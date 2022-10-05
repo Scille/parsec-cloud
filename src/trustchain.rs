@@ -1,16 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{import_exception, prelude::*, types::PyTuple};
-
 use crate::{
     api_crypto::VerifyKey,
     certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate},
-    ids::{DeviceID, UserID},
+    ids::{DeviceID, UserID, self},
     protocol::Trustchain,
-    time::TimeProvider,
+    time::{DateTime, TimeProvider, self},
 };
 
-import_exception!(parsec.core.trustchain, TrustchainError);
+use pyo3::exceptions::{PyAttributeError, PyValueError};
+use pyo3::prelude::*;
+use pyo3::types::{PyTuple, PyType};
 
 #[pyclass]
 pub(crate) struct TrustchainContext(pub libparsec::core::TrustchainContext);
@@ -70,7 +70,7 @@ impl TrustchainContext {
         let (users, revoked_users, devices) = self
             .0
             .load_trustchain(&users, &revoked_users, &devices)
-            .map_err(|err| TrustchainError::new_err(err.to_string()))?;
+            .map_err(crate::trustchain::TrustchainError)?;
 
         let users = users.into_iter().map(|x| UserCertificate(x).into_py(py));
         let revoked_users = revoked_users
@@ -109,7 +109,7 @@ impl TrustchainContext {
                 devices_certifs,
                 expected_user_id.map(|user_id| user_id.0),
             )
-            .map_err(|err| TrustchainError::new_err(err.to_string()))?;
+            .map_err(crate::trustchain::TrustchainError)?;
 
         let devices = devices
             .into_iter()
@@ -120,5 +120,231 @@ impl TrustchainContext {
             revoked_user.map(RevokedUserCertificate),
             PyTuple::new(py, devices),
         ))
+    }
+}
+
+#[pyclass]
+pub(crate) struct TrustchainError(libparsec::core::TrustchainError);
+
+#[pymethods]
+impl TrustchainError {
+    #[classmethod]
+    fn invalid_certificate(_cls: &PyType, path: String, exc: String) -> Self {
+        Self(libparsec::core::TrustchainError::InvalidCertificate { path, exc })
+    }
+
+    #[classmethod]
+    fn invalid_self_signed_user_certificate(_cls: &PyType, user_id: UserID) -> Self {
+        Self(
+            libparsec::core::TrustchainError::InvalidSelfSignedUserCertificate {
+                user_id: user_id.0,
+            },
+        )
+    }
+
+    #[classmethod]
+    fn invalid_self_signed_revocation_certificate(_cls: &PyType, user_id: UserID) -> Self {
+        Self(
+            libparsec::core::TrustchainError::InvalidSelfSignedUserRevocationCertificate {
+                user_id: user_id.0,
+            },
+        )
+    }
+
+    #[classmethod]
+    fn invalid_signature_given(_cls: &PyType, path: String, user_id: UserID) -> Self {
+        Self(libparsec::core::TrustchainError::InvalidSignatureGiven {
+            path,
+            user_id: user_id.0,
+        })
+    }
+
+    #[classmethod]
+    fn invalid_signature_loop_detected(_cls: &PyType, path: String) -> Self {
+        Self(libparsec::core::TrustchainError::InvalidSignatureLoopDetected { path })
+    }
+
+    #[classmethod]
+    fn missing_device_certificate(_cls: &PyType, path: String, device_id: DeviceID) -> Self {
+        Self(libparsec::core::TrustchainError::MissingDeviceCertificate {
+            path,
+            device_id: device_id.0,
+        })
+    }
+
+    #[classmethod]
+    fn missing_user_certificate(_cls: &PyType, path: String, user_id: UserID) -> Self {
+        Self(libparsec::core::TrustchainError::MissingUserCertificate {
+            path,
+            user_id: user_id.0,
+        })
+    }
+
+    #[classmethod]
+    fn signature_posterior_user_revocation(
+        _cls: &PyType,
+        path: String,
+        verified_timestamp: DateTime,
+        user_timestamp: DateTime,
+    ) -> Self {
+        Self(
+            libparsec::core::TrustchainError::SignaturePosteriorUserRevocation {
+                path,
+                verified_timestamp: verified_timestamp.0,
+                user_timestamp: user_timestamp.0,
+            },
+        )
+    }
+
+    #[classmethod]
+    fn unexpected_certificate(_cls: &PyType, expected: UserID, got: UserID) -> Self {
+        Self(libparsec::core::TrustchainError::UnexpectedCertificate {
+            expected: expected.0,
+            got: got.0,
+        })
+    }
+
+    #[getter]
+    fn path(&self) -> PyResult<String> {
+        match &self.0 {
+            libparsec::core::TrustchainError::InvalidCertificate { path, .. } => Ok(path.clone()),
+            libparsec::core::TrustchainError::InvalidSignatureGiven { path, .. } => {
+                Ok(path.clone())
+            }
+            libparsec::core::TrustchainError::InvalidSignatureLoopDetected { path } => {
+                Ok(path.clone())
+            }
+            libparsec::core::TrustchainError::MissingDeviceCertificate { path, .. } => {
+                Ok(path.clone())
+            }
+            libparsec::core::TrustchainError::MissingUserCertificate { path, .. } => {
+                Ok(path.clone())
+            }
+            libparsec::core::TrustchainError::SignaturePosteriorUserRevocation { path, .. } => {
+                Ok(path.clone())
+            }
+            _ => Err(PyAttributeError::new_err("No such attribute `path`")),
+        }
+    }
+
+    #[getter]
+    fn exc(&self) -> PyResult<String> {
+        if let libparsec::core::TrustchainError::InvalidCertificate { exc, .. } = &self.0 {
+            Ok(exc.clone())
+        } else {
+            Err(PyAttributeError::new_err("No such attribute `exc`"))
+        }
+    }
+
+    #[getter]
+    fn user_id(&self) -> PyResult<UserID> {
+        match &self.0 {
+            libparsec::core::TrustchainError::InvalidSelfSignedUserCertificate { user_id } => {
+                Ok(ids::UserID(user_id.clone()))
+            }
+            libparsec::core::TrustchainError::InvalidSelfSignedUserRevocationCertificate {
+                user_id,
+            } => Ok(ids::UserID(user_id.clone())),
+            libparsec::core::TrustchainError::InvalidSignatureGiven { user_id, .. } => {
+                Ok(ids::UserID(user_id.clone()))
+            }
+            libparsec::core::TrustchainError::MissingUserCertificate { user_id, .. } => {
+                Ok(ids::UserID(user_id.clone()))
+            }
+            _ => Err(PyAttributeError::new_err("No such attribute `user_id`")),
+        }
+    }
+
+    #[getter]
+    fn device_id(&self) -> PyResult<ids::DeviceID> {
+        if let libparsec::core::TrustchainError::MissingDeviceCertificate { device_id, .. } =
+            &self.0
+        {
+            Ok(ids::DeviceID(device_id.clone()))
+        } else {
+            Err(PyAttributeError::new_err("No such attribute `device_id`"))
+        }
+    }
+
+    #[getter]
+    fn verified_timestamp(&self) -> PyResult<DateTime> {
+        if let libparsec::core::TrustchainError::SignaturePosteriorUserRevocation {
+            verified_timestamp,
+            ..
+        } = &self.0
+        {
+            Ok(time::DateTime(*verified_timestamp))
+        } else {
+            Err(PyAttributeError::new_err(
+                "No such attribute `verified_timestamp`",
+            ))
+        }
+    }
+
+    #[getter]
+    fn user_timestamp(&self) -> PyResult<DateTime> {
+        if let libparsec::core::TrustchainError::SignaturePosteriorUserRevocation {
+            user_timestamp,
+            ..
+        } = &self.0
+        {
+            Ok(time::DateTime(*user_timestamp))
+        } else {
+            Err(PyAttributeError::new_err(
+                "No such attribute `user_timestamp`",
+            ))
+        }
+    }
+
+    #[getter]
+    fn expected(&self) -> PyResult<ids::UserID> {
+        if let libparsec::core::TrustchainError::UnexpectedCertificate { expected, .. } = &self.0 {
+            Ok(ids::UserID(expected.clone()))
+        } else {
+            Err(PyAttributeError::new_err("No such attribute `expected`"))
+        }
+    }
+
+    #[getter]
+    fn got(&self) -> PyResult<ids::UserID> {
+        if let libparsec::core::TrustchainError::UnexpectedCertificate { got, .. } = &self.0 {
+            Ok(ids::UserID(got.clone()))
+        } else {
+            Err(PyAttributeError::new_err("No such attribute `got`"))
+        }
+    }
+}
+
+impl From<TrustchainError> for PyErr {
+    fn from(err: TrustchainError) -> Self {
+        match err.0 {
+            libparsec::core::TrustchainError::InvalidCertificate { .. } => {
+                PyValueError::new_err("Invalid certificate")
+            }
+            libparsec::core::TrustchainError::InvalidSelfSignedUserCertificate { .. } => {
+                PyValueError::new_err("Invalid self signed user certificate")
+            }
+            libparsec::core::TrustchainError::InvalidSelfSignedUserRevocationCertificate {
+                ..
+            } => PyValueError::new_err("Invalid self signed user revocation certificate"),
+            libparsec::core::TrustchainError::InvalidSignatureGiven { .. } => {
+                PyValueError::new_err("Invalid signature given")
+            }
+            libparsec::core::TrustchainError::InvalidSignatureLoopDetected { .. } => {
+                PyValueError::new_err("Invalid signature loop detected")
+            }
+            libparsec::core::TrustchainError::MissingDeviceCertificate { .. } => {
+                PyValueError::new_err("Missing device certificate")
+            }
+            libparsec::core::TrustchainError::MissingUserCertificate { .. } => {
+                PyValueError::new_err("Missing user certificate")
+            }
+            libparsec::core::TrustchainError::SignaturePosteriorUserRevocation { .. } => {
+                PyValueError::new_err("Signature posterior user revocation")
+            }
+            libparsec::core::TrustchainError::UnexpectedCertificate { .. } => {
+                PyValueError::new_err("Unexpected certificate")
+            }
+        }
     }
 }

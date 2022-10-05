@@ -1,11 +1,25 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+<<<<<<< HEAD
+=======
+// TODO: Remove these lines when all functions/macros are used
+#![allow(dead_code)]
+#![allow(unused_macros)]
+#![allow(unused_imports)]
+
+use crate::trustchain::TrustchainError;
+>>>>>>> c8b4bb877 (Added `TrustchainError` binding)
 use pyo3::{
     conversion::IntoPy,
     exceptions::PyNotImplementedError,
     pyclass::CompareOp,
+<<<<<<< HEAD
     types::PyFrozenSet,
     FromPyObject, {PyAny, PyObject, PyResult, Python},
+=======
+    types::{PyFrozenSet, PyTuple},
+    FromPyObject, PyErr, {PyAny, PyObject, PyResult, Python},
+>>>>>>> c8b4bb877 (Added `TrustchainError` binding)
 };
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
