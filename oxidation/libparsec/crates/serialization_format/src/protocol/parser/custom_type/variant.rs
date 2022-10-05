@@ -10,7 +10,7 @@ use crate::protocol::parser::field::{quote_fields, Field};
 #[derive(Debug, Deserialize, Clone)]
 pub struct Variant {
     pub name: String,
-    pub discriminant_value: String,
+    pub discriminant_value: Option<String>,
     pub fields: Vec<Field>,
 }
 
@@ -18,7 +18,7 @@ pub struct Variant {
 impl Default for Variant {
     fn default() -> Self {
         Self {
-            discriminant_value: "type".to_string(),
+            discriminant_value: None,
             fields: vec![],
             name: "FooVariant".to_string(),
         }
@@ -36,9 +36,12 @@ impl Variant {
             .expect("A valid variant name");
 
         let mut attrs: Vec<syn::Attribute> = Vec::new();
-        if rename.is_some() {
-            let name = &&self.name;
-            attrs.push(syn::parse_quote!(#[serde(rename = #name)]))
+        // Add the serde attribute to rename the variant during serialization
+        // if we have set a specific value for it
+        // or the variant needed to be renamed to avoid collision with keyword.
+        if rename.is_some() || self.discriminant_value.is_some() {
+            let rename = self.discriminant_value.as_ref().unwrap_or(&self.name);
+            attrs.push(syn::parse_quote!(#[serde(rename = #rename)]))
         }
 
         let fields = quote_fields(&self.fields, Some(syn::Visibility::Inherited), types);
@@ -124,6 +127,27 @@ pub fn quote_variants(variants: &[Variant], types: &HashMap<String, String>) -> 
     },
     quote::quote! {
         foo_bar
+    }
+)]
+#[case::discriminant_value(
+    Variant {
+        discriminant_value: Some("foobar".to_string()),
+        ..Default::default()
+    },
+    quote::quote! {
+        #[serde(rename = "foobar")]
+        FooVariant
+    }
+)]
+#[case::discriminant_clashing_with_name(
+    Variant {
+        name: "type".to_string(),
+        discriminant_value: Some("foobar".to_string()),
+        ..Default::default()
+    },
+    quote::quote! {
+        #[serde(rename = "foobar")]
+        ty
     }
 )]
 fn test_quote(#[case] variant: Variant, #[case] expected: proc_macro2::TokenStream) {
