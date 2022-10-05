@@ -2,13 +2,10 @@
 
 // TODO: Remove these lines when all functions/macros are used
 #![allow(dead_code)]
-#![allow(unused_macros)]
-#![allow(unused_imports)]
 
 use pyo3::{
     conversion::IntoPy,
     exceptions::{PyNotImplementedError, PyValueError},
-    prelude::PyModule,
     pyclass::CompareOp,
     types::{PyFrozenSet, PyTuple},
     FromPyObject, {PyAny, PyObject, PyResult, Python},

@@ -7,7 +7,6 @@ use pyo3::{
 };
 use std::str::FromStr;
 
-#[allow(deprecated)]
 use crate::{
     api_crypto::VerifyKey,
     ids::{EntryID, OrganizationID},

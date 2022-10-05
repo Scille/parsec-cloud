@@ -16,7 +16,6 @@ use crate::{
     DateTime, DeviceID, DeviceLabel, HumanHandle, RealmID, RealmRole, UserID, UserProfile,
 };
 
-#[allow(unused_macros)]
 macro_rules! impl_verify_and_load_allow_root {
     ($name:ident) => {
         impl $name {

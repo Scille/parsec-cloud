@@ -7,7 +7,6 @@ use pyo3::{
 };
 use uuid::Uuid;
 
-#[allow(deprecated)]
 use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey},
     binding_utils::py_to_rs_user_profile,
