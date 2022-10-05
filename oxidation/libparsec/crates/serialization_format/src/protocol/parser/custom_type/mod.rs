@@ -75,7 +75,7 @@ mod test {
         variants: vec![
             Variant {
                 name: "Pinged".to_string(),
-                discriminant_value: "pinged".to_string(),
+                discriminant_value: Some("pinged".to_string()),
                 fields: vec![
                     Field {
                         name: "ping".to_string(),
