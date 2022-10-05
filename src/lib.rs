@@ -481,6 +481,10 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_class::<trustchain::TrustchainContext>()?;
     m.add_class::<trustchain::TrustchainError>()?;
+    m.add(
+        "TrustchainErrorException",
+        py.get_type::<trustchain::TrustchainErrorException>(),
+    )?;
 
     // Registering ABC classes
     m.add_class::<runtime::FutureIntoCoroutine>()?;

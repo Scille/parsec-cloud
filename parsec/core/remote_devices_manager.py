@@ -7,6 +7,7 @@ from parsec._parsec import (
     UserGetRepNotFound,
     TrustchainContext,
     TimeProvider,
+    TrustchainErrorException,
 )
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import DeviceID, UserID
@@ -17,8 +18,6 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
 )
-from parsec.core.trustchain import TrustchainError
-
 
 DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour
 
@@ -93,7 +92,7 @@ class RemoteDevicesManager:
             verified_revoked_user = (
                 None if no_cache else self._trustchain_ctx.get_revoked_user(user_id)
             )
-        except TrustchainError as exc:
+        except TrustchainErrorException as exc:
             raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
         if not verified_user:
             verified_user, verified_revoked_user, _ = await self.get_user_and_devices(
@@ -114,7 +113,7 @@ class RemoteDevicesManager:
         """
         try:
             verified_device = None if no_cache else self._trustchain_ctx.get_device(device_id)
-        except TrustchainError as exc:
+        except TrustchainErrorException as exc:
             raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
         if not verified_device:
             _, _, verified_devices = await self.get_user_and_devices(
@@ -167,7 +166,7 @@ class RemoteDevicesManager:
                 devices_certifs=rep.device_certificates,
                 expected_user_id=user_id,
             )
-        except TrustchainError as exc:
+        except TrustchainErrorException as exc:
             raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
 
 
@@ -207,7 +206,7 @@ async def get_device_invitation_creator(
             user_certif=rep["user_certificate"],
             devices_certifs=(rep["device_certificate"],),
         )
-    except TrustchainError as exc:
+    except TrustchainErrorException as exc:
         raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
 
     return user, device
@@ -249,7 +248,7 @@ async def get_user_invitation_creator(
             user_certif=rep["user_certificate"],
             devices_certifs=(rep["device_certificate"],),
         )
-    except TrustchainError as exc:
+    except TrustchainErrorException as exc:
         raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
 
     return user, device

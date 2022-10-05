@@ -2,15 +2,19 @@
 
 use crate::{
     api_crypto::VerifyKey,
+    binding_utils::{gen_proto, to_trustchain_error_exception},
     certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate},
-    ids::{DeviceID, UserID, self},
+    ids::{self, DeviceID, UserID},
     protocol::Trustchain,
-    time::{DateTime, TimeProvider, self},
+    time::{self, DateTime, TimeProvider},
 };
 
-use pyo3::exceptions::{PyAttributeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{PyTuple, PyType};
+use pyo3::{
+    create_exception,
+    exceptions::{PyAttributeError, PyException, PyValueError},
+};
 
 #[pyclass]
 pub(crate) struct TrustchainContext(pub libparsec::core::TrustchainContext);
@@ -70,7 +74,7 @@ impl TrustchainContext {
         let (users, revoked_users, devices) = self
             .0
             .load_trustchain(&users, &revoked_users, &devices)
-            .map_err(crate::trustchain::TrustchainError)?;
+            .map_err(to_trustchain_error_exception)?;
 
         let users = users.into_iter().map(|x| UserCertificate(x).into_py(py));
         let revoked_users = revoked_users
@@ -109,7 +113,7 @@ impl TrustchainContext {
                 devices_certifs,
                 expected_user_id.map(|user_id| user_id.0),
             )
-            .map_err(crate::trustchain::TrustchainError)?;
+            .map_err(to_trustchain_error_exception)?;
 
         let devices = devices
             .into_iter()
@@ -124,7 +128,13 @@ impl TrustchainContext {
 }
 
 #[pyclass]
-pub(crate) struct TrustchainError(libparsec::core::TrustchainError);
+#[derive(PartialEq)]
+pub(crate) struct TrustchainError(pub(crate) libparsec::core::TrustchainError);
+
+// This object is only here to wrap our `TrustchainError` in a python exception
+// object. Without this object we can't raise or except `TrustchainError` in
+// python code
+create_exception!(_parsec, TrustchainErrorException, PyException);
 
 #[pymethods]
 impl TrustchainError {
@@ -314,6 +324,10 @@ impl TrustchainError {
         }
     }
 }
+
+gen_proto!(TrustchainError, __richcmp__, eq);
+gen_proto!(TrustchainError, __str__); // Needed for python's exceptions
+gen_proto!(TrustchainError, __repr__);
 
 impl From<TrustchainError> for PyErr {
     fn from(err: TrustchainError) -> Self {
