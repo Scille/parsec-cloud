@@ -25,6 +25,18 @@
                     "$ref": "./field.schema.json"
                 }
             }
-        }
+        },
+        "oneOf": [
+            {
+                "required": [
+                    "unit"
+                ]
+            },
+            {
+                "required": [
+                    "other_fields"
+                ]
+            }
+        ]
     }
 }
