@@ -59,7 +59,40 @@ fn serde_user_get_req() {
         )[..],
         authenticated_cmds::user_get::Rep::Ok {
             user_certificate: b"foobar".to_vec(),
-            revoked_user_certificate: b"foobar".to_vec(),
+            revoked_user_certificate: Some(b"foobar".to_vec()),
+            device_certificates: vec![b"foobar".to_vec()],
+            trustchain: authenticated_cmds::user_get::Trustchain {
+                users: vec![b"foobar".to_vec()],
+                devices: vec![b"foobar".to_vec()],
+                revoked_users: vec![b"foobar".to_vec()],
+            },
+        }
+    )
+)]
+#[rstest]
+#[case::ok_without_revoked_user_certificate(
+    (
+        // Generated from Python implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   device_certificates: [hex!("666f6f626172")]
+        //   revoked_user_certificate: None
+        //   status: "ok"
+        //   trustchain: {
+        //     devices: [hex!("666f6f626172")]
+        //     revoked_users: [hex!("666f6f626172")]
+        //     users: [hex!("666f6f626172")]
+        //   }
+        //   user_certificate: hex!("666f6f626172")
+        &hex!(
+            "85b36465766963655f63657274696669636174657391c406666f6f626172b87265766f6b65"
+            "645f757365725f6365727469666963617465c0a6737461747573a26f6baa74727573746368"
+            "61696e83a76465766963657391c406666f6f626172ad7265766f6b65645f757365727391c4"
+            "06666f6f626172a5757365727391c406666f6f626172b0757365725f636572746966696361"
+            "7465c406666f6f626172"
+        )[..],
+        authenticated_cmds::user_get::Rep::Ok {
+            user_certificate: b"foobar".to_vec(),
+            revoked_user_certificate: None,
             device_certificates: vec![b"foobar".to_vec()],
             trustchain: authenticated_cmds::user_get::Trustchain {
                 users: vec![b"foobar".to_vec()],
@@ -229,6 +262,41 @@ fn serde_user_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_
     let data2 = authenticated_cmds::user_create::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+#[case::missing_redacted_device_certificate(
+    // Generated from Python implementation (Parsec v2.11.1+dev)
+    // Content:
+    //   cmd: "user_create"
+    //   device_certificate: hex!("666f6f626172")
+    //   redacted_device_certificate: None
+    //   redacted_user_certificate: hex!("666f6f626172")
+    //   user_certificate: hex!("666f6f626172")
+    &hex!(
+        "85a3636d64ab757365725f637265617465b26465766963655f6365727469666963617465c4"
+        "06666f6f626172bb72656461637465645f6465766963655f6365727469666963617465c0b9"
+        "72656461637465645f757365725f6365727469666963617465c406666f6f626172b0757365"
+        "725f6365727469666963617465c406666f6f626172"
+    )[..],
+)]
+#[case::missing_redacted_user_certificate(
+    // Generated from Python implementation (Parsec v2.11.1+dev)
+    // Content:
+    //   cmd: "user_create"
+    //   device_certificate: hex!("666f6f626172")
+    //   redacted_device_certificate: hex!("666f6f626172")
+    //   redacted_user_certificate: None
+    //   user_certificate: hex!("666f6f626172")
+    &hex!(
+        "85a3636d64ab757365725f637265617465b26465766963655f6365727469666963617465c4"
+        "06666f6f626172bb72656461637465645f6465766963655f6365727469666963617465c406"
+        "666f6f626172b972656461637465645f757365725f6365727469666963617465c0b0757365"
+        "725f6365727469666963617465c406666f6f626172"
+    )[..],
+)]
+fn serde_user_create_req_invalid(#[case] raw: &[u8]) {
+    assert!(authenticated_cmds::AnyCmdReq::load(raw).is_err())
 }
 
 #[rstest]
@@ -459,32 +527,58 @@ fn serde_device_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::dev
 }
 
 #[rstest]
-fn serde_human_find_req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   cmd: "human_find"
-    //   omit_non_human: false
-    //   omit_revoked: false
-    //   page: 8
-    //   per_page: 8
-    //   query: "foobar"
-    let raw = hex!(
-        "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
-        "5f7265766f6b6564c2a47061676508a87065725f7061676508a57175657279a6666f6f6261"
-        "72"
-    );
+#[case::full(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   cmd: "human_find"
+        //   omit_non_human: false
+        //   omit_revoked: false
+        //   page: 8
+        //   per_page: 8
+        //   query: "foobar"
+        &hex!(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a47061676508a87065725f7061676508a57175657279a6666f6f6261"
+            "72"
+        )[..],
+        authenticated_cmds::AnyCmdReq::HumanFind(authenticated_cmds::human_find::Req {
+            query: Some("foobar".to_owned()),
+            omit_revoked: false,
+            omit_non_human: false,
+            page: NonZeroU64::new(8).unwrap(),
+            per_page: IntegerBetween1And100::try_from(8).unwrap(),
+        })
+    )
+)]
+#[case::without_query(
+    (
+        // Generated from Python implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   cmd: "human_find"
+        //   omit_non_human: false
+        //   omit_revoked: false
+        //   page: 8
+        //   per_page: 8
+        //   query: None
+        //
+        &hex!(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a47061676508a87065725f7061676508a57175657279c0"
+        )[..],
+        authenticated_cmds::AnyCmdReq::HumanFind(authenticated_cmds::human_find::Req {
+            query: None,
+            omit_revoked: false,
+            omit_non_human: false,
+            page: NonZeroU64::new(8).unwrap(),
+            per_page: IntegerBetween1And100::try_from(8).unwrap(),
+        })
+    )
+)]
+fn serde_human_find_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmdReq)) {
+    let (raw, expected) = raw_expected;
 
-    let req = authenticated_cmds::human_find::Req {
-        query: Some("foobar".to_owned()),
-        omit_revoked: false,
-        omit_non_human: false,
-        page: NonZeroU64::new(8).unwrap(),
-        per_page: NonZeroU64::new(8).unwrap(),
-    };
-
-    let expected = authenticated_cmds::AnyCmdReq::HumanFind(req);
-
-    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
@@ -525,7 +619,7 @@ fn serde_human_find_req() {
                 revoked: false,
             }],
             page: NonZeroU64::new(8).unwrap(),
-            per_page: NonZeroU64::new(8).unwrap(),
+            per_page: IntegerBetween1And100::try_from(8).unwrap(),
             total: 8,
         }
     )
@@ -557,4 +651,69 @@ fn serde_human_find_rep(#[case] raw_expected: (&[u8], authenticated_cmds::human_
     let data2 = authenticated_cmds::human_find::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+#[case::page_0(
+    // Generated from Python implementation (Parsec v2.11.1+dev)
+    // Content:
+    //   cmd: "human_find"
+    //   omit_non_human: false
+    //   omit_revoked: false
+    //   page: 0
+    //   per_page: 8
+    //   query: "foobar"
+    &hex!(
+        "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+        "5f7265766f6b6564c2a47061676500a87065725f7061676508a57175657279a6666f6f6261"
+        "72"
+    )[..],
+)]
+#[case::negative_page(
+    // Generated from Python implementation (Parsec v2.12.1+dev)
+    // Content:
+    //   cmd: "human_find"
+    //   omit_non_human: false
+    //   omit_revoked: false
+    //   page: -1
+    //   per_page: 8
+    //   query: "foobar"
+    &hex!(
+        "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+        "5f7265766f6b6564c2a470616765ffa87065725f7061676508a57175657279a6666f6f6261"
+        "72"
+    )[..],
+)]
+#[case::per_page_0(
+    // Generated from Python implementation (Parsec v2.11.1+dev)
+    // Content:
+    //   cmd: "human_find"
+    //   omit_non_human: false
+    //   omit_revoked: false
+    //   page: 8
+    //   per_page: 0
+    //   query: "foobar"
+    &hex!(
+        "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+        "5f7265766f6b6564c2a47061676508a87065725f7061676500a57175657279a6666f6f6261"
+        "72"
+    )[..],
+)]
+#[case::per_page_101(
+    // Generated from Python implementation (Parsec v2.11.1+dev)
+    // Content:
+    //   cmd: "human_find"
+    //   omit_non_human: false
+    //   omit_revoked: false
+    //   page: 0
+    //   per_page: 101
+    //   query: "foobar"
+    &hex!(
+        "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+        "5f7265766f6b6564c2a47061676500a87065725f7061676565a57175657279a6666f6f6261"
+        "72"
+    )[..],
+)]
+fn serde_human_find_req_invalid(#[case] raw: &[u8]) {
+    assert!(authenticated_cmds::AnyCmdReq::load(raw).is_err())
 }

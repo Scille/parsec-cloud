@@ -22,8 +22,10 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepOk,
-    OrganizationStatsRepOk,
     Regex,
+    OrganizationStatsRepOk,
+    UserRevokeRepOk,
+    HumanFindRepOk,
 )
 from parsec.event_bus import EventBus
 from parsec.api.protocol import (
@@ -172,15 +174,15 @@ class LoggedCore:
             omit_revoked=omit_revoked,
             omit_non_human=omit_non_human,
         )
-        if rep["status"] != "ok":
+        if not isinstance(rep, HumanFindRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
         results = []
-        for item in rep["results"]:
+        for item in rep.results:
             # Note `BackendNotFoundError` should never occurs (unless backend is broken !)
             # here given we are feeding the backend the user IDs it has provided us
-            user_info = await self.get_user_info(item["user_id"])
+            user_info = await self.get_user_info(item.user_id)
             results.append(user_info)
-        return (results, rep["total"])
+        return (results, rep.total)
 
     async def get_organization_stats(self) -> OrganizationStats:
         """
@@ -269,8 +271,8 @@ class LoggedCore:
         rep = await self._backend_conn.cmds.user_revoke(
             revoked_user_certificate=revoked_user_certificate
         )
-        if rep["status"] != "ok":
-            raise BackendConnectionError(f"Error while trying to revoke user {user_id.str}: {rep}")
+        if not isinstance(rep, UserRevokeRepOk):
+            raise BackendConnectionError(f"Error while trying to revoke user {user_id}: {rep}")
 
         # Invalidate potential cache to avoid displaying the user as not-revoked
         self._remote_devices_manager.invalidate_user_cache(user_id)

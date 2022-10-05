@@ -13,7 +13,6 @@ mod invite;
 mod local_device;
 mod local_manifest;
 mod manifest;
-mod protocol;
 mod storage;
 mod time;
 
@@ -22,25 +21,6 @@ mod time;
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    // Events
-    m.add_class::<protocol::EventsListenReq>()?;
-    m.add_class::<protocol::EventsListenRep>()?;
-    m.add_class::<protocol::EventsSubscribeReq>()?;
-    m.add_class::<protocol::EventsSubscribeRep>()?;
-
-    // User
-    m.add_class::<protocol::UserGetReq>()?;
-    m.add_class::<protocol::UserGetRep>()?;
-    m.add_class::<protocol::UserCreateReq>()?;
-    m.add_class::<protocol::UserCreateRep>()?;
-    m.add_class::<protocol::UserRevokeReq>()?;
-    m.add_class::<protocol::UserRevokeRep>()?;
-    m.add_class::<protocol::DeviceCreateReq>()?;
-    m.add_class::<protocol::DeviceCreateRep>()?;
-    m.add_class::<protocol::HumanFindReq>()?;
-    m.add_class::<protocol::HumanFindRep>()?;
-    m.add_class::<protocol::Trustchain>()?;
-    m.add_class::<protocol::HumanFindResultItem>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())

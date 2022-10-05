@@ -2,6 +2,12 @@
 
 from typing import Tuple, Optional, List
 
+from parsec._parsec import (
+    UserGetRepOk,
+    UserGetRepNotFound,
+    TrustchainContext,
+    TimeProvider,
+)
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import DeviceID, UserID
 from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
@@ -12,8 +18,6 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
 )
 from parsec.core.trustchain import TrustchainError
-
-from parsec._parsec import TrustchainContext, TimeProvider
 
 
 DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour
@@ -148,19 +152,19 @@ class RemoteDevicesManager:
                 f"Failed to fetch user `{user_id.str}` from the backend: {exc}"
             ) from exc
 
-        if rep["status"] == "not_found":
+        if isinstance(rep, UserGetRepNotFound):
             raise RemoteDevicesManagerUserNotFoundError(
                 f"User `{user_id.str}` doesn't exist in backend"
             )
-        elif rep["status"] != "ok":
-            raise RemoteDevicesManagerError(f"Cannot fetch user {user_id.str}: `{rep['status']}`")
+        elif not isinstance(rep, UserGetRepOk):
+            raise RemoteDevicesManagerError(f"Cannot fetch user {user_id}: {rep}")
 
         try:
             return self._trustchain_ctx.load_user_and_devices(
-                trustchain=rep["trustchain"],
-                user_certif=rep["user_certificate"],
-                revoked_user_certif=rep["revoked_user_certificate"],
-                devices_certifs=rep["device_certificates"],
+                trustchain=rep.trustchain,
+                user_certif=rep.user_certificate,
+                revoked_user_certif=rep.revoked_user_certificate,
+                devices_certifs=rep.device_certificates,
                 expected_user_id=user_id,
             )
         except TrustchainError as exc:

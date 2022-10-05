@@ -2,8 +2,43 @@
 
 import attr
 from typing import List, Optional, Tuple
-from parsec._parsec import DateTime
 
+from parsec._parsec import (
+    DateTime,
+    UserGetReq,
+    UserGetRep,
+    UserGetRepOk,
+    UserGetRepNotFound,
+    UserCreateReq,
+    UserCreateRep,
+    UserCreateRepOk,
+    UserCreateRepActiveUsersLimitReached,
+    UserCreateRepAlreadyExists,
+    UserCreateRepInvalidCertification,
+    UserCreateRepInvalidData,
+    UserCreateRepNotAllowed,
+    UserRevokeReq,
+    UserRevokeRep,
+    UserRevokeRepOk,
+    UserRevokeRepAlreadyRevoked,
+    UserRevokeRepNotFound,
+    UserRevokeRepInvalidCertification,
+    UserRevokeRepNotAllowed,
+    DeviceCreateReq,
+    DeviceCreateRep,
+    DeviceCreateRepOk,
+    DeviceCreateRepAlreadyExists,
+    DeviceCreateRepBadUserId,
+    DeviceCreateRepInvalidCertification,
+    DeviceCreateRepInvalidData,
+    HumanFindReq,
+    HumanFindRep,
+    HumanFindRepOk,
+    HumanFindRepNotAllowed,
+    Trustchain,
+    HumanFindResultItem,
+)
+from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.event_bus import EventBus
 from parsec.api.data import RevokedUserCertificate, DataError
@@ -11,13 +46,7 @@ from parsec.api.protocol import (
     OrganizationID,
     UserID,
     DeviceID,
-    HumanHandle,
     UserProfile,
-    user_get_serializer,
-    human_find_serializer,
-    user_create_serializer,
-    user_revoke_serializer,
-    device_create_serializer,
 )
 from parsec.backend.utils import catch_protocol_errors, api
 from parsec.backend.user_type import (
@@ -65,13 +94,6 @@ PEER_EVENT_MAX_WAIT = 300
 INVITATION_VALIDITY = 3600
 
 
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class Trustchain:
-    users: Tuple[bytes, ...]
-    revoked_users: Tuple[bytes, ...]
-    devices: Tuple[bytes, ...]
-
-
 @attr.s(slots=True, auto_attribs=True)
 class GetUserAndDevicesResult:
     user_certificate: bytes
@@ -82,13 +104,6 @@ class GetUserAndDevicesResult:
     trustchain_revoked_user_certificates: Tuple[bytes, ...]
 
 
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class HumanFindResultItem:
-    user_id: UserID
-    revoked: bool
-    human_handle: Optional[HumanHandle] = None
-
-
 class BaseUserComponent:
     def __init__(self, event_bus: EventBus):
         self._event_bus = event_bus
@@ -97,162 +112,148 @@ class BaseUserComponent:
 
     @api("user_get")
     @catch_protocol_errors
-    async def api_user_get(self, client_ctx, msg):
-        msg = user_get_serializer.req_load(msg)
+    @api_typed_msg_adapter(UserGetReq, UserGetRep)
+    async def api_user_get(self, client_ctx, req: UserGetReq) -> UserGetRep:
         need_redacted = client_ctx.profile == UserProfile.OUTSIDER
 
         try:
             result = await self.get_user_with_devices_and_trustchain(
-                client_ctx.organization_id, msg["user_id"], redacted=need_redacted
+                client_ctx.organization_id, req.user_id, redacted=need_redacted
             )
         except UserNotFoundError:
-            return {"status": "not_found"}
+            return UserGetRepNotFound()
 
-        return user_get_serializer.rep_dump(
-            {
-                "status": "ok",
-                "user_certificate": result.user_certificate,
-                "revoked_user_certificate": result.revoked_user_certificate,
-                "device_certificates": result.device_certificates,
-                "trustchain": {
-                    "devices": result.trustchain_device_certificates,
-                    "users": result.trustchain_user_certificates,
-                    "revoked_users": result.trustchain_revoked_user_certificates,
-                },
-            }
+        return UserGetRepOk(
+            user_certificate=result.user_certificate,
+            revoked_user_certificate=result.revoked_user_certificate,
+            device_certificates=list(result.device_certificates),
+            trustchain=Trustchain(
+                devices=list(result.trustchain_device_certificates),
+                users=list(result.trustchain_user_certificates),
+                revoked_users=list(result.trustchain_revoked_user_certificates),
+            ),
         )
 
     @api("human_find")
     @catch_protocol_errors
-    async def api_human_find(self, client_ctx, msg):
+    @api_typed_msg_adapter(HumanFindReq, HumanFindRep)
+    async def api_human_find(self, client_ctx, req: HumanFindReq) -> HumanFindRep:
         if client_ctx.profile == UserProfile.OUTSIDER:
-            return {
-                "status": "not_allowed",
-                "reason": "Not allowed for user with OUTSIDER profile.",
-            }
-
-        msg = human_find_serializer.req_load(msg)
-        results, total = await self.find_humans(client_ctx.organization_id, **msg)
-        return human_find_serializer.rep_dump(
-            {
-                "status": "ok",
-                "results": results,
-                "page": msg["page"],
-                "per_page": msg["per_page"],
-                "total": total,
-            }
+            return HumanFindRepNotAllowed(None)
+        results, total = await self.find_humans(
+            client_ctx.organization_id,
+            omit_non_human=req.omit_non_human,
+            omit_revoked=req.omit_revoked,
+            page=req.page,
+            per_page=req.per_page,
+            query=req.query,
+        )
+        return HumanFindRepOk(
+            results=results,
+            page=req.page,
+            per_page=req.per_page,
+            total=total,
         )
 
     @api("user_create")
     @catch_protocol_errors
-    async def api_user_create(self, client_ctx, msg):
+    @api_typed_msg_adapter(UserCreateReq, UserCreateRep)
+    async def api_user_create(self, client_ctx, req: UserCreateReq) -> UserCreateRep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return user_create_serializer.rep_dump(
-                {
-                    "status": "not_allowed",
-                    "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
-                }
-            )
-        msg = user_create_serializer.req_load(msg)
+            return UserCreateRepNotAllowed(None)
 
         try:
             user, first_device = validate_new_user_certificates(
                 expected_author=client_ctx.device_id,
                 author_verify_key=client_ctx.verify_key,
-                device_certificate=msg["device_certificate"],
-                user_certificate=msg["user_certificate"],
-                redacted_user_certificate=msg["redacted_user_certificate"],
-                redacted_device_certificate=msg["redacted_device_certificate"],
+                device_certificate=req.device_certificate,
+                user_certificate=req.user_certificate,
+                redacted_user_certificate=req.redacted_user_certificate,
+                redacted_device_certificate=req.redacted_device_certificate,
             )
             await self.create_user(client_ctx.organization_id, user, first_device)
-            rep = {"status": "ok"}
 
         except CertificateValidationError as exc:
-            rep = {"status": exc.status, "reason": exc.reason}
+            if exc.status == "invalid_certification":
+                return UserCreateRepInvalidCertification(None)
+            elif exc.status == "invalid_data":
+                return UserCreateRepInvalidData(None)
+            elif exc.status == "not_allowed":
+                return UserCreateRepNotAllowed(None)
 
-        except UserAlreadyExistsError as exc:
-            rep = {"status": "already_exists", "reason": str(exc)}
+        except UserAlreadyExistsError:
+            return UserCreateRepAlreadyExists(None)
 
         except UserActiveUsersLimitReached:
-            rep = {"status": "active_users_limit_reached"}
+            return UserCreateRepActiveUsersLimitReached(None)
 
-        return user_create_serializer.rep_dump(rep)
+        return UserCreateRepOk()
 
     @api("user_revoke")
     @catch_protocol_errors
-    async def api_user_revoke(self, client_ctx, msg):
+    @api_typed_msg_adapter(UserRevokeReq, UserRevokeRep)
+    async def api_user_revoke(self, client_ctx, req: UserRevokeReq) -> UserRevokeRep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
-            }
-
-        msg = user_revoke_serializer.req_load(msg)
+            return UserRevokeRepNotAllowed(None)
 
         try:
             data = RevokedUserCertificate.verify_and_load(
-                msg["revoked_user_certificate"],
+                req.revoked_user_certificate,
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
             )
 
-        except DataError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
+        except DataError:
+            return UserRevokeRepInvalidCertification(None)
 
         if not timestamps_in_the_ballpark(data.timestamp, DateTime.now()):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
+            return UserRevokeRepInvalidCertification(None)
 
         if data.user_id == client_ctx.user_id:
-            return {"status": "not_allowed", "reason": "Cannot do self-revocation"}
+            return UserRevokeRepNotAllowed(None)
 
         try:
             await self.revoke_user(
                 organization_id=client_ctx.organization_id,
                 user_id=data.user_id,
-                revoked_user_certificate=msg["revoked_user_certificate"],
+                revoked_user_certificate=req.revoked_user_certificate,
                 revoked_user_certifier=data.author,
                 revoked_on=data.timestamp,
             )
 
         except UserNotFoundError:
-            return {"status": "not_found"}
+            return UserRevokeRepNotFound()
 
         except UserAlreadyRevokedError:
-            return {
-                "status": "already_revoked",
-                "reason": f"User `{data.user_id.str}` already revoked",
-            }
+            return UserRevokeRepAlreadyRevoked(None)
 
-        return user_revoke_serializer.rep_dump({"status": "ok"})
+        return UserRevokeRepOk()
 
     @api("device_create")
     @catch_protocol_errors
-    async def api_device_create(self, client_ctx, msg):
-        msg = device_create_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(DeviceCreateReq, DeviceCreateRep)
+    async def api_device_create(self, client_ctx, req: DeviceCreateReq) -> DeviceCreateRep:
         try:
             device = validate_new_device_certificate(
                 expected_author=client_ctx.device_id,
                 author_verify_key=client_ctx.verify_key,
-                device_certificate=msg["device_certificate"],
-                redacted_device_certificate=msg["redacted_device_certificate"],
+                device_certificate=req.device_certificate,
+                redacted_device_certificate=req.redacted_device_certificate,
             )
             await self.create_device(client_ctx.organization_id, device)
-            rep = {"status": "ok"}
 
         except CertificateValidationError as exc:
-            rep = {"status": exc.status, "reason": exc.reason}
+            if exc.status == "bad_user_id":
+                return DeviceCreateRepBadUserId(None)
+            elif exc.status == "invalid_certification":
+                return DeviceCreateRepInvalidCertification(None)
+            elif exc.status == "invalid_data":
+                return DeviceCreateRepInvalidData(None)
 
-        except UserAlreadyExistsError as exc:
-            rep = {"status": "already_exists", "reason": str(exc)}
+        except UserAlreadyExistsError:
+            return DeviceCreateRepAlreadyExists(None)
 
-        return device_create_serializer.rep_dump(rep)
+        return DeviceCreateRepOk()
 
     #### Virtual methods ####
 

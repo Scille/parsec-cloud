@@ -1,13 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::import_exception;
-use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyTuple};
+use pyo3::{import_exception, prelude::*, types::PyTuple};
 
-use crate::api_crypto::VerifyKey;
-use crate::certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate};
-use crate::ids::{DeviceID, UserID};
-use crate::time::TimeProvider;
+use crate::{
+    api_crypto::VerifyKey,
+    certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate},
+    ids::{DeviceID, UserID},
+    protocol::Trustchain,
+    time::TimeProvider,
+};
 
 import_exception!(parsec.core.trustchain, TrustchainError);
 
@@ -88,7 +89,7 @@ impl TrustchainContext {
 
     fn load_user_and_devices<'py>(
         &mut self,
-        trustchain: Option<&PyDict>,
+        trustchain: Trustchain,
         user_certif: Vec<u8>,
         revoked_user_certif: Option<Vec<u8>>,
         devices_certifs: Vec<Vec<u8>>,
@@ -99,23 +100,10 @@ impl TrustchainContext {
         Option<RevokedUserCertificate>,
         &'py PyTuple,
     )> {
-        crate::binding_utils::parse_kwargs!(
-            trustchain,
-            [users: Vec<Vec<u8>>, "users"],
-            [devices: Vec<Vec<u8>>, "devices"],
-            [revoked_users: Vec<Vec<u8>>, "revoked_users"]
-        );
-
-        let trustchain = libparsec::protocol::authenticated_cmds::user_get::Trustchain {
-            users,
-            devices,
-            revoked_users,
-        };
-
         let (user, revoked_user, devices) = self
             .0
             .load_user_and_devices(
-                trustchain,
+                trustchain.0,
                 user_certif,
                 revoked_user_certif,
                 devices_certifs,

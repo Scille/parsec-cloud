@@ -8,6 +8,7 @@ mod message;
 mod organization;
 mod ping;
 mod realm;
+mod user;
 mod vlob;
 
 pub use block::*;
@@ -18,6 +19,7 @@ pub use message::*;
 pub use organization::*;
 pub use ping::*;
 pub use realm::*;
+pub use user::*;
 pub use vlob::*;
 
 // We use this type because we can't match Option<String> in macro_rules

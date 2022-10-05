@@ -14,6 +14,7 @@ from hypothesis.stateful import (
 
 from parsec.api.protocol import UserID, DeviceName, UserProfile
 from parsec._parsec import (
+    Trustchain,
     TrustchainContext,
     UserCertificate,
     RevokedUserCertificate,
@@ -184,11 +185,11 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
                 if device_id.user_id == user
             ]
             user_content, revoked_user_content, devices_contents = ctx.load_user_and_devices(
-                trustchain={
-                    "users": [certif for certif in self.users_certifs.values()],
-                    "revoked_users": [certif for certif in self.revoked_users_certifs.values()],
-                    "devices": [certif for certif in self.devices_certifs.values()],
-                },
+                trustchain=Trustchain(
+                    users=[certif for certif in self.users_certifs.values()],
+                    revoked_users=[certif for certif in self.revoked_users_certifs.values()],
+                    devices=[certif for certif in self.devices_certifs.values()],
+                ),
                 user_certif=user_certif,
                 revoked_user_certif=revoked_user_certif,
                 devices_certifs=devices_certifs,

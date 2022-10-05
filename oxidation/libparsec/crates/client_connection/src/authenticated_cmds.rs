@@ -33,8 +33,9 @@
 use std::{collections::HashMap, num::NonZeroU64};
 
 use libparsec_crypto::{PublicKey, SigningKey};
-use libparsec_protocol::authenticated_cmds::{
-    self, invite_delete::InvitationDeletedReason, invite_new::UserOrDevice,
+use libparsec_protocol::{
+    authenticated_cmds::{self, invite_delete::InvitationDeletedReason, invite_new::UserOrDevice},
+    IntegerBetween1And100,
 };
 use libparsec_types::{
     BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, Maybe, RealmID,
@@ -209,7 +210,7 @@ impl AuthenticatedCmds {
             omit_revoked: bool,
             omit_non_human: bool,
             page: NonZeroU64,
-            per_page: NonZeroU64
+            per_page: IntegerBetween1And100
         )
     );
 

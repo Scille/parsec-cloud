@@ -2,6 +2,7 @@
 
 import secrets
 
+from parsec._parsec import DateTime, DeviceCreateRepOk
 from parsec.api.data import DeviceCertificate
 from parsec.api.protocol import DeviceID, DeviceName, DeviceLabel
 from parsec.core.backend_connection import (
@@ -10,7 +11,6 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.types import LocalDevice
 from parsec.crypto import SigningKey, SecretKey
-from parsec._parsec import DateTime
 
 
 async def _create_new_device_for_self(
@@ -58,7 +58,7 @@ async def _create_new_device_for_self(
             redacted_device_certificate=redacted_device_certificate,
         )
 
-    if rep["status"] != "ok":
+    if not isinstance(rep, DeviceCreateRepOk):
         raise BackendConnectionError(f"Cannot create recovery device: {rep}")
 
     return new_device

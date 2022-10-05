@@ -2,8 +2,8 @@
 
 import pytest
 from unittest.mock import ANY
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, UserRevokeRepOk
 from parsec.api.data import UserManifest, WorkspaceEntry, EntryName, RevokedUserCertificate
 from parsec.api.protocol import RealmID
 from parsec.crypto import SecretKey
@@ -73,7 +73,7 @@ async def test_share_revoked_recipient(running_backend, alice_user_fs, alice, ma
     rep = await alice_user_fs.backend_cmds.user_revoke(
         revoked_user_certificate=revoked_user_certificate
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, UserRevokeRepOk)
 
     # Share with Bob, this perform a backend request and fail
     with pytest.raises(FSSharingNotAllowedError) as exc:
