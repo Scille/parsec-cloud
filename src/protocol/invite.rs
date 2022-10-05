@@ -42,7 +42,7 @@ crate::binding_utils::gen_proto!(InvitationType, __richcmp__, eq);
 impl InvitationType {
     #[classattr]
     #[pyo3(name = "DEVICE")]
-    fn device() -> &'static PyObject {
+    fn device() -> PyResult<&'static PyObject> {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -50,12 +50,12 @@ impl InvitationType {
                 })
             };
         };
-        &VALUE
+        Ok(&VALUE)
     }
 
     #[classattr]
     #[pyo3(name = "USER")]
-    fn user() -> &'static PyObject {
+    fn user() -> PyResult<&'static PyObject> {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -63,15 +63,15 @@ impl InvitationType {
                 })
             };
         };
-        &VALUE
+        Ok(&VALUE)
     }
 
     #[getter]
-    fn value(&self) -> &'static str {
-        match self.0 {
+    fn value(&self) -> PyResult<&str> {
+        Ok(match self.0 {
             libparsec::types::InvitationType::Device => "DEVICE",
             libparsec::types::InvitationType::User => "USER",
-        }
+        })
     }
 }
 
@@ -98,20 +98,20 @@ crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __richcmp__, eq);
 impl InvitationEmailSentStatus {
     #[classmethod]
     #[pyo3(name = "SUCCESS")]
-    fn success(_cls: &PyType) -> Self {
-        Self(invite_new::InvitationEmailSentStatus::Success)
+    fn success(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(invite_new::InvitationEmailSentStatus::Success))
     }
 
     #[classmethod]
     #[pyo3(name = "NOT_AVAILABLE")]
-    fn not_available(_cls: &PyType) -> Self {
-        Self(invite_new::InvitationEmailSentStatus::NotAvailable)
+    fn not_available(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(invite_new::InvitationEmailSentStatus::NotAvailable))
     }
 
     #[classmethod]
     #[pyo3(name = "BAD_RECIPIENT")]
-    fn bad_recipient(_cls: &PyType) -> Self {
-        Self(invite_new::InvitationEmailSentStatus::BadRecipient)
+    fn bad_recipient(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(invite_new::InvitationEmailSentStatus::BadRecipient))
     }
 }
 
@@ -126,29 +126,29 @@ crate::binding_utils::gen_proto!(InvitationDeletedReason, __richcmp__, eq);
 impl InvitationDeletedReason {
     #[classmethod]
     #[pyo3(name = "FINISHED")]
-    fn finished(_cls: &PyType) -> Self {
-        Self(invite_delete::InvitationDeletedReason::Finished)
+    fn finished(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(invite_delete::InvitationDeletedReason::Finished))
     }
 
     #[classmethod]
     #[pyo3(name = "CANCELLED")]
-    fn cancelled(_cls: &PyType) -> Self {
-        Self(invite_delete::InvitationDeletedReason::Cancelled)
+    fn cancelled(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(invite_delete::InvitationDeletedReason::Cancelled))
     }
 
     #[classmethod]
     #[pyo3(name = "ROTTEN")]
-    fn rotten(_cls: &PyType) -> Self {
-        Self(invite_delete::InvitationDeletedReason::Rotten)
+    fn rotten(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(invite_delete::InvitationDeletedReason::Rotten))
     }
 
     #[getter]
-    fn value(&self) -> &'static str {
-        match self.0 {
+    fn value(&self) -> PyResult<&str> {
+        Ok(match self.0 {
             invite_delete::InvitationDeletedReason::Finished => "FINISHED",
             invite_delete::InvitationDeletedReason::Cancelled => "CANCELLED",
             invite_delete::InvitationDeletedReason::Rotten => "ROTTEN",
-        }
+        })
     }
 }
 
@@ -163,29 +163,29 @@ crate::binding_utils::gen_proto!(InvitationStatus, __richcmp__, eq);
 impl InvitationStatus {
     #[classmethod]
     #[pyo3(name = "IDLE")]
-    fn idle(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Idle)
+    fn idle(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(libparsec::types::InvitationStatus::Idle))
     }
 
     #[classmethod]
     #[pyo3(name = "READY")]
-    fn ready(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Ready)
+    fn ready(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(libparsec::types::InvitationStatus::Ready))
     }
 
     #[classmethod]
     #[pyo3(name = "DELETED")]
-    fn deleted(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Deleted)
+    fn deleted(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(libparsec::types::InvitationStatus::Deleted))
     }
 
     #[getter]
-    fn name(&self) -> &'static str {
-        match self.0 {
+    fn name(&self) -> PyResult<&str> {
+        Ok(match self.0 {
             libparsec::types::InvitationStatus::Idle => "IDLE",
             libparsec::types::InvitationStatus::Ready => "READY",
             libparsec::types::InvitationStatus::Deleted => "DELETED",
-        }
+        })
     }
 }
 
@@ -238,47 +238,43 @@ impl InviteListItem {
 
     #[getter]
     #[pyo3(name = "r#type")]
-    fn r#type(&self) -> InvitationType {
-        match self.0 {
-            invite_list::InviteListItem::User { .. } => {
-                InvitationType(libparsec::types::InvitationType::User)
-            }
-            invite_list::InviteListItem::Device { .. } => {
-                InvitationType(libparsec::types::InvitationType::Device)
-            }
-        }
+    fn r#type(&self) -> PyResult<InvitationType> {
+        Ok(InvitationType(match self.0 {
+            invite_list::InviteListItem::User { .. } => libparsec::types::InvitationType::User,
+            invite_list::InviteListItem::Device { .. } => libparsec::types::InvitationType::Device,
+        }))
     }
 
     #[getter]
-    fn token(&self) -> InvitationToken {
-        match self.0 {
-            invite_list::InviteListItem::User { token, .. } => InvitationToken(token),
-            invite_list::InviteListItem::Device { token, .. } => InvitationToken(token),
-        }
+    fn token(&self) -> PyResult<InvitationToken> {
+        Ok(InvitationToken(match self.0 {
+            invite_list::InviteListItem::User { token, .. } => token,
+            invite_list::InviteListItem::Device { token, .. } => token,
+        }))
     }
 
     #[getter]
-    fn created_on(&self) -> DateTime {
+    fn created_on(&self) -> PyResult<DateTime> {
+        Ok(DateTime(match self.0 {
+            invite_list::InviteListItem::User { created_on, .. } => created_on,
+            invite_list::InviteListItem::Device { created_on, .. } => created_on,
+        }))
+    }
+
+    #[getter]
+    fn claimer_email(&self) -> PyResult<&str> {
         match &self.0 {
-            invite_list::InviteListItem::User { created_on, .. } => DateTime(*created_on),
-            invite_list::InviteListItem::Device { created_on, .. } => DateTime(*created_on),
-        }
-    }
-
-    #[getter]
-    fn claimer_email(&self) -> PyResult<String> {
-        match &self.0 {
-            invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email.clone()),
+            invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email),
             _ => Err(PyAttributeError::new_err("")),
         }
     }
 
     #[getter]
-    fn status(&self) -> InvitationStatus {
-        match &self.0 {
-            invite_list::InviteListItem::User { status, .. } => InvitationStatus(status.clone()),
-            invite_list::InviteListItem::Device { status, .. } => InvitationStatus(status.clone()),
-        }
+    fn status(&self) -> PyResult<InvitationStatus> {
+        Ok(InvitationStatus(match &self.0 {
+            invite_list::InviteListItem::User { status, .. } => status.clone(),
+            invite_list::InviteListItem::Device { status, .. } => status.clone(),
+        }))
     }
 }
 
@@ -297,17 +293,17 @@ impl InviteNewReq {
         claimer_email: Option<String>,
         send_email: bool,
     ) -> PyResult<Self> {
-        match r#type.0 {
-            libparsec::types::InvitationType::Device => Ok(InviteNewReq(invite_new::Req(
-                invite_new::UserOrDevice::Device { send_email },
-            ))),
-            libparsec::types::InvitationType::User => Ok(InviteNewReq(invite_new::Req(
-                invite_new::UserOrDevice::User {
+        Ok(InviteNewReq(match r#type.0 {
+            libparsec::types::InvitationType::Device => {
+                invite_new::Req(invite_new::UserOrDevice::Device { send_email })
+            }
+            libparsec::types::InvitationType::User => {
+                invite_new::Req(invite_new::UserOrDevice::User {
                     claimer_email: claimer_email.expect("Missing claimer_email_argument"),
                     send_email,
-                },
-            ))),
-        }
+                })
+            }
+        }))
     }
 
     #[classmethod]
@@ -331,19 +327,19 @@ impl InviteNewReq {
 
     #[getter]
     #[pyo3(name = "r#type")]
-    fn invitation_type(&self) -> InvitationType {
-        match self.0 {
+    fn invitation_type(&self) -> PyResult<InvitationType> {
+        Ok(InvitationType(match self.0 {
             invite_new::Req(invite_new::UserOrDevice::Device { .. }) => {
-                InvitationType(libparsec::types::InvitationType::Device)
+                libparsec::types::InvitationType::Device
             }
             invite_new::Req(invite_new::UserOrDevice::User { .. }) => {
-                InvitationType(libparsec::types::InvitationType::User)
+                libparsec::types::InvitationType::User
             }
-        }
+        }))
     }
 
     #[getter]
-    fn claimer_email(&'_ self) -> PyResult<&'_ String> {
+    fn claimer_email(&self) -> PyResult<&str> {
         match &self.0 {
             invite_new::Req(invite_new::UserOrDevice::User { claimer_email, .. }) => {
                 Ok(claimer_email)
@@ -353,11 +349,11 @@ impl InviteNewReq {
     }
 
     #[getter]
-    fn send_email(&self) -> bool {
-        match &self.0 {
-            invite_new::Req(invite_new::UserOrDevice::User { send_email, .. }) => *send_email,
-            invite_new::Req(invite_new::UserOrDevice::Device { send_email }) => *send_email,
-        }
+    fn send_email(&self) -> PyResult<bool> {
+        Ok(match self.0 {
+            invite_new::Req(invite_new::UserOrDevice::User { send_email, .. }) => send_email,
+            invite_new::Req(invite_new::UserOrDevice::Device { send_email }) => send_email,
+        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -447,13 +443,13 @@ impl InviteDeleteReq {
     }
 
     #[getter]
-    fn token(&self) -> InvitationToken {
-        invite::InvitationToken(self.0.token)
+    fn token(&self) -> PyResult<InvitationToken> {
+        Ok(invite::InvitationToken(self.0.token))
     }
 
     #[getter]
-    fn reason(&self) -> InvitationDeletedReason {
-        InvitationDeletedReason(self.0.reason.clone())
+    fn reason(&self) -> PyResult<InvitationDeletedReason> {
+        Ok(InvitationDeletedReason(self.0.reason.clone()))
     }
 }
 
@@ -561,15 +557,15 @@ impl InviteInfoRepOk {
     ) -> PyResult<(Self, InviteInfoRep)> {
         let greeter_user_id = greeter_user_id.0;
         let greeter_human_handle = greeter_human_handle.0;
-        match r#type {
-            InvitationType(libparsec::types::InvitationType::Device) => Ok((
+        Ok(match r#type {
+            InvitationType(libparsec::types::InvitationType::Device) => (
                 Self,
                 InviteInfoRep(invite_info::Rep::Ok(invite_info::UserOrDevice::Device {
                     greeter_user_id,
                     greeter_human_handle,
                 })),
-            )),
-            InvitationType(libparsec::types::InvitationType::User) => Ok((
+            ),
+            InvitationType(libparsec::types::InvitationType::User) => (
                 Self,
                 InviteInfoRep(invite_info::Rep::Ok(invite_info::UserOrDevice::User {
                     claimer_email: claimer_email
@@ -577,8 +573,8 @@ impl InviteInfoRepOk {
                     greeter_user_id,
                     greeter_human_handle,
                 })),
-            )),
-        }
+            ),
+        })
     }
 
     #[getter]
@@ -723,13 +719,13 @@ impl Invite1GreeterWaitPeerReq {
     }
 
     #[getter]
-    fn token(&self) -> InvitationToken {
-        invite::InvitationToken(self.0.token)
+    fn token(&self) -> PyResult<InvitationToken> {
+        Ok(invite::InvitationToken(self.0.token))
     }
 
     #[getter]
-    fn greeter_public_key(_self: PyRef<'_, Self>) -> PublicKey {
-        api_crypto::PublicKey(_self.0.greeter_public_key.clone())
+    fn greeter_public_key(_self: PyRef<'_, Self>) -> PyResult<PublicKey> {
+        Ok(api_crypto::PublicKey(_self.0.greeter_public_key.clone()))
     }
 }
 
@@ -792,8 +788,8 @@ impl Invite2aClaimerSendHashedNonceReq {
     }
 
     #[getter]
-    fn claimer_hashed_nonce(_self: PyRef<'_, Self>) -> HashDigest {
-        api_crypto::HashDigest(_self.0.claimer_hashed_nonce.clone())
+    fn claimer_hashed_nonce(_self: PyRef<'_, Self>) -> PyResult<HashDigest> {
+        Ok(api_crypto::HashDigest(_self.0.claimer_hashed_nonce.clone()))
     }
 }
 
@@ -855,8 +851,8 @@ impl Invite2aGreeterGetHashedNonceReq {
     }
 
     #[getter]
-    fn token(&self) -> InvitationToken {
-        invite::InvitationToken(self.0.token)
+    fn token(&self) -> PyResult<InvitationToken> {
+        Ok(invite::InvitationToken(self.0.token))
     }
 }
 
@@ -918,9 +914,8 @@ impl Invite2bClaimerSendNonceReq {
     }
 
     #[getter]
-    fn claimer_nonce<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> &'py PyBytes {
-        let greeter_nonce = &_self.0.claimer_nonce;
-        PyBytes::new(py, greeter_nonce)
+    fn claimer_nonce<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(py, &_self.0.claimer_nonce))
     }
 }
 
@@ -972,13 +967,13 @@ impl Invite2bGreeterSendNonceReq {
     }
 
     #[getter]
-    fn token(_self: PyRef<'_, Self>) -> InvitationToken {
-        invite::InvitationToken(_self.0.token)
+    fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
+        Ok(invite::InvitationToken(_self.0.token))
     }
 
     #[getter]
-    fn greeter_nonce<'py>(_self: PyRef<'py, Self>, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &_self.0.greeter_nonce)
+    fn greeter_nonce<'py>(_self: PyRef<'py, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(py, &_self.0.greeter_nonce))
     }
 }
 
@@ -1082,8 +1077,8 @@ impl Invite3aGreeterWaitPeerTrustReq {
     }
 
     #[getter]
-    fn token(_self: PyRef<'_, Self>) -> InvitationToken {
-        invite::InvitationToken(_self.0.token)
+    fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
+        Ok(invite::InvitationToken(_self.0.token))
     }
 }
 
@@ -1177,8 +1172,8 @@ impl Invite3bGreeterSignifyTrustReq {
     }
 
     #[getter]
-    fn token(_self: PyRef<'_, Self>) -> InvitationToken {
-        invite::InvitationToken(_self.0.token)
+    fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
+        Ok(invite::InvitationToken(_self.0.token))
     }
 }
 
@@ -1227,8 +1222,8 @@ impl Invite4ClaimerCommunicateReq {
     }
 
     #[getter]
-    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &_self.0.payload)
+    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(py, &_self.0.payload))
     }
 }
 
@@ -1287,14 +1282,13 @@ impl Invite4GreeterCommunicateReq {
     }
 
     #[getter]
-    fn token(_self: PyRef<'_, Self>) -> InvitationToken {
-        invite::InvitationToken(_self.0.token)
+    fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
+        Ok(invite::InvitationToken(_self.0.token))
     }
 
     #[getter]
-    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> &'py PyBytes {
-        let payload = &_self.0.payload;
-        PyBytes::new(py, payload)
+    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(py, &_self.0.payload))
     }
 }
 
