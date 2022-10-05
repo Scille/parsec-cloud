@@ -1,29 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-<<<<<<< HEAD
-=======
-// TODO: Remove these lines when all functions/macros are used
-#![allow(dead_code)]
-#![allow(unused_macros)]
-#![allow(unused_imports)]
-
-<<<<<<< HEAD
-use crate::trustchain::TrustchainError;
->>>>>>> c8b4bb877 (Added `TrustchainError` binding)
-=======
-use crate::trustchain::{TrustchainError, TrustchainErrorException};
->>>>>>> 72d61f88d (Added python exception for `TrustchainError`)
 use pyo3::{
-    conversion::IntoPy,
-    exceptions::PyNotImplementedError,
-    pyclass::CompareOp,
-<<<<<<< HEAD
-    types::PyFrozenSet,
-    FromPyObject, {PyAny, PyObject, PyResult, Python},
-=======
-    types::{PyFrozenSet, PyTuple},
-    FromPyObject, PyErr, {PyAny, PyObject, PyResult, Python},
->>>>>>> c8b4bb877 (Added `TrustchainError` binding)
+    conversion::IntoPy, exceptions::PyNotImplementedError, pyclass::CompareOp, types::PyFrozenSet,
+    FromPyObject, PyAny, PyObject, PyResult, Python,
 };
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
@@ -127,33 +106,6 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
         .collect::<PyResult<std::collections::HashSet<T>>>()
 }
 
-<<<<<<< HEAD
-=======
-pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
-    let regex = regex
-        .getattr("pattern")
-        .unwrap_or(regex)
-        .extract::<&str>()?
-        .replace("\\Z", "\\z")
-        .replace("\\ ", "\x20");
-    Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
-}
-
-pub fn rs_to_py_regex<'py>(py: Python<'py>, regex: &Regex) -> PyResult<&'py PyAny> {
-    let re = py.import("re")?;
-    let args = PyTuple::new(
-        py,
-        vec![regex.as_str().replace("\\z", "\\Z").replace('\x20', "\\ ")],
-    );
-    re.call_method1("compile", args)
-}
-
-pub fn to_trustchain_error_exception(err: libparsec::core::TrustchainError) -> PyErr {
-    let python_error = TrustchainError(err);
-    TrustchainErrorException::new_err(python_error)
-}
-
->>>>>>> 72d61f88d (Added python exception for `TrustchainError`)
 macro_rules! parse_kwargs_optional {
     ($kwargs: ident $(,[$var: ident $(:$ty: ty)?, $name: literal $(,$function: ident)?])* $(,)?) => {
         $(let mut $var = None;)*

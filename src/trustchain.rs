@@ -2,18 +2,18 @@
 
 use crate::{
     api_crypto::VerifyKey,
-    binding_utils::{gen_proto, to_trustchain_error_exception},
+    binding_utils::gen_proto,
     certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate},
-    ids::{self, DeviceID, UserID},
+    ids::{DeviceID, UserID},
     protocol::Trustchain,
     time::{self, DateTime, TimeProvider},
 };
 
-use pyo3::prelude::*;
-use pyo3::types::PyTuple;
 use pyo3::{
     create_exception,
     exceptions::{PyAttributeError, PyException},
+    prelude::*,
+    types::PyTuple,
 };
 
 #[pyclass]
@@ -70,11 +70,9 @@ impl TrustchainContext {
         revoked_users: Vec<Vec<u8>>,
         devices: Vec<Vec<u8>>,
         py: Python<'py>,
-    ) -> PyResult<(&'py PyTuple, &'py PyTuple, &'py PyTuple)> {
-        let (users, revoked_users, devices) = self
-            .0
-            .load_trustchain(&users, &revoked_users, &devices)
-            .map_err(to_trustchain_error_exception)?;
+    ) -> Result<(&'py PyTuple, &'py PyTuple, &'py PyTuple), TrustchainError> {
+        let (users, revoked_users, devices) =
+            self.0.load_trustchain(&users, &revoked_users, &devices)?;
 
         let users = users.into_iter().map(|x| UserCertificate(x).into_py(py));
         let revoked_users = revoked_users
@@ -99,21 +97,21 @@ impl TrustchainContext {
         devices_certifs: Vec<Vec<u8>>,
         expected_user_id: Option<UserID>,
         py: Python<'py>,
-    ) -> PyResult<(
-        UserCertificate,
-        Option<RevokedUserCertificate>,
-        &'py PyTuple,
-    )> {
-        let (user, revoked_user, devices) = self
-            .0
-            .load_user_and_devices(
-                trustchain.0,
-                user_certif,
-                revoked_user_certif,
-                devices_certifs,
-                expected_user_id.map(|user_id| user_id.0),
-            )
-            .map_err(to_trustchain_error_exception)?;
+    ) -> Result<
+        (
+            UserCertificate,
+            Option<RevokedUserCertificate>,
+            &'py PyTuple,
+        ),
+        TrustchainError,
+    > {
+        let (user, revoked_user, devices) = self.0.load_user_and_devices(
+            trustchain.0,
+            user_certif,
+            revoked_user_certif,
+            devices_certifs,
+            expected_user_id.map(|user_id| user_id.0),
+        )?;
 
         let devices = devices
             .into_iter()
@@ -128,8 +126,7 @@ impl TrustchainContext {
 }
 
 #[pyclass]
-#[derive(PartialEq)]
-pub(crate) struct TrustchainError(pub(crate) libparsec::core::TrustchainError);
+pub(crate) struct TrustchainError(pub libparsec::core::TrustchainError);
 
 // This object is only here to wrap our `TrustchainError` in a python exception
 // object. Without this object we can't raise or except `TrustchainError` in
@@ -139,32 +136,24 @@ create_exception!(_parsec, TrustchainErrorException, PyException);
 #[pymethods]
 impl TrustchainError {
     #[getter]
-    fn path(&self) -> PyResult<String> {
+    fn path(&self) -> PyResult<&str> {
         match &self.0 {
-            libparsec::core::TrustchainError::InvalidCertificate { path, .. } => Ok(path.clone()),
-            libparsec::core::TrustchainError::InvalidSignatureGiven { path, .. } => {
-                Ok(path.clone())
-            }
-            libparsec::core::TrustchainError::InvalidSignatureLoopDetected { path } => {
-                Ok(path.clone())
-            }
-            libparsec::core::TrustchainError::MissingDeviceCertificate { path, .. } => {
-                Ok(path.clone())
-            }
-            libparsec::core::TrustchainError::MissingUserCertificate { path, .. } => {
-                Ok(path.clone())
-            }
+            libparsec::core::TrustchainError::InvalidCertificate { path, .. } => Ok(path),
+            libparsec::core::TrustchainError::InvalidSignatureGiven { path, .. } => Ok(path),
+            libparsec::core::TrustchainError::InvalidSignatureLoopDetected { path } => Ok(path),
+            libparsec::core::TrustchainError::MissingDeviceCertificate { path, .. } => Ok(path),
+            libparsec::core::TrustchainError::MissingUserCertificate { path, .. } => Ok(path),
             libparsec::core::TrustchainError::SignaturePosteriorUserRevocation { path, .. } => {
-                Ok(path.clone())
+                Ok(path)
             }
             _ => Err(PyAttributeError::new_err("No such attribute `path`")),
         }
     }
 
     #[getter]
-    fn exc(&self) -> PyResult<String> {
+    fn exc(&self) -> PyResult<&str> {
         if let libparsec::core::TrustchainError::InvalidCertificate { exc, .. } = &self.0 {
-            Ok(exc.clone())
+            Ok(exc)
         } else {
             Err(PyAttributeError::new_err("No such attribute `exc`"))
         }
@@ -174,27 +163,27 @@ impl TrustchainError {
     fn user_id(&self) -> PyResult<UserID> {
         match &self.0 {
             libparsec::core::TrustchainError::InvalidSelfSignedUserCertificate { user_id } => {
-                Ok(ids::UserID(user_id.clone()))
+                Ok(UserID(user_id.clone()))
             }
             libparsec::core::TrustchainError::InvalidSelfSignedUserRevocationCertificate {
                 user_id,
-            } => Ok(ids::UserID(user_id.clone())),
+            } => Ok(UserID(user_id.clone())),
             libparsec::core::TrustchainError::InvalidSignatureGiven { user_id, .. } => {
-                Ok(ids::UserID(user_id.clone()))
+                Ok(UserID(user_id.clone()))
             }
             libparsec::core::TrustchainError::MissingUserCertificate { user_id, .. } => {
-                Ok(ids::UserID(user_id.clone()))
+                Ok(UserID(user_id.clone()))
             }
             _ => Err(PyAttributeError::new_err("No such attribute `user_id`")),
         }
     }
 
     #[getter]
-    fn device_id(&self) -> PyResult<ids::DeviceID> {
+    fn device_id(&self) -> PyResult<DeviceID> {
         if let libparsec::core::TrustchainError::MissingDeviceCertificate { device_id, .. } =
             &self.0
         {
-            Ok(ids::DeviceID(device_id.clone()))
+            Ok(DeviceID(device_id.clone()))
         } else {
             Err(PyAttributeError::new_err("No such attribute `device_id`"))
         }
@@ -205,9 +194,9 @@ impl TrustchainError {
         if let libparsec::core::TrustchainError::SignaturePosteriorUserRevocation {
             verified_timestamp,
             ..
-        } = &self.0
+        } = self.0
         {
-            Ok(time::DateTime(*verified_timestamp))
+            Ok(time::DateTime(verified_timestamp))
         } else {
             Err(PyAttributeError::new_err(
                 "No such attribute `verified_timestamp`",
@@ -220,9 +209,9 @@ impl TrustchainError {
         if let libparsec::core::TrustchainError::SignaturePosteriorUserRevocation {
             user_timestamp,
             ..
-        } = &self.0
+        } = self.0
         {
-            Ok(time::DateTime(*user_timestamp))
+            Ok(time::DateTime(user_timestamp))
         } else {
             Err(PyAttributeError::new_err(
                 "No such attribute `user_timestamp`",
@@ -231,18 +220,18 @@ impl TrustchainError {
     }
 
     #[getter]
-    fn expected(&self) -> PyResult<ids::UserID> {
+    fn expected(&self) -> PyResult<UserID> {
         if let libparsec::core::TrustchainError::UnexpectedCertificate { expected, .. } = &self.0 {
-            Ok(ids::UserID(expected.clone()))
+            Ok(UserID(expected.clone()))
         } else {
             Err(PyAttributeError::new_err("No such attribute `expected`"))
         }
     }
 
     #[getter]
-    fn got(&self) -> PyResult<ids::UserID> {
+    fn got(&self) -> PyResult<UserID> {
         if let libparsec::core::TrustchainError::UnexpectedCertificate { got, .. } = &self.0 {
-            Ok(ids::UserID(got.clone()))
+            Ok(UserID(got.clone()))
         } else {
             Err(PyAttributeError::new_err("No such attribute `got`"))
         }
@@ -252,3 +241,15 @@ impl TrustchainError {
 gen_proto!(TrustchainError, __richcmp__, eq);
 gen_proto!(TrustchainError, __str__); // Needed for python's exceptions
 gen_proto!(TrustchainError, __repr__);
+
+impl From<TrustchainError> for PyErr {
+    fn from(err: TrustchainError) -> Self {
+        TrustchainErrorException::new_err(err)
+    }
+}
+
+impl From<libparsec::core::TrustchainError> for TrustchainError {
+    fn from(err: libparsec::core::TrustchainError) -> Self {
+        TrustchainError(err)
+    }
+}
