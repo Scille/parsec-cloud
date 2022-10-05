@@ -1,0 +1,97 @@
+[
+    {
+        "label": "PkiEnrollmentInfo",
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "pki_enrollment_info",
+            "other_fields": [
+                {
+                    "name": "enrollment_id",
+                    "type": "UUID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "unit": "PkiEnrollmentInfoStatus"
+            }
+        ],
+        "nested_types": [
+            {
+                "label": "PkiEnrollmentInfoStatus",
+                "discriminant_field": "enrollment_status",
+                "variants": [
+                    {
+                        "name": "Submitted",
+                        "discriminant_value": "SUBMITTED",
+                        "fields": [
+                            {
+                                "name": "submitted_on",
+                                "type": "DateTime"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Accepted",
+                        "discriminant_value": "ACCEPTED",
+                        "fields": [
+                            {
+                                "name": "submitted_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "accepted_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "accepter_der_x509_certificate",
+                                "type": "Bytes"
+                            },
+                            {
+                                "name": "accept_payload_signature",
+                                "type": "Bytes"
+                            },
+                            {
+                                // Signature should be checked before loading.
+                                "name": "accept_payload",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Rejected",
+                        "discriminant_value": "REJECTED",
+                        "fields": [
+                            {
+                                "name": "submitted_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "rejected_on",
+                                "type": "DateTime"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Cancelled",
+                        "discriminant_value": "CANCELLED",
+                        "fields": [
+                            {
+                                "name": "submitted_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "cancelled_on",
+                                "type": "DateTime"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
