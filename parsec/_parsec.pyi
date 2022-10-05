@@ -82,7 +82,7 @@ from parsec._parsec_pyi.time import (
     mock_time,
 )
 
-from parsec._parsec_pyi.trustchain import TrustchainContext
+from parsec._parsec_pyi.trustchain import TrustchainContext, TrustchainError
 
 from parsec._parsec_pyi.local_device import LocalDevice, UserInfo, DeviceInfo
 
@@ -516,6 +516,7 @@ __all__ = [
     "mock_time",
     # Trustchain
     "TrustchainContext",
+    "TrustchainError",
     # Local Device
     "LocalDevice",
     "UserInfo",
