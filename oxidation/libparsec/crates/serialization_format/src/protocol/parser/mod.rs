@@ -25,6 +25,9 @@ pub struct Protocol(pub Vec<Cmd>);
 pub struct Cmd {
     pub label: String,
     pub major_versions: Vec<u32>,
+    /// When the Command was introduced during a major version lifetime but not from the start.
+    /// This field is only used as documentation purpose.
+    pub introduced_in: Option<MajorMinorVersion>,
     pub req: Request,
     #[serde(rename = "reps")]
     pub possible_responses: Vec<Response>,
@@ -39,6 +42,7 @@ impl Default for Cmd {
         Self {
             label: "FooCmd".to_string(),
             major_versions: vec![],
+            introduced_in: None,
             req: Request::default(),
             nested_types: vec![],
             possible_responses: vec![],
@@ -78,6 +82,26 @@ impl Default for Cmd {
     Protocol(vec![
         Cmd::default(),
         Cmd::default()
+    ])
+)]
+#[case::with_introduced_field(
+    r#"[
+        {
+            "label": "FooCmd",
+            "major_versions": [ 42 ],
+            "introduced_in": 42.2,
+            "req": {
+                "cmd": "foo_cmd",
+                "other_fields": []
+            },
+            "reps": [],
+        }
+    ]"#,
+    Protocol(vec![
+        Cmd {
+            introduced_in: Some("42.2".parse().unwrap()),
+            ..Default::default()
+        }
     ])
 )]
 fn test_deserialize(#[case] raw_str: &str, #[case] expected: Protocol) {
