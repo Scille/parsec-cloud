@@ -1,15 +1,16 @@
-from typing import Type
-from parsec._parsec import (
-    EntryID,
-    EntryName,
+from parsec._parsec_pyi.crypto import (
     PublicKey,
     PrivateKey,
     SecretKey,
     VerifyKey,
-    DeviceID,
     SigningKey,
-    DateTime,
 )
+from parsec._parsec_pyi.ids import (
+    EntryID,
+    EntryName,
+    DeviceID,
+)
+from parsec._parsec_pyi.time import DateTime
 
 class MessageContent:
     @property
