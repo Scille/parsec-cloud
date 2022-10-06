@@ -22,6 +22,9 @@
                     "type": "number"
                 }
             },
+            "introduced_in": {
+                "$ref": "./major-minor-string.schema.json"
+            },
             "req": {
                 "$ref": "./protocol-request.schema.json"
             },
