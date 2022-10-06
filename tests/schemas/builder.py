@@ -25,7 +25,7 @@ from parsec.serde.fields import (
 
 from parsec.api.protocol.base import CmdSerializer
 from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
-from parsec.api.data.message import BaseMessageContent
+from parsec.api.data import MessageContent
 
 from parsec.core.types.base import BaseLocalData
 
@@ -42,7 +42,7 @@ _BASE_DATA_CLASSES = (
     BaseSignedData,
     BaseAPISignedData,
     BaseLocalData,
-    BaseMessageContent,
+    MessageContent,
 )
 
 
