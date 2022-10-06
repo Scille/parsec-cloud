@@ -130,7 +130,7 @@ mod test {
     )]
     #[case::field_introduced_in(
         r#"{"name": "Bar", "type": "Boolean", "introduced_in": "5.2"}"#,
-        Field { name: "Bar".to_string(), ty: "Boolean".to_string(), introduced_in: Some("5.2".try_into().unwrap()), default: None}
+        Field { name: "Bar".to_string(), ty: "Boolean".to_string(), introduced_in: Some("5.2".parse().unwrap()), default: None}
     )]
     fn deserialization(#[case] input: &str, #[case] expected: Field) {
         let field = serde_json::from_str::<Field>(input).expect("Got error on valid data");

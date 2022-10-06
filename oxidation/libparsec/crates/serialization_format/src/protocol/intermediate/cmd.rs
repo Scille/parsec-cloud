@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use super::{CustomType, Request, Response};
+use super::{CustomType, MajorMinorVersion, Request, Response};
 use crate::protocol::parser;
 
 macro_rules! filter_out_future_fields {
@@ -24,6 +24,7 @@ macro_rules! filter_out_future_fields {
 #[derive(Debug)]
 pub struct Cmd {
     pub label: String,
+    pub introduced_in: Option<MajorMinorVersion>,
     pub req: Request,
     pub possible_responses: Vec<Response>,
     pub nested_types: Vec<CustomType>,
@@ -34,6 +35,7 @@ impl Default for Cmd {
     fn default() -> Self {
         Self {
             label: "FooCmd".to_string(),
+            introduced_in: None,
             nested_types: vec![],
             possible_responses: vec![],
             req: parser::Request::default(),
@@ -43,6 +45,10 @@ impl Default for Cmd {
 
 impl Cmd {
     pub fn from_parsed_cmd(cmd: parser::Cmd, version: u32) -> Self {
+        let introduced_in = cmd
+            .introduced_in
+            .filter(|mm_version| mm_version.major == version);
+
         let possible_responses = cmd
             .possible_responses
             .into_iter()
@@ -76,6 +82,7 @@ impl Cmd {
 
         Self {
             label: cmd.label,
+            introduced_in,
             req,
             possible_responses,
             nested_types,
@@ -91,6 +98,17 @@ impl Cmd {
     pub fn quote(&self) -> syn::ItemMod {
         let name = self.quote_label();
         let module = self.req.quote_name();
+        let module_attrs = self
+            .introduced_in
+            .map(|version| {
+                let message = format!(
+                    "The command `{}` was introduced in `API-{}`.",
+                    self.label, version
+                );
+                let attr: syn::Attribute = syn::parse_quote!(#[doc = #message]);
+                vec![attr]
+            })
+            .unwrap_or_default();
         // TODO: We may need to have the types passed as argument for subsecant custom type.
         let mut types = HashMap::new();
         self.nested_types.iter().for_each(|nested_type| {
@@ -119,6 +137,7 @@ impl Cmd {
         });
 
         syn::parse_quote! {
+            #(#module_attrs)*
             pub mod #module {
                 use super::AnyCmdReq;
 
@@ -210,7 +229,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("0.4".try_into().unwrap()),
+                        introduced_in: Some("0.4".parse().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -222,7 +241,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("0.4".try_into().unwrap()),
+                        introduced_in: Some("0.4".parse().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -236,7 +255,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("2.4".try_into().unwrap()),
+                        introduced_in: Some("2.4".parse().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -258,7 +277,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         parser::Field {
-                            introduced_in: Some("0.5".try_into().unwrap()),
+                            introduced_in: Some("0.5".parse().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -272,7 +291,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         parser::Field {
-                            introduced_in: Some("0.5".try_into().unwrap()),
+                            introduced_in: Some("0.5".parse().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -288,7 +307,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         parser::Field {
-                            introduced_in: Some("2.5".try_into().unwrap()),
+                            introduced_in: Some("2.5".parse().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -315,7 +334,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some("0.2".try_into().unwrap()),
+                                    introduced_in: Some("0.2".parse().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -334,7 +353,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some("0.2".try_into().unwrap()),
+                                    introduced_in: Some("0.2".parse().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -355,7 +374,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some("6.2".try_into().unwrap()),
+                                    introduced_in: Some("6.2".parse().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -389,7 +408,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some("0.1".try_into().unwrap()),
+                            introduced_in: Some("0.1".parse().unwrap()),
                             ..Default::default()
                         }
                     ]
@@ -403,7 +422,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some("0.1".try_into().unwrap()),
+                            introduced_in: Some("0.1".parse().unwrap()),
                             ..Default::default()
                         }
                     ]
@@ -419,7 +438,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some("3.1".try_into().unwrap()),
+                            introduced_in: Some("3.1".parse().unwrap()),
                             ..Default::default()
                         }
                     ]
@@ -563,6 +582,36 @@ mod test {
             ..Default::default()
         }
     )]
+    #[case::introduced_previously(
+        parser::Cmd {
+            introduced_in: Some("0.4".parse().unwrap()),
+            ..Default::default()
+        },
+        Cmd {
+            introduced_in: None,
+            ..Default::default()
+        }
+    )]
+    #[case::introduced_during(
+        parser::Cmd {
+            introduced_in: Some("1.4".parse().unwrap()),
+            ..Default::default()
+        },
+        Cmd {
+            introduced_in: Some("1.4".parse().unwrap()),
+            ..Default::default()
+        }
+    )]
+    #[case::introduced_after(
+        parser::Cmd {
+            introduced_in: Some("2.4".parse().unwrap()),
+            ..Default::default()
+        },
+        Cmd {
+            introduced_in: None,
+            ..Default::default()
+        }
+    )]
     fn test_cmd_conversion(#[case] original: parser::Cmd, #[case] expected: Cmd) {
         assert_eq!(Cmd::from_parsed_cmd(original, 1), expected)
     }
@@ -661,6 +710,69 @@ mod test {
                     FooResponse,
                     #[serde(rename = "foo_response")]
                     FooResponse,
+                    /// `UnknownStatus` covers the case the server returns a valid message but with
+                    /// an unknown status value (given change in error status only cause a minor bump in API version)
+                    /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
+                    #[serde(skip)]
+                    UnknownStatus {
+                        _status: String,
+                        reason: Option<String>
+                    }
+                }
+
+                #[derive(::serde::Deserialize)]
+                struct UnknownStatus {
+                    status: String,
+                    reason: Option<String>
+                }
+
+                impl Rep {
+                    pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                        ::rmp_serde::to_vec_named(self)
+                    }
+
+                    pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                        ::rmp_serde::from_slice::<Self>(buf)
+                        .or_else(|_error| {
+                            let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                            Ok(Self::UnknownStatus {
+                                _status: data.status,
+                                reason: data.reason,
+                            })
+                        })
+                    }
+                }
+            }
+        }
+    )]
+    #[case::with_introduced_in(
+        Cmd {
+            introduced_in: Some("2.4".parse().unwrap()),
+            ..Default::default()
+        },
+        quote! {
+            #[doc = "The command `FooCmd` was introduced in `API-2.4`."]
+            pub mod foo_cmd {
+                use super::AnyCmdReq;
+
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                pub struct Req;
+
+                impl Req {
+                    pub fn new() -> Self { Self }
+                }
+
+                impl Req {
+                    pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                        AnyCmdReq::FooCmd(self).dump()
+                    }
+                }
+
+                #[allow(clippy::derive_partial_eq_without_eq)]
+                #[::serde_with::serde_as]
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
+                #[serde(tag = "status")]
+                pub enum Rep {
                     /// `UnknownStatus` covers the case the server returns a valid message but with
                     /// an unknown status value (given change in error status only cause a minor bump in API version)
                     /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
