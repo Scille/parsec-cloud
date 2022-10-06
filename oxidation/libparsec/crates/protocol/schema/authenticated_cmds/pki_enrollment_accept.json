@@ -48,6 +48,73 @@
             {
                 "status": "ok",
                 "other_fields": []
+            },
+            {
+                "status": "not_allowed",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_payload_data",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_certification",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "string"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_data",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "string"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "no_longer_available",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "already_exists",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "active_users_limit_reached",
+                "other_fields": []
             }
         ]
     }
