@@ -201,7 +201,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("0.4".try_into().unwrap()),
+                        introduced_in: Some("0.4".parse().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -213,7 +213,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("0.4".try_into().unwrap()),
+                        introduced_in: Some("0.4".parse().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -227,7 +227,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("2.4".try_into().unwrap()),
+                        introduced_in: Some("2.4".parse().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -249,7 +249,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         parser::Field {
-                            introduced_in: Some("0.5".try_into().unwrap()),
+                            introduced_in: Some("0.5".parse().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -263,7 +263,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         parser::Field {
-                            introduced_in: Some("0.5".try_into().unwrap()),
+                            introduced_in: Some("0.5".parse().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -279,7 +279,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         parser::Field {
-                            introduced_in: Some("2.5".try_into().unwrap()),
+                            introduced_in: Some("2.5".parse().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -306,7 +306,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some("0.2".try_into().unwrap()),
+                                    introduced_in: Some("0.2".parse().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -325,7 +325,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some("0.2".try_into().unwrap()),
+                                    introduced_in: Some("0.2".parse().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -346,7 +346,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some("6.2".try_into().unwrap()),
+                                    introduced_in: Some("6.2".parse().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -380,7 +380,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some("0.1".try_into().unwrap()),
+                            introduced_in: Some("0.1".parse().unwrap()),
                             ..Default::default()
                         }
                     ]
@@ -394,7 +394,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some("0.1".try_into().unwrap()),
+                            introduced_in: Some("0.1".parse().unwrap()),
                             ..Default::default()
                         }
                     ]
@@ -410,7 +410,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some("3.1".try_into().unwrap()),
+                            introduced_in: Some("3.1".parse().unwrap()),
                             ..Default::default()
                         }
                     ]
