@@ -10,6 +10,7 @@ mod invite;
 mod local_device;
 mod local_manifest;
 mod manifest;
+mod message;
 mod protocol;
 mod regex;
 mod runtime;
@@ -96,6 +97,12 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     )?)?;
     m.add_function(wrap_pyfunction!(manifest::manifest_verify_and_load, m)?)?;
     m.add_function(wrap_pyfunction!(manifest::manifest_unverified_load, m)?)?;
+
+    m.add_class::<message::MessageContent>()?;
+    m.add_class::<message::SharingGrantedMessageContent>()?;
+    m.add_class::<message::SharingReencryptedMessageContent>()?;
+    m.add_class::<message::SharingRevokedMessageContent>()?;
+    m.add_class::<message::PingMessageContent>()?;
 
     // Block
     m.add_class::<protocol::BlockCreateReq>()?;
