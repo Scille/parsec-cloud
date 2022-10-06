@@ -127,9 +127,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             ws_entry = self.workspace_fs.get_workspace_entry()
             roles = await self.workspace_fs.get_user_roles()
             for user, role in roles.items():
-                user_info = None
-                if role == WorkspaceRole.OWNER or len(roles) <= 2:
-                    user_info = await self.core.get_user_info(user)
+                user_info = await self.core.get_user_info(user)
                 self.users_roles[user] = (role, user_info)
         except (FSBackendOfflineError, BackendNotAvailable):
             # Fallback to craft a custom list with only our device since it's
@@ -184,14 +182,13 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def is_shared(self):
-        return len(self.users_roles) > 1
+        return len(self.get_others()) >= 1
 
-    @property
-    def others(self):
+    def get_others(self):
         return [
             user_info
             for user_id, (role, user_info) in self.users_roles.items()
-            if user_id != self.workspace_fs.device.user_id
+            if user_id != self.workspace_fs.device.user_id and not user_info.is_revoked
         ]
 
     @property
@@ -316,6 +313,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         display = workspace_name.str
         shared_message = ""
 
+        others = self.get_others()
+
         if not self.is_timestamped:
             if not self.is_shared:
                 shared_message = _("TEXT_WORKSPACE_IS_PRIVATE")
@@ -323,13 +322,13 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(
                     user=self.owner.short_user_display
                 )
-            elif len(self.others) == 1 and self.others[0]:
-                (user,) = self.others
+            elif len(others) == 1 and others[0]:
+                (user,) = others
                 shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(
                     user=user.short_user_display
                 )
             else:
-                n = len(self.others)
+                n = len(others)
                 assert n > 1
                 shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS").format(n=n)
         else:

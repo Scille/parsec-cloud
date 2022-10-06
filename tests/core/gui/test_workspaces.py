@@ -14,7 +14,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.lang import translate, format_datetime
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixtures
 
 
 @pytest.fixture
@@ -569,3 +569,42 @@ async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
     w_w.check_hide_unmounted.setChecked(True)
     aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(lambda: _workspace_visible(False))
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_workspace_button(aqtbot, running_backend, logged_gui, autoclose_dialog, bob, adam):
+    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    core = logged_gui.test_get_core()
+    wid = await core.user_fs.workspace_create(EntryName("Workspace"))
+
+    def _workspace_button_shown(people):
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == EntryName("Workspace")
+        if people == 0:
+            wk_button.label_shared_info.text() == translate("TEXT_WORKSPACE_IS_PRIVATE")
+        elif people == 1:
+            wk_button.label_shared_info.text() == translate(
+                "TEXT_WORKSPACE_IS_SHARED_WITH_user"
+            ).format(user="bob")
+        else:
+            wk_button.label_shared_info.text() == translate(
+                "TEXT_WORKSPACE_IS_SHARED_n_USERS"
+            ).format(n=people)
+
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=0))
+
+    await core.user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=1))
+
+    await core.user_fs.workspace_share(wid, adam.user_id, WorkspaceRole.MANAGER)
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=2))
+
+    await core.revoke_user(adam.user_id)
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=1))
+
+    await core.revoke_user(bob.user_id)
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=0))
