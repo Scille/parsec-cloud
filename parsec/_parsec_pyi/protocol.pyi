@@ -1,4 +1,4 @@
-from typing import Any, Iterable, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple, Literal
 
 from parsec._parsec_pyi.ids import (
     BlockID,
@@ -246,7 +246,7 @@ class InviteListItem:
         token: InvitationToken,
         created_on: DateTime,
         claimer_email: str,
-        status: InvitationStatus,
+        status: Literal["IDLE", "READY", "DELETED"],
     ) -> InviteListItem: ...
     @classmethod
     def Device(
@@ -256,6 +256,8 @@ class InviteListItem:
     def type(self) -> InvitationType: ...
     @property
     def token(self) -> InvitationToken: ...
+    @property
+    def created_on(self) -> DateTime: ...
     @property
     def status(self) -> InvitationStatus: ...
 
