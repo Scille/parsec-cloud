@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::{convert::TryFrom, fmt::Display};
+use std::{fmt::Display, str::FromStr};
 
 use serde::Deserialize;
 
@@ -12,10 +12,10 @@ pub struct MajorMinorVersion {
     pub minor: u32,
 }
 
-impl TryFrom<&str> for MajorMinorVersion {
-    type Error = String;
+impl FromStr for MajorMinorVersion {
+    type Err = String;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         fn parse_value(raw: &str, part: &str) -> Result<u32, String> {
             raw.parse()
                 .map_err(|e| format!("Invalid {part} value `{raw}`: {e}"))
@@ -27,6 +27,14 @@ impl TryFrom<&str> for MajorMinorVersion {
         let major = parse_value(raw_major, "major")?;
         let minor = parse_value(raw_minor, "minor")?;
         Ok(Self { major, minor })
+    }
+}
+
+impl TryFrom<&str> for MajorMinorVersion {
+    type Error = <MajorMinorVersion as FromStr>::Err;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        MajorMinorVersion::from_str(value)
     }
 }
 
@@ -46,5 +54,5 @@ impl Display for MajorMinorVersion {
 #[case::empty_major(".2", Err("Invalid major value ``: cannot parse integer from empty string".to_string()))]
 #[case::empty_minor("1.", Err("Invalid minor value ``: cannot parse integer from empty string".to_string()))]
 fn test_from_str(#[case] raw: &str, #[case] expected: Result<MajorMinorVersion, String>) {
-    assert_eq!(MajorMinorVersion::try_from(raw), expected);
+    assert_eq!(MajorMinorVersion::from_str(raw), expected);
 }

@@ -1,0 +1,6 @@
+{
+    "title": "Major Minor String",
+    "type": "string",
+    "description": "A version represented with a Major number and a Minor number",
+    "pattern": "^\\d+.\\d+$"
+}
