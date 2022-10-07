@@ -9,7 +9,6 @@ from typing import (
     Union,
     Dict,
     Sequence,
-    Pattern,
     Type,
     TypeVar,
     AsyncIterator,
@@ -19,6 +18,7 @@ from structlog import get_logger
 from contextlib import asynccontextmanager
 
 from parsec._parsec import (
+    Regex,
     DateTime,
     MessageGetRepOk,
     RealmCreateRepOk,
@@ -246,7 +246,7 @@ class UserFS:
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
-        prevent_sync_pattern: Pattern[str],
+        prevent_sync_pattern: Regex,
         preferred_language: str,
         workspace_storage_cache_size: int,
     ):
@@ -302,10 +302,12 @@ class UserFS:
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
-        prevent_sync_pattern: Pattern[str],
-        preferred_language: str = "en",
+        prevent_sync_pattern: Regex,
+        preferred_language: Optional[str] = None,
         workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     ) -> AsyncIterator[UserFSTypeVar]:
+        if preferred_language is None:
+            preferred_language = "en"
         self = cls(
             data_base_dir,
             device,
@@ -401,6 +403,7 @@ class UserFS:
                 device=self.device,
                 workspace_id=workspace_id,
                 cache_size=self.workspace_storage_cache_size,
+                prevent_sync_pattern=self.prevent_sync_pattern,
             ) as workspace_storage:
                 task_status.started(workspace_storage)
                 await trio.sleep_forever()
@@ -421,7 +424,7 @@ class UserFS:
         )
 
         # Apply the current "prevent sync" pattern
-        await workspace.set_and_apply_prevent_sync_pattern(self.prevent_sync_pattern)
+        await workspace.apply_prevent_sync_pattern()
 
         return workspace
 

@@ -9,7 +9,6 @@ from typing import (
     Set,
     Optional,
     Union,
-    Pattern,
     AsyncIterator,
     AsyncContextManager,
 )
@@ -130,15 +129,8 @@ class ManifestStorage:
 
     # "Prevent sync" pattern operations
 
-    async def get_prevent_sync_pattern(self) -> Tuple[Regex, bool]:
-        async with self._open_cursor() as cursor:
-            cursor.execute("SELECT pattern, fully_applied FROM prevent_sync_pattern WHERE _id = 0")
-            reply = cursor.fetchone()
-            pattern, fully_applied = reply
-            return (Regex.from_regex_str(pattern), bool(fully_applied))
-
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
-        """Set the "prevent sync" pattern for the corresponding workspace
+    async def set_prevent_sync_pattern(self, pattern: Regex) -> bool:
+        """Set the "prevent sync" pattern for the corresponding workspace.
 
         This operation is idempotent,
         i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
@@ -148,8 +140,12 @@ class ManifestStorage:
                 """UPDATE prevent_sync_pattern SET pattern = ?, fully_applied = 0 WHERE _id = 0 AND pattern != ?""",
                 (pattern.pattern, pattern.pattern),
             )
+            cursor.execute("SELECT fully_applied FROM prevent_sync_pattern WHERE _id = 0")
+            reply = cursor.fetchone()
+            (fully_applied,) = reply
+            return fully_applied
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> bool:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the
@@ -161,6 +157,10 @@ class ManifestStorage:
                 """UPDATE prevent_sync_pattern SET fully_applied = 1 WHERE _id = 0 AND pattern = ?""",
                 (pattern.pattern,),
             )
+            cursor.execute("SELECT fully_applied FROM prevent_sync_pattern WHERE _id = 0")
+            reply = cursor.fetchone()
+            (fully_applied,) = reply
+            return fully_applied
 
     # Checkpoint operations
 

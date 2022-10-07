@@ -9,7 +9,6 @@ from typing import (
     Tuple,
     AsyncIterator,
     cast,
-    Pattern,
     Callable,
     Optional,
     Awaitable,
@@ -799,19 +798,23 @@ class WorkspaceFS:
         for name, child_entry_id in manifest.children.items():
             await self._recursive_apply_prevent_sync_pattern(child_entry_id, prevent_sync_pattern)
 
-    async def apply_prevent_sync_pattern(self, pattern: Regex) -> None:
+    async def apply_prevent_sync_pattern(self) -> None:
+        if self.local_storage.get_prevent_sync_pattern_fully_applied():
+            return
+        pattern = self.local_storage.get_prevent_sync_pattern()
         # Fully apply "prevent sync" pattern
         await self._recursive_apply_prevent_sync_pattern(self.workspace_id, pattern)
         # Acknowledge "prevent sync" pattern
         await self.local_storage.mark_prevent_sync_pattern_fully_applied(pattern)
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+    async def set_and_apply_prevent_sync_pattern(self, pattern: Regex) -> None:
         await self.local_storage.set_prevent_sync_pattern(pattern)
-
-    async def set_and_apply_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
-        await self.set_prevent_sync_pattern(pattern)
-        if not self.local_storage.get_prevent_sync_pattern_fully_applied():
-            await self.apply_prevent_sync_pattern(self.local_storage.get_prevent_sync_pattern())
+        if self.local_storage.get_prevent_sync_pattern_fully_applied():
+            return
+        # Fully apply "prevent sync" pattern
+        await self._recursive_apply_prevent_sync_pattern(self.workspace_id, pattern)
+        # Acknowledge "prevent sync" pattern
+        await self.local_storage.mark_prevent_sync_pattern_fully_applied(pattern)
 
     # Debugging helper
 

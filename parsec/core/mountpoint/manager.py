@@ -349,7 +349,7 @@ async def mountpoint_manager_factory(
     mount_on_workspace_created: bool = False,
     mount_on_workspace_shared: bool = False,
     unmount_on_workspace_revoked: bool = False,
-    exclude_from_mount_all: list = (),
+    exclude_from_mount_all: frozenset = frozenset(),
 ):
     config = {"debug": debug}
 

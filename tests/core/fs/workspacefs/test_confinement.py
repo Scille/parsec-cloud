@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import re
 import pytest
 
 from parsec._parsec import Regex
@@ -22,9 +21,6 @@ async def test_local_confinement_points(alice_workspace, running_backend):
     # Apply a *.tmp pattern
     pattern = Regex.from_regex_str(".*\\.tmp$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
-    print(
-        alice_workspace.local_storage.get_prevent_sync_pattern().pattern, "second", pattern.pattern
-    )
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
 
@@ -109,12 +105,12 @@ async def test_sync_with_different_patterns(running_backend, alice_user_fs, alic
     workspace2 = alice2_user_fs.get_workspace(wid)
 
     # Workspace 1 patterns .tmp files
-    pattern1 = re.compile(r".*\.tmp$")
+    pattern1 = Regex.from_regex_str(r".*\.tmp$")
     await workspace1.set_and_apply_prevent_sync_pattern(pattern1)
     await workspace1.sync()
 
     # Workspace 2 patterns ~ files
-    pattern2 = re.compile(r".*~$")
+    pattern2 = Regex.from_regex_str(r".*~$")
     await workspace2.set_and_apply_prevent_sync_pattern(pattern2)
     await workspace2.sync()
 
@@ -309,3 +305,24 @@ def test_stable_prevent_sync_pattern():
     a = get_prevent_sync_pattern()
     b = get_prevent_sync_pattern()
     assert a.pattern == b.pattern
+
+
+@pytest.mark.trio
+async def test_database_with_invalid_pattern_resilience(core_factory, alice):
+    with pytest.raises(ValueError):
+        Regex.from_regex_str("[")
+
+    class InvalidRegex:
+        pattern = "["
+
+    # Set an invalid regex in the local database
+    async with core_factory(alice) as core:
+        wid = await core.user_fs.workspace_create(EntryName("w"))
+        workspace = core.user_fs.get_workspace(wid)
+        await workspace.local_storage.manifest_storage.set_prevent_sync_pattern(InvalidRegex())
+
+    async with core_factory(alice) as core:
+        workspace = core.user_fs.get_workspace(wid)
+        await workspace.path_info("/")
+        assert workspace.local_storage.get_prevent_sync_pattern() == get_prevent_sync_pattern()
+        assert workspace.local_storage.get_prevent_sync_pattern_fully_applied()
