@@ -56,7 +56,7 @@ async def test_sequester_export_full_run(
         return curr_now
 
     def _sqlite_timestamp(year: int, month: int, day: int) -> int:
-        return int(DateTime(year, month, day).timestamp() * 1000)
+        return int(DateTime(year, month, day).timestamp() * 1000000)
 
     output_db_path = tmp_path / "export.sqlite"
 
@@ -716,7 +716,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     ).dump_and_sign(author_signkey=adam.signing_key)
 
     def _sqlite_ts(year, month, day):
-        return int(DateTime(year, month, day).timestamp() * 1000)
+        return int(DateTime(year, month, day).timestamp() * 1000000)
 
     vlob_atoms = [
         # / v1

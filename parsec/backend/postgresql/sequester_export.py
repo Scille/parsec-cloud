@@ -75,7 +75,7 @@ CREATE TABLE vlob_atom (
     -- of the box so we have to roll our own integer-based format, note this is
     -- different than the 8bytes floating point format used in our msgpack-based
     -- serialization system (it was a bad idea, see Rust implementation for more info)
-    timestamp INTEGER NOT NULL,  -- ms since UNIX epoch
+    timestamp INTEGER NOT NULL,  -- us since UNIX epoch
 
     UNIQUE(vlob_id, version)
 );
@@ -418,7 +418,8 @@ LIMIT $5
                 # Must convert `vlob_id`` fields from UUID to bytes given SQLite doesn't handle the former
                 # Must also convert datetime to a number of ms since UNIX epoch
                 cooked_rows = [
-                    (r[0], r[1].bytes, r[2], r[3], r[4], int(r[5].timestamp() * 1000)) for r in rows
+                    (r[0], r[1].bytes, r[2], r[3], r[4], int(r[5].timestamp() * 1000000))
+                    for r in rows
                 ]
                 con = sqlite3.connect(self.output_db_path)
                 try:
