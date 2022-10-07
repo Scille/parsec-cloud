@@ -14,12 +14,9 @@
         "unit": {
             "type": "string"
         },
-        "other_fields": {
-            "type": "array",
+        "fields": {
             "description": "Additional fields to send alongside the command",
-            "items": {
-                "$ref": "./field.schema.json"
-            }
+            "$ref": "./fields.schema.json"
         }
     },
     "oneOf": [
@@ -30,7 +27,7 @@
         },
         {
             "required": [
-                "other_fields"
+                "fields"
             ]
         }
     ]
