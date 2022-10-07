@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::{PyAttributeError, PyNotImplementedError},
+    exceptions::{PyAttributeError, PyNotImplementedError, PyValueError},
     import_exception,
     prelude::*,
     types::{PyBytes, PyType},
@@ -75,18 +75,6 @@ impl InvitationType {
     }
 }
 
-// fn py_to_rs_invitation_email_sent_status(
-//     email_sent: &PyAny,
-// ) -> PyResult<invite_new::InvitationEmailSentStatus> {
-//     use invite_new::InvitationEmailSentStatus::*;
-//     Ok(match email_sent.getattr("name")?.extract::<&str>()? {
-//         "SUCCESS" => Success,
-//         "NOT_AVAILABLE" => NotAvailable,
-//         "BAD_RECIPIENT" => BadRecipient,
-//         _ => unreachable!(),
-//     })
-// }
-
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus);
@@ -136,6 +124,24 @@ impl InvitationEmailSentStatus {
         };
 
         Ok(&VALUE)
+    }
+
+    #[classmethod]
+    fn from_str(_cls: &PyType, value: &str) -> PyResult<Self> {
+        match value {
+            "SUCCESS" => Ok(Self(invite_new::InvitationEmailSentStatus::Success)),
+            "NOT_AVAILABLE" => Ok(Self(invite_new::InvitationEmailSentStatus::NotAvailable)),
+            "BAD_RECIPIENT" => Ok(Self(invite_new::InvitationEmailSentStatus::BadRecipient)),
+            _ => Err(PyValueError::new_err(format!("Invalid value `{}`", value))),
+        }
+    }
+
+    fn __str__(&self) -> &str {
+        match self.0 {
+            invite_new::InvitationEmailSentStatus::Success => "SUCCESS",
+            invite_new::InvitationEmailSentStatus::NotAvailable => "NOT_AVAILABLE",
+            invite_new::InvitationEmailSentStatus::BadRecipient => "BAD_RECIPIENT",
+        }
     }
 }
 

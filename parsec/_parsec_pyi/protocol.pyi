@@ -278,6 +278,9 @@ class InvitationEmailSentStatus:
     NOT_AVAILABLE: InvitationEmailSentStatus
     BAD_RECIPIENT: InvitationEmailSentStatus
 
+    @classmethod
+    def from_str(cls, value: str) -> InvitationEmailSentStatus: ...
+
 class InviteNewRepOk(InviteNewRep):
     def __init__(
         self, token: InvitationToken, email_sent: Optional[InvitationEmailSentStatus]

@@ -181,7 +181,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
 
         self.invite_addr, email_sent_status = job.ret
 
-        if email_sent_status == InvitationEmailSentStatus.SUCCESS():
+        if email_sent_status == InvitationEmailSentStatus.SUCCESS:
             self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
             self.button_send_email.setDisabled(True)
             SnackbarManager.inform(
@@ -190,7 +190,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
                 )
             )
         else:
-            if email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT():
+            if email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
                 show_info_copy_link(
                     self,
                     _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
