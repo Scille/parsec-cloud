@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import re
 import trio
 import pytest
 from unittest.mock import ANY, Mock
 from urllib.error import URLError, HTTPError
 
+from parsec._parsec import Regex
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
 from parsec.backend.backend_events import BackendEvent
@@ -380,7 +380,7 @@ async def test_sync_confined_children_after_rename(
     alice_w = alice_core.user_fs.get_workspace(wid)
 
     # Set a filter
-    pattern = re.compile(r".*\.tmp$")
+    pattern = Regex.from_regex_str(r".*\.tmp$")
     await alice_w.set_and_apply_prevent_sync_pattern(pattern)
 
     # Create a confined path
