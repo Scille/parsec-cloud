@@ -196,7 +196,7 @@ class WorkspaceExport:
                 author, author_verify_key = self.devices_form_internal_id[author_internal_id]
             except KeyError:
                 raise InconsistentWorkspaceError(f"Missing device certificate for `{author}`")
-            timestamp = DateTime.from_timestamp(raw_timestamp / 1000)
+            timestamp = DateTime.from_timestamp(raw_timestamp / 1000000)
 
             decrypted_blob = sequester_service_decrypt(
                 decryption_key=self.decryption_key, data=blob
