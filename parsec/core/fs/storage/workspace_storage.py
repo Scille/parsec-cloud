@@ -11,7 +11,6 @@ from typing import (
     Optional,
     AsyncIterator,
     NoReturn,
-    Pattern,
     List,
 )
 import trio
@@ -45,6 +44,10 @@ from parsec.core.types.manifest import AnyLocalManifest
 logger = get_logger()
 
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
+
+FAILSAFE_PATTERN_FILTER = Regex.from_regex_str(
+    r"^\b$"
+)  # Matches nothing (https://stackoverflow.com/a/2302992/2846140)
 
 
 async def workspace_storage_non_speculative_init(
@@ -128,7 +131,7 @@ class BaseWorkspaceStorage:
 
     # Prevent sync pattern interface
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Regex) -> None:
         raise NotImplementedError
 
     async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
@@ -266,6 +269,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         data_base_dir: Path,
         device: LocalDevice,
         workspace_id: EntryID,
+        prevent_sync_pattern: Regex = FAILSAFE_PATTERN_FILTER,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
         data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
     ) -> AsyncIterator["WorkspaceStorage"]:
@@ -322,7 +326,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                             assert instance.workspace_id in instance.manifest_storage._cache
 
                             # Load "prevent sync" pattern
-                            await instance._load_prevent_sync_pattern()
+                            await instance.set_prevent_sync_pattern(prevent_sync_pattern)
 
                             # Yield point
                             yield instance
@@ -413,20 +417,16 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
     # "Prevent sync" pattern interface
 
-    async def _load_prevent_sync_pattern(self) -> None:
-        (
-            self._prevent_sync_pattern,
-            self._prevent_sync_pattern_fully_applied,
-        ) = await self.manifest_storage.get_prevent_sync_pattern()
-
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Regex) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace
 
         This operation is idempotent,
         i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
         """
-        await self.manifest_storage.set_prevent_sync_pattern(pattern)
-        await self._load_prevent_sync_pattern()
+        self._prevent_sync_pattern = pattern
+        self._prevent_sync_pattern_fully_applied = (
+            await self.manifest_storage.set_prevent_sync_pattern(pattern)
+        )
 
     async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
         """Mark the provided pattern as fully applied.
@@ -435,8 +435,9 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         workspace are compliant with the new pattern. The applied pattern is provided
         as an argument in order to avoid concurrency issues.
         """
-        await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
-        await self._load_prevent_sync_pattern()
+        self._prevent_sync_pattern_fully_applied = (
+            await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
+        )
 
     async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         return await self.chunk_storage.get_local_chunk_ids(chunk_id)
