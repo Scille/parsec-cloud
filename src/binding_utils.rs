@@ -1,16 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-// TODO: Remove these lines when all functions/macros are used
-#![allow(dead_code)]
-
 use pyo3::{
     conversion::IntoPy,
-    exceptions::{PyNotImplementedError, PyValueError},
+    exceptions::PyNotImplementedError,
     pyclass::CompareOp,
-    types::{PyFrozenSet, PyTuple},
+    types::PyFrozenSet,
     FromPyObject, {PyAny, PyObject, PyResult, Python},
 };
-use regex::Regex;
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
     hash::{Hash, Hasher},
@@ -111,25 +107,6 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
         .iter()
         .map(T::extract)
         .collect::<PyResult<std::collections::HashSet<T>>>()
-}
-
-pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
-    let regex = regex
-        .getattr("pattern")
-        .unwrap_or(regex)
-        .extract::<&str>()?
-        .replace("\\Z", "\\z")
-        .replace("\\ ", "\x20");
-    Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
-}
-
-pub fn rs_to_py_regex<'py>(py: Python<'py>, regex: &Regex) -> PyResult<&'py PyAny> {
-    let re = py.import("re")?;
-    let args = PyTuple::new(
-        py,
-        vec![regex.as_str().replace("\\z", "\\Z").replace('\x20', "\\ ")],
-    );
-    re.call_method1("compile", args)
 }
 
 macro_rules! parse_kwargs_optional {
