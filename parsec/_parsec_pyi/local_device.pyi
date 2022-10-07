@@ -107,6 +107,7 @@ class LocalDevice:
 
 class UserInfo:
     def __init__(
+        self,
         user_id: UserID,
         human_handle: Optional[HumanHandle],
         profile: UserProfile,
@@ -140,6 +141,7 @@ class UserInfo:
 
 class DeviceInfo:
     def __init__(
+        self,
         device_id: DeviceID,
         device_label: Optional[DeviceLabel],
         created_on: DateTime,

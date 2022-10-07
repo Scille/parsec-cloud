@@ -1,12 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import re
 import attr
-import fnmatch
-import itertools
 from pathlib import Path
 import importlib.resources
-from typing import Optional, Tuple, List, Pattern
+from typing import AsyncIterator, Optional, Tuple, List, Union
 from structlog import get_logger
 from functools import partial
 from contextlib import asynccontextmanager
@@ -26,6 +23,11 @@ from parsec._parsec import (
     OrganizationStatsRepOk,
     UserRevokeRepOk,
     HumanFindRepOk,
+    WorkspaceEntry,
+)
+from parsec.core.pki.accepter import (
+    PkiEnrollementAccepterInvalidSubmittedCtx,
+    PkiEnrollementAccepterValidSubmittedCtx,
 )
 from parsec.event_bus import EventBus
 from parsec.api.protocol import (
@@ -69,7 +71,7 @@ from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 
 logger = get_logger()
 
-FAILSAFE_PATTERN_FILTER = re.compile(
+FAILSAFE_PATTERN_FILTER = Regex.from_regex_str(
     r"^\b$"
 )  # Matches nothing (https://stackoverflow.com/a/2302992/2846140)
 
@@ -84,17 +86,12 @@ def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Regex
         )
         return None
     try:
-        # We need to reset `fnmatch._nextgroupnum` in order to make the pattern
-        # of the form `*a*` stable.
-        # Note: the `_nextgroupnum` counter has been removed in python 3.11
-        if hasattr(fnmatch, "_nextgroupnum"):
-            fnmatch._nextgroupnum = itertools.count().__next__
-        regex = []
+        regex_list = []
         for line in data.splitlines():
             line = line.strip()
             if line and not line.startswith("#"):
-                regex.append(str(Regex.from_pattern(line)))
-        regex = "|".join(regex)
+                regex_list.append(str(Regex.from_pattern(line)))
+        regex = "|".join(regex_list)
     except ValueError as exc:
         logger.warning(
             "Could not parse the file containing the filename patterns to ignore", exc_info=exc
@@ -102,7 +99,7 @@ def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Regex
         return None
     try:
         return Regex.from_regex_str(regex)
-    except re.error as exc:
+    except ValueError as exc:
         logger.warning(
             "Could not compile the file containing the filename patterns to ignore into a regex pattern",
             exc_info=exc,
@@ -110,14 +107,14 @@ def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Regex
         return None
 
 
-def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -> Pattern:
+def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -> Regex:
     pattern = None
     # Get the pattern from the path defined in the core config
     if prevent_sync_pattern_path is not None:
         pattern = _get_prevent_sync_pattern(prevent_sync_pattern_path)
     # Default to the pattern from the ignore file in the core resources
     if pattern is None:
-        with importlib.resources.files(core_resources).joinpath("default_pattern.ignore") as path:
+        with importlib.resources.files(core_resources).joinpath("default_pattern.ignore") as path:  # type: ignore[attr-defined]
             pattern = _get_prevent_sync_pattern(path)
     # As a last resort use the failsafe
     if pattern is None:
@@ -149,7 +146,7 @@ class LoggedCore:
     def backend_status_exc(self) -> Optional[Exception]:
         return self._backend_conn.status_exc
 
-    def find_workspace_from_name(self, workspace_name: EntryName):
+    def find_workspace_from_name(self, workspace_name: EntryName) -> WorkspaceEntry:
         for workspace in self.user_fs.get_user_manifest().workspaces:
             if workspace_name == workspace.name:
                 return workspace
@@ -157,7 +154,7 @@ class LoggedCore:
 
     async def find_humans(
         self,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -199,7 +196,7 @@ class LoggedCore:
             realms=rep.realms,
             users=rep.users,
             active_users=rep.active_users,
-            users_per_profile_detail=rep.users_per_profile_detail,
+            users_per_profile_detail=list(rep.users_per_profile_detail),
         )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:
@@ -226,7 +223,7 @@ class LoggedCore:
             created_on=user_certif.timestamp,
         )
 
-    async def get_user_devices_info(self, user_id: UserID = None) -> List[DeviceInfo]:
+    async def get_user_devices_info(self, user_id: Optional[UserID] = None) -> List[DeviceInfo]:
         """
         Raises:
             BackendConnectionError
@@ -295,7 +292,9 @@ class LoggedCore:
         try:
             email_sent = rep.email_sent
         except AttributeError:
-            email_sent = InvitationEmailSentStatus.SUCCESS
+            email_sent = InvitationEmailSentStatus.SUCCESS()
+        if email_sent is None:
+            email_sent = InvitationEmailSentStatus.SUCCESS()
 
         return (
             BackendInvitationAddr.build(
@@ -321,9 +320,10 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
 
         try:
-            if rep.email_sent:
-                email_sent = rep.email_sent
+            email_sent = rep.email_sent
         except AttributeError:
+            email_sent = InvitationEmailSentStatus.SUCCESS()
+        if email_sent is None:
             email_sent = InvitationEmailSentStatus.SUCCESS()
 
         return (
@@ -384,7 +384,11 @@ class LoggedCore:
     def get_organization_config(self) -> OrganizationConfig:
         return self._backend_conn.get_organization_config()
 
-    async def list_submitted_enrollment_requests(self):
+    async def list_submitted_enrollment_requests(
+        self,
+    ) -> List[
+        Union[PkiEnrollementAccepterInvalidSubmittedCtx, PkiEnrollementAccepterValidSubmittedCtx]
+    ]:
         return await accepter_list_submitted_from_backend(
             cmds=self._backend_conn.cmds, extra_trust_roots=self.config.pki_extra_trust_roots
         )
@@ -393,7 +397,7 @@ class LoggedCore:
 @asynccontextmanager
 async def logged_core_factory(
     config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
-):
+) -> AsyncIterator[LoggedCore]:
     event_bus = event_bus or EventBus()
     prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)
     backend_conn = BackendAuthenticatedConn(
