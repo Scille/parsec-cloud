@@ -305,3 +305,24 @@ def test_stable_prevent_sync_pattern():
     a = get_prevent_sync_pattern()
     b = get_prevent_sync_pattern()
     assert a.pattern == b.pattern
+
+
+@pytest.mark.trio
+async def test_database_with_invalid_pattern_resilience(core_factory, alice):
+    with pytest.raises(ValueError):
+        Regex.from_regex_str("[")
+
+    class InvalidRegex:
+        pattern = "["
+
+    # Set an invalid regex in the local database
+    async with core_factory(alice) as core:
+        wid = await core.user_fs.workspace_create(EntryName("w"))
+        workspace = core.user_fs.get_workspace(wid)
+        await workspace.local_storage.manifest_storage.set_prevent_sync_pattern(InvalidRegex())
+
+    async with core_factory(alice) as core:
+        workspace = core.user_fs.get_workspace(wid)
+        await workspace.path_info("/")
+        assert workspace.local_storage.get_prevent_sync_pattern() == get_prevent_sync_pattern()
+        assert workspace.local_storage.get_prevent_sync_pattern_fully_applied()
