@@ -120,11 +120,18 @@ impl DateTime {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum MockedTime {
     RealTime,
     FrozenTime(DateTime),
-    ShiftedTime { microseconds: i64 },
+    ShiftedTime {
+        microseconds: i64,
+    },
+    FasterTime {
+        reference: DateTime,
+        microseconds: i64,
+        speed_factor: f64,
+    },
 }
 
 // TODO: remove me and only rely on TimeProvider instead !
@@ -144,6 +151,18 @@ mod mock_time {
                 MockedTime::FrozenTime(dt) => dt,
                 MockedTime::ShiftedTime { microseconds: us } => {
                     DateTime::from(chrono::Utc::now()).add_us(us)
+                }
+                MockedTime::FasterTime {
+                    reference,
+                    microseconds: us,
+                    speed_factor,
+                } => {
+                    let delta = DateTime::from(chrono::Utc::now()) - reference;
+                    let delta_us = delta
+                        .num_microseconds()
+                        .expect("No reason to get an overflow");
+                    let speed_shift = speed_factor * delta_us as f64;
+                    reference.add_us(us + speed_shift as i64)
                 }
             })
         }
@@ -201,8 +220,10 @@ mod time_provider {
     // 1) this is only for test where it's most likely they will be only one thing to wakeup anyway
     // 2) Any wrongly waked up coroutine will just realized it is too soon and go back to sleep
     lazy_static! {
-        static ref MOCK_CONFIG_HAS_CHANGED: libparsec_platform_async::Notify =
-            libparsec_platform_async::Notify::new();
+        static ref MOCK_CONFIG_HAS_CHANGED: (
+            libparsec_platform_async::watch::Sender<()>,
+            libparsec_platform_async::watch::Receiver<()>
+        ) = libparsec_platform_async::watch::channel(());
     }
 
     /// Time provider system consist of a hierarchy of agents, each one able to mock it
@@ -226,13 +247,32 @@ mod time_provider {
             }
         }
 
+        pub fn get_speed_factor(&self) -> Option<f64> {
+            match (&self.parent, &self.time) {
+                (None, MockedTime::FasterTime { speed_factor, .. }) => Some(*speed_factor),
+                (None, _) => None,
+                (Some(parent), MockedTime::FasterTime { speed_factor, .. }) => Some(
+                    speed_factor
+                        * parent
+                            .lock()
+                            .expect("Mutex is poisoned")
+                            .get_speed_factor()
+                            .unwrap_or(1.0),
+                ),
+                (Some(parent), _) => parent.lock().expect("Mutex is poisoned").get_speed_factor(),
+            }
+        }
+
         pub fn mock_time(&mut self, time: MockedTime) {
             self.time = time;
             // Broadcast the config change given it impact everybody waiting
-            MOCK_CONFIG_HAS_CHANGED.notify_waiters();
+            MOCK_CONFIG_HAS_CHANGED
+                .0
+                .send(())
+                .expect("The channel is closed");
         }
 
-        fn parent_now_or_realtime(&self) -> DateTime {
+        pub fn parent_now_or_realtime(&self) -> DateTime {
             match &self.parent {
                 // TODO: remove me and only rely on `chrono::Utc::now().into()` instead !
                 None => DateTime::now_legacy(),
@@ -246,6 +286,18 @@ mod time_provider {
                 MockedTime::FrozenTime(dt) => dt,
                 MockedTime::ShiftedTime { microseconds: us } => {
                     self.parent_now_or_realtime().add_us(us)
+                }
+                MockedTime::FasterTime {
+                    reference,
+                    microseconds: us,
+                    speed_factor,
+                } => {
+                    let delta = self.parent_now_or_realtime() - reference;
+                    let delta_us = delta
+                        .num_microseconds()
+                        .expect("No reason to get an overflow");
+                    let speed_shift = speed_factor * delta_us as f64;
+                    reference.add_us(us + speed_shift as i64)
                 }
             }
         }
@@ -293,6 +345,13 @@ mod time_provider {
             self.0.lock().expect("Mutex is poisoned").now()
         }
 
+        pub fn parent_now_or_realtime(&self) -> DateTime {
+            self.0
+                .lock()
+                .expect("Mutex is poisoned")
+                .parent_now_or_realtime()
+        }
+
         /// When we call sleep, there is no guarantee when the starting time will be taken.
         /// Hence it is possible this time is taken after we have call the mock_time (this
         /// is typically the case when calling sleep from Python where the actual sleep is
@@ -304,19 +363,32 @@ mod time_provider {
         }
 
         pub async fn sleep(&self, time: super::Duration) {
+            // The order is important here: we first clone the configuration
+            // to make sure we won't miss a configuration change while we're
+            // taking a time reference using now()
+            let mut config = MOCK_CONFIG_HAS_CHANGED.1.clone();
+            let mut sleep_started_at = self.now();
+
             // Increase the `TimeProvider.sleeping_stats` counter and ensure
             // it will be correctly decreased even if the future is aborted
             let _updated_stats = SleepingStatPlusOne::new(self.0.clone());
 
             let mut remaining_time = time;
+
             // Err is `to_sleep` gets negative, if such we are done with sleeping !
-            while let Ok(to_sleep) = remaining_time.to_std() {
-                let sleep_started_at = self.now();
+            while let Ok(mut to_sleep) = remaining_time.to_std() {
+                if let Some(speed_factor) =
+                    self.0.lock().expect("Mutex is poisoned").get_speed_factor()
+                {
+                    to_sleep = to_sleep.div_f64(speed_factor);
+                }
                 libparsec_platform_async::select!(
                     _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
-                    _ = MOCK_CONFIG_HAS_CHANGED.notified().fuse() => {
+                    _ = config.changed().fuse() => {
                         // Recompute the time we still have to sleep
-                        remaining_time = remaining_time - (self.now() - sleep_started_at);
+                        let now = self.now();
+                        remaining_time = remaining_time - (now - sleep_started_at);
+                        sleep_started_at = now;
                     }
                 );
             }

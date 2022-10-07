@@ -9,8 +9,7 @@ use pyo3::{
     PyAny, PyResult,
 };
 
-#[allow(deprecated)]
-use crate::runtime::spawn_future_into_trio_coroutine;
+use crate::runtime::FutureIntoCoroutine;
 
 #[pyfunction]
 /// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
@@ -48,9 +47,9 @@ impl TimeProvider {
     }
 
     // Booyakasha !
-    pub fn sleep<'py>(&self, py: Python<'py>, time: f64) -> PyResult<&'py PyAny> {
+    pub fn sleep(&self, time: f64) -> FutureIntoCoroutine {
         let time_provider = self.0.clone();
-        spawn_future_into_trio_coroutine(py, async move {
+        FutureIntoCoroutine::new(async move {
             time_provider
                 .sleep(libparsec::types::Duration::microseconds(
                     (time * 1e6) as i64,
@@ -64,23 +63,34 @@ impl TimeProvider {
         Ok(TimeProvider(self.0.new_child()))
     }
 
-    #[args(freeze = "None", shift = "None", realtime = "false")]
+    #[args(freeze = "None", shift = "None", speed = "None", realtime = "false")]
     pub fn mock_time(
         &mut self,
         freeze: Option<DateTime>,
         shift: Option<f64>,
+        speed: Option<f64>,
         realtime: bool,
     ) -> PyResult<()> {
         use libparsec::types::MockedTime;
-        let mock_config = match (freeze, shift, realtime) {
-            (None, None, true) => MockedTime::RealTime,
-            (Some(dt), None, false) => MockedTime::FrozenTime(dt.0),
-            (None, Some(shift_in_seconds), false) => MockedTime::ShiftedTime {
+        let mock_config = match (freeze, shift, speed, realtime) {
+            (None, None, None, true) => MockedTime::RealTime,
+            (Some(dt), None, None, false) => MockedTime::FrozenTime(dt.0),
+            (None, Some(shift_in_seconds), None, false) => MockedTime::ShiftedTime {
                 microseconds: (shift_in_seconds * 1e6) as i64,
             },
+            (None, None, Some(speed_factor), false) => {
+                let reference = self.0.parent_now_or_realtime();
+                MockedTime::FasterTime {
+                    reference,
+                    microseconds: (self.0.now() - reference)
+                        .num_microseconds()
+                        .expect("No reason to overflow"),
+                    speed_factor,
+                }
+            }
             _ => {
                 return Err(PyValueError::new_err(
-                    "Must only provide one of `freeze`, `shift` and `realtime`",
+                    "Must only provide one of `freeze`, `shift`, `speed` and `realtime`",
                 ))
             }
         };

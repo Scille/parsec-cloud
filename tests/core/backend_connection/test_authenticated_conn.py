@@ -29,9 +29,7 @@ from tests.common import real_clock_timeout
 async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
     await running_backend_ready()
     event_bus = event_bus_factory()
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     with event_bus.listen() as spy:
         async with conn.run():
             await spy.wait_with_timeout(
@@ -78,9 +76,7 @@ async def test_init_with_backend_online(
         finally:
             monitor_teardown = True
 
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     assert conn.status == BackendConnStatus.LOST
     default_organization_config = OrganizationConfig(
         user_profile_outsider_allowed=False,
@@ -139,9 +135,7 @@ async def test_init_with_backend_online(
 
 @pytest.mark.trio
 async def test_init_with_backend_offline(event_bus, alice):
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     assert conn.status == BackendConnStatus.LOST
     default_organization_config = OrganizationConfig(
         user_profile_outsider_allowed=False,
@@ -175,9 +169,7 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
         await trio.sleep(0)
         raise RuntimeError("D'oh !")
 
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     with event_bus.listen() as spy:
         conn.register_monitor(_bad_monitor)
         async with conn.run():
@@ -198,9 +190,7 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
 
 @pytest.mark.trio
 async def test_switch_offline(frozen_clock, running_backend, event_bus, alice):
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     with event_bus.listen() as spy:
         async with conn.run():
 
@@ -256,9 +246,7 @@ async def test_concurrency_sends(running_backend, alice, event_bus):
             work_all_done.set()
 
     conn = BackendAuthenticatedConn(
-        alice.organization_addr,
-        alice.device_id,
-        alice.signing_key,
+        alice,
         event_bus,
         max_pool=CONCURRENCY // 2,
     )
@@ -354,9 +342,7 @@ async def test_realm_notif_maintenance(running_backend, alice_backend_conn, alic
 
 @pytest.mark.trio
 async def test_connection_refused(running_backend, event_bus, mallory):
-    conn = BackendAuthenticatedConn(
-        mallory.organization_addr, mallory.device_id, mallory.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(mallory, event_bus)
     with event_bus.listen() as spy:
         async with conn.run():
 

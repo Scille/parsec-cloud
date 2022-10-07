@@ -13,7 +13,7 @@ __freeze_time_dict = {}
 
 def _timestamp_mockup(device):
     _, time = __freeze_time_dict.get(device.device_id, (None, None))
-    return time or DateTime.now()
+    return time or device.time_provider.now()
 
 
 @contextmanager

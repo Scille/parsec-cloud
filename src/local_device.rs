@@ -251,8 +251,14 @@ impl LocalDevice {
     }
 
     #[getter]
-    fn time_provider(&self) -> PyResult<TimeProvider> {
+    fn get_time_provider(&self) -> PyResult<TimeProvider> {
         Ok(TimeProvider(self.0.time_provider.clone()))
+    }
+
+    #[setter]
+    fn set_time_provider(&mut self, value: TimeProvider) -> PyResult<()> {
+        self.0.time_provider = value.0;
+        Ok(())
     }
 
     // TODO: rename this into `now`

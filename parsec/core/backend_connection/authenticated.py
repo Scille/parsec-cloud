@@ -25,7 +25,7 @@ from parsec._parsec import (
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.protocol import DeviceID, AUTHENTICATED_CMDS
-from parsec.core.types import EntryID, BackendOrganizationAddr, OrganizationConfig
+from parsec.core.types import EntryID, BackendOrganizationAddr, OrganizationConfig, LocalDevice
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import (
     connect_as_authenticated,
@@ -233,9 +233,7 @@ def _transport_pool_factory(addr, device_id, signing_key, max_pool, keepalive):
 class BackendAuthenticatedConn:
     def __init__(
         self,
-        addr: BackendOrganizationAddr,
-        device_id: DeviceID,
-        signing_key: SigningKey,
+        device: LocalDevice,
         event_bus: EventBus,
         max_cooldown: int = 30,
         max_pool: int = 4,
@@ -244,9 +242,11 @@ class BackendAuthenticatedConn:
         if max_pool < 2:
             raise ValueError("max_pool must be at least 2 (for event listener + query sender)")
 
+        addr = device.organization_addr
+        self._device = device
         self._started = False
         self._transport_pool = _transport_pool_factory(
-            addr, device_id, signing_key, max_pool, keepalive
+            addr, device.device_id, device.signing_key, max_pool, keepalive
         )
         self._status = BackendConnStatus.LOST
         self._status_exc = None
@@ -368,7 +368,7 @@ class BackendAuthenticatedConn:
                     cooldown_time = self.max_cooldown
                 self._backend_connection_failures += 1
                 logger.info("Backend offline", cooldown_time=cooldown_time)
-                await trio.sleep(cooldown_time)
+                await self._device.time_provider.sleep(cooldown_time)
             if self.status == BackendConnStatus.REFUSED:
                 # It's most likely useless to retry connection anyway
                 logger.info("Backend connection refused", status=self.status)
@@ -380,7 +380,7 @@ class BackendAuthenticatedConn:
             if self.status == BackendConnStatus.DESYNC:
                 # Try again in 10 seconds
                 logger.info("Backend connection is desync", status=self.status)
-                await trio.sleep(DESYNC_RETRY_TIME)
+                await self._device.time_provider.sleep(DESYNC_RETRY_TIME)
 
     def _cancel_manager_connect(self):
         if self._manager_connect_cancel_scope:

@@ -20,6 +20,7 @@ from tests.common import call_with_control
 
 
 @pytest.mark.slow
+@pytest.mark.flaky(reruns=1)
 def test_workspace_reencryption_need(
     hypothesis_settings,
     reset_testbed,

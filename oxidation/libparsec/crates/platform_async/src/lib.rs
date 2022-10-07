@@ -15,5 +15,6 @@ pub use futures::prelude::*;
 pub use futures::select;
 pub use platform::join_set::JoinSet;
 pub use platform::sleep;
+pub use platform::sync::watch;
 pub use platform::sync::Notify;
 pub use platform::task::{spawn, Task};

@@ -64,6 +64,7 @@ logger = get_logger()
 BALLPARK_CLIENT_EARLY_OFFSET = 50.0  # seconds
 BALLPARK_CLIENT_LATE_OFFSET = 70.0  # seconds
 BALLPARK_CLIENT_TOLERANCE = 0.8  # 80%
+BALLPARK_ALWAYS_OK = False  # Useful for disabling ballpark checks in the tests
 
 
 def timestamps_in_the_ballpark(
@@ -76,6 +77,8 @@ def timestamps_in_the_ballpark(
     Useful to compare signed message timestamp with the one stored by the
     backend.
     """
+    if BALLPARK_ALWAYS_OK:
+        return True
     seconds = backend - client
     return -ballpark_client_early_offset < seconds < ballpark_client_late_offset
 
