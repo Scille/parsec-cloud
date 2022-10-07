@@ -256,7 +256,7 @@ jobs:
         env:
           PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
         run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
-        timeout-minutes: 10
+        timeout-minutes: 20
 
       - name: Hypothesis tests
         if: steps.python-changes.outputs.run == 'true'
