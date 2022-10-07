@@ -424,7 +424,7 @@ impl LocalFolderManifest {
         // Deal with additions second
         for (name, entry_id) in data.into_iter() {
             if let Some(entry_id) = entry_id {
-                if prevent_sync_pattern.0.is_match(name.as_ref()) {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
                     self.local_confinement_points.insert(entry_id);
                 } else {
                     actually_updated = true;
@@ -496,7 +496,7 @@ impl LocalFolderManifest {
             .children
             .iter()
             .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern.0.is_match(name.as_ref()) {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
                     Some(*entry_id)
                 } else {
                     None
@@ -716,7 +716,7 @@ impl LocalWorkspaceManifest {
         // Deal with additions second
         for (name, entry_id) in data.into_iter() {
             if let Some(entry_id) = entry_id {
-                if prevent_sync_pattern.0.is_match(name.as_ref()) {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
                     self.local_confinement_points.insert(entry_id);
                 } else {
                     actually_updated = true;
@@ -788,7 +788,7 @@ impl LocalWorkspaceManifest {
             .children
             .iter()
             .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern.0.is_match(name.as_ref()) {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
                     Some(*entry_id)
                 } else {
                     None

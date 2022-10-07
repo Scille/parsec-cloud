@@ -20,6 +20,10 @@ impl Regex {
     pub fn from_regex_str(regex_str: &str) -> Result<Self, regex::Error> {
         Ok(Regex(regex::Regex::new(regex_str)?))
     }
+
+    pub fn is_match(&self, string: &str) -> bool {
+        self.0.is_match(string)
+    }
 }
 
 impl AsRef<str> for Regex {
@@ -56,9 +60,9 @@ mod tests {
         #[case] other_case: &str,
     ) {
         let regex = Regex::from_pattern(pattern_str).expect("Should be valid");
-        assert!(regex.0.is_match(valid_case));
-        assert!(!regex.0.is_match(bad_base));
-        assert!(regex.0.is_match(other_case));
+        assert!(regex.is_match(valid_case));
+        assert!(!regex.is_match(bad_base));
+        assert!(regex.is_match(other_case));
     }
 
     #[rstest]
@@ -70,9 +74,9 @@ mod tests {
         #[case] other_case: &str,
     ) {
         let regex = Regex::from_regex_str(regex_str).expect("Should be valid");
-        assert!(regex.0.is_match(valid_case));
-        assert!(!regex.0.is_match(bad_base));
-        assert!(regex.0.is_match(other_case));
+        assert!(regex.is_match(valid_case));
+        assert!(!regex.is_match(bad_base));
+        assert!(regex.is_match(other_case));
     }
 
     #[test]
