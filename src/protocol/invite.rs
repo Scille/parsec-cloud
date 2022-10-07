@@ -75,17 +75,17 @@ impl InvitationType {
     }
 }
 
-fn py_to_rs_invitation_email_sent_status(
-    email_sent: &PyAny,
-) -> PyResult<invite_new::InvitationEmailSentStatus> {
-    use invite_new::InvitationEmailSentStatus::*;
-    Ok(match email_sent.getattr("name")?.extract::<&str>()? {
-        "SUCCESS" => Success,
-        "NOT_AVAILABLE" => NotAvailable,
-        "BAD_RECIPIENT" => BadRecipient,
-        _ => unreachable!(),
-    })
-}
+// fn py_to_rs_invitation_email_sent_status(
+//     email_sent: &PyAny,
+// ) -> PyResult<invite_new::InvitationEmailSentStatus> {
+//     use invite_new::InvitationEmailSentStatus::*;
+//     Ok(match email_sent.getattr("name")?.extract::<&str>()? {
+//         "SUCCESS" => Success,
+//         "NOT_AVAILABLE" => NotAvailable,
+//         "BAD_RECIPIENT" => BadRecipient,
+//         _ => unreachable!(),
+//     })
+// }
 
 #[pyclass]
 #[derive(Clone)]
@@ -96,22 +96,46 @@ crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __richcmp__, eq);
 
 #[pymethods]
 impl InvitationEmailSentStatus {
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "SUCCESS")]
-    fn success(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_new::InvitationEmailSentStatus::Success))
+    fn success() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus::Success).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "NOT_AVAILABLE")]
-    fn not_available(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_new::InvitationEmailSentStatus::NotAvailable))
+    fn not_available() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus::NotAvailable).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "BAD_RECIPIENT")]
-    fn bad_recipient(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_new::InvitationEmailSentStatus::BadRecipient))
+    fn bad_recipient() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus::BadRecipient).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
     }
 }
 
@@ -379,15 +403,21 @@ pub(crate) struct InviteNewRepOk;
 #[pymethods]
 impl InviteNewRepOk {
     #[new]
-    pub fn new(token: InvitationToken, email_sent: &PyAny) -> PyResult<(Self, InviteNewRep)> {
+    #[args(email_sent = "None")]
+    pub fn new(
+        token: InvitationToken,
+        email_sent: Option<InvitationEmailSentStatus>,
+    ) -> PyResult<(Self, InviteNewRep)> {
         let token = token.0;
-        let email_sent = match py_to_rs_invitation_email_sent_status(email_sent) {
-            Ok(email_sent) => libparsec::types::Maybe::Present(Some(email_sent)),
-            _ => libparsec::types::Maybe::Present(None),
-        };
         Ok((
             Self,
-            InviteNewRep(invite_new::Rep::Ok { token, email_sent }),
+            InviteNewRep(invite_new::Rep::Ok {
+                token,
+                email_sent: match email_sent {
+                    Some(e) => libparsec::types::Maybe::Present(Some(e.0)),
+                    None => libparsec::types::Maybe::Absent,
+                },
+            }),
         ))
     }
 

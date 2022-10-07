@@ -274,12 +274,9 @@ class InviteNewRep:
     def load(buf: bytes) -> InviteNewRep: ...
 
 class InvitationEmailSentStatus:
-    @classmethod
-    def SUCCESS(cls) -> InvitationEmailSentStatus: ...
-    @classmethod
-    def NOT_AVAILABLE(cls) -> InvitationEmailSentStatus: ...
-    @classmethod
-    def BAD_RECIPIENT(cls) -> InvitationEmailSentStatus: ...
+    SUCCESS: InvitationEmailSentStatus
+    NOT_AVAILABLE: InvitationEmailSentStatus
+    BAD_RECIPIENT: InvitationEmailSentStatus
 
 class InviteNewRepOk(InviteNewRep):
     def __init__(
