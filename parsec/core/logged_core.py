@@ -67,13 +67,9 @@ from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
-
+from parsec.core.fs.storage.workspace_storage import FAILSAFE_PATTERN_FILTER
 
 logger = get_logger()
-
-FAILSAFE_PATTERN_FILTER = Regex.from_regex_str(
-    r"^\b$"
-)  # Matches nothing (https://stackoverflow.com/a/2302992/2846140)
 
 
 def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Regex]:
