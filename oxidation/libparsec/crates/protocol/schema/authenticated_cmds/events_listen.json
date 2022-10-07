@@ -7,132 +7,104 @@
         ],
         "req": {
             "cmd": "events_listen",
-            "other_fields": [
-                {
-                    "name": "wait",
+            "fields": {
+                "wait": {
                     "type": "Boolean"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "unit": "APIEvent",
-                "other_fields": []
+        "reps": {
+            "ok": {
+                "unit": "APIEvent"
             },
-            {
-                "status": "cancelled",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "cancelled": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "no_events",
-                "other_fields": []
+            "no_events": {
+                "fields": {}
             }
-        ],
-        "nested_types": [
-            {
-                "label": "APIEvent",
+        },
+        "nested_types": {
+            "APIEvent": {
                 "discriminant_field": "event",
-                "variants": [
-                    {
-                        "name": "Pinged",
+                "variants": {
+                    "Pinged": {
                         "discriminant_value": "pinged",
-                        "fields": [
-                            {
-                                "name": "ping",
+                        "fields": {
+                            "ping": {
                                 "type": "String"
                             }
-                        ]
+                        }
                     },
-                    {
-                        "name": "MessageReceived",
+                    "MessageReceived": {
                         "discriminant_value": "message.received",
-                        "fields": [
-                            {
-                                "name": "index",
+                        "fields": {
+                            "index": {
                                 "type": "Index"
                             }
-                        ]
+                        }
                     },
-                    {
-                        "name": "InviteStatusChanged",
+                    "InviteStatusChanged": {
                         "discriminant_value": "invite.status_changed",
-                        "fields": [
-                            {
-                                "name": "token",
+                        "fields": {
+                            "token": {
                                 "type": "InvitationToken"
                             },
-                            {
-                                "name": "invitation_status",
+                            "invitation_status": {
                                 "type": "InvitationStatus"
                             }
-                        ]
+                        }
                     },
-                    {
-                        "name": "RealmMaintenanceFinished",
-                        "discriminant_value": "realm.maintenance_finished",
-                        "fields": [
-                            {
-                                "name": "realm_id",
-                                "type": "RealmID"
-                            },
-                            {
-                                "name": "encryption_revision",
-                                "type": "Index"
-                            }
-                        ]
-                    },
-                    {
-                        "name": "RealmMaintenanceStarted",
+                    "RealmMaintenanceStarted": {
                         "discriminant_value": "realm.maintenance_started",
-                        "fields": [
-                            {
-                                "name": "realm_id",
+                        "fields": {
+                            "realm_id": {
                                 "type": "RealmID"
                             },
-                            {
-                                "name": "encryption_revision",
+                            "encryption_revision": {
                                 "type": "Index"
                             }
-                        ]
+                        }
                     },
-                    {
-                        "name": "RealmVlobsUpdated",
-                        "discriminant_value": "realm.vlobs_updated",
-                        "fields": [
-                            {
-                                "name": "realm_id",
+                    "RealmMaintenanceFinished": {
+                        "discriminant_value": "realm.maintenance_finished",
+                        "fields": {
+                            "realm_id": {
                                 "type": "RealmID"
                             },
-                            {
-                                "name": "checkpoint",
+                            "encryption_revision": {
+                                "type": "Index"
+                            }
+                        }
+                    },
+                    "RealmVlobsUpdated": {
+                        "discriminant_value": "realm.vlobs_updated",
+                        "fields": {
+                            "realm_id": {
+                                "type": "RealmID"
+                            },
+                            "checkpoint": {
                                 "type": "Index"
                             },
-                            {
-                                "name": "src_id",
+                            "src_id": {
                                 "type": "VlobID"
                             },
-                            {
-                                "name": "src_version",
+                            "src_version": {
                                 "type": "Index"
                             }
-                        ]
+                        }
                     },
-                    {
-                        "name": "RealmRolesUpdated",
+                    "RealmRolesUpdated": {
                         "discriminant_value": "realm.roles_updated",
-                        "fields": [
-                            {
-                                "name": "realm_id",
+                        "fields": {
+                            "realm_id": {
                                 "type": "RealmID"
                             },
-                            {
-                                "name": "role",
+                            "role": {
                                 "type": "Option<RealmRole>"
                             }
                         ]

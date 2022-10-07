@@ -8,13 +8,12 @@
         ],
         "req": {
             "cmd": "events_subscribe",
-            "other_fields": []
+            "fields": {}
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
+        "reps": {
+            "ok": {
+                "fields": {}
             }
-        ]
+        }
     }
 ]

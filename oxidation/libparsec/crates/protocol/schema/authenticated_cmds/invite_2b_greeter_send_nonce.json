@@ -8,39 +8,32 @@
         ],
         "req": {
             "cmd": "invite_2b_greeter_send_nonce",
-            "other_fields": [
-                {
-                    "name": "token",
+            "fields": {
+                "token": {
                     "type": "InvitationToken"
                 },
-                {
-                    "name": "greeter_nonce",
+                "greeter_nonce": {
                     "type": "Bytes"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "claimer_nonce",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "claimer_nonce": {
                         "type": "Bytes"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": []
+            "not_found": {
+                "fields": {}
             },
-            {
-                "status": "already_deleted",
-                "other_fields": []
+            "already_deleted": {
+                "fields": {}
             },
-            {
-                "status": "invalid_state",
-                "other_fields": []
+            "invalid_state": {
+                "fields": {}
             }
-        ]
+        }
     }
 ]

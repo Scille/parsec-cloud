@@ -8,35 +8,29 @@
         ],
         "req": {
             "cmd": "invite_2a_claimer_send_hashed_nonce",
-            "other_fields": [
-                {
-                    "name": "claimer_hashed_nonce",
+            "fields": {
+                "claimer_hashed_nonce": {
                     "type": "HashDigest"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "greeter_nonce",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "greeter_nonce": {
                         "type": "Bytes"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": []
+            "not_found": {
+                "fields": {}
             },
-            {
-                "status": "already_deleted",
-                "other_fields": []
+            "already_deleted": {
+                "fields": {}
             },
-            {
-                "status": "invalid_state",
-                "other_fields": []
+            "invalid_state": {
+                "fields": {}
             }
-        ]
+        }
     }
 ]

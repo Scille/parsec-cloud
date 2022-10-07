@@ -8,30 +8,25 @@
         ],
         "req": {
             "cmd": "invite_3b_greeter_signify_trust",
-            "other_fields": [
-                {
-                    "name": "token",
+            "fields": {
+                "token": {
                     "type": "InvitationToken"
                 }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            },
-            {
-                "status": "not_found",
-                "other_fields": []
-            },
-            {
-                "status": "already_deleted",
-                "other_fields": []
-            },
-            {
-                "status": "invalid_state",
-                "other_fields": []
             }
-        ]
+        },
+        "reps": {
+            "ok": {
+                "fields": {}
+            },
+            "not_found": {
+                "fields": {}
+            },
+            "already_deleted": {
+                "fields": {}
+            },
+            "invalid_state": {
+                "fields": {}
+            }
+        }
     }
 ]

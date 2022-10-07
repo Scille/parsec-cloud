@@ -8,98 +8,78 @@
         ],
         "req": {
             "cmd": "realm_start_reencryption_maintenance",
-            "other_fields": [
-                {
-                    "name": "realm_id",
+            "fields": {
+                "realm_id": {
                     "type": "RealmID"
                 },
-                {
-                    "name": "encryption_revision",
+                "encryption_revision": {
                     "type": "Index"
                 },
-                {
-                    "name": "timestamp",
+                "timestamp": {
                     "type": "DateTime"
                 },
-                {
-                    "name": "per_participant_message",
+                "per_participant_message": {
                     "type": "Map<UserID, Bytes>"
                 }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            },
-            {
-                "status": "not_allowed",
-                "other_fields": []
-            },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
-            },
-            {
-                "status": "bad_encryption_revision",
-                "other_fields": []
-            },
-            {
-                "status": "participant_mismatch",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
-            },
-            {
-                "status": "maintenance_error",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
-            },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
-            },
-            {
-                "status": "bad_timestamp",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    },
-                    {
-                        "name": "ballpark_client_early_offset",
-                        "type": "Float",
-                        "introduced_in": "2.4"
-                    },
-                    {
-                        "name": "ballpark_client_late_offset",
-                        "type": "Float",
-                        "introduced_in": "2.4"
-                    },
-                    {
-                        "name": "backend_timestamp",
-                        "type": "DateTime",
-                        "introduced_in": "2.4"
-                    },
-                    {
-                        "name": "client_timestamp",
-                        "type": "DateTime",
-                        "introduced_in": "2.4"
-                    }
-                ]
             }
-        ]
+        },
+        "reps": {
+            "ok": {
+                "fields": {}
+            },
+            "not_allowed": {
+                "fields": {}
+            },
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "bad_encryption_revision": {
+                "fields": {}
+            },
+            "participant_mismatch": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "maintenance_error": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "in_maintenance": {
+                "fields": {}
+            },
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    },
+                    "ballpark_client_early_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "ballpark_client_late_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "backend_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    "client_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                }
+            }
+        }
     }
 ]

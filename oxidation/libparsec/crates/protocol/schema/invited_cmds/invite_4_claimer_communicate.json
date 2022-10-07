@@ -8,31 +8,26 @@
         ],
         "req": {
             "cmd": "invite_4_claimer_communicate",
-            "other_fields": [
-                {
-                    "name": "payload",
+            "fields": {
+                "payload": {
                     "type": "Bytes"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "payload",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "payload": {
                         "type": "Bytes"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": []
+            "not_found": {
+                "fields": {}
             },
-            {
-                "status": "invalid_state",
-                "other_fields": []
+            "invalid_state": {
+                "fields": {}
             }
-        ]
+        }
     }
 ]

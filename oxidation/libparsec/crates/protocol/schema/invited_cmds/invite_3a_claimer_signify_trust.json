@@ -8,21 +8,18 @@
         ],
         "req": {
             "cmd": "invite_3a_claimer_signify_trust",
-            "other_fields": []
+            "fields": {}
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
+        "reps": {
+            "ok": {
+                "fields": {}
             },
-            {
-                "status": "not_found",
-                "other_fields": []
+            "not_found": {
+                "fields": {}
             },
-            {
-                "status": "invalid_state",
-                "other_fields": []
+            "invalid_state": {
+                "fields": {}
             }
-        ]
+        }
     }
 ]

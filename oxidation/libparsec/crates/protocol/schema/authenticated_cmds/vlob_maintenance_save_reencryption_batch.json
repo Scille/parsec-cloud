@@ -8,70 +8,56 @@
         ],
         "req": {
             "cmd": "vlob_maintenance_save_reencryption_batch",
-            "other_fields": [
-                {
-                    "name": "realm_id",
+            "fields": {
+                "realm_id": {
                     "type": "RealmID"
                 },
-                {
-                    "name": "encryption_revision",
+                "encryption_revision": {
                     "type": "Index"
                 },
-                {
-                    "name": "batch",
+                "batch": {
                     "type": "List<ReencryptionBatchEntry>"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "total",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "total": {
                         "type": "Size"
                     },
-                    {
-                        "name": "done",
+                    "done": {
                         "type": "Size"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
+            "not_allowed": {
+                "fields": {}
             },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_found": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_in_maintenance",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_in_maintenance": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "bad_encryption_revision",
-                "other_fields": []
+            "bad_encryption_revision": {
+                "fields": {}
             },
-            {
-                "status": "maintenance_error",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "maintenance_error": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]

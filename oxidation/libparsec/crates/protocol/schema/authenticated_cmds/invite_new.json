@@ -9,87 +9,71 @@
             "cmd": "invite_new",
             "unit": "UserOrDevice"
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "token",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "token": {
                         "type": "InvitationToken"
                     },
-                    {
-                        // Added in API 2.3 (Parsec v2.6.0)
-                        // Field used when the invitation is correctly created but the invitation email cannot be sent
-                        "name": "email_sent",
+                    // Added in API 2.3 (Parsec v2.6.0)
+                    // Field used when the invitation is correctly created but the invitation email cannot be sent
+                    "email_sent": {
                         "type": "InvitationEmailSentStatus",
                         "introduced_in": "2.3"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
+            "not_allowed": {
+                "fields": {}
             },
-            {
-                "status": "already_member",
-                "other_fields": []
+            "already_member": {
+                "fields": {}
             },
-            {
-                "status": "not_available",
-                "other_fields": []
+            "not_available": {
+                "fields": {}
             }
-        ],
-        "nested_types": [
-            {
-                "label": "UserOrDevice",
+        },
+        "nested_types": {
+            "UserOrDevice": {
                 "discriminant_field": "type",
-                "variants": [
-                    {
-                        "name": "User",
+                "variants": {
+                    "User": {
                         "discriminant_value": "USER",
-                        "fields": [
-                            {
-                                "name": "claimer_email",
+                        "fields": {
+                            "claimer_email": {
                                 "type": "String"
                             },
-                            {
-                                "name": "send_email",
+                            "send_email": {
                                 "type": "Boolean"
                             }
-                        ]
+                        }
                     },
-                    {
-                        "name": "Device",
+                    "Device": {
                         "discriminant_value": "DEVICE",
-                        "fields": [
-                            {
-                                "name": "send_email",
+                        "fields": {
+                            "send_email": {
                                 "type": "Boolean"
                             }
-                        ]
+                        }
                     }
-                ]
+                }
             },
-            {
-                "label": "InvitationEmailSentStatus",
-                "variants": [
-                    {
-                        "name": "Success",
+            "InvitationEmailSentStatus": {
+                "variants": {
+                    "Success": {
                         "discriminant_value": "SUCCESS",
-                        "fields": []
+                        "fields": {}
                     },
-                    {
-                        "name": "NotAvailable",
+                    "NotAvailable": {
                         "discriminant_value": "NOT_AVAILABLE",
-                        "fields": []
+                        "fields": {}
                     },
-                    {
-                        "name": "BadRecipient",
+                    "BadRecipient": {
                         "discriminant_value": "BAD_RECIPIENT",
-                        "fields": []
+                        "fields": {}
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]

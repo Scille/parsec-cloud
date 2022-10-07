@@ -8,117 +8,93 @@
         ],
         "req": {
             "cmd": "realm_update_roles",
-            "other_fields": [
-                {
-                    "name": "role_certificate",
+            "fields": {
+                "role_certificate": {
                     "type": "Bytes"
                 },
-                {
-                    "name": "recipient_message",
+                "recipient_message": {
                     "type": "Option<Bytes>"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
+        "reps": {
+            "ok": {
+                "fields": {}
             },
-            {
-                "status": "not_allowed",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_allowed": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "invalid_certification",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "invalid_certification": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "invalid_data",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "invalid_data": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "already_granted",
-                "other_fields": []
+            "already_granted": {
+                "fields": {}
             },
-            {
-                "status": "incompatible_profile",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "incompatible_profile": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_found": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
+            "in_maintenance": {
+                "fields": {}
             },
-            {
-                "status": "user_revoked",
-                "other_fields": []
+            "user_revoked": {
+                "fields": {}
             },
-            {
-                "status": "require_greater_timestamp",
-                "other_fields": [
-                    {
-                        "name": "strictly_greater_than",
+            "require_greater_timestamp": {
+                "fields": {
+                    "strictly_greater_than": {
                         "type": "DateTime"
                     }
-                ]
+                }
             },
-            {
-                "status": "bad_timestamp",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     },
-                    {
-                        "name": "ballpark_client_early_offset",
+                    "ballpark_client_early_offset": {
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "ballpark_client_late_offset",
+                    "ballpark_client_late_offset": {
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "backend_timestamp",
+                    "backend_timestamp": {
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "client_timestamp",
+                    "client_timestamp": {
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]

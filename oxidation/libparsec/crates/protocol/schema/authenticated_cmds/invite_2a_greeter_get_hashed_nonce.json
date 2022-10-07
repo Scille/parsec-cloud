@@ -8,35 +8,29 @@
         ],
         "req": {
             "cmd": "invite_2a_greeter_get_hashed_nonce",
-            "other_fields": [
-                {
-                    "name": "token",
+            "fields": {
+                "token": {
                     "type": "InvitationToken"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "claimer_hashed_nonce",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "claimer_hashed_nonce": {
                         "type": "HashDigest"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": []
+            "not_found": {
+                "fields": {}
             },
-            {
-                "status": "already_deleted",
-                "other_fields": []
+            "already_deleted": {
+                "fields": {}
             },
-            {
-                "status": "invalid_state",
-                "other_fields": []
+            "invalid_state": {
+                "fields": {}
             }
-        ]
+        }
     }
 ]

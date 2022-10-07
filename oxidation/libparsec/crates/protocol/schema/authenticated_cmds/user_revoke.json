@@ -8,49 +8,40 @@
         ],
         "req": {
             "cmd": "user_revoke",
-            "other_fields": [
-                {
-                    "name": "revoked_user_certificate",
+            "fields": {
+                "revoked_user_certificate": {
                     "type": "Bytes"
                 }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            },
-            {
-                "status": "not_allowed",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
-            },
-            {
-                "status": "invalid_certification",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
-            },
-            {
-                "status": "not_found",
-                "other_fields": []
-            },
-            {
-                "status": "already_revoked",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
             }
-        ]
+        },
+        "reps": {
+            "ok": {
+                "fields": {}
+            },
+            "not_allowed": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "invalid_certification": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "not_found": {
+                "fields": {}
+            },
+            "already_revoked": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            }
+        }
     }
 ]

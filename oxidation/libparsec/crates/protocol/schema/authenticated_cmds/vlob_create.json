@@ -8,145 +8,114 @@
         ],
         "req": {
             "cmd": "vlob_create",
-            "other_fields": [
-                {
-                    "name": "realm_id",
+            "fields": {
+                "realm_id": {
                     "type": "RealmID"
                 },
-                {
-                    "name": "encryption_revision",
+                "encryption_revision": {
                     "type": "Index"
                 },
-                {
-                    "name": "vlob_id",
+                "vlob_id": {
                     "type": "VlobID"
                 },
-                {
-                    // If blob contains a signed message, it timestamp cannot be directly enforced
-                    // by the backend (given the message is probably also encrypted).
-                    // Hence the timestamp is passed in clear so backend can reject the message
-                    // if it considers the timestamp invalid. On top of that each client asking
-                    // for the message will receive the declared timestamp to check against
-                    // the actual timestamp within the message.
-                    "name": "timestamp",
+                // If blob contains a signed message, it timestamp cannot be directly enforced
+                // by the backend (given the message is probably also encrypted).
+                // Hence the timestamp is passed in clear so backend can reject the message
+                // if it considers the timestamp invalid. On top of that each client asking
+                // for the message will receive the declared timestamp to check against
+                // the actual timestamp within the message.
+                "timestamp": {
                     "type": "DateTime"
                 },
-                {
-                    "name": "blob",
+                "blob": {
                     "type": "Bytes"
                 },
-                {
-                    // Field set to `None` if sequester is disabled for the organization
-                    // Key is sequester service ID, value is blob encrypted with the service key
-                    // New in API version 2.8/3.2 (Parsec 2.11.0)
-                    "name": "sequester_blob",
+                // Field set to `None` if sequester is disabled for the organization
+                // Key is sequester service ID, value is blob encrypted with the service key
+                // New in API version 2.8/3.2 (Parsec 2.11.0)
+                "sequester_blob": {
                     "type": "Option<Map<SequesterServiceID, Bytes>>",
                     "introduced_in": "2.8"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
+        "reps": {
+            "ok": {
+                "fields": {}
             },
-            {
-                "status": "already_exists",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "already_exists": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
+            "not_allowed": {
+                "fields": {}
             },
-            {
-                "status": "bad_encryption_revision",
-                "other_fields": []
+            "bad_encryption_revision": {
+                "fields": {}
             },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
+            "in_maintenance": {
+                "fields": {}
             },
-            {
-                "status": "require_greater_timestamp",
-                "other_fields": [
-                    {
-                        "name": "strictly_greater_than",
+            "require_greater_timestamp": {
+                "fields": {
+                    "strictly_greater_than": {
                         "type": "DateTime"
                     }
-                ]
+                }
             },
-            {
-                "status": "bad_timestamp",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     },
-                    {
-                        "name": "ballpark_client_early_offset",
+                    "ballpark_client_early_offset": {
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "ballpark_client_late_offset",
+                    "ballpark_client_late_offset": {
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "backend_timestamp",
+                    "backend_timestamp": {
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "client_timestamp",
+                    "client_timestamp": {
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_a_sequestered_organization",
-                "other_fields": []
+            "not_a_sequestered_organization": {
+                "fields": {}
             },
-            {
-                "status": "sequester_inconsistency",
-                "other_fields": [
-                    {
-                        "name": "sequester_authority_certificate",
+            "sequester_inconsistency": {
+                "fields": {
+                    "sequester_authority_certificate": {
                         "type": "Bytes"
                     },
-                    {
-                        "name": "sequester_services_certificates",
+                    "sequester_services_certificates": {
                         "type": "List<Bytes>"
                     }
                 ]
             },
-            {
-                "status": "rejected_by_sequester_service",
-                "other_fields": [
-                    {
-                        "name": "service_id",
+            "rejected_by_sequester_service": {
+                "fields": {
+                    "service_id": {
                         "type": "SequesterServiceID"
                     },
-                    {
-                        "name": "service_label",
+                    "service_label": {
                         "type": "String"
                     },
-                    {
-                        "name": "reason",
+                    "reason": {
                         "type": "String"
                     }
-                ]
+                }
             },
-            {
-                "status": "timeout",
-                "other_fields": []
-            }
+            "timeout": {}
         ]
     }
 ]

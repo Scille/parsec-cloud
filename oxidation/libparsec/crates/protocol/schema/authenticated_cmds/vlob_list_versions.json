@@ -8,40 +8,33 @@
         ],
         "req": {
             "cmd": "vlob_list_versions",
-            "other_fields": [
-                {
-                    "name": "vlob_id",
+            "fields": {
+                "vlob_id": {
                     "type": "VlobID"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "versions",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "versions": {
                         "type": "Map<Index, (DateTime, DeviceID)>"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
+            "not_allowed": {
+                "fields": {}
             },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_found": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
+            "in_maintenance": {
+                "fields": {}
             }
-        ]
+        }
     }
 ]

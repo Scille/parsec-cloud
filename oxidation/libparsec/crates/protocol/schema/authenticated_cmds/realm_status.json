@@ -8,69 +8,56 @@
         ],
         "req": {
             "cmd": "realm_status",
-            "other_fields": [
-                {
-                    "name": "realm_id",
+            "fields": {
+                "realm_id": {
                     "type": "RealmID"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "in_maintenance",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "in_maintenance": {
                         "type": "Boolean"
                     },
-                    {
-                        "name": "maintenance_type",
+                    "maintenance_type": {
                         "type": "Option<MaintenanceType>"
                     },
-                    {
-                        "name": "maintenance_started_on",
+                    "maintenance_started_on": {
                         "type": "Option<DateTime>"
                     },
-                    {
-                        "name": "maintenance_started_by",
+                    "maintenance_started_by": {
                         "type": "Option<DeviceID>"
                     },
-                    {
-                        "name": "encryption_revision",
+                    "encryption_revision": {
                         "type": "Index"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
+            "not_allowed": {
+                "fields": {}
             },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_found": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             }
-        ],
-        "nested_types": [
-            {
-                "label": "MaintenanceType",
-                "variants": [
-                    {
-                        "name": "GarbageCollection",
+        },
+        "nested_types": {
+            "MaintenanceType": {
+                "variants": {
+                    "GarbageCollection": {
                         "discriminant_value": "GARBAGE_COLLECTION",
-                        "fields": []
+                        "fields": {}
                     },
-                    {
-                        "name": "Reencryption",
+                    "Reencryption": {
                         "discriminant_value": "REENCRYPTION",
-                        "fields": []
+                        "fields": {}
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]
