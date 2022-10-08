@@ -11,7 +11,7 @@ import oscrypto.asymmetric
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery, trio_run
-from parsec.cli_utils import operation
+from parsec.cli_utils import operation, cli_exception_handler, debug_config_options
 from parsec.sequester_crypto import sequester_authority_sign, SequesterEncryptionKeyDer
 from parsec.sequester_export_reader import extract_workspace, RealmExportProgress
 from parsec.api.data import SequesterServiceCertificate
@@ -38,7 +38,9 @@ class SequesterBackendCliError(Exception):
     pass
 
 
-SERVICE_TYPE_CHOICES = {service.value: service for service in SequesterServiceType}
+SERVICE_TYPE_CHOICES: Dict[str, SequesterServiceType] = {
+    service.value: service for service in SequesterServiceType
+}
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -158,6 +160,8 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
     help="[Service Type webhook only] webhook url used to send encrypted service data",
 )
 @db_backend_options
+# Add --debug
+@debug_config_options
 def create_service(
     service_public_key: Path,
     authority_private_key: Path,
@@ -168,56 +172,60 @@ def create_service(
     db_min_connections: int,
     service_type: str,
     webhook_url: Optional[str],
+    debug: bool,
 ):
-    service_type = SERVICE_TYPE_CHOICES[service_type]
-    # Check service type
-    if webhook_url is not None and service_type != SequesterServiceType.WEBHOOK:
-        raise SequesterBackendCliError(
-            f"Incompatible service type {service_type} with webhook_url option\nwebhook_url can only be used with {SequesterServiceType.WEBHOOK}."
-        )
-    if service_type == SequesterServiceType.WEBHOOK and not webhook_url:
-        raise SequesterBackendCliError("Webhook sequester service requires webhook_url argument")
-    # Load key files
-    service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())
-    authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
-    # Generate data schema
-    service_id = SequesterServiceID(uuid4())
-    now = DateTime.now()
-    certif_data = SequesterServiceCertificate(
-        timestamp=now,
-        service_id=service_id,
-        service_label=service_label,
-        encryption_key_der=service_key,
-    )
-    certificate = sequester_authority_sign(signing_key=authority_key, data=certif_data.dump())
-
-    sequester_service: BaseSequesterService
-    if service_type == SequesterServiceType.STORAGE:
-        assert webhook_url is None
-        sequester_service = StorageSequesterService(
+    with cli_exception_handler(debug):
+        cooked_service_type: SequesterServiceType = SERVICE_TYPE_CHOICES[service_type]
+        # Check service type
+        if webhook_url is not None and cooked_service_type != SequesterServiceType.WEBHOOK:
+            raise SequesterBackendCliError(
+                f"Incompatible service type {cooked_service_type} with webhook_url option\nwebhook_url can only be used with {SequesterServiceType.WEBHOOK}."
+            )
+        if cooked_service_type == SequesterServiceType.WEBHOOK and not webhook_url:
+            raise SequesterBackendCliError(
+                "Webhook sequester service requires webhook_url argument"
+            )
+        # Load key files
+        service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())
+        authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
+        # Generate data schema
+        service_id = SequesterServiceID(uuid4())
+        now = DateTime.now()
+        certif_data = SequesterServiceCertificate(
+            timestamp=now,
             service_id=service_id,
             service_label=service_label,
-            service_certificate=certificate,
-            created_on=now,
+            encryption_key_der=service_key,
         )
-    else:
-        assert service_type == SequesterServiceType.WEBHOOK
-        assert webhook_url
-        # Removing the extra slash if present to avoid a useless redirection
-        if webhook_url and webhook_url.endswith("/"):
-            webhook_url = webhook_url[:-1]
-        sequester_service = WebhookSequesterService(
-            service_id=service_id,
-            service_label=service_label,
-            service_certificate=certificate,
-            created_on=now,
-            webhook_url=webhook_url,
-        )
+        certificate = sequester_authority_sign(signing_key=authority_key, data=certif_data.dump())
 
-    db_config = _get_config(db, db_min_connections, db_max_connections)
+        sequester_service: BaseSequesterService
+        if cooked_service_type == SequesterServiceType.STORAGE:
+            assert webhook_url is None
+            sequester_service = StorageSequesterService(
+                service_id=service_id,
+                service_label=service_label,
+                service_certificate=certificate,
+                created_on=now,
+            )
+        else:
+            assert cooked_service_type == SequesterServiceType.WEBHOOK
+            assert webhook_url
+            # Removing the extra slash if present to avoid a useless redirection
+            if webhook_url and webhook_url.endswith("/"):
+                webhook_url = webhook_url[:-1]
+            sequester_service = WebhookSequesterService(
+                service_id=service_id,
+                service_label=service_label,
+                service_certificate=certificate,
+                created_on=now,
+                webhook_url=webhook_url,
+            )
 
-    trio_run(_create_service, db_config, organization, sequester_service, use_asyncio=True)
-    click.echo(click.style("Service created", fg="green"))
+        db_config = _get_config(db, db_min_connections, db_max_connections)
+
+        trio_run(_create_service, db_config, organization, sequester_service, use_asyncio=True)
+        click.echo(click.style("Service created", fg="green"))
 
 
 @click.command(short_help="List available sequester services")
@@ -241,6 +249,8 @@ def list_services(
 @click.option("--enable", is_flag=True, help="Enable service")
 @click.option("--disable", is_flag=True, help="Disable service")
 @db_backend_options
+# Add --debug
+@debug_config_options
 def update_service(
     organization: OrganizationID,
     service: SequesterServiceID,
@@ -249,17 +259,19 @@ def update_service(
     db_min_connections: int,
     enable: bool,
     disable: bool,
+    debug: bool,
 ):
-    if enable and disable:
-        raise click.BadParameter("Enable and disable flags are both set")
-    if not enable and not disable:
-        raise click.BadParameter("Required: enable or disable flag")
-    db_config = _get_config(db, db_min_connections, db_max_connections)
-    if disable:
-        trio_run(_disable_service, db_config, organization, service, use_asyncio=True)
-    if enable:
-        trio_run(_enable_service, db_config, organization, service, use_asyncio=True)
-    click.echo(click.style("Service updated", fg="green"))
+    with cli_exception_handler(debug):
+        if enable and disable:
+            raise click.BadParameter("Enable and disable flags are both set")
+        if not enable and not disable:
+            raise click.BadParameter("Required: enable or disable flag")
+        db_config = _get_config(db, db_min_connections, db_max_connections)
+        if disable:
+            trio_run(_disable_service, db_config, organization, service, use_asyncio=True)
+        if enable:
+            trio_run(_enable_service, db_config, organization, service, use_asyncio=True)
+        click.echo(click.style("Service updated", fg="green"))
 
 
 async def _human_accesses(
@@ -487,6 +499,8 @@ async def _export_realm(
 @click.option("--output", type=Path, required=True)
 @db_backend_options
 @blockstore_backend_options
+# Add --debug
+@debug_config_options
 def export_realm(
     organization: OrganizationID,
     realm: RealmID,
@@ -496,11 +510,20 @@ def export_realm(
     db_max_connections: int,
     db_min_connections: int,
     blockstore: BaseBlockStoreConfig,
+    debug: bool,
 ):
-    db_config = _get_config(db, db_min_connections, db_max_connections)
-    trio_run(
-        _export_realm, db_config, blockstore, organization, realm, service, output, use_asyncio=True
-    )
+    with cli_exception_handler(debug):
+        db_config = _get_config(db, db_min_connections, db_max_connections)
+        trio_run(
+            _export_realm,
+            db_config,
+            blockstore,
+            organization,
+            realm,
+            service,
+            output,
+            use_asyncio=True,
+        )
 
 
 @click.command(short_help="Open a realm export using the sequester service key and dump it content")
@@ -514,23 +537,26 @@ def export_realm(
 @click.option(
     "--output", type=Path, required=True, help="Directory where to dump the content of the realm"
 )
-def extract_realm_export(service_decryption_key: Path, input: Path, output: Path):
-    # Finally a command that is not async !
-    # This is because here we do only a single thing at a time and sqlite3 provide
-    # a synchronous api anyway
-    decryption_key = oscrypto.asymmetric.load_private_key(service_decryption_key.read_bytes())
+# Add --debug
+@debug_config_options
+def extract_realm_export(service_decryption_key: Path, input: Path, output: Path, debug: bool):
+    with cli_exception_handler(debug):
+        # Finally a command that is not async !
+        # This is because here we do only a single thing at a time and sqlite3 provide
+        # a synchronous api anyway
+        decryption_key = oscrypto.asymmetric.load_private_key(service_decryption_key.read_bytes())
 
-    ret = 0
-    for fs_path, event_type, event_msg in extract_workspace(
-        output=output, export_db=input, decryption_key=decryption_key
-    ):
-        if event_type == RealmExportProgress.EXTRACT_IN_PROGRESS:
-            fs_path_display = click.style(str(fs_path), fg="yellow")
-            click.echo(f"{ fs_path_display }: { event_msg }")
-        else:
-            # Error
-            ret = 1
-            fs_path_display = click.style(str(fs_path), fg="red")
-            click.echo(f"{ fs_path_display }: { event_type.value } { event_msg }")
+        ret = 0
+        for fs_path, event_type, event_msg in extract_workspace(
+            output=output, export_db=input, decryption_key=decryption_key
+        ):
+            if event_type == RealmExportProgress.EXTRACT_IN_PROGRESS:
+                fs_path_display = click.style(str(fs_path), fg="yellow")
+                click.echo(f"{ fs_path_display }: { event_msg }")
+            else:
+                # Error
+                ret = 1
+                fs_path_display = click.style(str(fs_path), fg="red")
+                click.echo(f"{ fs_path_display }: { event_type.value } { event_msg }")
 
-    return ret
+        return ret
