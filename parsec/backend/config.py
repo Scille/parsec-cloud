@@ -3,7 +3,7 @@
 import attr
 from typing import List, Optional, Union, Tuple
 
-from parsec.core.types import BackendAddr
+from parsec._parsec import BackendAddr
 
 
 class BaseBlockStoreConfig:
