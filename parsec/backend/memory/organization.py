@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from typing import TYPE_CHECKING, Optional, Union, Dict
+from typing import TYPE_CHECKING, Optional, Union, Dict, Tuple
 import trio
 from collections import defaultdict
 
@@ -19,6 +19,7 @@ from parsec.backend.organization import (
     OrganizationFirstUserCreationError,
     UsersPerProfileDetailItem,
 )
+from parsec.backend.sequester import BaseSequesterService
 from parsec.backend.utils import Unset, UnsetType
 from parsec.backend.events import BackendEvent
 
@@ -95,7 +96,10 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         root_verify_key: VerifyKey,
         sequester_authority: Optional[SequesterAuthority] = None,
+        sequester_initial_services: Optional[Tuple[BaseSequesterService, ...]] = None,
     ) -> None:
+        assert sequester_initial_services is None or sequester_authority is not None
+
         # Organization bootstrap involves multiple modifications (in user,
         # device and organization) and is not atomic (given await is used),
         # so we protect it from concurrency with a big old lock
@@ -122,7 +126,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 self._organizations[organization.organization_id] = self._organizations[
                     organization.organization_id
                 ].evolve(
-                    sequester_authority=sequester_authority, sequester_services_certificates=()
+                    sequester_authority=sequester_authority, sequester_services_certificates=tuple(x.service_certificate for x in sequester_initial_services or ())
                 )
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:

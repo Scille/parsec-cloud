@@ -17,19 +17,20 @@ from parsec._parsec import (
     OrganizationConfigRepNotFound,
     UsersPerProfileDetailItem,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.crypto import VerifyKey
+from parsec.crypto import VerifyKey, CryptoError
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import (
     UserCertificate,
     DeviceCertificate,
     DataError,
+    SequesterServiceCertificate,
     SequesterAuthorityCertificate,
 )
 from parsec.api.protocol import (
     OrganizationID,
     UserProfile,
+    api_typed_msg_adapter,
     organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
 )
@@ -43,6 +44,7 @@ from parsec.backend.utils import (
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.config import BackendConfig
+from parsec.backend.sequester import BaseSequesterService
 from parsec.backend.client_context import (
     AnonymousClientContext,
     APIV1_AnonymousClientContext,
@@ -287,14 +289,24 @@ class BaseOrganizationComponent:
                 "reason": "Redacted user&device certificate must be provided together",
             }
 
+        sequester_initial_services: Optional[Tuple[BaseSequesterService, ...]]
+        sequester_authority: Optional[SequesterAuthority]
+
         # Sequester can not be set with APIV1
         if isinstance(client_ctx, APIV1_AnonymousClientContext):
             sequester_authority = None
 
         else:
             sequester_authority_certificate = msg["sequester_authority_certificate"]
+            sequester_initial_services_certificate = msg["sequester_initial_services_certificate"]
             if sequester_authority_certificate is None:
+                if sequester_initial_services_certificate:
+                    return {
+                        "status": "invalid_data",
+                        "reason": "`sequester_initial_services_certificate` requires `sequester_authority_certificate`",
+                    }
                 sequester_authority = None
+                sequester_initial_services = None
 
             else:
                 try:
@@ -307,7 +319,7 @@ class BaseOrganizationComponent:
                 except DataError:
                     return {
                         "status": "invalid_data",
-                        "reason": "Invalid signature for sequester authority certificate",
+                        "reason": "Invalid sequester authority certificate",
                     }
 
                 if not timestamps_in_the_ballpark(sequester_authority_certif_data.timestamp, now):
@@ -326,6 +338,18 @@ class BaseOrganizationComponent:
                     certificate=sequester_authority_certificate,
                     verify_key_der=sequester_authority_certif_data.verify_key_der,
                 )
+
+                sequester_initial_services = ()
+                try:
+                    for service_certificate in sequester_initial_services_certificate or ():
+                        sequester_certificate_data = SequesterServiceCertificate.load(sequester_authority_certif_data.verify_key_der.verify(service_certificate))
+                        sequester_certificate_data
+                except (CryptoError, DataError) as exc:
+                    return {
+                        "status": "invalid_data",
+                        "reason": "Invalid sequester service certificate",
+                    }
+                sequester_initial_services.append(sequester_certificate_data)
 
         user = User(
             user_id=u_data.user_id,
@@ -356,6 +380,7 @@ class BaseOrganizationComponent:
                 bootstrap_token=bootstrap_token,
                 root_verify_key=root_verify_key,
                 sequester_authority=sequester_authority,
+                sequester_initial_services=sequester_initial_services,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -409,6 +434,7 @@ class BaseOrganizationComponent:
         bootstrap_token: str,
         root_verify_key: VerifyKey,
         sequester_authority: Optional[SequesterAuthority] = None,
+        sequester_initial_services: Optional[Tuple[BaseSequesterService, ...]] = None,
     ) -> None:
         """
         Raises:

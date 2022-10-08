@@ -253,13 +253,6 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     f"Invalid certification data (timestamp out of ballpark)."
                 )
 
-            row = await conn.fetchrow(
-                *_q_get_sequester_service_exist(
-                    organization_id=organization_id.str, service_id=service.service_id
-                )
-            )
-            if row:
-                raise SequesterServiceAlreadyExists
             webhook_url: Optional[str]
             if isinstance(service, WebhookSequesterService):
                 webhook_url = service.webhook_url
@@ -277,7 +270,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 )
             )
             if result != "INSERT 0 1":
-                raise SequesterError(f"Insertion Error: {result}")
+                raise SequesterServiceAlreadyExists
 
     async def _assert_service_enabled(
         self, conn: TrioConnectionProxy, organization_id: OrganizationID

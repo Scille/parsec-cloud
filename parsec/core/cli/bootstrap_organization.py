@@ -3,7 +3,7 @@
 from pathlib import Path
 import click
 import platform
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple, Iterable
 
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.utils import trio_run
@@ -41,6 +41,7 @@ async def _bootstrap_organization(
     human_email: Optional[str],
     save_device_with_selected_auth: Callable,
     sequester_verify_key: Optional[Path],
+    sequester_initial_services_certificate: Iterable[str],
 ) -> None:
     if sequester_verify_key is not None:
         answer = await aconfirm(
@@ -72,6 +73,7 @@ Do you want to continue ?""",
             human_handle=human_handle,
             device_label=device_label,
             sequester_authority_verify_key=sequester_verify_key,
+            sequester_initial_services_certificate=sequester_initial_services_certificate,
         )
 
     # We don't have to worry about overwritting an existing keyfile
@@ -94,6 +96,12 @@ Do you want to continue ?""",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
     help=f"Enable sequestered organization feature.\n{SEQUESTER_BRIEF}",
 )
+@click.option(
+    "--sequester-service-certificate",
+    type=lambda x: x,  # TODO
+    multiple=True,
+    help="<TODO>"
+)
 @save_device_options
 @core_config_options
 @cli_command_base_options
@@ -105,12 +113,17 @@ def bootstrap_organization(
     human_email: Optional[str],
     save_device_with_selected_auth: Callable,
     sequester_verify_key: Optional[Path],
+    sequester_service_certificate: Tuple[str],
     **kwargs,
 ) -> None:
     """
     Configure the organization and register it first user&device.
     """
     with cli_exception_handler(config.debug):
+        print("==>", repr(sequester_service_certificate))
+        if sequester_service_certificate and not sequester_verify_key:
+            raise RuntimeError("option --sequester-service-certificate requires --sequester-verify-key")
+
         # Disable task monitoring given user prompt will block the coroutine
         trio_run(
             _bootstrap_organization,
@@ -121,4 +134,5 @@ def bootstrap_organization(
             human_email,
             save_device_with_selected_auth,
             sequester_verify_key,
+            sequester_service_certificate,
         )

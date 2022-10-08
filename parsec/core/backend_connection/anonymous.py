@@ -2,6 +2,7 @@
 
 from uuid import UUID
 from structlog import get_logger
+from typing import Optional, List
 
 from parsec._version import __version__
 from parsec.crypto import VerifyKey
@@ -115,7 +116,8 @@ async def organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-    sequester_authority_certificate: bytes,
+    sequester_authority_certificate: Optional[bytes],
+    sequester_initial_services_certificate: Optional[List[bytes]],
 ) -> dict:
     return await _anonymous_cmd(
         organization_bootstrap_serializer,
@@ -129,4 +131,5 @@ async def organization_bootstrap(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
         sequester_authority_certificate=sequester_authority_certificate,
+        sequester_initial_services_certificate=sequester_initial_services_certificate,
     )

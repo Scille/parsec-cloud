@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 from functools import lru_cache
 from triopg import UniqueViolationError
 
@@ -23,10 +23,11 @@ from parsec.backend.organization import (
     OrganizationFirstUserCreationError,
     UsersPerProfileDetailItem,
 )
-from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.sequester import BaseSequesterService, WebhookSequesterService
+from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import q_create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
-from parsec.backend.postgresql.handler import send_signal
+from parsec.backend.postgresql.sequester import _q_create_sequester_service
 
 
 _q_insert_organization = Q(
@@ -268,7 +269,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         root_verify_key: VerifyKey,
         sequester_authority: Optional[SequesterAuthority] = None,
+        sequester_initial_services: Optional[Tuple[BaseSequesterService, ...]] = None,
     ) -> None:
+        assert sequester_initial_services is None or sequester_authority is not None
+
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
             # organization table until the end of the transaction. Hence
@@ -302,6 +306,30 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             )
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
+
+            if sequester_initial_services:
+                # Sanity check, the caller is responsible to provide unique service IDs
+                assert len({x.service_id for x in sequester_initial_services}) == len(sequester_initial_services)
+
+                for service in sequester_initial_services:
+                    webhook_url: Optional[str]
+                    if isinstance(service, WebhookSequesterService):
+                        webhook_url = service.webhook_url
+                    else:
+                        webhook_url = None
+                    result = await conn.execute(
+                        *_q_create_sequester_service(
+                            organization_id=id.str,
+                            service_id=service.service_id,
+                            service_label=service.service_label,
+                            service_certificate=service.service_certificate,
+                            created_on=service.created_on,
+                            service_type=service.service_type.value.upper(),
+                            webhook_url=webhook_url,
+                        )
+                    )
+                    if result != "INSERT 0 1":
+                        raise OrganizationError(f"Insertion Error: {result}")
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
         async with self.dbh.pool.acquire() as conn, conn.transaction():

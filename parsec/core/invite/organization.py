@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Optional
+from typing import Optional, Iterable
+from parsec.api.data.certif import SequesterServiceCertificate
 
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
@@ -45,6 +46,7 @@ async def bootstrap_organization(
     human_handle: Optional[HumanHandle],
     device_label: Optional[DeviceLabel],
     sequester_authority_verify_key: Optional[SequesterVerifyKeyDer] = None,
+    sequester_initial_services_certificate: Iterable[SequesterServiceCertificate] = ()
 ) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
@@ -106,6 +108,7 @@ async def bootstrap_organization(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
         sequester_authority_certificate=sequester_authority_certificate,
+        sequester_initial_services_certificate=sequester_initial_services_certificate,
     )
     _check_rep(rep, step_name="organization bootstrap")
 
@@ -120,6 +123,7 @@ async def failsafe_organization_bootstrap(
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
     sequester_authority_certificate: Optional[bytes] = None,
+    sequester_initial_services_certificate: Iterable[bytes] = (),
 ) -> dict:
     # Try the new anonymous API
     try:
@@ -131,6 +135,7 @@ async def failsafe_organization_bootstrap(
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
             sequester_authority_certificate=sequester_authority_certificate,
+            sequester_initial_services_certificate=sequester_initial_services_certificate,
         )
     # If we get a 404 error, maybe the backend is too old to know about the anonymous route (API version < 2.6)
     except BackendNotAvailable as exc:

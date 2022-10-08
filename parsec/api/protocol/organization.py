@@ -60,6 +60,15 @@ class OrganizationBootstrapReqSchema(BaseReqSchema):
     # Note there is absolutely no way to change this later as this certif must
     # be signed by the root key which has been destroyed after bootstrap
     sequester_authority_certificate = fields.Bytes(required=False, allow_none=True, missing=None)
+    # Added in API version 2.9/3.3 (Parsec 2.13.0)
+    # Unlike `sequester_authority_certificate`, additional sequester services can
+    # be configured later on
+    sequester_initial_services_certificate = fields.List(
+        fields.Bytes(),
+        required=False,
+        allow_none=True,
+        missing=None
+    )
 
 
 class OrganizationBootstrapRepSchema(BaseRepSchema):
