@@ -3,7 +3,14 @@
 import click
 
 from parsec.utils import trio_run
-from parsec.cli_utils import logging_config_options, spinner, cli_exception_handler, ok, ko
+from parsec.cli_utils import (
+    logging_config_options,
+    spinner,
+    cli_exception_handler,
+    debug_config_options,
+    ok,
+    ko,
+)
 from parsec.backend.postgresql import apply_migrations, retrieve_migrations
 
 
@@ -24,7 +31,8 @@ def _validate_postgres_db_url(ctx, param, value: str) -> str:
 @click.option("--dry-run", is_flag=True)
 # Avoid polluting CLI command output with INFO logs
 @logging_config_options(default_log_level="WARNING")
-@click.option("--debug", is_flag=True, envvar="PARSEC_DEBUG")
+# Add --debug
+@debug_config_options
 def migrate(db: str, debug: bool, dry_run: bool, **kwargs) -> None:
     """
     Updates the database schema
