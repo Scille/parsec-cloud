@@ -1,20 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from uuid import uuid4
+from base64 import b64encode, b64decode
 from async_generator import asynccontextmanager
+import textwrap
 import attr
 import click
 from parsec._parsec import DateTime
 from typing import Optional, Dict, List, Tuple
 from pathlib import Path
 import oscrypto.asymmetric
+from parsec.backend.postgresql.organization import PGOrganizationComponent
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery, trio_run
 from parsec.cli_utils import operation, cli_exception_handler, debug_config_options
-from parsec.sequester_crypto import sequester_authority_sign, SequesterEncryptionKeyDer
+from parsec.sequester_crypto import (
+    sequester_authority_sign,
+    SequesterEncryptionKeyDer,
+    SequesterVerifyKeyDer,
+    CryptoError,
+)
 from parsec.sequester_export_reader import extract_workspace, RealmExportProgress
-from parsec.api.data import SequesterServiceCertificate
+from parsec.api.data import SequesterServiceCertificate, DataError
 from parsec.api.protocol import OrganizationID, UserID, RealmID, SequesterServiceID, HumanHandle
 from parsec.backend.cli.utils import db_backend_options, blockstore_backend_options
 from parsec.backend.config import BaseBlockStoreConfig
@@ -32,6 +40,52 @@ from parsec.backend.postgresql.sequester import PGPSequesterComponent
 from parsec.backend.postgresql.sequester_export import RealmExporter
 from parsec.backend.postgresql.user import PGUserComponent
 from parsec.backend.postgresql.realm import PGRealmComponent
+
+
+SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER = "-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----"
+SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER = "-----END PARSEC SEQUESTER SERVICE CERTIFICATE-----"
+
+
+def dump_sequester_service_certificate_pem(
+    certificate_data: SequesterServiceCertificate,
+    authority_signing_key: oscrypto.asymmetric.PrivateKey,
+) -> str:
+    certificate = sequester_authority_sign(
+        signing_key=authority_signing_key, data=certificate_data.dump()
+    )
+    return "\n".join(
+        (
+            SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER,
+            *textwrap.wrap(b64encode(certificate).decode(), width=64),
+            SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER,
+            "",
+        )
+    )
+
+
+def load_sequester_service_certificate_pem(
+    data: str, authority_verify_key: SequesterVerifyKeyDer
+) -> Tuple[SequesterServiceCertificate, bytes]:
+
+    err_msg = "Not a valid Parsec sequester service certificate PEM file"
+    try:
+        header, *content, footer = data.strip().splitlines()
+    except ValueError as exc:
+        raise ValueError(err_msg) from exc
+
+    if header != SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER:
+        raise ValueError(f"{err_msg}: missing `{SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER}` header")
+    if footer != SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER:
+        raise ValueError(f"{err_msg}: missing `{SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER}` footer")
+
+    try:
+        certificate = b64decode("".join(content))
+        return (
+            SequesterServiceCertificate.load(authority_verify_key.verify(certificate)),
+            certificate,
+        )
+    except (ValueError, DataError, CryptoError) as exc:
+        raise ValueError(f"{err_msg}: invalid body ({exc})") from exc
 
 
 class SequesterBackendCliError(Exception):
@@ -125,6 +179,192 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
     return BackendDbConfig(
         db_url=db, db_min_connections=db_min_connections, db_max_connections=db_max_connections
     )
+
+
+@click.command(short_help="Generate a certificate for a new sequester service")
+@click.option("--service-label", type=str, help="New service name", required=True)
+@click.option(
+    "--service-public-key",
+    help="The service encryption public key used to encrypt data to the sequester service",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    required=True,
+)
+@click.option(
+    "--authority-private-key",
+    help="The private authority key use. Used to sign the encryption key.",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    required=True,
+)
+@click.option(
+    "--output",
+    "-o",
+    help="File to write the sequester service certificate into.",
+    type=click.File("w", encoding="utf8"),
+    required=True,
+    metavar="CERTIFICATE.pem",
+)
+# Add --debug
+@debug_config_options
+def generate_service_certificate(
+    service_label: str,
+    service_public_key: Path,
+    authority_private_key: Path,
+    output: click.utils.LazyFile,
+    debug: bool,
+):
+    with cli_exception_handler(debug):
+        # Load key files
+        service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())
+        authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
+
+        # Generate data schema
+        service_id = SequesterServiceID(uuid4())
+        now = DateTime.now()
+        certificate_data = SequesterServiceCertificate(
+            timestamp=now,
+            service_id=service_id,
+            service_label=service_label,
+            encryption_key_der=service_key,
+        )
+
+        # Write the output file
+        pem_content = dump_sequester_service_certificate_pem(
+            certificate_data=certificate_data,
+            authority_signing_key=authority_key,
+        )
+        output.write(pem_content)
+
+        display_service = f"{click.style(service_label, fg='yellow')} (id: {click.style(service_id.str, fg='yellow')})"
+        display_file = click.style(output.name, fg="green")
+        click.echo(f"Sequester service certificate {display_service} exported in {display_file}")
+        click.echo(
+            f"Use {click.style('import_service_certificate', fg='yellow')} command to add it to an organization"
+        )
+
+
+@click.command(short_help="Register a new sequester service from it existing certificate")
+@click.option(
+    "--service-certificate",
+    help="File containing the sequester service certificate (previously generated by `generate_service_certificate` command).",
+    type=click.File("r", encoding="utf8"),
+    required=True,
+    metavar="CERTIFICATE.pem",
+)
+@click.option(
+    "--organization",
+    type=OrganizationID,
+    help="Organization ID where to register the service",
+    required=True,
+)
+@click.option(
+    "--service-type",
+    type=click.Choice(list(SERVICE_TYPE_CHOICES.keys()), case_sensitive=False),
+    default=SequesterServiceType.STORAGE.value,
+    help="Service type",
+)
+@click.option(
+    "--webhook-url",
+    type=str,
+    default=None,
+    help="[Service Type webhook only] webhook url used to send encrypted service data",
+)
+@db_backend_options
+# Add --debug
+@debug_config_options
+def import_service_certificate(
+    service_certificate: click.utils.LazyFile,
+    organization: OrganizationID,
+    db: str,
+    db_max_connections: int,
+    db_min_connections: int,
+    service_type: str,
+    webhook_url: Optional[str],
+    debug: bool,
+):
+    with cli_exception_handler(debug):
+        cooked_service_type: SequesterServiceType = SERVICE_TYPE_CHOICES[service_type]
+        # Check service type
+        if webhook_url is not None and cooked_service_type != SequesterServiceType.WEBHOOK:
+            raise SequesterBackendCliError(
+                f"Incompatible service type {cooked_service_type} with webhook_url option\nwebhook_url can only be used with {SequesterServiceType.WEBHOOK}."
+            )
+        if cooked_service_type == SequesterServiceType.WEBHOOK and not webhook_url:
+            raise SequesterBackendCliError(
+                "Webhook sequester service requires webhook_url argument"
+            )
+
+        db_config = _get_config(db, db_min_connections, db_max_connections)
+        service_certificate_pem = service_certificate.read()
+
+        trio_run(
+            _import_service_certificate,
+            db_config,
+            organization,
+            service_certificate_pem,
+            cooked_service_type,
+            webhook_url,
+            use_asyncio=True,
+        )
+        click.echo(click.style("Service created", fg="green"))
+
+
+async def _import_service_certificate(
+    db_config: BackendDbConfig,
+    organization_id: OrganizationID,
+    service_certificate_pem: str,
+    service_type: SequesterServiceType,
+    webhook_url: Optional[None],
+):
+    async with run_pg_db_handler(db_config) as dbh:
+
+        # 1) Retreive the sequester authority verify key and check organization is compatible
+
+        async with dbh.pool.acquire() as conn:
+            organization = await PGOrganizationComponent._get(conn, id=organization_id)
+
+        if not organization.is_bootstrapped():
+            raise RuntimeError("Organization is not bootstrapped, aborting.")
+
+        if organization.sequester_authority is None:
+            raise RuntimeError("Organization doesn't support sequester, aborting.")
+
+        # 2) Validate the certificate
+
+        (
+            service_certificate_data,
+            service_certificate_content,
+        ) = load_sequester_service_certificate_pem(
+            data=service_certificate_pem,
+            authority_verify_key=organization.sequester_authority.verify_key_der,
+        )
+
+        # 3) Insert the certificate
+
+        service: BaseSequesterService
+        if service_type == SequesterServiceType.STORAGE:
+            assert webhook_url is None
+            service = StorageSequesterService(
+                service_id=service_certificate_data.service_id,
+                service_label=service_certificate_data.service_label,
+                service_certificate=service_certificate_content,
+                created_on=service_certificate_data.timestamp,
+            )
+        else:
+            assert service_type == SequesterServiceType.WEBHOOK
+            assert webhook_url
+            # Removing the extra slash if present to avoid a useless redirection
+            if webhook_url and webhook_url.endswith("/"):
+                webhook_url = webhook_url[:-1]
+            service = WebhookSequesterService(
+                service_id=service_certificate_data.service_id,
+                service_label=service_certificate_data.service_label,
+                service_certificate=service_certificate_content,
+                created_on=service_certificate_data.timestamp,
+                webhook_url=webhook_url,
+            )
+
+        sequester_component = PGPSequesterComponent(dbh)
+        await sequester_component.create_service(organization_id, service)
 
 
 @click.command(short_help="Register a new sequester service")

@@ -2,18 +2,11 @@
 
 import re
 import os
-from parsec.backend.sequester import (
-    SequesterServiceAlreadyDisabledError,
-    SequesterServiceAlreadyEnabledError,
-    SequesterServiceType,
-)
 import trio
 from uuid import UUID
 from pathlib import Path
 from functools import partial
-
-from tests.common.fixtures_customisation import customize_fixtures
-from tests.common.sequester import sequester_service_factory
+import oscrypto.asymmetric
 
 try:
     import fcntl
@@ -31,8 +24,13 @@ from click.testing import CliRunner, Result as CliResult
 
 from parsec import __version__ as parsec_version
 from parsec.cli import cli
-from parsec.backend.postgresql import MigrationItem
 from parsec.api.protocol import RealmID
+from parsec.backend.postgresql import MigrationItem
+from parsec.backend.sequester import (
+    SequesterServiceAlreadyDisabledError,
+    SequesterServiceAlreadyEnabledError,
+    SequesterServiceType,
+)
 from parsec.core.types import BackendAddr, EntryID
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types import (
@@ -43,7 +41,13 @@ from parsec.core.types import (
 )
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 
-from tests.common import AsyncMock, real_clock_timeout, asgi_app_handle_client_factory
+from tests.common import (
+    AsyncMock,
+    real_clock_timeout,
+    asgi_app_handle_client_factory,
+    customize_fixtures,
+    sequester_service_factory,
+)
 
 
 CWD = Path(__file__).parent.parent
@@ -1016,9 +1020,7 @@ def _setup_sequester_key_paths(tmp_path, coolorg):
     key_path.mkdir()
     service_key_path = key_path / "service.pem"
     authority_key_path = key_path / "authority.pem"
-
-    import oscrypto.asymmetric
-
+    authority_pubkey_path = key_path / "authority_pub.pem"
     service = sequester_service_factory("Test Service", coolorg.sequester_authority)
     service_key = service.encryption_key
     authority_key = coolorg.sequester_authority.signing_key
@@ -1026,7 +1028,10 @@ def _setup_sequester_key_paths(tmp_path, coolorg):
     authority_key_path.write_bytes(
         oscrypto.asymmetric.dump_private_key(authority_key, passphrase=None)
     )
-    return authority_key_path, service_key_path
+    authority_pubkey_path.write_bytes(
+        oscrypto.asymmetric.dump_public_key(coolorg.sequester_authority.verify_key)
+    )
+    return authority_key_path, authority_pubkey_path, service_key_path
 
 
 async def _cli_invoke_in_thread(runner: CliRunner, cmd: str, input: str = None):
@@ -1073,6 +1078,34 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
             assert result.exit_code == 0
             return result
 
+        async def generate_service_certificate(
+            service_key_path: Path,
+            authority_key_path: Path,
+            service_label: str,
+            output: Path,
+            check_result: bool = True,
+        ) -> CliResult:
+            result = await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester generate_service_certificate --service-label {service_label} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --output {output}",
+            )
+            if check_result:
+                assert result.exit_code == 0
+            return result
+
+        async def import_service_certificate(
+            service_certificate_path: Path,
+            extra_args: str = "",
+            check_result: bool = True,
+        ) -> CliResult:
+            result = await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester import_service_certificate {common_args} --service-certificate {service_certificate_path} {extra_args}",
+            )
+            if check_result:
+                assert result.exit_code == 0
+            return result
+
         async def create_service(
             service_key_path: Path,
             authority_key_path: Path,
@@ -1111,7 +1144,9 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         assert result.output == "Found 0 sequester service(s)\n"
 
         # Create service
-        authority_key_path, service_key_path = _setup_sequester_key_paths(tmp_path, coolorg)
+        authority_key_path, authority_pubkey_path, service_key_path = _setup_sequester_key_paths(
+            tmp_path, coolorg
+        )
         service_label = "TestService"
         result = await create_service(service_key_path, authority_key_path, service_label)
 
@@ -1160,6 +1195,30 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         assert len(files) == 1
         assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id.str}.sqlite")
 
+        # Create service using generate/import commands
+        service_certif_pem = tmp_path / "certif.pem"
+        service2_label = "TestService2"
+        await generate_service_certificate(
+            service_key_path, authority_key_path, service2_label, service_certif_pem
+        )
+        assert (
+            "-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----" in service_certif_pem.read_text()
+        )
+        await import_service_certificate(
+            service_certif_pem,
+        )
+
+        # Import invalid sequester service certificate
+        modify_index = len("-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----\n") + 1
+        pem_content = bytearray(service_certif_pem.read_bytes())
+        pem_content[modify_index] = 0 if pem_content[modify_index] != 0 else 1
+        service_certif_pem.write_bytes(pem_content)
+        result = await import_service_certificate(
+            service_certif_pem,
+            check_result=False,
+        )
+        assert result.exit_code == 1
+
         # Create webhook service
         result = await create_service(
             service_key_path,
@@ -1207,7 +1266,7 @@ async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
     password = "P@ssw0rd."
     runner = CliRunner()
 
-    _, public_key = _setup_sequester_key_paths(tmp_path=tmp_path, coolorg=coolorg)
+    _, _, public_key = _setup_sequester_key_paths(tmp_path=tmp_path, coolorg=coolorg)
 
     async def create_organization():
         result = await _cli_invoke_in_thread(
