@@ -370,6 +370,7 @@ class BaseInviteComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(InviteNewReq, InviteNewRep)
     async def api_invite_new(self, client_ctx, req):
+        # Define helper
         def _to_http_redirection_url(
             client_ctx, invitation: Union[UserInvitation, DeviceInvitation]
         ) -> str:
@@ -381,6 +382,7 @@ class BaseInviteComponent:
                 token=invitation.token,
             ).to_http_redirection_url()
 
+        # Create new user / new device
         if req.type == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return InviteNewRepNotAllowed()
@@ -392,39 +394,6 @@ class BaseInviteComponent:
                 )
             except InvitationAlreadyMemberError:
                 return InviteNewRepAlreadyMember()
-
-            if req.send_email and self._config.backend_addr:
-                if client_ctx.human_handle:
-                    greeter_name = client_ctx.human_handle.label
-                    reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
-                else:
-                    greeter_name = client_ctx.user_id.str
-                    reply_to = None
-                message = generate_invite_email(
-                    from_addr=self._config.email_config.sender,
-                    to_addr=invitation.claimer_email,
-                    greeter_name=greeter_name,
-                    reply_to=reply_to,
-                    organization_id=client_ctx.organization_id,
-                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
-                    backend_url=self._config.backend_addr.to_http_domain_url(),
-                )
-                try:
-                    await send_email(
-                        email_config=self._config.email_config,
-                        to_addr=invitation.claimer_email,
-                        message=message,
-                    )
-                    email_sent_status = InvitationEmailSentStatus.SUCCESS
-                except InvitationEmailConfigError:
-                    email_sent_status = InvitationEmailSentStatus.NOT_AVAILABLE
-                except InvitationEmailRecipientError:
-                    email_sent_status = InvitationEmailSentStatus.BAD_RECIPIENT
-                else:
-                    email_sent_status = InvitationEmailSentStatus.SUCCESS
-                finally:
-                    return InviteNewRepOk(invitation.token, email_sent_status)
-
         else:  # Device
             if req.send_email and not client_ctx.human_handle:
                 return InviteNewRepNotAvailable()
@@ -434,33 +403,67 @@ class BaseInviteComponent:
                 greeter_user_id=client_ctx.user_id,
             )
 
-            if req.send_email and self._config.backend_addr:
-                message = generate_invite_email(
-                    from_addr=self._config.email_config.sender,
-                    to_addr=client_ctx.human_handle.email,
-                    greeter_name=None,
-                    reply_to=None,
-                    organization_id=client_ctx.organization_id,
-                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
-                    backend_url=self._config.backend_addr.to_http_domain_url(),
-                )
-                try:
-                    await send_email(
-                        email_config=self._config.email_config,
-                        to_addr=client_ctx.human_handle.email,
-                        message=message,
-                    )
-                    email_sent_status = InvitationEmailSentStatus.SUCCESS
-                except InvitationEmailConfigError:
-                    email_sent_status = InvitationEmailSentStatus.NOT_AVAILABLE
-                except InvitationEmailRecipientError:
-                    email_sent_status = InvitationEmailSentStatus.BAD_RECIPIENT
-                else:
-                    email_sent_status = InvitationEmailSentStatus.SUCCESS
-                finally:
-                    return InviteNewRepOk(invitation.token, email_sent_status)
+        # No need to send email, we're done
+        if not req.send_email:
+            # Note: before parsec v2.13.0, we used to reply with a missing `email_sent` field in this case.
+            # However, we'd rather limit the use of missing fields to compatibility use cases (e.g when a
+            # field has been added in a new version but does not exist in older versions). In this case, we
+            # can replace the missing field with `SUCCESS` without breaking compatibility with older clients
+            # since they also choose `SUCCESS` as value when getting an `AttributeError` on the reply.
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS)
 
-        return InviteNewRepOk(invitation.token, None)
+        # Backend address not configured, we won't be able to send the email
+        if not self._config.backend_addr:
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+
+        # Generate email message
+        if req.type == InvitationType.USER:
+            to_addr = invitation.claimer_email
+            if client_ctx.human_handle:
+                greeter_name = client_ctx.human_handle.label
+                reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
+            else:
+                greeter_name = client_ctx.user_id.str
+                reply_to = None
+            message = generate_invite_email(
+                from_addr=self._config.email_config.sender,
+                to_addr=invitation.claimer_email,
+                greeter_name=greeter_name,
+                reply_to=reply_to,
+                organization_id=client_ctx.organization_id,
+                invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                backend_url=self._config.backend_addr.to_http_domain_url(),
+            )
+        else:  # Device
+            to_addr = client_ctx.human_handle.email
+            message = generate_invite_email(
+                from_addr=self._config.email_config.sender,
+                to_addr=client_ctx.human_handle.email,
+                greeter_name=None,
+                reply_to=None,
+                organization_id=client_ctx.organization_id,
+                invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                backend_url=self._config.backend_addr.to_http_domain_url(),
+            )
+
+        # Send the email
+        try:
+            await send_email(
+                email_config=self._config.email_config,
+                to_addr=to_addr,
+                message=message,
+            )
+        except InvitationEmailRecipientError:
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.BAD_RECIPIENT)
+        except InvitationEmailConfigError:
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+        except Exception:
+            # Fail-safe: since the device/user has been created, we don't want to fail too hard
+            logger.exception("Unexpected exception while sending an email")
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+
+        # The email has been successfully sent
+        return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS)
 
     @api("invite_delete")
     @catch_protocol_errors
