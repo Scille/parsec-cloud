@@ -2,21 +2,27 @@
 
 use std::collections::HashMap;
 
-use super::{CustomType, MajorMinorVersion, Request, Response};
+use itertools::Itertools;
+
+use super::{CustomType, CustomTypes, MajorMinorVersion, Request, Responses};
 use crate::protocol::parser;
 
 macro_rules! filter_out_future_fields {
     ($current_version:expr, $fields:expr) => {
         $fields
             .iter()
-            .filter(move |field| {
+            .filter_map(move |(name, field)| {
                 // We check if the current field need to be present at the `current_version`
-                field
+                if field
                     .introduced_in
                     .map(|mj_version| mj_version.major <= $current_version)
                     .unwrap_or(true)
+                {
+                    Some((name.clone(), field.clone()))
+                } else {
+                    None
+                }
             })
-            .cloned()
             .collect()
     };
 }
@@ -26,8 +32,8 @@ pub struct Cmd {
     pub label: String,
     pub introduced_in: Option<MajorMinorVersion>,
     pub req: Request,
-    pub possible_responses: Vec<Response>,
-    pub nested_types: Vec<CustomType>,
+    pub possible_responses: Responses,
+    pub nested_types: CustomTypes,
 }
 
 #[cfg(test)]
@@ -36,8 +42,8 @@ impl Default for Cmd {
         Self {
             label: "FooCmd".to_string(),
             introduced_in: None,
-            nested_types: vec![],
-            possible_responses: vec![],
+            nested_types: CustomTypes::default(),
+            possible_responses: Responses::default(),
             req: parser::Request::default(),
         }
     }
@@ -52,31 +58,32 @@ impl Cmd {
         let possible_responses = cmd
             .possible_responses
             .into_iter()
-            .map(|mut response| {
-                response.other_fields = filter_out_future_fields!(version, response.other_fields);
-                response
+            .map(|(name, mut response)| {
+                response.fields = filter_out_future_fields!(version, response.fields);
+                (name, response)
             })
             .collect();
 
         let mut req = cmd.req;
-        req.other_fields = filter_out_future_fields!(version, req.other_fields);
+        req.fields = filter_out_future_fields!(version, req.fields);
 
         let nested_types = cmd
             .nested_types
             .into_iter()
-            .map(|mut custom_type| {
+            .map(|(name, mut custom_type)| {
                 match custom_type {
-                    CustomType::Enum(ref mut custom_enum) => {
-                        custom_enum.variants.iter_mut().for_each(|variant| {
+                    CustomType::Enum(ref mut custom_enum) => custom_enum
+                        .variants
+                        .iter_mut()
+                        .for_each(|(_name, variant)| {
                             variant.fields = filter_out_future_fields!(version, variant.fields)
-                        })
-                    }
+                        }),
                     CustomType::Struct(ref mut custom_struct) => {
                         custom_struct.fields =
                             filter_out_future_fields!(version, custom_struct.fields);
                     }
                 }
-                custom_type
+                (name, custom_type)
             })
             .collect();
 
@@ -111,9 +118,8 @@ impl Cmd {
             .unwrap_or_default();
         // TODO: We may need to have the types passed as argument for subsecant custom type.
         let mut types = HashMap::new();
-        self.nested_types.iter().for_each(|nested_type| {
-            let ty = nested_type.label().to_string();
-            types.insert(ty.clone(), ty);
+        self.nested_types.iter().for_each(|(name, _nested_type)| {
+            types.insert(name.clone(), name.clone());
         });
         let nested_types = self.quote_nested_types(&types);
         let (req_def, req_impl) = self.req.quote(&types);
@@ -192,14 +198,15 @@ impl Cmd {
     pub fn quote_nested_types(&self, types: &HashMap<String, String>) -> Vec<syn::Item> {
         self.nested_types
             .iter()
-            .map(|nested_type| nested_type.quote(types))
+            .map(|(name, nested_type)| nested_type.quote(name, types))
             .collect()
     }
 
     pub fn quote_reps(&self, types: &HashMap<String, String>) -> Vec<syn::Variant> {
         self.possible_responses
             .iter()
-            .map(|response| response.quote(types))
+            .sorted_by_key(|(name, _)| *name)
+            .map(|(name, response)| response.quote(name, types))
             .collect()
     }
 }
@@ -211,31 +218,33 @@ mod test {
     use quote::{quote, ToTokens};
     use rstest::rstest;
 
-    use super::{parser, Cmd, Response};
+    use super::{parser, Cmd, Responses};
+
+    use crate::protocol::intermediate::Response;
 
     #[rstest]
     #[case::basic(parser::Cmd::default(), Cmd::default())]
     #[case::request_with_previously_introduced_field(
         parser::Cmd {
             req: parser::Request {
-                other_fields: vec![
-                    parser::Field {
+                fields: parser::Fields::from([
+                    ("foo".to_string(), parser::Field {
                         introduced_in: Some("0.4".parse().unwrap()),
                         ..Default::default()
-                    }
-                ],
+                    })
+                ]),
                 ..Default::default()
             },
             ..Default::default()
         },
         Cmd {
             req: parser::Request {
-                other_fields: vec![
-                    parser::Field {
+                fields: parser::Fields::from([
+                    ("foo".to_string(), parser::Field {
                         introduced_in: Some("0.4".parse().unwrap()),
                         ..Default::default()
-                    }
-                ],
+                    })
+                ]),
                 ..Default::default()
             },
             ..Default::default()
@@ -244,19 +253,19 @@ mod test {
     #[case::request_with_not_yet_introduced_field(
         parser::Cmd {
             req: parser::Request {
-                other_fields: vec![
-                    parser::Field {
+                fields: parser::Fields::from([
+                    ("foo".to_string(), parser::Field {
                         introduced_in: Some("2.4".parse().unwrap()),
                         ..Default::default()
-                    }
-                ],
+                    })
+                ]),
                 ..Default::default()
             },
             ..Default::default()
         },
         Cmd {
             req: parser::Request {
-                other_fields: vec![],
+                fields: parser::Fields::default(),
                 ..Default::default()
             },
             ..Default::default()
@@ -264,210 +273,206 @@ mod test {
     )]
     #[case::possible_response_with_introduced_field(
         parser::Cmd {
-            possible_responses: vec![
-                parser::Response {
-                    other_fields: vec![
-                        parser::Field {
+            possible_responses: Responses::from([
+                ("ok".to_string(), parser::Response {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: Some("0.5".parse().unwrap()),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                }
-            ],
+                })
+            ]),
             ..Default::default()
         },
         Cmd {
-            possible_responses: vec![
-                parser::Response {
-                    other_fields: vec![
-                        parser::Field {
+            possible_responses: parser::Responses::from([
+                ("ok".to_string(), parser::Response {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: Some("0.5".parse().unwrap()),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                }
-            ],
+                })
+            ]),
             ..Default::default()
         }
     )]
     #[case::possible_response_with_not_yet_introduced_field(
         parser::Cmd {
-            possible_responses: vec![
-                parser::Response {
-                    other_fields: vec![
-                        parser::Field {
+            possible_responses: parser::Responses::from([
+                ("ok".to_string(), parser::Response {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: Some("2.5".parse().unwrap()),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                }
-            ],
+                })
+            ]),
             ..Default::default()
         },
         Cmd {
-            possible_responses: vec![
-                parser::Response {
-                    other_fields: vec![],
+            possible_responses: parser::Responses::from([
+                ("ok".to_string(), parser::Response {
+                    fields: parser::Fields::default(),
                     ..Default::default()
-                }
-            ],
+                })
+            ]),
             ..Default::default()
         }
     )]
     #[case::nested_type_enum_with_introduced_field(
         parser::Cmd {
-            nested_types: vec![
-                parser::CustomType::Enum(parser::CustomEnum {
-                    variants: vec![
-                        parser::Variant {
-                            fields: vec![
-                                parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
+                    variants: parser::Variants::from([
+                        ("Bar".to_string(), parser::Variant {
+                            fields: parser::Fields::from([
+                                ("foo".to_string(), parser::Field {
                                     introduced_in: Some("0.2".parse().unwrap()),
                                     ..Default::default()
-                                }
-                            ],
+                                })
+                            ]),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                })
-            ],
+                }))
+            ]),
             ..Default::default()
         },
         Cmd {
-            nested_types: vec![
-                parser::CustomType::Enum(parser::CustomEnum {
-                    variants: vec![
-                        parser::Variant {
-                            fields: vec![
-                                parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
+                    variants: parser::Variants::from([
+                        ("Bar".to_string(), parser::Variant {
+                            fields: parser::Fields::from([
+                                ("foo".to_string(), parser::Field {
                                     introduced_in: Some("0.2".parse().unwrap()),
                                     ..Default::default()
-                                }
-                            ],
+                                })
+                            ]),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                })
-            ],
+                }))
+            ]),
             ..Default::default()
         }
     )]
     #[case::nested_type_enum_with_not_yet_introduced_field(
         parser::Cmd {
-            nested_types: vec![
-                parser::CustomType::Enum(parser::CustomEnum {
-                    variants: vec![
-                        parser::Variant {
-                            fields: vec![
-                                parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
+                    variants: parser::Variants::from([
+                        ("Bar".to_string(), parser::Variant {
+                            fields: parser::Fields::from([
+                                ("foo".to_string(), parser::Field {
                                     introduced_in: Some("6.2".parse().unwrap()),
                                     ..Default::default()
-                                }
-                            ],
+                                })
+                            ]),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                })
-            ],
+                }))
+            ]),
             ..Default::default()
         },
         Cmd {
-            nested_types: vec![
-                parser::CustomType::Enum(parser::CustomEnum {
-                    variants: vec![
-                        parser::Variant {
-                            fields: vec![],
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
+                    variants: parser::Variants::from([
+                        ("Bar".to_string(), parser::Variant {
+                            fields: parser::Fields::default(),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                })
-            ],
+                }))
+            ]),
             ..Default::default()
         }
     )]
     #[case::nested_type_struct_with_introduced_field(
         parser::Cmd {
-            nested_types: vec![
-                parser::CustomType::Struct(parser::CustomStruct {
-                    label: "Data".to_string(),
-                    fields: vec![
-                        parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: Some("0.1".parse().unwrap()),
                             ..Default::default()
-                        }
-                    ]
-                })
-            ],
+                        })
+                    ])
+                }))
+            ]),
             ..Default::default()
         },
         Cmd {
-            nested_types: vec![
-                parser::CustomType::Struct(parser::CustomStruct {
-                    label: "Data".to_string(),
-                    fields: vec![
-                        parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: Some("0.1".parse().unwrap()),
                             ..Default::default()
-                        }
-                    ]
-                })
-            ],
+                        })
+                    ])
+                }))
+            ]),
             ..Default::default()
         }
     )]
     #[case::nested_type_struct_with_not_yet_introduced_field(
         parser::Cmd {
-            nested_types: vec![
-                parser::CustomType::Struct(parser::CustomStruct {
-                    label: "Data".to_string(),
-                    fields: vec![
-                        parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: Some("3.1".parse().unwrap()),
                             ..Default::default()
-                        }
-                    ]
-                })
-            ],
+                        })
+                    ])
+                }))
+            ]),
             ..Default::default()
         },
         Cmd {
-            nested_types: vec![
-                parser::CustomType::Struct(parser::CustomStruct {
-                    label: "Data".to_string(),
-                    fields: vec![]
-                })
-            ],
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
+                    fields: parser::Fields::default()
+                }))
+            ]),
             ..Default::default()
         }
     )]
     #[case::request_with_static_field(
         parser::Cmd {
             req: parser::Request {
-                other_fields: vec![
-                    parser::Field {
+                fields: parser::Fields::from([
+                    ("foo".to_string(), parser::Field {
                         introduced_in: None,
                         ..Default::default()
-                    }
-                ],
+                    })
+                ]),
                 ..Default::default()
             },
             ..Default::default()
         },
         Cmd {
             req: parser::Request {
-                other_fields: vec![
-                    parser::Field {
+                fields: parser::Fields::from([
+                    ("foo".to_string(), parser::Field {
                         introduced_in: None,
                         ..Default::default()
-                    }
-                ],
+                    })
+                ]),
                 ..Default::default()
             },
             ..Default::default()
@@ -475,101 +480,99 @@ mod test {
     )]
     #[case::possible_response_with_static_field(
         parser::Cmd {
-            possible_responses: vec![
-                parser::Response {
-                    other_fields: vec![
-                        parser::Field {
+            possible_responses: parser::Responses::from([
+                ("ok".to_string(), parser::Response {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: None,
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                }
-            ],
+                })
+            ]),
             ..Default::default()
         },
         Cmd {
-            possible_responses: vec![
-                parser::Response {
-                    other_fields: vec![
-                        parser::Field {
+            possible_responses: parser::Responses::from([
+                ("ok".to_string(), parser::Response {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: None,
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                }
-            ],
+                })
+            ]),
             ..Default::default()
         }
     )]
     #[case::nested_type_enum_with_static_field(
         parser::Cmd {
-            nested_types: vec![
-                parser::CustomType::Enum(parser::CustomEnum {
-                    variants: vec![
-                        parser::Variant {
-                            fields: vec![
-                                parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
+                    variants: parser::Variants::from([
+                        ("Bar".to_string(), parser::Variant {
+                            fields: parser::Fields::from([
+                                ("foo".to_string(), parser::Field {
                                     introduced_in: None,
                                     ..Default::default()
-                                }
-                            ],
+                                })
+                            ]),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                })
-            ],
+                }))
+            ]),
             ..Default::default()
         },
         Cmd {
-            nested_types: vec![
-                parser::CustomType::Enum(parser::CustomEnum {
-                    variants: vec![
-                        parser::Variant {
-                            fields: vec![
-                                parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
+                    variants: parser::Variants::from([
+                        ("Bar".to_string(), parser::Variant {
+                            fields: parser::Fields::from([
+                                ("foo".to_string(), parser::Field {
                                     introduced_in: None,
                                     ..Default::default()
-                                }
-                            ],
+                                })
+                            ]),
                             ..Default::default()
-                        }
-                    ],
+                        })
+                    ]),
                     ..Default::default()
-                })
-            ],
+                }))
+            ]),
             ..Default::default()
         }
     )]
     #[case::nested_type_struct_with_static_field(
         parser::Cmd {
-            nested_types: vec![
-                parser::CustomType::Struct(parser::CustomStruct {
-                    label: "Struct".to_string(),
-                    fields: vec![
-                        parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: None,
                             ..Default::default()
-                        }
-                    ]
-                })
-            ],
+                        })
+                    ])
+                }))
+            ]),
             ..Default::default()
         },
         Cmd {
-            nested_types: vec![
-                parser::CustomType::Struct(parser::CustomStruct {
-                    label: "Struct".to_string(),
-                    fields: vec![
-                        parser::Field {
+            nested_types: parser::CustomTypes::from([
+                ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
+                    fields: parser::Fields::from([
+                        ("foo".to_string(), parser::Field {
                             introduced_in: None,
                             ..Default::default()
-                        }
-                    ]
-                })
-            ],
+                        })
+                    ])
+                }))
+            ]),
             ..Default::default()
         }
     )]
@@ -669,10 +672,10 @@ mod test {
     )]
     #[case::with_possible_responses(
         Cmd {
-            possible_responses: vec![
-                Response::default(),
-                Response::default()
-            ],
+            possible_responses: parser::Responses::from([
+                ("ok".to_string(), Response::default()),
+                ("err".to_string(), Response::default())
+            ]),
             ..Default::default()
         },
         quote! {
@@ -697,10 +700,10 @@ mod test {
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
                 #[serde(tag = "status")]
                 pub enum Rep {
-                    #[serde(rename = "foo_response")]
-                    FooResponse,
-                    #[serde(rename = "foo_response")]
-                    FooResponse,
+                    #[serde(rename = "err")]
+                    Err,
+                    #[serde(rename = "ok")]
+                    Ok,
                     /// `UnknownStatus` covers the case the server returns a valid message but with
                     /// an unknown status value (given change in error status only cause a minor bump in API version)
                     /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)

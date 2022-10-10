@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::protocol::parser::field::{quote_fields, Field};
+use crate::protocol::parser::field::{quote_fields, Fields};
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
@@ -12,7 +12,7 @@ pub struct Request {
     pub cmd: String,
     pub unit: Option<String>,
     #[serde(default)]
-    pub other_fields: Vec<Field>,
+    pub fields: Fields,
 }
 
 #[cfg(test)]
@@ -21,7 +21,7 @@ impl Default for Request {
         Self {
             cmd: "foo_cmd".to_string(),
             unit: None,
-            other_fields: vec![],
+            fields: Fields::default(),
         }
     }
 }
@@ -34,7 +34,7 @@ impl Request {
     pub fn quote(&self, types: &HashMap<String, String>) -> (syn::ItemStruct, syn::ItemImpl) {
         if let Some(unit) = &self.unit {
             self.quote_unit(unit)
-        } else if self.other_fields.is_empty() {
+        } else if self.fields.is_empty() {
             self.quote_empty()
         } else {
             self.quote_fields(types)
@@ -78,7 +78,7 @@ impl Request {
 
     fn quote_fields(&self, types: &HashMap<String, String>) -> (syn::ItemStruct, syn::ItemImpl) {
         let shared_derive = Request::shared_derive();
-        let fields = quote_fields(&self.other_fields, None, types);
+        let fields = quote_fields(&self.fields, None, types);
         let (params, params_name): (Vec<syn::PatType>, Vec<syn::Ident>) = fields
             .iter()
             .map(|field| {
@@ -133,87 +133,124 @@ impl Request {
 }
 
 #[cfg(test)]
-#[rstest::rstest]
-#[case::empty(
-    Request::default(),
-    quote::quote! {
-        #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-        pub struct Req;
-    },
-    quote::quote! {
-        impl Req {
-            pub fn new() -> Self { Self }
+mod test {
+    use pretty_assertions::assert_eq;
+    use quote::{quote, ToTokens};
+    use rstest::rstest;
+
+    use super::{Fields, HashMap, Request};
+
+    use crate::protocol::parser::Field;
+
+    #[rstest]
+    #[case::unit(
+        r#"{"cmd": "foo", "unit": "u32"}"#,
+        Request { cmd: "foo".to_string(), unit: Some("u32".to_string()), fields: Fields::default() }
+    )]
+    #[case::fields(
+        r#"{
+            "cmd": "foo",
+            "fields": {
+                "foo": {
+                    "type": "usize"
+                }
+            }
+        }"#,
+        Request {
+            cmd: "foo".to_string(),
+            unit: None,
+            fields: Fields::from([
+                ("foo".to_string(), Field {
+                    ty: "usize".to_string(),
+                    ..Default::default()
+                })
+            ])
         }
+    )]
+    fn deserialization(#[case] input: &str, #[case] expected: Request) {
+        let request: Request = serde_json::from_str(input).expect("Valid json input");
+        assert_eq!(request, expected);
     }
-)]
-#[case::with_unit(
-    Request {
-        unit: Some("String".to_string()),
-        ..Default::default()
-    },
-    quote::quote! {
-        #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-        pub struct Req(pub String);
-    },
-    quote::quote! {
-        impl Req {
-            pub fn new(value: String) -> Self {
-                Self(value)
+
+    #[rstest]
+    #[case::empty(
+        Request::default(),
+        quote! {
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req;
+        },
+        quote! {
+            impl Req {
+                pub fn new() -> Self { Self }
             }
         }
-    }
-)]
-#[case::with_fields(
-    Request {
-        other_fields: vec![
-            Field::default(),
-            Field::default()
-        ],
-        ..Default::default()
-    },
-    quote::quote! {
-        #[::serde_with::serde_as]
-        #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-        pub struct Req {
-            #[serde_as(as = "_")]
-            pub foo_type: String,
-            #[serde_as(as = "_")]
-            pub foo_type: String
-        }
-    },
-    quote::quote! {
-        impl Req {
-            pub fn new(foo_type: String, foo_type: String) -> Self {
-                Self {
-                    foo_type,
-                    foo_type
+    )]
+    #[case::with_unit(
+        Request {
+            unit: Some("String".to_string()),
+            ..Default::default()
+        },
+        quote! {
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req(pub String);
+        },
+        quote! {
+            impl Req {
+                pub fn new(value: String) -> Self {
+                    Self(value)
                 }
             }
         }
+    )]
+    #[case::with_fields(
+        Request {
+            fields: Fields::from([
+                ("foo".to_string(), Field::default()),
+                ("bar".to_string(), Field::default())
+            ]),
+            ..Default::default()
+        },
+        quote! {
+            #[::serde_with::serde_as]
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req {
+                #[serde_as(as = "_")]
+                pub bar: String,
+                #[serde_as(as = "_")]
+                pub foo: String
+            }
+        },
+        quote! {
+            impl Req {
+                pub fn new(bar: String, foo: String) -> Self {
+                    Self {
+                        bar,
+                        foo
+                    }
+                }
+            }
+        }
+    )]
+    fn test_quote(
+        #[case] request: Request,
+        #[case] expected_definition: proc_macro2::TokenStream,
+        #[case] expected_impl: proc_macro2::TokenStream,
+    ) {
+        assert_eq!(
+            request
+                .quote(&HashMap::new())
+                .0
+                .into_token_stream()
+                .to_string(),
+            expected_definition.to_string()
+        );
+        assert_eq!(
+            request
+                .quote(&HashMap::new())
+                .1
+                .into_token_stream()
+                .to_string(),
+            expected_impl.to_string()
+        )
     }
-)]
-fn test_quote(
-    #[case] request: Request,
-    #[case] expected_definition: proc_macro2::TokenStream,
-    #[case] expected_impl: proc_macro2::TokenStream,
-) {
-    use pretty_assertions::assert_eq;
-    use quote::ToTokens;
-
-    assert_eq!(
-        request
-            .quote(&HashMap::new())
-            .0
-            .into_token_stream()
-            .to_string(),
-        expected_definition.to_string()
-    );
-    assert_eq!(
-        request
-            .quote(&HashMap::new())
-            .1
-            .into_token_stream()
-            .to_string(),
-        expected_impl.to_string()
-    )
 }
