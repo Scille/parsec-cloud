@@ -219,3 +219,10 @@ async def test_create_disable_services(
         backend_service2,
         webhook_service.backend_service,
     ]
+
+    # 6) Bonus: service creation in a expired organization is allowed
+    await backend.organization.update(id=coolorg.organization_id, is_expired=True)
+    backend_service3 = service.backend_service.evolve(service_id=SequesterServiceID.new())
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=backend_service3
+    )

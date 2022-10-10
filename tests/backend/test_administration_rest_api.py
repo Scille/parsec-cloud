@@ -16,7 +16,7 @@ from parsec.api.rest import organization_stats_rep_serializer
 from parsec.backend.organization import Organization
 from parsec.backend.backend_events import BackendEvent
 
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, local_device_to_backend_user
 
 
 @pytest.mark.trio
@@ -398,6 +398,30 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
     # No BackendEvent.ORGANIZATION_EXPIRED should have occured
     await trio.testing.wait_all_tasks_blocked()
     assert spy.events == []
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
+async def test_bootstsrap_expired_organization(backend_asgi_app, backend, alice, coolorg):
+    bootstrap_token = "123"
+    await backend_asgi_app.backend.organization.create(
+        id=coolorg.organization_id, bootstrap_token=bootstrap_token
+    )
+    await backend_asgi_app.backend.organization.update(id=coolorg.organization_id, is_expired=True)
+
+    # Bootstrap should go fine
+    backend_user, backend_first_device = local_device_to_backend_user(alice, coolorg)
+    await backend.organization.bootstrap(
+        id=coolorg.organization_id,
+        user=backend_user,
+        first_device=backend_first_device,
+        bootstrap_token=bootstrap_token,
+        root_verify_key=coolorg.root_verify_key,
+    )
+
+    # Once bootstrapped, the organization is still expired
+    org = await backend.organization.get(id=coolorg.organization_id)
+    assert org.is_expired is True
 
 
 @pytest.mark.trio
