@@ -232,12 +232,9 @@ class InviteListRep:
 class InviteListRepUnknownStatus(InviteListRep): ...
 
 class InvitationStatus:
-    @classmethod
-    def IDLE(cls) -> InvitationStatus: ...
-    @classmethod
-    def READY(cls) -> InvitationStatus: ...
-    @classmethod
-    def DELETED(cls) -> InvitationStatus: ...
+    IDLE: InvitationStatus
+    READY: InvitationStatus
+    DELETED: InvitationStatus
 
 class InviteListItem:
     @classmethod

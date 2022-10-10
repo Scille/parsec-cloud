@@ -191,31 +191,64 @@ crate::binding_utils::gen_proto!(InvitationStatus, __richcmp__, eq);
 
 #[pymethods]
 impl InvitationStatus {
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "IDLE")]
-    fn idle(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::InvitationStatus::Idle))
+    fn idle() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    InvitationStatus(libparsec::types::InvitationStatus::Idle).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "READY")]
-    fn ready(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::InvitationStatus::Ready))
+    fn ready() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    InvitationStatus(libparsec::types::InvitationStatus::Ready).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
+    }
+
+    #[classattr]
+    #[pyo3(name = "DELETED")]
+    fn deleted() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    InvitationStatus(libparsec::types::InvitationStatus::Deleted).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
     }
 
     #[classmethod]
-    #[pyo3(name = "DELETED")]
-    fn deleted(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::InvitationStatus::Deleted))
+    fn from_str(_cls: &PyType, value: &str) -> PyResult<Self> {
+        match value {
+            "IDLE" => Ok(Self(libparsec::types::InvitationStatus::Idle)),
+            "READY" => Ok(Self(libparsec::types::InvitationStatus::Ready)),
+            "DELETED" => Ok(Self(libparsec::types::InvitationStatus::Deleted)),
+            _ => Err(PyValueError::new_err(format!("Invalid value `{}`", value))),
+        }
     }
 
-    #[getter]
-    fn name(&self) -> PyResult<&str> {
-        Ok(match self.0 {
-            libparsec::types::InvitationStatus::Idle => "IDLE",
+    fn __str__(&self) -> &str {
+        match self.0 {
             libparsec::types::InvitationStatus::Ready => "READY",
+            libparsec::types::InvitationStatus::Idle => "IDLE",
             libparsec::types::InvitationStatus::Deleted => "DELETED",
-        })
+        }
     }
 }
 
