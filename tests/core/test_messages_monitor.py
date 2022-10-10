@@ -41,7 +41,12 @@ async def _send_msg(backend, author, recipient, ping="ping"):
 
 
 @pytest.mark.trio
-async def test_process_while_offline(running_backend, alice_core, bob_user_fs, alice, bob):
+async def test_process_while_offline(
+    running_backend, alice_core, bob_user_fs, alice, bob, monkeypatch
+):
+    # TODO: use global time provider instead of disabling ballpark checks
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
