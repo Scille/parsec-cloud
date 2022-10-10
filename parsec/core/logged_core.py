@@ -192,7 +192,7 @@ class LoggedCore:
             realms=rep.realms,
             users=rep.users,
             active_users=rep.active_users,
-            users_per_profile_detail=list(rep.users_per_profile_detail),
+            users_per_profile_detail=rep.users_per_profile_detail,
         )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:
@@ -289,8 +289,6 @@ class LoggedCore:
             email_sent = rep.email_sent
         except AttributeError:
             email_sent = InvitationEmailSentStatus.SUCCESS
-        if email_sent is None:
-            email_sent = InvitationEmailSentStatus.SUCCESS
 
         return (
             BackendInvitationAddr.build(
@@ -318,8 +316,6 @@ class LoggedCore:
         try:
             email_sent = rep.email_sent
         except AttributeError:
-            email_sent = InvitationEmailSentStatus.SUCCESS
-        if email_sent is None:
             email_sent = InvitationEmailSentStatus.SUCCESS
 
         return (
