@@ -5,6 +5,8 @@ import click
 from parsec.backend.cli.run import run_cmd
 from parsec.backend.cli.migration import migrate
 from parsec.backend.cli.sequester import (
+    generate_service_certificate,
+    import_service_certificate,
     create_service,
     list_services,
     update_service,
@@ -27,6 +29,8 @@ backend_sequester_cmd.add_command(list_services, "list_services")
 backend_sequester_cmd.add_command(update_service, "update_service")
 backend_sequester_cmd.add_command(export_realm, "export_realm")
 backend_sequester_cmd.add_command(extract_realm_export, "extract_realm_export")
+backend_sequester_cmd.add_command(generate_service_certificate, "generate_service_certificate")
+backend_sequester_cmd.add_command(import_service_certificate, "import_service_certificate")
 
 
 @click.group()
