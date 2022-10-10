@@ -6,6 +6,7 @@ from typing import Type
 
 from parsec._parsec import (
     InvitationStatus,
+    InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationToken,
     InvitationType,
@@ -81,10 +82,23 @@ InvitationTypeField: Type[fields.Field] = fields.rust_enum_field_factory(Invitat
 invite_new_serializer = ApiCommandSerializer(InviteNewReq, InviteNewRep)
 
 
-class InvitationDeletedReason(Enum):
-    FINISHED = "FINISHED"
-    CANCELLED = "CANCELLED"
-    ROTTEN = "ROTTEN"
+class InvitationDeletedReasonField(Field):
+    def _serialize(self, value: Any, attr: Any, obj: Any) -> Optional[str]:
+        if value is None:
+            return None
+        elif isinstance(value, InvitationDeletedReason):
+            return str(value)
+
+        raise ValidationError(f"Invalid type `{value}`")
+
+    def _deserialize(self, value: Any, attr: Any, data: Any) -> InvitationDeletedReason:
+        if not isinstance(value, str):
+            raise ValidationError("Not a string")
+
+        try:
+            return InvitationDeletedReason.from_str(value)
+        except ValueError:
+            raise ValidationError(f"Invalid type `{value}`")
 
 
 invite_delete_serializer = ApiCommandSerializer(InviteDeleteReq, InviteDeleteRep)

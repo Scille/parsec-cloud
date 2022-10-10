@@ -168,31 +168,64 @@ crate::binding_utils::gen_proto!(InvitationDeletedReason, __richcmp__, eq);
 
 #[pymethods]
 impl InvitationDeletedReason {
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "FINISHED")]
-    fn finished(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_delete::InvitationDeletedReason::Finished))
+    fn finished() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject =  {
+                Python::with_gil(|py| {
+                    InvitationDeletedReason(invite_delete::InvitationDeletedReason::Finished).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "CANCELLED")]
-    fn cancelled(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_delete::InvitationDeletedReason::Cancelled))
+    fn cancelled() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject =  {
+                Python::with_gil(|py| {
+                    InvitationDeletedReason(invite_delete::InvitationDeletedReason::Cancelled).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
+    }
+
+    #[classattr]
+    #[pyo3(name = "ROTTEN")]
+    fn rotten() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject =  {
+                Python::with_gil(|py| {
+                    InvitationDeletedReason(invite_delete::InvitationDeletedReason::Rotten).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
     }
 
     #[classmethod]
-    #[pyo3(name = "ROTTEN")]
-    fn rotten(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_delete::InvitationDeletedReason::Rotten))
+    fn from_str(_cls: &PyType, value: &str) -> PyResult<Self> {
+        match value {
+            "FINISHED" => Ok(Self(invite_delete::InvitationDeletedReason::Finished)),
+            "CANCELLED" => Ok(Self(invite_delete::InvitationDeletedReason::Cancelled)),
+            "ROTTEN" => Ok(Self(invite_delete::InvitationDeletedReason::Rotten)),
+            _ => Err(PyValueError::new_err(format!("Invalid value `{}`", value))),
+        }
     }
 
-    #[getter]
-    fn value(&self) -> PyResult<&str> {
-        Ok(match self.0 {
+    fn __str__(&self) -> &str {
+        match self.0 {
             invite_delete::InvitationDeletedReason::Finished => "FINISHED",
             invite_delete::InvitationDeletedReason::Cancelled => "CANCELLED",
             invite_delete::InvitationDeletedReason::Rotten => "ROTTEN",
-        })
+        }
     }
 }
 
