@@ -307,48 +307,14 @@ where
 impl<'de, T, U> serde_with::DeserializeAs<'de, Maybe<T>> for Maybe<U>
 where
     U: serde_with::DeserializeAs<'de, T>,
-    T: Default,
 {
     fn deserialize_as<D>(deserializer: D) -> Result<Maybe<T>, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        struct MaybeVisitor<T, U>(std::marker::PhantomData<(T, U)>);
-
-        impl<'de, T, U> serde::de::Visitor<'de> for MaybeVisitor<T, U>
-        where
-            U: serde_with::DeserializeAs<'de, T>,
-            T: Default,
-        {
-            type Value = Maybe<T>;
-
-            fn expecting(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                unreachable!()
-            }
-
-            fn visit_unit<E>(self) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(Maybe::Present(T::default()))
-            }
-
-            fn visit_none<E>(self) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(Maybe::Present(T::default()))
-            }
-
-            fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                U::deserialize_as(deserializer).map(Maybe::Present)
-            }
-        }
-
-        deserializer.deserialize_option(MaybeVisitor::<T, U>(std::marker::PhantomData))
+        Ok(Maybe::Present(
+            serde_with::de::DeserializeAsWrap::<T, U>::deserialize(deserializer)?.into_inner(),
+        ))
     }
 }
 
