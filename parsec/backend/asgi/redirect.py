@@ -7,7 +7,7 @@ from quart import g, Blueprint, redirect, abort, request
 
 if TYPE_CHECKING:
     from parsec.backend.app import BackendApp
-    from parsec.core.types import BackendAddr
+    from parsec._parsec import BackendAddr
 
 
 redirect_bp = Blueprint("redirect", __name__)

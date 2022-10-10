@@ -25,7 +25,7 @@ from parsec.backend.config import (
     SmtpEmailConfig,
     MockedEmailConfig,
 )
-from parsec.core.types import BackendAddr
+from parsec._parsec import BackendAddr
 
 
 logger = get_logger()

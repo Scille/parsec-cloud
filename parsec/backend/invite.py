@@ -121,7 +121,7 @@ from parsec.backend.config import (
     SmtpEmailConfig,
     MockedEmailConfig,
 )
-from parsec.core.types import BackendInvitationAddr
+from parsec._parsec import BackendInvitationAddr
 
 
 logger = get_logger()
