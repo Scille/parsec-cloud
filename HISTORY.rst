@@ -12,7 +12,7 @@ Features
 ~~~~~~~~
 
 * Add the webhook sequester service type that pushes encrypted workspace data to
-  3rd party through HTTP A webhook services is a sequester service with an
+  3rd party throughout HTTP. A webhook services is a sequester service with an
   encryption key. Metadata are also encrypted with the service key and send to
   the parsec metadata server. A webhook service does not store the sequester
   metadata to a storage, but it posted the metadata to an http service.  (`#2799
@@ -34,7 +34,7 @@ Bugfixes
   <https://github.com/Scille/parsec-cloud/issues/3022>`__)
 * Fixed links in About window not opening  (`#3023
   <https://github.com/Scille/parsec-cloud/issues/3023>`__)
-* Fix an error that desync postgresql timestamptz type  (`#3071
+* Fix an error that de-sync postgresql timestamp type  (`#3071
   <https://github.com/Scille/parsec-cloud/issues/3071>`__)
 * Fix a bug that caused the login time to be larger than expected for large
   organizations.  (`#3145 <https://github.com/Scille/parsec-
@@ -47,7 +47,7 @@ Parsec v2.12.1 (2022-09-13)
 Bugfixes
 ~~~~~~~~
 
-* Fix an error that desync postgresql timestamptz type  (`#3071
+* Fix an error that de-sync postgresql timestamp type  (`#3071
   <https://github.com/Scille/parsec-cloud/issues/3071>`__)
 
 
@@ -79,7 +79,7 @@ Bugfixes
   <https://github.com/Scille/parsec-cloud/issues/2960>`__)
 * Fix rare segfault in the GUI when an event occurs at the wrong time  (`#2839
   <https://github.com/Scille/parsec-cloud/issues/2839>`__)
-* Update reencryption status when role is changed  (`#2699
+* Update re-encryption status when role is changed  (`#2699
   <https://github.com/Scille/parsec-cloud/issues/2699>`__)
 * Fix an error that could happen when looking at a file status  (`#2779
   <https://github.com/Scille/parsec-cloud/issues/2779>`__)
