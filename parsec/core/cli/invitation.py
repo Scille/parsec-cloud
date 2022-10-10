@@ -491,7 +491,7 @@ async def _cancel_invitation(
         signing_key=device.signing_key,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
-        rep = await cmds.invite_delete(token=token, reason=InvitationDeletedReason.CANCELLED())
+        rep = await cmds.invite_delete(token=token, reason=InvitationDeletedReason.CANCELLED)
         if not isinstance(rep, InviteDeleteRepOk):
             raise RuntimeError(f"Backend error while cancelling invitation: {rep}")
         click.echo("Invitation deleted.")

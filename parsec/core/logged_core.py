@@ -332,7 +332,7 @@ class LoggedCore:
     async def delete_invitation(
         self,
         token: InvitationToken,
-        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED(),
+        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED,
     ) -> None:
         """
         Raises:
