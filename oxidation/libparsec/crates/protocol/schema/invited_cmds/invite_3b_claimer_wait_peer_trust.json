@@ -7,19 +7,12 @@
             3
         ],
         "req": {
-            "cmd": "invite_3b_claimer_wait_peer_trust",
-            "fields": {}
+            "cmd": "invite_3b_claimer_wait_peer_trust"
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
-            "not_found": {
-                "fields": {}
-            },
-            "invalid_state": {
-                "fields": {}
-            }
+            "ok": {},
+            "not_found": {},
+            "invalid_state": {}
         }
     }
 ]

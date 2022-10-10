@@ -31,9 +31,7 @@
                     }
                 }
             },
-            "not_found": {
-                "fields": {}
-            }
+            "not_found": {}
         },
         "nested_types": {
             "Trustchain": {

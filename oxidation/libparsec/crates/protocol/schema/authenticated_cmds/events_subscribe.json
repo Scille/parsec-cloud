@@ -7,13 +7,10 @@
             3
         ],
         "req": {
-            "cmd": "events_subscribe",
-            "fields": {}
+            "cmd": "events_subscribe"
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            }
+            "ok": {}
         }
     }
 ]

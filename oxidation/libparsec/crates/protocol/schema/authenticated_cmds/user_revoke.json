@@ -15,9 +15,7 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
+            "ok": {},
             "not_allowed": {
                 "fields": {
                     "reason": {
@@ -32,9 +30,7 @@
                     }
                 }
             },
-            "not_found": {
-                "fields": {}
-            },
+            "not_found": {},
             "already_revoked": {
                 "fields": {
                     "reason": {

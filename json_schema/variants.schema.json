@@ -5,8 +5,7 @@
     "additionalProperties": {
         "type": "object",
         "required": [
-            "discriminant_value",
-            "fields"
+            "discriminant_value"
         ],
         "properties": {
             "discriminant_value": {

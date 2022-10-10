@@ -15,18 +15,10 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
-            "not_found": {
-                "fields": {}
-            },
-            "already_deleted": {
-                "fields": {}
-            },
-            "invalid_state": {
-                "fields": {}
-            }
+            "ok": {},
+            "not_found": {},
+            "already_deleted": {},
+            "invalid_state": {}
         }
     }
 ]

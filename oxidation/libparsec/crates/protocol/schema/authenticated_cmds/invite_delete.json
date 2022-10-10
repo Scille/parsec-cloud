@@ -18,30 +18,21 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
-            "not_found": {
-                "fields": {}
-            },
-            "already_deleted": {
-                "fields": {}
-            }
+            "ok": {},
+            "not_found": {},
+            "already_deleted": {}
         },
         "nested_types": {
             "InvitationDeletedReason": {
                 "variants": {
                     "Finished": {
-                        "discriminant_value": "FINISHED",
-                        "fields": {}
+                        "discriminant_value": "FINISHED"
                     },
                     "Cancelled": {
-                        "discriminant_value": "CANCELLED",
-                        "fields": {}
+                        "discriminant_value": "CANCELLED"
                     },
                     "Rotten": {
-                        "discriminant_value": "ROTTEN",
-                        "fields": {}
+                        "discriminant_value": "ROTTEN"
                     }
                 }
             }

@@ -15,15 +15,9 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
-            "not_found": {
-                "fields": {}
-            },
-            "invalid_state": {
-                "fields": {}
-            }
+            "ok": {},
+            "not_found": {},
+            "invalid_state": {}
         }
     }
 ]

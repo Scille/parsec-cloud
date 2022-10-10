@@ -22,9 +22,7 @@
                     }
                 }
             },
-            "not_allowed": {
-                "fields": {}
-            },
+            "not_allowed": {},
             "not_found": {
                 "fields": {
                     "reason": {

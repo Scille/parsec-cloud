@@ -24,12 +24,8 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
-            "not_allowed": {
-                "fields": {}
-            },
+            "ok": {},
+            "not_allowed": {},
             "not_found": {
                 "fields": {
                     "reason": {
@@ -37,9 +33,7 @@
                     }
                 }
             },
-            "bad_encryption_revision": {
-                "fields": {}
-            },
+            "bad_encryption_revision": {},
             "participant_mismatch": {
                 "fields": {
                     "reason": {
@@ -54,9 +48,7 @@
                     }
                 }
             },
-            "in_maintenance": {
-                "fields": {}
-            },
+            "in_maintenance": {},
             "bad_timestamp": {
                 "fields": {
                     "reason": {

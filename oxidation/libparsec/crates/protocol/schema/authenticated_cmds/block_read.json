@@ -22,18 +22,10 @@
                     }
                 }
             },
-            "not_found": {
-                "fields": {}
-            },
-            "timeout": {
-                "fields": {}
-            },
-            "not_allowed": {
-                "fields": {}
-            },
-            "in_maintenance": {
-                "fields": {}
-            }
+            "not_found": {},
+            "timeout": {},
+            "not_allowed": {},
+            "in_maintenance": {}
         }
     }
 ]

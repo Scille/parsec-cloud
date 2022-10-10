@@ -26,9 +26,7 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
+            "ok": {},
             "not_allowed": {
                 "fields": {
                     "reason": {

@@ -7,8 +7,7 @@
             3
         ],
         "req": {
-            "cmd": "invite_list",
-            "fields": {}
+            "cmd": "invite_list"
         },
         "reps": {
             "ok": {

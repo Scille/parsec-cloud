@@ -7,8 +7,7 @@
             3
         ],
         "req": {
-            "cmd": "organization_config",
-            "fields": {}
+            "cmd": "organization_config"
         },
         "reps": {
             "ok": {
@@ -30,9 +29,7 @@
                     }
                 }
             },
-            "not_found": {
-                "fields": {}
-            }
+            "not_found": {}
         }
     }
 ]

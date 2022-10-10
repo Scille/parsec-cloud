@@ -7,8 +7,7 @@
             3
         ],
         "req": {
-            "cmd": "organization_stats",
-            "fields": {}
+            "cmd": "organization_stats"
         },
         "reps": {
             "ok": {
@@ -40,9 +39,7 @@
                     }
                 }
             },
-            "not_found": {
-                "fields": {}
-            }
+            "not_found": {}
         },
         "nested_types": {
             "UsersPerProfileDetailItem": {

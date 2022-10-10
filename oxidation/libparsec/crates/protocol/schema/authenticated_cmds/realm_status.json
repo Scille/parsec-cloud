@@ -34,9 +34,7 @@
                     }
                 }
             },
-            "not_allowed": {
-                "fields": {}
-            },
+            "not_allowed": {},
             "not_found": {
                 "fields": {
                     "reason": {
@@ -49,12 +47,10 @@
             "MaintenanceType": {
                 "variants": {
                     "GarbageCollection": {
-                        "discriminant_value": "GARBAGE_COLLECTION",
-                        "fields": {}
+                        "discriminant_value": "GARBAGE_COLLECTION"
                     },
                     "Reencryption": {
-                        "discriminant_value": "REENCRYPTION",
-                        "fields": {}
+                        "discriminant_value": "REENCRYPTION"
                     }
                 }
             }

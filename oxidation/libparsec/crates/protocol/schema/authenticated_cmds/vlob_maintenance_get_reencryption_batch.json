@@ -28,9 +28,7 @@
                     }
                 }
             },
-            "not_allowed": {
-                "fields": {}
-            },
+            "not_allowed": {},
             "not_found": {
                 "fields": {
                     "reason": {
@@ -45,9 +43,7 @@
                     }
                 }
             },
-            "bad_encryption_revision": {
-                "fields": {}
-            },
+            "bad_encryption_revision": {},
             "maintenance_error": {
                 "fields": {
                     "reason": {

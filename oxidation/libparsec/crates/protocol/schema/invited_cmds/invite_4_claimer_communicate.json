@@ -22,12 +22,8 @@
                     }
                 }
             },
-            "not_found": {
-                "fields": {}
-            },
-            "invalid_state": {
-                "fields": {}
-            }
+            "not_found": {},
+            "invalid_state": {}
         }
     }
 ]

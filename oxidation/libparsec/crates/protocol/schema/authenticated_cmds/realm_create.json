@@ -15,9 +15,7 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
+            "ok": {},
             "invalid_certification": {
                 "fields": {
                     "reason": {
@@ -39,9 +37,7 @@
                     }
                 }
             },
-            "already_exists": {
-                "fields": {}
-            },
+            "already_exists": {},
             "bad_timestamp": {
                 "fields": {
                     "reason": {

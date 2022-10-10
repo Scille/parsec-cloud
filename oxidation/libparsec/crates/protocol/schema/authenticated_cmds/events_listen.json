@@ -24,9 +24,7 @@
                     }
                 }
             },
-            "no_events": {
-                "fields": {}
-            }
+            "no_events": {}
         },
         "nested_types": {
             "APIEvent": {

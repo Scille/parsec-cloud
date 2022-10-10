@@ -21,24 +21,12 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
-            "already_exists": {
-                "fields": {}
-            },
-            "not_found": {
-                "fields": {}
-            },
-            "timeout": {
-                "fields": {}
-            },
-            "not_allowed": {
-                "fields": {}
-            },
-            "in_maintenance": {
-                "fields": {}
-            }
+            "ok": {},
+            "already_exists": {},
+            "not_found": {},
+            "timeout": {},
+            "not_allowed": {},
+            "in_maintenance": {}
         }
     }
 ]

@@ -18,9 +18,7 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
+            "ok": {},
             "not_allowed": {
                 "fields": {
                     "reason": {
@@ -42,9 +40,7 @@
                     }
                 }
             },
-            "already_granted": {
-                "fields": {}
-            },
+            "already_granted": {},
             "incompatible_profile": {
                 "fields": {
                     "reason": {
@@ -59,12 +55,8 @@
                     }
                 }
             },
-            "in_maintenance": {
-                "fields": {}
-            },
-            "user_revoked": {
-                "fields": {}
-            },
+            "in_maintenance": {},
+            "user_revoked": {},
             "require_greater_timestamp": {
                 "fields": {
                     "strictly_greater_than": {

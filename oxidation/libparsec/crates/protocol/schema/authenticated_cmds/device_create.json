@@ -19,9 +19,7 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
+            "ok": {},
             "invalid_certification": {
                 "fields": {
                     "reason": {

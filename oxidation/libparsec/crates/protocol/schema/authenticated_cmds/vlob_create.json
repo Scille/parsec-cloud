@@ -40,9 +40,7 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
+            "ok": {},
             "already_exists": {
                 "fields": {
                     "reason": {
@@ -50,15 +48,9 @@
                     }
                 }
             },
-            "not_allowed": {
-                "fields": {}
-            },
-            "bad_encryption_revision": {
-                "fields": {}
-            },
-            "in_maintenance": {
-                "fields": {}
-            },
+            "not_allowed": {},
+            "bad_encryption_revision": {},
+            "in_maintenance": {},
             "require_greater_timestamp": {
                 "fields": {
                     "strictly_greater_than": {
@@ -89,9 +81,7 @@
                     }
                 }
             },
-            "not_a_sequestered_organization": {
-                "fields": {}
-            },
+            "not_a_sequestered_organization": {},
             "sequester_inconsistency": {
                 "fields": {
                     "sequester_authority_certificate": {

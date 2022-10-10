@@ -23,15 +23,9 @@
                     }
                 }
             },
-            "not_allowed": {
-                "fields": {}
-            },
-            "already_member": {
-                "fields": {}
-            },
-            "not_available": {
-                "fields": {}
-            }
+            "not_allowed": {},
+            "already_member": {},
+            "not_available": {}
         },
         "nested_types": {
             "UserOrDevice": {
@@ -61,16 +55,13 @@
             "InvitationEmailSentStatus": {
                 "variants": {
                     "Success": {
-                        "discriminant_value": "SUCCESS",
-                        "fields": {}
+                        "discriminant_value": "SUCCESS"
                     },
                     "NotAvailable": {
-                        "discriminant_value": "NOT_AVAILABLE",
-                        "fields": {}
+                        "discriminant_value": "NOT_AVAILABLE"
                     },
                     "BadRecipient": {
-                        "discriminant_value": "BAD_RECIPIENT",
-                        "fields": {}
+                        "discriminant_value": "BAD_RECIPIENT"
                     }
                 }
             }

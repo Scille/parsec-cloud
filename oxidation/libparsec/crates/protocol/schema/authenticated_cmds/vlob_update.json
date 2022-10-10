@@ -34,9 +34,7 @@
             }
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
+            "ok": {},
             "not_found": {
                 "fields": {
                     "reason": {
@@ -44,18 +42,10 @@
                     }
                 }
             },
-            "not_allowed": {
-                "fields": {}
-            },
-            "bad_version": {
-                "fields": {}
-            },
-            "bad_encryption_revision": {
-                "fields": {}
-            },
-            "in_maintenance": {
-                "fields": {}
-            },
+            "not_allowed": {},
+            "bad_version": {},
+            "bad_encryption_revision": {},
+            "in_maintenance": {},
             "require_greater_timestamp": {
                 "fields": {
                     "strictly_greater_than": {

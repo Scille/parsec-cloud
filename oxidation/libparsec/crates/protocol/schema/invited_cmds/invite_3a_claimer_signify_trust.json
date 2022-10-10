@@ -7,19 +7,12 @@
             3
         ],
         "req": {
-            "cmd": "invite_3a_claimer_signify_trust",
-            "fields": {}
+            "cmd": "invite_3a_claimer_signify_trust"
         },
         "reps": {
-            "ok": {
-                "fields": {}
-            },
-            "not_found": {
-                "fields": {}
-            },
-            "invalid_state": {
-                "fields": {}
-            }
+            "ok": {},
+            "not_found": {},
+            "invalid_state": {}
         }
     }
 ]
