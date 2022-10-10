@@ -338,7 +338,7 @@ class SyncTransactions(EntryTransactions):
             )
 
             # Set the new base manifest
-            if new_local_manifest != local_manifest:  # type: ignore[operator]
+            if new_local_manifest != local_manifest:
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
     async def synchronization_step(
@@ -413,7 +413,7 @@ class SyncTransactions(EntryTransactions):
             new_base_version = new_local_manifest.base_version
 
             # Set the new base manifest
-            if new_local_manifest != local_manifest:  # type: ignore[operator]
+            if new_local_manifest != local_manifest:
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event

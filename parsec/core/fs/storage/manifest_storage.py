@@ -317,7 +317,7 @@ class ManifestStorage:
             await self.localdb.run_in_thread(_thread_target)
 
         # Tag entry as up-to-date only if no new manifest has been written in the meantime
-        if manifest == self._cache[entry_id]:  # type: ignore[operator]
+        if manifest == self._cache[entry_id]:
             self._cache_ahead_of_localdb.pop(entry_id)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
