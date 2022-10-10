@@ -68,6 +68,20 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
         .collect::<PyResult<std::collections::HashSet<T>>>()
 }
 
+macro_rules! py_object {
+    ($_self: ident, $subclass: ident, $py: ident) => {{
+        let initializer = PyClassInitializer::from(($subclass, Self($_self)));
+        // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
+        // or a sub-type of `T` (the type of `initializer` here).
+        // Here `initializer` is created using the type `<$subclass>` and the same type of `<$subclass>`
+        // will be used as the type of `subtype` in the call of `into_new_object`.
+        unsafe {
+            let ptr = initializer.into_new_object($py, $subclass::type_object_raw($py))?;
+            PyObject::from_owned_ptr($py, ptr)
+        }
+    }};
+}
+
 macro_rules! parse_kwargs_optional {
     ($kwargs: ident $(,[$var: ident $(:$ty: ty)?, $name: literal $(,$function: ident)?])* $(,)?) => {
         $(let mut $var = None;)*
@@ -159,3 +173,4 @@ macro_rules! gen_proto {
 pub(crate) use gen_proto;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
+pub(crate) use py_object;

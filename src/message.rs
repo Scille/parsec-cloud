@@ -71,51 +71,22 @@ impl MessageContent {
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
-        );
+        )
+        .map_err(PyValueError::new_err)?;
 
         Ok(match msg {
-            Ok(msg @ libparsec::types::MessageContent::SharingGranted { .. }) => {
-                let initializer =
-                    PyClassInitializer::from((SharingGrantedMessageContent, Self(msg)));
-                // This block is safe because `initializer` has the correct type
-                unsafe {
-                    let ptr = initializer
-                        .into_new_object(py, SharingGrantedMessageContent::type_object_raw(py))?;
-                    PyObject::from_owned_ptr(py, ptr)
-                }
+            libparsec::types::MessageContent::SharingGranted { .. } => {
+                crate::binding_utils::py_object!(msg, SharingGrantedMessageContent, py)
             }
-            Ok(msg @ libparsec::types::MessageContent::SharingReencrypted { .. }) => {
-                let initializer =
-                    PyClassInitializer::from((SharingReencryptedMessageContent, Self(msg)));
-                // This block is safe because `initializer` has the correct type
-                unsafe {
-                    let ptr = initializer.into_new_object(
-                        py,
-                        SharingReencryptedMessageContent::type_object_raw(py),
-                    )?;
-                    PyObject::from_owned_ptr(py, ptr)
-                }
+            libparsec::types::MessageContent::SharingReencrypted { .. } => {
+                crate::binding_utils::py_object!(msg, SharingReencryptedMessageContent, py)
             }
-            Ok(msg @ libparsec::types::MessageContent::SharingRevoked { .. }) => {
-                let initializer =
-                    PyClassInitializer::from((SharingRevokedMessageContent, Self(msg)));
-                // This block is safe because `initializer` has the correct type
-                unsafe {
-                    let ptr = initializer
-                        .into_new_object(py, SharingRevokedMessageContent::type_object_raw(py))?;
-                    PyObject::from_owned_ptr(py, ptr)
-                }
+            libparsec::types::MessageContent::SharingRevoked { .. } => {
+                crate::binding_utils::py_object!(msg, SharingRevokedMessageContent, py)
             }
-            Ok(msg @ libparsec::types::MessageContent::Ping { .. }) => {
-                let initializer = PyClassInitializer::from((PingMessageContent, Self(msg)));
-                // This block is safe because `initializer` has the correct type
-                unsafe {
-                    let ptr =
-                        initializer.into_new_object(py, PingMessageContent::type_object_raw(py))?;
-                    PyObject::from_owned_ptr(py, ptr)
-                }
+            libparsec::types::MessageContent::Ping { .. } => {
+                crate::binding_utils::py_object!(msg, PingMessageContent, py)
             }
-            Err(err) => return Err(PyValueError::new_err(err)),
         })
     }
 
