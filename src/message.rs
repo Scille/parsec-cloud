@@ -73,39 +73,49 @@ impl MessageContent {
             expected_timestamp.0,
         );
 
-        Ok(unsafe {
-            match msg {
-                Ok(msg @ libparsec::types::MessageContent::SharingGranted { .. }) => {
-                    let initializer =
-                        PyClassInitializer::from((SharingGrantedMessageContent, Self(msg)));
+        Ok(match msg {
+            Ok(msg @ libparsec::types::MessageContent::SharingGranted { .. }) => {
+                let initializer =
+                    PyClassInitializer::from((SharingGrantedMessageContent, Self(msg)));
+                // This block is safe because `initializer` has the correct type
+                unsafe {
                     let ptr = initializer
                         .into_new_object(py, SharingGrantedMessageContent::type_object_raw(py))?;
                     PyObject::from_owned_ptr(py, ptr)
                 }
-                Ok(msg @ libparsec::types::MessageContent::SharingReencrypted { .. }) => {
-                    let initializer =
-                        PyClassInitializer::from((SharingReencryptedMessageContent, Self(msg)));
+            }
+            Ok(msg @ libparsec::types::MessageContent::SharingReencrypted { .. }) => {
+                let initializer =
+                    PyClassInitializer::from((SharingReencryptedMessageContent, Self(msg)));
+                // This block is safe because `initializer` has the correct type
+                unsafe {
                     let ptr = initializer.into_new_object(
                         py,
                         SharingReencryptedMessageContent::type_object_raw(py),
                     )?;
                     PyObject::from_owned_ptr(py, ptr)
                 }
-                Ok(msg @ libparsec::types::MessageContent::SharingRevoked { .. }) => {
-                    let initializer =
-                        PyClassInitializer::from((SharingRevokedMessageContent, Self(msg)));
+            }
+            Ok(msg @ libparsec::types::MessageContent::SharingRevoked { .. }) => {
+                let initializer =
+                    PyClassInitializer::from((SharingRevokedMessageContent, Self(msg)));
+                // This block is safe because `initializer` has the correct type
+                unsafe {
                     let ptr = initializer
                         .into_new_object(py, SharingRevokedMessageContent::type_object_raw(py))?;
                     PyObject::from_owned_ptr(py, ptr)
                 }
-                Ok(msg @ libparsec::types::MessageContent::Ping { .. }) => {
-                    let initializer = PyClassInitializer::from((PingMessageContent, Self(msg)));
+            }
+            Ok(msg @ libparsec::types::MessageContent::Ping { .. }) => {
+                let initializer = PyClassInitializer::from((PingMessageContent, Self(msg)));
+                // This block is safe because `initializer` has the correct type
+                unsafe {
                     let ptr =
                         initializer.into_new_object(py, PingMessageContent::type_object_raw(py))?;
                     PyObject::from_owned_ptr(py, ptr)
                 }
-                Err(err) => return Err(PyValueError::new_err(err)),
             }
+            Err(err) => return Err(PyValueError::new_err(err)),
         })
     }
 
