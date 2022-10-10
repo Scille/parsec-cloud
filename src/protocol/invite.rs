@@ -409,20 +409,16 @@ pub(crate) struct InviteNewRepOk;
 #[pymethods]
 impl InviteNewRepOk {
     #[new]
-    #[args(email_sent = "None")]
     pub fn new(
         token: InvitationToken,
-        email_sent: Option<InvitationEmailSentStatus>,
+        email_sent: InvitationEmailSentStatus,
     ) -> PyResult<(Self, InviteNewRep)> {
         let token = token.0;
         Ok((
             Self,
             InviteNewRep(invite_new::Rep::Ok {
                 token,
-                email_sent: match email_sent {
-                    Some(e) => libparsec::types::Maybe::Present(Some(e.0)),
-                    None => libparsec::types::Maybe::Absent,
-                },
+                email_sent: libparsec::types::Maybe::Present(email_sent.0),
             }),
         ))
     }
@@ -439,13 +435,7 @@ impl InviteNewRepOk {
     fn email_sent(_self: PyRef<'_, Self>) -> PyResult<InvitationEmailSentStatus> {
         match &_self.as_ref().0 {
             invite_new::Rep::Ok { email_sent, .. } => match email_sent {
-                libparsec::types::Maybe::Present(p) => {
-                    if let Some(status) = p {
-                        Ok(InvitationEmailSentStatus(status.clone()))
-                    } else {
-                        Err(PyAttributeError::new_err(""))
-                    }
-                }
+                libparsec::types::Maybe::Present(p) => Ok(InvitationEmailSentStatus(p.clone())),
                 libparsec::types::Maybe::Absent => Err(PyAttributeError::new_err("")),
             },
             _ => Err(PyAttributeError::new_err("")),

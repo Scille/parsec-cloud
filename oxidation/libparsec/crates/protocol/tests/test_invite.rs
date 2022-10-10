@@ -71,12 +71,11 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
         //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
         //
         &hex!(
-            "83a6737461747573a26f6ba5746f6b656ed802d864b93ded264aae9ae583fd3d40c45aaa65"
-            "6d61696c5f73656e74c0"
+            "82a6737461747573a26f6ba5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
         )[..],
         authenticated_cmds::invite_new::Rep::Ok {
             token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
-            email_sent: Maybe::Present(None),
+            email_sent: Maybe::Absent,
         }
     )
 )]
@@ -93,7 +92,7 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
         )[..],
         authenticated_cmds::invite_new::Rep::Ok {
             token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
-            email_sent: Maybe::Present(Some(authenticated_cmds::invite_new::InvitationEmailSentStatus::Success)),
+            email_sent: Maybe::Present(authenticated_cmds::invite_new::InvitationEmailSentStatus::Success),
         }
     )
 )]
