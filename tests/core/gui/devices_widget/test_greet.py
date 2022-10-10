@@ -5,8 +5,8 @@ import trio
 from PyQt5 import QtCore
 from functools import partial
 from contextlib import asynccontextmanager
-from parsec._parsec import DateTime, InvitationType
 
+from parsec._parsec import DateTime, InvitationType
 from parsec.utils import start_task
 from parsec.api.protocol import HumanHandle, InvitationDeletedReason, DeviceLabel
 from parsec.core.gui.lang import translate

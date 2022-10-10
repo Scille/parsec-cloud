@@ -6,8 +6,9 @@ from marshmallow import ValidationError
 from marshmallow.fields import Field
 
 from parsec._parsec import (
-    InvitationType,
+    InvitationEmailSentStatus,
     InvitationToken,
+    InvitationType,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerReq,
     Invite1GreeterWaitPeerRep,
@@ -94,15 +95,23 @@ class InvitationTypeField(Field):
             raise ValidationError(f"Invalid type `{value}`")
 
 
-class InvitationEmailSentStatus(Enum):
-    SUCCESS = "SUCCESS"
-    NOT_AVAILABLE = "NOT_AVAILABLE"
-    BAD_RECIPIENT = "BAD_RECIPIENT"
+class InvitationEmailSentStatusField(Field):
+    def _serialize(self, value: Any, attr: Any, obj: Any) -> Optional[str]:
+        if value is None:
+            return None
+        elif isinstance(value, InvitationEmailSentStatus):
+            return str(value)
 
+        raise ValidationError(f"Invalid type `{value}`")
 
-InvitationEmailSentStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(
-    InvitationEmailSentStatus
-)
+    def _deserialize(self, value: Any, attr: Any, data: Any) -> InvitationEmailSentStatus:
+        if not isinstance(value, str):
+            raise ValidationError("Not a string")
+
+        try:
+            return InvitationEmailSentStatus.from_str(value)
+        except ValueError:
+            raise ValidationError(f"Invalid type `{value}`")
 
 
 invite_new_serializer = ApiCommandSerializer(InviteNewReq, InviteNewRep)

@@ -168,7 +168,7 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
     )
 
     assert isinstance(rep, InviteNewRepOk)
-    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS()
+    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS
     token = rep.token
     email = await email_letterbox.get_next_with_timeout()
     assert email == ("zack@example.com", ANY)
@@ -200,7 +200,7 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
     # Device invitation
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
     assert isinstance(rep, InviteNewRepOk)
-    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS()
+    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS
     token = rep.token
     email = await email_letterbox.get_next_with_timeout()
     assert email == (alice.human_handle.email, ANY)
@@ -245,12 +245,12 @@ async def test_invite_with_mail_error(alice, alice_ws, monkeypatch):
     )
 
     assert isinstance(rep, InviteNewRepOk)
-    assert rep.email_sent == InvitationEmailSentStatus.NOT_AVAILABLE()
+    assert rep.email_sent == InvitationEmailSentStatus.NOT_AVAILABLE
 
     # Device invitation
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
     assert isinstance(rep, InviteNewRepOk)
-    assert rep.email_sent == InvitationEmailSentStatus.NOT_AVAILABLE()
+    assert rep.email_sent == InvitationEmailSentStatus.NOT_AVAILABLE
 
     async def _mocked_send_email(email_config, to_addr, message):
         from parsec.backend.invite import InvitationEmailRecipientError
@@ -265,13 +265,13 @@ async def test_invite_with_mail_error(alice, alice_ws, monkeypatch):
     )
 
     assert isinstance(rep, InviteNewRepOk)
-    assert rep.email_sent == InvitationEmailSentStatus.BAD_RECIPIENT()
+    assert rep.email_sent == InvitationEmailSentStatus.BAD_RECIPIENT
 
     # Device invitation
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
 
     assert isinstance(rep, InviteNewRepOk)
-    assert rep.email_sent == InvitationEmailSentStatus.BAD_RECIPIENT()
+    assert rep.email_sent == InvitationEmailSentStatus.BAD_RECIPIENT
 
 
 @pytest.mark.trio
@@ -285,7 +285,7 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
     )
 
     assert isinstance(rep, InviteNewRepOk)
-    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS()
+    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS
     token = rep.token
     email = await email_letterbox.get_next_with_timeout()
     assert email == ("zack@example.com", ANY)

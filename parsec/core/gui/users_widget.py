@@ -527,9 +527,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         email, invitation_addr, email_sent_status = job.ret
-        if email_sent_status == InvitationEmailSentStatus.SUCCESS():
+        if email_sent_status == InvitationEmailSentStatus.SUCCESS:
             SnackbarManager.inform(_("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
-        elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT():
+        elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
             show_info_copy_link(
                 self,
                 _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),

@@ -288,9 +288,9 @@ class LoggedCore:
         try:
             email_sent = rep.email_sent
         except AttributeError:
-            email_sent = InvitationEmailSentStatus.SUCCESS()
+            email_sent = InvitationEmailSentStatus.SUCCESS
         if email_sent is None:
-            email_sent = InvitationEmailSentStatus.SUCCESS()
+            email_sent = InvitationEmailSentStatus.SUCCESS
 
         return (
             BackendInvitationAddr.build(
@@ -318,9 +318,9 @@ class LoggedCore:
         try:
             email_sent = rep.email_sent
         except AttributeError:
-            email_sent = InvitationEmailSentStatus.SUCCESS()
+            email_sent = InvitationEmailSentStatus.SUCCESS
         if email_sent is None:
-            email_sent = InvitationEmailSentStatus.SUCCESS()
+            email_sent = InvitationEmailSentStatus.SUCCESS
 
         return (
             BackendInvitationAddr.build(
