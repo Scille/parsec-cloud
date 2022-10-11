@@ -7,6 +7,7 @@ from marshmallow.fields import Field
 
 from parsec._parsec import (
     InvitationEmailSentStatus,
+    InvitationStatus,
     InvitationToken,
     InvitationType,
     Invite1ClaimerWaitPeerRep,
@@ -131,13 +132,23 @@ InvitationDeletedReasonField: Type[fields.BaseEnumField] = fields.enum_field_fac
 invite_delete_serializer = ApiCommandSerializer(InviteDeleteReq, InviteDeleteRep)
 
 
-class InvitationStatus(Enum):
-    IDLE = "IDLE"
-    READY = "READY"  # TODO: rename to CLAIMER_ONLINE ?
-    DELETED = "DELETED"
+class InvitationStatusField(Field):
+    def _serialize(self, value: Any, attr: Any, obj: Any) -> Optional[str]:
+        if value is None:
+            return None
+        elif isinstance(value, InvitationStatus):
+            return str(value)
 
+        raise ValidationError(f"Invalid type `{value}`")
 
-InvitationStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationStatus)
+    def _deserialize(self, value: Any, attr: Any, data: Any) -> InvitationStatus:
+        if not isinstance(value, str):
+            raise ValidationError("Not a string")
+
+        try:
+            return InvitationStatus.from_str(value)
+        except ValueError:
+            raise ValidationError(f"Invalid type `{value}`")
 
 
 invite_list_serializer = ApiCommandSerializer(InviteListReq, InviteListRep)

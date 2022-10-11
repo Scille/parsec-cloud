@@ -236,6 +236,9 @@ class InvitationStatus:
     READY: InvitationStatus
     DELETED: InvitationStatus
 
+    @classmethod
+    def from_str(cls, value: str) -> InvitationStatus: ...
+
 class InviteListItem:
     @classmethod
     def User(
