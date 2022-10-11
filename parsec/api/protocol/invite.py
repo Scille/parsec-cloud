@@ -87,7 +87,7 @@ class InvitationDeletedReasonField(Field):
         if value is None:
             return None
         elif isinstance(value, InvitationDeletedReason):
-            return str(value)
+            return value.value
 
         raise ValidationError(f"Invalid type `{value}`")
 

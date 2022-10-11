@@ -220,6 +220,15 @@ impl InvitationDeletedReason {
         }
     }
 
+    #[getter]
+    fn value(&self) -> &'static str {
+        match self.0 {
+            invite_delete::InvitationDeletedReason::Finished => "FINISHED",
+            invite_delete::InvitationDeletedReason::Cancelled => "CANCELLED",
+            invite_delete::InvitationDeletedReason::Rotten => "ROTTEN",
+        }
+    }
+
     fn __str__(&self) -> &str {
         match self.0 {
             invite_delete::InvitationDeletedReason::Finished => "FINISHED",

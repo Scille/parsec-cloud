@@ -137,7 +137,7 @@ async def _do_delete_invitation(
     if deleted_on:
         raise InvitationAlreadyDeletedError(token)
 
-    await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=str(reason)))
+    await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.value))
     await send_signal(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
