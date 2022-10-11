@@ -131,6 +131,11 @@
                             "type": "Option<RealmRole>"
                         }
                     ]
+                },
+                {
+                    "name": "PkiEnrollmentUpdated",
+                    "discriminant_value": "pki_enrollment.updated",
+                    "fields": []
                 }
             ]
         }
