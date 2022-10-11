@@ -90,18 +90,6 @@ impl InvitationType {
     }
 }
 
-fn py_to_rs_invitation_email_sent_status(
-    email_sent: &PyAny,
-) -> PyResult<invite_new::InvitationEmailSentStatus> {
-    use invite_new::InvitationEmailSentStatus::*;
-    Ok(match email_sent.getattr("name")?.extract::<&str>()? {
-        "SUCCESS" => Success,
-        "NOT_AVAILABLE" => NotAvailable,
-        "BAD_RECIPIENT" => BadRecipient,
-        _ => unreachable!(),
-    })
-}
-
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus);
@@ -433,12 +421,12 @@ pub(crate) struct InviteNewRepOk;
 #[pymethods]
 impl InviteNewRepOk {
     #[new]
-    pub fn new(token: InvitationToken, email_sent: &PyAny) -> PyResult<(Self, InviteNewRep)> {
+    pub fn new(
+        token: InvitationToken,
+        email_sent: InvitationEmailSentStatus,
+    ) -> PyResult<(Self, InviteNewRep)> {
         let token = token.0;
-        let email_sent = match py_to_rs_invitation_email_sent_status(email_sent) {
-            Ok(email_sent) => libparsec::types::Maybe::Present(email_sent),
-            _ => libparsec::types::Maybe::Absent,
-        };
+        let email_sent = libparsec::types::Maybe::Present(email_sent.0);
         Ok((
             Self,
             InviteNewRep(invite_new::Rep::Ok { token, email_sent }),
