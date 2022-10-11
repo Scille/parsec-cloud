@@ -110,6 +110,9 @@ impl EventsListenRepOk {
                 events_listen::APIEvent::InviteStatusChanged { .. } => {
                     Ok(BackendEvent::InviteStatusChanged)
                 }
+                events_listen::APIEvent::PkiEnrollmentUpdated => {
+                    Ok(BackendEvent::PkiEnrollmentsUpdated)
+                }
             },
             _ => unreachable!(),
         }

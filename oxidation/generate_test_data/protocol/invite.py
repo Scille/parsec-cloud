@@ -71,7 +71,7 @@ serializer = invite_new_serializer
 
 serialized = serializer.req_dumps(
     {
-        "type": InvitationType.USER(),
+        "type": InvitationType.USER,
         "cmd": "invite_new",
         "claimer_email": "alice@dev1",
         "send_email": True,
@@ -82,7 +82,7 @@ display("invite_new_req_user", serialized, [])
 
 serialized = serializer.req_dumps(
     {
-        "type": InvitationType.DEVICE(),
+        "type": InvitationType.DEVICE,
         "cmd": "invite_new",
         "send_email": True,
         "claimer_email": None,
@@ -185,7 +185,7 @@ display("invite_info_req", serialized, [])
 
 serialized = serializer.rep_dumps(
     InviteInfoRepOk(
-        type=InvitationType.USER(),
+        type=InvitationType.USER,
         claimer_email="alice@dev1",
         greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
         greeter_human_handle=HumanHandle("bob@dev1", "bob"),
@@ -196,7 +196,7 @@ display("invite_info_rep_user", serialized, [])
 
 serialized = serializer.rep_dumps(
     InviteInfoRepOk(
-        type=InvitationType.DEVICE(),
+        type=InvitationType.DEVICE,
         greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
         greeter_human_handle=HumanHandle("bob@dev1", "bob"),
         claimer_email=None,
@@ -204,6 +204,28 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("invite_info_rep_device", serialized, [])
+
+serialized = serializer.rep_dumps(
+    InviteInfoRepOk(
+        type=InvitationType.USER,
+        claimer_email="alice@dev1",
+        greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
+        greeter_human_handle=None,
+    )
+)
+serializer.rep_loads(serialized)
+display("invite_info_rep_user no handle", serialized, [])
+
+serialized = serializer.rep_dumps(
+    InviteInfoRepOk(
+        type=InvitationType.DEVICE,
+        greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
+        greeter_human_handle=None,
+        claimer_email=None,
+    )
+)
+serializer.rep_loads(serialized)
+display("invite_info_rep_device no handle", serialized, [])
 
 ################### Invite1ClaimerWaitPeer ##################
 

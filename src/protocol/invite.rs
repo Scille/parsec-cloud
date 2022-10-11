@@ -551,10 +551,10 @@ impl InviteInfoRepOk {
         r#type: InvitationType,
         claimer_email: Option<String>,
         greeter_user_id: UserID,
-        greeter_human_handle: HumanHandle,
+        greeter_human_handle: Option<HumanHandle>,
     ) -> PyResult<(Self, InviteInfoRep)> {
         let greeter_user_id = greeter_user_id.0;
-        let greeter_human_handle = greeter_human_handle.0;
+        let greeter_human_handle = greeter_human_handle.map(|inner| inner.0);
         match r#type {
             InvitationType(libparsec::types::InvitationType::Device) => Ok((
                 Self,
@@ -617,13 +617,13 @@ impl InviteInfoRepOk {
     fn greeter_human_handle(_self: PyRef<'_, Self>) -> PyResult<HumanHandle> {
         match &_self.as_ref().0 {
             invite_info::Rep::Ok(invite_info::UserOrDevice::Device {
-                greeter_human_handle,
+                greeter_human_handle: Some(handle),
                 ..
-            }) => Ok(HumanHandle(greeter_human_handle.clone())),
+            }) => Ok(HumanHandle(handle.clone())),
             invite_info::Rep::Ok(invite_info::UserOrDevice::User {
-                greeter_human_handle,
+                greeter_human_handle: Some(handle),
                 ..
-            }) => Ok(HumanHandle(greeter_human_handle.clone())),
+            }) => Ok(HumanHandle(handle.clone())),
             _ => Err(PyAttributeError::new_err("rep in not ok")),
         }
     }

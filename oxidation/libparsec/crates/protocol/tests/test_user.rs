@@ -38,52 +38,80 @@ fn serde_user_get_req() {
 
 #[rstest]
 #[case::ok(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   device_certificates: [hex!("666f6f626172")]
-        //   revoked_user_certificate: hex!("666f6f626172")
-        //   status: "ok"
-        //   trustchain: {
-        //     devices: [hex!("666f6f626172")]
-        //     revoked_users: [hex!("666f6f626172")]
-        //     users: [hex!("666f6f626172")]
-        //   }
-        //   user_certificate: hex!("666f6f626172")
-        &hex!(
-            "85b36465766963655f63657274696669636174657391c406666f6f626172b87265766f6b65"
-            "645f757365725f6365727469666963617465c406666f6f626172a6737461747573a26f6baa"
-            "7472757374636861696e83a76465766963657391c406666f6f626172ad7265766f6b65645f"
-            "757365727391c406666f6f626172a5757365727391c406666f6f626172b0757365725f6365"
-            "727469666963617465c406666f6f626172"
-        )[..],
-        authenticated_cmds::user_get::Rep::Ok {
-            user_certificate: b"foobar".to_vec(),
-            revoked_user_certificate: Some(b"foobar".to_vec()),
-            device_certificates: vec![b"foobar".to_vec()],
-            trustchain: authenticated_cmds::user_get::Trustchain {
-                users: vec![b"foobar".to_vec()],
-                devices: vec![b"foobar".to_vec()],
-                revoked_users: vec![b"foobar".to_vec()],
-            },
-        }
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   device_certificates: [hex!("666f6f626172")]
+    //   revoked_user_certificate: hex!("666f6f626172")
+    //   status: "ok"
+    //   trustchain: {
+    //     devices: [hex!("666f6f626172")]
+    //     revoked_users: [hex!("666f6f626172")]
+    //     users: [hex!("666f6f626172")]
+    //   }
+    //   user_certificate: hex!("666f6f626172")
+    &hex!(
+        "85b36465766963655f63657274696669636174657391c406666f6f626172b87265766f6b65"
+        "645f757365725f6365727469666963617465c406666f6f626172a6737461747573a26f6baa"
+        "7472757374636861696e83a76465766963657391c406666f6f626172ad7265766f6b65645f"
+        "757365727391c406666f6f626172a5757365727391c406666f6f626172b0757365725f6365"
+        "727469666963617465c406666f6f626172"
+    ),
+    authenticated_cmds::user_get::Rep::Ok {
+        user_certificate: b"foobar".to_vec(),
+        revoked_user_certificate: Some(b"foobar".to_vec()),
+        device_certificates: vec![b"foobar".to_vec()],
+        trustchain: authenticated_cmds::user_get::Trustchain {
+            users: vec![b"foobar".to_vec()],
+            devices: vec![b"foobar".to_vec()],
+            revoked_users: vec![b"foobar".to_vec()],
+        },
+    }
+)]
+#[case::ok_null_revoked_user_cert(
+    // Generated from Rust implementation (Parsec v2.13.0-rc1+dev)
+    // Content:
+    //   device_certificates: [hex!("666f6f626172")]
+    //   revoked_user_certificate: None
+    //   status: "ok"
+    //   trustchain: {
+    //     devices: [hex!("666f6f626172")]
+    //     revoked_users: [hex!("666f6f626172")]
+    //     users: [hex!("666f6f626172")]
+    //   }
+    //   user_certificate: hex!("666f6f626172")
+    //
+    &hex!(
+        "85b36465766963655f63657274696669636174657391c406666f6f626172b87265766f6b65"
+        "645f757365725f6365727469666963617465c0a6737461747573a26f6baa74727573746368"
+        "61696e83a76465766963657391c406666f6f626172ad7265766f6b65645f757365727391c4"
+        "06666f6f626172a5757365727391c406666f6f626172b0757365725f636572746966696361"
+        "7465c406666f6f626172"
+    ),
+    authenticated_cmds::user_get::Rep::Ok {
+        user_certificate: b"foobar".to_vec(),
+        revoked_user_certificate: None,
+        device_certificates: vec![b"foobar".to_vec()],
+        trustchain: authenticated_cmds::user_get::Trustchain {
+            users: vec![b"foobar".to_vec()],
+            devices: vec![b"foobar".to_vec()],
+            revoked_users: vec![b"foobar".to_vec()],
+        },
+    }
 )]
 #[case::not_found(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "not_found"
-        &hex!(
-            "81a6737461747573a96e6f745f666f756e64"
-        )[..],
-        authenticated_cmds::user_get::Rep::NotFound
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "not_found"
+    &hex!(
+        "81a6737461747573a96e6f745f666f756e64"
+    ),
+    authenticated_cmds::user_get::Rep::NotFound
 )]
-fn serde_user_get_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_get::Rep)) {
-    let (raw, expected) = raw_expected;
-
-    let data = authenticated_cmds::user_get::Rep::load(raw).unwrap();
+fn serde_user_get_rep(
+    #[case] raw_bytes: &[u8],
+    #[case] expected: authenticated_cmds::user_get::Rep,
+) {
+    let data = authenticated_cmds::user_get::Rep::load(raw_bytes).unwrap();
 
     assert_eq!(data, expected);
 
