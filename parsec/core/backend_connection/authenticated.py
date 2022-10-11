@@ -17,7 +17,7 @@ from parsec._parsec import (
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOkVlobsUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
     EventsSubscribeRepOk,
     OrganizationConfigRepOk,
     OrganizationConfigRepUnknownStatus,
@@ -170,7 +170,7 @@ def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
             EventsListenRepOkRealmMaintenanceFinished,
             EventsListenRepOkRealmMaintenanceStarted,
             EventsListenRepOkRealmRolesUpdated,
-            EventsListenRepOkVlobsUpdated,
+            EventsListenRepOkRealmVlobsUpdated,
         ),
     ):
         logger.warning("Bad response to `events_listen` command", rep=rep)
@@ -189,7 +189,7 @@ def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
             role=rep.role,
         )
 
-    elif isinstance(rep, EventsListenRepOkVlobsUpdated):
+    elif isinstance(rep, EventsListenRepOkRealmVlobsUpdated):
         event_bus.send(
             CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
             realm_id=EntryID(rep.realm_id.uuid),
