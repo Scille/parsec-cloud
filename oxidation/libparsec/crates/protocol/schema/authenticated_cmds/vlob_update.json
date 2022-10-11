@@ -81,20 +81,24 @@
                 },
                 {
                     "name": "ballpark_client_early_offset",
-                    "type": "Float"
+                    "type": "Float",
+                    "introduced_in_revision": 4
 
                 },
                 {
                     "name": "ballpark_client_late_offset",
-                    "type": "Float"
+                    "type": "Float",
+                    "introduced_in_revision": 4
                 },
                 {
                     "name": "backend_timestamp",
-                    "type": "DateTime"
+                    "type": "DateTime",
+                    "introduced_in_revision": 4
                 },
                 {
                     "name": "client_timestamp",
-                    "type": "DateTime"
+                    "type": "DateTime",
+                    "introduced_in_revision": 4
                 }
             ]
         },
