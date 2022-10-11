@@ -58,7 +58,7 @@ async def test_block_read_check_access_rights(
     assert isinstance(rep, BlockReadRepNotAllowed)
 
     # User part of the realm with various role
-    for role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER, RealmRole.OWNER):
+    for role in RealmRole.values:
         await backend.realm.update_roles(
             alice.organization_id,
             RealmGrantedRole(

@@ -1,4 +1,5 @@
 from parsec._parsec_pyi.certif import (
+    RealmRole,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
@@ -451,6 +452,7 @@ from parsec._parsec_pyi.regex import Regex
 
 __all__ = [
     # Certif
+    "RealmRole",
     "UserCertificate",
     "DeviceCertificate",
     "RevokedUserCertificate",

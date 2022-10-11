@@ -1,10 +1,19 @@
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 from parsec._parsec_pyi.crypto import PublicKey, SigningKey, VerifyKey
 from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, HumanHandle, RealmID, UserID
 from parsec._parsec_pyi.time import DateTime
 
-from parsec.api.protocol import RealmRole, UserProfile
+from parsec.api.protocol import UserProfile
+
+class RealmRole:
+    values: List[RealmRole]
+    OWNER: RealmRole
+    MANAGER: RealmRole
+    CONTRIBUTOR: RealmRole
+    READER: RealmRole
+    @property
+    def value(self) -> str: ...
 
 class UserCertificate:
     def __init__(
@@ -125,7 +134,6 @@ class RealmRoleCertificate:
         expected_author: Optional[DeviceID] = None,
         expected_realm: Optional[RealmID] = None,
         expected_user: Optional[UserID] = None,
-        expected_role: Optional[RealmRole] = None,
     ) -> RealmRoleCertificate: ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod

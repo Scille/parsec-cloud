@@ -269,7 +269,7 @@ async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlob
     rep = await vlob_read(bob_ws, vlobs[0])
     assert isinstance(rep, VlobReadRepNotAllowed)
 
-    for role in RealmRole:
+    for role in RealmRole.values:
         await backend.realm.update_roles(
             alice.organization_id,
             RealmGrantedRole(
@@ -527,7 +527,7 @@ async def test_list_versions_check_access_rights(
     rep = await vlob_list_versions(bob_ws, vlobs[0])
     assert isinstance(rep, VlobListVersionsRepNotAllowed)
 
-    for role in RealmRole:
+    for role in RealmRole.values:
         await backend.realm.update_roles(
             alice.organization_id,
             RealmGrantedRole(

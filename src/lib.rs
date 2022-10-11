@@ -35,6 +35,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::PrivateKey>()?;
     m.add_class::<api_crypto::PublicKey>()?;
 
+    m.add_class::<certif::RealmRole>()?;
     m.add_class::<certif::UserCertificate>()?;
     m.add_class::<certif::RevokedUserCertificate>()?;
     m.add_class::<certif::DeviceCertificate>()?;

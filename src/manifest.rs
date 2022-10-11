@@ -8,7 +8,7 @@ use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::{
     api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey},
-    binding_utils::{py_to_rs_realm_role, rs_to_py_realm_role},
+    certif::RealmRole,
     ids::{BlockID, DeviceID, EntryID},
     time::DateTime,
 };
@@ -71,7 +71,7 @@ impl WorkspaceEntry {
             [encryption_revision: u32, "encryption_revision"],
             [encrypted_on: DateTime, "encrypted_on"],
             [role_cached_on: DateTime, "role_cached_on"],
-            [role, "role", py_to_rs_realm_role],
+            [role: Option<RealmRole>, "role"],
         );
 
         Ok(Self(libparsec::types::WorkspaceEntry {
@@ -81,7 +81,7 @@ impl WorkspaceEntry {
             encryption_revision,
             encrypted_on: encrypted_on.0,
             role_cached_on: role_cached_on.0,
-            role,
+            role: role.map(|x| x.0),
         }))
     }
 
@@ -95,7 +95,7 @@ impl WorkspaceEntry {
             [encryption_revision: u32, "encryption_revision"],
             [encrypted_on: DateTime, "encrypted_on"],
             [role_cached_on: DateTime, "role_cached_on"],
-            [role, "role", py_to_rs_realm_role],
+            [role: Option<RealmRole>, "role"],
         );
 
         let mut r = self.0.clone();
@@ -119,7 +119,7 @@ impl WorkspaceEntry {
             r.role_cached_on = v.0;
         }
         if let Some(v) = role {
-            r.role = v;
+            r.role = v.map(|x| x.0);
         }
 
         Ok(Self(r))
@@ -169,11 +169,8 @@ impl WorkspaceEntry {
     }
 
     #[getter]
-    fn role(&self) -> PyResult<Option<PyObject>> {
-        match self.0.role {
-            Some(role) => rs_to_py_realm_role(&role).map(Some),
-            None => Ok(None),
-        }
+    fn role(&self) -> Option<RealmRole> {
+        self.0.role.map(RealmRole)
     }
 }
 

@@ -7,7 +7,6 @@ from parsec._parsec import (
     EventsListenRepNoEvents,
     EventsListenRepOkRealmVlobsUpdated,
     EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOk,
 )
 from parsec.api.protocol import VlobID, RealmID, RealmRole
 from parsec.backend.realm import RealmGrantedRole
@@ -93,9 +92,9 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
     ]
 
     assert reps == [
-        EventsListenRepOk(EventsListenRepOkRealmVlobsUpdated(other_realm, 1, OTHER_VLOB_ID, 1)),
-        EventsListenRepOk(EventsListenRepOkRealmVlobsUpdated(realm, 2, VLOB_ID, 2)),
-        EventsListenRepOk(EventsListenRepOkRealmVlobsUpdated(realm, 3, VLOB_ID, 3)),
+        EventsListenRepOkRealmVlobsUpdated(other_realm, 1, OTHER_VLOB_ID, 1),
+        EventsListenRepOkRealmVlobsUpdated(realm, 2, VLOB_ID, 2),
+        EventsListenRepOkRealmVlobsUpdated(realm, 3, VLOB_ID, 3),
         EventsListenRepNoEvents(),
     ]
 
