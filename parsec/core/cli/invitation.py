@@ -58,7 +58,7 @@ async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
             if not isinstance(rep, InviteNewRepOk):
                 raise RuntimeError(f"Backend refused to create device invitation: {rep}")
             try:
-                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS():
+                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS:
                     click.secho("Email could not be sent", fg="red")
             except AttributeError:
                 pass
@@ -101,7 +101,7 @@ async def _invite_user(
                 raise RuntimeError(f"Backend refused to create user invitation: {rep}")
 
             try:
-                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS():
+                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS:
                     click.secho("Email could not be sent", fg="red")
             except AttributeError:
                 pass
