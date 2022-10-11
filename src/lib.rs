@@ -121,15 +121,15 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::EventsListenRepOk>()?;
     m.add_class::<protocol::EventsListenRepNoEvents>()?;
     m.add_class::<protocol::EventsListenRepUnknownStatus>()?;
-    m.add_class::<protocol::EventsListenRepOkPinged>()?;
     m.add_class::<protocol::EventsListenRepCancelled>()?;
+    m.add_class::<protocol::EventsListenRepOkPinged>()?;
     m.add_class::<protocol::EventsListenRepOkMessageReceived>()?;
     m.add_class::<protocol::EventsListenRepOkInviteStatusChanged>()?;
     m.add_class::<protocol::EventsListenRepOkRealmMaintenanceFinished>()?;
     m.add_class::<protocol::EventsListenRepOkRealmMaintenanceStarted>()?;
     m.add_class::<protocol::EventsListenRepOkRealmVlobsUpdated>()?;
-    m.add_class::<protocol::EventsListenRepOkPkiEnrollment>()?;
     m.add_class::<protocol::EventsListenRepOkRealmRolesUpdated>()?;
+    m.add_class::<protocol::EventsListenRepOkPkiEnrollmentUpdated>()?;
     m.add_class::<protocol::EventsSubscribeReq>()?;
     m.add_class::<protocol::EventsSubscribeRep>()?;
     m.add_class::<protocol::EventsSubscribeRepOk>()?;
