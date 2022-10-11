@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
-from typing import Optional, List, Tuple
+from typing import Optional, Tuple
 
 from parsec._parsec import UsersPerProfileDetailItem
 from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
@@ -14,7 +14,7 @@ class OrganizationStats:
     realms: int
     data_size: int
     metadata_size: int
-    users_per_profile_detail: List[UsersPerProfileDetailItem]
+    users_per_profile_detail: Tuple[UsersPerProfileDetailItem]
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)

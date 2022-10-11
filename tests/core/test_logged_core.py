@@ -169,11 +169,11 @@ async def test_get_organization_stats(running_backend, alice_core, bob_core):
         realms=3,
         users=3,
         active_users=3,
-        users_per_profile_detail=[
+        users_per_profile_detail=(
             UsersPerProfileDetailItem(active=2, profile=UserProfile.ADMIN, revoked=0),
             UsersPerProfileDetailItem(active=1, profile=UserProfile.STANDARD, revoked=0),
             UsersPerProfileDetailItem(active=0, profile=UserProfile.OUTSIDER, revoked=0),
-        ],
+        ),
     )
 
     # ...but not mere mortals !
