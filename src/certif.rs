@@ -3,16 +3,105 @@
 use libparsec::types::{CertificateSignerOwned, CertificateSignerRef, UserProfile};
 use pyo3::import_exception;
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyDict, PyType};
+use pyo3::types::{PyBytes, PyDict, PyList, PyType};
 
 use crate::api_crypto::{PublicKey, SigningKey, VerifyKey};
-use crate::binding_utils::{
-    py_to_rs_realm_role, py_to_rs_user_profile, rs_to_py_realm_role, rs_to_py_user_profile,
-};
+use crate::binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile};
 use crate::ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, UserID};
 use crate::time::DateTime;
 
 import_exception!(parsec.api.data, DataError);
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct RealmRole(pub libparsec::types::RealmRole);
+
+crate::binding_utils::gen_proto!(RealmRole, __repr__);
+crate::binding_utils::gen_proto!(RealmRole, __richcmp__, eq);
+crate::binding_utils::gen_proto!(RealmRole, __hash__);
+
+#[pymethods]
+impl RealmRole {
+    #[classattr]
+    #[pyo3(name = "OWNER")]
+    fn owner() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     RealmRole(libparsec::types::RealmRole::Owner).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
+    }
+
+    #[classattr]
+    #[pyo3(name = "MANAGER")]
+    fn manager() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     RealmRole(libparsec::types::RealmRole::Manager).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
+    }
+
+    #[classattr]
+    #[pyo3(name = "CONTRIBUTOR")]
+    fn contributor() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     RealmRole(libparsec::types::RealmRole::Contributor).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
+    }
+
+    #[classattr]
+    #[pyo3(name = "READER")]
+    fn reader() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     RealmRole(libparsec::types::RealmRole::Reader).into_py(py)
+                })
+            };
+        };
+
+        Ok(&VALUE)
+    }
+
+    #[getter]
+    fn value(&self) -> &str {
+        match self.0 {
+            libparsec::types::RealmRole::Owner => "OWNER",
+            libparsec::types::RealmRole::Manager => "MANAGER",
+            libparsec::types::RealmRole::Contributor => "CONTRIBUTOR",
+            libparsec::types::RealmRole::Reader => "READER",
+        }
+    }
+
+    #[classattr]
+    fn values(py: Python) -> PyResult<&PyAny> {
+        Ok(PyList::new(
+            py,
+            &[
+                Self::owner()?,
+                Self::manager()?,
+                Self::contributor()?,
+                Self::reader()?,
+            ],
+        )
+        .as_ref())
+    }
+}
 
 #[pyclass]
 pub(crate) struct UserCertificate(pub libparsec::types::UserCertificate);
@@ -450,7 +539,7 @@ impl RealmRoleCertificate {
             [timestamp: DateTime, "timestamp"],
             [realm_id: RealmID, "realm_id"],
             [user_id: UserID, "user_id"],
-            [role, "role", py_to_rs_realm_role],
+            [role: Option<RealmRole>, "role"],
         );
 
         Ok(Self(libparsec::types::RealmRoleCertificate {
@@ -461,7 +550,7 @@ impl RealmRoleCertificate {
             },
             realm_id: realm_id.0,
             user_id: user_id.0,
-            role,
+            role: role.map(|x| x.0),
         }))
     }
 
@@ -473,7 +562,7 @@ impl RealmRoleCertificate {
             [timestamp: DateTime, "timestamp"],
             [realm_id: RealmID, "realm_id"],
             [user_id: UserID, "user_id"],
-            [role, "role", py_to_rs_realm_role],
+            [role: Option<RealmRole>, "role"],
         );
 
         let mut r = self.0.clone();
@@ -494,7 +583,7 @@ impl RealmRoleCertificate {
             r.user_id = x.0;
         }
         if let Some(x) = role {
-            r.role = x;
+            r.role = x.map(|y| y.0);
         }
 
         Ok(Self(r))
@@ -508,7 +597,6 @@ impl RealmRoleCertificate {
         expected_author: Option<DeviceID>,
         expected_realm: Option<RealmID>,
         expected_user: Option<UserID>,
-        expected_role: Option<&PyAny>,
     ) -> PyResult<Self> {
         let r = Self(
             libparsec::types::RealmRoleCertificate::verify_and_load(
@@ -540,16 +628,6 @@ impl RealmRoleCertificate {
             }
         }
 
-        if let Some(expected_role) = expected_role {
-            let expected_role = py_to_rs_realm_role(expected_role)?;
-            if r.0.role != expected_role {
-                return Err(DataError::new_err(format!(
-                    "Invalid role: expected `{:?}`, got `{:?}`",
-                    expected_role, r.0.role
-                )));
-            }
-        }
-
         Ok(r)
     }
 
@@ -575,41 +653,41 @@ impl RealmRoleCertificate {
         author: DeviceID,
         timestamp: DateTime,
         realm_id: RealmID,
-    ) -> PyResult<Self> {
-        Ok(Self(libparsec::types::RealmRoleCertificate {
+    ) -> Self {
+        Self(libparsec::types::RealmRoleCertificate {
             user_id: author.0.user_id.clone(),
             author: CertificateSignerOwned::User(author.0),
             timestamp: timestamp.0,
             realm_id: realm_id.0,
             role: Some(libparsec::types::RealmRole::Owner),
-        }))
-    }
-
-    #[getter]
-    fn author(&self) -> PyResult<Option<DeviceID>> {
-        Ok(match &self.0.author {
-            CertificateSignerOwned::Root => None,
-            CertificateSignerOwned::User(device_id) => Some(DeviceID(device_id.clone())),
         })
     }
 
     #[getter]
-    fn timestamp(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.timestamp))
+    fn author(&self) -> Option<DeviceID> {
+        match &self.0.author {
+            CertificateSignerOwned::Root => None,
+            CertificateSignerOwned::User(device_id) => Some(DeviceID(device_id.clone())),
+        }
     }
 
     #[getter]
-    fn realm_id(&self) -> PyResult<RealmID> {
-        Ok(RealmID(self.0.realm_id))
+    fn timestamp(&self) -> DateTime {
+        DateTime(self.0.timestamp)
     }
 
     #[getter]
-    fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID(self.0.user_id.clone()))
+    fn realm_id(&self) -> RealmID {
+        RealmID(self.0.realm_id)
     }
 
     #[getter]
-    fn role(&self) -> PyResult<Option<Py<PyAny>>> {
-        self.0.role.map(|x| rs_to_py_realm_role(&x)).transpose()
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id.clone())
+    }
+
+    #[getter]
+    fn role(&self) -> Option<RealmRole> {
+        self.0.role.map(RealmRole)
     }
 }

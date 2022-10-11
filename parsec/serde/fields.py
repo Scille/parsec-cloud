@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Type
+from typing import Type, TypeVar, Tuple
 from parsec._parsec import DateTime as RsDateTime
 from uuid import UUID as _UUID
 from enum import Enum
@@ -151,6 +151,36 @@ def str_based_field_factory(value_type: Type) -> Type[Field]:
             return value_type(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
+
+    return type(
+        f"{value_type.__name__}Field",
+        (Field,),
+        {"_serialize": _serialize, "_deserialize": _deserialize},
+    )
+
+
+T = TypeVar("T")
+
+
+def rust_enum_field_factory(value_type: T, choices: Tuple[T, ...]) -> Type[Field]:
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        if isinstance(value, value_type):
+            return value.value
+        else:
+            raise ValidationError(f"Not a InvitationStatus")
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, str):
+            raise ValidationError("Not string")
+
+        for candidate in choices:
+            if candidate.value == value:
+                return candidate
+
+        raise ValidationError(f"Invalid type `{value}`")
 
     return type(
         f"{value_type.__name__}Field",

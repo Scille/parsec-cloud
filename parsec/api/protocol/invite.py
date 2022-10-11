@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from enum import Enum
-from typing import Optional, Type, Any
-from marshmallow import ValidationError
-from marshmallow.fields import Field
+from typing import Type
 
 from parsec._parsec import (
-    InvitationType,
+    InvitationStatus,
+    InvitationEmailSentStatus,
     InvitationToken,
+    InvitationType,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerReq,
     Invite1GreeterWaitPeerRep,
@@ -46,8 +46,13 @@ from parsec.api.protocol.base import ApiCommandSerializer
 
 
 __all__ = (
+    "InvitationStatus",
+    "InvitationStatusField",
+    "InvitationEmailSentStatus",
     "InvitationToken",
     "InvitationTokenField",
+    "InvitationType",
+    "InvitationTypeField",
     "invite_new_serializer",
     "invite_delete_serializer",
     "invite_list_serializer",
@@ -68,40 +73,11 @@ __all__ = (
 
 
 InvitationTokenField: Type[fields.Field] = fields.uuid_based_field_factory(InvitationToken)
-
-
-class InvitationTypeField(Field):
-    def _serialize(self, value: Any, attr: Any, obj: Any) -> Optional[str]:
-        if value is None:
-            return None
-
-        if value == InvitationType.DEVICE:
-            return "DEVICE"
-        elif value == InvitationType.USER:
-            return "USER"
-        else:
-            raise ValidationError(f"Not a InvitationType")
-
-    def _deserialize(self, value: Any, attr: Any, data: Any) -> InvitationType:
-        if not isinstance(value, str):
-            raise ValidationError("Not string")
-
-        if value == "DEVICE":
-            return InvitationType.DEVICE
-        elif value == "USER":
-            return InvitationType.USER
-        else:
-            raise ValidationError(f"Invalid type `{value}`")
-
-
-class InvitationEmailSentStatus(Enum):
-    SUCCESS = "SUCCESS"
-    NOT_AVAILABLE = "NOT_AVAILABLE"
-    BAD_RECIPIENT = "BAD_RECIPIENT"
-
-
-InvitationEmailSentStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(
-    InvitationEmailSentStatus
+InvitationStatusField: Type[fields.Field] = fields.rust_enum_field_factory(
+    InvitationStatus, (InvitationStatus.IDLE, InvitationStatus.READY, InvitationStatus.DELETED)
+)
+InvitationTypeField: Type[fields.Field] = fields.rust_enum_field_factory(
+    InvitationType, (InvitationType.DEVICE, InvitationType.USER)
 )
 
 
@@ -114,21 +90,7 @@ class InvitationDeletedReason(Enum):
     ROTTEN = "ROTTEN"
 
 
-InvitationDeletedReasonField: Type[fields.BaseEnumField] = fields.enum_field_factory(
-    InvitationDeletedReason
-)
-
-
 invite_delete_serializer = ApiCommandSerializer(InviteDeleteReq, InviteDeleteRep)
-
-
-class InvitationStatus(Enum):
-    IDLE = "IDLE"
-    READY = "READY"  # TODO: rename to CLAIMER_ONLINE ?
-    DELETED = "DELETED"
-
-
-InvitationStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationStatus)
 
 
 invite_list_serializer = ApiCommandSerializer(InviteListReq, InviteListRep)

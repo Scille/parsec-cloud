@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::{PyAttributeError, PyNotImplementedError},
     import_exception,
     prelude::*,
-    types::{PyBytes, PyType},
+    types::{PyBytes, PyList, PyType},
 };
 
 use libparsec::protocol::authenticated_cmds::{
@@ -21,7 +21,6 @@ use libparsec::protocol::invited_cmds::{
 use crate::{
     api_crypto,
     api_crypto::{HashDigest, PublicKey},
-    binding_utils::py_to_rs_invitation_status,
     ids::{HumanHandle, UserID},
     invite,
     invite::InvitationToken,
@@ -37,6 +36,7 @@ pub(crate) struct InvitationType(pub libparsec::types::InvitationType);
 
 crate::binding_utils::gen_proto!(InvitationType, __repr__);
 crate::binding_utils::gen_proto!(InvitationType, __richcmp__, eq);
+crate::binding_utils::gen_proto!(InvitationType, __hash__);
 
 #[pymethods]
 impl InvitationType {
@@ -154,38 +154,65 @@ impl InvitationDeletedReason {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct InvitationStatus(libparsec::types::InvitationStatus);
+pub(crate) struct InvitationStatus(pub libparsec::types::InvitationStatus);
 
 crate::binding_utils::gen_proto!(InvitationStatus, __repr__);
 crate::binding_utils::gen_proto!(InvitationStatus, __richcmp__, eq);
+crate::binding_utils::gen_proto!(InvitationStatus, __hash__);
 
 #[pymethods]
 impl InvitationStatus {
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "IDLE")]
-    fn idle(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Idle)
+    fn idle() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    InvitationStatus(libparsec::types::InvitationStatus::Idle).into_py(py)
+                })
+            };
+        };
+        Ok(&VALUE)
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "READY")]
-    fn ready(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Ready)
+    fn ready() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    InvitationStatus(libparsec::types::InvitationStatus::Ready).into_py(py)
+                })
+            };
+        };
+        Ok(&VALUE)
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "DELETED")]
-    fn deleted(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Deleted)
+    fn deleted() -> PyResult<&'static PyObject> {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    InvitationStatus(libparsec::types::InvitationStatus::Deleted).into_py(py)
+                })
+            };
+        };
+        Ok(&VALUE)
     }
 
     #[getter]
-    fn name(&self) -> &'static str {
-        match self.0 {
+    fn value(&self) -> PyResult<&str> {
+        Ok(match self.0 {
             libparsec::types::InvitationStatus::Idle => "IDLE",
             libparsec::types::InvitationStatus::Ready => "READY",
             libparsec::types::InvitationStatus::Deleted => "DELETED",
-        }
+        })
+    }
+
+    #[classattr]
+    fn values(py: Python) -> PyResult<&PyAny> {
+        Ok(PyList::new(py, &[Self::idle()?, Self::ready()?, Self::deleted()?]).as_ref())
     }
 }
 
@@ -205,16 +232,15 @@ impl InviteListItem {
         token: InvitationToken,
         created_on: DateTime,
         claimer_email: String,
-        status: &PyAny,
+        status: InvitationStatus,
     ) -> PyResult<Self> {
         let token = token.0;
         let created_on = created_on.0;
-        let status = py_to_rs_invitation_status(status)?;
         Ok(Self(invite_list::InviteListItem::User {
             token,
             created_on,
             claimer_email,
-            status,
+            status: status.0,
         }))
     }
 
@@ -224,15 +250,14 @@ impl InviteListItem {
         _cls: &PyType,
         token: InvitationToken,
         created_on: DateTime,
-        status: &PyAny,
+        status: InvitationStatus,
     ) -> PyResult<Self> {
         let token = token.0;
         let created_on = created_on.0;
-        let status = py_to_rs_invitation_status(status)?;
         Ok(Self(invite_list::InviteListItem::Device {
             token,
             created_on,
-            status,
+            status: status.0,
         }))
     }
 

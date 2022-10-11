@@ -5,7 +5,6 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
-    EventsListenRepOk,
     EventsListenRepOkPkiEnrollmentUpdated,
 )
 from parsec.api.data import PkiEnrollmentSubmitPayload, RevokedUserCertificate
@@ -120,9 +119,7 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
         )
         assert rep["status"] == "ok"
         await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
-    assert await events_listen_nowait(bob_ws) == EventsListenRepOk(
-        EventsListenRepOkPkiEnrollmentUpdated()
-    )
+    assert await events_listen_nowait(bob_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
     # Retry without force
 
@@ -155,9 +152,7 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
         )
         assert rep["status"] == "ok"
         await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
-    assert await events_listen_nowait(bob_ws) == EventsListenRepOk(
-        EventsListenRepOkPkiEnrollmentUpdated()
-    )
+    assert await events_listen_nowait(bob_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
 
 @pytest.mark.trio
@@ -325,9 +320,7 @@ async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_w
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
         assert rep == {"status": "ok"}
         await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
-    assert await events_listen_nowait(alice_ws) == EventsListenRepOk(
-        EventsListenRepOkPkiEnrollmentUpdated()
-    )
+    assert await events_listen_nowait(alice_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
     # Assert user has been created
     rep = await backend.user.find_humans(
@@ -460,9 +453,7 @@ async def test_pki_reject(backend, anonymous_backend_ws, mallory, alice_ws):
         rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
         assert rep == {"status": "ok"}
         await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
-    assert await events_listen_nowait(alice_ws) == EventsListenRepOk(
-        EventsListenRepOkPkiEnrollmentUpdated()
-    )
+    assert await events_listen_nowait(alice_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
     # Reject twice
     with backend.event_bus.listen() as spy:

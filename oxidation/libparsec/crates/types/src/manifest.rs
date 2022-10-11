@@ -160,7 +160,7 @@ pub struct BlockAccess {
  * RealmRole
  */
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum RealmRole {
     Owner,

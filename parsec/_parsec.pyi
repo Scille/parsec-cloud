@@ -1,4 +1,5 @@
 from parsec._parsec_pyi.certif import (
+    RealmRole,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
@@ -407,6 +408,7 @@ from parsec._parsec_pyi.protocol import (
 
 __all__ = [
     # Certif
+    "RealmRole",
     "UserCertificate",
     "DeviceCertificate",
     "RevokedUserCertificate",

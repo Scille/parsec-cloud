@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Type
-from enum import Enum
 
 from parsec._parsec import (
+    RealmRole,
     RealmCreateReq,
     RealmCreateRep,
     RealmStatusReq,
@@ -40,14 +40,9 @@ __all__ = (
 )
 
 
-class RealmRole(Enum):
-    OWNER = "OWNER"
-    MANAGER = "MANAGER"
-    CONTRIBUTOR = "CONTRIBUTOR"
-    READER = "READER"
-
-
-RealmRoleField: Type[fields.BaseEnumField] = fields.enum_field_factory(RealmRole)
+RealmRoleField: Type[fields.Field] = fields.rust_enum_field_factory(
+    RealmRole, (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
+)
 RealmIDField: Type[fields.Field] = fields.uuid_based_field_factory(RealmID)
 
 realm_create_serializer = ApiCommandSerializer(RealmCreateReq, RealmCreateRep)

@@ -146,7 +146,7 @@ macro_rules! gen_rep {
 
                     let rep = $mod::Rep::load(&buf).map_err(|e| ProtocolError::new_err(e.to_string()))?;
 
-                    Ok(unsafe {
+                    let ret = unsafe {
                         match rep {
                             rep @ $mod::Rep::Ok $({ $($tt)+ })? => {
                                 let initializer =
@@ -169,6 +169,10 @@ macro_rules! gen_rep {
                                 PyObject::from_owned_ptr(py, ptr)
                             },
                         }
+                    };
+                    Ok(match _cls.getattr("_post_load") {
+                        Ok(post_load) => post_load.call1((ret.as_ref(py), ))?.into_py(py),
+                        Err(_) => ret,
                     })
                 }
             }
