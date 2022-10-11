@@ -116,7 +116,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::BlockReadRepUnknownStatus>()?;
 
     // Events
-    m.add_class::<protocol::BackendEvent>()?;
     m.add_class::<protocol::EventsListenReq>()?;
     m.add_class::<protocol::EventsListenRep>()?;
     m.add_class::<protocol::EventsListenRepOk>()?;
