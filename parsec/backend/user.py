@@ -198,7 +198,7 @@ class BaseUserComponent:
 
         try:
             data = RevokedUserCertificate.verify_and_load(
-                req.revoked_user_certificate,
+                signed=req.revoked_user_certificate,
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
             )
