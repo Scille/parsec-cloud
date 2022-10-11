@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import trio
+from typing import Callable
+from functools import partial
 
 from parsec._parsec import (
     EventsListenRep,
@@ -31,10 +33,9 @@ from parsec.api.protocol import (
 from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.api.protocol.types import UserProfile
 from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent
-from functools import partial
-from typing import Callable
 
 
 class EventsComponent:
@@ -45,7 +46,7 @@ class EventsComponent:
     @api("events_subscribe")
     @catch_protocol_errors
     @api_typed_msg_adapter(EventsSubscribeReq, EventsSubscribeRep)
-    async def api_events_subscribe(self, client_ctx, msg):
+    async def api_events_subscribe(self, client_ctx: AuthenticatedClientContext, msg):
         def _on_roles_updated(
             event: APIEvent,
             backend_event: BackendEvent,
@@ -229,13 +230,13 @@ class EventsComponent:
     @api_typed_msg_adapter(EventsListenReq, EventsListenRep)
     async def api_events_listen(self, client_ctx, msg: EventsListenReq):
         if msg.wait:
-            event_data = await client_ctx.receive_events_channel.receive()
+            event_rep = await client_ctx.receive_events_channel.receive()
 
         else:
             try:
-                event_data = client_ctx.receive_events_channel.receive_nowait()
+                event_rep = client_ctx.receive_events_channel.receive_nowait()
             except trio.WouldBlock:
                 return EventsListenRepNoEvents()
 
-        assert isinstance(event_data, EventsListenRep), f"got type:{type(event_data)} {event_data}"
-        return event_data
+        assert isinstance(event_rep, EventsListenRep), event_rep
+        return event_rep

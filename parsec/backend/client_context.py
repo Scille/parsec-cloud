@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from enum import Enum
 from uuid import uuid4
-from typing import Optional, Tuple, Set, Dict
+from typing import Optional, Set
 from structlog import BoundLogger, get_logger
 import trio
 
+from parsec._parsec import EventsListenRep
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBusConnectionContext
 from parsec.api.version import ApiVersion, API_V2_VERSION
@@ -53,7 +53,8 @@ class AuthenticatedClientContext(BaseClientContext):
         "public_key",
         "verify_key",
         "event_bus_ctx",
-        "channels",
+        "send_events_channel",
+        "receive_events_channel",
         "realms",
         "events_subscribed",
         "logger",
@@ -88,9 +89,9 @@ class AuthenticatedClientContext(BaseClientContext):
         self.verify_key = verify_key
 
         self.event_bus_ctx: EventBusConnectionContext
-        self.channels = trio.open_memory_channel[Tuple[Enum, Dict[str, object]]](
-            AUTHENTICATED_CLIENT_CHANNEL_SIZE
-        )
+        self.send_events_channel, self.receive_events_channel = trio.open_memory_channel[
+            EventsListenRep
+        ](AUTHENTICATED_CLIENT_CHANNEL_SIZE)
         self.realms: Set[RealmID] = set()
         self.events_subscribed = False
 
@@ -112,16 +113,6 @@ class AuthenticatedClientContext(BaseClientContext):
     @property
     def device_display(self) -> str:
         return self.device_label.str if self.device_label else self.device_id.device_name.str
-
-    @property
-    def send_events_channel(self):
-        send_channel, _ = self.channels
-        return send_channel
-
-    @property
-    def receive_events_channel(self):
-        _, receive_channel = self.channels
-        return receive_channel
 
 
 class InvitedClientContext(BaseClientContext):
