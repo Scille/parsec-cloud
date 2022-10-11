@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use libparsec::types::{CertificateSignerOwned, CertificateSignerRef, UserProfile};
+use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict, PyList, PyType};
@@ -24,7 +25,7 @@ crate::binding_utils::gen_proto!(RealmRole, __hash__);
 impl RealmRole {
     #[classattr]
     #[pyo3(name = "OWNER")]
-    fn owner() -> PyResult<&'static PyObject> {
+    fn owner() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -33,12 +34,12 @@ impl RealmRole {
             };
         };
 
-        Ok(&VALUE)
+        &VALUE
     }
 
     #[classattr]
     #[pyo3(name = "MANAGER")]
-    fn manager() -> PyResult<&'static PyObject> {
+    fn manager() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -47,12 +48,12 @@ impl RealmRole {
             };
         };
 
-        Ok(&VALUE)
+        &VALUE
     }
 
     #[classattr]
     #[pyo3(name = "CONTRIBUTOR")]
-    fn contributor() -> PyResult<&'static PyObject> {
+    fn contributor() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -61,12 +62,12 @@ impl RealmRole {
             };
         };
 
-        Ok(&VALUE)
+        &VALUE
     }
 
     #[classattr]
     #[pyo3(name = "READER")]
-    fn reader() -> PyResult<&'static PyObject> {
+    fn reader() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -75,11 +76,25 @@ impl RealmRole {
             };
         };
 
-        Ok(&VALUE)
+        &VALUE
+    }
+
+    #[classmethod]
+    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
+        PyList::new(
+            py,
+            &[
+                Self::owner(),
+                Self::manager(),
+                Self::contributor(),
+                Self::reader(),
+            ],
+        )
+        .as_ref()
     }
 
     #[getter]
-    fn value(&self) -> &str {
+    fn str(&self) -> &str {
         match self.0 {
             libparsec::types::RealmRole::Owner => "OWNER",
             libparsec::types::RealmRole::Manager => "MANAGER",
@@ -88,18 +103,15 @@ impl RealmRole {
         }
     }
 
-    #[classattr]
-    fn values(py: Python) -> PyResult<&PyAny> {
-        Ok(PyList::new(
-            py,
-            &[
-                Self::owner()?,
-                Self::manager()?,
-                Self::contributor()?,
-                Self::reader()?,
-            ],
-        )
-        .as_ref())
+    #[classmethod]
+    fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
+        match value {
+            "OWNER" => Ok(Self::owner()),
+            "MANAGER" => Ok(Self::manager()),
+            "CONTRIBUTOR" => Ok(Self::contributor()),
+            "READER" => Ok(Self::reader()),
+            _ => Err(PyValueError::new_err("")),
+        }
     }
 }
 

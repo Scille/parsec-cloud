@@ -185,7 +185,7 @@ async def query_get_current_roles(
         # Existing group must have at least one owner user
         raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
 
-    return {UserID(user_id): RealmRole(role) for user_id, role in ret if role is not None}
+    return {UserID(user_id): RealmRole.from_str(role) for user_id, role in ret if role is not None}
 
 
 @query()
@@ -222,7 +222,9 @@ async def query_get_realms_for_user(
         *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
     )
     return {
-        RealmID(row["realm_id"]): RealmRole(row["role"]) for row in rep if row["role"] is not None
+        RealmID(row["realm_id"]): RealmRole.from_str(row["role"])
+        for row in rep
+        if row["role"] is not None
     }
 
 
@@ -241,7 +243,7 @@ async def query_dump_realms_granted_roles(
                 certificate=row["certificate"],
                 realm_id=RealmID(row["realm_id"]),
                 user_id=UserID(row["user_id"]),
-                role=RealmRole(row["role"]),
+                role=RealmRole.from_str(row["role"]),
                 granted_by=DeviceID(row["granted_by"]),
                 granted_on=row["granted_on"],
             )
