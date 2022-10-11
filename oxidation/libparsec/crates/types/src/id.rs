@@ -251,12 +251,6 @@ pub enum UserProfile {
     Outsider,
 }
 
-impl Default for UserProfile {
-    fn default() -> Self {
-        Self::Standard
-    }
-}
-
 impl FromStr for UserProfile {
     type Err = &'static str;
 
