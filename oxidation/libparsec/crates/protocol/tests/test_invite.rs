@@ -66,7 +66,6 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
     (
         // Generated from Rust implementation (Parsec v2.12.1+dev)
         // Content:
-        //   email_sent: None
         //   status: "ok"
         //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
         //
