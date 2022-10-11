@@ -15,6 +15,7 @@ pub type Variants = HashMap<String, Variant>;
 #[derive(Debug, Deserialize, Clone)]
 pub struct Variant {
     pub discriminant_value: Option<String>,
+    #[serde(default)]
     pub fields: Fields,
 }
 
