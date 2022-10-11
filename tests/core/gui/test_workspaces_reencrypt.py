@@ -76,6 +76,7 @@ async def reencryption_needed_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_display(
     aqtbot,
