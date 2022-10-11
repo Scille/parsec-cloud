@@ -40,9 +40,7 @@ __all__ = (
 )
 
 
-RealmRoleField: Type[fields.Field] = fields.rust_enum_field_factory(
-    RealmRole, (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
-)
+RealmRoleField: Type[fields.Field] = fields.rust_enum_field_factory(RealmRole)
 RealmIDField: Type[fields.Field] = fields.uuid_based_field_factory(RealmID)
 
 realm_create_serializer = ApiCommandSerializer(RealmCreateReq, RealmCreateRep)

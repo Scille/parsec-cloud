@@ -42,7 +42,7 @@ crate::binding_utils::gen_proto!(InvitationType, __hash__);
 impl InvitationType {
     #[classattr]
     #[pyo3(name = "DEVICE")]
-    fn device() -> PyResult<&'static PyObject> {
+    fn device() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -50,12 +50,12 @@ impl InvitationType {
                 })
             };
         };
-        Ok(&VALUE)
+        &VALUE
     }
 
     #[classattr]
     #[pyo3(name = "USER")]
-    fn user() -> PyResult<&'static PyObject> {
+    fn user() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -63,15 +63,29 @@ impl InvitationType {
                 })
             };
         };
-        Ok(&VALUE)
+        &VALUE
+    }
+
+    #[classmethod]
+    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
+        PyList::new(py, &[Self::device(), Self::user()]).as_ref()
     }
 
     #[getter]
-    fn value(&self) -> PyResult<&str> {
-        Ok(match self.0 {
+    fn str(&self) -> &str {
+        match self.0 {
             libparsec::types::InvitationType::Device => "DEVICE",
             libparsec::types::InvitationType::User => "USER",
-        })
+        }
+    }
+
+    #[classmethod]
+    fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
+        match value {
+            "DEVICE" => Ok(Self::device()),
+            "USER" => Ok(Self::user()),
+            _ => Err(PyValueError::new_err("")),
+        }
     }
 }
 
@@ -194,7 +208,7 @@ crate::binding_utils::gen_proto!(InvitationStatus, __hash__);
 impl InvitationStatus {
     #[classattr]
     #[pyo3(name = "IDLE")]
-    fn idle() -> PyResult<&'static PyObject> {
+    fn idle() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -202,12 +216,12 @@ impl InvitationStatus {
                 })
             };
         };
-        Ok(&VALUE)
+        &VALUE
     }
 
     #[classattr]
     #[pyo3(name = "READY")]
-    fn ready() -> PyResult<&'static PyObject> {
+    fn ready() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -215,12 +229,12 @@ impl InvitationStatus {
                 })
             };
         };
-        Ok(&VALUE)
+        &VALUE
     }
 
     #[classattr]
     #[pyo3(name = "DELETED")]
-    fn deleted() -> PyResult<&'static PyObject> {
+    fn deleted() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
@@ -228,21 +242,31 @@ impl InvitationStatus {
                 })
             };
         };
-        Ok(&VALUE)
+        &VALUE
+    }
+
+    #[classmethod]
+    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
+        PyList::new(py, &[Self::idle(), Self::ready(), Self::deleted()]).as_ref()
     }
 
     #[getter]
-    fn value(&self) -> PyResult<&str> {
-        Ok(match self.0 {
+    fn str(&self) -> &str {
+        match self.0 {
             libparsec::types::InvitationStatus::Idle => "IDLE",
             libparsec::types::InvitationStatus::Ready => "READY",
             libparsec::types::InvitationStatus::Deleted => "DELETED",
-        })
+        }
     }
 
-    #[classattr]
-    fn values(py: Python) -> PyResult<&PyAny> {
-        Ok(PyList::new(py, &[Self::idle()?, Self::ready()?, Self::deleted()?]).as_ref())
+    #[classmethod]
+    fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
+        match value {
+            "IDLE" => Ok(Self::idle()),
+            "READY" => Ok(Self::ready()),
+            "DELETED" => Ok(Self::deleted()),
+            _ => Err(PyValueError::new_err("")),
+        }
     }
 }
 

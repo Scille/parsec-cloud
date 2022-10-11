@@ -7,13 +7,16 @@ from parsec._parsec_pyi.time import DateTime
 from parsec.api.protocol import UserProfile
 
 class RealmRole:
-    values: List[RealmRole]
     OWNER: RealmRole
     MANAGER: RealmRole
     CONTRIBUTOR: RealmRole
     READER: RealmRole
+    @classmethod
+    def values(cls) -> List[RealmRole]: ...
+    @classmethod
+    def from_str(cls, value: str) -> RealmRole: ...
     @property
-    def value(self) -> str: ...
+    def str(self) -> str: ...
 
 class UserCertificate:
     def __init__(

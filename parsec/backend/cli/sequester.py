@@ -597,7 +597,7 @@ async def _human_accesses(
                     if granted_role.role is None:
                         display_role = "Access removed"
                     else:
-                        display_role = f"Access {granted_role.role.value} granted"
+                        display_role = f"Access {granted_role.role.str} granted"
                     print(base_indent + f"\t\t{granted_role.granted_on}: {display_role}")
 
         non_human_users = humans.pop(None)

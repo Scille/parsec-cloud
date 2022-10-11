@@ -73,12 +73,8 @@ __all__ = (
 
 
 InvitationTokenField: Type[fields.Field] = fields.uuid_based_field_factory(InvitationToken)
-InvitationStatusField: Type[fields.Field] = fields.rust_enum_field_factory(
-    InvitationStatus, (InvitationStatus.IDLE, InvitationStatus.READY, InvitationStatus.DELETED)
-)
-InvitationTypeField: Type[fields.Field] = fields.rust_enum_field_factory(
-    InvitationType, (InvitationType.DEVICE, InvitationType.USER)
-)
+InvitationStatusField: Type[fields.Field] = fields.rust_enum_field_factory(InvitationStatus)
+InvitationTypeField: Type[fields.Field] = fields.rust_enum_field_factory(InvitationType)
 
 
 invite_new_serializer = ApiCommandSerializer(InviteNewReq, InviteNewRep)
