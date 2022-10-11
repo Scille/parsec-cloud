@@ -579,28 +579,28 @@ impl InviteInfoRepOk {
         r#type: InvitationType,
         claimer_email: Option<String>,
         greeter_user_id: UserID,
-        greeter_human_handle: HumanHandle,
+        greeter_human_handle: Option<HumanHandle>,
     ) -> PyResult<(Self, InviteInfoRep)> {
         let greeter_user_id = greeter_user_id.0;
-        let greeter_human_handle = greeter_human_handle.0;
-        Ok(match r#type {
-            InvitationType(libparsec::types::InvitationType::Device) => (
+        let greeter_human_handle = greeter_human_handle.map(|inner| inner.0);
+        match r#type {
+            InvitationType(libparsec::types::InvitationType::Device) => Ok((
                 Self,
                 InviteInfoRep(invite_info::Rep::Ok(invite_info::UserOrDevice::Device {
                     greeter_user_id,
-                    greeter_human_handle: Some(greeter_human_handle),
+                    greeter_human_handle,
                 })),
-            ),
-            InvitationType(libparsec::types::InvitationType::User) => (
+            )),
+            InvitationType(libparsec::types::InvitationType::User) => Ok((
                 Self,
                 InviteInfoRep(invite_info::Rep::Ok(invite_info::UserOrDevice::User {
                     claimer_email: claimer_email
                         .expect("Missing claimer_email for InviteInfoRep[User]"),
                     greeter_user_id,
-                    greeter_human_handle: Some(greeter_human_handle),
+                    greeter_human_handle,
                 })),
-            ),
-        })
+            )),
+        }
     }
 
     #[getter]
