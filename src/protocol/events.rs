@@ -71,7 +71,7 @@ pub(crate) enum BackendEvent {
     RealmMaintenanceFinished,
     RealmVlobsUpdated,
     RealmRolesUpdated,
-    PkiEnrollmentsUpdated,
+    PkiEnrollmentUpdated,
 }
 
 #[pymethods]
@@ -109,6 +109,9 @@ impl EventsListenRepOk {
                 }
                 events_listen::APIEvent::InviteStatusChanged { .. } => {
                     Ok(BackendEvent::InviteStatusChanged)
+                }
+                events_listen::APIEvent::PkiEnrollmentUpdated => {
+                    Ok(BackendEvent::PkiEnrollmentUpdated)
                 }
             },
             _ => unreachable!(),
