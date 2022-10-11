@@ -323,7 +323,7 @@ fn serde_vlob_read_req() {
             blob: b"foobar".to_vec(),
             author: "alice@dev1".parse().unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-            author_last_role_granted_on: Maybe::Present(Some("2000-1-2T01:00:00Z".parse().unwrap())),
+            author_last_role_granted_on: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
         }
     )
 )]

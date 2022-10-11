@@ -46,7 +46,7 @@
                     // to be able to perform the proper integrity checks on the manifest timestamp.
                     // New in API version 2.3 (Parsec 2.6.0)
                     "name": "author_last_role_granted_on",
-                    "type": "Option<DateTime>",
+                    "type": "DateTime",
                     "introduced_in_revision": 3
                 }
             ]
