@@ -258,7 +258,7 @@ impl VlobReadRepOk {
         blob: Vec<u8>,
         author: DeviceID,
         timestamp: DateTime,
-        author_last_role_granted_on: Option<DateTime>,
+        author_last_role_granted_on: DateTime,
     ) -> PyResult<(Self, VlobReadRep)> {
         Ok((
             Self,
@@ -268,7 +268,7 @@ impl VlobReadRepOk {
                 author: author.0,
                 timestamp: timestamp.0,
                 author_last_role_granted_on: libparsec::types::Maybe::Present(
-                    author_last_role_granted_on.map(|x| x.0),
+                    author_last_role_granted_on.0,
                 ),
             }),
         ))
@@ -313,7 +313,7 @@ impl VlobReadRepOk {
                 author_last_role_granted_on,
                 ..
             } => match author_last_role_granted_on {
-                libparsec::types::Maybe::Present(x) => x.map(DateTime),
+                libparsec::types::Maybe::Present(x) => Some(DateTime(*x)),
                 _ => None,
             },
             _ => return Err(PyNotImplementedError::new_err("")),
