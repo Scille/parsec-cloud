@@ -56,24 +56,6 @@ gen_rep!(
 #[derive(Clone)]
 pub(crate) struct EventsListenRepOk;
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) enum BackendEvent {
-    DeviceCreated,
-    InviteConduiteUpdated,
-    UserCreated,
-    UserRevoked,
-    OrganizationExpired,
-    Pinged,
-    MessageReceived,
-    InviteStatusChanged,
-    RealmMaintenanceStarted,
-    RealmMaintenanceFinished,
-    RealmVlobsUpdated,
-    RealmRolesUpdated,
-    PkiEnrollmentsUpdated,
-}
-
 #[pymethods]
 impl EventsListenRepOk {
     #[new]
