@@ -5,6 +5,7 @@ use rstest::rstest;
 use std::collections::HashMap;
 
 use libparsec_protocol::*;
+use libparsec_types::Maybe;
 
 #[rstest]
 fn serde_realm_create_req() {
@@ -110,10 +111,10 @@ fn serde_realm_create_req() {
         &hex!("81a6737461747573ad6261645f74696d657374616d70")[..],
         authenticated_cmds::realm_create::Rep::BadTimestamp {
             reason: None,
-            ballpark_client_early_offset: None,
-            ballpark_client_late_offset: None,
-            backend_timestamp: None,
-            client_timestamp: None,
+            ballpark_client_early_offset: Maybe::Absent,
+            ballpark_client_late_offset: Maybe::Absent,
+            backend_timestamp: Maybe::Absent,
+            client_timestamp: Maybe::Absent,
         }
     )
 )]
@@ -136,10 +137,10 @@ fn serde_realm_create_req() {
         )[..],
         authenticated_cmds::realm_create::Rep::BadTimestamp {
             reason: None,
-            ballpark_client_early_offset: Some(50.),
-            ballpark_client_late_offset: Some(70.),
-            backend_timestamp: Some("2000-1-2T01:00:00Z".parse().unwrap()),
-            client_timestamp: Some("2000-1-2T01:00:00Z".parse().unwrap()),
+            ballpark_client_early_offset: Maybe::Present(50.),
+            ballpark_client_late_offset: Maybe::Present(70.),
+            backend_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
+            client_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
         }
     )
 )]
@@ -636,6 +637,22 @@ fn serde_realm_update_roles_req(#[case] raw_expected: (&[u8], authenticated_cmds
         }
     )
 )]
+#[case::bad_timestamp_legacy(
+    (
+        // Generated from Python implementation (Parsec v2.8.1+dev)
+        // Content:
+        //   status: "bad_timestamp"
+        //
+        &hex!("81a6737461747573ad6261645f74696d657374616d70")[..],
+        authenticated_cmds::realm_update_roles::Rep::BadTimestamp {
+            reason: None,
+            ballpark_client_early_offset: Maybe::Absent,
+            ballpark_client_late_offset: Maybe::Absent,
+            backend_timestamp: Maybe::Absent,
+            client_timestamp: Maybe::Absent,
+        }
+    )
+)]
 #[case::bad_timestamp(
     (
         // Generated from Python implementation (Parsec v2.11.1+dev)
@@ -655,10 +672,10 @@ fn serde_realm_update_roles_req(#[case] raw_expected: (&[u8], authenticated_cmds
         )[..],
         authenticated_cmds::realm_update_roles::Rep::BadTimestamp {
             reason: None,
-            ballpark_client_early_offset: 50.,
-            ballpark_client_late_offset: 70.,
-            backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-            client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+            ballpark_client_early_offset: Maybe::Present(50.),
+            ballpark_client_late_offset: Maybe::Present(70.),
+            backend_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
+            client_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
         }
     )
 )]
@@ -809,6 +826,22 @@ fn serde_realm_start_reencryption_maintenance_req() {
         authenticated_cmds::realm_start_reencryption_maintenance::Rep::InMaintenance
     )
 )]
+#[case::bad_timestamp_legacy(
+    (
+        // Generated from Python implementation (Parsec v2.8.1+dev)
+        // Content:
+        //   status: "bad_timestamp"
+        //
+        &hex!("81a6737461747573ad6261645f74696d657374616d70")[..],
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::BadTimestamp {
+            reason: None,
+            ballpark_client_early_offset: Maybe::Absent,
+            ballpark_client_late_offset: Maybe::Absent,
+            backend_timestamp: Maybe::Absent,
+            client_timestamp: Maybe::Absent,
+        }
+    )
+)]
 #[case::bad_timestamp(
     (
         // Generated from Python implementation (Parsec v2.11.1+dev)
@@ -828,10 +861,10 @@ fn serde_realm_start_reencryption_maintenance_req() {
         )[..],
         authenticated_cmds::realm_start_reencryption_maintenance::Rep::BadTimestamp {
             reason: None,
-            ballpark_client_early_offset: 50.,
-            ballpark_client_late_offset: 70.,
-            backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-            client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+            ballpark_client_early_offset: Maybe::Present(50.),
+            ballpark_client_late_offset: Maybe::Present(70.),
+            backend_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
+            client_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
         }
     )
 )]

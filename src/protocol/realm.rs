@@ -399,10 +399,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
     ],
 );
 
@@ -497,10 +497,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
     ],
 );
 

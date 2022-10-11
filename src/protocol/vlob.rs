@@ -17,7 +17,7 @@ use libparsec::protocol::authenticated_cmds::{
 use crate::{
     ids::{DeviceID, RealmID, SequesterServiceID, VlobID},
     protocol::gen_rep,
-    protocol::{Bytes, ListOfBytes, Reason},
+    protocol::{Bytes, ListOfBytes, OptionalDateTime, OptionalFloat, Reason},
     time::DateTime,
 };
 
@@ -151,10 +151,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
     ],
     [NotASequesteredOrganization],
     [
@@ -414,10 +414,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
     ],
     [NotASequesteredOrganization],
     [
