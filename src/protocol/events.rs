@@ -1,8 +1,8 @@
 use crate::{
-    binding_utils::{py_to_rs_invitation_status, py_to_rs_realm_role},
+    binding_utils::py_to_rs_realm_role,
     ids::{self, RealmID, VlobID},
     invite::InvitationToken,
-    protocol::Reason,
+    protocol::{InvitationStatus, Reason},
 };
 use libparsec::protocol::authenticated_cmds::{
     events_listen::{self, APIEvent},
@@ -289,12 +289,15 @@ pub(crate) struct EventsListenRepOkInviteStatusChanged;
 #[pymethods]
 impl EventsListenRepOkInviteStatusChanged {
     #[new]
-    fn new(token: InvitationToken, invitation_status: &PyAny) -> PyResult<(Self, EventsListenRep)> {
+    fn new(
+        token: InvitationToken,
+        invitation_status: InvitationStatus,
+    ) -> PyResult<(Self, EventsListenRep)> {
         Ok((
             Self,
             EventsListenRep(events_listen::Rep::Ok(APIEvent::InviteStatusChanged {
                 token: token.0,
-                invitation_status: py_to_rs_invitation_status(invitation_status)?,
+                invitation_status: invitation_status.0,
             })),
         ))
     }

@@ -21,7 +21,6 @@ use libparsec::protocol::invited_cmds::{
 use crate::{
     api_crypto,
     api_crypto::{HashDigest, PublicKey},
-    binding_utils::py_to_rs_invitation_status,
     ids::{HumanHandle, UserID},
     invite,
     invite::InvitationToken,
@@ -184,7 +183,7 @@ impl InvitationDeletedReason {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct InvitationStatus(libparsec::types::InvitationStatus);
+pub(crate) struct InvitationStatus(pub libparsec::types::InvitationStatus);
 
 crate::binding_utils::gen_proto!(InvitationStatus, __repr__);
 crate::binding_utils::gen_proto!(InvitationStatus, __richcmp__, eq);
@@ -268,16 +267,15 @@ impl InviteListItem {
         token: InvitationToken,
         created_on: DateTime,
         claimer_email: String,
-        status: &PyAny,
+        status: InvitationStatus,
     ) -> PyResult<Self> {
         let token = token.0;
         let created_on = created_on.0;
-        let status = py_to_rs_invitation_status(status)?;
         Ok(Self(invite_list::InviteListItem::User {
             token,
             created_on,
             claimer_email,
-            status,
+            status: status.0,
         }))
     }
 
@@ -287,15 +285,14 @@ impl InviteListItem {
         _cls: &PyType,
         token: InvitationToken,
         created_on: DateTime,
-        status: &PyAny,
+        status: InvitationStatus,
     ) -> PyResult<Self> {
         let token = token.0;
         let created_on = created_on.0;
-        let status = py_to_rs_invitation_status(status)?;
         Ok(Self(invite_list::InviteListItem::Device {
             token,
             created_on,
-            status,
+            status: status.0,
         }))
     }
 

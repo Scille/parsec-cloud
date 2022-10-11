@@ -89,16 +89,6 @@ pub fn rs_to_py_user_profile(profile: &libparsec::types::UserProfile) -> PyResul
     })
 }
 
-pub fn py_to_rs_invitation_status(status: &PyAny) -> PyResult<libparsec::types::InvitationStatus> {
-    use libparsec::types::InvitationStatus::*;
-    Ok(match status.getattr("name")?.extract::<&str>()? {
-        "IDLE" => Idle,
-        "READY" => Ready,
-        "DELETED" => Deleted,
-        _ => unreachable!(),
-    })
-}
-
 // This implementation is due to
 // https://github.com/PyO3/pyo3/blob/39d2b9d96476e6cc85ca43e720e035e0cdff7a45/src/types/set.rs#L240
 // where HashSet is PySet in FromPyObject trait
