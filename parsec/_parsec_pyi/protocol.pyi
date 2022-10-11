@@ -236,6 +236,8 @@ class InvitationStatus:
     READY: InvitationStatus
     DELETED: InvitationStatus
 
+    @property
+    def value(self) -> str: ...
     @classmethod
     def from_str(cls, value: str) -> InvitationStatus: ...
 

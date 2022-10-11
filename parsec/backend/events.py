@@ -17,6 +17,7 @@ from parsec._parsec import (
     EventsSubscribeRep,
     EventsSubscribeRepOk,
     EventsSubscribeReq,
+    InvitationStatus,
 )
 from parsec.api.protocol import (
     OrganizationID,
@@ -24,7 +25,6 @@ from parsec.api.protocol import (
     UserID,
     RealmID,
     RealmRole,
-    InvitationStatus,
     InvitationToken,
     APIEvent,
 )

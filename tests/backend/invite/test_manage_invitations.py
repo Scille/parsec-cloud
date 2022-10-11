@@ -18,6 +18,7 @@ from parsec._parsec import (
     InviteNewRepNotAllowed,
     InviteNewRepNotAvailable,
     InviteNewRepOk,
+    InvitationStatus,
 )
 
 # TODO: Remove python InvitationType enum, for now we keep it for legacy reasons
@@ -25,7 +26,6 @@ from parsec.api.protocol.invite import InvitationType as PyInvitationType
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
-    InvitationStatus,
     HandshakeBadIdentity,
     UserProfile,
 )

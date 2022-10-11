@@ -242,7 +242,16 @@ impl InvitationStatus {
         }
     }
 
-    fn __str__(&self) -> &str {
+    #[getter]
+    fn value(&self) -> &'static str {
+        match self.0 {
+            libparsec::types::InvitationStatus::Ready => "READY",
+            libparsec::types::InvitationStatus::Idle => "IDLE",
+            libparsec::types::InvitationStatus::Deleted => "DELETED",
+        }
+    }
+
+    fn __str__(&self) -> &'static str {
         match self.0 {
             libparsec::types::InvitationStatus::Ready => "READY",
             libparsec::types::InvitationStatus::Idle => "IDLE",

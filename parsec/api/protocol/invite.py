@@ -137,7 +137,7 @@ class InvitationStatusField(Field):
         if value is None:
             return None
         elif isinstance(value, InvitationStatus):
-            return str(value)
+            return value.value
 
         raise ValidationError(f"Invalid type `{value}`")
 

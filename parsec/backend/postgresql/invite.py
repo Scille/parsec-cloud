@@ -1,15 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from parsec._parsec import DateTime
 from typing import List, Optional
 
+from parsec._parsec import DateTime, InvitationStatus
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
     HumanHandle,
     InvitationToken,
     InvitationType,
-    InvitationStatus,
     InvitationDeletedReason,
 )
 from parsec.backend.backend_events import BackendEvent

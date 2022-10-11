@@ -17,6 +17,7 @@ from structlog import get_logger
 
 from parsec._parsec import (
     InvitationEmailSentStatus,
+    InvitationStatus,
     InvitationType,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerRepInvalidState,
@@ -108,7 +109,6 @@ from parsec.api.protocol import (
     HumanHandle,
     InvitationToken,
     InvitationDeletedReason,
-    InvitationStatus,
     UserProfile,
 )
 from parsec.api.protocol.base import api_typed_msg_adapter

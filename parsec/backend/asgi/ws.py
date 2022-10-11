@@ -6,13 +6,13 @@ from structlog import get_logger
 from functools import partial
 from quart import g, websocket, Websocket, Blueprint
 
+from parsec._parsec import InvitationStatus
 from parsec.api.protocol.base import MessageSerializationError
 from parsec.api.protocol import (
     packb,
     unpackb,
     ProtocolError,
     InvalidMessageError,
-    InvitationStatus,
     OrganizationID,
     UserID,
     InvitationToken,

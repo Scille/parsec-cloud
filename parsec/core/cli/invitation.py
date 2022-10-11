@@ -454,12 +454,12 @@ async def _list_invitations(config: CoreConfig, device: LocalDevice) -> None:
         if not isinstance(rep, InviteListRepOk):
             raise RuntimeError(f"Backend error while listing invitations: {rep}")
         display_statuses = {
-            InvitationStatus.READY: click.style("ready", fg="green"),
-            InvitationStatus.IDLE: click.style("idle", fg="yellow"),
-            InvitationStatus.DELETED: click.style("deleted", fg="red"),
+            InvitationStatus.READY.value: click.style("ready", fg="green"),
+            InvitationStatus.IDLE.value: click.style("idle", fg="yellow"),
+            InvitationStatus.DELETED.value: click.style("deleted", fg="red"),
         }
         for invitation in rep.invitations:
-            display_status = display_statuses[invitation.status]
+            display_status = display_statuses[invitation.status.value]
             display_token = invitation.token.hex
             if invitation.type == InvitationType.USER:
                 display_type = f"user (email={invitation.claimer_email})"

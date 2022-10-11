@@ -4,13 +4,12 @@ from parsec.backend.backend_events import BackendEvent
 import attr
 from typing import TYPE_CHECKING, List, Optional, Tuple
 from collections import defaultdict
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, InvitationStatus
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
     InvitationToken,
-    InvitationStatus,
     InvitationDeletedReason,
 )
 from parsec.backend.invite import (

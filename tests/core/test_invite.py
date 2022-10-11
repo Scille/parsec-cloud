@@ -3,12 +3,11 @@
 import pytest
 import trio
 
-from parsec._parsec import DateTime, InvitationType, InviteListRepOk
+from parsec._parsec import DateTime, InvitationType, InviteListRepOk, InvitationStatus
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
     InvitationDeletedReason,
-    InvitationStatus,
     UserProfile,
 )
 
