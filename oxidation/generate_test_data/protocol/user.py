@@ -37,11 +37,15 @@ serialized = serializer.rep_dumps(
         "user_certificate": b"foobar",
         "revoked_user_certificate": None,
         "device_certificates": [b"foobar"],
-        "trustchain": {"devices": [b"foobar"], "users": [b"foobar"], "revoked_users": [b"foobar"]},
+        "trustchain": {
+            "devices": [b"foobar"],
+            "users": [b"foobar"],
+            "revoked_users": [b"foobar"],
+        },
     }
 )
 serializer.rep_loads(serialized)
-display("user_get_rep_without_revoked_user_certificate", serialized, [])
+display("user_get_rep_null_revoked_user_cert", serialized, [])
 
 serialized = serializer.rep_dumps({"status": "not_found"})
 serializer.rep_loads(serialized)
