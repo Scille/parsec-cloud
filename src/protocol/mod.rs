@@ -48,7 +48,16 @@ macro_rules! rs_to_py {
         SequesterServiceID(*$v)
     };
     ($v: ident, OptionalDateTime, $py: ident) => {
-        $v.map(DateTime)
+        match *$v {
+            libparsec::types::Maybe::Present(v) => Some(DateTime(v)),
+            libparsec::types::Maybe::Absent => None,
+        }
+    };
+    ($v: ident, OptionalFloat, $py: ident) => {
+        match *$v {
+            libparsec::types::Maybe::Present(v) => Some(v),
+            libparsec::types::Maybe::Absent => None,
+        }
     };
     ($v: ident, $ty: ty, $py: ident) => {
         *$v
@@ -72,10 +81,16 @@ macro_rules! py_to_rs {
         $v
     };
     ($v: ident, OptionalFloat) => {
-        $v
+        match $v {
+            Some(v) => libparsec::types::Maybe::Present(v),
+            None => libparsec::types::Maybe::Absent,
+        }
     };
     ($v: ident, OptionalDateTime) => {
-        $v.map(|x| x.0)
+        match $v {
+            Some(v) => libparsec::types::Maybe::Present(v.0),
+            None => libparsec::types::Maybe::Absent,
+        }
     };
     ($v: ident, $ty: ty) => {
         $v.0
@@ -97,7 +112,7 @@ macro_rules! rs_to_py_ty {
     };
     ($ty: ty) => {
         $ty
-    }
+    };
 }
 
 macro_rules! gen_rep {
