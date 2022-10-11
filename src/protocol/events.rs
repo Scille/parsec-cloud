@@ -407,10 +407,10 @@ impl EventsListenRepOkRealmMaintenanceStarted {
 
 #[pyclass(extends = EventsListenRep)]
 #[derive(Clone)]
-pub(crate) struct EventsListenRepOkVlobsUpdated;
+pub(crate) struct EventsListenRepOkRealmVlobsUpdated;
 
 #[pymethods]
-impl EventsListenRepOkVlobsUpdated {
+impl EventsListenRepOkRealmVlobsUpdated {
     #[new]
     fn new(
         realm_id: RealmID,

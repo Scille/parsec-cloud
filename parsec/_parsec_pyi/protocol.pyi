@@ -569,7 +569,7 @@ class EventsListenRepOkRealmMaintenanceStarted(EventsListenRep):
     @property
     def encryption_revision(self) -> int: ...
 
-class EventsListenRepOkVlobsUpdated(EventsListenRep):
+class EventsListenRepOkRealmVlobsUpdated(EventsListenRep):
     def __init__(
         self, realm_id: RealmID, checkpoint: int, src_id: VlobID, src_version: int
     ) -> None: ...

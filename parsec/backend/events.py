@@ -12,7 +12,7 @@ from parsec._parsec import (
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOkVlobsUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
     EventsListenReq,
     EventsSubscribeRep,
     EventsSubscribeRepOk,
@@ -107,7 +107,7 @@ class EventsComponent:
             try:
                 if event == APIEvent.REALM_VLOBS_UPDATED:
                     client_ctx.send_events_channel.send_nowait(
-                        EventsListenRepOkVlobsUpdated(realm_id, **kwargs)
+                        EventsListenRepOkRealmVlobsUpdated(realm_id, **kwargs)
                     )
                 elif event == APIEvent.REALM_MAINTENANCE_STARTED:
                     client_ctx.send_events_channel.send_nowait(
