@@ -17,6 +17,7 @@ from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
 
 from parsec._parsec import (
+    InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationType,
     Invite1ClaimerWaitPeerRep,
@@ -108,7 +109,6 @@ from parsec.api.protocol import (
     UserID,
     HumanHandle,
     InvitationToken,
-    InvitationDeletedReason,
     InvitationStatus,
     UserProfile,
 )

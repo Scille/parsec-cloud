@@ -25,10 +25,11 @@ from parsec._parsec import (
     Invite4GreeterCommunicateRepNotFound,
     InviteDeleteRepAlreadyDeleted,
     InviteDeleteRepNotFound,
+    InvitationDeletedReason,
 )
 
 from parsec.crypto import PrivateKey
-from parsec.api.protocol import InvitationDeletedReason, InvitationToken
+from parsec.api.protocol import InvitationToken
 
 from tests.common import real_clock_timeout
 from tests.backend.common import (

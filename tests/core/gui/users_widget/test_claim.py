@@ -7,12 +7,11 @@ from PyQt5 import QtCore
 from contextlib import asynccontextmanager
 from functools import partial
 
-from parsec._parsec import DateTime, InvitationType
+from parsec._parsec import DateTime, InvitationType, InvitationDeletedReason
 from parsec.api.protocol import (
     DeviceLabel,
     InvitationToken,
     HumanHandle,
-    InvitationDeletedReason,
     UserProfile,
 )
 from parsec.core.types import BackendInvitationAddr

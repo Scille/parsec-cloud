@@ -4,11 +4,10 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import DateTime, InvitationType, InviteListRepOk
+from parsec._parsec import DateTime, InvitationType, InviteListRepOk, InvitationDeletedReason
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
-    InvitationDeletedReason,
     InvitationStatus,
     UserProfile,
 )

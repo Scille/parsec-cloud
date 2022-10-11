@@ -4,11 +4,10 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import DateTime, InvitedPingRepOk
+from parsec._parsec import DateTime, InvitedPingRepOk, InvitationDeletedReason
 from parsec.api.protocol import (
     INVITED_CMDS,
     InvitationToken,
-    InvitationDeletedReason,
 )
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
