@@ -515,10 +515,10 @@ impl EventsListenRepOkRealmRolesUpdated {
 
 #[pyclass(extends = EventsListenRep)]
 #[derive(Clone)]
-pub(crate) struct EventsListenRepOkPkiEnrollment;
+pub(crate) struct EventsListenRepOkPkiEnrollmentUpdated;
 
 #[pymethods]
-impl EventsListenRepOkPkiEnrollment {
+impl EventsListenRepOkPkiEnrollmentUpdated {
     #[new]
     fn new() -> PyResult<(Self, EventsListenRep)> {
         Ok((

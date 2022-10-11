@@ -8,7 +8,7 @@ from parsec._parsec import (
     EventsListenRepOkInviteStatusChanged,
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
-    EventsListenRepOkPkiEnrollment,
+    EventsListenRepOkPkiEnrollmentUpdated,
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
@@ -173,7 +173,7 @@ class EventsComponent:
             ):
                 return
             try:
-                client_ctx.send_events_channel.send_nowait(EventsListenRepOkPkiEnrollment())
+                client_ctx.send_events_channel.send_nowait(EventsListenRepOkPkiEnrollmentUpdated())
             except trio.WouldBlock:
                 client_ctx.close_connection_asap()
 
