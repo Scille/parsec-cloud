@@ -386,8 +386,8 @@ impl InviteNewRepOk {
     pub fn new(token: InvitationToken, email_sent: &PyAny) -> PyResult<(Self, InviteNewRep)> {
         let token = token.0;
         let email_sent = match py_to_rs_invitation_email_sent_status(email_sent) {
-            Ok(email_sent) => libparsec::types::Maybe::Present(Some(email_sent)),
-            _ => libparsec::types::Maybe::Present(None),
+            Ok(email_sent) => libparsec::types::Maybe::Present(email_sent),
+            _ => libparsec::types::Maybe::Absent,
         };
         Ok((
             Self,
@@ -407,13 +407,7 @@ impl InviteNewRepOk {
     fn email_sent(_self: PyRef<'_, Self>) -> PyResult<InvitationEmailSentStatus> {
         match &_self.as_ref().0 {
             invite_new::Rep::Ok { email_sent, .. } => match email_sent {
-                libparsec::types::Maybe::Present(p) => {
-                    if let Some(status) = p {
-                        Ok(InvitationEmailSentStatus(status.clone()))
-                    } else {
-                        Err(PyAttributeError::new_err(""))
-                    }
-                }
+                libparsec::types::Maybe::Present(p) => Ok(InvitationEmailSentStatus(p.clone())),
                 libparsec::types::Maybe::Absent => Err(PyAttributeError::new_err("")),
             },
             _ => Err(PyAttributeError::new_err("")),
