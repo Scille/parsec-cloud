@@ -103,7 +103,7 @@ display("invite_new_rep_without", serialized, [])
 serialized = serializer.rep_dumps(
     InviteNewRepOk(
         token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
-        email_sent=InvitationEmailSentStatus.SUCCESS,
+        email_sent=InvitationEmailSentStatus.SUCCESS(),
     )
 )
 serializer.rep_loads(serialized)
