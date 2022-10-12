@@ -2,4 +2,4 @@
 
 # This file is imported from __init__.py and exec'd from setup.py
 
-__version__ = "v2.13.0-rc2"
+__version__ = "v2.13.0-rc2+dev"
