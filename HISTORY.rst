@@ -11,7 +11,7 @@ Parsec v2.13.0-rc2 (2022-10-12)
 Features
 ~~~~~~~~
 
-*  Introduce ``generate_service_certificate`` & ``import_service_certificate``
+* Introduce ``generate_service_certificate`` & ``import_service_certificate``
   CLI commands  (corresponding to the ends of ``create_service_certificate``
   command).  This allows to keep the sequester private keys on an offline
   machine at all time.  (`#3198 <https://github.com/Scille/parsec-
