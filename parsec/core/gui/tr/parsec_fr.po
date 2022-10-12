@@ -1016,11 +1016,11 @@ msgstr "Dernière étape : Installer macFUSE"
 
 msgid "TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"
 msgstr ""
-"Pour finaliser votre installation, FUSE for MacOS doit être installé pour"
+"Pour finaliser votre installation, macFUSE doit être installé pour"
 " permettre l'utilisation de certaines fonctions de Parsec.<br><br><a "
 "href=\"https://docs.parsec.cloud/en/latest/userguide/installation.html"
 "#fuse-for-macos-installation\" title=\"FUSE_install\" style=\"font-"
-"weight: bold;\">Un guide d'installation de FUSE for MacOS est disponible "
+"weight: bold;\">Un guide d'installation de macFUSE est disponible "
 "ici</a>"
 
 msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"

@@ -58,17 +58,22 @@ MacOS
 
 MacOS (10.15, >= 11.0) installer is available as a DMG installer on `GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer named ``parsec-vX.Y.Z-macos-amd64.dmg``).
 
-The MacOS version needs `FUSE for MacOS <https://osxfuse.github.io/>`_ to be installed, which can be troublesome on Big Sur. See `this discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' limitations.
+The MacOS version requires `macFUSE <https://osxfuse.github.io/>`_ to be installed, which can be troublesome on Big Sur and Monterey. See `this discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' limitations.
 
 
-FUSE for MacOS installation
+macFUSE installation
 ***************************
 
-From `FUSE for MacOS <https://osxfuse.github.io/>`_ website, you can find the lastest version to download at the indicated location.
+.. note::
+
+    Parsec uses userspace filesystems for a smooth integration of created repositories and ease of access to stored files.
+    This core feature is enabled by macFUSE, and is required to have the native experience we aim for.
+
+From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find the lastest version to download at the indicated location.
 
 .. image:: screens/macfuse_download.png
     :align: center
-    :alt: FUSE for MacOS download screen
+    :alt: macFUSE download screen
 
 Open the ``.dmg`` file and follow its instructions to install. If the opening fails, check the `App Store and identified developers` box in System Preferences > Security & Privacy:
 
