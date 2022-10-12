@@ -67,7 +67,7 @@ async def test_sequester_export_full_run(
         timestamp=curr_now,  # 2000/1/1
     )
     await backend.sequester.create_service(
-        organization_id=coolorg.organization_id, service=s1.backend_service, now=curr_now
+        organization_id=coolorg.organization_id, service=s1.backend_service
     )
 
     # Populate: Realm
