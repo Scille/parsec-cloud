@@ -136,7 +136,8 @@ def _display_service(service: BaseSequesterService) -> None:
     if isinstance(service, WebhookSequesterService):
         click.echo(f"\tWebhook endpoint URL {service.webhook_url}")
     if not service.is_enabled:
-        click.echo(f"\tDisabled on: {service.disabled_on}")
+        display_disable = click.style("Disabled", fg="red")
+        click.echo(f"\t{display_disable} on: {service.disabled_on}")
 
 
 async def _list_services(config, organization_id: OrganizationID) -> None:
