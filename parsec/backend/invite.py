@@ -410,11 +410,11 @@ class BaseInviteComponent:
             # field has been added in a new version but does not exist in older versions). In this case, we
             # can replace the missing field with `SUCCESS` without breaking compatibility with older clients
             # since they also choose `SUCCESS` as value when getting an `AttributeError` on the reply.
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS)
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS())
 
         # Backend address not configured, we won't be able to send the email
         if not self._config.backend_addr:
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE())
 
         # Generate email message
         if req.type == InvitationType.USER:
@@ -454,16 +454,16 @@ class BaseInviteComponent:
                 message=message,
             )
         except InvitationEmailRecipientError:
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.BAD_RECIPIENT)
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.BAD_RECIPIENT())
         except InvitationEmailConfigError:
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE())
         except Exception:
             # Fail-safe: since the device/user has been created, we don't want to fail too hard
             logger.exception("Unexpected exception while sending an email")
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE())
 
         # The email has been successfully sent
-        return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS)
+        return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS())
 
     @api("invite_delete")
     @catch_protocol_errors

@@ -169,13 +169,13 @@ async def query_update_roles(
     if author_role is not None:
         author_role, _ = author_role
         if author_role is not None:
-            author_role = RealmRole(author_role)
+            author_role = RealmRole.from_str(author_role)
 
     last_role_granted_on = None
     if existing_user_role is not None:
         existing_user_role, last_role_granted_on = existing_user_role
         if existing_user_role is not None:
-            existing_user_role = RealmRole(existing_user_role)
+            existing_user_role = RealmRole.from_str(existing_user_role)
 
     owner_only = (RealmRole.OWNER,)
     owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
@@ -231,7 +231,7 @@ async def query_update_roles(
             organization_id=organization_id.str,
             realm_id=new_role.realm_id.uuid,
             user_id=new_role.user_id.str,
-            role=new_role.role.value if new_role.role else None,
+            role=new_role.role.str if new_role.role else None,
             certificate=new_role.certificate,
             granted_by=new_role.granted_by.str,
             granted_on=new_role.granted_on,

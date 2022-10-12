@@ -1,4 +1,5 @@
 from parsec._parsec_pyi.certif import (
+    RealmRole,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
@@ -229,11 +230,11 @@ from parsec._parsec_pyi.protocol import (
     EventsListenRepOkInviteStatusChanged,
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
-    EventsListenRepOkPkiEnrollment,
+    EventsListenRepOkPkiEnrollmentUpdated,
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOkVlobsUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
     EventsListenRepUnknownStatus,
     EventsListenReq,
     EventsSubscribeRep,
@@ -407,6 +408,7 @@ from parsec._parsec_pyi.protocol import (
 
 __all__ = [
     # Certif
+    "RealmRole",
     "UserCertificate",
     "DeviceCertificate",
     "RevokedUserCertificate",
@@ -620,11 +622,11 @@ __all__ = [
     "EventsListenRepOkInviteStatusChanged",
     "EventsListenRepOkMessageReceived",
     "EventsListenRepOkPinged",
-    "EventsListenRepOkPkiEnrollment",
+    "EventsListenRepOkPkiEnrollmentUpdated",
     "EventsListenRepOkRealmMaintenanceFinished",
     "EventsListenRepOkRealmMaintenanceStarted",
     "EventsListenRepOkRealmRolesUpdated",
-    "EventsListenRepOkVlobsUpdated",
+    "EventsListenRepOkRealmVlobsUpdated",
     "EventsListenRepUnknownStatus",
     "EventsListenReq",
     "EventsSubscribeRep",

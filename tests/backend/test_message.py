@@ -7,7 +7,6 @@ from parsec._parsec import (
     MessageGetRepOk,
     Message,
     EventsListenRepOkMessageReceived,
-    EventsListenRepOk,
     EventsListenRepNoEvents,
 )
 from parsec.api.protocol import message_get_serializer
@@ -33,7 +32,7 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
             bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
         )
 
-    assert listen.rep == EventsListenRepOk(EventsListenRepOkMessageReceived(1))
+    assert listen.rep == EventsListenRepOkMessageReceived(1)
 
     rep = await message_get(alice_ws)
     assert rep == MessageGetRepOk(
@@ -120,8 +119,8 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
         await events_listen_nowait(alice_ws),
     ]
     assert reps == [
-        EventsListenRepOk(EventsListenRepOkMessageReceived(1)),
-        EventsListenRepOk(EventsListenRepOkMessageReceived(2)),
+        EventsListenRepOkMessageReceived(1),
+        EventsListenRepOkMessageReceived(2),
         EventsListenRepNoEvents(),
     ]
 
@@ -136,6 +135,6 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
 
     reps = [await events_listen_nowait(alice_ws), await events_listen_nowait(alice_ws)]
     assert reps == [
-        EventsListenRepOk(EventsListenRepOkMessageReceived(3)),
+        EventsListenRepOkMessageReceived(3),
         EventsListenRepNoEvents(),
     ]

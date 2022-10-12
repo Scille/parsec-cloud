@@ -14,7 +14,7 @@ from parsec.core.config import CoreConfig
 from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
 
 
-WORKSPACE_ROLE_CHOICES = {"NONE": None, **{role.value: role for role in WorkspaceRole}}
+WORKSPACE_ROLE_CHOICES = {"NONE": None, **{role.str: role for role in WorkspaceRole.values()}}
 
 
 async def _share_workspace(

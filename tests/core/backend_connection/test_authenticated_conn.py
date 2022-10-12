@@ -6,7 +6,7 @@ import trio
 from parsec._parsec import (
     AuthenticatedPingRepOk,
     EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOkVlobsUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
     RealmID,
 )
 from parsec.api.data import EntryName
@@ -311,10 +311,10 @@ async def test_realm_notif_on_new_workspace_sync(
             [
                 # Access to newly created realm
                 EventsListenRepOkRealmRolesUpdated(RealmID.from_bytes(wid.bytes), RealmRole.OWNER),
-                EventsListenRepOkVlobsUpdated(
+                EventsListenRepOkRealmVlobsUpdated(
                     RealmID.from_bytes(wid.bytes), 1, VlobID.from_bytes(wid.bytes), 1
                 ),
-                EventsListenRepOkVlobsUpdated(
+                EventsListenRepOkRealmVlobsUpdated(
                     RealmID.from_bytes(uid.bytes), 2, VlobID.from_bytes(uid.bytes), 2
                 ),
             ]

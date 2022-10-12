@@ -34,6 +34,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::PrivateKey>()?;
     m.add_class::<api_crypto::PublicKey>()?;
 
+    m.add_class::<certif::RealmRole>()?;
     m.add_class::<certif::UserCertificate>()?;
     m.add_class::<certif::RevokedUserCertificate>()?;
     m.add_class::<certif::DeviceCertificate>()?;
@@ -115,21 +116,20 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::BlockReadRepUnknownStatus>()?;
 
     // Events
-    m.add_class::<protocol::BackendEvent>()?;
     m.add_class::<protocol::EventsListenReq>()?;
     m.add_class::<protocol::EventsListenRep>()?;
     m.add_class::<protocol::EventsListenRepOk>()?;
     m.add_class::<protocol::EventsListenRepNoEvents>()?;
     m.add_class::<protocol::EventsListenRepUnknownStatus>()?;
-    m.add_class::<protocol::EventsListenRepOkPinged>()?;
     m.add_class::<protocol::EventsListenRepCancelled>()?;
+    m.add_class::<protocol::EventsListenRepOkPinged>()?;
     m.add_class::<protocol::EventsListenRepOkMessageReceived>()?;
     m.add_class::<protocol::EventsListenRepOkInviteStatusChanged>()?;
     m.add_class::<protocol::EventsListenRepOkRealmMaintenanceFinished>()?;
     m.add_class::<protocol::EventsListenRepOkRealmMaintenanceStarted>()?;
-    m.add_class::<protocol::EventsListenRepOkVlobsUpdated>()?;
-    m.add_class::<protocol::EventsListenRepOkPkiEnrollment>()?;
+    m.add_class::<protocol::EventsListenRepOkRealmVlobsUpdated>()?;
     m.add_class::<protocol::EventsListenRepOkRealmRolesUpdated>()?;
+    m.add_class::<protocol::EventsListenRepOkPkiEnrollmentUpdated>()?;
     m.add_class::<protocol::EventsSubscribeReq>()?;
     m.add_class::<protocol::EventsSubscribeRep>()?;
     m.add_class::<protocol::EventsSubscribeRepOk>()?;

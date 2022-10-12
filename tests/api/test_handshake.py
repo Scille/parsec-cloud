@@ -300,7 +300,7 @@ def test_process_challenge_req_good_multiple_api_version(
         {
             "handshake": "answer",
             "type": HandshakeType.INVITED.value,
-            "invitation_type": InvitationType.USER.value,
+            "invitation_type": InvitationType.USER.str,
             "organization_id": "d@mmy",  # Invalid OrganizationID
             "token": "<good>",
         },
@@ -314,7 +314,7 @@ def test_process_challenge_req_good_multiple_api_version(
         {
             "handshake": "answer",
             "type": HandshakeType.INVITED.value,
-            "invitation_type": InvitationType.USER.value,
+            "invitation_type": InvitationType.USER.str,
             "organization_id": "<good>",
             "token": "abc123",  # Invalid token type
         },

@@ -159,6 +159,32 @@ def str_based_field_factory(value_type: Type) -> Type[Field]:
     )
 
 
+def rust_enum_field_factory(value_type: Type) -> Type[Field]:
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        if isinstance(value, value_type):
+            return value.str
+        else:
+            raise ValidationError(f"Not a InvitationStatus")
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, str):
+            raise ValidationError("Not string")
+
+        try:
+            return value_type.from_str(value)
+        except ValueError as exc:
+            raise ValidationError(f"Invalid type `{value}`") from exc
+
+    return type(
+        f"{value_type.__name__}Field",
+        (Field,),
+        {"_serialize": _serialize, "_deserialize": _deserialize},
+    )
+
+
 def uuid_based_field_factory(value_type: Type) -> Type[Field]:
     assert isinstance(value_type, type)
 

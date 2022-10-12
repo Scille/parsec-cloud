@@ -341,7 +341,7 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
     aw = aum.workspaces[0]
 
     previous_entry = None
-    for role in WorkspaceRole:
+    for role in WorkspaceRole.values():
         # (re)share with rights
         await alice_user_fs.workspace_share(wid, bob.user_id, role)
         with bob_user_fs.event_bus.listen() as spy:

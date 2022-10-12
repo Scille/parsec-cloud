@@ -427,7 +427,7 @@ async def _do_new_user_invitation(
         invitation_type = InvitationType.USER
         q = _q_retrieve_compatible_user_invitation(
             organization_id=organization_id.str,
-            type=invitation_type.value,
+            type=invitation_type.str,
             greeter_user_id=greeter_user_id.str,
             claimer_email=claimer_email,
         )
@@ -435,7 +435,7 @@ async def _do_new_user_invitation(
         invitation_type = InvitationType.DEVICE
         q = _q_retrieve_compatible_device_invitation(
             organization_id=organization_id.str,
-            type=invitation_type.value,
+            type=invitation_type.str,
             greeter_user_id=greeter_user_id.str,
         )
 
@@ -449,7 +449,7 @@ async def _do_new_user_invitation(
         await conn.execute(
             *_q_insert_invitation(
                 organization_id=organization_id.str,
-                type=invitation_type.value,
+                type=invitation_type.str,
                 token=token,
                 greeter_user_id=greeter_user_id.str,
                 claimer_email=claimer_email,
@@ -577,7 +577,7 @@ class PGInviteComponent(BaseInviteComponent):
                 status = InvitationStatus.IDLE
 
             invitation: Invitation
-            if type == InvitationType.USER.value:
+            if type == InvitationType.USER.str:
                 invitation = UserInvitation(
                     greeter_user_id=UserID(greeter),
                     greeter_human_handle=greeter_human_handle,
@@ -625,7 +625,7 @@ class PGInviteComponent(BaseInviteComponent):
                 email=greeter_human_handle_email, label=greeter_human_handle_label
             )
 
-        if type == InvitationType.USER.value:
+        if type == InvitationType.USER.str:
             return UserInvitation(
                 greeter_user_id=UserID(greeter),
                 greeter_human_handle=greeter_human_handle,
