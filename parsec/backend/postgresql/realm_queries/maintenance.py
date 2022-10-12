@@ -106,7 +106,7 @@ async def _get_realm_role_for_not_revoked(
             return None
         if row["role"] is None:
             return None
-        return RealmRole(row["role"])
+        return RealmRole.from_str(row["role"])
 
     if users:
         rep = await conn.fetch(

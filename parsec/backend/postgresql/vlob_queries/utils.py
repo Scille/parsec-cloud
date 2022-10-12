@@ -107,7 +107,7 @@ async def _check_realm_access(
     if not rep:
         raise VlobNotFoundError(f"User `{author.user_id.str}` doesn't exist")
 
-    role = RealmRole(rep[0]) if rep[0] is not None else None
+    role = RealmRole.from_str(rep[0]) if rep[0] is not None else None
     if role not in allowed_roles:
         raise VlobAccessError()
 

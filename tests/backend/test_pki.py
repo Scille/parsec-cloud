@@ -3,14 +3,24 @@
 from uuid import uuid4
 import pytest
 
-from parsec._parsec import DateTime, UserRevokeRepOk
+from parsec._parsec import (
+    DateTime,
+    UserRevokeRepOk,
+    EventsListenRepOkPkiEnrollmentUpdated,
+)
 from parsec.api.data import PkiEnrollmentSubmitPayload, RevokedUserCertificate
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserProfile
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.invite.greeter import _create_new_user_certificates
 
-from tests.backend.common import pki_enrollment_submit, pki_enrollment_info
+from tests.backend.common import (
+    pki_enrollment_submit,
+    pki_enrollment_info,
+    events_subscribe,
+    events_listen_nowait,
+)
 from tests.backend.common import (
     pki_enrollment_accept,
     pki_enrollment_list,
@@ -89,51 +99,61 @@ def _prepare_accept_reply(admin, invitee):
 
 
 @pytest.mark.trio
-async def test_pki_submit(anonymous_backend_ws, bob):
+async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
     payload = PkiEnrollmentSubmitPayload(
         verify_key=bob.verify_key,
         public_key=bob.public_key,
         requested_device_label=bob.device_label,
     ).dump()
 
-    rep = await pki_enrollment_submit(
-        anonymous_backend_ws,
-        enrollment_id=uuid4(),
-        force=False,
-        submitter_der_x509_certificate=b"<x509 certif>",
-        submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
-        submit_payload_signature=b"<signature>",
-        submit_payload=payload,
-    )
+    await events_subscribe(bob_ws)
 
-    assert rep["status"] == "ok"
+    with backend.event_bus.listen() as spy:
+        rep = await pki_enrollment_submit(
+            anonymous_backend_ws,
+            enrollment_id=uuid4(),
+            force=False,
+            submitter_der_x509_certificate=b"<x509 certif>",
+            submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
+            submit_payload_signature=b"<signature>",
+            submit_payload=payload,
+        )
+        assert rep["status"] == "ok"
+        await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
+    assert await events_listen_nowait(bob_ws) == EventsListenRepOkPkiEnrollmentUpdated()
+
     # Retry without force
 
-    rep = await pki_enrollment_submit(
-        anonymous_backend_ws,
-        enrollment_id=uuid4(),
-        force=False,
-        submitter_der_x509_certificate=b"<x509 certif>",
-        submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
-        submit_payload_signature=b"<signature>",
-        submit_payload=payload,
-    )
+    with backend.event_bus.listen() as spy:
+        rep = await pki_enrollment_submit(
+            anonymous_backend_ws,
+            enrollment_id=uuid4(),
+            force=False,
+            submitter_der_x509_certificate=b"<x509 certif>",
+            submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
+            submit_payload_signature=b"<signature>",
+            submit_payload=payload,
+        )
 
-    assert rep["status"] == "already_submitted"
-    assert rep["submitted_on"]
+        assert rep["status"] == "already_submitted"
+        assert rep["submitted_on"]
+        assert not spy.events
 
     # Retry with force
 
-    rep = await pki_enrollment_submit(
-        anonymous_backend_ws,
-        enrollment_id=uuid4(),
-        force=True,
-        submitter_der_x509_certificate=b"<x509 certif>",
-        submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
-        submit_payload_signature=b"<signature>",
-        submit_payload=payload,
-    )
-    assert rep["status"] == "ok"
+    with backend.event_bus.listen() as spy:
+        rep = await pki_enrollment_submit(
+            anonymous_backend_ws,
+            enrollment_id=uuid4(),
+            force=True,
+            submitter_der_x509_certificate=b"<x509 certif>",
+            submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
+            submit_payload_signature=b"<signature>",
+            submit_payload=payload,
+        )
+        assert rep["status"] == "ok"
+        await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
+    assert await events_listen_nowait(bob_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
 
 @pytest.mark.trio
@@ -282,7 +302,9 @@ async def test_pki_list_empty(alice_ws):
 
 
 @pytest.mark.trio
-async def test_pki_accept(anonymous_backend_ws, mallory, alice, alice_ws, backend):
+async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_ws):
+    await events_subscribe(alice_ws)
+
     # Assert mallory does not exist
     rep = await backend.user.find_humans(
         organization_id=alice.organization_id, query=mallory.human_handle.email
@@ -294,9 +316,12 @@ async def test_pki_accept(anonymous_backend_ws, mallory, alice, alice_ws, backen
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     # Send reply
-    user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
-    rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep == {"status": "ok"}
+    with backend.event_bus.listen() as spy:
+        user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+        rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
+        assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
+    assert await events_listen_nowait(alice_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
     # Assert user has been created
     rep = await backend.user.find_humans(
@@ -310,8 +335,10 @@ async def test_pki_accept(anonymous_backend_ws, mallory, alice, alice_ws, backen
 
     # Send reply twice
     user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
-    rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep["status"] == "no_longer_available"
+    with backend.event_bus.listen() as spy:
+        rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
+        assert rep["status"] == "no_longer_available"
+        assert not spy.events
 
 
 @pytest.mark.trio
@@ -416,17 +443,24 @@ async def test_pki_accept_already_rejected(backend, anonymous_backend_ws, mallor
 
 
 @pytest.mark.trio
-async def test_pki_reject(anonymous_backend_ws, mallory, alice_ws):
+async def test_pki_reject(backend, anonymous_backend_ws, mallory, alice_ws):
+    await events_subscribe(alice_ws)
+
     # Create request
     request_id = uuid4()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
-    rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-    assert rep == {"status": "ok"}
+    with backend.event_bus.listen() as spy:
+        rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
+        assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
+    assert await events_listen_nowait(alice_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
     # Reject twice
-    rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-    assert rep["status"] == "no_longer_available"
+    with backend.event_bus.listen() as spy:
+        rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
+        assert rep["status"] == "no_longer_available"
+        assert not spy.events
 
 
 @pytest.mark.trio

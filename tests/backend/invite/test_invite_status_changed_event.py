@@ -46,7 +46,7 @@ async def test_greeter_event_on_claimer_join_and_leave(
             rep = await events_listen_wait(alice_ws)
             # PostgreSQL event dispatching might be lagging behind and return
             # the IDLE event first
-            if rep.invitation_status == InvitationStatus.IDLE.value:
+            if rep.invitation_status == InvitationStatus.IDLE:
                 rep = await events_listen_wait(alice_ws)
         assert rep == EventsListenRepOkInviteStatusChanged(invitation.token, InvitationStatus.READY)
 

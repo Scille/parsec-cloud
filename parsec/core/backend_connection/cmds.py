@@ -375,7 +375,7 @@ async def events_subscribe(
     return await _send_cmd(transport, events_subscribe_serializer, cmd="events_subscribe")
 
 
-async def events_listen(transport: Transport, wait: bool = True) -> dict:
+async def events_listen(transport: Transport, wait: bool = True) -> EventsListenRep:
     return await _send_cmd(transport, events_listen_serializer, cmd="events_listen", wait=wait)
 
 

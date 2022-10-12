@@ -34,34 +34,6 @@ pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
     Ok(s.finish())
 }
 
-pub fn rs_to_py_realm_role(role: &libparsec::types::RealmRole) -> PyResult<PyObject> {
-    Python::with_gil(|py| -> PyResult<PyObject> {
-        let cls = py.import("parsec.api.protocol")?.getattr("RealmRole")?;
-        let role_name = match role {
-            libparsec::types::RealmRole::Owner => "OWNER",
-            libparsec::types::RealmRole::Manager => "MANAGER",
-            libparsec::types::RealmRole::Contributor => "CONTRIBUTOR",
-            libparsec::types::RealmRole::Reader => "READER",
-        };
-        let obj = cls.getattr(role_name)?;
-        Ok(obj.into_py(py))
-    })
-}
-
-pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<Option<libparsec::types::RealmRole>> {
-    if role.is_none() {
-        return Ok(None);
-    }
-    use libparsec::types::RealmRole::*;
-    Ok(Some(match role.getattr("name")?.extract::<&str>()? {
-        "OWNER" => Owner,
-        "MANAGER" => Manager,
-        "CONTRIBUTOR" => Contributor,
-        "READER" => Reader,
-        _ => unreachable!(),
-    }))
-}
-
 pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<libparsec::types::UserProfile> {
     use libparsec::types::UserProfile::*;
     Ok(match profile.getattr("name")?.extract::<&str>()? {
@@ -83,16 +55,6 @@ pub fn rs_to_py_user_profile(profile: &libparsec::types::UserProfile) -> PyResul
         };
         let obj = cls.getattr(profile_name)?;
         Ok(obj.into_py(py))
-    })
-}
-
-pub fn py_to_rs_invitation_status(status: &PyAny) -> PyResult<libparsec::types::InvitationStatus> {
-    use libparsec::types::InvitationStatus::*;
-    Ok(match status.getattr("name")?.extract::<&str>()? {
-        "IDLE" => Idle,
-        "READY" => Ready,
-        "DELETED" => Deleted,
-        _ => unreachable!(),
     })
 }
 

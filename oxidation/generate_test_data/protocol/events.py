@@ -15,7 +15,7 @@ from parsec._parsec import (
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOkVlobsUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
     EventsSubscribeRepOk,
 )
 
@@ -67,7 +67,7 @@ serializer.rep_loads(serialized)
 display("events_listen_rep_realm_maintenance_started", serialized, [])
 
 serialized = serializer.rep_dumps(
-    EventsListenRepOkVlobsUpdated(
+    EventsListenRepOkRealmVlobsUpdated(
         realm_id=RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         checkpoint=0,
         src_id=VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
