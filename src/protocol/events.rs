@@ -346,9 +346,7 @@ impl EventsListenRepOkRealmRolesUpdated {
     #[getter]
     fn role(_self: PyRef<'_, Self>) -> Option<RealmRole> {
         match &_self.into_super().as_ref().0 {
-            events_listen::Rep::Ok(APIEvent::RealmRolesUpdated { role, .. }) => {
-                role.and_then(|x| Some(RealmRole(x)))
-            }
+            events_listen::Rep::Ok(APIEvent::RealmRolesUpdated { role, .. }) => role.map(RealmRole),
             _ => unreachable!(),
         }
     }
