@@ -17,7 +17,6 @@ from parsec.backend.sequester import (
     WebhookSequesterService,
     SequesterServiceType,
     SequesterError,
-    SequesterCertificateOutOfBallparkError,
     SequesterCertificateValidationError,
     SequesterDisabledError,
     SequesterOrganizationNotFoundError,
@@ -28,7 +27,6 @@ from parsec.backend.sequester import (
     SequesterWrongServiceTypeError,
 )
 from parsec.crypto import CryptoError
-from parsec.utils import timestamps_in_the_ballpark
 from parsec._parsec import DateTime
 
 
@@ -224,10 +222,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
         self,
         organization_id: OrganizationID,
         service: BaseSequesterService,
-        now: Optional[DateTime] = None,
     ) -> None:
-        now = now or DateTime.now()
-
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             sequester_authority = await get_sequester_authority(conn, organization_id)
 
@@ -241,17 +236,16 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 ) from exc
 
             try:
-                certif_data = SequesterServiceCertificate.load(certif_dumped)
+                SequesterServiceCertificate.load(certif_dumped)
 
             except DataError as exc:
                 raise SequesterCertificateValidationError(
                     f"Invalid certification data ({exc})."
                 ) from exc
 
-            if not timestamps_in_the_ballpark(certif_data.timestamp, now):
-                raise SequesterCertificateOutOfBallparkError(
-                    f"Invalid certification data (timestamp out of ballpark)."
-                )
+            # Note that unlike for other signed data, we don't check the certificate's
+            # timestamp. This is because the certficate is allowed to be created long
+            # before being inserted (see `generate_service_certificate` CLI command)
 
             row = await conn.fetchrow(
                 *_q_get_sequester_service_exist(

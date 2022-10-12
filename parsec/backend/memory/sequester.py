@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Optional, Dict, List, Tuple
 from collections import defaultdict
 from parsec._parsec import DateTime
 
-from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import CryptoError
 from parsec.api.data import SequesterServiceCertificate, DataError
 from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, VlobID
@@ -18,7 +17,6 @@ from parsec.backend.sequester import (
     SequesterServiceAlreadyExists,
     SequesterServiceAlreadyDisabledError,
     SequesterCertificateValidationError,
-    SequesterCertificateOutOfBallparkError,
     SequesterServiceType,
     SequesterWrongServiceTypeError,
 )
@@ -64,10 +62,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self,
         organization_id: OrganizationID,
         service: BaseSequesterService,
-        now: Optional[DateTime] = None,
     ) -> None:
-        now = now or DateTime.now()
-
         try:
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
@@ -85,17 +80,12 @@ class MemorySequesterComponent(BaseSequesterComponent):
             ) from exc
 
         try:
-            certif_data = SequesterServiceCertificate.load(certif_dumped)
+            SequesterServiceCertificate.load(certif_dumped)
 
         except DataError as exc:
             raise SequesterCertificateValidationError(
                 f"Invalid certification data ({exc})."
             ) from exc
-
-        if not timestamps_in_the_ballpark(certif_data.timestamp, now):
-            raise SequesterCertificateOutOfBallparkError(
-                f"Invalid certification data (timestamp out of ballpark)."
-            )
 
         org_services = self._services[organization_id]
         if service.service_id in org_services:
