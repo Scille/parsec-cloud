@@ -85,7 +85,7 @@
                     "sequester_services_certificates": {
                         "type": "List<Bytes>"
                     }
-                ]
+                }
             },
             "rejected_by_sequester_service": {
                 "fields": {
@@ -101,6 +101,6 @@
                 }
             },
             "timeout": {}
-        ]
+        }
     }
 ]
