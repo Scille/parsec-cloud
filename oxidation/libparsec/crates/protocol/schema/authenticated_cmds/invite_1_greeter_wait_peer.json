@@ -8,39 +8,26 @@
         ],
         "req": {
             "cmd": "invite_1_greeter_wait_peer",
-            "other_fields": [
-                {
-                    "name": "token",
+            "fields": {
+                "token": {
                     "type": "InvitationToken"
                 },
-                {
-                    "name": "greeter_public_key",
+                "greeter_public_key": {
                     "type": "PublicKey"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "claimer_public_key",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "claimer_public_key": {
                         "type": "PublicKey"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": []
-            },
-            {
-                "status": "already_deleted",
-                "other_fields": []
-            },
-            {
-                "status": "invalid_state",
-                "other_fields": []
-            }
-        ]
+            "not_found": {},
+            "already_deleted": {},
+            "invalid_state": {}
+        }
     }
 ]

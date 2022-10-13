@@ -7,80 +7,64 @@
         ],
         "req": {
             "cmd": "human_find",
-            "other_fields": [
-                {
-                    "name": "query",
+            "fields": {
+                "query": {
                     "type": "Option<String>"
                 },
-                {
-                    "name": "omit_revoked",
+                "omit_revoked": {
                     "type": "Boolean"
                 },
-                {
-                    "name": "omit_non_human",
+                "omit_non_human": {
                     "type": "Boolean"
                 },
-                {
-                    // First page is 1
-                    "name": "page",
+                // First page is 1
+                "page": {
                     "type": "NonZeroInteger"
                 },
-                {
-                    "name": "per_page",
+                "per_page": {
                     "type": "IntegerBetween1And100"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "results",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "results": {
                         "type": "List<HumanFindResultItem>"
                     },
-                    {
-                        "name": "page",
+                    "page": {
                         "type": "NonZeroInteger"
                     },
-                    {
-                        "name": "per_page",
+                    "per_page": {
                         "type": "IntegerBetween1And100"
                     },
-                    {
-                        "name": "total",
+                    "total": {
                         "type": "Size"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_allowed": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             }
-        ],
-        "nested_types": [
-            {
-                "label": "HumanFindResultItem",
-                "fields": [
-                    {
-                        "name": "user_id",
+        },
+        "nested_types": {
+            "HumanFindResultItem": {
+                "fields": {
+                    "user_id": {
                         "type": "UserID"
                     },
-                    {
-                        "name": "human_handle",
+                    "human_handle": {
                         "type": "Option<HumanHandle>"
                     },
-                    {
-                        "name": "revoked",
+                    "revoked": {
                         "type": "Boolean"
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]

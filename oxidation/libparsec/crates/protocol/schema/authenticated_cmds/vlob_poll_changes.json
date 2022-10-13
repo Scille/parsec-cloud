@@ -8,48 +8,35 @@
         ],
         "req": {
             "cmd": "vlob_poll_changes",
-            "other_fields": [
-                {
-                    "name": "realm_id",
+            "fields": {
+                "realm_id": {
                     "type": "RealmID"
                 },
-                {
-                    "name": "last_checkpoint",
+                "last_checkpoint": {
                     "type": "Index"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "changes",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "changes": {
                         "type": "Map<VlobID, Index>"
                     },
-                    {
-                        "name": "current_checkpoint",
+                    "current_checkpoint": {
                         "type": "Index"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
-            },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
-            }
-        ]
+            "in_maintenance": {}
+        }
     }
 ]

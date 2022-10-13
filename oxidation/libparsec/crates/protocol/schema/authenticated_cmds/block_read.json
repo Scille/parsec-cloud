@@ -8,39 +8,24 @@
         ],
         "req": {
             "cmd": "block_read",
-            "other_fields": [
-                {
-                    "name": "block_id",
+            "fields": {
+                "block_id": {
                     "type": "BlockID"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "block",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "block": {
                         "type": "Bytes"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": []
-            },
-            {
-                "status": "timeout",
-                "other_fields": []
-            },
-            {
-                "status": "not_allowed",
-                "other_fields": []
-            },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
-            }
-        ]
+            "not_found": {},
+            "timeout": {},
+            "not_allowed": {},
+            "in_maintenance": {}
+        }
     }
 ]

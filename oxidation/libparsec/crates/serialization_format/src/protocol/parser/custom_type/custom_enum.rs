@@ -6,32 +6,20 @@ use serde::Deserialize;
 
 use super::{
     shared_attribute,
-    variant::{quote_variants, Variant},
+    variant::{quote_variants, Variants},
 };
 
-#[cfg_attr(test, derive(PartialEq, Eq))]
+#[cfg_attr(test, derive(PartialEq, Eq, Default))]
 #[derive(Debug, Deserialize, Clone)]
 pub struct CustomEnum {
-    pub label: String,
     #[serde(default)]
     pub discriminant_field: Option<String>,
-    pub variants: Vec<Variant>,
-}
-
-#[cfg(test)]
-impl Default for CustomEnum {
-    fn default() -> Self {
-        Self {
-            discriminant_field: None,
-            label: "FooEnum".to_string(),
-            variants: vec![],
-        }
-    }
+    pub variants: Variants,
 }
 
 impl CustomEnum {
-    pub fn quote(&self, types: &HashMap<String, String>) -> syn::ItemEnum {
-        let name = self.quote_label();
+    pub fn quote(&self, name: &str, types: &HashMap<String, String>) -> syn::ItemEnum {
+        let name = self.quote_label(name);
 
         let mut attrs = shared_attribute().to_vec();
         if let Some(discriminant_field) = &self.discriminant_field {
@@ -48,58 +36,66 @@ impl CustomEnum {
         }
     }
 
-    pub fn quote_label(&self) -> syn::Ident {
-        syn::parse_str(&self.label).expect("A valid label for Custom struct")
+    pub fn quote_label(&self, name: &str) -> syn::Ident {
+        syn::parse_str(name).expect("A valid label for Custom struct")
     }
 }
 
 #[cfg(test)]
-#[rstest::rstest]
-#[case::basic(
-    CustomEnum::default(),
-    quote::quote! {
-        #[::serde_with::serde_as]
-        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
-        pub enum FooEnum {}
-    }
-)]
-#[case::with_discriminant_field(
-    CustomEnum {
-        discriminant_field: Some("response_type".to_string()),
-        ..Default::default()
-    },
-    quote::quote! {
-        #[::serde_with::serde_as]
-        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
-        #[serde(tag = "response_type")]
-        pub enum FooEnum {}
-    }
-)]
-#[case::with_variant(
-    CustomEnum {
-        variants: vec![
-            Variant::default(),
-            Variant::default(),
-        ],
-        ..Default::default()
-    },
-    quote::quote! {
-        #[::serde_with::serde_as]
-        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
-        pub enum FooEnum {
-            FooVariant,
-            FooVariant
-        }
-    }
-)]
-fn test_quote(#[case] custom_enum: CustomEnum, #[case] expected: proc_macro2::TokenStream) {
-    use quote::ToTokens;
+mod test {
+    use pretty_assertions::assert_eq;
+    use quote::{quote, ToTokens};
+    use rstest::rstest;
 
-    assert_eq!(
-        custom_enum
-            .quote(&HashMap::new())
-            .into_token_stream()
-            .to_string(),
-        expected.to_string()
-    )
+    use super::{CustomEnum, HashMap, Variants};
+
+    use crate::protocol::parser::Variant;
+
+    #[rstest]
+    #[case::basic(
+        CustomEnum::default(),
+        quote! {
+            #[::serde_with::serde_as]
+            #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
+            pub enum FooEnum {}
+        }
+    )]
+    #[case::with_discriminant_field(
+        CustomEnum {
+            discriminant_field: Some("response_type".to_string()),
+            ..Default::default()
+        },
+        quote! {
+            #[::serde_with::serde_as]
+            #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
+            #[serde(tag = "response_type")]
+            pub enum FooEnum {}
+        }
+    )]
+    #[case::with_variant(
+        CustomEnum {
+            variants: Variants::from([
+                ("Foo".to_string(), Variant::default()),
+                ("Bar".to_string(), Variant::default())
+            ]),
+            ..Default::default()
+        },
+        quote! {
+            #[::serde_with::serde_as]
+            #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
+            pub enum FooEnum {
+                Bar,
+                Foo
+            }
+        }
+    )]
+    fn test_quote(#[case] custom_enum: CustomEnum, #[case] expected: proc_macro2::TokenStream) {
+        assert_eq!(
+            custom_enum
+                .quote("FooEnum", &HashMap::new())
+                .into_token_stream()
+                .to_string(),
+            expected.to_string()
+        )
+    }
 }
