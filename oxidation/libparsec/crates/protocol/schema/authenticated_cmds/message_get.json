@@ -8,46 +8,38 @@
         ],
         "req": {
             "cmd": "message_get",
-            "other_fields": [
-                {
-                    "name": "offset",
+            "fields": {
+                "offset": {
                     "type": "Index"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "messages",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "messages": {
                         "type": "List<Message>"
                     }
-                ]
+                }
             }
-        ],
-        "nested_types": [
-            {
-                "label": "Message",
-                "fields": [
-                    {
-                        "name": "count",
+        },
+        "nested_types": {
+            "Message": {
+                "fields": {
+                    "count": {
                         "type": "Size"
                     },
-                    {
-                        "name": "sender",
+                    "sender": {
                         "type": "DeviceID"
                     },
-                    {
-                        "name": "timestamp",
+                    "timestamp": {
                         "type": "DateTime"
                     },
-                    {
-                        "name": "body",
+                    "body": {
                         "type": "Bytes"
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]

@@ -2,36 +2,51 @@
     "title": "Protocol request",
     "description": "A protocol request",
     "type": "object",
-    "required": [
-        "cmd"
-    ],
-    "additionalProperties": false,
-    "properties": {
-        "cmd": {
-            "type": "string",
-            "description": "The name of the command"
-        },
-        "unit": {
-            "type": "string"
-        },
-        "other_fields": {
-            "type": "array",
-            "description": "Additional fields to send alongside the command",
-            "items": {
-                "$ref": "./field.schema.json"
-            }
-        }
-    },
     "oneOf": [
         {
             "required": [
-                "unit"
-            ]
+                "cmd"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "cmd": {
+                    "type": "string",
+                    "description": "The name of the command"
+                }
+            }
         },
         {
             "required": [
-                "other_fields"
-            ]
+                "cmd",
+                "unit"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "cmd": {
+                    "type": "string",
+                    "description": "The name of the command"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
+        {
+            "required": [
+                "cmd",
+                "fields"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "cmd": {
+                    "type": "string",
+                    "description": "The name of the command"
+                },
+                "fields": {
+                    "description": "Additional fields to send alongside the command",
+                    "$ref": "./fields.schema.json"
+                }
+            }
         }
     ]
 }

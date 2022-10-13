@@ -1,81 +1,39 @@
 {
     "title": "Nested types",
-    "type": "array",
-    "items": {
+    "type": "object",
+    "additionalProperties": {
+        "type": "object",
         "oneOf": [
             {
-                "$ref": "#/$defs/enum_type"
+                "type": "object",
+                "definition": "A Custom enum",
+                "required": [
+                    "variants"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "discriminant_field": {
+                        "type": "string",
+                        "description": "The name of the field used to determine the type of the variant"
+                    },
+                    "variants": {
+                        "$ref": "./variants.schema.json"
+                    }
+                }
             },
             {
-                "$ref": "#/$defs/struct_type"
+                "type": "object",
+                "description": "A Custom struct",
+                "required": [
+                    "fields"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "fields": {
+                        "$ref": "./fields.schema.json"
+                    }
+                }
             }
         ]
-    },
-    "$defs": {
-        "enum_type": {
-            "type": "object",
-            "required": [
-                "label",
-                "variants"
-            ],
-            "additionalProperties": false,
-            "properties": {
-                "label": {
-                    "type": "string",
-                    "name": "The name of the enum"
-                },
-                "discriminant_field": {
-                    "type": "string",
-                    "description": "The name of the field used to determine the type of the variant"
-                },
-                "variants": {
-                    "type": "array",
-                    "description": "The list of possible variants of this type",
-                    "items": {
-                        "type": "object",
-                        "required": [
-                            "name",
-                            "discriminant_value",
-                            "fields"
-                        ],
-                        "additionalProperties": false,
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "discriminant_value": {
-                                "type": "string"
-                            },
-                            "fields": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "./field.schema.json"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "struct_type": {
-            "type": "object",
-            "required": [
-                "label",
-                "fields"
-            ],
-            "additionalProperties": false,
-            "properties": {
-                "label": {
-                    "type": "string",
-                    "description": "The name of the struct"
-                },
-                "fields": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "./field.schema.json"
-                    }
-                }
-            }
-        }
     }
 }
