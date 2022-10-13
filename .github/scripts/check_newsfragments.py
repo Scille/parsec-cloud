@@ -9,6 +9,7 @@ import json
 import argparse
 from pathlib import Path
 from subprocess import run
+from typing import Optional
 from urllib.request import urlopen, Request, HTTPError
 from concurrent.futures import ThreadPoolExecutor
 
@@ -24,13 +25,16 @@ BASE_CMD = "git log origin/master --exit-code --".split()
 IGNORED_BRANCHES_PATTERN = r"(master|[0-9]+\.[0-9]+)"
 
 
-def check_newsfragment(fragment):
+def check_newsfragment(fragment) -> Optional[bool]:
+    fragment_name = fragment.name
     cmd_args = [*BASE_CMD, fragment]
     ret = run(cmd_args, capture_output=True)
     if ret.returncode == 0:
-        print(f"Found new newsfragment {fragment.name}")
+        print(f"[{fragment_name}] Found new newsfragment")
 
-        id, *_ = fragment.name.split(".")
+        id, *_ = fragment_name.split(".")
+        # For more information on github api for issues:
+        # see https://docs.github.com/en/rest/issues/issues#get-an-issue
         req = Request(
             method="GET",
             url=f"https://api.github.com/repos/Scille/parsec-cloud/issues/{id}",
@@ -39,16 +43,22 @@ def check_newsfragment(fragment):
         try:
             ret = urlopen(req)
         except HTTPError:
-            raise SystemExit("New newsfragment ID doesn't correspond to an issue !")
-        data = json.loads(ret.read())
-        if "pull_request" in data:
-            raise SystemExit(
-                "New newsfragement ID correspond to a pull request instead of an issue !"
-            )
-        if data["state"] != "open":
-            raise SystemExit("New newsfragement ID correspond to a closed issue")
-        return True
-    return False
+            print(f"[{fragment_name}] fragment ID doesn't correspond to an issue !")
+        else:
+            data = json.loads(ret.read())
+            print(f"[{fragment_name}] issue#{id} => {data}")
+            if "pull_request" in data:
+                print(
+                    f"[{fragment_name}] fragment ID correspond to a pull request instead of an issue !"
+                )
+            else:
+                if data["state"] == "open":
+                    return True
+                else:
+                    print(f"[{fragment_name}] fragment ID correspond to a closed issue !")
+        return False
+    else:
+        return None
 
 
 if __name__ == "__main__":
@@ -61,7 +71,15 @@ if __name__ == "__main__":
         raise SystemExit(0)
 
     with ThreadPoolExecutor() as pool:
-        ret = pool.map(check_newsfragment, Path("newsfragments").glob("*.rst"))
+        ret = list(
+            filter(
+                lambda value: value is not None,
+                pool.map(check_newsfragment, Path("newsfragments").glob("*.rst")),
+            )
+        )
+
+    if len(ret) == 0:
+        raise SystemExit("No new newsfragment found")
 
     if True not in ret:
-        raise SystemExit("No new newsfragment found")
+        raise SystemExit("No valid newsfragments found")
