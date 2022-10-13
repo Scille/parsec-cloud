@@ -131,7 +131,7 @@ class BaseTypedReqSchema(BaseReqSchema):
 
     @post_load
     def make_obj(self, data: Dict[str, Any]) -> "BaseReq":
-        return self.TYPE(**data)  # type: ignore[call-arg]
+        return self.TYPE(**data)
 
 
 class BaseRepSchema(BaseSchema):
@@ -150,7 +150,7 @@ class BaseTypedRepSchema(BaseRepSchema):
     @post_load
     def make_obj(self, data: Dict[str, Any]) -> "BaseRep":
         data.pop("status")
-        return self.TYPE(**data)  # type: ignore[call-arg]
+        return self.TYPE(**data)
 
 
 class ErrorRepSchema(BaseRepSchema):
@@ -266,7 +266,7 @@ class CmdSerializer:
 
         def _maybe_untype_wrapper(fn):  # type: ignore[no-untyped-def]
             @wraps(fn)
-            def wrapper(data):  # type: ignore[no-untyped-def, misc]
+            def wrapper(data):  # type: ignore[no-untyped-def]
                 if isinstance(data, (BaseReq, BaseRep)):
                     data = data.SERIALIZER.dump(data)
 
@@ -334,7 +334,7 @@ class CmdMeta(type):
     BASE_SCHEMA_CLS: type
     DISCRIMINANT_FIELD: str
 
-    def __new__(  # type: ignore[no-untyped-def, misc]
+    def __new__(  # type: ignore[no-untyped-def]
         cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]
     ):
         # Sanity checks
@@ -519,7 +519,7 @@ def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):  # type: ignore[no-un
 def api_typed_msg_adapter(req_cls, rep_cls):  # type: ignore[no-untyped-def]
     def _api_typed_msg_adapter(fn):  # type: ignore[no-untyped-def]
         @wraps(fn)
-        async def wrapper(self, client_ctx, msg):  # type: ignore[no-untyped-def, misc]
+        async def wrapper(self, client_ctx, msg):  # type: ignore[no-untyped-def]
             # Here packb&unpackb should never fail given they are only undoing
             # work we've just done in another layer
             if client_ctx.TYPE == ClientType.INVITED:
