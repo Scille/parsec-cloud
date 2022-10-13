@@ -78,6 +78,8 @@ pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<
                 "Chunk" => "libparsec_client_types::Chunk",
                 "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
                 "UUID" => "libparsec_types::uuid::Uuid",
+                // Used only in protocol
+                "IntegerBetween1And100" => "crate::IntegerBetween1And100",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }
