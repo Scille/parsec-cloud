@@ -133,7 +133,7 @@ def logging_config_options(default_log_level: str):
         @click.option(
             "--log-level",
             "-l",
-            type=click.Choice(LOG_LEVELS),
+            type=click.Choice(LOG_LEVELS, case_sensitive=False),
             default=default_log_level,
             show_default=True,
             envvar="PARSEC_LOG_LEVEL",
@@ -141,7 +141,7 @@ def logging_config_options(default_log_level: str):
         @click.option(
             "--log-format",
             "-f",
-            type=click.Choice(("CONSOLE", "JSON")),
+            type=click.Choice(("CONSOLE", "JSON"), case_sensitive=False),
             default="CONSOLE",
             show_default=True,
             envvar="PARSEC_LOG_FORMAT",

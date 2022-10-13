@@ -13,7 +13,7 @@ from sentry_sdk.utils import event_from_exception
 from parsec import __version__
 
 
-# Long story short Python's logging is an overengineering mess, adding
+# Long story short Python's logging is an over-engineering mess, adding
 # structlog and Sentry brings another layer of complexity :/
 #
 # What we want to achieve here:
@@ -143,7 +143,7 @@ def _structlog_to_sentry_processor(logger, method_name: str, event: dict) -> dic
 def build_structlog_configuration(log_level: str, log_format: str, log_stream: TextIO) -> dict:
     log_level = _cook_log_level(log_level)
     # A bit of struclog architecture:
-    # - lazy proxy: component obtained through `structlog.get_logger()`, lazyness
+    # - lazy proxy: component obtained through `structlog.get_logger()`, laziness
     #     is needed given it is imported very early on (later it bind operation
     #     will initialize the logger wrapper)
     # - logger wrapper: component responsible for all the cooking (e.g. calling processors)
@@ -174,7 +174,7 @@ def configure_stdlib_logger(
     log_level = _cook_log_level(log_level)
 
     # Use structlog to format stdlib logging records.
-    # Note this is only cosmetic: stdlib is still responsible for outputing them.
+    # Note this is only cosmetic: stdlib is still responsible for outputting them.
     formatter = structlog.stdlib.ProcessorFormatter(
         foreign_pre_chain=[
             structlog.stdlib.add_log_level,
