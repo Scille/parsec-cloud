@@ -8,26 +8,16 @@
         ],
         "req": {
             "cmd": "invite_2b_claimer_send_nonce",
-            "other_fields": [
-                {
-                    "name": "claimer_nonce",
+            "fields": {
+                "claimer_nonce": {
                     "type": "Bytes"
                 }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            },
-            {
-                "status": "not_found",
-                "other_fields": []
-            },
-            {
-                "status": "invalid_state",
-                "other_fields": []
             }
-        ]
+        },
+        "reps": {
+            "ok": {},
+            "not_found": {},
+            "invalid_state": {}
+        }
     }
 ]

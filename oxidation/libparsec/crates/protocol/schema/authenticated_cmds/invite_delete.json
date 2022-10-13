@@ -8,52 +8,34 @@
         ],
         "req": {
             "cmd": "invite_delete",
-            "other_fields": [
-                {
-                    "name": "token",
+            "fields": {
+                "token": {
                     "type": "InvitationToken"
                 },
-                {
-                    "name": "reason",
+                "reason": {
                     "type": "InvitationDeletedReason"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            },
-            {
-                "status": "not_found",
-                "other_fields": []
-            },
-            {
-                "status": "already_deleted",
-                "other_fields": []
-            }
-        ],
-        "nested_types": [
-            {
-                "label": "InvitationDeletedReason",
-                "variants": [
-                    {
-                        "name": "Finished",
-                        "discriminant_value": "FINISHED",
-                        "fields": []
+        "reps": {
+            "ok": {},
+            "not_found": {},
+            "already_deleted": {}
+        },
+        "nested_types": {
+            "InvitationDeletedReason": {
+                "variants": {
+                    "Finished": {
+                        "discriminant_value": "FINISHED"
                     },
-                    {
-                        "name": "Cancelled",
-                        "discriminant_value": "CANCELLED",
-                        "fields": []
+                    "Cancelled": {
+                        "discriminant_value": "CANCELLED"
                     },
-                    {
-                        "name": "Rotten",
-                        "discriminant_value": "ROTTEN",
-                        "fields": []
+                    "Rotten": {
+                        "discriminant_value": "ROTTEN"
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]

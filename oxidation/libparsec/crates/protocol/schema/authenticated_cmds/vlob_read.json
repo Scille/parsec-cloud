@@ -8,80 +8,56 @@
         ],
         "req": {
             "cmd": "vlob_read",
-            "other_fields": [
-                {
-                    "name": "encryption_revision",
+            "fields": {
+                "encryption_revision": {
                     "type": "Index"
                 },
-                {
-                    "name": "vlob_id",
+                "vlob_id": {
                     "type": "VlobID"
                 },
-                {
-                    "name": "version",
+                "version": {
                     "type": "Option<Version>"
                 },
-                {
-                    "name": "timestamp",
+                "timestamp": {
                     "type": "Option<DateTime>"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "version",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "version": {
                         "type": "Version"
                     },
-                    {
-                        "name": "blob",
+                    "blob": {
                         "type": "Bytes"
                     },
-                    {
-                        "name": "author",
+                    "author": {
                         "type": "DeviceID"
                     },
-                    {
-                        "name": "timestamp",
+                    "timestamp": {
                         "type": "DateTime"
                     },
-                    {
-                        // This field is used by the client to figure out if its role certificate cache is up-to-date enough
-                        // to be able to perform the proper integrity checks on the manifest timestamp.
-                        // New in API version 2.3 (Parsec 2.6.0)
-                        "name": "author_last_role_granted_on",
+                    // This field is used by the client to figure out if its role certificate cache is up-to-date enough
+                    // to be able to perform the proper integrity checks on the manifest timestamp.
+                    // New in API version 2.3 (Parsec 2.6.0)
+                    "author_last_role_granted_on": {
                         "type": "DateTime",
                         "introduced_in": "2.3"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_found": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
-            },
-            {
-                "status": "bad_version",
-                "other_fields": []
-            },
-            {
-                "status": "bad_encryption_revision",
-                "other_fields": []
-            },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
-            }
-        ]
+            "not_allowed": {},
+            "bad_version": {},
+            "bad_encryption_revision": {},
+            "in_maintenance": {}
+        }
     }
 ]

@@ -8,59 +8,46 @@
         ],
         "req": {
             "cmd": "device_create",
-            "other_fields": [
-                {
-                    "name": "device_certificate",
+            "fields": {
+                "device_certificate": {
                     "type": "Bytes"
                 },
-                {
-                    // Same certificate than above, but expunged of device_label
-                    "name": "redacted_device_certificate",
+                // Same certificate than above, but expunged of device_label
+                "redacted_device_certificate": {
                     "type": "Bytes"
                 }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            },
-            {
-                "status": "invalid_certification",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
-            },
-            {
-                "status": "bad_user_id",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
-            },
-            {
-                "status": "invalid_data",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
-            },
-            {
-                "status": "already_exists",
-                "other_fields": [
-                    {
-                        "name": "reason",
-                        "type": "Option<String>"
-                    }
-                ]
             }
-        ]
+        },
+        "reps": {
+            "ok": {},
+            "invalid_certification": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "bad_user_id": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "invalid_data": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "already_exists": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            }
+        }
     }
 ]

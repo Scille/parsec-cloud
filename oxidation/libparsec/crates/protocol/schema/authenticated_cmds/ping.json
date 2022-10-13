@@ -8,23 +8,20 @@
         ],
         "req": {
             "cmd": "ping",
-            "other_fields": [
-                {
-                    "name": "ping",
+            "fields": {
+                "ping": {
                     "type": "String"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "pong",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "pong": {
                         "type": "String"
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]
