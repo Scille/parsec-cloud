@@ -41,7 +41,7 @@ SUPPORTED_API_VERSIONS = (
 rpc_bp = Blueprint("anonymous_api", __name__)
 
 
-def _rpc_msgpack_rep(data: dict, api_version: ApiVersion) -> Response:
+def _rpc_msgpack_rep(data: dict[str, str], api_version: ApiVersion) -> Response:
     return Response(
         response=packb(data),
         # Unlike REST, RPC doesn't use status to encode operational result
@@ -175,7 +175,7 @@ async def _do_handshake(
 
 
 @rpc_bp.route("/anonymous/<raw_organization_id>", methods=["GET", "POST"])
-async def anonymous_api(raw_organization_id: str):
+async def anonymous_api(raw_organization_id: str) -> Response:  # type: ignore[misc]
     backend: BackendApp = g.backend
 
     allow_missing_organization = (
@@ -224,7 +224,7 @@ async def anonymous_api(raw_organization_id: str):
 
 
 @rpc_bp.route("/authenticated/<raw_organization_id>", methods=["POST"])
-async def authenticated_api(raw_organization_id: str):
+async def authenticated_api(raw_organization_id: str) -> Response:  # type: ignore[misc]
     backend: BackendApp = g.backend
 
     api_version, organization_id, _, user, device = await _do_handshake(

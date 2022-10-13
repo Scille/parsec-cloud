@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import NoReturn, TYPE_CHECKING
+from typing import Any, Awaitable, Callable, NoReturn, TYPE_CHECKING, TypeVar
+from typing_extensions import ParamSpec
 from functools import wraps
+from parsec.serde.serializer import JSONSerializer
 from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response, g
 
 from parsec.serde import SerdeValidationError, SerdePackingError
@@ -23,13 +25,15 @@ from parsec.backend.organization import (
 if TYPE_CHECKING:
     from parsec.backend.app import BackendApp
 
+T = TypeVar("T")
+P = ParamSpec("P")
 
 administration_bp = Blueprint("administration_api", __name__)
 
 
-def administration_authenticated(fn):
+def administration_authenticated(fn: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
     @wraps(fn)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         authorization = request.headers.get("Authorization")
         if authorization != f"Bearer {g.backend.config.administration_token}":
             await json_abort({"error": "not_allowed"}, 403)
@@ -38,22 +42,24 @@ def administration_authenticated(fn):
     return wrapper
 
 
-async def json_abort(data: dict, status: int) -> NoReturn:
+async def json_abort(data: dict[str, Any], status: int) -> NoReturn:
     response = await make_response(jsonify(data), status)
     abort(response)
 
 
-async def load_req_data(req_serializer) -> dict:
+async def load_req_data(req_serializer: JSONSerializer) -> dict[str, Any]:
     raw = await request.get_data()
     try:
-        return req_serializer.loads(raw)
+        return req_serializer.loads(raw)  # type: ignore[arg-type]
     except SerdeValidationError as exc:
         await json_abort({"error": "bad_data", "reason": exc.errors}, 400)
     except SerdePackingError:
         await json_abort({"error": "bad_data", "reason": "Invalid JSON"}, 400)
 
 
-def make_rep_response(rep_serializer, data, **kwargs) -> Response:
+def make_rep_response(
+    rep_serializer: JSONSerializer, data: dict[str, Any], **kwargs: Any
+) -> Response:
     return current_app.response_class(
         rep_serializer.dumps(data), content_type=current_app.config["JSONIFY_MIMETYPE"], **kwargs
     )
@@ -61,8 +67,8 @@ def make_rep_response(rep_serializer, data, **kwargs) -> Response:
 
 @administration_bp.route("/administration/organizations", methods=["POST"])
 @administration_authenticated
-async def administration_create_organizations():
-    backend: "BackendApp" = current_app.backend
+async def administration_create_organizations() -> Response:  # type: ignore[misc]
+    backend: "BackendApp" = current_app.backend  # type: ignore[attr-defined]
     data = await load_req_data(organization_create_req_serializer)
 
     organization_id = data.pop("organization_id")
@@ -83,7 +89,7 @@ async def administration_create_organizations():
     "/administration/organizations/<raw_organization_id>", methods=["GET", "PATCH"]
 )
 @administration_authenticated
-async def administration_organization_item(raw_organization_id: str):
+async def administration_organization_item(raw_organization_id: str) -> Response:  # type: ignore[misc]
     backend: "BackendApp" = g.backend
     try:
         organization_id = OrganizationID(raw_organization_id)
@@ -125,7 +131,7 @@ async def administration_organization_item(raw_organization_id: str):
     "/administration/organizations/<raw_organization_id>/stats", methods=["GET"]
 )
 @administration_authenticated
-async def administration_organization_stat(raw_organization_id: str):
+async def administration_organization_stat(raw_organization_id: str) -> Response:  # type: ignore[misc]
     backend: "BackendApp" = g.backend
     try:
         organization_id = OrganizationID(raw_organization_id)
