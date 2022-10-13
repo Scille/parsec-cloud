@@ -10,7 +10,11 @@ use serde::Deserialize;
 
 pub use custom_enum::CustomEnum;
 pub use custom_struct::CustomStruct;
-pub use variant::Variant;
+pub use variant::{Variant, Variants};
+
+/// A collection of [CustomType].
+/// Each keys is the name of the custom type.
+pub type CustomTypes = HashMap<String, CustomType>;
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
@@ -21,19 +25,12 @@ pub enum CustomType {
 }
 
 impl CustomType {
-    pub fn label(&self) -> &str {
+    pub fn quote(&self, name: &str, types: &HashMap<String, String>) -> syn::Item {
         match self {
-            CustomType::Struct(custom_struct) => &custom_struct.label,
-            CustomType::Enum(custom_enum) => &custom_enum.label,
-        }
-    }
-}
-
-impl CustomType {
-    pub fn quote(&self, types: &HashMap<String, String>) -> syn::Item {
-        match self {
-            CustomType::Struct(custom_struct) => syn::Item::Struct(custom_struct.quote(types)),
-            CustomType::Enum(custom_enum) => syn::Item::Enum(custom_enum.quote(types)),
+            CustomType::Struct(custom_struct) => {
+                syn::Item::Struct(custom_struct.quote(name, types))
+            }
+            CustomType::Enum(custom_enum) => syn::Item::Enum(custom_enum.quote(name, types)),
         }
     }
 }
@@ -47,86 +44,85 @@ fn shared_attribute() -> Vec<syn::Attribute> {
 
 #[cfg(test)]
 mod test {
-    use super::{variant::Variant, CustomEnum, CustomStruct, CustomType};
-    use crate::protocol::parser::field::Field;
+    use super::{
+        variant::{Variant, Variants},
+        CustomEnum, CustomStruct, CustomType,
+    };
+    use crate::protocol::parser::field::{Field, Fields};
     use rstest::rstest;
 
     #[rstest]
     #[case::deserialize_enum(
         r#"{
-        "label": "APIEvent",
         "discriminant_field": "event",
-        "variants": [
-            {
-                "name": "Pinged",
+        "variants": {
+            "Pinged": {
                 "discriminant_value": "pinged",
-                "fields": [
-                    {
-                        "name": "ping",
+                "fields": {
+                    "ping": {
                         "type": "String"
                     }
-                ]
+                }
             }
-        ]
+        }
     }"#
     , CustomType::Enum(CustomEnum {
-        label: "APIEvent".to_string(),
         discriminant_field: Some("event".to_string()),
-        variants: vec![
+        variants: Variants::from([
+            ("Pinged".to_string(),
             Variant {
-                name: "Pinged".to_string(),
                 discriminant_value: Some("pinged".to_string()),
-                fields: vec![
+                fields: Fields::from([
+                    ("ping".to_string(),
                     Field {
-                        name: "ping".to_string(),
                         ty: "String".to_string(),
                         introduced_in: None,
                         default: None,
                     }
-                ]
+                )
+                ])
             }
-        ]
+        )
+        ])
     }))]
     #[case::deserialize_struct(
         r#"{
-        "label": "HumanFindResultItem",
-        "fields": [
-            {
-                "name": "user_id",
+        "fields": {
+            "user_id": {
                 "type": "UserID"
             },
-            {
-                "name": "human_handle",
+            "human_handle": {
                 "type": "Option<HumanHandle>"
             },
-            {
-                "name": "revoked",
+            "revoked": {
                 "type": "Boolean"
             }
-        ]
+        }
     }"#,
     CustomType::Struct(CustomStruct {
-        label: "HumanFindResultItem".to_string(),
-        fields: vec![
+        fields: Fields::from([
+            ("user_id".to_string(),
             Field {
-                name: "user_id".to_string(),
                 ty: "UserID".to_string(),
                 introduced_in: None,
                 default: None,
             },
-            Field {
-                name: "human_handle".to_string(),
-                ty: "Option<HumanHandle>".to_string(),
-                introduced_in: None,
-                default: None,
-            },
-            Field {
-                name: "revoked".to_string(),
-                ty: "Boolean".to_string(),
-                introduced_in: None,
-                default: None,
-            }
-        ]
+        ),
+        ("human_handle".to_string(),
+        Field {
+            ty: "Option<HumanHandle>".to_string(),
+            introduced_in: None,
+            default: None,
+        },
+    ),
+    ("revoked".to_string(),
+    Field {
+        ty: "Boolean".to_string(),
+        introduced_in: None,
+        default: None,
+    }
+)
+        ])
     }))]
     fn test_deserialization(#[case] input: &str, #[case] expected: CustomType) {
         let custom_type =

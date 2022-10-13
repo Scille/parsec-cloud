@@ -8,11 +8,11 @@ pub mod request;
 pub mod response;
 
 pub use collection::ProtocolCollection;
-pub use custom_type::{CustomEnum, CustomStruct, CustomType, Variant};
-pub use field::Field;
+pub use custom_type::{CustomEnum, CustomStruct, CustomType, CustomTypes, Variant, Variants};
+pub use field::{Field, Fields};
 pub use major_minor_version::MajorMinorVersion;
 pub use request::Request;
-pub use response::Response;
+pub use response::{Response, Responses};
 
 use serde::Deserialize;
 
@@ -30,10 +30,9 @@ pub struct Cmd {
     pub introduced_in: Option<MajorMinorVersion>,
     pub req: Request,
     #[serde(rename = "reps")]
-    pub possible_responses: Vec<Response>,
+    pub possible_responses: Responses,
     #[serde(default)]
-    // TODO: May need to be put in a option.
-    pub nested_types: Vec<CustomType>,
+    pub nested_types: CustomTypes,
 }
 
 #[cfg(test)]
@@ -44,8 +43,8 @@ impl Default for Cmd {
             major_versions: vec![],
             introduced_in: None,
             req: Request::default(),
-            nested_types: vec![],
-            possible_responses: vec![],
+            nested_types: CustomTypes::default(),
+            possible_responses: Responses::default(),
         }
     }
 }
@@ -63,20 +62,20 @@ impl Default for Cmd {
             "major_versions": [],
             "req": {
                 "cmd": "foo_cmd",
-                "other_fields": []
+                "fields": {}
             },
-            "reps": [],
-            "nested_types": []
+            "reps": {},
+            "nested_types": {}
         },
         {
             "label": "FooCmd",
             "major_versions": [],
             "req": {
                 "cmd": "foo_cmd",
-                "other_fields": []
+                "fields": {}
             },
-            "reps": [],
-            "nested_types": []
+            "reps": {},
+            "nested_types": {}
         }
     ]"#,
     Protocol(vec![
@@ -89,16 +88,17 @@ impl Default for Cmd {
         {
             "label": "FooCmd",
             "major_versions": [ 42 ],
-            "introduced_in": 42.2,
+            "introduced_in": "42.2",
             "req": {
                 "cmd": "foo_cmd",
-                "other_fields": []
+                "fields": {}
             },
-            "reps": [],
+            "reps": {}
         }
     ]"#,
     Protocol(vec![
         Cmd {
+            major_versions: vec![42],
             introduced_in: Some("42.2".parse().unwrap()),
             ..Default::default()
         }

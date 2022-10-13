@@ -6,13 +6,16 @@ use crate::protocol::utils::{quote_serde_as, validate_raw_type};
 
 use super::MajorMinorVersion;
 
+use itertools::Itertools;
 use serde::Deserialize;
+
+/// A Collection of fields.
+/// The keys of this dict are the name of the field.
+pub type Fields = HashMap<String, Field>;
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
 pub struct Field {
-    /// The name of the field.
-    pub name: String,
     /// The type's name of the field.
     #[serde(rename = "type")]
     pub ty: String,
@@ -28,7 +31,6 @@ pub struct Field {
 impl Default for Field {
     fn default() -> Self {
         Self {
-            name: "foo_type".to_string(),
             ty: "String".to_string(),
             introduced_in: None,
             default: None,
@@ -39,10 +41,11 @@ impl Default for Field {
 impl Field {
     pub fn quote(
         &self,
+        name: &str,
         visibility: syn::Visibility,
         types: &HashMap<String, String>,
     ) -> syn::Field {
-        let (rename, name) = self.quote_name();
+        let (rename, name) = self.quote_name(name);
         let (ty, serde_skip) = self.quote_type(types);
 
         let mut attrs: Vec<syn::Attribute> = Vec::new();
@@ -72,12 +75,12 @@ impl Field {
         .unwrap()
     }
 
-    fn quote_name(&self) -> (Option<&'static str>, syn::Ident) {
-        let rename = match self.name.as_str() {
+    fn quote_name(&self, name: &str) -> (Option<&'static str>, syn::Ident) {
+        let rename = match name {
             "type" => Some("ty"),
             _ => None,
         };
-        let quote = syn::parse_str(rename.unwrap_or(&self.name)).expect("A valid name");
+        let quote = syn::parse_str(rename.unwrap_or(name)).expect("A valid name");
 
         (rename, quote)
     }
@@ -100,15 +103,18 @@ impl Field {
 
 /// Quote multiple fields.
 /// Can specify the visibility used by default it's public (`pub`)
+///
+/// > The fields will be sorted by their name in binary mode.
 pub fn quote_fields(
-    fields: &[Field],
+    fields: &Fields,
     visibility: Option<syn::Visibility>,
     types: &HashMap<String, String>,
 ) -> Vec<syn::Field> {
     let visibility = visibility.unwrap_or_else(|| syn::parse_quote!(pub));
     fields
         .iter()
-        .map(|field| field.quote(visibility.clone(), types))
+        .sorted_by_key(|(name, _)| *name)
+        .map(|(name, field)| field.quote(name, visibility.clone(), types))
         .collect()
 }
 
@@ -125,12 +131,16 @@ mod test {
 
     #[rstest]
     #[case::basic_field(
-        r#"{"name": "Foo", "type": "String"}"#,
-        Field { name: "Foo".to_string() , ty: "String".to_string(), introduced_in: None, default: None }
+        r#"{"type": "String"}"#,
+        Field { ty: "String".to_string(), introduced_in: None, default: None }
     )]
-    #[case::field_introduced_in(
-        r#"{"name": "Bar", "type": "Boolean", "introduced_in": "5.2"}"#,
-        Field { name: "Bar".to_string(), ty: "Boolean".to_string(), introduced_in: Some("5.2".parse().unwrap()), default: None}
+    #[case::with_introduced_in(
+        r#"{"type": "Boolean", "introduced_in": "5.2"}"#,
+        Field { ty: "Boolean".to_string(), introduced_in: Some("5.2".parse().unwrap()), default: None}
+    )]
+    #[case::with_default(
+        r#"{"type": "u32", "default": "42"}"#,
+        Field { ty: "u32".to_string(), default: Some("42".to_string()), introduced_in: None}
     )]
     fn deserialization(#[case] input: &str, #[case] expected: Field) {
         let field = serde_json::from_str::<Field>(input).expect("Got error on valid data");
@@ -141,7 +151,6 @@ mod test {
     #[case::public(
         syn::parse_quote!(pub),
         Field {
-            name: "foo".to_string(),
             ty: "Integer".to_string(),
             introduced_in: None,
             default: None,
@@ -154,7 +163,6 @@ mod test {
     #[case::public_with_introduced(
         syn::parse_quote!(pub),
         Field {
-            name: "foo".to_string(),
             ty: "Integer".to_string(),
             introduced_in: Some(MajorMinorVersion { major: 4, minor: 1}),
             default: None,
@@ -169,7 +177,6 @@ mod test {
     #[case::public_with_default(
         syn::parse_quote!(pub),
         Field {
-            name: "foo".to_string(),
             ty: "Integer".to_string(),
             introduced_in: None,
             default: Some("42".to_string())
@@ -183,7 +190,6 @@ mod test {
     #[case::private(
         syn::Visibility::Inherited,
         Field {
-            name: "foo".to_string(),
             ty: "Integer".to_string(),
             introduced_in: None,
             default: None,
@@ -196,7 +202,6 @@ mod test {
     #[case::private_with_introduced(
         syn::Visibility::Inherited,
         Field {
-            name: "foo".to_string(),
             ty: "Integer".to_string(),
             introduced_in: Some(MajorMinorVersion { major: 4, minor: 1}),
             default: None,
@@ -211,7 +216,6 @@ mod test {
     #[case::private_with_default(
         syn::Visibility::Inherited,
         Field {
-            name: "foo".to_string(),
             ty: "Integer".to_string(),
             introduced_in: None,
             default: Some("42".to_string())
@@ -229,7 +233,7 @@ mod test {
     ) {
         assert_eq!(
             field
-                .quote(vis, &HashMap::new())
+                .quote("foo", vis, &HashMap::new())
                 .into_token_stream()
                 .to_string(),
             expected.to_string()

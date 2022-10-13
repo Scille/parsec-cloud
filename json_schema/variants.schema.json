@@ -1,0 +1,20 @@
+{
+    "title": "Variants scheme",
+    "type": "object",
+    "description": "The list of possible variants of this type",
+    "additionalProperties": {
+        "type": "object",
+        "required": [
+            "discriminant_value"
+        ],
+        "properties": {
+            "discriminant_value": {
+                "type": "string"
+            },
+            "fields": {
+                "$ref": "./fields.schema.json"
+            }
+        },
+        "additionalProperties": false
+    }
+}

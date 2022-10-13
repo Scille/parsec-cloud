@@ -7,14 +7,10 @@
             3
         ],
         "req": {
-            "cmd": "events_subscribe",
-            "other_fields": []
+            "cmd": "events_subscribe"
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            }
-        ]
+        "reps": {
+            "ok": {}
+        }
     }
 ]

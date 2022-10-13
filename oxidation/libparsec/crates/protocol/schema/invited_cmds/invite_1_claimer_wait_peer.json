@@ -8,31 +8,22 @@
         ],
         "req": {
             "cmd": "invite_1_claimer_wait_peer",
-            "other_fields": [
-                {
-                    "name": "claimer_public_key",
+            "fields": {
+                "claimer_public_key": {
                     "type": "PublicKey"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "greeter_public_key",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "greeter_public_key": {
                         "type": "PublicKey"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_found",
-                "other_fields": []
-            },
-            {
-                "status": "invalid_state",
-                "other_fields": []
-            }
-        ]
+            "not_found": {},
+            "invalid_state": {}
+        }
     }
 ]
