@@ -1,3 +1,4 @@
+from __future__ import annotations
 from parsec._parsec_pyi.certif import (
     RealmRole,
     UserCertificate,

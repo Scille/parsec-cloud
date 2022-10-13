@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Optional, Tuple, Union
 from parsec._parsec import (
     EntryID,

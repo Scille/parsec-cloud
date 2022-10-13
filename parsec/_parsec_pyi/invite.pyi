@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List, Optional, Tuple
 from uuid import UUID
 from parsec._parsec import (

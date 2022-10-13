@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 class Regex:
     @classmethod
     def from_pattern(cls, pattern: str) -> Regex: ...
