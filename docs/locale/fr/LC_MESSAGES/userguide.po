@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-27 15:47+0200\n"
+"POT-Creation-Date: 2022-10-13 11:21+0200\n"
 "PO-Revision-Date: 2020-02-27 17:57+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -16,15 +16,13 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.10.1\n"
+"Generated-By: Babel 2.10.3\n"
 
-# ######################
-# userguide/index.rst #
-#: ../../userguide/index.rst:5
+#: ../../userguide/index.rst:7
 msgid "User Guide"
 msgstr "Guide utilisateur"
 
-#: ../../userguide/index.rst:18
+#: ../../userguide/index.rst:20
 msgid ""
 "You can also use the simplified `Guide d'utilisation Parsec "
 "<https://parsec.cloud/pdf/Guide-d-utilisation-Parsec.pdf>`_"
@@ -33,17 +31,15 @@ msgstr ""
 "<https://parsec.cloud/pdf/Guide-d-utilisation-Parsec.pdf>`_ est également"
 " disponible."
 
-# #############################
-# userguide/installation.rst #
-#: ../../userguide/installation.rst:5
+#: ../../userguide/installation.rst:7
 msgid "Install Parsec client"
 msgstr "Installation du client Parsec"
 
-#: ../../userguide/installation.rst:8
+#: ../../userguide/installation.rst:10
 msgid "Windows"
 msgstr "Windows"
 
-#: ../../userguide/installation.rst:10
+#: ../../userguide/installation.rst:12
 msgid ""
 "Windows installer is available at the latest stable version on "
 "`parsec.cloud <https://parsec.cloud/get-parsec>`_. Otherwise, it is "
@@ -60,15 +56,15 @@ msgstr ""
 "faire fonctionner Parsec sur un ordinateur 32 bits (installeurs nommées "
 "``parsec-vX.Y.Z-win32-setup.exe``)."
 
-#: ../../userguide/installation.rst:14
+#: ../../userguide/installation.rst:16
 msgid "Linux"
 msgstr "Linux"
 
-#: ../../userguide/installation.rst:16
+#: ../../userguide/installation.rst:18
 msgid "Parsec is available on Snap:"
 msgstr "Parsec est disponible sur Snap:"
 
-#: ../../userguide/installation.rst:22
+#: ../../userguide/installation.rst:24
 msgid ""
 "If you are familiar with Snap, you may notice that Parsec snap is "
 "provided in classic mode (i.e. without sandbox). This is needed because "
@@ -83,15 +79,15 @@ msgstr ""
 "vos données comme un disque virtuel, ce qui n'est pas autorisé par "
 "l'isolation de Snap."
 
-#: ../../userguide/installation.rst:27
+#: ../../userguide/installation.rst:29
 msgid "You can install the snap from the command line by doing:"
 msgstr "Vous pouvez installer le snap depuis la ligne de commande en faisant :"
 
-#: ../../userguide/installation.rst:35
+#: ../../userguide/installation.rst:37
 msgid "Via pip"
 msgstr "Via pip"
 
-#: ../../userguide/installation.rst:37
+#: ../../userguide/installation.rst:39
 msgid ""
 "Given that Parsec is written in Python, an alternative is to install it "
 "through `pip (the Python package repository) <https://pypi.org/project"
@@ -100,21 +96,21 @@ msgstr ""
 "Parsec étant écrit en Python, une autre façon de l'installer est via `pip"
 " (Python package repository) <https://pypi.org/project/parsec-cloud/>`_."
 
-#: ../../userguide/installation.rst:43
+#: ../../userguide/installation.rst:45
 msgid "Or intall it with all its dependencies, for the GUI."
 msgstr ""
 "Ou l'installer avec toutes ses dépendances, pour accéder à l'interface "
 "graphique par exemple."
 
-#: ../../userguide/installation.rst:51
+#: ../../userguide/installation.rst:53
 msgid "Parsec requires Python >= 3.9 to work."
 msgstr "Parsec a besoin de Python >= 3.9 pour fonctionner."
 
-#: ../../userguide/installation.rst:55
+#: ../../userguide/installation.rst:57
 msgid "MacOS"
 msgstr "MacOS"
 
-#: ../../userguide/installation.rst:57
+#: ../../userguide/installation.rst:59
 msgid ""
 "MacOS (10.15, >= 11.0) installer is available as a DMG installer on "
 "`GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer "
@@ -124,86 +120,103 @@ msgstr ""
 "`GitHub <https://github.com/Scille/parsec/releases/latest>`_ (fichier "
 "nommé ``parsec-vX.Y.Z-macos-amd64.dmg``"
 
-#: ../../userguide/installation.rst:59
+#: ../../userguide/installation.rst:61
 #, fuzzy
 msgid ""
-"The MacOS version needs `FUSE for MacOS <https://osxfuse.github.io/>`_ to"
-" be installed, which can be troublesome on Big Sur. See `this discussion "
-"<https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' "
-"limitations."
+"The MacOS version requires `macFUSE <https://osxfuse.github.io/>`_ to be "
+"installed, which can be troublesome on Big Sur and Monterey. See `this "
+"discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and"
+" the OS' limitations."
 msgstr ""
 "La version MacOS nécessite l'installation de macFUSE "
-"<https://osxfuse.github.io/>`, ce qui peut être problématique sur Big "
-"Sur. Voir `cette discussion "
-"<https://github.com/osxfuse/osxfuse/issues/814>`_. Un guide "
-"d'installation détaillé est en travaux."
-
-#: ../../userguide/installation.rst:63
-msgid "FUSE for MacOS installation"
-msgstr "Installation de FUSE for MacOS"
+"<https://osxfuse.github.io/>`, ce qui peut être problématique sur Big Sur"
+" et Monterey. Voir `cette discussion "
+"<https://github.com/osxfuse/osxfuse/issues/814>`_."
 
 #: ../../userguide/installation.rst:65
+msgid "macFUSE installation"
+msgstr "Installation de macFUSE"
+
+#: ../../userguide/installation.rst:69
 msgid ""
-"From `FUSE for MacOS <https://osxfuse.github.io/>`_ website, you can find"
-" the lastest version to download at the indicated location."
+"Parsec uses userspace filesystems for a smooth integration of created "
+"repositories and ease of access to stored files. This core feature is "
+"enabled by macFUSE, and is required to have the native experience we aim "
+"for."
 msgstr ""
-"Vous trouverez la dernière version de FUSE for MacOS à cette adresse : "
-"<https://osxfuse.github.io/>`_"
+"Parsec utilise des systèmes de fichiers en espace utilisateur pour une "
+"intégration intuitive du contenu partagé sur l'application. Cette "
+"fonctionnalité est dépendante de l'extension macFUSE, et est nécessaire "
+"pour garantir une expérience native sur cette plateforme."
 
-msgid "FUSE for MacOS download screen"
-msgstr "Écran de téléchargement de FUSE for MacOS"
+#: ../../userguide/installation.rst:72
+#, fuzzy
+msgid ""
+"From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find "
+"the lastest version to download at the indicated location."
+msgstr ""
+"Vous trouverez la dernière version de macFUSE à cette adresse : "
+"https://osxfuse.github.io/"
 
-#: ../../userguide/installation.rst:71
+#: ../../userguide/installation.rst:-1
+msgid "macFUSE download screen"
+msgstr "Écran de téléchargement de macFUSE"
+
+#: ../../userguide/installation.rst:78
 msgid ""
 "Open the ``.dmg`` file and follow its instructions to install. If the "
 "opening fails, check the `App Store and identified developers` box in "
 "System Preferences > Security & Privacy:"
 msgstr ""
-"Ouvrez le fichier en ``.dmg`` et suivez les instruction d'installation. Si "
-"l'ouverture du fichier échoue, cochez la case `App Store et développeurs "
-"identifiés` dans Préférences Système > Sécurité et confidentialité :"
+"Ouvrez le fichier en ``.dmg`` et suivez les instruction d'installation. "
+"Si l'ouverture du fichier échoue, cochez la case `App Store et "
+"développeurs identifiés` dans Préférences Système > Sécurité et "
+"confidentialité :"
 
+#: ../../userguide/installation.rst:-1
 msgid "MacOS path to Security and Privacy"
 msgstr "Chemin vers Sécurité et confidentialité MacOS"
 
+#: ../../userguide/installation.rst:-1
 msgid "MacOS allow identified developer"
 msgstr "MacOS autoriser développeurs identifiés"
 
-#: ../../userguide/installation.rst:81
+#: ../../userguide/installation.rst:88
 msgid ""
 "To change this setting, click the lock first which will require admin "
 "rights."
 msgstr ""
-"Pour changer ce paramètre, cliquez d'abord sur le cadenas, qui requiert les "
-"droits d'administrateur."
+"Pour changer ce paramètre, cliquez d'abord sur le cadenas, qui requiert "
+"les droits d'administrateur."
 
-#: ../../userguide/installation.rst:83
+#: ../../userguide/installation.rst:90
 msgid ""
 "Once the installation is done, a `System Extension Updated` window will "
 "pop up. Click `Open Security Preferences`, and click the lock, then click"
 " `Allow`:"
 msgstr ""
-"Une fois l'installation terminée, une fenêtre suggérant d'autoriser cette "
-"extension système apparaît. Cliquez sur `Ouvrir les préférences de sécurité`, "
-"puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur le cadenas :"
+"Une fois l'installation terminée, une fenêtre suggérant d'autoriser cette"
+" extension système apparaît. Cliquez sur `Ouvrir les préférences de "
+"sécurité`, puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur "
+"le cadenas :"
 
+#: ../../userguide/installation.rst:-1
 msgid "System Extension Updated window"
 msgstr "Fenêtre de mise à jour d'extension système"
 
+#: ../../userguide/installation.rst:-1
 msgid "MacOS allow extension"
 msgstr "Autoriser extension MacOS"
 
-#: ../../userguide/installation.rst:93
+#: ../../userguide/installation.rst:100
 msgid "Finally, reboot your Mac to complete the installation."
 msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
 
-# ###########################
-# userguide/new_device.rst #
-#: ../../userguide/new_device.rst:4
+#: ../../userguide/new_device.rst:6
 msgid "Create new devices"
 msgstr "Créer de nouveaux terminaux"
 
-#: ../../userguide/new_device.rst:6
+#: ../../userguide/new_device.rst:8
 msgid ""
 "So far, we've only registered users on a single computer. However what "
 "would happened if this computer get lost or stolen ?"
@@ -211,7 +224,7 @@ msgstr ""
 "Pour le moment, chaque utilisateur n'a été enregistré que sur un seul "
 "ordinateur. Que se passerait-il si cet ordinateur était volé ou perdu ?"
 
-#: ../../userguide/new_device.rst:8
+#: ../../userguide/new_device.rst:10
 msgid ""
 "For this reason it's a good idea for a user to register himself on "
 "multiple computers."
@@ -219,7 +232,7 @@ msgstr ""
 "C'est pour cette raison qu'il est une bonne pratique de s'enregistrer sur"
 " plusieurs ordinateurs."
 
-#: ../../userguide/new_device.rst:10
+#: ../../userguide/new_device.rst:12
 msgid ""
 "To put it another way, a physical person is represented in Parsec by a "
 "user and each computer this person has is represented in Parsec by a "
@@ -229,7 +242,7 @@ msgstr ""
 "est représentée dans Parsec par un utilisateur et que chaque ordinateur "
 "que la personne possède est représenté dans Parsec par un terminal."
 
-#: ../../userguide/new_device.rst:12
+#: ../../userguide/new_device.rst:14
 msgid ""
 "Just like for the user, the device creation requires to have the inviting"
 " and the invitee devices both connected to the server at the same time."
@@ -238,18 +251,19 @@ msgstr ""
 " nécessite d'avoir le créateur de l'invitation et l'invité connectés au "
 "serveur simultanément."
 
-#: ../../userguide/new_device.rst:16 ../../userguide/new_user.rst:11
+#: ../../userguide/new_device.rst:18 ../../userguide/new_user.rst:13
 msgid "Send invite"
 msgstr "Envoi de l'invitation"
 
-#: ../../userguide/new_device.rst:18
+#: ../../userguide/new_device.rst:20
 msgid "Inviting a new device is done from the Parsec client:"
 msgstr "Inviter un nouveau terminal se fait via le client Parsec:"
 
+#: ../../userguide/new_device.rst:-1
 msgid "Device invitation process"
 msgstr "Processus d'invitation d'un appareil"
 
-#: ../../userguide/new_device.rst:24
+#: ../../userguide/new_device.rst:26
 msgid ""
 "Once started the invitation is pending (note you can cancel it though) "
 "and the user must check his emails for an invitation link that has been "
@@ -259,17 +273,17 @@ msgstr ""
 "est toutefois possible de l'annuler) et l'utilisateur doit recevoir un "
 "lien d'invitation par email."
 
-#: ../../userguide/new_device.rst:28
+#: ../../userguide/new_device.rst:30
 msgid "For cryptographic reasons, a user can only create new devices for himself."
 msgstr ""
 "Pour des raisons liées aux procédés cryptographiques, un utilisateur ne "
 "peut créer de nouveaux terminaux que pour lui-même."
 
-#: ../../userguide/new_device.rst:32 ../../userguide/new_user.rst:28
+#: ../../userguide/new_device.rst:34 ../../userguide/new_user.rst:30
 msgid "Receive invite"
 msgstr "Réception de l'invitation"
 
-#: ../../userguide/new_device.rst:34
+#: ../../userguide/new_device.rst:36
 msgid ""
 "The user should receive a link by email enabling him to register his "
 "device. Clicking on the invitation URL on the new computer should open up"
@@ -281,7 +295,7 @@ msgstr ""
 "nouvel appareil devrait ouvrir le client Parsec (qui doit avoir été "
 "installé préalablement). L'échange de jeton va ensuite commencer."
 
-#: ../../userguide/new_device.rst:38
+#: ../../userguide/new_device.rst:40
 msgid ""
 "If clicking on the URL doesn't work, you can also use the ``Enter a URL "
 "manually`` dialog inside Parsec."
@@ -289,7 +303,7 @@ msgstr ""
 "Si cliquer sur le lien ne fait rien, vous pouvez aussi utiliser le bouton"
 " ``Entrer un lien manuellement`` dans Parsec."
 
-#: ../../userguide/new_device.rst:40
+#: ../../userguide/new_device.rst:42
 msgid ""
 "Given the password is only used locally, it doesn't have to be the same "
 "across devices."
@@ -297,11 +311,11 @@ msgstr ""
 "Le mot de passe n'étant utilisé que localement, il n'a pas besoin d'être "
 "le même pour les deux terminaux."
 
-#: ../../userguide/new_device.rst:45 ../../userguide/new_user.rst:38
+#: ../../userguide/new_device.rst:47 ../../userguide/new_user.rst:40
 msgid "Token exchange"
 msgstr "Échange de jetons"
 
-#: ../../userguide/new_device.rst:47
+#: ../../userguide/new_device.rst:49
 msgid ""
 "The token exchange is a verification process that aims at ensuring that "
 "the two devices are not victim of a `Man-in-the-middle attack "
@@ -316,7 +330,7 @@ msgstr ""
 "possible d'en apprendre plus à la section :ref:`Cryptographie "
 "<doc_cryptography>`"
 
-#: ../../userguide/new_device.rst:49
+#: ../../userguide/new_device.rst:51
 msgid ""
 "The user will have to proceed to a token exchange between the two "
 "devices. For that, the devices will both display a token, or a list of "
@@ -336,25 +350,25 @@ msgstr ""
 " soit victime d'une `Attaque de l'homme du milieu "
 "<https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
 
+#: ../../userguide/new_device.rst:-1 ../../userguide/new_user.rst:-1
 msgid "Display of a token that has to be transmitted during a token exchange"
 msgstr "Affichage d'un jeton qui doit être transmis pendant l'échange des jetons."
 
+#: ../../userguide/new_device.rst:-1 ../../userguide/new_user.rst:-1
 msgid "List of tokens displayed during a token exchange"
 msgstr "La liste des jetons affichés pendant l'échange des jetons."
 
-#: ../../userguide/new_device.rst:59
+#: ../../userguide/new_device.rst:61
 msgid "The user’s new Parsec client has been configured and is ready to log in."
 msgstr ""
 "Le nouveau client Parsec de l'utilisateur a été configuré et est "
 "maintenant prêt à s'authentifier."
 
-# #################################
-# userguide/new_organization.rst #
-#: ../../userguide/new_organization.rst:4
+#: ../../userguide/new_organization.rst:6
 msgid "Create your own organization"
 msgstr "Créer votre propre organisation"
 
-#: ../../userguide/new_organization.rst:6
+#: ../../userguide/new_organization.rst:8
 msgid ""
 "Once installed, the Parsec client must be connected to an organization "
 "that have been created on a Parsec server."
@@ -362,7 +376,7 @@ msgstr ""
 "Une fois installé, le client Parsec doit se connecter à une organisation "
 "ayant été créée sur un serveur Parsec."
 
-#: ../../userguide/new_organization.rst:8
+#: ../../userguide/new_organization.rst:10
 msgid ""
 "The simplest way to do that is to create one directly from the Parsec "
 "client. It automatically handles all the process securely, and create a "
@@ -376,7 +390,7 @@ msgstr ""
 "Parsec <https://my.parsec.cloud/>`_ en envoyant par email un lien "
 "permettant de terminer l'inscription."
 
-#: ../../userguide/new_organization.rst:10
+#: ../../userguide/new_organization.rst:12
 msgid ""
 "Creating an organization is proposed automatically if you have no account"
 " linked to your Parsec client."
@@ -384,10 +398,11 @@ msgstr ""
 "Créer une organisation est proposé automatiquement si aucun compte n'est "
 "lié à votre client Parsec."
 
+#: ../../userguide/new_organization.rst:-1
 msgid "Parsec welcome screen"
 msgstr "L'écran d'accueil de Parsec"
 
-#: ../../userguide/new_organization.rst:16
+#: ../../userguide/new_organization.rst:18
 msgid ""
 "Otherwise, you can click on `Create an organization` in the Menu of the "
 "login screen."
@@ -395,13 +410,12 @@ msgstr ""
 "Sinon, vous pouvez cliquer sur `Créer une organisation` dans le menu en "
 "haut à gauche de l'écran de connexion."
 
-# #################################
-# userguide/new_organization.rst #
+#: ../../userguide/new_organization.rst:-1
 #, fuzzy
 msgid "Create an organization in menu"
 msgstr "Créer votre propre organisation"
 
-#: ../../userguide/new_organization.rst:24
+#: ../../userguide/new_organization.rst:26
 msgid ""
 "Another possibility (though more technical) is to host you own Parsec "
 "server and create the organization on it using the Parsec CLI. You can "
@@ -415,7 +429,7 @@ msgstr ""
 "de bootstrap à Parsec. Vous pouvez lire plus à ce sujet dans la partie "
 ":ref:`Héberger le serveur <doc_hosting_server>`."
 
-#: ../../userguide/new_organization.rst:27
+#: ../../userguide/new_organization.rst:29
 msgid ""
 "Once you start the process, you are asked for an Email and an "
 "Organization Name. This email address will be used to contact you later."
@@ -424,10 +438,11 @@ msgstr ""
 "Email et un Nom d'Organisation. C'est cette adresse email qui sera "
 "utilisée pour vous contacter."
 
+#: ../../userguide/new_organization.rst:-1
 msgid "Organization create process"
 msgstr "Processus de création d'organisation"
 
-#: ../../userguide/new_organization.rst:33
+#: ../../userguide/new_organization.rst:35
 msgid ""
 "Creating an organization through the Parsec client register yourself as "
 "its first user and device (this step is called the bootstrap). This is "
@@ -438,20 +453,21 @@ msgstr ""
 "C'est pourquoi vous devez entrer votre nom d'utilisateur, d'appareil, et "
 "mot de passe."
 
+#: ../../userguide/new_organization.rst:-1
 msgid "Organization bootstrap process"
 msgstr "Processus de démarrage d'une organisation"
 
-#: ../../userguide/new_organization.rst:39
+#: ../../userguide/new_organization.rst:41
 msgid "Few key points here:"
 msgstr "Quelques point importants :"
 
-#: ../../userguide/new_organization.rst:41
+#: ../../userguide/new_organization.rst:43
 msgid "User name is the name you'll be referenced by from within the organization"
 msgstr ""
 "Le nom d'utilisateur est le nom par lequel vous serez connu au sein de "
 "l'organisation"
 
-#: ../../userguide/new_organization.rst:42
+#: ../../userguide/new_organization.rst:44
 msgid ""
 "Device name is the name your current hardware will be referenced by (e.g."
 " people will see the work you've done on this computer as from "
@@ -461,7 +477,7 @@ msgstr ""
 "exemple les gens verront votre travail sur cet ordinateur comme provenant"
 " de ``my_user@my_device``)"
 
-#: ../../userguide/new_organization.rst:44
+#: ../../userguide/new_organization.rst:46
 msgid ""
 "The password is used to encrypt your user&device private keys on your "
 "computer."
@@ -469,7 +485,7 @@ msgstr ""
 "Le mot de passe est utilisé pour chiffrer vos clés privées d'utilisateur "
 "et de terminal sur votre ordinateur."
 
-#: ../../userguide/new_organization.rst:46
+#: ../../userguide/new_organization.rst:48
 msgid ""
 "Once this process is completed, you can log-in to the organization you "
 "just created."
@@ -477,7 +493,7 @@ msgstr ""
 "Une fois ce processus complété, vous pouvez vous connecter à "
 "l'organisation que vous venez de créer."
 
-#: ../../userguide/new_organization.rst:50
+#: ../../userguide/new_organization.rst:52
 msgid ""
 "The keys stored encrypted on your computer are what makes Parsec secure. "
 "Hence there is no way to recover if you lost them (e.g. if you computer "
@@ -488,7 +504,7 @@ msgstr ""
 "exemple si votre ordinateur est volé) ou si vous oubliez le mot de passe "
 "les protégeant."
 
-#: ../../userguide/new_organization.rst:54
+#: ../../userguide/new_organization.rst:56
 msgid ""
 "To avoid losing access to your data you should always have :ref:`multiple"
 " devices <doc_userguide_new_device>` or :ref:`share your workspaces "
@@ -499,19 +515,17 @@ msgstr ""
 ":ref:`partager vos espaces de travail <doc_userguide_share_data>` avec "
 "d'autre utilisateurs."
 
-# #########################
-# userguide/new_user.rst #
-#: ../../userguide/new_user.rst:4
+#: ../../userguide/new_user.rst:6
 msgid "Create new users"
 msgstr "Créer de nouveaux utilisateurs"
 
-#: ../../userguide/new_user.rst:6
+#: ../../userguide/new_user.rst:8
 msgid "Now that our organization is ready, we can start inviting new users."
 msgstr ""
 "Maintenant que notre organisation est prête, nous pouvons inviter de "
 "nouveaux utilisateurs."
 
-#: ../../userguide/new_user.rst:8
+#: ../../userguide/new_user.rst:10
 msgid ""
 "In Parsec, inviting a user is a critical operation that aims at building "
 "trust toward an unknown user the inviting using has vouched for. For this"
@@ -524,14 +538,15 @@ msgstr ""
 "opération nécessite que l'utilisateur invité et celui invitant soient "
 "tous les deux connectés au serveur Parsec en même temps."
 
-#: ../../userguide/new_user.rst:13
+#: ../../userguide/new_user.rst:15
 msgid "Inviting a user is done from the Parsec client:"
 msgstr "Inviter un nouveau terminal se fait via le client Parsec:"
 
+#: ../../userguide/new_user.rst:-1
 msgid "Click on Invite User"
 msgstr "Cliquer sur ``Invite un utilisateur``"
 
-#: ../../userguide/new_user.rst:19
+#: ../../userguide/new_user.rst:21
 msgid ""
 "Once started the invitation is pending (note you can cancel it though) "
 "and the invitee must check his emails for an invitation link that has "
@@ -541,7 +556,7 @@ msgstr ""
 "est toutefois possible de l'annuler) et l'invité doit recevoir un lien "
 "d'invitation par email."
 
-#: ../../userguide/new_user.rst:21
+#: ../../userguide/new_user.rst:23
 msgid ""
 "It's also during this step that is chosen if the invitee will have "
 "administrator rights over the organization. Make sure to double check "
@@ -551,13 +566,13 @@ msgstr ""
 "bénéficiera des droits d'administration sur l'organisation. Assurez-vous "
 "de vérifier ce paramètre car il ne sera plus modifiable par la suite."
 
-#: ../../userguide/new_user.rst:25
+#: ../../userguide/new_user.rst:27
 msgid "Only an administrator of the organization can invite a new user"
 msgstr ""
 "Seul un administrateur de l'organisation peut inviter de nouveau "
 "utilisateurs"
 
-#: ../../userguide/new_user.rst:30
+#: ../../userguide/new_user.rst:32
 msgid ""
 "The invitee should receive a link by email enabling him to register. "
 "Clicking on the invitation URL should open up the Parsec client. The "
@@ -567,7 +582,7 @@ msgstr ""
 "Cliquer sur cette URL d'activation devrait ouvrir le client Parsec. "
 "L'échange de jeton peut maintenant commencer."
 
-#: ../../userguide/new_user.rst:34
+#: ../../userguide/new_user.rst:36
 msgid ""
 "If clicking on the URL doesn't work, you can also use the ``Enter a URL "
 "manually`` dialog."
@@ -575,7 +590,7 @@ msgstr ""
 "Si cliquer sur le lien d'invitation ne fonctionne pas, il est possible "
 "d'utiliser le menu ``Enter a URL manually``"
 
-#: ../../userguide/new_user.rst:40
+#: ../../userguide/new_user.rst:42
 msgid ""
 "The token exchange is a verification process that aims at ensuring that "
 "the two users are not victim of a `Man-in-the-middle attack "
@@ -590,7 +605,7 @@ msgstr ""
 "possible d'en apprendre plus à la section :ref:`Cryptography "
 "<doc_cryptography>`"
 
-#: ../../userguide/new_user.rst:42
+#: ../../userguide/new_user.rst:44
 msgid ""
 "The inviting and the invitee will have to exchange tokens in person or on"
 " an already verified canal. For that, they will both be given a token, or"
@@ -610,7 +625,7 @@ msgstr ""
 "l'homme du milieu "
 "<https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
 
-#: ../../userguide/new_user.rst:52
+#: ../../userguide/new_user.rst:54
 msgid ""
 "The invitee user’s Parsec client has been configured and is ready to log "
 "in."
@@ -618,13 +633,11 @@ msgstr ""
 "Le client Parsec de l'utilisateur invité a été configuré et est "
 "maintenant prêt à s'authentifier."
 
-# ############################
-# userguide/revoke_user.rst #
-#: ../../userguide/revoke_user.rst:4
+#: ../../userguide/revoke_user.rst:6
 msgid "Revoking users"
 msgstr "Révoquer des utilisateurs"
 
-#: ../../userguide/revoke_user.rst:6
+#: ../../userguide/revoke_user.rst:8
 msgid ""
 "Revoking a user is the operation that aims at removing his access rights "
 "to the organization. This is needed when:"
@@ -632,17 +645,17 @@ msgstr ""
 "Révoquer un utilisateur est une opération visant à supprimer ses droits "
 "d'accès à l'organisation. Cela est requis quand:"
 
-#: ../../userguide/revoke_user.rst:8
+#: ../../userguide/revoke_user.rst:10
 msgid "the user is no longer needed (e.g. a person leaving his company)"
 msgstr ""
 "l'utilisateur n'a plus besoin de cet accès (par exemple dans le cas d'une"
 " personne changeant d'entreprise)"
 
-#: ../../userguide/revoke_user.rst:9
+#: ../../userguide/revoke_user.rst:11
 msgid "the user has been compromised"
 msgstr "l'utilisateur a été compromis"
 
-#: ../../userguide/revoke_user.rst:13
+#: ../../userguide/revoke_user.rst:15
 msgid ""
 "There is no way to revoke a single device instead of the entire user. "
 "This is intended given the compromised device has the knowledge of some "
@@ -653,11 +666,11 @@ msgstr ""
 "connaissance des secret cryptographiques partagés entres les terminaux de"
 " l'utilisateur."
 
-#: ../../userguide/revoke_user.rst:19
+#: ../../userguide/revoke_user.rst:21
 msgid "Revocation"
 msgstr "Révocation"
 
-#: ../../userguide/revoke_user.rst:21
+#: ../../userguide/revoke_user.rst:23
 msgid ""
 "Revocation is done from the client, this option is accessible by right-"
 "clicking on a user:"
@@ -665,25 +678,24 @@ msgstr ""
 "La révocation se fait depuis le client, cette option apparaît après un "
 "clic droit sur un utilisateur :"
 
-# ############################
-# userguide/revoke_user.rst #
+#: ../../userguide/revoke_user.rst:-1
 #, fuzzy
 msgid "Revoking user process"
 msgstr "Révoquer des utilisateurs"
 
-#: ../../userguide/revoke_user.rst:29
+#: ../../userguide/revoke_user.rst:31
 msgid "Only an administrator of the organization can revoke a user"
 msgstr "Seul un administrateur de l'organisation peut révoquer un utilisateur"
 
-#: ../../userguide/revoke_user.rst:30
+#: ../../userguide/revoke_user.rst:32
 msgid "Revocation is irreversible!"
 msgstr "Révoquer un utilisateur est irréversible !"
 
-#: ../../userguide/revoke_user.rst:33
+#: ../../userguide/revoke_user.rst:35
 msgid "Workspace re-encryption"
 msgstr "Rechiffrer un espace de travail"
 
-#: ../../userguide/revoke_user.rst:36
+#: ../../userguide/revoke_user.rst:38
 msgid ""
 "Once a user is revoked, it corresponding devices are no longer allowed to"
 " connect to the Parsec server hosting the organization. In practice this "
@@ -695,7 +707,7 @@ msgstr ""
 "cela veut dire que l'utilisateur est dans l'incapacité de modifier ou "
 "consulter les données qui étaient partagées avec lui."
 
-#: ../../userguide/revoke_user.rst:38
+#: ../../userguide/revoke_user.rst:40
 msgid ""
 "However from a cryptographic point of view this user still knows the "
 "encryption key of the workspaces that have been shared with them. For "
@@ -707,7 +719,7 @@ msgstr ""
 " accès. Pour cette raison ces espaces de travail doivent être re-chiffrés"
 " afin d'assurer la sécurité des données."
 
-#: ../../userguide/revoke_user.rst:40
+#: ../../userguide/revoke_user.rst:42
 msgid ""
 "Concretely, once a user is revoked, each owner of a previously shared "
 "workspace will be notified a re-encryption operation is needed. Each "
@@ -722,33 +734,32 @@ msgstr ""
 "d'attendre un meilleur moment (par exemple si plusieurs utilisateurs sont"
 " révoqués d'un coup)."
 
+#: ../../userguide/revoke_user.rst:-1
 #, fuzzy
 msgid "Workspace re-encryption process"
 msgstr "Rechiffrer un espace de travail"
 
-#: ../../userguide/revoke_user.rst:48
+#: ../../userguide/revoke_user.rst:50
 msgid "During it re-encryption, a workspace cannot be synchronized"
 msgstr ""
 "Pendant ce re-chiffrement, un espace de travail ne peut pas être "
 "synchronisé"
 
-#: ../../userguide/revoke_user.rst:49
+#: ../../userguide/revoke_user.rst:51
 msgid "Re-encryption is fairly quick given only metadata are re-encrypted"
 msgstr ""
 "L'opération de re-chiffrement est très rapide étant donné que seules les "
 "méta-données sont re-chiffrées"
 
-# ###########################
-# userguide/share_data.rst #
-#: ../../userguide/share_data.rst:4
+#: ../../userguide/share_data.rst:6
 msgid "Share data"
 msgstr "Partage des données"
 
-#: ../../userguide/share_data.rst:7
+#: ../../userguide/share_data.rst:9
 msgid "Create & share workspace"
 msgstr "Créer et partager un espace de travail"
 
-#: ../../userguide/share_data.rst:9
+#: ../../userguide/share_data.rst:11
 msgid ""
 "In Parsec, data are stored into workspaces, each workspace having it own "
 "policy for read and write access."
@@ -756,16 +767,17 @@ msgstr ""
 "Dans Parsec, les données sont stockées dans des espaces de travail, "
 "chacun ayant ses propres règles d'accès en lecture et écriture."
 
-#: ../../userguide/share_data.rst:12
+#: ../../userguide/share_data.rst:14
 msgid "So before adding data to Parsec we must create a workspace:"
 msgstr ""
 "De fait, avant de pouvoir ajouter des données dans Parsec il faut créer "
 "un espace de travail."
 
+#: ../../userguide/share_data.rst:-1
 msgid "Creating workspace process"
 msgstr ""
 
-#: ../../userguide/share_data.rst:18
+#: ../../userguide/share_data.rst:20
 msgid ""
 "The creator of the workspace automatically gets the ``Owner`` role, as "
 "shown above, and can then share the workspace with other users."
@@ -774,22 +786,23 @@ msgstr ""
 "automatiquement le rôle ``Propriétaire`` et peut ausitôt partager "
 "l'espace de travail avec d'autres utilisateurs."
 
+#: ../../userguide/share_data.rst:-1
 msgid "Sharing workspace process"
 msgstr ""
 
-#: ../../userguide/share_data.rst:25
+#: ../../userguide/share_data.rst:27
 msgid "Regarding the different sharing roles:"
 msgstr "Concernant les différents rôles de partage disponibles :"
 
-#: ../../userguide/share_data.rst:27
+#: ../../userguide/share_data.rst:29
 msgid "Reader: has read-only access to the workspace"
 msgstr "Lecteur: a un accès en lecture seule sur l'espace de travail"
 
-#: ../../userguide/share_data.rst:28
+#: ../../userguide/share_data.rst:30
 msgid "Contributor: has read&write access"
 msgstr "Contributeur: a un accès en lecture et écriture"
 
-#: ../../userguide/share_data.rst:29
+#: ../../userguide/share_data.rst:31
 msgid ""
 "Manager: same access as Contributor, but can give Reader and Contributor "
 "roles to other users."
@@ -797,7 +810,7 @@ msgstr ""
 "Gérant: comme le Contributeur, mais peut en plus donner les rôles Lecteur"
 " et Contributeur à d'autres utilisateurs"
 
-#: ../../userguide/share_data.rst:31
+#: ../../userguide/share_data.rst:32
 msgid ""
 "Owner: same as Manager, but can also give Manager and Owner roles to "
 "other users. On top of that, owners are responsible for maintenance tasks"
@@ -810,7 +823,7 @@ msgstr ""
 "chiffrement de l'espace de travail "
 "<doc_userguide_revoke_user_workspace_re_encryption>`."
 
-#: ../../userguide/share_data.rst:37
+#: ../../userguide/share_data.rst:38
 msgid ""
 "Just like a user with a single device is bad because there is no fall-"
 "back if something happens to it, having a workspace with a single user is"
@@ -820,7 +833,7 @@ msgstr ""
 " idée car il ne dispose pas de moyen de récupération en cas de problème, "
 "avoir un espace de travail contenant un seul utilisateur est dangereux."
 
-#: ../../userguide/share_data.rst:39
+#: ../../userguide/share_data.rst:40
 msgid ""
 "Strong cryptographic security prevent data recovery if the user is lost "
 "or cannot log in. For this reason it is better to share the workspace "
@@ -830,11 +843,11 @@ msgstr ""
 "n'est plus en mesure de se connecter au système. Pour cette raison il est"
 " recommandé de partage l'espace de travail avec d'autres utilisateurs."
 
-#: ../../userguide/share_data.rst:42
+#: ../../userguide/share_data.rst:43
 msgid "Upload data"
 msgstr "Importer des données"
 
-#: ../../userguide/share_data.rst:44
+#: ../../userguide/share_data.rst:45
 msgid ""
 "Once the workspace is created, it appears in the file explorer as a "
 "regular folder."
@@ -842,7 +855,7 @@ msgstr ""
 "Une fois l'espace de travail créé, il apparait dans l'explorateur de "
 "fichiers comme un répertoire classique."
 
-#: ../../userguide/share_data.rst:48
+#: ../../userguide/share_data.rst:49
 msgid ""
 "Although workspaces are mounted by default, they can be unmounted or "
 "mounted back using the toggle at the bottom left of the workspace card. "
@@ -859,7 +872,7 @@ msgstr ""
 msgid "workspaces unmounted and mounted"
 msgstr ""
 
-#: ../../userguide/share_data.rst:54
+#: ../../userguide/share_data.rst:55
 msgid ""
 "Parsec also proposes its own file manager, accessible when clicking on a "
 "mounted workspace."
@@ -867,10 +880,11 @@ msgstr ""
 "Parsec propose aussi son propre explorateur de fichier, accessible par un"
 " clic sur un Espace de Travail monté."
 
+#: ../../userguide/share_data.rst:-1
 msgid "Parsec in file explorer"
 msgstr ""
 
-#: ../../userguide/share_data.rst:60
+#: ../../userguide/share_data.rst:61
 msgid ""
 "Data copied from file explorer also appear into the Parsec client. On top"
 " of that the Parsec client also displays the current synchronization "
@@ -885,7 +899,7 @@ msgstr ""
 " synchronisées avec le serveur Parsec et sont donc visibles par les "
 "autres utilisateurs ayant accès à l'espace de travail)."
 
-#: ../../userguide/share_data.rst:64
+#: ../../userguide/share_data.rst:65
 msgid ""
 "Parsec client can work while offline (however only the data present "
 "locally are available), synchronization will occur automatically as soon "
@@ -895,3 +909,4 @@ msgstr ""
 "(toutefois seules les données présentent localement sont disponibles), la"
 " synchronisation se faisant automatiquement dès que la connexion avec le "
 "serveur Parsec est de nouveau disponible."
+
