@@ -4,7 +4,7 @@ from __future__ import annotations
 import trio
 import click
 from structlog import get_logger
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 from functools import partial
 import tempfile
 from pathlib import Path
@@ -49,7 +49,9 @@ def _parse_forward_proto_enforce_https_check_param(
 
 
 class DevOption(click.Option):
-    def handle_parse_result(self, ctx, opts, args):
+    def handle_parse_result(
+        self, ctx: click.Context, opts: Any, args: list[str]
+    ) -> Tuple[Any, list[str]]:
         value, args = super().handle_parse_result(ctx, opts, args)
         if value:
 
