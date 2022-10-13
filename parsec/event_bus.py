@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import (
     DefaultDict,
@@ -92,7 +93,7 @@ class EventBus:
                     "Unhandled exception in event bus callback",
                     callback=cb,
                     event_type=event,
-                    **kwargs
+                    **kwargs,
                 )
 
     @contextmanager

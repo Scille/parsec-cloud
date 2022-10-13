@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 from unittest.mock import ANY
@@ -48,7 +49,7 @@ async def test_sequestered_organization_bootstrap(
     rep = await organization_bootstrap(
         anonymous_backend_ws,
         check_rep=False,
-        **{**organization_bootstrap_args, "sequester_authority_certificate": b"dummy"}
+        **{**organization_bootstrap_args, "sequester_authority_certificate": b"dummy"},
     )
     assert rep == {
         "status": "invalid_data",
@@ -65,7 +66,7 @@ async def test_sequestered_organization_bootstrap(
         **{
             **organization_bootstrap_args,
             "sequester_authority_certificate": bad_sequester_authority_certificate,
-        }
+        },
     )
     assert rep == {
         "status": "invalid_data",
@@ -83,7 +84,7 @@ async def test_sequestered_organization_bootstrap(
         **{
             **organization_bootstrap_args,
             "sequester_authority_certificate": authority_certif_bad_timestamp,
-        }
+        },
     )
     assert rep == {
         "status": "bad_timestamp",
@@ -104,7 +105,7 @@ async def test_sequestered_organization_bootstrap(
         **{
             **organization_bootstrap_args,
             "sequester_authority_certificate": authority_certif_different_timestamp,
-        }
+        },
     )
     assert rep == {
         "status": "invalid_data",

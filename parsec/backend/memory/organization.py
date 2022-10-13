@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Union, Dict
 import trio
@@ -46,7 +47,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         vlob: "MemoryVlobComponent",
         block: "MemoryBlockComponent",
         realm: "MemoryRealmComponent",
-        **other_components
+        **other_components,
     ):
         self._user_component = user
         self._vlob_component = vlob

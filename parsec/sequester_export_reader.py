@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import List, Dict, Iterator, Mapping, Optional, Tuple
 from pathlib import Path, PurePath
