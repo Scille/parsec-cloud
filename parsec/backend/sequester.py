@@ -37,10 +37,6 @@ class SequesterCertificateValidationError(SequesterError):
     pass
 
 
-class SequesterCertificateOutOfBallparkError(SequesterError):
-    pass
-
-
 class SequesterServiceNotFoundError(SequesterError):
     pass
 
@@ -107,7 +103,6 @@ class BaseSequesterComponent:
         self,
         organization_id: OrganizationID,
         service: BaseSequesterService,
-        now: Optional[DateTime] = None,
     ) -> None:
         """
         Raises:
@@ -115,6 +110,10 @@ class BaseSequesterComponent:
             SequesterOrganizationNotFoundError
             SequesterSignatureError
             SequesterServiceAlreadyExists
+
+        Note that unlike for other signed data, we don't check the certificate's
+        timestamp. This is because the certficate is allowed to be created long
+        before being inserted (see `generate_service_certificate` CLI command)
         """
         raise NotImplementedError()
 
