@@ -32,3 +32,6 @@ serde_json = "1.0.85"
 
 [features]
 test = []
+
+[build-dependencies]
+glob = "0.3.0"
