@@ -11,6 +11,7 @@ use crate::protocol::parser::field::{quote_fields, Field};
 pub struct Request {
     pub cmd: String,
     pub unit: Option<String>,
+    #[serde(default)]
     pub other_fields: Vec<Field>,
 }
 
