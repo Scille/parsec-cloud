@@ -355,8 +355,6 @@ async def _import_service_certificate(
             assert service_type == SequesterServiceType.WEBHOOK
             assert webhook_url
             # Removing the extra slash if present to avoid a useless redirection
-            if webhook_url and webhook_url.endswith("/"):
-                webhook_url = webhook_url[:-1]
             service = WebhookSequesterService(
                 service_id=service_certificate_data.service_id,
                 service_label=service_certificate_data.service_label,
@@ -454,8 +452,6 @@ def create_service(
             assert cooked_service_type == SequesterServiceType.WEBHOOK
             assert webhook_url
             # Removing the extra slash if present to avoid a useless redirection
-            if webhook_url and webhook_url.endswith("/"):
-                webhook_url = webhook_url[:-1]
             sequester_service = WebhookSequesterService(
                 service_id=service_id,
                 service_label=service_label,

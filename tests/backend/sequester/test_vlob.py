@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import patch, Mock
 
 import urllib
-
+from urllib.parse import urlsplit, parse_qs
 from parsec._parsec import (
     VlobCreateRepOk,
     VlobCreateRepSequesterInconsistency,
@@ -227,6 +227,11 @@ async def test_webhook_vlob_create_update(
     url = "http://somewhere.post"
 
     with patch("parsec.backend.http_utils.urllib.request") as mock:
+        # Register webhook service
+        service = await _register_service_and_create_vlob(
+            coolorg, backend, alice_ws, realm, vlob_id, blob, sequester_blob, url
+        )
+
         # Helper
         def _assert_webhook_posted(expected_sequester_data):
             mock.Request.assert_called_once()
@@ -234,16 +239,14 @@ async def test_webhook_vlob_create_update(
             args, kwargs = mock.Request.call_args
             assert args[0].startswith(url)
             assert kwargs["method"] == "POST"
+            # Extract url params
+            params = parse_qs(urlsplit(args[0]).query)
+            assert coolorg.organization_id.str == params["organization_id"][0]
+            assert service.service_id.str == params["service_id"][0]
             # Extract http data
-            assert coolorg.organization_id.str == args[0].split("/")[-1]
             assert expected_sequester_data == kwargs["data"]
             # Reset
             mock.reset_mock()
-
-        # Register webhook service
-        service = await _register_service_and_create_vlob(
-            coolorg, backend, alice_ws, realm, vlob_id, blob, sequester_blob, url
-        )
 
         # Vlob has been created, assert that data have been posted
         _assert_webhook_posted(sequester_blob)

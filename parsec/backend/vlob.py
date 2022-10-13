@@ -192,7 +192,11 @@ async def extract_sequestered_data_and_proceed_webhook(
         sequester_data = sequester_blob[service.service_id]
         try:
             await http_request(
-                url=f"{service.webhook_url}/{organization_id.str}",
+                url=f"{service.webhook_url}",
+                url_params={
+                    "organization_id": organization_id.str,
+                    "service_id": service.service_id.str,
+                },
                 method="POST",
                 data=sequester_data,
             )
