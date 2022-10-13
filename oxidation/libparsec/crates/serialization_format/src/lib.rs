@@ -71,7 +71,8 @@ pub(crate) fn content_from_file(path: &PathBuf) -> anyhow::Result<parser::Protoc
             .split_once("//")
             .map(|(before, _after)| before)
             .unwrap_or(&line);
-        content.push_str(line)
+        content.push_str(line);
+        content.push('\n');
     }
     content_from_str(&content, &filename)
 }

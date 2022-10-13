@@ -8,36 +8,28 @@
         ],
         "req": {
             "cmd": "realm_get_role_certificates",
-            "other_fields": [
-                {
-                    "name": "realm_id",
+            "fields": {
+                "realm_id": {
                     "type": "RealmID"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": [
-                    {
-                        "name": "certificates",
+        "reps": {
+            "ok": {
+                "fields": {
+                    "certificates": {
                         "type": "List<Bytes>"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
-            },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             }
-        ]
+        }
     }
 ]

@@ -8,46 +8,25 @@
         ],
         "req": {
             "cmd": "block_create",
-            "other_fields": [
-                {
-                    "name": "block_id",
+            "fields": {
+                "block_id": {
                     "type": "BlockID"
                 },
-                {
-                    "name": "realm_id",
+                "realm_id": {
                     "type": "RealmID"
                 },
-                {
-                    "name": "block",
+                "block": {
                     "type": "Bytes"
                 }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            },
-            {
-                "status": "already_exists",
-                "other_fields": []
-            },
-            {
-                "status": "not_found",
-                "other_fields": []
-            },
-            {
-                "status": "timeout",
-                "other_fields": []
-            },
-            {
-                "status": "not_allowed",
-                "other_fields": []
-            },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
             }
-        ]
+        },
+        "reps": {
+            "ok": {},
+            "already_exists": {},
+            "not_found": {},
+            "timeout": {},
+            "not_allowed": {},
+            "in_maintenance": {}
+        }
     }
 ]

@@ -8,143 +8,99 @@
         ],
         "req": {
             "cmd": "vlob_update",
-            "other_fields": [
-                {
-                    "name": "encryption_revision",
+            "fields": {
+                "encryption_revision": {
                     "type": "Index"
                 },
-                {
-                    "name": "vlob_id",
+                "vlob_id": {
                     "type": "VlobID"
                 },
-                {
-                    "name": "timestamp",
+                "timestamp": {
                     "type": "DateTime"
                 },
-                {
-                    "name": "version",
+                "version": {
                     "type": "Version"
                 },
-                {
-                    "name": "blob",
+                "blob": {
                     "type": "Bytes"
                 },
-                {
-                    // Field set to `None` if sequester is disabled for the organization
-                    // Key is sequester service ID, value is blob encrypted with the service key
-                    // New in API version 2.8/3.2 (Parsec 2.11.0)
-                    "name": "sequester_blob",
+                // Field set to `None` if sequester is disabled for the organization
+                // Key is sequester service ID, value is blob encrypted with the service key
+                // New in API version 2.8/3.2 (Parsec 2.11.0)
+                "sequester_blob": {
                     "type": "Option<Map<SequesterServiceID, Bytes>>",
                     "introduced_in": "2.8"
                 }
-            ]
+            }
         },
-        "reps": [
-            {
-                "status": "ok",
-                "other_fields": []
-            },
-            {
-                "status": "not_found",
-                "other_fields": [
-                    {
-                        "name": "reason",
+        "reps": {
+            "ok": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_allowed",
-                "other_fields": []
-            },
-            {
-                "status": "bad_version",
-                "other_fields": []
-            },
-            {
-                "status": "bad_encryption_revision",
-                "other_fields": []
-            },
-            {
-                "status": "in_maintenance",
-                "other_fields": []
-            },
-            {
-                "status": "require_greater_timestamp",
-                "other_fields": [
-                    {
-                        "name": "strictly_greater_than",
+            "not_allowed": {},
+            "bad_version": {},
+            "bad_encryption_revision": {},
+            "in_maintenance": {},
+            "require_greater_timestamp": {
+                "fields": {
+                    "strictly_greater_than": {
                         "type": "DateTime"
                     }
-                ]
+                }
             },
-            {
-                "status": "bad_timestamp",
-                "other_fields": [
-                    {
-                        "name": "reason",
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
                         "type": "Option<String>"
                     },
-                    {
-                        "name": "ballpark_client_early_offset",
+                    "ballpark_client_early_offset": {
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "ballpark_client_late_offset",
+                    "ballpark_client_late_offset": {
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "backend_timestamp",
+                    "backend_timestamp": {
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     },
-                    {
-                        "name": "client_timestamp",
+                    "client_timestamp": {
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     }
-                ]
+                }
             },
-            {
-                "status": "not_a_sequestered_organization",
-                "other_fields": []
-            },
-            {
-                "status": "sequester_inconsistency",
-                "other_fields": [
-                    {
-                        "name": "sequester_authority_certificate",
+            "not_a_sequestered_organization": {},
+            "sequester_inconsistency": {
+                "fields": {
+                    "sequester_authority_certificate": {
                         "type": "Bytes"
                     },
-                    {
-                        "name": "sequester_services_certificates",
+                    "sequester_services_certificates": {
                         "type": "List<Bytes>"
                     }
-                ]
+                }
             },
-            {
-                "status": "rejected_by_sequester_service",
-                "other_fields": [
-                    {
-                        "name": "service_id",
+            "rejected_by_sequester_service": {
+                "fields": {
+                    "service_id": {
                         "type": "SequesterServiceID"
                     },
-                    {
-                        "name": "service_label",
+                    "service_label": {
                         "type": "String"
                     },
-                    {
-                        "name": "reason",
+                    "reason": {
                         "type": "String"
                     }
-                ]
+                }
             },
-            {
-                "status": "timeout",
-                "other_fields": []
-            }
-        ]
+            "timeout": {}
+        }
     }
 ]
