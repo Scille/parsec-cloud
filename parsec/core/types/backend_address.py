@@ -12,7 +12,7 @@ from parsec._parsec import (
     BackendOrganizationFileLinkAddr,
     BackendPkiEnrollmentAddr,
 )
-from typing import Union
+from typing import Any, Optional, Union
 
 PARSEC_SCHEME = "parsec"
 
@@ -28,13 +28,15 @@ BackendAddrType = Union[
 
 
 class BackendOrganizationAddrField(fields.Field):
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: Any, attr: str, data: object) -> BackendOrganizationAddr:
         try:
             return BackendOrganizationAddr.from_url(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
-    def _serialize(self, value, attr, data):
+    def _serialize(
+        self, value: Optional[BackendOrganizationAddr], attr: str, data: dict[str, object]
+    ) -> Optional[str]:
         if value is None:
             return None
 
@@ -42,13 +44,15 @@ class BackendOrganizationAddrField(fields.Field):
 
 
 class BackendAddrField(fields.Field):
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: Any, attr: str, data: object) -> BackendAddr:
         try:
             return BackendAddr.from_url(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
-    def _serialize(self, value, attr, data):
+    def _serialize(
+        self, value: Optional[BackendAddr], attr: str, data: dict[str, object]
+    ) -> Optional[str]:
         if value is None:
             return None
 
@@ -56,13 +60,15 @@ class BackendAddrField(fields.Field):
 
 
 class BackendPkiEnrollmentAddrField(fields.Field):
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: Any, attr: str, data: object) -> BackendPkiEnrollmentAddr:
         try:
             return BackendPkiEnrollmentAddr.from_url(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
-    def _serialize(self, value, attr, data):
+    def _serialize(
+        self, value: Optional[BackendPkiEnrollmentAddr], attr: str, data: object
+    ) -> Optional[str]:
         if value is None:
             return None
 

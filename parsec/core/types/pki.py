@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Dict
+from typing import Iterable, List, Optional, Dict, Union
 from pathlib import Path
 from uuid import UUID
 from parsec._parsec import DateTime
@@ -35,9 +35,9 @@ class X509Certificate:
         certificate_id = fields.String(required=True, allow_none=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Union[str, Dict[str, str], bytes]]) -> X509Certificate:
             data.pop("type", None)
-            return X509Certificate(**data)
+            return X509Certificate(**data)  # type: ignore[arg-type]
 
     issuer: Dict[str, str]
     subject: Dict[str, str]
@@ -45,7 +45,7 @@ class X509Certificate:
     certificate_sha1: bytes
     certificate_id: Optional[str]
 
-    def is_available_locally(self):
+    def is_available_locally(self) -> bool:
         """Certificates that are received from another peer are not available locally."""
         return self.certificate_id is not None
 
@@ -91,9 +91,12 @@ class LocalPendingEnrollment(BaseLocalData):
         ciphertext = fields.Bytes(required=True)  # An encrypted PendingDeviceKeys
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(
+            self,
+            data: Dict[str, object],
+        ) -> LocalPendingEnrollment:
             data.pop("type", None)
-            return LocalPendingEnrollment(**data)
+            return LocalPendingEnrollment(**data)  # type: ignore[arg-type]
 
     x509_certificate: X509Certificate
     addr: BackendPkiEnrollmentAddr
@@ -135,7 +138,7 @@ class LocalPendingEnrollment(BaseLocalData):
             yield path
 
     @classmethod
-    def load_from_path(cls, path: Path):
+    def load_from_path(cls, path: Path) -> LocalPendingEnrollment:
         """
         Raises:
             PkiEnrollmentLocalPendingError
