@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from enum import Enum
 from typing import Type
 
 from parsec._parsec import (
@@ -77,28 +76,12 @@ __all__ = (
 InvitationTokenField: Type[fields.Field] = fields.uuid_based_field_factory(InvitationToken)
 InvitationStatusField: Type[fields.Field] = fields.rust_enum_field_factory(InvitationStatus)
 InvitationTypeField: Type[fields.Field] = fields.rust_enum_field_factory(InvitationType)
+InvitationDeletedReasonField: Type[fields.Field] = fields.rust_enum_field_factory(
+    InvitationDeletedReason
+)
 
 
 invite_new_serializer = ApiCommandSerializer(InviteNewReq, InviteNewRep)
-
-
-class InvitationDeletedReasonField(Field):
-    def _serialize(self, value: Any, attr: Any, obj: Any) -> Optional[str]:
-        if value is None:
-            return None
-        elif isinstance(value, InvitationDeletedReason):
-            return value.value
-
-        raise ValidationError(f"Invalid type `{value}`")
-
-    def _deserialize(self, value: Any, attr: Any, data: Any) -> InvitationDeletedReason:
-        if not isinstance(value, str):
-            raise ValidationError("Not a string")
-
-        try:
-            return InvitationDeletedReason.from_str(value)
-        except ValueError:
-            raise ValidationError(f"Invalid type `{value}`")
 
 
 invite_delete_serializer = ApiCommandSerializer(InviteDeleteReq, InviteDeleteRep)
