@@ -106,6 +106,7 @@ jobs:
         run: poetry install -E core -E backend
 
       - uses: ./.github/actions/use-pre-commit
+        timeout-minutes: 30
 
   ##############################################################################
   #                            🐍 Python tests                                 #
