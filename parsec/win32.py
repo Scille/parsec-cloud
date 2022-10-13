@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from ctypes import GetLastError, FormatError, WinDLL
 from ctypes.wintypes import BOOL, HANDLE, LPCWSTR, LPVOID

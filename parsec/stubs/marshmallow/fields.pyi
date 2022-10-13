@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 missing_: object
@@ -19,7 +21,7 @@ class Field:
         dump_only=False,
         missing=missing_,
         error_messages=None,
-        **metadata
+        **metadata,
     ): ...
     def serialize(self, attr, obj, accessor=None): ...
     def deserialize(self, value): ...

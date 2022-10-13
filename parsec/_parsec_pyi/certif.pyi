@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Optional, List
 
 from parsec._parsec_pyi.crypto import PublicKey, SigningKey, VerifyKey

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Dict, FrozenSet, Optional, Set, Tuple, Union
 
 from ..core.fs.workspacefs.file_operations import Chunks

@@ -909,4 +909,3 @@ msgstr ""
 "(toutefois seules les données présentent localement sont disponibles), la"
 " synchronisation se faisant automatiquement dès que la connexion avec le "
 "serveur Parsec est de nouveau disponible."
-

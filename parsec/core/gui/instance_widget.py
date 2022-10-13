@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import trio
 from typing import Optional, Tuple
@@ -114,7 +115,7 @@ class InstanceWidget(QWidget):
         event_bus: EventBus,
         config: CoreConfig,
         systray_notification: pyqtBoundSignal,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.jobs_ctx = jobs_ctx

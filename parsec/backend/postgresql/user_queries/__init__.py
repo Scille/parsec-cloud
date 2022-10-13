@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 from parsec.backend.postgresql.user_queries.create import query_create_user, query_create_device
 from parsec.backend.postgresql.user_queries.find import query_find_humans

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List, Optional, Sequence, Tuple
 
 from parsec._parsec_pyi.crypto import VerifyKey

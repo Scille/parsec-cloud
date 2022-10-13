@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 from dataclasses import dataclass, field as dataclass_field
 from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional

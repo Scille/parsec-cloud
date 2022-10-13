@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Iterable, List, Optional, Tuple, Literal
 
 from parsec._parsec_pyi.ids import (

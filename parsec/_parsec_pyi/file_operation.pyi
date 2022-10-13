@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sre_constants import ANY
 from typing import Any, List, Set, Tuple
 

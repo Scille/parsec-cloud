@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 class SecretKey:
     def __init__(self, data: bytes) -> None: ...
     @property
