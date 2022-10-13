@@ -91,6 +91,7 @@ async def test_shift_mock():
     assert grandchild1_from_child1_tp.now() == t1.add(seconds=1)
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.trio
 async def test_sleep_with_mock():
     tp = TimeProvider()
@@ -157,6 +158,7 @@ async def test_sleep_cancellation(maybe_wrap_tp_sleep):
         await wait_for_sleeping_stat(tp, 0)
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.trio
 async def test_sleep_in_nursery(maybe_wrap_tp_sleep):
     tp = TimeProvider()
