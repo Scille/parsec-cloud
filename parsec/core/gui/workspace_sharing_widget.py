@@ -55,7 +55,7 @@ async def _do_get_users(core, workspace_fs):
             if user_info not in ret:
                 ret[user_info] = NOT_SHARED_KEY
         return ret
-    except BackendNotAvailable as exc:
+    except (FSBackendOfflineError, BackendNotAvailable) as exc:
         raise JobResultError("offline") from exc
 
 
