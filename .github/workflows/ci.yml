@@ -161,7 +161,8 @@ jobs:
           steps.changes.outputs.python == 'true'
           || steps.changes.outputs.rust-ext == 'true'
           || github.ref == 'refs/heads/master'
-        run: echo "::set-output name=run::true"
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: (🐧 Linux) Configure PostgreSQL APT repository
         if: >-
@@ -316,7 +317,8 @@ jobs:
           steps.changes.outputs.rust == 'true'
           || steps.changes.outputs.rust-ext == 'true'
           || github.ref == 'refs/heads/master'
-        run: echo "::set-output name=run::true"
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
 
       - uses: ./.github/actions/setup-rust
         if: steps.rust-changes.outputs.run == 'true'
@@ -404,7 +406,8 @@ jobs:
           steps.changes.outputs.wasm == 'true'
           || steps.changes.outputs.github == 'true'
           || github.ref == 'refs/head/master'
-        run: echo "::set-output name=run::true"
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
 
       - uses: ./.github/actions/setup-rust
         if: steps.wasm-pack-changes.outputs.run == 'true'
@@ -461,7 +464,8 @@ jobs:
           steps.changes.outputs.client-web == 'true'
           || steps.changes.outputs.client-common == 'true'
           || github.ref == 'refs/heads/master'
-        run: echo "::set-output name=run::true"
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Install dependencies
         if: steps.web-change.outputs.run == 'true'
