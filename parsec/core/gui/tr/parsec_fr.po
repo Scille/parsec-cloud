@@ -2351,9 +2351,6 @@ msgstr "Effacer"
 msgid "TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"
 msgstr "Seul le propriétaire d'un espace de travail peut le rechiffrer."
 
-msgid "TEXT_WORKSPACE_SHARING_STATUS_UNKNOWN"
-msgstr "état de partage inconnu"
-
 msgid "TEXT_WORKSPACE_IS_PRIVATE"
 msgstr "privé"
 

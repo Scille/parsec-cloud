@@ -333,7 +333,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
         if not self.is_timestamped:
             if self.sharing_status == SharingStatus.Unknown:
-                shared_message = _("TEXT_WORKSPACE_SHARING_STATUS_UNKNOWN")
+                shared_message = ""
             # Workspace is not shared
             elif self.sharing_status == SharingStatus.NotShared:
                 shared_message = _("TEXT_WORKSPACE_IS_PRIVATE")

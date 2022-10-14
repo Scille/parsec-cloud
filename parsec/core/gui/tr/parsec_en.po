@@ -2293,9 +2293,6 @@ msgstr "Remove"
 msgid "TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"
 msgstr "Only a workspace owner can reencrypt a workspace."
 
-msgid "TEXT_WORKSPACE_SHARING_STATUS_UNKNOWN"
-msgstr "sharing status unknown"
-
 msgid "TEXT_WORKSPACE_IS_PRIVATE"
 msgstr "private"
 
