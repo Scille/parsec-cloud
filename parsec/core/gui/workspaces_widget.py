@@ -371,7 +371,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if name_filter is not None and name_filter not in button.name.str.lower():
                 continue
             # Filter by user
-            if user_filter is not None and user_filter not in button.users_roles:
+            if user_filter is not None and (
+                button.users_roles is None or user_filter not in button.users_roles
+            ):
                 continue
             # Filter unmounted workspaces
             if hide_unmounted_filter and not button.is_mounted():
