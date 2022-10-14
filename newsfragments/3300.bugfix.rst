@@ -1,0 +1,1 @@
+Disabled workspaces not longer appear enabled when logging in

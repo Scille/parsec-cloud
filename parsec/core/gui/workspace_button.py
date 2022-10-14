@@ -174,6 +174,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         else:
             self.reencryption_needs = None
 
+        self.set_mountpoint_state(self.is_mounted())
+
     @property
     def owner(self):
         for user_id, (role, user_info) in self.users_roles.items():

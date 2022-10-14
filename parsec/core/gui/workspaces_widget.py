@@ -350,6 +350,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.layout_workspaces.addWidget(label)
             return
 
+        position = 0
+        if self.scrollArea.verticalScrollBar():
+            position = self.scrollArea.verticalScrollBar().sliderPosition()
+
         # Make sure the search bar is visible
         self.line_edit_search.show()
 
@@ -378,6 +382,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         # Force the layout to update
         self.layout_workspaces.update()
+        # Restore the scroll bar position
+        if self.scrollArea.verticalScrollBar():
+            self.scrollArea.verticalScrollBar().setSliderPosition(position)
 
     def on_list_error(self, job):
         self.spinner.hide()
