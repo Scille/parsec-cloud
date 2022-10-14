@@ -9,10 +9,12 @@ from structlog import get_logger
 from typing import Sequence, Optional, cast
 from importlib import __import__ as import_function
 from subprocess import CalledProcessError
-from contextlib import asynccontextmanager
+from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
 
 from parsec._parsec import DateTime
 from parsec.core.core_events import CoreEvent
+from parsec.core.fs import UserFS, WorkspaceFS
+from parsec.core.logged_core import WorkspaceEntry
 from parsec.core.types import EntryID
 from parsec.core.fs import FsPath, WorkspaceFSTimestamped
 from parsec.event_bus import EventBus, EventCallback
@@ -30,6 +32,10 @@ from parsec.core.mountpoint.exceptions import (
 from parsec.core.mountpoint.winify import winify_entry_name
 from parsec.core.win_registry import cleanup_parsec_drive_icons
 
+RunnerType = Callable[
+    [UserFS, WorkspaceFS, Path, dict[Any, Any], EventBus],
+    _AsyncGeneratorContextManager[Path],
+]
 
 # Importing winfspy can take some time (about 0.4 seconds)
 # Let's import those bindings at module level, in order to
@@ -46,7 +52,7 @@ except (ImportError, RuntimeError, OSError):
 logger = get_logger()
 
 
-def get_mountpoint_runner():
+def get_mountpoint_runner() -> RunnerType:
     # Windows
     if sys.platform == "win32":
 
@@ -76,15 +82,23 @@ def get_mountpoint_runner():
 
 
 class MountpointManager:
-    def __init__(self, user_fs, event_bus, base_mountpoint_path, config, runner, nursery):
+    def __init__(
+        self,
+        user_fs: UserFS,
+        event_bus: EventBus,
+        base_mountpoint_path: Path,
+        config: dict[Any, Any],
+        runner: RunnerType,
+        nursery: _AsyncGeneratorContextManager[Any],
+    ) -> None:
         self.user_fs = user_fs
         self.event_bus = event_bus
         self.base_mountpoint_path = base_mountpoint_path
         self.config = config
         self._runner = runner
         self._nursery = nursery
-        self._mountpoint_tasks = {}
-        self._timestamped_workspacefs = {}
+        self._mountpoint_tasks: Dict[Tuple[EntryID, Optional[DateTime]], TaskStatus] = {}
+        self._timestamped_workspacefs: Dict[EntryID, Dict[DateTime, WorkspaceFSTimestamped]] = {}
 
         if sys.platform == "win32":
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
@@ -95,7 +109,7 @@ class MountpointManager:
                 [part.str for part in parts]
             )
 
-    def _get_workspace(self, workspace_id: EntryID):
+    def _get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         try:
             return self.user_fs.get_workspace(workspace_id)
         except FSWorkspaceNotFoundError as exc:
@@ -103,7 +117,9 @@ class MountpointManager:
                 f"Workspace `{workspace_id.str}` doesn't exist"
             ) from exc
 
-    def _get_workspace_timestamped(self, workspace_id: EntryID, timestamp: DateTime):
+    def _get_workspace_timestamped(
+        self, workspace_id: EntryID, timestamp: DateTime
+    ) -> WorkspaceFSTimestamped:
         try:
             return self._timestamped_workspacefs[workspace_id][timestamp]
         except KeyError:
@@ -127,7 +143,9 @@ class MountpointManager:
         try:
             # Get a random WorkspaceFSTimestamped if possible, as all WorkspaceFSTimestamped from
             # the same WorkspaceFS will share the same cache when implemented
-            source_workspace = next(v for v in self._timestamped_workspacefs[workspace_id].values())
+            source_workspace: WorkspaceFS = next(
+                v for v in self._timestamped_workspacefs[workspace_id].values()
+            )
         except (StopIteration, KeyError):  # No WorkspaceFSTimestamped found for this workspace_id
             source_workspace = self._get_workspace(workspace_id)
         try:
@@ -145,11 +163,13 @@ class MountpointManager:
             self._timestamped_workspacefs[workspace_id] = {timestamp: new_workspace}
         return new_workspace
 
-    async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None) -> TaskStatus:
+    async def _mount_workspace_helper(
+        self, workspace_fs: WorkspaceFS, timestamp: Optional[DateTime] = None
+    ) -> TaskStatus:
         workspace_id = workspace_fs.workspace_id
         key = workspace_id, timestamp
 
-        async def curried_runner(task_status: TaskStatus):
+        async def curried_runner(task_status: TaskStatus) -> None:
             event_kwargs = {}
 
             try:
@@ -157,8 +177,8 @@ class MountpointManager:
                     self.user_fs,
                     workspace_fs,
                     self.base_mountpoint_path,
-                    config=self.config,
-                    event_bus=self.event_bus,
+                    self.config,
+                    self.event_bus,
                 ) as mountpoint_path:
 
                     # Another runner started before us
@@ -197,8 +217,8 @@ class MountpointManager:
         return runner_task
 
     def get_path_in_mountpoint(
-        self, workspace_id: EntryID, path: FsPath, timestamp: DateTime = None
-    ) -> PurePath:
+        self, workspace_id: EntryID, path: FsPath, timestamp: Optional[DateTime] = None
+    ) -> Path:
         if timestamp is None:
             self._get_workspace(workspace_id)
         else:
@@ -210,7 +230,9 @@ class MountpointManager:
         except KeyError:
             raise MountpointNotMounted(f"Workspace `{workspace_id.str}` is not mounted")
 
-    async def mount_workspace(self, workspace_id: EntryID, timestamp: DateTime = None) -> PurePath:
+    async def mount_workspace(
+        self, workspace_id: EntryID, timestamp: Optional[DateTime] = None
+    ) -> Path:
         if (workspace_id, timestamp) in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id.str}` already mounted.")
 
@@ -221,15 +243,20 @@ class MountpointManager:
         runner_task = await self._mount_workspace_helper(workspace)
         return runner_task.value
 
-    async def unmount_workspace(self, workspace_id: EntryID, timestamp: DateTime = None):
+    async def unmount_workspace(
+        self, workspace_id: EntryID, timestamp: Optional[DateTime] = None
+    ) -> None:
         if (workspace_id, timestamp) not in self._mountpoint_tasks:
             raise MountpointNotMounted(f"Workspace `{workspace_id.str}` not mounted.")
 
         await self._mountpoint_tasks[(workspace_id, timestamp)].cancel_and_join()
 
     async def remount_workspace_new_timestamp(
-        self, workspace_id: EntryID, original_timestamp: DateTime, target_timestamp: DateTime
-    ) -> PurePath:
+        self,
+        workspace_id: EntryID,
+        original_timestamp: Optional[DateTime],
+        target_timestamp: DateTime,
+    ) -> Path:
         """
         Mount the workspace at target_timestamp, and unmount the workspace at the original
         timestamp if it is not None. If both timestamps are equals, do nothing.
@@ -250,7 +277,9 @@ class MountpointManager:
             await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
         return runner_task.value
 
-    async def get_timestamped_mounted(self):
+    async def get_timestamped_mounted(
+        self,
+    ) -> dict[Tuple[EntryID, Optional[DateTime]], WorkspaceFSTimestamped]:
         return {
             # workspace_id_and_ts[1] will never be `None` because of the filter check
             workspace_id_and_ts: self._get_workspace_timestamped(*workspace_id_and_ts)  # type: ignore[arg-type]
@@ -258,7 +287,9 @@ class MountpointManager:
             if workspace_id_and_ts[1] is not None
         }
 
-    def is_workspace_mounted(self, workspace_id: EntryID, timestamp=None) -> bool:
+    def is_workspace_mounted(
+        self, workspace_id: EntryID, timestamp: Optional[DateTime] = None
+    ) -> bool:
         return (workspace_id, timestamp) in self._mountpoint_tasks
 
     async def safe_mount(self, workspace_id: EntryID) -> None:
@@ -289,7 +320,7 @@ class MountpointManager:
         except Exception:
             logger.exception("Unexpected error while unmounting a revoked workspace")
 
-    async def safe_mount_all(self, exclude: Sequence[EntryID] = ()):
+    async def safe_mount_all(self, exclude: Sequence[EntryID] = ()) -> None:
         exclude_set = set(exclude)
         user_manifest = self.user_fs.get_user_manifest()
         for workspace_entry in user_manifest.workspaces:
@@ -297,12 +328,12 @@ class MountpointManager:
                 continue
             await self.safe_mount(workspace_entry.id)
 
-    async def safe_unmount_all(self):
+    async def safe_unmount_all(self) -> None:
         for workspace_id, timestamp in list(self._mountpoint_tasks.keys()):
             await self.safe_unmount(workspace_id, timestamp=timestamp)
 
 
-async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
+async def cleanup_macos_mountpoint_folder(base_mountpoint_path: Path) -> None:
     # In case of a crash on macOS, workspaces don't unmount correctly and leave empty
     # mountpoints or directories in the default mount folder. This function is used to
     # unmount and/or delete these anytime a login occurs. In some rare and so far unknown
@@ -342,17 +373,17 @@ async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
 
 @asynccontextmanager
 async def mountpoint_manager_factory(
-    user_fs,
-    event_bus,
-    base_mountpoint_path,
+    user_fs: UserFS,
+    event_bus: EventBus,
+    base_mountpoint_path: Path,
     *,
     debug: bool = False,
     mount_all: bool = False,
     mount_on_workspace_created: bool = False,
     mount_on_workspace_shared: bool = False,
     unmount_on_workspace_revoked: bool = False,
-    exclude_from_mount_all: frozenset = frozenset(),
-):
+    exclude_from_mount_all: frozenset[EntryID] = frozenset(),
+) -> AsyncGenerator[MountpointManager, Any]:
     config = {"debug": debug}
 
     runner = get_mountpoint_runner()
@@ -363,7 +394,9 @@ async def mountpoint_manager_factory(
     elif sys.platform == "darwin":
         await cleanup_macos_mountpoint_folder(base_mountpoint_path)
 
-    def on_event(event, new_entry, previous_entry=None):
+    def on_event(
+        event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: Optional[WorkspaceEntry] = None
+    ) -> None:
         # Workspace created
         if event == CoreEvent.FS_WORKSPACE_CREATED:
             if mount_on_workspace_created:
@@ -396,13 +429,15 @@ async def mountpoint_manager_factory(
 
                 # Setup new workspace events
                 with event_bus.connect_in_context(
-                    (CoreEvent.FS_WORKSPACE_CREATED, cast(EventCallback, on_event)),
-                    (CoreEvent.SHARING_UPDATED, cast(EventCallback, on_event)),
+                    (CoreEvent.FS_WORKSPACE_CREATED, on_event),  # type: ignore[arg-type]
+                    (CoreEvent.SHARING_UPDATED, on_event),  # type: ignore[arg-type]
                 ):
 
                     # Mount required workspaces
                     if mount_all:
-                        await mountpoint_manager.safe_mount_all(exclude=exclude_from_mount_all)
+                        await mountpoint_manager.safe_mount_all(
+                            exclude=tuple(exclude_from_mount_all)
+                        )
 
                     # Yield point
                     yield mountpoint_manager
