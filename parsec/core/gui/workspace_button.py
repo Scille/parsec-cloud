@@ -63,7 +63,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self._reencryption = None
         self._reencryption_needs = None
         self.users_roles = None
-        self.sharing_status: SharingStatus = SharingStatus.Unknown
         self.workspace_name = workspace_fs.get_workspace_name()
 
         # Static initialization
@@ -139,12 +138,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 users_roles[user_id] = (role, user_info)
         except (FSBackendOfflineError, BackendNotAvailable):
             self.users_roles = None
-            self.sharing_status = SharingStatus.Unknown
         else:
             self.users_roles = users_roles
-            self.sharing_status = (
-                SharingStatus.Shared if len(roles) > 1 else SharingStatus.NotShared
-            )
 
         current_role = self.role or NOT_SHARED_KEY
 
@@ -193,6 +188,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 created_on=DateTime.from_timestamp(0),
             )
         return None
+
+    @property
+    def sharing_status(self) -> SharingStatus:
+        if self.users_roles is None:
+            return SharingStatus.Unknown
+        return SharingStatus.Shared if self.get_others() else SharingStatus.NotShared
 
     @property
     def role(self):
