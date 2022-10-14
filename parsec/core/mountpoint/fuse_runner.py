@@ -33,7 +33,6 @@ __all__ = ("fuse_mountpoint_runner",)
 logger = get_logger()
 
 
-# Union[Callable[[int, Optional[FrameType]], Any], int, Handlers, None]
 def _sig_ign(sig: int, stack: Optional[FrameType]) -> Any:
     """A signal handler behaving like signal.SIG_IGN"""
     pass

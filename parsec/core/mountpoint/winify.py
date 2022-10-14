@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import re
+from typing import Tuple
 
 from parsec.api.data import EntryName
 
 # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
 # tl;dr: https://twitter.com/foone/status/1058676834940776450
-_WIN32_RES_CHARS = tuple(chr(x) for x in range(1, 32)) + (
+_WIN32_RES_CHARS: Tuple[str, ...] = tuple(chr(x) for x in range(1, 32)) + (
     "<",
     ">",
     ":",
@@ -17,7 +18,7 @@ _WIN32_RES_CHARS = tuple(chr(x) for x in range(1, 32)) + (
     "?",
     "*",
 )  # Ignore `\`
-_WIN32_RES_NAMES = (
+_WIN32_RES_NAMES: Tuple[str, ...] = (
     "CON",
     "PRN",
     "AUX",
