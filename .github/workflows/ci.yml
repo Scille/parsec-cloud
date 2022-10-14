@@ -20,8 +20,6 @@ env:
     --side-effects-timeout=10
     -vv
     -x
-  # Compile Rust extensions in release speeds up Python tests a lot
-  FORCE_MATURIN_RELEASE: 1
 
 jobs:
 
