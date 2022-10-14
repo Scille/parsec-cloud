@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sys
 
+from enum import Enum
 from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
@@ -32,6 +33,12 @@ class TemporaryWorkspaceWidget(QWidget, Ui_TemporaryWorkspaceWidget):
         self.setupUi(self)
 
 
+class SharingStatus(Enum):
+    Unknown = 0
+    Shared = 1
+    NotShared = 2
+
+
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     clicked = pyqtSignal(WorkspaceFS)
     share_clicked = pyqtSignal(WorkspaceFS)
@@ -55,7 +62,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         # Property inner state
         self._reencryption = None
         self._reencryption_needs = None
-        self.users_roles = {}
+        self.users_roles = None
+        self.sharing_status: SharingStatus = SharingStatus.Unknown
         self.workspace_name = workspace_fs.get_workspace_name()
 
         # Static initialization
@@ -122,34 +130,23 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             )
 
     async def _get_workspace_info(self):
-        self.users_roles = {}
+        users_roles = {}
 
         try:
-            ws_entry = self.workspace_fs.get_workspace_entry()
             roles = await self.workspace_fs.get_user_roles()
-            for user, role in roles.items():
-                user_info = await self.core.get_user_info(user)
-                self.users_roles[user] = (role, user_info)
+            for user_id, role in roles.items():
+                user_info = await self.core.get_user_info(user_id)
+                users_roles[user_id] = (role, user_info)
         except (FSBackendOfflineError, BackendNotAvailable):
-            # Fallback to craft a custom list with only our device since it's
-            # the only one we know about
-            user_info = UserInfo(
-                user_id=self.core.device.user_id,
-                human_handle=self.core.device.human_handle,
-                profile=self.core.device.profile,
-                revoked_on=None,
-                # Unfortunately, this field is not available from LocalDevice
-                # so we have to set it with a dummy value :'(
-                # However it's more a hack than an issue given this field is
-                # not used here.
-                created_on=DateTime.from_timestamp(0),
+            self.users_roles = None
+            self.sharing_status = SharingStatus.Unknown
+        else:
+            self.users_roles = users_roles
+            self.sharing_status = (
+                SharingStatus.Shared if len(roles) > 1 else SharingStatus.NotShared
             )
-            self.users_roles[user_info.user_id] = (ws_entry.role, user_info)
 
-        try:
-            current_role, _ = self.users_roles[self.workspace_fs.device.user_id]
-        except KeyError:
-            current_role = NOT_SHARED_KEY
+        current_role = self.role or NOT_SHARED_KEY
 
         if not self.core.device.is_outsider and current_role not in (
             WorkspaceRole.READER,
@@ -159,7 +156,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
         self.label_role.setText(get_role_translation(current_role))
         self.label_owner.setVisible(self.is_owner)
-        self.label_shared.setVisible(self.is_shared)
+        self.label_shared.setVisible(self.sharing_status == SharingStatus.Shared)
         self.reload_workspace_name(self.workspace_name)
 
         self.button_remount_ts.show()
@@ -176,28 +173,43 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
         self.set_mountpoint_state(self.is_mounted())
 
-    @property
-    def owner(self):
-        for user_id, (role, user_info) in self.users_roles.items():
-            if role == WorkspaceRole.OWNER and user_info:
-                return user_info
-        raise ValueError
+    def get_owner(self) -> Optional[UserInfo]:
+        if self.users_roles:
+            for user_id, (role, user_info) in self.users_roles.items():
+                if role == WorkspaceRole.OWNER and user_info:
+                    return user_info
+        elif self.role == WorkspaceRole.OWNER:
+            # Fallback to craft a custom list with only our device since it's
+            # the only one we know about
+            return UserInfo(
+                user_id=self.core.device.user_id,
+                human_handle=self.core.device.human_handle,
+                profile=self.core.device.profile,
+                revoked_on=None,
+                # Unfortunately, this field is not available from LocalDevice
+                # so we have to set it with a dummy value :'(
+                # However it's more a hack than an issue given this field is
+                # not used here.
+                created_on=DateTime.from_timestamp(0),
+            )
+        return None
 
     @property
-    def is_shared(self):
-        return len(self.get_others()) >= 1
+    def role(self):
+        return self.workspace_fs.get_workspace_entry().role
 
     def get_others(self):
-        return [
-            user_info
-            for user_id, (role, user_info) in self.users_roles.items()
-            if user_id != self.workspace_fs.device.user_id and not user_info.is_revoked
-        ]
+        if self.users_roles:
+            return [
+                user_info
+                for user_id, (role, user_info) in self.users_roles.items()
+                if user_id != self.workspace_fs.device.user_id and not user_info.is_revoked
+            ]
+        return []
 
     @property
     def is_owner(self):
-        user_id = self.workspace_fs.device.user_id
-        return user_id in self.users_roles and self.users_roles[user_id][0] == WorkspaceRole.OWNER
+        return self.role == WorkspaceRole.OWNER
 
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
@@ -319,17 +331,33 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         others = self.get_others()
 
         if not self.is_timestamped:
-            if not self.is_shared:
+            if self.sharing_status == SharingStatus.Unknown:
+                shared_message = _("TEXT_WORKSPACE_SHARING_STATUS_UNKNOWN")
+            # Workspace is not shared
+            elif self.sharing_status == SharingStatus.NotShared:
                 shared_message = _("TEXT_WORKSPACE_IS_PRIVATE")
+            # Workspace is shared, we are not the owner
             elif not self.is_owner:
-                shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(
-                    user=self.owner.short_user_display
-                )
-            elif len(others) == 1 and others[0]:
-                (user,) = others
-                shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(
-                    user=user.short_user_display
-                )
+                # We know the owner, display their name
+                if self.get_owner():
+                    shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(
+                        user=self.get_owner().short_user_display
+                    )
+                # We don't know the owner's name, just display that the workspace is shared
+                else:
+                    shared_message = _("TEXT_WORKSPACE_IS_SHARED")
+            # We are the owner, workspace is shared with only one user
+            elif len(others) == 1:
+                # We have their info
+                if others[0]:
+                    (user,) = others
+                    shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(
+                        user=user.short_user_display
+                    )
+                # We don't, just display that the workspace is shared
+                else:
+                    shared_message = _("TEXT_WORKSPACE_IS_SHARED")
+            # Only case left should be that we are the owner and there are more than one user, display the number
             else:
                 n = len(others)
                 assert n > 1
