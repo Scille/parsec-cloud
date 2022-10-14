@@ -121,15 +121,14 @@ msgstr ""
 "nommé ``parsec-vX.Y.Z-macos-amd64.dmg``"
 
 #: ../../userguide/installation.rst:61
-#, fuzzy
 msgid ""
 "The MacOS version requires `macFUSE <https://osxfuse.github.io/>`_ to be "
 "installed, which can be troublesome on Big Sur and Monterey. See `this "
 "discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and"
 " the OS' limitations."
 msgstr ""
-"La version MacOS nécessite l'installation de macFUSE "
-"<https://osxfuse.github.io/>`, ce qui peut être problématique sur Big Sur"
+"La version MacOS nécessite l'installation de `macFUSE "
+"<https://osxfuse.github.io/>`_, ce qui peut être problématique sur Big Sur"
 " et Monterey. Voir `cette discussion "
 "<https://github.com/osxfuse/osxfuse/issues/814>`_."
 
@@ -150,13 +149,12 @@ msgstr ""
 "pour garantir une expérience native sur cette plateforme."
 
 #: ../../userguide/installation.rst:72
-#, fuzzy
 msgid ""
 "From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find "
 "the lastest version to download at the indicated location."
 msgstr ""
-"Vous trouverez la dernière version de macFUSE à cette adresse : "
-"https://osxfuse.github.io/"
+"Vous trouverez la dernière version de macFUSE `à cette adresse "
+"<https://osxfuse.github.io/>`_."
 
 #: ../../userguide/installation.rst:-1
 msgid "macFUSE download screen"
