@@ -55,7 +55,7 @@ async def _do_get_users(core, workspace_fs):
             if user_info not in ret:
                 ret[user_info] = NOT_SHARED_KEY
         return ret
-    except BackendNotAvailable as exc:
+    except (FSBackendOfflineError, BackendNotAvailable) as exc:
         raise JobResultError("offline") from exc
 
 
@@ -194,6 +194,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.workspace_fs = workspace_fs
+        self.dialog = None
 
         self.has_changes = False
 
@@ -348,6 +349,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             show_error(self, _("TEXT_WORKSPACE_SHARING_OFFLINE"))
         self.spinner.hide()
         self.widget_users.show()
+        if self.dialog is not None:
+            self.dialog.reject()
 
     def on_close(self):
         self.closing.emit(self.has_changes)
@@ -374,6 +377,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             parent=parent,
             width=1000,
         )
+        w.dialog = d
         d.closing.connect(w.on_close)
         w.closing.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop
