@@ -9,7 +9,7 @@ from parsec.api.data import EntryName
 from parsec.api.protocol import UserProfile
 from parsec.core.types import WorkspaceRole
 from parsec.core.local_device import save_device_with_password_in_config
-from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.workspace_button import WorkspaceButton, SharingStatus
 from parsec.core.gui.lang import translate
 
 from tests.common import customize_fixtures
@@ -411,7 +411,7 @@ async def test_rename_workspace_when_revoked(
         assert wk_button.label_title.toolTip() == "Workspace"
         assert wk_button.label_shared_info.tooltip() == "private"
         assert wk_button.label_shared_info.text() == "private"
-        assert not wk_button.is_shared
+        assert wk_button.sharing_status != SharingStatus.Shared
         assert wk_button.name == EntryName("Workspace")
 
     await aqtbot.wait_until(_workspace_not_shared_listed)
@@ -424,7 +424,7 @@ async def test_rename_workspace_when_revoked(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.is_shared
+        assert wk_button.sharing_status == SharingStatus.Shared
         assert wk_button.name == EntryName("Workspace")
         assert wk_button.label_title.toolTip() == "Workspace"
         assert wk_button.label_title.text() == "Workspace"
