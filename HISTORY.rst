@@ -5,6 +5,20 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.13.0-rc3 (2022-10-14)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Scrollbar should stay in place when enabling/disabling workspaces  (`#3301
+  <https://github.com/Scille/parsec-cloud/issues/3301>`__)
+* Fixed how workspaces are displayed when offline  (`#3302
+  <https://github.com/Scille/parsec-cloud/issues/3302>`__)
+* Disabled workspaces not longer appear enabled when logging in  (`#3300
+  <https://github.com/Scille/parsec-cloud/issues/3300>`__)
+
+
 Parsec v2.13.0-rc2 (2022-10-12)
 -------------------------------
 
