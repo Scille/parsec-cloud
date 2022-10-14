@@ -268,11 +268,7 @@ mod test {
                         pub struct Req;
 
                         impl Req {
-                            pub fn new () -> Self { Self }
-                        }
-
-                        impl Req {
-                            pub fn dump (self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                            pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                                 AnyCmdReq::FooCmd(self).dump()
                             }
                         }
@@ -326,11 +322,7 @@ mod test {
                         pub struct Req;
 
                         impl Req {
-                            pub fn new () -> Self { Self }
-                        }
-
-                        impl Req {
-                            pub fn dump (self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                            pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                                 AnyCmdReq::FooCmd(self).dump()
                             }
                         }
