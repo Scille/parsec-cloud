@@ -80,7 +80,7 @@ class BackendApp:
 
     apis: Dict[ClientType, Dict[str, Callable]] = attr.field(init=False)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         self.apis = collect_apis(
             self.user,
             self.invite,

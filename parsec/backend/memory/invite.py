@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from parsec.backend.backend_events import BackendEvent
 import attr
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Optional, Tuple
 from collections import defaultdict
 from parsec._parsec import DateTime
 
@@ -40,20 +40,26 @@ class Conduit:
 
 
 class OrganizationStore:
-    def __init__(self):
-        self.invitations = {}
-        self.deleted_invitations = {}
-        self.conduits = defaultdict(Conduit)
+    def __init__(self) -> None:
+        self.invitations: dict[InvitationToken, Invitation] = {}
+        self.deleted_invitations: dict[
+            InvitationToken, Tuple[DateTime, InvitationDeletedReason]
+        ] = {}
+        self.conduits: dict[InvitationToken, Conduit] = defaultdict(Conduit)
 
 
 class MemoryInviteComponent(BaseInviteComponent):
-    def __init__(self, send_event, *args, **kwargs):
+    def __init__(
+        self, send_event: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._send_event = send_event
-        self._organizations = defaultdict(OrganizationStore)
-        self._user_component: "MemoryUserComponent" = None
+        self._organizations: dict[OrganizationID, OrganizationStore] = defaultdict(
+            OrganizationStore
+        )
+        self._user_component: Optional[MemoryUserComponent] = None
 
-    def register_components(self, user: "MemoryUserComponent", **other_components):
+    def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
         self._user_component = user
 
     def _get_invitation_and_conduit(
@@ -188,6 +194,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         """
         Raise: InvitationAlreadyMemberError
         """
+        assert self._user_component is not None
+
         org = self._user_component._organizations[organization_id]
 
         for _, user in org.users.items():
@@ -227,6 +235,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         created_on: Optional[DateTime],
         claimer_email: Optional[str] = None,
     ) -> Invitation:
+        assert self._user_component is not None
+
         org = self._organizations[organization_id]
         for invitation in org.invitations.values():
             if (

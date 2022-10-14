@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole, BlockID
 from parsec.backend.utils import OperationKind
@@ -28,16 +28,16 @@ class BlockMeta:
 
 
 class MemoryBlockComponent(BaseBlockComponent):
-    def __init__(self):
-        self._blockmetas = {}
-        self._blockstore_component: "MemoryBlockStoreComponent" = None
-        self._realm_component: "MemoryRealmComponent" = None
+    def __init__(self) -> None:
+        self._blockmetas: dict[Tuple[OrganizationID, BlockID], BlockMeta] = {}
+        self._blockstore_component: Optional[MemoryBlockStoreComponent] = None
+        self._realm_component: Optional[MemoryRealmComponent] = None
 
     def register_components(
         self,
-        blockstore: "MemoryBlockStoreComponent",
-        realm: "MemoryRealmComponent",
-        **other_components,
+        blockstore: MemoryBlockStoreComponent,
+        realm: MemoryRealmComponent,
+        **other_components: Any,
     ) -> None:
         self._blockstore_component = blockstore
         self._realm_component = realm
@@ -59,6 +59,8 @@ class MemoryBlockComponent(BaseBlockComponent):
         user_id: UserID,
         operation_kind: OperationKind,
     ) -> None:
+        assert self._realm_component is not None
+
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
@@ -92,6 +94,8 @@ class MemoryBlockComponent(BaseBlockComponent):
     async def read(
         self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
     ) -> bytes:
+        assert self._blockstore_component is not None
+
         try:
             blockmeta = self._blockmetas[(organization_id, block_id)]
 
@@ -110,6 +114,8 @@ class MemoryBlockComponent(BaseBlockComponent):
         realm_id: RealmID,
         block: bytes,
     ) -> None:
+        assert self._blockstore_component is not None
+
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
         if (organization_id, block_id) in self._blockmetas:
             raise BlockAlreadyExistsError()
@@ -120,7 +126,7 @@ class MemoryBlockComponent(BaseBlockComponent):
 
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self):
+    def __init__(self) -> None:
         self._blocks: Dict[Tuple[OrganizationID, BlockID], bytes] = {}
 
     async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:

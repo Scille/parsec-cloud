@@ -95,7 +95,7 @@ class Organization:
     sequester_authority: Optional[SequesterAuthority]
     sequester_services_certificates: Optional[Tuple[bytes, ...]]
 
-    def is_bootstrapped(self):
+    def is_bootstrapped(self) -> bool:
         return self.root_verify_key is not None
 
     def evolve(self, **kwargs):
