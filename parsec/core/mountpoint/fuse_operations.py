@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import PurePath
 from parsec._parsec import DateTime
 from structlog import get_logger
-from typing import Optional, Iterator
+from typing import Any, List, Optional, Iterator
 from contextlib import contextmanager
 from stat import S_IRWXU, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
@@ -19,6 +19,7 @@ from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 from parsec.core.fs.exceptions import FSReadOnlyError
+from parsec.core.types import FileDescriptor
 
 
 logger = get_logger()
@@ -34,7 +35,7 @@ logger = get_logger()
 BANNED_PREFIXES = (".Trash-",)
 
 
-def is_banned(name: EntryName):
+def is_banned(name: EntryName) -> bool:
     return any(name.str.startswith(prefix) for prefix in BANNED_PREFIXES)
 
 
@@ -57,6 +58,7 @@ def get_path_and_translate_error(
             # FsPath conversion might raise an FSNameTooLongError so make
             # sure it runs within the try-except so it can be caught by the
             # FSLocalOperationError filter.
+            assert context is not None
             path = FsPath(context)
         yield path
 
@@ -155,7 +157,7 @@ class FuseOperations(LoggingMixIn, Operations):
     ):
         super().__init__()
         self.fs_access = fs_access
-        self.fds = {}
+        self.fds: dict[str, Any] = {}
         self._need_exit = False
         self._get_path_and_translate_error = partial(
             get_path_and_translate_error,
@@ -165,19 +167,19 @@ class FuseOperations(LoggingMixIn, Operations):
             timestamp=timestamp,
         )
 
-    def __call__(self, operation: str, context: Optional[str], *args, **kwargs):
+    def __call__(self, operation: str, context: Optional[str], *args: Any, **kwargs: Any) -> Any:
         with self._get_path_and_translate_error(operation=operation, context=context) as path:
             return super().__call__(operation, path, *args, **kwargs)
 
-    def schedule_exit(self):
+    def schedule_exit(self) -> None:
         # TODO: Currently call fuse_exit from a non fuse thread is not possible
         # (see https://github.com/fusepy/fusepy/issues/116).
         self._need_exit = True
 
-    def init(self, path: FsPath):
+    def init(self, path: FsPath) -> None:
         pass
 
-    def statfs(self, path: FsPath):
+    def statfs(self, path: FsPath) -> dict[str, int]:
         # We have currently no way of easily getting the size of workspace
         # Also, the total size of a workspace is not limited
         # For the moment let's settle on 0 MB used for 1 TB available
@@ -190,7 +192,7 @@ class FuseOperations(LoggingMixIn, Operations):
             "f_namemax": 255,  # 255 bytes as maximum length for filenames
         }
 
-    def getattr(self, path: FsPath, fh: Optional[int] = None):
+    def getattr(self, path: FsPath, fh: Optional[int] = None) -> dict[str, Any]:
         if self._need_exit:
             fuse_exit()
 
@@ -219,15 +221,15 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat["st_gid"] = gid
         return fuse_stat
 
-    def chmod(self, path: FsPath, mode: int):
+    def chmod(self, path: FsPath, mode: int) -> None:
         # TODO: silently ignored for the moment
         return
 
-    def chown(self, path: FsPath, uid: int, gid: int):
+    def chown(self, path: FsPath, uid: int, gid: int) -> None:
         # TODO: silently ignored for the moment
         return
 
-    def readdir(self, path: FsPath, fh: int):
+    def readdir(self, path: FsPath, fh: int) -> List[str]:
         stat = self.fs_access.entry_info(path)
 
         if stat["type"] == "file":
@@ -235,50 +237,50 @@ class FuseOperations(LoggingMixIn, Operations):
 
         return [".", ".."] + list(c.str for c in stat["children"])
 
-    def create(self, path: FsPath, mode: int):
+    def create(self, path: FsPath, mode: int) -> Optional[FileDescriptor]:
         if is_banned(path.name):
             raise FuseOSError(errno.EACCES)
         _, fd = self.fs_access.file_create(path, open=True)
         return fd
 
-    def open(self, path: FsPath, flags: int = 0):
+    def open(self, path: FsPath, flags: int = 0) -> FileDescriptor:
         # Filter file status and file creation flags
         write_mode = (flags % 4) in (os.O_WRONLY, os.O_RDWR)
         _, fd = self.fs_access.file_open(path, write_mode=write_mode)
         return fd
 
-    def release(self, path: FsPath, fh: int):
+    def release(self, path: FsPath, fh: FileDescriptor) -> None:
         self.fs_access.fd_close(fh)
 
-    def read(self, path: FsPath, size: int, offset: int, fh: int):
+    def read(self, path: FsPath, size: int, offset: int, fh: FileDescriptor) -> bytes:
         # Atomic read
         ret = self.fs_access.fd_read(fh, size, offset, raise_eof=False)
         # Fuse wants bytes but fd_read returns a bytearray
         return bytes(ret)
 
-    def write(self, path: FsPath, data: bytes, offset: int, fh: int):
+    def write(self, path: FsPath, data: bytes, offset: int, fh: FileDescriptor) -> int:
         return self.fs_access.fd_write(fh, data, offset)
 
-    def truncate(self, path: FsPath, length: int, fh: Optional[int] = None):
+    def truncate(self, path: FsPath, length: int, fh: Optional[FileDescriptor] = None) -> None:
         if fh:
             self.fs_access.fd_resize(fh, length)
         else:
             self.fs_access.file_resize(path, length)
 
-    def unlink(self, path: FsPath):
+    def unlink(self, path: FsPath) -> None:
         self.fs_access.file_delete(path)
 
-    def mkdir(self, path: FsPath, mode: int):
+    def mkdir(self, path: FsPath, mode: int) -> int:
         if is_banned(path.name):
             raise FuseOSError(errno.EACCES)
         self.fs_access.folder_create(path)
         return 0
 
-    def rmdir(self, path: FsPath):
+    def rmdir(self, path: FsPath) -> int:
         self.fs_access.folder_delete(path)
         return 0
 
-    def rename(self, path: FsPath, destination: str):
+    def rename(self, path: FsPath, destination: FsPath) -> int:
         destination = FsPath(destination)
         if not path.parent.is_root() and re.match(r".*\.sb-\w*-\w*", str(path.parent.name)):
             # This shouldn't happen with the defer_permission option in the FUSE function,
@@ -290,13 +292,13 @@ class FuseOperations(LoggingMixIn, Operations):
             self.fs_access.entry_rename(path, destination, overwrite=True)
         return 0
 
-    def flush(self, path: FsPath, fh: int):
+    def flush(self, path: FsPath, fh: FileDescriptor) -> int:
         self.fs_access.fd_flush(fh)
         return 0
 
-    def fsync(self, path: FsPath, datasync, fh: int):
+    def fsync(self, path: FsPath, datasync: Any, fh: FileDescriptor) -> int:
         self.fs_access.fd_flush(fh)
         return 0
 
-    def fsyncdir(self, path: FsPath, datasync, fh: int):
+    def fsyncdir(self, path: FsPath, datasync: Any, fh: FileDescriptor) -> int:
         return 0  # TODO

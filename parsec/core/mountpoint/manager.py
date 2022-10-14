@@ -5,17 +5,17 @@ import trio
 import logging
 import sys
 
-from pathlib import PurePath
-from parsec._parsec import DateTime
 from structlog import get_logger
-from typing import Sequence, Optional
+from typing import Sequence, Optional, cast
 from importlib import __import__ as import_function
 from subprocess import CalledProcessError
 from contextlib import asynccontextmanager
 
+from parsec._parsec import DateTime
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID
 from parsec.core.fs import FsPath, WorkspaceFSTimestamped
+from parsec.event_bus import EventBus, EventCallback
 from parsec.utils import TaskStatus, start_task, open_service_nursery
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.mountpoint.exceptions import (
@@ -252,7 +252,8 @@ class MountpointManager:
 
     async def get_timestamped_mounted(self):
         return {
-            workspace_id_and_ts: self._get_workspace_timestamped(*workspace_id_and_ts)
+            # workspace_id_and_ts[1] will never be `None` because of the filter check
+            workspace_id_and_ts: self._get_workspace_timestamped(*workspace_id_and_ts)  # type: ignore[arg-type]
             for workspace_id_and_ts in self._mountpoint_tasks.keys()
             if workspace_id_and_ts[1] is not None
         }
@@ -395,8 +396,8 @@ async def mountpoint_manager_factory(
 
                 # Setup new workspace events
                 with event_bus.connect_in_context(
-                    (CoreEvent.FS_WORKSPACE_CREATED, on_event),
-                    (CoreEvent.SHARING_UPDATED, on_event),
+                    (CoreEvent.FS_WORKSPACE_CREATED, cast(EventCallback, on_event)),
+                    (CoreEvent.SHARING_UPDATED, cast(EventCallback, on_event)),
                 ):
 
                     # Mount required workspaces
