@@ -349,7 +349,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             show_error(self, _("TEXT_WORKSPACE_SHARING_OFFLINE"))
         self.spinner.hide()
         self.widget_users.show()
-        self.dialog.reject()
+        if self.dialog is not None:
+            self.dialog.reject()
 
     def on_close(self):
         self.closing.emit(self.has_changes)
