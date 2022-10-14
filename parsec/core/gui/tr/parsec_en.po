@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-09-20 08:14+0200\n"
+"POT-Creation-Date: 2022-10-14 16:22+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -970,8 +970,8 @@ msgstr "One last step: Install macFUSE"
 
 msgid "TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"
 msgstr ""
-"To finalize your installation, macFUSE must be installed for "
-"certain key features to function.<br><br><a "
+"To finalize your installation, macFUSE must be installed for certain key "
+"features to function.<br><br><a "
 "href=\"https://docs.parsec.cloud/en/latest/userguide/installation.html"
 "#fuse-for-macos-installation\" title=\"FUSE_install\" style=\"font-"
 "weight: bold;\">A macFUSE installation guide is available here</a>"
@@ -2299,6 +2299,9 @@ msgstr "private"
 msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
 msgstr "owned by {user}"
 
+msgid "TEXT_WORKSPACE_IS_SHARED"
+msgstr "shared"
+
 msgid "TEXT_WORKSPACE_IS_SHARED_WITH_user"
 msgstr "shared with {user}"
 
@@ -2646,9 +2649,6 @@ msgstr "Invite a new device"
 
 msgid "ACTION_DEVICE_ADD_NEW"
 msgstr "Invite a new device"
-
-msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
-msgstr "This workspace is empty."
 
 msgid "TEXT_ENROLLMENT_CERTIFICATE_SUBJECT_NAME"
 msgstr "Name"
@@ -3032,3 +3032,6 @@ msgstr "Go to a file using a link"
 
 msgid "TEXT_WORKSPACES_HIDE_UNMOUNTED"
 msgstr "Hide deactivated workspaces"
+
+#~ msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
+#~ msgstr "This workspace is empty."
