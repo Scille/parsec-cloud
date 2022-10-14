@@ -35,8 +35,30 @@ jobs:
       - test-web-app
       - test-wasm
     runs-on: ubuntu-latest
+    if: always()
     steps:
-      - run: echo "My job here is done !"
+      # The Needs context value contains only:
+      # - the final state a jobs (if it fail or not)
+      # - it's output (actually none of our jobs are configuring outputs variable)
+      #
+      # https://docs.github.com/en/actions/learn-github-actions/contexts#needs-context
+      - name: Debug the needs context values
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: printenv NEEDS
+
+      - name: We're very sorry
+        run: |
+          echo "Oh No, we have jobs that have failed/cancelled/skipped :("
+          exit 42
+        if: >-
+          contains(needs.*.result, 'failure')
+          || contains(needs.*.result, 'skipped')
+          || contains(needs.*.result, 'cancelled')
+          || ! contains(needs.*.result, 'success')
+
+      - name: It's showtime
+        run: echo "My job here is done !"
 
   ##############################################################################
   #                                   📊 Q&A                                   #
