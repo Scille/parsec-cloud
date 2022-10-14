@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-09-20 08:14+0200\n"
+"POT-Creation-Date: 2022-10-14 16:22+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -2358,6 +2358,9 @@ msgstr "privé"
 msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
 msgstr "administré par {user}"
 
+msgid "TEXT_WORKSPACE_IS_SHARED"
+msgstr "partagé"
+
 msgid "TEXT_WORKSPACE_IS_SHARED_WITH_user"
 msgstr "partagé avec {user}"
 
@@ -2721,9 +2724,6 @@ msgstr "Inviter un nouvel appareil"
 
 msgid "ACTION_DEVICE_ADD_NEW"
 msgstr "Inviter un nouvel appareil"
-
-msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
-msgstr "Cet espace de travail est vide."
 
 msgid "TEXT_ENROLLMENT_CERTIFICATE_SUBJECT_NAME"
 msgstr "Nom"
@@ -3113,3 +3113,6 @@ msgstr "Trouver un fichier via son lien"
 
 msgid "TEXT_WORKSPACES_HIDE_UNMOUNTED"
 msgstr "Masquer les espaces de travail désactivés"
+
+#~ msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
+#~ msgstr "Cet espace de travail est vide."
