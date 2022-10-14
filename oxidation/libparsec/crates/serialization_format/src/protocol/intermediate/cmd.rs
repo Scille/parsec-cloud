@@ -122,7 +122,7 @@ impl Cmd {
             types.insert(name.clone(), name.clone());
         });
         let nested_types = self.quote_nested_types(&types);
-        let (req_def, req_impl) = self.req.quote(&types);
+        let req = self.req.quote(&types);
         let valid_statuses = self
             .possible_responses
             .iter()
@@ -149,9 +149,7 @@ impl Cmd {
 
                 #(#nested_types)*
 
-                #req_def
-
-                #req_impl
+                #req
 
                 impl Req {
                     pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
@@ -630,10 +628,6 @@ mod test {
                 pub struct Req;
 
                 impl Req {
-                    pub fn new() -> Self { Self }
-                }
-
-                impl Req {
                     pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                         AnyCmdReq::FooCmd(self).dump()
                     }
@@ -693,10 +687,6 @@ mod test {
 
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req;
-
-                impl Req {
-                    pub fn new() -> Self { Self }
-                }
 
                 impl Req {
                     pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
@@ -760,10 +750,6 @@ mod test {
 
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req;
-
-                impl Req {
-                    pub fn new() -> Self { Self }
-                }
 
                 impl Req {
                     pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
