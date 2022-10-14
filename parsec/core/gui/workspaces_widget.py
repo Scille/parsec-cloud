@@ -748,6 +748,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if wb:
             mounted = self.is_workspace_mounted(workspace_id, timestamp)
             wb.set_mountpoint_state(mounted)
+            self.refresh_workspace_layout()
 
     def _on_mountpoint_started(self, event, mountpoint, workspace_id, timestamp):
         self._on_mountpoint_state_updated(workspace_id, timestamp)
