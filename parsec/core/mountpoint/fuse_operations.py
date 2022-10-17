@@ -147,14 +147,14 @@ def get_path_and_translate_error(
         raise FuseOSError(errno.EACCES) from exc
 
 
-class FuseOperations(LoggingMixIn, Operations):
+class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimported, misc]
     def __init__(
         self,
         fs_access: ThreadFSAccess,
         mountpoint: PurePath,
         workspace_id: EntryID,
         timestamp: Optional[DateTime],
-    ):
+    ) -> None:
         super().__init__()
         self.fs_access = fs_access
         self.fds: dict[str, Any] = {}

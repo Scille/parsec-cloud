@@ -121,7 +121,7 @@ async def _teardown_mountpoint(mountpoint_path: Path) -> None:
 
 
 @asynccontextmanager
-async def fuse_mountpoint_runner(
+async def fuse_mountpoint_runner(  # type: ignore[misc]
     user_fs: UserFS,
     workspace_fs: WorkspaceFS,
     base_mountpoint_path: Path,
