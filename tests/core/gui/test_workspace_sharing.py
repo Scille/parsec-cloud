@@ -66,7 +66,7 @@ async def test_workspace_sharing_list_users(
     assert main_user_w.user_info.short_user_display == "Boby McBobFace"
     assert main_user_w.label_name.text() == "<b>Boby McBobFace</b>"
     assert main_user_w.label_email.text() == "bob@example.com"
-    assert main_user_w.combo_role.currentIndex() == 4
+    assert main_user_w.combo_role.currentIndex() == 0
     assert main_user_w.combo_role.currentText() == translate("TEXT_WORKSPACE_ROLE_OWNER")
 
     for i in range(1, 3):
@@ -201,14 +201,14 @@ async def test_share_workspace(
     assert user_w.user_info.user_id == bob.user_id
     assert user_w.role == WorkspaceRole.OWNER
     assert not user_w.is_current_user
-    assert user_w.combo_role.currentIndex() == 4
+    assert user_w.combo_role.currentIndex() == 0
     assert user_w.isEnabled() is False
 
     user_w = share_w_w.scroll_content.layout().itemAt(1).widget()
     assert user_w.user_info.user_id == adam.user_id
     assert user_w.role == WorkspaceRole.MANAGER
     assert user_w.is_current_user
-    assert user_w.combo_role.currentIndex() == 3
+    assert user_w.combo_role.currentIndex() == 0
     assert user_w.isEnabled() is False
 
     user_w = share_w_w.scroll_content.layout().itemAt(2).widget()
