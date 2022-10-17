@@ -37,7 +37,7 @@ jobs:
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
       - uses: ./.github/actions/setup-python-poetry
         with:
@@ -127,7 +127,7 @@ jobs:
           set -e
           echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
 
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
@@ -239,7 +239,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
@@ -289,7 +289,7 @@ jobs:
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
       - uses: actions/setup-python@b55428b1882923874294fa556849718a1d7f2ca5  # pin v4.2.0
         id: setup-python
@@ -353,7 +353,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package electron
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
       - name: Install dependencies
         run: |
@@ -382,7 +382,7 @@ jobs:
       NDK_VERSION: 22.1.7171670
       SDK_VERSION: 30.0.3
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
       - name: Install rust toolchain
         id: rust-toolchain
