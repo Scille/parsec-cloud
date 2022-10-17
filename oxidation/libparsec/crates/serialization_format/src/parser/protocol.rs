@@ -130,6 +130,12 @@ impl Rep {
             }
         }
     }
+    fn quote_valid_status(&self) -> TokenStream {
+        let lit = &self.status;
+        quote! {
+            #lit
+        }
+    }
 }
 
 fn quote_reps(_reps: &[Rep], types: &HashMap<String, String>) -> TokenStream {
@@ -144,6 +150,21 @@ fn quote_reps(_reps: &[Rep], types: &HashMap<String, String>) -> TokenStream {
         };
     }
     reps
+}
+
+fn quote_valid_statuses(_reps: &[Rep]) -> TokenStream {
+    let mut statuses = quote! { "ok" };
+
+    for rep in _reps {
+        let status = rep.quote_valid_status();
+
+        statuses = quote! {
+            #statuses
+            | #status
+        };
+    }
+
+    statuses
 }
 
 #[derive(Deserialize)]
@@ -249,6 +270,7 @@ impl Cmds {
             };
             let req = cmd.req.quote(&types);
             let variants_rep = quote_reps(&cmd.reps, &types);
+            let valid_statuses = quote_valid_statuses(&cmd.reps);
 
             if let Some(nested_types) = &cmd.nested_types {
                 // Drop local types
@@ -311,17 +333,23 @@ impl Cmds {
                         }
 
                         pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
-                            Ok(if let Ok(data) = ::rmp_serde::from_slice::<Self>(buf) {
+                            let data = ::rmp_serde::from_slice::<Self>(buf);
+
+                            if data.is_ok() {
                                 data
                             } else {
                                 // Due to how Serde handles variant discriminant, we cannot express unknown status as a default case in the main schema
                                 // Instead we have this additional deserialization attempt fallback
-                                let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                                Self::UnknownStatus {
-                                    _status: data.status,
-                                    reason: data.reason,
+                                let unknown_status = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+
+                                match unknown_status.status.as_str() {
+                                    #valid_statuses => data,
+                                    _ => Ok(Self::UnknownStatus {
+                                        _status: unknown_status.status,
+                                        reason: unknown_status.reason,
+                                    })
                                 }
-                            })
+                            }
                         }
                     }
                 }
