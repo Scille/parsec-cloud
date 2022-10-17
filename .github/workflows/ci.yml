@@ -20,6 +20,9 @@ env:
     --side-effects-timeout=10
     -vv
     -x
+  # Override the default rust compilation profile made in `build.py`,
+  # We prefer using one that is more fit to the CI.
+  CARGO_PROFILE: integration
 
 jobs:
 

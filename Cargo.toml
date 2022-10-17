@@ -38,3 +38,12 @@ members = [
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
 default-members = ["oxidation/libparsec"]
+
+# A custom profile that is the fusion of `release` & `debug` profile.
+# We want the speed of the `release` profile but with the debug assertions of the `debug` profile.
+[profile.integration]
+inherits = "release"
+overflow-checks = true
+debug-assertions = true
+debug = true
+incremental = true
