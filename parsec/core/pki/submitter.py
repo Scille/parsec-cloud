@@ -190,6 +190,15 @@ class PkiEnrollmentSubmitterInitialCtx:
         )
 
 
+T_PkiEnrollmentSubmitterStatusCtx = Union[
+    "PkiEnrollmentSubmitterSubmittedStatusCtx",
+    "PkiEnrollmentSubmitterCancelledStatusCtx",
+    "PkiEnrollmentSubmitterRejectedStatusCtx",
+    "PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx",
+    "PkiEnrollmentSubmitterAcceptedStatusCtx",
+]
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentSubmitterSubmittedCtx:
     config_dir: Path
@@ -218,13 +227,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
 
     async def poll(
         self, extra_trust_roots: Iterable[Path] = ()
-    ) -> Union[
-        "PkiEnrollmentSubmitterSubmittedStatusCtx",
-        "PkiEnrollmentSubmitterCancelledStatusCtx",
-        "PkiEnrollmentSubmitterRejectedStatusCtx",
-        "PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx",
-        "PkiEnrollmentSubmitterAcceptedStatusCtx",
-    ]:
+    ) -> T_PkiEnrollmentSubmitterStatusCtx:
         """
         Raises:
             BackendNotAvailable

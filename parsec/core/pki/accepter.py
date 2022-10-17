@@ -6,7 +6,7 @@ from uuid import UUID
 from pathlib import Path
 from hashlib import sha1
 from parsec._parsec import DateTime
-from typing import Iterable, List, Union, Optional, cast
+from typing import Iterable, List, Optional, cast
 
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
@@ -42,9 +42,7 @@ from parsec.core.pki.exceptions import (
 
 async def accepter_list_submitted_from_backend(
     cmds: BackendAuthenticatedCmds, extra_trust_roots: Iterable[Path] = ()
-) -> List[
-    Union["PkiEnrollementAccepterValidSubmittedCtx", "PkiEnrollementAccepterInvalidSubmittedCtx"]
-]:
+) -> List[PkiEnrollmentAccepterValidSubmittedCtx | PkiEnrollmentAccepterInvalidSubmittedCtx]:
     """
     Raises:
         BackendNotAvailable
@@ -63,7 +61,7 @@ async def accepter_list_submitted_from_backend(
         raise PkiEnrollmentListError(f"Backend refused to list enrollments: {rep['status']}", rep)
 
     pendings: List[
-        PkiEnrollementAccepterInvalidSubmittedCtx | PkiEnrollementAccepterValidSubmittedCtx
+        PkiEnrollmentAccepterInvalidSubmittedCtx | PkiEnrollmentAccepterValidSubmittedCtx
     ] = []
 
     for enrollment in cast(list[dict[str, object]], rep["enrollments"]):
@@ -84,7 +82,7 @@ async def accepter_list_submitted_from_backend(
 
         # Could not load the submitter certificate
         except PkiEnrollmentError as exc:
-            invalid_submitted_pending = PkiEnrollementAccepterInvalidSubmittedCtx(
+            invalid_submitted_pending = PkiEnrollmentAccepterInvalidSubmittedCtx(
                 cmds=cmds,
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
@@ -108,7 +106,7 @@ async def accepter_list_submitted_from_backend(
 
         # Verification failed
         except PkiEnrollmentError as exc:
-            pending = PkiEnrollementAccepterInvalidSubmittedCtx(
+            invalid_submitted_pending = PkiEnrollmentAccepterInvalidSubmittedCtx(
                 cmds=cmds,
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
@@ -118,11 +116,11 @@ async def accepter_list_submitted_from_backend(
                 raw_submit_payload=raw_submit_payload,
                 error=exc,
             )
-            pendings.append(pending)
+            pendings.append(invalid_submitted_pending)
             continue
 
         # Verification succeed
-        valid_submitted_pending = PkiEnrollementAccepterValidSubmittedCtx(
+        valid_submitted_pending = PkiEnrollmentAccepterValidSubmittedCtx(
             cmds=cmds,
             enrollment_id=enrollment_id,
             submitted_on=submitted_on,
@@ -138,7 +136,7 @@ async def accepter_list_submitted_from_backend(
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollementAccepterValidSubmittedCtx:
+class PkiEnrollmentAccepterValidSubmittedCtx:
     _cmds: BackendAuthenticatedCmds
     enrollment_id: UUID
     submitted_on: DateTime
@@ -275,7 +273,7 @@ class PkiEnrollementAccepterValidSubmittedCtx:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollementAccepterInvalidSubmittedCtx:
+class PkiEnrollmentAccepterInvalidSubmittedCtx:
     """
     The `error` attribute can be one of the following:
     - PkiEnrollmentCertificateCryptoError: when any of the required certificate-replated crypto operation fails

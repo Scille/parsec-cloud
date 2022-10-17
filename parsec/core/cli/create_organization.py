@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Any
 
 import click
 
@@ -54,7 +55,7 @@ def create_organization(
     addr: BackendAddr,
     administration_token: str,
     debug: bool,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     with cli_exception_handler(debug):
         trio_run(_create_organization, organization_id, addr, administration_token)

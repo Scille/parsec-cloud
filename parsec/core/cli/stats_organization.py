@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Any, TextIO
 
 from typing import Optional
 import click
@@ -40,7 +41,7 @@ def stats_organization(
     addr: BackendAddr,
     administration_token: str,
     debug: bool,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     with cli_exception_handler(debug):
         trio_run(_stats_organization, organization_id, addr, administration_token)
@@ -51,7 +52,7 @@ async def _stats_server(
     administration_token: str,
     at: Optional[DateTime],
     format: str,
-) -> None:
+) -> str:
     query_args = {"format": format}
     if at is not None:
         query_args["at"] = at.to_rfc3339()
@@ -88,11 +89,11 @@ async def _stats_server(
 def stats_server(
     addr: BackendAddr,
     administration_token: str,
-    output: click.File,
+    output: TextIO,
     format: str,
     debug: bool,
     at: DateTime,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     with cli_exception_handler(debug):
         data = trio_run(_stats_server, addr, administration_token, at, format)

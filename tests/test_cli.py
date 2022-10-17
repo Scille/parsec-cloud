@@ -123,7 +123,7 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
         )
     ]
 
-    def _run_cli_share_workspace_test(args, expected_error_code, use_recipiant):
+    def _run_cli_share_workspace_test(args, expected_error_code, use_recipient):
         factory_mock.reset_mock()
 
         workspace_id = EntryID.new()
@@ -144,7 +144,7 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
         factory_mock.return_value.user_fs.workspace_share.assert_called_once_with(
             workspace_id, alice.user_id, expected_workspace_role
         )
-        if use_recipiant:
+        if use_recipient:
             factory_mock.return_value.find_humans.assert_called_once()
         else:
             factory_mock.return_value.find_humans.assert_not_called()
@@ -159,8 +159,8 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
     # Test with user-id
     args = default_args + f"--user-id={alice.user_id.str}"
     _run_cli_share_workspace_test(args, 0, False)
-    # Test with recipiant
-    args = default_args + f"--recipiant=alice@example.com"
+    # Test with recipient
+    args = default_args + f"--recipient=alice@example.com"
     _run_cli_share_workspace_test(args, 0, True)
 
 
@@ -778,7 +778,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 @pytest.mark.parametrize(
     "env",
     [
-        pytest.param({}, id="Standard environement"),
+        pytest.param({}, id="Standard environnement"),
         pytest.param(
             {"WINFSP_LIBRARY_PATH": "nope"},
             id="Wrong winfsp library path",
