@@ -7,7 +7,7 @@ inputs:
     required: true
 
   components:
-    description: Extra component to install with rustup
+    description: Comma-separated string of additional components to install e.g. `clippy`, `rustfmt`
     required: false
     default: rustfmt, clippy
 
@@ -22,7 +22,7 @@ inputs:
     default: cache
 
   target:
-    description: Additional target to install (ex. `wasm32-unknown-unknown`)
+    description: Comma-separated string of additional targets to install e.g. `wasm32-unknown-unknown`
     required: false
 
 outputs:
@@ -30,17 +30,9 @@ outputs:
     description: A boolean value to indicate an exact match was found for the key.
     value: ${{ steps.cache-rust.outputs.cache-hit }}
 
-  rustc:
-    description: Rustc version
-    value: ${{ steps.rust-toolchain.outputs.rustc }}
-
-  cargo:
-    description: Cargo version
-    value: ${{ steps.rust-toolchain.outputs.cargo }}
-
-  rustup:
-    description: Rustup version
-    value: ${{ steps.rust-toolchain.outputs.rustup }}
+  cache-key:
+    description: Rust toolchain cache key.
+    value: ${{ steps.rust-toolchain.outputs.cachekey }}
 
 runs:
   using: composite
@@ -59,9 +51,12 @@ runs:
 
     - name: Install rust toolchain
       id: rust-toolchain
-      uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # pin v1.0.6
+      uses: dtolnay/rust-toolchain@2e4fc08e24c79a982d0b6f4638011718d61c0eee
       with:
         toolchain: ${{ inputs.version }}
         components: ${{ inputs.components }}
-        target: ${{ inputs.target }}
-        override: true
+        targets: ${{ inputs.target }}
+
+    - name: Debug cache-key from toolchain install
+      run: echo ${{ steps.rust-toolchain.outputs.cachekey }}
+      shell: bash
