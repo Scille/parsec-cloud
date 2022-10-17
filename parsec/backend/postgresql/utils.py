@@ -2,8 +2,13 @@
 from __future__ import annotations
 
 import re
-from typing import Callable, Dict, List, Any, Optional, Tuple
+import triopg
+from typing import Awaitable, Callable, Dict, List, Any, Optional, Tuple, TypeVar
+from typing_extensions import ParamSpec, Concatenate
 from functools import wraps
+
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 class Q:
@@ -74,7 +79,7 @@ def _table_q_factory(
         table_alias: Optional[str] = None,
         select: str = "*",
         suffix: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         if table_alias:
             from_table = f"{table} as {table_alias}"
@@ -97,7 +102,7 @@ def _table_q_factory(
         suffix = suffix or ""
         return f"(SELECT {select} FROM {from_table} WHERE {condition} {suffix})"
 
-    def _q_internal_id(**kwargs) -> str:
+    def _q_internal_id(**kwargs: Any) -> str:
         return _q(select="_id", **kwargs)
 
     _q.__name__ = f"q_{table}"
@@ -223,12 +228,21 @@ COALESCE(
 """
 
 
-def query(in_transaction: bool = False):
+def query(
+    in_transaction: bool = False,
+) -> Callable[
+    [Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]],
+    Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]],
+]:
     if in_transaction:
 
-        def decorator(fn):
+        def decorator(
+            fn: Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]
+        ) -> Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]:
             @wraps(fn)
-            async def wrapper(conn, *args, **kwargs):
+            async def wrapper(
+                conn: triopg._triopg.TrioConnectionProxy, *args: P.args, **kwargs: P.kwargs
+            ) -> T:
                 async with conn.transaction():
                     return await fn(conn, *args, **kwargs)
 
@@ -236,7 +250,9 @@ def query(in_transaction: bool = False):
 
     else:
 
-        def decorator(fn):
+        def decorator(
+            fn: Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]
+        ) -> Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]:
             return fn
 
     return decorator

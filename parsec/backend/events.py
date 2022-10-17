@@ -30,9 +30,8 @@ from parsec.api.protocol import (
     InvitationStatus,
     InvitationToken,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.api.protocol.types import UserProfile
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent

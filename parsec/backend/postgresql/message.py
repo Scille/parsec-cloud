@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
+import triopg
 from typing import List, Tuple
 
+from parsec._parsec import DateTime
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
@@ -54,7 +55,7 @@ OFFSET $offset
 
 
 async def send_message(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     sender: DeviceID,
     recipient: UserID,

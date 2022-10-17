@@ -23,9 +23,8 @@ from parsec.api.protocol import (
     BlockReadRep,
     BlockCreateReq,
     BlockCreateRep,
-    api_typed_msg_adapter,
 )
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 
 
 class BlockError(Exception):

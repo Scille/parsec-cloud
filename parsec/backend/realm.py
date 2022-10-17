@@ -61,7 +61,6 @@ from parsec._parsec import (
     RealmFinishReencryptionMaintenanceRepMaintenanceError,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.backend.user import UserAlreadyRevokedError
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,
@@ -78,7 +77,7 @@ from parsec.api.protocol import (
     MaintenanceType,
     UserProfile,
 )
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 
 
 class RealmError(Exception):

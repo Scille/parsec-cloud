@@ -1,18 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
 import attr
+import importlib.resources
 import re
-from uuid import uuid4
+import trio
+import trio_typing
 import triopg
-from typing import List, Tuple, Optional, Iterable
-from triopg import UniqueViolationError, UndefinedTableError, PostgresError
+from base64 import b64decode, b64encode
+from datetime import datetime
 from functools import wraps
 from structlog import get_logger
-from base64 import b64decode, b64encode
-import importlib.resources
-from datetime import datetime
+from typing import Any, Awaitable, Callable, Coroutine, List, Tuple, Optional, Iterable
+from typing_extensions import ParamSpec
+from triopg import UniqueViolationError, UndefinedTableError, PostgresError
+from uuid import uuid4
 
 from parsec._parsec import DateTime
 from parsec.event_bus import EventBus
@@ -21,6 +23,7 @@ from parsec.utils import start_task, TaskStatus
 from parsec.backend.postgresql import migrations as migrations_module
 from parsec.backend.backend_events import BackendEvent, backend_event_serializer
 
+P = ParamSpec("P")
 
 logger = get_logger()
 
@@ -85,7 +88,7 @@ async def apply_migrations(
 
 
 async def _apply_migrations(
-    conn, migrations: Iterable[MigrationItem], dry_run: bool
+    conn: triopg._triopg.TrioConnectionProxy, migrations: Iterable[MigrationItem], dry_run: bool
 ) -> MigrationResult:
     error = None
     already_applied = []
@@ -107,7 +110,9 @@ async def _apply_migrations(
     return MigrationResult(already_applied=already_applied, new_apply=new_apply, error=error)
 
 
-async def _apply_migration(conn, migration: MigrationItem) -> None:
+async def _apply_migration(
+    conn: triopg._triopg.TrioConnectionProxy, migration: MigrationItem
+) -> None:
     async with conn.transaction():
         await conn.execute(migration.sql)
         if migration.idx >= CREATE_MIGRATION_TABLE_ID:
@@ -116,12 +121,12 @@ async def _apply_migration(conn, migration: MigrationItem) -> None:
             await conn.execute(sql, migration.idx, migration.name, datetime.now())
 
 
-async def _last_migration_row(conn):
+async def _last_migration_row(conn: triopg._triopg.TrioConnectionProxy) -> int:
     query = "SELECT _id FROM migration ORDER BY applied desc LIMIT 1"
     return await conn.fetchval(query)
 
 
-async def _is_initial_migration_applied(conn) -> bool:
+async def _is_initial_migration_applied(conn: triopg._triopg.TrioConnectionProxy) -> bool:
     query = "SELECT _id FROM organization LIMIT 1"
     try:
         await conn.fetchval(query)
@@ -131,7 +136,7 @@ async def _is_initial_migration_applied(conn) -> bool:
         return True
 
 
-async def _idx_limit(conn) -> int:
+async def _idx_limit(conn: triopg._triopg.TrioConnectionProxy) -> int:
     idx_limit = 0
     try:
         idx_limit = await _last_migration_row(conn)
@@ -143,9 +148,11 @@ async def _idx_limit(conn) -> int:
     return idx_limit
 
 
-def retry_on_unique_violation(fn):
+def retry_on_unique_violation(
+    fn: Callable[P, Awaitable[None]]
+) -> Callable[P, Coroutine[None, None, None]]:
     @wraps(fn)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> None:
         while True:
             try:
                 return await fn(*args, **kwargs)
@@ -155,7 +162,7 @@ def retry_on_unique_violation(fn):
     return wrapper
 
 
-async def handle_datetime(conn):
+async def handle_datetime(conn: triopg._triopg.TrioConnectionProxy) -> None:
     await conn.set_type_codec(
         "timestamptz",
         encoder=lambda x: (int(x.timestamp() * 1000000) - MICRO_SECONDS_BETWEEN_1970_AND_2000,),
@@ -174,20 +181,22 @@ class PGHandler:
         self.min_connections = min_connections
         self.max_connections = max_connections
         self.event_bus = event_bus
-        self.pool: triopg.TrioPoolProxy
-        self.notification_conn: triopg.TrioConnectionProxy
+        self.pool: triopg._triopg.TrioPoolProxy
+        self.notification_conn: triopg._triopg.TrioConnectionProxy
         self._task_status: Optional[TaskStatus] = None
         self._connection_lost = False
 
     async def init(self, nursery: trio.Nursery) -> None:
         self._task_status = await start_task(nursery, self._run_connections)
 
-    async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED) -> None:
+    async def _run_connections(
+        self, task_status: trio_typing.TaskStatus[None] = trio.TASK_STATUS_IGNORED
+    ) -> None:
 
         # By default AsyncPG only work with Python standard `datetime.DateTime`
         # for timestamp types, here we override this behavior to uses our own custom
         # DateTime type
-        async def _init_connection(conn):
+        async def _init_connection(conn: triopg._triopg.TrioConnectionProxy) -> None:
             await handle_datetime(conn)
 
         async with triopg.create_pool(
@@ -217,12 +226,14 @@ class PGHandler:
     # Hence all client connections should be closed in order not to mislead
     # them into thinking no notifications has occurred.
     # And the simplest way to do that is to raise a big exception in _run_connections ;-)
-    def _on_notification_conn_termination(self, conn) -> None:
+    def _on_notification_conn_termination(self, conn: triopg._triopg.TrioConnectionProxy) -> None:
         self._connection_lost = True
         if self._task_status:
             self._task_status.cancel()
 
-    def _on_notification(self, conn, pid: int, channel: str, payload: str) -> None:
+    def _on_notification(
+        self, conn: triopg._triopg.TrioConnectionProxy, pid: int, channel: str, payload: str
+    ) -> None:
         try:
             data = backend_event_serializer.loads(b64decode(payload.encode("ascii")))
         except (SerdeValidationError, SerdePackingError, ValueError) as exc:
@@ -241,7 +252,9 @@ class PGHandler:
             await self._task_status.cancel_and_join()
 
 
-async def send_signal(conn, signal: BackendEvent, **kwargs) -> None:
+async def send_signal(
+    conn: triopg._triopg.TrioConnectionProxy, signal: BackendEvent, **kwargs: Any
+) -> None:
     # PostgreSQL's NOTIFY only accept string as payload, hence we must
     # use base64 on our payload...
 

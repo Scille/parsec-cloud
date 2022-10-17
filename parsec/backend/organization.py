@@ -18,7 +18,6 @@ from parsec._parsec import (
     OrganizationConfigRepNotFound,
     UsersPerProfileDetailItem,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
@@ -40,6 +39,7 @@ from parsec.backend.utils import (
     api,
     Unset,
     UnsetType,
+    api_typed_msg_adapter,
 )
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent

@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
 from typing import Optional
 
 from parsec._parsec import DateTime
-
 from parsec.api.protocol import OrganizationID, UserID, DeviceID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyRevokedError
@@ -40,7 +40,7 @@ _q_revoke_user_error = Q(
 
 @query(in_transaction=True)
 async def query_revoke_user(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     user_id: UserID,
     revoked_user_certificate: bytes,

@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
-from typing import List, Optional
+import triopg
+from typing import Any, List, Optional
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -118,13 +119,13 @@ WHERE
 
 
 async def _do_delete_invitation(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     greeter: UserID,
     token: InvitationToken,
     on: DateTime,
     reason: InvitationDeletedReason,
-):
+) -> None:
     row = await conn.fetchrow(
         *_q_delete_invitation_info(
             organization_id=organization_id.str, greeter=greeter.str, token=token.uuid
@@ -248,7 +249,7 @@ WHERE
 
 
 async def _conduit_talk(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     greeter: Optional[UserID],
     token: InvitationToken,
@@ -338,7 +339,9 @@ async def _conduit_talk(
     )
 
 
-async def _conduit_listen(conn, ctx: ConduitListenCtx) -> Optional[bytes]:
+async def _conduit_listen(
+    conn: triopg._triopg.TrioConnectionProxy, ctx: ConduitListenCtx
+) -> Optional[bytes]:
     async with conn.transaction():
         if ctx.is_greeter:
             row = await conn.fetchrow(
@@ -418,7 +421,7 @@ async def _conduit_listen(conn, ctx: ConduitListenCtx) -> Optional[bytes]:
 
 
 async def _do_new_user_invitation(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     greeter_user_id: UserID,
     claimer_email: Optional[str],
@@ -469,7 +472,7 @@ async def _do_new_user_invitation(
 
 
 class PGInviteComponent(BaseInviteComponent):
-    def __init__(self, dbh: PGHandler, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.dbh = dbh
 

@@ -57,7 +57,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID
-    ) -> Dict[RealmID, RealmRole]:
+    ) -> dict[RealmID, RealmRole]:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_realms_for_user(conn, organization_id, user)
 

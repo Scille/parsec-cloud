@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
+
 from parsec.api.protocol import RealmRole, OrganizationID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmGrantedRole, RealmAlreadyExistsError
@@ -66,7 +68,9 @@ SELECT
 
 @query(in_transaction=True)
 async def query_create(
-    conn, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    self_granted_role: RealmGrantedRole,
 ) -> None:
     assert self_granted_role.granted_by is not None
     assert self_granted_role.granted_by.user_id == self_granted_role.user_id

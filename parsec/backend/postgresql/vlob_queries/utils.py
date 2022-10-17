@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
 from typing import Optional, Tuple
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, RealmID, DeviceID, VlobID
 from parsec.backend.utils import OperationKind
 from parsec.backend.postgresql.utils import (
@@ -26,7 +27,7 @@ from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status
 
 
 async def _check_realm(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_id: RealmID,
     encryption_revision: Optional[int],
@@ -93,7 +94,7 @@ WHERE user_._id = { q_user_internal_id(organization_id="$organization_id", user_
 
 
 async def _check_realm_access(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_id: RealmID,
     author: DeviceID,
@@ -117,7 +118,7 @@ async def _check_realm_access(
 
 
 async def _check_realm_and_read_access(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -131,7 +132,7 @@ async def _check_realm_and_read_access(
 
 
 async def _check_realm_and_write_access(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -173,7 +174,7 @@ LIMIT 1
 
 
 async def _get_realm_id_from_vlob_id(
-    conn, organization_id: OrganizationID, vlob_id: VlobID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, vlob_id: VlobID
 ) -> RealmID:
     realm_id_uuid = await conn.fetchval(
         *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
@@ -184,7 +185,10 @@ async def _get_realm_id_from_vlob_id(
 
 
 async def _get_last_role_granted_on(
-    conn, organization_id: OrganizationID, realm_id: RealmID, author: DeviceID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    author: DeviceID,
 ) -> Optional[DateTime]:
     rep = await conn.fetchrow(
         *_q_check_realm_access(

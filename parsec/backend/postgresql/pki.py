@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import hashlib
-from typing import List
+from typing import Any, List
 from uuid import UUID
 from asyncpg import UniqueViolationError
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserID, UserProfile
@@ -217,7 +217,7 @@ _q_retrieve_active_human_by_email_for_update = Q(
 )
 
 
-def _build_enrollment_info(entry) -> PkiEnrollmentInfo:
+def _build_enrollment_info(entry: dict[str, Any]) -> PkiEnrollmentInfo:
     if entry["enrollment_state"] == PkiEnrollmentStatus.SUBMITTED.value:
         return PkiEnrollmentInfoSubmitted(
             enrollment_id=entry["enrollment_id"], submitted_on=entry["submitted_on"]

@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
+import triopg
 from typing import Dict, Tuple, Optional
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, VlobID, RealmID
 from parsec.backend.vlob import VlobVersionError, VlobNotFoundError
 from parsec.backend.postgresql.utils import (
@@ -91,7 +92,7 @@ WHERE
 
 @query(in_transaction=True)
 async def query_read(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     encryption_revision: int,
@@ -185,7 +186,11 @@ ORDER BY version DESC
 
 @query(in_transaction=True)
 async def query_poll_changes(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
+    checkpoint: int,
 ) -> Tuple[int, Dict[VlobID, int]]:
     await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
@@ -204,7 +209,10 @@ async def query_poll_changes(
 
 @query(in_transaction=True)
 async def query_list_versions(
-    conn, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    vlob_id: VlobID,
 ) -> Dict[int, Tuple[DateTime, DeviceID]]:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)

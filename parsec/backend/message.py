@@ -11,8 +11,7 @@ from parsec._parsec import (
     Message,
 )
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
-from parsec.api.protocol.base import api_typed_msg_adapter
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 
 
 class MessageError(Exception):
