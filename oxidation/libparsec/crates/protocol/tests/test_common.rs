@@ -46,3 +46,27 @@ fn serde_block_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_
 
     assert_eq!(data, expected);
 }
+
+#[rstest]
+#[case::invalid_type_deserialization(
+    // Generated from msgpack
+    // Content:
+    //  status': 'ok'
+    //  type: 'USER'
+    //  claimer_email: 'a@a.com'
+    //  greeter_user_id: 'aa'
+    //  greeter_human_handle: 42 // Invalid field
+    //
+    &hex!(
+        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696ca761"
+        "40612e636f6daf677265657465725f757365725f6964a26161b4677265657465725f68756d"
+        "616e5f68616e646c652a"
+    )[..],
+    "invalid type: integer `42`, expected a tuple of size 2",
+)]
+fn serde_invalid_type_deserialization(#[case] raw: &[u8], #[case] expected: &str) {
+    let err = invited_cmds::invite_info::Rep::load(raw)
+        .unwrap_err()
+        .to_string();
+    assert_eq!(err, expected)
+}
