@@ -7,6 +7,9 @@ import tempfile
 import zipfile
 import pathlib
 
+# The default rust build profile to use when compiling the rust extension.
+DEFAULT_CARGO_PROFILE = "release"
+
 
 def display(line: str):
     YELLOW_FG = "\x1b[33m"
@@ -27,14 +30,6 @@ def run(cmd, **kwargs):
     return ret
 
 
-def in_cibuildwheel():
-    return bool(int(os.environ.get("CIBUILDWHEEL", "0")))
-
-
-def force_maturin_release() -> bool:
-    return os.environ.get("FORCE_MATURIN_RELEASE", "0") == "1"
-
-
 def build():
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
@@ -49,9 +44,11 @@ def build():
     # So we must ask maturin to build a wheel of the project, only to extract the
     # native module and discard the rest !
 
-    release = "--release" if in_cibuildwheel() or force_maturin_release() else ""
+    maturin_build_profile = "--profile=" + os.environ.get("CARGO_PROFILE", DEFAULT_CARGO_PROFILE)
     with tempfile.TemporaryDirectory() as distdir:
-        run(f"maturin build {release} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}")
+        run(
+            f"maturin build {maturin_build_profile} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
+        )
 
         outputs = list(pathlib.Path(distdir).iterdir())
         if len(outputs) != 1:
