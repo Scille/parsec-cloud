@@ -4,7 +4,7 @@ from __future__ import annotations
 import trio
 from enum import Enum
 from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
-from typing import Any, Awaitable, Optional, List, AsyncGenerator, Callable, TypeVar
+from typing import Any, AsyncIterator, Awaitable, Optional, List, AsyncGenerator, Callable, TypeVar
 from structlog import get_logger
 from functools import partial
 
@@ -113,7 +113,7 @@ class BackendAuthenticatedCmds:
     def __init__(
         self,
         addr: BackendOrganizationAddr,
-        acquire_transport: Callable[..., _AsyncGeneratorContextManager[T]],
+        acquire_transport: Callable[..., _AsyncGeneratorContextManager[Transport]],
     ):
         self.addr = addr
         self.acquire_transport = acquire_transport
@@ -502,7 +502,7 @@ class BackendAuthenticatedConn:
         force_fresh: bool = False,
         ignore_status: bool = False,
         allow_not_available: bool = False,
-    ) -> AsyncGenerator[Transport, Transport]:
+    ) -> AsyncIterator[Transport]:
         if not ignore_status:
             if self.status_exc:
                 # Re-raising an already raised exception is bad practice
@@ -547,12 +547,12 @@ async def backend_authenticated_cmds_factory(
         BackendConnectionError
     """
     transport_lock = trio.Lock()
-    transport = None
+    transport: Optional[Transport] = None
     closed = False
 
-    async def _init_transport() -> None:
+    async def _init_transport() -> Transport:
         nonlocal transport
-        if not transport:
+        if transport is None:
             if closed:
                 raise trio.ClosedResourceError
             transport = await connect_as_authenticated(
@@ -560,18 +560,18 @@ async def backend_authenticated_cmds_factory(
             )
             transport.logger = transport.logger.bind(device_id=device_id)
 
+        return transport
+
     async def _destroy_transport() -> None:
         nonlocal transport
-        if transport:
+        if transport is not None:
             await transport.aclose()
             transport = None
 
     @asynccontextmanager
-    async def _acquire_transport(**kwargs: Any) -> AsyncGenerator[Optional[Transport], None]:  # type: ignore[misc]
-        nonlocal transport
-
+    async def _acquire_transport(**kwargs: object) -> AsyncIterator[Transport]:
         async with transport_lock:
-            await _init_transport()
+            transport = await _init_transport()
             try:
                 yield transport
             except BackendNotAvailable:
