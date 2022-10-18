@@ -24,46 +24,6 @@ from parsec._parsec import (
     OrganizationConfigRepOk,
     OrganizationConfigRepUnknownStatus,
 )
-from parsec.core.types.commands import (
-    EventsListenCallbackType,
-    EventsSubscribeCallbackType,
-    AuthenticatedPingCallbackType,
-    InviteDeleteCallbackType,
-    MessageGetCallbackType,
-    UserGetCallbackType,
-    UserCreateCallbackType,
-    UserRevokeCallbackType,
-    DeviceCreateCallbackType,
-    PkiEnrollmentListCallbackType,
-    PkiEnrollmentRejectCallbackType,
-    PkiEnrollmentAcceptCallbackType,
-    HumanFindCallbackType,
-    InviteNewCallbackType,
-    InviteListCallbackType,
-    Invite1GreeterWaitPeerCallbackType,
-    Invite2aGreeterGetHashedNonceCallbackType,
-    Invite2bGreeterSendNonceCallbackType,
-    Invite3aGreeterWaitPeerTrustCallbackType,
-    Invite3bGreeterSignifyTrustCallbackType,
-    Invite4GreeterCommunicateCallbackType,
-    BlockCreateCallbackType,
-    BlockReadCallbackType,
-    VlobCreateCallbackType,
-    VlobReadCallbackType,
-    VlobUpdateCallbackCallbackType,
-    VlobPollChangesCallbackType,
-    VlobListVersionsCallbackType,
-    VlobMaintenanceGetReenscryptionBatchCallbackType,
-    VlobMaintenanceSaveReencryptionBatchCallbackType,
-    RealmCreateCallbackType,
-    RealmStatusCallbackType,
-    RealmGetRoleCertificatesCallbackType,
-    RealmUpdateRolesCallbackType,
-    RealmStartReencryptionMaintenanceCallbackType,
-    RealmFinishReencryptionMaintenanceCallbackType,
-    OrganizationStatsCallbackType,
-    OrganizationConfigCallbackType,
-)
 from parsec.api.transport import Transport
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
@@ -118,82 +78,56 @@ class BackendAuthenticatedCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    events_subscribe: EventsSubscribeCallbackType = expose_cmds_with_retrier(cmds.events_subscribe)
-    events_listen: EventsListenCallbackType = expose_cmds_with_retrier(cmds.events_listen)
-    ping: AuthenticatedPingCallbackType = expose_cmds_with_retrier(cmds.authenticated_ping)
-    message_get: MessageGetCallbackType = expose_cmds_with_retrier(cmds.message_get)
-    user_get: UserGetCallbackType = expose_cmds_with_retrier(cmds.user_get)
-    user_create: UserCreateCallbackType = expose_cmds_with_retrier(cmds.user_create)
-    user_revoke: UserRevokeCallbackType = expose_cmds_with_retrier(cmds.user_revoke)
-    device_create: DeviceCreateCallbackType = expose_cmds_with_retrier(cmds.device_create)
-    human_find: HumanFindCallbackType = expose_cmds_with_retrier(cmds.human_find)
-    invite_new: InviteNewCallbackType = expose_cmds_with_retrier(cmds.invite_new)
-    invite_delete: InviteDeleteCallbackType = expose_cmds_with_retrier(cmds.invite_delete)
-    invite_list: InviteListCallbackType = expose_cmds_with_retrier(cmds.invite_list)
-    invite_1_greeter_wait_peer: Invite1GreeterWaitPeerCallbackType = expose_cmds_with_retrier(
-        cmds.invite_1_greeter_wait_peer
+    events_subscribe = expose_cmds_with_retrier(cmds.events_subscribe)
+    events_listen = expose_cmds_with_retrier(cmds.events_listen)
+    ping = expose_cmds_with_retrier(cmds.authenticated_ping)
+    message_get = expose_cmds_with_retrier(cmds.message_get)
+    user_get = expose_cmds_with_retrier(cmds.user_get)
+    user_create = expose_cmds_with_retrier(cmds.user_create)
+    user_revoke = expose_cmds_with_retrier(cmds.user_revoke)
+    device_create = expose_cmds_with_retrier(cmds.device_create)
+    human_find = expose_cmds_with_retrier(cmds.human_find)
+    invite_new = expose_cmds_with_retrier(cmds.invite_new)
+    invite_delete = expose_cmds_with_retrier(cmds.invite_delete)
+    invite_list = expose_cmds_with_retrier(cmds.invite_list)
+    invite_1_greeter_wait_peer = expose_cmds_with_retrier(cmds.invite_1_greeter_wait_peer)
+    invite_2a_greeter_get_hashed_nonce = expose_cmds_with_retrier(
+        cmds.invite_2a_greeter_get_hashed_nonce
     )
-    invite_2a_greeter_get_hashed_nonce: Invite2aGreeterGetHashedNonceCallbackType = (
-        expose_cmds_with_retrier(cmds.invite_2a_greeter_get_hashed_nonce)
+    invite_2b_greeter_send_nonce = expose_cmds_with_retrier(cmds.invite_2b_greeter_send_nonce)
+    invite_3a_greeter_wait_peer_trust = expose_cmds_with_retrier(
+        cmds.invite_3a_greeter_wait_peer_trust
     )
-    invite_2b_greeter_send_nonce: Invite2bGreeterSendNonceCallbackType = expose_cmds_with_retrier(
-        cmds.invite_2b_greeter_send_nonce
+    invite_3b_greeter_signify_trust = expose_cmds_with_retrier(cmds.invite_3b_greeter_signify_trust)
+    invite_4_greeter_communicate = expose_cmds_with_retrier(cmds.invite_4_greeter_communicate)
+    block_create = expose_cmds_with_retrier(cmds.block_create)
+    block_read = expose_cmds_with_retrier(cmds.block_read)
+    vlob_poll_changes = expose_cmds_with_retrier(cmds.vlob_poll_changes)
+    vlob_create = expose_cmds_with_retrier(cmds.vlob_create)
+    vlob_read = expose_cmds_with_retrier(cmds.vlob_read)
+    vlob_update = expose_cmds_with_retrier(cmds.vlob_update)
+    vlob_list_versions = expose_cmds_with_retrier(cmds.vlob_list_versions)
+    vlob_maintenance_get_reencryption_batch = expose_cmds_with_retrier(
+        cmds.vlob_maintenance_get_reencryption_batch
     )
-    invite_3a_greeter_wait_peer_trust: Invite3aGreeterWaitPeerTrustCallbackType = (
-        expose_cmds_with_retrier(cmds.invite_3a_greeter_wait_peer_trust)
+    vlob_maintenance_save_reencryption_batch = expose_cmds_with_retrier(
+        cmds.vlob_maintenance_save_reencryption_batch
     )
-    invite_3b_greeter_signify_trust: Invite3bGreeterSignifyTrustCallbackType = (
-        expose_cmds_with_retrier(cmds.invite_3b_greeter_signify_trust)
+    realm_create = expose_cmds_with_retrier(cmds.realm_create)
+    realm_status = expose_cmds_with_retrier(cmds.realm_status)
+    realm_get_role_certificates = expose_cmds_with_retrier(cmds.realm_get_role_certificates)
+    realm_update_roles = expose_cmds_with_retrier(cmds.realm_update_roles)
+    realm_start_reencryption_maintenance = expose_cmds_with_retrier(
+        cmds.realm_start_reencryption_maintenance
     )
-    invite_4_greeter_communicate: Invite4GreeterCommunicateCallbackType = expose_cmds_with_retrier(
-        cmds.invite_4_greeter_communicate
+    realm_finish_reencryption_maintenance = expose_cmds_with_retrier(
+        cmds.realm_finish_reencryption_maintenance
     )
-    block_create: BlockCreateCallbackType = expose_cmds_with_retrier(cmds.block_create)
-    block_read: BlockReadCallbackType = expose_cmds_with_retrier(cmds.block_read)
-    vlob_poll_changes: VlobPollChangesCallbackType = expose_cmds_with_retrier(
-        cmds.vlob_poll_changes
-    )
-    vlob_create: VlobCreateCallbackType = expose_cmds_with_retrier(cmds.vlob_create)
-    vlob_read: VlobReadCallbackType = expose_cmds_with_retrier(cmds.vlob_read)
-    vlob_update: VlobUpdateCallbackCallbackType = expose_cmds_with_retrier(cmds.vlob_update)
-    vlob_list_versions: VlobListVersionsCallbackType = expose_cmds_with_retrier(
-        cmds.vlob_list_versions
-    )
-    vlob_maintenance_get_reencryption_batch: VlobMaintenanceGetReenscryptionBatchCallbackType = (
-        expose_cmds_with_retrier(cmds.vlob_maintenance_get_reencryption_batch)
-    )
-    vlob_maintenance_save_reencryption_batch: VlobMaintenanceSaveReencryptionBatchCallbackType = (
-        expose_cmds_with_retrier(cmds.vlob_maintenance_save_reencryption_batch)
-    )
-    realm_create: RealmCreateCallbackType = expose_cmds_with_retrier(cmds.realm_create)
-    realm_status: RealmStatusCallbackType = expose_cmds_with_retrier(cmds.realm_status)
-    realm_get_role_certificates: RealmGetRoleCertificatesCallbackType = expose_cmds_with_retrier(
-        cmds.realm_get_role_certificates
-    )
-    realm_update_roles: RealmUpdateRolesCallbackType = expose_cmds_with_retrier(
-        cmds.realm_update_roles
-    )
-    realm_start_reencryption_maintenance: RealmStartReencryptionMaintenanceCallbackType = (
-        expose_cmds_with_retrier(cmds.realm_start_reencryption_maintenance)
-    )
-    realm_finish_reencryption_maintenance: RealmFinishReencryptionMaintenanceCallbackType = (
-        expose_cmds_with_retrier(cmds.realm_finish_reencryption_maintenance)
-    )
-    organization_stats: OrganizationStatsCallbackType = expose_cmds_with_retrier(
-        cmds.organization_stats
-    )
-    organization_config: OrganizationConfigCallbackType = expose_cmds_with_retrier(
-        cmds.organization_config
-    )
-    pki_enrollment_list: PkiEnrollmentListCallbackType = expose_cmds_with_retrier(
-        cmds.pki_enrollment_list
-    )
-    pki_enrollment_reject: PkiEnrollmentRejectCallbackType = expose_cmds_with_retrier(
-        cmds.pki_enrollment_reject
-    )
-    pki_enrollment_accept: PkiEnrollmentAcceptCallbackType = expose_cmds_with_retrier(
-        cmds.pki_enrollment_accept
-    )
+    organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
+    organization_config = expose_cmds_with_retrier(cmds.organization_config)
+    pki_enrollment_list = expose_cmds_with_retrier(cmds.pki_enrollment_list)
+    pki_enrollment_reject = expose_cmds_with_retrier(cmds.pki_enrollment_reject)
+    pki_enrollment_accept = expose_cmds_with_retrier(cmds.pki_enrollment_accept)
 
 
 for cmd in AUTHENTICATED_CMDS:

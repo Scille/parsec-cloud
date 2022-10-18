@@ -66,6 +66,7 @@ from parsec._parsec import (
     VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
 )
+from parsec._parsec_pyi.protocol import VlobCreateRep, VlobUpdateRep
 from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
@@ -769,6 +770,7 @@ class UserFS:
         try:
             # Note encryption_revision is always 1 given we never re-encrypt
             # the user manifest's realm
+            rep: VlobCreateRep | VlobUpdateRep
             if to_sync_um.version == 1:
                 rep = await self.backend_cmds.vlob_create(
                     realm_id=RealmID(self.user_manifest_id.uuid),

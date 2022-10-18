@@ -38,21 +38,6 @@ from parsec.core.types.organizations import (
     UsersPerProfileDetailItem,
     OrganizationConfig,
 )
-from parsec.core.types.commands import (
-    AuthenticatedPingCallbackType,
-    DeviceCreateCallbackType,
-    EventsListenCallbackType,
-    EventsSubscribeCallbackType,
-    MessageGetCallbackType,
-    OrganizationBootstrapCallbackType,
-    PkiEnrollmentAcceptCallbackType,
-    PkiEnrollmentListCallbackType,
-    PkiEnrollmentRejectCallbackType,
-    UserCreateCallbackType,
-    UserGetCallbackType,
-    UserRevokeCallbackType,
-)
-
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
 
@@ -107,17 +92,4 @@ __all__ = (
     "OrganizationStats",
     "UsersPerProfileDetailItem",
     "OrganizationConfig",
-    # commands
-    "AuthenticatedPingCallbackType",
-    "DeviceCreateCallbackType",
-    "EventsListenCallbackType",
-    "EventsSubscribeCallbackType",
-    "MessageGetCallbackType",
-    "OrganizationBootstrapCallbackType",
-    "PkiEnrollmentAcceptCallbackType",
-    "PkiEnrollmentListCallbackType",
-    "PkiEnrollmentRejectCallbackType",
-    "UserCreateCallbackType",
-    "UserGetCallbackType",
-    "UserRevokeCallbackType",
 )

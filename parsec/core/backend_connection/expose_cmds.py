@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Any, TypeVar, Callable, Awaitable, cast
+from typing import TypeVar, Callable, Awaitable
 from typing_extensions import Concatenate, ParamSpec
 
 from parsec.api.transport import Transport
@@ -11,22 +11,26 @@ from parsec.core.backend_connection.exceptions import BackendNotAvailable
 
 
 P = ParamSpec("P")
-R = TypeVar("R", bound=Awaitable[Any])
+R = TypeVar("R")
 
 
-def expose_cmds(cmd: Callable[Concatenate[Transport, P], Awaitable[R]]) -> Callable[P, R]:
+def expose_cmds(
+    cmd: Callable[Concatenate[Transport, P], Awaitable[R]]
+) -> Callable[Concatenate[BackendAuthenticatedCmds, P], Awaitable[R]]:
     @wraps(cmd)
-    async def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> R:  # type: ignore[no-untyped-def, misc]
+    async def wrapper(self: BackendAuthenticatedCmds, *args: P.args, **kwargs: P.kwargs) -> R:
         async with self.acquire_transport() as transport:
             return await cmd(transport, *args, **kwargs)
 
     # because of wraps mypy does not infer a proper type
-    return cast(Callable[P, R], wrapper)
+    return wrapper
 
 
-def expose_cmds_with_retrier(cmd: Callable[Concatenate[Transport, P], R]) -> Callable[P, R]:
+def expose_cmds_with_retrier(
+    cmd: Callable[Concatenate[Transport, P], Awaitable[R]]
+) -> Callable[Concatenate[BackendAuthenticatedCmds, P], Awaitable[R]]:
     @wraps(cmd)
-    async def wrapper(self: BackendAuthenticatedCmds, *args: P.args, **kwargs: P.kwargs) -> R:  # type: ignore[misc]
+    async def wrapper(self: BackendAuthenticatedCmds, *args: P.args, **kwargs: P.kwargs) -> R:
         # Reusing the transports expose us to `BackendNotAvailable` exceptions
         # due to inactivity timeout while the transport was in the pool.
         try:
@@ -38,4 +42,4 @@ def expose_cmds_with_retrier(cmd: Callable[Concatenate[Transport, P], R]) -> Cal
                 return await cmd(transport, *args, **kwargs)
 
     # because of wraps mypy does not infer a proper type
-    return cast(Callable[P, R], wrapper)
+    return wrapper
