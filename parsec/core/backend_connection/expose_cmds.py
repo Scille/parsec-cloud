@@ -6,6 +6,7 @@ from typing import Any, TypeVar, Callable, Awaitable, cast
 from typing_extensions import Concatenate, ParamSpec
 
 from parsec.api.transport import Transport
+from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 
 
@@ -25,7 +26,7 @@ def expose_cmds(cmd: Callable[Concatenate[Transport, P], Awaitable[R]]) -> Calla
 
 def expose_cmds_with_retrier(cmd: Callable[Concatenate[Transport, P], R]) -> Callable[P, R]:
     @wraps(cmd)
-    async def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> R:  # type: ignore[no-untyped-def, misc]
+    async def wrapper(self: BackendAuthenticatedCmds, *args: P.args, **kwargs: P.kwargs) -> R:  # type: ignore[misc]
         # Reusing the transports expose us to `BackendNotAvailable` exceptions
         # due to inactivity timeout while the transport was in the pool.
         try:
