@@ -24,7 +24,7 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
     ServerStatsItem,
-    ServerStatsRep,
+    ServerStats,
     UsersPerProfileDetailItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
@@ -370,7 +370,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def server_stats(
         self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
-    ) -> ServerStatsRep:
+    ) -> ServerStats:
         from_date = from_date or DateTime(1900, 1, 1, 0, 0, 0)
         to_date = to_date or DateTime.now()
         results: List[ServerStatsItem] = []
@@ -400,7 +400,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 )
             )
 
-        return ServerStatsRep(stats=results)
+        return ServerStats(stats=results)
 
     async def update(
         self,

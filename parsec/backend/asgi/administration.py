@@ -21,7 +21,7 @@ from parsec.api.rest import (
 from parsec.backend.organization import (
     OrganizationAlreadyExistsError,
     OrganizationNotFoundError,
-    ServerStatsRep,
+    ServerStats,
     generate_bootstrap_token,
 )
 
@@ -32,7 +32,8 @@ if TYPE_CHECKING:
 administration_bp = Blueprint("administration_api", __name__)
 
 
-def _convert_server_stats_results_as_csv(results: ServerStatsRep) -> str:
+def _convert_server_stats_results_as_csv(results: ServerStats) -> str:
+    # Use `newline=""` to let the CSV writer handles the newlines
     with StringIO(newline="") as memory_file:
         writer = csv.writer(memory_file)
         # Header
@@ -60,7 +61,6 @@ def _convert_server_stats_results_as_csv(results: ServerStatsRep) -> str:
                 row.realms_count,
                 row.users_count,
             ]
-            print(row.users_per_profile_detail)
             csv_row.extend([row.users_per_profile_detail[i].active for i in range(3)])
             csv_row.extend([row.users_per_profile_detail[i].revoked for i in range(3)])
             writer.writerow(csv_row)
@@ -202,7 +202,7 @@ async def administration_server_stats():
         return await json_abort(
             {
                 "error": "bad_data",
-                "reason": f"Missing/invalid mandatory query argument 'format' expected one of ['csv', 'json']",
+                "reason": f"Missing/invalid mandatory query argument `format` (expected `csv` or `json`)",
             },
             400,
         )

@@ -41,7 +41,7 @@ class Realm:
     checkpoint: int = attr.ib(default=0)
     granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
     last_role_change_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
-    created_on: DateTime = attr.ib(default=DateTime.now())
+    created_on: DateTime = attr.ib(factory=DateTime.now)
 
     @property
     def roles(self) -> Dict[UserID, RealmRole]:

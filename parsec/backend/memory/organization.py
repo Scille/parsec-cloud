@@ -20,7 +20,7 @@ from parsec.backend.organization import (
     OrganizationStats,
     SequesterAuthority,
     ServerStatsItem,
-    ServerStatsRep,
+    ServerStats,
     UsersPerProfileDetailItem,
 )
 from parsec.backend.utils import Unset, UnsetType
@@ -188,7 +188,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
     async def server_stats(
         self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
-    ) -> ServerStatsRep:
+    ) -> ServerStats:
         from_date = from_date or DateTime(1900, 1, 1, 0, 0, 0)
         to_date = to_date or DateTime.now()
         result: List[ServerStatsItem] = []
@@ -206,7 +206,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 )
             )
 
-        return ServerStatsRep(stats=result)
+        return ServerStats(stats=result)
 
     async def update(
         self,

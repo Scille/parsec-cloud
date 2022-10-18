@@ -123,7 +123,7 @@ class ServerStatsItem:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class ServerStatsRep:
+class ServerStats:
     stats: List[ServerStatsItem]
 
 
@@ -444,7 +444,7 @@ class BaseOrganizationComponent:
 
     async def server_stats(
         self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
-    ) -> ServerStatsRep:
+    ) -> ServerStats:
         raise NotImplementedError()
 
     async def update(
