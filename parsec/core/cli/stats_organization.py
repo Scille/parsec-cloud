@@ -83,7 +83,7 @@ def stats_organization(
     "--to",
     type=ParsecDateTimeClickType(),
 )
-@click.option("--output", type=click.File("w"))
+@click.option("--output", type=click.File("w"), default="-")
 @click.option(
     "--format",
     default="json",
