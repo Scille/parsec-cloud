@@ -8,7 +8,7 @@ import urllib.parse
 from parsec.utils import DateTime, trio_run
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import organization_stats_rep_serializer
-from parsec.cli_utils import cli_exception_handler
+from parsec.cli_utils import cli_exception_handler, ParsecDateTimeClickType
 from parsec.core.types import BackendAddr
 from parsec.core.backend_connection.transport import http_request
 from parsec.core.cli.utils import cli_command_base_options
@@ -35,7 +35,6 @@ async def _stats_server(
     administration_token: str,
     from_date: Optional[DateTime],
     to_date: Optional[DateTime],
-    output: Optional[str],
     format: str,
 ) -> None:
     query_args = {"format": format}
@@ -49,23 +48,7 @@ async def _stats_server(
     rep = await http_request(
         url=url, method="GET", headers={"authorization": f"Bearer {administration_token}"}
     )
-    result_str = rep.decode()
-
-    if output is not None:
-        with open(output, "w") as f:
-            f.write(result_str)
-    else:
-        print(result_str)
-
-
-def _validate_date(ctx, param, value):
-    if value is None:
-        return
-
-    try:
-        return DateTime.from_rfc3339(value)
-    except ValueError as e:
-        raise click.BadParameter(f"invalid value '{e}'")
+    return rep.decode()
 
 
 @click.command(short_help="get data&user statistics on organization")
@@ -84,39 +67,41 @@ def stats_organization(
         trio_run(_stats_organization, organization_id, addr, administration_token)
 
 
-@click.command(short_help="Get a per-organization report of server usage within a period of time")
+@click.command(short_help="Get a per-organization report of server usage")
 @click.option("--addr", "-B", required=True, type=BackendAddr.from_url, envvar="PARSEC_ADDR")
 @click.option(
-    "--admin-token",
+    "--administration-token",
     "-T",
     required=True,
     envvar="PARSEC_ADMINISTRATION_TOKEN",
-    help="Passing the admin token as an argument represents a security risk, prefer using the environment variable for that.",
 )
 @click.option(
-    "--date-from",
-    type=click.UNPROCESSED,
-    callback=_validate_date,
-    help="A RFC 3339 compliant timestamp eg. (2020-12-09 16:09:53+00:00).",
+    "--from",
+    type=ParsecDateTimeClickType(),
 )
 @click.option(
-    "--date-to",
-    type=click.UNPROCESSED,
-    callback=_validate_date,
-    help="A RFC 3339 compliant timestamp eg. (2020-12-09 16:09:53+00:00)",
+    "--to",
+    type=ParsecDateTimeClickType(),
 )
-@click.option("--output", type=str)
-@click.option("--format", default="json", type=click.Choice(["json", "csv"]))
+@click.option("--output", type=click.File("w"))
+@click.option(
+    "--format",
+    default="json",
+    type=click.Choice(["json", "csv"]),
+    show_default=True,
+)
 @cli_command_base_options
 def stats_server(
     addr: BackendAddr,
-    admin_token: str,
-    date_from: Optional[DateTime],
-    date_to: Optional[DateTime],
-    output: str,
+    administration_token: str,
+    output: click.File,
     format: str,
     debug: bool,
     **kwargs,
 ) -> None:
+    # from/to cannot be passed as regular function param given they are Python keywords
+    from_: Optional[DateTime] = kwargs["from"]
+    to_: Optional[DateTime] = kwargs["to"]
     with cli_exception_handler(debug):
-        trio_run(_stats_server, addr, admin_token, date_from, date_to, output, format)
+        data = trio_run(_stats_server, addr, administration_token, from_, to_, format)
+        output.write(data)

@@ -4,10 +4,13 @@ from __future__ import annotations
 import sys
 import trio
 import click
+import datetime
 import traceback
+from typing import Any, Optional
 from functools import partial, wraps
 from contextlib import contextmanager, asynccontextmanager
 
+from parsec._parsec import DateTime
 from parsec.logging import configure_logging, configure_sentry_logging
 
 
@@ -221,3 +224,41 @@ def debug_config_options(fn):
         envvar="DEBUG",
     )
     return decorator(fn)
+
+
+class ParsecDateTimeClickType(click.DateTime):
+    """
+    Add support for RFC3339 date time to `click.DateTime`.
+
+    While using local time for a CLI seems a good idea (this is the behavior
+    of `click.DateTime`), it's good to provide a way to pass datetime in a very
+    unambiguous way (i.e. something that can survive being copy/pasted between
+    computer with different clock configuration)
+
+    Notes:
+    - we don't support the full range of timezone but only `Z`, this makes things
+      much simpler and should be enough in most cases
+    - The `2000-01-01` format uses the local timezone, this might be a bit confusing but
+      should not be that much of a big deal (use the RFC3339 format if you want to be sure !)
+    """
+
+    name = "datetime"
+
+    def __init__(self):
+        super().__init__(["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"])
+
+    def convert(
+        self, value: Any, param: Optional[click.Parameter], ctx: Optional[click.Context]
+    ) -> DateTime:
+        if isinstance(value, DateTime):
+            return value
+
+        assert isinstance(value, str)
+
+        pydt: datetime.datetime = super().convert(value, param, ctx)
+        if value.endswith("Z"):
+            # Provided datetime is in UTC, must correct it before converting
+            # into timestamp !
+            pydt = pydt.replace(tzinfo=datetime.timezone.utc)
+
+        return DateTime.from_timestamp(pydt.timestamp())
