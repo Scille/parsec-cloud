@@ -7,9 +7,9 @@ from parsec._parsec_pyi.crypto import (
 )
 from parsec._parsec_pyi.ids import (
     EntryID,
-    EntryName,
     DeviceID,
 )
+from parsec._parsec_pyi.manifest import EntryName
 from parsec._parsec_pyi.time import DateTime
 
 class MessageContent:
