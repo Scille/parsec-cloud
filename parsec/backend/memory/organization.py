@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Union, Dict
+from typing import TYPE_CHECKING, Optional, Union, Dict
 import trio
 from collections import defaultdict
 
@@ -19,8 +19,6 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     OrganizationStats,
     SequesterAuthority,
-    ServerStatsItem,
-    ServerStats,
     UsersPerProfileDetailItem,
 )
 from parsec.backend.utils import Unset, UnsetType
@@ -63,6 +61,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        timestamp: Optional[DateTime] = None,
     ) -> None:
         org = self._organizations.get(id)
         # Allow overwritting of not-yet-bootstrapped organization
@@ -132,46 +131,42 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     async def stats(
         self,
         id: OrganizationID,
-        from_date: Optional[DateTime] = None,
-        to_date: Optional[DateTime] = None,
+        from_: Optional[DateTime] = None,
+        to_: Optional[DateTime] = None,
     ) -> OrganizationStats:
         await self.get(id)
-        from_date = from_date or DateTime(1900, 1, 1, 0, 0, 0)
-        to_date = to_date or DateTime.now()
+        from_ = from_ or DateTime.from_timestamp(0)
+        to_ = to_ or DateTime.now()
 
         metadata_size = 0
         for (vlob_organization_id, _), vlob in self._vlob_component._vlobs.items():
             if vlob_organization_id == id:
-                metadata_size += sum(
-                    len(blob) for (blob, _, ts) in vlob.data if from_date <= ts <= to_date
-                )
+                metadata_size += sum(len(blob) for (blob, _, ts) in vlob.data if from_ <= ts < to_)
 
         data_size = 0
         for (vlob_organization_id, _), blockmeta in self._block_component._blockmetas.items():
-            if vlob_organization_id == id and (from_date <= blockmeta.created_on <= to_date):
+            if vlob_organization_id == id and (from_ <= blockmeta.created_on < to_):
                 data_size += blockmeta.size
 
         users = 0
         active_users = 0
         users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
         for user in self._user_component._organizations[id].users.values():
-            if user.created_on > to_date:
+            if user.created_on >= to_:
                 continue
             users += 1
             # User must be revoked at the time we're looking for
-            if user.revoked_on and user.revoked_on >= from_date:
+            if user.revoked_on and user.revoked_on < to_:
                 users_per_profile_detail[user.profile]["revoked"] += 1
             else:
                 users_per_profile_detail[user.profile]["active"] += 1
                 active_users += 1
 
-        realms = len(
-            [
-                realm_id
-                for organization_id, realm_id in self._realm_component._realms.keys()
-                if organization_id == id
-            ]
-        )
+        realms = 0
+        for (organization_id, _), realm in self._realm_component._realms.items():
+            if organization_id == id and realm.created_on < to_:
+                realms += 1
+
         users_per_profile_detail = tuple(
             UsersPerProfileDetailItem(profile=profile, **data)
             for profile, data in users_per_profile_detail.items()
@@ -187,26 +182,32 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         )
 
     async def server_stats(
-        self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
-    ) -> ServerStats:
-        from_date = from_date or DateTime(1900, 1, 1, 0, 0, 0)
-        to_date = to_date or DateTime.now()
-        result: List[ServerStatsItem] = []
+        self, from_: Optional[DateTime] = None, to_: Optional[DateTime] = None
+    ) -> Dict[OrganizationID, OrganizationStats]:
+        from_ = from_ or DateTime.from_timestamp(0)
+        to_ = to_ or DateTime.now()
 
-        for org_id, _ in self._organizations.items():
-            stats = await self.stats(org_id, from_date, to_date)
-            result.append(
-                ServerStatsItem(
-                    organization_id=org_id.str,
-                    data_size=stats.data_size,
-                    metadata_size=stats.metadata_size,
-                    realms_count=stats.realms,
-                    users_count=stats.users,
-                    users_per_profile_detail=stats.users_per_profile_detail,
-                )
+        # Default to empty in case of invalid interval, we need this special case
+        # given the user/realm count metrics only checks against the `to` bound
+        # (i.e. they are snapshots)
+        # given some metric doesn't get checked against both bounds (e.g. a realm
+        # cannot be deleted, hence we
+        if from_ >= to_:
+            return {}
+
+        result = {}
+        for org_id, org in self._organizations.items():
+            if not org.is_bootstrapped():
+                continue
+            # Org bootstrap date is the date of the very first certificate
+            bootstrapped_on = min(
+                u.created_on for u in self._user_component._organizations[org_id].users.values()
             )
+            if bootstrapped_on >= to_:
+                continue
+            result[org_id] = await self.stats(org_id, from_, to_)
 
-        return ServerStats(stats=result)
+        return result
 
     async def update(
         self,

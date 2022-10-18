@@ -35,13 +35,13 @@ if TYPE_CHECKING:
     from parsec.backend.memory.block import MemoryBlockComponent
 
 
-@attr.s
+@attr.s(auto_attribs=True)
 class Realm:
+    granted_roles: List[RealmGrantedRole]
+    created_on: DateTime
     status: RealmStatus = attr.ib(factory=lambda: RealmStatus(None, None, None, 1))
-    checkpoint: int = attr.ib(default=0)
-    granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
+    checkpoint: int = 0
     last_role_change_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
-    created_on: DateTime = attr.ib(factory=DateTime.now)
 
     @property
     def roles(self) -> Dict[UserID, RealmRole]:
@@ -99,7 +99,10 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         key = (organization_id, self_granted_role.realm_id)
         if key not in self._realms:
-            self._realms[key] = Realm(granted_roles=[self_granted_role])
+            self._realms[key] = Realm(
+                granted_roles=[self_granted_role],
+                created_on=self_granted_role.granted_on,
+            )
 
             await self._send_event(
                 BackendEvent.REALM_ROLES_UPDATED,

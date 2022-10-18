@@ -461,6 +461,16 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             alice1_slughash = match.group(1)
             p.wait()
 
+        print("####### Stats server #######")
+        _run(
+            "core stats_server "
+            f"--addr={backend_url} "
+            f"--administration-token={administration_token} "
+            "--from 2000-01-01T12:00:00Z "
+            "--to 2000-01-02 ",
+            env=ssl_conf.client_env,
+        )
+
         print("####### Stats organization #######")
         _run(
             "core stats_organization "

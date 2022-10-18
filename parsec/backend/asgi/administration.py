@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import csv
 from io import StringIO
-from typing import NoReturn, TYPE_CHECKING
+from typing import NoReturn, Tuple, Dict, TYPE_CHECKING
 from functools import wraps
 from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response, g
 
 from parsec._parsec import DateTime
+from parsec.api.protocol.types import UserProfile
 from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import (
@@ -21,7 +22,7 @@ from parsec.api.rest import (
 from parsec.backend.organization import (
     OrganizationAlreadyExistsError,
     OrganizationNotFoundError,
-    ServerStats,
+    OrganizationStats,
     generate_bootstrap_token,
 )
 
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 administration_bp = Blueprint("administration_api", __name__)
 
 
-def _convert_server_stats_results_as_csv(results: ServerStats) -> str:
+def _convert_server_stats_results_as_csv(stats: Dict[OrganizationID, OrganizationStats]) -> str:
     # Use `newline=""` to let the CSV writer handles the newlines
     with StringIO(newline="") as memory_file:
         writer = csv.writer(memory_file)
@@ -45,24 +46,29 @@ def _convert_server_stats_results_as_csv(results: ServerStats) -> str:
                 "realms_count",
                 "users_count",
                 "admin_count_active",
-                "standard_count_active",
-                "outsider_count_active",
                 "admin_count_revoked",
+                "standard_count_active",
                 "standard_count_revoked",
+                "outsider_count_active",
                 "outsider_count_revoked",
             ]
         )
 
-        for row in results.stats:
+        def _find_profile_counts(profile: UserProfile) -> Tuple[int, int]:
+            detail = next(x for x in org_stats.users_per_profile_detail if x.profile == profile)
+            return (detail.active, detail.revoked)
+
+        for organization_id, org_stats in stats.items():
             csv_row = [
-                row.organization_id,
-                row.data_size,
-                row.metadata_size,
-                row.realms_count,
-                row.users_count,
+                organization_id.str,
+                org_stats.data_size,
+                org_stats.metadata_size,
+                org_stats.realms,
+                org_stats.active_users,
+                *_find_profile_counts(UserProfile.ADMIN),
+                *_find_profile_counts(UserProfile.STANDARD),
+                *_find_profile_counts(UserProfile.OUTSIDER),
             ]
-            csv_row.extend([row.users_per_profile_detail[i].active for i in range(3)])
-            csv_row.extend([row.users_per_profile_detail[i].revoked for i in range(3)])
             writer.writerow(csv_row)
 
         return memory_file.getvalue()
@@ -208,30 +214,30 @@ async def administration_server_stats():
         )
 
     try:
-        from_date = DateTime.from_rfc3339(request.args["from"]) if "from" in request.args else None
-        to_date = (
-            DateTime.from_rfc3339(request.args["to"]) if "to" in request.args else DateTime.now()
-        )
-        results = await backend.organization.server_stats(from_date, to_date)
+        raw_from = request.args.get("from")
+        from_date = DateTime.from_rfc3339(raw_from) if raw_from else None
+        raw_to = request.args.get("to")
+        to_date = DateTime.from_rfc3339(raw_to) if raw_to else None
+        server_stats = await backend.organization.server_stats(from_date, to_date)
     except ValueError:
         return await json_abort({"error": "bad_data", "reason": "bad timestamp"}, 400)
 
     if request.args["format"] == "csv":
-        return _convert_server_stats_results_as_csv(results)
+        return _convert_server_stats_results_as_csv(server_stats)
 
     return make_rep_response(
         server_stats_rep_serializer,
         data={
             "stats": [
                 {
-                    "organization_id": stats.organization_id,
-                    "realms_count": stats.realms_count,
-                    "data_size": stats.data_size,
-                    "metadata_size": stats.metadata_size,
-                    "users_count": stats.users_count,
-                    "users_per_profile_detail": stats.users_per_profile_detail,
+                    "organization_id": organization_id.str,
+                    "data_size": org_stats.data_size,
+                    "metadata_size": org_stats.metadata_size,
+                    "realms": org_stats.realms,
+                    "active_users": org_stats.active_users,
+                    "users_per_profile_detail": org_stats.users_per_profile_detail,
                 }
-                for stats in results.stats
+                for organization_id, org_stats in server_stats.items()
             ]
         },
         status=200,

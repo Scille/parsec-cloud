@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import List, Optional, Tuple, Union
+from typing import List, Dict, Optional, Tuple, Union
 from secrets import token_hex
 
 from parsec._parsec import (
@@ -110,21 +110,6 @@ class OrganizationStats:
     active_users: int
     realms: int
     users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class ServerStatsItem:
-    organization_id: str
-    data_size: int
-    metadata_size: int
-    realms_count: int
-    users_count: int
-    users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class ServerStats:
-    stats: List[ServerStatsItem]
 
 
 def generate_bootstrap_token() -> str:
@@ -435,16 +420,28 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def stats(self, id: OrganizationID) -> OrganizationStats:
+    async def stats(
+        self,
+        id: OrganizationID,
+        from_: Optional[DateTime] = None,
+        to_: Optional[DateTime] = None,
+    ) -> OrganizationStats:
         """
+        If provided, `from_` lower bound is included and `to_` upper bound is excluded
+
         Raises:
             OrganizationNotFoundError
         """
         raise NotImplementedError()
 
     async def server_stats(
-        self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
-    ) -> ServerStats:
+        self, from_: Optional[DateTime] = None, to_: Optional[DateTime] = None
+    ) -> Dict[OrganizationID, OrganizationStats]:
+        """
+        If provided, `from_` lower bound is included and `to_` upper bound is excluded
+
+        Raises: Nothing !
+        """
         raise NotImplementedError()
 
     async def update(

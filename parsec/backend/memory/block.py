@@ -111,16 +111,16 @@ class MemoryBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
-        date: Optional[DateTime] = None,
+        timestamp: Optional[DateTime] = None,
     ) -> None:
-        date = date or DateTime.now()
+        timestamp = timestamp or DateTime.now()
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
         if (organization_id, block_id) in self._blockmetas:
             raise BlockAlreadyExistsError()
 
         await self._blockstore_component.create(organization_id, block_id, block)
 
-        self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block), date)
+        self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block), timestamp)
 
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):

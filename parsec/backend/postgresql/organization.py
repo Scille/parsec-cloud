@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import List, Optional, Union
+from typing import Dict, Optional, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
 
@@ -23,8 +23,6 @@ from parsec.backend.organization import (
     OrganizationAlreadyBootstrappedError,
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
-    ServerStatsItem,
-    ServerStats,
     UsersPerProfileDetailItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
@@ -370,10 +368,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def server_stats(
         self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
-    ) -> ServerStats:
+    ) -> Dict[OrganizationID, OrganizationStats]:
         from_date = from_date or DateTime(1900, 1, 1, 0, 0, 0)
         to_date = to_date or DateTime.now()
-        results: List[ServerStatsItem] = []
+        results = {}
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             orgs = await conn.fetch(*_q_get_server_stats())
@@ -389,18 +387,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 if from_date <= date <= to_date:
                     realm_count += 1
 
-            results.append(
-                ServerStatsItem(
-                    organization_id=org_id,
-                    data_size=org_stats.data_size,
-                    metadata_size=org_stats.metadata_size,
-                    realms_count=realm_count,
-                    users_count=org_stats.users,
-                    users_per_profile_detail=org_stats.users_per_profile_detail,
-                )
-            )
+            results[org_id] = org_stats
 
-        return ServerStats(stats=results)
+        return results
 
     async def update(
         self,
