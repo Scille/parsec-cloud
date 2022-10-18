@@ -8,7 +8,7 @@ from structlog import get_logger
 from base64 import b64encode
 from urllib.request import getproxies, proxy_bypass
 from urllib.parse import urlsplit, SplitResult
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, cast
 import pypac
 
 from parsec.api.transport import USER_AGENT
@@ -47,7 +47,10 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
     # configured, and `get_pac` silently fails on wrong content-type by returning None)
     # Also disable WPAD protocol to retrieve PAC from DNS given it produce annoying
     # WARNING logs
-    get_pac_kwargs: dict = {"from_dns": False, "allowed_content_types": {""}}
+    get_pac_kwargs: dict[str, bool | set[str] | str] = {
+        "from_dns": False,
+        "allowed_content_types": {""},
+    }
 
     force_proxy_pac_url = os.environ.get("http_proxy_pac") or os.environ.get("HTTP_PROXY_PAC")
     if force_proxy_pac_url:
@@ -60,7 +63,7 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
         logger.debug("Retrieving .PAC proxy config url from system")
 
     try:
-        pacfile = pypac.get_pac(**get_pac_kwargs)
+        pacfile = pypac.get_pac(**get_pac_kwargs)  # type: ignore[arg-type]
     except Exception as exc:
         logger.warning("Error while retrieving .PAC proxy config", exc_info=exc)
         return None
@@ -70,6 +73,7 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
 
     try:
         proxies = pacfile.find_proxy_for_url(url, hostname)
+        assert proxies is not None, "Proxy list is None"
         logger.debug("Found proxies info in .PAC proxy config", target_url=url, proxies=proxies)
         proxies = [p.strip() for p in proxies.split(";")]
         if len(proxies) > 1:
@@ -251,11 +255,12 @@ async def maybe_connect_through_proxy(
 
     conn = h11.Connection(our_role=h11.CLIENT)
 
-    async def send(event):
+    async def send(event: h11.Request) -> None:
         data = conn.send(event)
+        assert data is not None, "Connection is closed"
         await stream.send_all(data)
 
-    async def next_event():
+    async def next_event() -> h11.Event:
         while True:
             event = conn.next_event()
             if event is h11.NEED_DATA:
@@ -264,7 +269,7 @@ async def maybe_connect_through_proxy(
                 data = await stream.receive_some(2048)
                 conn.receive_data(data)
                 continue
-            return event
+            return cast(h11.Event, event)
 
     host = f"{hostname}:{port}"
     try:
@@ -293,7 +298,7 @@ async def maybe_connect_through_proxy(
                 proxy_url=proxy_url,
                 target_host=host,
                 target_url=target_url,
-                answer_status=answer.status_code,
+                answer_status=answer.status_code,  # type: ignore[attr-defined]
             )
             raise BackendNotAvailable("Bad answer from proxy")
         # Successful CONNECT should reset the connection's statemachine

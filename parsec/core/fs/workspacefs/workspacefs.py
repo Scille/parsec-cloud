@@ -16,7 +16,7 @@ from typing import (
 )
 import structlog
 
-from parsec._parsec import DateTime, FileManifest, Regex
+from parsec._parsec import DateTime, FileManifest, Regex, RealmStatusRepOk
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
@@ -242,6 +242,7 @@ class WorkspaceFS:
                 f"Cannot retrieve remote status for workspace {self.workspace_id.str}: {exc}"
             ) from exc
 
+        assert isinstance(rep, RealmStatusRepOk)
         reencryption_already_in_progress = (
             rep.in_maintenance and rep.maintenance_type == MaintenanceType.REENCRYPTION()
         )

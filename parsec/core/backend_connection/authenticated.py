@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import trio
 from enum import Enum
-from contextlib import asynccontextmanager
-from typing import Optional, List, AsyncGenerator, Callable, TypeVar
+from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
+from typing import Any, Awaitable, Optional, List, AsyncGenerator, Callable, TypeVar
 from structlog import get_logger
 from functools import partial
+
+from trio_typing import TaskStatus
 
 from parsec._parsec import (
     EventsListenRepOkPkiEnrollmentUpdated,
@@ -22,10 +24,56 @@ from parsec._parsec import (
     OrganizationConfigRepOk,
     OrganizationConfigRepUnknownStatus,
 )
+from parsec.core.types.commands import (
+    EventsListenCallbackType,
+    EventsSubscribeCallbackType,
+    AuthenticatedPingCallbackType,
+    InviteDeleteCallbackType,
+    MessageGetCallbackType,
+    UserGetCallbackType,
+    UserCreateCallbackType,
+    UserRevokeCallbackType,
+    DeviceCreateCallbackType,
+    PkiEnrollmentListCallbackType,
+    PkiEnrollmentRejectCallbackType,
+    PkiEnrollmentAcceptCallbackType,
+    HumanFindCallbackType,
+    InviteNewCallbackType,
+    InviteListCallbackType,
+    Invite1GreeterWaitPeerCallbackType,
+    Invite2aGreeterGetHashedNonceCallbackType,
+    Invite2bGreeterSendNonceCallbackType,
+    Invite3aGreeterWaitPeerTrustCallbackType,
+    Invite3bGreeterSignifyTrustCallbackType,
+    Invite4GreeterCommunicateCallbackType,
+    BlockCreateCallbackType,
+    BlockReadCallbackType,
+    VlobCreateCallbackType,
+    VlobReadCallbackType,
+    VlobUpdateCallbackCallbackType,
+    VlobPollChangesCallbackType,
+    VlobListVersionsCallbackType,
+    VlobMaintenanceGetReenscryptionBatchCallbackType,
+    VlobMaintenanceSaveReencryptionBatchCallbackType,
+    RealmCreateCallbackType,
+    RealmStatusCallbackType,
+    RealmGetRoleCertificatesCallbackType,
+    RealmUpdateRolesCallbackType,
+    RealmStartReencryptionMaintenanceCallbackType,
+    RealmFinishReencryptionMaintenanceCallbackType,
+    OrganizationStatsCallbackType,
+    OrganizationConfigCallbackType,
+)
+from parsec.api.transport import Transport
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.protocol import DeviceID, AUTHENTICATED_CMDS
-from parsec.core.types import EntryID, BackendOrganizationAddr, OrganizationConfig, LocalDevice
+from parsec.core.types import (
+    EntryID,
+    BackendOrganizationAddr,
+    OrganizationConfig,
+    LocalDevice,
+)
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import (
     connect_as_authenticated,
@@ -52,6 +100,8 @@ BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED C
 
 BaseExceptionTypeVar = TypeVar("BaseExceptionTypeVar", bound=BaseException)
 
+T = TypeVar("T")
+
 
 def copy_exception(exception: BaseExceptionTypeVar) -> BaseExceptionTypeVar:
     result = type(exception)(*exception.args)
@@ -60,60 +110,90 @@ def copy_exception(exception: BaseExceptionTypeVar) -> BaseExceptionTypeVar:
 
 
 class BackendAuthenticatedCmds:
-    def __init__(self, addr: BackendOrganizationAddr, acquire_transport):
+    def __init__(
+        self,
+        addr: BackendOrganizationAddr,
+        acquire_transport: Callable[..., _AsyncGeneratorContextManager[T]],
+    ):
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    events_subscribe = expose_cmds_with_retrier(cmds.events_subscribe)
-    events_listen = expose_cmds_with_retrier(cmds.events_listen)
-    ping = expose_cmds_with_retrier(cmds.authenticated_ping)
-    message_get = expose_cmds_with_retrier(cmds.message_get)
-    user_get = expose_cmds_with_retrier(cmds.user_get)
-    user_create = expose_cmds_with_retrier(cmds.user_create)
-    user_revoke = expose_cmds_with_retrier(cmds.user_revoke)
-    device_create = expose_cmds_with_retrier(cmds.device_create)
-    human_find = expose_cmds_with_retrier(cmds.human_find)
-    invite_new = expose_cmds_with_retrier(cmds.invite_new)
-    invite_delete = expose_cmds_with_retrier(cmds.invite_delete)
-    invite_list = expose_cmds_with_retrier(cmds.invite_list)
-    invite_1_greeter_wait_peer = expose_cmds_with_retrier(cmds.invite_1_greeter_wait_peer)
-    invite_2a_greeter_get_hashed_nonce = expose_cmds_with_retrier(
-        cmds.invite_2a_greeter_get_hashed_nonce
+    events_subscribe: EventsSubscribeCallbackType = expose_cmds_with_retrier(cmds.events_subscribe)
+    events_listen: EventsListenCallbackType = expose_cmds_with_retrier(cmds.events_listen)
+    ping: AuthenticatedPingCallbackType = expose_cmds_with_retrier(cmds.authenticated_ping)
+    message_get: MessageGetCallbackType = expose_cmds_with_retrier(cmds.message_get)
+    user_get: UserGetCallbackType = expose_cmds_with_retrier(cmds.user_get)
+    user_create: UserCreateCallbackType = expose_cmds_with_retrier(cmds.user_create)
+    user_revoke: UserRevokeCallbackType = expose_cmds_with_retrier(cmds.user_revoke)
+    device_create: DeviceCreateCallbackType = expose_cmds_with_retrier(cmds.device_create)
+    human_find: HumanFindCallbackType = expose_cmds_with_retrier(cmds.human_find)
+    invite_new: InviteNewCallbackType = expose_cmds_with_retrier(cmds.invite_new)
+    invite_delete: InviteDeleteCallbackType = expose_cmds_with_retrier(cmds.invite_delete)
+    invite_list: InviteListCallbackType = expose_cmds_with_retrier(cmds.invite_list)
+    invite_1_greeter_wait_peer: Invite1GreeterWaitPeerCallbackType = expose_cmds_with_retrier(
+        cmds.invite_1_greeter_wait_peer
     )
-    invite_2b_greeter_send_nonce = expose_cmds_with_retrier(cmds.invite_2b_greeter_send_nonce)
-    invite_3a_greeter_wait_peer_trust = expose_cmds_with_retrier(
-        cmds.invite_3a_greeter_wait_peer_trust
+    invite_2a_greeter_get_hashed_nonce: Invite2aGreeterGetHashedNonceCallbackType = (
+        expose_cmds_with_retrier(cmds.invite_2a_greeter_get_hashed_nonce)
     )
-    invite_3b_greeter_signify_trust = expose_cmds_with_retrier(cmds.invite_3b_greeter_signify_trust)
-    invite_4_greeter_communicate = expose_cmds_with_retrier(cmds.invite_4_greeter_communicate)
-    block_create = expose_cmds_with_retrier(cmds.block_create)
-    block_read = expose_cmds_with_retrier(cmds.block_read)
-    vlob_poll_changes = expose_cmds_with_retrier(cmds.vlob_poll_changes)
-    vlob_create = expose_cmds_with_retrier(cmds.vlob_create)
-    vlob_read = expose_cmds_with_retrier(cmds.vlob_read)
-    vlob_update = expose_cmds_with_retrier(cmds.vlob_update)
-    vlob_list_versions = expose_cmds_with_retrier(cmds.vlob_list_versions)
-    vlob_maintenance_get_reencryption_batch = expose_cmds_with_retrier(
-        cmds.vlob_maintenance_get_reencryption_batch
+    invite_2b_greeter_send_nonce: Invite2bGreeterSendNonceCallbackType = expose_cmds_with_retrier(
+        cmds.invite_2b_greeter_send_nonce
     )
-    vlob_maintenance_save_reencryption_batch = expose_cmds_with_retrier(
-        cmds.vlob_maintenance_save_reencryption_batch
+    invite_3a_greeter_wait_peer_trust: Invite3aGreeterWaitPeerTrustCallbackType = (
+        expose_cmds_with_retrier(cmds.invite_3a_greeter_wait_peer_trust)
     )
-    realm_create = expose_cmds_with_retrier(cmds.realm_create)
-    realm_status = expose_cmds_with_retrier(cmds.realm_status)
-    realm_get_role_certificates = expose_cmds_with_retrier(cmds.realm_get_role_certificates)
-    realm_update_roles = expose_cmds_with_retrier(cmds.realm_update_roles)
-    realm_start_reencryption_maintenance = expose_cmds_with_retrier(
-        cmds.realm_start_reencryption_maintenance
+    invite_3b_greeter_signify_trust: Invite3bGreeterSignifyTrustCallbackType = (
+        expose_cmds_with_retrier(cmds.invite_3b_greeter_signify_trust)
     )
-    realm_finish_reencryption_maintenance = expose_cmds_with_retrier(
-        cmds.realm_finish_reencryption_maintenance
+    invite_4_greeter_communicate: Invite4GreeterCommunicateCallbackType = expose_cmds_with_retrier(
+        cmds.invite_4_greeter_communicate
     )
-    organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
-    organization_config = expose_cmds_with_retrier(cmds.organization_config)
-    pki_enrollment_list = expose_cmds_with_retrier(cmds.pki_enrollment_list)
-    pki_enrollment_reject = expose_cmds_with_retrier(cmds.pki_enrollment_reject)
-    pki_enrollment_accept = expose_cmds_with_retrier(cmds.pki_enrollment_accept)
+    block_create: BlockCreateCallbackType = expose_cmds_with_retrier(cmds.block_create)
+    block_read: BlockReadCallbackType = expose_cmds_with_retrier(cmds.block_read)
+    vlob_poll_changes: VlobPollChangesCallbackType = expose_cmds_with_retrier(
+        cmds.vlob_poll_changes
+    )
+    vlob_create: VlobCreateCallbackType = expose_cmds_with_retrier(cmds.vlob_create)
+    vlob_read: VlobReadCallbackType = expose_cmds_with_retrier(cmds.vlob_read)
+    vlob_update: VlobUpdateCallbackCallbackType = expose_cmds_with_retrier(cmds.vlob_update)
+    vlob_list_versions: VlobListVersionsCallbackType = expose_cmds_with_retrier(
+        cmds.vlob_list_versions
+    )
+    vlob_maintenance_get_reencryption_batch: VlobMaintenanceGetReenscryptionBatchCallbackType = (
+        expose_cmds_with_retrier(cmds.vlob_maintenance_get_reencryption_batch)
+    )
+    vlob_maintenance_save_reencryption_batch: VlobMaintenanceSaveReencryptionBatchCallbackType = (
+        expose_cmds_with_retrier(cmds.vlob_maintenance_save_reencryption_batch)
+    )
+    realm_create: RealmCreateCallbackType = expose_cmds_with_retrier(cmds.realm_create)
+    realm_status: RealmStatusCallbackType = expose_cmds_with_retrier(cmds.realm_status)
+    realm_get_role_certificates: RealmGetRoleCertificatesCallbackType = expose_cmds_with_retrier(
+        cmds.realm_get_role_certificates
+    )
+    realm_update_roles: RealmUpdateRolesCallbackType = expose_cmds_with_retrier(
+        cmds.realm_update_roles
+    )
+    realm_start_reencryption_maintenance: RealmStartReencryptionMaintenanceCallbackType = (
+        expose_cmds_with_retrier(cmds.realm_start_reencryption_maintenance)
+    )
+    realm_finish_reencryption_maintenance: RealmFinishReencryptionMaintenanceCallbackType = (
+        expose_cmds_with_retrier(cmds.realm_finish_reencryption_maintenance)
+    )
+    organization_stats: OrganizationStatsCallbackType = expose_cmds_with_retrier(
+        cmds.organization_stats
+    )
+    organization_config: OrganizationConfigCallbackType = expose_cmds_with_retrier(
+        cmds.organization_config
+    )
+    pki_enrollment_list: PkiEnrollmentListCallbackType = expose_cmds_with_retrier(
+        cmds.pki_enrollment_list
+    )
+    pki_enrollment_reject: PkiEnrollmentRejectCallbackType = expose_cmds_with_retrier(
+        cmds.pki_enrollment_reject
+    )
+    pki_enrollment_accept: PkiEnrollmentAcceptCallbackType = expose_cmds_with_retrier(
+        cmds.pki_enrollment_accept
+    )
 
 
 for cmd in AUTHENTICATED_CMDS:
@@ -165,8 +245,14 @@ def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
         event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
 
 
-def _transport_pool_factory(addr, device_id, signing_key, max_pool, keepalive):
-    async def _connect():
+def _transport_pool_factory(
+    addr: BackendOrganizationAddr,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+    max_pool: int,
+    keepalive: Optional[int],
+) -> TransportPool:
+    async def _connect() -> Transport:
         transport = await connect_as_authenticated(
             addr, device_id=device_id, signing_key=signing_key, keepalive=keepalive
         )
@@ -199,7 +285,7 @@ class BackendAuthenticatedConn:
         self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope = None
-        self._monitors_cbs: List[Callable[..., None]] = []
+        self._monitors_cbs: List[Callable[..., Any]] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
@@ -242,7 +328,7 @@ class BackendAuthenticatedConn:
         # and the actual cancellation.
         await trio.lowlevel.checkpoint_if_cancelled()
         old_status, self._status = self._status, status
-        self._status_exc = status_exc
+        self._status_exc = status_exc  # type: ignore[assignment]
         if not self._status_event_sent or old_status != status:
             self.event_bus.send(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
@@ -257,30 +343,30 @@ class BackendAuthenticatedConn:
     def get_organization_config(self) -> OrganizationConfig:
         return self._organization_config
 
-    def register_monitor(self, monitor_cb) -> None:
+    def register_monitor(self, monitor_cb: Callable[..., Any]) -> None:
         if self._started:
             raise RuntimeError("Cannot register monitor once started !")
         self._monitors_cbs.append(monitor_cb)
 
-    def are_monitors_idle(self):
+    def are_monitors_idle(self) -> bool:
         return self._monitors_idle_event.is_set()
 
-    async def wait_idle_monitors(self):
+    async def wait_idle_monitors(self) -> None:
         await self._monitors_idle_event.wait()
 
     @asynccontextmanager
-    async def run(self):
+    async def run(self) -> AsyncGenerator[None, None]:
         if self._started:
             raise RuntimeError("Already started")
-        async with trio.open_service_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
             nursery.start_soon(self._run_manager)
             yield
             nursery.cancel_scope.cancel()
 
-    async def _run_manager(self):
+    async def _run_manager(self) -> None:
         while True:
             try:
-                with trio.CancelScope() as self._manager_connect_cancel_scope:
+                with trio.CancelScope() as self._manager_connect_cancel_scope:  # type: ignore[assignment]
                     try:
                         await self._manager_connect()
                     except (BackendNotAvailable, BackendConnectionRefused):
@@ -328,11 +414,11 @@ class BackendAuthenticatedConn:
                 logger.info("Backend connection is desync", status=self.status)
                 await self._device.time_provider.sleep(DESYNC_RETRY_TIME)
 
-    def _cancel_manager_connect(self):
+    def _cancel_manager_connect(self) -> None:
         if self._manager_connect_cancel_scope:
             self._manager_connect_cancel_scope.cancel()
 
-    async def _manager_connect(self):
+    async def _manager_connect(self) -> None:
         async with self._acquire_transport(ignore_status=True, force_fresh=True) as transport:
             await self.set_status(BackendConnStatus.INITIALIZING)
             self._backend_connection_failures = 0
@@ -359,8 +445,8 @@ class BackendAuthenticatedConn:
                     user_profile_outsider_allowed=rep.user_profile_outsider_allowed,
                     active_users_limit=rep.active_users_limit,
                     # Sequester introduced in APIv2.8/3.2
-                    sequester_authority=rep.sequester_authority_certificate,
-                    sequester_services=rep.sequester_services_certificates,
+                    sequester_authority=rep.sequester_authority_certificate,  # type: ignore[arg-type]
+                    sequester_services=rep.sequester_services_certificates,  # type: ignore[arg-type]
                 )
 
             rep = await cmds.events_subscribe(transport)
@@ -370,25 +456,30 @@ class BackendAuthenticatedConn:
             # Quis custodiet ipsos custodes?
             monitors_states = ["STALLED" for _ in range(len(self._monitors_cbs))]
 
-            async def _wrap_monitor_cb(monitor_cb, idx, *, task_status=trio.TASK_STATUS_IGNORED):
-                def _idle():
+            async def _wrap_monitor_cb(
+                monitor_cb: Callable[..., Awaitable[None]],
+                idx: int,
+                *,
+                task_status: TaskStatus[Any] = trio.TASK_STATUS_IGNORED,
+            ) -> Any:
+                def _idle() -> None:
                     monitors_states[idx] = "IDLE"
                     if all(state == "IDLE" for state in monitors_states):
                         self._monitors_idle_event.set()
 
-                def _awake():
+                def _awake() -> None:
                     monitors_states[idx] = "AWAKE"
                     if self._monitors_idle_event.is_set():
                         self._monitors_idle_event = trio.Event()
 
-                task_status.idle = _idle
-                task_status.awake = _awake
+                setattr(task_status, "idle", _idle)
+                setattr(task_status, "awake", _awake)
                 await monitor_cb(task_status=task_status)
 
             try:
-                async with trio.open_service_nursery() as monitors_nursery:
+                async with trio.open_service_nursery() as monitors_nursery:  # type: ignore[attr-defined]
 
-                    async with trio.open_service_nursery() as monitors_bootstrap_nursery:
+                    async with trio.open_service_nursery() as monitors_bootstrap_nursery:  # type: ignore[attr-defined]
                         for idx, monitor_cb in enumerate(self._monitors_cbs):
                             monitors_bootstrap_nursery.start_soon(
                                 monitors_nursery.start,
@@ -398,8 +489,8 @@ class BackendAuthenticatedConn:
                     await self.set_status(BackendConnStatus.READY)
 
                     while True:
-                        rep = await cmds.events_listen(transport, wait=True)
-                        _handle_event(self.event_bus, rep)
+                        listen_rep = await cmds.events_listen(transport, wait=True)
+                        _handle_event(self.event_bus, listen_rep)
 
             finally:
                 # No more monitors are running
@@ -407,8 +498,11 @@ class BackendAuthenticatedConn:
 
     @asynccontextmanager
     async def _acquire_transport(
-        self, force_fresh=False, ignore_status=False, allow_not_available=False
-    ):
+        self,
+        force_fresh: bool = False,
+        ignore_status: bool = False,
+        allow_not_available: bool = False,
+    ) -> AsyncGenerator[Transport, Transport]:
         if not ignore_status:
             if self.status_exc:
                 # Re-raising an already raised exception is bad practice
@@ -456,7 +550,7 @@ async def backend_authenticated_cmds_factory(
     transport = None
     closed = False
 
-    async def _init_transport():
+    async def _init_transport() -> None:
         nonlocal transport
         if not transport:
             if closed:
@@ -466,14 +560,14 @@ async def backend_authenticated_cmds_factory(
             )
             transport.logger = transport.logger.bind(device_id=device_id)
 
-    async def _destroy_transport():
+    async def _destroy_transport() -> None:
         nonlocal transport
         if transport:
             await transport.aclose()
             transport = None
 
     @asynccontextmanager
-    async def _acquire_transport(**kwargs):
+    async def _acquire_transport(**kwargs: Any) -> AsyncGenerator[Optional[Transport], None]:  # type: ignore[misc]
         nonlocal transport
 
         async with transport_lock:

@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     AsyncIterator,
     List,
+    cast,
 )
 from structlog import get_logger
 from contextlib import asynccontextmanager
@@ -181,48 +182,69 @@ class ReencryptionJob:
                 new_ciphered = self.new_workspace_entry.key.encrypt(clear_text)
                 done_batch.append((item.vlob_id, item.version, new_ciphered))
 
-            rep = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
-                workspace_id, new_encryption_revision, done_batch
+            rep_maitenance_save_reencryption = (
+                await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
+                    workspace_id, new_encryption_revision, done_batch
+                )
             )
             if isinstance(
-                rep,
+                rep_maitenance_save_reencryption,
                 (
                     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
                     VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
                 ),
             ):
-                raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-            elif isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotAllowed):
+                raise FSWorkspaceNotInMaintenance(
+                    f"Reencryption job already finished: {rep_maitenance_save_reencryption}"
+                )
+            elif isinstance(
+                rep_maitenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepNotAllowed
+            ):
                 raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep_maitenance_save_reencryption}"
                 )
-            elif not isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepOk):
+            elif not isinstance(
+                rep_maitenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepOk
+            ):
                 raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
+                    f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep_maitenance_save_reencryption}"
                 )
-            total = rep.total
-            done = rep.done
+
+            total = cast(
+                VlobMaintenanceSaveReencryptionBatchRepOk, rep_maitenance_save_reencryption
+            ).total
+            done = cast(
+                VlobMaintenanceSaveReencryptionBatchRepOk, rep_maitenance_save_reencryption
+            ).done
 
             if total == done:
                 # Finish the maintenance
-                rep = await self.backend_cmds.realm_finish_reencryption_maintenance(
-                    workspace_id, new_encryption_revision
+                rep_reencryption_maintenance = (
+                    await self.backend_cmds.realm_finish_reencryption_maintenance(
+                        workspace_id, new_encryption_revision
+                    )
                 )
                 if isinstance(
-                    rep,
+                    rep_reencryption_maintenance,
                     (
                         RealmFinishReencryptionMaintenanceRepNotInMaintenance,
                         RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
                     ),
                 ):
-                    raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-                elif isinstance(rep, RealmFinishReencryptionMaintenanceRepNotAllowed):
-                    raise FSWorkspaceNoAccess(
-                        f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
+                    raise FSWorkspaceNotInMaintenance(
+                        f"Reencryption job already finished: {rep_reencryption_maintenance}"
                     )
-                elif not isinstance(rep, RealmFinishReencryptionMaintenanceRepOk):
+                elif isinstance(
+                    rep_reencryption_maintenance, RealmFinishReencryptionMaintenanceRepNotAllowed
+                ):
+                    raise FSWorkspaceNoAccess(
+                        f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep_reencryption_maintenance}"
+                    )
+                elif not isinstance(
+                    rep_reencryption_maintenance, RealmFinishReencryptionMaintenanceRepOk
+                ):
                     raise FSError(
-                        f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
+                        f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep_reencryption_maintenance}"
                     )
 
         except BackendNotAvailable as exc:

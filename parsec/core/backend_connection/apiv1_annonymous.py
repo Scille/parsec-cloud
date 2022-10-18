@@ -2,19 +2,26 @@
 from __future__ import annotations
 
 import trio
-from contextlib import asynccontextmanager
-from typing import Optional, AsyncGenerator
+from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
+from typing import Any, Callable, Optional, AsyncGenerator, TypeVar
+from parsec.api.transport import Transport
 
-from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.core.types import BackendAddrType, BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import apiv1_connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.expose_cmds import expose_cmds
 from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
 
+T = TypeVar("T")
+
 
 class APIV1_BackendAnonymousCmds:
-    def __init__(self, addr, acquire_transport):
+    def __init__(
+        self,
+        addr: BackendAddrType,
+        acquire_transport: Callable[..., _AsyncGeneratorContextManager[T]],
+    ) -> None:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
@@ -37,7 +44,7 @@ async def apiv1_backend_anonymous_cmds_factory(
     transport = None
     closed = False
 
-    async def _init_transport():
+    async def _init_transport() -> None:
         nonlocal transport
         if not transport:
             if closed:
@@ -45,14 +52,14 @@ async def apiv1_backend_anonymous_cmds_factory(
             transport = await apiv1_connect(addr, keepalive=keepalive)
             transport.logger = transport.logger.bind(auth="<anonymous>")
 
-    async def _destroy_transport():
+    async def _destroy_transport() -> None:
         nonlocal transport
         if transport:
             await transport.aclose()
             transport = None
 
     @asynccontextmanager
-    async def _acquire_transport(**kwargs):
+    async def _acquire_transport(**kwargs: Any) -> AsyncGenerator[Optional[Transport], Optional[Transport]]:  # type: ignore[misc]
         nonlocal transport
 
         async with transport_lock:
