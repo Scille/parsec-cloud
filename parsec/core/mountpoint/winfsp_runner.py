@@ -113,7 +113,7 @@ async def _wait_for_winfsp_ready(mountpoint_path: PurePath, timeout: float = 1.0
 
 
 @asynccontextmanager
-async def winfsp_mountpoint_runner(  # type: ignore[misc]
+async def winfsp_mountpoint_runner(
     user_fs: UserFS,
     workspace_fs: WorkspaceFS,
     base_mountpoint_path: PurePath,

@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from pathlib import Path
 
 import trio
 import logging
 import sys
 
 from structlog import get_logger
-from typing import Sequence, Optional, cast
+from typing import Any, AsyncGenerator, Sequence, Optional, Callable, Dict, Tuple
 from importlib import __import__ as import_function
 from subprocess import CalledProcessError
 from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
@@ -17,7 +18,7 @@ from parsec.core.fs import UserFS, WorkspaceFS
 from parsec.core.logged_core import WorkspaceEntry
 from parsec.core.types import EntryID
 from parsec.core.fs import FsPath, WorkspaceFSTimestamped
-from parsec.event_bus import EventBus, EventCallback
+from parsec.event_bus import EventBus
 from parsec.utils import TaskStatus, start_task, open_service_nursery
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.mountpoint.exceptions import (

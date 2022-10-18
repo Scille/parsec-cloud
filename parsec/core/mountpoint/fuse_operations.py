@@ -147,6 +147,7 @@ def get_path_and_translate_error(
         raise FuseOSError(errno.EACCES) from exc
 
 
+# We can't derive from any (because of unresolved imports)
 class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimported, misc]
     def __init__(
         self,

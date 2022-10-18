@@ -78,6 +78,8 @@ def _patch_signals() -> None:
         signal.signal(signal.SIGTERM, _sig_dfl)
 
 
+# Mypy reports a missing return statement, hovewer it's not possible to exit this
+# function without raising an exception or sucessfully return
 async def _bootstrap_mountpoint(base_mountpoint_path: Path, workspace_fs: WorkspaceFS) -> Tuple[Path, int]:  # type: ignore[return]
     # Find a suitable path where to mount the workspace. The check we are doing
     # here are not atomic (and the mount operation is not itself atomic anyway),
@@ -121,7 +123,7 @@ async def _teardown_mountpoint(mountpoint_path: Path) -> None:
 
 
 @asynccontextmanager
-async def fuse_mountpoint_runner(  # type: ignore[misc]
+async def fuse_mountpoint_runner(
     user_fs: UserFS,
     workspace_fs: WorkspaceFS,
     base_mountpoint_path: Path,
