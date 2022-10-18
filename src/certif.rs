@@ -1,119 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec::types::{CertificateSignerOwned, CertificateSignerRef, UserProfile};
-use pyo3::exceptions::PyValueError;
-use pyo3::import_exception;
-use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyDict, PyList, PyType};
+use pyo3::{
+    import_exception,
+    prelude::*,
+    types::{PyBytes, PyDict, PyType},
+};
 
-use crate::api_crypto::{PublicKey, SigningKey, VerifyKey};
-use crate::binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile};
-use crate::ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, UserID};
-use crate::time::DateTime;
+use libparsec::types::{CertificateSignerOwned, CertificateSignerRef};
+
+use crate::{
+    api_crypto::{PublicKey, SigningKey, VerifyKey},
+    enumerate::{RealmRole, UserProfile},
+    ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, UserID},
+    time::DateTime,
+};
 
 import_exception!(parsec.api.data, DataError);
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct RealmRole(pub libparsec::types::RealmRole);
-
-crate::binding_utils::gen_proto!(RealmRole, __repr__);
-crate::binding_utils::gen_proto!(RealmRole, __richcmp__, eq);
-crate::binding_utils::gen_proto!(RealmRole, __hash__);
-
-#[pymethods]
-impl RealmRole {
-    #[classattr]
-    #[pyo3(name = "OWNER")]
-    fn owner() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     RealmRole(libparsec::types::RealmRole::Owner).into_py(py)
-                })
-            };
-        };
-
-        &VALUE
-    }
-
-    #[classattr]
-    #[pyo3(name = "MANAGER")]
-    fn manager() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     RealmRole(libparsec::types::RealmRole::Manager).into_py(py)
-                })
-            };
-        };
-
-        &VALUE
-    }
-
-    #[classattr]
-    #[pyo3(name = "CONTRIBUTOR")]
-    fn contributor() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     RealmRole(libparsec::types::RealmRole::Contributor).into_py(py)
-                })
-            };
-        };
-
-        &VALUE
-    }
-
-    #[classattr]
-    #[pyo3(name = "READER")]
-    fn reader() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     RealmRole(libparsec::types::RealmRole::Reader).into_py(py)
-                })
-            };
-        };
-
-        &VALUE
-    }
-
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
-        PyList::new(
-            py,
-            [
-                Self::owner(),
-                Self::manager(),
-                Self::contributor(),
-                Self::reader(),
-            ],
-        )
-        .as_ref()
-    }
-
-    #[getter]
-    fn str(&self) -> &str {
-        match self.0 {
-            libparsec::types::RealmRole::Owner => "OWNER",
-            libparsec::types::RealmRole::Manager => "MANAGER",
-            libparsec::types::RealmRole::Contributor => "CONTRIBUTOR",
-            libparsec::types::RealmRole::Reader => "READER",
-        }
-    }
-
-    #[classmethod]
-    fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
-        match value {
-            "OWNER" => Ok(Self::owner()),
-            "MANAGER" => Ok(Self::manager()),
-            "CONTRIBUTOR" => Ok(Self::contributor()),
-            "READER" => Ok(Self::reader()),
-            _ => Err(PyValueError::new_err("")),
-        }
-    }
-}
 
 #[pyclass]
 pub(crate) struct UserCertificate(pub libparsec::types::UserCertificate);
@@ -133,7 +35,7 @@ impl UserCertificate {
             [user_id: UserID, "user_id"],
             [human_handle: Option<HumanHandle>, "human_handle"],
             [public_key: PublicKey, "public_key"],
-            [profile, "profile", py_to_rs_user_profile]
+            [profile: UserProfile, "profile"]
         );
 
         Ok(Self(libparsec::types::UserCertificate {
@@ -145,7 +47,7 @@ impl UserCertificate {
             user_id: user_id.0,
             human_handle: human_handle.map(|human_handle| human_handle.0),
             public_key: public_key.0,
-            profile,
+            profile: profile.0,
         }))
     }
 
@@ -158,7 +60,7 @@ impl UserCertificate {
             [user_id: UserID, "user_id"],
             [human_handle: Option<HumanHandle>, "human_handle"],
             [public_key: PublicKey, "public_key"],
-            [profile, "profile", py_to_rs_user_profile]
+            [profile: UserProfile, "profile"]
         );
 
         let mut r = self.0.clone();
@@ -182,7 +84,7 @@ impl UserCertificate {
             r.public_key = x.0;
         }
         if let Some(x) = profile {
-            r.profile = x;
+            r.profile = x.0;
         }
 
         Ok(Self(r))
@@ -243,7 +145,7 @@ impl UserCertificate {
 
     #[getter]
     fn is_admin(&self) -> PyResult<bool> {
-        Ok(self.0.profile == UserProfile::Admin)
+        Ok(self.0.profile == libparsec::types::UserProfile::Admin)
     }
 
     #[getter]
@@ -275,8 +177,8 @@ impl UserCertificate {
     }
 
     #[getter]
-    fn profile(&self) -> PyResult<PyObject> {
-        rs_to_py_user_profile(&self.0.profile)
+    fn profile(&self) -> PyResult<&'static PyObject> {
+        Ok(UserProfile::from_profile(self.0.profile))
     }
 }
 

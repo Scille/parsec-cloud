@@ -1,6 +1,5 @@
 from __future__ import annotations
 from parsec._parsec_pyi.certif import (
-    RealmRole,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
@@ -14,6 +13,13 @@ from parsec._parsec_pyi.crypto import (
     VerifyKey,
     PrivateKey,
     PublicKey,
+)
+
+from parsec._parsec_pyi.enumerate import (
+    InvitationType,
+    InvitationEmailSentStatus,
+    RealmRole,
+    UserProfile,
 )
 
 from parsec._parsec_pyi.ids import (
@@ -122,9 +128,7 @@ from parsec._parsec_pyi.protocol import (
     BlockReadRepUnknownStatus,
     # Invite
     InvitationDeletedReason,
-    InvitationEmailSentStatus,
     InvitationStatus,
-    InvitationType,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,
@@ -452,7 +456,6 @@ from parsec._parsec_pyi.regex import Regex
 
 __all__ = [
     # Certif
-    "RealmRole",
     "UserCertificate",
     "DeviceCertificate",
     "RevokedUserCertificate",
@@ -464,6 +467,11 @@ __all__ = [
     "VerifyKey",
     "PrivateKey",
     "PublicKey",
+    # Enumerate
+    "InvitationType",
+    "InvitationEmailSentStatus",
+    "RealmRole",
+    "UserProfile",
     # Ids
     "OrganizationID",
     "EntryID",
@@ -555,9 +563,7 @@ __all__ = [
     "BlockReadRepUnknownStatus",
     # Invite protocol
     "InvitationDeletedReason",
-    "InvitationEmailSentStatus",
     "InvitationStatus",
-    "InvitationType",
     "Invite1ClaimerWaitPeerRep",
     "Invite1ClaimerWaitPeerRepInvalidState",
     "Invite1ClaimerWaitPeerRepNotFound",

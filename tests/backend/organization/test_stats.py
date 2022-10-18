@@ -128,7 +128,7 @@ async def test_organization_stats_users(
     )
 
     async with backend_authenticated_ws_factory(backend_asgi_app, godfrey1) as sock:
-        for profile in UserProfile:
+        for profile in UserProfile.values():
             i = [
                 i
                 for i, v in enumerate(expected_stats.users_per_profile_detail)

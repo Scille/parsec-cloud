@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DeviceName
+from parsec._parsec import DeviceName, UserProfile
 from parsec.api.protocol.base import (
     ProtocolError,
     MessageSerializationError,
@@ -21,7 +21,6 @@ from parsec.api.protocol.types import (
     OrganizationIDField,
     HumanHandleField,
     UserProfileField,
-    UserProfile,
     DeviceLabelField,
     DeviceLabel,
     StrBased,

@@ -1,41 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Protocol, Type, TypeVar, Union
-
-from parsec._parsec import DateTime as RsDateTime
-from uuid import UUID as _UUID
-from enum import Enum
 from collections.abc import Mapping
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Iterable, Protocol, Type, TypeVar, Union
+from uuid import UUID as _UUID
+
 from marshmallow import ValidationError
 from marshmallow.fields import (
-    # Republishing
-    Int,
-    Float,
-    String,
-    List,
-    Dict,
-    Nested,
-    Integer,
     Boolean,
+    Dict,
     Email,
-    Field,
+    Field,  # Republishing
+    Float,
+    Int,
+    Integer,
+    List,
+    Nested,
+    String,
 )
 
+from parsec._parsec import DateTime as RsDateTime
+from parsec.crypto import HashDigest as _HashDigest
+from parsec.crypto import PrivateKey as _PrivateKey
+from parsec.crypto import PublicKey as _PublicKey
+from parsec.crypto import SecretKey as _SecretKey
+from parsec.crypto import SigningKey as _SigningKey
+from parsec.crypto import VerifyKey as _VerifyKey
+from parsec.sequester_crypto import SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer
+from parsec.sequester_crypto import SequesterVerifyKeyDer as _SequesterVerifyKeyDer
 from parsec.types import FrozenDict as _FrozenDict
-from parsec.crypto import (
-    SecretKey as _SecretKey,
-    HashDigest as _HashDigest,
-    SigningKey as _SigningKey,
-    VerifyKey as _VerifyKey,
-    PrivateKey as _PrivateKey,
-    PublicKey as _PublicKey,
-)
-from parsec.sequester_crypto import (
-    SequesterVerifyKeyDer as _SequesterVerifyKeyDer,
-    SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer,
-)
-
 
 __all__ = (
     "enum_field_factory",

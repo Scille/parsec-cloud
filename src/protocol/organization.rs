@@ -10,7 +10,7 @@ use pyo3::{
 use libparsec::protocol::authenticated_cmds::v2::{organization_config, organization_stats};
 
 use crate::{
-    binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile},
+    enumerate::UserProfile,
     protocol::{gen_rep, Reason},
 };
 
@@ -26,18 +26,17 @@ crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __richcmp__, eq);
 #[pymethods]
 impl UsersPerProfileDetailItem {
     #[new]
-    fn new(profile: &PyAny, active: u64, revoked: u64) -> PyResult<Self> {
-        let profile = py_to_rs_user_profile(profile)?;
+    fn new(profile: UserProfile, active: u64, revoked: u64) -> PyResult<Self> {
         Ok(Self(organization_stats::UsersPerProfileDetailItem {
-            profile,
+            profile: profile.0,
             active,
             revoked,
         }))
     }
 
     #[getter]
-    fn profile(&self) -> PyResult<PyObject> {
-        rs_to_py_user_profile(&self.0.profile)
+    fn profile(&self) -> PyResult<&'static PyObject> {
+        Ok(UserProfile::from_profile(self.0.profile))
     }
 
     #[getter]

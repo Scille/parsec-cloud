@@ -9,9 +9,9 @@ use std::str::FromStr;
 
 use crate::{
     api_crypto::VerifyKey,
+    enumerate::InvitationType,
     ids::{EntryID, OrganizationID},
     invite::InvitationToken,
-    protocol::InvitationType,
 };
 
 #[pyclass]

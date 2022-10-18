@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey},
-    binding_utils::py_to_rs_user_profile,
+    enumerate::UserProfile,
     ids::{DeviceID, DeviceLabel, EntryID, HumanHandle},
 };
 
@@ -242,7 +242,7 @@ impl InviteUserConfirmation {
             [device_id: DeviceID, "device_id"],
             [device_label: Option<DeviceLabel>, "device_label"],
             [human_handle: Option<HumanHandle>, "human_handle"],
-            [profile, "profile", py_to_rs_user_profile],
+            [profile: UserProfile, "profile"],
             [root_verify_key: VerifyKey, "root_verify_key"],
         );
 
@@ -250,7 +250,7 @@ impl InviteUserConfirmation {
             device_id: device_id.0,
             device_label: device_label.map(|d| d.0),
             human_handle: human_handle.map(|h| h.0),
-            profile,
+            profile: profile.0,
             root_verify_key: root_verify_key.0,
         }))
     }
@@ -378,7 +378,7 @@ impl InviteDeviceConfirmation {
             [device_id: DeviceID, "device_id"],
             [device_label: Option<DeviceLabel>, "device_label"],
             [human_handle: Option<HumanHandle>, "human_handle"],
-            [profile, "profile", py_to_rs_user_profile],
+            [profile: UserProfile, "profile"],
             [private_key: PrivateKey, "private_key"],
             [root_verify_key: VerifyKey, "root_verify_key"],
             [user_manifest_id: EntryID, "user_manifest_id"],
@@ -389,7 +389,7 @@ impl InviteDeviceConfirmation {
             device_id: device_id.0,
             device_label: device_label.map(|d| d.0),
             human_handle: human_handle.map(|h| h.0),
-            profile,
+            profile: profile.0,
             private_key: private_key.0,
             user_manifest_id: user_manifest_id.0,
             user_manifest_key: user_manifest_key.0,

@@ -169,9 +169,9 @@ async def ask_info_new_user(
             click.echo("Invalid value")
             continue
 
-    choices = list(UserProfile)
-    for i, choice in enumerate(UserProfile):
-        display_choice = click.style(choice.value, fg="yellow")
+    choices = UserProfile.values()
+    for i, choice in enumerate(choices):
+        display_choice = click.style(choice.str, fg="yellow")
         click.echo(f" {i} - {display_choice}")
     choice_index = await async_prompt(
         "New user profile", default="1", type=click.Choice([str(i) for i, _ in enumerate(choices)])

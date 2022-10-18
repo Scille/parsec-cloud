@@ -1,23 +1,10 @@
 from __future__ import annotations
-from typing import Any, Optional, List
+from typing import Any, Optional
 
 from parsec._parsec_pyi.crypto import PublicKey, SigningKey, VerifyKey
+from parsec._parsec_pyi.enumerate import RealmRole, UserProfile
 from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, HumanHandle, RealmID, UserID
 from parsec._parsec_pyi.time import DateTime
-
-from parsec.api.protocol import UserProfile
-
-class RealmRole:
-    OWNER: RealmRole
-    MANAGER: RealmRole
-    CONTRIBUTOR: RealmRole
-    READER: RealmRole
-    @classmethod
-    def values(cls) -> List[RealmRole]: ...
-    @classmethod
-    def from_str(cls, value: str) -> RealmRole: ...
-    @property
-    def str(self) -> str: ...
 
 class UserCertificate:
     def __init__(

@@ -1,17 +1,20 @@
 from __future__ import annotations
 from typing import List, Optional, Tuple
 from uuid import UUID
-from parsec._parsec import (
-    DeviceID,
-    EntryID,
+
+from parsec._parsec_pyi.crypto import (
     PrivateKey,
     SecretKey,
-    DeviceLabel,
-    HumanHandle,
     VerifyKey,
     PublicKey,
 )
-from parsec.api.protocol.types import UserProfile
+from parsec._parsec_pyi.enumerate import UserProfile
+from parsec._parsec_pyi.ids import (
+    DeviceID,
+    EntryID,
+    DeviceLabel,
+    HumanHandle,
+)
 
 class InvitationToken:
     def __init__(self, uuid: UUID) -> None: ...

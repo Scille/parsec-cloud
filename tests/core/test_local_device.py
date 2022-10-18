@@ -299,7 +299,7 @@ def test_supports_legacy_is_admin_field(alice):
     raw_local_user = unpackb(dumped_local_user)
     assert raw_local_user == {
         **raw_legacy_local_user,
-        "profile": alice.profile.value,
+        "profile": alice.profile.str,
         "human_handle": None,
         "device_label": None,
     }
