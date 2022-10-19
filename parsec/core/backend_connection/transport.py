@@ -9,7 +9,7 @@ import urllib.request
 from structlog import get_logger
 from contextlib import asynccontextmanager
 from typing import (
-    AsyncGenerator,
+    AsyncIterator,
     Optional,
     Dict,
     Callable,
@@ -201,7 +201,7 @@ class TransportPool:
         self._lock = trio.Semaphore(max_pool)
 
     @asynccontextmanager
-    async def acquire(self, force_fresh: bool = False) -> AsyncGenerator[Transport, None]:
+    async def acquire(self, force_fresh: bool = False) -> AsyncIterator[Transport]:
         """
         Raises:
             BackendConnectionError

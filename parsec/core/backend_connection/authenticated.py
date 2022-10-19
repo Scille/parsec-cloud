@@ -3,8 +3,18 @@ from __future__ import annotations
 
 import trio
 from enum import Enum
-from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
-from typing import Any, AsyncIterator, Awaitable, Optional, List, AsyncGenerator, Callable, TypeVar
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from typing import (
+    Any,
+    AsyncIterator,
+    Awaitable,
+    Optional,
+    List,
+    AsyncGenerator,
+    Callable,
+    Protocol,
+    TypeVar,
+)
 from structlog import get_logger
 from functools import partial
 
@@ -63,6 +73,16 @@ BaseExceptionTypeVar = TypeVar("BaseExceptionTypeVar", bound=BaseException)
 T = TypeVar("T")
 
 
+class AcquireTransport(Protocol):
+    def __call__(
+        self,
+        force_fresh: bool = False,
+        ignore_status: bool = False,
+        allow_not_available: bool = False,
+    ) -> AbstractAsyncContextManager[Transport]:
+        ...
+
+
 def copy_exception(exception: BaseExceptionTypeVar) -> BaseExceptionTypeVar:
     result = type(exception)(*exception.args)
     result.__cause__ = exception.__cause__
@@ -73,7 +93,7 @@ class BackendAuthenticatedCmds:
     def __init__(
         self,
         addr: BackendOrganizationAddr,
-        acquire_transport: Callable[..., _AsyncGeneratorContextManager[Transport]],
+        acquire_transport: AcquireTransport,
     ):
         self.addr = addr
         self.acquire_transport = acquire_transport
@@ -219,7 +239,7 @@ class BackendAuthenticatedConn:
         self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope = None
-        self._monitors_cbs: List[Callable[..., Any]] = []
+        self._monitors_cbs: List[Callable[..., None]] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
@@ -503,7 +523,9 @@ async def backend_authenticated_cmds_factory(
             transport = None
 
     @asynccontextmanager
-    async def _acquire_transport(**kwargs: object) -> AsyncIterator[Transport]:
+    async def _acquire_transport(
+        force_fresh: bool = False, ignore_status: bool = False, allow_not_available: bool = False
+    ) -> AsyncIterator[Transport]:
         async with transport_lock:
             transport = await _init_transport()
             try:

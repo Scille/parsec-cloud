@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import trio
-from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
-from typing import Any, Callable, Optional, AsyncGenerator, TypeVar, Union
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Optional, AsyncGenerator, TypeVar
 
 from parsec.api.protocol import INVITED_CMDS
+from parsec.core.backend_connection.authenticated import AcquireTransport
 from parsec.core.types import BackendAddrType, BackendInvitationAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_invited
@@ -19,7 +20,7 @@ class BackendInvitedCmds:
     def __init__(
         self,
         addr: BackendAddrType,
-        acquire_transport: Callable[..., _AsyncGeneratorContextManager[T]],
+        acquire_transport: AcquireTransport,
     ) -> None:
         self.addr = addr
         self.acquire_transport = acquire_transport
@@ -51,7 +52,7 @@ async def backend_invited_cmds_factory(
         BackendConnectionError
     """
     transport_lock = trio.Lock()
-    transport = None
+    transport: Optional[Transport] = None
     closed = False
 
     async def _init_transport() -> None:
@@ -69,12 +70,15 @@ async def backend_invited_cmds_factory(
             transport = None
 
     @asynccontextmanager
-    async def _acquire_transport(**kwargs: Any) -> AsyncGenerator[Union[BackendInvitedCmds, Optional[Transport]], BackendInvitedCmds]:  # type: ignore[misc]
+    async def _acquire_transport(
+        force_fresh: bool = False, ignore_status: bool = False, allow_not_available: bool = False
+    ) -> AsyncIterator[Transport]:
         nonlocal transport
 
         async with transport_lock:
             await _init_transport()
             try:
+                assert transport is not None, "Transport is None after call `_init_transport`"
                 yield transport
             except BackendNotAvailable:
                 await _destroy_transport()
