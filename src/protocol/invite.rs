@@ -739,6 +739,7 @@ gen_rep!(
     Invite1ClaimerWaitPeerRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState]
 );
 
@@ -999,6 +1000,7 @@ gen_rep!(
     Invite2bClaimerSendNonceRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState]
 );
 
@@ -1112,6 +1114,7 @@ gen_rep!(
     Invite3aClaimerSignifyTrustRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState]
 );
 
@@ -1207,6 +1210,7 @@ gen_rep!(
     Invite3bClaimerWaitPeerTrustRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState]
 );
 
@@ -1307,6 +1311,7 @@ gen_rep!(
     Invite4ClaimerCommunicateRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState],
 );
 
