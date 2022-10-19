@@ -158,6 +158,7 @@ class PGBlockComponent(BaseBlockComponent):
         author: DeviceID,
         block_id: BlockID,
         realm_id: RealmID,
+        timestamp: DateTime,
         block: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
@@ -203,7 +204,7 @@ class PGBlockComponent(BaseBlockComponent):
                         realm_id=realm_id.uuid,
                         author=author.str,
                         size=len(block),
-                        created_on=DateTime.now(),
+                        created_on=timestamp,
                     )
                 )
             except UniqueViolationError as exc:

@@ -170,8 +170,8 @@ async def test_stats(
                 author=org_d1.device_id,
                 block_id=BlockID.new(),
                 realm_id=realm_id,
-                block=b"\x00" * 100,
                 timestamp=dtx4,
+                block=b"\x00" * 100,
             )
 
     # Now check the stats
@@ -235,8 +235,8 @@ async def test_stats(
         author=org_d1.device_id,
         block_id=BlockID.new(),
         realm_id=realm_id,
-        block=b"\x00" * 100,
         timestamp=dty1,
+        block=b"\x00" * 100,
     )
 
     # Stats should have changed

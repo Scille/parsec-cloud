@@ -46,7 +46,14 @@ BLOCK_DATA = b"Hodi ho !"
 async def block(backend, alice, realm):
     block_id = BlockID.from_hex("0000000000000000000000000000000C")
 
-    await backend.block.create(alice.organization_id, alice.device_id, block_id, realm, BLOCK_DATA)
+    await backend.block.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        block_id=block_id,
+        realm_id=realm,
+        timestamp=DateTime.now(),
+        block=BLOCK_DATA,
+    )
     return block_id
 
 

@@ -140,6 +140,7 @@ async def test_sequester_export_full_run(
         author=alice.device_id,
         block_id=block1,
         realm_id=realm1,
+        timestamp=_next_day(),  # 2000/1/7
         block=b"block1",
     )
     await backend.block.create(
@@ -147,6 +148,7 @@ async def test_sequester_export_full_run(
         author=alice.device_id,
         block_id=block2,
         realm_id=realm1,
+        timestamp=_next_day(),  # 2000/1/8
         block=b"block2",
     )
 
@@ -344,6 +346,7 @@ async def test_sequester_export_full_run(
         author=alice.device_id,
         block_id=block3,
         realm_id=realm1,
+        timestamp=DateTime.now(),
         block=b"block3",
     )
     async with RealmExporter.run(

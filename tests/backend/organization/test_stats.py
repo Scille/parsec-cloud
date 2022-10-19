@@ -61,6 +61,7 @@ async def test_organization_stats_data(alice_ws, realm, realm_factory, alice, ba
         author=alice.device_id,
         block_id=BlockID.new(),
         realm_id=realm,
+        timestamp=DateTime.now(),
         block=b"1234",
     )
     stats = await organization_stats(alice_ws)

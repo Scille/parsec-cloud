@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole, BlockID
@@ -110,10 +110,9 @@ class MemoryBlockComponent(BaseBlockComponent):
         author: DeviceID,
         block_id: BlockID,
         realm_id: RealmID,
+        timestamp: DateTime,
         block: bytes,
-        timestamp: Optional[DateTime] = None,
     ) -> None:
-        timestamp = timestamp or DateTime.now()
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
         if (organization_id, block_id) in self._blockmetas:
             raise BlockAlreadyExistsError()

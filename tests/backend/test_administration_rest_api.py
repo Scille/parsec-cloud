@@ -572,6 +572,7 @@ async def test_organization_stats_data(backend_asgi_app, realm, realm_factory, a
         author=alice.device_id,
         block_id=BlockID.new(),
         realm_id=realm,
+        timestamp=DateTime.now(),
         block=b"1234",
     )
     rep = await organization_stats()
