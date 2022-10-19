@@ -235,7 +235,7 @@ class BackendAuthenticatedConn:
             addr, device.device_id, device.signing_key, max_pool, keepalive
         )
         self._status = BackendConnStatus.LOST
-        self._status_exc = None
+        self._status_exc: Optional[Exception] = None
         self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope = None
@@ -282,7 +282,7 @@ class BackendAuthenticatedConn:
         # and the actual cancellation.
         await trio.lowlevel.checkpoint_if_cancelled()
         old_status, self._status = self._status, status
-        self._status_exc = status_exc  # type: ignore[assignment]
+        self._status_exc = status_exc
         if not self._status_event_sent or old_status != status:
             self.event_bus.send(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
