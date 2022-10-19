@@ -114,8 +114,15 @@ impl DateTime {
         now.into()
     }
 
+
+    /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
     pub fn to_rfc3339(&self) -> String {
         self.0.to_rfc3339_opts(chrono::SecondsFormat::Micros, false)
+    }
+
+    /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
+    pub fn from_rfc3339(s: &str) -> Result<Self, chrono::ParseError> {
+        s.parse().map(|dt: chrono::DateTime<chrono::Utc>| dt.into())
     }
 }
 
@@ -132,22 +139,24 @@ impl std::fmt::Debug for DateTime {
     }
 }
 
+// `std::fmt::Display` is convenient but ambiguous about it format (and the
+// guarantee it won't change !), so:
+// - display should only be used for human display (e.g. CLI output, error messages)
+// - for actual serialization `DateTime::to_rfc3339` must be used instead
 impl std::fmt::Display for DateTime {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false)
-        )
+        write!(f, "{}", self.to_rfc3339())
     }
 }
 
+// `FromStr` is a convenient but ambiguous shortcut, we should only use it
+// for tests and prefere `DateTime::from_rfc3339` elsewhere
+// TODO: prevent me from being used outside of test code
 impl std::str::FromStr for DateTime {
     type Err = chrono::format::ParseError;
 
-    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(|dt: chrono::DateTime<chrono::Utc>| dt.into())
+        Self::from_rfc3339(s)
     }
 }
 
