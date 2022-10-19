@@ -22,6 +22,7 @@
                     }
                 }
             },
+            "already_deleted": {},
             "not_found": {},
             "invalid_state": {}
         }
