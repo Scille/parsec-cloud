@@ -117,7 +117,7 @@ SET
     root_verify_key = $root_verify_key,
     sequester_authority_certificate=$sequester_authority_certificate,
     sequester_authority_verify_key_der=$sequester_authority_verify_key_der,
-    _bootstrapped_on = NOW()
+    _bootstrapped_on = $bootstrapped_on
 WHERE
     organization_id = $organization_id
     AND bootstrap_token = $bootstrap_token
@@ -275,8 +275,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        bootstrapped_on: Optional[DateTime] = None,
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
+        bootstrapped_on = bootstrapped_on or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
             # organization table until the end of the transaction. Hence
@@ -303,6 +305,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 *_q_bootstrap_organization(
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
+                    bootstrapped_on=bootstrapped_on,
                     root_verify_key=root_verify_key.encode(),
                     sequester_authority_certificate=sequester_authority_certificate,
                     sequester_authority_verify_key_der=sequester_authority_verify_key_der,

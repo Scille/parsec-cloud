@@ -356,6 +356,7 @@ class BaseOrganizationComponent:
                 first_device=first_device,
                 bootstrap_token=bootstrap_token,
                 root_verify_key=root_verify_key,
+                bootstrapped_on=now,
                 sequester_authority=sequester_authority,
             )
 
@@ -410,6 +411,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        bootstrapped_on: Optional[DateTime] = None,
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         """

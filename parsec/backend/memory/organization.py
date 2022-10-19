@@ -99,6 +99,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        bootstrapped_on: Optional[DateTime] = None,
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         assert self._user_component is not None

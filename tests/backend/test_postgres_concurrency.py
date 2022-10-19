@@ -67,11 +67,11 @@ async def test_concurrency_bootstrap_organization(postgresql_url, backend_factor
     async def _concurrent_boostrap(backend):
         try:
             await backend.organization.bootstrap(
-                coolorg.organization_id,
-                backend_user,
-                backend_first_device,
-                coolorg.bootstrap_token,
-                coolorg.root_verify_key,
+                id=coolorg.organization_id,
+                user=backend_user,
+                first_device=backend_first_device,
+                bootstrap_token=coolorg.bootstrap_token,
+                root_verify_key=coolorg.root_verify_key,
             )
             results.append(None)
 
