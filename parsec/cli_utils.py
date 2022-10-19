@@ -4,10 +4,13 @@ from __future__ import annotations
 import sys
 import trio
 import click
+import datetime
 import traceback
+from typing import Any, Optional, Dict
 from functools import partial, wraps
 from contextlib import contextmanager, asynccontextmanager
 
+from parsec._parsec import DateTime
 from parsec.logging import configure_logging, configure_sentry_logging
 
 
@@ -221,3 +224,76 @@ def debug_config_options(fn):
         envvar="DEBUG",
     )
     return decorator(fn)
+
+
+class ParsecDateTimeClickType(click.ParamType):
+    """
+    Add support for RFC3339 date time to `click.DateTime`.
+
+    Funny enough, `click.DateTime` only support local time (e.g. 2000-01-01T00:00:00)
+    while we precisely want the exact opposite: only support time in Zoulou
+    format (e.g. 2000-01-01T00:00:00Z).
+
+    The rational for this is using local time is very error prone:
+    - Copy/pasting between computers `2000-01-01T00:00:00` may changes it meaning
+    - The convenient date only format (e.g. `2000-01-01`) becomes ambiguous given
+      we don't know if it should use local time or not (for instance with a CET
+      timezone `2000-01-01` gets translated to `1999-12-31T23:00:00Z`, even if
+      we are in summer and hence current local time is UTC+1 :/)
+
+    So the simple fix is to only allow the Zoulou format (e.g. `2000-01-01T00:00:00Z`)
+    and consider the date only format as shortcut for not typing the final `T00:00:00Z`.
+
+    On top of that, we don't support the full range of timezone but only `Z` (so
+    `2000-01-01T00:00:00+01:00` is not supported), this makes code much simpler
+    and should be enough in most cases.
+    """
+
+    name = "datetime"
+
+    def __repr__(self) -> str:
+        return "ParsecDateTimeClickType"
+
+    def to_info_dict(self) -> Dict[str, Any]:
+        info_dict = super().to_info_dict()
+        info_dict["formats"] = self.formats
+        return info_dict
+
+    def get_metavar(self, param: click.Parameter) -> str:
+        return f"[2000-01-01|2000-01-01T00:00:00Z]"
+
+    def convert(
+        self, value: Any, param: Optional[click.Parameter], ctx: Optional[click.Context]
+    ) -> DateTime:
+        if isinstance(value, DateTime):
+            return value
+
+        assert isinstance(value, str)
+
+        pydt: Optional[datetime.datetime] = None
+        try:
+            # Try short format
+            pydt = datetime.datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            try:
+                # Try long format
+                pydt = datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                try:
+                    # Long format with subseconds ?
+                    pydt = datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
+                except ValueError:
+                    pass
+
+        if not pydt:
+            self.fail(
+                f"`{value}` must be a RFC3339 date/datetime (e.g. `2000-01-01` or `2000-01-01T00:00:00Z`)",
+                param,
+                ctx,
+            )
+
+        # strptime consider the provided datetime to be in local time,
+        # so we must correct it given we know it is in fact a UTC
+        pydt = pydt.replace(tzinfo=datetime.timezone.utc)
+
+        return DateTime.from_timestamp(pydt.timestamp())
