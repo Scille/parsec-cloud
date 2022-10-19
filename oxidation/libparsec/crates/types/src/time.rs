@@ -117,7 +117,7 @@ impl DateTime {
 
     /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
     pub fn to_rfc3339(&self) -> String {
-        self.0.to_rfc3339_opts(chrono::SecondsFormat::Micros, false)
+        self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true)
     }
 
     /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
@@ -657,6 +657,7 @@ mod tests {
 
         let expected = match micro {
             0 => "2000-01-01T00:00:00Z".to_owned(),
+            x if x % 1000 == 0 => format!("2000-01-01T00:00:00.{}Z", micro / 1000),
             _ => format!("2000-01-01T00:00:00.{micro}Z"),
         };
         assert_eq!(dt.to_rfc3339(), expected);

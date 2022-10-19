@@ -456,7 +456,7 @@ fn serde_user_manifest(alice: &Device) {
     Some("2021-10-24T11:50:43.208821Z".parse().unwrap()),
     None,
     None,
-    Some("Invalid timestamp: expected `2021-10-24T11:50:43.208821+00:00`, got `2021-12-04T11:50:43.208821+00:00`".to_string())
+    Some("Invalid timestamp: expected `2021-10-24T11:50:43.208821Z`, got `2021-12-04T11:50:43.208821Z`".to_string())
 )]
 #[case::invalid_id(
     None,
