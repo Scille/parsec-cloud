@@ -5,13 +5,60 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.13.0 (2022-10-19)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Introduce ``generate_service_certificate`` & ``import_service_certificate``
+  CLI commands  (corresponding to the ends of ``create_service_certificate``
+  command).  This allows to keep the sequester private keys on an offline
+  machine at all time.  (`#3198 <https://github.com/Scille/parsec-
+  cloud/issues/3198>`__)
+* Add the webhook sequester service type that pushes encrypted workspace data to
+  3rd party throughout HTTP. A webhook services is a sequester service with an
+  encryption key. Metadata are also encrypted with the service key and send to
+  the parsec metadata server. A webhook service does not store the sequester
+  metadata to a storage, but it posted the metadata to an http service.  (`#2799
+  <https://github.com/Scille/parsec-cloud/issues/2799>`__)
+* Add a way to filter out unmounted workspaces  (`#3056
+  <https://github.com/Scille/parsec-cloud/issues/3056>`__)
+* Updated the file link not found error message with the name of the file
+  (`#3122 <https://github.com/Scille/parsec-cloud/issues/3122>`__)
+* Added new context menu option to generate file links that point to a specific
+  version of a file.  (`#3123 <https://github.com/Scille/parsec-
+  cloud/issues/3123>`__)
+* Made workspace listing faster  (`#3125 <https://github.com/Scille/parsec-
+  cloud/issues/3125>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Remove cut status if cut is overriden by a copy  (`#3022
+  <https://github.com/Scille/parsec-cloud/issues/3022>`__)
+* Fixed links in About window not opening  (`#3023
+  <https://github.com/Scille/parsec-cloud/issues/3023>`__)
+* Fix an error that de-sync postgresql timestamp type  (`#3071
+  <https://github.com/Scille/parsec-cloud/issues/3071>`__)
+* Fix a bug that caused the login time to be larger than expected for large
+  organizations.  (`#3145 <https://github.com/Scille/parsec-
+  cloud/issues/3145>`__)
+* Scrollbar should stay in place when enabling/disabling workspaces  (`#3301
+  <https://github.com/Scille/parsec-cloud/issues/3301>`__)
+* Fixed how workspaces are displayed when offline  (`#3302
+  <https://github.com/Scille/parsec-cloud/issues/3302>`__)
+* Disabled workspaces not longer appear enabled when logging in  (`#3300
+  <https://github.com/Scille/parsec-cloud/issues/3300>`__)
+
+
 Parsec v2.12.1 (2022-09-13)
 ---------------------------
 
 Bugfixes
 ~~~~~~~~
 
-* Fix an error that desync postgresql timestamptz type  (`#3071
+* Fix an error that de-sync postgresql timestamp type  (`#3071
   <https://github.com/Scille/parsec-cloud/issues/3071>`__)
 
 
@@ -31,8 +78,6 @@ Features
   <https://github.com/Scille/parsec-cloud/issues/2673>`__)
 * Added a show status/show history to the current directory in the explorer
   (`#2674 <https://github.com/Scille/parsec-cloud/issues/2674>`__)
-* Fixed links in About window not opening  (`#3023
-  <https://github.com/Scille/parsec-cloud/issues/3023>`__)
 
 Bugfixes
 ~~~~~~~~
@@ -43,11 +88,12 @@ Bugfixes
   <https://github.com/Scille/parsec-cloud/issues/2960>`__)
 * Fix rare segfault in the GUI when an event occurs at the wrong time  (`#2839
   <https://github.com/Scille/parsec-cloud/issues/2839>`__)
-* Update reencryption status when role is changed  (`#2699
+* Update re-encryption status when role is changed  (`#2699
   <https://github.com/Scille/parsec-cloud/issues/2699>`__)
 * Fix an error that could happen when looking at a file status  (`#2779
   <https://github.com/Scille/parsec-cloud/issues/2779>`__)
-
+* Fixed links in About window not opening  (`#3023
+  <https://github.com/Scille/parsec-cloud/issues/3023>`__)
 
 Parsec v2.11.1 (2022-08-16)
 ---------------------------

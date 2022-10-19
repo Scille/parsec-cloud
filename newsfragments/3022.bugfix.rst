@@ -1,1 +1,0 @@
-Remove cut status if cut is overriden by a copy

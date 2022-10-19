@@ -1,2 +1,0 @@
-Added new context menu option to generate file links that point to a specific
-version of a file.
