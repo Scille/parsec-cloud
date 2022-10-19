@@ -65,8 +65,9 @@ from parsec._parsec import (
     VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
+    VlobCreateRep,
+    VlobUpdateRep,
 )
-from parsec._parsec_pyi.protocol import VlobCreateRep, VlobUpdateRep
 from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus

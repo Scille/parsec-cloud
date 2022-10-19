@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import TypeVar, Callable, Awaitable
+from typing import TYPE_CHECKING, TypeVar, Callable, Awaitable
 from typing_extensions import Concatenate, ParamSpec
 
 from parsec.api.transport import Transport
-from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 
+if TYPE_CHECKING:
+    from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -41,5 +42,4 @@ def expose_cmds_with_retrier(
             async with self.acquire_transport(force_fresh=True) as transport:
                 return await cmd(transport, *args, **kwargs)
 
-    # because of wraps mypy does not infer a proper type
     return wrapper
