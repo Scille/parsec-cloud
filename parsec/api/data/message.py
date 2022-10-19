@@ -58,7 +58,7 @@ class SharingGrantedMessageContent(BaseMessageContent):
         # to make sure he is an owner.
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "SharingGrantedMessageContent":
+        def make_obj(self, data: Dict[str, Any]) -> "SharingGrantedMessageContent":  # type: ignore[misc]
             data.pop("type")
             return SharingGrantedMessageContent(**data)
 
@@ -78,7 +78,7 @@ class SharingReencryptedMessageContent(SharingGrantedMessageContent):
         # occurs right before a reencryption.
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "SharingReencryptedMessageContent":
+        def make_obj(self, data: Dict[str, Any]) -> "SharingReencryptedMessageContent":  # type: ignore[misc]
             data.pop("type")
             return SharingReencryptedMessageContent(**data)
 
@@ -90,7 +90,7 @@ class SharingRevokedMessageContent(BaseMessageContent):
         id = EntryIDField(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "SharingRevokedMessageContent":
+        def make_obj(self, data: Dict[str, Any]) -> "SharingRevokedMessageContent":  # type: ignore[misc]
             data.pop("type")
             return SharingRevokedMessageContent(**data)
 
@@ -104,7 +104,7 @@ class PingMessageContent(BaseMessageContent):
         ping = fields.String(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "PingMessageContent":
+        def make_obj(self, data: Dict[str, Any]) -> "PingMessageContent":  # type: ignore[misc]
             data.pop("type")
             return PingMessageContent(**data)
 

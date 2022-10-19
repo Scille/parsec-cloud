@@ -31,7 +31,7 @@ class SequesterAuthorityCertificate(BaseAPISignedData):
         verify_key_der = fields.SequesterVerifyKeyDerField(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "SequesterAuthorityCertificate":
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterAuthorityCertificate":  # type: ignore[misc]
             data.pop("type")
             return SequesterAuthorityCertificate(**data)
 
@@ -51,7 +51,7 @@ class SequesterServiceCertificate(BaseAPIData):
         encryption_key_der = fields.SequesterEncryptionKeyDerField(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "SequesterServiceCertificate":
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterServiceCertificate":  # type: ignore[misc]
             data.pop("type")
             return SequesterServiceCertificate(**data)
 

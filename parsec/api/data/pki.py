@@ -30,7 +30,7 @@ class PkiEnrollmentSubmitPayload(BaseAPIData):
         # information from the submitter's X509 certificate
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "PkiEnrollmentSubmitPayload":
+        def make_obj(self, data: Dict[str, Any]) -> "PkiEnrollmentSubmitPayload":  # type: ignore[misc]
             data.pop("type")
             return PkiEnrollmentSubmitPayload(**data)
 
@@ -50,7 +50,7 @@ class PkiEnrollmentAcceptPayload(BaseAPIData):
         root_verify_key = fields.VerifyKey(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "PkiEnrollmentAcceptPayload":
+        def make_obj(self, data: Dict[str, Any]) -> "PkiEnrollmentAcceptPayload":  # type: ignore[misc]
             data.pop("type")
             return PkiEnrollmentAcceptPayload(**data)
 
