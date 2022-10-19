@@ -152,7 +152,6 @@ def round_to_block_size(size: int, block_size: int = DEFAULT_BLOCK_SIZE) -> int:
     return ((size // block_size) + 1) * block_size
 
 
-# winfsp is present only in a windows env, so we ignore this type
 def stat_to_file_attributes(stat: dict[str, str]) -> FILE_ATTRIBUTE:
     # TODO: consider using FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS/FILE_ATTRIBUTE_RECALL_ON_OPEN ?
     # (see https://docs.microsoft.com/en-us/windows/desktop/fileio/file-attribute-constants)
@@ -212,8 +211,8 @@ def handle_error(func: Callable[Concatenate[T, U, P], R]) -> Callable[Concatenat
     return wrapper
 
 
-# `BaseFileSystemOperations` is resolved as `Any` on non-windows platform. We can't
-# derive from `Any` type (misc).
+# `BaseFileSystemOperations` is resolved as `Any` on non-windows platform.
+# We can't derive from `Any` type (misc).
 class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
     def __init__(
         self,
