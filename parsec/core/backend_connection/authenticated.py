@@ -56,6 +56,7 @@ from parsec.core.backend_connection.exceptions import (
 )
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 from parsec.core.core_events import CoreEvent
+from parsec.utils import open_service_nursery
 
 logger = get_logger()
 
@@ -238,7 +239,7 @@ class BackendAuthenticatedConn:
         self._status_exc: Optional[Exception] = None
         self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
-        self._manager_connect_cancel_scope = None
+        self._manager_connect_cancel_scope: Optional[trio.CancelScope] = None
         self._monitors_cbs: List[Callable[..., None]] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
@@ -312,7 +313,7 @@ class BackendAuthenticatedConn:
     async def run(self) -> AsyncIterator[None]:
         if self._started:
             raise RuntimeError("Already started")
-        async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
+        async with open_service_nursery() as nursery:
             nursery.start_soon(self._run_manager)
             yield
             nursery.cancel_scope.cancel()
@@ -320,7 +321,7 @@ class BackendAuthenticatedConn:
     async def _run_manager(self) -> None:
         while True:
             try:
-                with trio.CancelScope() as self._manager_connect_cancel_scope:  # type: ignore[assignment]
+                with trio.CancelScope() as self._manager_connect_cancel_scope:
                     try:
                         await self._manager_connect()
                     except (BackendNotAvailable, BackendConnectionRefused):
@@ -431,7 +432,7 @@ class BackendAuthenticatedConn:
                 await monitor_cb(task_status=task_status)
 
             try:
-                async with trio.open_service_nursery() as monitors_nursery:  # type: ignore[attr-defined]
+                async with open_service_nursery() as monitors_nursery:
 
                     async with trio.open_service_nursery() as monitors_bootstrap_nursery:  # type: ignore[attr-defined]
                         for idx, monitor_cb in enumerate(self._monitors_cbs):
