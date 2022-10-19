@@ -207,42 +207,42 @@ impl DateTime {
     }
 
     #[args(
-        days = "0.",
-        hours = "0.",
-        minutes = "0.",
-        seconds = "0.",
-        microseconds = "0."
+        days = "0",
+        hours = "0",
+        minutes = "0",
+        seconds = "0",
+        microseconds = "0"
     )]
     fn subtract(
         &self,
-        days: f64,
-        hours: f64,
-        minutes: f64,
-        seconds: f64,
-        microseconds: f64,
+        days: i32,
+        hours: i32,
+        minutes: i32,
+        seconds: i32,
+        microseconds: i32,
     ) -> PyResult<Self> {
-        let us =
-            -((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds) as i64;
+        let us = -((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1_000_000 + microseconds)
+            as i64;
         Ok(Self(self.0.add_us(us)))
     }
 
     #[args(
-        days = "0.",
-        hours = "0.",
-        minutes = "0.",
-        seconds = "0.",
-        microseconds = "0."
+        days = "0",
+        hours = "0",
+        minutes = "0",
+        seconds = "0",
+        microseconds = "0"
     )]
     fn add(
         &self,
-        days: f64,
-        hours: f64,
-        minutes: f64,
-        seconds: f64,
-        microseconds: f64,
+        days: i32,
+        hours: i32,
+        minutes: i32,
+        seconds: i32,
+        microseconds: i32,
     ) -> PyResult<Self> {
         let us =
-            ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds) as i64;
+            ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1_000_000 + microseconds) as i64;
         Ok(Self(self.0.add_us(us)))
     }
 }

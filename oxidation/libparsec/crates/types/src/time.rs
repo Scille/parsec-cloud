@@ -57,12 +57,12 @@ impl DateTime {
     pub fn from_f64_with_us_precision(ts: f64) -> Self {
         let mut t = ts.trunc() as i64;
         let mut us = (ts.fract() * 1e6).round() as i32;
-        if us >= 1000000 {
+        if us >= 1_000_000 {
             t += 1;
-            us -= 1000000;
+            us -= 1_000_000;
         } else if us < 0 {
             t -= 1;
-            us += 1000000;
+            us += 1_000_000;
         }
 
         Self(chrono::Utc.timestamp_opt(t, (us as u32) * 1000).unwrap())
@@ -506,12 +506,12 @@ impl LocalDateTime {
     pub fn from_f64_with_us_precision(ts: f64) -> Self {
         let mut t = ts.trunc() as i64;
         let mut us = (ts.fract() * 1e6).round() as i32;
-        if us >= 1000000 {
+        if us >= 1_000_000 {
             t += 1;
-            us -= 1000000;
+            us -= 1_000_000;
         } else if us < 0 {
             t -= 1;
-            us += 1000000;
+            us += 1_000_000;
         }
 
         Self(chrono::Local.timestamp_opt(t, (us as u32) * 1000).unwrap())
