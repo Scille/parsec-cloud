@@ -119,8 +119,6 @@ impl DateTime {
         now.into()
     }
 
-    /// Return a date-time formatted string in the rfc3339 format with a precision update to milliseconds.
-    /// Equivalent to ISO-8601
     pub fn to_rfc3339(&self) -> String {
         self.0.to_rfc3339_opts(chrono::SecondsFormat::Micros, false)
     }

@@ -189,7 +189,6 @@ impl DateTime {
         Ok(LocalDateTime(self.0.to_local()))
     }
 
-    // Equivalent to ISO 8601
     fn to_rfc3339(&self) -> PyResult<String> {
         Ok(self.0.to_rfc3339())
     }
