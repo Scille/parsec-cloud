@@ -17,13 +17,13 @@ impl DateTime {
     #[new]
     #[args(hour = 0, minute = 0, second = 0, microsecond = 0)]
     fn new(
-        year: u64,
-        month: u64,
-        day: u64,
-        hour: u64,
-        minute: u64,
-        second: u64,
-        microsecond: u64,
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        minute: u32,
+        second: u32,
+        microsecond: u32,
     ) -> PyResult<Self> {
         Ok(Self(libparsec::types::DateTime::from_ymd_hms_us(
             year,
@@ -168,13 +168,13 @@ impl LocalDateTime {
     #[new]
     #[args(hour = 0, minute = 0, second = 0, microsecond = 0)]
     fn new(
-        year: u64,
-        month: u64,
-        day: u64,
-        hour: u64,
-        minute: u64,
-        second: u64,
-        microsecond: u64,
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        minute: u32,
+        second: u32,
+        microsecond: u32,
     ) -> PyResult<Self> {
         Ok(Self(libparsec::types::LocalDateTime::from_ymd_hms_us(
             year,
@@ -188,32 +188,32 @@ impl LocalDateTime {
     }
 
     #[getter]
-    fn year(&self) -> PyResult<u64> {
+    fn year(&self) -> PyResult<i32> {
         Ok(self.0.year())
     }
 
     #[getter]
-    fn month(&self) -> PyResult<u64> {
+    fn month(&self) -> PyResult<u32> {
         Ok(self.0.month())
     }
 
     #[getter]
-    fn day(&self) -> PyResult<u64> {
+    fn day(&self) -> PyResult<u32> {
         Ok(self.0.day())
     }
 
     #[getter]
-    fn hour(&self) -> PyResult<u64> {
+    fn hour(&self) -> PyResult<u32> {
         Ok(self.0.hour())
     }
 
     #[getter]
-    fn minute(&self) -> PyResult<u64> {
+    fn minute(&self) -> PyResult<u32> {
         Ok(self.0.minute())
     }
 
     #[getter]
-    fn second(&self) -> PyResult<u64> {
+    fn second(&self) -> PyResult<u32> {
         Ok(self.0.second())
     }
 

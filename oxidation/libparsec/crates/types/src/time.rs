@@ -38,23 +38,18 @@ pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
 impl DateTime {
     pub fn from_ymd_hms_us(
-        year: u64,
-        month: u64,
-        day: u64,
-        hour: u64,
-        minute: u64,
-        second: u64,
-        microsecond: u64,
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        minute: u32,
+        second: u32,
+        microsecond: u32,
     ) -> Self {
         Self(
             chrono::Utc
-                .ymd(year as i32, month as u32, day as u32)
-                .and_hms_micro(
-                    hour as u32,
-                    minute as u32,
-                    second as u32,
-                    microsecond as u32,
-                ),
+                .ymd(year, month, day)
+                .and_hms_micro(hour, minute, second, microsecond),
         )
     }
 
@@ -83,28 +78,28 @@ impl DateTime {
         Self(self.0 + Duration::microseconds(us))
     }
 
-    pub fn year(&self) -> u64 {
-        self.0.year() as u64
+    pub fn year(&self) -> i32 {
+        self.0.year()
     }
 
-    pub fn month(&self) -> u64 {
-        self.0.month() as u64
+    pub fn month(&self) -> u32 {
+        self.0.month()
     }
 
-    pub fn day(&self) -> u64 {
-        self.0.day() as u64
+    pub fn day(&self) -> u32 {
+        self.0.day()
     }
 
-    pub fn hour(&self) -> u64 {
-        self.0.hour() as u64
+    pub fn hour(&self) -> u32 {
+        self.0.hour()
     }
 
-    pub fn minute(&self) -> u64 {
-        self.0.minute() as u64
+    pub fn minute(&self) -> u32 {
+        self.0.minute()
     }
 
-    pub fn second(&self) -> u64 {
-        self.0.second() as u64
+    pub fn second(&self) -> u32 {
+        self.0.second()
     }
 
     pub fn to_local(self) -> LocalDateTime {
@@ -492,23 +487,18 @@ impl From<DateTime> for LocalDateTime {
 
 impl LocalDateTime {
     pub fn from_ymd_hms_us(
-        year: u64,
-        month: u64,
-        day: u64,
-        hour: u64,
-        minute: u64,
-        second: u64,
-        microsecond: u64,
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        minute: u32,
+        second: u32,
+        microsecond: u32,
     ) -> Self {
         Self(
             chrono::Local
-                .ymd(year as i32, month as u32, day as u32)
-                .and_hms_micro(
-                    hour as u32,
-                    minute as u32,
-                    second as u32,
-                    microsecond as u32,
-                ),
+                .ymd(year, month, day)
+                .and_hms_micro(hour, minute, second, microsecond),
         )
     }
 
