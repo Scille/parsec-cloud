@@ -47,7 +47,7 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
     # configured, and `get_pac` silently fails on wrong content-type by returning None)
     # Also disable WPAD protocol to retrieve PAC from DNS given it produce annoying
     # WARNING logs
-    get_pac_kwargs: dict[str, bool | set[str] | str] = {
+    get_pac_kwargs: dict[str, object] = {
         "from_dns": False,
         "allowed_content_types": {""},
     }
@@ -73,7 +73,10 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
 
     try:
         proxies = pacfile.find_proxy_for_url(url, hostname)
-        assert proxies is not None, "Proxy list is None"
+        if proxies is None:
+            logger.debug("Proxy list is None", target_url=url)
+            return None
+
         logger.debug("Found proxies info in .PAC proxy config", target_url=url, proxies=proxies)
         proxies = [p.strip() for p in proxies.split(";")]
         if len(proxies) > 1:

@@ -15,3 +15,8 @@ def get_pac(
     sessions: Optional[requests.Session] = None,
 ) -> Optional[PACFile]:
     ...
+
+
+class PACFile:
+    def find_proxy_for_url(self, url: str, hostname: str) -> str:
+        ...
