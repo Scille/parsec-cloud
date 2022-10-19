@@ -309,7 +309,7 @@ class BackendAuthenticatedConn:
         await self._monitors_idle_event.wait()
 
     @asynccontextmanager
-    async def run(self) -> AsyncGenerator[None, None]:
+    async def run(self) -> AsyncIterator[None]:
         if self._started:
             raise RuntimeError("Already started")
         async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
