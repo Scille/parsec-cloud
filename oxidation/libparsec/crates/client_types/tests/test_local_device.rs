@@ -3,9 +3,9 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_client_types::*;
-use libparsec_crypto::*;
-use libparsec_types::*;
+use libparsec_client_types::LocalDevice;
+use libparsec_crypto::SecretKey;
+use libparsec_types::UserProfile;
 
 use tests_fixtures::{alice, Device};
 

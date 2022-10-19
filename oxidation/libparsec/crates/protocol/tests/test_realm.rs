@@ -4,7 +4,7 @@ use hex_literal::hex;
 use rstest::rstest;
 use std::collections::HashMap;
 
-use libparsec_protocol::*;
+use libparsec_protocol::authenticated_cmds;
 use libparsec_types::Maybe;
 
 #[rstest]

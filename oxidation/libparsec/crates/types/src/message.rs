@@ -3,7 +3,7 @@
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
-use serde_with::*;
+use serde_with::serde_as;
 use std::io::{Read, Write};
 
 use crate::{DateTime, DeviceID, EntryID, EntryName};

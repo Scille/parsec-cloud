@@ -9,9 +9,12 @@ use rstest::fixture;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-use libparsec_client_types::*;
-use libparsec_crypto::*;
-use libparsec_types::*;
+use libparsec_client_types::LocalDevice;
+use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
+use libparsec_types::{
+    BackendOrganizationAddr, DateTime, DeviceID, DeviceLabel, EntryID, HumanHandle, OrganizationID,
+    TimeProvider, UserID, UserProfile,
+};
 
 pub struct Device {
     pub organization_addr: BackendOrganizationAddr,

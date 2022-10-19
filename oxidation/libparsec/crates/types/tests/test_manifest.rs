@@ -4,8 +4,11 @@ use hex_literal::hex;
 use rstest::rstest;
 use std::{collections::HashMap, num::NonZeroU64, str::FromStr};
 
-use libparsec_crypto::*;
-use libparsec_types::*;
+use libparsec_crypto::{HashDigest, SecretKey};
+use libparsec_types::{
+    BlockAccess, Blocksize, DateTime, DeviceID, DeviceName, EntryID, FileManifest, FolderManifest,
+    Manifest, RealmRole, UserID, UserManifest, WorkspaceEntry, WorkspaceManifest,
+};
 
 use tests_fixtures::{alice, Device};
 

@@ -3,8 +3,10 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_crypto::*;
-use libparsec_types::*;
+use libparsec_crypto::SecretKey;
+use libparsec_types::{
+    InviteDeviceConfirmation, InviteDeviceData, InviteUserConfirmation, InviteUserData, UserProfile,
+};
 
 use tests_fixtures::{bob, Device};
 

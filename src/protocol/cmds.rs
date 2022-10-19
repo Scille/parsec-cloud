@@ -8,7 +8,21 @@ use pyo3::{
 
 use libparsec::protocol::{authenticated_cmds, invited_cmds};
 
-use crate::protocol::*;
+use crate::protocol::{
+    AuthenticatedPingReq, BlockCreateReq, BlockReadReq, DeviceCreateReq, EventsListenReq,
+    EventsSubscribeReq, HumanFindReq, Invite1ClaimerWaitPeerReq, Invite1GreeterWaitPeerReq,
+    Invite2aClaimerSendHashedNonceReq, Invite2aGreeterGetHashedNonceReq,
+    Invite2bClaimerSendNonceReq, Invite2bGreeterSendNonceReq, Invite3aClaimerSignifyTrustReq,
+    Invite3aGreeterWaitPeerTrustReq, Invite3bClaimerWaitPeerTrustReq,
+    Invite3bGreeterSignifyTrustReq, Invite4ClaimerCommunicateReq, Invite4GreeterCommunicateReq,
+    InviteDeleteReq, InviteInfoReq, InviteListReq, InviteNewReq, InvitedPingReq, MessageGetReq,
+    OrganizationConfigReq, OrganizationStatsReq, RealmCreateReq,
+    RealmFinishReencryptionMaintenanceReq, RealmGetRoleCertificatesReq,
+    RealmStartReencryptionMaintenanceReq, RealmStatsReq, RealmStatusReq, RealmUpdateRolesReq,
+    UserCreateReq, UserGetReq, UserRevokeReq, VlobCreateReq, VlobListVersionsReq,
+    VlobMaintenanceGetReencryptionBatchReq, VlobMaintenanceSaveReencryptionBatchReq,
+    VlobPollChangesReq, VlobReadReq, VlobUpdateReq,
+};
 
 import_exception!(parsec.api.protocol, ProtocolError);
 

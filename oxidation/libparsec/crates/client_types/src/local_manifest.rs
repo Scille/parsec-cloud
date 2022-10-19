@@ -9,7 +9,11 @@ use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
 use libparsec_crypto::{HashDigest, SecretKey};
-use libparsec_types::*;
+use libparsec_types::{
+    impl_transparent_data_format_conversion, BlockAccess, BlockID, Blocksize, ChunkID, DateTime,
+    DeviceID, EntryID, EntryName, FileManifest, FolderManifest, UserManifest, WorkspaceEntry,
+    WorkspaceManifest,
+};
 use serialization_format::parsec_data;
 
 use crate as libparsec_client_types;

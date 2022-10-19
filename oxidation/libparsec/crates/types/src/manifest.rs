@@ -2,7 +2,7 @@
 
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{Deserialize, Serialize};
-use serde_with::*;
+use serde_with::serde_as;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::num::NonZeroU64;

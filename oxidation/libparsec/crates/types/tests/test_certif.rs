@@ -5,7 +5,10 @@ use libparsec_types::UserCertificate;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
 
-use libparsec_types::*;
+use libparsec_types::{
+    CertificateSignerOwned, CertificateSignerRef, DeviceCertificate, RealmRole,
+    RealmRoleCertificate, RevokedUserCertificate, UserProfile,
+};
 
 use tests_fixtures::{alice, bob, Device};
 

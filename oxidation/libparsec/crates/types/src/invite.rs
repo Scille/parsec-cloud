@@ -4,7 +4,7 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_with::*;
+use serde_with::serde_as;
 use std::str::FromStr;
 
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};

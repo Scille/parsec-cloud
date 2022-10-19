@@ -6,9 +6,14 @@ use rstest::rstest;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
-use libparsec_client_types::*;
-use libparsec_crypto::*;
-use libparsec_types::*;
+use libparsec_client_types::{
+    Chunk, LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest,
+};
+use libparsec_crypto::{HashDigest, SecretKey};
+use libparsec_types::{
+    BlockAccess, BlockID, Blocksize, ChunkID, DateTime, DeviceID, EntryID, EntryName, FileManifest,
+    FolderManifest, RealmRole, UserManifest, WorkspaceEntry, WorkspaceManifest,
+};
 
 use tests_fixtures::{alice, timestamp, Device};
 

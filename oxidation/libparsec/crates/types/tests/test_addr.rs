@@ -2,10 +2,13 @@
 
 use pretty_assertions::assert_eq;
 use rstest::rstest;
-use rstest_reuse::*;
+use rstest_reuse::{apply, template};
 use serde_test::{assert_tokens, Token};
 
-use libparsec_types::*;
+use libparsec_types::{
+    BackendAddr, BackendInvitationAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr,
+    BackendOrganizationFileLinkAddr, InvitationType, OrganizationID,
+};
 
 const ORG: &str = "MyOrg";
 const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";

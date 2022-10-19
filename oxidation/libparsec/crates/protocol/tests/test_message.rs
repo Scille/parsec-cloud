@@ -3,7 +3,7 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_protocol::*;
+use libparsec_protocol::authenticated_cmds;
 
 #[rstest]
 fn serde_message_get_req() {

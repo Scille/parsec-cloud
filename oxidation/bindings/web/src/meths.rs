@@ -5,12 +5,12 @@
  */
 
 #[allow(unused_imports)]
-use js_sys::*;
+use js_sys::{JsString, Object, Promise, Reflect, TypeError};
 #[allow(unused_imports)]
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
 use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
-use wasm_bindgen_futures::*;
+use wasm_bindgen_futures::future_to_promise;
 
 // HelloError
 

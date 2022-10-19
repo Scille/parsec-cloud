@@ -7,7 +7,12 @@ use std::str::FromStr;
 
 use rstest::rstest;
 
-use libparsec_protocol::*;
+use libparsec_protocol::{
+    Answer, ApiVersion, AuthenticatedClientHandshakeStalled, Handshake, HandshakeError,
+    HandshakeResult, InvitedClientHandshakeStalled, ServerHandshakeAnswer, ServerHandshakeResult,
+    ServerHandshakeStalled, SignedAnswer, API_V2_VERSION, BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+};
 use libparsec_types::{DateTime, InvitationToken, InvitationType, OrganizationID};
 
 use tests_fixtures::{alice, bob, timestamp, Device};
