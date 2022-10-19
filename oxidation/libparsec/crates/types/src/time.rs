@@ -124,6 +124,69 @@ impl DateTime {
     }
 }
 
+impl std::convert::AsRef<chrono::DateTime<chrono::Utc>> for DateTime {
+    #[inline]
+    fn as_ref(&self) -> &chrono::DateTime<chrono::Utc> {
+        &self.0
+    }
+}
+
+impl std::fmt::Debug for DateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("DateTime")
+            .field(&self.to_string())
+            .field(&self.0.nanosecond())
+            .finish()
+    }
+}
+
+impl std::fmt::Display for DateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false)
+        )
+    }
+}
+
+impl std::str::FromStr for DateTime {
+    type Err = chrono::format::ParseError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|dt: chrono::DateTime<chrono::Utc>| dt.into())
+    }
+}
+
+impl From<chrono::DateTime<chrono::Utc>> for DateTime {
+    fn from(dt: chrono::DateTime<chrono::Utc>) -> Self {
+        // Force precision to the microsecond
+        Self(
+            chrono::Utc
+                .timestamp_opt(dt.timestamp(), dt.timestamp_subsec_micros() * 1000)
+                .unwrap(),
+        )
+    }
+}
+
+impl From<LocalDateTime> for DateTime {
+    fn from(ldt: LocalDateTime) -> Self {
+        Self(ldt.0.into())
+    }
+}
+
+impl Sub for DateTime {
+    type Output = Duration;
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.0 - rhs.0
+    }
+}
+
+/*
+ * MockedTime
+ */
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum MockedTime {
     RealTime,
@@ -413,69 +476,6 @@ mod time_provider {
 }
 
 pub use time_provider::TimeProvider;
-
-/*
- * DateTime
- */
-
-impl std::convert::AsRef<chrono::DateTime<chrono::Utc>> for DateTime {
-    #[inline]
-    fn as_ref(&self) -> &chrono::DateTime<chrono::Utc> {
-        &self.0
-    }
-}
-
-impl std::fmt::Debug for DateTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("DateTime")
-            .field(&self.to_string())
-            .field(&self.0.nanosecond())
-            .finish()
-    }
-}
-
-impl std::fmt::Display for DateTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false)
-        )
-    }
-}
-
-impl std::str::FromStr for DateTime {
-    type Err = chrono::format::ParseError;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(|dt: chrono::DateTime<chrono::Utc>| dt.into())
-    }
-}
-
-impl From<chrono::DateTime<chrono::Utc>> for DateTime {
-    fn from(dt: chrono::DateTime<chrono::Utc>) -> Self {
-        // Force precision to the microsecond
-        Self(
-            chrono::Utc
-                .timestamp_opt(dt.timestamp(), dt.timestamp_subsec_micros() * 1000)
-                .unwrap(),
-        )
-    }
-}
-
-impl From<LocalDateTime> for DateTime {
-    fn from(ldt: LocalDateTime) -> Self {
-        Self(ldt.0.into())
-    }
-}
-
-impl Sub for DateTime {
-    type Output = Duration;
-    fn sub(self, rhs: Self) -> Self::Output {
-        self.0 - rhs.0
-    }
-}
 
 /*
  * LocalDateTime
