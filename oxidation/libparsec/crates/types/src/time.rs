@@ -583,10 +583,10 @@ impl std::fmt::Display for LocalDateTime {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use chrono::Timelike;
     use hex_literal::hex;
+    use pretty_assertions::{assert_eq, assert_ne};
+    use rstest::rstest;
 
     use super::*;
 
@@ -605,25 +605,15 @@ mod tests {
 
     #[test]
     fn test_datetime_parse_has_microsecond_precision() {
-        let dt1: DateTime = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
-        let dt2: DateTime = "2021-12-04T11:50:43.208820Z".parse().unwrap();
+        let dt1 = DateTime::from_rfc3339("2021-12-04T11:50:43.208820992Z").unwrap();
+        let dt2 = DateTime::from_rfc3339("2021-12-04T11:50:43.208820Z").unwrap();
         assert_eq!(dt1, dt2);
-        let dt3: DateTime = "2021-12-04T11:50:43.208821Z".parse().unwrap();
+        let dt3 = DateTime::from_rfc3339("2021-12-04T11:50:43.208821Z").unwrap();
         assert_ne!(dt1, dt3);
 
         assert_eq!(dt1.0.nanosecond() % 1000, 0);
         assert_eq!(dt2.0.nanosecond() % 1000, 0);
         assert_eq!(dt3.0.nanosecond() % 1000, 0);
-    }
-
-    #[test]
-    fn test_rfc3339_parsing_idempotent() {
-        let time_provider = TimeProvider::default();
-        let now = time_provider.now();
-        let parsed_result = DateTime::from_str(&now.to_rfc3339());
-
-        assert!(parsed_result.is_ok());
-        assert_eq!(parsed_result.unwrap(), now);
     }
 
     #[test]
@@ -637,5 +627,54 @@ mod tests {
             let ns = dt.0.nanosecond();
             assert_eq!(ns % 1000, 0);
         }
+    }
+
+    #[rstest]
+    #[case("2000-01-01T00:00:00Z", 0)]
+    #[case("2000-01-01T00:00:00+00:00", 0)]
+    #[case("2000-01-01T01:00:00+01:00", 0)]
+    #[case("2000-01-01T01:25:00+01:25", 0)]
+    #[case("1999-12-31T23:00:00-01:00", 0)]
+    // Test with milliseconds
+    #[case("2000-01-01T00:00:00.123+00:00", 123000)]
+    #[case("2000-01-01T01:00:00.123+01:00", 123000)]
+    #[case("2000-01-01T01:25:00.123+01:25", 123000)]
+    #[case("1999-12-31T23:00:00.123-01:00", 123000)]
+    // Test with microseconds
+    #[case("2000-01-01T00:00:00.123456Z", 123456)]
+    #[case("2000-01-01T00:00:00.123456+00:00", 123456)]
+    #[case("2000-01-01T01:00:00.123456+01:00", 123456)]
+    #[case("2000-01-01T01:25:00.123456+01:25", 123456)]
+    #[case("1999-12-31T23:00:00.123456-01:00", 123456)]
+    fn test_rfc3339_conversion(#[case] raw: &str, #[case] micro: u32) {
+        let dt = DateTime::from_rfc3339(raw);
+        assert_eq!(
+            dt,
+            Ok(DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, micro))
+        );
+
+        let dt = dt.unwrap();
+
+        let expected = match micro {
+            0 => "2000-01-01T00:00:00Z".to_owned(),
+            _ => format!("2000-01-01T00:00:00.{micro}Z"),
+        };
+        assert_eq!(dt.to_rfc3339(), expected);
+
+        // Finally cheap test on idempotence
+        assert_eq!(DateTime::from_rfc3339(&dt.to_rfc3339()), Ok(dt));
+    }
+
+    #[rstest]
+    #[case("2000-01-01")] // Missing time part
+    #[case("2000-01-01T00:00:00")] // Missing tz
+    #[case("2000-01-01T00:00:00+42:00")]
+    #[case("2000-01-01T01:00:")]
+    #[case("2000-01-01T01")]
+    #[case("2000-01-01T")]
+    #[case("whatever")]
+    fn test_datetime_from_rfc3339_bad_parsing(#[case] raw: &str) {
+        let ret = DateTime::from_rfc3339(raw);
+        assert_eq!(ret.is_err(), true);
     }
 }
