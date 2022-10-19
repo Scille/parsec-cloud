@@ -52,7 +52,7 @@ impl DateTime {
         )
     }
 
-    // Don't implement this as `From<f64>` to keep it private
+    // Don't implement this as `From<f64>` to prevent misunderstanding on precision
     pub fn from_f64_with_us_precision(ts: f64) -> Self {
         let mut t = ts.trunc() as i64;
         let mut us = (ts.fract() * 1e6).round() as i32;
@@ -67,7 +67,7 @@ impl DateTime {
         Self(chrono::Utc.timestamp_opt(t, (us as u32) * 1000).unwrap())
     }
 
-    // Don't implement this as `Into<f64>` to keep it private
+    // Don't implement this as `Into<f64>` to prevent misunderstanding on precision
     pub fn get_f64_with_us_precision(&self) -> f64 {
         let ts_us = self.0.timestamp_nanos() / 1000;
         ts_us as f64 / 1e6
