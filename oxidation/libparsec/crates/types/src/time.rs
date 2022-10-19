@@ -37,18 +37,24 @@ pub use chrono::Duration; // Reexported
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
 impl DateTime {
-    pub fn from_ymd_and_hms(
+    pub fn from_ymd_hms_us(
         year: u64,
         month: u64,
         day: u64,
         hour: u64,
         minute: u64,
         second: u64,
+        microsecond: u64,
     ) -> Self {
         Self(
             chrono::Utc
                 .ymd(year as i32, month as u32, day as u32)
-                .and_hms(hour as u32, minute as u32, second as u32),
+                .and_hms_micro(
+                    hour as u32,
+                    minute as u32,
+                    second as u32,
+                    microsecond as u32,
+                ),
         )
     }
 
@@ -487,18 +493,24 @@ impl From<DateTime> for LocalDateTime {
 }
 
 impl LocalDateTime {
-    pub fn from_ymd_and_hms(
+    pub fn from_ymd_hms_us(
         year: u64,
         month: u64,
         day: u64,
         hour: u64,
         minute: u64,
         second: u64,
+        microsecond: u64,
     ) -> Self {
         Self(
             chrono::Local
                 .ymd(year as i32, month as u32, day as u32)
-                .and_hms(hour as u32, minute as u32, second as u32),
+                .and_hms_micro(
+                    hour as u32,
+                    minute as u32,
+                    second as u32,
+                    microsecond as u32,
+                ),
         )
     }
 

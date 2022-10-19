@@ -111,10 +111,24 @@ crate::binding_utils::gen_proto!(DateTime, __hash__);
 #[pymethods]
 impl DateTime {
     #[new]
-    #[args(hour = 0, minute = 0, second = 0)]
-    fn new(year: u64, month: u64, day: u64, hour: u64, minute: u64, second: u64) -> PyResult<Self> {
-        Ok(Self(libparsec::types::DateTime::from_ymd_and_hms(
-            year, month, day, hour, minute, second,
+    #[args(hour = 0, minute = 0, second = 0, microsecond = 0)]
+    fn new(
+        year: u64,
+        month: u64,
+        day: u64,
+        hour: u64,
+        minute: u64,
+        second: u64,
+        microsecond: u64,
+    ) -> PyResult<Self> {
+        Ok(Self(libparsec::types::DateTime::from_ymd_hms_us(
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            microsecond,
         )))
     }
 
@@ -246,10 +260,24 @@ crate::binding_utils::gen_proto!(LocalDateTime, __hash__);
 #[pymethods]
 impl LocalDateTime {
     #[new]
-    #[args(hour = 0, minute = 0, second = 0)]
-    fn new(year: u64, month: u64, day: u64, hour: u64, minute: u64, second: u64) -> PyResult<Self> {
-        Ok(Self(libparsec::types::LocalDateTime::from_ymd_and_hms(
-            year, month, day, hour, minute, second,
+    #[args(hour = 0, minute = 0, second = 0, microsecond = 0)]
+    fn new(
+        year: u64,
+        month: u64,
+        day: u64,
+        hour: u64,
+        minute: u64,
+        second: u64,
+        microsecond: u64,
+    ) -> PyResult<Self> {
+        Ok(Self(libparsec::types::LocalDateTime::from_ymd_hms_us(
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            microsecond,
         )))
     }
 
