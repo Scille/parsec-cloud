@@ -5,8 +5,8 @@ from pathlib import PurePath
 from parsec._parsec import DateTime
 from functools import partial, wraps
 from contextlib import contextmanager
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, Iterator
-from typing_extensions import ParamSpec
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, Iterator, cast
+from typing_extensions import Concatenate, ParamSpec
 from trio import Cancelled, RunFinishedError
 from structlog import get_logger
 from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
@@ -153,7 +153,7 @@ def round_to_block_size(size: int, block_size: int = DEFAULT_BLOCK_SIZE) -> int:
 
 
 # winfsp is present only in a windows env, so we ignore this type
-def stat_to_file_attributes(stat: dict[str, str]) -> FILE_ATTRIBUTE:  # type: ignore[no-any-unimported]
+def stat_to_file_attributes(stat: dict[str, str]) -> FILE_ATTRIBUTE:
     # TODO: consider using FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS/FILE_ATTRIBUTE_RECALL_ON_OPEN ?
     # (see https://docs.microsoft.com/en-us/windows/desktop/fileio/file-attribute-constants)
     if stat["type"] == "folder":
@@ -193,18 +193,19 @@ def stat_to_winfsp_attributes(stat: dict[str, Any]) -> dict[str, Any]:
     return attributes
 
 
+FileContext = Union[OpenedFile, OpenedFolder, str]
 R = TypeVar("R")
 P = ParamSpec("P")
+T = TypeVar("T", bound=BaseFileSystemOperations)
+U = TypeVar("U", bound=FileContext)
 
 
-def handle_error(func: Callable[P, R]) -> Callable[..., R]:
+def handle_error(func: Callable[Concatenate[T, U, P], R]) -> Callable[Concatenate[T, U, P], R]:
     """A decorator to handle error in wfspy operations"""
     operation = func.__name__
 
     @wraps(func)
-    # `BaseFileSystemOperations` is imported as any when checking types on platform
-    # different than Windows.
-    def wrapper(self: BaseFileSystemOperations, arg: Union[OpenedFile, OpenedFolder, str], *args: P.args, **kwargs: P.kwargs) -> R:  # type: ignore[no-any-unimported]
+    def wrapper(self: T, arg: U, *args: P.args, **kwargs: P.kwargs) -> R:
         with self._get_path_and_translate_error(operation=operation, file_context=arg):
             return func.__get__(self)(arg, *args, **kwargs)
 
@@ -213,7 +214,7 @@ def handle_error(func: Callable[P, R]) -> Callable[..., R]:
 
 # `BaseFileSystemOperations` is resolved as `Any` on non-windows platform. We can't
 # derive from `Any` type (misc).
-class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[no-any-unimported, misc]
+class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
     def __init__(
         self,
         fs_access: ThreadFSAccess,
@@ -272,7 +273,7 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[no-any-unimpor
         file_attributes: Any,
         security_descriptor: Any,
         allocation_size: Any,
-    ) -> Union[OpenedFile, OpenedFolder]:
+    ) -> FileContext:
         # `granted_access` is already handle by winfsp
         # `allocation_size` useless for us
         # `security_descriptor` is not supported yet
@@ -287,19 +288,19 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[no-any-unimpor
             return OpenedFile(parsec_file_name, fd)
 
     @handle_error
-    def get_security(self, file_context: Any) -> Tuple[Any, int]:
+    def get_security(self, file_context: FileContext) -> Tuple[Any, int]:
         return self._security_descriptor.handle, self._security_descriptor.size
 
     @handle_error
     def set_security(
-        self, file_context: Any, security_information: Any, modification_descriptor: Any
+        self, file_context: FileContext, security_information: Any, modification_descriptor: Any
     ) -> None:
         # TODO
         pass
 
     @handle_error
     def rename(
-        self, file_context: Any, file_name: str, new_file_name: str, replace_if_exists: bool
+        self, file_context: FileContext, file_name: str, new_file_name: str, replace_if_exists: bool
     ) -> None:
         parsec_file_name = _winpath_to_parsec(file_name)
         parsec_new_file_name = _winpath_to_parsec(new_file_name)
@@ -321,21 +322,22 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[no-any-unimpor
             return OpenedFolder(parsec_file_name)
 
     @handle_error
-    def close(self, file_context: Any) -> None:
+    def close(self, file_context: FileContext) -> None:
         # The file might be deleted at this point. This is fine though as the
         # file descriptor can still be used after a deletion (posix style)
-        if isinstance(file_context, OpenedFile) and file_context.fd is not None:
+        if isinstance(file_context, (OpenedFile)) and file_context.fd is not None:
             self.fs_access.fd_close(file_context.fd)
 
     @handle_error
-    def get_file_info(self, file_context: Any) -> dict[str, Any]:
+    def get_file_info(self, file_context: FileContext) -> dict[str, Any]:
+        assert isinstance(file_context, (OpenedFile, OpenedFolder))
         stat = self.fs_access.entry_info(file_context.path)
         return stat_to_winfsp_attributes(stat)
 
     @handle_error
     def set_basic_info(
         self,
-        file_context: Any,
+        file_context: FileContext,
         file_attributes: Any,
         creation_time: Any,
         last_access_time: Any,
@@ -360,23 +362,31 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[no-any-unimpor
         return self.get_file_info(file_context)
 
     @handle_error
-    def set_file_size(self, file_context: Any, new_size: int, set_allocation_size: bool) -> None:
+    def set_file_size(
+        self, file_context: FileContext, new_size: int, set_allocation_size: bool
+    ) -> None:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
         self.fs_access.fd_resize(file_context.fd, new_size, truncate_only=set_allocation_size)
 
     @handle_error
-    def can_delete(self, file_context: Any, file_name: str) -> None:
+    def can_delete(self, file_context: FileContext, file_name: str) -> None:
+        assert isinstance(file_context, (OpenedFile, OpenedFolder))
         self.fs_access.check_write_rights(file_context.path)
         stat = self.fs_access.entry_info(file_context.path)
         if stat["type"] == "file":
             return
-        if file_context.is_root():
+        if cast(OpenedFolder, file_context).is_root():
             # Cannot remove root mountpoint !
             raise NTStatusError(NTSTATUS.STATUS_RESOURCEMANAGER_READ_ONLY)
         if stat["children"]:
             raise NTStatusError(NTSTATUS.STATUS_DIRECTORY_NOT_EMPTY)
 
     @handle_error
-    def read_directory(self, file_context: Any, marker: Optional[str]) -> List[dict[str, Any]]:
+    def read_directory(
+        self, file_context: FileContext, marker: Optional[str]
+    ) -> List[dict[str, Any]]:
+        assert isinstance(file_context, OpenedFolder)
         entries = []
         stat = self.fs_access.entry_info(file_context.path)
 
@@ -420,26 +430,32 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[no-any-unimpor
         return entries
 
     @handle_error
-    def get_dir_info_by_name(self, file_context: Any, file_name: str) -> dict[str, Any]:
+    def get_dir_info_by_name(self, file_context: FileContext, file_name: str) -> dict[str, Any]:
+        assert isinstance(file_context, OpenedFolder)
         child_name = unwinify_entry_name(file_name)
         stat = self.fs_access.entry_info(file_context.path / child_name)
         entry = {"file_name": file_name, **stat_to_winfsp_attributes(stat)}
         return entry
 
     @handle_error
-    def read(self, file_context: Any, offset: int, length: int) -> bytes:
+    def read(self, file_context: FileContext, offset: int, length: int) -> bytes:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
         buffer = self.fs_access.fd_read(file_context.fd, length, offset, raise_eof=True)
         return buffer
 
     @handle_error
     def write(
         self,
-        file_context: Any,
+        file_context: FileContext,
         buffer: bytes,
         offset: int,
         write_to_end_of_file: bool,
         constrained_io: bool,
     ) -> int:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
+
         # Adapt offset
         if write_to_end_of_file:
             offset = -1
@@ -449,11 +465,14 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[no-any-unimpor
         return self.fs_access.fd_write(file_context.fd, buffer, offset, constrained_io)
 
     @handle_error
-    def flush(self, file_context: Any) -> None:
+    def flush(self, file_context: FileContext) -> None:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
+
         self.fs_access.fd_flush(file_context.fd)
 
     @handle_error
-    def cleanup(self, file_context: Any, file_name: str, flags: Any) -> None:
+    def cleanup(self, file_context: FileContext, file_name: str, flags: Any) -> None:
         # Cleanup operation is causal but close is not, so it's important
         # to delete file and folder here in order to make sure the file/folder
         # is actually deleted by the time the API call returns.
@@ -469,9 +488,12 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[no-any-unimpor
     @handle_error
     def overwrite(
         self,
-        file_context: Any,
+        file_context: FileContext,
         file_attributes: Any,
         replace_file_attributes: bool,
         allocation_size: int,
     ) -> None:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
+
         self.fs_access.fd_resize(file_context.fd, allocation_size, truncate_only=True)
