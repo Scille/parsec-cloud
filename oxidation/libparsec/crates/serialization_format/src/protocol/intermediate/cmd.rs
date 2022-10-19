@@ -125,8 +125,9 @@ impl Cmd {
         let req = self.req.quote(&types);
         let valid_statuses = self
             .possible_responses
-            .iter()
-            .map(|rep| rep.status.clone())
+            .keys()
+            .sorted()
+            .cloned()
             .collect::<Vec<String>>();
         let mut variants_rep = self.quote_reps(&types);
 
@@ -185,7 +186,7 @@ impl Cmd {
                                 let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
 
                                 match data.status.as_str() {
-                                    #(#valid_statuses)|* => Err(err)
+                                    #(#valid_statuses => Err(err),)*
                                     _ => Ok(Self::UnknownStatus {
                                         invalid_status: data.status,
                                         reason: data.reason,
@@ -661,7 +662,7 @@ mod test {
 
                     pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
                         ::rmp_serde::from_slice::<Self>(buf)
-                        .or_else(|_error| {
+                        .or_else(|err| {
                             let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
 
                             match data.status.as_str() {
@@ -793,10 +794,12 @@ mod test {
 
                     pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
                         ::rmp_serde::from_slice::<Self>(buf)
-                        .or_else(|_error| {
+                        .or_else(|err| {
                             let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
 
                             match data.status.as_str() {
+                                "err" => Err(err),
+                                "ok" => Err(err),
                                 _ => Ok(Self::UnknownStatus {
                                     invalid_status: data.status,
                                     reason: data.reason,
@@ -837,7 +840,7 @@ mod test {
                     /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
                     #[serde(skip)]
                     UnknownStatus {
-                        _status: String,
+                        status: String,
                         reason: Option<String>
                     }
                 }
@@ -855,12 +858,15 @@ mod test {
 
                     pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
                         ::rmp_serde::from_slice::<Self>(buf)
-                        .or_else(|_error| {
+                        .or_else(|err| {
                             let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                            Ok(Self::UnknownStatus {
-                                _status: data.status,
-                                reason: data.reason,
-                            })
+
+                            match data.status.as_str() {
+                                _ => Ok(Self::UnknownStatus {
+                                    status: data.status,
+                                    reason: data.reason,
+                                })
+                            }
                         })
                     }
                 }
