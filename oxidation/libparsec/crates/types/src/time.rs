@@ -128,10 +128,7 @@ impl std::convert::AsRef<chrono::DateTime<chrono::Utc>> for DateTime {
 
 impl std::fmt::Debug for DateTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("DateTime")
-            .field(&self.to_string())
-            .field(&self.0.nanosecond())
-            .finish()
+        f.debug_tuple("DateTime").field(&self.to_rfc3339()).finish()
     }
 }
 
