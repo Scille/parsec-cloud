@@ -214,7 +214,11 @@ async def _apiv1_process_anonymous_answer(
         if backend.config.organization_spontaneous_bootstrap:
             # Lazy creation of the organization with always the same empty token
             try:
-                await backend.organization.create(id=organization_id, bootstrap_token="")
+                await backend.organization.create(
+                    id=organization_id,
+                    bootstrap_token="",
+                    created_on=DateTime.now(),
+                )
             except OrganizationAlreadyExistsError:
                 pass
             organization = await backend.organization.get(organization_id)

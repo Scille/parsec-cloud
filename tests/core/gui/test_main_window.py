@@ -60,7 +60,7 @@ def catch_text_input_widget(widget_catcher_factory):
 async def organization_bootstrap_addr(running_backend):
     org_id = OrganizationID("ShinraElectricPowerCompany")
     org_token = "123"
-    await running_backend.backend.organization.create(org_id, org_token)
+    await running_backend.backend.organization.create(id=org_id, bootstrap_token=org_token)
     return BackendOrganizationBootstrapAddr.build(running_backend.addr, org_id, org_token)
 
 

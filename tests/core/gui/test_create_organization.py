@@ -25,7 +25,7 @@ def catch_create_org_widget(widget_catcher_factory):
 async def organization_bootstrap_addr(running_backend):
     org_id = OrganizationID("AnomalousMaterials")
     org_token = "123456"
-    await running_backend.backend.organization.create(org_id, org_token)
+    await running_backend.backend.organization.create(id=org_id, bootstrap_token=org_token)
     return BackendOrganizationBootstrapAddr.build(running_backend.addr, org_id, org_token)
 
 
@@ -430,7 +430,6 @@ async def test_create_organization_bootstrap_only_custom_server(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 async def test_create_organization_already_bootstrapped(
     aqtbot,
     running_backend,
@@ -445,7 +444,10 @@ async def test_create_organization_already_bootstrapped(
     org = organization_factory()
     backend_user, backend_first_device = local_device_to_backend_user(alice, org)
     bootstrap_token = "123456"
-    await running_backend.backend.organization.create(org.organization_id, bootstrap_token, None)
+    await running_backend.backend.organization.create(
+        id=org.organization_id,
+        bootstrap_token=bootstrap_token,
+    )
     await running_backend.backend.organization.bootstrap(
         org.organization_id,
         backend_user,

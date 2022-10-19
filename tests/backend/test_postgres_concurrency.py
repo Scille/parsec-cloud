@@ -82,7 +82,9 @@ async def test_concurrency_bootstrap_organization(postgresql_url, backend_factor
         config={"db_url": postgresql_url, "db_max_connections": 10}, populated=False
     ) as backend:
         # Create the organization
-        await backend.organization.create(coolorg.organization_id, coolorg.bootstrap_token)
+        await backend.organization.create(
+            id=coolorg.organization_id, bootstrap_token=coolorg.bootstrap_token
+        )
 
         # Concurrent bootstrap
         with ensure_pg_transaction_concurrency_barrier(concurrency=10):

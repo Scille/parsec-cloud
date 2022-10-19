@@ -29,7 +29,7 @@ async def test_sequestered_organization_bootstrap(
 ):
     # Create organization
     org_token = "123456"
-    await backend.organization.create(coolorg.organization_id, org_token)
+    await backend.organization.create(id=coolorg.organization_id, bootstrap_token=org_token)
 
     backend_alice, backend_alice_first_device = local_device_to_backend_user(
         alice, coolorg, timestamp=coolorg.sequester_authority.certif_data.timestamp

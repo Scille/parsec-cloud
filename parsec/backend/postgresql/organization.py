@@ -6,6 +6,7 @@ from typing import Any, Optional, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
@@ -48,7 +49,7 @@ VALUES (
     $bootstrap_token,
     $active_users_limit,
     $user_profile_outsider_allowed,
-    NOW(),
+    $created_on,
     NULL,
     FALSE,
     NULL
@@ -196,7 +197,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        created_on: Optional[DateTime] = None,
     ) -> None:
+        created_on = created_on or DateTime.now()
         if active_users_limit is Unset:
             active_users_limit = self._config.organization_initial_active_users_limit
         if user_profile_outsider_allowed is Unset:
@@ -211,6 +214,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                         bootstrap_token=bootstrap_token,
                         active_users_limit=active_users_limit,
                         user_profile_outsider_allowed=user_profile_outsider_allowed,
+                        created_on=created_on,
                     )
                 )
             except UniqueViolationError:
