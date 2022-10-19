@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
+from typing import Optional
 
 from parsec._parsec import (
+    DateTime,
     BlockCreateRepOk,
     BlockCreateRepTimeout,
     BlockCreateRepAlreadyExists,
@@ -80,11 +82,12 @@ class BaseBlockComponent:
     async def api_block_create(self, client_ctx, req: BlockCreateReq) -> BlockCreateRep:
         try:
             await self.create(
-                client_ctx.organization_id,
-                client_ctx.device_id,
-                req.block_id,
-                req.realm_id,
-                req.block,
+                organization_id=client_ctx.organization_id,
+                author=client_ctx.device_id,
+                block_id=req.block_id,
+                realm_id=req.realm_id,
+                block=req.block,
+                created_on=DateTime.now(),
             )
 
         except BlockAlreadyExistsError:
@@ -124,6 +127,7 @@ class BaseBlockComponent:
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
+        created_on: Optional[DateTime] = None,
     ) -> None:
         """
         Raises:

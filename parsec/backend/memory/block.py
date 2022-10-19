@@ -4,6 +4,7 @@ from __future__ import annotations
 import attr
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole, BlockID
 from parsec.backend.utils import OperationKind
 from parsec.backend.realm import RealmNotFoundError
@@ -113,6 +114,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
+        created_on: Optional[DateTime] = None,
     ) -> None:
         assert self._blockstore_component is not None
 
