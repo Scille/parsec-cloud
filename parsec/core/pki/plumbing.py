@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from types import ModuleType
 from typing import Iterable, Tuple, Optional
 from pathlib import Path
 from uuid import UUID
@@ -16,7 +17,7 @@ from parsec.core.types import LocalDevice
 from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
 
 
-def _load_smartcard_extension():
+def _load_smartcard_extension() -> ModuleType:
     try:
         return import_module("parsec_ext.smartcard")
     except ModuleNotFoundError as exc:
