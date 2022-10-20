@@ -55,13 +55,15 @@ async def backend_invited_cmds_factory(
     transport: Optional[Transport] = None
     closed = False
 
-    async def _init_transport() -> None:
+    async def _init_transport() -> Transport:
         nonlocal transport
         if not transport:
             if closed:
                 raise trio.ClosedResourceError
             transport = await connect_as_invited(addr, keepalive=keepalive)
             transport.logger = transport.logger.bind(auth="<invited>")
+
+        return transport
 
     async def _destroy_transport() -> None:
         nonlocal transport
@@ -76,9 +78,8 @@ async def backend_invited_cmds_factory(
         nonlocal transport
 
         async with transport_lock:
-            await _init_transport()
+            transport = await _init_transport()
             try:
-                assert transport is not None, "Transport is None after call `_init_transport`"
                 yield transport
             except BackendNotAvailable:
                 await _destroy_transport()
