@@ -3,13 +3,21 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import wraps
-from typing_extensions import Final, Literal
-from typing import Sequence, Dict, Callable
+from typing_extensions import Final, Literal, ParamSpec
+from typing import TYPE_CHECKING, Any, Awaitable, Sequence, Dict, Callable, TypeVar, Union
+from parsec._parsec import (
+    AuthenticatedAnyCmdReq,
+    InvitedAnyCmdReq,
+)
 from quart import Websocket
 
-from parsec.utils import open_service_nursery
 from parsec.api.protocol import ProtocolError, InvalidMessageError
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
+from parsec.serde.packing import packb, unpackb
+from parsec.utils import open_service_nursery
+
+if TYPE_CHECKING:
+    from parsec.backend.client_context import BaseClientContext
 
 PEER_EVENT_MAX_WAIT = 3  # 5mn
 ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
@@ -20,16 +28,46 @@ OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 
 from parsec.api.protocol.base import ClientType
 
+T = TypeVar("T")
+P = ParamSpec("P")
+CmdReq = Union[InvitedAnyCmdReq, AuthenticatedAnyCmdReq]
+
+
+# TODO: temporary hack that should be removed once all cmds are typed, at this point we
+# will be able to do this handling directly into `BackendApp._handle_client_websocket_loop`
+def api_typed_msg_adapter(req_cls, rep_cls):
+    def _api_typed_msg_adapter(fn: Callable[[T, BaseClientContext, CmdReq], Awaitable[Any]]):
+        @wraps(fn)
+        async def wrapper(self: T, client_ctx: BaseClientContext, msg: dict) -> dict:
+            # Here packb&unpackb should never fail given they are only undoing
+            # work we've just done in another layer
+            if client_ctx.TYPE == ClientType.INVITED:
+                from parsec.api.protocol import InvitedAnyCmdReq
+
+                typed_req = InvitedAnyCmdReq.load(packb(msg))
+            else:
+                from parsec.api.protocol import AuthenticatedAnyCmdReq
+
+                typed_req = AuthenticatedAnyCmdReq.load(packb(msg))
+
+            assert isinstance(typed_req, req_cls)
+            typed_rep = await fn(self, client_ctx, typed_req)
+            return unpackb(typed_rep.dump())
+
+        return wrapper
+
+    return _api_typed_msg_adapter
+
 
 def api(
     cmd: str,
     *,
     cancel_on_client_sending_new_cmd: bool = False,
     client_types: Sequence[ClientType] = (ClientType.AUTHENTICATED,),
-):
-    def wrapper(fn):
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    def wrapper(fn: Callable[P, T]) -> Callable[P, T]:
         assert not hasattr(fn, "_api_info")
-        fn._api_info = {
+        fn._api_info = {  # type: ignore[attr-defined]
             "cmd": cmd,
             "client_types": client_types,
             "cancel_on_client_sending_new_cmd": cancel_on_client_sending_new_cmd,
@@ -94,7 +132,7 @@ async def run_with_cancel_on_client_sending_new_cmd(
 
     rep = None
 
-    async def _keep_websocket_breathing():
+    async def _keep_websocket_breathing() -> None:
         # If a command is received, the client is violating the
         # request/reply pattern. We consider this as an order to stop
         # listening events.

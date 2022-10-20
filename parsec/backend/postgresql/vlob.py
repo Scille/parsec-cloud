@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
+import triopg
 from typing import List, Tuple, Dict, Optional
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.organization import SequesterAuthority
@@ -28,7 +29,7 @@ from parsec.backend.postgresql.sequester import get_sequester_services, get_sequ
 
 
 async def _check_sequestered_organization(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     sequester_authority: Optional[SequesterAuthority],
     sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
@@ -66,7 +67,9 @@ class PGVlobComponent(BaseVlobComponent):
             OrganizationID, Optional[SequesterAuthority]
         ] = {}
 
-    async def _fetch_organization_sequester_authority(self, conn, organization_id: OrganizationID):
+    async def _fetch_organization_sequester_authority(
+        self, conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
+    ) -> None:
         sequester_authority: Optional[SequesterAuthority]
         try:
             sequester_authority = await get_sequester_authority(conn, organization_id)
@@ -75,7 +78,7 @@ class PGVlobComponent(BaseVlobComponent):
         self._sequester_organization_authority_cache[organization_id] = sequester_authority
 
     async def _get_sequester_organization_authority(
-        self, conn, organization_id: OrganizationID
+        self, conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
     ) -> Optional[SequesterAuthority]:
         if organization_id not in self._sequester_organization_authority_cache:
             await self._fetch_organization_sequester_authority(conn, organization_id)
@@ -83,7 +86,7 @@ class PGVlobComponent(BaseVlobComponent):
 
     async def _extract_sequestered_data_and_proceed_webhook(
         self,
-        conn,
+        conn: triopg._triopg.TrioConnectionProxy,
         organization_id: OrganizationID,
         sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
         author: DeviceID,

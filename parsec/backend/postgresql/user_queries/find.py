@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
+import triopg
 from functools import lru_cache
 from typing import Tuple, List, Optional
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import UserID, OrganizationID, HumanHandle
 from parsec.backend.user import HumanFindResultItem
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
@@ -102,7 +103,7 @@ ORDER BY row_order
 
 @query()
 async def query_retrieve_active_human_by_email(
-    conn, organization_id: OrganizationID, email: str
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, email: str
 ) -> Optional[UserID]:
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
@@ -118,7 +119,7 @@ async def query_retrieve_active_human_by_email(
 
 @query()
 async def query_find_humans(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     omit_revoked: bool = False,
     omit_non_human: bool = False,

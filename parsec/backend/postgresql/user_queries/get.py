@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
 from typing import Tuple, List, Optional
 
 from parsec.api.protocol import (
@@ -212,7 +213,9 @@ FROM cte2;
 )
 
 
-async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> User:
+async def _get_user(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
+) -> User:
     row = await conn.fetchrow(
         *_q_get_user(organization_id=organization_id.str, user_id=user_id.str)
     )
@@ -239,7 +242,9 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
     )
 
 
-async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID) -> Device:
+async def _get_device(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, device_id: DeviceID
+) -> Device:
     row = await conn.fetchrow(
         *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
     )
@@ -257,7 +262,10 @@ async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID
 
 
 async def _get_trustchain(
-    conn, organization_id: OrganizationID, *device_ids: Optional[DeviceID], redacted: bool = False
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    *device_ids: Optional[DeviceID],
+    redacted: bool = False,
 ) -> Trustchain:
     rows = await conn.fetch(
         *_q_get_trustchain(
@@ -285,7 +293,7 @@ async def _get_trustchain(
 
 
 async def _get_user_devices(
-    conn, organization_id: OrganizationID, user_id: UserID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
 ) -> Tuple[Device, ...]:
     results = await conn.fetch(
         *_q_get_user_devices(organization_id=organization_id.str, user_id=user_id.str)
@@ -305,13 +313,15 @@ async def _get_user_devices(
 
 
 @query()
-async def query_get_user(conn, organization_id: OrganizationID, user_id: UserID) -> User:
+async def query_get_user(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
+) -> User:
     return await _get_user(conn, organization_id, user_id)
 
 
 @query(in_transaction=True)
 async def query_get_user_with_trustchain(
-    conn, organization_id: OrganizationID, user_id: UserID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
 ) -> Tuple[User, Trustchain]:
     user = await _get_user(conn, organization_id, user_id)
     trustchain = await _get_trustchain(conn, organization_id, user.user_certifier)
@@ -320,7 +330,7 @@ async def query_get_user_with_trustchain(
 
 @query(in_transaction=True)
 async def query_get_user_with_device_and_trustchain(
-    conn, organization_id: OrganizationID, device_id: DeviceID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, device_id: DeviceID
 ) -> Tuple[User, Device, Trustchain]:
     user = await _get_user(conn, organization_id, device_id.user_id)
     user_device = await _get_device(conn, organization_id, device_id)
@@ -336,7 +346,10 @@ async def query_get_user_with_device_and_trustchain(
 
 @query(in_transaction=True)
 async def query_get_user_with_devices_and_trustchain(
-    conn, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user_id: UserID,
+    redacted: bool = False,
 ) -> GetUserAndDevicesResult:
     user = await _get_user(conn, organization_id, user_id)
     user_devices = await _get_user_devices(conn, organization_id, user_id)
@@ -363,7 +376,7 @@ async def query_get_user_with_devices_and_trustchain(
 
 @query(in_transaction=True)
 async def query_get_user_with_device(
-    conn, organization_id: OrganizationID, device_id: DeviceID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, device_id: DeviceID
 ) -> Tuple[User, Device]:
     d_row = await conn.fetchrow(
         *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
@@ -405,7 +418,7 @@ async def query_get_user_with_device(
 
 @query()
 async def query_dump_users(
-    conn, organization_id: OrganizationID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
 ) -> Tuple[List[User], List[Device]]:
     users = []
     devices = []

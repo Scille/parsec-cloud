@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
-from typing import Dict, List, Optional
+import triopg
+from typing import Any, Dict, List, Optional
 
+from parsec._parsec import DateTime
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
     DeviceID,
@@ -46,7 +47,9 @@ _q_get_realm_status = Q(
 )
 
 
-async def get_realm_status(conn, organization_id: OrganizationID, realm_id: RealmID) -> RealmStatus:
+async def get_realm_status(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
+) -> RealmStatus:
     rep = await conn.fetchrow(
         *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
@@ -98,11 +101,14 @@ ORDER BY user_, certified_on DESC
 
 
 async def _get_realm_role_for_not_revoked(
-    conn, organization_id: OrganizationID, realm_id: RealmID, users: Optional[List[UserID]] = None
-):
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    users: Optional[List[UserID]] = None,
+) -> dict[UserID, Optional[RealmRole]]:
     now = DateTime.now()
 
-    def _cook_role(row):
+    def _cook_role(row: dict[str, Any]) -> Optional[RealmRole]:
         if row["revoked_on"] and row["revoked_on"] <= now:
             return None
         if row["role"] is None:
@@ -164,7 +170,7 @@ INSERT INTO vlob_encryption_revision(
 
 @query(in_transaction=True)
 async def query_start_reencryption_maintenance(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -255,7 +261,7 @@ WHERE
 
 @query(in_transaction=True)
 async def query_finish_reencryption_maintenance(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,

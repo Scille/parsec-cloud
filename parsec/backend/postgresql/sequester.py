@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
 from collections import defaultdict
-from typing import List, Optional, Tuple
-from triopg._triopg import TrioConnectionProxy
+from typing import Any, List, Optional, Tuple
 
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import DataError, SequesterServiceCertificate
@@ -164,7 +164,9 @@ _get_vlob_atom_ids = Q(
 )
 
 
-async def get_sequester_authority(conn, organization_id: OrganizationID) -> SequesterAuthority:
+async def get_sequester_authority(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
+) -> SequesterAuthority:
     row = await conn.fetchrow(
         *_q_get_organisation_sequester_authority(organization_id=organization_id.str)
     )
@@ -176,7 +178,7 @@ async def get_sequester_authority(conn, organization_id: OrganizationID) -> Sequ
 
 
 async def get_sequester_services(
-    conn, organization_id: OrganizationID, with_disabled: bool
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, with_disabled: bool
 ) -> List[BaseSequesterService]:
     q = (
         _q_get_organization_services
@@ -187,7 +189,7 @@ async def get_sequester_services(
     return [build_sequester_service_obj(row) for row in rows]
 
 
-def build_sequester_service_obj(row) -> BaseSequesterService:
+def build_sequester_service_obj(row: dict[str, Any]) -> BaseSequesterService:
     service_id = SequesterServiceID(row["service_id"])
     service_type = SequesterServiceType(row["service_type"].lower())
     if service_type == SequesterServiceType.STORAGE:
@@ -275,7 +277,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 raise SequesterError(f"Insertion Error: {result}")
 
     async def _assert_service_enabled(
-        self, conn: TrioConnectionProxy, organization_id: OrganizationID
+        self, conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
     ) -> None:
         row = await conn.fetchrow(
             *_q_get_organisation_sequester_authority(organization_id=organization_id.str)
@@ -346,7 +348,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
 
     async def _get_service(
         self,
-        conn: TrioConnectionProxy,
+        conn: triopg._triopg.TrioConnectionProxy,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
     ) -> BaseSequesterService:

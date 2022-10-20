@@ -7,7 +7,6 @@ from parsec.api.protocol.base import (
     InvalidMessageError,
     packb,
     unpackb,
-    api_typed_msg_adapter,
     settle_compatible_versions,
     IncompatibleAPIVersionsError,
 )
@@ -155,7 +154,6 @@ __all__ = (
     "InvalidMessageError",
     "packb",
     "unpackb",
-    "api_typed_msg_adapter",
     "HandshakeError",
     "HandshakeFailedChallenge",
     "HandshakeBadAdministrationToken",

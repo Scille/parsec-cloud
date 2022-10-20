@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec.backend.backend_events import BackendEvent
 import itertools
+import triopg
 from triopg import UniqueViolationError
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import (
     User,
     Device,
@@ -170,7 +171,9 @@ _q_lock = Q(
 )
 
 
-async def q_take_user_device_write_lock(conn, organization_id: OrganizationID):
+async def q_take_user_device_write_lock(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
+) -> None:
     """
     User/device creation is a complex procedure given it contains checks that
     cannot be enforced by PostgreSQL, e.g.:
@@ -187,7 +190,10 @@ async def q_take_user_device_write_lock(conn, organization_id: OrganizationID):
 
 
 async def _do_create_user_with_human_handle(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user: User,
+    first_device: Device,
 ) -> None:
     assert user.human_handle is not None
     # Create human handle if needed
@@ -237,7 +243,10 @@ async def _do_create_user_with_human_handle(
 
 
 async def _do_create_user_without_human_handle(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user: User,
+    first_device: Device,
 ) -> None:
     try:
         result = await conn.execute(
@@ -260,12 +269,12 @@ async def _do_create_user_without_human_handle(
 
 
 async def q_create_user(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     user: User,
     first_device: Device,
     lock_already_held: bool = False,
-):
+) -> None:
     if not lock_already_held:
         await q_take_user_device_write_lock(conn, organization_id)
 
@@ -296,13 +305,19 @@ async def q_create_user(
 
 @query(in_transaction=True)
 async def query_create_user(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user: User,
+    first_device: Device,
 ) -> None:
     await q_create_user(conn, organization_id, user, first_device)
 
 
 async def _create_device(
-    conn, organization_id: OrganizationID, device: Device, first_device: bool = False
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    device: Device,
+    first_device: bool = False,
 ) -> None:
     if not first_device:
         existing_devices = await conn.fetch(
@@ -336,7 +351,10 @@ async def _create_device(
 
 @query(in_transaction=True)
 async def query_create_device(
-    conn, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    device: Device,
+    encrypted_answer: bytes = b"",
 ) -> None:
     await q_take_user_device_write_lock(conn, organization_id)
     await _create_device(conn, organization_id, device, bool(encrypted_answer))

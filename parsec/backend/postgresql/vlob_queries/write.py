@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
 from typing import Dict, Optional
-from parsec._parsec import DateTime
 from triopg import UniqueViolationError
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.postgresql.utils import (
@@ -70,7 +71,7 @@ DO UPDATE SET last_vlob_update = (
 
 
 async def _set_vlob_updated(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     vlob_atom_internal_id: int,
     organization_id: OrganizationID,
     author: DeviceID,
@@ -78,7 +79,7 @@ async def _set_vlob_updated(
     src_id: VlobID,
     timestamp: DateTime,
     src_version: int = 1,
-):
+) -> None:
     index = await conn.fetchval(
         *_q_vlob_updated(
             organization_id=organization_id.str,
@@ -156,7 +157,7 @@ RETURNING _id
 
 @query(in_transaction=True)
 async def query_update(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     encryption_revision: int,
@@ -267,7 +268,7 @@ _q_create_sequester_blob = Q(
 
 @query(in_transaction=True)
 async def query_create(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,

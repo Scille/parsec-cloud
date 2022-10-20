@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
 from triopg.exceptions import UniqueViolationError
 
 from parsec._parsec import DateTime
@@ -100,7 +101,10 @@ VALUES (
 
 
 async def _check_realm(
-    conn, organization_id: OrganizationID, realm_id: RealmID, operation_kind: OperationKind
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    operation_kind: OperationKind,
 ) -> None:
     # Fetch the realm status maintenance type
     try:

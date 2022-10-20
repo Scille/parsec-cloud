@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
-from typing import Tuple, List, Optional
+from typing import Any, Tuple, List, Optional
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.user import (
     BaseUserComponent,
@@ -29,7 +29,7 @@ from parsec.backend.postgresql.user_queries import (
 
 
 class PGUserComponent(BaseUserComponent):
-    def __init__(self, dbh: PGHandler, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.dbh = dbh
 
@@ -86,7 +86,7 @@ class PGUserComponent(BaseUserComponent):
     ) -> Tuple[List[HumanFindResultItem], int]:
         async with self.dbh.pool.acquire() as conn:
             return await query_find_humans(
-                conn=conn,
+                conn,
                 organization_id=organization_id,
                 query=query,
                 page=page,

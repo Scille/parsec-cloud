@@ -39,7 +39,6 @@ from parsec._parsec import (
     Trustchain,
     HumanFindResultItem,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.event_bus import EventBus
 from parsec.api.data import RevokedUserCertificate, DataError
@@ -49,7 +48,7 @@ from parsec.api.protocol import (
     DeviceID,
     UserProfile,
 )
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 from parsec.backend.user_type import (
     User,
     Device,

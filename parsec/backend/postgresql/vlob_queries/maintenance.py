@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
 from typing import List, Tuple
 
 from parsec.backend.utils import OperationKind
@@ -120,8 +121,12 @@ SELECT (
 
 
 async def _check_realm_and_maintenance_access(
-    conn, organization_id, author, realm_id, encryption_revision
-):
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
+    encryption_revision: int,
+) -> None:
     await _check_realm(
         conn, organization_id, realm_id, encryption_revision, OperationKind.MAINTENANCE
     )
@@ -131,7 +136,7 @@ async def _check_realm_and_maintenance_access(
 
 @query(in_transaction=True)
 async def query_maintenance_get_reencryption_batch(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -154,7 +159,7 @@ async def query_maintenance_get_reencryption_batch(
 
 @query(in_transaction=True)
 async def query_maintenance_save_reencryption_batch(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,

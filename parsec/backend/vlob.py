@@ -79,7 +79,6 @@ from parsec._parsec import (
     VlobMaintenanceSaveReencryptionBatchRepNotFound,
     ReencryptionBatchEntry,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,
     BALLPARK_CLIENT_LATE_OFFSET,
@@ -92,7 +91,7 @@ from parsec.api.protocol import (
     OrganizationID,
     SequesterServiceID,
 )
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 
 
 class VlobError(Exception):

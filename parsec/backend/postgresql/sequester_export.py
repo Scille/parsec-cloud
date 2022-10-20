@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional, NewType, Tuple
+import triopg
+from typing import AsyncGenerator, Optional, NewType, Tuple, cast
 import trio
 import sqlite3
 from contextlib import asynccontextmanager
@@ -112,7 +113,7 @@ async def _init_output_db(
     realm_id: RealmID,
     service_id: SequesterServiceID,
     output_db_path: Path,
-    input_conn,
+    input_conn: triopg._triopg.TrioConnectionProxy,
 ) -> None:
     # 0) Retreive organization/realm/sequester service from input database
 
@@ -153,7 +154,7 @@ async def _init_output_db(
 
     # 1) Check the output database and create it if needed
 
-    def _sqlite_init_db():
+    def _sqlite_init_db() -> None:
         try:
             con = sqlite3.connect(f"file:{output_db_path}?mode=rw", uri=True)
         except sqlite3.Error:
@@ -195,7 +196,7 @@ async def _init_output_db(
                 )
             if db_realm_id != realm_id.bytes:
                 raise RealmExporterOutputDbError(
-                    f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{realm_id.bytes}`"
+                    f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{realm_id.bytes}`"  # type: ignore[str-bytes-safe]
                 )
             if db_root_verify_key != root_verify_key:
                 raise RealmExporterOutputDbError(
@@ -220,7 +221,7 @@ WHERE organization = (SELECT _id FROM organization WHERE organization_id = $1)
         organization_id.str,
     )
 
-    def _sqlite_save_user_certifs():
+    def _sqlite_save_user_certifs() -> None:
         output_con = sqlite3.connect(output_db_path)
         try:
             output_con.executemany(
@@ -248,7 +249,7 @@ SELECT _id FROM organization WHERE organization_id = $1
         organization_id.str,
     )
 
-    def _sqlite_save_device_certifs():
+    def _sqlite_save_device_certifs() -> None:
         output_con = sqlite3.connect(output_db_path)
         try:
             output_con.executemany(
@@ -278,7 +279,7 @@ AND organization = (SELECT _id FROM organization WHERE organization_id = $1)
         realm_id.uuid,
     )
 
-    def _sqlite_save_realm_role_certifs():
+    def _sqlite_save_realm_role_certifs() -> None:
         output_con = sqlite3.connect(output_db_path)
         try:
             output_con.executemany(
@@ -319,7 +320,7 @@ class RealmExporter:
         output_db_path: Path,
         input_dbh: PGHandler,
         input_blockstore: BaseBlockStoreComponent,
-    ):
+    ) -> AsyncGenerator["RealmExporter", None]:
         async with input_dbh.pool.acquire() as input_conn:
             await _init_output_db(
                 organization_id=organization_id,
@@ -341,7 +342,7 @@ class RealmExporter:
     # Vlobs export
 
     async def compute_vlobs_export_status(self) -> Tuple[int, BatchOffsetMarker]:
-        def _retreive_vlobs_export_status():
+        def _retreive_vlobs_export_status() -> int:
             con = sqlite3.connect(self.output_db_path)
             try:
                 row = con.execute("SELECT max(_id) FROM vlob_atom").fetchone()
@@ -372,7 +373,7 @@ WHERE
             )
             to_export_count = rows[0][0]
 
-        return (to_export_count, last_exported_index)
+        return (cast(int, to_export_count), cast(BatchOffsetMarker, last_exported_index))
 
     async def export_vlobs(
         self, batch_size: int = 1000, batch_offset_marker: Optional[BatchOffsetMarker] = None
@@ -415,7 +416,7 @@ LIMIT $5
                 batch_size,
             )
 
-            def _save_in_output_db():
+            def _save_in_output_db() -> None:
                 # Must convert `vlob_id`` fields from UUID to bytes given SQLite doesn't handle the former
                 # Must also convert datetime to a number of ms since UNIX epoch
                 cooked_rows = [
@@ -450,7 +451,7 @@ ON CONFLICT DO NOTHING
     # Blocks export
 
     async def compute_blocks_export_status(self) -> Tuple[int, BatchOffsetMarker]:
-        def _retreive_vlobs_export_status():
+        def _retreive_vlobs_export_status() -> int:
             con = sqlite3.connect(self.output_db_path)
             try:
                 row = con.execute("SELECT max(_id) FROM block").fetchone()
@@ -481,7 +482,7 @@ WHERE
             )
             to_export_count = rows[0][0]
 
-        return (to_export_count, last_exported_index)
+        return (cast(int, to_export_count), cast(BatchOffsetMarker, last_exported_index))
 
     async def export_blocks(
         self, batch_size: int = 100, batch_offset_marker: Optional[BatchOffsetMarker] = None
@@ -528,7 +529,7 @@ LIMIT $4
                     )
                 )
 
-            def _save_in_output_db():
+            def _save_in_output_db() -> None:
                 con = sqlite3.connect(self.output_db_path)
                 try:
                     # Must convert `vlob_id`` fields from UUID to bytes given SQLite doesn't handle the former

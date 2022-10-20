@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional, Union
+import triopg
+from typing import Any, Optional, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
 
@@ -164,7 +165,7 @@ SELECT
 @lru_cache()
 def _q_update_factory(
     with_is_expired: bool, with_active_users_limit: bool, with_user_profile_outsider_allowed: bool
-):
+) -> Q:
     fields = []
     if with_is_expired:
         fields.append("is_expired = $is_expired")
@@ -185,7 +186,7 @@ def _q_update_factory(
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, dbh: PGHandler, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.dbh = dbh
 
@@ -223,7 +224,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             return await self._get(conn, id)
 
     @staticmethod
-    async def _get(conn, id: OrganizationID, for_update: bool = False) -> Organization:
+    async def _get(
+        conn: triopg._triopg.TrioConnectionProxy, id: OrganizationID, for_update: bool = False
+    ) -> Organization:
         if for_update:
             row = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id.str))
         else:
@@ -348,7 +351,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             OrganizationNotFoundError
             OrganizationError
         """
-        fields: dict = {}
+        fields: dict[str, Any] = {}
 
         with_is_expired = is_expired is not Unset
         with_active_users_limit = active_users_limit is not Unset

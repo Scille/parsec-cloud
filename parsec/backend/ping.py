@@ -11,8 +11,7 @@ from parsec._parsec import (
     InvitedPingRepOk,
 )
 from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.api.protocol.base import api_typed_msg_adapter
-from parsec.backend.utils import catch_protocol_errors, api, ClientType
+from parsec.backend.utils import catch_protocol_errors, api, ClientType, api_typed_msg_adapter
 
 
 class BasePingComponent:

@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+import triopg
+from typing import Dict, List
 
 from parsec.api.protocol import (
     OrganizationID,
@@ -122,7 +123,10 @@ WHERE
 
 @query()
 async def query_get_status(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
 ) -> RealmStatus:
     ret = await conn.fetchrow(
         *_q_get_realm_status(
@@ -149,7 +153,10 @@ async def query_get_status(
 
 @query(in_transaction=True)
 async def query_get_stats(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
 ) -> RealmStats:
     ret = await conn.fetchrow(
         *_q_has_realm_access(
@@ -176,7 +183,7 @@ async def query_get_stats(
 
 @query()
 async def query_get_current_roles(
-    conn, organization_id: OrganizationID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
 ) -> Dict[UserID, RealmRole]:
     ret = await conn.fetch(
         *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id.uuid)
@@ -191,7 +198,10 @@ async def query_get_current_roles(
 
 @query()
 async def query_get_role_certificates(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
 ) -> List[bytes]:
     ret = await conn.fetch(
         *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id.uuid)
@@ -217,8 +227,8 @@ async def query_get_role_certificates(
 
 @query()
 async def query_get_realms_for_user(
-    conn, organization_id: OrganizationID, user: UserID
-) -> Dict[RealmID, Optional[RealmRole]]:
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user: UserID
+) -> dict[RealmID, RealmRole]:
     rep = await conn.fetch(
         *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
     )
@@ -231,7 +241,7 @@ async def query_get_realms_for_user(
 
 @query()
 async def query_dump_realms_granted_roles(
-    conn, organization_id: OrganizationID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
 ) -> List[RealmGrantedRole]:
     granted_roles = []
     rows = await conn.fetch(

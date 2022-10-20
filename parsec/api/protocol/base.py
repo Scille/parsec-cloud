@@ -514,32 +514,6 @@ def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):  # type: ignore[no-un
     return type(name, (), fields)
 
 
-# TODO: temporary hack that should be removed once all cmds are typed, at this point we
-# will be able to do this handling directly into `BackendApp._handle_client_websocket_loop`
-def api_typed_msg_adapter(req_cls, rep_cls):  # type: ignore[no-untyped-def]
-    def _api_typed_msg_adapter(fn):  # type: ignore[no-untyped-def]
-        @wraps(fn)
-        async def wrapper(self, client_ctx, msg):  # type: ignore[no-untyped-def]
-            # Here packb&unpackb should never fail given they are only undoing
-            # work we've just done in another layer
-            if client_ctx.TYPE == ClientType.INVITED:
-                from parsec.api.protocol import InvitedAnyCmdReq
-
-                typed_req = InvitedAnyCmdReq.load(_packb(msg))
-            else:
-                from parsec.api.protocol import AuthenticatedAnyCmdReq
-
-                typed_req = AuthenticatedAnyCmdReq.load(_packb(msg))
-
-            assert isinstance(typed_req, req_cls)
-            typed_rep = await fn(self, client_ctx, typed_req)
-            return _unpackb(typed_rep.dump())
-
-        return wrapper
-
-    return _api_typed_msg_adapter
-
-
 class ApiCommandSerializer:
     def __init__(self, req_schema: Any, rep_schema: Any) -> None:
         self.req_schema = req_schema

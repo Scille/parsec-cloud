@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import triopg
 from typing import Optional, Tuple
 
 from parsec.backend.backend_events import BackendEvent
@@ -122,7 +123,7 @@ DO UPDATE SET last_role_change = (
 
 @query(in_transaction=True)
 async def query_update_roles(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     new_role: RealmGrantedRole,
     recipient_message: Optional[bytes],
