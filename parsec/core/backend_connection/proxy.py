@@ -258,14 +258,10 @@ async def maybe_connect_through_proxy(
 
     conn = h11.Connection(our_role=h11.CLIENT)
 
-    async def send(event: h11.Request) -> None:
-        data = conn.send(event)
-        assert data is not None, "Connection is closed"
-        await stream.send_all(data)
-
     async def next_event() -> h11.Event:
         while True:
             event = conn.next_event()
+            # FIXME: Handle the case where `event` is `h11.PAUSED`
             if event is h11.NEED_DATA:
                 # Note there is no need to handle 100 continue here given we are client
                 # (see https://h11.readthedocs.io/en/v0.10.0/api.htm1l#flow-control)
@@ -292,16 +288,23 @@ async def maybe_connect_through_proxy(
             ],
         )
         logger.debug("Sending CONNECT to proxy", proxy_url=proxy_url, req=req)
-        await send(req)
+
+        data = conn.send(req)
+        # At this point we've just initialized the `h11` connection and nothing has been sent so it
+        # can't be `None` which mean "Connection closed" for `h11`
+        assert data is not None, "Connection is closed"
+        await stream.send_all(data)
+
         answer = await next_event()
         logger.debug("Receiving CONNECT answer from proxy", proxy_url=proxy_url, answer=answer)
         if not isinstance(answer, h11.Response) or not 200 <= answer.status_code < 300:
+            assert isinstance(answer, h11.Response)
             logger.warning(
                 "Bad answer from proxy to CONNECT request",
                 proxy_url=proxy_url,
                 target_host=host,
                 target_url=target_url,
-                answer_status=answer.status_code,  # type: ignore[attr-defined]
+                answer_status=answer.status_code,
             )
             raise BackendNotAvailable("Bad answer from proxy")
         # Successful CONNECT should reset the connection's statemachine
