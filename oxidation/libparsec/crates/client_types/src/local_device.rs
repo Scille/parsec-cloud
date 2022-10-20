@@ -54,7 +54,7 @@ impl LocalDevice {
     /// The purpose of the slog is simply to tell whether `LocalDevice` and
     /// `AvailableDevice` objects corresponds to the same device.
     pub fn slug(&self) -> String {
-        // Add a hash to avoid clash when the backend is reseted and we recreate
+        // Add a hash to avoid clash when the backend is reset-ed and we recreate
         // a device with same OrganizationID/DeviceID than a previous one
         let mut hasher = sha2::Sha256::new();
         hasher.update(self.root_verify_key().as_ref());
@@ -231,9 +231,9 @@ impl UserInfo {
     }
 
     /// Note that we might consider a user revoked even though our current time is still
-    /// below the revokation timestamp. This is because there is no clear causality between
-    /// our time and the production of the revokation timestamp (as it might have been produced
-    /// by another device). So we simply consider a user revoked if a revokation timestamp has
+    /// below the revocation timestamp. This is because there is no clear causality between
+    /// our time and the production of the revocation timestamp (as it might have been produced
+    /// by another device). So we simply consider a user revoked if a revocation timestamp has
     /// been issued.
     pub fn is_revoked(&self) -> bool {
         self.revoked_on.is_some()

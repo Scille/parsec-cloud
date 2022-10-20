@@ -109,7 +109,7 @@ impl Chunk {
             return Ok(self);
         }
 
-        // Check alignement
+        // Check alignment
         if self.raw_offset != self.start {
             return Err("This chunk is not aligned");
         }
