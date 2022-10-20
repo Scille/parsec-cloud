@@ -35,7 +35,7 @@ class BackendOrganizationAddrField(fields.Field):
             raise ValidationError(str(exc)) from exc
 
     def _serialize(
-        self, value: Optional[BackendOrganizationAddr], attr: str, data: dict[str, object]
+        self, value: Optional[BackendOrganizationAddr], attr: str, data: object
     ) -> Optional[str]:
         if value is None:
             return None
@@ -50,9 +50,7 @@ class BackendAddrField(fields.Field):
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
-    def _serialize(
-        self, value: Optional[BackendAddr], attr: str, data: dict[str, object]
-    ) -> Optional[str]:
+    def _serialize(self, value: Optional[BackendAddr], attr: str, data: object) -> Optional[str]:
         if value is None:
             return None
 

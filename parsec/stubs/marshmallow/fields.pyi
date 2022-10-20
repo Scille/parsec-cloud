@@ -1,7 +1,7 @@
-from __future__ import annotations
-from typing import Any
-
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Any, Callable, Optional
 
 missing_: object
 
@@ -10,25 +10,25 @@ class Field:
 
     def __init__(
         self,
-        default=missing_,
-        attribute=None,
-        load_from=None,
-        dump_to=None,
-        error=None,
-        validate=None,
-        required=False,
-        allow_none=None,
-        load_only=False,
-        dump_only=False,
-        missing=missing_,
-        error_messages=None,
-        **metadata,
+        default: object = missing_,
+        attribute: Optional[str] = None,
+        load_from: Optional[str] = None,
+        dump_to: Optional[str] = None,
+        error: Optional[Any] = None,
+        validate: Optional[Callable[[Any], bool]] = None,
+        required: bool = False,
+        allow_none: Optional[bool] = None,
+        load_only: bool = False,
+        dump_only: bool = False,
+        missing: object = missing_,
+        error_messages: Optional[dict[str, object]] = None,
+        **metadata: Any,
     ): ...
-    def serialize(self, attr, obj, accessor=None): ...
-    def deserialize(self, value): ...
-    def _serialize(self, value, attr: str, obj: object): ...
-    def _deserialize(self, value, attr: str, obj: dict[str, object]): ...
-    def __deepcopy__(self, memo): ...
+    def serialize(self, attr: str, obj: str, accessor: Optional[Callable[..., object]] = None): ...
+    def deserialize(self, value: Any, attr: Optional[str] = None, data: Optional[Any] = None): ...
+    def _serialize(self, value: Any, attr: str, obj: object): ...
+    def _deserialize(self, value: Any, attr: str, obj: dict[str, object]): ...
+    def __deepcopy__(self, memo: Any): ...
     def fail(self, key: str, **kwargs: Any) -> None: ...
 
 class Int(Field): ...
