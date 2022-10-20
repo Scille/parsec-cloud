@@ -1,25 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable, NoReturn, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, NoReturn, Dict, Tuple, TypeVar
 from typing_extensions import ParamSpec
+import csv
+from io import StringIO
 from functools import wraps
 from parsec.serde.serializer import JSONSerializer
 from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response, g
 
 from parsec._parsec import DateTime
 from parsec.serde import SerdeValidationError, SerdePackingError
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.api.rest import (
     organization_config_rep_serializer,
     organization_create_req_serializer,
     organization_create_rep_serializer,
     organization_update_req_serializer,
     organization_stats_rep_serializer,
+    server_stats_rep_serializer,
 )
 from parsec.backend.organization import (
     OrganizationAlreadyExistsError,
     OrganizationNotFoundError,
+    OrganizationStats,
     generate_bootstrap_token,
 )
 
@@ -30,6 +34,47 @@ T = TypeVar("T")
 P = ParamSpec("P")
 
 administration_bp = Blueprint("administration_api", __name__)
+
+
+def _convert_server_stats_results_as_csv(stats: Dict[OrganizationID, OrganizationStats]) -> str:
+    # Use `newline=""` to let the CSV writer handles the newlines
+    with StringIO(newline="") as memory_file:
+        writer = csv.writer(memory_file)
+        # Header
+        writer.writerow(
+            [
+                "organization_id",
+                "data_size",
+                "metadata_size",
+                "realms",
+                "active_users",
+                "admin_users_active",
+                "admin_users_revoked",
+                "standard_users_active",
+                "standard_users_revoked",
+                "outsider_users_active",
+                "outsider_users_revoked",
+            ]
+        )
+
+        def _find_profile_counts(profile: UserProfile) -> Tuple[int, int]:
+            detail = next(x for x in org_stats.users_per_profile_detail if x.profile == profile)
+            return (detail.active, detail.revoked)
+
+        for organization_id, org_stats in stats.items():
+            csv_row = [
+                organization_id.str,
+                org_stats.data_size,
+                org_stats.metadata_size,
+                org_stats.realms,
+                org_stats.active_users,
+                *_find_profile_counts(UserProfile.ADMIN),
+                *_find_profile_counts(UserProfile.STANDARD),
+                *_find_profile_counts(UserProfile.OUTSIDER),
+            ]
+            writer.writerow(csv_row)
+
+        return memory_file.getvalue()
 
 
 def administration_authenticated(fn: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
@@ -157,3 +202,58 @@ async def administration_organization_stat(raw_organization_id: str) -> Response
         },
         status=200,
     )
+
+
+@administration_bp.route("/administration/stats", methods=["GET"])
+@administration_authenticated
+async def administration_server_stats():
+    backend: "BackendApp" = g.backend
+
+    if request.args.get("format") not in ("csv", "json"):
+        return await json_abort(
+            {
+                "error": "bad_data",
+                "reason": f"Missing/invalid mandatory query argument `format` (expected `csv` or `json`)",
+            },
+            400,
+        )
+
+    try:
+        raw_at = request.args.get("at")
+        at = DateTime.from_rfc3339(raw_at) if raw_at else None
+        server_stats = await backend.organization.server_stats(at=at)
+    except ValueError:
+        return await json_abort(
+            {
+                "error": "bad_data",
+                "reason": "Invalid `at` query argument (expected RFC3339 datetime)",
+            },
+            400,
+        )
+
+    if request.args["format"] == "csv":
+        csv_data = _convert_server_stats_results_as_csv(server_stats)
+        return current_app.response_class(
+            csv_data,
+            content_type="text/csv",
+            status=200,
+        )
+
+    else:
+        return make_rep_response(
+            server_stats_rep_serializer,
+            data={
+                "stats": [
+                    {
+                        "organization_id": organization_id.str,
+                        "data_size": org_stats.data_size,
+                        "metadata_size": org_stats.metadata_size,
+                        "realms": org_stats.realms,
+                        "active_users": org_stats.active_users,
+                        "users_per_profile_detail": org_stats.users_per_profile_detail,
+                    }
+                    for organization_id, org_stats in server_stats.items()
+                ]
+            },
+            status=200,
+        )
