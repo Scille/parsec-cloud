@@ -62,7 +62,6 @@ async def apiv1_connect(
         BackendConnectionError
     """
     handshake = APIV1_AnonymousClientHandshake(addr.organization_id)
-    assert addr.port is not None, "Organization port is None"
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
 
