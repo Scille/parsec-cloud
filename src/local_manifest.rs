@@ -136,7 +136,7 @@ impl Chunk {
 
     fn evolve_as_block(&self, py: Python, data: PyObject) -> PyResult<Self> {
         let data = if let Ok(data) = data.extract::<&PyByteArray>(py) {
-            // Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+            // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
             // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
             // python thread modifying the bytearray behind our back.
             unsafe { data.as_bytes() }

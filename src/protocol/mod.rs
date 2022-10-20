@@ -148,29 +148,45 @@ macro_rules! gen_rep {
 
                     let rep = $mod::Rep::load(&buf).map_err(|e| ProtocolError::new_err(e.to_string()))?;
 
-                    let ret = unsafe {
-                        match rep {
-                            rep @ $mod::Rep::Ok $({ $($tt)+ })? => {
-                                let initializer =
-                                    ::pyo3::PyClassInitializer::from(([<$base_class Ok>], Self(rep)));
+                    let ret = match rep {
+                        rep @ $mod::Rep::Ok $({ $($tt)+ })? => {
+                            let initializer =
+                                ::pyo3::PyClassInitializer::from(([<$base_class Ok>], Self(rep)));
+                            // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
+                            // or a sub-type of `T` (the type of `initializer` here).
+                            // Here `initializer` is created using the type `<$base_class Ok>` and the same type of `<$base_class Ok>`
+                            // will be used as the type of `subtype` in the call of `into_new_object`.
+                            unsafe {
                                 let ptr = initializer.into_new_object(py, [<$base_class Ok>]::type_object_raw(py))?;
                                 PyObject::from_owned_ptr(py, ptr)
                             }
-                            $(
-                                rep @ $mod::Rep::$variant $({ $($field: _,)+ })? => {
-                                    let initializer =
-                                        ::pyo3::PyClassInitializer::from(([<$base_class $variant>], Self(rep)));
+                        }
+                        $(
+                            rep @ $mod::Rep::$variant $({ $($field: _,)+ })? => {
+                                let initializer =
+                                    ::pyo3::PyClassInitializer::from(([<$base_class $variant>], Self(rep)));
+                                // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
+                                // or a sub-type of `T` (the type of `initializer` here).
+                                // Here `initializer` is created using the type `<$base_class $variant>` and the same type of `<$base_class $variant>`
+                                // will be used as the type of `subtype` in the call of `into_new_object`.
+                                unsafe {
                                     let ptr = initializer.into_new_object(py, [<$base_class $variant>]::type_object_raw(py))?;
                                     PyObject::from_owned_ptr(py, ptr)
                                 }
-                            )*
-                            rep @ $mod::Rep::UnknownStatus { .. } => {
-                                let initializer =
-                                    ::pyo3::PyClassInitializer::from(([<$base_class UnknownStatus>], Self(rep)));
+                            }
+                        )*
+                        rep @ $mod::Rep::UnknownStatus { .. } => {
+                            let initializer =
+                                ::pyo3::PyClassInitializer::from(([<$base_class UnknownStatus>], Self(rep)));
+                            // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
+                            // or a sub-type of `T` (the type of `initializer` here).
+                            // Here `initializer` is created using the type `<$base_class UnknownStatus>` and the same type of `<$base_class UnknownStatus>`
+                            // will be used as the type of `subtype` in the call of `into_new_object`.
+                            unsafe {
                                 let ptr = initializer.into_new_object(py, [<$base_class UnknownStatus>]::type_object_raw(py))?;
                                 PyObject::from_owned_ptr(py, ptr)
-                            },
-                        }
+                            }
+                        },
                     };
                     Ok(match _cls.getattr("_post_load") {
                         Ok(post_load) => post_load.call1((ret.as_ref(py), ))?.into_py(py),
