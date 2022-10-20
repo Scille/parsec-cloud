@@ -301,7 +301,7 @@ mod test {
 
                             pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
                                 ::rmp_serde::from_slice::<Self>(buf)
-                                .or_else(|_error| {
+                                .or_else(|err| {
                                     let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
 
                                     match data.status.as_str() {
@@ -355,7 +355,7 @@ mod test {
 
                             pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
                                 ::rmp_serde::from_slice::<Self>(buf)
-                                .or_else(|_error| {
+                                .or_else(|err| {
                                     let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
 
                                     match data.status.as_str() {
