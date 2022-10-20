@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-from typing import Tuple, Dict
+from typing import Any, AsyncGenerator, Tuple, Dict
 import trio
 from contextlib import asynccontextmanager
 from parsec.backend.memory.sequester import MemorySequesterComponent
@@ -26,15 +26,17 @@ from parsec.backend.webhooks import WebhooksComponent
 
 
 @asynccontextmanager
-async def components_factory(config: BackendConfig, event_bus: EventBus):
+async def components_factory(  # type: ignore[misc]
+    config: BackendConfig, event_bus: EventBus
+) -> AsyncGenerator[dict[str, Any], None]:
     send_events_channel, receive_events_channel = trio.open_memory_channel[
         Tuple[Enum, Dict[str, object]]
     ](math.inf)
 
-    async def _send_event(event: Enum, **kwargs):
+    async def _send_event(event: Enum, **kwargs: Any) -> None:
         await send_events_channel.send((event, kwargs))
 
-    async def _dispatch_event():
+    async def _dispatch_event() -> None:
         async for event, kwargs in receive_events_channel:
             await trio.sleep(0)
             event_bus.send(event, **kwargs)

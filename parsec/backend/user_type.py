@@ -2,17 +2,17 @@
 from __future__ import annotations
 
 import attr
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 from parsec._parsec import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.data import UserCertificate, DeviceCertificate, DataError
-from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel, UserProfile
+from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel, UserProfile, DeviceName
 
 
 class CertificateValidationError(Exception):
-    def __init__(self, status, reason):
+    def __init__(self, status: str, reason: str) -> None:
         self.status = status
         self.reason = reason
         super().__init__((status, reason))
@@ -20,18 +20,18 @@ class CertificateValidationError(Exception):
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class Device:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.device_id.str})"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> Device:
         return attr.evolve(self, **kwargs)
 
     @property
-    def device_name(self):
+    def device_name(self) -> DeviceName:
         return self.device_id.device_name
 
     @property
-    def user_id(self):
+    def user_id(self) -> UserID:
         return self.device_id.user_id
 
     @property
@@ -48,14 +48,14 @@ class Device:
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class User:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.user_id.str})"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> User:
         return attr.evolve(self, **kwargs)
 
-    def is_revoked(self):
-        return self.revoked_on
+    def is_revoked(self) -> bool:
+        return self.revoked_on is not None
 
     @property
     def public_key(self) -> PublicKey:

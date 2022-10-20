@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union, Dict
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional, Union, Dict
 import trio
 from collections import defaultdict
 
@@ -31,24 +31,26 @@ if TYPE_CHECKING:
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, send_event, *args, **kwargs):
+    def __init__(
+        self, send_event: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self._user_component: "MemoryUserComponent" = None
-        self._vlob_component: "MemoryVlobComponent" = None
-        self._block_component: "MemoryBlockComponent" = None
-        self._realm_component: "MemoryRealmComponent" = None
+        self._user_component: Optional[MemoryUserComponent] = None
+        self._vlob_component: Optional[MemoryVlobComponent] = None
+        self._block_component: Optional[MemoryBlockComponent] = None
+        self._realm_component: Optional[MemoryRealmComponent] = None
         self._organizations: Dict[OrganizationID, Organization] = {}
         self._send_event = send_event
-        self._organization_bootstrap_lock = defaultdict(trio.Lock)
+        self._organization_bootstrap_lock: dict[OrganizationID, trio.Lock] = defaultdict(trio.Lock)
 
     def register_components(
         self,
-        user: "MemoryUserComponent",
-        vlob: "MemoryVlobComponent",
-        block: "MemoryBlockComponent",
-        realm: "MemoryRealmComponent",
-        **other_components,
-    ):
+        user: MemoryUserComponent,
+        vlob: MemoryVlobComponent,
+        block: MemoryBlockComponent,
+        realm: MemoryRealmComponent,
+        **other_components: Any,
+    ) -> None:
         self._user_component = user
         self._vlob_component = vlob
         self._block_component = block
@@ -97,6 +99,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         root_verify_key: VerifyKey,
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
+        assert self._user_component is not None
+
         # Organization bootstrap involves multiple modifications (in user,
         # device and organization) and is not atomic (given await is used),
         # so we protect it from concurrency with a big old lock
@@ -127,6 +131,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 )
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
+        assert self._vlob_component is not None
+        assert self._block_component is not None
+        assert self._user_component is not None
+        assert self._realm_component is not None
+
         await self.get(id)
 
         metadata_size = 0

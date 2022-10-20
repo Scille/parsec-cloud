@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field as dataclass_field
-from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, AbstractSet, Tuple, Dict, Optional
 from collections import defaultdict
 
 from parsec._parsec import DateTime
@@ -53,7 +53,7 @@ class Vlob:
     sequestered_data: Optional[SequesteredVlobData]
 
     @property
-    def current_version(self):
+    def current_version(self) -> int:
         return len(self.data)
 
 
@@ -123,11 +123,11 @@ class Changes:
 
 
 class MemoryVlobComponent(BaseVlobComponent):
-    def __init__(self, send_event):
+    def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._organization_component: "MemoryOrganizationComponent" = None
-        self._realm_component: "MemoryRealmComponent" = None
-        self._sequester_component: "MemorySequesterComponent" = None
+        self._organization_component: Optional[MemoryOrganizationComponent] = None
+        self._realm_component: Optional[MemoryRealmComponent] = None
+        self._sequester_component: Optional[MemorySequesterComponent] = None
         self._vlobs: Dict[Tuple[OrganizationID, VlobID], Vlob] = {}
         self._per_realm_changes: Dict[Tuple[OrganizationID, RealmID], Changes] = defaultdict(
             Changes
@@ -135,10 +135,10 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     def register_components(
         self,
-        organization: "MemoryOrganizationComponent",
-        realm: "MemoryRealmComponent",
-        sequester: "MemorySequesterComponent",
-        **other_components,
+        organization: MemoryOrganizationComponent,
+        realm: MemoryRealmComponent,
+        sequester: MemorySequesterComponent,
+        **other_components: Any,
     ) -> None:
         self._organization_component = organization
         self._realm_component = realm
@@ -183,6 +183,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         expect_sequestered_organization: bool,
         expect_active_sequester_services: AbstractSet[SequesterServiceID] = set(),
     ) -> Dict[SequesterServiceID, BaseSequesterService]:
+        assert self._organization_component is not None
+        assert self._sequester_component is not None
+
         try:
             org = self._organization_component._organizations[organization_id]
         except KeyError:
@@ -281,6 +284,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         timestamp: Optional[DateTime],
         operation_kind: OperationKind,
     ) -> "Realm":
+        assert self._realm_component is not None
+
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
@@ -386,7 +391,7 @@ class MemoryVlobComponent(BaseVlobComponent):
     async def _update_changes(
         self,
         organization_id: OrganizationID,
-        author,
+        author: DeviceID,
         realm_id: RealmID,
         src_id: VlobID,
         timestamp: DateTime,

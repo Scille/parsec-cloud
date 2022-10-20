@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Optional, Dict, List, Tuple
 from collections import defaultdict
 from parsec._parsec import DateTime
 
@@ -28,19 +28,19 @@ if TYPE_CHECKING:
 
 
 class MemorySequesterComponent(BaseSequesterComponent):
-    def __init__(self):
-        self._organization_component: "MemoryOrganizationComponent" = None
-        self._vlob_component: "MemoryVlobComponent" = None
+    def __init__(self) -> None:
+        self._organization_component: Optional[MemoryOrganizationComponent] = None
+        self._vlob_component: Optional[MemoryVlobComponent] = None
         self._services: Dict[
             OrganizationID, Dict[SequesterServiceID, BaseSequesterService]
         ] = defaultdict(dict)
 
     def register_components(
         self,
-        organization: "MemoryOrganizationComponent",
-        vlob: "MemoryVlobComponent",
-        **other_components,
-    ):
+        organization: MemoryOrganizationComponent,
+        vlob: MemoryVlobComponent,
+        **other_components: Any,
+    ) -> None:
         self._organization_component = organization
         self._vlob_component = vlob
 
@@ -51,6 +51,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
         # Organization objects in the organization component contains the list of active services
         # (typically returned in `organization_config` API command), so it must be refreshed
         # every time we create/disable/re-enable a service !
+        assert self._organization_component is not None
+
         organization = self._organization_component._organizations[organization_id]
         sequester_services_certificates = tuple(
             s.service_certificate for s in self._services[organization_id].values() if s.is_enabled
@@ -64,6 +66,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
         organization_id: OrganizationID,
         service: BaseSequesterService,
     ) -> None:
+        assert self._organization_component is not None
+
         try:
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
@@ -122,6 +126,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
     def _get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
     ) -> BaseSequesterService:
+        assert self._organization_component is not None
+
         try:
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
@@ -141,6 +147,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
     async def get_organization_services(
         self, organization_id: OrganizationID
     ) -> List[BaseSequesterService]:
+        assert self._organization_component is not None
+
         try:
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
@@ -155,6 +163,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
         service_id: SequesterServiceID,
         realm_id: RealmID,
     ) -> List[Tuple[VlobID, int, bytes]]:
+        assert self._vlob_component is not None
+
         dump: List[Tuple[VlobID, int, bytes]] = []
         # Check orga and service exists
         service = self._get_service(organization_id=organization_id, service_id=service_id)

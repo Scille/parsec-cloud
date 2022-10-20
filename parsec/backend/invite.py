@@ -273,11 +273,13 @@ def generate_invite_email(
 
 
 async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: Message) -> None:
-    def _do():
+    def _do() -> None:
         try:
             context = ssl.create_default_context()
             if email_config.use_ssl:
-                server = smtplib.SMTP_SSL(email_config.host, email_config.port, context=context)
+                server: Union[smtplib.SMTP, smtplib.SMTP_SSL] = smtplib.SMTP_SSL(
+                    email_config.host, email_config.port, context=context
+                )
             else:
                 server = smtplib.SMTP(email_config.host, email_config.port)
 
@@ -301,7 +303,7 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
 async def _mocked_send_mail(
     email_config: MockedEmailConfig, to_addr: str, message: Message
 ) -> None:
-    def _do():
+    def _do() -> None:
         tmpfile_fd, tmpfile_path = tempfile.mkstemp(
             prefix="tmp-email-", suffix=".html", dir=email_config.tmpdir
         )

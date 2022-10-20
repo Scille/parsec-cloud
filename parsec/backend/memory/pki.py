@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Callable, Coroutine, Dict, List, Optional
 from uuid import UUID
 from collections import defaultdict
 import attr
@@ -46,12 +46,12 @@ class PkiEnrollment:
 
 
 class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
-    def __init__(self, send_event):
+    def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._user_component: MemoryUserComponent = None
+        self._user_component: Optional[MemoryUserComponent] = None
         self._enrollments: Dict[OrganizationID, List[PkiEnrollment]] = defaultdict(list)
 
-    def register_components(self, user: MemoryUserComponent, **other_components):
+    def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
         self._user_component = user
 
     async def submit(
@@ -65,6 +65,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         submit_payload: bytes,
         submitted_on: DateTime,
     ) -> None:
+        assert self._user_component is not None
 
         # Assert enrollment id not used already
         for enrollment in reversed(self._enrollments[organization_id]):
@@ -191,6 +192,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         user: User,
         first_device: Device,
     ) -> None:
+        assert self._user_component is not None
+
         for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
                 if not isinstance(enrollment.info, PkiEnrollmentInfoSubmitted):

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import attr
 from parsec._parsec import DateTime
-from typing import TYPE_CHECKING, Iterable, Tuple, List, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
@@ -34,7 +34,9 @@ class OrganizationStore:
 
 
 class MemoryUserComponent(BaseUserComponent):
-    def __init__(self, send_event, *args, **kwargs):
+    def __init__(
+        self, send_event: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._send_event = send_event
         self._organizations: Dict[OrganizationID, OrganizationStore] = defaultdict(
@@ -43,9 +45,9 @@ class MemoryUserComponent(BaseUserComponent):
 
     def register_components(
         self,
-        organization: "MemoryOrganizationComponent",
-        realm: "MemoryRealmComponent",
-        **other_components,
+        organization: MemoryOrganizationComponent,
+        realm: MemoryRealmComponent,
+        **other_components: Any,
     ) -> None:
         self._organization_component = organization
         self._realm_component = realm
@@ -105,7 +107,10 @@ class MemoryUserComponent(BaseUserComponent):
         )
 
     async def _get_trustchain(
-        self, organization_id: OrganizationID, *devices_ids, redacted: bool = False
+        self,
+        organization_id: OrganizationID,
+        *devices_ids: Optional[DeviceID],
+        redacted: bool = False,
     ) -> Trustchain:
         trustchain_devices = set()
         trustchain_users = set()
@@ -115,7 +120,7 @@ class MemoryUserComponent(BaseUserComponent):
         user_certif_field = "redacted_user_certificate" if redacted else "user_certificate"
         device_certif_field = "redacted_device_certificate" if redacted else "device_certificate"
 
-        async def _recursive_extract_creators(device_id):
+        async def _recursive_extract_creators(device_id: Optional[DeviceID]) -> None:
             if not device_id or device_id in in_trustchain:
                 return
             in_trustchain.add(device_id)

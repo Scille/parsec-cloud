@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import Any, Callable, Coroutine, List, Tuple
 from collections import defaultdict
 from parsec._parsec import DateTime
 
@@ -11,11 +11,13 @@ from parsec.backend.message import BaseMessageComponent
 
 
 class MemoryMessageComponent(BaseMessageComponent):
-    def __init__(self, send_event):
+    def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._organizations = defaultdict(lambda: defaultdict(list))
+        self._organizations: dict[
+            OrganizationID, dict[UserID, List[Tuple[DeviceID, DateTime, bytes]]]
+        ] = defaultdict(lambda: defaultdict(list))
 
-    def register_components(self, **other_components):
+    def register_components(self, **other_components: Any) -> None:
         pass
 
     async def send(

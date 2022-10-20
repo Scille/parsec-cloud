@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import attr
 from parsec._parsec import DateTime
-from typing import TYPE_CHECKING, List, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Dict, Optional, Tuple
 
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, UserProfile
 from parsec.backend.backend_events import BackendEvent
@@ -61,23 +61,23 @@ class Realm:
 
 
 class MemoryRealmComponent(BaseRealmComponent):
-    def __init__(self, send_event):
+    def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._user_component: "MemoryUserComponent" = None
-        self._message_component: "MemoryMessageComponent" = None
-        self._vlob_component: "MemoryVlobComponent" = None
-        self._block_component: "MemoryBlockComponent" = None
+        self._user_component: Optional[MemoryUserComponent] = None
+        self._message_component: Optional[MemoryMessageComponent] = None
+        self._vlob_component: Optional[MemoryVlobComponent] = None
+        self._block_component: Optional[MemoryBlockComponent] = None
         self._realms: Dict[Tuple[OrganizationID, RealmID], Realm] = {}
         self._maintenance_reencryption_is_finished_hook = None
 
     def register_components(
         self,
-        user: "MemoryUserComponent",
-        message: "MemoryMessageComponent",
-        vlob: "MemoryVlobComponent",
-        block: "MemoryBlockComponent",
-        **other_components,
-    ):
+        user: MemoryUserComponent,
+        message: MemoryMessageComponent,
+        vlob: MemoryVlobComponent,
+        block: MemoryBlockComponent,
+        **other_components: Any,
+    ) -> None:
         self._user_component = user
         self._message_component = message
         self._vlob_component = vlob
@@ -123,6 +123,9 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def get_stats(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> RealmStats:
+        assert self._block_component is not None
+        assert self._vlob_component is not None
+
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
@@ -166,6 +169,9 @@ class MemoryRealmComponent(BaseRealmComponent):
     ) -> None:
         assert new_role.granted_by is not None
         assert new_role.granted_by.user_id != new_role.user_id
+        assert self._user_component is not None
+        assert self._vlob_component is not None
+        assert self._message_component is not None
 
         # The only way for an OUTSIDER to be OWNER is to create his own realm
         # (given he needs to have one to store it user manifest).
@@ -266,6 +272,10 @@ class MemoryRealmComponent(BaseRealmComponent):
         per_participant_message: Dict[UserID, bytes],
         timestamp: DateTime,
     ) -> None:
+        assert self._message_component is not None
+        assert self._user_component is not None
+        assert self._vlob_component is not None
+
         realm = self._get_realm(organization_id, realm_id)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
@@ -314,6 +324,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_id: RealmID,
         encryption_revision: int,
     ) -> None:
+        assert self._vlob_component is not None
+
         realm = self._get_realm(organization_id, realm_id)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
