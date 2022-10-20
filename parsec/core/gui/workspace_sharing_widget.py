@@ -86,11 +86,27 @@ async def _do_share_workspace(user_fs, workspace_fs, user_info, role):
 class SharingWidget(QWidget, Ui_SharingWidget):
     role_changed = pyqtSignal(UserInfo, object)
 
-    def __init__(self, user_info, is_current_user, current_user_role, role, enabled):
+    def __init__(self, user_info, is_current_user, current_user_role, role):
         super().__init__()
         self.setupUi(self)
 
         self.combo_role.installEventFilter(self)
+
+        enabled = True
+        # Current user cannot change their own permission on the workspace
+        if is_current_user:
+            enabled = False
+        # Current user is READER of CONTRIBUTOR, they cannot change the permission
+        elif (
+            current_user_role == WorkspaceRole.READER
+            or current_user_role == WorkspaceRole.CONTRIBUTOR
+        ):
+            enabled = False
+        # User has permission equivalent or higher than current user
+        elif current_user_role == WorkspaceRole.MANAGER and (
+            role == WorkspaceRole.OWNER or role == WorkspaceRole.MANAGER
+        ):
+            enabled = False
 
         self._role = role
         self.current_user_role = current_user_role
@@ -110,16 +126,19 @@ class SharingWidget(QWidget, Ui_SharingWidget):
             self.label_name.setFont(font)
             self.setToolTip(_("TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"))
 
+        self.setEnabled(enabled)
+
         if not enabled:
-            for role, index in _ROLES_TO_INDEX.items():
-                self.combo_role.insertItem(index, get_role_translation(role))
+            # Not enabled, no point in filling all the roles since they cannot be changed anyway
+            self.combo_role.addItem(get_role_translation(role))
         else:
-            current_index = _ROLES_TO_INDEX[self.current_user_role]
             for role, index in _ROLES_TO_INDEX.items():
-                if current_index < index:
-                    break
                 self.combo_role.insertItem(index, get_role_translation(role))
-                if self.user_info.profile == UserProfile.OUTSIDER and role in (
+                # Outsider cannot be Manager or Owner, Manager cannot set Manager or Owner
+                if (
+                    self.user_info.profile == UserProfile.OUTSIDER
+                    or current_user_role == WorkspaceRole.MANAGER
+                ) and role in (
                     WorkspaceRole.MANAGER,
                     WorkspaceRole.OWNER,
                 ):
@@ -128,14 +147,17 @@ class SharingWidget(QWidget, Ui_SharingWidget):
                     font = item.font()
                     font.setStrikeOut(True)
                     item.setFont(font)
-                    item.setToolTip(_("NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"))
+                    if current_user_role == WorkspaceRole.MANAGER:
+                        item.setToolTip(_("NOT_ALLOWED_FOR_MANAGER_ROLE_TOOLTIP"))
+                    else:
+                        item.setToolTip(_("NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"))
 
-        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role])
-        self.combo_role.currentIndexChanged.connect(self.on_role_changed)
-        self.status_timer = QTimer()
-        self.status_timer.setInterval(3000)
-        self.status_timer.setSingleShot(True)
-        self.status_timer.timeout.connect(self._refresh_status)
+            self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role])
+            self.combo_role.currentIndexChanged.connect(self.on_role_changed)
+            self.status_timer = QTimer()
+            self.status_timer.setInterval(3000)
+            self.status_timer.setSingleShot(True)
+            self.status_timer.timeout.connect(self._refresh_status)
 
     @property
     def role(self):
@@ -219,28 +241,13 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                     w.setVisible(False)
 
     def add_participant(self, user_info, is_current_user, role):
-        enabled = True
-        if is_current_user:
-            enabled = False
-        elif (
-            self.current_user_role == WorkspaceRole.READER
-            or self.current_user_role == WorkspaceRole.CONTRIBUTOR
-        ):
-            enabled = False
-        elif self.current_user_role == WorkspaceRole.MANAGER and (
-            role == WorkspaceRole.OWNER or role == WorkspaceRole.MANAGER
-        ):
-            enabled = False
-
         w = SharingWidget(
             user_info=user_info,
             is_current_user=is_current_user,
             current_user_role=self.current_user_role,
             role=role,
-            enabled=enabled,
         )
         w.role_changed.connect(self.on_role_changed)
-        w.setEnabled(enabled)
         self.scroll_content.layout().insertWidget(self.scroll_content.layout().count() - 1, w)
 
     def _get_sharing_widget(self, user_id):

@@ -1,0 +1,1 @@
+Managers can no longer try to promote other users to manager

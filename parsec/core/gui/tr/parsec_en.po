@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-10-14 16:22+0200\n"
+"POT-Creation-Date: 2022-10-17 09:24+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -2328,6 +2328,9 @@ msgstr "Not shared"
 
 msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
 msgstr "This user has been revoked."
+
+msgid "NOT_ALLOWED_FOR_MANAGER_ROLE_TOOLTIP"
+msgstr "Your role on this workspace is not high enough."
 
 msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Role not allowed for the outsider users."
