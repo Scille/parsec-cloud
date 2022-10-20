@@ -18,7 +18,17 @@ macro_rules! filter_out_future_fields {
                     .map(|mj_version| mj_version.major <= $current_version)
                     .unwrap_or(true)
                 {
-                    Some((name.clone(), field.clone()))
+                    let mut dup_field = field.clone();
+                    // We remove the `introduced_in` tag if the field was introduced in a prior version to the current version.
+                    // We consider at this step that the field is now `stable`.
+                    if dup_field
+                        .introduced_in
+                        .map(|mj_version| mj_version.major < $current_version)
+                        .unwrap_or_default()
+                    {
+                        dup_field.introduced_in = None;
+                    }
+                    Some((name.clone(), dup_field))
                 } else {
                     None
                 }
@@ -249,7 +259,6 @@ mod test {
             req: parser::Request {
                 fields: parser::Fields::from([
                     ("foo".to_string(), parser::Field {
-                        introduced_in: Some("0.4".parse().unwrap()),
                         ..Default::default()
                     })
                 ]),
@@ -299,7 +308,6 @@ mod test {
                 ("ok".to_string(), parser::Response {
                     fields: parser::Fields::from([
                         ("foo".to_string(), parser::Field {
-                            introduced_in: Some("0.5".parse().unwrap()),
                             ..Default::default()
                         })
                     ]),
@@ -361,7 +369,6 @@ mod test {
                         ("Bar".to_string(), parser::Variant {
                             fields: parser::Fields::from([
                                 ("foo".to_string(), parser::Field {
-                                    introduced_in: Some("0.2".parse().unwrap()),
                                     ..Default::default()
                                 })
                             ]),
@@ -428,7 +435,6 @@ mod test {
                 ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
                     fields: parser::Fields::from([
                         ("foo".to_string(), parser::Field {
-                            introduced_in: Some("0.1".parse().unwrap()),
                             ..Default::default()
                         })
                     ])
