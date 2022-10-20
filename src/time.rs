@@ -160,6 +160,11 @@ impl DateTime {
         Ok(self.0.second())
     }
 
+    #[getter]
+    fn microsecond(&self) -> PyResult<u32> {
+        Ok(self.0.microsecond())
+    }
+
     #[classmethod]
     fn now(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::DateTime::now_legacy()))
@@ -219,8 +224,8 @@ impl DateTime {
         seconds: i32,
         microseconds: i32,
     ) -> PyResult<Self> {
-        let us = -((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1_000_000 + microseconds)
-            as i64;
+        let us = -((((days * 24 + hours) * 60 + minutes) * 60 + seconds) as i64 * 1_000_000
+            + microseconds as i64);
         Ok(Self(self.0.add_us(us)))
     }
 
@@ -239,8 +244,8 @@ impl DateTime {
         seconds: i32,
         microseconds: i32,
     ) -> PyResult<Self> {
-        let us =
-            ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1_000_000 + microseconds) as i64;
+        let us = (((days * 24 + hours) * 60 + minutes) * 60 + seconds) as i64 * 1_000_000
+            + microseconds as i64;
         Ok(Self(self.0.add_us(us)))
     }
 }

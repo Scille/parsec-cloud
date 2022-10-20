@@ -27,7 +27,8 @@ class DateTime:
     """
 
     def __init__(
-        self, year: int,
+        self,
+        year: int,
         month: int,
         day: int,
         hour: int = 0,
@@ -53,6 +54,8 @@ class DateTime:
     def minute(self) -> int: ...
     @property
     def second(self) -> int: ...
+    @property
+    def microsecond(self) -> int: ...
     @staticmethod
     def now() -> DateTime: ...
     @staticmethod

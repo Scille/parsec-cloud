@@ -102,6 +102,10 @@ impl DateTime {
         self.0.second()
     }
 
+    pub fn microsecond(&self) -> u32 {
+        self.0.nanosecond() / 1000
+    }
+
     pub fn to_local(self) -> LocalDateTime {
         self.into()
     }
@@ -113,7 +117,6 @@ impl DateTime {
         let now = chrono::Utc::now();
         now.into()
     }
-
 
     /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
     pub fn to_rfc3339(&self) -> String {
@@ -614,6 +617,18 @@ mod tests {
         assert_eq!(dt1.0.nanosecond() % 1000, 0);
         assert_eq!(dt2.0.nanosecond() % 1000, 0);
         assert_eq!(dt3.0.nanosecond() % 1000, 0);
+    }
+
+    #[test]
+    fn test_datetime_attributes() {
+        let dt = DateTime::from_rfc3339("2000-1-2T12:30:59.123456Z").unwrap();
+        assert_eq!(dt.year(), 2000);
+        assert_eq!(dt.month(), 1);
+        assert_eq!(dt.day(), 2);
+        assert_eq!(dt.hour(), 12);
+        assert_eq!(dt.minute(), 30);
+        assert_eq!(dt.second(), 59);
+        assert_eq!(dt.microsecond(), 123456);
     }
 
     #[test]

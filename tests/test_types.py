@@ -352,7 +352,7 @@ def test_datetime():
         day=2,
         hour=12,
         minute=30,
-        second=59,
+        second=45,
         microsecond=123456,
     )
     assert dt.year == 2000
@@ -363,11 +363,11 @@ def test_datetime():
     assert dt.second == 45
     assert dt.microsecond == 123456
 
-    for part in ("year", "month", "day", "hour", "minute", "second", "microsecond"):
-        dt_add = dt.add(**{part: 1})
+    for part in ("day", "hour", "minute", "second", "microsecond"):
+        dt_add = dt.add(**{f"{part}s": 1})
         assert getattr(dt_add, part) == getattr(dt, part) + 1
 
-        dt_sub = dt.add(**{part: 1})
+        dt_sub = dt.subtract(**{f"{part}s": 1})
         assert getattr(dt_sub, part) == getattr(dt, part) - 1
 
     assert dt == dt
@@ -381,10 +381,10 @@ def test_datetime():
 
     assert dt - dt.subtract(microseconds=1) == 0.000001
 
-    assert dt.to_rfc3339() == "2000-01-02T12:30:59.123456Z"
+    assert dt.to_rfc3339() == "2000-01-02T12:30:45.123456Z"
     dt2 = DateTime.from_rfc3339(dt.to_rfc3339())
     assert dt2 == dt
 
-    assert dt.timestamp() == 946816259.123456
+    assert dt.timestamp() == 946816245.123456
     dt3 = DateTime.from_timestamp(dt.timestamp())
     assert dt3 == dt
