@@ -294,6 +294,15 @@ Example:
         "human_label": "John Doe"
     }
 
+SSE Keepalive
+-------------
+
+* ``--sse-keepalive <float>``
+* Environ: ``PARSEC_SSE_KEEPALIVE``
+* Default: ``30``
+
+Keep SSE connection open by sending keepalive messages to client (pass <= 0 to disable).
+
 Sentry
 ------
 

@@ -138,6 +138,7 @@ def backend_factory(
                 "db_max_connections": 5,
                 "debug": False,
                 "db_url": backend_store,
+                "sse_keepalive": 30,
                 "blockstore_config": blockstore,
                 "email_config": None,
                 "backend_addr": None,

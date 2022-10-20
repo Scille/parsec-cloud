@@ -51,6 +51,10 @@ class EventsComponent:
     async def api_events_subscribe(
         self, client_ctx: AuthenticatedClientContext, msg: dict[str, object]
     ) -> EventsSubscribeRep:
+        await self.connect_events(client_ctx)
+        return EventsSubscribeRepOk()
+
+    async def connect_events(self, client_ctx: AuthenticatedClientContext) -> None:
         def _on_roles_updated(
             backend_event: BackendEvent,
             organization_id: OrganizationID,
@@ -208,8 +212,6 @@ class EventsComponent:
             )
             client_ctx.realms = set(realms_for_user.keys())
             client_ctx.events_subscribed = True
-
-        return EventsSubscribeRepOk()
 
     @api("events_listen", cancel_on_client_sending_new_cmd=True)
     @catch_protocol_errors
