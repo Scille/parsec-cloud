@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Dict, NoReturn, Callable, Union
+from typing import Awaitable, NoReturn, Callable, Union
 import trio
 from structlog import get_logger
 from functools import partial
@@ -29,6 +29,8 @@ from parsec.backend.client_context import (
 from parsec.backend.handshake import do_handshake
 from parsec.backend.invite import CloseInviteConnection
 
+Ctx = Union[AuthenticatedClientContext, InvitedClientContext, APIV1_AnonymousClientContext]
+R = dict[str, Union[str, dict[str, str]]]
 
 logger = get_logger()
 
@@ -37,7 +39,7 @@ ws_bp = Blueprint("ws_api", __name__)
 
 
 @ws_bp.websocket("/ws")
-async def handle_ws():
+async def handle_ws() -> None:  # type: ignore[misc]
     backend: BackendApp = g.backend
     selected_logger = logger
 
@@ -161,7 +163,11 @@ async def handle_ws():
 
 
 async def _handle_client_websocket_loop(
-    api_cmds: Dict[str, Callable], websocket: Websocket, client_ctx
+    api_cmds: dict[str, Callable[[Ctx, R], Awaitable[R]]],
+    websocket: Websocket,
+    client_ctx: Union[
+        AuthenticatedClientContext, InvitedClientContext, APIV1_AnonymousClientContext
+    ],
 ) -> NoReturn:
 
     raw_req: Union[None, bytes, str] = None
@@ -169,7 +175,7 @@ async def _handle_client_websocket_loop(
         # raw_req can be already defined if we received a new request
         # while processing a command
         raw_req = raw_req or await websocket.receive()
-        rep: dict
+        rep: R
         try:
             # Wesocket can return both bytes or utf8-string messages, we only accept the former
             if not isinstance(raw_req, bytes):
