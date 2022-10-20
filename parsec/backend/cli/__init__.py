@@ -21,7 +21,7 @@ __all__ = ("backend_cmd",)
 
 
 @click.group(short_help="Handle sequestered organization")
-def backend_sequester_cmd():
+def backend_sequester_cmd() -> None:
     pass
 
 
@@ -35,7 +35,7 @@ backend_sequester_cmd.add_command(import_service_certificate, "import_service_ce
 
 
 @click.group()
-def backend_cmd():
+def backend_cmd() -> None:
     pass
 
 

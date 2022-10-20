@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import Any
 import click
 
 from parsec.utils import trio_run
@@ -15,7 +16,7 @@ from parsec.cli_utils import (
 from parsec.backend.postgresql import apply_migrations, retrieve_migrations
 
 
-def _validate_postgres_db_url(ctx, param, value: str) -> str:
+def _validate_postgres_db_url(ctx: Any, param: Any, value: str) -> str:
     if not (value.startswith("postgresql://") or value.startswith("postgres://")):
         raise click.BadParameter("Must start with `postgresql://` or `postgres://`")
     return value
@@ -34,7 +35,7 @@ def _validate_postgres_db_url(ctx, param, value: str) -> str:
 @logging_config_options(default_log_level="WARNING")
 # Add --debug
 @debug_config_options
-def migrate(db: str, debug: bool, dry_run: bool, **kwargs) -> None:
+def migrate(db: str, debug: bool, dry_run: bool, **kwargs: Any) -> None:
     """
     Updates the database schema
     """

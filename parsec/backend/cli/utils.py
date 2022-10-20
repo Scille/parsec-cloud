@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import click
-from typing import Optional, List
+from typing import Callable, Optional, List, TypeVar
+from typing_extensions import ParamSpec
 from itertools import count
 from collections import defaultdict
 
@@ -17,8 +18,11 @@ from parsec.backend.config import (
     RAID5BlockStoreConfig,
 )
 
+T = TypeVar("T")
+P = ParamSpec("P")
 
-def db_backend_options(fn):
+
+def db_backend_options(fn: Callable[P, T]) -> Callable[P, T]:
     decorators = [
         click.option(
             "--db",
@@ -193,7 +197,7 @@ def _parse_blockstore_params(raw_params: str) -> BaseBlockStoreConfig:
         raise click.BadParameter(f"Invalid multi blockstore mode `{raid_mode}`")
 
 
-def blockstore_backend_options(fn):
+def blockstore_backend_options(fn: Callable[P, T]) -> Callable[P, T]:
     decorators = [
         click.option(
             "--blockstore",

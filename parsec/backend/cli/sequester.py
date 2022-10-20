@@ -1,18 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from uuid import uuid4
-from base64 import b64encode, b64decode
-from async_generator import asynccontextmanager
-import textwrap
 import attr
 import click
-from parsec._parsec import DateTime
-from typing import Optional, Dict, List, Tuple
+import oscrypto
+import textwrap
+from oscrypto.asymmetric import PrivateKey
+from async_generator import asynccontextmanager
+from base64 import b64encode, b64decode
 from pathlib import Path
-import oscrypto.asymmetric
-from parsec.backend.postgresql.organization import PGOrganizationComponent
+from typing import AsyncGenerator, Optional, Dict, List, Tuple
+from uuid import uuid4
 
+from parsec._parsec import DateTime
+from parsec.backend.postgresql.organization import PGOrganizationComponent
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery, trio_run
 from parsec.cli_utils import operation, cli_exception_handler, debug_config_options
@@ -49,7 +50,7 @@ SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER = "-----END PARSEC SEQUESTER SERVICE CE
 
 def dump_sequester_service_certificate_pem(
     certificate_data: SequesterServiceCertificate,
-    authority_signing_key: oscrypto.asymmetric.PrivateKey,
+    authority_signing_key: PrivateKey,
 ) -> str:
     certificate = sequester_authority_sign(
         signing_key=authority_signing_key, data=certificate_data.dump()
@@ -106,7 +107,7 @@ class BackendDbConfig:
 
 
 @asynccontextmanager
-async def run_pg_db_handler(config: BackendDbConfig):
+async def run_pg_db_handler(config: BackendDbConfig) -> AsyncGenerator[PGHandler, None]:
     event_bus = EventBus()
     dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
 
@@ -141,7 +142,7 @@ def _display_service(service: BaseSequesterService) -> None:
         click.echo(f"\t{display_disable} on: {service.disabled_on}")
 
 
-async def _list_services(config, organization_id: OrganizationID) -> None:
+async def _list_services(config: BackendDbConfig, organization_id: OrganizationID) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
         services = await sequester_component.get_organization_services(organization_id)
@@ -159,7 +160,7 @@ async def _list_services(config, organization_id: OrganizationID) -> None:
 
 
 async def _disable_service(
-    config, organizaton_id: OrganizationID, service_id: SequesterServiceID
+    config: BackendDbConfig, organizaton_id: OrganizationID, service_id: SequesterServiceID
 ) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
@@ -167,7 +168,7 @@ async def _disable_service(
 
 
 async def _enable_service(
-    config, organizaton_id: OrganizationID, service_id: SequesterServiceID
+    config: BackendDbConfig, organizaton_id: OrganizationID, service_id: SequesterServiceID
 ) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
@@ -213,7 +214,7 @@ def generate_service_certificate(
     authority_private_key: Path,
     output: click.utils.LazyFile,
     debug: bool,
-):
+) -> None:
     with cli_exception_handler(debug):
         # Load key files
         service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())
@@ -282,7 +283,7 @@ def import_service_certificate(
     service_type: str,
     webhook_url: Optional[str],
     debug: bool,
-):
+) -> None:
     with cli_exception_handler(debug):
         cooked_service_type: SequesterServiceType = SERVICE_TYPE_CHOICES[service_type]
         # Check service type
@@ -316,7 +317,7 @@ async def _import_service_certificate(
     service_certificate_pem: str,
     service_type: SequesterServiceType,
     webhook_url: Optional[None],
-):
+) -> None:
     async with run_pg_db_handler(db_config) as dbh:
 
         # 1) Retreive the sequester authority verify key and check organization is compatible
@@ -413,7 +414,7 @@ def create_service(
     service_type: str,
     webhook_url: Optional[str],
     debug: bool,
-):
+) -> None:
     with cli_exception_handler(debug):
         cooked_service_type: SequesterServiceType = SERVICE_TYPE_CHOICES[service_type]
         # Check service type
@@ -471,7 +472,7 @@ def create_service(
 @db_backend_options
 def list_services(
     organization: OrganizationID, db: str, db_max_connections: int, db_min_connections: int
-):
+) -> None:
     db_config = _get_config(db, db_min_connections, db_max_connections)
     trio_run(_list_services, db_config, organization, use_asyncio=True)
 
@@ -498,7 +499,7 @@ def update_service(
     enable: bool,
     disable: bool,
     debug: bool,
-):
+) -> None:
     with cli_exception_handler(debug):
         if enable and disable:
             raise click.BadParameter("Enable and disable flags are both set")
@@ -581,7 +582,9 @@ async def _human_accesses(
         #     Realm 8006a491f0704040ae9a197ca7501f71
         #       2000-01-01T00:00:00Z: Access READER granted
 
-        def _display_user(user, per_realm_granted_role, indent):
+        def _display_user(
+            user: User, per_realm_granted_role: dict[RealmID, list[RealmGrantedRole]], indent: int
+        ) -> None:
             base_indent = "\t" * indent
             display_user = click.style(user.user_id, fg="green")
             user_info = f"{user.profile}, created on {user.created_on}"
@@ -609,7 +612,7 @@ async def _human_accesses(
             print()
 
         for user, per_realm_granted_roles in non_human_users:
-            _display_user(user.user_id, per_realm_granted_roles, indent=0)
+            _display_user(user, per_realm_granted_roles, indent=0)
 
 
 @click.command(short_help="Get information about user&realm accesses")
@@ -622,7 +625,7 @@ def human_accesses(
     db: str,
     db_max_connections: int,
     db_min_connections: int,
-):
+) -> None:
     db_config = _get_config(db, db_min_connections, db_max_connections)
     trio_run(_human_accesses, db_config, organization, filter, use_asyncio=True)
 
@@ -749,7 +752,7 @@ def export_realm(
     db_min_connections: int,
     blockstore: BaseBlockStoreConfig,
     debug: bool,
-):
+) -> None:
     with cli_exception_handler(debug):
         db_config = _get_config(db, db_min_connections, db_max_connections)
         trio_run(
@@ -777,7 +780,9 @@ def export_realm(
 )
 # Add --debug
 @debug_config_options
-def extract_realm_export(service_decryption_key: Path, input: Path, output: Path, debug: bool):
+def extract_realm_export(
+    service_decryption_key: Path, input: Path, output: Path, debug: bool
+) -> int:
     with cli_exception_handler(debug):
         # Finally a command that is not async !
         # This is because here we do only a single thing at a time and sqlite3 provide
