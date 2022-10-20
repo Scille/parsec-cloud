@@ -35,6 +35,7 @@ from parsec._parsec import (
     OrganizationConfigRepUnknownStatus,
 )
 from parsec.api.transport import Transport
+from parsec.core.fs.userfs.userfs import UserFS
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.protocol import DeviceID, AUTHENTICATED_CMDS
@@ -81,6 +82,13 @@ class AcquireTransport(Protocol):
         ignore_status: bool = False,
         allow_not_available: bool = False,
     ) -> AbstractAsyncContextManager[Transport]:
+        ...
+
+
+class MonitorCallback(Protocol):
+    def __call__(
+        self, user_fs: UserFS, event_bus: EventBus, task_status: TaskStatus[object]
+    ) -> Any:
         ...
 
 
@@ -240,7 +248,7 @@ class BackendAuthenticatedConn:
         self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope: Optional[trio.CancelScope] = None
-        self._monitors_cbs: List[Callable[..., None]] = []
+        self._monitors_cbs: List[MonitorCallback] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
@@ -298,7 +306,7 @@ class BackendAuthenticatedConn:
     def get_organization_config(self) -> OrganizationConfig:
         return self._organization_config
 
-    def register_monitor(self, monitor_cb: Callable[..., Any]) -> None:
+    def register_monitor(self, monitor_cb: MonitorCallback) -> None:
         if self._started:
             raise RuntimeError("Cannot register monitor once started !")
         self._monitors_cbs.append(monitor_cb)

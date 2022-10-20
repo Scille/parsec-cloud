@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from parsec.core.fs.userfs.userfs import UserFS
+from parsec.event_bus import EventBus
 
 import pytest
 import trio
@@ -68,7 +70,7 @@ async def test_init_with_backend_online(
         "organization_config"
     ] = _mocked_organization_config
 
-    async def _monitor(*, task_status=trio.TASK_STATUS_IGNORED):
+    async def _monitor(user_fs: UserFS, event_bus: EventBus, task_status=trio.TASK_STATUS_IGNORED):
         nonlocal monitor_initialized, monitor_teardown
         monitor_initialized = True
         try:
