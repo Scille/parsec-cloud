@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import os
 import random
-from typing import Tuple, Optional
+from typing import Tuple, Optional, cast
 from pathlib import Path
 from uuid import uuid4
 
 from parsec._parsec import DateTime, DeviceCreateRepOk, UserCreateRepOk
 from parsec.api.data import UserCertificate, DeviceCertificate, EntryID, EntryName
 from parsec.api.protocol import (
+    InvitationToken,
     OrganizationID,
     DeviceID,
     HumanHandle,
@@ -29,6 +30,7 @@ from parsec.core.types import (
 from parsec.core.config import load_config
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
+    BackendInvitedCmds,
     backend_authenticated_cmds_factory,
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
@@ -37,6 +39,9 @@ from parsec.core.local_device import (
     save_device_with_password_in_config,
 )
 from parsec.core.invite import (
+    DeviceClaimInProgress3Ctx,
+    UserClaimInProgress3Ctx,
+    UserGreetInProgress4Ctx,
     bootstrap_organization,
     DeviceGreetInitialCtx,
     UserGreetInitialCtx,
@@ -68,7 +73,9 @@ async def initialize_test_organization(
     # Bootstrap organization and Alice user and create device "laptop" for Alice
 
     alice_device = await bootstrap_organization(
-        organization_bootstrap_addr,
+        # Casting is fine here because `bootstrap_organization` needs the stored backend addr and
+        # `organization_id`. Theses attributes are presents in `BackendOrganizationFileLinkAddr` too
+        cast(BackendOrganizationBootstrapAddr, organization_bootstrap_addr),
         human_handle=HumanHandle(label="Alice", email="alice@example.com"),
         device_label=DeviceLabel("laptop"),
     )
@@ -160,7 +167,9 @@ async def initialize_test_organization(
     return (alice_device, other_alice_device, bob_device)
 
 
-async def _add_random_device(cmds, device, additional_devices_number):
+async def _add_random_device(
+    cmds: BackendAuthenticatedCmds, device: LocalDevice, additional_devices_number: int
+) -> None:
     for _ in range(additional_devices_number):
         device_label = DeviceLabel("device_" + str(uuid4())[:9])
         await _register_new_device(cmds=cmds, author=device, device_label=device_label)
@@ -174,7 +183,7 @@ async def _add_random_users(
     alice_ws_id: EntryID,
     bob_ws_id: EntryID,
     additional_users_number: int,
-):
+) -> None:
     """
     Add random number of users with random role, and share workspaces with them.
     1 out of 5 users will be revoked from organization.
@@ -185,7 +194,7 @@ async def _add_random_users(
         if user_profile == UserProfile.OUTSIDER:
             realm_role = random.choice([WorkspaceRole.READER, WorkspaceRole.CONTRIBUTOR])
         else:
-            realm_role = random.choice(list(WorkspaceRole))
+            realm_role = random.choice(WorkspaceRole.values())
         # Workspace_choice : 0 = add user to first_ws, 1 = add to second_ws, 2 = add in both workspace, other = nothing
         workspace_choice = random.randint(0, 3)
         # invite user to organization
@@ -206,7 +215,9 @@ async def _add_random_users(
             await alice_core.revoke_user(user_device.user_id)
 
 
-async def _init_ctx_create(cmds, token):
+async def _init_ctx_create(
+    cmds: BackendAuthenticatedCmds, token: InvitationToken
+) -> UserGreetInProgress4Ctx:
     initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
     in_progress_ctx = await initial_ctx.do_wait_peer()
     in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
@@ -215,15 +226,22 @@ async def _init_ctx_create(cmds, token):
     return in_progress_ctx
 
 
-async def _init_ctx_claim(cmds):
+async def _init_ctx_claim(
+    cmds: BackendInvitedCmds,
+) -> DeviceClaimInProgress3Ctx | UserClaimInProgress3Ctx:
     initial_ctx = await claimer_retrieve_info(cmds=cmds)
-    in_progress_ctx = await initial_ctx.do_wait_peer()
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+    initial_in_progress_ctx = await initial_ctx.do_wait_peer()
+    signify_trust_in_progress_ctx = await initial_in_progress_ctx.do_signify_trust()
+    in_progress_ctx = await signify_trust_in_progress_ctx.do_wait_peer_trust()
     return in_progress_ctx
 
 
-async def _invite_user_task(cmds, token, host_device, profile: UserProfile = UserProfile.STANDARD):
+async def _invite_user_task(
+    cmds: BackendAuthenticatedCmds,
+    token: InvitationToken,
+    host_device: LocalDevice,
+    profile: UserProfile = UserProfile.STANDARD,
+) -> None:
     in_progress_ctx = await _init_ctx_create(cmds=cmds, token=token)
     await in_progress_ctx.do_create_new_user(
         author=host_device,
@@ -233,7 +251,9 @@ async def _invite_user_task(cmds, token, host_device, profile: UserProfile = Use
     )
 
 
-async def _invite_device_task(cmds, device, device_label, token):
+async def _invite_device_task(
+    cmds: BackendAuthenticatedCmds, device: LocalDevice, device_label: str, token: InvitationToken
+) -> None:
     initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
     in_progress_ctx = await initial_ctx.do_wait_peer()
     in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
@@ -244,8 +264,14 @@ async def _invite_device_task(cmds, device, device_label, token):
     )
 
 
-async def _claim_user(cmds, claimer_email, requested_device_label, requested_user_label):
+async def _claim_user(
+    cmds: BackendInvitedCmds,
+    claimer_email: str,
+    requested_device_label: Optional[DeviceLabel],
+    requested_user_label: str,
+) -> LocalDevice:
     in_progress_ctx = await _init_ctx_claim(cmds)
+    assert isinstance(in_progress_ctx, UserClaimInProgress3Ctx)
     new_device = await in_progress_ctx.do_claim_user(
         requested_human_handle=HumanHandle(label=requested_user_label, email=claimer_email),
         requested_device_label=requested_device_label,
@@ -253,7 +279,9 @@ async def _claim_user(cmds, claimer_email, requested_device_label, requested_use
     return new_device
 
 
-async def _claim_device(cmds, requested_device_label):
+async def _claim_device(
+    cmds: BackendInvitedCmds, requested_device_label: Optional[DeviceLabel]
+) -> LocalDevice:
     initial_ctx = await claimer_retrieve_info(cmds=cmds)
     in_progress_ctx = await initial_ctx.do_wait_peer()
     in_progress_ctx = await in_progress_ctx.do_signify_trust()
@@ -319,7 +347,7 @@ async def _register_new_device(
     cmds: BackendAuthenticatedCmds,
     author: LocalDevice,
     device_label: Optional[DeviceLabel],
-):
+) -> LocalDevice:
 
     new_device = LocalDevice(
         organization_addr=author.organization_addr,
