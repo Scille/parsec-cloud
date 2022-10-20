@@ -50,9 +50,7 @@ class PkiEnrollmentSubmitterInitialCtx:
     x509_certificate: X509Certificate
 
     @classmethod
-    async def new(
-        cls, addr: BackendPkiEnrollmentAddr
-    ) -> "PkiEnrollmentSubmitterSubmittedStatusCtx":
+    async def new(cls, addr: BackendPkiEnrollmentAddr) -> PkiEnrollmentSubmitterInitialCtx:
         """
         Raises:
             PkiEnrollmentCertificateError
@@ -75,7 +73,7 @@ class PkiEnrollmentSubmitterInitialCtx:
 
     async def submit(
         self, config_dir: Path, requested_device_label: DeviceLabel, force: bool
-    ) -> "PkiEnrollmentSubmitterSubmittedCtx":
+    ) -> PkiEnrollmentSubmitterSubmittedStatusCtx:
         """
         Raises:
             BackendNotAvailable
@@ -108,6 +106,9 @@ class PkiEnrollmentSubmitterInitialCtx:
             payload=raw_submit_payload, x509_certificate=self.x509_certificate
         )
 
+        assert (
+            self.x509_certificate.subject_email_address is not None
+        ), "Subject email address is `None` before enrollment submit"
         rep = await cmd_pki_enrollment_submit(
             addr=self.addr,
             enrollment_id=self.enrollment_id,
@@ -362,7 +363,7 @@ class BasePkiEnrollmentSubmitterStatusCtx:
 class PkiEnrollmentSubmitterSubmittedStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     submit_payload: PkiEnrollmentSubmitPayload
 
-    async def remove_from_disk(self):
+    async def remove_from_disk(self) -> None:
         """
         Raises:
             PkiEnrollmentLocalPendingError
@@ -378,7 +379,7 @@ class PkiEnrollmentSubmitterSubmittedStatusCtx(BasePkiEnrollmentSubmitterStatusC
 class PkiEnrollmentSubmitterCancelledStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     cancelled_on: DateTime
 
-    async def remove_from_disk(self):
+    async def remove_from_disk(self) -> None:
         """
         Raises:
             PkiEnrollmentLocalPendingError
@@ -394,7 +395,7 @@ class PkiEnrollmentSubmitterCancelledStatusCtx(BasePkiEnrollmentSubmitterStatusC
 class PkiEnrollmentSubmitterRejectedStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     rejected_on: DateTime
 
-    async def remove_from_disk(self):
+    async def remove_from_disk(self) -> None:
         """
         Raises:
             PkiEnrollmentLocalPendingError
@@ -424,7 +425,7 @@ class PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSu
     accepter_x509_certificate: Optional[X509Certificate]
     error: PkiEnrollmentError
 
-    async def remove_from_disk(self):
+    async def remove_from_disk(self) -> None:
         """
         Raises:
             PkiEnrollmentLocalPendingError

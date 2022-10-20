@@ -62,7 +62,9 @@ async def accepter_list_submitted_from_backend(
     if rep["status"] != "ok":
         raise PkiEnrollmentListError(f"Backend refused to list enrollments: {rep['status']}", rep)
 
-    pendings = []
+    pendings: List[
+        PkiEnrollementAccepterInvalidSubmittedCtx | PkiEnrollementAccepterValidSubmittedCtx
+    ] = []
 
     for enrollment in rep["enrollments"]:
 
@@ -80,7 +82,7 @@ async def accepter_list_submitted_from_backend(
 
         # Could not load the submitter certificate
         except PkiEnrollmentError as exc:
-            pending = PkiEnrollementAccepterInvalidSubmittedCtx(
+            invalid_submitted_pending = PkiEnrollementAccepterInvalidSubmittedCtx(
                 cmds=cmds,
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
@@ -90,7 +92,7 @@ async def accepter_list_submitted_from_backend(
                 raw_submit_payload=raw_submit_payload,
                 error=exc,
             )
-            pendings.append(pending)
+            pendings.append(invalid_submitted_pending)
             continue
 
         # Verify the enrollment request
@@ -118,7 +120,7 @@ async def accepter_list_submitted_from_backend(
             continue
 
         # Verification succeed
-        pending = PkiEnrollementAccepterValidSubmittedCtx(
+        valid_submitted_pending = PkiEnrollementAccepterValidSubmittedCtx(
             cmds=cmds,
             enrollment_id=enrollment_id,
             submitted_on=submitted_on,
@@ -128,7 +130,7 @@ async def accepter_list_submitted_from_backend(
             submitter_x509_certificate=submitter_x509_certificate,
             submit_payload=submit_payload,
         )
-        pendings.append(pending)
+        pendings.append(valid_submitted_pending)
 
     return pendings
 
@@ -168,7 +170,7 @@ class PkiEnrollementAccepterValidSubmittedCtx:
         device_label: DeviceLabel,
         human_handle: HumanHandle,
         profile: UserProfile,
-    ):
+    ) -> None:
         """
         Raises:
             BackendNotAvailable
