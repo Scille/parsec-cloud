@@ -96,7 +96,7 @@ class AuthenticatedClientContext(BaseClientContext):
         self.realms: Set[RealmID] = set()
         self.events_subscribed = False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"AuthenticatedClientContext(org={self.organization_id.str}, device={self.device_id.str})"
 
     @property
@@ -137,7 +137,7 @@ class InvitedClientContext(BaseClientContext):
         self.organization_id = organization_id
         self.invitation = invitation
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"InvitedClientContext(org={self.organization_id.str}, invitation={self.invitation})"
 
 
@@ -145,7 +145,7 @@ class AnonymousClientContext(BaseClientContext):
     __slots__ = ("organization_id", "logger")
     TYPE = ClientType.ANONYMOUS
 
-    def __init__(self, organization_id: OrganizationID):
+    def __init__(self, organization_id: OrganizationID) -> None:
         # Anonymous is a special snowflake: it is accessed trough HTTP instead of
         # Websocket, hence there is no api version negotiation for the moment
         super().__init__(API_V2_VERSION)
@@ -154,8 +154,8 @@ class AnonymousClientContext(BaseClientContext):
 
         self.organization_id = organization_id
 
-    def __repr__(self):
-        return f"InvitedClientContext(org={self.organization_id.str}, invitation={self.invitation})"
+    def __repr__(self) -> str:
+        return f"InvitedClientContext(org={self.organization_id.str})"
 
 
 class APIV1_AnonymousClientContext(BaseClientContext):
@@ -169,7 +169,7 @@ class APIV1_AnonymousClientContext(BaseClientContext):
 
         self.organization_id = organization_id
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"APIV1_AnonymousClientContext(org={self.organization_id.str})"
 
 
@@ -177,10 +177,10 @@ class APIV1_AdministrationClientContext(BaseClientContext):
     __slots__ = ("logger",)
     TYPE = ClientType.APIV1_ADMINISTRATION
 
-    def __init__(self, api_version: ApiVersion):
+    def __init__(self, api_version: ApiVersion) -> None:
         super().__init__(api_version)
 
         self.logger = logger.bind(conn_id=self.conn_id)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"APIV1_AdministrationClientContext()"

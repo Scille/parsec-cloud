@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import DateTime
-from typing import Tuple, Dict, Optional, cast, Type, Union
+from typing import Tuple, Optional, cast, Union
 from quart import Websocket
 
 from parsec.api.protocol import (
@@ -38,7 +38,7 @@ from parsec.backend.invite import (
 
 async def do_handshake(
     backend: BackendApp, websocket: Websocket
-) -> Tuple[Optional[BaseClientContext], Optional[Dict]]:
+) -> Tuple[Optional[BaseClientContext], Optional[dict[str, object]]]:
     try:
         handshake = ServerHandshake()
         challenge_req = handshake.build_challenge_req()
@@ -75,19 +75,19 @@ async def do_handshake(
 
 async def _process_authenticated_answer(
     backend: BackendApp, handshake: ServerHandshake
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
+) -> Tuple[Optional[BaseClientContext], bytes, Optional[dict[str, object]]]:
     return await _do_process_authenticated_answer(backend, handshake, HandshakeType.AUTHENTICATED)
 
 
 async def _do_process_authenticated_answer(
-    backend: BackendApp, handshake: ServerHandshake, handshake_type
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
+    backend: BackendApp, handshake: ServerHandshake, handshake_type: HandshakeType
+) -> Tuple[Optional[BaseClientContext], bytes, Optional[dict[str, object]]]:
 
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     device_id = cast(DeviceID, handshake.answer_data["device_id"])
     expected_rvk = handshake.answer_data["rvk"]
 
-    def _make_error_infos(reason):
+    def _make_error_infos(reason: str) -> dict[str, object]:
         return {
             "reason": reason,
             "handshake_type": handshake_type,
@@ -131,12 +131,12 @@ async def _do_process_authenticated_answer(
 
 async def _process_invited_answer(
     backend: BackendApp, handshake: ServerHandshake
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
+) -> Tuple[Optional[BaseClientContext], bytes, Optional[dict[str, object]]]:
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     invitation_type = cast(InvitationType, handshake.answer_data["invitation_type"])
     token = handshake.answer_data["token"]
 
-    def _make_error_infos(reason):
+    def _make_error_infos(reason: str) -> dict[str, object]:
         return {
             "reason": reason,
             "handshake_type": HandshakeType.INVITED,
@@ -176,7 +176,7 @@ async def _process_invited_answer(
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")
 
-    expected_invitation_type: Type = (
+    expected_invitation_type = (
         UserInvitation
         if handshake.answer_data["invitation_type"] == InvitationType.USER
         else DeviceInvitation
@@ -196,11 +196,11 @@ async def _process_invited_answer(
 
 async def _apiv1_process_anonymous_answer(
     backend: BackendApp, handshake: ServerHandshake
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
+) -> Tuple[Optional[BaseClientContext], bytes, Optional[dict[str, object]]]:
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     expected_rvk = handshake.answer_data["rvk"]
 
-    def _make_error_infos(reason):
+    def _make_error_infos(reason: str) -> dict[str, object]:
         return {
             "reason": reason,
             "handshake_type": APIV1_HandshakeType.ANONYMOUS,

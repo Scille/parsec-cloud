@@ -3,13 +3,15 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import wraps
+from quart import Websocket
+from trio import CancelScope
 from typing_extensions import Final, Literal, ParamSpec
 from typing import TYPE_CHECKING, Any, Awaitable, Sequence, Dict, Callable, TypeVar, Union
+
 from parsec._parsec import (
     AuthenticatedAnyCmdReq,
     InvitedAnyCmdReq,
 )
-from quart import Websocket
 
 from parsec.api.protocol import ProtocolError, InvalidMessageError
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
@@ -18,6 +20,11 @@ from parsec.utils import open_service_nursery
 
 if TYPE_CHECKING:
     from parsec.backend.client_context import BaseClientContext
+
+    Ctx = TypeVar("Ctx", bound=BaseClientContext)
+    T = TypeVar("T")
+    P = ParamSpec("P")
+    CmdReq = Union[InvitedAnyCmdReq, AuthenticatedAnyCmdReq]
 
 PEER_EVENT_MAX_WAIT = 3  # 5mn
 ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
@@ -28,17 +35,20 @@ OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 
 from parsec.api.protocol.base import ClientType
 
-T = TypeVar("T")
-P = ParamSpec("P")
-CmdReq = Union[InvitedAnyCmdReq, AuthenticatedAnyCmdReq]
-
 
 # TODO: temporary hack that should be removed once all cmds are typed, at this point we
 # will be able to do this handling directly into `BackendApp._handle_client_websocket_loop`
-def api_typed_msg_adapter(req_cls, rep_cls):
-    def _api_typed_msg_adapter(fn: Callable[[T, BaseClientContext, CmdReq], Awaitable[Any]]):
+def api_typed_msg_adapter(
+    req_cls: Any, rep_cls: Any
+) -> Callable[
+    [Callable[[T, Ctx, Any], Awaitable[Any]]],
+    Callable[[T, Ctx, dict[str, object]], Awaitable[dict[str, object]]],
+]:
+    def _api_typed_msg_adapter(
+        fn: Callable[[T, Ctx, Any], Awaitable[Any]]
+    ) -> Callable[[T, Ctx, dict[str, object]], Awaitable[dict[str, object]]]:
         @wraps(fn)
-        async def wrapper(self: T, client_ctx: BaseClientContext, msg: dict) -> dict:
+        async def wrapper(self: T, client_ctx: Ctx, msg: dict[str, object]) -> dict[str, object]:
             # Here packb&unpackb should never fail given they are only undoing
             # work we've just done in another layer
             if client_ctx.TYPE == ClientType.INVITED:
@@ -77,8 +87,8 @@ def api(
     return wrapper
 
 
-def collect_apis(*components) -> Dict[ClientType, Dict[str, Callable]]:
-    apis: Dict[ClientType, Dict[str, Callable]] = {}
+def collect_apis(*components: object) -> Dict[ClientType, Dict[str, Callable[..., Any]]]:
+    apis: Dict[ClientType, Dict[str, Callable[..., Any]]] = {}
     for component in components:
         for methname in dir(component):
             meth = getattr(component, methname)
@@ -95,9 +105,11 @@ def collect_apis(*components) -> Dict[ClientType, Dict[str, Callable]]:
     return apis
 
 
-def catch_protocol_errors(fn):
+def catch_protocol_errors(
+    fn: Callable[P, Awaitable[dict[str, object]]]
+) -> Callable[P, Awaitable[dict[str, object]]]:
     @wraps(fn)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> dict[str, object]:
         try:
             return await fn(*args, **kwargs)
 
@@ -115,13 +127,13 @@ def catch_protocol_errors(fn):
 
 
 class CancelledByNewCmd(Exception):
-    def __init__(self, new_raw_req):
+    def __init__(self, new_raw_req: Union[None, bytes, str]) -> None:
         self.new_raw_req = new_raw_req
 
 
 async def run_with_cancel_on_client_sending_new_cmd(
-    websocket: Websocket, fn: Callable, *args, **kwargs
-) -> dict:
+    websocket: Websocket, fn: Callable[P, Awaitable[T]], *args: P.args, **kwargs: P.kwargs
+) -> dict[str, object]:
     """
     This is kind of a special case here:
     unlike other requests this one is going to (potentially) take
@@ -139,7 +151,7 @@ async def run_with_cancel_on_client_sending_new_cmd(
         raw_req = await websocket.receive()
         raise CancelledByNewCmd(raw_req)
 
-    async def _do_fn(cancel_scope):
+    async def _do_fn(cancel_scope: CancelScope) -> None:
         nonlocal rep
         rep = await fn(*args, **kwargs)
         cancel_scope.cancel()

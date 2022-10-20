@@ -39,6 +39,7 @@ from parsec._parsec import (
     Trustchain,
     HumanFindResultItem,
 )
+from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.event_bus import EventBus
 from parsec.api.data import RevokedUserCertificate, DataError
@@ -113,7 +114,9 @@ class BaseUserComponent:
     @api("user_get")
     @catch_protocol_errors
     @api_typed_msg_adapter(UserGetReq, UserGetRep)
-    async def api_user_get(self, client_ctx, req: UserGetReq) -> UserGetRep:
+    async def api_user_get(
+        self, client_ctx: AuthenticatedClientContext, req: UserGetReq
+    ) -> UserGetRep:
         need_redacted = client_ctx.profile == UserProfile.OUTSIDER
 
         try:
@@ -137,7 +140,9 @@ class BaseUserComponent:
     @api("human_find")
     @catch_protocol_errors
     @api_typed_msg_adapter(HumanFindReq, HumanFindRep)
-    async def api_human_find(self, client_ctx, req: HumanFindReq) -> HumanFindRep:
+    async def api_human_find(
+        self, client_ctx: AuthenticatedClientContext, req: HumanFindReq
+    ) -> HumanFindRep:
         if client_ctx.profile == UserProfile.OUTSIDER:
             return HumanFindRepNotAllowed(None)
         results, total = await self.find_humans(
@@ -158,7 +163,9 @@ class BaseUserComponent:
     @api("user_create")
     @catch_protocol_errors
     @api_typed_msg_adapter(UserCreateReq, UserCreateRep)
-    async def api_user_create(self, client_ctx, req: UserCreateReq) -> UserCreateRep:
+    async def api_user_create(
+        self, client_ctx: AuthenticatedClientContext, req: UserCreateReq
+    ) -> UserCreateRep:
         if client_ctx.profile != UserProfile.ADMIN:
             return UserCreateRepNotAllowed(None)
 
@@ -192,7 +199,9 @@ class BaseUserComponent:
     @api("user_revoke")
     @catch_protocol_errors
     @api_typed_msg_adapter(UserRevokeReq, UserRevokeRep)
-    async def api_user_revoke(self, client_ctx, req: UserRevokeReq) -> UserRevokeRep:
+    async def api_user_revoke(
+        self, client_ctx: AuthenticatedClientContext, req: UserRevokeReq
+    ) -> UserRevokeRep:
         if client_ctx.profile != UserProfile.ADMIN:
             return UserRevokeRepNotAllowed(None)
 
@@ -232,7 +241,9 @@ class BaseUserComponent:
     @api("device_create")
     @catch_protocol_errors
     @api_typed_msg_adapter(DeviceCreateReq, DeviceCreateRep)
-    async def api_device_create(self, client_ctx, req: DeviceCreateReq) -> DeviceCreateRep:
+    async def api_device_create(
+        self, client_ctx: AuthenticatedClientContext, req: DeviceCreateReq
+    ) -> DeviceCreateRep:
         try:
             device = validate_new_device_certificate(
                 expected_author=client_ctx.device_id,

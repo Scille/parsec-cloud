@@ -24,6 +24,7 @@ from parsec.api.protocol import (
     BlockCreateReq,
     BlockCreateRep,
 )
+from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 
 
@@ -55,7 +56,9 @@ class BaseBlockComponent:
     @api("block_read")
     @catch_protocol_errors
     @api_typed_msg_adapter(BlockReadReq, BlockReadRep)
-    async def api_block_read(self, client_ctx, req: BlockReadReq) -> BlockReadRep:
+    async def api_block_read(
+        self, client_ctx: AuthenticatedClientContext, req: BlockReadReq
+    ) -> BlockReadRep:
         try:
             block = await self.read(client_ctx.organization_id, client_ctx.device_id, req.block_id)
 
@@ -77,7 +80,9 @@ class BaseBlockComponent:
     @api("block_create")
     @catch_protocol_errors
     @api_typed_msg_adapter(BlockCreateReq, BlockCreateRep)
-    async def api_block_create(self, client_ctx, req: BlockCreateReq) -> BlockCreateRep:
+    async def api_block_create(
+        self, client_ctx: AuthenticatedClientContext, req: BlockCreateReq
+    ) -> BlockCreateRep:
         try:
             await self.create(
                 client_ctx.organization_id,

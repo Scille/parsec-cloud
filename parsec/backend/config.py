@@ -81,7 +81,7 @@ class SmtpEmailConfig:
     use_tls: bool
     sender: str
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.__class__.__name__}(sender={self.sender}, host={self.host}, port={self.port}, use_ssl={self.use_ssl})"
 
 
@@ -92,7 +92,7 @@ class MockedEmailConfig:
     sender: str
     tmpdir: str
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.__class__.__name__}(sender={self.sender}, tmpdir={self.tmpdir})"
 
 
@@ -121,7 +121,7 @@ class BackendConfig:
     organization_initial_user_profile_outsider_allowed: bool = True
 
     @property
-    def db_type(self):
+    def db_type(self) -> str:
         if self.db_url.upper() == "MOCKED":
             return "MOCKED"
         else:

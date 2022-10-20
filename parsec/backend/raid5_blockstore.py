@@ -4,6 +4,7 @@ from __future__ import annotations
 import struct
 from structlog import get_logger
 from sys import byteorder
+from trio import Nursery
 from typing import List, Optional, Union
 
 from parsec.utils import open_service_nursery
@@ -72,7 +73,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         error_count = 0
         fetch_results: List[Union[Exception, Optional[bytes]]] = [None] * len(self.blockstores)
 
-        async def _partial_blockstore_read(nursery, blockstore_index: int) -> None:
+        async def _partial_blockstore_read(nursery: Nursery, blockstore_index: int) -> None:
             nonlocal error_count
             nonlocal fetch_results
             try:
@@ -138,7 +139,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         error_count = 0
 
         async def _subblockstore_create(
-            nursery, blockstore_index: int, chunk_or_checksum: bytes
+            nursery: Nursery, blockstore_index: int, chunk_or_checksum: bytes
         ) -> None:
             nonlocal error_count
             try:

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional, List, Tuple
+from typing import Any, Optional, List, Tuple
 import attr
 
 from parsec._parsec import DateTime
@@ -71,10 +71,10 @@ class BaseSequesterService:
     created_on: DateTime = attr.ib(factory=DateTime.now)
     disabled_on: Optional[DateTime] = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.service_id})"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> BaseSequesterService:
         return attr.evolve(self, **kwargs)
 
     @property

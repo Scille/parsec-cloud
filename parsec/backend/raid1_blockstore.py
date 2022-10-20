@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import List
+from trio import CancelScope, Nursery
 from structlog import get_logger
 
 from parsec.utils import open_service_nursery
@@ -26,7 +27,9 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
     async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         value = None
 
-        async def _single_blockstore_read(nursery, blockstore: BaseBlockStoreComponent) -> None:
+        async def _single_blockstore_read(
+            nursery: Nursery, blockstore: BaseBlockStoreComponent
+        ) -> None:
             nonlocal value
             try:
                 value = await blockstore.read(organization_id, block_id)
@@ -55,7 +58,7 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
         at_least_one_error = False
 
         async def _single_blockstore_create(
-            cancel_scope, blockstore: BaseBlockStoreComponent
+            cancel_scope: CancelScope, blockstore: BaseBlockStoreComponent
         ) -> None:
             nonlocal at_least_one_success
             nonlocal at_least_one_error

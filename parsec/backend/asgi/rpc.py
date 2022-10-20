@@ -41,7 +41,7 @@ SUPPORTED_API_VERSIONS = (
 rpc_bp = Blueprint("anonymous_api", __name__)
 
 
-def _rpc_msgpack_rep(data: dict[str, str], api_version: ApiVersion) -> Response:
+def _rpc_msgpack_rep(data: dict[str, object], api_version: ApiVersion) -> Response:
     return Response(
         response=packb(data),
         # Unlike REST, RPC doesn't use status to encode operational result

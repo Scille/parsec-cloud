@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 from secrets import token_hex
 
 from parsec._parsec import (
@@ -47,6 +47,7 @@ from parsec.backend.config import BackendConfig
 from parsec.backend.client_context import (
     AnonymousClientContext,
     APIV1_AnonymousClientContext,
+    AuthenticatedClientContext,
 )
 
 
@@ -98,7 +99,7 @@ class Organization:
     def is_bootstrapped(self) -> bool:
         return self.root_verify_key is not None
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> Organization:
         return attr.evolve(self, **kwargs)
 
 
@@ -125,7 +126,7 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(OrganizationConfigReq, OrganizationConfigRep)
     async def api_authenticated_organization_config(
-        self, client_ctx, req: OrganizationConfigReq
+        self, client_ctx: AuthenticatedClientContext, req: OrganizationConfigReq
     ) -> OrganizationConfigRep:
         organization_id = client_ctx.organization_id
         try:
@@ -158,7 +159,7 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(OrganizationStatsReq, OrganizationStatsRep)
     async def api_authenticated_organization_stats(
-        self, client_ctx, req: OrganizationStatsReq
+        self, client_ctx: AuthenticatedClientContext, req: OrganizationStatsReq
     ) -> OrganizationStatsRep:
         if client_ctx.profile != UserProfile.ADMIN:
             return OrganizationStatsRepNotAllowed(None)
@@ -187,8 +188,8 @@ class BaseOrganizationComponent:
     async def api_organization_bootstrap(
         self,
         client_ctx: Union[APIV1_AnonymousClientContext, AnonymousClientContext],
-        msg: dict,
-    ):
+        msg: dict[str, object],
+    ) -> dict[str, object]:
         # Use the correct serializer depending on the API
         if isinstance(client_ctx, APIV1_AnonymousClientContext):
             serializer = apiv1_organization_bootstrap_serializer
