@@ -4,7 +4,7 @@ use pyo3::{exceptions::PyNotImplementedError, import_exception, prelude::*, type
 
 use crate::ids::{BlockID, RealmID};
 use crate::protocol::gen_rep;
-use libparsec::protocol::authenticated_cmds::{block_create, block_read};
+use libparsec::protocol::authenticated_cmds::v2::{block_create, block_read};
 
 import_exception!(parsec.api.protocol, ProtocolError);
 
@@ -29,7 +29,11 @@ impl BlockCreateReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -89,7 +93,11 @@ impl BlockReadReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
