@@ -4,7 +4,7 @@ use hex_literal::hex;
 use libparsec_types::{Maybe, UserProfile};
 use rstest::rstest;
 
-use libparsec_protocol::*;
+use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
 
 #[rstest]
 fn serde_organization_stats_req() {
