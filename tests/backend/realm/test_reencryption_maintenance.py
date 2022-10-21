@@ -591,6 +591,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
         author=alice.device_id,
         realm_id=realm_id,
         block_id=block_id,
+        created_on=next_timestamp(),
         block=b"<block_data>",
     )
 

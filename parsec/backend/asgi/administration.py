@@ -7,6 +7,7 @@ from functools import wraps
 from parsec.serde.serializer import JSONSerializer
 from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response, g
 
+from parsec._parsec import DateTime
 from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import (
@@ -75,7 +76,7 @@ async def administration_create_organizations() -> Response:  # type: ignore[mis
     bootstrap_token = generate_bootstrap_token()
     try:
         await backend.organization.create(
-            id=organization_id, bootstrap_token=bootstrap_token, **data
+            id=organization_id, bootstrap_token=bootstrap_token, created_on=DateTime.now(), **data
         )
     except OrganizationAlreadyExistsError:
         await json_abort({"error": "already_exists"}, 400)

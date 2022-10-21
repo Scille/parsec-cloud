@@ -356,6 +356,7 @@ class BaseOrganizationComponent:
                 first_device=first_device,
                 bootstrap_token=bootstrap_token,
                 root_verify_key=root_verify_key,
+                bootstrapped_on=now,
                 sequester_authority=sequester_authority,
             )
 
@@ -388,6 +389,7 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        created_on: Optional[DateTime] = None,
     ) -> None:
         """
         Raises:
@@ -409,6 +411,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        bootstrapped_on: Optional[DateTime] = None,
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         """

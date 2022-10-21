@@ -6,11 +6,11 @@ from typing import NoReturn, Tuple, Optional
 from quart import Response, Blueprint, abort, request, g
 from nacl.exceptions import CryptoError
 
+from parsec._parsec import DateTime
 from parsec.api.version import API_V2_VERSION, API_V3_VERSION, ApiVersion
 from parsec.api.protocol import DeviceID
 from parsec.backend.user import UserNotFoundError
 from parsec.backend.user_type import Device, User
-
 from parsec.serde import SerdePackingError, packb, unpackb
 from parsec.api.protocol import (
     OrganizationID,
@@ -204,7 +204,9 @@ async def anonymous_api(raw_organization_id: str) -> Response:  # type: ignore[m
     if cmd == "organization_bootstrap" and not organization:
         assert backend.config.organization_spontaneous_bootstrap
         try:
-            await backend.organization.create(id=organization_id, bootstrap_token="")
+            await backend.organization.create(
+                id=organization_id, bootstrap_token="", created_on=DateTime.now()
+            )
         except OrganizationAlreadyExistsError:
             pass
 

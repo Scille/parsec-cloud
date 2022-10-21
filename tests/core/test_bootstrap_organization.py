@@ -23,7 +23,7 @@ async def test_good(
 
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
-    await backend.organization.create(org_id, org_token)
+    await backend.organization.create(id=org_id, bootstrap_token=org_token)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(
         running_backend.addr, org_id, org_token
@@ -107,7 +107,7 @@ async def test_good(
 async def test_bootstrap_sequester_verify_key(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
-    await backend.organization.create(org_id, org_token)
+    await backend.organization.create(id=org_id, bootstrap_token=org_token)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(
         running_backend.addr, org_id, org_token
@@ -138,8 +138,8 @@ async def test_invalid_token(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     old_token = "123456"
     new_token = "abcdef"
-    await backend.organization.create(org_id, old_token)
-    await backend.organization.create(org_id, new_token)
+    await backend.organization.create(id=org_id, bootstrap_token=old_token)
+    await backend.organization.create(id=org_id, bootstrap_token=new_token)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(
         running_backend.addr, org_id, old_token
@@ -153,7 +153,7 @@ async def test_invalid_token(running_backend, backend):
 async def test_already_bootstrapped(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
-    await backend.organization.create(org_id, org_token)
+    await backend.organization.create(id=org_id, bootstrap_token=org_token)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(
         running_backend.addr, org_id, org_token

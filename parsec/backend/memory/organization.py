@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional, Union, Dic
 import trio
 from collections import defaultdict
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.user import UserError, User, Device
@@ -62,6 +63,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        created_on: Optional[DateTime] = None,
     ) -> None:
         org = self._organizations.get(id)
         # Allow overwritting of not-yet-bootstrapped organization
@@ -97,6 +99,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        bootstrapped_on: Optional[DateTime] = None,
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         assert self._user_component is not None

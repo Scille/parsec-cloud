@@ -6,6 +6,7 @@ from typing import Any, Optional, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
@@ -48,7 +49,7 @@ VALUES (
     $bootstrap_token,
     $active_users_limit,
     $user_profile_outsider_allowed,
-    NOW(),
+    $created_on,
     NULL,
     FALSE,
     NULL
@@ -116,7 +117,7 @@ SET
     root_verify_key = $root_verify_key,
     sequester_authority_certificate=$sequester_authority_certificate,
     sequester_authority_verify_key_der=$sequester_authority_verify_key_der,
-    _bootstrapped_on = NOW()
+    _bootstrapped_on = $bootstrapped_on
 WHERE
     organization_id = $organization_id
     AND bootstrap_token = $bootstrap_token
@@ -196,7 +197,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        created_on: Optional[DateTime] = None,
     ) -> None:
+        created_on = created_on or DateTime.now()
         if active_users_limit is Unset:
             active_users_limit = self._config.organization_initial_active_users_limit
         if user_profile_outsider_allowed is Unset:
@@ -211,6 +214,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                         bootstrap_token=bootstrap_token,
                         active_users_limit=active_users_limit,
                         user_profile_outsider_allowed=user_profile_outsider_allowed,
+                        created_on=created_on,
                     )
                 )
             except UniqueViolationError:
@@ -271,8 +275,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        bootstrapped_on: Optional[DateTime] = None,
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
+        bootstrapped_on = bootstrapped_on or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
             # organization table until the end of the transaction. Hence
@@ -299,6 +305,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 *_q_bootstrap_organization(
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
+                    bootstrapped_on=bootstrapped_on,
                     root_verify_key=root_verify_key.encode(),
                     sequester_authority_certificate=sequester_authority_certificate,
                     sequester_authority_verify_key_der=sequester_authority_verify_key_der,

@@ -358,12 +358,19 @@ def backend_data_binder_factory(initial_user_manifest_state):
             org: OrganizationFullData,
             first_device: LocalDevice,
             initial_user_manifest: str = "v1",
+            timestamp: Optional[DateTime] = None,
         ):
             assert initial_user_manifest in ("v1", "not_synced")
 
-            await self.backend.organization.create(org.organization_id, org.bootstrap_token)
+            await self.backend.organization.create(
+                id=org.organization_id,
+                bootstrap_token=org.bootstrap_token,
+                created_on=timestamp or first_device.timestamp(),
+            )
             assert org.organization_id == first_device.organization_id
-            backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
+            backend_user, backend_first_device = local_device_to_backend_user(
+                first_device, org, timestamp
+            )
             if org.sequester_authority:
                 sequester_authority = SequesterAuthority(
                     certificate=org.sequester_authority.certif,
@@ -401,6 +408,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
             device: LocalDevice,
             certifier: Optional[LocalDevice] = None,
             initial_user_manifest: Optional[str] = None,
+            timestamp: Optional[DateTime] = None,
         ):
             assert initial_user_manifest in (None, "v1", "not_synced")
 
@@ -416,7 +424,9 @@ def backend_data_binder_factory(initial_user_manifest_state):
                         f"Organization `{device.organization_id.str}` not bootstrapped"
                     )
 
-            backend_user, backend_device = local_device_to_backend_user(device, certifier)
+            backend_user, backend_device = local_device_to_backend_user(
+                device, certifier, timestamp
+            )
 
             if any(d for d in self.binded_local_devices if d.user_id == device.user_id):
                 # User already created, only add device

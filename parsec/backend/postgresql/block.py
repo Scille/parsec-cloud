@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import Optional
 import triopg
 from triopg.exceptions import UniqueViolationError
 
@@ -163,7 +164,9 @@ class PGBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
+        created_on: Optional[DateTime] = None,
     ) -> None:
+        created_on = created_on or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_WRITE)
 
@@ -207,7 +210,7 @@ class PGBlockComponent(BaseBlockComponent):
                         realm_id=realm_id.uuid,
                         author=author.str,
                         size=len(block),
-                        created_on=DateTime.now(),
+                        created_on=created_on,
                     )
                 )
             except UniqueViolationError as exc:

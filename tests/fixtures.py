@@ -615,11 +615,11 @@ def backend_data_binder_factory(initial_user_manifest_state):
             assert org.organization_id == first_device.organization_id
             backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
             await self.backend.organization.bootstrap(
-                org.organization_id,
-                backend_user,
-                backend_first_device,
-                org.bootstrap_token,
-                org.root_verify_key,
+                id=org.organization_id,
+                user=backend_user,
+                first_device=backend_first_device,
+                bootstrap_token=org.bootstrap_token,
+                root_verify_key=org.root_verify_key,
             )
             self.certificates_store.store_user(
                 org.organization_id,
