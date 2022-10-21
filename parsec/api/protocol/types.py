@@ -9,7 +9,6 @@ from parsec.serde import fields
 from parsec._parsec import (
     OrganizationID,
     UserID,
-    DeviceName,
     DeviceID,
     DeviceLabel,
     HumanHandle,
@@ -17,7 +16,6 @@ from parsec._parsec import (
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
-DeviceNameTypeVar = TypeVar("DeviceNameTypeVar", bound="DeviceName")
 
 
 def _bytes_size(txt: str) -> int:
@@ -65,7 +63,6 @@ class StrBased:
 
 OrganizationIDField: Type[fields.Field] = fields.str_based_field_factory(OrganizationID)
 UserIDField: Type[fields.Field] = fields.str_based_field_factory(UserID)
-DeviceNameField: Type[fields.Field] = fields.str_based_field_factory(DeviceName)
 DeviceIDField: Type[fields.Field] = fields.str_based_field_factory(DeviceID)
 DeviceLabelField: Type[fields.Field] = fields.str_based_field_factory(DeviceLabel)
 
