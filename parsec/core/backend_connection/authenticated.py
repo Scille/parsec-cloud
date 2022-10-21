@@ -7,11 +7,9 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import (
     Any,
     AsyncIterator,
-    Awaitable,
     Optional,
     List,
     AsyncGenerator,
-    Callable,
     Protocol,
     TypeVar,
 )
@@ -87,7 +85,10 @@ class AcquireTransport(Protocol):
 
 class MonitorCallback(Protocol):
     def __call__(
-        self, user_fs: UserFS, event_bus: EventBus, task_status: TaskStatus[object]
+        self,
+        task_status: TaskStatus[object],
+        user_fs: Optional[UserFS] = None,
+        event_bus: Optional[EventBus] = None,
     ) -> Any:
         ...
 
@@ -420,7 +421,7 @@ class BackendAuthenticatedConn:
             monitors_states = ["STALLED" for _ in range(len(self._monitors_cbs))]
 
             async def _wrap_monitor_cb(
-                monitor_cb: Callable[..., Awaitable[None]],
+                monitor_cb: MonitorCallback,
                 idx: int,
                 *,
                 task_status: TaskStatus[Any] = trio.TASK_STATUS_IGNORED,
