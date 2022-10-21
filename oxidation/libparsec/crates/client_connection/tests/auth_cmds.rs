@@ -52,7 +52,7 @@ async fn valid_request() {
     log::debug!("[test] client result: {client_response:?}");
     let client_response = client_response.expect("unexpected error for client response");
     assert_eq!(
-        authenticated_cmds::ping::Rep::Ok {
+        authenticated_cmds::v3::ping::Rep::Ok {
             pong: format!(
                 r#"hello from the server side!, thanks for your message: "{}""#,
                 PING_MESSAGE
@@ -144,7 +144,9 @@ async fn send_ping(
     message: &str,
 ) -> (
     JoinHandle<anyhow::Result<()>>,
-    JoinHandle<libparsec_client_connection::command_error::Result<authenticated_cmds::ping::Rep>>,
+    JoinHandle<
+        libparsec_client_connection::command_error::Result<authenticated_cmds::v3::ping::Rep>,
+    >,
 ) {
     let (ready_send, ready_recv) = channel();
     let (stop_send, stop_recv) = channel();
@@ -181,14 +183,14 @@ async fn server(
     notify_ready.send(()).expect("failed to send server ready");
     log::debug!("[server] signal we're ready");
 
-    Ok(dbg!(graceful.await)?)
+    dbg!(graceful.await.map_err(anyhow::Error::from))
 }
 
 async fn client(
     client: AuthenticatedCmds,
     notify_stop: Sender<()>,
     message: String,
-) -> libparsec_client_connection::command_error::Result<authenticated_cmds::ping::Rep> {
+) -> libparsec_client_connection::command_error::Result<authenticated_cmds::v3::ping::Rep> {
     let rep = client.ping(message).await;
     log::info!("[client] recv response: {rep:?}");
     log::debug!("[client] notify server to stop");
