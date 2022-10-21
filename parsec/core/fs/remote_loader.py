@@ -3,7 +3,18 @@ from __future__ import annotations
 
 import math
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Iterable, Tuple, cast, Iterator, Callable, Awaitable
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Optional,
+    List,
+    Iterable,
+    Tuple,
+    cast,
+    Iterator,
+    Callable,
+    Awaitable,
+)
 import trio
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
 
@@ -71,7 +82,6 @@ from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
-    BackendAuthenticatedCmds,
 )
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
@@ -102,6 +112,9 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection import BackendAuthenticatedCmds
 
 # This value is used to increment the timestamp provided by the backend
 # when a manifest restamping is required. This value should be kept small

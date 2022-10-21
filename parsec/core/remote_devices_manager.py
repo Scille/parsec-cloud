@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Tuple, Optional, List
+from typing import TYPE_CHECKING, Tuple, Optional, List
 
 from parsec._parsec import (
     UserGetRepOk,
@@ -14,11 +14,12 @@ from parsec.crypto import VerifyKey
 from parsec.api.protocol import DeviceID, UserID
 from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
 from parsec.core.backend_connection import (
-    BackendAuthenticatedCmds,
-    APIV1_BackendAnonymousCmds,
     BackendConnectionError,
     BackendNotAvailable,
 )
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection import BackendAuthenticatedCmds, APIV1_BackendAnonymousCmds
 
 DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour
 

@@ -5,6 +5,7 @@ import trio
 from pathlib import Path
 from trio_typing import TaskStatus
 from typing import (
+    TYPE_CHECKING,
     Tuple,
     Optional,
     Union,
@@ -97,7 +98,6 @@ from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import (
-    BackendAuthenticatedCmds,
     BackendConnectionError,
     BackendNotAvailable,
 )
@@ -126,6 +126,9 @@ from parsec.core.fs.exceptions import (
     FSServerUploadTemporarilyUnavailableError,
     FSSequesterServiceRejectedError,
 )
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection import BackendAuthenticatedCmds
 
 
 logger = get_logger()
