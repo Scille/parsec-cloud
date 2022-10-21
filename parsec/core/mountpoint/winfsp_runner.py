@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+from typing import Any, AsyncIterator
 import trio
 import unicodedata
 from zlib import adler32
@@ -9,6 +10,7 @@ from pathlib import PurePath
 from functools import partial
 from structlog import get_logger
 from contextlib import asynccontextmanager
+from parsec.core.types import EntryID, LocalDevice
 from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing import filetime_now, FileSystemNotStarted
 
@@ -71,7 +73,7 @@ def sorted_drive_letters(index: int, length: int, grouping: int = 5) -> str:
     return result
 
 
-async def _get_available_drive(index, length) -> PurePath:
+async def _get_available_drive(index: int, length: int) -> PurePath:
     drives = (trio.Path(f"{letter}:\\") for letter in sorted_drive_letters(index, length))
     for drive in drives:
         try:
@@ -86,13 +88,13 @@ async def _get_available_drive(index, length) -> PurePath:
     )
 
 
-def _generate_volume_serial_number(device, workspace_id):
+def _generate_volume_serial_number(device: LocalDevice, workspace_id: EntryID) -> int:
     return adler32(
         f"{device.organization_id.str}-{device.device_id.str}-{workspace_id.str}".encode()
     )
 
 
-async def _wait_for_winfsp_ready(mountpoint_path, timeout=1.0):
+async def _wait_for_winfsp_ready(mountpoint_path: PurePath, timeout: float = 1.0) -> None:
     trio_mountpoint_path = trio.Path(mountpoint_path)
 
     # Polling for `timeout` seconds until winfsp is ready
@@ -115,9 +117,9 @@ async def winfsp_mountpoint_runner(
     user_fs: UserFS,
     workspace_fs: WorkspaceFS,
     base_mountpoint_path: PurePath,
-    config: dict,
+    config: dict[str, Any],
     event_bus: EventBus,
-):
+) -> AsyncIterator[PurePath]:
     """
     Raises:
         MountpointDriverCrash
@@ -151,7 +153,8 @@ async def winfsp_mountpoint_runner(
         .decode("ascii")
     )
     volume_serial_number = _generate_volume_serial_number(device, workspace_fs.workspace_id)
-    operations = WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs)
+    # Types can't be checked when unpacking `event_kwargs`
+    operations = WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs)  # type: ignore[arg-type]
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
     fs = FileSystem(
         mountpoint_path.drive,
@@ -184,7 +187,7 @@ async def winfsp_mountpoint_runner(
         event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
 
         # Manage drive icon
-        drive_letter, *_ = mountpoint_path.drive
+        drive_letter = mountpoint_path.drive[0]
         with parsec_drive_icon_context(drive_letter):
 
             # Run fs start in a thread
