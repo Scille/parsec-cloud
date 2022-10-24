@@ -76,15 +76,15 @@ class HumanHandleField(fields.Tuple):
         label = fields.String(required=True)
         super().__init__(email, label, **kwargs)
 
-    def _serialize(
-        self, value: HumanHandle, attr: object, data: object
-    ) -> Optional[Tuple[str, str]]:
+    def _serialize(self, value: HumanHandle, attr: str, data: object) -> Optional[Tuple[str, str]]:
         if value is None:
             return None
         return (value.email, value.label)
 
-    def _deserialize(self, *args: object, **kwargs: object) -> HumanHandle:
-        result = super()._deserialize(*args, **kwargs)
+    def _deserialize(
+        self, value: Tuple[str, str], attr: str, obj: dict[str, object]
+    ) -> HumanHandle:
+        result = super()._deserialize(value, attr, obj)
         return HumanHandle(*result)
 
 
