@@ -1,18 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec.backend.backend_events import BackendEvent
 import attr
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Optional, Tuple
 from collections import defaultdict
-from parsec._parsec import DateTime
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Optional, Tuple
 
+from parsec._parsec import DateTime, InvitationDeletedReason
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
     InvitationToken,
     InvitationStatus,
-    InvitationDeletedReason,
 )
 from parsec.backend.invite import (
     ConduitState,

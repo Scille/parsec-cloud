@@ -11,6 +11,7 @@ from parsec._parsec import (
     Message,
 )
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
+from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 
 
@@ -22,7 +23,9 @@ class BaseMessageComponent:
     @api("message_get")
     @catch_protocol_errors
     @api_typed_msg_adapter(MessageGetReq, MessageGetRep)
-    async def api_message_get(self, client_ctx, req: MessageGetReq) -> MessageGetRep:
+    async def api_message_get(
+        self, client_ctx: AuthenticatedClientContext, req: MessageGetReq
+    ) -> MessageGetRep:
         offset = req.offset
         messages = await self.get(client_ctx.organization_id, client_ctx.user_id, offset)
 

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import List
+from typing import Any, List
 from uuid import UUID
 from parsec._parsec import DateTime
 
@@ -40,7 +40,7 @@ class PkiEnrollmentError(Exception):
 
 
 class PkiEnrollmentAlreadyEnrolledError(PkiEnrollmentError):
-    def __init__(self, accepted_on, *args, **kwargs):
+    def __init__(self, accepted_on: DateTime, *args: Any, **kwargs: Any):
         self.accepted_on = accepted_on
         PkiEnrollmentError.__init__(self, *args, **kwargs)
 
@@ -58,7 +58,7 @@ class PkiEnrollmentActiveUsersLimitReached(PkiEnrollmentError):
 
 
 class PkiEnrollmentCertificateAlreadySubmittedError(PkiEnrollmentError):
-    def __init__(self, submitted_on, *args, **kwargs):
+    def __init__(self, submitted_on: DateTime, *args: Any, **kwargs: Any):
         self.submitted_on = submitted_on
         PkiEnrollmentError.__init__(self, *args, **kwargs)
 
@@ -130,8 +130,8 @@ class BasePkiEnrollmentComponent:
     @api("pki_enrollment_submit", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
     async def api_pki_enrollment_submit(
-        self, client_ctx: AnonymousClientContext, msg: dict
-    ) -> dict:
+        self, client_ctx: AnonymousClientContext, msg: dict[str, object]
+    ) -> dict[str, object]:
         msg = pki_enrollment_submit_serializer.req_load(msg)
 
         try:
@@ -170,7 +170,9 @@ class BasePkiEnrollmentComponent:
 
     @api("pki_enrollment_info", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
-    async def api_pki_enrollment_info(self, client_ctx: AnonymousClientContext, msg: dict) -> dict:
+    async def api_pki_enrollment_info(
+        self, client_ctx: AnonymousClientContext, msg: dict[str, object]
+    ) -> dict[str, object]:
         msg = pki_enrollment_info_serializer.req_load(msg)
         try:
             info = await self.info(
@@ -214,8 +216,8 @@ class BasePkiEnrollmentComponent:
     @api("pki_enrollment_list")
     @catch_protocol_errors
     async def api_pki_enrollment_list(
-        self, client_ctx: AuthenticatedClientContext, msg: dict
-    ) -> dict:
+        self, client_ctx: AuthenticatedClientContext, msg: dict[str, object]
+    ) -> dict[str, object]:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
@@ -241,8 +243,8 @@ class BasePkiEnrollmentComponent:
     @api("pki_enrollment_reject")
     @catch_protocol_errors
     async def api_pki_enrollment_reject(
-        self, client_ctx: AuthenticatedClientContext, msg: dict
-    ) -> dict:
+        self, client_ctx: AuthenticatedClientContext, msg: dict[str, object]
+    ) -> dict[str, object]:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
@@ -268,8 +270,8 @@ class BasePkiEnrollmentComponent:
     @api("pki_enrollment_accept")
     @catch_protocol_errors
     async def api_pki_enrollment_accept(
-        self, client_ctx: AuthenticatedClientContext, msg: dict
-    ) -> dict:
+        self, client_ctx: AuthenticatedClientContext, msg: dict[str, object]
+    ) -> dict[str, object]:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",

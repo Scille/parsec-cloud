@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional, Dict, Callable
+from typing import AsyncGenerator, Awaitable, Optional, Dict, Callable
 import attr
 from structlog import get_logger
 from contextlib import asynccontextmanager
@@ -32,7 +32,9 @@ logger = get_logger()
 
 
 @asynccontextmanager
-async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBus] = None):
+async def backend_app_factory(
+    config: BackendConfig, event_bus: Optional[EventBus] = None
+) -> AsyncGenerator[BackendApp, None]:
     event_bus = event_bus or EventBus()
 
     if config.db_url == "MOCKED":
@@ -78,7 +80,9 @@ class BackendApp:
     sequester: BaseSequesterComponent
     events: EventsComponent
 
-    apis: Dict[ClientType, Dict[str, Callable]] = attr.field(init=False)
+    apis: Dict[ClientType, Dict[str, Callable[..., Awaitable[dict[str, object]]]]] = attr.field(
+        init=False
+    )
 
     def __attrs_post_init__(self) -> None:
         self.apis = collect_apis(

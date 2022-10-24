@@ -12,6 +12,7 @@ from parsec.api.protocol import (
     DeviceLabel,
     organization_bootstrap_webhook_serializer,
 )
+from parsec.backend.config import BackendConfig
 
 
 logger = get_logger()
@@ -39,7 +40,7 @@ def _do_urllib_request(url: str, data: bytes) -> None:
 
 
 class WebhooksComponent:
-    def __init__(self, config):
+    def __init__(self, config: BackendConfig) -> None:
         self._config = config
 
     async def on_organization_bootstrap(
@@ -49,7 +50,7 @@ class WebhooksComponent:
         device_label: Optional[DeviceLabel],
         human_email: Optional[str],
         human_label: Optional[str],
-    ):
+    ) -> None:
         if not self._config.organization_bootstrap_webhook_url:
             return
         data = organization_bootstrap_webhook_serializer.dumps(

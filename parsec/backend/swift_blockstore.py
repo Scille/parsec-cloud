@@ -9,7 +9,7 @@ from functools import partial
 original_version_info = pbr.version.VersionInfo
 
 
-def side_effect(key):
+def side_effect(key: str) -> str:
     if key == "python-swiftclient":
         return "3.5.0"
 
@@ -31,7 +31,7 @@ from parsec.backend.blockstore import BaseBlockStoreComponent
 logger = get_logger()
 
 
-def build_swift_slug(organization_id: OrganizationID, id: BlockID):
+def build_swift_slug(organization_id: OrganizationID, id: BlockID) -> str:
     # The slug uses the UUID canonical textual representation (eg.
     # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`) where `BlockID.__str__`
     # uses the short textual representation (eg. `3b91779235ac409f9af1fe6de8d2b905`)
@@ -39,7 +39,9 @@ def build_swift_slug(organization_id: OrganizationID, id: BlockID):
 
 
 class SwiftBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, auth_url, tenant, container, user, password):
+    def __init__(
+        self, auth_url: str, tenant: str, container: str, user: str, password: str
+    ) -> None:
         self.swift_client = swiftclient.Connection(
             authurl=auth_url, user=":".join([user, tenant]), key=password
         )

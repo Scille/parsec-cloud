@@ -4,7 +4,7 @@ from __future__ import annotations
 import triopg
 from typing import Any, List, Optional
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, InvitationDeletedReason
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -12,7 +12,6 @@ from parsec.api.protocol import (
     InvitationToken,
     InvitationType,
     InvitationStatus,
-    InvitationDeletedReason,
 )
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal, PGHandler

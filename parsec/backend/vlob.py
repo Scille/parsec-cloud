@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import json
-from typing import List, Tuple, Dict, Optional
-from structlog import get_logger
 import urllib
+from parsec.backend.client_context import AuthenticatedClientContext
+from structlog import get_logger
+from typing import List, Tuple, Dict, Optional
 
 from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import (
@@ -136,7 +137,7 @@ class VlobMaintenanceError(VlobError):
 
 class VlobRequireGreaterTimestampError(VlobError):
     @property
-    def strictly_greater_than(self):
+    def strictly_greater_than(self) -> DateTime:
         return self.args[0]
 
 
@@ -258,7 +259,9 @@ class BaseVlobComponent:
     @api("vlob_create")
     @catch_protocol_errors
     @api_typed_msg_adapter(VlobCreateReq, VlobCreateRep)
-    async def api_vlob_create(self, client_ctx, req: VlobCreateReq) -> VlobCreateRep:
+    async def api_vlob_create(
+        self, client_ctx: AuthenticatedClientContext, req: VlobCreateReq
+    ) -> VlobCreateRep:
         """
         This API call, when successful, performs the writing of a new vlob version to the database.
         Before adding new entries, extra care should be taken in order to guarantee the consistency in
@@ -326,7 +329,9 @@ class BaseVlobComponent:
     @api("vlob_read")
     @catch_protocol_errors
     @api_typed_msg_adapter(VlobReadReq, VlobReadRep)
-    async def api_vlob_read(self, client_ctx, req: VlobReadReq) -> VlobReadRep:
+    async def api_vlob_read(
+        self, client_ctx: AuthenticatedClientContext, req: VlobReadReq
+    ) -> VlobReadRep:
         try:
             (version, blob, author, created_on, author_last_role_granted_on,) = await self.read(
                 client_ctx.organization_id,
@@ -363,7 +368,9 @@ class BaseVlobComponent:
     @api("vlob_update")
     @catch_protocol_errors
     @api_typed_msg_adapter(VlobUpdateReq, VlobUpdateRep)
-    async def api_vlob_update(self, client_ctx, req: VlobUpdateReq) -> VlobUpdateRep:
+    async def api_vlob_update(
+        self, client_ctx: AuthenticatedClientContext, req: VlobUpdateReq
+    ) -> VlobUpdateRep:
         """
         This API call, when successful, performs the writing of a new vlob version to the database.
         Before adding new entries, extra care should be taken in order to guarantee the consistency in
@@ -444,7 +451,7 @@ class BaseVlobComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(VlobPollChangesReq, VlobPollChangesRep)
     async def api_vlob_poll_changes(
-        self, client_ctx, req: VlobPollChangesReq
+        self, client_ctx: AuthenticatedClientContext, req: VlobPollChangesReq
     ) -> VlobPollChangesRep:
         # TODO: raise error if too many events since offset ?
         try:
@@ -470,7 +477,7 @@ class BaseVlobComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(VlobListVersionsReq, VlobListVersionsRep)
     async def api_vlob_list_versions(
-        self, client_ctx, req: VlobListVersionsReq
+        self, client_ctx: AuthenticatedClientContext, req: VlobListVersionsReq
     ) -> VlobListVersionsRep:
         try:
             versions_dict = await self.list_versions(
@@ -494,7 +501,7 @@ class BaseVlobComponent:
         VlobMaintenanceGetReencryptionBatchReq, VlobMaintenanceGetReencryptionBatchRep
     )
     async def api_vlob_maintenance_get_reencryption_batch(
-        self, client_ctx, req: VlobMaintenanceGetReencryptionBatchReq
+        self, client_ctx: AuthenticatedClientContext, req: VlobMaintenanceGetReencryptionBatchReq
     ) -> VlobMaintenanceGetReencryptionBatchRep:
         try:
             batch = await self.maintenance_get_reencryption_batch(
@@ -530,7 +537,7 @@ class BaseVlobComponent:
         VlobMaintenanceSaveReencryptionBatchReq, VlobMaintenanceSaveReencryptionBatchRep
     )
     async def api_vlob_maintenance_save_reencryption_batch(
-        self, client_ctx, req: VlobMaintenanceSaveReencryptionBatchReq
+        self, client_ctx: AuthenticatedClientContext, req: VlobMaintenanceSaveReencryptionBatchReq
     ) -> VlobMaintenanceSaveReencryptionBatchRep:
         try:
             total, done = await self.maintenance_save_reencryption_batch(

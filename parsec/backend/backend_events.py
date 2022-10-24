@@ -170,7 +170,7 @@ class BackendEventSchema(OneOfSchema):
         BackendEvent.PKI_ENROLLMENTS_UPDATED: PkiEnrollmentUpdatedSchema,
     }
 
-    def get_obj_type(self, obj):
+    def get_obj_type(self, obj: dict[str, object]) -> object:
         return obj["__signal__"]
 
 

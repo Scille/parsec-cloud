@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Awaitable, NoReturn, Callable, Union
 import trio
-from structlog import get_logger
 from functools import partial
 from quart import g, websocket, Websocket, Blueprint
+from structlog import get_logger
+from typing import Awaitable, NoReturn, Callable, TypeVar, Union
 
 from parsec.api.protocol.base import MessageSerializationError
 from parsec.api.protocol import (
@@ -23,14 +23,15 @@ from parsec.backend.utils import run_with_cancel_on_client_sending_new_cmd, Canc
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.client_context import (
     AuthenticatedClientContext,
+    BaseClientContext,
     InvitedClientContext,
     APIV1_AnonymousClientContext,
 )
 from parsec.backend.handshake import do_handshake
 from parsec.backend.invite import CloseInviteConnection
 
-Ctx = Union[AuthenticatedClientContext, InvitedClientContext, APIV1_AnonymousClientContext]
-R = dict[str, Union[str, dict[str, str]]]
+Ctx = TypeVar("Ctx", bound=BaseClientContext)
+R = dict[str, object]
 
 logger = get_logger()
 
@@ -165,9 +166,7 @@ async def handle_ws() -> None:  # type: ignore[misc]
 async def _handle_client_websocket_loop(
     api_cmds: dict[str, Callable[[Ctx, R], Awaitable[R]]],
     websocket: Websocket,
-    client_ctx: Union[
-        AuthenticatedClientContext, InvitedClientContext, APIV1_AnonymousClientContext
-    ],
+    client_ctx: Ctx,
 ) -> NoReturn:
 
     raw_req: Union[None, bytes, str] = None

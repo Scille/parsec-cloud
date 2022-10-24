@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Union
+
 from parsec._parsec import (
     AuthenticatedPingReq,
     AuthenticatedPingRep,
@@ -11,6 +12,7 @@ from parsec._parsec import (
     InvitedPingRepOk,
 )
 from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.backend.client_context import AuthenticatedClientContext, BaseClientContext
 from parsec.backend.utils import catch_protocol_errors, api, ClientType, api_typed_msg_adapter
 
 
@@ -28,8 +30,12 @@ class BasePingComponent:
         (AuthenticatedPingReq, InvitedPingReq),
         Union[AuthenticatedPingRep, InvitedPingRep],
     )
-    async def api_ping(self, client_ctx, req) -> Union[AuthenticatedPingRep, InvitedPingRep]:
+    async def api_ping(
+        self, client_ctx: BaseClientContext, req: AuthenticatedPingReq | InvitedPingReq
+    ) -> AuthenticatedPingRep | InvitedPingRep:
         if client_ctx.TYPE == ClientType.AUTHENTICATED:
+            assert isinstance(client_ctx, AuthenticatedClientContext)
+
             await self.ping(client_ctx.organization_id, client_ctx.device_id, req.ping)
             return AuthenticatedPingRepOk(pong=req.ping)
         else:

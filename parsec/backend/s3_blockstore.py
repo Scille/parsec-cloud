@@ -15,7 +15,7 @@ from parsec.backend.blockstore import BaseBlockStoreComponent
 logger = get_logger()
 
 
-def build_s3_slug(organization_id: OrganizationID, block_id: BlockID):
+def build_s3_slug(organization_id: OrganizationID, block_id: BlockID) -> str:
     # The slug uses the UUID canonical textual representation (eg.
     # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`) where `BlockID.__str__`
     # uses the short textual representation (eg. `3b91779235ac409f9af1fe6de8d2b905`)
@@ -23,7 +23,14 @@ def build_s3_slug(organization_id: OrganizationID, block_id: BlockID):
 
 
 class S3BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, s3_region, s3_bucket, s3_key, s3_secret, s3_endpoint_url=None):
+    def __init__(
+        self,
+        s3_region: str,
+        s3_bucket: str,
+        s3_key: str,
+        s3_secret: str,
+        s3_endpoint_url: str | None = None,
+    ):
         self._s3 = None
         self._s3_bucket = None
         self._s3 = boto3.client(
@@ -40,6 +47,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
     async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         slug = build_s3_slug(organization_id=organization_id, block_id=block_id)
         try:
+            assert self._s3 is not None
             obj = self._s3.get_object(Bucket=self._s3_bucket, Key=slug)
         except (BotoCoreError, ClientError) as exc:
             self._logger.warning(
@@ -57,6 +65,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
     ) -> None:
         slug = build_s3_slug(organization_id=organization_id, block_id=block_id)
         try:
+            assert self._s3 is not None
             await trio.to_thread.run_sync(
                 partial(self._s3.put_object, Bucket=self._s3_bucket, Key=slug, Body=block)
             )

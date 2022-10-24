@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import trio
-from typing import Callable, Union, Type
+from typing import Any, Awaitable, Callable, Union, Type
 from functools import partial
 
 from parsec._parsec import (
@@ -38,14 +38,18 @@ from parsec.backend.backend_events import BackendEvent
 
 
 class EventsComponent:
-    def __init__(self, realm_component: BaseRealmComponent, send_event: Callable):
+    def __init__(
+        self, realm_component: BaseRealmComponent, send_event: Callable[..., Awaitable[None]]
+    ):
         self._realm_component = realm_component
         self.send = send_event
 
     @api("events_subscribe")
     @catch_protocol_errors
     @api_typed_msg_adapter(EventsSubscribeReq, EventsSubscribeRep)
-    async def api_events_subscribe(self, client_ctx: AuthenticatedClientContext, msg):
+    async def api_events_subscribe(
+        self, client_ctx: AuthenticatedClientContext, msg: dict[str, object]
+    ) -> EventsSubscribeRep:
         def _on_roles_updated(
             backend_event: BackendEvent,
             organization_id: OrganizationID,
@@ -98,7 +102,7 @@ class EventsComponent:
             organization_id: OrganizationID,
             author: DeviceID,
             realm_id: RealmID,
-            **kwargs,
+            **kwargs: Any,
         ) -> None:
             if (
                 organization_id != client_ctx.organization_id
@@ -209,7 +213,9 @@ class EventsComponent:
     @api("events_listen", cancel_on_client_sending_new_cmd=True)
     @catch_protocol_errors
     @api_typed_msg_adapter(EventsListenReq, EventsListenRep)
-    async def api_events_listen(self, client_ctx, msg: EventsListenReq):
+    async def api_events_listen(
+        self, client_ctx: AuthenticatedClientContext, msg: EventsListenReq
+    ) -> EventsListenRep:
         if msg.wait:
             event_rep = await client_ctx.receive_events_channel.receive()
 
