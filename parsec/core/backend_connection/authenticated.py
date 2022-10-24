@@ -7,6 +7,7 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import (
     Any,
     AsyncIterator,
+    Awaitable,
     Optional,
     List,
     AsyncGenerator,
@@ -89,7 +90,7 @@ class MonitorCallback(Protocol):
         task_status: TaskStatus[object],
         user_fs: Optional[UserFS] = None,
         event_bus: Optional[EventBus] = None,
-    ) -> Any:
+    ) -> Awaitable[None]:
         ...
 
 
@@ -409,8 +410,8 @@ class BackendAuthenticatedConn:
                     user_profile_outsider_allowed=rep.user_profile_outsider_allowed,
                     active_users_limit=rep.active_users_limit,
                     # Sequester introduced in APIv2.8/3.2
-                    sequester_authority=rep.sequester_authority_certificate,  # type: ignore[arg-type]
-                    sequester_services=rep.sequester_services_certificates,  # type: ignore[arg-type]
+                    sequester_authority=rep.sequester_authority_certificate,
+                    sequester_services=rep.sequester_services_certificates,
                 )
 
             rep = await cmds.events_subscribe(transport)
@@ -443,7 +444,7 @@ class BackendAuthenticatedConn:
             try:
                 async with open_service_nursery() as monitors_nursery:
 
-                    async with trio.open_service_nursery() as monitors_bootstrap_nursery:  # type: ignore[attr-defined]
+                    async with open_service_nursery() as monitors_bootstrap_nursery:
                         for idx, monitor_cb in enumerate(self._monitors_cbs):
                             monitors_bootstrap_nursery.start_soon(
                                 monitors_nursery.start,

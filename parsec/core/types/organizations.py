@@ -5,7 +5,6 @@ import attr
 from typing import Optional, Tuple
 
 from parsec._parsec import UsersPerProfileDetailItem
-from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -22,9 +21,11 @@ class OrganizationStats:
 class OrganizationConfig:
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
-    sequester_authority: Optional[SequesterAuthorityCertificate]
-    sequester_services: Optional[Tuple[SequesterServiceCertificate, ...]]
+    # TODO: Should this be `SequesterAuthorityCertificate` instead of bytes?
+    sequester_authority: Optional[bytes]
+    # TODO: Should this be `SequesterServiceCertificate` instead of bytes?
+    sequester_services: Optional[Tuple[bytes, ...]]
 
     @property
-    def is_sequestered_organization(self):
+    def is_sequestered_organization(self) -> bool:
         return self.sequester_authority is not None
