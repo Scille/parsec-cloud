@@ -1,11 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec.core.core_events import CoreEvent
 import trio
+from typing import TYPE_CHECKING
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSBackendOfflineError
 from parsec.core.backend_connection import BackendNotAvailable
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection.authenticated import MonitorTaskStatus
 
 
 async def freeze_messages_monitor_mockpoint():
@@ -16,7 +20,7 @@ async def freeze_messages_monitor_mockpoint():
     pass
 
 
-async def monitor_messages(user_fs, event_bus, task_status):
+async def monitor_messages(user_fs, event_bus, task_status: MonitorTaskStatus):
     wakeup = trio.Event()
 
     def _on_message_received(event, index):

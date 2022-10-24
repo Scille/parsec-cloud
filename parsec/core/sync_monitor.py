@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from typing import Optional, Union, Dict, Sequence
+from typing import TYPE_CHECKING, Optional, Union, Dict, Sequence
 import trio
 from structlog import get_logger
 
@@ -33,6 +33,9 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.fs.storage import UserStorage, WorkspaceStorage, BaseWorkspaceStorage
 from parsec.event_bus import EventBus
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection.authenticated import MonitorTaskStatus
 
 
 logger = get_logger()
@@ -360,7 +363,7 @@ class SyncContextStore:
         self._ctxs.pop(entry_id, None)
 
 
-async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
+async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus):
     ctxs = SyncContextStore(user_fs)
     early_wakeup = trio.Event()
 
