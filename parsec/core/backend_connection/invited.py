@@ -3,18 +3,25 @@ from __future__ import annotations
 
 import trio
 from contextlib import asynccontextmanager
-from typing import Optional, AsyncGenerator
+from typing import AsyncIterator, Optional, AsyncGenerator, TypeVar
 
 from parsec.api.protocol import INVITED_CMDS
-from parsec.core.types import BackendInvitationAddr
+from parsec.core.backend_connection.authenticated import AcquireTransport
+from parsec.core.types import BackendAddrType, BackendInvitationAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_invited
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
-from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
+from parsec.core.backend_connection.expose_cmds import Transport, expose_cmds_with_retrier
+
+T = TypeVar("T")
 
 
 class BackendInvitedCmds:
-    def __init__(self, addr, acquire_transport):
+    def __init__(
+        self,
+        addr: BackendAddrType,
+        acquire_transport: AcquireTransport,
+    ) -> None:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
@@ -45,10 +52,10 @@ async def backend_invited_cmds_factory(
         BackendConnectionError
     """
     transport_lock = trio.Lock()
-    transport = None
+    transport: Optional[Transport] = None
     closed = False
 
-    async def _init_transport():
+    async def _init_transport() -> Transport:
         nonlocal transport
         if not transport:
             if closed:
@@ -56,18 +63,22 @@ async def backend_invited_cmds_factory(
             transport = await connect_as_invited(addr, keepalive=keepalive)
             transport.logger = transport.logger.bind(auth="<invited>")
 
-    async def _destroy_transport():
+        return transport
+
+    async def _destroy_transport() -> None:
         nonlocal transport
         if transport:
             await transport.aclose()
             transport = None
 
     @asynccontextmanager
-    async def _acquire_transport(**kwargs):
+    async def _acquire_transport(
+        force_fresh: bool = False, ignore_status: bool = False, allow_not_available: bool = False
+    ) -> AsyncIterator[Transport]:
         nonlocal transport
 
         async with transport_lock:
-            await _init_transport()
+            transport = await _init_transport()
             try:
                 yield transport
             except BackendNotAvailable:

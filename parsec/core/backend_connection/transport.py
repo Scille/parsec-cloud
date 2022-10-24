@@ -8,7 +8,14 @@ import certifi
 import urllib.request
 from structlog import get_logger
 from contextlib import asynccontextmanager
-from typing import Optional, Dict, Callable, Awaitable, AsyncContextManager
+from typing import (
+    AsyncIterator,
+    Optional,
+    Dict,
+    Callable,
+    Awaitable,
+    Union,
+)
 
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
@@ -16,7 +23,6 @@ from parsec.api.protocol import (
     DeviceID,
     ProtocolError,
     HandshakeError,
-    BaseClientHandshake,
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
     APIV1_AnonymousClientHandshake,
@@ -43,6 +49,10 @@ from parsec.core.backend_connection.proxy import (
 
 logger = get_logger()
 
+CLIENT_HANDSHAKE_TYPE = Union[
+    APIV1_AnonymousClientHandshake, AuthenticatedClientHandshake, InvitedClientHandshake
+]
+
 
 async def apiv1_connect(
     addr: BackendOrganizationBootstrapAddr, keepalive: Optional[int] = None
@@ -63,6 +73,7 @@ async def connect_as_invited(
         invitation_type=addr.invitation_type,
         token=addr.token,
     )
+    assert addr.port is not None, "Organization port is None"
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
 
@@ -78,6 +89,7 @@ async def connect_as_authenticated(
         user_signkey=signing_key,
         root_verify_key=addr.root_verify_key,
     )
+    assert addr.port is not None, "Organization port is None"
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
 
@@ -86,7 +98,7 @@ async def _connect(
     port: int,
     use_ssl: bool,
     keepalive: Optional[int],
-    handshake: BaseClientHandshake,
+    handshake: CLIENT_HANDSHAKE_TYPE,
 ) -> Transport:
     stream = await maybe_connect_through_proxy(hostname, port, use_ssl)
 
@@ -153,7 +165,7 @@ def _upgrade_stream_to_ssl(raw_stream: trio.abc.Stream, hostname: str) -> trio.a
     return trio.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
 
-async def _do_handshake(transport: Transport, handshake: BaseClientHandshake) -> None:
+async def _do_handshake(transport: Transport, handshake: CLIENT_HANDSHAKE_TYPE) -> None:
     try:
         challenge_req = await transport.recv()
         answer_req = handshake.process_challenge_req(challenge_req)
@@ -183,12 +195,12 @@ async def _do_handshake(transport: Transport, handshake: BaseClientHandshake) ->
 class TransportPool:
     def __init__(self, connect_cb: Callable[[], Awaitable[Transport]], max_pool: int):
         self._connect_cb = connect_cb
-        self._transports = []
+        self._transports: list[Transport] = []
         self._closed = False
         self._lock = trio.Semaphore(max_pool)
 
     @asynccontextmanager
-    async def acquire(self, force_fresh: bool = False) -> AsyncContextManager[Transport]:
+    async def acquire(self, force_fresh: bool = False) -> AsyncIterator[Transport]:
         """
         Raises:
             BackendConnectionError
@@ -231,9 +243,9 @@ async def http_request(
 ) -> bytes:
     """Raises: urllib.error.URLError or OSError"""
 
-    def _target():
+    def _target() -> urllib.request._UrlopenRet:
         request = urllib.request.Request(url, data=data, headers=headers, method=method)
-        handlers = []
+        handlers: list[urllib.request.BaseHandler] = []
         proxy_url = blocking_io_get_proxy(target_url=url, hostname=request.host)
         if proxy_url:
             logger.debug("Using proxy to connect", proxy_url=proxy_url, target_url=url)

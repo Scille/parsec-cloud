@@ -5,6 +5,7 @@ from uuid import UUID
 from structlog import get_logger
 
 from parsec._version import __version__
+from parsec.api.protocol.base import CmdSerializer
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
     OrganizationID,
@@ -14,7 +15,6 @@ from parsec.api.protocol import (
     organization_bootstrap_serializer,
 )
 from parsec.core.types import (
-    BackendAddr,
     BackendPkiEnrollmentAddr,
     BackendOrganizationBootstrapAddr,
 )
@@ -36,8 +36,11 @@ REQUEST_HEADERS = {
 
 
 async def _anonymous_cmd(
-    serializer, addr: BackendAddr, organization_id: OrganizationID, **req
-) -> dict:
+    serializer: CmdSerializer,
+    addr: BackendPkiEnrollmentAddr | BackendOrganizationBootstrapAddr,
+    organization_id: OrganizationID,
+    **req: object,
+) -> dict[str, object]:
     """
     Raises:
         BackendNotAvailable
@@ -84,7 +87,7 @@ async def pki_enrollment_submit(
     submitter_der_x509_certificate_email: str,
     submit_payload_signature: bytes,
     submit_payload: bytes,
-) -> dict:
+) -> dict[str, object]:
     return await _anonymous_cmd(
         serializer=pki_enrollment_submit_serializer,
         cmd="pki_enrollment_submit",
@@ -99,7 +102,9 @@ async def pki_enrollment_submit(
     )
 
 
-async def pki_enrollment_info(addr: BackendPkiEnrollmentAddr, enrollment_id: UUID) -> dict:
+async def pki_enrollment_info(
+    addr: BackendPkiEnrollmentAddr, enrollment_id: UUID
+) -> dict[str, object]:
     return await _anonymous_cmd(
         serializer=pki_enrollment_info_serializer,
         cmd="pki_enrollment_info",
@@ -117,7 +122,7 @@ async def organization_bootstrap(
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
     sequester_authority_certificate: bytes,
-) -> dict:
+) -> dict[str, object]:
     return await _anonymous_cmd(
         organization_bootstrap_serializer,
         cmd="organization_bootstrap",

@@ -38,7 +38,6 @@ from parsec.core.types.organizations import (
     UsersPerProfileDetailItem,
     OrganizationConfig,
 )
-
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
 

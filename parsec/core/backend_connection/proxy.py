@@ -47,11 +47,13 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
     # configured, and `get_pac` silently fails on wrong content-type by returning None)
     # Also disable WPAD protocol to retrieve PAC from DNS given it produce annoying
     # WARNING logs
-    get_pac_kwargs: dict = {"from_dns": False, "allowed_content_types": {""}}
+    kwargs_url = None
+    kwargs_from_dns = False
+    kwargs_allowed_content_types = {""}
 
     force_proxy_pac_url = os.environ.get("http_proxy_pac") or os.environ.get("HTTP_PROXY_PAC")
     if force_proxy_pac_url:
-        get_pac_kwargs["url"] = force_proxy_pac_url
+        kwargs_url = force_proxy_pac_url
         logger.debug(
             "Retrieving .PAC proxy config url from `HTTP_PROXY_PAC` env var",
             pac_url=force_proxy_pac_url,
@@ -60,7 +62,11 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
         logger.debug("Retrieving .PAC proxy config url from system")
 
     try:
-        pacfile = pypac.get_pac(**get_pac_kwargs)
+        pacfile = pypac.get_pac(
+            url=kwargs_url,
+            from_dns=kwargs_from_dns,
+            allowed_content_types=kwargs_allowed_content_types,
+        )
     except Exception as exc:
         logger.warning("Error while retrieving .PAC proxy config", exc_info=exc)
         return None
@@ -70,6 +76,10 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
 
     try:
         proxies = pacfile.find_proxy_for_url(url, hostname)
+        if proxies is None:
+            logger.debug("Proxy list is None", target_url=url)
+            return None
+
         logger.debug("Found proxies info in .PAC proxy config", target_url=url, proxies=proxies)
         proxies = [p.strip() for p in proxies.split(";")]
         if len(proxies) > 1:
@@ -251,11 +261,7 @@ async def maybe_connect_through_proxy(
 
     conn = h11.Connection(our_role=h11.CLIENT)
 
-    async def send(event):
-        data = conn.send(event)
-        await stream.send_all(data)
-
-    async def next_event():
+    async def next_response() -> h11.Response | None:
         while True:
             event = conn.next_event()
             if event is h11.NEED_DATA:
@@ -264,10 +270,21 @@ async def maybe_connect_through_proxy(
                 data = await stream.receive_some(2048)
                 conn.receive_data(data)
                 continue
-            return event
+            elif event is h11.PAUSED:
+                return None
+            elif isinstance(event, h11.Response):
+                return event
+            else:
+                logger.info(
+                    "Ignoring additional events to our CONNECT from proxy",
+                    proxy_url=proxy_url,
+                    answer=answer,
+                )
+                continue
 
     host = f"{hostname}:{port}"
     try:
+        # Prepare request
         req = h11.Request(
             method="CONNECT",
             target=host,
@@ -283,11 +300,31 @@ async def maybe_connect_through_proxy(
                 *proxy_headers,
             ],
         )
+
+        # Send CONNECT request to the proxy
         logger.debug("Sending CONNECT to proxy", proxy_url=proxy_url, req=req)
-        await send(req)
-        answer = await next_event()
+        data = conn.send(req)
+        assert (
+            data is not None
+        )  # `None` means "Connection closed", which not possible at this point
+        await stream.send_all(data)
+
+        # Get next response
+        answer = await next_response()
         logger.debug("Receiving CONNECT answer from proxy", proxy_url=proxy_url, answer=answer)
-        if not isinstance(answer, h11.Response) or not 200 <= answer.status_code < 300:
+
+        # PAUSED event, this should not happen
+        if answer is None:
+            logger.warning(
+                "Unexpected PAUSED event",
+                proxy_url=proxy_url,
+                target_host=host,
+                target_url=target_url,
+            )
+            raise BackendNotAvailable("Bad answer from proxy")
+
+        # Bad status code, the proxy refused the request
+        if not 200 <= answer.status_code < 300:
             logger.warning(
                 "Bad answer from proxy to CONNECT request",
                 proxy_url=proxy_url,
@@ -296,15 +333,18 @@ async def maybe_connect_through_proxy(
                 answer_status=answer.status_code,
             )
             raise BackendNotAvailable("Bad answer from proxy")
-        # Successful CONNECT should reset the connection's statemachine
-        answer = await next_event()
-        while not isinstance(answer, h11.PAUSED):
+
+        # Wait for the next PAUSED event,
+        # as a successful CONNECT should reset the connection's state machine
+        answer = await next_response()
+        while answer is not None:
+            # This should probably not happen
             logger.debug(
-                "Receiving additional answer to our CONNECT from proxy",
+                "Receiving additional response to our CONNECT from proxy",
                 proxy_url=proxy_url,
                 answer=answer,
             )
-            answer = await next_event()
+            answer = await next_response()
 
     except trio.BrokenResourceError as exc:
         logger.warning(

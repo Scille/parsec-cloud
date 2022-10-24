@@ -5,6 +5,7 @@ import attr
 import trio
 from collections import defaultdict
 from typing import (
+    TYPE_CHECKING,
     List,
     Dict,
     Tuple,
@@ -16,7 +17,7 @@ from typing import (
 )
 import structlog
 
-from parsec._parsec import DateTime, FileManifest, Regex
+from parsec._parsec import DateTime, FileManifest, Regex, RealmStatusRepOk
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
@@ -42,7 +43,6 @@ from parsec.core.types import (
 from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import (
-    BackendAuthenticatedCmds,
     BackendNotAvailable,
     BackendConnectionError,
 )
@@ -68,6 +68,9 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection import BackendAuthenticatedCmds
 
 
 logger = structlog.get_logger()
@@ -242,6 +245,7 @@ class WorkspaceFS:
                 f"Cannot retrieve remote status for workspace {self.workspace_id.str}: {exc}"
             ) from exc
 
+        assert isinstance(rep, RealmStatusRepOk)
         reencryption_already_in_progress = (
             rep.in_maintenance and rep.maintenance_type == MaintenanceType.REENCRYPTION()
         )

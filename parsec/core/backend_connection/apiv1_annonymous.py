@@ -2,19 +2,29 @@
 from __future__ import annotations
 
 import trio
-from contextlib import asynccontextmanager
-from typing import Optional, AsyncGenerator
+from contextlib import (
+    asynccontextmanager,
+)
+from typing import AsyncIterator, Optional, AsyncGenerator, TypeVar
+from parsec.api.transport import Transport
+from parsec.core.backend_connection.authenticated import AcquireTransport
 
-from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.core.types import BackendAddrType, BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import apiv1_connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.expose_cmds import expose_cmds
 from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
 
+T = TypeVar("T")
+
 
 class APIV1_BackendAnonymousCmds:
-    def __init__(self, addr, acquire_transport):
+    def __init__(
+        self,
+        addr: BackendAddrType,
+        acquire_transport: AcquireTransport,
+    ) -> None:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
@@ -34,29 +44,32 @@ async def apiv1_backend_anonymous_cmds_factory(
         BackendConnectionError
     """
     transport_lock = trio.Lock()
-    transport = None
+    transport: Optional[Transport] = None
     closed = False
 
-    async def _init_transport():
+    async def _init_transport() -> Transport:
         nonlocal transport
         if not transport:
             if closed:
                 raise trio.ClosedResourceError
             transport = await apiv1_connect(addr, keepalive=keepalive)
             transport.logger = transport.logger.bind(auth="<anonymous>")
+        return transport
 
-    async def _destroy_transport():
+    async def _destroy_transport() -> None:
         nonlocal transport
         if transport:
             await transport.aclose()
             transport = None
 
     @asynccontextmanager
-    async def _acquire_transport(**kwargs):
+    async def _acquire_transport(
+        force_fresh: bool = False, ignore_status: bool = False, allow_not_available: bool = False
+    ) -> AsyncIterator[Transport]:
         nonlocal transport
 
         async with transport_lock:
-            await _init_transport()
+            transport = await _init_transport()
             try:
                 yield transport
             except BackendNotAvailable:
