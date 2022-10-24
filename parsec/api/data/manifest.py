@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Type
 
 from parsec.api.protocol import DeviceID
-from enum import Enum
 from parsec._parsec import (
     BlockAccess,
     WorkspaceEntry,
@@ -39,10 +38,3 @@ __all__ = [
     "manifest_verify_and_load",
     "manifest_unverified_load",
 ]
-
-
-class ManifestType(Enum):
-    FILE_MANIFEST = "file_manifest"
-    FOLDER_MANIFEST = "folder_manifest"
-    WORKSPACE_MANIFEST = "workspace_manifest"
-    USER_MANIFEST = "user_manifest"
