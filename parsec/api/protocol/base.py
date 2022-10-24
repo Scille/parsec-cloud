@@ -130,7 +130,7 @@ class BaseTypedReqSchema(BaseReqSchema):
     # Children must provide a checked constant `cmd` field
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> "BaseReq":
+    def make_obj(self, data: Dict[str, Any]) -> "BaseReq":  # type: ignore[misc]
         return self.TYPE(**data)
 
 
@@ -148,7 +148,7 @@ class BaseTypedRepSchema(BaseRepSchema):
     # Children must provide a checked constant `status` field
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> "BaseRep":
+    def make_obj(self, data: Dict[str, Any]) -> "BaseRep":  # type: ignore[misc]
         data.pop("status")
         return self.TYPE(**data)
 
@@ -186,7 +186,7 @@ class TimestampOutOfBallparkRepSchema(BaseRepSchema):
     backend_timestamp = fields.DateTime(required=False, allow_none=False)
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore[misc]
         # Cannot use `missing=None` with `allow_none=False`
         data.setdefault("ballpark_client_early_offset", None)
         data.setdefault("ballpark_client_late_offset", None)
@@ -264,9 +264,9 @@ class CmdSerializer:
         # dict interface.
         # Of course once all the `api_...` functions migrated, this hack must be removed ;-)
 
-        def _maybe_untype_wrapper(fn):  # type: ignore[no-untyped-def]
+        def _maybe_untype_wrapper(fn: Callable[[Any], Any]) -> Callable[[Any], Any]:
             @wraps(fn)
-            def wrapper(data):  # type: ignore[no-untyped-def]
+            def wrapper(data: Any) -> Any:  # type: ignore[misc]
                 if isinstance(data, (BaseReq, BaseRep)):
                     data = data.SERIALIZER.dump(data)
 
@@ -461,7 +461,7 @@ def cmd_rep_error_type_factory(
     }
 
     @post_load
-    def make_obj(self: BaseTypedRepSchema, data: Dict[str, Any]) -> BaseRep:
+    def make_obj(self: BaseTypedRepSchema, data: Dict[str, Any]) -> BaseRep:  # type: ignore[misc]
         data.pop("status")
         return rep_cls(**data)
 
