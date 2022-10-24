@@ -5,7 +5,7 @@ import attr
 from pathlib import Path
 from uuid import UUID, uuid4
 from parsec._parsec import DateTime
-from typing import Iterable, List, Union, Optional
+from typing import Iterable, List, Union, Optional, cast
 
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.protocol import DeviceLabel, PkiEnrollmentStatus
@@ -159,6 +159,7 @@ class PkiEnrollmentSubmitterInitialCtx:
                 self.enrollment_id,
                 self.x509_certificate,
             )
+        submitted_on = cast(DateTime, rep["submitted_on"])
 
         # Save the enrollment request on disk.
         # Note there is not atomicity with the request to the backend, but it's
@@ -172,7 +173,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             x509_certificate=self.x509_certificate,
             addr=self.addr,
             enrollment_id=self.enrollment_id,
-            submitted_on=rep["submitted_on"],
+            submitted_on=submitted_on,
             submit_payload=cooked_submit_payload,
             signing_key=self.signing_key,
             private_key=self.private_key,
@@ -183,7 +184,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             config_dir=config_dir,
             x509_certificate=self.x509_certificate,
             addr=self.addr,
-            submitted_on=rep["submitted_on"],
+            submitted_on=submitted_on,
             enrollment_id=self.enrollment_id,
             submit_payload=cooked_submit_payload,
         )
@@ -264,6 +265,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
             )
 
         elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
+            cancelled_on = cast(DateTime, rep["cancelled_on"])
             return PkiEnrollmentSubmitterCancelledStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
@@ -271,10 +273,11 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 submitted_on=self.submitted_on,
                 enrollment_id=self.enrollment_id,
                 submit_payload=self.submit_payload,
-                cancelled_on=rep["cancelled_on"],
+                cancelled_on=cancelled_on,
             )
 
         elif enrollment_status == PkiEnrollmentStatus.REJECTED:
+            rejected_on = cast(DateTime, rep["rejected_on"])
             return PkiEnrollmentSubmitterRejectedStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
@@ -282,15 +285,15 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 submitted_on=self.submitted_on,
                 enrollment_id=self.enrollment_id,
                 submit_payload=self.submit_payload,
-                rejected_on=rep["rejected_on"],
+                rejected_on=rejected_on,
             )
 
         else:
             assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
-            accepter_der_x509_certificate: bytes = rep["accepter_der_x509_certificate"]
-            payload_signature: bytes = rep["accept_payload_signature"]
-            payload: bytes = rep["accept_payload"]
-            accepted_on: DateTime = rep["accepted_on"]
+            accepter_der_x509_certificate: bytes = cast(bytes, rep["accepter_der_x509_certificate"])
+            payload_signature: bytes = cast(bytes, rep["accept_payload_signature"])
+            payload: bytes = cast(bytes, rep["accept_payload"])
+            accepted_on: DateTime = cast(DateTime, rep["accepted_on"])
 
             # Load peer certificate
             try:
