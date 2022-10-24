@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import Optional
 from pypac.api import PACFile
@@ -10,7 +11,7 @@ def get_pac(
     js: Optional[str] = None,
     from_dns: bool = True,
     timeout: int = 2,
-    allowed_content_types: Optional[str] = None,
+    allowed_content_types: Optional[set[str]] = None,
     sessions: Optional[requests.Session] = None,
 ) -> Optional[PACFile]: ...
 
