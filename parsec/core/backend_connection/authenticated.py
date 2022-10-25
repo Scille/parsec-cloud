@@ -5,9 +5,9 @@ import trio
 from enum import Enum
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import (
-    Any,
     AsyncIterator,
     Awaitable,
+    Callable,
     Optional,
     List,
     AsyncGenerator,
@@ -15,7 +15,6 @@ from typing import (
     TypeVar,
 )
 from structlog import get_logger
-from functools import partial
 
 from trio_typing import TaskStatus
 
@@ -87,7 +86,7 @@ class AcquireTransport(Protocol):
 class MonitorCallback(Protocol):
     def __call__(
         self,
-        task_status: TaskStatus[object],
+        task_status: MonitorTaskStatus,
         user_fs: Optional[UserFS] = None,
         event_bus: Optional[EventBus] = None,
     ) -> Awaitable[None]:
@@ -227,6 +226,47 @@ def _transport_pool_factory(
     return TransportPool(_connect, max_pool=max_pool)
 
 
+class MonitorTaskState(Enum):
+    STALLED = "STALLED"
+    IDLE = "IDLE"
+    AWAKE = "AWAKE"
+
+
+class MonitorTaskStatus(TaskStatus[None]):
+    state: MonitorTaskState
+    monitor_callback: MonitorCallback
+    task_status: TaskStatus[None] | None
+
+    def __init__(
+        self, monitor_callback: MonitorCallback, state_changed: Callable[[MonitorTaskState], None]
+    ):
+        self.state = MonitorTaskState.STALLED
+        self.monitor_callback = monitor_callback
+        self.task_status = None
+        self._state_changed: Callable[[MonitorTaskState], None] = state_changed
+
+    def reset(self) -> None:
+        self.state = MonitorTaskState.STALLED
+        self.task_status = None
+
+    async def run_monitor(self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED) -> None:
+        self.task_status = task_status
+        self.state = MonitorTaskState.STALLED
+        await self.monitor_callback(task_status=self)
+
+    def started(self, value: None = None) -> None:
+        assert self.task_status is not None
+        self.task_status.started(value)
+
+    def idle(self) -> None:
+        self.state = MonitorTaskState.IDLE
+        self._state_changed(self.state)
+
+    def awake(self) -> None:
+        self.state = MonitorTaskState.AWAKE
+        self._state_changed(self.state)
+
+
 class BackendAuthenticatedConn:
     def __init__(
         self,
@@ -250,7 +290,7 @@ class BackendAuthenticatedConn:
         self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope: Optional[trio.CancelScope] = None
-        self._monitors_cbs: List[MonitorCallback] = []
+        self._monitors_task_statuses: List[MonitorTaskStatus] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
@@ -311,13 +351,31 @@ class BackendAuthenticatedConn:
     def register_monitor(self, monitor_cb: MonitorCallback) -> None:
         if self._started:
             raise RuntimeError("Cannot register monitor once started !")
-        self._monitors_cbs.append(monitor_cb)
+        self._monitors_task_statuses.append(
+            MonitorTaskStatus(monitor_cb, self.on_monitor_state_changed)
+        )
+
+    def on_monitor_state_changed(self, state: MonitorTaskState) -> None:
+        if state == MonitorTaskState.IDLE:
+            if all(
+                status.state == MonitorTaskState.IDLE for status in self._monitors_task_statuses
+            ):
+                self._monitors_idle_event.set()
+        elif state == MonitorTaskState.AWAKE:
+            if self._monitors_idle_event.is_set():
+                self._monitors_idle_event = trio.Event()
 
     def are_monitors_idle(self) -> bool:
         return self._monitors_idle_event.is_set()
 
     async def wait_idle_monitors(self) -> None:
         await self._monitors_idle_event.wait()
+
+    def reset_monitors_status(self) -> None:
+        for monitor_task_status in self._monitors_task_statuses:
+            monitor_task_status.reset()
+        if self._monitors_idle_event.is_set():
+            self._monitors_idle_event = trio.Event()
 
     @asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
@@ -418,37 +476,17 @@ class BackendAuthenticatedConn:
             if not isinstance(rep, EventsSubscribeRepOk):
                 raise BackendConnectionRefused(f"Error while events subscribing : {rep}")
 
-            # Quis custodiet ipsos custodes?
-            monitors_states = ["STALLED" for _ in range(len(self._monitors_cbs))]
-
-            async def _wrap_monitor_cb(
-                monitor_cb: MonitorCallback,
-                idx: int,
-                *,
-                task_status: TaskStatus[Any] = trio.TASK_STATUS_IGNORED,
-            ) -> Any:
-                def _idle() -> None:
-                    monitors_states[idx] = "IDLE"
-                    if all(state == "IDLE" for state in monitors_states):
-                        self._monitors_idle_event.set()
-
-                def _awake() -> None:
-                    monitors_states[idx] = "AWAKE"
-                    if self._monitors_idle_event.is_set():
-                        self._monitors_idle_event = trio.Event()
-
-                setattr(task_status, "idle", _idle)
-                setattr(task_status, "awake", _awake)
-                await monitor_cb(task_status=task_status)
-
             try:
                 async with open_service_nursery() as monitors_nursery:
 
                     async with open_service_nursery() as monitors_bootstrap_nursery:
-                        for idx, monitor_cb in enumerate(self._monitors_cbs):
+
+                        # Make sure we start from a clean state
+                        self.reset_monitors_status()
+                        for task_status in self._monitors_task_statuses:
                             monitors_bootstrap_nursery.start_soon(
                                 monitors_nursery.start,
-                                partial(_wrap_monitor_cb, monitor_cb, idx),
+                                task_status.run_monitor,
                             )
 
                     await self.set_status(BackendConnStatus.READY)
