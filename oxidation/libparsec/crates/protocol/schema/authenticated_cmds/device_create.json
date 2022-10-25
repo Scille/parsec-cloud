@@ -23,28 +23,28 @@
             "invalid_certification": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "bad_user_id": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "invalid_data": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "already_exists": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             }

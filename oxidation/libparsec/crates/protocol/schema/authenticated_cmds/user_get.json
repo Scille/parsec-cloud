@@ -21,7 +21,7 @@
                         "type": "Bytes"
                     },
                     "revoked_user_certificate": {
-                        "type": "Option<Bytes>"
+                        "type": "RequiredOption<Bytes>"
                     },
                     "device_certificates": {
                         "type": "List<Bytes>"

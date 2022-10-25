@@ -9,7 +9,7 @@
             "cmd": "human_find",
             "fields": {
                 "query": {
-                    "type": "Option<String>"
+                    "type": "RequiredOption<String>"
                 },
                 "omit_revoked": {
                     "type": "Boolean"
@@ -46,7 +46,7 @@
             "not_allowed": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             }
@@ -58,7 +58,7 @@
                         "type": "UserID"
                     },
                     "human_handle": {
-                        "type": "Option<HumanHandle>"
+                        "type": "RequiredOption<HumanHandle>"
                     },
                     "revoked": {
                         "type": "Boolean"

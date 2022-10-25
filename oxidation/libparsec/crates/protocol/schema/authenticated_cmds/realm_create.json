@@ -19,21 +19,21 @@
             "invalid_certification": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "invalid_data": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "not_found": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
@@ -41,7 +41,7 @@
             "bad_timestamp": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     },
                     "ballpark_client_early_offset": {
                         "type": "Float",

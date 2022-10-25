@@ -46,16 +46,20 @@ impl Field {
         types: &HashMap<String, String>,
     ) -> syn::Field {
         let (rename, name) = self.quote_name(name);
-        let (ty, serde_skip) = self.quote_type(types);
+        let (ty, serde_attr) = self.quote_type(types);
 
-        let mut attrs: Vec<syn::Attribute> = Vec::new();
+        let mut attrs: Vec<syn::Attribute> = serde_attr.into_iter().collect_vec();
 
+        attrs.push(quote_serde_as(&ty, self.can_only_be_null()));
+        if self.can_only_be_null() {
+            attrs.push(syn::parse_quote!(#[doc = "The field may be null."]))
+        } else if self.can_be_missing_or_null() {
+            attrs.push(
+                syn::parse_quote!(#[doc = "The field may be absent or its value to be null."]),
+            )
+        }
         if let Some(rename) = rename {
             attrs.push(syn::parse_quote!(#[serde(rename = #rename)]))
-        }
-        attrs.push(quote_serde_as(&ty));
-        if let Some(serde_skip) = serde_skip {
-            attrs.push(serde_skip)
         }
         if let Some(default) = &self.default {
             attrs.push(syn::parse_quote!(#[serde(default = #default)]));
@@ -98,6 +102,16 @@ impl Field {
         } else {
             (ty, None)
         }
+    }
+
+    /// True when the type of the field is the wrapper `RequiredOption<ty>`.
+    fn can_only_be_null(&self) -> bool {
+        self.ty.starts_with("RequiredOption")
+    }
+
+    /// True when the type of the field is the wrapper `NonRequiredOption<ty>`.
+    fn can_be_missing_or_null(&self) -> bool {
+        self.ty.starts_with("NonRequiredOption")
     }
 }
 
@@ -168,8 +182,8 @@ mod test {
             default: None,
         },
         quote! {
-            #[serde_as(as = "libparsec_types::Maybe<_>")]
             #[serde(default, skip_serializing_if = "libparsec_types::Maybe::is_absent")]
+            #[serde_as(as = "libparsec_types::Maybe<_>")]
             #[doc = "Introduced in `API-4.1`."]
             pub foo: libparsec_types::Maybe<i64>
         }
@@ -207,8 +221,8 @@ mod test {
             default: None,
         },
         quote! {
-            #[serde_as(as = "libparsec_types::Maybe<_>")]
             #[serde(default, skip_serializing_if = "libparsec_types::Maybe::is_absent")]
+            #[serde_as(as = "libparsec_types::Maybe<_>")]
             #[doc = "Introduced in `API-4.1`."]
             foo: libparsec_types::Maybe<i64>
         }
@@ -224,6 +238,30 @@ mod test {
             #[serde_as(as = "_")]
             #[serde(default = "42")]
             foo: i64
+        }
+    )]
+    #[case::required_option(
+        syn::Visibility::Inherited,
+        Field {
+            ty: "RequiredOption<Integer>".to_string(),
+            ..Default::default()
+        },
+        quote! {
+            #[serde_as(as = "Option<_>", no_default)]
+            #[doc = "The field may be null."]
+            foo: Option<i64>
+        }
+    )]
+    #[case::non_required_option(
+        syn::Visibility::Inherited,
+        Field {
+            ty: "NonRequiredOption<Integer>".to_string(),
+            ..Default::default()
+        },
+        quote! {
+            #[serde_as(as = "Option<_>")]
+            #[doc = "The field may be absent or its value to be null."]
+            foo: Option<i64>
         }
     )]
     fn test_quote(
