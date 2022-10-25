@@ -361,8 +361,8 @@ jobs:
         shell: bash
         run: |
           set -ex
-          cargo test --package libparsec_crypto --features use-sodiumoxide
-          cargo test --package libparsec_crypto --features use-rustcrypto
+          cargo test --package libparsec_crypto --features use-sodiumoxide --no-default-features
+          cargo test --package libparsec_crypto --features use-rustcrypto --no-default-features
           cargo test --workspace --features mock-time --exclude libparsec_crypto
 
   ##############################################################################
