@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import cast
 
 import attr
 import trio
 from parsec._parsec import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
+from exceptiongroup import BaseExceptionGroup
 
 from parsec import service_nursery
 from parsec.monitoring import TaskMonitoringInstrument
@@ -15,7 +17,6 @@ __all__ = [
     "start_task",
     "trio_run",
     "open_service_nursery",
-    "split_multi_error",
 ]
 
 logger = get_logger()
@@ -167,53 +168,42 @@ def trio_run(async_fn, *args, use_asyncio=False, monitor_tasks=True):
     return trio.run(async_fn, *args, instruments=instruments)
 
 
-# MultiError handling
-
-
-def split_multi_error(exc):
-    def is_cancelled(exc):
-        return exc if isinstance(exc, trio.Cancelled) else None
-
-    def not_cancelled(exc):
-        return None if isinstance(exc, trio.Cancelled) else exc
-
-    cancelled_errors = trio.MultiError.filter(is_cancelled, exc)
-    other_exceptions = trio.MultiError.filter(not_cancelled, exc)
-    return cancelled_errors, other_exceptions
+# BaseExceptionGroup handling
 
 
 async def check_cancellation(exc):
-    # If the multierror contains a Cancelled(), that means a cancellation
+    # If the exception group contains a Cancelled(), that means a cancellation
     # has leaked outside of the nursery. This indicates the current scope
     # has likely been cancelled. In this case, there is no point in handling
     # both the cancelled and regular exceptions: simply check for cancellation
     # and let a new Cancelled() raise if necessary, discarding the original
     # exception.
-    cancelled_errors, _ = split_multi_error(exc)
-    if cancelled_errors:
+    cancelled_errors, _ = exc.split(trio.Cancelled)
+    if cancelled_errors is not None:
         await trio.lowlevel.checkpoint_if_cancelled()
 
 
-def collapse_multi_error(multierror):
+def collapse_exception_group(exception_group: BaseExceptionGroup):
     # Pick the first exception as the reference exception
-    pick = multierror.exceptions[0]
+    pick = cast(Exception, exception_group.exceptions[0])
     try:
         # Craft a new a name to indicate the exception is collapsed
         name = f"{type(pick).__name__}AndFriends"
-        # Init method should be ignored as it might get called by `MultiError([result])`
+        # Init method should be ignored as it might get called by `BaseExceptionGroup([result])`
         attrs = {"__init__": lambda *args, **kwargs: None}
-        # Craft the specific class, inheriting from MultiError
-        cls = type(name, (type(pick), trio.MultiError), attrs)
+        # Craft the specific class, inheriting from BaseExceptionGroup
+        cls = type(name, (type(pick), BaseExceptionGroup), attrs)
         # Instantiate the instance
         result = cls()
         # Replicate the picked exception inner state
         result.__dict__.update(pick.__dict__)
         result.args = pick.args
-        # Replicate the multierror inner state
-        result.exceptions = multierror.exceptions
-        result.__cause__ = multierror.__cause__
-        result.__context__ = multierror.__context__
-        result.__traceback__ = multierror.__traceback__
+        # Replicate the exception group inner state
+        result._message = exception_group._message
+        result._exceptions = exception_group._exceptions
+        result.__cause__ = exception_group.__cause__
+        result.__context__ = exception_group.__context__
+        result.__traceback__ = exception_group.__traceback__
         # Supress context, we do not want the collapsing to appear in the stacktrace
         result.__suppress_context__ = True
         return result
@@ -227,20 +217,20 @@ def collapse_multi_error(multierror):
 async def open_service_nursery():
     """Open a service nursery.
 
-    This nursery does not raise MultiError exceptions.
-    Instead, it collapses the MultiError into a single exception.
-    More precisely, the first exception of the MultiError is raised,
-    patched with extra MultiError capabilities.
+    This nursery does not raise BaseExceptionGroup exceptions.
+    Instead, it collapses the BaseExceptionGroup into a single exception.
+    More precisely, the first exception of the BaseExceptionGroup is raised,
+    patched with extra BaseExceptionGroup capabilities.
     """
     try:
-        async with service_nursery.open_service_nursery_with_multierror() as nursery:
+        async with service_nursery.open_service_nursery_with_exception_group() as nursery:
             yield nursery
-    except trio.MultiError as exc:
+    except BaseExceptionGroup as exc:
         # Re-raise a Cancelled() if the exception contains a Cancelled()
         await check_cancellation(exc)
-        # Collapse the MultiError into a single exception
-        logger.warning("A MultiError has been detected")
-        raise collapse_multi_error(exc)
+        # Collapse the BaseExceptionGroup into a single exception
+        logger.warning("A BaseExceptionGroup has been detected")
+        raise collapse_exception_group(exc)
 
 
 async def cancel_and_checkpoint(scope):

@@ -8,10 +8,10 @@ from contextlib import asynccontextmanager
 import trio
 from structlog import get_logger
 from PyQt5.QtCore import QObject, pyqtBoundSignal
+from exceptiongroup import BaseExceptionGroup
 
 from parsec.core.fs import FSError
 from parsec.core.mountpoint import MountpointError
-from parsec.utils import split_multi_error
 
 
 logger = get_logger()
@@ -108,9 +108,9 @@ class QtToTrioJob:
                 self.set_cancelled(exc)
                 raise
 
-            except trio.MultiError as exc:
-                cancelled_errors, other_exceptions = split_multi_error(exc)
-                if other_exceptions:
+            except BaseExceptionGroup as exc:
+                cancelled_errors, other_exceptions = exc.split(trio.Cancelled)
+                if other_exceptions is not None:
                     self.set_exception(other_exceptions)
                 else:
                     self.set_cancelled(cancelled_errors)

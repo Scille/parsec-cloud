@@ -51,7 +51,7 @@ h11 = "^0.13"
 # marshmallow = "2.14.0"
 toastedmarshmallow = "0.2.6" # updating causes consitency problem in test
 PyNaCl = "^1.5"
-trio = ">=0.20,<0.22"
+trio = "^0.22"
 trio_typing = "^0.7"
 sentry-sdk = "^1.5"
 structlog = ">=21.5,<23.0"

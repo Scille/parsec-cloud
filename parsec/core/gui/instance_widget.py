@@ -7,6 +7,7 @@ from structlog import get_logger
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 from packaging.version import Version
+import exceptiongroup
 
 from parsec.event_bus import EventBus
 from parsec.api.protocol import HandshakeRevokedDevice
@@ -42,9 +43,9 @@ MIN_MACFUSE_VERSION = Version("4.4.0")
 
 async def _do_run_core(config, device, qt_on_ready: Tuple[QObject, str]):
     qt_on_ready: pyqtBoundSignal = getattr(qt_on_ready[0], qt_on_ready[1])  # Retreive the signal
-    # Quick fix to avoid MultiError<Cancelled, ...> exception bubbling up
-    # TODO: replace this by a proper generic MultiError handling
-    with trio.MultiError.catch(lambda exc: None if isinstance(exc, trio.Cancelled) else exc):
+    # Quick fix to avoid BaseExceptionGroup<Cancelled, ...> exception bubbling up
+    # TODO: is it still necessary?
+    with exceptiongroup.catch({trio.Cancelled: lambda _: None}):
         async with logged_core_factory(config=config, device=device, event_bus=None) as core:
             # Create our own job scheduler allows us to cancel all pending
             # jobs depending on us when we logout

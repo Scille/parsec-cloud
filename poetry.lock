@@ -301,7 +301,7 @@ python-versions = ">=2.7"
 name = "exceptiongroup"
 version = "1.0.0rc9"
 description = "Backport of PEP 654 (exception groups)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -1324,7 +1324,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "trio"
-version = "0.21.0"
+version = "0.22.0"
 description = "A friendly Python library for async concurrency and I/O"
 category = "main"
 optional = false
@@ -1334,6 +1334,7 @@ python-versions = ">=3.7"
 async-generator = ">=1.9"
 attrs = ">=19.2.0"
 cffi = {version = ">=1.14", markers = "os_name == \"nt\" and implementation_name != \"pypy\""}
+exceptiongroup = {version = ">=1.0.0rc9", markers = "python_version < \"3.11\""}
 idna = "*"
 outcome = "*"
 sniffio = "*"
@@ -1484,7 +1485,7 @@ core = ["packaging", "PyQt5", "pyqt5-sip", "qtrio", "qrcode", "fusepy", "winfspy
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9.0"
-content-hash = "866230205f7f9a9bb0b334ef090fe4f6500e648b62ea737fcbf023798a9718ba"
+content-hash = "7b678b60a5264b6a5fa7d3d59f48f028d4c619472f2d5d1481fae4b0839fdecc"
 
 [metadata.files]
 aiofiles = [
@@ -2331,8 +2332,8 @@ tomli = [
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 trio = [
-    {file = "trio-0.21.0-py3-none-any.whl", hash = "sha256:4dc0bf9d5cc78767fc4516325b6d80cc0968705a31d0eec2ecd7cdda466265b0"},
-    {file = "trio-0.21.0.tar.gz", hash = "sha256:523f39b7b69eef73501cebfe1aafd400a9aad5b03543a0eded52952488ff1c13"},
+    {file = "trio-0.22.0-py3-none-any.whl", hash = "sha256:f1dd0780a89bfc880c7c7994519cb53f62aacb2c25ff487001c0052bd721cdf0"},
+    {file = "trio-0.22.0.tar.gz", hash = "sha256:ce68f1c5400a47b137c5a4de72c7c901bd4e7a24fbdebfe9b41de8c6c04eaacf"},
 ]
 trio-asyncio = [
     {file = "trio_asyncio-0.12.0-py3-none-any.whl", hash = "sha256:9bf678f83204ba33c395783681c69af563a84145fad2110a152a81a4a18ae7e4"},

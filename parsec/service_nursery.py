@@ -125,7 +125,7 @@ def _get_coroutine_or_flag_problem(
 
 
 @asynccontextmanager
-async def open_service_nursery_with_multierror() -> AsyncIterator:
+async def open_service_nursery_with_exception_group() -> AsyncIterator:
     """Provides a nursery augmented with a cancellation ordering constraint.
     If an entire service nursery becomes cancelled, either due to an
     exception raised by some task in the nursery or due to the
