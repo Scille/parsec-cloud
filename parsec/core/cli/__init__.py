@@ -49,6 +49,7 @@ core_cmd.add_command(invitation.cancel_invitation, "cancel_invitation")
 core_cmd.add_command(create_organization.create_organization, "create_organization")
 core_cmd.add_command(stats_organization.stats_organization, "stats_organization")
 core_cmd.add_command(status_organization.status_organization, "status_organization")
+core_cmd.add_command(stats_organization.stats_server, "stats_server")
 core_cmd.add_command(bootstrap_organization.bootstrap_organization, "bootstrap_organization")
 
 core_cmd.add_command(pki.pki_enrollment_submit, "pki_enrollment_submit")

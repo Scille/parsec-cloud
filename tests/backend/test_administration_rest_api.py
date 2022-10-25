@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import trio
-from parsec._parsec import DateTime
 import pytest
 from unittest.mock import ANY
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
     VlobID,
     BlockID,
@@ -72,6 +72,8 @@ async def test_organization_create(backend_asgi_app):
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,
@@ -139,6 +141,8 @@ async def test_organization_create_already_exists_not_bootstrapped(backend_asgi_
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,
@@ -187,6 +191,8 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=False,
         active_users_limit=None,
@@ -213,6 +219,8 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=10,
@@ -235,6 +243,8 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,

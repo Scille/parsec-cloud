@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Dict, Optional, Tuple, Union
 from secrets import token_hex
 
 from parsec._parsec import (
@@ -90,6 +90,8 @@ class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
     is_expired: bool
+    created_on: DateTime
+    bootstrapped_on: Optional[DateTime]
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
@@ -424,10 +426,25 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def stats(self, id: OrganizationID) -> OrganizationStats:
+    async def stats(
+        self,
+        id: OrganizationID,
+        at: Optional[DateTime] = None,
+    ) -> OrganizationStats:
         """
         Raises:
             OrganizationNotFoundError
+
+        Note: also raises `OrganizationNotFoundError` if the organization is
+        present in the database but has been created after `at` datetime.
+        """
+        raise NotImplementedError()
+
+    async def server_stats(
+        self, at: Optional[DateTime] = None
+    ) -> Dict[OrganizationID, OrganizationStats]:
+        """
+        Raises: Nothing !
         """
         raise NotImplementedError()
 

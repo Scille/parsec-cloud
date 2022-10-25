@@ -43,6 +43,10 @@ class Realm:
     last_role_change_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
 
     @property
+    def created_on(self) -> DateTime:
+        return min(r.granted_on for r in self.granted_roles)
+
+    @property
     def roles(self) -> Dict[UserID, RealmRole]:
         roles: Dict[UserID, RealmRole] = {}
         for x in sorted(self.granted_roles, key=lambda x: x.granted_on):

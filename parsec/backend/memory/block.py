@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 class BlockMeta:
     realm_id: RealmID
     size: int
+    created_on: DateTime
 
 
 class MemoryBlockComponent(BaseBlockComponent):
@@ -118,13 +119,14 @@ class MemoryBlockComponent(BaseBlockComponent):
     ) -> None:
         assert self._blockstore_component is not None
 
+        created_on = created_on or DateTime.now()
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
         if (organization_id, block_id) in self._blockmetas:
             raise BlockAlreadyExistsError()
 
         await self._blockstore_component.create(organization_id, block_id, block)
 
-        self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block))
+        self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block), created_on)
 
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):

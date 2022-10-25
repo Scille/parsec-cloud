@@ -12,13 +12,13 @@ from parsec.backend.user import UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
-    SequesterAuthority,
-    OrganizationStats,
-    OrganizationAlreadyExistsError,
-    OrganizationInvalidBootstrapTokenError,
     OrganizationAlreadyBootstrappedError,
-    OrganizationNotFoundError,
+    OrganizationAlreadyExistsError,
     OrganizationFirstUserCreationError,
+    OrganizationInvalidBootstrapTokenError,
+    OrganizationNotFoundError,
+    OrganizationStats,
+    SequesterAuthority,
     UsersPerProfileDetailItem,
 )
 from parsec.backend.utils import Unset, UnsetType
@@ -65,6 +65,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
         created_on: Optional[DateTime] = None,
     ) -> None:
+        created_on = created_on or DateTime.now()
         org = self._organizations.get(id)
         # Allow overwritting of not-yet-bootstrapped organization
         if org and org.root_verify_key:
@@ -80,6 +81,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             organization_id=id,
             bootstrap_token=bootstrap_token,
             is_expired=False,
+            created_on=created_on,
+            bootstrapped_on=None,
             root_verify_key=None,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
@@ -124,7 +127,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationFirstUserCreationError(exc) from exc
 
             self._organizations[organization.organization_id] = organization.evolve(
-                root_verify_key=root_verify_key
+                bootstrapped_on=bootstrapped_on,
+                root_verify_key=root_verify_key,
             )
             if sequester_authority:
                 self._organizations[organization.organization_id] = self._organizations[
@@ -133,42 +137,48 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                     sequester_authority=sequester_authority, sequester_services_certificates=()
                 )
 
-    async def stats(self, id: OrganizationID) -> OrganizationStats:
+    async def stats(
+        self,
+        id: OrganizationID,
+        at: Optional[DateTime] = None,
+    ) -> OrganizationStats:
         assert self._vlob_component is not None
         assert self._block_component is not None
         assert self._user_component is not None
         assert self._realm_component is not None
+        at = at or DateTime.now()
 
-        await self.get(id)
+        org = await self.get(id)
+        if org.created_on > at:
+            raise OrganizationNotFoundError
 
         metadata_size = 0
         for (vlob_organization_id, _), vlob in self._vlob_component._vlobs.items():
             if vlob_organization_id == id:
-                metadata_size += sum(len(blob) for (blob, _, _) in vlob.data)
+                metadata_size += sum(len(blob) for (blob, _, ts) in vlob.data if ts <= at)
 
         data_size = 0
         for (vlob_organization_id, _), blockmeta in self._block_component._blockmetas.items():
-            if vlob_organization_id == id:
+            if vlob_organization_id == id and (blockmeta.created_on <= at):
                 data_size += blockmeta.size
 
         users = 0
         active_users = 0
         users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
         for user in self._user_component._organizations[id].users.values():
-            users += 1
-            if user.revoked_on:
-                users_per_profile_detail[user.profile]["revoked"] += 1
-            else:
-                users_per_profile_detail[user.profile]["active"] += 1
-                active_users += 1
+            if user.created_on <= at:
+                users += 1
+                if user.revoked_on and user.revoked_on <= at:
+                    users_per_profile_detail[user.profile]["revoked"] += 1
+                else:
+                    users_per_profile_detail[user.profile]["active"] += 1
+                    active_users += 1
 
-        realms = len(
-            [
-                realm_id
-                for organization_id, realm_id in self._realm_component._realms.keys()
-                if organization_id == id
-            ]
-        )
+        realms = 0
+        for (organization_id, _), realm in self._realm_component._realms.items():
+            if organization_id == id and realm.created_on <= at:
+                realms += 1
+
         users_per_profile_detail = tuple(
             UsersPerProfileDetailItem(profile=profile, **data)
             for profile, data in users_per_profile_detail.items()
@@ -182,6 +192,20 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             active_users=active_users,
             users_per_profile_detail=users_per_profile_detail,
         )
+
+    async def server_stats(
+        self, at: Optional[DateTime] = None
+    ) -> Dict[OrganizationID, OrganizationStats]:
+        at = at or DateTime.now()
+        result = {}
+        for org_id in self._organizations.keys():
+            try:
+                result[org_id] = await self.stats(org_id, at)
+            except OrganizationNotFoundError:
+                # Organization didn't not exist at the considered time, just ignore it
+                pass
+
+        return result
 
     async def update(
         self,

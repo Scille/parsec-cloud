@@ -1,0 +1,2 @@
+Add `parsec core stats_server` CLI command to provide per-organization
+usage statistics for the whole server.

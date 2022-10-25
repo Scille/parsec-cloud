@@ -359,14 +359,16 @@ def backend_data_binder_factory(initial_user_manifest_state):
             first_device: LocalDevice,
             initial_user_manifest: str = "v1",
             timestamp: Optional[DateTime] = None,
+            create_needed: bool = True,
         ):
             assert initial_user_manifest in ("v1", "not_synced")
 
-            await self.backend.organization.create(
-                id=org.organization_id,
-                bootstrap_token=org.bootstrap_token,
-                created_on=timestamp or first_device.timestamp(),
-            )
+            if create_needed:
+                await self.backend.organization.create(
+                    id=org.organization_id,
+                    bootstrap_token=org.bootstrap_token,
+                    created_on=timestamp or first_device.timestamp(),
+                )
             assert org.organization_id == first_device.organization_id
             backend_user, backend_first_device = local_device_to_backend_user(
                 first_device, org, timestamp
