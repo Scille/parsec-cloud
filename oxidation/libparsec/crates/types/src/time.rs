@@ -37,37 +37,38 @@ pub use chrono::Duration; // Reexported
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
 impl DateTime {
-    pub fn from_ymd_and_hms(
-        year: u64,
-        month: u64,
-        day: u64,
-        hour: u64,
-        minute: u64,
-        second: u64,
+    pub fn from_ymd_hms_us(
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        minute: u32,
+        second: u32,
+        microsecond: u32,
     ) -> Self {
         Self(
             chrono::Utc
-                .ymd(year as i32, month as u32, day as u32)
-                .and_hms(hour as u32, minute as u32, second as u32),
+                .ymd(year, month, day)
+                .and_hms_micro(hour, minute, second, microsecond),
         )
     }
 
-    // Don't implement this as `From<f64>` to keep it private
+    // Don't implement this as `From<f64>` to prevent misunderstanding on precision
     pub fn from_f64_with_us_precision(ts: f64) -> Self {
         let mut t = ts.trunc() as i64;
         let mut us = (ts.fract() * 1e6).round() as i32;
-        if us >= 1000000 {
+        if us >= 1_000_000 {
             t += 1;
-            us -= 1000000;
+            us -= 1_000_000;
         } else if us < 0 {
             t -= 1;
-            us += 1000000;
+            us += 1_000_000;
         }
 
         Self(chrono::Utc.timestamp_opt(t, (us as u32) * 1000).unwrap())
     }
 
-    // Don't implement this as `Into<f64>` to keep it private
+    // Don't implement this as `Into<f64>` to prevent misunderstanding on precision
     pub fn get_f64_with_us_precision(&self) -> f64 {
         let ts_us = self.0.timestamp_nanos() / 1000;
         ts_us as f64 / 1e6
@@ -77,28 +78,32 @@ impl DateTime {
         Self(self.0 + Duration::microseconds(us))
     }
 
-    pub fn year(&self) -> u64 {
-        self.0.year() as u64
+    pub fn year(&self) -> i32 {
+        self.0.year()
     }
 
-    pub fn month(&self) -> u64 {
-        self.0.month() as u64
+    pub fn month(&self) -> u32 {
+        self.0.month()
     }
 
-    pub fn day(&self) -> u64 {
-        self.0.day() as u64
+    pub fn day(&self) -> u32 {
+        self.0.day()
     }
 
-    pub fn hour(&self) -> u64 {
-        self.0.hour() as u64
+    pub fn hour(&self) -> u32 {
+        self.0.hour()
     }
 
-    pub fn minute(&self) -> u64 {
-        self.0.minute() as u64
+    pub fn minute(&self) -> u32 {
+        self.0.minute()
     }
 
-    pub fn second(&self) -> u64 {
-        self.0.second() as u64
+    pub fn second(&self) -> u32 {
+        self.0.second()
+    }
+
+    pub fn microsecond(&self) -> u32 {
+        self.0.nanosecond() / 1000
     }
 
     pub fn to_local(self) -> LocalDateTime {
@@ -113,12 +118,78 @@ impl DateTime {
         now.into()
     }
 
-    /// Return a date-time formatted string in the rfc3339 format with a precision update to milliseconds.
-    /// Equivalent to ISO-8601
+    /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
     pub fn to_rfc3339(&self) -> String {
-        self.0.to_rfc3339_opts(chrono::SecondsFormat::Micros, false)
+        self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true)
+    }
+
+    /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
+    pub fn from_rfc3339(s: &str) -> Result<Self, chrono::ParseError> {
+        s.parse().map(|dt: chrono::DateTime<chrono::Utc>| dt.into())
     }
 }
+
+impl std::convert::AsRef<chrono::DateTime<chrono::Utc>> for DateTime {
+    #[inline]
+    fn as_ref(&self) -> &chrono::DateTime<chrono::Utc> {
+        &self.0
+    }
+}
+
+impl std::fmt::Debug for DateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("DateTime").field(&self.to_rfc3339()).finish()
+    }
+}
+
+// `std::fmt::Display` is convenient but ambiguous about it format (and the
+// guarantee it won't change !), so:
+// - display should only be used for human display (e.g. CLI output, error messages)
+// - for actual serialization `DateTime::to_rfc3339` must be used instead
+impl std::fmt::Display for DateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.to_rfc3339())
+    }
+}
+
+// `FromStr` is a convenient but ambiguous shortcut, we should only use it
+// for tests and prefere `DateTime::from_rfc3339` elsewhere
+// TODO: prevent me from being used outside of test code
+impl std::str::FromStr for DateTime {
+    type Err = chrono::format::ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_rfc3339(s)
+    }
+}
+
+impl From<chrono::DateTime<chrono::Utc>> for DateTime {
+    fn from(dt: chrono::DateTime<chrono::Utc>) -> Self {
+        // Force precision to the microsecond
+        Self(
+            chrono::Utc
+                .timestamp_opt(dt.timestamp(), dt.timestamp_subsec_micros() * 1000)
+                .unwrap(),
+        )
+    }
+}
+
+impl From<LocalDateTime> for DateTime {
+    fn from(ldt: LocalDateTime) -> Self {
+        Self(ldt.0.into())
+    }
+}
+
+impl Sub for DateTime {
+    type Output = Duration;
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.0 - rhs.0
+    }
+}
+
+/*
+ * MockedTime
+ */
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MockedTime {
@@ -411,69 +482,6 @@ mod time_provider {
 pub use time_provider::TimeProvider;
 
 /*
- * DateTime
- */
-
-impl std::convert::AsRef<chrono::DateTime<chrono::Utc>> for DateTime {
-    #[inline]
-    fn as_ref(&self) -> &chrono::DateTime<chrono::Utc> {
-        &self.0
-    }
-}
-
-impl std::fmt::Debug for DateTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("DateTime")
-            .field(&self.to_string())
-            .field(&self.0.nanosecond())
-            .finish()
-    }
-}
-
-impl std::fmt::Display for DateTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false)
-        )
-    }
-}
-
-impl std::str::FromStr for DateTime {
-    type Err = chrono::format::ParseError;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(|dt: chrono::DateTime<chrono::Utc>| dt.into())
-    }
-}
-
-impl From<chrono::DateTime<chrono::Utc>> for DateTime {
-    fn from(dt: chrono::DateTime<chrono::Utc>) -> Self {
-        // Force precision to the microsecond
-        Self(
-            chrono::Utc
-                .timestamp_opt(dt.timestamp(), dt.timestamp_subsec_micros() * 1000)
-                .unwrap(),
-        )
-    }
-}
-
-impl From<LocalDateTime> for DateTime {
-    fn from(ldt: LocalDateTime) -> Self {
-        Self(ldt.0.into())
-    }
-}
-
-impl Sub for DateTime {
-    type Output = Duration;
-    fn sub(self, rhs: Self) -> Self::Output {
-        self.0 - rhs.0
-    }
-}
-
-/*
  * LocalDateTime
  */
 
@@ -487,18 +495,19 @@ impl From<DateTime> for LocalDateTime {
 }
 
 impl LocalDateTime {
-    pub fn from_ymd_and_hms(
-        year: u64,
-        month: u64,
-        day: u64,
-        hour: u64,
-        minute: u64,
-        second: u64,
+    pub fn from_ymd_hms_us(
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        minute: u32,
+        second: u32,
+        microsecond: u32,
     ) -> Self {
         Self(
             chrono::Local
-                .ymd(year as i32, month as u32, day as u32)
-                .and_hms(hour as u32, minute as u32, second as u32),
+                .ymd(year, month, day)
+                .and_hms_micro(hour, minute, second, microsecond),
         )
     }
 
@@ -506,12 +515,12 @@ impl LocalDateTime {
     pub fn from_f64_with_us_precision(ts: f64) -> Self {
         let mut t = ts.trunc() as i64;
         let mut us = (ts.fract() * 1e6).round() as i32;
-        if us >= 1000000 {
+        if us >= 1_000_000 {
             t += 1;
-            us -= 1000000;
+            us -= 1_000_000;
         } else if us < 0 {
             t -= 1;
-            us += 1000000;
+            us += 1_000_000;
         }
 
         Self(chrono::Local.timestamp_opt(t, (us as u32) * 1000).unwrap())
@@ -577,10 +586,10 @@ impl std::fmt::Display for LocalDateTime {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use chrono::Timelike;
     use hex_literal::hex;
+    use pretty_assertions::{assert_eq, assert_ne};
+    use rstest::rstest;
 
     use super::*;
 
@@ -599,10 +608,10 @@ mod tests {
 
     #[test]
     fn test_datetime_parse_has_microsecond_precision() {
-        let dt1: DateTime = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
-        let dt2: DateTime = "2021-12-04T11:50:43.208820Z".parse().unwrap();
+        let dt1 = DateTime::from_rfc3339("2021-12-04T11:50:43.208820992Z").unwrap();
+        let dt2 = DateTime::from_rfc3339("2021-12-04T11:50:43.208820Z").unwrap();
         assert_eq!(dt1, dt2);
-        let dt3: DateTime = "2021-12-04T11:50:43.208821Z".parse().unwrap();
+        let dt3 = DateTime::from_rfc3339("2021-12-04T11:50:43.208821Z").unwrap();
         assert_ne!(dt1, dt3);
 
         assert_eq!(dt1.0.nanosecond() % 1000, 0);
@@ -611,13 +620,15 @@ mod tests {
     }
 
     #[test]
-    fn test_rfc3339_parsing_idempotent() {
-        let time_provider = TimeProvider::default();
-        let now = time_provider.now();
-        let parsed_result = DateTime::from_str(&now.to_rfc3339());
-
-        assert!(parsed_result.is_ok());
-        assert_eq!(parsed_result.unwrap(), now);
+    fn test_datetime_attributes() {
+        let dt = DateTime::from_rfc3339("2000-1-2T12:30:59.123456Z").unwrap();
+        assert_eq!(dt.year(), 2000);
+        assert_eq!(dt.month(), 1);
+        assert_eq!(dt.day(), 2);
+        assert_eq!(dt.hour(), 12);
+        assert_eq!(dt.minute(), 30);
+        assert_eq!(dt.second(), 59);
+        assert_eq!(dt.microsecond(), 123456);
     }
 
     #[test]
@@ -631,5 +642,55 @@ mod tests {
             let ns = dt.0.nanosecond();
             assert_eq!(ns % 1000, 0);
         }
+    }
+
+    #[rstest]
+    #[case("2000-01-01T00:00:00Z", 0)]
+    #[case("2000-01-01T00:00:00+00:00", 0)]
+    #[case("2000-01-01T01:00:00+01:00", 0)]
+    #[case("2000-01-01T01:25:00+01:25", 0)]
+    #[case("1999-12-31T23:00:00-01:00", 0)]
+    // Test with milliseconds
+    #[case("2000-01-01T00:00:00.123+00:00", 123000)]
+    #[case("2000-01-01T01:00:00.123+01:00", 123000)]
+    #[case("2000-01-01T01:25:00.123+01:25", 123000)]
+    #[case("1999-12-31T23:00:00.123-01:00", 123000)]
+    // Test with microseconds
+    #[case("2000-01-01T00:00:00.123456Z", 123456)]
+    #[case("2000-01-01T00:00:00.123456+00:00", 123456)]
+    #[case("2000-01-01T01:00:00.123456+01:00", 123456)]
+    #[case("2000-01-01T01:25:00.123456+01:25", 123456)]
+    #[case("1999-12-31T23:00:00.123456-01:00", 123456)]
+    fn test_rfc3339_conversion(#[case] raw: &str, #[case] micro: u32) {
+        let dt = DateTime::from_rfc3339(raw);
+        assert_eq!(
+            dt,
+            Ok(DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, micro))
+        );
+
+        let dt = dt.unwrap();
+
+        let expected = match micro {
+            0 => "2000-01-01T00:00:00Z".to_owned(),
+            x if x % 1000 == 0 => format!("2000-01-01T00:00:00.{}Z", micro / 1000),
+            _ => format!("2000-01-01T00:00:00.{micro}Z"),
+        };
+        assert_eq!(dt.to_rfc3339(), expected);
+
+        // Finally cheap test on idempotence
+        assert_eq!(DateTime::from_rfc3339(&dt.to_rfc3339()), Ok(dt));
+    }
+
+    #[rstest]
+    #[case("2000-01-01")] // Missing time part
+    #[case("2000-01-01T00:00:00")] // Missing tz
+    #[case("2000-01-01T00:00:00+42:00")]
+    #[case("2000-01-01T01:00:")]
+    #[case("2000-01-01T01")]
+    #[case("2000-01-01T")]
+    #[case("whatever")]
+    fn test_datetime_from_rfc3339_bad_parsing(#[case] raw: &str) {
+        let ret = DateTime::from_rfc3339(raw);
+        assert_eq!(ret.is_err(), true);
     }
 }

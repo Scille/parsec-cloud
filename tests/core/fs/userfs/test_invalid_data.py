@@ -98,7 +98,7 @@ async def test_invalid_timestamp(testbed, alice, alice2):
         await testbed.run(signed_timestamp=bad_timestamp)
     assert (
         str(exc.value)
-        == "Invalid user manifest: Invalid timestamp: expected `2000-01-02T00:00:00+00:00`, got `2000-01-03T00:00:00+00:00`"
+        == "Invalid user manifest: Invalid timestamp: expected `2000-01-02T00:00:00Z`, got `2000-01-03T00:00:00Z`"
     )
 
     # Invalid expected timestamp stored in backend
@@ -106,7 +106,7 @@ async def test_invalid_timestamp(testbed, alice, alice2):
         await testbed.run(backend_timestamp=bad_timestamp)
     assert (
         str(exc.value)
-        == "Invalid user manifest: Invalid timestamp: expected `2000-01-03T00:00:00+00:00`, got `2000-01-02T00:00:00+00:00`"
+        == "Invalid user manifest: Invalid timestamp: expected `2000-01-03T00:00:00Z`, got `2000-01-02T00:00:00Z`"
     )
 
 

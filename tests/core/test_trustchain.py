@@ -289,8 +289,8 @@ def test_device_signature_while_revoked(trustchain_data_factory):
     with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("mallory"))
     assert str(exc.value) == (
-        "mallory@dev1 <-sign- alice@dev1: Signature (2000-01-02T00:00:00+00:00)"
-        " is posterior to user revocation (2000-01-01T00:00:00+00:00)"
+        "mallory@dev1 <-sign- alice@dev1: Signature (2000-01-02T00:00:00Z)"
+        " is posterior to user revocation (2000-01-01T00:00:00Z)"
     )
 
 
@@ -309,8 +309,8 @@ def test_user_signature_while_revoked(trustchain_data_factory):
     with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("mallory"))
     assert str(exc.value) == (
-        "mallory's creation <-sign- alice@dev1: Signature (2000-01-02T00:00:00+00:00)"
-        " is posterior to user revocation (2000-01-01T00:00:00+00:00)"
+        "mallory's creation <-sign- alice@dev1: Signature (2000-01-02T00:00:00Z)"
+        " is posterior to user revocation (2000-01-01T00:00:00Z)"
     )
 
 
@@ -329,8 +329,8 @@ def test_revoked_user_signature_while_revoked(trustchain_data_factory):
     with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("mallory"))
     assert str(exc.value) == (
-        "mallory's revocation <-sign- alice@dev1: Signature (2000-01-02T00:00:00+00:00)"
-        " is posterior to user revocation (2000-01-01T00:00:00+00:00)"
+        "mallory's revocation <-sign- alice@dev1: Signature (2000-01-02T00:00:00Z)"
+        " is posterior to user revocation (2000-01-01T00:00:00Z)"
     )
 
 

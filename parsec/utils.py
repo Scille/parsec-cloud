@@ -62,8 +62,8 @@ logger = get_logger()
 # 80% in order to make sure that a clock shift is caught during the
 # handshake instead of being caught by another API call later on.
 
-BALLPARK_CLIENT_EARLY_OFFSET = 50.0  # seconds
-BALLPARK_CLIENT_LATE_OFFSET = 70.0  # seconds
+BALLPARK_CLIENT_EARLY_OFFSET = 50  # seconds
+BALLPARK_CLIENT_LATE_OFFSET = 70  # seconds
 BALLPARK_CLIENT_TOLERANCE = 0.8  # 80%
 BALLPARK_ALWAYS_OK = False  # Useful for disabling ballpark checks in the tests
 

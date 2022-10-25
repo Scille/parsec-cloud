@@ -489,7 +489,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 return
 
             datetime = LocalDateTime(
-                date.year(), date.month(), date.day(), time.hour(), time.minute(), time.second()
+                year=date.year(),
+                month=date.month(),
+                day=date.day(),
+                hour=time.hour(),
+                minute=time.minute(),
+                second=time.second(),
             ).to_utc()
             self.mount_workspace(workspace_fs.workspace_id, datetime)
 

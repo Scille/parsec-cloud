@@ -27,7 +27,14 @@ class DateTime:
     """
 
     def __init__(
-        self, year: int, month: int, day: int, hour: int, minute: int, second: int
+        self,
+        year: int,
+        month: int,
+        day: int,
+        hour: int = 0,
+        minute: int = 0,
+        second: int = 0,
+        microsecond: int = 0,
     ) -> None: ...
     def __lt__(self, other: DateTime) -> bool: ...
     def __gt__(self, other: DateTime) -> bool: ...
@@ -47,6 +54,8 @@ class DateTime:
     def minute(self) -> int: ...
     @property
     def second(self) -> int: ...
+    @property
+    def microsecond(self) -> int: ...
     @staticmethod
     def now() -> DateTime: ...
     @staticmethod
@@ -56,19 +65,19 @@ class DateTime:
     def timestamp(self) -> float: ...
     def add(
         self,
-        days: float = 0,
-        hours: float = 0,
-        minutes: float = 0,
-        seconds: float = 0,
-        microseconds: float = 0,
+        days: int = 0,
+        hours: int = 0,
+        minutes: int = 0,
+        seconds: int = 0,
+        microseconds: int = 0,
     ) -> DateTime: ...
     def subtract(
         self,
-        days: float = 0,
-        hours: float = 0,
-        minutes: float = 0,
-        seconds: float = 0,
-        microseconds: float = 0,
+        days: int = 0,
+        hours: int = 0,
+        minutes: int = 0,
+        seconds: int = 0,
+        microseconds: int = 0,
     ) -> DateTime: ...
     def to_local(self) -> LocalDateTime: ...
     def to_rfc3339(self) -> str: ...
@@ -79,7 +88,7 @@ class LocalDateTime:
     """
 
     def __init__(
-        self, year: int, month: int, day: int, hour: int, minute: int, second: int
+        self, year: int, month: int, day: int, hour: int, minute: int, second: int, microsecond: int
     ) -> None: ...
     @property
     def year(self) -> int: ...

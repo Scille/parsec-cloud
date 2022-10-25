@@ -100,11 +100,11 @@ async def test_invalid_timestamp(testbed, alice, alice2):
     bad_timestamp = DateTime(2000, 1, 3)
 
     # Invalid timestamp field in manifest
-    exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-02T00:00:00+00:00`, got `2000-01-03T00:00:00+00:00`"
+    exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-02T00:00:00Z`, got `2000-01-03T00:00:00Z`"
     await testbed.run(signed_timestamp=bad_timestamp, exc_msg=exc_msg)
 
     # Invalid expected timestamp stored in backend
-    exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-03T00:00:00+00:00`, got `2000-01-02T00:00:00+00:00`"
+    exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-03T00:00:00Z`, got `2000-01-02T00:00:00Z`"
     await testbed.run(backend_timestamp=bad_timestamp, exc_msg=exc_msg)
 
 
@@ -129,7 +129,7 @@ def backend_disable_vlob_checks(backend):
 @customize_fixtures(backend_force_mocked=True)
 async def test_no_user_certif(running_backend, testbed, alice, bob):
     # Data created before workspace manifest access
-    exc_msg = "Manifest was created at 2000-01-02T00:00:00+00:00 by `bob@dev1` which had no right to access the workspace at that time"
+    exc_msg = "Manifest was created at 2000-01-02T00:00:00Z by `bob@dev1` which had no right to access the workspace at that time"
 
     # Backend enforces consistency between user role and vlob access, so we have
     # to disable those checks to be able to send our invalid data to the core

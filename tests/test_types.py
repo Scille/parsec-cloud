@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pytest
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.api.protocol.types import DeviceLabel, HumanHandle
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
@@ -342,3 +343,48 @@ def test_human_handle_bade_field_size():
     for bad in ("", "x" * (256 - len(email_suffix)) + email_suffix):
         with pytest.raises(ValueError):
             HumanHandle(email="foo@example.com", label="")
+
+
+def test_datetime():
+    dt = DateTime(
+        year=2000,
+        month=1,
+        day=2,
+        hour=12,
+        minute=30,
+        second=45,
+        microsecond=123456,
+    )
+    assert dt.year == 2000
+    assert dt.month == 1
+    assert dt.day == 2
+    assert dt.hour == 12
+    assert dt.minute == 30
+    assert dt.second == 45
+    assert dt.microsecond == 123456
+
+    for part in ("day", "hour", "minute", "second", "microsecond"):
+        dt_add = dt.add(**{f"{part}s": 1})
+        assert getattr(dt_add, part) == getattr(dt, part) + 1
+
+        dt_sub = dt.subtract(**{f"{part}s": 1})
+        assert getattr(dt_sub, part) == getattr(dt, part) - 1
+
+    assert dt == dt
+    assert dt.add(microseconds=1) != dt
+    assert dt.add(microseconds=1).subtract(microseconds=1) == dt
+
+    assert dt < dt.add(microseconds=1)
+    assert dt > dt.subtract(microseconds=1)
+    assert dt <= dt
+    assert dt >= dt
+
+    assert dt - dt.subtract(microseconds=1) == 0.000001
+
+    assert dt.to_rfc3339() == "2000-01-02T12:30:45.123456Z"
+    dt2 = DateTime.from_rfc3339(dt.to_rfc3339())
+    assert dt2 == dt
+
+    assert dt.timestamp() == 946816245.123456
+    dt3 = DateTime.from_timestamp(dt.timestamp())
+    assert dt3 == dt
