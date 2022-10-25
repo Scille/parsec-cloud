@@ -31,9 +31,6 @@ from parsec._parsec import (
 )
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import (
-    InvitationType as PyInvitationType,
-)  # TODO: Remove legacy invitation type
 import pytest
 import trio
 from parsec._parsec import DateTime
@@ -73,7 +70,7 @@ async def invited_ws(backend_asgi_app, backend_invited_ws_factory, alice, invita
     async with backend_invited_ws_factory(
         backend_asgi_app,
         organization_id=alice.organization_id,
-        invitation_type=PyInvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ) as invited_ws:
         yield invited_ws

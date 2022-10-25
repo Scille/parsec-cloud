@@ -29,7 +29,7 @@ from parsec.api.protocol.types import (
 from parsec.api.protocol.invite import (
     InvitationToken,
     InvitationTokenField,
-    InvitationType as PyInvitationType,
+    InvitationType,
     InvitationTypeField,
 )
 from parsec.api.version import (
@@ -505,7 +505,7 @@ class InvitedClientHandshake(BaseClientHandshake):
     def __init__(
         self,
         organization_id: OrganizationID,
-        invitation_type: PyInvitationType,
+        invitation_type: InvitationType,
         token: InvitationToken,
     ):
         super().__init__()
