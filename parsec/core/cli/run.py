@@ -5,7 +5,6 @@ import trio
 import click
 import multiprocessing
 from pathlib import Path
-from parsec._parsec import DateTime
 from typing import Optional
 
 from parsec.utils import trio_run
@@ -61,9 +60,7 @@ else:
                 click.echo("bye ;-)")
 
 
-async def _run_mountpoint(
-    config: CoreConfig, device: LocalDevice, timestamp: Optional[DateTime] = None
-) -> None:
+async def _run_mountpoint(config: CoreConfig, device: LocalDevice) -> None:
     config = config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(config, device):
         display_device = click.style(device.device_id, fg="yellow")
@@ -75,14 +72,12 @@ async def _run_mountpoint(
 
 @click.command(short_help="run parsec mountpoint")
 @click.option("--mountpoint", "-m", type=click.Path(exists=False))
-@click.option("--timestamp", "-t", type=DateTime.from_rfc3339)
 @core_config_and_device_options
 @cli_command_base_options
 def run_mountpoint(
     config: CoreConfig,
     device: LocalDevice,
     mountpoint: Path,
-    timestamp: Optional[DateTime],
     **kwargs,
 ) -> None:
     """
@@ -93,6 +88,6 @@ def run_mountpoint(
         config = config.evolve(mountpoint_base_dir=Path(mountpoint))
     with cli_exception_handler(config.debug):
         try:
-            trio_run(_run_mountpoint, config, device, timestamp)
+            trio_run(_run_mountpoint, config, device)
         except KeyboardInterrupt:
             click.echo("bye ;-)")
