@@ -2,30 +2,24 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{
-    gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES,
+use sodiumoxide::crypto::secretbox::{
+    gen_nonce, open, seal,
+    xsalsa20poly1305::{gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES},
+    Nonce,
 };
-use sodiumoxide::crypto::secretbox::{gen_nonce, open, seal, Nonce};
 
-use crate::CryptoError;
+use crate::{prelude::*, CryptoError};
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
 pub struct SecretKey(Key);
 
-crate::macros::impl_key_debug!(SecretKey);
-
-super::utils::impl_try_from!(SecretKey, Key);
-
-impl SecretKey {
-    pub const ALGORITHM: &'static str = "xsalsa20poly1305";
-    pub const SIZE: usize = KEYBYTES;
-
-    pub fn generate() -> Self {
+impl SecretKeyTrait for SecretKey {
+    fn generate() -> Self {
         Self(gen_key())
     }
 
-    pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
+    fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         // Returned format: NONCE | MAC | CIPHERTEXT
         let mut ciphered = Vec::with_capacity(NONCEBYTES + MACBYTES + data.len());
         let nonce = gen_nonce();
@@ -34,7 +28,7 @@ impl SecretKey {
         ciphered
     }
 
-    pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
+    fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
         let nonce_slice = ciphered.get(..NONCEBYTES).ok_or(CryptoError::Nonce)?;
         let nonce = Nonce::from_slice(nonce_slice).ok_or(CryptoError::DataSize)?;
         let plaintext =
@@ -42,7 +36,7 @@ impl SecretKey {
         Ok(plaintext)
     }
 
-    pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
+    fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
         // Sodiumoxide doesn't expose those methods, so we have to access
         // the libsodium C API directly
         unsafe {
@@ -72,10 +66,27 @@ impl SecretKey {
     }
 }
 
+crate::macros::impl_key_debug!(SecretKey);
+
 impl AsRef<[u8]> for SecretKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
+    }
+}
+
+impl TryFrom<&[u8]> for SecretKey {
+    type Error = CryptoError;
+
+    fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
+        let arr: [u8; Self::SIZE] = v.try_into().map_err(|_| CryptoError::DataSize)?;
+        Ok(Self(Key(arr)))
+    }
+}
+
+impl From<[u8; KEYBYTES]> for SecretKey {
+    fn from(key: [u8; KEYBYTES]) -> Self {
+        Self(Key(key))
     }
 }
 

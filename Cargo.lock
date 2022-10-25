@@ -247,6 +247,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "base32"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23ce669cd6c8588f79e15cf450314f9638f967fc5770ff1c7c1deb0925ea7cfa"
+
+[[package]]
 name = "base64"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1409,6 +1415,7 @@ dependencies = [
 name = "libparsec_crypto"
 version = "0.0.0"
 dependencies = [
+ "base32",
  "blake2",
  "crypto_box",
  "digest 0.10.5",
@@ -1423,6 +1430,7 @@ dependencies = [
  "rand 0.7.3",
  "rand 0.8.5",
  "rmp-serde",
+ "rstest",
  "serde",
  "serde_bytes",
  "serde_test",

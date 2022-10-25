@@ -3,7 +3,7 @@
 use pyo3::{exceptions::PyValueError, pyclass, pymethods, types::PyType, PyResult};
 
 #[pyclass]
-pub(crate) struct Regex(pub libparsec::types::regex::Regex);
+pub(crate) struct Regex(pub libparsec::types::Regex);
 
 crate::binding_utils::gen_proto!(Regex, __richcmp__, eq);
 crate::binding_utils::gen_proto!(Regex, __str__);
@@ -12,7 +12,7 @@ crate::binding_utils::gen_proto!(Regex, __str__);
 impl Regex {
     #[classmethod]
     fn from_pattern(_cls: &PyType, pattern: &str) -> PyResult<Self> {
-        libparsec::types::regex::Regex::from_pattern(pattern)
+        libparsec::types::Regex::from_pattern(pattern)
             .map(Regex)
             .map_err(|err| {
                 PyValueError::new_err(format!(
@@ -24,7 +24,7 @@ impl Regex {
 
     #[classmethod]
     fn from_regex_str(_cls: &PyType, regex_str: &str) -> PyResult<Self> {
-        libparsec::types::regex::Regex::from_regex_str(regex_str)
+        libparsec::types::Regex::from_regex_str(regex_str)
             .map(Regex)
             .map_err(|err| {
                 PyValueError::new_err(format!(
@@ -79,7 +79,7 @@ mod test {
                 continue;
             }
 
-            let sub_regex_str = libparsec::types::regex::Regex::from_pattern(line)
+            let sub_regex_str = libparsec::types::Regex::from_pattern(line)
                 .unwrap()
                 .to_string();
 

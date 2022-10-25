@@ -4,10 +4,12 @@ use blake2::Blake2bMac;
 use digest::{consts::U5, Mac};
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use xsalsa20poly1305::aead::{Aead, NewAead};
-use xsalsa20poly1305::{generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
+use xsalsa20poly1305::{
+    aead::{Aead, NewAead},
+    generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE,
+};
 
-use crate::CryptoError;
+use crate::{prelude::*, CryptoError};
 
 type Blake2bMac40 = Blake2bMac<U5>;
 
@@ -15,17 +17,12 @@ type Blake2bMac40 = Blake2bMac<U5>;
 #[serde(try_from = "&Bytes")]
 pub struct SecretKey(Key);
 
-crate::macros::impl_key_debug!(SecretKey);
-
-impl SecretKey {
-    pub const ALGORITHM: &'static str = "xsalsa20poly1305";
-    pub const SIZE: usize = KEY_SIZE;
-
-    pub fn generate() -> Self {
+impl SecretKeyTrait for SecretKey {
+    fn generate() -> Self {
         Self(XSalsa20Poly1305::generate_key(rand_08::thread_rng()))
     }
 
-    pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
+    fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         // Returned format: NONCE | MAC | CIPHERTEXT
         // TODO: zero copy with preallocated buffer
         // let mut ciphered = Vec::with_capacity(NONCE_SIZE + TAG_SIZE + data.len());
@@ -39,7 +36,7 @@ impl SecretKey {
         res
     }
 
-    pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
+    fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
         let cipher = XSalsa20Poly1305::new(&self.0);
         let nonce_slice = ciphered.get(..NONCE_SIZE).ok_or(CryptoError::Nonce)?;
         cipher
@@ -47,7 +44,7 @@ impl SecretKey {
             .map_err(|_| CryptoError::Decryption)
     }
 
-    pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
+    fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
         // TODO only work for 5 bytes -> need to improve
         if digest_size != 5 {
             panic!("Not implemeted for this digest size");
@@ -61,6 +58,8 @@ impl SecretKey {
         res.into_bytes().to_vec()
     }
 }
+
+crate::macros::impl_key_debug!(SecretKey);
 
 impl AsRef<[u8]> for SecretKey {
     fn as_ref(&self) -> &[u8] {
@@ -77,8 +76,8 @@ impl TryFrom<&[u8]> for SecretKey {
     }
 }
 
-impl From<[u8; Self::SIZE]> for SecretKey {
-    fn from(key: [u8; Self::SIZE]) -> Self {
+impl From<[u8; KEY_SIZE]> for SecretKey {
+    fn from(key: [u8; KEY_SIZE]) -> Self {
         Self(key.into())
     }
 }

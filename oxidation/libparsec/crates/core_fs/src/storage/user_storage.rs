@@ -97,7 +97,7 @@ impl UserStorage {
 mod tests {
     use std::sync::Mutex;
 
-    use libparsec_crypto::SecretKey;
+    use libparsec_crypto::{prelude::*, SecretKey};
     use libparsec_types::{DateTime, UserManifest};
 
     use rstest::rstest;

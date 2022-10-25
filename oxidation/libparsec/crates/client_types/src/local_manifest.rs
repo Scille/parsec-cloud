@@ -1,14 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_types::regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use std::cmp::Ordering;
-use std::collections::hash_map::RandomState;
-use std::collections::{HashMap, HashSet};
-use std::num::NonZeroU64;
+use std::{
+    cmp::Ordering,
+    collections::{hash_map::RandomState, HashMap, HashSet},
+    num::NonZeroU64,
+};
 
-use libparsec_crypto::{HashDigest, SecretKey};
+use libparsec_crypto::{prelude::*, HashDigest, SecretKey};
 use libparsec_types::*;
 use serialization_format::parsec_data;
 
