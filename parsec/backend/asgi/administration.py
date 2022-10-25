@@ -82,14 +82,29 @@ def administration_authenticated(fn: Callable[P, Awaitable[T]]) -> Callable[P, A
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         authorization = request.headers.get("Authorization")
         if authorization != f"Bearer {g.backend.config.administration_token}":
-            await json_abort({"error": "not_allowed"}, 403)
+            await not_allowed_abort()
         return await fn(*args, **kwargs)
 
     return wrapper
 
 
-async def json_abort(data: dict[str, Any], status: int) -> NoReturn:
-    response = await make_response(jsonify(data), status)
+async def not_allowed_abort() -> NoReturn:
+    response = await make_response(jsonify({"error": "not_allowed"}), 403)
+    abort(response)
+
+
+async def not_found_abort() -> NoReturn:
+    response = await make_response(jsonify({"error": "not_found"}), 404)
+    abort(response)
+
+
+async def bad_data_abort(reason: str) -> NoReturn:
+    response = await make_response(jsonify({"error": "bad_data", "reason": reason}), 400)
+    abort(response)
+
+
+async def already_exists_abort() -> NoReturn:
+    response = await make_response(jsonify({"error": "already_exists"}), 400)
     abort(response)
 
 
@@ -98,9 +113,9 @@ async def load_req_data(req_serializer: JSONSerializer) -> dict[str, Any]:
     try:
         return req_serializer.loads(raw)  # type: ignore[arg-type]
     except SerdeValidationError as exc:
-        await json_abort({"error": "bad_data", "reason": exc.errors}, 400)
+        await bad_data_abort(reason=str(exc.errors))
     except SerdePackingError:
-        await json_abort({"error": "bad_data", "reason": "Invalid JSON"}, 400)
+        await bad_data_abort(reason="Invalid JSON")
 
 
 def make_rep_response(
@@ -124,7 +139,7 @@ async def administration_create_organizations() -> Response:  # type: ignore[mis
             id=organization_id, bootstrap_token=bootstrap_token, created_on=DateTime.now(), **data
         )
     except OrganizationAlreadyExistsError:
-        await json_abort({"error": "already_exists"}, 400)
+        await already_exists_abort()
 
     return make_rep_response(
         organization_create_rep_serializer, data={"bootstrap_token": bootstrap_token}, status=200
@@ -140,12 +155,12 @@ async def administration_organization_item(raw_organization_id: str) -> Response
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
-        await json_abort({"error": "not_found"}, 404)
+        await not_found_abort()
     # Check whether the organization actually exists
     try:
         organization = await backend.organization.get(id=organization_id)
     except OrganizationNotFoundError:
-        await json_abort({"error": "not_found"}, 404)
+        await not_found_abort()
 
     if request.method == "GET":
 
@@ -168,7 +183,7 @@ async def administration_organization_item(raw_organization_id: str) -> Response
         try:
             await backend.organization.update(id=organization_id, **data)
         except OrganizationNotFoundError:
-            await json_abort({"error": "not_found"}, 404)
+            await not_found_abort()
 
         return make_rep_response(organization_config_rep_serializer, data={}, status=200)
 
@@ -182,17 +197,16 @@ async def administration_organization_stat(raw_organization_id: str) -> Response
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
-        await json_abort({"error": "not_found"}, 404)
+        await not_found_abort()
 
     try:
         stats = await backend.organization.stats(id=organization_id)
     except OrganizationNotFoundError:
-        await json_abort({"error": "not_found"}, 404)
+        await not_found_abort()
 
     return make_rep_response(
         organization_stats_rep_serializer,
         data={
-            "status": "ok",
             "realms": stats.realms,
             "data_size": stats.data_size,
             "metadata_size": stats.metadata_size,
@@ -206,16 +220,12 @@ async def administration_organization_stat(raw_organization_id: str) -> Response
 
 @administration_bp.route("/administration/stats", methods=["GET"])
 @administration_authenticated
-async def administration_server_stats():
+async def administration_server_stats() -> Response:  # type: ignore[misc]
     backend: "BackendApp" = g.backend
 
     if request.args.get("format") not in ("csv", "json"):
-        return await json_abort(
-            {
-                "error": "bad_data",
-                "reason": f"Missing/invalid mandatory query argument `format` (expected `csv` or `json`)",
-            },
-            400,
+        return await bad_data_abort(
+            reason=f"Missing/invalid mandatory query argument `format` (expected `csv` or `json`)",
         )
 
     try:
@@ -223,12 +233,8 @@ async def administration_server_stats():
         at = DateTime.from_rfc3339(raw_at) if raw_at else None
         server_stats = await backend.organization.server_stats(at=at)
     except ValueError:
-        return await json_abort(
-            {
-                "error": "bad_data",
-                "reason": "Invalid `at` query argument (expected RFC3339 datetime)",
-            },
-            400,
+        return await bad_data_abort(
+            reason="Invalid `at` query argument (expected RFC3339 datetime)",
         )
 
     if request.args["format"] == "csv":
