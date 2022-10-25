@@ -1,1 +1,1 @@
-Remove noop `--timestamp`` param from `parsec core run` CLI command
+Remove noop `--timestamp` param from `parsec core run` CLI command
