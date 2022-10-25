@@ -79,7 +79,7 @@ impl TryFrom<&[u8]> for SecretKey {
     type Error = CryptoError;
 
     fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
-        let arr: [u8; Self::SIZE] = v.try_into().map_err(|_| CryptoError::DataSize)?;
+        let arr: [u8; KEYBYTES] = v.try_into().map_err(|_| CryptoError::DataSize)?;
         Ok(Self(Key(arr)))
     }
 }

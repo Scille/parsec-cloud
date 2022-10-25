@@ -70,7 +70,7 @@ impl AsRef<[u8]> for SecretKey {
 impl TryFrom<&[u8]> for SecretKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        <[u8; Self::SIZE]>::try_from(data)
+        <[u8; KEY_SIZE]>::try_from(data)
             .map(Self::from)
             .map_err(|_| CryptoError::DataSize)
     }
