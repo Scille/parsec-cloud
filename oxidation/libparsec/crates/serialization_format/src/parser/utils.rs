@@ -39,6 +39,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "String" => "String",
                 "Bytes" => "Vec<u8>",
                 "Option" => "Option",
+                "MaybeOption" => "Option",
                 "List" => "Vec",
                 "Map" => "::std::collections::HashMap",
                 "Set" => "::std::collections::HashSet",
@@ -168,9 +169,13 @@ pub(crate) fn extract_serde_as(ty: &Type) -> String {
     }
 }
 
-pub(crate) fn quote_serde_as(ty: &Type) -> TokenStream {
+pub(crate) fn quote_serde_as(ty: &Type, no_default: bool) -> TokenStream {
     let serde_as = extract_serde_as(ty)
         .replace("Vec<u8>", "::serde_with::Bytes")
         .replace("u8", "_");
-    quote! { #[serde_as(as = #serde_as)] }
+    if no_default {
+        quote! { #[serde_as(as = #serde_as, no_default)] }
+    } else {
+        quote! { #[serde_as(as = #serde_as)] }
+    }
 }

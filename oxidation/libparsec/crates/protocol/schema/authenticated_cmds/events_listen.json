@@ -20,7 +20,7 @@
             "other_fields": [
                 {
                     "name": "reason",
-                    "type": "Option<String>"
+                    "type": "MaybeOption<String>"
                 }
             ]
         },

@@ -35,7 +35,7 @@
             "other_fields": [
                 {
                     "name": "reason",
-                    "type": "Option<String>"
+                    "type": "MaybeOption<String>"
                 }
             ]
         },
@@ -48,7 +48,7 @@
             "other_fields": [
                 {
                     "name": "reason",
-                    "type": "Option<String>"
+                    "type": "MaybeOption<String>"
                 }
             ]
         },
@@ -57,7 +57,7 @@
             "other_fields": [
                 {
                     "name": "reason",
-                    "type": "Option<String>"
+                    "type": "MaybeOption<String>"
                 }
             ]
         },
@@ -70,7 +70,7 @@
             "other_fields": [
                 {
                     "name": "reason",
-                    "type": "Option<String>"
+                    "type": "MaybeOption<String>"
                 },
                 {
                     "name": "ballpark_client_early_offset",

@@ -30,7 +30,7 @@ impl Field {
 
         let (ty, serde_skip) = self.quote_type(types);
         let rename = SerdeAttr::Rename.quote(rename.map(|_| &self.name));
-        let serde_as = quote_serde_as(&ty);
+        let serde_as = quote_serde_as(&ty, !self.is_maybe_option());
         let serde_default = if let Some(default) = &self.default {
             quote! { #[serde(default = #default)] }
         } else {
@@ -80,6 +80,11 @@ impl Field {
         };
         let ty = syn::parse_str::<Type>(&inspected_ty).expect("Expected a valid type (Field)");
         (ty, serde_skip)
+    }
+
+    /// True when the type of the field is the wrapper `MaybeOption<ty>`.
+    fn is_maybe_option(&self) -> bool {
+        self.ty.starts_with("MaybeOption")
     }
 }
 
