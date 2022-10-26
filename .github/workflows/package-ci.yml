@@ -18,7 +18,7 @@ on:
 env:
   rust-version: 1.63.0
   python-version: 3.9
-  poetry-version: 1.2.0
+  poetry-version: 1.2.2
 
 jobs:
   package-wheel:

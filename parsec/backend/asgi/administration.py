@@ -7,7 +7,7 @@ import csv
 from io import StringIO
 from functools import wraps
 from parsec.serde.serializer import JSONSerializer
-from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response, g
+from quart import current_app, Response, Blueprint, request, jsonify, make_response, g
 
 from parsec._parsec import DateTime
 from parsec.serde import SerdeValidationError, SerdePackingError
@@ -32,6 +32,9 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 P = ParamSpec("P")
+
+CONTENT_TYPE_JSON = "application/json"
+
 
 administration_bp = Blueprint("administration_api", __name__)
 
@@ -90,22 +93,22 @@ def administration_authenticated(fn: Callable[P, Awaitable[T]]) -> Callable[P, A
 
 async def not_allowed_abort() -> NoReturn:
     response = await make_response(jsonify({"error": "not_allowed"}), 403)
-    abort(response)
+    current_app.aborter(response)
 
 
 async def not_found_abort() -> NoReturn:
     response = await make_response(jsonify({"error": "not_found"}), 404)
-    abort(response)
+    current_app.aborter(response)
 
 
 async def bad_data_abort(reason: str) -> NoReturn:
     response = await make_response(jsonify({"error": "bad_data", "reason": reason}), 400)
-    abort(response)
+    current_app.aborter(response)
 
 
 async def already_exists_abort() -> NoReturn:
     response = await make_response(jsonify({"error": "already_exists"}), 400)
-    abort(response)
+    current_app.aborter(response)
 
 
 async def load_req_data(req_serializer: JSONSerializer) -> dict[str, Any]:
@@ -122,13 +125,13 @@ def make_rep_response(
     rep_serializer: JSONSerializer, data: dict[str, Any], **kwargs: Any
 ) -> Response:
     return current_app.response_class(
-        rep_serializer.dumps(data), content_type=current_app.config["JSONIFY_MIMETYPE"], **kwargs
+        rep_serializer.dumps(data), content_type=CONTENT_TYPE_JSON, **kwargs
     )
 
 
 @administration_bp.route("/administration/organizations", methods=["POST"])
 @administration_authenticated
-async def administration_create_organizations() -> Response:  # type: ignore[misc]
+async def administration_create_organizations() -> Response:
     backend: "BackendApp" = current_app.backend  # type: ignore[attr-defined]
     data = await load_req_data(organization_create_req_serializer)
 
@@ -150,7 +153,7 @@ async def administration_create_organizations() -> Response:  # type: ignore[mis
     "/administration/organizations/<raw_organization_id>", methods=["GET", "PATCH"]
 )
 @administration_authenticated
-async def administration_organization_item(raw_organization_id: str) -> Response:  # type: ignore[misc]
+async def administration_organization_item(raw_organization_id: str) -> Response:
     backend: "BackendApp" = g.backend
     try:
         organization_id = OrganizationID(raw_organization_id)
@@ -192,7 +195,7 @@ async def administration_organization_item(raw_organization_id: str) -> Response
     "/administration/organizations/<raw_organization_id>/stats", methods=["GET"]
 )
 @administration_authenticated
-async def administration_organization_stat(raw_organization_id: str) -> Response:  # type: ignore[misc]
+async def administration_organization_stat(raw_organization_id: str) -> Response:
     backend: "BackendApp" = g.backend
     try:
         organization_id = OrganizationID(raw_organization_id)
@@ -220,7 +223,7 @@ async def administration_organization_stat(raw_organization_id: str) -> Response
 
 @administration_bp.route("/administration/stats", methods=["GET"])
 @administration_authenticated
-async def administration_server_stats() -> Response:  # type: ignore[misc]
+async def administration_server_stats() -> Response:
     backend: "BackendApp" = g.backend
 
     if request.args.get("format") not in ("csv", "json"):

@@ -40,7 +40,7 @@ ws_bp = Blueprint("ws_api", __name__)
 
 
 @ws_bp.websocket("/ws")
-async def handle_ws() -> None:  # type: ignore[misc]
+async def handle_ws() -> None:
     backend: BackendApp = g.backend
     selected_logger = logger
 

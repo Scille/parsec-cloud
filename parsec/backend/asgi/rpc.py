@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from base64 import b64decode
 from typing import NoReturn, Tuple, Optional
-from quart import Response, Blueprint, abort, request, g
+from quart import Response, Blueprint, request, g, current_app
 from nacl.exceptions import CryptoError
 
 from parsec._parsec import DateTime
@@ -69,7 +69,9 @@ def _rpc_msgpack_rep(data: dict[str, object], api_version: ApiVersion) -> Respon
 
 
 def _handshake_abort(status_code: int, api_version: ApiVersion) -> NoReturn:
-    abort(Response(response="", status=status_code, headers={"Api-Version": str(api_version)}))
+    current_app.aborter(
+        Response(response="", status=status_code, headers={"Api-Version": str(api_version)})
+    )
 
 
 async def _do_handshake(
@@ -98,7 +100,7 @@ async def _do_handshake(
         supported_api_versions = ";".join(
             str(api_version) for api_version in SUPPORTED_API_VERSIONS
         )
-        abort(
+        current_app.aborter(
             Response(
                 response="", status=422, headers={"Supported-Api-Versions": supported_api_versions}
             )
@@ -122,7 +124,7 @@ async def _do_handshake(
             organization = None
     else:
         if organization.is_expired:
-            abort(_rpc_msgpack_rep({"status": "expired_organization"}, api_version))
+            current_app.aborter(_rpc_msgpack_rep({"status": "expired_organization"}, api_version))
 
     # 3) Check Content-Type
     if request.headers.get("Content-Type") != CONTENT_TYPE_MSGPACK:
@@ -161,7 +163,7 @@ async def _do_handshake(
             _handshake_abort(401, api_version=api_version)
         else:
             if user.revoked_on:
-                abort(_rpc_msgpack_rep({"status": "revoked_user"}, api_version))
+                current_app.aborter(_rpc_msgpack_rep({"status": "revoked_user"}, api_version))
 
         try:
             device.verify_key.verify_with_signature(
@@ -175,7 +177,7 @@ async def _do_handshake(
 
 
 @rpc_bp.route("/anonymous/<raw_organization_id>", methods=["GET", "POST"])
-async def anonymous_api(raw_organization_id: str) -> Response:  # type: ignore[misc]
+async def anonymous_api(raw_organization_id: str) -> Response:
     backend: BackendApp = g.backend
 
     allow_missing_organization = (
@@ -226,7 +228,7 @@ async def anonymous_api(raw_organization_id: str) -> Response:  # type: ignore[m
 
 
 @rpc_bp.route("/authenticated/<raw_organization_id>", methods=["POST"])
-async def authenticated_api(raw_organization_id: str) -> Response:  # type: ignore[misc]
+async def authenticated_api(raw_organization_id: str) -> Response:
     backend: BackendApp = g.backend
 
     api_version, organization_id, _, user, device = await _do_handshake(
