@@ -121,7 +121,7 @@ async def failsafe_organization_bootstrap(
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
     sequester_authority_certificate: Optional[bytes] = None,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     # Try the new anonymous API
     try:
         rep = await cmd_organization_bootstrap(

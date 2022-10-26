@@ -6,7 +6,7 @@ from uuid import UUID
 from pathlib import Path
 from hashlib import sha1
 from parsec._parsec import DateTime
-from typing import Iterable, List, Union, Optional
+from typing import Iterable, List, Union, Optional, cast
 
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
@@ -66,13 +66,15 @@ async def accepter_list_submitted_from_backend(
         PkiEnrollementAccepterInvalidSubmittedCtx | PkiEnrollementAccepterValidSubmittedCtx
     ] = []
 
-    for enrollment in rep["enrollments"]:
+    for enrollment in cast(list[dict[str, object]], rep["enrollments"]):
 
-        enrollment_id: UUID = enrollment["enrollment_id"]
-        submitted_on: DateTime = enrollment["submitted_on"]
-        submitter_der_x509_certificate: bytes = enrollment["submitter_der_x509_certificate"]
-        submit_payload_signature: bytes = enrollment["submit_payload_signature"]
-        raw_submit_payload: bytes = enrollment["submit_payload"]
+        enrollment_id: UUID = cast(UUID, enrollment["enrollment_id"])
+        submitted_on: DateTime = cast(DateTime, enrollment["submitted_on"])
+        submitter_der_x509_certificate: bytes = cast(
+            bytes, enrollment["submitter_der_x509_certificate"]
+        )
+        submit_payload_signature: bytes = cast(bytes, enrollment["submit_payload_signature"])
+        raw_submit_payload: bytes = cast(bytes, enrollment["submit_payload"])
 
         # Load the submitter certificate
         try:
