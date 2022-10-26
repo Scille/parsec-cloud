@@ -37,8 +37,8 @@ class QtToTrioJob:
         fn: Callable,
         args: List[Any],
         kwargs: Dict[str, Any],
-        on_success: JobResultSignal,
-        on_error: JobResultSignal,
+        on_success: JobResultSignal | None,
+        on_error: JobResultSignal | None,
     ):
         # `pyqtBoundSignal` (i.e. `pyqtSignal` connected to a QObject instance) doesn't
         # hold a strong reference on the QObject. Hence if the latter gets freed, calling
@@ -212,7 +212,12 @@ class QtToTrioJobScheduler:
         return job
 
     def submit_job(
-        self, on_success: JobResultSignal, on_error: JobResultSignal, fn: Callable, *args, **kwargs
+        self,
+        on_success: JobResultSignal | None,
+        on_error: JobResultSignal | None,
+        fn: Callable,
+        *args,
+        **kwargs,
     ):
         job = QtToTrioJob(fn, args, kwargs, on_success, on_error)
         if self.nursery._closed:
