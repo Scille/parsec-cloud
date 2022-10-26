@@ -11,7 +11,7 @@ from parsec.core.backend_connection.exceptions import BackendNotAvailable
 if TYPE_CHECKING:
     from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
     from parsec.core.backend_connection.invited import BackendInvitedCmds
-    from parsec.core.backend_connection.apiv1_annonymous import APIV1_BackendAnonymousCmds
+    from parsec.core.backend_connection.apiv1_anonymous import APIV1_BackendAnonymousCmds
 
     T_BACKEND = Union[BackendInvitedCmds, BackendAuthenticatedCmds, APIV1_BackendAnonymousCmds]
 
