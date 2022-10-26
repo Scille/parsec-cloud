@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING, TypeVar, Callable, Awaitable, Union
 from typing_extensions import Concatenate, ParamSpec
 
 from parsec.api.transport import Transport
+from parsec.core.backend_connection.apiv1_annonymous import APIV1_BackendAnonymousCmds
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
+from parsec.core.backend_connection.invited import BackendInvitedCmds
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
@@ -18,6 +20,8 @@ if TYPE_CHECKING:
 P = ParamSpec("P")
 R = TypeVar("R")
 
+BackendCmdsType = Union[BackendAuthenticatedCmds, BackendInvitedCmds, APIV1_BackendAnonymousCmds]
+
 
 def expose_cmds(
     cmd: Callable[Concatenate[Transport, P], Awaitable[R]]
@@ -27,7 +31,6 @@ def expose_cmds(
         async with self.acquire_transport() as transport:
             return await cmd(transport, *args, **kwargs)
 
-    # because of wraps mypy does not infer a proper type
     return wrapper
 
 
