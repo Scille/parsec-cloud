@@ -262,6 +262,11 @@ def no_logs_gte_error(caplog):
         ):
             return False
 
+        if record.exc_text.endswith(
+            "wsproto.utilities.LocalProtocolError: Event CloseConnection(code=1000, reason=None) cannot be sent in state ConnectionState.CLOSED."
+        ):
+            return False
+
         return True
 
     # The test should use `caplog.assert_occured_once` to indicate a log was expected,
