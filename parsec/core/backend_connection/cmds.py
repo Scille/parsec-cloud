@@ -104,7 +104,7 @@ from parsec._parsec import (
     HashDigest,
 )
 from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
-from parsec.crypto import HashDigest, VerifyKey, PublicKey
+from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
     OrganizationID,
