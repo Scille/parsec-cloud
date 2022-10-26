@@ -243,6 +243,10 @@ impl PrivateKey {
     fn encode(&self) -> &[u8] {
         self.0.as_ref()
     }
+
+    fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
+        SecretKey(self.0.generate_shared_secret_key(&peer_public_key.0))
+    }
 }
 
 #[pyclass]
