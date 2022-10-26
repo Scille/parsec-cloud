@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-import urllib
+import urllib.error
 from parsec.backend.client_context import AuthenticatedClientContext
 from structlog import get_logger
 from typing import List, Tuple, Dict, Optional

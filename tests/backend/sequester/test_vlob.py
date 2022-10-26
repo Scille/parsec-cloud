@@ -5,7 +5,7 @@ import json
 import pytest
 from unittest.mock import patch, Mock
 
-import urllib
+import urllib.error
 from urllib.parse import urlsplit, parse_qs
 from parsec._parsec import (
     VlobCreateRepOk,
@@ -316,7 +316,8 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
 
         # Test httperror
         def raise_httperror(*args, **kwargs):
-            raise urllib.error.HTTPError(url, 405, "METHOD NOT ALLOWED", None, None)
+            fp = Mock()
+            raise urllib.error.HTTPError(url, 405, "METHOD NOT ALLOWED", None, fp)
 
         mock.urlopen.side_effect = raise_httperror
         rep = await vlob_create(

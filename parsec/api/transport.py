@@ -140,7 +140,7 @@ class Transport:
             # https://github.com/python-hyper/wsproto/issues/174
             ws.initiate_upgrade_connection(
                 headers=upgrade_request.headers,  # type: ignore[arg-type]
-                path=upgrade_request.target,  # type: ignore[arg-type]
+                path=upgrade_request.target,
             )
         transport = cls(stream, ws)
 
