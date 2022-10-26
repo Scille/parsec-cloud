@@ -5,9 +5,8 @@ import trio
 from contextlib import (
     asynccontextmanager,
 )
-from typing import AsyncIterator, Optional, AsyncGenerator, TypeVar
+from typing import TYPE_CHECKING, AsyncIterator, Optional, AsyncGenerator, TypeVar
 from parsec.api.transport import Transport
-from parsec.core.backend_connection.authenticated import AcquireTransport
 
 from parsec.core.types import BackendAddrType, BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import cmds
@@ -15,6 +14,9 @@ from parsec.core.backend_connection.transport import apiv1_connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.expose_cmds import expose_cmds
 from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection.authenticated import AcquireTransport
 
 T = TypeVar("T")
 

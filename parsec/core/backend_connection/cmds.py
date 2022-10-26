@@ -104,7 +104,7 @@ from parsec._parsec import (
     HashDigest,
 )
 from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
-from parsec.crypto import VerifyKey, PublicKey
+from parsec.crypto import HashDigest, VerifyKey, PublicKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
     OrganizationID,
@@ -172,7 +172,7 @@ from parsec.core.backend_connection.exceptions import (
 
 
 COMMAND_RETURN_TYPE = Union[
-    dict[str, Any],
+    dict[str, object],
     AuthenticatedPingRep,
     BlockCreateRep,
     BlockReadRep,
@@ -223,7 +223,7 @@ COMMAND_RETURN_TYPE = Union[
 
 
 async def _send_cmd(
-    transport: Transport, serializer: ApiCommandSerializer | CmdSerializer, **req: Any
+    transport: Transport, serializer: ApiCommandSerializer | CmdSerializer, **req: object
 ) -> COMMAND_RETURN_TYPE:
     """
     Raises:
@@ -1029,9 +1029,9 @@ async def organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     return cast(
-        dict[str, Any],
+        dict[str, object],
         await _send_cmd(
             transport,
             apiv1_organization_bootstrap_serializer,
@@ -1050,16 +1050,16 @@ async def organization_bootstrap(
 ### PKI enrollment API ###
 
 
-async def pki_enrollment_list(transport: Transport) -> dict[str, Any]:
+async def pki_enrollment_list(transport: Transport) -> dict[str, object]:
     return cast(
-        dict[str, Any],
+        dict[str, object],
         await _send_cmd(transport, pki_enrollment_list_serializer, cmd="pki_enrollment_list"),
     )
 
 
-async def pki_enrollment_reject(transport: Transport, enrollment_id: UUID) -> dict[str, Any]:
+async def pki_enrollment_reject(transport: Transport, enrollment_id: UUID) -> dict[str, object]:
     return cast(
-        dict[str, Any],
+        dict[str, object],
         await _send_cmd(
             transport,
             pki_enrollment_reject_serializer,
@@ -1079,9 +1079,9 @@ async def pki_enrollment_accept(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     return cast(
-        dict[str, Any],
+        dict[str, object],
         await _send_cmd(
             transport,
             pki_enrollment_accept_serializer,
