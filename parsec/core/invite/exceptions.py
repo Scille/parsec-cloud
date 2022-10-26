@@ -7,20 +7,20 @@ class InviteError(Exception):
 
 
 class InvitePeerResetError(InviteError):
-    def __init__(self, msg="Claim operation reset by peer"):
+    def __init__(self, msg: str = "Claim operation reset by peer") -> None:
         super().__init__(msg)
 
 
 class InviteNotFoundError(InviteError):
-    def __init__(self, msg="Invitation not found"):
+    def __init__(self, msg: str = "Invitation not found") -> None:
         super().__init__(msg)
 
 
 class InviteAlreadyUsedError(InviteError):
-    def __init__(self, msg="Invitation already used"):
+    def __init__(self, msg: str = "Invitation already used") -> None:
         super().__init__(msg)
 
 
 class InviteActiveUsersLimitReachedError(InviteError):
-    def __init__(self, msg="Active users limit reached"):
+    def __init__(self, msg: str = "Active users limit reached") -> None:
         super().__init__(msg)

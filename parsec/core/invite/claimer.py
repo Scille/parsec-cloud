@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Union, Optional, List, Tuple
+from typing import Any, Type, TypeVar, Union, Optional, List, Tuple
 
 from parsec.crypto import (
     generate_shared_secret_key,
@@ -34,6 +34,8 @@ from parsec.core.invite.exceptions import (
 )
 
 from parsec._parsec import (
+    BackendActionAddr,
+    BackendAddr,
     InvitationType,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,
@@ -133,7 +135,8 @@ INVALID_STATE_TYPES = (
 
 ACTIVE_USERS_LIMIT_REACHED_TYPES = (UserCreateRepActiveUsersLimitReached,)
 
-OK_TYPES = (
+T_OK_TYPES = TypeVar(
+    "T_OK_TYPES",
     DeviceCreateRepOk,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
@@ -155,34 +158,35 @@ OK_TYPES = (
 )
 
 
-def _check_rep(rep, step_name):
+def _check_rep(rep: Any, step_name: str, ok_type: Type[T_OK_TYPES]) -> T_OK_TYPES:
     if isinstance(rep, NOT_FOUND_TYPES):
         raise InviteNotFoundError
     elif isinstance(rep, ALREADY_DELETED_TYPES):
         raise InviteAlreadyUsedError
     elif isinstance(rep, INVALID_STATE_TYPES):
         raise InvitePeerResetError
-    elif not isinstance(rep, OK_TYPES):
+    elif not isinstance(rep, ok_type):
         raise InviteError(f"Backend error during {step_name}: {rep}")
+    return rep
 
 
 async def claimer_retrieve_info(
     cmds: BackendInvitedCmds,
 ) -> Union["UserClaimInitialCtx", "DeviceClaimInitialCtx"]:
     rep = await cmds.invite_info()
-    _check_rep(rep, step_name="invitation retrieval")
+    rep_ok = _check_rep(rep, step_name="invitation retrieval", ok_type=InviteInfoRepOk)
 
-    if rep.type == InvitationType.USER:
+    if rep_ok.type == InvitationType.USER:
         return UserClaimInitialCtx(
-            claimer_email=rep.claimer_email,
-            greeter_user_id=rep.greeter_user_id,
-            greeter_human_handle=rep.greeter_human_handle,
+            claimer_email=rep_ok.claimer_email,
+            greeter_user_id=rep_ok.greeter_user_id,
+            greeter_human_handle=rep_ok.greeter_human_handle,
             cmds=cmds,
         )
     else:
         return DeviceClaimInitialCtx(
-            greeter_user_id=rep.greeter_user_id,
-            greeter_human_handle=rep.greeter_human_handle,
+            greeter_user_id=rep_ok.greeter_user_id,
+            greeter_human_handle=rep_ok.greeter_human_handle,
             cmds=cmds,
         )
 
@@ -199,26 +203,26 @@ class BaseClaimInitialCtx:
         rep = await self._cmds.invite_1_claimer_wait_peer(
             claimer_public_key=claimer_private_key.public_key
         )
-        _check_rep(rep, step_name="step 1")
+        rep_ok = _check_rep(rep, step_name="step 1", ok_type=Invite1ClaimerWaitPeerRepOk)
 
         shared_secret_key = generate_shared_secret_key(
-            our_private_key=claimer_private_key, peer_public_key=rep.greeter_public_key
+            our_private_key=claimer_private_key, peer_public_key=rep_ok.greeter_public_key
         )
         claimer_nonce = generate_nonce()
 
         rep = await self._cmds.invite_2a_claimer_send_hashed_nonce(
             claimer_hashed_nonce=HashDigest.from_data(claimer_nonce)
         )
-        _check_rep(rep, step_name="step 2a")
+        rep_ok = _check_rep(rep, step_name="step 2a", ok_type=Invite2aClaimerSendHashedNonceRepOk)
 
         claimer_sas, greeter_sas = generate_sas_codes(
             claimer_nonce=claimer_nonce,
-            greeter_nonce=rep.greeter_nonce,
+            greeter_nonce=rep_ok.greeter_nonce,
             shared_secret_key=shared_secret_key,
         )
 
         rep = await self._cmds.invite_2b_claimer_send_nonce(claimer_nonce=claimer_nonce)
-        _check_rep(rep, step_name="step 2b")
+        _check_rep(rep, step_name="step 2b", ok_type=Invite2bClaimerSendNonceRepOk)
 
         return claimer_sas, greeter_sas, shared_secret_key
 
@@ -262,7 +266,7 @@ class BaseClaimInProgress1Ctx:
 
     async def _do_signify_trust(self) -> None:
         rep = await self._cmds.invite_3a_claimer_signify_trust()
-        _check_rep(rep, step_name="step 3a")
+        _check_rep(rep, step_name="step 3a", ok_type=Invite3aClaimerSignifyTrustRepOk)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -296,7 +300,7 @@ class BaseClaimInProgress2Ctx:
 
     async def _do_wait_peer_trust(self) -> None:
         rep = await self._cmds.invite_3b_claimer_wait_peer_trust()
-        _check_rep(rep, step_name="step 3b")
+        _check_rep(rep, step_name="step 3b", ok_type=Invite3bClaimerWaitPeerTrustRepOk)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -345,21 +349,28 @@ class UserClaimInProgress3Ctx:
             raise InviteError("Cannot generate InviteUserData payload") from exc
 
         rep = await self._cmds.invite_4_claimer_communicate(payload=payload)
-        _check_rep(rep, step_name="step 4 (data exchange)")
+        _check_rep(rep, step_name="step 4 (data exchange)", ok_type=Invite4ClaimerCommunicateRepOk)
 
         rep = await self._cmds.invite_4_claimer_communicate(payload=b"")
-        _check_rep(rep, step_name="step 4 (confirmation exchange)")
+        rep_ok = _check_rep(
+            rep, step_name="step 4 (confirmation exchange)", ok_type=Invite4ClaimerCommunicateRepOk
+        )
 
         try:
             confirmation = InviteUserConfirmation.decrypt_and_load(
-                rep.payload, key=self._shared_secret_key
+                rep_ok.payload, key=self._shared_secret_key
             )
         except DataError as exc:
             raise InviteError("Invalid InviteUserConfirmation payload provided by peer") from exc
 
+        addr = self._cmds.addr
+        assert not isinstance(
+            addr, (BackendAddr, BackendActionAddr)
+        ), "BackendAddr/BackendActionAddr don't have `get_backend_addr` defined"
+
         organization_addr = BackendOrganizationAddr.build(
-            backend_addr=self._cmds.addr.get_backend_addr(),
-            organization_id=self._cmds.addr.organization_id,
+            backend_addr=addr.get_backend_addr(),
+            organization_id=addr.organization_id,
             root_verify_key=confirmation.root_verify_key,
         )
 
@@ -401,21 +412,28 @@ class DeviceClaimInProgress3Ctx:
             raise InviteError("Cannot generate InviteDeviceData payload") from exc
 
         rep = await self._cmds.invite_4_claimer_communicate(payload=payload)
-        _check_rep(rep, step_name="step 4 (data exchange)")
+        _check_rep(rep, step_name="step 4 (data exchange)", ok_type=Invite4ClaimerCommunicateRepOk)
 
         rep = await self._cmds.invite_4_claimer_communicate(payload=b"")
-        _check_rep(rep, step_name="step 4 (confirmation exchange)")
+        rep_ok = _check_rep(
+            rep, step_name="step 4 (confirmation exchange)", ok_type=Invite4ClaimerCommunicateRepOk
+        )
 
         try:
             confirmation = InviteDeviceConfirmation.decrypt_and_load(
-                rep.payload, key=self._shared_secret_key
+                rep_ok.payload, key=self._shared_secret_key
             )
         except DataError as exc:
             raise InviteError("Invalid InviteDeviceConfirmation payload provided by peer") from exc
 
+        addr = self._cmds.addr
+        assert not isinstance(
+            addr, (BackendAddr, BackendActionAddr)
+        ), "BackendAddr/BackendActionAddr don't have `get_backend_addr` defined"
+
         organization_addr = BackendOrganizationAddr.build(
-            backend_addr=self._cmds.addr.get_backend_addr(),
-            organization_id=self._cmds.addr.organization_id,
+            backend_addr=addr.get_backend_addr(),
+            organization_id=addr.organization_id,
             root_verify_key=confirmation.root_verify_key,
         )
 

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
@@ -30,7 +30,7 @@ from parsec.core.invite.exceptions import (
 )
 
 
-def _check_rep(rep, step_name):
+def _check_rep(rep: Any, step_name: str) -> None:
     if rep["status"] == "not_found":
         raise InviteNotFoundError
     elif rep["status"] == "already_bootstrapped":
@@ -121,7 +121,7 @@ async def failsafe_organization_bootstrap(
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
     sequester_authority_certificate: Optional[bytes] = None,
-) -> dict:
+) -> dict[str, Any]:
     # Try the new anonymous API
     try:
         rep = await cmd_organization_bootstrap(
@@ -146,6 +146,8 @@ async def failsafe_organization_bootstrap(
     if sequester_authority_certificate:
         raise InviteError("Backend doesn't support sequestered organization")
     async with apiv1_backend_anonymous_cmds_factory(addr) as anonymous_cmds:
+        assert addr.token is not None, "Token is required to bootstrap an organization"
+
         return await anonymous_cmds.organization_bootstrap(
             organization_id=addr.organization_id,
             bootstrap_token=addr.token,

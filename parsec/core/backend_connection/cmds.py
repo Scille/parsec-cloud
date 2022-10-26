@@ -101,6 +101,7 @@ from parsec._parsec import (
     VlobUpdateRep,
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepUnknownStatus,
+    HashDigest,
 )
 from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
 from parsec.crypto import VerifyKey, PublicKey
@@ -796,7 +797,7 @@ async def invite_1_greeter_wait_peer(
 
 
 async def invite_2a_claimer_send_hashed_nonce(
-    transport: Transport, claimer_hashed_nonce: bytes
+    transport: Transport, claimer_hashed_nonce: HashDigest
 ) -> Invite2aClaimerSendHashedNonceRep:
     return cast(
         Invite2aClaimerSendHashedNonceRep,
@@ -1028,9 +1029,9 @@ async def organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-) -> Awaitable[dict[str, Any]]:
+) -> dict[str, Any]:
     return cast(
-        Awaitable[dict[str, Any]],
+        dict[str, Any],
         await _send_cmd(
             transport,
             apiv1_organization_bootstrap_serializer,
