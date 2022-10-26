@@ -8,7 +8,7 @@ from parsec.core.gui.lang import translate as _
 NOT_SHARED_KEY = "NOT_SHARED"
 
 
-def get_role_translation(user_role):
+def get_role_translation(user_role: WorkspaceRole | str) -> str:
     ROLES_TRANSLATIONS = {
         WorkspaceRole.READER: _("TEXT_WORKSPACE_ROLE_READER"),
         WorkspaceRole.CONTRIBUTOR: _("TEXT_WORKSPACE_ROLE_CONTRIBUTOR"),
