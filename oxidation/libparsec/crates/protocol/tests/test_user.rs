@@ -4,7 +4,7 @@ use hex_literal::hex;
 use rstest::rstest;
 use std::num::NonZeroU64;
 
-use libparsec_protocol::*;
+use libparsec_protocol::{authenticated_cmds::v2 as authenticated_cmds, IntegerBetween1And100};
 use libparsec_types::HumanHandle;
 
 #[rstest]

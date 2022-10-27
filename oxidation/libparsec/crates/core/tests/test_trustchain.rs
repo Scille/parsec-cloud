@@ -4,7 +4,7 @@ use chrono::{TimeZone, Utc};
 use rstest::rstest;
 
 use libparsec_core::{TrustchainContext, TrustchainError};
-use libparsec_protocol::authenticated_cmds::user_get::Trustchain;
+use libparsec_protocol::authenticated_cmds::v2::user_get::Trustchain;
 use libparsec_types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, DeviceID, RevokedUserCertificate,
     UserCertificate, UserProfile,
