@@ -72,9 +72,6 @@ repos:
         require_serial: true
         language: system
         types_or: [ python, pyi ]
-        # Mypy will complain if it find two files with the same name which
-        # are not part of a package (typically occurs for packaging script helpers)
-        files: ^(parsec|tests)/
 
   ######
   # Rust
