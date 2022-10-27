@@ -5,6 +5,8 @@ import trio
 import pytest
 import parsec
 
+from exceptiongroup import BaseExceptionGroup
+
 # Importing parsec is enough to add open_service_nursery to trio
 parsec
 
@@ -16,7 +18,7 @@ async def test_open_service_nursery_exists():
 
 
 @pytest.mark.trio
-async def test_open_service_nursery_multierror_collapse(caplog):
+async def test_open_service_nursery_exception_group_collapse(caplog):
     async def _raise(exc):
         raise exc
 
@@ -28,31 +30,31 @@ async def test_open_service_nursery_multierror_collapse(caplog):
     assert isinstance(exception, ZeroDivisionError)
     assert exception.args == (1, 2, 3)
 
-    assert not isinstance(exception, trio.MultiError)
+    assert not isinstance(exception, BaseExceptionGroup)
 
     with pytest.raises(ZeroDivisionError) as ctx:
         async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_raise, RuntimeError())
             await _raise(ZeroDivisionError(1, 2, 3))
 
-    caplog.assert_occured_once("[warning  ] A MultiError has been detected [parsec.utils]")
+    caplog.assert_occured_once("[warning  ] A BaseExceptionGroup has been detected [parsec.utils]")
 
     exception = ctx.value
     assert isinstance(exception, ZeroDivisionError)
     assert exception.args == (1, 2, 3)
 
-    assert isinstance(exception, trio.MultiError)
+    assert isinstance(exception, BaseExceptionGroup)
     assert len(exception.exceptions) == 2
 
     a, b = exception.exceptions
     assert isinstance(a, ZeroDivisionError)
-    assert not isinstance(a, trio.MultiError)
+    assert not isinstance(a, BaseExceptionGroup)
     assert isinstance(b, RuntimeError)
-    assert not isinstance(b, trio.MultiError)
+    assert not isinstance(b, BaseExceptionGroup)
 
 
 @pytest.mark.trio
-async def test_open_service_nursery_multierror_with_cancelled():
+async def test_open_service_nursery_exception_group_with_cancelled():
     async def _raise(exc):
         raise exc
 
