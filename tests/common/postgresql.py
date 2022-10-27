@@ -57,13 +57,7 @@ def bootstrap_postgresql_testbed():
     #   thread (i.e. if the test is mark as trio). Hence we would have to spawn
     #   another thread just to run the new trio loop.
 
-    # TODO: use `asyncio.run` when moving to python 3.7 and onward
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        loop.run_until_complete(_execute_pg_query(_pg_db_url, run_migrations))
-    finally:
-        loop.close()
+    asyncio.run(_execute_pg_query(_pg_db_url, run_migrations))
 
     return _pg_db_url
 
@@ -96,13 +90,7 @@ RESTART IDENTITY CASCADE
 
 
 def reset_postgresql_testbed():
-    # TODO: use `asyncio.run` when moving to python 3.7 and onward
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        loop.run_until_complete(asyncio_reset_postgresql_testbed())
-    finally:
-        loop.close()
+    asyncio.run(asyncio_reset_postgresql_testbed())
 
 
 def get_postgresql_url():
