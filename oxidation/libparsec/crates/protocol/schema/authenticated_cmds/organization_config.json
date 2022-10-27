@@ -17,14 +17,14 @@
                     },
                     // `None` stands for "no limit" here
                     "active_users_limit": {
-                        "type": "Option<Size>"
+                        "type": "RequiredOption<Size>"
                     },
                     "sequester_authority_certificate": {
-                        "type": "Option<Bytes>",
+                        "type": "RequiredOption<Bytes>",
                         "introduced_in": "2.8"
                     },
                     "sequester_services_certificates": {
-                        "type": "Option<List<Bytes>>",
+                        "type": "RequiredOption<List<Bytes>>",
                         "introduced_in": "2.8"
                     }
                 }
