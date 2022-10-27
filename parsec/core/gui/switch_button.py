@@ -8,27 +8,29 @@ Taken from:
 - https://stackoverflow.com/a/51825815/2846140
 """
 
-from PyQt5.QtCore import QPropertyAnimation, QRectF, QSize, Qt, pyqtProperty
-from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QAbstractButton, QSizePolicy
+from PyQt5.QtCore import QPropertyAnimation, QEvent, QRectF, QSize, Qt, pyqtProperty
+from PyQt5.QtGui import QPainter, QMouseEvent, QResizeEvent, QPaintEvent
+from PyQt5.QtWidgets import QAbstractButton, QSizePolicy, QWidget
 
 
 class SwitchButton(QAbstractButton):
-    def __init__(self, parent=None, track_radius=10, thumb_radius=8):
+    def __init__(
+        self, parent: QWidget | None = None, track_radius: int = 10, thumb_radius: int = 8
+    ):
         super().__init__(parent=parent)
         self.setCheckable(True)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        self._track_radius = track_radius
-        self._thumb_radius = thumb_radius
+        self._track_radius: int = track_radius
+        self._thumb_radius: int = thumb_radius
 
-        self._margin = max(0, self._thumb_radius - self._track_radius)
-        self._base_offset = max(self._thumb_radius, self._track_radius)
+        self._margin: int = max(0, self._thumb_radius - self._track_radius)
+        self._base_offset: int = max(self._thumb_radius, self._track_radius)
         self._end_offset = {
             True: lambda: self.width() - self._base_offset,
             False: lambda: self._base_offset,
         }
-        self._offset = self._base_offset
+        self._offset: int = self._base_offset
 
         palette = self.palette()
         if self._thumb_radius > self._track_radius:
@@ -47,29 +49,29 @@ class SwitchButton(QAbstractButton):
             self._thumb_text = {True: "✔", False: "✕"}
             self._track_opacity = 1
 
-    @pyqtProperty(int)
-    def offset(self):
+        self.offset = pyqtProperty(int, fget=SwitchButton.getOffset, fset=SwitchButton.setOffset)
+
+    def getOffset(self) -> int:
         return self._offset
 
-    @offset.setter
-    def offset(self, value):
+    def setOffset(self, value: int) -> None:
         self._offset = value
         self.update()
 
-    def sizeHint(self):  # pylint: disable=invalid-name
+    def sizeHint(self) -> QSize:
         return QSize(
             4 * self._track_radius + 2 * self._margin, 2 * self._track_radius + 2 * self._margin
         )
 
-    def setChecked(self, checked):
+    def setChecked(self, checked: bool) -> None:
         super().setChecked(checked)
-        self.offset = self._end_offset[checked]()
+        self.setOffset(self._end_offset[checked]())
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
-        self.offset = self._end_offset[self.isChecked()]()
+        self.setOffset(self._end_offset[self.isChecked()]())
 
-    def paintEvent(self, event):  # pylint: disable=invalid-name, unused-argument
+    def paintEvent(self, event: QPaintEvent) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
         p.setPen(Qt.NoPen)
@@ -99,7 +101,7 @@ class SwitchButton(QAbstractButton):
         p.setBrush(thumb_brush)
         p.setOpacity(thumb_opacity)
         p.drawEllipse(
-            self.offset - self._thumb_radius,
+            self.getOffset() - self._thumb_radius,
             self._base_offset - self._thumb_radius,
             2 * self._thumb_radius,
             2 * self._thumb_radius,
@@ -111,7 +113,7 @@ class SwitchButton(QAbstractButton):
         p.setFont(font)
         p.drawText(
             QRectF(
-                self.offset - self._thumb_radius,
+                self.getOffset() - self._thumb_radius,
                 self._base_offset - self._thumb_radius,
                 2 * self._thumb_radius,
                 2 * self._thumb_radius,
@@ -120,7 +122,7 @@ class SwitchButton(QAbstractButton):
             self._thumb_text[self.isChecked()],
         )
 
-    def mouseReleaseEvent(self, event):  # pylint: disable=invalid-name
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         super().mouseReleaseEvent(event)
         if event.button() == Qt.LeftButton:
             anim = QPropertyAnimation(self, b"offset", self)
@@ -129,6 +131,6 @@ class SwitchButton(QAbstractButton):
             anim.setEndValue(self._end_offset[self.isChecked()]())
             anim.start()
 
-    def enterEvent(self, event):  # pylint: disable=invalid-name
+    def enterEvent(self, event: QEvent) -> None:
         self.setCursor(Qt.PointingHandCursor)
         super().enterEvent(event)
