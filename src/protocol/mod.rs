@@ -136,17 +136,16 @@ macro_rules! gen_rep {
             #[::pyo3::pymethods]
             impl $base_class {
                 fn dump<'py>(&self, py: ::pyo3::Python<'py>) -> ::pyo3::PyResult<&'py ::pyo3::types::PyBytes> {
-                    Ok(::pyo3::types::PyBytes::new(
-                        py,
-                        &self.0.clone().dump().map_err(ProtocolError::new_err)?,
-                    ))
+                    self.0.clone().dump()
+                        .map(|bytes| ::pyo3::types::PyBytes::new(py, bytes.as_slice()))
+                        .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))
                 }
 
                 #[classmethod]
                 fn load<'py>(_cls: &::pyo3::types::PyType, buf: Vec<u8>, py: Python<'py>) -> ::pyo3::PyResult<PyObject> {
                     use pyo3::{pyclass_init::PyObjectInit, PyTypeInfo};
 
-                    let rep = $mod::Rep::load(&buf).map_err(|e| ProtocolError::new_err(e.to_string()))?;
+                    let rep = $mod::Rep::load(&buf).map_err(|e| ProtocolError::new_err(format!("decoding error: {e}")))?;
 
                     let ret = match rep {
                         rep @ $mod::Rep::Ok $({ $($tt)+ })? => {
@@ -233,7 +232,7 @@ macro_rules! gen_rep {
                     py: ::pyo3::Python<'py>
                 ) -> ::pyo3::PyResult<&'py ::pyo3::types::PyString> {
                     Ok(match &_self.as_ref().0 {
-                        $mod::Rep::UnknownStatus { _status, .. } => ::pyo3::types::PyString::new(py, _status),
+                        $mod::Rep::UnknownStatus { invalid_status, .. } => ::pyo3::types::PyString::new(py, invalid_status),
                         _ => return Err(::pyo3::exceptions::PyNotImplementedError::new_err("")),
                     })
                 }

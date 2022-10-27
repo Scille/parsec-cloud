@@ -9,7 +9,7 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::{
+use libparsec::protocol::authenticated_cmds::v2::{
     vlob_create, vlob_list_versions, vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch, vlob_poll_changes, vlob_read, vlob_update,
 };
@@ -95,7 +95,11 @@ impl VlobCreateReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -211,7 +215,11 @@ impl VlobReadReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -357,7 +365,11 @@ impl VlobUpdateReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -466,7 +478,11 @@ impl VlobPollChangesReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -549,7 +565,11 @@ impl VlobListVersionsReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -621,7 +641,11 @@ impl VlobMaintenanceGetReencryptionBatchReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -711,7 +735,11 @@ impl VlobMaintenanceSaveReencryptionBatchReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 

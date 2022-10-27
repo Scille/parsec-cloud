@@ -7,7 +7,7 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::{organization_config, organization_stats};
+use libparsec::protocol::authenticated_cmds::v2::{organization_config, organization_stats};
 
 use crate::{
     binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile},
@@ -68,7 +68,11 @@ impl OrganizationStatsReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 }
@@ -190,7 +194,11 @@ impl OrganizationConfigReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 }
