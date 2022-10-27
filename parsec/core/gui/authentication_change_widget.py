@@ -1,9 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Any
 
 from PyQt5.QtWidgets import QWidget, QApplication
 
 from structlog import get_logger
+from parsec._parsec import LocalDevice
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 
 from parsec.core.local_device import (
     load_device_with_password,
@@ -21,27 +24,30 @@ from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_er
 from parsec.core.gui.lang import translate as _
 
 from parsec.core.gui.ui.authentication_change_widget import Ui_AuthenticationChangeWidget
+from parsec.core.logged_core import LoggedCore
 
 
 logger = get_logger()
 
 
 class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
-    def __init__(self, core, jobs_ctx, loaded_device):
+    def __init__(
+        self, core: LoggedCore, jobs_ctx: QtToTrioJobScheduler, loaded_device: LocalDevice
+    ) -> None:
         super().__init__()
         self.setupUi(self)
         self.core = core
         self.jobs_ctx = jobs_ctx
-        self.dialog = None
+        self.dialog: GreyedDialog | None = None
         self.button_validate.clicked.connect(self._on_validate_clicked)
         self.widget_auth.authentication_state_changed.connect(self._on_info_filled)
         self.button_validate.setEnabled(False)
         self.loaded_device = loaded_device
 
-    def _on_info_filled(self, auth_method, valid):
+    def _on_info_filled(self, auth_method: Any, valid: bool) -> None:
         self.button_validate.setEnabled(valid)
 
-    async def _on_validate_clicked(self):
+    async def _on_validate_clicked(self) -> None:
         self.button_validate.setEnabled(False)
         auth_method = self.widget_auth.get_auth_method()
         try:
@@ -57,7 +63,9 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
             if self.dialog:
                 self.dialog.accept()
             elif QApplication.activeModalWidget():
-                QApplication.activeModalWidget().accept()
+                # Mypy: `activeModalWidget` return a `QWidget` that don't have the method `accept` define
+                # Finger-cross that the return modal have that method
+                QApplication.activeModalWidget().accept()  # type: ignore[attr-defined]
             else:
                 logger.warning("Cannot close dialog when changing password info")
         except LocalDeviceCryptoError as exc:
@@ -73,7 +81,13 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
             show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
     @classmethod
-    async def show_modal(cls, core, jobs_ctx, parent, on_finished=None):
+    async def show_modal(
+        cls,
+        core: LoggedCore,
+        jobs_ctx: QtToTrioJobScheduler,
+        parent: QWidget,
+        on_finished: None = None,
+    ) -> AuthenticationChangeWidget | None:
         available_device = get_available_device(core.config.config_dir, core.device)
         loaded_device = None
 
@@ -91,20 +105,20 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                     hidden=True,
                 )
                 if not password:
-                    return
+                    return None
                 loaded_device = load_device_with_password(available_device.key_file_path, password)
             else:
                 loaded_device = await load_device_with_smartcard(available_device.key_file_path)
         except LocalDeviceError:
             show_error(parent, _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
-            return
+            return None
 
-        w = cls(core=core, jobs_ctx=jobs_ctx, loaded_device=loaded_device)
-        d = GreyedDialog(w, title=_("TEXT_CHANGE_AUTHENTICATION_TITLE"), parent=parent)
-        w.dialog = d
+        widget = cls(core=core, jobs_ctx=jobs_ctx, loaded_device=loaded_device)
+        dialog = GreyedDialog(widget, title=_("TEXT_CHANGE_AUTHENTICATION_TITLE"), parent=parent)
+        widget.dialog = dialog
 
         if on_finished:
-            d.finished.connect(on_finished)
+            dialog.finished.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop
-        d.show()
-        return w
+        dialog.show()
+        return widget
