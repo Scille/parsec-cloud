@@ -499,7 +499,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             config=self.config,
-            addr=action_addr,
+            addr=cast(BackendAddr, action_addr),
             parent=self,
             on_finished=_on_finished,
         )
