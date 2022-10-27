@@ -2,13 +2,18 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, Union, cast
+from PyQt5.QtGui import QKeyEvent, QMouseEvent
 
 import trio
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
+from parsec.core import CoreConfig
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 
 from parsec.core.pki import (
+    PkiEnrollmentFinalizedCtx,
     PkiEnrollmentSubmitterSubmittedCtx,
     PkiEnrollmentSubmitterSubmittedStatusCtx,
     PkiEnrollmentSubmitterCancelledStatusCtx,
@@ -39,31 +44,46 @@ from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInput
 from parsec.core.gui.ui.login_smartcard_input_widget import Ui_LoginSmartcardInputWidget
 from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
 from parsec.core.gui.ui.enrollment_pending_button import Ui_EnrollmentPendingButton
+from parsec.event_bus import EventBus
+
+AnyContextType = Union[
+    PkiEnrollmentSubmitterAcceptedStatusCtx,
+    PkiEnrollmentSubmitterSubmittedStatusCtx,
+    PkiEnrollmentSubmitterCancelledStatusCtx,
+    PkiEnrollmentSubmitterRejectedStatusCtx,
+    PkiEnrollmentSubmitterSubmittedCtx,
+]
 
 
 class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
     finalize_clicked = pyqtSignal(PkiEnrollmentSubmitterAcceptedStatusCtx)
     clear_clicked = pyqtSignal(BasePkiEnrollmentSubmitterStatusCtx)
 
-    def __init__(self, config, jobs_ctx, context):
+    def __init__(
+        self, config: CoreConfig, jobs_ctx: QtToTrioJobScheduler, context: AnyContextType
+    ) -> None:
         super().__init__()
         self.setupUi(self)
         self.config = config
         self.jobs_ctx = jobs_ctx
         self.context = context
         self.label_org.setText(self.context.addr.organization_id.str)
-        self.label_name.setText(self.context.x509_certificate.subject_common_name)
+        self.label_name.setText(
+            self.context.x509_certificate.subject_common_name
+            if self.context.x509_certificate.subject_common_name is not None
+            else ""
+        )
         self.button_action.hide()
         self.label_status.setText(_("TEXT_ENROLLMENT_RETRIEVING_STATUS"))
         self.label_status.setToolTip("")
         self.jobs_ctx.submit_job(None, None, self._get_pending_enrollment_infos)
 
-    async def _get_pending_enrollment_infos(self):
+    async def _get_pending_enrollment_infos(self) -> None:
         try:
             while True:
                 new_context = None
                 try:
-                    new_context = await self.context.poll(
+                    new_context = await cast(PkiEnrollmentSubmitterSubmittedCtx, self.context).poll(
                         extra_trust_roots=self.config.pki_extra_trust_roots
                     )
                 except Exception:
@@ -140,7 +160,7 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
 class AccountButton(QWidget, Ui_AccountButton):
     clicked = pyqtSignal(AvailableDevice)
 
-    def __init__(self, device):
+    def __init__(self, device: AvailableDevice) -> None:
         super().__init__()
         self.setupUi(self)
         self.device = device
@@ -148,7 +168,7 @@ class AccountButton(QWidget, Ui_AccountButton):
         self.label_name.setText(self.device.short_user_display)
         self.label_organization.setText(self.device.organization_id.str)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() & Qt.LeftButton:
             self.clicked.emit(self.device)
 
@@ -158,7 +178,13 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
     pending_finalize_clicked = pyqtSignal(PkiEnrollmentSubmitterAcceptedStatusCtx)
     pending_clear_clicked = pyqtSignal(BasePkiEnrollmentSubmitterStatusCtx)
 
-    def __init__(self, config, jobs_ctx, devices, pendings):
+    def __init__(
+        self,
+        config: CoreConfig,
+        jobs_ctx: QtToTrioJobScheduler,
+        devices: list[AvailableDevice],
+        pendings: list[PkiEnrollmentSubmitterSubmittedCtx],
+    ):
         super().__init__()
         self.setupUi(self)
         for available_device in devices:
@@ -173,13 +199,13 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
             epb.clear_clicked.connect(self._on_pending_clear_clicked)
             self.accounts_widget.layout().insertWidget(0, epb)
 
-    def _on_pending_clear_clicked(self, pending):
+    def _on_pending_clear_clicked(self, pending: AnyContextType) -> None:
         self.pending_clear_clicked.emit(pending)
 
-    def _on_pending_finalize_clicked(self, pending):
+    def _on_pending_finalize_clicked(self, pending: AnyContextType) -> None:
         self.pending_finalize_clicked.emit(pending)
 
-    def clear(self):
+    def clear(self) -> None:
         while self.accounts_widget.layout().count() != 1:
             item = self.accounts_widget.layout().takeAt(0)
             if item and item.widget():
@@ -191,7 +217,7 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
     back_clicked = pyqtSignal()
     log_in_clicked = pyqtSignal(AvailableDevice)
 
-    def __init__(self, device, hide_back=False):
+    def __init__(self, device: AvailableDevice, hide_back: bool = False):
         super().__init__()
         self.setupUi(self)
         self.device = device
@@ -207,17 +233,17 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
             )
         )
 
-    def _on_log_in_clicked(self):
+    def _on_log_in_clicked(self) -> None:
         self.button_login.setDisabled(True)
         self.button_login.setText(_("ACTION_LOGGING_IN"))
         self.log_in_clicked.emit(self.device)
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
             self._on_log_in_clicked()
         event.accept()
 
-    def reset(self):
+    def reset(self) -> None:
         self.button_login.setDisabled(False)
         self.button_login.setText(_("ACTION_LOG_IN"))
 
@@ -226,7 +252,7 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
     back_clicked = pyqtSignal()
     log_in_clicked = pyqtSignal(AvailableDevice, str)
 
-    def __init__(self, device, hide_back=False):
+    def __init__(self, device: AvailableDevice, hide_back: bool = False) -> None:
         super().__init__()
         self.setupUi(self)
         self.device = device
@@ -242,17 +268,17 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
             )
         )
 
-    def _on_log_in_clicked(self):
+    def _on_log_in_clicked(self) -> None:
         self.button_login.setDisabled(True)
         self.button_login.setText(_("ACTION_LOGGING_IN"))
         self.log_in_clicked.emit(self.device, self.line_edit_password.text())
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
             self._on_log_in_clicked()
         event.accept()
 
-    def reset(self):
+    def reset(self) -> None:
         self.button_login.setDisabled(False)
         self.line_edit_password.setText("")
         self.button_login.setText(_("ACTION_LOG_IN"))
@@ -263,7 +289,7 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
     create_organization_clicked = pyqtSignal()
     recover_device_clicked = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setupUi(self)
         if ParsecApp.connected_devices:
@@ -274,7 +300,7 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
         self.button_join_org.clicked.connect(self.join_organization_clicked.emit)
         self.button_recover_device.clicked.connect(self.recover_device_clicked.emit)
 
-    def reset(self):
+    def reset(self) -> None:
         pass
 
 
@@ -286,7 +312,14 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     recover_device_clicked = pyqtSignal()
     login_canceled = pyqtSignal()
 
-    def __init__(self, jobs_ctx, event_bus, config, login_failed_sig, parent):
+    def __init__(
+        self,
+        jobs_ctx: QtToTrioJobScheduler,
+        event_bus: EventBus,
+        config: CoreConfig,
+        login_failed_sig: Any,
+        parent: QWidget,
+    ) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -297,13 +330,13 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         login_failed_sig.connect(self.on_login_failed)
         self.reload_devices()
 
-    def on_login_failed(self):
+    def on_login_failed(self) -> None:
         item = self.widget.layout().itemAt(0)
         if item:
             lw = item.widget()
             lw.reset()
 
-    def list_devices_and_enrollments(self):
+    def list_devices_and_enrollments(self) -> None:
         pendings = PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(
             config_dir=self.config.config_dir
         )
@@ -340,12 +373,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.widget.layout().addWidget(accounts_widget)
             accounts_widget.setFocus()
 
-    def _on_pending_finalize_clicked(self, context: PkiEnrollmentSubmitterAcceptedStatusCtx):
+    def _on_pending_finalize_clicked(self, context: AnyContextType) -> None:
         self.jobs_ctx.submit_job(None, None, self._finalize_enrollment, context)
 
-    async def _finalize_enrollment(self, context):
+    async def _finalize_enrollment(self, context: PkiEnrollmentSubmitterAcceptedStatusCtx) -> None:
         try:
-            context = await context.finalize()
+            finalized_context = await context.finalize()
         except PkiEnrollmentCertificateNotFoundError:
             # Nothing to do, the user cancelled the certificate selection prompt
             return
@@ -359,7 +392,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         try:
             await save_device_with_smartcard_in_config(
                 config_dir=self.config.config_dir,
-                device=context.new_device,
+                device=finalized_context.new_device,
                 certificate_id=context.x509_certificate.certificate_id,
                 certificate_sha1=context.x509_certificate.certificate_sha1,
             )
@@ -367,10 +400,17 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
             return
 
-        await self._remove_enrollment(context)
+        await self._remove_enrollment(finalized_context)
         SnackbarManager.inform(_("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
 
-    async def _remove_enrollment(self, context):
+    async def _remove_enrollment(
+        self,
+        context: PkiEnrollmentSubmitterSubmittedStatusCtx
+        | PkiEnrollmentSubmitterCancelledStatusCtx
+        | PkiEnrollmentSubmitterRejectedStatusCtx
+        | PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
+        | PkiEnrollmentFinalizedCtx,
+    ) -> None:
         try:
             await context.remove_from_disk()
         except Exception as exc:
@@ -378,14 +418,14 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             return
         self.reload_devices()
 
-    def _on_pending_clear_clicked(self, context: BasePkiEnrollmentSubmitterStatusCtx):
+    def _on_pending_clear_clicked(self, context: BasePkiEnrollmentSubmitterStatusCtx) -> None:
         self.jobs_ctx.submit_job(None, None, self._remove_enrollment, context)
 
-    def reload_devices(self):
+    def reload_devices(self) -> None:
         self._clear_widget()
         self.list_devices_and_enrollments()
 
-    def _clear_widget(self):
+    def _clear_widget(self) -> None:
         while self.widget.layout().count() != 0:
             item = self.widget.layout().takeAt(0)
             if item:
@@ -396,8 +436,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
                 w.hide()
                 w.setParent(None)
 
-    def _on_account_clicked(self, device, hide_back=False):
+    def _on_account_clicked(self, device: AvailableDevice, hide_back: bool = False) -> None:
         self._clear_widget()
+        lw: LoginPasswordInputWidget | LoginSmartcardInputWidget
         if device.type == DeviceFileType.PASSWORD:
             lw = LoginPasswordInputWidget(device, hide_back=hide_back)
             lw.back_clicked.connect(self._on_back_clicked)
@@ -410,15 +451,15 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             lw.log_in_clicked.connect(self.try_login_with_smartcard)
             self.widget.layout().addWidget(lw)
 
-    def _on_back_clicked(self):
+    def _on_back_clicked(self) -> None:
         self.login_canceled.emit()
         self.reload_devices()
 
-    def try_login_with_password(self, device, password):
+    def try_login_with_password(self, device: AvailableDevice, password: str) -> None:
         self.login_with_password_clicked.emit(device.key_file_path, password)
 
-    def try_login_with_smartcard(self, device):
+    def try_login_with_smartcard(self, device: AvailableDevice) -> None:
         self.login_with_smartcard_clicked.emit(device.key_file_path)
 
-    def disconnect_all(self):
+    def disconnect_all(self) -> None:
         pass
