@@ -2,9 +2,110 @@
     {
         "label": "VlobUpdate",
         "major_versions": [
-            1,
-            2,
             3
+        ],
+        "req": {
+            "cmd": "vlob_update",
+            "fields": {
+                "encryption_revision": {
+                    "type": "Index"
+                },
+                "vlob_id": {
+                    "type": "VlobID"
+                },
+                "timestamp": {
+                    "type": "DateTime"
+                },
+                "version": {
+                    "type": "Version"
+                },
+                "blob": {
+                    "type": "Bytes"
+                },
+                // Field set to `None` if sequester is disabled for the organization
+                // Key is sequester service ID, value is blob encrypted with the service key
+                // New in API version 2.8/3.2 (Parsec 2.11.0)
+                "sequester_blob": {
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>",
+                    "introduced_in": "3.2"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "bad_version": {},
+            "bad_encryption_revision": {},
+            "in_maintenance": {},
+            "require_greater_timestamp": {
+                "fields": {
+                    "strictly_greater_than": {
+                        "type": "DateTime"
+                    }
+                }
+            },
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    },
+                    "ballpark_client_early_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "ballpark_client_late_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "backend_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    "client_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                }
+            },
+            "not_a_sequestered_organization": {},
+            "sequester_inconsistency": {
+                "fields": {
+                    "sequester_authority_certificate": {
+                        "type": "Bytes"
+                    },
+                    "sequester_services_certificates": {
+                        "type": "List<Bytes>"
+                    }
+                }
+            },
+            "rejected_by_sequester_service": {
+                "fields": {
+                    "service_id": {
+                        "type": "SequesterServiceID"
+                    },
+                    "service_label": {
+                        "type": "String"
+                    },
+                    "reason": {
+                        "type": "String"
+                    }
+                }
+            },
+            "timeout": {}
+        }
+    },
+    {
+        "label": "VlobUpdate",
+        "major_versions": [
+            1,
+            2
         ],
         "req": {
             "cmd": "vlob_update",

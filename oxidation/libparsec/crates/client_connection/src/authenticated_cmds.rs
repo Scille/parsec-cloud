@@ -41,7 +41,7 @@ use libparsec_protocol::{
     IntegerBetween1And100,
 };
 use libparsec_types::{
-    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, RealmID,
+    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, Maybe, RealmID,
     ReencryptionBatchEntry, SequesterServiceID, UserID, VlobID,
 };
 use reqwest::{
@@ -350,7 +350,7 @@ impl AuthenticatedCmds {
             timestamp: DateTime,
             version: u32,
             blob: Vec<u8>,
-            sequester_blob: Option<HashMap<SequesterServiceID, Vec<u8>>>
+            sequester_blob: Maybe<Option<HashMap<SequesterServiceID, Vec<u8>>>>
         )
     );
 }
