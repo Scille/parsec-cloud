@@ -28,7 +28,7 @@
                                 "type": "UserID"
                             },
                             "greeter_human_handle": {
-                                "type": "Option<HumanHandle>"
+                                "type": "RequiredOption<HumanHandle>"
                             }
                         }
                     },
@@ -39,7 +39,7 @@
                                 "type": "UserID"
                             },
                             "greeter_human_handle": {
-                                "type": "Option<HumanHandle>"
+                                "type": "RequiredOption<HumanHandle>"
                             }
                         }
                     }

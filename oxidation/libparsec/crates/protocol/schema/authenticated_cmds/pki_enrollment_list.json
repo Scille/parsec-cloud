@@ -19,7 +19,7 @@
             "not_allowed": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             }

@@ -42,49 +42,49 @@
             "not_allowed": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "invalid_payload_data": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "invalid_certification": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "invalid_data": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "not_found": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "no_longer_available": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "already_exists": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
@@ -134,49 +134,49 @@
             "not_allowed": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "invalid_payload_data": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "invalid_certification": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "invalid_data": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "not_found": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "no_longer_available": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
             "already_exists": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },

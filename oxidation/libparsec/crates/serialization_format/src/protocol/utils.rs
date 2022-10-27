@@ -38,7 +38,10 @@ pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<
                 "Float" => "f64",
                 "String" => "String",
                 "Bytes" => "Vec<u8>",
-                "Option" => "Option",
+                // Both value convert to the same type but have a different meaning.
+                // - `RequiredOption` => The field must be present but its value can be null.
+                // - `NonRequiredOption` => the field can be missing or its value to be null.
+                "RequiredOption" | "NonRequiredOption" => "Option",
                 "List" => "Vec",
                 "Map" => "::std::collections::HashMap",
                 "Set" => "::std::collections::HashSet",
@@ -121,11 +124,15 @@ pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<
     }
 }
 
-pub fn quote_serde_as(ty: &Type) -> syn::Attribute {
+pub fn quote_serde_as(ty: &Type, no_default: bool) -> syn::Attribute {
     let serde_as = extract_serde_as(ty)
         .replace("Vec<u8>", "::serde_with::Bytes")
         .replace("u8", "_");
-    syn::parse_quote!(#[serde_as(as = #serde_as)])
+    if no_default {
+        syn::parse_quote!(#[serde_as(as = #serde_as, no_default)])
+    } else {
+        syn::parse_quote!(#[serde_as(as = #serde_as)])
+    }
 }
 
 /// Extract the type recursively by changing all unit type except u8 by _

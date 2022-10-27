@@ -16,10 +16,10 @@
                     "type": "VlobID"
                 },
                 "version": {
-                    "type": "Option<Version>"
+                    "type": "RequiredOption<Version>"
                 },
                 "timestamp": {
-                    "type": "Option<DateTime>"
+                    "type": "RequiredOption<DateTime>"
                 }
             }
         },
@@ -50,7 +50,7 @@
             "not_found": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
