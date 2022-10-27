@@ -41,7 +41,7 @@ use libparsec_protocol::{
     IntegerBetween1And100,
 };
 use libparsec_types::{
-    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, RealmID,
+    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, Maybe, RealmID,
     ReencryptionBatchEntry, SequesterServiceID, UserID, VlobID,
 };
 use reqwest::{
@@ -318,7 +318,7 @@ impl AuthenticatedCmds {
             vlob_id: VlobID,
             timestamp: DateTime,
             blob: Vec<u8>,
-            sequester_blob: Option<HashMap<SequesterServiceID, Vec<u8>>>
+            sequester_blob: Maybe<Option<HashMap<SequesterServiceID, Vec<u8>>>>
         )
         /// List version of a vlob
         vlob_list_versions(vlob_id: VlobID)
