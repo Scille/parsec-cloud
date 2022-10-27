@@ -7,7 +7,7 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::message_get;
+use libparsec::protocol::authenticated_cmds::v2::message_get;
 
 use crate::ids::DeviceID;
 use crate::protocol::gen_rep;
@@ -74,7 +74,11 @@ impl MessageGetReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 

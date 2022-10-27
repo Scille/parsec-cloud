@@ -4,7 +4,7 @@ use crate::{
     invite::InvitationToken,
     protocol::{invite::InvitationStatus, Reason},
 };
-use libparsec::protocol::authenticated_cmds::{
+use libparsec::protocol::authenticated_cmds::v2::{
     events_listen::{self, APIEvent},
     events_subscribe,
 };
@@ -12,7 +12,7 @@ use pyo3::{import_exception, prelude::*, types::PyBytes, PyObject, PyResult, Pyt
 
 use super::gen_rep;
 
-import_exception!(parsec.api.protcol, ProtocolError);
+import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -31,7 +31,11 @@ impl EventsListenReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -382,7 +386,11 @@ impl EventsSubscribeReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 }

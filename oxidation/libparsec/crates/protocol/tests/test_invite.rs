@@ -4,7 +4,9 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_crypto::{HashDigest, PublicKey};
-use libparsec_protocol::*;
+use libparsec_protocol::{
+    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+};
 use libparsec_types::{HumanHandle, InvitationStatus, Maybe};
 
 #[rstest]

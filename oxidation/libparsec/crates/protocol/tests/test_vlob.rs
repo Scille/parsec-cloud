@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_protocol::*;
+use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
 use libparsec_types::{Maybe, ReencryptionBatchEntry};
 
 #[rstest]

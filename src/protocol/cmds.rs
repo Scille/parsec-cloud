@@ -6,7 +6,9 @@ use pyo3::{
     types::{PyBytes, PyType},
 };
 
-use libparsec::protocol::{authenticated_cmds, invited_cmds};
+use libparsec::protocol::{
+    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+};
 
 use crate::protocol::*;
 
@@ -21,14 +23,18 @@ impl AuthenticatedAnyCmdReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>, py: Python) -> PyResult<PyObject> {
         use authenticated_cmds::AnyCmdReq;
-        let cmd = AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)?;
+        let cmd = AnyCmdReq::load(&buf)
+            .map_err(|e| ProtocolError::new_err(format!("decoding error: {e}")))?;
         Ok(match cmd {
             AnyCmdReq::BlockRead(x) => BlockReadReq(x).into_py(py),
             AnyCmdReq::BlockCreate(x) => BlockCreateReq(x).into_py(py),
@@ -80,6 +86,18 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(x) => {
                 VlobMaintenanceSaveReencryptionBatchReq(x).into_py(py)
             }
+            AnyCmdReq::PkiEnrollmentAccept(_) => {
+                todo!("missing python binding for `pki_enrollment_accept`")
+            }
+            AnyCmdReq::PkiEnrollmentInfo(_) => {
+                todo!("missing python binding for `pki_enrollment_info`")
+            }
+            AnyCmdReq::PkiEnrollmentList(_) => {
+                todo!("missing python binding for `pki_enrollment_list`")
+            }
+            AnyCmdReq::PkiEnrollmentReject(_) => {
+                todo!("missing python binding for `pki_enrollment_reject`")
+            }
         })
     }
 }
@@ -93,14 +111,18 @@ impl InvitedAnyCmdReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>, py: Python) -> PyResult<PyObject> {
         use invited_cmds::AnyCmdReq;
-        let cmd = AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)?;
+        let cmd = AnyCmdReq::load(&buf)
+            .map_err(|e| ProtocolError::new_err(format!("decoding error: {e}")))?;
         Ok(match cmd {
             AnyCmdReq::Invite1ClaimerWaitPeer(x) => Invite1ClaimerWaitPeerReq(x).into_py(py),
             AnyCmdReq::Invite2aClaimerSendHashedNonce(x) => {
