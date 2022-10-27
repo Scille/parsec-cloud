@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Type
 
 from parsec._parsec import (
     RealmRole,
@@ -41,8 +40,8 @@ __all__ = (
 )
 
 
-RealmRoleField: Type[fields.Field] = fields.rust_enum_field_factory(RealmRole)
-RealmIDField: Type[fields.Field] = fields.uuid_based_field_factory(RealmID)
+RealmRoleField = fields.rust_enum_field_factory(RealmRole)
+RealmIDField = fields.uuid_based_field_factory(RealmID)
 
 realm_create_serializer = ApiCommandSerializer(RealmCreateReq, RealmCreateRep)
 realm_status_serializer = ApiCommandSerializer(RealmStatusReq, RealmStatusRep)

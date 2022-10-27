@@ -25,7 +25,7 @@ class SequesterAuthorityCertificate(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("sequester_authority_certificate", required=True)
         # Override author field to always uses None given this certificate can only be signed by the root key
-        author = fields.CheckedConstant(
+        author = fields.CheckedConstant(  # type: ignore[assignment]
             None, required=True, allow_none=True
         )  # Constant None fields required to be allowed to be None !
         verify_key_der = fields.SequesterVerifyKeyDerField(required=True)

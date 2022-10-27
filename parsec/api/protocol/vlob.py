@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Type
 
 from parsec._parsec import (
     VlobID,
@@ -36,7 +35,7 @@ __all__ = (
 )
 
 
-VlobIDField: Type[fields.Field] = fields.uuid_based_field_factory(VlobID)
+VlobIDField = fields.uuid_based_field_factory(VlobID)
 
 
 class SequesterInconsistencyRepSchema(BaseRepSchema):

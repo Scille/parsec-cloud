@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional, Tuple, cast, Dict, Sequence, Union, Any
+from typing import Optional, cast, Dict, Sequence, Union, Any
 from enum import Enum
 from secrets import token_bytes
 
@@ -94,7 +94,7 @@ class ApiVersionField(fields.Tuple):
         revision = fields.Integer(required=True, validate=validate.Range(min=0))
         super().__init__(version, revision, **kwargs)
 
-    def _deserialize(self, value: Tuple[str, str], attr: str, obj: dict[str, object]) -> ApiVersion:
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> ApiVersion:
         result = super()._deserialize(value, attr, obj)
         return ApiVersion(*result)
 

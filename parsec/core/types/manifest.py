@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, Type
+from typing import TypeVar, Union
 
 from parsec.serde import fields
 from parsec.api.protocol import RealmRole, BlockID
@@ -28,10 +28,12 @@ from parsec._parsec import (
     Regex,
 )
 
-if TYPE_CHECKING:
-    from parsec._parsec import AnyLocalManifest
-else:
-    AnyLocalManifest = Type["AnyLocalManifest"]
+AnyLocalManifest = Union[
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
+    LocalUserManifest,
+]
 
 __all__ = (
     "WorkspaceEntry",
@@ -55,7 +57,7 @@ DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 WorkspaceRole = RealmRole
 
 
-ChunkIDField: Type[fields.Field] = fields.uuid_based_field_factory(ChunkID)
+ChunkIDField = fields.uuid_based_field_factory(ChunkID)
 
 
 class LocalManifestType(Enum):

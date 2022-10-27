@@ -12,7 +12,7 @@ from parsec._parsec import (
     BackendOrganizationFileLinkAddr,
     BackendPkiEnrollmentAddr,
 )
-from typing import Optional, Union
+from typing import Union
 
 PARSEC_SCHEME = "parsec"
 
@@ -27,58 +27,55 @@ BackendAddrType = Union[
 ]
 
 
-class BackendOrganizationAddrField(fields.Field):
+class BackendOrganizationAddrField(fields.Field[BackendOrganizationAddr]):
     def _deserialize(self, value: object, attr: str, data: object) -> BackendOrganizationAddr:
+        if not isinstance(value, str):
+            raise ValidationError(f"expected 'str' for got '{type(value)}'")
         try:
-            if not isinstance(value, str):
-                raise ValidationError(f"expected 'str' for got '{type(value)}'")
-
             return BackendOrganizationAddr.from_url(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
     def _serialize(
-        self, value: Optional[BackendOrganizationAddr], attr: str, data: object
-    ) -> Optional[str]:
+        self, value: BackendOrganizationAddr | None, attr: str, data: object
+    ) -> str | None:
         if value is None:
             return None
-
+        assert isinstance(value, BackendOrganizationAddr)
         return value.to_url()
 
 
-class BackendAddrField(fields.Field):
+class BackendAddrField(fields.Field[BackendAddr]):
     def _deserialize(self, value: object, attr: str, data: object) -> BackendAddr:
+        if not isinstance(value, str):
+            raise ValidationError(f"expected 'str' for got '{type(value)}'")
         try:
-            if not isinstance(value, str):
-                raise ValidationError(f"expected 'str' for got '{type(value)}'")
-
             return BackendAddr.from_url(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
-    def _serialize(self, value: Optional[BackendAddr], attr: str, data: object) -> Optional[str]:
+    def _serialize(self, value: BackendAddr | None, attr: str, data: object) -> str | None:
         if value is None:
             return None
-
+        assert isinstance(value, BackendAddr)
         return value.to_url()
 
 
-class BackendPkiEnrollmentAddrField(fields.Field):
+class BackendPkiEnrollmentAddrField(fields.Field[BackendPkiEnrollmentAddr]):
     def _deserialize(self, value: object, attr: str, data: object) -> BackendPkiEnrollmentAddr:
+        if not isinstance(value, str):
+            raise ValidationError(f"expected 'str' for got '{type(value)}'")
         try:
-            if not isinstance(value, str):
-                raise ValidationError(f"expected 'str' for got '{type(value)}'")
-
             return BackendPkiEnrollmentAddr.from_url(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
     def _serialize(
-        self, value: Optional[BackendPkiEnrollmentAddr], attr: str, data: object
-    ) -> Optional[str]:
+        self, value: BackendPkiEnrollmentAddr | None, attr: str, data: object
+    ) -> str | None:
         if value is None:
             return None
-
+        assert isinstance(value, BackendPkiEnrollmentAddr)
         return value.to_url()
 
 

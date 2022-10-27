@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from unicodedata import normalize
-from typing import Union, TypeVar, Optional, Tuple, Pattern, Type
+from marshmallow import ValidationError
+from typing import Union, TypeVar, Optional, Tuple, Pattern
 from enum import Enum
 
 from parsec.serde import fields
@@ -61,28 +62,32 @@ class StrBased:
         return self._str
 
 
-OrganizationIDField: Type[fields.Field] = fields.str_based_field_factory(OrganizationID)
-UserIDField: Type[fields.Field] = fields.str_based_field_factory(UserID)
-DeviceIDField: Type[fields.Field] = fields.str_based_field_factory(DeviceID)
-DeviceLabelField: Type[fields.Field] = fields.str_based_field_factory(DeviceLabel)
+OrganizationIDField = fields.str_based_field_factory(OrganizationID)
+UserIDField = fields.str_based_field_factory(UserID)
+DeviceIDField = fields.str_based_field_factory(DeviceID)
+DeviceLabelField = fields.str_based_field_factory(DeviceLabel)
 
 
-class HumanHandleField(fields.Tuple):
-    def __init__(self, **kwargs: object):
-        email = fields.String(required=True)
-        label = fields.String(required=True)
-        super().__init__(email, label, **kwargs)
+class HumanHandleField(fields.Field[HumanHandle]):
+    email_field = fields.String(required=True)
+    label_field = fields.String(required=True)
+    args = (email_field, label_field)
 
-    def _serialize(self, value: HumanHandle, attr: str, data: object) -> Optional[Tuple[str, str]]:
+    def _serialize(
+        self, value: HumanHandle | None, attr: str, data: object
+    ) -> Optional[Tuple[str, str]]:
         if value is None:
             return None
         return (value.email, value.label)
 
-    def _deserialize(
-        self, value: Tuple[str, str], attr: str, obj: dict[str, object]
-    ) -> HumanHandle:
-        result = super()._deserialize(value, attr, obj)
-        return HumanHandle(*result)
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> HumanHandle:
+        if not isinstance(value, (list, tuple)):
+            raise ValidationError("Expecting list or tuple")
+        try:
+            email, label = value
+        except ValueError:
+            raise ValidationError("Expecting two elements")
+        return HumanHandle(self.email_field.deserialize(email), self.label_field.deserialize(label))
 
 
 class UserProfile(Enum):
@@ -102,4 +107,4 @@ class UserProfile(Enum):
     OUTSIDER = "OUTSIDER"
 
 
-UserProfileField: Type[fields.Field] = fields.enum_field_factory(UserProfile)
+UserProfileField = fields.enum_field_factory(UserProfile)
