@@ -1,13 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+import datetime
+from typing import Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QBrush, QFont
-from PyQt5.QtWidgets import QCalendarWidget
+from PyQt5.QtCore import QDate, QRect, Qt
+from PyQt5.QtGui import QColor, QBrush, QFont, QPainter
+from PyQt5.QtWidgets import QCalendarWidget, QWidget
 
 
 class CalendarWidget(QCalendarWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
         self.setDateEditEnabled(True)
@@ -40,12 +42,15 @@ class CalendarWidget(QCalendarWidget):
         self.setWeekdayTextFormat(Qt.Saturday, cell_text_format)
         self.setWeekdayTextFormat(Qt.Sunday, cell_text_format)
 
-    def paintCell(self, painter, rect, date):
+    def paintCell(self, painter: QPainter, rect: QRect, date: QDate | datetime.date) -> None:
         painter.save()
 
+        assert isinstance(date, QDate)
+        # According to Qt doc comparison operator are overloaded
+        # see (https://doc.qt.io/qtforpython-5/PySide2/QtCore/QDate.html)
         is_invalid_date = (
-            date < self.minimumDate()
-            or date > self.maximumDate()
+            date < self.minimumDate()  # type: ignore[operator]
+            or date > self.maximumDate()  # type: ignore[operator]
             or date.month() != self.monthShown()
             or date.year() != self.yearShown()
         )
