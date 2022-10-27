@@ -40,3 +40,6 @@ client-web:
   - oxidation/bindings/web/**
   - oxidation/client/tests/**
   - oxidation/client/jest.config.js
+
+newsfragments:
+  - newsfragments/**

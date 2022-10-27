@@ -20,6 +20,9 @@ outputs:
   client-common:
     value: ${{ steps.changes.outputs.client-common }}
     description: True if a files in the ionic-client part was edited.
+  newsfragments:
+    value: ${{ steps.changes.outputs.newsfragments }}
+    description: True if a files in the newsfragment part was edited.
 
 runs:
   using: composite
