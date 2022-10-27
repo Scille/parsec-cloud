@@ -21,9 +21,6 @@ from parsec._parsec import (
     InviteNewRepOk,
 )
 
-# TODO: Remove python InvitationType enum, for now we keep it for legacy reasons
-from parsec.api.protocol.invite import InvitationType as PyInvitationType
-
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
     InvitationStatus,
@@ -97,7 +94,7 @@ async def test_user_new_invitation_and_info(
     async with backend_invited_ws_factory(
         backend_asgi_app,
         organization_id=alice.organization_id,
-        invitation_type=PyInvitationType.USER,
+        invitation_type=InvitationType.USER,
         token=token,
     ) as invited_ws:
         rep = await invite_info(invited_ws)
@@ -148,7 +145,7 @@ async def test_device_new_invitation_and_info(
     async with backend_invited_ws_factory(
         backend_asgi_app,
         organization_id=alice.organization_id,
-        invitation_type=PyInvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=token,
     ) as invited_ws:
         rep = await invite_info(invited_ws)
@@ -366,7 +363,7 @@ async def test_delete_invitation(
         async with backend_invited_ws_factory(
             backend_asgi_app,
             organization_id=alice.organization_id,
-            invitation_type=PyInvitationType.DEVICE,
+            invitation_type=InvitationType.DEVICE,
             token=invitation.token,
         ):
             pass
@@ -560,7 +557,7 @@ async def test_invitation_deletion_isolated_between_organizations(
         async with backend_invited_ws_factory(
             backend_asgi_app,
             organization_id=alice.organization_id,
-            invitation_type=PyInvitationType.DEVICE,
+            invitation_type=InvitationType.DEVICE,
             token=invitation.token,
         ):
             pass
