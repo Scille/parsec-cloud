@@ -80,7 +80,7 @@ class BaseEnumField(Field):
 
         return value.value
 
-    def _deserialize(self, value: str, attr: str, data: dict[str, object]) -> Enum:
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> Enum:
         if not isinstance(value, str):
             raise ValidationError("Not string")
 
@@ -113,7 +113,7 @@ def bytes_based_field_factory(value_type: Any) -> Type[Field]:
 
         return value
 
-    def _deserialize(self: Any, value: bytes, attr: str, data: dict[str, object]) -> Any:
+    def _deserialize(self: Any, value: bytes, attr: str, data: dict[str, object]) -> Field:
         if not isinstance(value, bytes):
             raise ValidationError("Not bytes")
 
@@ -169,7 +169,7 @@ def rust_enum_field_factory(value_type: Any) -> Type[Field]:
         else:
             raise ValidationError(f"Not a InvitationStatus")
 
-    def _deserialize(self: Any, value: Any, attr: str, data: dict[str, object]) -> Any:
+    def _deserialize(self: Any, value: object, attr: str, data: dict[str, object]) -> Any:
         if not isinstance(value, str):
             raise ValidationError("Not string")
 
@@ -195,7 +195,7 @@ def uuid_based_field_factory(value_type: Any) -> Type[Field]:
         assert isinstance(value, value_type)
         return value.uuid
 
-    def _deserialize(self: Any, value: _UUID, attr: str, data: dict[str, object]) -> Any:
+    def _deserialize(self: Any, value: object, attr: str, data: dict[str, object]) -> Field:
         if not isinstance(value, _UUID):
             raise ValidationError("Not an UUID")
 
@@ -217,7 +217,10 @@ def uuid_based_field_factory(value_type: Any) -> Type[Field]:
 class Path(Field):
     """Absolute path"""
 
-    def _deserialize(self, value: str, attr: str, data: dict[str, object]) -> str:
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> str:
+        if not isinstance(value, str):
+            raise ValidationError(f"expected 'str' but got {type(value)}")
+
         if not value.startswith("/"):
             raise ValidationError("Path must be absolute")
         if value != "/":
@@ -230,7 +233,7 @@ class Path(Field):
 class UUID(Field):
     """UUID already handled by pack/unpack"""
 
-    def _deserialize(self, value: _UUID, attr: str, data: dict[str, object]) -> _UUID:
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> _UUID:
         if not isinstance(value, _UUID):
             raise ValidationError("Not an UUID")
         return value
@@ -239,7 +242,7 @@ class UUID(Field):
 class DateTime(Field):
     """DateTime already handled by pack/unpack"""
 
-    def _deserialize(self, value: RsDateTime, attr: str, data: dict[str, object]) -> RsDateTime:
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> RsDateTime:
         if not isinstance(value, RsDateTime):
             raise ValidationError("Not a datetime")
 

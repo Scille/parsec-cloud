@@ -228,7 +228,7 @@ class LocalFolderManifest:
         cls,
         remote: FolderManifest,
         prevent_sync_pattern: Regex,
-        local_manifest: LocalFolderManifest,
+        local_manifest: AnyLocalManifest,
         timestamp: DateTime,
     ) -> LocalFolderManifest: ...
 
@@ -300,7 +300,7 @@ class LocalWorkspaceManifest:
     def asdict(self) -> Dict[str, Any]: ...
     def dump_and_encrypt(self, key: SecretKey) -> bytes: ...
     @classmethod
-    def decrypt_and_load(self, encrypted: bytes, key: SecretKey) -> LocalWorkspaceManifest: ...
+    def decrypt_and_load(cls, encrypted: bytes, key: SecretKey) -> LocalWorkspaceManifest: ...
     @classmethod
     def new_placeholder(
         cls,
@@ -318,7 +318,7 @@ class LocalWorkspaceManifest:
         cls,
         remote: WorkspaceManifest,
         prevent_sync_pattern: Regex,
-        local_manifest: LocalWorkspaceManifest,
+        local_manifest: AnyLocalManifest,
         timestamp: DateTime,
     ) -> LocalWorkspaceManifest: ...
 
