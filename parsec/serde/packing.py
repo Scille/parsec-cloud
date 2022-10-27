@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import datetime
 from typing import Any, Mapping
 from uuid import UUID
-from parsec._parsec import DateTime, LocalDateTime
+from parsec._parsec import DateTime
 from struct import pack as struct_pack, unpack as struct_unpack
 from msgpack import (  # type: ignore[import]
     packb as msgpack_packb,
@@ -27,13 +26,7 @@ def packb(data: Mapping[str, Any], exc_cls: Any = SerdePackingError) -> bytes:
     """
 
     def _default(obj: Any) -> Any:
-        # TODO: we should be only testing against DateTime, but
-        # asyncpg returns datetime
-        if (
-            isinstance(obj, DateTime)
-            or isinstance(obj, LocalDateTime)
-            or isinstance(obj, datetime.datetime)
-        ):
+        if isinstance(obj, DateTime):
             return ExtType(1, struct_pack("!d", obj.timestamp()))
         elif isinstance(obj, UUID):
             return ExtType(2, obj.bytes)
