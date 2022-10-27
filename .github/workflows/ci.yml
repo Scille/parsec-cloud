@@ -148,6 +148,7 @@ jobs:
             os: macos-12
           - name: 🏁 Windows
             os: windows-2022
+            winfsp-version: 1.11.22176
     name: '${{ matrix.name }}: 🐍 Python tests'
     runs-on: ${{ matrix.os }}
     steps:
@@ -215,7 +216,7 @@ jobs:
           && startsWith(matrix.os, 'windows-')
         shell: bash
         run: |
-          choco install -y --limit-output winfsp --version=${{ env.winfsp-version }}
+          choco install -y --limit-output winfsp --version=${{ matrix.winfsp-version }}
           mkdir winfsp-test
           curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
           unzip winfsp-test/winfsp-tests.zip -d winfsp-test
