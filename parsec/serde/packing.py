@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 from uuid import UUID
-from parsec._parsec import DateTime, LocalDateTime
+from parsec._parsec import DateTime
 from struct import pack as struct_pack, unpack as struct_unpack
 from msgpack import (  # type: ignore[import]
     packb as msgpack_packb,
@@ -26,7 +26,7 @@ def packb(data: Mapping[str, Any], exc_cls: Any = SerdePackingError) -> bytes:
     """
 
     def _default(obj: Any) -> Any:
-        if isinstance(obj, (DateTime, LocalDateTime)):
+        if isinstance(obj, DateTime):
             return ExtType(1, struct_pack("!d", obj.timestamp()))
         elif isinstance(obj, UUID):
             return ExtType(2, obj.bytes)
