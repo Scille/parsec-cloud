@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
@@ -30,7 +30,7 @@ from parsec.core.invite.exceptions import (
 )
 
 
-def _check_rep(rep: Any, step_name: str) -> None:
+def _check_rep(rep: dict[str, object], step_name: str) -> None:
     if rep["status"] == "not_found":
         raise InviteNotFoundError
     elif rep["status"] == "already_bootstrapped":
@@ -93,11 +93,11 @@ async def bootstrap_organization(
             timestamp=timestamp,
             verify_key_der=sequester_authority_verify_key,
         )
-        sequester_authority_certificate = sequester_authority_certificate.dump_and_sign(
-            root_signing_key
-        )
+        sequester_authority_certificate_signed: Optional[
+            bytes
+        ] = sequester_authority_certificate.dump_and_sign(root_signing_key)
     else:
-        sequester_authority_certificate = None
+        sequester_authority_certificate_signed = None
 
     rep = await failsafe_organization_bootstrap(
         addr=addr,
@@ -106,7 +106,7 @@ async def bootstrap_organization(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
-        sequester_authority_certificate=sequester_authority_certificate,
+        sequester_authority_certificate=sequester_authority_certificate_signed,
     )
     _check_rep(rep, step_name="organization bootstrap")
 
@@ -121,7 +121,7 @@ async def failsafe_organization_bootstrap(
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
     sequester_authority_certificate: Optional[bytes] = None,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     # Try the new anonymous API
     try:
         rep = await cmd_organization_bootstrap(

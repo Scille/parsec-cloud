@@ -27,7 +27,6 @@ def expose_cmds(
         async with self.acquire_transport() as transport:
             return await cmd(transport, *args, **kwargs)
 
-    # because of wraps mypy does not infer a proper type
     return wrapper
 
 
