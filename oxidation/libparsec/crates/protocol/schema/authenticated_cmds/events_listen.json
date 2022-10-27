@@ -20,7 +20,7 @@
             "cancelled": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             },
@@ -103,7 +103,7 @@
                                 "type": "RealmID"
                             },
                             "role": {
-                                "type": "Option<RealmRole>"
+                                "type": "RequiredOption<RealmRole>"
                             }
                         }
                     },

@@ -21,13 +21,13 @@
                         "type": "Boolean"
                     },
                     "maintenance_type": {
-                        "type": "Option<MaintenanceType>"
+                        "type": "RequiredOption<MaintenanceType>"
                     },
                     "maintenance_started_on": {
-                        "type": "Option<DateTime>"
+                        "type": "RequiredOption<DateTime>"
                     },
                     "maintenance_started_by": {
-                        "type": "Option<DeviceID>"
+                        "type": "RequiredOption<DeviceID>"
                     },
                     "encryption_revision": {
                         "type": "Index"
@@ -38,7 +38,7 @@
             "not_found": {
                 "fields": {
                     "reason": {
-                        "type": "Option<String>"
+                        "type": "NonRequiredOption<String>"
                     }
                 }
             }
