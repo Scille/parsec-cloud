@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Any
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMenu, QSystemTrayIcon
@@ -12,7 +13,7 @@ def systray_available() -> bool:
 
 
 class Systray(QSystemTrayIcon):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 
         self.menu = QMenu()
@@ -27,9 +28,9 @@ class Systray(QSystemTrayIcon):
         self.activated.connect(self.on_activated)
         self.show()
 
-    def on_systray_notification(self, title, msg, msec=2000):
+    def on_systray_notification(self, title: str, msg: str, msec: int = 2000) -> None:
         self.showMessage(title, msg, msecs=msec)
 
-    def on_activated(self, reason):
+    def on_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason == QSystemTrayIcon.DoubleClick:
             self.on_show.emit()
