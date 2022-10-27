@@ -13,7 +13,7 @@ logger = get_logger()
 
 
 class ChangelogWidget(QWidget, Ui_ChangelogWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setupUi(self)
         rc_file = QFile(":/generated_misc/generated_misc/history.html")
