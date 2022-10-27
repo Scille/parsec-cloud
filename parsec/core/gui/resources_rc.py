@@ -14,6 +14,6 @@ Running `python misc/generate_pyqt.py build` should fix the issue
 if __name__ == "__main__":
     from PyQt5.QtCore import QDirIterator
 
-    it = QDirIterator(":", QDirIterator.Subdirectories)
+    it = QDirIterator(":", QDirIterator.IteratorFlags(QDirIterator.Subdirectories))
     while it.hasNext():
         print(it.next())
