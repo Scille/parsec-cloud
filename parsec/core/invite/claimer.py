@@ -5,7 +5,6 @@ import attr
 from typing import Any, Type, TypeVar, Union, Optional, List, Tuple
 
 from parsec.crypto import (
-    generate_shared_secret_key,
     generate_nonce,
     SecretKey,
     PrivateKey,
@@ -205,8 +204,8 @@ class BaseClaimInitialCtx:
         )
         rep_ok = _check_rep(rep, step_name="step 1", ok_type=Invite1ClaimerWaitPeerRepOk)
 
-        shared_secret_key = generate_shared_secret_key(
-            our_private_key=claimer_private_key, peer_public_key=rep_ok.greeter_public_key
+        shared_secret_key = claimer_private_key.generate_shared_secret_key(
+            peer_public_key=rep_ok.greeter_public_key
         )
         claimer_nonce = generate_nonce()
 

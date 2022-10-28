@@ -16,7 +16,6 @@ from parsec._parsec import (
     Invite1GreeterWaitPeerRepOk,
 )
 from parsec.crypto import (
-    generate_shared_secret_key,
     generate_nonce,
     SecretKey,
     PrivateKey,
@@ -88,9 +87,8 @@ class BaseGreetInitialCtx:
         )
         rep_ok = _check_rep(rep, step_name="step 1", ok_type=Invite1GreeterWaitPeerRepOk)
 
-        shared_secret_key = generate_shared_secret_key(
-            our_private_key=greeter_private_key,
-            peer_public_key=rep_ok.claimer_public_key,
+        shared_secret_key = greeter_private_key.generate_shared_secret_key(
+            peer_public_key=rep_ok.claimer_public_key
         )
         greeter_nonce = generate_nonce()
 

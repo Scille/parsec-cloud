@@ -6,7 +6,6 @@ from base64 import b32decode, b32encode
 
 from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.secret import SecretBox
-from nacl.bindings import crypto_scalarmult
 from nacl.pwhash import argon2i
 from nacl.utils import random
 
@@ -95,12 +94,6 @@ def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tupl
         memlimit=CRYPTO_MEMLIMIT,
     )
     return SecretKey(rawkey), salt
-
-
-def generate_shared_secret_key(
-    our_private_key: PrivateKey, peer_public_key: PublicKey
-) -> SecretKey:
-    return SecretKey(crypto_scalarmult(our_private_key.encode(), peer_public_key.encode()))
 
 
 def generate_nonce(size=64) -> bytes:
