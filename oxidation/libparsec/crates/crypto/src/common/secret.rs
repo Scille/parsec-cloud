@@ -13,7 +13,8 @@ macro_rules! impl_secret_key {
         impl $key {
             pub fn generate_recovery_passphrase() -> (String, Self) {
                 let key = Self::generate();
-                let b32 = ::base32::encode(::base32::Alphabet::RFC4648 { padding: false }, key.as_ref());
+                let b32 =
+                    ::base32::encode(::base32::Alphabet::RFC4648 { padding: false }, key.as_ref());
                 let passphrase = b32
                     .as_bytes()
                     .chunks(4)
@@ -85,7 +86,6 @@ macro_rules! impl_secret_key {
                 serializer.serialize_bytes(self.as_ref())
             }
         }
-
     };
 }
 

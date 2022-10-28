@@ -18,7 +18,7 @@ use crate::{CryptoError, SecretKey};
 #[serde(try_from = "&Bytes")]
 pub struct PrivateKey(curve25519xsalsa20poly1305::SecretKey);
 
-crate::macros::impl_key_debug!(PrivateKey);
+crate::impl_key_debug!(PrivateKey);
 
 super::utils::impl_try_from!(PrivateKey, curve25519xsalsa20poly1305::SecretKey);
 
@@ -79,7 +79,7 @@ impl Serialize for PrivateKey {
 #[serde(try_from = "&Bytes")]
 pub struct PublicKey(curve25519xsalsa20poly1305::PublicKey);
 
-crate::macros::impl_key_debug!(PublicKey);
+crate::impl_key_debug!(PublicKey);
 
 super::utils::impl_try_from!(PublicKey, curve25519xsalsa20poly1305::PublicKey);
 

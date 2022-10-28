@@ -21,10 +21,10 @@ mod sodiumoxide;
 ))]
 pub mod prelude {
     pub use crate::common::*;
-    #[cfg(all(feature = "use-sodiumoxide", not(feature = "use-rustcrypto")))]
-    pub use crate::sodiumoxide::*;
     #[cfg(all(feature = "use-rustcrypto", not(feature = "use-sodiumoxide")))]
     pub use crate::rustcrypto::*;
+    #[cfg(all(feature = "use-sodiumoxide", not(feature = "use-rustcrypto")))]
+    pub use crate::sodiumoxide::*;
 }
 
 #[cfg(any(
