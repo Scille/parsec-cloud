@@ -15,3 +15,5 @@ pub enum CryptoError {
     #[error("The nonce must be exactly 24 bytes long")]
     Nonce,
 }
+
+pub type CryptoResult<T> = Result<T, CryptoError>;
