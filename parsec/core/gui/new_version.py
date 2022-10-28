@@ -4,24 +4,26 @@ from __future__ import annotations
 import sys
 from marshmallow.decorators import post_load
 import json
-from typing import Optional, Tuple, List
+from typing import Any, Optional, Tuple
 from json import JSONDecodeError
 from packaging.version import Version
 from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
-from PyQt5.QtWidgets import QDialog, QWidget
+from PyQt5.QtWidgets import QDialog, QWidget, QLayout
+from PyQt5.QtGui import QCloseEvent
 
 from parsec import __version__
 from parsec.serde import BaseSchema, fields, JSONSerializer, SerdeError
 from parsec.core.backend_connection.transport import http_request
 from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.trio_jobs import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
 from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
-
+from parsec.event_bus import EventBus
+from parsec.core.config import CoreConfig
 
 logger = get_logger()
 
@@ -43,9 +45,9 @@ class ApiReleaseSchema(BaseSchema):
     assets = fields.List(fields.Nested(ApiReleaseAssetSchema), missing=[])
 
     @post_load
-    def add_version_field(self, data):
+    def add_version_field(self, data: dict[str, object]) -> dict[str, object]:
         try:
-            data["version"] = Version(data["tag_name"])
+            data["version"] = Version(str(data["tag_name"]))
         except ValueError:
             data["version"] = None
         return data
@@ -58,7 +60,7 @@ class ApiReleasesSchema(BaseSchema):
 api_releases_serializer = JSONSerializer(ApiReleasesSchema)
 
 
-async def fetch_json_releases(api_url: str) -> Optional[List]:
+async def fetch_json_releases(api_url: str) -> None | list[dict[str, Any]]:
 
     try:
         data = await http_request(api_url, method="GET")
@@ -76,7 +78,7 @@ async def do_check_new_version(
     # Retrieve the releases from Github
     json_releases = await fetch_json_releases(api_url)
     if json_releases is None:
-        # Cannot retreive the releases (typically due to no internet access)
+        # Cannot retrieve the releases (typically due to no internet access)
         return None
 
     # We'd better be very careful on the JSON data loading, otherwise a
@@ -93,7 +95,7 @@ async def do_check_new_version(
     # (e.g. v1.1.0 is released, then v1.0.0 release is removed by mistake and
     # recreated).
     # So we force order by version just to be sure. Of course this means we
-    # cannot save mistakes that occured after the 30 first releases, but it
+    # cannot save mistakes that occurred after the 30 first releases, but it
     # should be "good enough" ;-)
     # We also filter out tags which are not named after a version, this is just
     # an extra sanity as they shouldn't be marked as released in the first place.
@@ -134,23 +136,23 @@ async def do_check_new_version(
 class NewVersionInfo(QWidget, Ui_NewVersionInfo):
     close_clicked = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.button_close.clicked.connect(self.close_clicked.emit)
         self.show_waiting()
 
-    def show_error(self):
+    def show_error(self) -> None:
         self.label_waiting.hide()
         self.label_error.show()
         self.label_up_to_date.hide()
 
-    def show_up_to_date(self):
+    def show_up_to_date(self) -> None:
         self.label_waiting.hide()
         self.label_error.hide()
         self.label_up_to_date.show()
 
-    def show_waiting(self):
+    def show_waiting(self) -> None:
         self.label_waiting.show()
         self.label_error.hide()
         self.label_up_to_date.hide()
@@ -160,13 +162,13 @@ class NewVersionAvailable(QWidget, Ui_NewVersionAvailable):
     download_clicked = pyqtSignal()
     close_clicked = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.button_download.clicked.connect(self.download_clicked.emit)
         self.button_ignore.clicked.connect(self.close_clicked.emit)
 
-    def set_version(self, version):
+    def set_version(self, version: None | Version) -> None:
         if version:
             self.label.setText(
                 _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(version=str(version))
@@ -177,7 +179,9 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
     check_new_version_success = pyqtSignal(QtToTrioJob)
     check_new_version_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, event_bus, config, **kwargs):
+    def __init__(
+        self, jobs_ctx: QtToTrioJobScheduler, event_bus: EventBus, config: CoreConfig, **kwargs: Any
+    ) -> None:
         super().__init__(**kwargs)
         self.setupUi(self)
 
@@ -187,6 +191,8 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.widget_info = NewVersionInfo(parent=self)
         self.widget_available = NewVersionAvailable(parent=self)
         self.widget_available.hide()
+
+        assert isinstance(self.layout, QLayout)
         self.layout.addWidget(self.widget_info)
         self.layout.addWidget(self.widget_available)
 
@@ -201,7 +207,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.check_new_version_success.connect(self.on_check_new_version_success)
         self.check_new_version_error.connect(self.on_check_new_version_error)
 
-        self.version_job = self.jobs_ctx.submit_job(
+        self.version_job: QtToTrioJob | None = self.jobs_ctx.submit_job(
             (self, "check_new_version_success"),
             (self, "check_new_version_error"),
             do_check_new_version,
@@ -210,11 +216,11 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         )
         self.setWindowFlags(Qt.SplashScreen)
 
-    def on_check_new_version_success(self, job):
+    def on_check_new_version_success(self, job: QtToTrioJob) -> None:
         assert job is self.version_job
         assert self.version_job.is_finished()
         assert self.version_job.status == "ok"
-        version_job_ret = self.version_job.ret
+        version_job_ret: Optional[Tuple[Version, str]] | None = self.version_job.ret
         self.version_job = None
         if version_job_ret:
             new_version, url = version_job_ret
@@ -231,7 +237,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             self.widget_info.show()
             self.widget_info.show_up_to_date()
 
-    def on_check_new_version_error(self, job):
+    def on_check_new_version_error(self, job: QtToTrioJob) -> None:
         assert job is self.version_job
         assert self.version_job.is_finished()
         assert self.version_job.status != "ok"
@@ -242,14 +248,14 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.widget_info.show()
         self.widget_info.show_error()
 
-    def download(self):
+    def download(self) -> None:
         desktop.open_url(self.download_url)
         self.accept()
 
-    def ignore(self):
+    def ignore(self) -> None:
         self.reject()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QCloseEvent) -> None:
         if self.version_job:
             self.version_job.cancel()
         event.accept()
