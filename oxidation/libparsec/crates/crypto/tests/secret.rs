@@ -5,7 +5,7 @@ use pretty_assertions::assert_eq;
 use rstest::rstest;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{prelude::*, CryptoError, SecretKey};
+use libparsec_crypto::{CryptoError, SecretKey};
 
 #[macro_use]
 mod common;

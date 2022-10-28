@@ -3,7 +3,7 @@
 use base64::DecodeError;
 use std::path::PathBuf;
 
-use libparsec::crypto::{prelude::*, SecretKey};
+use libparsec::crypto::SecretKey;
 pub use libparsec::{create_context, RuntimeContext};
 
 #[cfg(not(target_arch = "wasm32"))]

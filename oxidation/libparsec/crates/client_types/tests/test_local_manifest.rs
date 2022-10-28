@@ -8,7 +8,7 @@ use std::{
 };
 
 use libparsec_client_types::*;
-use libparsec_crypto::{prelude::*, *};
+use libparsec_crypto::prelude::*;
 use libparsec_types::*;
 
 use tests_fixtures::{alice, timestamp, Device};

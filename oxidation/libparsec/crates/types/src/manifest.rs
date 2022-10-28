@@ -11,7 +11,7 @@ use std::{
 };
 use unicode_normalization::UnicodeNormalization;
 
-use libparsec_crypto::{prelude::*, HashDigest, SecretKey, SigningKey, VerifyKey};
+use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use serialization_format::parsec_data;
 
 use crate::{

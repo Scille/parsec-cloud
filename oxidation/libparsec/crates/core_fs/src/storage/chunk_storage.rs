@@ -6,7 +6,7 @@ use diesel::{
 };
 use std::sync::Mutex;
 
-use libparsec_crypto::{prelude::*, SecretKey};
+use libparsec_crypto::SecretKey;
 use libparsec_types::{ChunkID, TimeProvider, DEFAULT_BLOCK_SIZE};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
