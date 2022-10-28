@@ -22,6 +22,7 @@ from parsec.serde.fields import (
     EnumCheckedConstant,
     BaseEnumField,
 )
+from parsec.api.protocol.types import HumanHandleField
 
 from parsec.api.protocol.base import CmdSerializer
 from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
@@ -78,7 +79,7 @@ def field_to_spec(field):
     elif isinstance(field, Map):
         spec["key_type"] = field_to_spec(field.key_field)
         spec["nested_type"] = field_to_spec(field.nested_field)
-    elif isinstance(field, Tuple):
+    elif isinstance(field, (Tuple, HumanHandleField)):
         spec["args_types"] = [field_to_spec(x) for x in field.args]
     # Note Dict type correspond to a schemaless field, so nothing more to document
 

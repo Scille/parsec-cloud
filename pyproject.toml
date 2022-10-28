@@ -139,12 +139,13 @@ pyinstaller = "^5.3"
 
 flake8 = "5.0.4"
 black = "^22.6.0"
-mypy = "^0.971"
+mypy = "^0.982"
 
 setuptools = "^63.1.0"
 maturin = "~=0.13"
 cibuildwheel = "2.9.0"
 editorconfig-checker = "2.4.0"
+types-requests = "^2.28"
 
 [tool.poetry.build]
 generate-setup-file = false

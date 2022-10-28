@@ -436,7 +436,7 @@ class BaseRep(metaclass=CmdRepMeta):
 
 
 def cmd_rep_error_type_factory(
-    name: str, status: str, extra_fields: Dict[str, fields.Field] = {}
+    name: str, status: str, extra_fields: Dict[str, fields.Field[Any]] = {}
 ) -> Type[BaseRep]:
     """
     Shorthand for creating:
@@ -455,7 +455,7 @@ def cmd_rep_error_type_factory(
             [...] # extra_fields
 
     """
-    schema_fields: Dict[str, fields.Field] = {
+    schema_fields: Dict[str, fields.Field[Any]] = {
         **extra_fields,
         "status": fields.CheckedConstant(status, required=True),
     }

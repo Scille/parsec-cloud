@@ -58,7 +58,6 @@ from parsec._parsec_pyi.local_manifest import (
     LocalFolderManifest,
     LocalUserManifest,
     LocalWorkspaceManifest,
-    AnyLocalManifest,
     local_manifest_decrypt_and_load,
 )
 
@@ -501,7 +500,6 @@ __all__ = [
     "LocalFolderManifest",
     "LocalUserManifest",
     "LocalWorkspaceManifest",
-    "AnyLocalManifest",
     "local_manifest_decrypt_and_load",
     # Manifest
     "EntryName",

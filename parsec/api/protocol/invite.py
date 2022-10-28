@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Type
 
 from parsec._parsec import (
     InvitationStatus,
@@ -73,9 +72,9 @@ __all__ = (
 )
 
 
-InvitationTokenField: Type[fields.Field] = fields.uuid_based_field_factory(InvitationToken)
-InvitationStatusField: Type[fields.Field] = fields.rust_enum_field_factory(InvitationStatus)
-InvitationTypeField: Type[fields.Field] = fields.rust_enum_field_factory(InvitationType)
+InvitationTokenField = fields.uuid_based_field_factory(InvitationToken)
+InvitationStatusField = fields.rust_enum_field_factory(InvitationStatus)
+InvitationTypeField = fields.rust_enum_field_factory(InvitationType)
 
 
 invite_new_serializer = ApiCommandSerializer(InviteNewReq, InviteNewRep)

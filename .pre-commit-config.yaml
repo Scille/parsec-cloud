@@ -72,6 +72,7 @@ repos:
         require_serial: true
         language: system
         types_or: [ python, pyi ]
+        files: ^(parsec|tests)/
 
   ######
   # Rust

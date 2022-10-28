@@ -246,7 +246,12 @@ def no_logs_gte_error(caplog):
     # client websocket is currently disconnecting
     # see: https://github.com/Scille/parsec-cloud/issues/2716
     def skip_hypercorn_buggy_log(record):
-        if record.name == "asyncio" and isinstance(record.exc_info, ConnectionError):
+        try:
+            _, exc, _ = record.exc_info
+        except ValueError:
+            exc = None
+
+        if record.name == "asyncio" and isinstance(exc, ConnectionError):
             return True
 
         if record.name != "hypercorn.error":
