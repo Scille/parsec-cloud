@@ -1508,7 +1508,7 @@ impl LocalUserManifest {
 }
 
 #[pyfunction]
-pub fn local_manifest_decrypt_and_load<'py>(
+pub(crate) fn local_manifest_decrypt_and_load<'py>(
     py: Python<'py>,
     encrypted: &[u8],
     key: &SecretKey,

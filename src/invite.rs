@@ -113,7 +113,7 @@ impl SASCode {
 }
 
 #[pyfunction]
-pub fn generate_sas_codes<'p>(
+pub(crate) fn generate_sas_codes<'p>(
     py: Python<'p>,
     claimer_nonce: &PyBytes,
     greeter_nonce: &PyBytes,
