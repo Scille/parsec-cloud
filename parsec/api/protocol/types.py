@@ -84,10 +84,15 @@ class HumanHandleField(fields.Field[HumanHandle]):
         if not isinstance(value, (list, tuple)):
             raise ValidationError("Expecting list or tuple")
         try:
-            email, label = value
+            email_value, label_value = value
         except ValueError:
             raise ValidationError("Expecting two elements")
-        return HumanHandle(self.email_field.deserialize(email), self.label_field.deserialize(label))
+        email = self.email_field.deserialize(email_value)
+        label = self.label_field.deserialize(label_value)
+        try:
+            return HumanHandle(email, label)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
 
 
 class UserProfile(Enum):

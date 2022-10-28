@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Optional, Any
 
-# import requests
+import requests
 
 def get_pac(
     url: Optional[str] = None,
@@ -11,7 +11,7 @@ def get_pac(
     from_dns: bool = True,
     timeout: int = 2,
     allowed_content_types: Optional[set[str]] = None,
-    # sessions: Optional[requests.Session] = None,
+    sessions: Optional[requests.Session] = None,
 ) -> Optional[PACFile]: ...
 
 class PACFile:
