@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from parsec._parsec_pyi.certif import (
     UserCertificate,
     DeviceCertificate,
@@ -13,6 +14,7 @@ from parsec._parsec_pyi.crypto import (
     VerifyKey,
     PrivateKey,
     PublicKey,
+    generate_nonce,
 )
 
 from parsec._parsec_pyi.enumerate import (
@@ -56,6 +58,7 @@ from parsec._parsec_pyi.addrs import (
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
     BackendPkiEnrollmentAddr,
+    export_root_verify_key,
 )
 
 from parsec._parsec_pyi.local_manifest import (
@@ -475,6 +478,7 @@ __all__ = [
     "VerifyKey",
     "PrivateKey",
     "PublicKey",
+    "generate_nonce",
     # Enumerate
     "InvitationType",
     "InvitationEmailSentStatus",
@@ -510,6 +514,7 @@ __all__ = [
     "BackendOrganizationBootstrapAddr",
     "BackendOrganizationFileLinkAddr",
     "BackendPkiEnrollmentAddr",
+    "export_root_verify_key",
     # Local Manifest
     "Chunk",
     "LocalFileManifest",
