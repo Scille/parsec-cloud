@@ -101,3 +101,15 @@ fn test_invalid_passphrase(#[case] bad_passphrase: &str) {
         CryptoError::DataSize
     );
 }
+
+#[test]
+fn test_from_password() {
+    let password = "P@ssw0rd.";
+    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
+
+    let expected = SecretKey::from(hex!(
+        "8f46e610b307443ec4ac81a4d799cbe1b97987901d4f681b82dacf3b59cad0a1"
+    ));
+
+    assert_eq!(SecretKey::from_password(password, &salt), expected);
+}

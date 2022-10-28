@@ -1,7 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::Blake2bMac;
 use digest::{consts::U5, Mac};
+use rand_08::{rngs::OsRng, RngCore};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 use xsalsa20poly1305::{
@@ -12,6 +14,32 @@ use xsalsa20poly1305::{
 use crate::CryptoError;
 
 type Blake2bMac40 = Blake2bMac<U5>;
+
+/// Memory block size in bytes
+const BLOCKSIZE: u32 = 1024;
+/// The maximum amount of RAM that the functions in this module will use, in bytes.
+// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L128
+const MEMLIMIT_INTERACTIVE: u32 = 33554432;
+/// The maximum number of computations to perform when using the functions.
+//§ https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L127
+const OPSLIMIT_INTERACTIVE: u32 = 4;
+/// Degree of parallelism
+const PARALLELISM: u32 = 1;
+
+lazy_static::lazy_static! {
+    static ref ARGON2: Argon2<'static> =
+        Argon2::new(
+            Algorithm::Argon2i,
+            Version::V0x13,
+            Params::new(
+                MEMLIMIT_INTERACTIVE / BLOCKSIZE,
+                OPSLIMIT_INTERACTIVE,
+                PARALLELISM,
+                Some(KEY_SIZE),
+            )
+            .expect("Can't fail"),
+        );
+}
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
@@ -55,10 +83,31 @@ impl SecretKey {
         // TODO investigate why new() is not working
         // let mut hasher = Blake2bMac40::new(&self.0);
         // &self.0 always provide the correct key size
-        let mut hasher = Blake2bMac40::new_from_slice(&self.0).unwrap_or_else(|_| unreachable!());
+        let mut hasher =
+            Blake2bMac40::new_from_slice(self.0.as_ref()).unwrap_or_else(|_| unreachable!());
         hasher.update(data);
         let res = hasher.finalize();
         res.into_bytes().to_vec()
+    }
+
+    pub fn generate_salt() -> Vec<u8> {
+        // https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L121
+        const SALTBYTES: usize = 16;
+
+        let mut salt = vec![0; SALTBYTES];
+        OsRng.fill_bytes(&mut salt);
+
+        salt
+    }
+
+    pub fn from_password(password: &str, salt: &[u8]) -> Self {
+        let mut key = [0; KEY_SIZE];
+
+        ARGON2
+            .hash_password_into(password.as_bytes(), salt, &mut key)
+            .expect("Invalid salt");
+
+        Self::from(key)
     }
 }
 
