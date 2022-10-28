@@ -2,7 +2,7 @@ from __future__ import annotations
 
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Dict, Callable, TypeVar
+from typing import Dict, Callable, TypeVar, Any
 from .fields import Field
 
 class ValidationError(Exception):
@@ -47,7 +47,7 @@ class MarshmallowSchema:
     def load(self, data): ...
     def loads(self, data): ...
 
-    _declared_fields: Dict[str, Field]
+    _declared_fields: Dict[str, Field[Any]]
 
 class Schema:
     def dump(self, obj, many, update_fields: bool, **kwargs): ...
@@ -61,4 +61,4 @@ class Schema:
     @property
     def partial(self): ...
 
-    _declared_fields: Dict[str, Field]
+    _declared_fields: Dict[str, Field[Any]]
