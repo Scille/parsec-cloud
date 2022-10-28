@@ -12,16 +12,14 @@ import qrcode.image.svg
 import io
 
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import OverlayLabel
+from parsec.core.gui.custom_widgets import OverlayLabel, Pixmap
 from parsec.core.gui.custom_dialogs import GreyedDialog
 
 from parsec.core.gui.ui.qrcode_widget import Ui_QRCodeWidget
 
 
-def generate_qr_code(text):
-    qr = qrcode.QRCode(
-        version=None, error_correction=qrcode.constants.ERROR_CORRECT_H, border=4, box_size=10
-    )
+def generate_qr_code(text: str) -> QPixmap:
+    qr = qrcode.QRCode(version=None, error_correction=qrcode.ERROR_CORRECT_H, border=4, box_size=10)
 
     qr.add_data(text)
     qr.make(fit=True)
@@ -46,37 +44,37 @@ def generate_qr_code(text):
 
 
 class _QRCodeWidget(QWidget, Ui_QRCodeWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setupUi(self)
 
 
 class SmallQRCodeWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setLayout(QVBoxLayout())
-        self.qrcode = _QRCodeWidget()
+        self.qrcode: _QRCodeWidget = _QRCodeWidget()
         self.qrcode.label_text.setText(_("TEXT_CLICK_TO_ENLARGE"))
         self.qrcode.label_qrcode.clicked.connect(self._on_image_clicked)
         self.qrcode.label_qrcode.set_mode(OverlayLabel.ClickMode.OpenFullScreen, True)
         self.qrcode.label_qrcode.setFixedSize(100, 100)
         self.layout().addWidget(self.qrcode)
-        self.image = None
+        self.image: Pixmap | None = None
 
-    def set_image(self, img):
+    def set_image(self, img: Pixmap) -> None:
         self.image = img
         self.qrcode.label_qrcode.setPixmap(img)
 
-    def _on_image_clicked(self):
+    def _on_image_clicked(self) -> None:
         if not self.image:
             return
         _show_large_qrcode(self, self.image)
 
 
 class LargeQRCodeWidget(QWidget):
-    def __init__(self, image, parent=None):
+    def __init__(self, image: Pixmap, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.dialog = None
+        self.dialog: GreyedDialog | None = None
         self.setLayout(QVBoxLayout())
         self.qrcode = _QRCodeWidget()
         self.qrcode.label_text.setText(_("TEXT_CLICK_TO_CLOSE"))
@@ -86,12 +84,13 @@ class LargeQRCodeWidget(QWidget):
         self.qrcode.label_qrcode.setFixedSize(400, 400)
         self.layout().addWidget(self.qrcode)
 
-    def _on_image_clicked(self):
-        self.dialog.accept()
+    def _on_image_clicked(self) -> None:
+        if self.dialog:
+            self.dialog.accept()
 
 
-def _show_large_qrcode(parent, image):
-    w = LargeQRCodeWidget(image)
-    d = GreyedDialog(w, title=None, parent=parent, hide_close=True, close_on_click=True)
-    w.dialog = d
-    return d.open()
+def _show_large_qrcode(parent: QWidget, image: Pixmap) -> None:
+    widget = LargeQRCodeWidget(image)
+    dialog = GreyedDialog(widget, title=None, parent=parent, hide_close=True, close_on_click=True)
+    widget.dialog = dialog
+    return dialog.open()
