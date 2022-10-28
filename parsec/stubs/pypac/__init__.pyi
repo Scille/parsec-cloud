@@ -1,8 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional
-from pypac.api import PACFile
+from typing import Optional, Any
 
 import requests
 
@@ -16,4 +15,4 @@ def get_pac(
 ) -> Optional[PACFile]: ...
 
 class PACFile:
-    def find_proxy_for_url(self, url: str, hostname: str) -> str: ...
+    def find_proxy_for_url(self, url: str, hostname: str) -> Any: ...

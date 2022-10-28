@@ -79,6 +79,11 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
         if proxies is None:
             logger.debug("Proxy list is None", target_url=url)
             return None
+        if not isinstance(proxies, str):
+            logger.warning(
+                "FindProxyForURL did not return a string", target_url=url, proxies=proxies
+            )
+            return None
 
         logger.debug("Found proxies info in .PAC proxy config", target_url=url, proxies=proxies)
         proxies = [p.strip() for p in proxies.split(";")]

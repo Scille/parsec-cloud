@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Any, Generic, TypeVar, Callable
 
-missing_: object
+missing_: object = object()
 
 T = TypeVar("T")
 
@@ -12,17 +12,17 @@ class Field(Generic[T]):
     def __init__(
         self,
         default: object = missing_,
-        attribute: Optional[str] = None,
-        load_from: Optional[str] = None,
-        dump_to: Optional[str] = None,
-        error: Optional[Any] = None,
-        validate: Optional[Callable[[Any], bool]] = None,
+        attribute: str | None = None,
+        load_from: str | None = None,
+        dump_to: str | None = None,
+        error: str | None = None,
+        validate: Callable[[Any], bool] | None = None,
         required: bool = False,
-        allow_none: Optional[bool] = None,
+        allow_none: bool | None = None,
         load_only: bool = False,
         dump_only: bool = False,
         missing: object = missing_,
-        error_messages: Optional[dict[str, object]] = None,
+        error_messages: dict[str, object] | None = None,
         **metadata: Any,
     ): ...
     def serialize(
