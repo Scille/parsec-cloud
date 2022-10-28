@@ -485,7 +485,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
             device, auth_method, password = widget.status
             self.reload_login_devices()
-            await self.try_login(device, auth_method, password)
+            # mypy: Cast is safe here because we only need the device slug which
+            # is present in both `LocalDevice` and `AvailableDevice`
+            await self.try_login(cast(LocalDevice, device), auth_method, password)
             answer = ask_question(
                 self,
                 _("TEXT_CLAIM_USER_SUCCESSFUL_TITLE"),
