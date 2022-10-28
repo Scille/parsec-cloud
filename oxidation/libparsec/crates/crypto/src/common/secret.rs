@@ -1,11 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-/// 34 symbols to 32 values due to 0/O and 1/I
-pub(crate) const RECOVERY_PASSPHRASE_SYMBOLS: [char; 34] = [
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-    'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7',
-];
-
 macro_rules! impl_secret_key {
     ($key: ident) => {
         crate::impl_key_debug!($key);
@@ -37,11 +31,11 @@ macro_rules! impl_secret_key {
                 // lead to a bad password anyway
                 let mut b32 = passphrase
                     .chars()
-                    .filter(|c| crate::common::RECOVERY_PASSPHRASE_SYMBOLS.contains(c))
-                    .map(|c| match c {
-                        '0' => 'O',
-                        '1' => 'I',
-                        _ => c,
+                    .filter_map(|c| match c {
+                        '0' => Some('O'),
+                        '1' => Some('I'),
+                        'A'..='Z' | '2'..='7' => Some(c),
+                        _ => None,
                     })
                     .collect::<String>();
                 // Add padding
