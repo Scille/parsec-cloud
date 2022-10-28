@@ -15,7 +15,6 @@ from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.workspace_button import Optional
 from parsec.core.types import BackendAddr, BackendInvitationAddr, LocalDevice
 from parsec.core.local_device import (
-    AvailableDevice,
     save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
     DeviceFileType,
@@ -639,7 +638,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.config = config
         self.dialog: Optional[GreyedDialog] = None
         self.addr = addr
-        self.status: Optional[Tuple[AvailableDevice, DeviceFileType, str]] = None
+        self.status: Optional[Tuple[LocalDevice, DeviceFileType, str]] = None
         self.user_email: Optional[str] = None
         self.claimer_job: Optional[QtToTrioJob] = None
         self.retrieve_info_job = None
@@ -774,9 +773,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         page.failed.connect(self._on_page_failed_force_reject)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(
-        self, device: AvailableDevice, auth_method: DeviceFileType, password: str
-    ) -> None:
+    def _on_finished(self, device: LocalDevice, auth_method: DeviceFileType, password: str) -> None:
         self.status = (device, auth_method, password)
         assert self.dialog is not None
         self.dialog.accept()

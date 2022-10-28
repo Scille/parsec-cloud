@@ -26,7 +26,12 @@ from parsec.core.types import (
 from parsec.core.core_events import CoreEvent
 from parsec.core.config import CoreConfig, save_config
 from parsec.core.pki import is_pki_enrollment_available
-from parsec.core.local_device import list_available_devices, get_key_file, DeviceFileType
+from parsec.core.local_device import (
+    get_available_device,
+    list_available_devices,
+    get_key_file,
+    DeviceFileType,
+)
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
@@ -333,7 +338,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         d.exec_()
 
     def _on_manage_keys(self) -> None:
-        devices = [device for device in list_available_devices(self.config.config_dir)]
+        devices = list_available_devices(self.config.config_dir)
         options = [_("ACTION_CANCEL"), _("ACTION_RECOVER_DEVICE")]
         if len(devices):
             options.append(_("ACTION_CREATE_RECOVERY_DEVICE"))
@@ -395,7 +400,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             if answer == _("ACTION_CREATE_RECOVERY_DEVICE"):
                 DeviceRecoveryExportWidget.show_modal(
-                    self.config, self.jobs_ctx, [device], parent=self
+                    self.config,
+                    self.jobs_ctx,
+                    [get_available_device(self.config.config_dir, device)],
+                    parent=self,
                 )
 
         widget = CreateOrgWidget.show_modal(
@@ -485,9 +493,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
             device, auth_method, password = widget.status
             self.reload_login_devices()
-            # mypy: Cast is safe here because we only need the device slug which
-            # is present in both `LocalDevice` and `AvailableDevice`
-            await self.try_login(cast(LocalDevice, device), auth_method, password)
+            await self.try_login(device, auth_method, password)
             answer = ask_question(
                 self,
                 _("TEXT_CLAIM_USER_SUCCESSFUL_TITLE"),
@@ -496,7 +502,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 oriented_question=True,
             )
             if answer == _("ACTION_CREATE_RECOVERY_DEVICE"):
-                DeviceRecoveryExportWidget.show_modal(self.config, self.jobs_ctx, [device], self)
+                DeviceRecoveryExportWidget.show_modal(
+                    self.config,
+                    self.jobs_ctx,
+                    [get_available_device(self.config.config_dir, device)],
+                    self,
+                )
 
         widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
