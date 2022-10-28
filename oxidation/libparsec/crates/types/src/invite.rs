@@ -1,19 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use rand::seq::SliceRandom;
-use rand::Rng;
+use rand::{seq::SliceRandom, Rng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
 
-use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
+use libparsec_crypto::{prelude::*, PrivateKey, PublicKey, SecretKey, VerifyKey};
 use serialization_format::parsec_data;
 
-use crate as libparsec_types;
-use crate::data_macros::impl_transparent_data_format_conversion;
-use crate::ext_types::new_uuid_type;
-use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
+use crate::{
+    self as libparsec_types, data_macros::impl_transparent_data_format_conversion,
+    ext_types::new_uuid_type, DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile,
+};
 
 /*
  * InvitationType

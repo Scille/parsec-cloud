@@ -2,9 +2,10 @@
 
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
+use rstest::rstest;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{CryptoError, SecretKey};
+use libparsec_crypto::{prelude::*, CryptoError, SecretKey};
 
 #[macro_use]
 mod common;
@@ -73,5 +74,30 @@ fn secret_key_should_verify_length_when_deserialize() {
             .unwrap_err()
             .to_string(),
         "Invalid data size"
+    );
+}
+
+#[test]
+fn test_recovery_passphrase() {
+    let (passphrase, key) = SecretKey::generate_recovery_passphrase();
+
+    let key2 = SecretKey::from_recovery_passphrase(&passphrase).unwrap();
+    assert_eq!(key2, key);
+
+    // Add dummy stuff to the passphrase should not cause issues
+    let altered_passphrase = passphrase.to_lowercase().replace('-', "@  白");
+    let key3 = SecretKey::from_recovery_passphrase(&altered_passphrase).unwrap();
+    assert_eq!(key3, key);
+}
+
+#[rstest]
+#[case::empty("")]
+#[case::only_invalid_characters("-@//白")]
+#[case::too_short("D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO")]
+#[case::too_long("D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO-NU4Q-NU4Q")]
+fn test_invalid_passphrase(#[case] bad_passphrase: &str) {
+    assert_eq!(
+        SecretKey::from_recovery_passphrase(bad_passphrase).unwrap_err(),
+        CryptoError::DataSize
     );
 }

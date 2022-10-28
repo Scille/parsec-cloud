@@ -5,12 +5,14 @@ use serde_with::{serde_as, Bytes};
 use std::{
     collections::HashSet,
     ffi::OsStr,
+    fs::File,
     path::{Path, PathBuf},
 };
 
-use crate::LocalDevice;
-use crate::{LocalDeviceError, LocalDeviceResult};
+use libparsec_crypto::{prelude::*, SecretKey};
 use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
+
+use crate::{LocalDevice, LocalDeviceError, LocalDeviceResult};
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -261,4 +263,55 @@ pub fn list_available_devices(config_dir: &Path) -> LocalDeviceResult<Vec<Availa
     }
 
     Ok(list)
+}
+
+pub async fn save_recovery_device(
+    key_file: &Path,
+    device: LocalDevice,
+    force: bool,
+) -> LocalDeviceResult<String> {
+    if File::open(key_file).is_ok() && !force {
+        return Err(LocalDeviceError::AlreadyExists(key_file.to_path_buf()));
+    }
+
+    let (passphrase, key) = SecretKey::generate_recovery_passphrase();
+
+    let ciphertext = key.encrypt(&device.dump());
+
+    let key_file_content = DeviceFile::Recovery(DeviceFileRecovery {
+        ciphertext,
+        organization_id: device.organization_id().clone(),
+        slug: device.slug(),
+        human_handle: device.human_handle,
+        device_label: device.device_label,
+        device_id: device.device_id,
+    });
+
+    key_file_content.save(key_file)?;
+
+    Ok(passphrase)
+}
+
+/// TODO: need test (backend_cmds required)
+pub async fn load_recovery_device(
+    key_file: &Path,
+    passphrase: &str,
+) -> LocalDeviceResult<LocalDevice> {
+    let ciphertext =
+        std::fs::read(key_file).map_err(|_| LocalDeviceError::Access(key_file.to_path_buf()))?;
+    let data = rmp_serde::from_slice::<DeviceFile>(&ciphertext)
+        .map_err(|_| LocalDeviceError::Deserialization(key_file.to_path_buf()))?;
+
+    let device = match data {
+        DeviceFile::Recovery(device) => device,
+        _ => return Err(LocalDeviceError::Validation(DeviceFileType::Recovery)),
+    };
+
+    let key =
+        SecretKey::from_recovery_passphrase(passphrase).map_err(LocalDeviceError::CryptoError)?;
+    let plaintext = key
+        .decrypt(&device.ciphertext)
+        .map_err(LocalDeviceError::CryptoError)?;
+    LocalDevice::load(&plaintext)
+        .map_err(|_| LocalDeviceError::Deserialization(key_file.to_path_buf()))
 }

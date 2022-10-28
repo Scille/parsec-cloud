@@ -1,13 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use libparsec_types::regex::Regex;
 use rstest::rstest;
-use std::collections::{HashMap, HashSet};
-use std::num::NonZeroU64;
+use std::{
+    collections::{HashMap, HashSet},
+    num::NonZeroU64,
+};
 
 use libparsec_client_types::*;
-use libparsec_crypto::*;
+use libparsec_crypto::{prelude::*, *};
 use libparsec_types::*;
 
 use tests_fixtures::{alice, timestamp, Device};

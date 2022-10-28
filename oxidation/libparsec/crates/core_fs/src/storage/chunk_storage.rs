@@ -1,15 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use diesel::dsl::count_star;
-use diesel::{sql_query, table, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
+use diesel::{
+    dsl::count_star, sql_query, table, AsChangeset, ExpressionMethods, Insertable, QueryDsl,
+    RunQueryDsl,
+};
 use std::sync::Mutex;
 
-use libparsec_crypto::SecretKey;
+use libparsec_crypto::{prelude::*, SecretKey};
 use libparsec_types::{ChunkID, TimeProvider, DEFAULT_BLOCK_SIZE};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
-use crate::error::{FSError, FSResult};
-use crate::extensions::CoalesceTotalSize;
+use crate::{
+    error::{FSError, FSResult},
+    extensions::CoalesceTotalSize,
+};
 
 table! {
     chunks (chunk_id) {

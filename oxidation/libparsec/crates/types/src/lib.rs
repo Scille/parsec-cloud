@@ -12,9 +12,10 @@ mod id;
 mod invite;
 mod manifest;
 mod message;
-pub mod regex;
+mod regex;
 mod time;
 
+pub use crate::regex::*;
 pub use addr::*;
 pub use certif::*;
 pub use error::*;

@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-#[allow(unused_macros)]
 macro_rules! test_serde {
     ($name:ident, $cls:ident) => {
         #[test]
@@ -12,7 +11,6 @@ macro_rules! test_serde {
     };
 }
 
-#[allow(unused_macros)]
 macro_rules! test_msgpack_serialization {
     ($name:ident, $cls:ident, $data:expr, $serialized:expr) => {
         #[test]
