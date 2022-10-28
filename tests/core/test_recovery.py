@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import pytest
-from parsec.api.protocol.types import DeviceLabel
 
+from parsec._parsec import SecretKey
+from parsec.crypto import CryptoError
+from parsec.api.protocol.types import DeviceLabel
 from parsec.core.local_device import (
     get_recovery_device_file_name,
     load_recovery_device,
@@ -11,18 +13,17 @@ from parsec.core.local_device import (
 )
 from parsec.core.recovery import generate_recovery_device, generate_new_device_from_recovery
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionRefused
-from parsec.crypto import generate_recovery_passphrase, derivate_secret_key_from_recovery_passphrase
 
 
 def test_recovery_passphrase():
-    passphrase, key = generate_recovery_passphrase()
+    passphrase, key = SecretKey.generate_recovery_passphrase()
 
-    key2 = derivate_secret_key_from_recovery_passphrase(passphrase)
+    key2 = SecretKey.from_recovery_passphrase(passphrase)
     assert key2 == key
 
     # Add dummy stuff to the passphrase should not cause issues
     altered_passphrase = passphrase.lower().replace("-", "@  白")
-    key3 = derivate_secret_key_from_recovery_passphrase(altered_passphrase)
+    key3 = SecretKey.from_recovery_passphrase(altered_passphrase)
     assert key3 == key
 
 
@@ -40,8 +41,8 @@ def test_recovery_passphrase():
     ],
 )
 def test_invalid_passphrase(bad_passphrase):
-    with pytest.raises(ValueError):
-        derivate_secret_key_from_recovery_passphrase(bad_passphrase)
+    with pytest.raises(CryptoError):
+        SecretKey.from_recovery_passphrase(bad_passphrase)
 
 
 @pytest.mark.trio

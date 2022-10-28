@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from types import ModuleType
 
 import attr
@@ -16,9 +17,6 @@ from parsec.crypto import (
     SigningKey,
     PrivateKey,
     CryptoError,
-    derivate_secret_key_from_password,
-    generate_recovery_passphrase,
-    derivate_secret_key_from_recovery_passphrase,
 )
 from parsec.api.protocol import (
     OrganizationID,
@@ -335,7 +333,7 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
             raise LocalDeviceValidationError("Not a password-protected device file")
 
         try:
-            key, _ = derivate_secret_key_from_password(password, cast(bytes, data["salt"]))
+            key = SecretKey.from_password(password, cast(bytes, data["salt"]))
             return key.decrypt(cast(bytes, data["ciphertext"]))
         except CryptoError as exc:
             raise LocalDeviceCryptoError(str(exc)) from exc
@@ -404,7 +402,8 @@ def save_device_with_password(
 
     def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict[str, bytes]]:
         try:
-            key, salt = derivate_secret_key_from_password(password)
+            salt = SecretKey.generate_salt()
+            key = SecretKey.from_password(password, salt)
             ciphertext = key.encrypt(cleartext)
 
         except CryptoError as exc:
@@ -486,8 +485,8 @@ async def load_recovery_device(key_file: PurePath, passphrase: str) -> LocalDevi
         raise LocalDeviceValidationError("Not a device recovery file")
 
     try:
-        key = derivate_secret_key_from_recovery_passphrase(passphrase)
-    except ValueError as exc:
+        key = SecretKey.from_recovery_passphrase(passphrase)
+    except CryptoError as exc:
         # Not really a crypto operation, but it is more coherent for the caller
         raise LocalDeviceCryptoError("Invalid passphrase") from exc
 
@@ -513,7 +512,7 @@ async def save_recovery_device(key_file: PurePath, device: LocalDevice, force: b
     if await key_file.exists() and not force:
         raise LocalDeviceAlreadyExistsError(f"Device key file `{key_file}` already exists")
 
-    passphrase, key = generate_recovery_passphrase()
+    passphrase, key = SecretKey.generate_recovery_passphrase()
 
     try:
         ciphertext = key.encrypt(device.dump())
