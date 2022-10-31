@@ -1,18 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Awaitable, Callable, Optional
 from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication
 
-from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
+from parsec._parsec import (
+    LocalDevice,
+    OrganizationID,
+    HumanHandle,
+    DeviceLabel,
+    BackendAddr,
+    BackendOrganizationBootstrapAddr,
+)
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendNotAvailable,
     BackendOutOfBallparkError,
 )
-from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
+from parsec.core.config import CoreConfig
 from parsec.core.invite import (
     bootstrap_organization,
     InviteNotFoundError,
@@ -28,7 +35,7 @@ from parsec.core.local_device import (
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
 )
-from parsec.core.gui.trio_jobs import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.trio_jobs import JobResultError
 from parsec.core.gui.desktop import get_default_device
@@ -43,11 +50,11 @@ logger = get_logger()
 
 
 async def _do_create_org(
-    config,
+    config: CoreConfig,
     human_handle: HumanHandle,
     device_label: DeviceLabel,
     backend_addr: BackendOrganizationBootstrapAddr,
-):
+) -> LocalDevice:
     try:
         new_device = await bootstrap_organization(
             backend_addr, human_handle=human_handle, device_label=device_label
@@ -75,7 +82,7 @@ async def _do_create_org(
 class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
     info_filled = pyqtSignal(bool)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setupUi(self)
         self.line_edit_user_email.validity_changed.connect(self.check_infos)
@@ -94,7 +101,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
         self.radio_use_custom.toggled.connect(self._switch_server)
         self.radio_use_commercial.setChecked(True)
 
-    def _are_inputs_valid(self):
+    def _are_inputs_valid(self) -> bool:
         return bool(
             self.line_edit_user_email.is_input_valid()
             and self.line_edit_user_full_name.is_input_valid()
@@ -109,7 +116,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
             )
         )
 
-    def _switch_server(self, _):
+    def _switch_server(self, _: Any) -> None:
         if self.radio_use_commercial.isChecked():
             self.widget_custom_backend.hide()
             self.widget_contract.show()
@@ -118,11 +125,11 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
             self.widget_custom_backend.show()
         self.check_infos()
 
-    def check_infos(self, _=None):
+    def check_infos(self, _: None = None) -> None:
         self.info_filled.emit(self._are_inputs_valid())
 
     @property
-    def backend_addr(self):
+    def backend_addr(self) -> BackendAddr | None:
         return (
             BackendAddr.from_url(self.line_edit_backend_addr.text(), allow_http_redirection=True)
             if self.radio_use_custom.isChecked()
@@ -134,13 +141,18 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     req_success = pyqtSignal(QtToTrioJob)
     req_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, config, start_addr: Optional[BackendAddr]):
+    def __init__(
+        self,
+        jobs_ctx: QtToTrioJobScheduler,
+        config: CoreConfig,
+        start_addr: Optional[BackendOrganizationBootstrapAddr],
+    ) -> None:
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.create_job = None
-        self.dialog = None
+        self.dialog: GreyedDialog | None = None
         self.status = None
         self.new_device = None
 
@@ -184,15 +196,15 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 self.current_widget.radio_use_commercial.setChecked(True)
                 self.current_widget.radio_use_custom.setDisabled(True)
 
-    def _on_info_filled(self, valid):
+    def _on_info_filled(self, valid: bool) -> None:
         self.button_validate.setEnabled(valid)
 
-    def on_close(self):
+    def on_close(self) -> None:
         self.status = None
         if self.create_job:
             self.create_job.cancel()
 
-    async def _on_next_clicked(self):
+    async def _on_next_clicked(self) -> None:
         if isinstance(self.current_widget, CreateOrgUserInfoWidget):
             backend_addr = None
 
@@ -201,11 +213,15 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             else:
                 org_id = OrganizationID(self.current_widget.line_edit_org_name.text())
                 try:
+                    if self.current_widget.radio_use_custom.isChecked():
+                        assert self.current_widget.backend_addr is not None
+                        addr = self.current_widget.backend_addr
+                    else:
+                        addr = self.config.preferred_org_creation_backend_addr
                     backend_addr = BackendOrganizationBootstrapAddr.build(
-                        backend_addr=self.current_widget.backend_addr
-                        if self.current_widget.radio_use_custom.isChecked()
-                        else self.config.preferred_org_creation_backend_addr,
+                        backend_addr=addr,
                         organization_id=org_id,
+                        token=None,
                     )
                 except ValueError as exc:
                     show_error(self, _("TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"), exception=exc)
@@ -227,6 +243,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 device_label=device_label,
                 backend_addr=backend_addr,
             )
+            assert self.dialog is not None
             self.dialog.button_close.setVisible(False)
             self.button_validate.setEnabled(False)
         else:
@@ -257,7 +274,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             except LocalDeviceError as exc:
                 show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
-    def _on_req_success(self, job):
+    def _on_req_success(self, job: QtToTrioJob) -> None:
         assert self.create_job is job
         assert self.create_job.is_finished()
         assert self.create_job.status == "ok"
@@ -278,10 +295,10 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.button_validate.setText(_("ACTION_CREATE_DEVICE"))
         self.button_validate.setEnabled(self.current_widget.is_auth_valid())
 
-    def _on_authentication_changed(self, auth_method, valid):
+    def _on_authentication_changed(self, auth_method: Any, valid: bool) -> None:
         self.button_validate.setEnabled(valid)
 
-    def _on_req_error(self, job):
+    def _on_req_error(self, job: QtToTrioJob) -> None:
         assert self.create_job is job
         assert self.create_job.is_finished()
         assert self.create_job.status != "ok"
@@ -291,46 +308,53 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         if status == "cancelled":
             return
 
-        errmsg = None
+        err_msg = None
         if status == "organization_already_exists":
-            errmsg = _("TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS")
+            err_msg = _("TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS")
         elif status == "invalid_email":
-            errmsg = _("TEXT_ORG_WIZARD_INVALID_EMAIL")
+            err_msg = _("TEXT_ORG_WIZARD_INVALID_EMAIL")
         elif status == "invalid_organization_id":
-            errmsg = _("TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID")
+            err_msg = _("TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID")
         elif status == "offline":
-            errmsg = _("TEXT_ORG_WIZARD_OFFLINE")
+            err_msg = _("TEXT_ORG_WIZARD_OFFLINE")
         elif status == "invite-not-found":
-            errmsg = _("TEXT_ORG_WIZARD_INVITE_NOT_FOUND")
+            err_msg = _("TEXT_ORG_WIZARD_INVITE_NOT_FOUND")
         elif status == "invite-already-used":
             if self.start_addr:
-                errmsg = _("TEXT_ORG_WIZARD_INVITE_ALREADY_USED")
+                err_msg = _("TEXT_ORG_WIZARD_INVITE_ALREADY_USED")
             else:
-                errmsg = _("TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS")
+                err_msg = _("TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS")
         elif status == "connection-refused":
-            errmsg = _("TEXT_ORG_WIZARD_CONNECTION_REFUSED")
+            err_msg = _("TEXT_ORG_WIZARD_CONNECTION_REFUSED")
         elif status == "connection-error":
-            errmsg = _("TEXT_ORG_WIZARD_CONNECTION_ERROR")
+            err_msg = _("TEXT_ORG_WIZARD_CONNECTION_ERROR")
         elif status == "out-of-ballpark":
-            errmsg = _("TEXT_BACKEND_STATE_DESYNC")
+            err_msg = _("TEXT_BACKEND_STATE_DESYNC")
         else:
-            errmsg = _("TEXT_ORG_WIZARD_UNKNOWN_FAILURE")
+            err_msg = _("TEXT_ORG_WIZARD_UNKNOWN_FAILURE")
         exc = self.create_job.exc
         if exc.params.get("exc"):
             exc = exc.params.get("exc")
-        show_error(self, errmsg, exception=exc)
+        show_error(self, err_msg, exception=exc)
         self.status = None
         self.create_job = None
         self.button_validate.setEnabled(True)
         self.dialog.button_close.setVisible(True)
 
     @classmethod
-    def show_modal(cls, jobs_ctx, config, parent, on_finished, start_addr=None):
-        w = cls(jobs_ctx, config, start_addr)
-        d = GreyedDialog(w, _("TEXT_ORG_WIZARD_TITLE"), parent=parent, width=1000)
-        w.dialog = d
+    def show_modal(
+        cls,
+        jobs_ctx: QtToTrioJobScheduler,
+        config: CoreConfig,
+        parent: QWidget,
+        on_finished: Callable[[], Awaitable[None]],
+        start_addr: BackendOrganizationBootstrapAddr | None = None,
+    ) -> CreateOrgWidget:
+        widget = cls(jobs_ctx, config, start_addr)
+        dialog = GreyedDialog(widget, _("TEXT_ORG_WIZARD_TITLE"), parent=parent, width=1000)
+        widget.dialog = dialog
 
-        d.finished.connect(on_finished)
+        dialog.finished.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop
-        d.show()
-        return w
+        dialog.show()
+        return widget
