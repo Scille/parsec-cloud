@@ -1,1 +1,1 @@
-maturin==0.13.5
+maturin==0.13.7
