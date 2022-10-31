@@ -16,8 +16,8 @@ from parsec.core.types import BackendPkiEnrollmentAddr
 from parsec.core.core_events import CoreEvent
 
 from parsec.core.pki import (
-    PkiEnrollementAccepterValidSubmittedCtx,
-    PkiEnrollementAccepterInvalidSubmittedCtx,
+    PkiEnrollmentAccepterValidSubmittedCtx,
+    PkiEnrollmentAccepterInvalidSubmittedCtx,
 )
 from parsec.core.pki.exceptions import PkiEnrollmentListError
 
@@ -141,7 +141,7 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
         self.button_reject.setIcon(QIcon(reject_pix))
         self.label_date.setText(format_datetime(pending.submitted_on))
 
-        if isinstance(self.pending, PkiEnrollementAccepterInvalidSubmittedCtx):
+        if isinstance(self.pending, PkiEnrollmentAccepterInvalidSubmittedCtx):
             if self.pending.submitter_x509_certificate:
                 self.widget_cert_infos.setVisible(True)
                 self.widget_cert_error.setVisible(False)
@@ -163,7 +163,7 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
             )
             self.label_cert_validity.setToolTip(textwrap.fill(str(self.pending.error), 80))
         else:
-            assert isinstance(self.pending, PkiEnrollementAccepterValidSubmittedCtx)
+            assert isinstance(self.pending, PkiEnrollmentAccepterValidSubmittedCtx)
             self.widget_cert_infos.setVisible(True)
             self.widget_cert_error.setVisible(False)
             self.button_accept.setVisible(True)

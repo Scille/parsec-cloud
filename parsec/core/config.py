@@ -28,7 +28,7 @@ def get_default_data_base_dir(environ: dict) -> Path:
         return Path(path) / "parsec"
 
 
-def get_default_config_dir(environ: dict) -> Path:
+def get_default_config_dir(environ: os._Environ) -> Path:
     if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:

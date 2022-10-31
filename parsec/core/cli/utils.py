@@ -4,11 +4,11 @@ from __future__ import annotations
 import os
 import trio
 import click
-from typing import List, TypeVar, Callable
+from typing import Any, List, TypeVar, Callable
 from functools import wraps, partial
 from pathlib import Path
 
-from parsec.core.config import get_default_config_dir, load_config
+from parsec.core.config import CoreConfig, get_default_config_dir, load_config
 from parsec.core.local_device import (
     LocalDeviceError,
     DeviceFileType,
@@ -30,10 +30,12 @@ from parsec.cli_utils import (
 from parsec.core.types import LocalDevice
 
 
-F = TypeVar("F", bound=Callable)
+R_gui_command_base_options = TypeVar("R_gui_command_base_options")
 
 
-def gui_command_base_options(fn: F) -> F:
+def gui_command_base_options(
+    fn: Callable[..., R_gui_command_base_options]
+) -> Callable[..., R_gui_command_base_options]:
     # Skip INFO logs by default allows to know in a glance if something went
     # wrong when running the GUI from a terminal
     for decorator in (
@@ -48,7 +50,12 @@ def gui_command_base_options(fn: F) -> F:
     return fn
 
 
-def cli_command_base_options(fn: F) -> F:
+R_cli_command_base_options = TypeVar("R_cli_command_base_options")
+
+
+def cli_command_base_options(
+    fn: Callable[..., R_cli_command_base_options]
+) -> Callable[..., R_cli_command_base_options]:
     # CLI command have a meaningful output, so we should avoid polluting it
     # with INFO logs.
     # On top of that, they are mostly short-running command so we don't
@@ -63,7 +70,10 @@ def cli_command_base_options(fn: F) -> F:
     return fn
 
 
-def core_config_options(fn: F) -> F:
+R_core_opts = TypeVar("R_core_opts")
+
+
+def core_config_options(fn: Callable[..., R_core_opts]) -> Callable[..., R_core_opts]:
     @click.option(
         "--pki-extra-trust-root",
         multiple=True,
@@ -76,9 +86,12 @@ def core_config_options(fn: F) -> F:
         "--config-dir", envvar="PARSEC_CONFIG_DIR", type=click.Path(exists=True, file_okay=False)
     )
     @wraps(fn)
-    def wrapper(pki_extra_trust_root, **kwargs):
+    def wrapper(pki_extra_trust_root: List[Path], **kwargs: object) -> R_core_opts:
         assert "config" not in kwargs
         config_dir = kwargs["config_dir"]
+        assert config_dir is None or isinstance(
+            config_dir, str
+        ), f"Invalid type for config_dir: {type(config_dir).__name__}"
         # `--sentry-*` are only present for gui command
         sentry_dsn = kwargs.get("sentry_dsn")
         sentry_environment = kwargs.get("sentry_environment", "")
@@ -114,7 +127,12 @@ def format_available_devices(devices: List[AvailableDevice]) -> str:
     return "\n".join(out)
 
 
-def core_config_and_available_device_options(fn: F) -> F:
+R_core_config_and_available_device_options = TypeVar("R_core_config_and_available_device_options")
+
+
+def core_config_and_available_device_options(
+    fn: Callable[..., R_core_config_and_available_device_options]
+) -> Callable[..., R_core_config_and_available_device_options]:
     @click.option(
         "--device",
         "-D",
@@ -123,9 +141,14 @@ def core_config_and_available_device_options(fn: F) -> F:
     )
     @core_config_options
     @wraps(fn)
-    def wrapper(**kwargs):
+    # MyPy don't like Any in decorator
+    # type: ignore[misc]
+    def wrapper(**kwargs: Any) -> R_core_config_and_available_device_options:
         config = kwargs["config"]
+        assert isinstance(config, CoreConfig)
+
         device_slughash = kwargs.pop("device")
+        assert isinstance(device_slughash, str)
 
         all_available_devices = list_available_devices(config.config_dir)
 
@@ -162,7 +185,12 @@ def core_config_and_available_device_options(fn: F) -> F:
     return wrapper
 
 
-def core_config_and_device_options(fn: F) -> F:
+R_core_config_and_device_options = TypeVar("R_core_config_and_device_options")
+
+
+def core_config_and_device_options(
+    fn: Callable[..., R_core_config_and_device_options]
+) -> Callable[..., R_core_config_and_device_options]:
     @click.option(
         "--password",
         "-P",
@@ -171,20 +199,25 @@ def core_config_and_device_options(fn: F) -> F:
     )
     @core_config_and_available_device_options
     @wraps(fn)
-    def wrapper(**kwargs):
+    # MyPy don't like `Any` in decorator
+    # type: ignore[misc]
+    def wrapper(**kwargs: object) -> R_core_config_and_device_options:
         password = kwargs["password"]
+        assert password is None or isinstance(password, str)
         available_device = kwargs.pop("device")
+        assert isinstance(available_device, AvailableDevice)
 
         try:
             if available_device.type == DeviceFileType.PASSWORD:
-                if password is None:
-                    password = click.prompt("password", hide_input=True)
-                device = load_device_with_password(available_device.key_file_path, password)
+                passwd: str = password or click.prompt("password", hide_input=True)
+                device = load_device_with_password(available_device.key_file_path, passwd)
             elif available_device.type == DeviceFileType.SMARTCARD:
                 # It's ok to be blocking here, we're not in async land yet
                 device = load_device_with_smartcard_sync(available_device.key_file_path)
             else:
-                raise SystemExit(f"Unsuported device file authentication `{available_device.type}`")
+                raise SystemExit(
+                    f"Unsupported device file authentication `{available_device.type}`"
+                )
 
         except LocalDeviceError as exc:
             raise SystemExit(f"Cannot load device {available_device.slughash}: {exc}")
@@ -195,12 +228,17 @@ def core_config_and_device_options(fn: F) -> F:
     return wrapper
 
 
-def save_device_options(fn: F) -> F:
+R_save_device_options = TypeVar("R_save_device_options")
+
+
+def save_device_options(
+    fn: Callable[..., R_save_device_options]
+) -> Callable[..., R_save_device_options]:
     @click.option(
         "--password", help="Password to protect the new device (you'll be prompted if not set)"
     )
     @wraps(fn)
-    def wrapper(**kwargs):
+    def wrapper(**kwargs: object) -> R_save_device_options:
         async def _save_device(config_dir: Path, device: LocalDevice) -> Path:
             password = kwargs["password"]
             device_display = click.style(device.slughash, fg="yellow")

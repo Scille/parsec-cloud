@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Any
 
 import click
 
@@ -17,12 +18,12 @@ async def _reencrypt_workspace(config: CoreConfig, device: LocalDevice, name: En
         workspace = core.find_workspace_from_name(name)
         workspace_id = workspace.id
         workspace_fs = core.user_fs.get_workspace(workspace_id)
-        reenc_needs = await workspace_fs.get_reencryption_need()
-        if not reenc_needs.need_reencryption:
+        reencryption_needs = await workspace_fs.get_reencryption_need()
+        if not reencryption_needs.need_reencryption:
             click.echo("The workspace does not need to be reencrypted")
             return
-        async with spinner("Reencrypting the workspace"):
-            if reenc_needs.reencryption_already_in_progress:
+        async with spinner("Re-encrypting the workspace"):
+            if reencryption_needs.reencryption_already_in_progress:
                 job = await core.user_fs.workspace_continue_reencryption(workspace_id)
             else:
                 job = await core.user_fs.workspace_start_reencryption(workspace_id)
@@ -33,15 +34,15 @@ async def _reencrypt_workspace(config: CoreConfig, device: LocalDevice, name: En
         click.echo("The workspace has been reencrypted")
 
 
-@click.command(short_help="reencrypt workspace")
+@click.command(short_help="re-encrypt workspace")
 @click.option("--workspace-name", required=True, type=EntryName)
 @core_config_and_device_options
 @cli_command_base_options
 def reencrypt_workspace(
-    config: CoreConfig, device: LocalDevice, workspace_name: EntryName, **kwargs
+    config: CoreConfig, device: LocalDevice, workspace_name: EntryName, **kwargs: Any
 ) -> None:
     """
-    Reencrypt a workspace
+    Re-encrypt a workspace
     """
     with cli_exception_handler(config.debug):
         trio_run(_reencrypt_workspace, config, device, workspace_name)

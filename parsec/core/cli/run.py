@@ -5,7 +5,7 @@ import trio
 import click
 import multiprocessing
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from parsec.utils import trio_run
 from parsec.logging import configure_sentry_logging
@@ -40,7 +40,7 @@ else:
         diagnose: bool,
         sentry_dsn: Optional[str],
         sentry_environment: str,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """
         Run parsec GUI
@@ -78,7 +78,7 @@ def run_mountpoint(
     config: CoreConfig,
     device: LocalDevice,
     mountpoint: Path,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     """
     Expose device's parsec drive on the given mountpoint.

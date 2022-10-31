@@ -23,7 +23,7 @@ __all__ = ("core_cmd",)
 
 
 @click.group()
-def core_cmd():
+def core_cmd() -> None:
     pass
 
 

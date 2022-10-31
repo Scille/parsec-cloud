@@ -27,8 +27,8 @@ from parsec._parsec import (
     WorkspaceEntry,
 )
 from parsec.core.pki.accepter import (
-    PkiEnrollementAccepterInvalidSubmittedCtx,
-    PkiEnrollementAccepterValidSubmittedCtx,
+    PkiEnrollmentAccepterInvalidSubmittedCtx,
+    PkiEnrollmentAccepterValidSubmittedCtx,
 )
 from parsec.event_bus import EventBus
 from parsec.api.protocol import (
@@ -380,7 +380,7 @@ class LoggedCore:
     async def list_submitted_enrollment_requests(
         self,
     ) -> List[
-        Union[PkiEnrollementAccepterInvalidSubmittedCtx, PkiEnrollementAccepterValidSubmittedCtx]
+        Union[PkiEnrollmentAccepterInvalidSubmittedCtx, PkiEnrollmentAccepterValidSubmittedCtx]
     ]:
         return await accepter_list_submitted_from_backend(
             cmds=self._backend_conn.cmds, extra_trust_roots=self.config.pki_extra_trust_roots

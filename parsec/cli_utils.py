@@ -124,7 +124,7 @@ async def aconfirm(*args, **kwargs):
     return await trio.to_thread.run_sync(partial(click.confirm, *args, **kwargs))
 
 
-async def aprompt(*args, **kwargs):
+async def aprompt(*args: Any, **kwargs: Any) -> Any:
     return await trio.to_thread.run_sync(partial(click.prompt, *args, **kwargs))
 
 

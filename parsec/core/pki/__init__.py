@@ -14,8 +14,8 @@ from parsec.core.pki.submitter import (
 )
 from parsec.core.pki.accepter import (
     accepter_list_submitted_from_backend,
-    PkiEnrollementAccepterValidSubmittedCtx,
-    PkiEnrollementAccepterInvalidSubmittedCtx,
+    PkiEnrollmentAccepterValidSubmittedCtx,
+    PkiEnrollmentAccepterInvalidSubmittedCtx,
 )
 
 
@@ -34,6 +34,6 @@ __all__ = (
     "PkiEnrollmentFinalizedCtx",
     # Accepter
     "accepter_list_submitted_from_backend",
-    "PkiEnrollementAccepterValidSubmittedCtx",
-    "PkiEnrollementAccepterInvalidSubmittedCtx",
+    "PkiEnrollmentAccepterValidSubmittedCtx",
+    "PkiEnrollmentAccepterInvalidSubmittedCtx",
 )

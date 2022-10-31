@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Any
 
 import click
 
@@ -21,7 +22,7 @@ async def _create_workspace(config: CoreConfig, device: LocalDevice, name: Entry
 @click.argument("name")
 @core_config_and_device_options
 @cli_command_base_options
-def create_workspace(config: CoreConfig, device: LocalDevice, name: str, **kwargs) -> None:
+def create_workspace(config: CoreConfig, device: LocalDevice, name: str, **kwargs: Any) -> None:
     """
     Create a new workspace for the given device.
     """
