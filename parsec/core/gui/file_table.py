@@ -31,7 +31,6 @@ from PyQt5.QtWidgets import (
 )
 from parsec.api.data import EntryName
 from parsec.core import CoreConfig
-from parsec.core.fs import WorkspaceFS
 
 from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.gui.lang import translate as _, format_datetime
@@ -57,9 +56,7 @@ class PasteStatus:
         Disabled = 1
         Enabled = 2
 
-    def __init__(
-        self, status: PasteStatus.Status, source_workspace: Optional[WorkspaceFS] = None
-    ) -> None:
+    def __init__(self, status: PasteStatus.Status, source_workspace: Optional[str] = None) -> None:
         self.source_workspace = source_workspace
         self.status = status
 

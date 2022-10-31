@@ -125,7 +125,7 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         path: FsPath,
         core: LoggedCore,
         parent: QWidget,
-        on_finished: Callable[..., None],
+        on_finished: Optional[Callable[..., None]],
     ) -> FileStatusWidget:
         w = cls(jobs_ctx=jobs_ctx, workspace_fs=workspace_fs, path=path, core=core)
         d = GreyedDialog(

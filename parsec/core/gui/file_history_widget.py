@@ -195,7 +195,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         close_version_list: pyqtBoundSignal,
         core: LoggedCore,
         parent: QWidget,
-        on_finished: Callable[..., None],
+        on_finished: Optional[Callable[..., None]],
     ) -> FileHistoryWidget:
         w = cls(
             jobs_ctx=jobs_ctx,
