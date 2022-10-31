@@ -20,7 +20,7 @@ PASSWORD_CSS = {
 }
 
 
-def get_password_strength_text(password_score):
+def get_password_strength_text(password_score: int) -> str:
     PASSWORD_STRENGTH_TEXTS = [
         _("TEXT_PASSWORD_VALIDATION_TOO_SHORT"),
         _("TEXT_PASSWORD_VALIDATION_VERY_WEAK"),
@@ -32,7 +32,7 @@ def get_password_strength_text(password_score):
     return PASSWORD_STRENGTH_TEXTS[password_score]
 
 
-def get_password_strength(password, excluded_strings=None):
+def get_password_strength(password: str, excluded_strings: list[str] | None = None) -> int:
     if len(password) < 8:
         return 0
     result = zxcvbn(password, user_inputs=excluded_strings)
@@ -40,19 +40,19 @@ def get_password_strength(password, excluded_strings=None):
 
 
 class PasswordStrengthWidget(QWidget, Ui_PasswordStrengthWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setupUi(self)
-        self._excluded_strings = []
+        self._excluded_strings: list[str] = []
 
-    def set_excluded_strings(self, excluded_strings: List[str]):
+    def set_excluded_strings(self, excluded_strings: List[str]) -> None:
         self._excluded_strings = []
         # User inputs are passed raw, we have to clean them up a bit
         # We split them up on the most common characters
         for exc_str in excluded_strings:
             self._excluded_strings += [x for x in re.split(r"\W+", exc_str) if x and len(x) > 3]
 
-    def on_password_change(self, text):
+    def on_password_change(self, text: str | None) -> None:
         if not text:
             self.hide()
             return
@@ -65,5 +65,5 @@ class PasswordStrengthWidget(QWidget, Ui_PasswordStrengthWidget):
         self.label.setStyleSheet(PASSWORD_CSS[score])
         self.show()
 
-    def get_password_strength(self, password):
+    def get_password_strength(self, password: str) -> int:
         return get_password_strength(password, self._excluded_strings)
