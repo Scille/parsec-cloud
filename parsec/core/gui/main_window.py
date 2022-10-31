@@ -653,6 +653,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     log_widget.reload_devices()
         elif state == "connected":
             device = tab.current_device
+            assert device is not None
             tab_name = f"{device.organization_id.str} - {device.short_user_display} - {device.device_display}"
             self.tab_center.setTabToolTip(idx, tab_name)
             self.tab_center.setTabText(
