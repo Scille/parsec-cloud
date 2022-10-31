@@ -88,7 +88,14 @@ class LocalDateTime:
     """
 
     def __init__(
-        self, year: int, month: int, day: int, hour: int, minute: int, second: int, microsecond: int
+        self,
+        year: int,
+        month: int,
+        day: int,
+        hour: int = 0,
+        minute: int = 0,
+        second: int = 0,
+        microsecond: int = 0,
     ) -> None: ...
     @property
     def year(self) -> int: ...
