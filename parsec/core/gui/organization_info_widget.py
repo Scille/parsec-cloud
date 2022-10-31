@@ -28,6 +28,7 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
         super().__init__()
         self.setupUi(self)
 
+        self.dialog: GreyedDialog | None = None
         self.label_backend_addr.setText(org_addr)
         self.label_backend_addr.setCursorPosition(0)
         self.button_copy_to_clipboard.clicked.connect(lambda: self._on_copy_addr_clicked(org_addr))
@@ -98,7 +99,7 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
             else:
                 self.label_sequestration_state.setVisible(False)
 
-    def _on_copy_addr_clicked(self, org_addr: str):
+    def _on_copy_addr_clicked(self, org_addr: str) -> None:
         desktop.copy_to_clipboard(org_addr)
         SnackbarManager.inform(translate("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
 
@@ -110,8 +111,8 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
         org_addr: str,
         stats: Optional[OrganizationStats] = None,
         config: Optional[OrganizationConfig] = None,
-        parent=None,
-    ):
+        parent: QWidget | None = None,
+    ) -> GreyedDialog:
         w = cls(profile, org_addr=org_addr, stats=stats, config=config)
         d = GreyedDialog(w, title=org_id.str, parent=parent, width=800)
         w.dialog = d
