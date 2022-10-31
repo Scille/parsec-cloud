@@ -50,24 +50,24 @@ class EventFilterCallback(Protocol):
 class EventWaiter:
     def __init__(self, filter: Optional[EventFilterCallback]):
         self._filter = filter
-        self._event_occured = trio.Event()
+        self._event_occurred = trio.Event()
         self._event_result: Optional[Tuple[Enum, Dict[str, object]]] = None
 
     def _cb(self, event: Enum, **kwargs: object) -> None:
-        if self._event_occured.is_set():
+        if self._event_occurred.is_set():
             return
         if self._filter and not self._filter(event, **kwargs):
             return
         self._event_result = (event, kwargs)
-        self._event_occured.set()
+        self._event_occurred.set()
 
     async def wait(self) -> Tuple[Enum, Dict[str, object]]:
-        await self._event_occured.wait()
+        await self._event_occurred.wait()
         assert self._event_result is not None
         return self._event_result
 
     def clear(self) -> None:
-        self._event_occured = trio.Event()
+        self._event_occurred = trio.Event()
         self._event_result = None
 
 
