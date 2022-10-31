@@ -26,7 +26,7 @@ chrono = { version = "0.4.22", features = ["serde"] }
 # the latter is much faster (see. https://github.com/uuid-rs/uuid/pull/545,
 # tl;dr: `rand` uses `getrandom` as seed then applies a fast chacha algo on it)
 # Hence `fast-rng` feature which enables the use of `rand`.
-uuid = { version = "1.1.2", features = ["serde", "v4", "fast-rng"] }
+uuid = { version = "1.2.1", features = ["serde", "v4", "fast-rng"] }
 data-encoding = "2.3.2"
 url = "2.3.1"
 percent-encoding = "2.2.0"
