@@ -1,25 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Callable, Tuple
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtBoundSignal, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.gui.trio_jobs import QtToTrioJob
+from parsec._parsec import DateTime
+from parsec.api.protocol.types import UserID
+from parsec.core.fs import FsPath, WorkspaceFS
+from parsec.core.gui.file_items import Optional
+from parsec.core.logged_core import LoggedCore
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
+from parsec.core.fs.workspacefs.versioning_helpers import TimestampBoundedData, VersionLister
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.file_size import get_filesize
 from parsec.core.gui.ui.file_history_widget import Ui_FileHistoryWidget
 from parsec.core.gui.ui.file_history_button import Ui_FileHistoryButton
+from parsec.core.types import UserInfo
 
 
-async def _do_workspace_version(version_lister, path, core):
+async def _do_workspace_version(
+    version_lister: VersionLister, path: FsPath, core: LoggedCore
+) -> Tuple[list[Tuple[UserInfo, TimestampBoundedData]], bool]:
     versions_list, download_limit_reached = await version_lister.list(
         path, max_manifest_queries=100
     )
 
-    _cache = {}
+    _cache: dict[UserID, UserInfo] = {}
 
-    async def get_user_info(user_id):
+    async def get_user_info(user_id: UserID) -> UserInfo:
         return _cache.setdefault(user_id, await core.get_user_info(user_id))
 
     return (
@@ -30,7 +40,16 @@ async def _do_workspace_version(version_lister, path, core):
 
 
 class FileHistoryButton(QWidget, Ui_FileHistoryButton):
-    def __init__(self, version, creator, name, size, src, dst, timestamp):
+    def __init__(
+        self,
+        version: str,
+        creator: str,
+        name: FsPath,
+        size: int,
+        src: FsPath,
+        dst: FsPath,
+        timestamp: DateTime,
+    ) -> None:
         super().__init__()
         self.setupUi(self)
         self.label_version.setText(str(version))
@@ -53,18 +72,18 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
 
     def __init__(
         self,
-        jobs_ctx,
-        workspace_fs,
-        path,
-        reload_timestamped_signal,
-        update_version_list,
-        close_version_list,
-        core,
-    ):
+        jobs_ctx: QtToTrioJobScheduler,
+        workspace_fs: WorkspaceFS,
+        path: FsPath,
+        reload_timestamped_signal: pyqtBoundSignal,
+        update_version_list: pyqtBoundSignal,
+        close_version_list: pyqtBoundSignal,
+        core: LoggedCore,
+    ) -> None:
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
-        self.dialog = None
+        self.dialog: Optional[GreyedDialog] = None
         self.core = core
         update_version_list.connect(self.reset_dialog)
         self.get_versions_success.connect(self.on_get_version_success)
@@ -75,12 +94,14 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         self.set_loading_in_progress(False)
         self.reset_dialog(workspace_fs, self.version_lister, path)
 
-    def set_loading_in_progress(self, in_progress: bool):
+    def set_loading_in_progress(self, in_progress: bool) -> None:
         self.loading_in_progress = in_progress
         self.area_list.setVisible(not in_progress)
         self.spinner.setVisible(in_progress)
 
-    def reset_dialog(self, workspace_fs, version_lister, path):
+    def reset_dialog(
+        self, workspace_fs: WorkspaceFS, version_lister: VersionLister, path: FsPath
+    ) -> None:
         if self.loading_in_progress:
             return
         self.set_loading_in_progress(True)
@@ -88,13 +109,13 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         self.path = path
         self.reset_list()
 
-    def load_more(self):
+    def load_more(self) -> None:
         if self.loading_in_progress:
             return
         self.set_loading_in_progress(True)
         self.reset_list()
 
-    def reset_list(self):
+    def reset_list(self) -> None:
         while self.layout_history.count() != 0:
             item = self.layout_history.takeAt(0)
             if item:
@@ -111,7 +132,16 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             core=self.core,
         )
 
-    def add_history_item(self, version, path, creator, size, timestamp, src_path, dst_path):
+    def add_history_item(
+        self,
+        version: str,
+        path: FsPath,
+        creator: str,
+        size: int,
+        timestamp: DateTime,
+        src_path: FsPath,
+        dst_path: FsPath,
+    ) -> None:
         button = FileHistoryButton(
             version=version,
             creator=creator,
@@ -124,7 +154,9 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         self.layout_history.addWidget(button)
         button.show()
 
-    def on_get_version_success(self, job):
+    def on_get_version_success(self, job: QtToTrioJob) -> None:
+        assert self.versions_job is not None
+        assert self.versions_job.ret is not None
         versions_list, download_limit_reached = self.versions_job.ret
         if download_limit_reached:
             self.button_load_more_entries.setVisible(False)
@@ -141,29 +173,30 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             )
         self.set_loading_in_progress(False)
 
-    def on_get_version_error(self, job):
+    def on_get_version_error(self, job: QtToTrioJob) -> None:
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("TEXT_FILE_HISTORY_LIST_FAILURE"), exception=self.versions_job.exc)
         self.versions_job = None
+        assert self.dialog is not None
         self.dialog.reject()
 
-    def on_close(self):
+    def on_close(self) -> None:
         if self.versions_job:
             self.versions_job.cancel()
 
     @classmethod
-    def show_modal(
+    def show_modal(  # type: ignore[misc]
         cls,
-        jobs_ctx,
-        workspace_fs,
-        path,
-        reload_timestamped_signal,
-        update_version_list,
-        close_version_list,
-        core,
-        parent,
-        on_finished,
-    ):
+        jobs_ctx: QtToTrioJobScheduler,
+        workspace_fs: WorkspaceFS,
+        path: FsPath,
+        reload_timestamped_signal: pyqtBoundSignal,
+        update_version_list: pyqtBoundSignal,
+        close_version_list: pyqtBoundSignal,
+        core: LoggedCore,
+        parent: QWidget,
+        on_finished: Callable[..., None],
+    ) -> FileHistoryWidget:
         w = cls(
             jobs_ctx=jobs_ctx,
             workspace_fs=workspace_fs,
