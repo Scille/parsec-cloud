@@ -541,7 +541,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "maturin"
-version = "0.13.6"
+version = "0.13.7"
 description = "Build and publish crates with pyo3, rust-cpython and cffi bindings as well as rust binaries as python packages"
 category = "dev"
 optional = false
@@ -1929,19 +1929,18 @@ markupsafe = [
     {file = "MarkupSafe-2.1.1.tar.gz", hash = "sha256:7f91197cc9e48f989d12e4e6fbc46495c446636dfc81b9ccf50bb0ec74b91d4b"},
 ]
 maturin = [
-    {file = "maturin-0.13.6-py3-none-linux_armv6l.whl", hash = "sha256:860badb4c7a13e5e6d5df258c409c2b4b23591af293fe47a5d85bf112ffce16d"},
-    {file = "maturin-0.13.6-py3-none-macosx_10_7_x86_64.whl", hash = "sha256:b4da3c045d29f04dd4d11978d6b16b46daaacd16d1ad59e02008198837537cc8"},
-    {file = "maturin-0.13.6-py3-none-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:2ab4d3ee49f5926a0cf26a319609e03eb37eb00f338e544ad6445ecb1971f2ef"},
-    {file = "maturin-0.13.6-py3-none-manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686.whl", hash = "sha256:ca1e1b7b2c1e9a5d8e0ad11f63d5181159ca52f1e14a8ee8472bf65e7f56d4fa"},
-    {file = "maturin-0.13.6-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:44add21ea04aa3abef41e840113a85d83ab28c354025c150b1f0a943b8d4a884"},
-    {file = "maturin-0.13.6-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:ef01b71d57f01aef29ec804ea0e895e9f966b34bf24e874a71a1c270f42d7492"},
-    {file = "maturin-0.13.6-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l.whl", hash = "sha256:3cd53bb17f6d81e1d19fde5b65722f1a1fcda7b63cd9c99873252c7e3b9659f1"},
-    {file = "maturin-0.13.6-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le.whl", hash = "sha256:3d8f24d7698944e4effab479967dc2f73aeb427aa5e8542abeba0bf4812d3168"},
-    {file = "maturin-0.13.6-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:10b5563a047bed00b3ac791030205dc4b916193795da0143b52050046ae2fd31"},
-    {file = "maturin-0.13.6-py3-none-win32.whl", hash = "sha256:3db7663f4a1b81370ec1c6494b4701220b7c64ed50c28d9c37ce171d73a127c1"},
-    {file = "maturin-0.13.6-py3-none-win_amd64.whl", hash = "sha256:de35b0e88c5f8ecbbbc4c44bbdf0bbfd6668b24631627725f86fa3323e112d14"},
-    {file = "maturin-0.13.6-py3-none-win_arm64.whl", hash = "sha256:0735621caafc0c65d809e1d381afdea82fb0c44b08a2619ec96cccf7e37d5c3b"},
-    {file = "maturin-0.13.6.tar.gz", hash = "sha256:df649c77dc9da2182322764fdaa265ef4e2fd74c87d9022e3463e130e5d2c536"},
+    {file = "maturin-0.13.7-py3-none-macosx_10_7_x86_64.whl", hash = "sha256:bc58b0266a4c124f9afd69a987ac324ff35c0d963b41073ed64a32f94c226d5a"},
+    {file = "maturin-0.13.7-py3-none-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:424d53adc9684167cf89829275fe5072331a197de0ac08e7a893f9283c7df213"},
+    {file = "maturin-0.13.7-py3-none-manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686.whl", hash = "sha256:3137876c338eb7e551ba44a609b5f02d02454d1b3a8677ad6bf2121c5a92b2b7"},
+    {file = "maturin-0.13.7-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:a96f1b3ede71c0f76b8c7cfac18a9eec90174bdf434fa9aeff491be9a7ca5179"},
+    {file = "maturin-0.13.7-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:0b6ac1219a809155057fd1f358f7ece03c3abd2e2991832ce5146825a9fa4160"},
+    {file = "maturin-0.13.7-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l.whl", hash = "sha256:3c36f429adc3a8af8de9838399750742a86053f0031a953b48ee92932120dc0c"},
+    {file = "maturin-0.13.7-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le.whl", hash = "sha256:bb3a2830d64ae6a324571f694475b91111e827bc0ccc60a0c47f4fb596a46bd8"},
+    {file = "maturin-0.13.7-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:794f58d3103449f8cd8ab5f36fd05c31b8d8de3643cd0e3720fd5dc3c328dd5c"},
+    {file = "maturin-0.13.7-py3-none-win32.whl", hash = "sha256:63586eb286866264ec62d29df6ab955360de6226128f67d14623ffe1a12d4963"},
+    {file = "maturin-0.13.7-py3-none-win_amd64.whl", hash = "sha256:f50d62aca567fdbbb929771794f3c5c78048ef0efa4af7d83ed472a8b8d26454"},
+    {file = "maturin-0.13.7-py3-none-win_arm64.whl", hash = "sha256:8c6225e7eba2885a0cd82a6cf898e74bb720796a5744e0450f3b1340d1ca97af"},
+    {file = "maturin-0.13.7.tar.gz", hash = "sha256:c0a77aa0c57f945649ca711c806203a1b6888ad49c2b8b85196ffdcf0421db77"},
 ]
 mccabe = [
     {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
@@ -2204,6 +2203,10 @@ pyqt5-sip = [
     {file = "PyQt5_sip-12.11.0-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:4031547dfb679be309094bfa79254f5badc5ddbe66b9ad38e319d84a7d612443"},
     {file = "PyQt5_sip-12.11.0-cp310-cp310-win32.whl", hash = "sha256:ad21ca0ee8cae2a41b61fc04949dccfab6fe008749627d94e8c7078cb7a73af1"},
     {file = "PyQt5_sip-12.11.0-cp310-cp310-win_amd64.whl", hash = "sha256:3126c84568ab341c12e46ded2230f62a9a78752a70fdab13713f89a71cd44f73"},
+    {file = "PyQt5_sip-12.11.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:bd733667098cac70e89279d9c239106d543fb480def62a44e6366ccb8f68510b"},
+    {file = "PyQt5_sip-12.11.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:ec1d8ce50be76c5c1d1c86c6dc0ccacc2446172dde98b663a17871f532f9bd44"},
+    {file = "PyQt5_sip-12.11.0-cp311-cp311-win32.whl", hash = "sha256:43dfe6dd409e713edeb67019b85419a7a0dc9923bfc451d6cf3778471c122532"},
+    {file = "PyQt5_sip-12.11.0-cp311-cp311-win_amd64.whl", hash = "sha256:afa4ffffc54e306669bf2b66ea37abbc56c5cdda4f3f474d20324e3634302b12"},
     {file = "PyQt5_sip-12.11.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:0f77655c62ec91d47c2c99143f248624d44dd2d8a12d016e7c020508ad418aca"},
     {file = "PyQt5_sip-12.11.0-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:ec5e9ef78852e1f96f86d7e15c9215878422b83dde36d44f1539a3062942f19c"},
     {file = "PyQt5_sip-12.11.0-cp37-cp37m-win32.whl", hash = "sha256:d12b81c3a08abf7657a2ebc7d3649852a1f327eb2146ebadf45930486d32e920"},
