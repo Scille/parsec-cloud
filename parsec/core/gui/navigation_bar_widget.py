@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional, List
+from typing import Any, Callable, Optional, List, cast
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPixmap, QColor
@@ -24,7 +24,7 @@ from parsec.core.gui.custom_widgets import ClickableLabel, IconLabel
 class NavigationBarWidget(QWidget):
     route_clicked = pyqtSignal(FsPath)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Path can be quite long and they would force a window resize,
         # so we put them inside a ScrollArea.
@@ -55,20 +55,20 @@ class NavigationBarWidget(QWidget):
         self.paths: List[EntryName] = []
         self.workspace_name: Optional[EntryName] = None
 
-    def _on_range_changed(self, min, max):
+    def _on_range_changed(self, min: int, max: int) -> None:
         self.scroll_area.horizontalScrollBar().setSliderPosition(max)
 
-    def _on_label_clicked(self, idx):
-        def _internal_label_clicked(_title):
+    def _on_label_clicked(self, idx: int) -> Callable[..., None]:
+        def _internal_label_clicked(_title: object) -> None:
             complete_path = FsPath([p for i, p in enumerate(self.paths) if i < idx])
             self.route_clicked.emit(complete_path)
 
         return _internal_label_clicked
 
-    def get_current_path(self):
+    def get_current_path(self) -> FsPath:
         return FsPath(self.paths)
 
-    def from_path(self, workspace_name: EntryName, path: str):
+    def from_path(self, workspace_name: EntryName, path: str) -> None:
         self.clear()
         path = FsPath(path)
         parts = [workspace_name]
@@ -86,15 +86,15 @@ class NavigationBarWidget(QWidget):
                 icon.setPixmap(QPixmap(":/icons/images/material/fiber_manual_record.svg"))
                 icon.apply_style()
                 icon.setStyleSheet("margin-right: 5px;")
-                self.layout().insertWidget(0, icon)
+                cast(QHBoxLayout, self.layout()).insertWidget(0, icon)
             else:
                 icon.setFixedSize(15, 15)
                 icon.setPixmap(QPixmap(":/icons/images/material/chevron_right.svg"))
                 icon.apply_style()
-                self.inner_widget.layout().insertWidget(
+                cast(QHBoxLayout, self.inner_widget.layout()).insertWidget(
                     self.inner_widget.layout().count() - 1, icon
                 )
-            label = None
+            label: None | QLabel = None
             if idx != len(parts) - 1:
                 obj_name = str(idx)
                 label = ClickableLabel(part.str)
@@ -110,9 +110,11 @@ class NavigationBarWidget(QWidget):
             font.setBold(True)
             font.setPixelSize(16)
             label.setFont(font)
-            self.inner_widget.layout().insertWidget(self.inner_widget.layout().count() - 1, label)
+            cast(QHBoxLayout, self.inner_widget.layout()).insertWidget(
+                self.inner_widget.layout().count() - 1, label
+            )
 
-    def clear(self):
+    def clear(self) -> None:
         self.paths = []
         self.workspace_name = None
         while self.layout().count() != 1:
