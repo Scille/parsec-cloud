@@ -235,7 +235,7 @@ jobs:
     needs: package-wheel
     runs-on: windows-2022
     steps:
-      - uses: actions/setup-python@b55428b1882923874294fa556849718a1d7f2ca5  # pin v4.2.0
+      - uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984  # pin v4.3.0
         with:
           python-version: ${{ env.python-version }}
 
@@ -291,7 +291,7 @@ jobs:
     steps:
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
-      - uses: actions/setup-python@b55428b1882923874294fa556849718a1d7f2ca5  # pin v4.2.0
+      - uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984  # pin v4.3.0
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
