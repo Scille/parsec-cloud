@@ -6,7 +6,7 @@ from uuid import UUID
 from pathlib import Path
 from hashlib import sha1
 from parsec._parsec import DateTime
-from typing import Iterable, List, Optional, cast
+from typing import Iterable, Optional, cast
 
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
@@ -42,7 +42,7 @@ from parsec.core.pki.exceptions import (
 
 async def accepter_list_submitted_from_backend(
     cmds: BackendAuthenticatedCmds, extra_trust_roots: Iterable[Path] = ()
-) -> List[PkiEnrollmentAccepterValidSubmittedCtx | PkiEnrollmentAccepterInvalidSubmittedCtx]:
+) -> list[PkiEnrollmentAccepterValidSubmittedCtx | PkiEnrollmentAccepterInvalidSubmittedCtx]:
     """
     Raises:
         BackendNotAvailable
@@ -60,7 +60,7 @@ async def accepter_list_submitted_from_backend(
     if rep["status"] != "ok":
         raise PkiEnrollmentListError(f"Backend refused to list enrollments: {rep['status']}", rep)
 
-    pendings: List[
+    pendings: list[
         PkiEnrollmentAccepterInvalidSubmittedCtx | PkiEnrollmentAccepterValidSubmittedCtx
     ] = []
 
@@ -280,7 +280,7 @@ class PkiEnrollmentAccepterInvalidSubmittedCtx:
     - PkiEnrollmentCertificateSignatureError: when the provided signature does not correspond to the certificate public key
     - PkiEnrollmentCertificateValidationError: when the provided certificate cannot be validated using the configured trust roots
     - PkiEnrollmentCertificateError: an generic certificate-related errors
-    - PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
+    - PkiEnrollmentPayloadValidationError: when some enrollment information cannot be properly loaded
 
     The `submitter_x509_certificate` is optional depending on whether the certificate information could be successfully extracted
     before the error or not.

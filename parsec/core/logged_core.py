@@ -208,7 +208,7 @@ class LoggedCore:
         except RemoteDevicesManagerNotFoundError as exc:
             raise BackendNotFoundError(str(exc)) from exc
         except RemoteDevicesManagerError as exc:
-            # TODO: we should be using our own kind of exception instead of borowing BackendConnectionError...
+            # TODO: we should be using our own kind of exception instead of borrowing BackendConnectionError...
             raise BackendConnectionError(
                 f"Error while fetching user {user_id.str} certificates"
             ) from exc
@@ -237,7 +237,7 @@ class LoggedCore:
         except RemoteDevicesManagerNotFoundError as exc:
             raise BackendNotFoundError(str(exc)) from exc
         except RemoteDevicesManagerError as exc:
-            # TODO: we should be using our own kind of exception instead of borowing BackendConnectionError...
+            # TODO: we should be using our own kind of exception instead of borrowing BackendConnectionError...
             raise BackendConnectionError(
                 f"Error while fetching user {user_id.str} certificates"
             ) from exc
