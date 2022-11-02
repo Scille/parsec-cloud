@@ -1,11 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Any
 
-from parsec.core.core_events import CoreEvent
 import sys
 
 from PyQt5.QtWidgets import QWidget
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 
+from parsec.event_bus import EventBus
+from parsec.core.config import CoreConfig
+from parsec.core.core_events import CoreEvent
 from parsec.core.gui import lang
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_dialogs import show_info
@@ -14,7 +18,14 @@ from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
 
 
 class SettingsWidget(QWidget, Ui_SettingsWidget):
-    def __init__(self, core_config, jobs_ctx, event_bus, *args, **kwargs):
+    def __init__(
+        self,
+        core_config: CoreConfig,
+        jobs_ctx: QtToTrioJobScheduler,
+        event_bus: EventBus,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.core_config = core_config
         self.event_bus = event_bus
@@ -40,11 +51,11 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.button_check_version.clicked.connect(self.check_version)
         self.check_box_show_confined.setChecked(self.core_config.gui_show_confined)
 
-    def check_version(self):
+    def check_version(self) -> None:
         d = CheckNewVersion(self.jobs_ctx, self.event_bus, self.core_config, parent=self)
         d.exec_()
 
-    def save(self):
+    def save(self) -> None:
         self.event_bus.send(
             CoreEvent.GUI_CONFIG_CHANGED,
             telemetry_enabled=self.check_box_send_data.isChecked(),
