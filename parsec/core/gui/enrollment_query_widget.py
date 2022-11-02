@@ -56,7 +56,7 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         self.button_ask_to_join.setEnabled(self.line_edit_device.is_input_valid())
 
     def _on_ask_to_join_clicked(self) -> None:
-        self.jobs_ctx.submit_job(None, None, self.make_enrollment_request)
+        _ = self.jobs_ctx.submit_job(None, None, self.make_enrollment_request)
 
     async def make_enrollment_request(self) -> None:
         # Catch all errors
@@ -142,7 +142,7 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
             self.button_ask_to_join.setEnabled(False)
 
     def _on_select_cert_clicked(self) -> None:
-        self.jobs_ctx.submit_job(None, None, self.prepare_enrollment_request)
+        _ = self.jobs_ctx.submit_job(None, None, self.prepare_enrollment_request)
 
     @classmethod
     def show_modal(

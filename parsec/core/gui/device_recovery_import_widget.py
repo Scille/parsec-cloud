@@ -122,7 +122,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         self.button_validate.setEnabled(valid)
 
     async def _create_new_device(
-        self, device_label: DeviceLabel, file_path: Path, passphrase: str
+        self, device_label: DeviceLabel, file_path: PurePath, passphrase: str
     ) -> LocalDevice:
         try:
             recovery_device = await load_recovery_device(file_path, passphrase)
@@ -149,7 +149,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         if isinstance(self.current_page, DeviceRecoveryImportPage1Widget):
             # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
             device_label = DeviceLabel(self.current_page.line_edit_device.clean_text())
-            self.jobs_ctx.submit_job(
+            _ = self.jobs_ctx.submit_job(
                 (self, "create_new_device_success"),
                 (self, "create_new_device_failure"),
                 self._create_new_device,
@@ -187,8 +187,8 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
                 show_error(self, translate("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
                 self.button_validate.setEnabled(True)
 
-    def _on_create_new_device_success(self, job: QtToTrioJob) -> None:
-        self.new_device: Optional[LocalDevice] = job.ret
+    def _on_create_new_device_success(self, job: QtToTrioJob[LocalDevice]) -> None:
+        self.new_device = job.ret
         self.main_layout.removeWidget(self.current_page)
         self.current_page = AuthenticationChoiceWidget(parent=self)
         self.current_page.authentication_state_changed.connect(self._on_page2_info_filled)
@@ -196,7 +196,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         self.button_validate.setEnabled(self.current_page.is_auth_valid())
         self.button_validate.setText(translate("ACTION_CREATE_DEVICE"))
 
-    def _on_create_new_device_failure(self, job: QtToTrioJob) -> None:
+    def _on_create_new_device_failure(self, job: QtToTrioJob[LocalDevice]) -> None:
         self.button_validate.setEnabled(True)
 
     @classmethod

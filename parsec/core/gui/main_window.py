@@ -16,7 +16,6 @@ from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.event_bus import EventBus, EventCallback
 from parsec._parsec import InvitationType
 from parsec.core.types import (
-    BackendAddr,
     LocalDevice,
     BackendActionAddr,
     BackendInvitationAddr,
@@ -444,7 +443,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if action_addr.invitation_type == InvitationType.USER:
                 self._on_claim_user_clicked(action_addr)
             elif action_addr.invitation_type == InvitationType.DEVICE:
-                self._on_claim_device_clicked(cast(BackendAddr, action_addr))
+                self._on_claim_device_clicked(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):
             if not is_pki_enrollment_available():
                 show_error(self, _("TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"))
@@ -512,12 +511,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             config=self.config,
-            addr=cast(BackendAddr, action_addr),
+            addr=action_addr,
             parent=self,
             on_finished=_on_finished,
         )
 
-    def _on_claim_device_clicked(self, action_addr: BackendAddr) -> None:
+    def _on_claim_device_clicked(self, action_addr: BackendInvitationAddr) -> None:
         widget: ClaimDeviceWidget
 
         @self._bind_async_callback
@@ -812,7 +811,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.switch_to_login_tab()
         self._on_claim_user_clicked(action_addr)
 
-    def show_claim_device_widget(self, action_addr: BackendAddr) -> None:
+    def show_claim_device_widget(self, action_addr: BackendInvitationAddr) -> None:
         self.switch_to_login_tab()
         self._on_claim_device_clicked(action_addr)
 
@@ -844,7 +843,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             isinstance(action_addr, BackendInvitationAddr)
             and action_addr.invitation_type == InvitationType.DEVICE
         ):
-            self.show_claim_device_widget(cast(BackendAddr, action_addr))
+            self.show_claim_device_widget(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):
             self.show_claim_pki_widget(action_addr)
         else:

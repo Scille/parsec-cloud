@@ -14,13 +14,17 @@ from parsec.core.gui.file_size import get_filesize
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
 
+from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_table import Column
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
+from parsec.core.gui.files_widget import FilesWidget
 from parsec.test_utils import create_inconsistent_workspace
 
 
-def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w):
+def create_files_widget_testbed(
+    monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w: FilesWidget, c_w
+):
     # === Testbed class is full of helpers ===
     class FilesWidgetTestbed:
         def __init__(self):
@@ -115,7 +119,9 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
             async with aqtbot.wait_signal(f_w.table_files.paste_clicked):
                 aqtbot.key_click(f_w.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
-        async def check_files_view(self, path, expected_entries, workspace_name=EntryName("wksp1")):
+        async def check_files_view(
+            self, path, expected_entries: list[str], workspace_name=EntryName("wksp1")
+        ):
             expected_table_files = []
             # Parent dir line brings to workspaces list if we looking into workspace's root
             if path == "/":
@@ -197,7 +203,7 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
 
 
 @pytest.fixture
-async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
+async def files_widget_testbed(monkeypatch, aqtbot, logged_gui: MainWindow):
     c_w = logged_gui.test_get_central_widget()
     w_w = logged_gui.test_get_workspaces_widget()
 
@@ -216,7 +222,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
 
     await aqtbot.wait_until(_workspace_available)
 
-    f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
+    f_w: FilesWidget = await logged_gui.test_switch_to_files_widget(workspace_name)
 
     return create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w)
 
@@ -227,7 +233,7 @@ async def test_file_browsing_and_edit(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
     tb = files_widget_testbed
-    f_w = files_widget_testbed.files_widget
+    f_w: FilesWidget = files_widget_testbed.files_widget
 
     # Populate some files for import
     out_of_parsec_data = Path(tmpdir) / "out_of_parsec_data"
@@ -768,7 +774,7 @@ async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, sn
 @pytest.mark.trio
 async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
-    f_w = files_widget_testbed.files_widget
+    f_w: FilesWidget = files_widget_testbed.files_widget
 
     # Populate the workspace
     await tb.workspace_fs.mkdir("/foo")
@@ -782,6 +788,7 @@ async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
     def _selection_on_file():
         assert tb.pwd() == "/foo"
         selected_files = f_w.table_files.selected_files()
+        print(f"[{_selection_on_file.__name__}] selected_files={selected_files}")
         assert len(selected_files) == 1
         selected_files[0].name == "bar.txt"
         # No new tab has been created

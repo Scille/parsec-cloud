@@ -37,7 +37,7 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.core = core
         self.dialog: Optional[GreyedDialog] = None
 
-        self.jobs_ctx.submit_job(
+        _ = self.jobs_ctx.submit_job(
             (self, "get_status_success"), (self, "get_status_error"), self.get_status
         )
 

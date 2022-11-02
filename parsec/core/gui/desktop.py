@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import trio
-from typing import Iterable
+from typing import Sequence
 from pathlib import PurePath
 import re
 
@@ -10,7 +10,7 @@ from PyQt5.QtCore import QUrl, QSysInfo, QLocale
 from PyQt5.QtGui import QDesktopServices, QGuiApplication, QClipboard
 
 
-async def open_files_job(paths: Iterable[PurePath]) -> tuple[bool, Iterable[PurePath]]:
+async def open_files_job(paths: Sequence[PurePath]) -> tuple[bool, Sequence[PurePath]]:
     status = True
     for path in paths:
         assert path.is_absolute()

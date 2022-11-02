@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Awaitable, Callable, Optional, Tuple
+from typing import Any, Awaitable, Callable, Optional
 
 import trio
 from enum import IntEnum
@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.core import CoreConfig
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.types import BackendAddr, BackendInvitationAddr, LocalDevice
+from parsec.core.types import BackendInvitationAddr, LocalDevice
 from parsec.core.local_device import (
     save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
@@ -38,7 +38,7 @@ from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
 from parsec.core.gui.ui.claim_device_code_exchange_widget import Ui_ClaimDeviceCodeExchangeWidget
 from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDeviceProvideInfoWidget
 from parsec.core.gui.ui.claim_device_instructions_widget import Ui_ClaimDeviceInstructionsWidget
-
+from parsec._parsec import SASCode
 
 logger = get_logger()
 
@@ -153,7 +153,7 @@ class Claimer:
         if not r:
             raise JobResultError(status="wait-peer-failed", origin=exc)
 
-    async def get_greeter_sas(self) -> Tuple[object, list[object]]:
+    async def get_greeter_sas(self) -> tuple[SASCode, list[SASCode]]:
         await self.main_oob_send.send(self.Step.GetGreeterSas)
         r, exc, greeter_sas, choices = await self.job_oob_recv.receive()
         if not r:
@@ -166,7 +166,7 @@ class Claimer:
         if not r:
             raise JobResultError(status="signify-trust-failed", origin=exc)
 
-    async def get_claimer_sas(self) -> object:
+    async def get_claimer_sas(self) -> SASCode:
         await self.main_oob_send.send(self.Step.GetClaimerSas)
         claimer_sas = await self.job_oob_recv.receive()
         return claimer_sas
@@ -208,10 +208,10 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         self.claimer = claimer
         self.jobs_ctx = jobs_ctx
 
-        self.signify_trust_job = None
-        self.wait_peer_trust_job = None
-        self.get_greeter_sas_job = None
-        self.get_claimer_sas_job = None
+        self.signify_trust_job: QtToTrioJob[None] | None = None
+        self.wait_peer_trust_job: QtToTrioJob[None] | None = None
+        self.get_greeter_sas_job: QtToTrioJob[tuple[SASCode, list[SASCode]]] | None = None
+        self.get_claimer_sas_job: QtToTrioJob[SASCode] | None = None
 
         self.widget_claimer_code.hide()
 
@@ -255,7 +255,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         show_info(self, _("TEXT_CLAIM_DEVICE_NONE_CODE_CLICKED"))
         self.failed.emit(None)
 
-    def _on_get_greeter_sas_success(self, job: QtToTrioJob) -> None:
+    def _on_get_greeter_sas_success(self, job: QtToTrioJob[tuple[SASCode, list[SASCode]]]) -> None:
         if self.get_greeter_sas_job is not job:
             return
         self.get_greeter_sas_job = None
@@ -266,7 +266,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         greeter_sas, choices = job.ret
         self.code_input_widget.set_choices(choices, greeter_sas)
 
-    def _on_get_greeter_sas_error(self, job: QtToTrioJob) -> None:
+    def _on_get_greeter_sas_error(self, job: QtToTrioJob[tuple[SASCode, list[SASCode]]]) -> None:
         if self.get_greeter_sas_job is not job:
             return
         self.get_greeter_sas_job = None
@@ -277,7 +277,8 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
             exc = None
             msg = _("TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR")
             if job.exc:
-                exc = job.exc.params.get("origin", None)
+                assert isinstance(job.exc, JobResultError)
+                exc = job.exc.origin
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
                 elif isinstance(exc, BackendInvitationAlreadyUsed):
@@ -285,7 +286,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
-    def _on_get_claimer_sas_success(self, job: QtToTrioJob) -> None:
+    def _on_get_claimer_sas_success(self, job: QtToTrioJob[SASCode]) -> None:
         if self.get_claimer_sas_job is not job:
             return
         self.get_claimer_sas_job = None
@@ -303,7 +304,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
             self.claimer.wait_peer_trust,
         )
 
-    def _on_get_claimer_sas_error(self, job: QtToTrioJob) -> None:
+    def _on_get_claimer_sas_error(self, job: QtToTrioJob[SASCode]) -> None:
         if self.get_claimer_sas_job is not job:
             return
         self.get_claimer_sas_job = None
@@ -312,7 +313,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         assert job.status != "ok"
         self.failed.emit()
 
-    def _on_signify_trust_success(self, job: QtToTrioJob) -> None:
+    def _on_signify_trust_success(self, job: QtToTrioJob[None]) -> None:
         if self.signify_trust_job is not job:
             return
         self.signify_trust_job = None
@@ -325,7 +326,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
             self.claimer.get_claimer_sas,
         )
 
-    def _on_signify_trust_error(self, job: QtToTrioJob) -> None:
+    def _on_signify_trust_error(self, job: QtToTrioJob[None]) -> None:
         if self.signify_trust_job is not job:
             return
         self.signify_trust_job = None
@@ -336,7 +337,8 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
             exc = None
             msg = _("TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR")
             if job.exc:
-                exc = job.exc.params.get("origin", None)
+                assert isinstance(job.exc, JobResultError)
+                exc = job.exc.origin
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
                 elif isinstance(exc, BackendInvitationAlreadyUsed):
@@ -344,7 +346,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
-    def _on_wait_peer_trust_success(self, job: QtToTrioJob) -> None:
+    def _on_wait_peer_trust_success(self, job: QtToTrioJob[None]) -> None:
         if self.wait_peer_trust_job is not job:
             return
         self.wait_peer_trust_job = None
@@ -353,7 +355,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         assert job.status == "ok"
         self.succeeded.emit()
 
-    def _on_wait_peer_trust_error(self, job: QtToTrioJob) -> None:
+    def _on_wait_peer_trust_error(self, job: QtToTrioJob[None]) -> None:
         if self.wait_peer_trust_job is not job:
             return
         self.wait_peer_trust_job = None
@@ -363,7 +365,8 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         if job.status != "cancelled":
             exc = None
             if job.exc:
-                exc = job.exc.params.get("origin", None)
+                assert isinstance(job.exc, JobResultError)
+                exc = job.exc.origin
             show_error(self, _("TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"), exception=exc)
         self.failed.emit(job)
 
@@ -390,8 +393,8 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.claimer = claimer
-        self.claim_job = None
-        self.new_device = None
+        self.claim_job: QtToTrioJob[LocalDevice] | None = None
+        self.new_device: LocalDevice | None = None
         self.line_edit_device.setFocus()
         self.line_edit_device.set_validator(validators.DeviceLabelValidator())
         self.line_edit_device.setText(get_default_device())
@@ -431,7 +434,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
                 self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
             )
 
-    def _on_claim_success(self, job: QtToTrioJob) -> None:
+    def _on_claim_success(self, job: QtToTrioJob[LocalDevice]) -> None:
         if self.claim_job is not job:
             return
         self.claim_job = None
@@ -444,7 +447,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
             self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
         )
 
-    def _on_claim_error(self, job: QtToTrioJob) -> None:
+    def _on_claim_error(self, job: QtToTrioJob[LocalDevice]) -> None:
         if self.claim_job is not job:
             return
         self.claim_job = None
@@ -455,7 +458,8 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
             exc = None
             msg = _("TEXT_CLAIM_DEVICE_CLAIM_ERROR")
             if job.exc:
-                exc = job.exc.params.get("origin", None)
+                assert isinstance(job.exc, JobResultError)
+                exc = job.exc.origin
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
                 elif isinstance(exc, BackendInvitationAlreadyUsed):
@@ -484,7 +488,7 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.claimer = claimer
-        self.wait_peer_job = None
+        self.wait_peer_job: QtToTrioJob[None] | None = None
         self.button_start.clicked.connect(self._on_button_start_clicked)
         self.wait_peer_success.connect(self._on_wait_peer_success)
         self.wait_peer_error.connect(self._on_wait_peer_error)
@@ -496,7 +500,7 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
             (self, "wait_peer_success"), (self, "wait_peer_error"), self.claimer.wait_peer
         )
 
-    def _on_wait_peer_success(self, job: QtToTrioJob) -> None:
+    def _on_wait_peer_success(self, job: QtToTrioJob[None]) -> None:
         if self.wait_peer_job is not job:
             return
         self.wait_peer_job = None
@@ -505,7 +509,7 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
         assert job.status == "ok"
         self.succeeded.emit()
 
-    def _on_wait_peer_error(self, job: QtToTrioJob) -> None:
+    def _on_wait_peer_error(self, job: QtToTrioJob[None]) -> None:
         if self.wait_peer_job is not job:
             return
         self.wait_peer_job = None
@@ -516,7 +520,8 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
             exc = None
             msg = _("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
             if job.exc:
-                exc = job.exc.params.get("origin", None)
+                assert isinstance(job.exc, JobResultError)
+                exc = job.exc.origin
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
                 elif isinstance(exc, BackendInvitationAlreadyUsed):
@@ -543,7 +548,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
     retrieve_info_error = pyqtSignal(QtToTrioJob)
 
     def __init__(
-        self, jobs_ctx: QtToTrioJobScheduler, config: CoreConfig, addr: BackendAddr
+        self, jobs_ctx: QtToTrioJobScheduler, config: CoreConfig, addr: BackendInvitationAddr
     ) -> None:
         super().__init__()
         self.setupUi(self)
@@ -551,9 +556,9 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.config = config
         self.dialog: Optional[GreyedDialog] = None
         self.addr = addr
-        self.status: Optional[Tuple[LocalDevice, DeviceFileType, str]] = None
-        self.claimer_job = None
-        self.retrieve_info_job = None
+        self.status: Optional[tuple[LocalDevice, DeviceFileType, str]] = None
+        self.claimer_job: QtToTrioJob[None] | None = None
+        self.retrieve_info_job: QtToTrioJob[None] | None = None
         self.claimer_success.connect(self._on_claimer_success)
         self.claimer_error.connect(self._on_claimer_error)
         self.retrieve_info_success.connect(self._on_retrieve_info_success)
@@ -576,7 +581,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.claimer.retrieve_info,
         )
 
-    def _on_retrieve_info_success(self, job: QtToTrioJob) -> None:
+    def _on_retrieve_info_success(self, job: QtToTrioJob[None]) -> None:
         if self.retrieve_info_job is not job:
             return
         self.retrieve_info_job = None
@@ -586,7 +591,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         current_page = self.main_layout.itemAt(0).widget()
         current_page.switch_to_info_retrieved()
 
-    def _on_retrieve_info_error(self, job: QtToTrioJob) -> None:
+    def _on_retrieve_info_error(self, job: QtToTrioJob[None]) -> None:
         if self.retrieve_info_job is not job:
             return
         self.retrieve_info_job = None
@@ -596,12 +601,13 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         if job.status != "cancelled":
             exc = None
             if job.exc:
-                exc = job.exc.params.get("origin", None)
+                assert isinstance(job.exc, JobResultError)
+                exc = job.exc.origin
                 show_error(self, _("TEXT_CLAIM_DEVICE_FAILED_TO_RETRIEVE_INFO"), exception=exc)
         assert self.dialog is not None
         self.dialog.reject()
 
-    def _on_page_failed(self, job: QtToTrioJob) -> None:
+    def _on_page_failed(self, job: QtToTrioJob[None]) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return
@@ -611,10 +617,13 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.dialog.reject()
             return
         # No reason to restart the process if offline or invitation has been deleted, simply close the dialog
-        if job is not None and isinstance(
-            # Exception cannot be `None` in this callback
-            job.exc.params.get("origin", None),  # type: ignore[attr-defined]
-            (BackendNotAvailable, BackendConnectionRefused),
+        if (
+            job.exc is not None
+            and isinstance(job.exc, JobResultError)
+            and isinstance(
+                job.exc.origin,
+                (BackendNotAvailable, BackendConnectionRefused),
+            )
         ):
             assert self.dialog is not None
             self.dialog.reject()
@@ -684,7 +693,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         except LocalDeviceError as exc:
             show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
-    def _on_claimer_success(self, job: QtToTrioJob) -> None:
+    def _on_claimer_success(self, job: QtToTrioJob[None]) -> None:
         if self.claimer_job is not job:
             return
         assert job
@@ -692,7 +701,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         assert job.status == "ok"
         self.claimer_job = None
 
-    def _on_claimer_error(self, job: QtToTrioJob) -> None:
+    def _on_claimer_error(self, job: QtToTrioJob[None]) -> None:
         if self.claimer_job is not job:
             return
         assert job
@@ -719,7 +728,8 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         else:
             msg = _("TEXT_CLAIM_DEVICE_UNKNOWN_ERROR")
         if job.exc:
-            exc = job.exc.params.get("origin", None)
+            assert isinstance(job.exc, JobResultError)
+            exc = job.exc.origin
         show_error(self, msg, exception=exc)
         # No point in retrying since the claimer job itself failed, simply close the dialog
         assert self.dialog is not None
@@ -740,13 +750,13 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.cancel()
 
     @classmethod
-    def show_modal(  # type: ignore[misc]
+    def show_modal(
         cls,
         jobs_ctx: QtToTrioJobScheduler,
         config: CoreConfig,
-        addr: BackendAddr,
+        addr: BackendInvitationAddr,
         parent: QWidget,
-        on_finished: Callable[..., Awaitable[None]],
+        on_finished: Callable[[], Awaitable[None]],
     ) -> ClaimDeviceWidget:
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
         d = GreyedDialog(w, _("TEXT_CLAIM_DEVICE_TITLE"), parent=parent, width=800)
