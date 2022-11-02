@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Any, Optional, Tuple, cast
 
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtCore import QPoint, Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
@@ -20,7 +21,8 @@ from parsec.core.backend_connection import (
     BackendInvitationOnExistingMember,
 )
 
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
+from parsec.core.logged_core import LoggedCore
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.custom_dialogs import (
     show_error,
     ask_question,
@@ -37,6 +39,7 @@ from parsec.core.gui.greet_user_widget import GreetUserWidget
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.user_invitation_button import Ui_UserInvitationButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
+from parsec.event_bus import EventBus
 
 USERS_PER_PAGE = 100
 
@@ -45,7 +48,7 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
     greet_clicked = pyqtSignal(InvitationToken)
     cancel_clicked = pyqtSignal(InvitationToken)
 
-    def __init__(self, email, addr):
+    def __init__(self, email: str, addr: BackendInvitationAddr) -> None:
         super().__init__()
         self.setupUi(self)
         self.addr = addr
@@ -67,7 +70,7 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
 
-    def show_context_menu(self, pos):
+    def show_context_menu(self, pos: QPoint) -> None:
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
         action = menu.addAction(_("ACTION_USER_INVITE_COPY_ADDR"))
@@ -76,22 +79,22 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
         action.triggered.connect(self.copy_email)
         menu.exec_(global_pos)
 
-    def copy_addr(self):
+    def copy_addr(self) -> None:
         desktop.copy_to_clipboard(self.addr.to_url())
         SnackbarManager.inform(_("TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"))
 
-    def copy_email(self):
+    def copy_email(self) -> None:
         desktop.copy_to_clipboard(self.email)
         SnackbarManager.inform(_("TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"))
 
     @property
-    def token(self):
+    def token(self) -> InvitationToken:
         return self.addr.token
 
-    def _on_greet_clicked(self):
+    def _on_greet_clicked(self) -> None:
         self.greet_clicked.emit(self.token)
 
-    def _on_cancel_clicked(self):
+    def _on_cancel_clicked(self) -> None:
         self.cancel_clicked.emit(self.token)
 
 
@@ -99,11 +102,14 @@ class UserButton(QWidget, Ui_UserButton):
     revoke_clicked = pyqtSignal(UserInfo)
     filter_user_workspaces_clicked = pyqtSignal(UserInfo)
 
-    def __init__(self, user_info, is_current_user, current_user_is_admin):
+    def __init__(
+        self, user_info: UserInfo, is_current_user: bool, current_user_is_admin: bool
+    ) -> None:
         super().__init__()
         self.setupUi(self)
 
-        self.user_info = user_info
+        # mypy: This field is not read-only
+        self.user_info = user_info  # type: ignore[misc]
         self.is_current_user = is_current_user
         self.current_user_is_admin = current_user_is_admin
 
@@ -119,17 +125,16 @@ class UserButton(QWidget, Ui_UserButton):
         self.setGraphicsEffect(effect)
 
     @property
-    def user_info(self):
+    def user_info(self) -> UserInfo:
         return self._user_info
 
     @property
-    def user_email(self):
+    def user_email(self) -> str:
         if self.user_info.human_handle:
             return self.user_info.human_handle.email
         return ""
 
-    @user_info.setter
-    def user_info(self, val):
+    def set_user_info(self, val: UserInfo) -> None:
         profiles_txt = {
             UserProfile.OUTSIDER: _("TEXT_USER_PROFILE_OUTSIDER"),
             UserProfile.STANDARD: _("TEXT_USER_PROFILE_STANDARD"),
@@ -164,7 +169,7 @@ class UserButton(QWidget, Ui_UserButton):
         pix.replace_color(QColor(0, 0, 0), QColor(153, 153, 153))
         self.label_icon.setPixmap(pix)
 
-    def show_context_menu(self, pos):
+    def show_context_menu(self, pos: QPoint) -> None:
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
 
@@ -182,18 +187,18 @@ class UserButton(QWidget, Ui_UserButton):
         if not menu.isEmpty():
             menu.exec_(global_pos)
 
-    def copy_email(self):
+    def copy_email(self) -> None:
         desktop.copy_to_clipboard(self.user_email)
         SnackbarManager.inform(_("TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"))
 
-    def revoke(self):
+    def revoke(self) -> None:
         self.revoke_clicked.emit(self.user_info)
 
-    def filter_user_workspaces(self):
+    def filter_user_workspaces(self) -> None:
         self.filter_user_workspaces_clicked.emit(self.user_info)
 
 
-async def _do_revoke_user(core, user_info):
+async def _do_revoke_user(core: LoggedCore, user_info: UserInfo) -> UserInfo:
     try:
         await core.revoke_user(user_info.user_id)
         user_info = await core.get_user_info(user_info.user_id)
@@ -205,8 +210,12 @@ async def _do_revoke_user(core, user_info):
 
 
 async def _do_list_users_and_invitations(
-    core, page, pattern=None, omit_revoked=False, omit_invitation=False
-):
+    core: LoggedCore,
+    page: int,
+    pattern: Optional[str] = None,
+    omit_revoked: bool = False,
+    omit_invitation: bool = False,
+) -> Tuple[int, list[UserInfo], list[object]]:
     try:
         if not pattern:
             users, total = await core.find_humans(
@@ -226,7 +235,7 @@ async def _do_list_users_and_invitations(
         raise JobResultError("error") from exc
 
 
-async def _do_cancel_invitation(core, token):
+async def _do_cancel_invitation(core: LoggedCore, token: InvitationToken) -> None:
     try:
         await core.delete_invitation(token=token)
     except BackendNotAvailable as exc:
@@ -235,7 +244,9 @@ async def _do_cancel_invitation(core, token):
         raise JobResultError("error") from exc
 
 
-async def _do_invite_user(core, email):
+async def _do_invite_user(
+    core: LoggedCore, email: str
+) -> Tuple[str, BackendInvitationAddr, InvitationEmailSentStatus]:
     try:
         invitation_addr, email_sent_status = await core.new_user_invitation(
             email=email, send_email=True
@@ -260,7 +271,14 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     cancel_invitation_error = pyqtSignal(QtToTrioJob)
     filter_shared_workspaces_request = pyqtSignal(UserInfo)
 
-    def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
+    def __init__(
+        self,
+        core: LoggedCore,
+        jobs_ctx: QtToTrioJobScheduler,
+        event_bus: EventBus,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
 
         self.setupUi(self)
@@ -293,30 +311,30 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.checkbox_filter_revoked.clicked.connect(self.reset)
         self.checkbox_filter_invitation.clicked.connect(self.reset)
 
-    def show(self):
+    def show(self) -> None:
         self._page = 1
         self.reset()
         super().show()
 
-    def show_next_page(self):
+    def show_next_page(self) -> None:
         self._page += 1
         self.on_filter(change_page=True)
 
-    def show_previous_page(self):
+    def show_previous_page(self) -> None:
         if self._page > 1:
             self._page -= 1
         self.on_filter(change_page=True)
 
-    def _search_changed(self):
+    def _search_changed(self) -> None:
         self.search_timer.start()
 
-    def on_filter(self, change_page=False):
+    def on_filter(self, change_page: bool = False) -> None:
         self.search_timer.stop()
         if change_page is False:
             self._page = 1
         self.reset()
 
-    def invite_user(self):
+    def invite_user(self) -> None:
         user_email = get_text_input(
             self,
             _("TEXT_USER_INVITE_EMAIL"),
@@ -336,7 +354,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             email=user_email,
         )
 
-    def add_user(self, user_info, is_current_user):
+    def add_user(self, user_info: UserInfo, is_current_user: bool) -> None:
         button = UserButton(
             user_info=user_info,
             is_current_user=is_current_user,
@@ -347,19 +365,19 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         button.revoke_clicked.connect(self.revoke_user)
         button.show()
 
-    def add_user_invitation(self, email, invite_addr):
+    def add_user_invitation(self, email: str, invite_addr: BackendInvitationAddr) -> None:
         button = UserInvitationButton(email, invite_addr)
         self.layout_users.addWidget(button)
         button.greet_clicked.connect(self.greet_user)
         button.cancel_clicked.connect(self.cancel_invitation)
         button.show()
 
-    def greet_user(self, token):
+    def greet_user(self, token: InvitationToken) -> None:
         GreetUserWidget.show_modal(
             core=self.core, jobs_ctx=self.jobs_ctx, token=token, parent=self, on_finished=self.reset
         )
 
-    def cancel_invitation(self, token):
+    def cancel_invitation(self, token: InvitationToken) -> None:
         r = ask_question(
             self,
             _("TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"),
@@ -376,11 +394,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             token=token,
         )
 
-    def _on_revoke_success(self, job):
+    def _on_revoke_success(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
         assert job.status == "ok"
 
-        user_info = job.ret
+        user_info: UserInfo = cast(UserInfo, job.ret)
         SnackbarManager.inform(
             _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display),
             timeout=5000,
@@ -394,9 +412,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                     and isinstance(button, UserButton)
                     and button.user_info.user_id == user_info.user_id
                 ):
-                    button.user_info = user_info
+                    # mypy: `button.user_info` isn't read-only
+                    button.user_info = user_info  # type: ignore[misc]
 
-    def _on_revoke_error(self, job):
+    def _on_revoke_error(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
@@ -413,7 +432,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("TEXT_USER_REVOCATION_UNKNOWN_FAILURE")
         show_error(self, errmsg, exception=job.exc)
 
-    def revoke_user(self, user_info):
+    def revoke_user(self, user_info: UserInfo) -> None:
         result = ask_question(
             self,
             _("TEXT_USER_REVOCATION_TITLE"),
@@ -432,7 +451,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             user_info=user_info,
         )
 
-    def pagination(self, total: int, users_on_page: int):
+    def pagination(self, total: int, users_on_page: int) -> None:
         """Show/activate or hide/deactivate previous and next page button"""
         self.label_page_info.show()
         # Set plage of users displayed
@@ -464,12 +483,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self.button_previous_page.hide()
             self.button_next_page.hide()
 
-    def _on_list_success(self, job):
+    def _on_list_success(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
         assert job.status == "ok"
 
         self.layout_users.clear()
 
+        assert job.ret is not None
         total, users, invitations = job.ret
         # Securing if page go to far
         if total == 0 and self._page > 1:
@@ -493,7 +513,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.pagination(total=total, users_on_page=len(users))
         self.line_edit_search.setFocus()
 
-    def _on_list_error(self, job):
+    def _on_list_error(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
@@ -511,22 +531,23 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         show_error(self, errmsg, exception=job.exc)
 
-    def _on_cancel_invitation_success(self, job):
+    def _on_cancel_invitation_success(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
         assert job.status == "ok"
         SnackbarManager.inform(_("TEXT_USER_INVITATION_CANCELLED"))
         self.reset()
 
-    def _on_cancel_invitation_error(self, job):
+    def _on_cancel_invitation_error(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
         show_error(self, _("TEXT_INVITE_USER_CANCEL_ERROR"), exception=job.exc)
 
-    def _on_invite_user_success(self, job):
+    def _on_invite_user_success(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
         assert job.status == "ok"
 
+        assert job.ret is not None
         email, invitation_addr, email_sent_status = job.ret
         if email_sent_status == InvitationEmailSentStatus.SUCCESS:
             SnackbarManager.inform(_("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
@@ -553,7 +574,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         self.reset()
 
-    def _on_invite_user_error(self, job):
+    def _on_invite_user_error(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
@@ -567,7 +588,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         show_error(self, errmsg, exception=job.exc)
 
-    def reset(self):
+    def reset(self) -> None:
         self.label_page_info.hide()
         self.button_previous_page.hide()
         self.button_next_page.hide()
