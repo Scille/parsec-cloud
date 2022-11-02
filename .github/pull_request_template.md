@@ -1,4 +1,4 @@
-# What have changed ?
+# What has changed ?
 
 <!-- Why this PR exist ? what is its goal ? -->
 
