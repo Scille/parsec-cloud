@@ -166,17 +166,17 @@ class QtToTrioJobScheduler:
         self, throttling_id: str, delay: float, on_success, on_error, fn, *args, **kwargs
     ):
         """
-        Throttle execution: immediatly execute `fn` unless a job with a similar
+        Throttle execution: immediately execute `fn` unless a job with a similar
         `throttling_id` it has been already executed in the last `delay` seconds,
         in which case we schedule the execution to occur when the delay is elapsed.
-        Submitting a job with an already sheduled `throttling_id` will lead to
+        Submitting a job with an already scheduled `throttling_id` will lead to
         a single execution of the last provided job parameters at the soonest delay.
         """
 
         async def _throttled_execute(job, task_status=trio.TASK_STATUS_IGNORED):
             # Only modify `_throttling_scheduled_jobs` from the trio
-            # thread to avoid concurrent acces with the Qt thread
-            # Note we might be overwritting another job here, it is fine given
+            # thread to avoid concurrent access with the Qt thread
+            # Note we might be overwriting another job here, it is fine given
             # we only want to execute the last scheduled one
             self._throttling_scheduled_jobs[throttling_id] = job
             task_status.started()
