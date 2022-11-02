@@ -288,6 +288,7 @@ class UserRemoteLoader:
             for unsecure_certif, raw_certif in unsecure_certifs:
 
                 with translate_remote_devices_manager_errors():
+                    assert unsecure_certif.author is not None
                     author = await self.remote_devices_manager.get_device(unsecure_certif.author)
 
                 RealmRoleCertificate.verify_and_load(
