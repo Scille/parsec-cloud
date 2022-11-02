@@ -71,7 +71,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@a6732b126f28affc0bef10118c6480ff722aa9ff  # ping v2.11.2
+        uses: pypa/cibuildwheel@a6732b126f28affc0bef10118c6480ff722aa9ff  # pin v2.11.2
         with:
           output-dir: dist
         timeout-minutes: 30
