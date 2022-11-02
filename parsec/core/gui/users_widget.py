@@ -108,8 +108,7 @@ class UserButton(QWidget, Ui_UserButton):
         super().__init__()
         self.setupUi(self)
 
-        # mypy: This field is not read-only
-        self.user_info = user_info  # type: ignore[misc]
+        self.user_info = user_info
         self.is_current_user = is_current_user
         self.current_user_is_admin = current_user_is_admin
 
@@ -128,13 +127,8 @@ class UserButton(QWidget, Ui_UserButton):
     def user_info(self) -> UserInfo:
         return self._user_info
 
-    @property
-    def user_email(self) -> str:
-        if self.user_info.human_handle:
-            return self.user_info.human_handle.email
-        return ""
-
-    def set_user_info(self, val: UserInfo) -> None:
+    @user_info.setter
+    def user_info(self, val: UserInfo) -> None:
         profiles_txt = {
             UserProfile.OUTSIDER: _("TEXT_USER_PROFILE_OUTSIDER"),
             UserProfile.STANDARD: _("TEXT_USER_PROFILE_STANDARD"),
@@ -168,6 +162,12 @@ class UserButton(QWidget, Ui_UserButton):
         pix = Pixmap(profiles_icons[self.user_info.profile])
         pix.replace_color(QColor(0, 0, 0), QColor(153, 153, 153))
         self.label_icon.setPixmap(pix)
+
+    @property
+    def user_email(self) -> str:
+        if self.user_info.human_handle:
+            return self.user_info.human_handle.email
+        return ""
 
     def show_context_menu(self, pos: QPoint) -> None:
         global_pos = self.mapToGlobal(pos)
@@ -412,8 +412,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                     and isinstance(button, UserButton)
                     and button.user_info.user_id == user_info.user_id
                 ):
-                    # mypy: `button.user_info` isn't read-only
-                    button.user_info = user_info  # type: ignore[misc]
+                    button.user_info = user_info
 
     def _on_revoke_error(self, job: QtToTrioJob) -> None:
         assert job.is_finished()
