@@ -328,9 +328,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     def _on_connection_state_changed(
         self, status: BackendConnStatus, status_exc: Optional[Exception], allow_systray: bool = True
     ) -> None:
-        text = None
-        icon = None
-        tooltip = None
+        text: Optional[str] = None
+        icon: Optional[QPixmap] = None
+        tooltip: Optional[str] = None
         notif = None
         disconnected = None
 
@@ -389,6 +389,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 notif = ("WARN", tooltip)
                 disconnected = True
 
+        # Theses variables should not be None as they're assigned above
+        assert text is not None
+        assert tooltip is not None
+        assert icon is not None
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
             self.new_notification.emit(*notif)
