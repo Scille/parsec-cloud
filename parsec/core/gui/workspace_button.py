@@ -88,6 +88,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if self.is_timestamped:
             widget_tmp = TemporaryWorkspaceWidget()
             self.widget.layout().insertWidget(1, widget_tmp)
+            assert self.timestamp is not None
             widget_tmp.label_timestamp.setText(format_datetime(self.timestamp))
 
         effect = QGraphicsDropShadowEffect(self)
