@@ -16,7 +16,7 @@ from parsec._parsec import (
     InviteNewRepOk,
 )
 from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler, spinner, aprompt
+from parsec.cli_utils import cli_exception_handler, spinner, async_prompt
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
@@ -147,8 +147,8 @@ async def ask_info_new_user(
     default_user_email: Optional[str],
 ) -> Tuple[DeviceLabel, HumanHandle, UserProfile]:
     while True:
-        granted_label = await aprompt("New user label", default=default_user_label)
-        granted_email = await aprompt("New user email", default=default_user_email)
+        granted_label = await async_prompt("New user label", default=default_user_label)
+        granted_email = await async_prompt("New user email", default=default_user_email)
         try:
             granted_human_handle = HumanHandle(email=granted_email, label=granted_label)
             break
@@ -159,7 +159,7 @@ async def ask_info_new_user(
     while True:
         try:
             granted_device_label = DeviceLabel(
-                await aprompt(
+                await async_prompt(
                     "New user device label",
                     default=default_device_label.str if default_device_label is not None else None,
                 )
@@ -173,7 +173,7 @@ async def ask_info_new_user(
     for i, choice in enumerate(UserProfile):
         display_choice = click.style(choice.value, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    choice_index = await aprompt(
+    choice_index = await async_prompt(
         "New user profile", default="1", type=click.Choice([str(i) for i, _ in enumerate(choices)])
     )
     granted_profile = choices[int(choice_index)]
@@ -193,7 +193,7 @@ async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) 
     for i, choice in enumerate(choices):
         display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = await aprompt(
+    code = await async_prompt(
         f"Select code provided by claimer",
         type=click.Choice([str(i) for i, _ in enumerate(choices)]),
     )
@@ -239,7 +239,7 @@ async def _do_greet_device(device: LocalDevice, initial_ctx: DeviceGreetInitialC
     for i, choice in enumerate(choices):
         display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = await aprompt(
+    code = await async_prompt(
         f"Select code provided by claimer", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress2_ctx.claimer_sas:
@@ -250,7 +250,7 @@ async def _do_greet_device(device: LocalDevice, initial_ctx: DeviceGreetInitialC
         in_progress3_ctx = await in_progress2_ctx.do_signify_trust()
         in_progress4_ctx = await in_progress3_ctx.do_get_claim_requests()
 
-    granted_device_label = await aprompt(
+    granted_device_label = await async_prompt(
         "New device label",
         default=in_progress4_ctx.requested_device_label.str
         if in_progress4_ctx.requested_device_label is not None
@@ -352,7 +352,7 @@ async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> Optional[LocalDevi
     for i, choice in enumerate(choices):
         display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = await aprompt(
+    code = await async_prompt(
         f"Select code provided by greeter", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress_ctx.greeter_sas:
@@ -365,9 +365,9 @@ async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> Optional[LocalDevi
     async with spinner("Waiting for greeter"):
         in_progress3_ctx = await in_progress2_ctx.do_wait_peer_trust()
 
-    requested_label = await aprompt("User fullname")
+    requested_label = await async_prompt("User fullname")
     requested_email = initial_ctx.claimer_email
-    requested_device_label = await aprompt("Device label", default=platform.node())
+    requested_device_label = await async_prompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress3_ctx.do_claim_user(
             requested_device_label=DeviceLabel(requested_device_label),
@@ -385,7 +385,7 @@ async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> Optional[Local
     for i, choice in enumerate(choices):
         display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = await aprompt(
+    code = await async_prompt(
         f"Select code provided by greeter", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress_ctx.greeter_sas:
@@ -398,7 +398,7 @@ async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> Optional[Local
     async with spinner("Waiting for greeter"):
         in_progress3_ctx = await in_progress2_ctx.do_wait_peer_trust()
 
-    requested_device_label = await aprompt("Device label", default=platform.node())
+    requested_device_label = await async_prompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress3_ctx.do_claim_device(
             requested_device_label=DeviceLabel(requested_device_label)

@@ -9,7 +9,7 @@ from parsec._parsec import DateTime
 import click
 
 from parsec.api.protocol import DeviceLabel
-from parsec.cli_utils import aconfirm, cli_exception_handler, spinner, aprompt
+from parsec.cli_utils import async_confirm, cli_exception_handler, spinner, async_prompt
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.cli.invitation import ask_info_new_user
 from parsec.core.config import CoreConfig
@@ -228,7 +228,7 @@ async def _pki_enrollment_poll(
                 preselected_finalize = (
                     _preselected_actions_lookup(ctx_submitted.enrollment_id) == "finalize"
                 )
-                if not preselected_finalize and not await aconfirm("Finalize device creation"):
+                if not preselected_finalize and not await async_confirm("Finalize device creation"):
                     return
                 ctx_finalized = await ctx_submitted.finalize()
                 await save_device_with_smartcard_in_config(
@@ -361,7 +361,7 @@ async def _pki_enrollment_review_pendings(
 
                 elif action is None:
                     # Let the user pick and action
-                    action = await aprompt(
+                    action = await async_prompt(
                         "-> Action",
                         default="Ignore",
                         type=click.Choice(["Ignore", "Reject"], case_sensitive=False),
@@ -383,7 +383,7 @@ async def _pki_enrollment_review_pendings(
                 action = _preselected_actions_lookup(enrollment_id)
                 if action is None:
                     # Let the user pick and action
-                    action = await aprompt(
+                    action = await async_prompt(
                         "-> Action",
                         default="Ignore",
                         type=click.Choice(["Ignore", "Reject", "Accept"], case_sensitive=False),
