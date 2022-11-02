@@ -8,7 +8,7 @@ use std::{
     num::NonZeroU64,
 };
 
-use libparsec_crypto::{prelude::*, HashDigest, SecretKey};
+use libparsec_crypto::{HashDigest, SecretKey};
 use libparsec_types::*;
 use serialization_format::parsec_data;
 

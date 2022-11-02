@@ -9,7 +9,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use libparsec_crypto::{prelude::*, SecretKey};
+use libparsec_crypto::SecretKey;
 use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
 
 use crate::{LocalDevice, LocalDeviceError, LocalDeviceResult};

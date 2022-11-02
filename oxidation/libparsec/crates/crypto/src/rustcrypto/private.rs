@@ -103,7 +103,7 @@ use crate::{CryptoError, SecretKey};
 #[serde(try_from = "&Bytes")]
 pub struct PrivateKey(crypto_box::SecretKey);
 
-crate::macros::impl_key_debug!(PrivateKey);
+crate::impl_key_debug!(PrivateKey);
 
 impl PartialEq for PrivateKey {
     fn eq(&self, other: &Self) -> bool {
@@ -179,7 +179,7 @@ impl Serialize for PrivateKey {
 #[serde(try_from = "&Bytes")]
 pub struct PublicKey(crypto_box::PublicKey);
 
-crate::macros::impl_key_debug!(PublicKey);
+crate::impl_key_debug!(PublicKey);
 
 impl PartialEq for PublicKey {
     fn eq(&self, other: &Self) -> bool {

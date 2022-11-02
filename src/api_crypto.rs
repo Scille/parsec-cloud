@@ -7,8 +7,6 @@ use pyo3::{
     types::{PyByteArray, PyBytes, PyType},
 };
 
-use libparsec::crypto::prelude::*;
-
 import_exception!(nacl.exceptions, CryptoError);
 
 #[pyclass]

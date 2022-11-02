@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_bytes::Bytes;
 use sodiumoxide::crypto::secretbox::{
     gen_nonce, open, seal,
@@ -8,18 +8,21 @@ use sodiumoxide::crypto::secretbox::{
     Nonce,
 };
 
-use crate::{prelude::*, CryptoError};
+use crate::CryptoError;
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
 pub struct SecretKey(Key);
 
-impl SecretKeyTrait for SecretKey {
-    fn generate() -> Self {
+impl SecretKey {
+    pub const ALGORITHM: &'static str = "xsalsa20poly1305";
+    pub const SIZE: usize = KEYBYTES;
+
+    pub fn generate() -> Self {
         Self(gen_key())
     }
 
-    fn encrypt(&self, data: &[u8]) -> Vec<u8> {
+    pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         // Returned format: NONCE | MAC | CIPHERTEXT
         let mut ciphered = Vec::with_capacity(NONCEBYTES + MACBYTES + data.len());
         let nonce = gen_nonce();
@@ -28,7 +31,7 @@ impl SecretKeyTrait for SecretKey {
         ciphered
     }
 
-    fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
+    pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
         let nonce_slice = ciphered.get(..NONCEBYTES).ok_or(CryptoError::Nonce)?;
         let nonce = Nonce::from_slice(nonce_slice).ok_or(CryptoError::DataSize)?;
         let plaintext =
@@ -36,7 +39,7 @@ impl SecretKeyTrait for SecretKey {
         Ok(plaintext)
     }
 
-    fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
+    pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
         // Sodiumoxide doesn't expose those methods, so we have to access
         // the libsodium C API directly
         unsafe {
@@ -66,42 +69,10 @@ impl SecretKeyTrait for SecretKey {
     }
 }
 
-crate::macros::impl_key_debug!(SecretKey);
-
-impl AsRef<[u8]> for SecretKey {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
-    }
-}
-
-impl TryFrom<&[u8]> for SecretKey {
-    type Error = CryptoError;
-
-    fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
-        let arr: [u8; KEYBYTES] = v.try_into().map_err(|_| CryptoError::DataSize)?;
-        Ok(Self::from(arr))
-    }
-}
-
 impl From<[u8; KEYBYTES]> for SecretKey {
     fn from(key: [u8; KEYBYTES]) -> Self {
         Self(Key(key))
     }
 }
 
-impl TryFrom<&Bytes> for SecretKey {
-    type Error = CryptoError;
-    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
-        Self::try_from(data.as_ref())
-    }
-}
-
-impl Serialize for SecretKey {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_bytes(self.as_ref())
-    }
-}
+crate::common::impl_secret_key!(SecretKey);

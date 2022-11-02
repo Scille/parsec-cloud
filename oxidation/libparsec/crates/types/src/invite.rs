@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
 
-use libparsec_crypto::{prelude::*, PrivateKey, PublicKey, SecretKey, VerifyKey};
+use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use serialization_format::parsec_data;
 
 use crate::{

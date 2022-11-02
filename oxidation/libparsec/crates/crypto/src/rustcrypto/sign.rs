@@ -14,7 +14,7 @@ use crate::CryptoError;
 #[serde(try_from = "&Bytes")]
 pub struct SigningKey(Keypair);
 
-crate::macros::impl_key_debug!(SigningKey);
+crate::impl_key_debug!(SigningKey);
 
 impl Clone for SigningKey {
     fn clone(&self) -> Self {
@@ -109,7 +109,7 @@ impl Serialize for SigningKey {
 #[serde(try_from = "&Bytes")]
 pub struct VerifyKey(ed25519_dalek::PublicKey);
 
-crate::macros::impl_key_debug!(VerifyKey);
+crate::impl_key_debug!(VerifyKey);
 
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
