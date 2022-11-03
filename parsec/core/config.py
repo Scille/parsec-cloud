@@ -5,7 +5,7 @@ import os
 import sys
 import attr
 import json
-from typing import Any, Optional, FrozenSet
+from typing import Any, Optional, FrozenSet, Mapping
 from pathlib import Path
 from structlog import get_logger
 import binascii
@@ -18,7 +18,7 @@ DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE = 512 * 1024 * 1024
 logger = get_logger()
 
 
-def get_default_data_base_dir(environ: dict[str, str] | os._Environ[str]) -> Path:
+def get_default_data_base_dir(environ: Mapping[str, str]) -> Path:
     if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
@@ -28,7 +28,7 @@ def get_default_data_base_dir(environ: dict[str, str] | os._Environ[str]) -> Pat
         return Path(path) / "parsec"
 
 
-def get_default_config_dir(environ: dict[str, str] | os._Environ[str]) -> Path:
+def get_default_config_dir(environ: Mapping[str, str]) -> Path:
     if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:
@@ -38,7 +38,7 @@ def get_default_config_dir(environ: dict[str, str] | os._Environ[str]) -> Path:
         return Path(path) / "parsec"
 
 
-def get_default_mountpoint_base_dir(environ: dict[str, str] | os._Environ[str]) -> Path:
+def get_default_mountpoint_base_dir(environ: Mapping[str, str]) -> Path:
     return Path.home() / "Parsec"
 
 
@@ -80,11 +80,14 @@ class CoreConfig:
     gui_show_confined: bool = False
     gui_geometry: Optional[bytes] = None
 
-    ipc_socket_file: Optional[Path] = None
     ipc_win32_mutex_name: str = "parsec-cloud"
 
     def evolve(self, **kwargs: Any) -> CoreConfig:
         return attr.evolve(self, **kwargs)
+
+    @property
+    def ipc_socket_file(self) -> Path:
+        return self.data_base_dir / "parsec-cloud.lock"
 
 
 def config_factory(
@@ -115,7 +118,7 @@ def config_factory(
     gui_show_confined: bool = False,
     gui_geometry: Optional[bytes] = None,
     ipc_win32_mutex_name: str = "parsec-cloud",
-    environ: dict[str, str] | os._Environ[str] = {},
+    environ: Mapping[str, str] = {},
     **_: object,
 ) -> CoreConfig:
 
@@ -160,7 +163,6 @@ def config_factory(
         preferred_org_creation_backend_addr=preferred_org_creation_backend_addr,
         gui_show_confined=gui_show_confined,
         gui_geometry=gui_geometry,
-        ipc_socket_file=data_base_dir / "parsec-cloud.lock",
         ipc_win32_mutex_name=ipc_win32_mutex_name,
     )
 
