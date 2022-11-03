@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import string
+from typing import cast
 
 from parsec.api.data.entry import EntryName
 from parsec.core.fs import FsPath, UserFS, WorkspaceFS, FSFileNotFoundError
-from parsec.core.types import EntryID
+from parsec.core.types import EntryID, LocalFolderManifest
 
 
-async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
+async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath) -> None:
     """
     Create directory and make it inconsistent by adding an entry refering
     to an unknown EntryID.
@@ -17,16 +18,17 @@ async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
     await workspace.mkdir(dir)
     await workspace.touch(dir / "foo.txt")
     rep_info = await workspace.transactions.entry_info(dir)
-    rep_manifest = await workspace.local_storage.get_manifest(rep_info["id"])
+    rep_manifest = await workspace.local_storage.get_manifest(cast(EntryID, rep_info["id"]))
+    assert isinstance(rep_manifest, LocalFolderManifest)
     children = rep_manifest.children
     children[EntryName("newfail.txt")] = EntryID.from_hex("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
     rep_manifest = rep_manifest.evolve(children=children)
-    async with workspace.local_storage.lock_manifest(rep_info["id"]):
-        await workspace.local_storage.set_manifest(rep_info["id"], rep_manifest)
+    async with workspace.local_storage.lock_manifest(cast(EntryID, rep_info["id"])):
+        await workspace.local_storage.set_manifest(cast(EntryID, rep_info["id"]), rep_manifest)
     await workspace.sync()
 
 
-async def make_workspace_dir_simple_versions(workspace: WorkspaceFS, dir: FsPath):
+async def make_workspace_dir_simple_versions(workspace: WorkspaceFS, dir: FsPath) -> None:
     await workspace.mkdir(dir)
     await workspace.sync()
     for i in range(0, 9):
@@ -47,7 +49,7 @@ async def make_workspace_dir_simple_versions(workspace: WorkspaceFS, dir: FsPath
         await workspace.sync()
 
 
-async def make_workspace_dir_complex_versions(workspace: WorkspaceFS, dir: FsPath):
+async def make_workspace_dir_complex_versions(workspace: WorkspaceFS, dir: FsPath) -> None:
     await workspace.mkdir(dir)
     await workspace.sync()
     # Create useless stuff before file creation.
@@ -76,7 +78,9 @@ async def make_workspace_dir_complex_versions(workspace: WorkspaceFS, dir: FsPat
         await workspace.sync()
 
 
-async def create_inconsistent_workspace(user_fs: UserFS, name=EntryName("w")) -> WorkspaceFS:
+async def create_inconsistent_workspace(
+    user_fs: UserFS, name: EntryName = EntryName("w")
+) -> WorkspaceFS:
     wid = await user_fs.workspace_create(name)
     workspace = user_fs.get_workspace(wid)
     await make_workspace_dir_inconsistent(workspace, FsPath("/rep"))
