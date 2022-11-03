@@ -118,3 +118,16 @@ repos:
           - "@vue/cli-plugin-eslint@5.0.1"
           - "@vue/eslint-config-typescript@9.1.0"
           - "@intlify/eslint-plugin-vue-i18n@1.4.0"
+
+  ######
+  # JSON
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.18.4
+    hooks:
+      - id: check-jsonschema
+        name: Validate protocol files with jsonschema
+        files: ^oxidation/libparsec/crates/protocol/schema/
+        types_or: [ json5 ]
+        args: [ --schemafile, json_schema/protocol.schema.json ]
+        additional_dependencies: [ json5 ]
