@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from types import ModuleType
 
 import attr
 import trio
 from enum import Enum
 from pathlib import Path, PurePath
 from hashlib import sha256
-from typing import Callable, List, Optional, Iterator, Dict, Tuple
+from typing import Callable, List, Optional, Iterator, Dict, Tuple, cast
 from importlib import import_module
 
 from parsec.serde import BaseSchema, fields, MsgpackSerializer, OneOfSchema
@@ -42,10 +43,10 @@ RECOVERY_DEVICE_FILE_SUFFIX = ".psrk"
 
 
 # Save key file data for later user
-_KEY_FILE_DATA: Dict[DeviceID, Dict] = {}
+_KEY_FILE_DATA: Dict[DeviceID, Dict[str, object]] = {}
 
 
-def get_key_file_data(device_id: DeviceID) -> Dict:
+def get_key_file_data(device_id: DeviceID) -> Dict[str, object]:
     """Retrieve key file data for a given device"""
     return _KEY_FILE_DATA.get(device_id, {})
 
@@ -329,20 +330,22 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
         LocalDevicePackingError
     """
 
-    def _decrypt_ciphertext(data: dict) -> bytes:
+    def _decrypt_ciphertext(data: dict[str, object]) -> bytes:
         if data["type"] != DeviceFileType.PASSWORD:
             raise LocalDeviceValidationError("Not a password-protected device file")
 
         try:
-            key, _ = derivate_secret_key_from_password(password, data["salt"])
-            return key.decrypt(data["ciphertext"])
+            key, _ = derivate_secret_key_from_password(password, cast(bytes, data["salt"]))
+            return key.decrypt(cast(bytes, data["ciphertext"]))
         except CryptoError as exc:
             raise LocalDeviceCryptoError(str(exc)) from exc
 
     return _load_device(key_file, _decrypt_ciphertext)
 
 
-def _load_device(key_file: Path, decrypt_ciphertext: Callable[[dict], bytes]) -> LocalDevice:
+def _load_device(
+    key_file: Path, decrypt_ciphertext: Callable[[dict[str, object]], bytes]
+) -> LocalDevice:
     try:
         ciphertext = key_file.read_bytes()
     except OSError as exc:
@@ -399,7 +402,7 @@ def save_device_with_password(
         LocalDevicePackingError
     """
 
-    def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict]:
+    def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict[str, bytes]]:
         try:
             key, salt = derivate_secret_key_from_password(password)
             ciphertext = key.encrypt(cleartext)
@@ -417,7 +420,7 @@ def _save_device(
     key_file: Path,
     device: LocalDevice,
     force: bool,
-    encrypt_dump: Callable[[bytes], Tuple[DeviceFileType, bytes, dict]],
+    encrypt_dump: Callable[[bytes], Tuple[DeviceFileType, bytes, dict[str, bytes]]],
 ) -> None:
     assert key_file.suffix == DEVICE_FILE_SUFFIX
 
@@ -540,7 +543,7 @@ async def save_recovery_device(key_file: PurePath, device: LocalDevice, force: b
     return passphrase
 
 
-def _load_smartcard_extension():
+def _load_smartcard_extension() -> ModuleType:
     try:
         return import_module("parsec_ext.smartcard")
     except ModuleNotFoundError as exc:
