@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import sys
 import signal
-from typing import Optional
+from types import TracebackType
+from typing import Any, Callable, Iterator, Optional, Type
 from contextlib import contextmanager
 
 import trio
+import trio_typing
 import qtrio
 from structlog import get_logger
 from PyQt5.QtCore import QTimer, Qt
@@ -42,18 +44,23 @@ Running `python misc/generate_pyqt.py build` should fix the issue
 logger = get_logger()
 
 
-def before_quit(systray):
-    def _before_quit():
+def before_quit(systray: Systray) -> Callable[[], None]:
+    def _before_quit() -> None:
         systray.hide()
 
     return _before_quit
 
 
-async def _run_ipc_server(config, main_window, start_arg, task_status=trio.TASK_STATUS_IGNORED):
+async def _run_ipc_server(
+    config: CoreConfig,
+    main_window: MainWindow,
+    start_arg: str | None,
+    task_status: trio_typing.TaskStatus[None] = trio.TASK_STATUS_IGNORED,
+) -> None:
     new_instance_needed = main_window.new_instance_needed
     foreground_needed = main_window.foreground_needed
 
-    async def _cmd_handler(cmd):
+    async def _cmd_handler(cmd: dict[str, object]) -> dict[str, str]:
         if cmd["cmd"] == IPCCommand.FOREGROUND:
             foreground_needed.emit()
         elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
@@ -93,10 +100,12 @@ async def _run_ipc_server(config, main_window, start_arg, task_status=trio.TASK_
 
 
 @contextmanager
-def fail_on_first_exception(kill_window):
+def fail_on_first_exception(kill_window: Callable[[], None]) -> Iterator[None]:
     exceptions = []
 
-    def excepthook(etype, exception, traceback):
+    def excepthook(
+        etype: Type[BaseException], exception: BaseException, traceback: TracebackType | None
+    ) -> object:
         exceptions.append(exception)
         kill_window()
         return previous_hook(etype, exception, traceback)
@@ -112,12 +121,14 @@ def fail_on_first_exception(kill_window):
 
 
 @contextmanager
-def log_pyqt_exceptions():
+def log_pyqt_exceptions() -> Iterator[None]:
     # Override sys.excepthook to be able to properly log exceptions occuring in Qt slots.
     # Exceptions occuring in the core while in the Qt app should be catched sooner by the
     # job.
 
-    def log_except(etype, exception, traceback):
+    def log_except(
+        etype: Type[BaseException], exception: BaseException, traceback: TracebackType | None
+    ) -> None:
         logger.exception("Exception in Qt slot", exc_info=(etype, exception, traceback))
 
     sys.excepthook, previous_hook = log_except, sys.excepthook
@@ -127,7 +138,7 @@ def log_pyqt_exceptions():
         sys.excepthook = previous_hook
 
 
-def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool = False):
+def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool = False) -> object:
     logger.info("Starting UI")
 
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
@@ -145,8 +156,8 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
 
 
 async def _run_gui(
-    app: ParsecApp, config: CoreConfig, start_arg: str = None, diagnose: bool = False
-):
+    app: ParsecApp, config: CoreConfig, start_arg: str | None = None, diagnose: bool = False
+) -> None:
     app.load_stylesheet()
     app.load_font()
 
@@ -200,7 +211,7 @@ async def _run_gui(
 
             ensure_macfuse_available_or_show_dialogue(win)
 
-        def kill_window(*args):
+        def kill_window(*args: Any) -> None:
             win.close_app(force=True)
 
         signal.signal(signal.SIGINT, kill_window)
