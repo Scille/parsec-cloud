@@ -232,7 +232,7 @@ macro_rules! gen_rep {
                     py: ::pyo3::Python<'py>
                 ) -> ::pyo3::PyResult<&'py ::pyo3::types::PyString> {
                     Ok(match &_self.as_ref().0 {
-                        $mod::Rep::UnknownStatus { invalid_status, .. } => ::pyo3::types::PyString::new(py, invalid_status),
+                        $mod::Rep::UnknownStatus { unknown_status, .. } => ::pyo3::types::PyString::new(py, unknown_status),
                         _ => return Err(::pyo3::exceptions::PyNotImplementedError::new_err("")),
                     })
                 }
