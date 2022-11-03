@@ -1,15 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from pathlib import Path
+from PyQt5.QtGui import QWindow
 
 import trio
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple, cast
 from structlog import get_logger
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 from packaging.version import Version
 import exceptiongroup
 
-from parsec.event_bus import EventBus
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import BackendActionAddr, BackendOrganizationFileLinkAddr, LocalDevice
+from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.core import logged_core_factory
 from parsec.core.local_device import (
@@ -27,8 +31,7 @@ from parsec.core.mountpoint import (
 
 from parsec.core.config import CoreConfig
 from parsec.core.core_events import CoreEvent
-from parsec.core.gui.trio_jobs import QtToTrioJob
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler, run_trio_job_scheduler
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler, QtToTrioJob, run_trio_job_scheduler
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.custom_dialogs import show_error, show_info_link
 from parsec.core.gui.lang import translate as _
@@ -41,7 +44,9 @@ logger = get_logger()
 MIN_MACFUSE_VERSION = Version("4.4.0")
 
 
-async def _do_run_core(config, device, qt_on_ready: Tuple[QObject, str]):
+async def _do_run_core(
+    config: CoreConfig, device: LocalDevice, qt_on_ready: Tuple[QObject, str]
+) -> None:
     qt_on_ready: pyqtBoundSignal = getattr(qt_on_ready[0], qt_on_ready[1])  # Retreive the signal
     # Quick fix to avoid BaseExceptionGroup<Cancelled, ...> exception bubbling up
     # TODO: is it still necessary?
@@ -76,7 +81,7 @@ def check_macfuse_version() -> bool:
     return local_version >= MIN_MACFUSE_VERSION
 
 
-def ensure_macfuse_available_or_show_dialogue(window):
+def ensure_macfuse_available_or_show_dialogue(window: QWindow) -> None:
     try:
         import fuse  # noqa
     except OSError:
@@ -116,18 +121,18 @@ class InstanceWidget(QWidget):
         event_bus: EventBus,
         config: CoreConfig,
         systray_notification: pyqtBoundSignal,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.config = config
         self.systray_notification = systray_notification
 
-        self.core = None
-        self.core_jobs_ctx = None
+        self.core: Optional[LoggedCore] = None
+        self.core_jobs_ctx: Optional[QtToTrioJobScheduler] = None
         self.running_core_job = None
-        self.workspace_path = None
+        self.workspace_path: Optional[BackendActionAddr] = None
 
         self.run_core_success.connect(self.on_core_run_done)
         self.run_core_error.connect(self.on_core_run_error)
@@ -140,30 +145,32 @@ class InstanceWidget(QWidget):
         self.setLayout(layout)
 
     @property
-    def current_device(self):
+    def current_device(self) -> Optional[LocalDevice]:
         if self.core:
             return self.core.device
         return None
 
     @property
-    def is_logged_in(self):
+    def is_logged_in(self) -> bool:
         return self.running_core_job is not None
 
-    def set_workspace_path(self, action_addr):
+    def set_workspace_path(self, action_addr: BackendActionAddr) -> None:
         self.workspace_path = action_addr
 
-    def reset_workspace_path(self):
+    def reset_workspace_path(self) -> None:
         self.workspace_path = None
 
-    def on_core_config_updated(self, event, **kwargs):
+    def on_core_config_updated(self, event: CoreEvent, **kwargs: dict[object, object]) -> None:
         self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, **kwargs)
 
-    def start_core(self, device):
+    def start_core(self, device: LocalDevice) -> None:
         assert not self.running_core_job
         assert not self.core
         assert not self.core_jobs_ctx
 
-        self.config = ParsecApp.get_main_window().config
+        main_win = ParsecApp.get_main_window()
+        assert main_win is not None, "Main window is None"
+        self.config = main_win.config
 
         self.running_core_job = self.jobs_ctx.submit_job(
             (self, "run_core_success"),
@@ -174,10 +181,12 @@ class InstanceWidget(QWidget):
             (self, "run_core_ready"),
         )
 
-    def on_run_core_ready(self, core, core_jobs_ctx):
+    def on_run_core_ready(self, core: LoggedCore, core_jobs_ctx: QtToTrioJobScheduler) -> None:
         self.core = core
         self.core_jobs_ctx = core_jobs_ctx
-        self.core.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated)
+        self.core.event_bus.connect(
+            CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_core_config_updated)
+        )
         self.event_bus.send(
             CoreEvent.GUI_CONFIG_CHANGED, gui_last_device=self.core.device.device_id.str
         )
@@ -186,7 +195,7 @@ class InstanceWidget(QWidget):
         )
         self.logged_in.emit()
 
-    def on_core_run_error(self, job):
+    def on_core_run_error(self, job: QtToTrioJob) -> None:
         assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
@@ -216,7 +225,7 @@ class InstanceWidget(QWidget):
         self.running_core_job = None
         self.logged_out.emit()
 
-    def on_core_run_done(self, job):
+    def on_core_run_done(self, job: QtToTrioJob) -> None:
         assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
@@ -229,24 +238,24 @@ class InstanceWidget(QWidget):
         self.running_core_job = None
         self.logged_out.emit()
 
-    def stop_core(self):
+    def stop_core(self) -> None:
         if self.running_core_job:
             self.running_core_job.cancel()
 
-    def on_logged_out(self):
+    def on_logged_out(self) -> None:
         self.state_changed.emit(self, "logout")
         self.show_login_widget()
 
-    def on_logged_in(self):
+    def on_logged_in(self) -> None:
         self.state_changed.emit(self, "connected")
         self.show_central_widget()
 
-    def logout(self):
+    def logout(self) -> None:
         self.stop_core()
 
-    def login_with_password(self, key_file, password):
+    def login_with_password(self, key_file: Path, password: str) -> None:
         message = None
-        exception = None
+        exception: Optional[Exception] = None
         try:
             device = load_device_with_password(key_file, password)
             if ParsecApp.is_device_connected(
@@ -272,9 +281,9 @@ class InstanceWidget(QWidget):
                 show_error(self, message, exception=exception)
                 self.login_failed.emit()
 
-    async def login_with_smartcard(self, key_file):
+    async def login_with_smartcard(self, key_file: Path) -> None:
         message = None
-        exception = None
+        exception: Optional[Exception] = None
         try:
             device = await load_device_with_smartcard(key_file)
             if ParsecApp.is_device_connected(
@@ -304,7 +313,7 @@ class InstanceWidget(QWidget):
                 show_error(self, message, exception=exception)
                 self.login_failed.emit()
 
-    def show_central_widget(self):
+    def show_central_widget(self) -> None:
         self.clear_widgets()
         # The core can be set to None at any time if do_run_core get an error, is cancelled or
         # terminate.
@@ -317,14 +326,14 @@ class InstanceWidget(QWidget):
             jobs_ctx=core_jobs_ctx,
             event_bus=core.event_bus,
             systray_notification=self.systray_notification,
-            file_link_addr=self.workspace_path,
+            file_link_addr=cast(BackendOrganizationFileLinkAddr, self.workspace_path),
             parent=self,
         )
         self.layout().addWidget(central_widget)
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()
 
-    def show_login_widget(self):
+    def show_login_widget(self) -> None:
         self.clear_widgets()
         login_widget = LoginWidget(
             self.jobs_ctx, self.event_bus, self.config, self.login_failed, parent=self
@@ -343,19 +352,19 @@ class InstanceWidget(QWidget):
         item = self.layout().itemAt(0)
         if item:
             if isinstance(item.widget(), CentralWidget):
-                return item.widget()
+                return cast(CentralWidget, item.widget())
         return None
 
-    def get_login_widget(self):
+    def get_login_widget(self) -> Optional[LoginWidget]:
         item = self.layout().itemAt(0)
         if item:
             if isinstance(item.widget(), LoginWidget):
-                return item.widget()
+                return cast(LoginWidget, item.widget())
         return None
 
-    def clear_widgets(self):
+    def clear_widgets(self) -> None:
         item = self.layout().takeAt(0)
         if item:
             item.widget().hide()
-            item.widget().setParent(None)
+            item.widget().setParent(None)  # type: ignore[call-overload]
         QApplication.processEvents()
