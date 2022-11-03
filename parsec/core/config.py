@@ -5,7 +5,7 @@ import os
 import sys
 import attr
 import json
-from typing import Optional, FrozenSet
+from typing import Any, Optional, FrozenSet
 from pathlib import Path
 from structlog import get_logger
 import binascii
@@ -18,7 +18,7 @@ DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE = 512 * 1024 * 1024
 logger = get_logger()
 
 
-def get_default_data_base_dir(environ: dict) -> Path:
+def get_default_data_base_dir(environ: dict[str, str] | os._Environ[str]) -> Path:
     if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
@@ -28,7 +28,7 @@ def get_default_data_base_dir(environ: dict) -> Path:
         return Path(path) / "parsec"
 
 
-def get_default_config_dir(environ: os._Environ) -> Path:
+def get_default_config_dir(environ: dict[str, str] | os._Environ[str]) -> Path:
     if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:
@@ -38,7 +38,7 @@ def get_default_config_dir(environ: os._Environ) -> Path:
         return Path(path) / "parsec"
 
 
-def get_default_mountpoint_base_dir(environ: dict) -> Path:
+def get_default_mountpoint_base_dir(environ: dict[str, str] | os._Environ[str]) -> Path:
     return Path.home() / "Parsec"
 
 
@@ -78,45 +78,45 @@ class CoreConfig:
     gui_confirmation_before_close: bool = True
     gui_allow_multiple_instances: bool = False
     gui_show_confined: bool = False
-    gui_geometry: bytes = None
+    gui_geometry: Optional[bytes] = None
 
-    ipc_socket_file: Path = None
+    ipc_socket_file: Optional[Path] = None
     ipc_win32_mutex_name: str = "parsec-cloud"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> CoreConfig:
         return attr.evolve(self, **kwargs)
 
 
 def config_factory(
-    config_dir: Path = None,
-    data_base_dir: Path = None,
-    mountpoint_base_dir: Path = None,
+    config_dir: Optional[Path] = None,
+    data_base_dir: Optional[Path] = None,
+    mountpoint_base_dir: Optional[Path] = None,
     prevent_sync_pattern_path: Optional[Path] = None,
     mountpoint_enabled: bool = False,
     disabled_workspaces: FrozenSet[EntryID] = frozenset(),
     backend_max_cooldown: int = 30,
     backend_connection_keepalive: Optional[int] = 29,
     backend_max_connections: int = 4,
-    sentry_dsn: str = None,
+    sentry_dsn: Optional[str] = None,
     sentry_environment: str = "",
     telemetry_enabled: bool = True,
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     pki_extra_trust_roots: FrozenSet[Path] = frozenset(),
     debug: bool = False,
-    gui_last_device: str = None,
+    gui_last_device: Optional[str] = None,
     gui_tray_enabled: bool = True,
-    gui_language: str = None,
+    gui_language: Optional[str] = None,
     gui_first_launch: bool = True,
-    gui_last_version: str = None,
+    gui_last_version: Optional[str] = None,
     gui_check_version_at_startup: bool = True,
     gui_check_version_allow_pre_release: bool = False,
     gui_allow_multiple_instances: bool = False,
     preferred_org_creation_backend_addr: Optional[BackendAddr] = None,
     gui_show_confined: bool = False,
-    gui_geometry: bytes = None,
+    gui_geometry: Optional[bytes] = None,
     ipc_win32_mutex_name: str = "parsec-cloud",
-    environ: dict = {},
-    **_,
+    environ: dict[str, str] | os._Environ[str] = {},
+    **_: object,
 ) -> CoreConfig:
 
     # The environment variable we always be used first, and if it is not present,
@@ -175,7 +175,7 @@ def config_factory(
     return core_config
 
 
-def load_config(config_dir: Path, **extra_config) -> CoreConfig:
+def load_config(config_dir: Path, **extra_config: Any) -> CoreConfig:
 
     config_file = config_dir / "config.json"
     try:
@@ -246,7 +246,7 @@ def reload_config(config: CoreConfig) -> CoreConfig:
     return load_config(config.config_dir, debug=config.debug)
 
 
-def save_config(config: CoreConfig):
+def save_config(config: CoreConfig) -> None:
     config_path = config.config_dir
     config_path.mkdir(mode=0o700, parents=True, exist_ok=True)
     config_path /= "config.json"

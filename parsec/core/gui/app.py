@@ -72,6 +72,7 @@ async def _run_ipc_server(
 
         # Attempt to run an IPC server if Parsec is not already started
         try:
+            assert config.ipc_socket_file is not None
             async with run_ipc_server(
                 _cmd_handler, config.ipc_socket_file, win32_mutex_name=config.ipc_win32_mutex_name
             ):
@@ -84,10 +85,12 @@ async def _run_ipc_server(
             # Protect against race conditions, in case the server was shutting down
             try:
                 if start_arg:
+                    assert config.ipc_socket_file is not None
                     await send_to_ipc_server(
                         config.ipc_socket_file, IPCCommand.NEW_INSTANCE, start_arg=start_arg
                     )
                 else:
+                    assert config.ipc_socket_file is not None
                     await send_to_ipc_server(config.ipc_socket_file, IPCCommand.FOREGROUND)
 
             # IPC server has closed, retry to create our own
