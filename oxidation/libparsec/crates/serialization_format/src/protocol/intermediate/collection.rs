@@ -283,7 +283,7 @@ mod test {
                             /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
                             #[serde(skip)]
                             UnknownStatus {
-                                invalid_status: String,
+                                unknown_status: String,
                                 reason: Option<String>
                             }
                         }
@@ -306,7 +306,7 @@ mod test {
 
                                     match data.status.as_str() {
                                         _ => Ok(Self::UnknownStatus {
-                                            invalid_status: data.status,
+                                            unknown_status: data.status,
                                             reason: data.reason,
                                         })
                                     }
@@ -337,7 +337,7 @@ mod test {
                             /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
                             #[serde(skip)]
                             UnknownStatus {
-                                invalid_status: String,
+                                unknown_status: String,
                                 reason: Option<String>
                             }
                         }
@@ -360,7 +360,7 @@ mod test {
 
                                     match data.status.as_str() {
                                         _ => Ok(Self::UnknownStatus {
-                                            invalid_status: data.status,
+                                            unknown_status: data.status,
                                             reason: data.reason,
                                         })
                                     }
