@@ -260,6 +260,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
 BaseDataTypeVar = TypeVar("BaseDataTypeVar", bound="BaseData")
 
 
+@attr.s(slots=True, frozen=True, kw_only=True, eq=False)
 class BaseData(metaclass=DataMeta):
     """
     Some data within the api don't have to be signed (e.g. claim info) and
