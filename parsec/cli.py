@@ -5,6 +5,8 @@ import click
 import sys
 import os
 
+from typing import Sequence, Any
+
 from parsec._version import __version__
 from parsec.cli_utils import generate_not_available_cmd
 
@@ -23,7 +25,7 @@ except ImportError as exc:
 
 @click.group()
 @click.version_option(version=__version__, prog_name="parsec")
-def cli():
+def cli() -> None:
     pass
 
 
@@ -35,17 +37,18 @@ cli.add_command(backend_cmd, "backend")
 vanilla_cli_main = cli.main
 
 
-def patched_cli_main(args=None, **kwargs):
-    if args is None:
-        args = sys.argv[1:]
+def patched_cli_main(args: Sequence[str] | None = None, **kwargs: Any) -> Any:
+    args_list = list(args) if args is not None else sys.argv[1:]
 
     raw_extra_args = os.environ.get("PARSEC_CMD_ARGS", "")
-    args += [os.path.expandvars(x) for x in raw_extra_args.split()]
+    args_list += [os.path.expandvars(x) for x in raw_extra_args.split()]
 
-    return vanilla_cli_main(args=args, **kwargs)
+    return vanilla_cli_main(args=args_list[:], **kwargs)
 
 
-cli.main = patched_cli_main
+# Mypy: here we want to use the patched main instead of the provided one by `BaseCommand`
+# Note: We could use monkeypatch instead :thinking:
+cli.main = patched_cli_main  # type: ignore[assignment]
 
 
 if __name__ == "__main__":
