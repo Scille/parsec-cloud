@@ -20,6 +20,7 @@
         },
         "nested_types": {
             "InviteListItem": {
+                "type": "enum",
                 "discriminant_field": "type",
                 "variants": {
                     "User": {

@@ -16,6 +16,7 @@
         },
         "nested_types": {
             "UserOrDevice": {
+                "type": "enum",
                 "discriminant_field": "type",
                 "variants": {
                     "User": {

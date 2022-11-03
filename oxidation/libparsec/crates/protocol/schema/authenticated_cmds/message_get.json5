@@ -25,6 +25,7 @@
         },
         "nested_types": {
             "Message": {
+                "type": "struct",
                 "fields": {
                     "count": {
                         "type": "Size"

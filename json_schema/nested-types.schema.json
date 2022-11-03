@@ -3,15 +3,26 @@
     "type": "object",
     "additionalProperties": {
         "type": "object",
+        "definition": "A custom type",
+        "properties": {
+            "type": {
+                "enum": [
+                    "enum",
+                    "struct"
+                ]
+            }
+        },
+        "required": [
+            "type"
+        ],
         "oneOf": [
             {
                 "type": "object",
                 "definition": "A Custom enum",
-                "required": [
-                    "variants"
-                ],
-                "additionalProperties": false,
                 "properties": {
+                    "type": {
+                        "const": "enum"
+                    },
                     "discriminant_field": {
                         "type": "string",
                         "description": "The name of the field used to determine the type of the variant"
@@ -19,20 +30,27 @@
                     "variants": {
                         "$ref": "./variants.schema.json"
                     }
-                }
+                },
+                "required": [
+                    "variants"
+                ],
+                "additionalProperties": false
             },
             {
                 "type": "object",
                 "description": "A Custom struct",
-                "required": [
-                    "fields"
-                ],
-                "additionalProperties": false,
                 "properties": {
+                    "type": {
+                        "const": "struct"
+                    },
                     "fields": {
                         "$ref": "./fields.schema.json"
                     }
-                }
+                },
+                "required": [
+                    "fields"
+                ],
+                "additionalProperties": false
             }
         ]
     }

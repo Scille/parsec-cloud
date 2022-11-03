@@ -27,6 +27,7 @@
         },
         "nested_types": {
             "PkiEnrollmentInfoStatus": {
+                "type": "enum",
                 "discriminant_field": "enrollment_status",
                 "variants": {
                     "Submitted": {
@@ -112,6 +113,7 @@
         },
         "nested_types": {
             "PkiEnrollmentInfoStatus": {
+                "type": "enum",
                 "discriminant_field": "enrollment_status",
                 "variants": {
                     "Submitted": {

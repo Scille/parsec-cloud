@@ -29,6 +29,7 @@
         },
         "nested_types": {
             "UserOrDevice": {
+                "type": "enum",
                 "discriminant_field": "type",
                 "variants": {
                     "User": {
@@ -53,6 +54,7 @@
                 }
             },
             "InvitationEmailSentStatus": {
+                "type": "enum",
                 "variants": {
                     "Success": {
                         "discriminant_value": "SUCCESS"

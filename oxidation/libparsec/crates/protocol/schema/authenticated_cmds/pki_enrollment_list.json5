@@ -26,6 +26,7 @@
         },
         "nested_types": {
             "PkiEnrollmentListItem": {
+                "type": "struct",
                 "fields": {
                     "enrollment_id": {
                         "type": "UUID"
@@ -74,6 +75,7 @@
         },
         "nested_types": {
             "PkiEnrollmentListItem": {
+                "type": "struct",
                 "fields": {
                     "enrollment_id": {
                         "type": "UUID"

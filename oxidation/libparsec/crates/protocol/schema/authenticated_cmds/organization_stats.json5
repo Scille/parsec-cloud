@@ -43,6 +43,7 @@
         },
         "nested_types": {
             "UsersPerProfileDetailItem": {
+                "type": "struct",
                 "fields": {
                     "profile": {
                         "type": "UserProfile"

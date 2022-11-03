@@ -28,6 +28,7 @@
         },
         "nested_types": {
             "APIEvent": {
+                "type": "enum",
                 "discriminant_field": "event",
                 "variants": {
                     "Pinged": {

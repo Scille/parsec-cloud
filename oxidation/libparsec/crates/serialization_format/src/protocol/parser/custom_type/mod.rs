@@ -18,7 +18,7 @@ pub type CustomTypes = HashMap<String, CustomType>;
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
-#[serde(untagged)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum CustomType {
     Struct(CustomStruct),
     Enum(CustomEnum),
@@ -54,6 +54,7 @@ mod test {
     #[rstest]
     #[case::deserialize_enum(
         r#"{
+        "type": "enum",
         "discriminant_field": "event",
         "variants": {
             "Pinged": {
@@ -87,6 +88,7 @@ mod test {
     }))]
     #[case::deserialize_struct(
         r#"{
+        "type": "struct",
         "fields": {
             "user_id": {
                 "type": "UserID"
