@@ -1,15 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Callable, Optional, cast
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.fs import WorkspaceFSTimestamped
+from parsec._parsec import DateTime
+from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
+from parsec.core.logged_core import LoggedCore
 from parsec.core.types import DEFAULT_BLOCK_SIZE
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui.file_size import get_filesize
-from parsec.core.gui.trio_jobs import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.file_status_widget import Ui_FileInfoWidget
 from parsec.core.gui.lang import translate as _, format_datetime
 
@@ -19,34 +22,41 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
     get_status_success = pyqtSignal(QtToTrioJob)
     get_status_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, workspace_fs, path, core):
+    def __init__(
+        self,
+        jobs_ctx: QtToTrioJobScheduler,
+        workspace_fs: WorkspaceFS,
+        path: FsPath,
+        core: LoggedCore,
+    ):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.workspace_fs = workspace_fs
         self.path = path
         self.core = core
+        self.dialog: Optional[GreyedDialog] = None
 
         self.jobs_ctx.submit_job(
             (self, "get_status_success"), (self, "get_status_error"), self.get_status
         )
 
-    async def get_status(self):
+    async def get_status(self) -> None:
         path_info = await self.workspace_fs.path_info(self.path)
-        block_info = None
+        block_info: Optional[BlockInfo] = None
         if path_info["type"] == "file":
-            block_info: BlockInfo = await self.workspace_fs.get_blocks_by_type(self.path)
-            self.label_size.setText(get_filesize(path_info["size"]))
+            block_info = await self.workspace_fs.get_blocks_by_type(self.path)
+            self.label_size.setText(get_filesize(cast(int, path_info["size"])))
 
         version_lister = self.workspace_fs.get_version_lister()
         version_list = await version_lister.list(path=self.path)
         try:
             user_id = version_list[0][0].creator.user_id
             created_time = version_list[0][0].updated
-            updated_time = path_info["updated"]
+            updated_time = cast(DateTime, path_info["updated"])
 
             version_list = await version_lister.list(
-                path=self.path, starting_timestamp=updated_time
+                path=self.path, starting_timestamp=cast(DateTime, updated_time)
             )
             user_id_last = version_list[0][-1].creator.user_id
 
@@ -108,7 +118,15 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
             self.label_default_block_size.setText(get_filesize(DEFAULT_BLOCK_SIZE))
 
     @classmethod
-    def show_modal(cls, jobs_ctx, workspace_fs, path, core, parent, on_finished):
+    def show_modal(  # type: ignore[misc]
+        cls,
+        jobs_ctx: QtToTrioJobScheduler,
+        workspace_fs: WorkspaceFS,
+        path: FsPath,
+        core: LoggedCore,
+        parent: QWidget,
+        on_finished: Optional[Callable[..., None]],
+    ) -> FileStatusWidget:
         w = cls(jobs_ctx=jobs_ctx, workspace_fs=workspace_fs, path=path, core=core)
         d = GreyedDialog(
             w,
