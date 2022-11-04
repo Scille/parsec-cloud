@@ -37,7 +37,6 @@ class BaseSignedDataSchema(BaseSchema):
 class DataMeta(type):
 
     BASE_SCHEMA_CLS = BaseSchema
-    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 
     def __new__(cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]):  # type: ignore[no-untyped-def]
         # Sanity checks
@@ -261,6 +260,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
 BaseDataTypeVar = TypeVar("BaseDataTypeVar", bound="BaseData")
 
 
+@attr.s(slots=True, frozen=True, kw_only=True, eq=False)
 class BaseData(metaclass=DataMeta):
     """
     Some data within the api don't have to be signed (e.g. claim info) and
