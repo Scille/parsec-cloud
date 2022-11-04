@@ -93,7 +93,7 @@ impl DeviceFile {
     }
 
     fn load(key_file_path: &Path) -> LocalDeviceResult<Self> {
-        let data = std::fs::read(&key_file_path)
+        let data = std::fs::read(key_file_path)
             .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))?;
 
         rmp_serde::from_slice::<DeviceFile>(&data)

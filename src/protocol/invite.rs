@@ -68,7 +68,7 @@ impl InvitationType {
 
     #[classmethod]
     fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
-        PyList::new(py, &[Self::device(), Self::user()]).as_ref()
+        PyList::new(py, [Self::device(), Self::user()]).as_ref()
     }
 
     #[getter]
@@ -247,7 +247,7 @@ impl InvitationStatus {
 
     #[classmethod]
     fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
-        PyList::new(py, &[Self::idle(), Self::ready(), Self::deleted()]).as_ref()
+        PyList::new(py, [Self::idle(), Self::ready(), Self::deleted()]).as_ref()
     }
 
     #[getter]

@@ -83,7 +83,7 @@ impl RealmRole {
     fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
         PyList::new(
             py,
-            &[
+            [
                 Self::owner(),
                 Self::manager(),
                 Self::contributor(),
