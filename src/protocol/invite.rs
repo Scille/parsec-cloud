@@ -707,17 +707,17 @@ impl InviteInfoRepOk {
     }
 
     #[getter]
-    fn greeter_human_handle(_self: PyRef<'_, Self>) -> PyResult<HumanHandle> {
+    fn greeter_human_handle(_self: PyRef<'_, Self>) -> PyResult<Option<HumanHandle>> {
         match &_self.as_ref().0 {
             invite_info::Rep::Ok(invite_info::UserOrDevice::Device {
-                greeter_human_handle: Some(handle),
+                greeter_human_handle: handle,
                 ..
-            }) => Ok(HumanHandle(handle.clone())),
-            invite_info::Rep::Ok(invite_info::UserOrDevice::User {
-                greeter_human_handle: Some(handle),
+            })
+            | invite_info::Rep::Ok(invite_info::UserOrDevice::User {
+                greeter_human_handle: handle,
                 ..
-            }) => Ok(HumanHandle(handle.clone())),
-            _ => Err(PyAttributeError::new_err("rep in not ok")),
+            }) => Ok(handle.clone().map(HumanHandle)),
+            _ => Err(PyAttributeError::new_err("no greeter_human_handle attr")),
         }
     }
 }
