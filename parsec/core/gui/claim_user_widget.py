@@ -640,7 +640,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.addr = addr
         self.status: Optional[Tuple[LocalDevice, DeviceFileType, str]] = None
         self.user_email: Optional[str] = None
-        self.claimer_job = None
+        self.claimer_job: Optional[QtToTrioJob] = None
         self.retrieve_info_job = None
         self.claimer_success.connect(self._on_claimer_success)
         self.claimer_error.connect(self._on_claimer_error)

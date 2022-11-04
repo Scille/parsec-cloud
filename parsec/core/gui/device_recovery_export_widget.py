@@ -1,15 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import Optional, Sequence, Tuple
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from pathlib import Path, PurePath
 
+from parsec.core import CoreConfig
 from parsec.core.recovery import generate_recovery_device
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
+    AvailableDevice,
     load_device_with_password,
     load_device_with_smartcard,
     LocalDeviceError,
@@ -19,7 +22,7 @@ from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
     DeviceFileType,
 )
-from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError
+from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError, QtToTrioJobScheduler
 from parsec.core.gui.lang import translate
 from parsec.core.gui.desktop import open_files_job
 from parsec.core.gui.custom_dialogs import (
@@ -39,7 +42,14 @@ from parsec.core.gui.ui.device_recovery_export_page2_widget import (
 
 
 class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widget):
-    def __init__(self, jobs_ctx, device, save_path, passphrase, parent=None):
+    def __init__(
+        self,
+        jobs_ctx: QtToTrioJobScheduler,
+        device: LocalDevice,
+        save_path: PurePath,
+        passphrase: str,
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
         self.button_print.clicked.connect(self._print_recovery_key)
@@ -54,10 +64,10 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
         self.label_file_path.clicked.connect(self._on_path_clicked)
         self.edit_passphrase.setText(passphrase)
 
-    def _on_path_clicked(self, file_path):
+    def _on_path_clicked(self, file_path: str) -> None:
         self.jobs_ctx.submit_job(None, None, open_files_job, [PurePath(file_path).parent])
 
-    def _print_recovery_key(self):
+    def _print_recovery_key(self) -> None:
         html = translate("TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password").format(
             organization=self.device.organization_id,
             label=self.device.user_display,
@@ -70,7 +80,9 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
 class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widget):
     info_filled = pyqtSignal(bool)
 
-    def __init__(self, devices, parent=None):
+    def __init__(
+        self, devices: Sequence[AvailableDevice], parent: Optional[QWidget] = None
+    ) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
         self.button_select_file.clicked.connect(self._on_select_file_clicked)
@@ -82,7 +94,7 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
                 f"{device.organization_id.str} - {device.user_display}", device.slug
             )
 
-    def _on_select_file_clicked(self):
+    def _on_select_file_clicked(self) -> None:
         key_dir = QDialogInProcess.getExistingDirectory(
             self, translate("TEXT_EXPORT_KEY"), str(Path.home())
         )
@@ -90,13 +102,13 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
             self.label_file_path.setText(key_dir)
         self._check_infos()
 
-    def _check_infos(self):
+    def _check_infos(self) -> None:
         self.info_filled.emit(len(self.label_file_path.text()) > 0)
 
-    def get_selected_device(self):
+    def get_selected_device(self) -> AvailableDevice:
         return self.devices[self.combo_devices.currentData()]
 
-    def get_save_path(self):
+    def get_save_path(self) -> PurePath:
         return PurePath(self.label_file_path.text())
 
 
@@ -104,10 +116,16 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
     export_success = pyqtSignal(QtToTrioJob)
     export_failure = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, config, jobs_ctx, devices, parent=None):
+    def __init__(
+        self,
+        config: CoreConfig,
+        jobs_ctx: QtToTrioJobScheduler,
+        devices: Sequence[AvailableDevice],
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
-        self.dialog = None
+        self.dialog: Optional[GreyedDialog] = None
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.button_validate.clicked.connect(self._on_validate_clicked)
@@ -118,7 +136,8 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         self.export_success.connect(self._on_export_success)
         self.export_failure.connect(self._on_export_failure)
 
-    def _on_export_success(self, job):
+    def _on_export_success(self, job: QtToTrioJob) -> None:
+        assert job.ret is not None
         recovery_device, file_path, passphrase = job.ret
         self.main_layout.removeWidget(self.current_page)
         self.current_page = DeviceRecoveryExportPage2Widget(
@@ -132,13 +151,15 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         self.button_validate.setText(translate("ACTION_CLOSE"))
         self.button_validate.setEnabled(True)
 
-    def _on_export_failure(self, job):
+    def _on_export_failure(self, job: QtToTrioJob) -> None:
         self.button_validate.setEnabled(True)
 
-    def _on_page1_info_filled(self, valid):
+    def _on_page1_info_filled(self, valid: bool) -> None:
         self.button_validate.setEnabled(valid)
 
-    async def _export_recovery_device(self, config_dir, device, export_path):
+    async def _export_recovery_device(
+        self, config_dir: PurePath, device: LocalDevice, export_path: PurePath
+    ) -> Tuple[LocalDevice, PurePath, str]:
         try:
             recovery_device = await generate_recovery_device(device)
             file_name = get_recovery_device_file_name(recovery_device)
@@ -159,7 +180,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             raise JobResultError("error") from exc
         self.button_validate.setEnabled(True)
 
-    async def _on_validate_clicked(self):
+    async def _on_validate_clicked(self) -> None:
         if isinstance(self.current_page, DeviceRecoveryExportPage1Widget):
             self.button_validate.setEnabled(False)
             selected_device = self.current_page.get_selected_device()
@@ -214,10 +235,17 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                 export_path=save_path,
             )
         else:
+            assert self.dialog is not None
             self.dialog.accept()
 
     @classmethod
-    def show_modal(cls, config, jobs_ctx, devices, parent):
+    def show_modal(
+        cls,
+        config: CoreConfig,
+        jobs_ctx: QtToTrioJobScheduler,
+        devices: Sequence[AvailableDevice],
+        parent: QWidget,
+    ) -> DeviceRecoveryExportWidget:
         w = cls(config=config, jobs_ctx=jobs_ctx, devices=devices)
         d = GreyedDialog(
             w, translate("TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"), parent=parent, width=800
