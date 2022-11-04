@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import sys
+from typing import Any, AsyncIterator, Awaitable, Callable, Iterator, Mapping
 import trio
+from trio.abc import Stream
 from functools import partial
 from contextlib import contextmanager, asynccontextmanager
 from structlog import get_logger
@@ -18,9 +20,12 @@ from parsec.serde import (
     SerdeError,
     MsgpackSerializer,
 )
+from parsec.utils import open_service_nursery
 
 
 logger = get_logger()
+
+CommandHandlerCallback = Callable[[dict[str, object]], Awaitable[dict[str, Any]]]
 
 
 class IPCCommand(Enum):
@@ -33,10 +38,10 @@ class IPCServerError(Exception):
 
 
 class IPCServerBadResponse(IPCServerError):
-    def __init__(self, rep):
+    def __init__(self, rep: object) -> None:
         self.rep = rep
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Bad response from IPC server: {self.rep}"
 
 
@@ -64,7 +69,7 @@ class CommandReqSchema(OneOfSchema):
         IPCCommand.NEW_INSTANCE: NewInstanceReqSchema,
     }
 
-    def get_obj_type(self, obj):
+    def get_obj_type(self, obj: Mapping[str, object]) -> object:
         return obj["cmd"]
 
 
@@ -81,28 +86,32 @@ DEFAULT_WIN32_MUTEX_NAME = "parsec-cloud"
 
 
 @contextmanager
-def _install_win32_mutex(mutex_name: str):
+def _install_win32_mutex(mutex_name: str) -> Iterator[None]:
+    # mypy: This tells mypy to do type check only on windows platform. (avoid undefined symbols
+    # errors on linux and macos) This function is not meant to be called on other platforms
+    if sys.platform == "win32":
+        from parsec.win32 import CreateMutex, CloseHandle, GetLastError, ERROR_ALREADY_EXISTS
 
-    from parsec.win32 import CreateMutex, CloseHandle, GetLastError, ERROR_ALREADY_EXISTS
+        try:
+            mutex = CreateMutex(None, False, mutex_name)
+        except WindowsError as exc:
+            raise IPCServerError(f"Cannot create mutex `{mutex_name}`: {exc}") from exc
+        status = GetLastError()
+        if status == ERROR_ALREADY_EXISTS:
+            CloseHandle(mutex)
+            raise IPCServerAlreadyRunning(f"Mutex `{mutex_name}` already exists")
 
-    try:
-        mutex = CreateMutex(None, False, mutex_name)
-    except WindowsError as exc:
-        raise IPCServerError(f"Cannot create mutex `{mutex_name}`: {exc}") from exc
-    status = GetLastError()
-    if status == ERROR_ALREADY_EXISTS:
-        CloseHandle(mutex)
-        raise IPCServerAlreadyRunning(f"Mutex `{mutex_name}` already exists")
+        try:
+            yield
 
-    try:
-        yield
-
-    finally:
-        CloseHandle(mutex)
+        finally:
+            CloseHandle(mutex)
+    else:
+        raise RuntimeError("_install_win32_mutex called on a platform different than `win32`")
 
 
 @contextmanager
-def _install_posix_file_lock(socket_file: Path):
+def _install_posix_file_lock(socket_file: Path) -> Iterator[None]:
 
     import fcntl
 
@@ -121,8 +130,10 @@ def _install_posix_file_lock(socket_file: Path):
 
 @asynccontextmanager
 async def run_ipc_server(
-    cmd_handler, socket_file: Path, win32_mutex_name: str = DEFAULT_WIN32_MUTEX_NAME
-):
+    cmd_handler: CommandHandlerCallback,
+    socket_file: Path,
+    win32_mutex_name: str = DEFAULT_WIN32_MUTEX_NAME,
+) -> AsyncIterator[None]:
     if sys.platform == "win32":
         with _install_win32_mutex(win32_mutex_name):
             async with _run_tcp_server(socket_file, cmd_handler):
@@ -134,8 +145,10 @@ async def run_ipc_server(
 
 
 @asynccontextmanager
-async def _run_tcp_server(socket_file: Path, cmd_handler):
-    async def _client_handler(stream):
+async def _run_tcp_server(
+    socket_file: Path, cmd_handler: CommandHandlerCallback
+) -> AsyncIterator[None]:
+    async def _client_handler(stream: Stream) -> None:
 
         # General exception handling
         try:
@@ -166,7 +179,7 @@ async def _run_tcp_server(socket_file: Path, cmd_handler):
             logger.exception("Unexpected crash")
 
     try:
-        async with trio.open_service_nursery() as nursery:
+        async with open_service_nursery() as nursery:
             listeners = await nursery.start(
                 partial(trio.serve_tcp, _client_handler, 0, host="127.0.0.1")
             )
@@ -186,7 +199,7 @@ async def _run_tcp_server(socket_file: Path, cmd_handler):
         raise IPCServerError(f"Cannot start IPC server: {exc}") from exc
 
 
-async def send_to_ipc_server(socket_file: Path, cmd, **kwargs):
+async def send_to_ipc_server(socket_file: Path, cmd: IPCCommand, **kwargs: Any) -> dict[str, Any]:
     try:
         socket_port = int(socket_file.read_text().strip())
 
@@ -205,6 +218,7 @@ async def send_to_ipc_server(socket_file: Path, cmd, **kwargs):
                 raise IPCServerError(f"IPC server has closed the connection unexpectly")
             unpacker.feed(raw)
             raw_rep = next(unpacker, None)
+            assert raw_rep is not None
             rep = cmd_rep_serializer.load(raw_rep)
             if rep:
                 if rep["status"] != "ok":
