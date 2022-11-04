@@ -857,7 +857,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def close_tab(self, index: int, force: bool = False) -> None:
         tab = self.tab_center.widget(index)
         if not force:
-            r = _("ACTION_TAB_CLOSE_CONFIRM")
+            r: str | None = _("ACTION_TAB_CLOSE_CONFIRM")
             if tab and tab.is_logged_in:
                 r = ask_question(
                     self,
