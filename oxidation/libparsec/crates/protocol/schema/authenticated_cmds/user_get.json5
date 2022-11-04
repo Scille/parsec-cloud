@@ -35,6 +35,7 @@
         },
         "nested_types": {
             "Trustchain": {
+                "type": "struct",
                 "fields": {
                     "devices": {
                         "type": "List<Bytes>"

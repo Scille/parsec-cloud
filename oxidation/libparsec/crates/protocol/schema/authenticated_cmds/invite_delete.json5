@@ -24,6 +24,7 @@
         },
         "nested_types": {
             "InvitationDeletedReason": {
+                "type": "enum",
                 "variants": {
                     "Finished": {
                         "discriminant_value": "FINISHED"

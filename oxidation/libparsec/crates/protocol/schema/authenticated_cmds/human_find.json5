@@ -53,6 +53,7 @@
         },
         "nested_types": {
             "HumanFindResultItem": {
+                "type": "struct",
                 "fields": {
                     "user_id": {
                         "type": "UserID"
