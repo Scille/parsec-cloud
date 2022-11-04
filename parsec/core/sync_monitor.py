@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from typing import TYPE_CHECKING, Optional, Union, Dict, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Union, Dict, cast
 import trio
 from structlog import get_logger
 
@@ -12,6 +12,7 @@ from parsec._parsec import (
     VlobPollChangesRepInMaintenance,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
+    WorkspaceEntry,
 )
 from parsec.api.protocol import RealmID
 from parsec.core.core_events import CoreEvent
@@ -31,8 +32,8 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendAuthenticatedCmds,
 )
-from parsec.core.fs.storage import UserStorage, WorkspaceStorage, BaseWorkspaceStorage
-from parsec.event_bus import EventBus
+from parsec.core.fs.storage import UserStorage, WorkspaceStorage
+from parsec.event_bus import EventBus, EventCallback
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection.authenticated import MonitorTaskStatus
@@ -47,7 +48,7 @@ TICK_CRASH_COOLDOWN = 5
 TICK_SERVER_UPLOAD_TEMPORARILY_UNAVAILABLE_COOLDOWN = 30
 
 
-async def freeze_sync_monitor_mockpoint():
+async def freeze_sync_monitor_mockpoint() -> None:
     """
     Noop function that could be mocked during tests to be able to freeze the
     monitor coroutine running in background
@@ -58,14 +59,14 @@ async def freeze_sync_monitor_mockpoint():
 class LocalChange:
     __slots__ = ("first_changed_on", "last_changed_on", "due_time")
 
-    def __init__(self, now):
+    def __init__(self, now: float) -> None:
         self.first_changed_on = self.last_changed_on = now
         self.due_time = self._compute_due_time()
 
-    def _compute_due_time(self):
+    def _compute_due_time(self) -> float:
         return min(self.last_changed_on + MIN_WAIT, self.first_changed_on + MAX_WAIT)
 
-    def changed(self, changed_on) -> float:
+    def changed(self, changed_on: float) -> float:
         self.last_changed_on = changed_on
         self.due_time = self._compute_due_time()
         return self.due_time
@@ -82,24 +83,24 @@ class SyncContext:
       storage to get the list of changes (entry id + version) it has missed
     """
 
-    def __init__(self, user_fs: UserFS, id: EntryID, read_only: bool = False):
+    def __init__(self, user_fs: UserFS, id: EntryID, read_only: bool = False) -> None:
         self.user_fs = user_fs
         self.device = user_fs.device
         self.id = id
         self.read_only = read_only
         self.due_time = math.inf
         self._changes_loaded = False
-        self._local_changes = {}
-        self._remote_changes = set()
-        self._local_confinement_points = defaultdict(set)
+        self._local_changes: dict[EntryID, LocalChange] = {}
+        self._remote_changes: set[EntryID] = set()
+        self._local_confinement_points: dict[EntryID, set[EntryID]] = defaultdict(set)
 
-    def _sync(self, entry_id: EntryID) -> None:
+    async def _sync(self, entry_id: EntryID) -> None:
         raise NotImplementedError
 
     def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         raise NotImplementedError
 
-    def _get_local_storage(self) -> Union[UserStorage, BaseWorkspaceStorage]:
+    def _get_local_storage(self) -> Union[UserStorage, WorkspaceStorage]:
         raise NotImplementedError
 
     def __repr__(self) -> str:
@@ -115,7 +116,7 @@ class SyncContext:
         self.due_time = math.inf
 
         # 1) Fetch new checkpoint and changes
-        realm_checkpoint = await self._get_local_storage().get_realm_checkpoint()
+        realm_checkpoint: int = await self._get_local_storage().get_realm_checkpoint()
         try:
             rep = await self._get_backend_cmds().vlob_poll_changes(
                 RealmID(self.id.uuid), realm_checkpoint
@@ -198,7 +199,9 @@ class SyncContext:
     def set_confined_entry(self, entry_id: EntryID, cause_id: EntryID) -> None:
         self._local_confinement_points[cause_id].add(entry_id)
 
-    def _compute_due_time(self, now: Optional[float] = None, min_due_time: Optional[float] = None):
+    def _compute_due_time(
+        self, now: Optional[float] = None, min_due_time: Optional[float] = None
+    ) -> float:
         if self._remote_changes:
             self.due_time = now or self.device.timestamp().timestamp()
         elif self._local_changes:
@@ -264,7 +267,7 @@ class SyncContext:
                     for entry_id, change_info in self._local_changes.items()
                     if change_info.due_time <= now
                 ),
-                None,
+                None,  # type: ignore[arg-type]
             )
             if entry_id:
                 del self._local_changes[entry_id]
@@ -298,7 +301,7 @@ class SyncContext:
 
 
 class WorkspaceSyncContext(SyncContext):
-    def __init__(self, user_fs: UserFS, id: EntryID):
+    def __init__(self, user_fs: UserFS, id: EntryID) -> None:
         self.workspace = user_fs.get_workspace(id)
         read_only = self.workspace.get_workspace_entry().role == WorkspaceRole.READER
         super().__init__(user_fs, id, read_only=read_only)
@@ -334,17 +337,18 @@ class SyncContextStore:
     when a newly created workspace is modified for the first time)
     """
 
-    def __init__(self, user_fs: UserFS):
+    def __init__(self, user_fs: UserFS) -> None:
         self.user_fs = user_fs
         self._ctxs: Dict[EntryID, SyncContext] = {}
 
-    def iter(self) -> Sequence[SyncContext]:
+    def iter(self) -> Iterable[SyncContext]:
         return self._ctxs.copy().values()
 
     def get(self, entry_id: EntryID) -> Optional[SyncContext]:
         try:
             return self._ctxs[entry_id]
         except KeyError:
+            ctx: UserManifestSyncContext | WorkspaceSyncContext
             if entry_id == self.user_fs.user_manifest_id:
                 ctx = UserManifestSyncContext(self.user_fs, entry_id)
             else:
@@ -359,22 +363,26 @@ class SyncContextStore:
             self._ctxs[entry_id] = ctx
             return ctx
 
-    def discard(self, entry_id):
+    def discard(self, entry_id: EntryID) -> None:
         self._ctxs.pop(entry_id, None)
 
 
-async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus):
+async def monitor_sync(
+    user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus
+) -> None:
     ctxs = SyncContextStore(user_fs)
     early_wakeup = trio.Event()
 
-    def _trigger_early_wakeup():
+    def _trigger_early_wakeup() -> None:
         early_wakeup.set()
         # Don't wait for the *actual* awakening to change the status to
         # avoid having a period of time when the awakening is scheduled but
         # not yet notified to task_status
         task_status.awake()
 
-    def _on_entry_updated(event, id, workspace_id=None):
+    def _on_entry_updated(
+        event: CoreEvent, id: EntryID, workspace_id: Optional[EntryID] = None
+    ) -> None:
         if workspace_id is None:
             # User manifest
             assert id == user_fs.user_manifest_id
@@ -384,12 +392,16 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status: Monito
         if ctx and ctx.set_local_change(id):
             _trigger_early_wakeup()
 
-    def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
+    def _on_realm_vlobs_updated(
+        sender: str, realm_id: EntryID, checkpoint: int, src_id: EntryID, src_version: int
+    ) -> None:
         ctx = ctxs.get(realm_id)
         if ctx and ctx.set_remote_change(src_id):
             _trigger_early_wakeup()
 
-    def _on_sharing_updated(sender, new_entry, previous_entry):
+    def _on_sharing_updated(
+        sender: str, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry
+    ) -> None:
         # If role have changed we have to reset the sync context given
         # behavior could have changed a lot (e.g. switching to/from read-only)
         ctxs.discard(new_entry.id)
@@ -401,12 +413,14 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status: Monito
                 ctx.due_time = user_fs.device.timestamp().timestamp()
                 _trigger_early_wakeup()
 
-    def _on_entry_confined(event, entry_id, cause_id, workspace_id):
+    def _on_entry_confined(
+        event: CoreEvent, entry_id: EntryID, cause_id: EntryID, workspace_id: EntryID
+    ) -> None:
         ctx = ctxs.get(workspace_id)
         if ctx is not None:
             ctx.set_confined_entry(entry_id, cause_id)
 
-    async def _ctx_action(ctx, meth):
+    async def _ctx_action(ctx: SyncContext, meth: str) -> Any:
         try:
             return await getattr(ctx, meth)()
         except BackendNotAvailable:
@@ -424,23 +438,24 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status: Monito
         # Exception occured
         # Reset sync context which is now in an undefined state
         ctxs.discard(ctx.id)
-        ctx = ctxs.get(ctx.id)
-        if ctx:
+        undefined_ctx = ctxs.get(ctx.id)
+        if undefined_ctx:
             # Add small cooldown just to be sure not end up in a crazy busy error loop
-            ctx.due_time = user_fs.device.timestamp().timestamp() + delay
-            return ctx.due_time
+            undefined_ctx.due_time = user_fs.device.timestamp().timestamp() + delay
+            return undefined_ctx.due_time
         else:
             return math.inf
 
     with event_bus.connect_in_context(
-        (CoreEvent.FS_ENTRY_UPDATED, _on_entry_updated),
-        (CoreEvent.BACKEND_REALM_VLOBS_UPDATED, _on_realm_vlobs_updated),
-        (CoreEvent.SHARING_UPDATED, _on_sharing_updated),
-        (CoreEvent.FS_ENTRY_CONFINED, _on_entry_confined),
+        (CoreEvent.FS_ENTRY_UPDATED, cast(EventCallback, _on_entry_updated)),
+        (CoreEvent.BACKEND_REALM_VLOBS_UPDATED, cast(EventCallback, _on_realm_vlobs_updated)),
+        (CoreEvent.SHARING_UPDATED, cast(EventCallback, _on_sharing_updated)),
+        (CoreEvent.FS_ENTRY_CONFINED, cast(EventCallback, _on_entry_confined)),
     ):
         due_times = []
         # Init userfs sync context
         ctx = ctxs.get(user_fs.user_manifest_id)
+        assert ctx is not None
         due_times.append(await _ctx_action(ctx, "bootstrap"))
         # Init workspaces sync context
         user_manifest = user_fs.get_user_manifest()
@@ -457,7 +472,7 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status: Monito
                 task_status.idle()
             async with trio.open_nursery() as nursery:
 
-                async def wait_for_early_wakup():
+                async def wait_for_early_wakup() -> None:
                     await early_wakeup.wait()
                     nursery.cancel_scope.cancel()
 
