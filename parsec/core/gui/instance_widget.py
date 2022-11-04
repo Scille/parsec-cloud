@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 from pathlib import Path
-from PyQt5.QtGui import QWindow
 
 import trio
 from typing import Any, Optional, Tuple, cast
 from structlog import get_logger
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QMainWindow
 from packaging.version import Version
 import exceptiongroup
 
@@ -81,7 +80,7 @@ def check_macfuse_version() -> bool:
     return local_version >= MIN_MACFUSE_VERSION
 
 
-def ensure_macfuse_available_or_show_dialogue(window: QWindow) -> None:
+def ensure_macfuse_available_or_show_dialogue(window: QMainWindow) -> None:
     try:
         import fuse  # noqa
     except OSError:

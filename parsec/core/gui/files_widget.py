@@ -960,6 +960,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Initialize current size
         errors = []
         current_size = 0
+        assert isinstance(loading_dialog.center_widget, LoadingWidget)
         loading_dialog.center_widget.set_progress(current_size)
 
         # Loop over files to import
@@ -991,6 +992,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     ) -> int:
         assert self.workspace_fs is not None
         # Update loading widget
+        assert isinstance(loading_dialog.center_widget, LoadingWidget)
         loading_dialog.center_widget.set_current_file(source.name)
 
         # Create parent directory
