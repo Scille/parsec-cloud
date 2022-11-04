@@ -165,7 +165,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         if hide_close:
             self.button_close.hide()
         main_win = ParsecApp.get_main_window()
-        if width:
+        if width and main_win:
             if width < main_win.size().width():
                 spacing = int((main_win.size().width() - width) / 2)
                 self._get_spacer_right().changeSize(
