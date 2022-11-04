@@ -1,0 +1,51 @@
+[
+    {
+        "label": "InviteInfo",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_info"
+        },
+        "reps": {
+            "ok": {
+                "unit": "UserOrDevice"
+            }
+        },
+        "nested_types": {
+            "UserOrDevice": {
+                "type": "enum",
+                "discriminant_field": "type",
+                "variants": {
+                    "User": {
+                        "discriminant_value": "USER",
+                        "fields": {
+                            "claimer_email": {
+                                "type": "String"
+                            },
+                            "greeter_user_id": {
+                                "type": "UserID"
+                            },
+                            "greeter_human_handle": {
+                                "type": "RequiredOption<HumanHandle>"
+                            }
+                        }
+                    },
+                    "Device": {
+                        "discriminant_value": "DEVICE",
+                        "fields": {
+                            "greeter_user_id": {
+                                "type": "UserID"
+                            },
+                            "greeter_human_handle": {
+                                "type": "RequiredOption<HumanHandle>"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+]

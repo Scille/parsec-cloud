@@ -1,0 +1,217 @@
+[
+    {
+        "label": "VlobCreate",
+        "major_versions": [
+            3
+        ],
+        "req": {
+            "cmd": "vlob_create",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "encryption_revision": {
+                    "type": "Index"
+                },
+                "vlob_id": {
+                    "type": "VlobID"
+                },
+                // If blob contains a signed message, it timestamp cannot be directly enforced
+                // by the backend (given the message is probably also encrypted).
+                // Hence the timestamp is passed in clear so backend can reject the message
+                // if it considers the timestamp invalid. On top of that each client asking
+                // for the message will receive the declared timestamp to check against
+                // the actual timestamp within the message.
+                "timestamp": {
+                    "type": "DateTime"
+                },
+                "blob": {
+                    "type": "Bytes"
+                },
+                // Field set to `None` if sequester is disabled for the organization
+                // Key is sequester service ID, value is blob encrypted with the service key
+                // New in API version 2.8/3.2 (Parsec 2.11.0)
+                "sequester_blob": {
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>",
+                    "introduced_in": "3.2"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "already_exists": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "bad_encryption_revision": {},
+            "in_maintenance": {},
+            "require_greater_timestamp": {
+                "fields": {
+                    "strictly_greater_than": {
+                        "type": "DateTime"
+                    }
+                }
+            },
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    },
+                    "ballpark_client_early_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "ballpark_client_late_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "backend_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    "client_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                }
+            },
+            "not_a_sequestered_organization": {},
+            "sequester_inconsistency": {
+                "fields": {
+                    "sequester_authority_certificate": {
+                        "type": "Bytes"
+                    },
+                    "sequester_services_certificates": {
+                        "type": "List<Bytes>"
+                    }
+                }
+            },
+            "rejected_by_sequester_service": {
+                "fields": {
+                    "service_id": {
+                        "type": "SequesterServiceID"
+                    },
+                    "service_label": {
+                        "type": "String"
+                    },
+                    "reason": {
+                        "type": "String"
+                    }
+                }
+            },
+            "timeout": {}
+        }
+    },
+    {
+        "label": "VlobCreate",
+        "major_versions": [
+            1,
+            2
+        ],
+        "req": {
+            "cmd": "vlob_create",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "encryption_revision": {
+                    "type": "Index"
+                },
+                "vlob_id": {
+                    "type": "VlobID"
+                },
+                // If blob contains a signed message, it timestamp cannot be directly enforced
+                // by the backend (given the message is probably also encrypted).
+                // Hence the timestamp is passed in clear so backend can reject the message
+                // if it considers the timestamp invalid. On top of that each client asking
+                // for the message will receive the declared timestamp to check against
+                // the actual timestamp within the message.
+                "timestamp": {
+                    "type": "DateTime"
+                },
+                "blob": {
+                    "type": "Bytes"
+                },
+                // Field set to `None` if sequester is disabled for the organization
+                // Key is sequester service ID, value is blob encrypted with the service key
+                // New in API version 2.8/3.2 (Parsec 2.11.0)
+                "sequester_blob": {
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>",
+                    "introduced_in": "2.8"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "already_exists": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "bad_encryption_revision": {},
+            "in_maintenance": {},
+            "require_greater_timestamp": {
+                "fields": {
+                    "strictly_greater_than": {
+                        "type": "DateTime"
+                    }
+                }
+            },
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    },
+                    "ballpark_client_early_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "ballpark_client_late_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "backend_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    "client_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                }
+            },
+            "not_a_sequestered_organization": {},
+            "sequester_inconsistency": {
+                "fields": {
+                    "sequester_authority_certificate": {
+                        "type": "Bytes"
+                    },
+                    "sequester_services_certificates": {
+                        "type": "List<Bytes>"
+                    }
+                }
+            },
+            "rejected_by_sequester_service": {
+                "fields": {
+                    "service_id": {
+                        "type": "SequesterServiceID"
+                    },
+                    "service_label": {
+                        "type": "String"
+                    },
+                    "reason": {
+                        "type": "String"
+                    }
+                }
+            },
+            "timeout": {}
+        }
+    }
+]

@@ -1,0 +1,77 @@
+[
+    {
+        "label": "RealmStartReencryptionMaintenance",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_start_reencryption_maintenance",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "encryption_revision": {
+                    "type": "Index"
+                },
+                "timestamp": {
+                    "type": "DateTime"
+                },
+                "per_participant_message": {
+                    "type": "Map<UserID, Bytes>"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "bad_encryption_revision": {},
+            "participant_mismatch": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "maintenance_error": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "in_maintenance": {},
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    },
+                    "ballpark_client_early_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "ballpark_client_late_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "backend_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    "client_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                }
+            }
+        }
+    }
+]

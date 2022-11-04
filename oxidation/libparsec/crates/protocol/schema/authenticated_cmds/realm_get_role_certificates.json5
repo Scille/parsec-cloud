@@ -1,0 +1,35 @@
+[
+    {
+        "label": "RealmGetRoleCertificates",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_get_role_certificates",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "certificates": {
+                        "type": "List<Bytes>"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            }
+        }
+    }
+]

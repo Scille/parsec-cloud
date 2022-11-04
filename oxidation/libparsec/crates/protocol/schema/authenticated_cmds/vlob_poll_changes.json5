@@ -1,0 +1,42 @@
+[
+    {
+        "label": "VlobPollChanges",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "vlob_poll_changes",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "last_checkpoint": {
+                    "type": "Index"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "changes": {
+                        "type": "Map<VlobID, Index>"
+                    },
+                    "current_checkpoint": {
+                        "type": "Index"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "in_maintenance": {}
+        }
+    }
+]

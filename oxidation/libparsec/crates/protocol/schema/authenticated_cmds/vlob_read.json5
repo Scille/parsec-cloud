@@ -1,0 +1,63 @@
+[
+    {
+        "label": "VlobRead",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "vlob_read",
+            "fields": {
+                "encryption_revision": {
+                    "type": "Index"
+                },
+                "vlob_id": {
+                    "type": "VlobID"
+                },
+                "version": {
+                    "type": "RequiredOption<Version>"
+                },
+                "timestamp": {
+                    "type": "RequiredOption<DateTime>"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "version": {
+                        "type": "Version"
+                    },
+                    "blob": {
+                        "type": "Bytes"
+                    },
+                    "author": {
+                        "type": "DeviceID"
+                    },
+                    "timestamp": {
+                        "type": "DateTime"
+                    },
+                    // This field is used by the client to figure out if its role certificate cache is up-to-date enough
+                    // to be able to perform the proper integrity checks on the manifest timestamp.
+                    // New in API version 2.3 (Parsec 2.6.0)
+                    "author_last_role_granted_on": {
+                        "type": "DateTime",
+                        "introduced_in": "2.3"
+                    }
+                }
+            },
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "bad_version": {},
+            "bad_encryption_revision": {},
+            "in_maintenance": {}
+        }
+    }
+]

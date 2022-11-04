@@ -1,0 +1,33 @@
+[
+    {
+        "label": "Invite1GreeterWaitPeer",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_1_greeter_wait_peer",
+            "fields": {
+                "token": {
+                    "type": "InvitationToken"
+                },
+                "greeter_public_key": {
+                    "type": "PublicKey"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "claimer_public_key": {
+                        "type": "PublicKey"
+                    }
+                }
+            },
+            "not_found": {},
+            "already_deleted": {},
+            "invalid_state": {}
+        }
+    }
+]

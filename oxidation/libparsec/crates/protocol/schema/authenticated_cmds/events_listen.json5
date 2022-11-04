@@ -1,0 +1,118 @@
+[
+    {
+        "label": "EventsListen",
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "events_listen",
+            "fields": {
+                "wait": {
+                    "type": "Boolean"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "unit": "APIEvent"
+            },
+            "cancelled": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "no_events": {}
+        },
+        "nested_types": {
+            "APIEvent": {
+                "type": "enum",
+                "discriminant_field": "event",
+                "variants": {
+                    "Pinged": {
+                        "discriminant_value": "pinged",
+                        "fields": {
+                            "ping": {
+                                "type": "String"
+                            }
+                        }
+                    },
+                    "MessageReceived": {
+                        "discriminant_value": "message.received",
+                        "fields": {
+                            "index": {
+                                "type": "Index"
+                            }
+                        }
+                    },
+                    "InviteStatusChanged": {
+                        "discriminant_value": "invite.status_changed",
+                        "fields": {
+                            "token": {
+                                "type": "InvitationToken"
+                            },
+                            "invitation_status": {
+                                "type": "InvitationStatus"
+                            }
+                        }
+                    },
+                    "RealmMaintenanceStarted": {
+                        "discriminant_value": "realm.maintenance_started",
+                        "fields": {
+                            "realm_id": {
+                                "type": "RealmID"
+                            },
+                            "encryption_revision": {
+                                "type": "Index"
+                            }
+                        }
+                    },
+                    "RealmMaintenanceFinished": {
+                        "discriminant_value": "realm.maintenance_finished",
+                        "fields": {
+                            "realm_id": {
+                                "type": "RealmID"
+                            },
+                            "encryption_revision": {
+                                "type": "Index"
+                            }
+                        }
+                    },
+                    "RealmVlobsUpdated": {
+                        "discriminant_value": "realm.vlobs_updated",
+                        "fields": {
+                            "realm_id": {
+                                "type": "RealmID"
+                            },
+                            "checkpoint": {
+                                "type": "Index"
+                            },
+                            "src_id": {
+                                "type": "VlobID"
+                            },
+                            "src_version": {
+                                "type": "Index"
+                            }
+                        }
+                    },
+                    "RealmRolesUpdated": {
+                        "discriminant_value": "realm.roles_updated",
+                        "fields": {
+                            "realm_id": {
+                                "type": "RealmID"
+                            },
+                            "role": {
+                                "type": "RequiredOption<RealmRole>"
+                            }
+                        }
+                    },
+                    "PkiEnrollmentUpdated": {
+                        "discriminant_value": "pki_enrollment.updated"
+                    }
+                }
+            }
+        }
+    }
+]

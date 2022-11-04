@@ -1,0 +1,20 @@
+{
+    "title": "Fields schema",
+    "type": "object",
+    "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+            "type"
+        ],
+        "properties": {
+            "type": {
+                "type": "string",
+                "description": "Can be a specific type or a custom one defined in `nested-types`"
+            },
+            "introduced_in": {
+                "$ref": "./major-minor-string.schema.json"
+            }
+        }
+    }
+}

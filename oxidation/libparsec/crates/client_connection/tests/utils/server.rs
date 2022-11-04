@@ -12,7 +12,7 @@ use libparsec_client_connection::authenticated_cmds::{
     API_VERSION_HEADER_NAME, PARSEC_AUTH_METHOD,
 };
 use libparsec_crypto::VerifyKey;
-use libparsec_protocol::authenticated_cmds::{self, AnyCmdReq};
+use libparsec_protocol::authenticated_cmds::v3::{self as authenticated_cmds, AnyCmdReq};
 use libparsec_types::DeviceID;
 use std::{
     collections::HashMap,

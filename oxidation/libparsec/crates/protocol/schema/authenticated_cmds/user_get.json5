@@ -1,0 +1,53 @@
+[
+    {
+        "label": "UserGet",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "user_get",
+            "fields": {
+                "user_id": {
+                    "type": "UserID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "user_certificate": {
+                        "type": "Bytes"
+                    },
+                    "revoked_user_certificate": {
+                        "type": "RequiredOption<Bytes>"
+                    },
+                    "device_certificates": {
+                        "type": "List<Bytes>"
+                    },
+                    "trustchain": {
+                        "type": "Trustchain"
+                    }
+                }
+            },
+            "not_found": {}
+        },
+        "nested_types": {
+            "Trustchain": {
+                "type": "struct",
+                "fields": {
+                    "devices": {
+                        "type": "List<Bytes>"
+                    },
+                    "users": {
+                        "type": "List<Bytes>"
+                    },
+                    "revoked_users": {
+                        "type": "List<Bytes>"
+                    }
+                }
+            }
+        }
+    }
+]

@@ -1,0 +1,30 @@
+[
+    {
+        "label": "Invite2aGreeterGetHashedNonce",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_2a_greeter_get_hashed_nonce",
+            "fields": {
+                "token": {
+                    "type": "InvitationToken"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "claimer_hashed_nonce": {
+                        "type": "HashDigest"
+                    }
+                }
+            },
+            "not_found": {},
+            "already_deleted": {},
+            "invalid_state": {}
+        }
+    }
+]

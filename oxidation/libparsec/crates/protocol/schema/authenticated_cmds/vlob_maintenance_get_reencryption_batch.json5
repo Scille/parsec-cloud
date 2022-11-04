@@ -1,0 +1,56 @@
+[
+    {
+        "label": "VlobMaintenanceGetReencryptionBatch",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "vlob_maintenance_get_reencryption_batch",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "encryption_revision": {
+                    "type": "Index"
+                },
+                "size": {
+                    "type": "Size"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "batch": {
+                        "type": "List<ReencryptionBatchEntry>"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "not_in_maintenance": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "bad_encryption_revision": {},
+            "maintenance_error": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            }
+        }
+    }
+]

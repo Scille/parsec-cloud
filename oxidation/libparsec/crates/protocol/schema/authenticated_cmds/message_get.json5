@@ -1,0 +1,46 @@
+[
+    {
+        "label": "MessageGet",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "message_get",
+            "fields": {
+                "offset": {
+                    "type": "Index"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "messages": {
+                        "type": "List<Message>"
+                    }
+                }
+            }
+        },
+        "nested_types": {
+            "Message": {
+                "type": "struct",
+                "fields": {
+                    "count": {
+                        "type": "Size"
+                    },
+                    "sender": {
+                        "type": "DeviceID"
+                    },
+                    "timestamp": {
+                        "type": "DateTime"
+                    },
+                    "body": {
+                        "type": "Bytes"
+                    }
+                }
+            }
+        }
+    }
+]

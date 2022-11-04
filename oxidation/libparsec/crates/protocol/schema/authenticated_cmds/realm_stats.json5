@@ -1,0 +1,38 @@
+[
+    {
+        "label": "RealmStats",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_stats",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "blocks_size": {
+                        "type": "Size"
+                    },
+                    "vlobs_size": {
+                        "type": "Size"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            }
+        }
+    }
+]

@@ -7,7 +7,9 @@ use pyo3::{
     types::{PyBytes, PyString},
 };
 
-use libparsec::protocol::{authenticated_cmds, invited_cmds};
+use libparsec::protocol::{
+    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+};
 
 use crate::protocol::gen_rep;
 
@@ -30,7 +32,11 @@ impl InvitedPingReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -78,7 +84,11 @@ impl AuthenticatedPingReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 

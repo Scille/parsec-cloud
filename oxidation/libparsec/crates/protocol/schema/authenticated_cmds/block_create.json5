@@ -1,0 +1,32 @@
+[
+    {
+        "label": "BlockCreate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "block_create",
+            "fields": {
+                "block_id": {
+                    "type": "BlockID"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "block": {
+                    "type": "Bytes"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "already_exists": {},
+            "not_found": {},
+            "timeout": {},
+            "not_allowed": {},
+            "in_maintenance": {}
+        }
+    }
+]

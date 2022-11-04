@@ -1,0 +1,66 @@
+[
+    {
+        "label": "RealmCreate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_create",
+            "fields": {
+                "role_certificate": {
+                    "type": "Bytes"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "invalid_certification": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "invalid_data": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "already_exists": {},
+            "bad_timestamp": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    },
+                    "ballpark_client_early_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "ballpark_client_late_offset": {
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    "backend_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    "client_timestamp": {
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                }
+            }
+        }
+    }
+]

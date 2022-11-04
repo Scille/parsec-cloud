@@ -1,0 +1,60 @@
+[
+    {
+        "label": "RealmStatus",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_status",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "in_maintenance": {
+                        "type": "Boolean"
+                    },
+                    "maintenance_type": {
+                        "type": "RequiredOption<MaintenanceType>"
+                    },
+                    "maintenance_started_on": {
+                        "type": "RequiredOption<DateTime>"
+                    },
+                    "maintenance_started_by": {
+                        "type": "RequiredOption<DeviceID>"
+                    },
+                    "encryption_revision": {
+                        "type": "Index"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            }
+        },
+        "nested_types": {
+            "MaintenanceType": {
+                "type": "enum",
+                "variants": {
+                    "GarbageCollection": {
+                        "discriminant_value": "GARBAGE_COLLECTION"
+                    },
+                    "Reencryption": {
+                        "discriminant_value": "REENCRYPTION"
+                    }
+                }
+            }
+        }
+    }
+]

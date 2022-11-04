@@ -1,0 +1,16 @@
+[
+    {
+        "label": "EventsSubscribe",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "events_subscribe"
+        },
+        "reps": {
+            "ok": {}
+        }
+    }
+]

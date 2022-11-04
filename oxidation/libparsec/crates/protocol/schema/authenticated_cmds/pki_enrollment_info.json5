@@ -1,0 +1,174 @@
+[
+    {
+        "label": "PkiEnrollmentInfo",
+        "major_versions": [
+            3
+        ],
+        "introduced_in": "3.2",
+        "req": {
+            "cmd": "pki_enrollment_info",
+            "fields": {
+                "enrollment_id": {
+                    "type": "UUID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "unit": "PkiEnrollmentInfoStatus"
+            },
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            }
+        },
+        "nested_types": {
+            "PkiEnrollmentInfoStatus": {
+                "type": "enum",
+                "discriminant_field": "enrollment_status",
+                "variants": {
+                    "Submitted": {
+                        "discriminant_value": "SUBMITTED",
+                        "fields": {
+                            "submitted_on": {
+                                "type": "DateTime"
+                            }
+                        }
+                    },
+                    "Accepted": {
+                        "discriminant_value": "ACCEPTED",
+                        "fields": {
+                            "submitted_on": {
+                                "type": "DateTime"
+                            },
+                            "accepted_on": {
+                                "type": "DateTime"
+                            },
+                            "accepter_der_x509_certificate": {
+                                "type": "Bytes"
+                            },
+                            "accept_payload_signature": {
+                                "type": "Bytes"
+                            },
+                            // Signature should be checked before loading.
+                            "accept_payload": {
+                                "type": "Bytes"
+                            }
+                        }
+                    },
+                    "Rejected": {
+                        "discriminant_value": "REJECTED",
+                        "fields": {
+                            "submitted_on": {
+                                "type": "DateTime"
+                            },
+                            "rejected_on": {
+                                "type": "DateTime"
+                            }
+                        }
+                    },
+                    "Cancelled": {
+                        "discriminant_value": "CANCELLED",
+                        "fields": {
+                            "submitted_on": {
+                                "type": "DateTime"
+                            },
+                            "cancelled_on": {
+                                "type": "DateTime"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    {
+        "label": "PkiEnrollmentInfo",
+        "major_versions": [
+            2
+        ],
+        "introduced_in": "2.8",
+        "req": {
+            "cmd": "pki_enrollment_info",
+            "fields": {
+                "enrollment_id": {
+                    "type": "UUID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "unit": "PkiEnrollmentInfoStatus"
+            },
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            }
+        },
+        "nested_types": {
+            "PkiEnrollmentInfoStatus": {
+                "type": "enum",
+                "discriminant_field": "enrollment_status",
+                "variants": {
+                    "Submitted": {
+                        "discriminant_value": "SUBMITTED",
+                        "fields": {
+                            "submitted_on": {
+                                "type": "DateTime"
+                            }
+                        }
+                    },
+                    "Accepted": {
+                        "discriminant_value": "ACCEPTED",
+                        "fields": {
+                            "submitted_on": {
+                                "type": "DateTime"
+                            },
+                            "accepted_on": {
+                                "type": "DateTime"
+                            },
+                            "accepter_der_x509_certificate": {
+                                "type": "Bytes"
+                            },
+                            "accept_payload_signature": {
+                                "type": "Bytes"
+                            },
+                            // Signature should be checked before loading.
+                            "accept_payload": {
+                                "type": "Bytes"
+                            }
+                        }
+                    },
+                    "Rejected": {
+                        "discriminant_value": "REJECTED",
+                        "fields": {
+                            "submitted_on": {
+                                "type": "DateTime"
+                            },
+                            "rejected_on": {
+                                "type": "DateTime"
+                            }
+                        }
+                    },
+                    "Cancelled": {
+                        "discriminant_value": "CANCELLED",
+                        "fields": {
+                            "submitted_on": {
+                                "type": "DateTime"
+                            },
+                            "cancelled_on": {
+                                "type": "DateTime"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+]

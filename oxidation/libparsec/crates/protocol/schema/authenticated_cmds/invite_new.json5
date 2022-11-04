@@ -1,0 +1,72 @@
+[
+    {
+        "label": "InviteNew",
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_new",
+            "unit": "UserOrDevice"
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "token": {
+                        "type": "InvitationToken"
+                    },
+                    // Added in API 2.3 (Parsec v2.6.0)
+                    // Field used when the invitation is correctly created but the invitation email cannot be sent
+                    "email_sent": {
+                        "type": "InvitationEmailSentStatus",
+                        "introduced_in": "2.3"
+                    }
+                }
+            },
+            "not_allowed": {},
+            "already_member": {},
+            "not_available": {}
+        },
+        "nested_types": {
+            "UserOrDevice": {
+                "type": "enum",
+                "discriminant_field": "type",
+                "variants": {
+                    "User": {
+                        "discriminant_value": "USER",
+                        "fields": {
+                            "claimer_email": {
+                                "type": "String"
+                            },
+                            "send_email": {
+                                "type": "Boolean"
+                            }
+                        }
+                    },
+                    "Device": {
+                        "discriminant_value": "DEVICE",
+                        "fields": {
+                            "send_email": {
+                                "type": "Boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "InvitationEmailSentStatus": {
+                "type": "enum",
+                "variants": {
+                    "Success": {
+                        "discriminant_value": "SUCCESS"
+                    },
+                    "NotAvailable": {
+                        "discriminant_value": "NOT_AVAILABLE"
+                    },
+                    "BadRecipient": {
+                        "discriminant_value": "BAD_RECIPIENT"
+                    }
+                }
+            }
+        }
+    }
+]

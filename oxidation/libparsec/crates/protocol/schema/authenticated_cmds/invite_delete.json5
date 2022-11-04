@@ -1,0 +1,42 @@
+[
+    {
+        "label": "InviteDelete",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_delete",
+            "fields": {
+                "token": {
+                    "type": "InvitationToken"
+                },
+                "reason": {
+                    "type": "InvitationDeletedReason"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "not_found": {},
+            "already_deleted": {}
+        },
+        "nested_types": {
+            "InvitationDeletedReason": {
+                "type": "enum",
+                "variants": {
+                    "Finished": {
+                        "discriminant_value": "FINISHED"
+                    },
+                    "Cancelled": {
+                        "discriminant_value": "CANCELLED"
+                    },
+                    "Rotten": {
+                        "discriminant_value": "ROTTEN"
+                    }
+                }
+            }
+        }
+    }
+]

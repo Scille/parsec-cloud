@@ -1,0 +1,33 @@
+[
+    {
+        "label": "Invite4GreeterCommunicate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_4_greeter_communicate",
+            "fields": {
+                "token": {
+                    "type": "InvitationToken"
+                },
+                "payload": {
+                    "type": "Bytes"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "payload": {
+                        "type": "Bytes"
+                    }
+                }
+            },
+            "not_found": {},
+            "already_deleted": {},
+            "invalid_state": {}
+        }
+    }
+]

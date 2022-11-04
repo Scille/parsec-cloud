@@ -1,0 +1,47 @@
+[
+    {
+        "label": "RealmFinishReencryptionMaintenance",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_finish_reencryption_maintenance",
+            "fields": {
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "encryption_revision": {
+                    "type": "Index"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "not_allowed": {},
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "bad_encryption_revision": {},
+            "not_in_maintenance": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "maintenance_error": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            }
+        }
+    }
+]

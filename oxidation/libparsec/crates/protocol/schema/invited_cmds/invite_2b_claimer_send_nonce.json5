@@ -1,0 +1,24 @@
+[
+    {
+        "label": "Invite2bClaimerSendNonce",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_2b_claimer_send_nonce",
+            "fields": {
+                "claimer_nonce": {
+                    "type": "Bytes"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "already_deleted": {},
+            "not_found": {},
+            "invalid_state": {}
+        }
+    }
+]

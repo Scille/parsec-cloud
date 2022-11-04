@@ -1,0 +1,67 @@
+[
+    {
+        "label": "UserCreate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "user_create",
+            "fields": {
+                "user_certificate": {
+                    "type": "Bytes"
+                },
+                "device_certificate": {
+                    "type": "Bytes"
+                },
+                // Same certificate than `user_certificate`, but expunged of human_handle
+                "redacted_user_certificate": {
+                    "type": "Bytes"
+                },
+                // Same certificate than `device_certificate`, but expunged of device_label
+                "redacted_device_certificate": {
+                    "type": "Bytes"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "not_allowed": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "invalid_certification": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "invalid_data": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "already_exists": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            },
+            "active_users_limit_reached": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
+            }
+        }
+    }
+]

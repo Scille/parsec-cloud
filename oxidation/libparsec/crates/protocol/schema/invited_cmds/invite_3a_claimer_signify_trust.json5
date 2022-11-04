@@ -1,0 +1,19 @@
+[
+    {
+        "label": "Invite3aClaimerSignifyTrust",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_3a_claimer_signify_trust"
+        },
+        "reps": {
+            "ok": {},
+            "already_deleted": {},
+            "not_found": {},
+            "invalid_state": {}
+        }
+    }
+]

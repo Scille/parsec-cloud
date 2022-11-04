@@ -8,7 +8,7 @@ use pyo3::{
 };
 use std::collections::HashMap;
 
-use libparsec::protocol::authenticated_cmds::{
+use libparsec::protocol::authenticated_cmds::v2::{
     realm_create, realm_finish_reencryption_maintenance, realm_get_role_certificates,
     realm_start_reencryption_maintenance, realm_stats, realm_status, realm_update_roles,
 };
@@ -69,7 +69,11 @@ impl RealmCreateReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -125,7 +129,11 @@ impl RealmStatusReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -238,7 +246,11 @@ impl RealmStatsReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -307,7 +319,11 @@ impl RealmGetRoleCertificatesReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -369,7 +385,11 @@ impl RealmUpdateRolesReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -452,7 +472,11 @@ impl RealmStartReencryptionMaintenanceReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -541,7 +565,11 @@ impl RealmFinishReencryptionMaintenanceReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 

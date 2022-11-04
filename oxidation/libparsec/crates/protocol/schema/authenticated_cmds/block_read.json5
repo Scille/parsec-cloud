@@ -1,0 +1,31 @@
+[
+    {
+        "label": "BlockRead",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "block_read",
+            "fields": {
+                "block_id": {
+                    "type": "BlockID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "block": {
+                        "type": "Bytes"
+                    }
+                }
+            },
+            "not_found": {},
+            "timeout": {},
+            "not_allowed": {},
+            "in_maintenance": {}
+        }
+    }
+]

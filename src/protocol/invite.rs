@@ -7,12 +7,12 @@ use pyo3::{
     types::{PyBytes, PyList, PyType},
 };
 
-use libparsec::protocol::authenticated_cmds::{
+use libparsec::protocol::authenticated_cmds::v2::{
     invite_1_greeter_wait_peer, invite_2a_greeter_get_hashed_nonce, invite_2b_greeter_send_nonce,
     invite_3a_greeter_wait_peer_trust, invite_3b_greeter_signify_trust,
     invite_4_greeter_communicate, invite_delete, invite_list, invite_new,
 };
-use libparsec::protocol::invited_cmds::{
+use libparsec::protocol::invited_cmds::v2::{
     invite_1_claimer_wait_peer, invite_2a_claimer_send_hashed_nonce, invite_2b_claimer_send_nonce,
     invite_3a_claimer_signify_trust, invite_3b_claimer_wait_peer_trust,
     invite_4_claimer_communicate, invite_info,
@@ -438,7 +438,11 @@ impl InviteNewReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 }
@@ -513,7 +517,11 @@ impl InviteDeleteReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -564,7 +572,11 @@ impl InviteListReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 }
@@ -611,7 +623,11 @@ impl InviteInfoReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 }
@@ -724,7 +740,11 @@ impl Invite1ClaimerWaitPeerReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -739,6 +759,7 @@ gen_rep!(
     Invite1ClaimerWaitPeerRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState]
 );
 
@@ -789,7 +810,11 @@ impl Invite1GreeterWaitPeerReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -858,7 +883,11 @@ impl Invite2aClaimerSendHashedNonceReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -921,7 +950,11 @@ impl Invite2aGreeterGetHashedNonceReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -984,7 +1017,11 @@ impl Invite2bClaimerSendNonceReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -999,6 +1036,7 @@ gen_rep!(
     Invite2bClaimerSendNonceRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState]
 );
 
@@ -1037,7 +1075,11 @@ impl Invite2bGreeterSendNonceReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -1102,7 +1144,11 @@ impl Invite3aClaimerSignifyTrustReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 }
@@ -1112,6 +1158,7 @@ gen_rep!(
     Invite3aClaimerSignifyTrustRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState]
 );
 
@@ -1147,7 +1194,11 @@ impl Invite3aGreeterWaitPeerTrustReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -1197,7 +1248,11 @@ impl Invite3bClaimerWaitPeerTrustReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 }
@@ -1207,6 +1262,7 @@ gen_rep!(
     Invite3bClaimerWaitPeerTrustRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState]
 );
 
@@ -1242,7 +1298,11 @@ impl Invite3bGreeterSignifyTrustReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -1292,7 +1352,11 @@ impl Invite4ClaimerCommunicateReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 
@@ -1307,6 +1371,7 @@ gen_rep!(
     Invite4ClaimerCommunicateRep,
     { .. },
     [NotFound],
+    [AlreadyDeleted],
     [InvalidState],
 );
 
@@ -1352,7 +1417,11 @@ impl Invite4GreeterCommunicateReq {
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
         ))
     }
 

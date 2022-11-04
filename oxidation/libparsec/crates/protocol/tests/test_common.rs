@@ -3,7 +3,9 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_protocol::*;
+use libparsec_protocol::{
+    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+};
 
 #[rstest]
 #[case::invalid_msg_format(
@@ -16,7 +18,7 @@ use libparsec_protocol::*;
             "81a6737461747573b2696e76616c69645f6d73675f666f726d6174"
         )[..],
         authenticated_cmds::block_read::Rep::UnknownStatus {
-            _status: "invalid_msg_format".into(),
+            unknown_status: "invalid_msg_format".into(),
             reason: None
         }
     )
@@ -33,7 +35,7 @@ use libparsec_protocol::*;
             "726d6174"
         )[..],
         authenticated_cmds::block_read::Rep::UnknownStatus {
-            _status: "invalid_msg_format".into(),
+            unknown_status: "invalid_msg_format".into(),
             reason: Some("reason".into())
         }
     )

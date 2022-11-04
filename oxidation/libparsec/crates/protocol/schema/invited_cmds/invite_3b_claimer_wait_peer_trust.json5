@@ -1,0 +1,19 @@
+[
+    {
+        "label": "Invite3bClaimerWaitPeerTrust",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_3b_claimer_wait_peer_trust"
+        },
+        "reps": {
+            "ok": {},
+            "already_deleted": {},
+            "not_found": {},
+            "invalid_state": {}
+        }
+    }
+]

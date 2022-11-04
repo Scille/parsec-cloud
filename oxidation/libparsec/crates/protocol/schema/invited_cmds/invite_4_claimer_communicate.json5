@@ -1,0 +1,30 @@
+[
+    {
+        "label": "Invite4ClaimerCommunicate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_4_claimer_communicate",
+            "fields": {
+                "payload": {
+                    "type": "Bytes"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "payload": {
+                        "type": "Bytes"
+                    }
+                }
+            },
+            "already_deleted": {},
+            "not_found": {},
+            "invalid_state": {}
+        }
+    }
+]
