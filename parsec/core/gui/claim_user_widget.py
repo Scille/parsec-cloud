@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Awaitable, Callable, Tuple, cast
+from typing import Any, Awaitable, Callable, Tuple, cast, Optional
 
 import trio
 from enum import IntEnum
@@ -12,7 +12,6 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.protocol import DeviceLabel, HumanHandle
 from parsec.core import CoreConfig
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.workspace_button import Optional
 from parsec.core.types import BackendInvitationAddr, LocalDevice
 from parsec.core.local_device import (
     save_device_with_password_in_config,
