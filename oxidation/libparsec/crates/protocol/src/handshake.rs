@@ -23,8 +23,8 @@ pub const API_V2_VERSION: ApiVersion = ApiVersion {
     revision: 5,
 };
 pub const API_VERSION: ApiVersion = API_V2_VERSION;
-pub const BALLPARK_CLIENT_EARLY_OFFSET: f64 = 50.0; // seconds
-pub const BALLPARK_CLIENT_LATE_OFFSET: f64 = 70.0; // seconds
+pub const BALLPARK_CLIENT_EARLY_OFFSET: f64 = 300.0; // seconds
+pub const BALLPARK_CLIENT_LATE_OFFSET: f64 = 320.0; // seconds
 const BALLPARK_CLIENT_TOLERANCE: f64 = 0.8; // 80%
 
 pub fn timestamps_in_the_ballpark(

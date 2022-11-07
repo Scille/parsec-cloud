@@ -90,8 +90,8 @@ async def test_sequestered_organization_bootstrap(
         "status": "bad_timestamp",
         "client_timestamp": ANY,
         "backend_timestamp": ANY,
-        "ballpark_client_early_offset": 50.0,
-        "ballpark_client_late_offset": 70.0,
+        "ballpark_client_early_offset": 300.0,
+        "ballpark_client_late_offset": 320.0,
     }
 
     # Timestamp in authority certificate different than user/device certificates
