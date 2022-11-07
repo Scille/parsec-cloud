@@ -66,7 +66,7 @@ fn hello_world(mut cx: FunctionContext) -> JsResult<JsPromise> {
             js_obj
         }
         Err(err) => {
-            let js_obj = (&mut cx).empty_object();
+            let js_obj = cx.empty_object();
             let js_tag = JsBoolean::new(&mut cx, false);
             js_obj.set(&mut cx, "ok", js_tag)?;
             let js_err = variant_helloerror_rs_to_js(&mut cx, err)?;
