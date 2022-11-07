@@ -10,7 +10,6 @@ from typing import (
     List,
     Iterable,
     Tuple,
-    cast,
     Iterator,
     Callable,
     Awaitable,
@@ -286,10 +285,12 @@ class UserRemoteLoader:
 
             # Now verify each certif
             for unsecure_certif, raw_certif in unsecure_certifs:
+                certif_author = unsecure_certif.author
+                if certif_author is None:
+                    raise FSError("Expected a certificate signed by a user")
 
                 with translate_remote_devices_manager_errors():
-                    assert unsecure_certif.author is not None
-                    author = await self.remote_devices_manager.get_device(unsecure_certif.author)
+                    author = await self.remote_devices_manager.get_device(certif_author)
 
                 RealmRoleCertificate.verify_and_load(
                     raw_certif,
@@ -309,11 +310,8 @@ class UserRemoteLoader:
                     needed_roles = owner_only
                 else:
                     needed_roles = owner_or_manager
-                # TODO: typing, author is optional in base.py but it seems that manifests always have an author (no RVK)
-                if (
-                    current_roles.get(cast(DeviceID, unsecure_certif.author).user_id)
-                    not in needed_roles
-                ):
+
+                if current_roles.get(certif_author.user_id) not in needed_roles:
                     raise FSError(
                         f"Invalid realm role certificates: "
                         f"{unsecure_certif.author} has not right to give "
