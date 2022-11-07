@@ -9,6 +9,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QMainWindow
 from packaging.version import Version
 import exceptiongroup
+from parsec import event_bus
 
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import BackendActionAddr, BackendOrganizationFileLinkAddr, LocalDevice
@@ -180,11 +181,20 @@ class InstanceWidget(QWidget):
             (self, "run_core_ready"),
         )
 
+    def on_core_localdatabase_error(self, event: CoreEvent, localdatabase_error: Exception):
+        # On local database error, like disk full error, just disconnect the client
+        self.stop_core()
+        show_error(self, _("TEXT_CORE_OPERATION_ERROR"), exception=localdatabase_error)
+
     def on_run_core_ready(self, core: LoggedCore, core_jobs_ctx: QtToTrioJobScheduler) -> None:
         self.core = core
         self.core_jobs_ctx = core_jobs_ctx
         self.core.event_bus.connect(
             CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_core_config_updated)
+        )
+        self.core.event_bus.connect(
+            CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR,
+            cast(EventCallback, self.on_core_localdatabase_error),
         )
         self.event_bus.send(
             CoreEvent.GUI_CONFIG_CHANGED, gui_last_device=self.core.device.device_id.str
@@ -197,9 +207,13 @@ class InstanceWidget(QWidget):
     def on_core_run_error(self, job: QtToTrioJob) -> None:
         assert job is self.running_core_job
         assert self.running_core_job.is_finished()
+        self.running_core_job.exc
         if self.core:
             self.core.event_bus.disconnect(
                 CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
+            )
+            self.core.event_bus.disconnect(
+                CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR, self.on_core_localdatabase_error
             )
         if self.running_core_job.status is not None:
             if isinstance(self.running_core_job.exc, HandshakeRevokedDevice):
@@ -233,6 +247,9 @@ class InstanceWidget(QWidget):
             )
             self.core.event_bus.disconnect(
                 CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
+            )
+            self.core.event_bus.disconnect(
+                CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR, self.on_core_localdatabase_error
             )
         self.running_core_job = None
         self.logged_out.emit()

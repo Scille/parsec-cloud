@@ -104,7 +104,9 @@ class LocalDatabase:
                 finally:
                     del self._conn
 
-                self.event_bus.send(CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR, error=exception)
+                self.event_bus.send(
+                    CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR, localdatabase_error=exception
+                )
                 # Raise the dedicated operational error
                 raise FSLocalStorageOperationalError from exception
 
