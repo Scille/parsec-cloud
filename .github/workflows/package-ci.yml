@@ -129,7 +129,7 @@ jobs:
 
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -171,7 +171,7 @@ jobs:
       matrix:
         os: [ ubuntu-20.04, ubuntu-22.04 ]
     steps:
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
@@ -197,7 +197,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
@@ -216,7 +216,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -241,7 +241,7 @@ jobs:
 
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -296,7 +296,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -335,7 +335,7 @@ jobs:
         macos-version: [ 11, 12 ]
 
     steps:
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: dist
