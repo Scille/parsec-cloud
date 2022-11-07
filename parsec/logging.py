@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime
-from typing import Optional, TextIO
+from datetime import date, datetime
+from typing import Any, MutableMapping, Optional, TextIO, Tuple, Union, cast
 import structlog
 import logging
 from sentry_sdk import Hub as sentry_Hub, init as sentry_init
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.utils import event_from_exception
+from structlog.dev import ConsoleRenderer
+from structlog.processors import JSONRenderer
+from structlog.types import ExcInfo
 
 from parsec import __version__
 
@@ -38,7 +41,7 @@ from parsec import __version__
 # By the way, did you know Python's stdlib logging module was inspired by Java's ?
 
 
-def _build_formatter_renderer(log_format: str):
+def _build_formatter_renderer(log_format: str) -> ConsoleRenderer | JSONRenderer:
     if log_format == "CONSOLE":
         return structlog.dev.ConsoleRenderer()
     elif log_format == "JSON":
@@ -53,20 +56,25 @@ def _build_formatter_renderer(log_format: str):
 # local clock, but I assume you're already used to it ;)
 
 
-def _add_timestamp(logger, method_name: str, event: dict) -> dict:
+def _add_timestamp(
+    logger: logging.Logger, method_name: str, event: MutableMapping[str, object]
+) -> MutableMapping[str, object]:
     # Don't use pendulum here given this will be passed to sentry_sdk which
     # expects a regular timezone-naive datetime in UTC
     event["timestamp"] = datetime.utcnow()
     return event
 
 
-def _format_timestamp(logger, method_name: str, event: dict) -> dict:
-    event["timestamp"] = event["timestamp"].isoformat() + "Z"
+def _format_timestamp(
+    logger: logging.Logger, method_name: str, event: MutableMapping[str, object]
+) -> MutableMapping[str, object]:
+    event["timestamp"] = cast(date, event["timestamp"]).isoformat() + "Z"
     return event
 
 
 def _cook_log_level(log_level: Optional[str]) -> int:
-    log_level = log_level.upper()
+    if log_level is not None:
+        log_level = log_level.upper()
     if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "FATAL"):
         raise ValueError(f"Unknown log level `{log_level}`")
     return getattr(logging, log_level)
@@ -76,7 +84,10 @@ _SENTRY_BREADCRUMB_LEVELS = {"info", "warning", "error", "exception"}
 _SENTRY_EVENT_LEVELS = {"error", "exception"}
 
 
-def _structlog_to_sentry_processor(logger, method_name: str, event: dict) -> dict:
+def _structlog_to_sentry_processor(
+    logger: logging.Logger, method_name: str, event: dict[str, object]
+) -> dict[str, object]:
+    ExcInfoOptType = Optional[Union[Optional[ExcInfo], Tuple[Any, Any, Any]]]
     sentry_client = sentry_Hub.current.client
     if not sentry_client:
         return event
@@ -92,7 +103,8 @@ def _structlog_to_sentry_processor(logger, method_name: str, event: dict) -> dic
 
     if level in _SENTRY_EVENT_LEVELS:
         # Cook the exception as a (class, exc, traceback) tuple
-        v = data.pop("exc_info", None)
+        v = cast(ExcInfoOptType, data.pop("exc_info", None))
+        exc_info: ExcInfoOptType
         if isinstance(v, BaseException):
             exc_info = (v.__class__, v, v.__traceback__)
         elif isinstance(v, tuple):
@@ -140,8 +152,10 @@ def _structlog_to_sentry_processor(logger, method_name: str, event: dict) -> dic
     return event
 
 
-def build_structlog_configuration(log_level: str, log_format: str, log_stream: TextIO) -> dict:
-    log_level = _cook_log_level(log_level)
+def build_structlog_configuration(
+    log_level: str, log_format: str, log_stream: TextIO
+) -> dict[str, Any]:
+    log_level_index = _cook_log_level(log_level)
     # A bit of struclog architecture:
     # - lazy proxy: component obtained through `structlog.get_logger()`, laziness
     #     is needed given it is imported very early on (later it bind operation
@@ -162,7 +176,7 @@ def build_structlog_configuration(log_level: str, log_format: str, log_stream: T
             structlog.processors.format_exc_info,
             _build_formatter_renderer(log_format),
         ],
-        "wrapper_class": structlog.make_filtering_bound_logger(log_level),
+        "wrapper_class": structlog.make_filtering_bound_logger(log_level_index),
         "logger_factory": structlog.PrintLoggerFactory(file=log_stream),
         "cache_logger_on_first_use": True,
     }
@@ -171,7 +185,7 @@ def build_structlog_configuration(log_level: str, log_format: str, log_stream: T
 def configure_stdlib_logger(
     logger: logging.Logger, log_level: str, log_format: str, log_stream: TextIO
 ) -> None:
-    log_level = _cook_log_level(log_level)
+    log_level_index = _cook_log_level(log_level)
 
     # Use structlog to format stdlib logging records.
     # Note this is only cosmetic: stdlib is still responsible for outputting them.
@@ -188,10 +202,10 @@ def configure_stdlib_logger(
     handler.setFormatter(formatter)
 
     logger.addHandler(handler)
-    logger.setLevel(log_level)
+    logger.setLevel(log_level_index)
 
 
-def build_sentry_configuration(dsn: str, environment: str) -> dict:
+def build_sentry_configuration(dsn: str, environment: str) -> dict[str, Any]:
     sentry_logging = LoggingIntegration(
         level=logging.INFO,  # Capture as breadcrumbs
         event_level=logging.ERROR,  # Send as Sentry event

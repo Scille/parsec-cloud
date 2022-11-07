@@ -150,7 +150,7 @@ fn rebuild_signed_message(
     body: &Bytes,
 ) -> Vec<u8> {
     Vec::from_iter(
-        (&signature)
+        signature
             .iter()
             .chain(author_b64.as_bytes())
             .chain(

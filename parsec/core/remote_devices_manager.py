@@ -19,7 +19,7 @@ from parsec.core.backend_connection import (
 )
 
 if TYPE_CHECKING:
-    from parsec.core.backend_connection import BackendAuthenticatedCmds, APIV1_BackendAnonymousCmds
+    from parsec.core.backend_connection import BackendAuthenticatedCmds
 
 DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour
 
@@ -102,9 +102,7 @@ class RemoteDevicesManager:
             )
         return verified_user, verified_revoked_user
 
-    async def get_device(
-        self, device_id: Optional[DeviceID], no_cache: bool = False
-    ) -> DeviceCertificate:
+    async def get_device(self, device_id: DeviceID, no_cache: bool = False) -> DeviceCertificate:
         """
         Raises:
             RemoteDevicesManagerError
@@ -170,87 +168,3 @@ class RemoteDevicesManager:
             )
         except TrustchainErrorException as exc:
             raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
-
-
-async def get_device_invitation_creator(
-    backend_cmds: APIV1_BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
-) -> Tuple[UserCertificate, Optional[RevokedUserCertificate], DeviceCertificate]:
-    """
-    Raises:
-        RemoteDevicesManagerError
-        RemoteDevicesManagerBackendOfflineError
-        RemoteDevicesManagerUserNotFoundError
-        RemoteDevicesManagerInvalidTrustchainError
-    """
-    try:
-        rep = await backend_cmds.device_get_invitation_creator(new_device_id)
-    except BackendNotAvailable as exc:
-        raise RemoteDevicesManagerBackendOfflineError(*exc.args) from exc
-    except BackendConnectionError as exc:
-        raise RemoteDevicesManagerError(
-            "Failed to fetch invitation creator for device "
-            f"`{new_device_id.str}` from the backend: {exc}"
-        ) from exc
-
-    if rep["status"] == "not_found":
-        raise RemoteDevicesManagerUserNotFoundError(
-            f"User `{new_device_id.str}` doesn't exist in backend"
-        )
-    elif rep["status"] != "ok":
-        raise RemoteDevicesManagerError(
-            f"Cannot fetch invitation creator for device `{new_device_id.str}`: `{rep['status']}`"
-        )
-
-    try:
-        ctx = TrustchainContext(root_verify_key, DEFAULT_CACHE_VALIDITY)
-        user, _, (device,) = ctx.load_user_and_devices(
-            trustchain=rep["trustchain"],
-            user_certif=rep["user_certificate"],
-            devices_certifs=(rep["device_certificate"],),
-        )
-    except TrustchainErrorException as exc:
-        raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
-
-    return user, device
-
-
-async def get_user_invitation_creator(
-    backend_cmds: APIV1_BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
-) -> Tuple[UserCertificate, DeviceCertificate]:
-    """
-    Raises:
-        RemoteDevicesManagerError
-        RemoteDevicesManagerBackendOfflineError
-        RemoteDevicesManagerUserNotFoundError
-        RemoteDevicesManagerInvalidTrustchainError
-    """
-    try:
-        rep = await backend_cmds.user_get_invitation_creator(new_user_id)
-    except BackendNotAvailable as exc:
-        raise RemoteDevicesManagerBackendOfflineError(*exc.args) from exc
-    except BackendConnectionError as exc:
-        raise RemoteDevicesManagerError(
-            "Failed to fetch invitation creator for user "
-            f"`{new_user_id.str}` from the backend: {exc}"
-        ) from exc
-
-    if rep["status"] == "not_found":
-        raise RemoteDevicesManagerUserNotFoundError(
-            f"User `{new_user_id.str}` doesn't exist in backend"
-        )
-    elif rep["status"] != "ok":
-        raise RemoteDevicesManagerError(
-            f"Cannot fetch invitation creator for device `{new_user_id.str}`: `{rep['status']}`"
-        )
-
-    try:
-        ctx = TrustchainContext(root_verify_key, DEFAULT_CACHE_VALIDITY)
-        user, _, (device,) = ctx.load_user_and_devices(
-            trustchain=rep["trustchain"],
-            user_certif=rep["user_certificate"],
-            devices_certifs=(rep["device_certificate"],),
-        )
-    except TrustchainErrorException as exc:
-        raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
-
-    return user, device

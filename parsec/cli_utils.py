@@ -6,25 +6,55 @@ import trio
 import click
 import datetime
 import traceback
-from typing import Any, Optional, Dict
+from typing import (
+    Any,
+    Optional,
+    Dict,
+    Iterator,
+    AsyncIterator,
+    NoReturn,
+    TypedDict,
+    cast,
+    Callable,
+    TypeVar,
+    Awaitable,
+    TextIO,
+)
+from typing_extensions import ParamSpec, Concatenate
 from functools import partial, wraps
 from contextlib import contextmanager, asynccontextmanager
 
+from parsec.utils import open_service_nursery
 from parsec._parsec import DateTime
 from parsec.logging import configure_logging, configure_sentry_logging
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+class SchemesInternalType(TypedDict):
+    interval: int
+    frames: list[str]
+
+
+class SchemesType(TypedDict):
+
+    dots: SchemesInternalType
 
 
 # Scheme stolen from py-spinners
 # MIT License Copyright (c) 2017 Manraj Singh
 # (https://github.com/manrajgrover/py-spinners)
-SCHEMES = {"dots": {"interval": 80, "frames": ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]}}
+SCHEMES: SchemesType = {
+    "dots": {"interval": 80, "frames": ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]}
+}
 
 ok = click.style("✔", fg="green")
 ko = click.style("✘", fg="red")
 
 
 @contextmanager
-def operation(txt):
+def operation(txt: str) -> Iterator[None]:
 
     click.echo(txt, nl=False)
     try:
@@ -40,18 +70,22 @@ def operation(txt):
 
 
 @asynccontextmanager
-async def spinner(txt, sep=" ", scheme="dots", color="magenta"):
-    interval = SCHEMES[scheme]["interval"]
-    frames = SCHEMES[scheme]["frames"]
-    result = None
+async def spinner(
+    txt: str, sep: str = " ", scheme: str = "dots", color: str = "magenta"
+) -> AsyncIterator[None]:
+    scheme_theme = cast(Optional[SchemesInternalType], SCHEMES.get(scheme))
+    assert scheme_theme is not None
+    interval = scheme_theme["interval"]
+    frames = scheme_theme["frames"]
+    result: str | None = None
 
-    def _render_line(frame):
+    def _render_line(frame: str | None) -> None:
         # Clear line then re-print it
         click.echo(f"\r\033[K{txt}{sep}{frame}", nl=False)
 
-    async def _update_spinner():
+    async def _update_spinner() -> NoReturn:
         try:
-            i = 1
+            i: int = 1
             while True:
                 await trio.sleep(interval / 1000)
                 _render_line(click.style(frames[i], fg=color))
@@ -61,7 +95,7 @@ async def spinner(txt, sep=" ", scheme="dots", color="magenta"):
             _render_line(result)
             click.echo()
 
-    async with trio.open_service_nursery() as nursery:
+    async with open_service_nursery() as nursery:
         _render_line(frames[0])
         nursery.start_soon(_update_spinner)
 
@@ -80,7 +114,7 @@ async def spinner(txt, sep=" ", scheme="dots", color="magenta"):
 
 
 @contextmanager
-def cli_exception_handler(debug):
+def cli_exception_handler(debug: bool) -> Iterator[bool]:
     try:
         yield debug
 
@@ -99,40 +133,46 @@ def cli_exception_handler(debug):
             raise SystemExit(1)
 
 
-def generate_not_available_cmd(exc, hint=None):
+def generate_not_available_cmd(exc: BaseException, hint: str | None = None) -> click.Group:
     error_msg = "".join(
         [
             click.style("Not available: ", fg="red"),
             "Importing this module has failed with error:\n\n",
-            *traceback.format_exception(exc, exc, exc.__traceback__),
+            *traceback.format_exception(type(exc), exc, exc.__traceback__),
             f"\n\n{hint}\n" if hint else "",
         ]
     )
 
+    @click.group
     @click.command(
         context_settings=dict(ignore_unknown_options=True),
         help=f"Not available{' (' + hint + ')' if hint else ''}",
     )
     @click.argument("args", nargs=-1, type=click.UNPROCESSED)
-    def bad_cmd(args):
+    def bad_cmd(args: Any) -> NoReturn:
         raise SystemExit(error_msg)
 
     return bad_cmd
 
 
-async def aconfirm(*args, **kwargs):
-    return await trio.to_thread.run_sync(partial(click.confirm, *args, **kwargs))
+def async_wrapper(fn: Callable[P, R]) -> Callable[P, Awaitable[R]]:
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        return await trio.to_thread.run_sync(partial(fn, *args, **kwargs))
+
+    return wrapper
 
 
-async def aprompt(*args: Any, **kwargs: Any) -> Any:
-    return await trio.to_thread.run_sync(partial(click.prompt, *args, **kwargs))
+async_confirm = async_wrapper(click.confirm)
+async_prompt = async_wrapper(click.prompt)
 
 
-def logging_config_options(default_log_level: str):
+def logging_config_options(
+    default_log_level: str,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
     assert default_log_level in LOG_LEVELS
 
-    def _logging_config_options(fn):
+    def _logging_config_options(fn: Callable[P, R]) -> Callable[Concatenate[str, str, str, P], R]:
         @click.option(
             "--log-level",
             "-l",
@@ -153,32 +193,42 @@ def logging_config_options(default_log_level: str):
             "--log-file", "-o", default=None, envvar="PARSEC_LOG_FILE", help="[default: stderr]"
         )
         @wraps(fn)
-        def wrapper(**kwargs):
+        def wrapper(
+            log_level: str, log_format: str, log_file: str | None, *args: P.args, **kwargs: P.kwargs
+        ) -> R:
             # `click.open_file` considers "-" to be stdout
-            if kwargs["log_file"] in (None, "-"):
+            if log_file in (None, "-"):
 
                 @contextmanager
-                def open_log_file():
+                def open_log_file() -> Iterator[TextIO]:
                     yield sys.stderr
 
             else:
-                open_log_file = partial(click.open_file, kwargs["log_file"], "w")
+
+                @contextmanager
+                def open_log_file() -> Iterator[TextIO]:
+                    assert log_file is not None
+                    yield cast(TextIO, click.open_file(filename=log_file, mode="w"))
+
+            kwargs["log_level"] = log_level
+            kwargs["log_format"] = log_format
+            kwargs["log_file"] = log_file
 
             with open_log_file() as fd:
 
-                configure_logging(
-                    log_level=kwargs["log_level"], log_format=kwargs["log_format"], log_stream=fd
-                )
+                configure_logging(log_level=log_level, log_format=log_format, log_stream=fd)
 
-                return fn(**kwargs)
+                return fn(*args, **kwargs)
 
         return wrapper
 
     return _logging_config_options
 
 
-def sentry_config_options(configure_sentry: bool):
-    def _sentry_config_options(fn):
+def sentry_config_options(
+    configure_sentry: bool,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def _sentry_config_options(fn: Callable[P, R]) -> Callable[Concatenate[str, str, P], R]:
         # Sentry SKD uses 3 environ variables during it configuration phase:
         # - `SENTRY_DSN`
         # - `SENTRY_ENVIRONMENT`
@@ -192,7 +242,7 @@ def sentry_config_options(configure_sentry: bool):
             "--sentry-dsn",
             metavar="URL",
             envvar="PARSEC_SENTRY_DSN",
-            help="Sentry DSN for telemetry report",
+            help="Sentry Data Source Name for telemetry report",
         )
         @click.option(
             "--sentry-environment",
@@ -203,25 +253,31 @@ def sentry_config_options(configure_sentry: bool):
             help="Sentry environment for telemetry report",
         )
         @wraps(fn)
-        def wrapper(**kwargs):
-            if configure_sentry and kwargs["sentry_dsn"]:
-                configure_sentry_logging(
-                    dsn=kwargs["sentry_dsn"], environment=kwargs["sentry_environment"]
-                )
+        def wrapper(
+            sentry_dsn: str | None, sentry_environment: str, *args: P.args, **kwargs: P.kwargs
+        ) -> R:
+            if configure_sentry and sentry_dsn:
+                configure_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
 
-            return fn(**kwargs)
+            kwargs["sentry_dsn"] = sentry_dsn
+            kwargs["sentry_environment"] = sentry_environment
+
+            return fn(*args, **kwargs)
 
         return wrapper
 
     return _sentry_config_options
 
 
-def debug_config_options(fn):
-    decorator = click.option(
-        "--debug",
-        is_flag=True,
-        # Don't prefix with `PARSEC_` given devs are lazy
-        envvar="DEBUG",
+def debug_config_options(fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R]:
+    decorator = cast(
+        Callable[[Callable[P, R]], Callable[Concatenate[bool, P], R]],
+        click.option(
+            "--debug",
+            is_flag=True,
+            # Don't prefix with `PARSEC_` given devs are lazy
+            envvar="DEBUG",
+        ),
     )
     return decorator(fn)
 
@@ -250,6 +306,11 @@ class ParsecDateTimeClickType(click.ParamType):
     """
 
     name = "datetime"
+    formats = {
+        "short": "%Y-%m-%d",
+        "long": "%Y-%m-%dT%H:%M:%SZ",
+        "long_with_millisecond": "%Y-%m-%dT%H:%M:%S.%fZ",
+    }
 
     def __repr__(self) -> str:
         return "ParsecDateTimeClickType"
@@ -270,22 +331,24 @@ class ParsecDateTimeClickType(click.ParamType):
 
         assert isinstance(value, str)
 
-        pydt: Optional[datetime.datetime] = None
+        py_datetime: Optional[datetime.datetime] = None
         try:
             # Try short format
-            pydt = datetime.datetime.strptime(value, "%Y-%m-%d")
+            py_datetime = datetime.datetime.strptime(value, self.formats["short"])
         except ValueError:
             try:
                 # Try long format
-                pydt = datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+                py_datetime = datetime.datetime.strptime(value, self.formats["long"])
             except ValueError:
                 try:
-                    # Long format with subseconds ?
-                    pydt = datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    # Long format with Microsecond ?
+                    py_datetime = datetime.datetime.strptime(
+                        value, self.formats["long_with_millisecond"]
+                    )
                 except ValueError:
                     pass
 
-        if not pydt:
+        if not py_datetime:
             self.fail(
                 f"`{value}` must be a RFC3339 date/datetime (e.g. `2000-01-01` or `2000-01-01T00:00:00Z`)",
                 param,
@@ -294,6 +357,6 @@ class ParsecDateTimeClickType(click.ParamType):
 
         # strptime consider the provided datetime to be in local time,
         # so we must correct it given we know it is in fact a UTC
-        pydt = pydt.replace(tzinfo=datetime.timezone.utc)
+        py_datetime = py_datetime.replace(tzinfo=datetime.timezone.utc)
 
-        return DateTime.from_timestamp(pydt.timestamp())
+        return DateTime.from_timestamp(py_datetime.timestamp())

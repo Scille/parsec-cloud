@@ -8,7 +8,7 @@ from typing import Optional, Protocol, Any
 
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.utils import trio_run
-from parsec.cli_utils import spinner, cli_exception_handler, aprompt, aconfirm
+from parsec.cli_utils import spinner, cli_exception_handler, async_prompt, async_confirm
 from parsec.api.protocol import HumanHandle, DeviceLabel
 from parsec.core.config import CoreConfig
 from parsec.core.types import BackendOrganizationBootstrapAddr
@@ -52,7 +52,7 @@ async def _bootstrap_organization(
 ) -> None:
     sequester_vrf_key = None
     if sequester_verify_key is not None:
-        answer = await aconfirm(
+        answer = await async_confirm(
             f"""You are about to bootstrap a sequestered organization.
 
 {SEQUESTER_BRIEF}
@@ -65,11 +65,11 @@ Do you want to continue ?""",
             raise SystemExit("Bootstrap aborted")
         sequester_vrf_key = SequesterVerifyKeyDer(sequester_verify_key.read_bytes())
 
-    human_label: str = human_label or await aprompt("User fullname")
-    human_email: str = human_email or await aprompt("User email")
+    human_label: str = human_label or await async_prompt("User fullname")
+    human_email: str = human_email or await async_prompt("User email")
     human_handle = HumanHandle(email=human_email, label=human_label)
     if not device_label:
-        device_label_raw: str = await aprompt("Device label", default=platform.node())
+        device_label_raw: str = await async_prompt("Device label", default=platform.node())
         dev_label = DeviceLabel(device_label_raw)
     else:
         dev_label = DeviceLabel(device_label)

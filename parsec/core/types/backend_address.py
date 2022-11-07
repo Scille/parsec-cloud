@@ -18,7 +18,6 @@ PARSEC_SCHEME = "parsec"
 
 BackendAddrType = Union[
     BackendAddr,
-    BackendActionAddr,
     BackendInvitationAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,

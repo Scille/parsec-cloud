@@ -135,7 +135,7 @@ match {{ rs_value }} {
         js_obj
     },
     Err(err) => {
-        let js_obj = ({{ mut_cx_ref }}).empty_object();
+        let js_obj = cx.empty_object();
         let js_tag = JsBoolean::new({{ mut_cx_ref }}, false);
         js_obj.set({{ mut_cx_ref }}, "ok", js_tag)?;
         let js_err = {{ render_rs_to_js("err", type.err, mut_cx_ref) | indent(8) }};
