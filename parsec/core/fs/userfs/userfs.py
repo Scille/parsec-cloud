@@ -348,7 +348,11 @@ class UserFS:
         )
 
         # Run user storage
-        async with UserStorage.run(self.data_base_dir, self.device) as self.storage:
+        async with UserStorage.run(
+            self.data_base_dir,
+            event_bus,
+            self.device,
+        ) as self.storage:
 
             # Nursery for workspace storages
             async with open_service_nursery() as self._workspace_storage_nursery:
@@ -430,6 +434,7 @@ class UserFS:
                 data_base_dir=self.data_base_dir,
                 device=self.device,
                 workspace_id=workspace_id,
+                event_bus=self.event_bus,
                 cache_size=self.workspace_storage_cache_size,
                 prevent_sync_pattern=self.prevent_sync_pattern,
             ) as workspace_storage:
@@ -511,6 +516,7 @@ class UserFS:
             # it corresponding realm in the backend !
             await workspace_storage_non_speculative_init(
                 data_base_dir=self.data_base_dir,
+                event_bus=self.event_bus,
                 device=self.device,
                 workspace_id=workspace_entry.id,
             )

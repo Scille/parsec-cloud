@@ -40,6 +40,7 @@ from parsec.core.fs.storage.version import (
     get_workspace_cache_storage_db_path,
 )
 from parsec.core.types.manifest import AnyLocalManifest
+from parsec.event_bus import EventBus
 
 
 logger = get_logger()
@@ -52,12 +53,12 @@ FAILSAFE_PATTERN_FILTER = Regex.from_regex_str(
 
 
 async def workspace_storage_non_speculative_init(
-    data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
+    data_base_dir: Path, event_bus: EventBus, device: LocalDevice, workspace_id: EntryID
 ) -> None:
     db_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
 
     # Local data storage service
-    async with LocalDatabase.run(db_path) as data_localdb:
+    async with LocalDatabase.run(db_path, event_bus) as data_localdb:
 
         # Manifest storage service
         async with ManifestStorage.run(device, data_localdb, workspace_id) as manifest_storage:
@@ -270,6 +271,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         data_base_dir: Path,
         device: LocalDevice,
         workspace_id: EntryID,
+        event_bus: EventBus,
         prevent_sync_pattern: Regex = FAILSAFE_PATTERN_FILTER,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
         data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
@@ -284,12 +286,12 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
         # Local cache storage service
         async with LocalDatabase.run(
-            cache_path, vacuum_threshold=cache_localdb_vacuum_threshold
+            cache_path, event_bus=event_bus, vacuum_threshold=cache_localdb_vacuum_threshold
         ) as cache_localdb:
 
             # Local data storage service
             async with LocalDatabase.run(
-                data_path, vacuum_threshold=data_vacuum_threshold
+                data_path, event_bus=event_bus, vacuum_threshold=data_vacuum_threshold
             ) as data_localdb:
 
                 # Block storage service

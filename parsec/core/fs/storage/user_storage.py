@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from multiprocessing import Event
 
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -10,13 +11,16 @@ from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.fs.storage.version import get_user_data_storage_db_path
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
+from parsec.event_bus import EventBus
 
 
-async def user_storage_non_speculative_init(data_base_dir: Path, device: LocalDevice) -> None:
+async def user_storage_non_speculative_init(
+    data_base_dir: Path, device: LocalDevice, event_bus: EventBus
+) -> None:
     data_path = get_user_data_storage_db_path(data_base_dir, device)
 
     # Local data storage service
-    async with LocalDatabase.run(data_path) as localdb:
+    async with LocalDatabase.run(data_path, event_bus) as localdb:
 
         # Manifest storage service
         async with ManifestStorage.run(
@@ -48,11 +52,13 @@ class UserStorage:
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, data_base_dir: Path, device: LocalDevice) -> AsyncIterator["UserStorage"]:
+    async def run(
+        cls, data_base_dir: Path, event_bus: EventBus, device: LocalDevice
+    ) -> AsyncIterator["UserStorage"]:
         data_path = get_user_data_storage_db_path(data_base_dir, device)
 
         # Local database service
-        async with LocalDatabase.run(data_path) as localdb:
+        async with LocalDatabase.run(data_path, event_bus) as localdb:
 
             # Manifest storage service
             async with ManifestStorage.run(

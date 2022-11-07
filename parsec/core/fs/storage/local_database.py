@@ -6,8 +6,10 @@ from typing import AsyncIterator, Optional, Union
 import trio
 from contextlib import asynccontextmanager
 from sqlite3 import Connection, Cursor, OperationalError, connect as sqlite_connect
+from parsec.core.core_events import CoreEvent
 
 from parsec.core.fs.exceptions import FSLocalStorageClosedError, FSLocalStorageOperationalError
+from parsec.event_bus import EventBus
 
 
 class LocalDatabase:
@@ -16,7 +18,12 @@ class LocalDatabase:
     # Make the trio run_sync function patchable for the tests
     run_in_thread = staticmethod(trio.to_thread.run_sync)
 
-    def __init__(self, path: Union[str, Path, trio.Path], vacuum_threshold: Optional[int] = None):
+    def __init__(
+        self,
+        path: Union[str, Path, trio.Path],
+        event_bus: EventBus,
+        vacuum_threshold: Optional[int] = None,
+    ):
         # Make sure only a single task access the connection object at a time
         self._lock = trio.Lock()
 
@@ -25,14 +32,15 @@ class LocalDatabase:
 
         self.path = trio.Path(path)
         self.vacuum_threshold = vacuum_threshold
+        self.event_bus = event_bus
 
     @classmethod
     @asynccontextmanager
     async def run(
-        cls, path: Union[str, Path], vacuum_threshold: Optional[int] = None
+        cls, path: Union[str, Path], event_bus: EventBus, vacuum_threshold: Optional[int] = None
     ) -> AsyncIterator["LocalDatabase"]:
         # Instanciate the local database
-        self = cls(path, vacuum_threshold)
+        self = cls(path, event_bus, vacuum_threshold)
 
         # Create the connection to the sqlite database
         try:
@@ -72,7 +80,6 @@ class LocalDatabase:
         try:
             try:
                 yield
-
             # Extra checks for end of transaction
             finally:
                 end_of_transaction_detected = (
@@ -83,7 +90,6 @@ class LocalDatabase:
 
         # An operational error has been detected
         except OperationalError as exception:
-
             with trio.CancelScope(shield=True):
 
                 # Close the sqlite3 connection
@@ -98,6 +104,7 @@ class LocalDatabase:
                 finally:
                     del self._conn
 
+                self.event_bus.send(CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR, error=exception)
                 # Raise the dedicated operational error
                 raise FSLocalStorageOperationalError from exception
 
