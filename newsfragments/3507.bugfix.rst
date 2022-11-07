@@ -1,1 +1,1 @@
-Invite without HumanHandle should not crash
+Fixes greeting a new user into an organization with a legacy user (user that does not have an email set)
