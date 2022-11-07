@@ -325,18 +325,13 @@ def GreetUserTestBed(
                 )
 
                 user_widget = None
-                # Order can change a little bit depending on whether the user has a human handle
+                # Order can change a little bit depending on whether the user has a human handle or not
                 for i in range(u_w.layout_users.count()):
                     user_widget = u_w.layout_users.itemAt(i).widget()
                     if (
                         isinstance(user_widget, UserButton)
                         and user_widget.user_info.human_handle is not None
                     ):
-                        print(
-                            user_widget.user_info.human_handle,
-                            self.granted_email,
-                            self.granted_label,
-                        )
                         if (
                             user_widget.user_info.human_handle.email == self.granted_email
                             and user_widget.user_info.human_handle.label == self.granted_label
