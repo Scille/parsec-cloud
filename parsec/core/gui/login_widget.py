@@ -33,7 +33,7 @@ from parsec.core.local_device import save_device_with_smartcard_in_config
 
 from parsec.core.local_device import list_available_devices, AvailableDevice, DeviceFileType
 
-from parsec.core.gui.lang import translate as _
+from parsec.core.gui.lang import translate as T
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
@@ -74,9 +74,9 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
             else ""
         )
         self.button_action.hide()
-        self.label_status.setText(_("TEXT_ENROLLMENT_RETRIEVING_STATUS"))
+        self.label_status.setText(T("TEXT_ENROLLMENT_RETRIEVING_STATUS"))
         self.label_status.setToolTip("")
-        self.jobs_ctx.submit_job(None, None, self._get_pending_enrollment_infos)
+        _ = self.jobs_ctx.submit_job(None, None, self._get_pending_enrollment_infos)
 
     async def _get_pending_enrollment_infos(self) -> None:
         try:
@@ -87,21 +87,21 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
                         extra_trust_roots=self.config.pki_extra_trust_roots
                     )
                 except Exception:
-                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
+                    self.label_status.setText(T("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
                     self.label_status.setToolTip(
-                        _("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP")
+                        T("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP")
                     )
                     self.button_action.hide()
                 else:
                     if isinstance(new_context, PkiEnrollmentSubmitterSubmittedStatusCtx):
                         self.button_action.hide()
-                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_PENDING"))
-                        self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
+                        self.label_status.setText(T("TEXT_ENROLLMENT_STATUS_PENDING"))
+                        self.label_status.setToolTip(T("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
                     elif isinstance(new_context, PkiEnrollmentSubmitterCancelledStatusCtx):
                         self.context = new_context
-                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_OUTDATED"))
-                        self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"))
-                        self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                        self.label_status.setText(T("TEXT_ENROLLMENT_STATUS_OUTDATED"))
+                        self.label_status.setToolTip(T("TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"))
+                        self.button_action.setText(T("ACTION_ENROLLMENT_CLEAR"))
                         self.button_action.clicked.connect(
                             lambda: self.clear_clicked.emit(self.context)
                         )
@@ -109,9 +109,9 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
                         return
                     elif isinstance(new_context, PkiEnrollmentSubmitterRejectedStatusCtx):
                         self.context = new_context
-                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
-                        self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
-                        self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                        self.label_status.setText(T("TEXT_ENROLLMENT_STATUS_REJECTED"))
+                        self.label_status.setToolTip(T("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
+                        self.button_action.setText(T("ACTION_ENROLLMENT_CLEAR"))
                         self.button_action.clicked.connect(
                             lambda: self.clear_clicked.emit(self.context)
                         )
@@ -121,18 +121,18 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
                         new_context, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
                     ):
                         if isinstance(new_context.error, PkiEnrollmentCertificateValidationError):
-                            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"))
+                            self.label_status.setText(T("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"))
                             self.label_status.setToolTip(
-                                _("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED_TOOLTIP")
+                                T("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED_TOOLTIP")
                             )
                             self.button_action.hide()
                             return
                         else:
-                            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT"))
+                            self.label_status.setText(T("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT"))
                             self.label_status.setToolTip(
-                                _("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT_TOOLTIP")
+                                T("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT_TOOLTIP")
                             )
-                            self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                            self.button_action.setText(T("ACTION_ENROLLMENT_CLEAR"))
                             self.button_action.clicked.connect(
                                 lambda: self.clear_clicked.emit(self.context)
                             )
@@ -141,9 +141,9 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
                     else:
                         assert isinstance(new_context, PkiEnrollmentSubmitterAcceptedStatusCtx)
                         self.context = new_context
-                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
-                        self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
-                        self.button_action.setText(_("ACTION_ENROLLMENT_FINALIZE"))
+                        self.label_status.setText(T("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
+                        self.label_status.setToolTip(T("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
+                        self.button_action.setText(T("ACTION_ENROLLMENT_FINALIZE"))
                         self.button_action.show()
                         self.button_action.clicked.connect(
                             lambda: self.finalize_clicked.emit(self.context)
@@ -226,7 +226,7 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
         self.button_back.clicked.connect(self.back_clicked.emit)
         self.button_login.clicked.connect(self._on_log_in_clicked)
         self.label_instructions.setText(
-            _("TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user").format(
+            T("TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user").format(
                 organization=self.device.organization_id.str,
                 user=self.device.short_user_display,
                 device=self.device.device_display,
@@ -235,7 +235,7 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
 
     def _on_log_in_clicked(self) -> None:
         self.button_login.setDisabled(True)
-        self.button_login.setText(_("ACTION_LOGGING_IN"))
+        self.button_login.setText(T("ACTION_LOGGING_IN"))
         self.log_in_clicked.emit(self.device)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
@@ -245,7 +245,7 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
 
     def reset(self) -> None:
         self.button_login.setDisabled(False)
-        self.button_login.setText(_("ACTION_LOG_IN"))
+        self.button_login.setText(T("ACTION_LOG_IN"))
 
 
 class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
@@ -261,7 +261,7 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
         self.button_back.clicked.connect(self.back_clicked.emit)
         self.button_login.clicked.connect(self._on_log_in_clicked)
         self.label_instructions.setText(
-            _("TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user").format(
+            T("TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user").format(
                 organization=self.device.organization_id.str,
                 user=self.device.short_user_display,
                 device=self.device.device_display,
@@ -270,7 +270,7 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
 
     def _on_log_in_clicked(self) -> None:
         self.button_login.setDisabled(True)
-        self.button_login.setText(_("ACTION_LOGGING_IN"))
+        self.button_login.setText(T("ACTION_LOGGING_IN"))
         self.log_in_clicked.emit(self.device, self.line_edit_password.text())
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
@@ -281,7 +281,7 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
     def reset(self) -> None:
         self.button_login.setDisabled(False)
         self.line_edit_password.setText("")
-        self.button_login.setText(_("ACTION_LOG_IN"))
+        self.button_login.setText(T("ACTION_LOG_IN"))
 
 
 class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
@@ -293,9 +293,9 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
         super().__init__()
         self.setupUi(self)
         if ParsecApp.connected_devices:
-            self.label_no_device.setText(_("TEXT_LOGIN_NO_AVAILABLE_DEVICE"))
+            self.label_no_device.setText(T("TEXT_LOGIN_NO_AVAILABLE_DEVICE"))
         else:
-            self.label_no_device.setText(_("TEXT_LOGIN_NO_DEVICE_ON_MACHINE"))
+            self.label_no_device.setText(T("TEXT_LOGIN_NO_DEVICE_ON_MACHINE"))
         self.button_create_org.clicked.connect(self.create_organization_clicked.emit)
         self.button_join_org.clicked.connect(self.join_organization_clicked.emit)
         self.button_recover_device.clicked.connect(self.recover_device_clicked.emit)
@@ -373,8 +373,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.widget.layout().addWidget(accounts_widget)
             accounts_widget.setFocus()
 
-    def _on_pending_finalize_clicked(self, context: AnyContextType) -> None:
-        self.jobs_ctx.submit_job(None, None, self._finalize_enrollment, context)
+    def _on_pending_finalize_clicked(
+        self, context: PkiEnrollmentSubmitterAcceptedStatusCtx
+    ) -> None:
+        _ = self.jobs_ctx.submit_job(None, None, self._finalize_enrollment, context)
 
     async def _finalize_enrollment(self, context: PkiEnrollmentSubmitterAcceptedStatusCtx) -> None:
         try:
@@ -386,7 +388,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             # Nothing to do, the user cancelled the pin code prompt
             return
         except Exception as exc:
-            show_error(self, _("TEXT_ENROLLMENT_CANNOT_FINALIZE"), exception=exc)
+            show_error(self, T("TEXT_ENROLLMENT_CANNOT_FINALIZE"), exception=exc)
             return
 
         try:
@@ -397,11 +399,11 @@ class LoginWidget(QWidget, Ui_LoginWidget):
                 certificate_sha1=context.x509_certificate.certificate_sha1,
             )
         except Exception as exc:
-            show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+            show_error(self, T("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
             return
 
         await self._remove_enrollment(finalized_context)
-        SnackbarManager.inform(_("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
+        SnackbarManager.inform(T("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
 
     async def _remove_enrollment(
         self,
@@ -414,12 +416,19 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         try:
             await context.remove_from_disk()
         except Exception as exc:
-            show_error(self, _("TEXT_CANNOT_REMOVE_LOCAL_PENDING_ENROLLMENT"), exception=exc)
+            show_error(self, T("TEXT_CANNOT_REMOVE_LOCAL_PENDING_ENROLLMENT"), exception=exc)
             return
         self.reload_devices()
 
-    def _on_pending_clear_clicked(self, context: BasePkiEnrollmentSubmitterStatusCtx) -> None:
-        self.jobs_ctx.submit_job(None, None, self._remove_enrollment, context)
+    def _on_pending_clear_clicked(
+        self,
+        context: PkiEnrollmentSubmitterSubmittedStatusCtx
+        | PkiEnrollmentSubmitterCancelledStatusCtx
+        | PkiEnrollmentSubmitterRejectedStatusCtx
+        | PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
+        | PkiEnrollmentFinalizedCtx,
+    ) -> None:
+        _ = self.jobs_ctx.submit_job(None, None, self._remove_enrollment, context)
 
     def reload_devices(self) -> None:
         self._clear_widget()

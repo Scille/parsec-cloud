@@ -224,7 +224,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         self.event_bus = event_bus
         self.button_get_enrollment_addr.apply_style()
         self.button_get_enrollment_addr.clicked.connect(self._on_get_enrollment_addr_clicked)
-        self.current_job = None
+        self.current_job: QtToTrioJob[None] | None = None
 
     def _on_get_enrollment_addr_clicked(self) -> None:
         ba = BackendPkiEnrollmentAddr.build(
@@ -292,7 +292,9 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
             if not status:
                 enrollment_button.set_buttons_enabled(True)
             else:
-                self.jobs_ctx.submit_job(
+                assert dialog.profile is not None
+
+                _ = self.jobs_ctx.submit_job(
                     None,
                     None,
                     self.accept_recruit,
@@ -312,7 +314,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
 
     def _on_reject_clicked(self, rw: EnrollmentButton) -> None:
         rw.set_buttons_enabled(False)
-        self.jobs_ctx.submit_job(None, None, self.reject_recruit, enrollment_button=rw)
+        _ = self.jobs_ctx.submit_job(None, None, self.reject_recruit, enrollment_button=rw)
 
     async def accept_recruit(
         self,

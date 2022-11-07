@@ -9,6 +9,7 @@ import trio
 import qtrio
 import pytest
 from PyQt5 import QtCore, QtTest
+from typing import Type, Callable
 
 from parsec import __version__ as parsec_version
 from parsec.api.data import EntryName
@@ -26,7 +27,12 @@ from parsec.core.gui.login_widget import (
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
 from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.files_widget import FilesWidget
+from parsec.core.gui.workspaces_widget import WorkspacesWidget
 from parsec.core.local_device import LocalDeviceAlreadyExistsError
+from parsec.event_bus import EventBus
+from parsec.core.config import CoreConfig
+from parsec._parsec import LocalDevice
 
 from tests.common import real_clock_timeout
 
@@ -251,7 +257,7 @@ def throttled_job_fast_wait(monkeypatch):
 def gui_factory(
     aqtbot,
     job_scheduler,
-    testing_main_window_cls,
+    testing_main_window_cls: Type[MainWindow],
     core_config,
     event_bus_factory,
     running_backend_ready,
@@ -264,7 +270,7 @@ def gui_factory(
         start_arg=None,
         skip_dialogs=True,
         throttle_job_no_wait=True,
-    ):
+    ) -> MainWindow:
         # Wait for the backend to run if necessary
         await running_backend_ready()
 
@@ -308,7 +314,12 @@ def gui_factory(
 
 
 @pytest.fixture
-async def gui(aqtbot, gui_factory, event_bus, core_config):
+async def gui(
+    aqtbot,
+    gui_factory: Callable[[EventBus, CoreConfig], MainWindow],
+    event_bus: EventBus,
+    core_config: CoreConfig,
+):
     _gui = await gui_factory(event_bus, core_config)
 
     def _gui_displayed():
@@ -320,7 +331,14 @@ async def gui(aqtbot, gui_factory, event_bus, core_config):
 
 
 @pytest.fixture
-async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_customization):
+async def logged_gui(
+    aqtbot,
+    gui_factory: Callable[[], MainWindow],
+    core_config: CoreConfig,
+    alice: LocalDevice,
+    bob: LocalDevice,
+    fixtures_customization,
+):
     # Logged as bob (i.e. standard profile) by default
     if fixtures_customization.get("logged_gui_as_admin", False):
         device = alice
@@ -335,7 +353,7 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
 
 
 @pytest.fixture
-def testing_main_window_cls(aqtbot):
+def testing_main_window_cls(aqtbot) -> Type[MainWindow]:
     # Since widgets are not longer persistent and are instantiated only when needed,
     # we can no longer simply access them.
     # These methods help to retrieve a widget according to the current state of the GUI.
@@ -501,7 +519,7 @@ def testing_main_window_cls(aqtbot):
                 aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
             return u_w
 
-        async def test_switch_to_workspaces_widget(self, error=False):
+        async def test_switch_to_workspaces_widget(self, error=False) -> WorkspacesWidget:
             central_widget = self.test_get_central_widget()
             w_w = self.test_get_workspaces_widget()
             signal = w_w.list_error if error else w_w.list_success
@@ -509,7 +527,9 @@ def testing_main_window_cls(aqtbot):
                 aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
             return w_w
 
-        async def test_switch_to_files_widget(self, workspace_name, error=False):
+        async def test_switch_to_files_widget(
+            self, workspace_name: EntryName, error: bool = False
+        ) -> FilesWidget:
             assert isinstance(workspace_name, EntryName)
             w_w = await self.test_switch_to_workspaces_widget()
 

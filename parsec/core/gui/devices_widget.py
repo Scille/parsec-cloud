@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Tuple
+from typing import Any
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QLabel
@@ -45,7 +45,7 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 
 async def _do_invite_device(
     core: LoggedCore,
-) -> Tuple[BackendInvitationAddr, InvitationEmailSentStatus]:
+) -> tuple[BackendInvitationAddr, InvitationEmailSentStatus]:
     try:
         addr, email_sent_status = await core.new_device_invitation(send_email=False)
         return addr, email_sent_status
@@ -99,11 +99,13 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         super().show()
 
     def invite_device(self) -> None:
-        self.jobs_ctx.submit_job(
+        _ = self.jobs_ctx.submit_job(
             (self, "invite_success"), (self, "invite_error"), _do_invite_device, core=self.core
         )
 
-    def _on_invite_success(self, job: QtToTrioJob) -> None:
+    def _on_invite_success(
+        self, job: QtToTrioJob[tuple[BackendInvitationAddr, InvitationEmailSentStatus]]
+    ) -> None:
         assert job.is_finished()
         assert job.status == "ok"
         assert job.ret is not None
@@ -117,7 +119,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             on_finished=self.reset,
         )
 
-    def _on_invite_error(self, job: QtToTrioJob) -> None:
+    def _on_invite_error(
+        self, job: QtToTrioJob[tuple[BackendInvitationAddr, InvitationEmailSentStatus]]
+    ) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
@@ -134,7 +138,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.layout_devices.addWidget(button)
         button.show()
 
-    def _on_list_success(self, job: QtToTrioJob) -> None:
+    def _on_list_success(self, job: QtToTrioJob[list[DeviceInfo]]) -> None:
         assert job.is_finished()
         assert job.status == "ok"
 
@@ -146,7 +150,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             self.add_device(device, is_current_device=current_device.device_id == device.device_id)
         self.spinner.hide()
 
-    def _on_list_error(self, job: QtToTrioJob) -> None:
+    def _on_list_error(self, job: QtToTrioJob[list[DeviceInfo]]) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
@@ -161,6 +165,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
     def reset(self) -> None:
         self.layout_devices.clear()
         self.spinner.show()
-        self.jobs_ctx.submit_job(
+        _ = self.jobs_ctx.submit_job(
             (self, "list_success"), (self, "list_error"), _do_list_devices, core=self.core
         )

@@ -2,10 +2,23 @@
 from __future__ import annotations
 
 import threading
-from typing import List, Dict, Tuple, Callable, Any
+from typing import (
+    Any,
+    AsyncGenerator,
+    OrderedDict,
+    Tuple,
+    Callable,
+    TypeVar,
+    Awaitable,
+    cast,
+    Generic,
+)
+from typing_extensions import ParamSpec
 from inspect import iscoroutinefunction, signature
 from contextlib import asynccontextmanager
 import trio
+import trio_typing
+from parsec.utils import open_service_nursery
 from structlog import get_logger
 from PyQt5.QtCore import QObject, pyqtBoundSignal
 from exceptiongroup import BaseExceptionGroup
@@ -14,6 +27,9 @@ from parsec.core.fs import FSError
 from parsec.core.mountpoint import MountpointError
 
 
+P = ParamSpec("P")
+R = TypeVar("R")
+
 logger = get_logger()
 
 
@@ -21,9 +37,11 @@ JobResultSignal = Tuple[QObject, str]
 
 
 class JobResultError(Exception):
-    def __init__(self, status, **kwargs):
+    def __init__(self, status: str, origin: BaseException | None = None, **kwargs: Any) -> None:
         self.status = status
+        self.origin = origin
         self.params = kwargs
+        self.params["origin"] = self.origin
         super().__init__(status, kwargs)
 
 
@@ -31,15 +49,15 @@ class JobSchedulerNotAvailable(Exception):
     pass
 
 
-class QtToTrioJob:
+class QtToTrioJob(Generic[R]):
     def __init__(
         self,
-        fn: Callable,
-        args: List[Any],
-        kwargs: Dict[str, Any],
+        fn: Callable[P, Awaitable[R]] | Callable[P, R],
         on_success: JobResultSignal | None,
         on_error: JobResultSignal | None,
-    ):
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
         # `pyqtBoundSignal` (i.e. `pyqtSignal` connected to a QObject instance) doesn't
         # hold a strong reference on the QObject. Hence if the latter gets freed, calling
         # the signal will result in a segfault !
@@ -54,38 +72,44 @@ class QtToTrioJob:
         self._fn = fn
         self._args = args
         self._kwargs = kwargs
-        self.cancel_scope = None
+        self.cancel_scope: None | trio.CancelScope = None
         self._started = trio.Event()
         self._done = threading.Event()
-        self.status = None
-        self.ret = None
-        self.exc = None
+        self.status: None | str = None
+        self.ret: None | R = None
+        self.exc: None | trio.Cancelled | Exception | BaseExceptionGroup[
+            trio.Cancelled
+        ] | JobSchedulerNotAvailable = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self._fn.__name__}"
 
     @property
-    def arguments(self):
+    def arguments(self) -> OrderedDict[str, object]:
         bound_arguments = signature(self._fn).bind(*self._args, **self._kwargs)
         bound_arguments.apply_defaults()
         return bound_arguments.arguments
 
-    def is_finished(self):
+    def is_finished(self) -> bool:
         return self._done.is_set()
 
-    def is_cancelled(self):
+    def is_cancelled(self) -> bool:
         return self.status == "cancelled"
 
-    def is_ok(self):
+    def is_ok(self) -> bool:
         return self.status == "ok"
 
-    def is_errored(self):
+    def is_errored(self) -> bool:
         return self.status == "ko"
 
-    def is_crashed(self):
+    def is_crashed(self) -> bool:
         return self.status == "crashed"
 
-    async def __call__(self, *, task_status=trio.TASK_STATUS_IGNORED):
+    async def __call__(
+        self,
+        *,
+        task_status: trio_typing.TaskStatus[None] = trio.TASK_STATUS_IGNORED,
+    ) -> None:
         assert self.status is None
         with trio.CancelScope() as self.cancel_scope:
             task_status.started()
@@ -93,9 +117,9 @@ class QtToTrioJob:
 
             try:
                 if not iscoroutinefunction(self._fn):
-                    result = self._fn(*self._args, **self._kwargs)
+                    result = cast(R, self._fn(*self._args, **self._kwargs))
                 else:
-                    result = await self._fn(*self._args, **self._kwargs)
+                    result = await cast(Awaitable[R], self._fn(*self._args, **self._kwargs))
                 if isinstance(result, JobResultError):
                     self.set_exception(result)
                 else:
@@ -109,25 +133,33 @@ class QtToTrioJob:
                 raise
 
             except BaseExceptionGroup as exc:
-                cancelled_errors, other_exceptions = exc.split(trio.Cancelled)
+                cancelled_errors, other_exceptions = cast(
+                    tuple[BaseExceptionGroup[trio.Cancelled], BaseExceptionGroup[trio.Cancelled]],
+                    # Mypy: `exc.split` want an exception that is compatible with the generic type `EBase`.
+                    # but it consider `trio.Cancelled` not compatible
+                    exc.split(trio.Cancelled),  # type: ignore[arg-type]
+                )
                 if other_exceptions is not None:
                     self.set_exception(other_exceptions)
                 else:
+                    assert cancelled_errors is not None
                     self.set_cancelled(cancelled_errors)
                 if cancelled_errors:
                     raise cancelled_errors
 
-    def set_result(self, result):
+    def set_result(self, result: R) -> None:
         self.status = "ok"
         self.ret = result
         self._set_done()
 
-    def set_cancelled(self, exc):
+    def set_cancelled(
+        self, exc: trio.Cancelled | BaseExceptionGroup[trio.Cancelled] | JobSchedulerNotAvailable
+    ) -> None:
         self.status = "cancelled"
         self.exc = exc
         self._set_done()
 
-    def set_exception(self, exc):
+    def set_exception(self, exc: Exception | BaseExceptionGroup[trio.Cancelled]) -> None:
         if isinstance(exc, JobResultError):
             self.status = exc.status
             self.exc = exc
@@ -142,53 +174,64 @@ class QtToTrioJob:
             self.exc = wrapped
         self._set_done()
 
-    def _set_done(self):
+    def _set_done(self) -> None:
         self._done.set()
         signal = self._on_success if self.is_ok() else self._on_error
         if signal is not None:
             obj, name = signal
             getattr(obj, name).emit(self)
 
-    def cancel(self):
-        self.cancel_scope.cancel()
+    def cancel(self) -> None:
+        if self.cancel_scope:
+            self.cancel_scope.cancel()
 
 
 class QtToTrioJobScheduler:
-    def __init__(self, nursery):
+    def __init__(self, nursery: trio.Nursery) -> None:
         self.nursery = nursery
-        self._throttling_scheduled_jobs = {}
-        self._throttling_last_executed = {}
+        self._throttling_scheduled_jobs: dict[str, QtToTrioJob[Any]] = {}
+        self._throttling_last_executed: dict[str, float] = {}
 
-    def close(self):
+    def close(self) -> None:
         self.nursery.cancel_scope.cancel()
 
     def submit_throttled_job(
-        self, throttling_id: str, delay: float, on_success, on_error, fn, *args, **kwargs
-    ):
+        self,
+        throttling_id: str,
+        delay: float,
+        on_success: JobResultSignal | None,
+        on_error: JobResultSignal | None,
+        fn: Callable[P, Awaitable[R]] | Callable[P, R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> QtToTrioJob[R]:
         """
-        Throttle execution: immediatly execute `fn` unless a job with a similar
+        Throttle execution: immediately execute `fn` unless a job with a similar
         `throttling_id` it has been already executed in the last `delay` seconds,
         in which case we schedule the execution to occur when the delay is elapsed.
-        Submitting a job with an already sheduled `throttling_id` will lead to
+        Submitting a job with an already scheduled `throttling_id` will lead to
         a single execution of the last provided job parameters at the soonest delay.
         """
 
-        async def _throttled_execute(job, task_status=trio.TASK_STATUS_IGNORED):
+        async def _throttled_execute(
+            job: QtToTrioJob[R],
+            task_status: trio_typing.TaskStatus[None] = trio.TASK_STATUS_IGNORED,
+        ) -> None:
             # Only modify `_throttling_scheduled_jobs` from the trio
-            # thread to avoid concurrent acces with the Qt thread
-            # Note we might be overwritting another job here, it is fine given
+            # thread to avoid concurrent access with the Qt thread
+            # Note we might be overwriting another job here, it is fine given
             # we only want to execute the last scheduled one
             self._throttling_scheduled_jobs[throttling_id] = job
             task_status.started()
 
             # Sleep the throttle delay, if last execution occurred long enough
             # this will equivalent of doing `trio.sleep(0)`
-            last_executed = self._throttling_last_executed.get(throttling_id, 0)
+            last_executed = self._throttling_last_executed.get(throttling_id, 0.0)
             await trio.sleep_until(last_executed + delay)
 
             # It is possible our job has been executed by another `_throttled_execute`
             # that had a shorter delay. In such case we have nothing more to do.
-            last_executed = self._throttling_last_executed.get(throttling_id, 0)
+            last_executed = self._throttling_last_executed.get(throttling_id, 0.0)
             if last_executed + delay > trio.current_time():
                 return
             job = self._throttling_scheduled_jobs.pop(throttling_id, None)
@@ -204,8 +247,16 @@ class QtToTrioJobScheduler:
                 pass
 
         # Create the job but don't execute it: we have to handle throttle first !
-        job = QtToTrioJob(fn, args, kwargs, on_success, on_error)
-        if self.nursery._closed:
+        job = QtToTrioJob(
+            fn,
+            on_success,
+            on_error,
+            *args,
+            **kwargs,
+        )
+        # Mypy: `trio.Nursery` have the private attribute `_closed` that we rely on.
+        # `trio.Nursery` currently don't provide any Api to know if a Nursery is closed.
+        if self.nursery._closed:  # type: ignore[attr-defined]
             job.set_cancelled(JobSchedulerNotAvailable())
         else:
             self.nursery.start_soon(_throttled_execute, job)
@@ -215,12 +266,20 @@ class QtToTrioJobScheduler:
         self,
         on_success: JobResultSignal | None,
         on_error: JobResultSignal | None,
-        fn: Callable,
-        *args,
-        **kwargs,
-    ):
-        job = QtToTrioJob(fn, args, kwargs, on_success, on_error)
-        if self.nursery._closed:
+        fn: Callable[P, Awaitable[R]] | Callable[P, R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> QtToTrioJob[R]:
+        job: QtToTrioJob[R] = QtToTrioJob(
+            fn,
+            on_success,
+            on_error,
+            *args,
+            **kwargs,
+        )
+        # Mypy: `trio.Nursery` have the private attribute `_closed` that we rely on.
+        # `trio.Nursery` currently don't provide any Api to know if a Nursery is closed.
+        if self.nursery._closed:  # type: ignore[attr-defined]
             job.set_cancelled(JobSchedulerNotAvailable())
         else:
             self.nursery.start_soon(job)
@@ -228,6 +287,6 @@ class QtToTrioJobScheduler:
 
 
 @asynccontextmanager
-async def run_trio_job_scheduler():
-    async with trio.open_service_nursery() as nursery:
+async def run_trio_job_scheduler() -> AsyncGenerator[QtToTrioJobScheduler, None]:
+    async with open_service_nursery() as nursery:
         yield QtToTrioJobScheduler(nursery)

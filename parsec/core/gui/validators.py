@@ -14,18 +14,18 @@ from parsec.core.types import (
 )
 
 
-def trim_string(s):
+def trim_string(s: str) -> str:
     s = s.strip()
     return " ".join(s.split())
 
 
 class NetworkPortValidator(QIntValidator):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(1, 65536)
 
 
 class OrganizationIDValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
@@ -36,7 +36,7 @@ class OrganizationIDValidator(QValidator):
 
 
 class BackendAddrValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
@@ -47,7 +47,7 @@ class BackendAddrValidator(QValidator):
 
 
 class BackendOrganizationAddrValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
@@ -58,7 +58,7 @@ class BackendOrganizationAddrValidator(QValidator):
 
 
 class BackendOrganizationBootstrapAddrValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
@@ -69,7 +69,7 @@ class BackendOrganizationBootstrapAddrValidator(QValidator):
 
 
 class BackendActionAddrValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
@@ -80,7 +80,7 @@ class BackendActionAddrValidator(QValidator):
 
 
 class UserIDValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
@@ -91,7 +91,7 @@ class UserIDValidator(QValidator):
 
 
 class DeviceLabelValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
@@ -102,7 +102,7 @@ class DeviceLabelValidator(QValidator):
 
 
 class UserNameValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         # HumanHandle does not like spaces. To be a bit nicer to the user, we remove
         # them.
         string = trim_string(string)
@@ -121,12 +121,12 @@ class UserNameValidator(QValidator):
 
 class EmailValidator(QRegularExpressionValidator):
     # We don't use the HumanHandle to validate the email because it's way too permissive.
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(QRegularExpression(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"))
 
 
 class WorkspaceNameValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
@@ -137,12 +137,12 @@ class WorkspaceNameValidator(QValidator):
 
 
 class NotEmptyValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         return QValidator.Acceptable if len(string) else QValidator.Invalid, string, pos
 
 
 class FileNameValidator(QValidator):
-    def validate(self, string, pos):
+    def validate(self, string: str, pos: int) -> tuple[QValidator.State, str, int]:
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos

@@ -59,7 +59,7 @@ def GreetUserTestBed(
             self.users_widget = None
             self.invitation_widget = None
             self.invitation_addr = None
-            self.greet_user_widget = None
+            self.greet_user_widget: GreetUserWidget | None = None
             self.greet_user_information_widget = None
             self.cmds = None
 

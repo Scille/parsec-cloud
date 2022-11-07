@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Sequence
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -65,7 +65,7 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
         self.edit_passphrase.setText(passphrase)
 
     def _on_path_clicked(self, file_path: str) -> None:
-        self.jobs_ctx.submit_job(None, None, open_files_job, [PurePath(file_path).parent])
+        _ = self.jobs_ctx.submit_job(None, None, open_files_job, [PurePath(file_path).parent])
 
     def _print_recovery_key(self) -> None:
         html = translate("TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password").format(
@@ -130,13 +130,15 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         self.config = config
         self.button_validate.clicked.connect(self._on_validate_clicked)
         self.button_validate.setEnabled(False)
-        self.current_page = DeviceRecoveryExportPage1Widget(devices, self)
+        self.current_page: DeviceRecoveryExportPage1Widget | DeviceRecoveryExportPage2Widget = (
+            DeviceRecoveryExportPage1Widget(devices, self)
+        )
         self.current_page.info_filled.connect(self._on_page1_info_filled)
         self.main_layout.addWidget(self.current_page)
         self.export_success.connect(self._on_export_success)
         self.export_failure.connect(self._on_export_failure)
 
-    def _on_export_success(self, job: QtToTrioJob) -> None:
+    def _on_export_success(self, job: QtToTrioJob[tuple[LocalDevice, PurePath, str]]) -> None:
         assert job.ret is not None
         recovery_device, file_path, passphrase = job.ret
         self.main_layout.removeWidget(self.current_page)
@@ -151,7 +153,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         self.button_validate.setText(translate("ACTION_CLOSE"))
         self.button_validate.setEnabled(True)
 
-    def _on_export_failure(self, job: QtToTrioJob) -> None:
+    def _on_export_failure(self, job: QtToTrioJob[tuple[LocalDevice, PurePath, str]]) -> None:
         self.button_validate.setEnabled(True)
 
     def _on_page1_info_filled(self, valid: bool) -> None:
@@ -159,7 +161,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
 
     async def _export_recovery_device(
         self, config_dir: PurePath, device: LocalDevice, export_path: PurePath
-    ) -> Tuple[LocalDevice, PurePath, str]:
+    ) -> tuple[LocalDevice, PurePath, str]:
         try:
             recovery_device = await generate_recovery_device(device)
             file_name = get_recovery_device_file_name(recovery_device)
@@ -178,7 +180,6 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         except Exception as exc:
             show_error(self, translate("EXPORT_KEY_ERROR"), exception=exc)
             raise JobResultError("error") from exc
-        self.button_validate.setEnabled(True)
 
     async def _on_validate_clicked(self) -> None:
         if isinstance(self.current_page, DeviceRecoveryExportPage1Widget):
@@ -226,7 +227,8 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     )
                     self.button_validate.setEnabled(True)
                     return
-            self.jobs_ctx.submit_job(
+            assert device is not None
+            _ = self.jobs_ctx.submit_job(
                 (self, "export_success"),
                 (self, "export_failure"),
                 self._export_recovery_device,

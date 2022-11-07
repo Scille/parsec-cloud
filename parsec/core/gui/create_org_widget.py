@@ -151,12 +151,14 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
-        self.create_job = None
+        self.create_job: QtToTrioJob[LocalDevice] | None = None
         self.dialog: GreyedDialog | None = None
-        self.status = None
-        self.new_device = None
+        self.status: tuple[LocalDevice, DeviceFileType, str] | None = None
+        self.new_device: LocalDevice | None = None
 
-        self.current_widget = CreateOrgUserInfoWidget()
+        self.current_widget: CreateOrgUserInfoWidget | AuthenticationChoiceWidget = (
+            CreateOrgUserInfoWidget()
+        )
         self.current_widget.info_filled.connect(self._on_info_filled)
         self.main_layout.addWidget(self.current_widget)
 
@@ -249,6 +251,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         else:
             auth_method = self.current_widget.get_auth_method()
             try:
+                assert self.new_device is not None
                 if auth_method == DeviceFileType.PASSWORD:
                     save_device_with_password_in_config(
                         self.config.config_dir, self.new_device, self.current_widget.get_auth()
@@ -262,7 +265,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 if self.dialog:
                     self.dialog.accept()
                 elif QApplication.activeModalWidget():
-                    QApplication.activeModalWidget().accept()
+                    # Mypy: the current modal should have an accept method, right ?
+                    QApplication.activeModalWidget().accept()  # type: ignore[attr-defined]
                 else:
                     logger.warning("Cannot close dialog when org wizard")
             except LocalDeviceCryptoError as exc:
@@ -274,7 +278,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             except LocalDeviceError as exc:
                 show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
-    def _on_req_success(self, job: QtToTrioJob) -> None:
+    def _on_req_success(self, job: QtToTrioJob[LocalDevice]) -> None:
         assert self.create_job is job
         assert self.create_job.is_finished()
         assert self.create_job.status == "ok"
@@ -282,6 +286,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.new_device = self.create_job.ret
         self.create_job = None
 
+        assert isinstance(self.current_widget, CreateOrgUserInfoWidget)
         excl_strings = [
             self.current_widget.line_edit_org_name.text(),
             self.current_widget.line_edit_user_full_name.text(),
@@ -295,10 +300,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.button_validate.setText(_("ACTION_CREATE_DEVICE"))
         self.button_validate.setEnabled(self.current_widget.is_auth_valid())
 
-    def _on_authentication_changed(self, auth_method: Any, valid: bool) -> None:
-        self.button_validate.setEnabled(valid)
-
-    def _on_req_error(self, job: QtToTrioJob) -> None:
+    def _on_req_error(self, job: QtToTrioJob[LocalDevice]) -> None:
         assert self.create_job is job
         assert self.create_job.is_finished()
         assert self.create_job.status != "ok"
@@ -333,13 +335,18 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         else:
             err_msg = _("TEXT_ORG_WIZARD_UNKNOWN_FAILURE")
         exc = self.create_job.exc
+        assert isinstance(exc, JobResultError)
         if exc.params.get("exc"):
             exc = exc.params.get("exc")
         show_error(self, err_msg, exception=exc)
         self.status = None
         self.create_job = None
         self.button_validate.setEnabled(True)
-        self.dialog.button_close.setVisible(True)
+        if self.dialog:
+            self.dialog.button_close.setVisible(True)
+
+    def _on_authentication_changed(self, auth_method: Any, valid: bool) -> None:
+        self.button_validate.setEnabled(valid)
 
     @classmethod
     def show_modal(

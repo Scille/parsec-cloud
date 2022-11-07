@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 from marshmallow.decorators import post_load
 import json
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 from json import JSONDecodeError
 from packaging.version import Version
 from structlog import get_logger
@@ -29,7 +29,7 @@ logger = get_logger()
 
 
 # Helper to make mock easier for testing
-def get_platform_and_arch() -> Tuple[str, str]:
+def get_platform_and_arch() -> tuple[str, str]:
     return sys.platform, QSysInfo().currentCpuArchitecture()
 
 
@@ -74,7 +74,7 @@ async def fetch_json_releases(api_url: str) -> None | list[dict[str, Any]]:
 
 async def do_check_new_version(
     api_url: str, allow_prerelease: bool = False
-) -> Optional[Tuple[Version, str]]:
+) -> Optional[tuple[Version, str]]:
     # Retrieve the releases from Github
     json_releases = await fetch_json_releases(api_url)
     if json_releases is None:
@@ -207,7 +207,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.check_new_version_success.connect(self.on_check_new_version_success)
         self.check_new_version_error.connect(self.on_check_new_version_error)
 
-        self.version_job: QtToTrioJob | None = self.jobs_ctx.submit_job(
+        self.version_job: QtToTrioJob[tuple[Version, str] | None] | None = self.jobs_ctx.submit_job(
             (self, "check_new_version_success"),
             (self, "check_new_version_error"),
             do_check_new_version,
@@ -216,11 +216,11 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         )
         self.setWindowFlags(Qt.SplashScreen)
 
-    def on_check_new_version_success(self, job: QtToTrioJob) -> None:
+    def on_check_new_version_success(self, job: QtToTrioJob[tuple[Version, str] | None]) -> None:
         assert job is self.version_job
         assert self.version_job.is_finished()
         assert self.version_job.status == "ok"
-        version_job_ret: Optional[Tuple[Version, str]] | None = self.version_job.ret
+        version_job_ret = self.version_job.ret
         self.version_job = None
         if version_job_ret:
             new_version, url = version_job_ret
@@ -237,7 +237,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             self.widget_info.show()
             self.widget_info.show_up_to_date()
 
-    def on_check_new_version_error(self, job: QtToTrioJob) -> None:
+    def on_check_new_version_error(self, job: QtToTrioJob[tuple[Version, str] | None]) -> None:
         assert job is self.version_job
         assert self.version_job.is_finished()
         assert self.version_job.status != "ok"

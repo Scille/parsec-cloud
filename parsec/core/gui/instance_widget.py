@@ -46,7 +46,7 @@ MIN_MACFUSE_VERSION = Version("4.4.0")
 async def _do_run_core(
     config: CoreConfig, device: LocalDevice, qt_on_ready: Tuple[QObject, str]
 ) -> None:
-    qt_on_ready: pyqtBoundSignal = getattr(qt_on_ready[0], qt_on_ready[1])  # Retreive the signal
+    qt_on_ready: pyqtBoundSignal = getattr(qt_on_ready[0], qt_on_ready[1])  # Retrieve the signal
     # Quick fix to avoid BaseExceptionGroup<Cancelled, ...> exception bubbling up
     # TODO: is it still necessary?
     with exceptiongroup.catch({trio.Cancelled: lambda _: None}):
@@ -128,10 +128,10 @@ class InstanceWidget(QWidget):
         self.config = config
         self.systray_notification = systray_notification
 
-        self.core: Optional[LoggedCore] = None
-        self.core_jobs_ctx: Optional[QtToTrioJobScheduler] = None
-        self.running_core_job = None
-        self.workspace_path: Optional[BackendActionAddr] = None
+        self.core: LoggedCore | None = None
+        self.core_jobs_ctx: QtToTrioJobScheduler | None = None
+        self.running_core_job: QtToTrioJob[None] | None = None
+        self.workspace_path: BackendActionAddr | None = None
 
         self.run_core_success.connect(self.on_core_run_done)
         self.run_core_error.connect(self.on_core_run_error)
@@ -159,7 +159,7 @@ class InstanceWidget(QWidget):
     def reset_workspace_path(self) -> None:
         self.workspace_path = None
 
-    def on_core_config_updated(self, event: CoreEvent, **kwargs: dict[object, object]) -> None:
+    def on_core_config_updated(self, event: CoreEvent, **kwargs: object) -> None:
         self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, **kwargs)
 
     def start_core(self, device: LocalDevice) -> None:
@@ -194,12 +194,12 @@ class InstanceWidget(QWidget):
         )
         self.logged_in.emit()
 
-    def on_core_run_error(self, job: QtToTrioJob) -> None:
+    def on_core_run_error(self, job: QtToTrioJob[None]) -> None:
         assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
             self.core.event_bus.disconnect(
-                CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
+                CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_core_config_updated)
             )
         if self.running_core_job.status is not None:
             if isinstance(self.running_core_job.exc, HandshakeRevokedDevice):
@@ -224,7 +224,7 @@ class InstanceWidget(QWidget):
         self.running_core_job = None
         self.logged_out.emit()
 
-    def on_core_run_done(self, job: QtToTrioJob) -> None:
+    def on_core_run_done(self, job: QtToTrioJob[None]) -> None:
         assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
@@ -232,7 +232,7 @@ class InstanceWidget(QWidget):
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             )
             self.core.event_bus.disconnect(
-                CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
+                CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_core_config_updated)
             )
         self.running_core_job = None
         self.logged_out.emit()

@@ -96,13 +96,13 @@ def _get_coroutine_or_flag_problem(
     """
     try:
         # can we call it?
-        coro = async_fn(*args, **kwargs)
+        coroutine = async_fn(*args, **kwargs)
     except TypeError:
         probe_fn = async_fn
     else:
         # did we get a coroutine object back?
-        if isinstance(coro, collections.abc.Coroutine):
-            return coro
+        if isinstance(coroutine, collections.abc.Coroutine):
+            return coroutine
         probe_fn = partial(async_fn, **kwargs)
 
     # TODO: upstream a change that lets us access just the nice
@@ -125,7 +125,7 @@ def _get_coroutine_or_flag_problem(
 
 
 @asynccontextmanager
-async def open_service_nursery_with_exception_group() -> AsyncIterator:
+async def open_service_nursery_with_exception_group() -> AsyncIterator[trio.Nursery]:
     """Provides a nursery augmented with a cancellation ordering constraint.
     If an entire service nursery becomes cancelled, either due to an
     exception raised by some task in the nursery or due to the
@@ -154,12 +154,12 @@ async def open_service_nursery_with_exception_group() -> AsyncIterator:
         def start_soon(
             async_fn: Callable[..., Awaitable[Any]], *args: Any, name: Optional[str] = None
         ) -> None:
-            async def wrap_child(coro: Awaitable[Any]) -> None:
+            async def wrap_child(coroutine: Awaitable[Any]) -> None:
                 with child_task_scopes.open_child():
-                    await coro
+                    await coroutine
 
-            coro = _get_coroutine_or_flag_problem(async_fn, *args)
-            type(nursery).start_soon(nursery, wrap_child, coro, name=name or async_fn)
+            coroutine = _get_coroutine_or_flag_problem(async_fn, *args)
+            type(nursery).start_soon(nursery, wrap_child, coroutine, name=name or async_fn)
 
         async def start(
             async_fn: Callable[..., Awaitable[Any]], *args: Any, name: Optional[str] = None

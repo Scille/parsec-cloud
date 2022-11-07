@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Callable, Tuple
+from typing import Callable
 
 from PyQt5.QtCore import pyqtBoundSignal, pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -22,7 +22,7 @@ from parsec.core.types import UserInfo
 
 async def _do_workspace_version(
     version_lister: VersionLister, path: FsPath, core: LoggedCore
-) -> Tuple[list[Tuple[UserInfo, TimestampBoundedData]], bool]:
+) -> tuple[list[tuple[UserInfo, TimestampBoundedData]], bool]:
     versions_list, download_limit_reached = await version_lister.list(
         path, max_manifest_queries=100
     )
@@ -42,12 +42,12 @@ async def _do_workspace_version(
 class FileHistoryButton(QWidget, Ui_FileHistoryButton):
     def __init__(
         self,
-        version: str,
+        version: int,
         creator: str,
         name: FsPath,
-        size: int,
-        src: FsPath,
-        dst: FsPath,
+        size: int | None,
+        src: FsPath | None,
+        dst: FsPath | None,
         timestamp: DateTime,
     ) -> None:
         super().__init__()
@@ -82,6 +82,9 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
     ) -> None:
         super().__init__()
         self.setupUi(self)
+        self.versions_job: QtToTrioJob[
+            tuple[list[tuple[UserInfo, TimestampBoundedData]], bool]
+        ] | None = None
         self.jobs_ctx = jobs_ctx
         self.dialog: Optional[GreyedDialog] = None
         self.core = core
@@ -134,13 +137,13 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
 
     def add_history_item(
         self,
-        version: str,
+        version: int,
         path: FsPath,
         creator: str,
-        size: int,
+        size: int | None,
         timestamp: DateTime,
-        src_path: FsPath,
-        dst_path: FsPath,
+        src_path: FsPath | None,
+        dst_path: FsPath | None,
     ) -> None:
         button = FileHistoryButton(
             version=version,
@@ -154,7 +157,9 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         self.layout_history.addWidget(button)
         button.show()
 
-    def on_get_version_success(self, job: QtToTrioJob) -> None:
+    def on_get_version_success(
+        self, job: QtToTrioJob[tuple[list[tuple[UserInfo, TimestampBoundedData]], bool]]
+    ) -> None:
         assert self.versions_job is not None
         assert self.versions_job.ret is not None
         versions_list, download_limit_reached = self.versions_job.ret
@@ -173,7 +178,9 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             )
         self.set_loading_in_progress(False)
 
-    def on_get_version_error(self, job: QtToTrioJob) -> None:
+    def on_get_version_error(
+        self, job: QtToTrioJob[tuple[list[tuple[UserInfo, TimestampBoundedData]], bool]]
+    ) -> None:
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("TEXT_FILE_HISTORY_LIST_FAILURE"), exception=self.versions_job.exc)
         self.versions_job = None

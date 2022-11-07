@@ -132,7 +132,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def refresh_status(self) -> None:
         # Start the asynchronous job to get the workspace state
         if not self.is_timestamped:
-            self.jobs_ctx.submit_job(
+            _ = self.jobs_ctx.submit_job(
                 None,
                 None,
                 self._get_workspace_info,
