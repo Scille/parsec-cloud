@@ -7,7 +7,7 @@ import logging
 import sys
 
 from structlog import get_logger
-from typing import Any, AsyncGenerator, Sequence, Optional, Callable, Dict, Tuple
+from typing import Any, AsyncGenerator, Sequence, Optional, Callable, Dict, Tuple, cast
 from importlib import __import__ as import_function
 from subprocess import CalledProcessError
 from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
@@ -90,7 +90,7 @@ class MountpointManager:
         base_mountpoint_path: Path,
         config: dict[Any, Any],
         runner: RunnerType,
-        nursery: _AsyncGeneratorContextManager[Any],
+        nursery: trio.Nursery,
     ) -> None:
         self.user_fs = user_fs
         self.event_bus = event_bus
@@ -98,7 +98,7 @@ class MountpointManager:
         self.config = config
         self._runner = runner
         self._nursery = nursery
-        self._mountpoint_tasks: Dict[Tuple[EntryID, Optional[DateTime]], TaskStatus] = {}
+        self._mountpoint_tasks: Dict[Tuple[EntryID, Optional[DateTime]], TaskStatus[Any]] = {}
         self._timestamped_workspacefs: Dict[EntryID, Dict[DateTime, WorkspaceFSTimestamped]] = {}
 
         if sys.platform == "win32":
@@ -166,11 +166,11 @@ class MountpointManager:
 
     async def _mount_workspace_helper(
         self, workspace_fs: WorkspaceFS, timestamp: Optional[DateTime] = None
-    ) -> TaskStatus:
+    ) -> TaskStatus[Path]:
         workspace_id = workspace_fs.workspace_id
         key = workspace_id, timestamp
 
-        async def curried_runner(task_status: TaskStatus) -> None:
+        async def curried_runner(task_status: TaskStatus[Path]) -> None:
             event_kwargs = {}
 
             try:
@@ -214,7 +214,7 @@ class MountpointManager:
                     self.event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
 
         # Start the mountpoint runner task
-        runner_task = await start_task(self._nursery, curried_runner)
+        runner_task = cast(TaskStatus[Path], await start_task(self._nursery, curried_runner))
         return runner_task
 
     def get_path_in_mountpoint(
@@ -242,6 +242,7 @@ class MountpointManager:
 
         workspace = self._get_workspace(workspace_id)
         runner_task = await self._mount_workspace_helper(workspace)
+        assert runner_task.value is not None
         return runner_task.value
 
     async def unmount_workspace(
@@ -265,7 +266,9 @@ class MountpointManager:
         # TODO : use different workspaces for temp mount
         if original_timestamp == target_timestamp:
             try:
-                return self._mountpoint_tasks[(workspace_id, target_timestamp)].value
+                task_result = self._mountpoint_tasks[(workspace_id, target_timestamp)].value
+                assert task_result is not None
+                return task_result
             except KeyError:
                 pass
         new_workspace = await self._load_workspace_timestamped(workspace_id, target_timestamp)
@@ -276,6 +279,7 @@ class MountpointManager:
                 raise MountpointNotMounted(f"Workspace `{workspace_id.str}` not mounted.")
 
             await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
+        assert runner_task.value is not None
         return runner_task.value
 
     async def get_timestamped_mounted(

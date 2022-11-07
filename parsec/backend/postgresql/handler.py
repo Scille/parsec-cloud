@@ -183,7 +183,7 @@ class PGHandler:
         self.event_bus = event_bus
         self.pool: triopg._triopg.TrioPoolProxy
         self.notification_conn: triopg._triopg.TrioConnectionProxy
-        self._task_status: Optional[TaskStatus] = None
+        self._task_status: Optional[TaskStatus[None]] = None
         self._connection_lost = False
 
     async def init(self, nursery: trio.Nursery) -> None:
