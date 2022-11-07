@@ -18,11 +18,7 @@ def str_len_limiter(monkeypatch):
     )
 
 
-@pytest.mark.gui
-@pytest.mark.trio
-@pytest.mark.parametrize("online", (True, False))
-@customize_fixtures(logged_gui_as_admin=True)
-async def test_invite_user(
+async def _invite_user(
     aqtbot,
     logged_gui,
     bob,
@@ -103,6 +99,64 @@ async def test_invite_user(
 
             await aqtbot.wait_until(_email_send_failed)
             assert not email_letterbox.emails
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize("online", (True, False))
+@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(alice_has_human_handle=True)
+async def test_invite_user_greeter_has_human_handle(
+    aqtbot,
+    logged_gui,
+    bob,
+    running_backend,
+    monkeypatch,
+    autoclose_dialog,
+    email_letterbox,
+    online,
+    snackbar_catcher,
+):
+    await _invite_user(
+        aqtbot,
+        logged_gui,
+        bob,
+        running_backend,
+        monkeypatch,
+        autoclose_dialog,
+        email_letterbox,
+        online,
+        snackbar_catcher,
+    )
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize("online", (True, False))
+@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(alice_has_human_handle=False)
+async def test_invite_user_greeter_does_not_have_human_handle(
+    aqtbot,
+    logged_gui,
+    bob,
+    running_backend,
+    monkeypatch,
+    autoclose_dialog,
+    email_letterbox,
+    online,
+    snackbar_catcher,
+):
+    await _invite_user(
+        aqtbot,
+        logged_gui,
+        bob,
+        running_backend,
+        monkeypatch,
+        autoclose_dialog,
+        email_letterbox,
+        online,
+        snackbar_catcher,
+    )
 
 
 @pytest.mark.gui
