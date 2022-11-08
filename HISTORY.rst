@@ -5,6 +5,48 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.14.0-rc1 (2022-11-08)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Make CLI case insensitive on option `--log-level` & `--log-format`. Thus
+  allowing to provide the argument in upper or lower case.  (`#3268
+  <https://github.com/Scille/parsec-cloud/issues/3268>`__)
+*  Introduce ``generate_service_certificate`` & ``import_service_certificate``
+  CLI commands  (corresponding to the ends of ``create_service_certificate``
+  command).  This allows to keep the sequester private keys on an offline
+  machine at all time.  (`#3198 <https://github.com/Scille/parsec-
+  cloud/issues/3198>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Managers can no longer try to promote other users to manager  (`#3269
+  <https://github.com/Scille/parsec-cloud/issues/3269>`__)
+* Scrollbar should stay in place when enabling/disabling workspaces  (`#3301
+  <https://github.com/Scille/parsec-cloud/issues/3301>`__)
+* Fixed how workspaces are displayed when offline  (`#3302
+  <https://github.com/Scille/parsec-cloud/issues/3302>`__)
+* Fixes greeting a new user into an organization with a legacy user (user that
+  does not have an email set)  (`#3507 <https://github.com/Scille/parsec-
+  cloud/issues/3507>`__)
+* Disabled workspaces not longer appear enabled when logging in  (`#3300
+  <https://github.com/Scille/parsec-cloud/issues/3300>`__)
+* The device instance now gets logged off when an error occurs due to the disk
+  being full  (`#3335 <https://github.com/Scille/parsec-cloud/issues/3335>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Add `parsec core stats_server` CLI command to provide per-organization usage
+  statistics for the whole server.  (`#3109 <https://github.com/Scille/parsec-
+  cloud/issues/3109>`__)
+* Remove noop `--timestamp` param from `parsec core run` CLI command  (`#3345
+  <https://github.com/Scille/parsec-cloud/issues/3345>`__)
+
+
 Parsec v2.13.0 (2022-10-19)
 ---------------------------
 
