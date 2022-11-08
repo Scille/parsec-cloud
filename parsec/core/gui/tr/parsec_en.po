@@ -1007,7 +1007,7 @@ msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Cannot log in."
 
 msgid "TEXT_RUNNING_UNKNOWN_ERROR"
-msgstr "An unknown error has occured. You will be disconnected."
+msgstr "An unexpected error has occured. You will be disconnected."
 
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "This device is already logged in, probably in another tab."
