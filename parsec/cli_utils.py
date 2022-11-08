@@ -143,14 +143,16 @@ def generate_not_available_cmd_group(exc: BaseException, hint: str | None = None
         ]
     )
 
-    @click.group(
-        context_settings=dict(ignore_unknown_options=True),
+    class NotAvailableGroup(click.Group):
+        def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
+            raise SystemExit(error_msg)
+
+        def list_commands(self, ctx: click.Context) -> list[str]:
+            raise SystemExit(error_msg)
+
+    return NotAvailableGroup(
         help=f"Not available{' (' + hint + ')' if hint else ''}",
     )
-    def bad_cmd(args: Any) -> NoReturn:
-        raise SystemExit(error_msg)
-
-    return bad_cmd
 
 
 def generate_not_available_cmd(exc: BaseException, hint: str | None = None) -> click.Command:
