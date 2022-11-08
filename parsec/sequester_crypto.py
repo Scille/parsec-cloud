@@ -13,7 +13,9 @@ class SequesterKeyAlgorithm(Enum):
     RSA = "RSA"
 
 
-def _enforce_rsa_output_has_key_size(key: oscrypto.asymmetric.PrivateKey, output: bytes) -> bytes:
+def _enforce_rsa_output_has_key_size(
+    key: oscrypto.asymmetric.PrivateKey | oscrypto.asymmetric.PublicKey, output: bytes
+) -> bytes:
     # Using RSA, we should end up with a number as big as the key size and
     # provided as big endian bytes.
     # However it is possible the number can be represented with less bytes if
@@ -51,8 +53,8 @@ class _SequesterPublicKeyDer:
         if self._key.algorithm != "rsa":
             raise ValueError("Unsupported key format")
 
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, _SequesterPublicKeyDer):
             return NotImplemented
         return self._key == other._key
 
@@ -63,11 +65,11 @@ class _SequesterPublicKeyDer:
     def dump(self) -> bytes:
         return oscrypto.asymmetric.dump_public_key(self._key, encoding="der")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}({self._key})"
 
     @property
-    def secret(self) -> bytes:
+    def secret(self) -> oscrypto.asymmetric.PublicKey:
         return self._key
 
 
