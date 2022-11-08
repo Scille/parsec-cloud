@@ -1036,6 +1036,9 @@ msgstr ""
 msgid "TEXT_UPDATE_MACFUSE_BUTTON"
 msgstr "Télécharger la dernière version de macFUSE"
 
+msgid "TEXT_CORE_OPERATION_ERROR"
+msgstr "PARSEC à été fermé. Une erreur est survenu avec les données locales (votre disque est peu être plein)"
+
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
 

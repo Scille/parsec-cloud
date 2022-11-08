@@ -18,7 +18,7 @@ from parsec.api.data import EntryID, EntryName
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
-from parsec.core.fs.exceptions import FSReadOnlyError
+from parsec.core.fs.exceptions import FSLocalStorageOperationalError, FSReadOnlyError
 from parsec.core.types import FileDescriptor
 
 
@@ -109,6 +109,7 @@ def get_path_and_translate_error(
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
+
         fs_access.send_event(
             CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
             exc=exc,
@@ -121,6 +122,19 @@ def get_path_and_translate_error(
         # Use EINVAL as error code, so it behaves the same as internal errors
         raise FuseOSError(errno.EINVAL) from exc
 
+    except FSLocalStorageOperationalError as exc:
+        logger.warning("Localdatabase operation error")
+        fs_access.send_event(
+            CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        # Use EINVAL as error code, so it behaves the same as internal errors
+        raise FuseOSError(errno.EINVAL) from exc
     except Exception as exc:
         logger.exception(
             "Unhandled exception in fuse mountpoint",

@@ -9,6 +9,7 @@ from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, Iterato
 from typing_extensions import Concatenate, ParamSpec
 from trio import Cancelled, RunFinishedError
 from structlog import get_logger
+from parsec.core.fs.exceptions import FSLocalStorageOperationalError
 from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
 from winfspy import (
     NTStatusError,
@@ -116,6 +117,19 @@ def get_path_and_translate_error(
         )
         fs_access.send_event(
             CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
+
+    except FSLocalStorageOperationalError as exc:
+        logger.warning("Localdatabase operation error")
+        fs_access.send_event(
+            CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR,
             exc=exc,
             operation=operation,
             path=path,

@@ -184,6 +184,10 @@ class InstanceWidget(QWidget):
         self.core = core
         self.core_jobs_ctx = core_jobs_ctx
         self.core.event_bus.connect(
+            CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR,
+            cast(EventCallback, self.on_core_localdatabase_error),
+        )
+        self.core.event_bus.connect(
             CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_core_config_updated)
         )
         self.event_bus.send(
@@ -200,6 +204,9 @@ class InstanceWidget(QWidget):
         if self.core:
             self.core.event_bus.disconnect(
                 CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_core_config_updated)
+            )
+            self.core.event_bus.disconnect(
+                CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR, self.on_core_localdatabase_error
             )
         if self.running_core_job.status is not None:
             if isinstance(self.running_core_job.exc, HandshakeRevokedDevice):
@@ -234,8 +241,18 @@ class InstanceWidget(QWidget):
             self.core.event_bus.disconnect(
                 CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_core_config_updated)
             )
+            self.core.event_bus.disconnect(
+                CoreEvent.FS_LOCALDATABASE_OPERATIONAL_ERROR, self.on_core_localdatabase_error
+            )
         self.running_core_job = None
         self.logged_out.emit()
+
+    def on_core_localdatabase_error(
+        self, event: CoreEvent, exc: Exception, *args: Any, **kwargs: Any
+    ):
+        # On local database error, like disk full error, just disconnect the client
+        self.stop_core()
+        show_error(self, _("TEXT_CORE_OPERATION_ERROR"), exception=exc)
 
     def stop_core(self) -> None:
         if self.running_core_job:
