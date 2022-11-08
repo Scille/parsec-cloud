@@ -81,8 +81,8 @@ display("realm_create_rep_already_exists", serialized, [])
 serialized = serializer.rep_dumps(
     RealmCreateRepBadTimestamp(
         reason=None,
-        ballpark_client_early_offset=50.0,
-        ballpark_client_late_offset=70.0,
+        ballpark_client_early_offset=300.0,
+        ballpark_client_late_offset=320.0,
         backend_timestamp=DateTime(2000, 1, 2, 1),
         client_timestamp=DateTime(2000, 1, 2, 1),
     )
@@ -254,8 +254,8 @@ display("realm_update_roles_rep_require_greater_timestamp", serialized, [])
 serialized = serializer.rep_dumps(
     RealmUpdateRolesRepBadTimestamp(
         reason=None,
-        ballpark_client_early_offset=50.0,
-        ballpark_client_late_offset=70.0,
+        ballpark_client_early_offset=300.0,
+        ballpark_client_late_offset=320.0,
         backend_timestamp=DateTime(2000, 1, 2, 1),
         client_timestamp=DateTime(2000, 1, 2, 1),
     )
@@ -314,8 +314,8 @@ display("realm_start_reencryption_maintenance_rep_in_maintenance", serialized, [
 serialized = serializer.rep_dumps(
     RealmStartReencryptionMaintenanceRepBadTimestamp(
         reason=None,
-        ballpark_client_early_offset=50.0,
-        ballpark_client_late_offset=70.0,
+        ballpark_client_early_offset=300.0,
+        ballpark_client_late_offset=320.0,
         backend_timestamp=DateTime(2000, 1, 2, 1),
         client_timestamp=DateTime(2000, 1, 2, 1),
     )

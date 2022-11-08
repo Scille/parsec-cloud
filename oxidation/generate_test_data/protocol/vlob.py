@@ -119,8 +119,8 @@ display("vlob_create_rep_require_greater_timestamp", serialized, [])
 serialized = serializer.rep_dumps(
     VlobCreateRepBadTimestamp(
         reason=None,
-        ballpark_client_early_offset=50.0,
-        ballpark_client_late_offset=70.0,
+        ballpark_client_early_offset=300.0,
+        ballpark_client_late_offset=320.0,
         backend_timestamp=DateTime(2000, 1, 2, 1),
         client_timestamp=DateTime(2000, 1, 2, 1),
     )
@@ -256,8 +256,8 @@ display("vlob_update_rep_require_greater_timestamp", serialized, [])
 serialized = serializer.rep_dumps(
     VlobUpdateRepBadTimestamp(
         reason=None,
-        ballpark_client_early_offset=50.0,
-        ballpark_client_late_offset=70.0,
+        ballpark_client_early_offset=300.0,
+        ballpark_client_late_offset=320.0,
         backend_timestamp=DateTime(2000, 1, 2, 1),
         client_timestamp=DateTime(2000, 1, 2, 1),
     )

@@ -23,10 +23,10 @@ logger = get_logger()
 
 # Those values are used by the backend to determine whether the client
 # operates in an acceptable time window. A client early offset of
-# 50 seconds means that a timestamp provided by the client cannot be
-# higher than 50 seconds after the backend current time. A client late
-# offset of 70 seconds means that a timestamp provided by the client
-# cannot be lower than 70 seconds before the backend current time.
+# 300 seconds means that a timestamp provided by the client cannot be
+# higher than 300 seconds after the backend current time. A client late
+# offset of 320 seconds means that a timestamp provided by the client
+# cannot be lower than 320 seconds before the backend current time.
 #
 # Those values used to be higher (30 minutes), but an argument for
 # decreasing this value is that client clocks are usually either
@@ -34,6 +34,14 @@ logger = get_logger()
 # incorrect configuration). It's possible for a client clock to
 # slowly drift over time if it lost access to an NTP but drifting
 # an entire minute would take weeks or months.
+#
+# However, we observed that such a case could occur, where a client's
+# clock was 72 seconds late while the offset was 50/70 seconds. The
+# cause being setting the clock manually, which can easily cause drift
+# of 1 or 2 minutes. Since it's impossible to predict such behavior,
+# the offset has been changed from 50/70 to 300/320 seconds, which
+# seems good enough to prevent such cases and is windows' standard
+# tolerance for clock drifting.
 #
 # Note that those values also have to take into account the fact the
 # that the timestamps being compared are not produced at the same
@@ -56,15 +64,17 @@ logger = get_logger()
 # A more radical check would be to not accept more that 10 seconds
 # delay and 10 seconds shifting, yielding a 10/20 seconds window
 # (10 seconds in advance or 20 seconds late). This would effectively
-# reduce the current 50/70 seconds time window by a factor of 4.
+# reduce the previous 50/70 seconds time window by a factor of 4.
+# This however seems unrealistic as the 50/70 window turned out
+# too narrow.
 #
 # The ballpark client tolerance is the ratio applied to the offsets
 # while performing the ballpark checks. We use an arbitrary value of
 # 80% in order to make sure that a clock shift is caught during the
 # handshake instead of being caught by another API call later on.
 
-BALLPARK_CLIENT_EARLY_OFFSET = 50  # seconds
-BALLPARK_CLIENT_LATE_OFFSET = 70  # seconds
+BALLPARK_CLIENT_EARLY_OFFSET = 300  # seconds
+BALLPARK_CLIENT_LATE_OFFSET = 320  # seconds
 BALLPARK_CLIENT_TOLERANCE = 0.8  # 80%
 BALLPARK_ALWAYS_OK = False  # Useful for disabling ballpark checks in the tests
 
