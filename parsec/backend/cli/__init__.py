@@ -17,7 +17,7 @@ from parsec.backend.cli.sequester import (
 )
 
 
-__all__ = ("backend_cmd",)
+__all__ = ("backend_cmd_group",)
 
 
 @click.group(short_help="Handle sequestered organization")
@@ -35,11 +35,11 @@ backend_sequester_cmd.add_command(import_service_certificate, "import_service_ce
 
 
 @click.group()
-def backend_cmd() -> None:
+def backend_cmd_group() -> None:
     pass
 
 
-backend_cmd.add_command(run_cmd, "run")
-backend_cmd.add_command(migrate, "migrate")
-backend_cmd.add_command(human_accesses, "human_accesses")
-backend_cmd.add_command(backend_sequester_cmd, "sequester")
+backend_cmd_group.add_command(run_cmd, "run")
+backend_cmd_group.add_command(migrate, "migrate")
+backend_cmd_group.add_command(human_accesses, "human_accesses")
+backend_cmd_group.add_command(backend_sequester_cmd, "sequester")

@@ -8,19 +8,19 @@ import os
 from typing import Sequence, Any
 
 from parsec._version import __version__
-from parsec.cli_utils import generate_not_available_cmd
+from parsec.cli_utils import generate_not_available_cmd_group
 
 
 try:
-    from parsec.core.cli import core_cmd
+    from parsec.core.cli import core_cmd_group
 except ImportError as exc:
-    core_cmd = generate_not_available_cmd(exc)
+    core_cmd_group = generate_not_available_cmd_group(exc)
 
 
 try:
-    from parsec.backend.cli import backend_cmd
+    from parsec.backend.cli import backend_cmd_group
 except ImportError as exc:
-    backend_cmd = generate_not_available_cmd(exc)
+    backend_cmd_group = generate_not_available_cmd_group(exc)
 
 
 @click.group()
@@ -29,8 +29,8 @@ def cli() -> None:
     pass
 
 
-cli.add_command(core_cmd, "core")
-cli.add_command(backend_cmd, "backend")
+cli.add_command(core_cmd_group, "core")
+cli.add_command(backend_cmd_group, "backend")
 
 # Add support for PARSEC_CMD_ARGS env var
 

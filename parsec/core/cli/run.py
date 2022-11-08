@@ -24,7 +24,7 @@ try:
     from parsec.core.gui import run_gui as _run_gui
 
 except ImportError as exc:
-    _run_gui = generate_not_available_cmd(exc)
+    run_gui = generate_not_available_cmd(exc)
 
 else:
 

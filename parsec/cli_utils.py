@@ -133,7 +133,7 @@ def cli_exception_handler(debug: bool) -> Iterator[bool]:
             raise SystemExit(1)
 
 
-def generate_not_available_cmd(exc: BaseException, hint: str | None = None) -> click.Group:
+def generate_not_available_cmd_group(exc: BaseException, hint: str | None = None) -> click.Group:
     error_msg = "".join(
         [
             click.style("Not available: ", fg="red"),
@@ -143,7 +143,28 @@ def generate_not_available_cmd(exc: BaseException, hint: str | None = None) -> c
         ]
     )
 
-    @click.group
+    class NotAvailableGroup(click.Group):
+        def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
+            raise SystemExit(error_msg)
+
+        def list_commands(self, ctx: click.Context) -> list[str]:
+            raise SystemExit(error_msg)
+
+    return NotAvailableGroup(
+        help=f"Not available{' (' + hint + ')' if hint else ''}",
+    )
+
+
+def generate_not_available_cmd(exc: BaseException, hint: str | None = None) -> click.Command:
+    error_msg = "".join(
+        [
+            click.style("Not available: ", fg="red"),
+            "Importing this module has failed with error:\n\n",
+            *traceback.format_exception(type(exc), exc, exc.__traceback__),
+            f"\n\n{hint}\n" if hint else "",
+        ]
+    )
+
     @click.command(
         context_settings=dict(ignore_unknown_options=True),
         help=f"Not available{' (' + hint + ')' if hint else ''}",
