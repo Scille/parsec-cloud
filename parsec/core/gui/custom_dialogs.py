@@ -80,7 +80,6 @@ def bring_process_window_to_top(
         yield
         return
 
-    # mypy: This function always return a value or raise an exception
     def _bring_to_top(pid_target: int) -> bool:
         import ctypes
         from ctypes import wintypes as win

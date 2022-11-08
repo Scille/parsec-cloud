@@ -98,8 +98,8 @@ class MountpointManager:
         self.config = config
         self._runner = runner
         self._nursery = nursery
-        self._mountpoint_tasks: Dict[Tuple[EntryID, Optional[DateTime]], TaskStatus[Any]] = {}
-        self._timestamped_workspacefs: Dict[EntryID, Dict[DateTime, WorkspaceFSTimestamped]] = {}
+        self._mountpoint_tasks: dict[tuple[EntryID, Optional[DateTime]], TaskStatus[Any]] = {}
+        self._timestamped_workspacefs: dict[EntryID, dict[DateTime, WorkspaceFSTimestamped]] = {}
 
         if sys.platform == "win32":
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
@@ -284,7 +284,7 @@ class MountpointManager:
 
     async def get_timestamped_mounted(
         self,
-    ) -> dict[Tuple[EntryID, Optional[DateTime]], WorkspaceFSTimestamped]:
+    ) -> dict[tuple[EntryID, Optional[DateTime]], WorkspaceFSTimestamped]:
         return {
             # workspace_id_and_ts[1] will never be `None` because of the filter check
             workspace_id_and_ts: self._get_workspace_timestamped(*workspace_id_and_ts)  # type: ignore[arg-type]
