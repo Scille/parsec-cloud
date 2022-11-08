@@ -9,6 +9,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QMainWindow
 from packaging.version import Version
 import exceptiongroup
+from parsec.core.fs.exceptions import FSLocalStorageOperationalError
 
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import BackendActionAddr, BackendOrganizationFileLinkAddr, LocalDevice
@@ -133,8 +134,8 @@ class InstanceWidget(QWidget):
         self.running_core_job: QtToTrioJob[None] | None = None
         self.workspace_path: BackendActionAddr | None = None
 
-        self.run_core_success.connect(self.on_core_run_done)
-        self.run_core_error.connect(self.on_core_run_error)
+        self.run_core_success.connect(self.on_run_core_done)
+        self.run_core_error.connect(self.on_run_core_error)
         self.run_core_ready.connect(self.on_run_core_ready)
         self.logged_in.connect(self.on_logged_in)
         self.logged_out.connect(self.on_logged_out)
@@ -151,7 +152,7 @@ class InstanceWidget(QWidget):
 
     @property
     def is_logged_in(self) -> bool:
-        return self.running_core_job is not None
+        return self.core is not None
 
     def set_workspace_path(self, action_addr: BackendActionAddr) -> None:
         self.workspace_path = action_addr
@@ -194,7 +195,7 @@ class InstanceWidget(QWidget):
         )
         self.logged_in.emit()
 
-    def on_core_run_error(self, job: QtToTrioJob[None]) -> None:
+    def on_run_core_error(self, job: QtToTrioJob[None]) -> None:
         assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
@@ -218,13 +219,32 @@ class InstanceWidget(QWidget):
                     _("TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"),
                     exception=self.running_core_job.exc,
                 )
+            elif isinstance(self.running_core_job.exc, FSLocalStorageOperationalError):
+                show_error(
+                    self,
+                    _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"),
+                    exception=self.running_core_job.exc,
+                )
             else:
-                logger.exception("Unhandled error", exc_info=self.running_core_job.exc)
-                show_error(self, _("TEXT_LOGIN_UNKNOWN_ERROR"), exception=self.running_core_job.exc)
+                if not self.is_logged_in:
+                    logger.exception(
+                        "Unhandled error while logging in", exc_info=self.running_core_job.exc
+                    )
+                    show_error(
+                        self, _("TEXT_LOGIN_UNKNOWN_ERROR"), exception=self.running_core_job.exc
+                    )
+                else:
+                    logger.exception(
+                        "Unhandled error while logged in", exc_info=self.running_core_job.exc
+                    )
+                    show_error(
+                        self, _("TEXT_RUNNING_UNKNOWN_ERROR"), exception=self.running_core_job.exc
+                    )
+
         self.running_core_job = None
         self.logged_out.emit()
 
-    def on_core_run_done(self, job: QtToTrioJob[None]) -> None:
+    def on_run_core_done(self, job: QtToTrioJob[None]) -> None:
         assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:

@@ -941,7 +941,10 @@ async def test_import_file_disk_full(
         aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
 
     def _import_failed():
-        assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"))]
+        assert set(autoclose_dialog.dialogs) == {
+            ("Error", _("TEXT_FILE_IMPORT_ONE_ERROR")),
+            ("Error", _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR")),
+        }
         assert tb.ls() == []
         assert tb.pwd() == "/"
 

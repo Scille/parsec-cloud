@@ -94,7 +94,7 @@ def extract_translations():
         "_",
         "extract",
         "-k",
-        "translate",
+        "translate T",
         "-s",
         "--no-location",
         "-F",

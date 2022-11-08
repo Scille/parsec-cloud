@@ -4,10 +4,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import AsyncIterator, Optional, Union
 import trio
+from trio_typing import TaskStatus
 from contextlib import asynccontextmanager
 from sqlite3 import Connection, Cursor, OperationalError, connect as sqlite_connect
 
 from parsec.core.fs.exceptions import FSLocalStorageClosedError, FSLocalStorageOperationalError
+from parsec.utils import open_service_nursery
 
 
 class LocalDatabase:
@@ -22,9 +24,34 @@ class LocalDatabase:
 
         # Those attributes are set by the `run` async context manager
         self._conn: Connection
+        self._abort_service_send_channel: trio.MemorySendChannel[Exception]
 
         self.path = trio.Path(path)
         self.vacuum_threshold = vacuum_threshold
+
+    @asynccontextmanager
+    async def _service_abort_context(self) -> AsyncIterator[None]:
+        async def _service_abort_task(
+            task_status: TaskStatus[trio.MemorySendChannel[Exception]] = trio.TASK_STATUS_IGNORED,
+        ) -> None:
+            send, receive = trio.open_memory_channel[Exception](0)
+            task_status.started(send)
+            async with receive:
+                async for item in receive:
+                    raise item
+
+        async with open_service_nursery() as nursery:
+            async with await nursery.start(_service_abort_task) as self._abort_service_send_channel:
+                yield
+            nursery.cancel_scope.cancel()
+
+    async def _send_abort(self, exception: Exception) -> None:
+        # Send the exception to be raised in the `run` context
+        try:
+            await self._abort_service_send_channel.send(exception)
+        # The service has already exited
+        except trio.BrokenResourceError:
+            pass
 
     @classmethod
     @asynccontextmanager
@@ -38,8 +65,10 @@ class LocalDatabase:
         try:
             await self._connect()
 
-            # Yield the instance
-            yield self
+            async with self._service_abort_context():
+
+                # Yield the instance
+                yield self
 
         # Safely flush and close the connection
         finally:
@@ -84,19 +113,23 @@ class LocalDatabase:
         # An operational error has been detected
         except OperationalError as exception:
 
+            # Make sure the local database won't be used by another task
+            _conn = self._conn
+            del self._conn
+
+            # Protect against cancellation
             with trio.CancelScope(shield=True):
+
+                # Notify the service that it can no longer be used
+                await self._send_abort(FSLocalStorageOperationalError(*exception.args))
 
                 # Close the sqlite3 connection
                 try:
-                    await self.run_in_thread(self._conn.close)
+                    await self.run_in_thread(_conn.close)
 
                 # Ignore second operational error (it should not happen though)
                 except OperationalError:
                     pass
-
-                # Mark the local database as closed
-                finally:
-                    del self._conn
 
                 # Raise the dedicated operational error
                 raise FSLocalStorageOperationalError from exception

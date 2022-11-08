@@ -156,7 +156,10 @@ class FSLocalStorageClosedError(FSInternalError):
     pass
 
 
-class FSLocalStorageOperationalError(FSInternalError):
+# Local storage errors
+
+
+class FSLocalStorageOperationalError(FSError):
     pass
 
 

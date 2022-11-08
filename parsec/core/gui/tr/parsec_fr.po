@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-10-17 09:24+0200\n"
+"POT-Creation-Date: 2022-11-08 13:58+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -771,11 +771,6 @@ msgstr ""
 "Certains fichiers n'ont pas été importés car vous ne disposez pas des "
 "permissions suffisantes."
 
-msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
-msgstr ""
-"Un problème est survenu lors d'une écriture sur le disque. Il est peut-"
-"être déjà plein, veuillez vérifier l'espace disponible sur le disque."
-
 msgid "TEXT_FILE_IMPORT_ONE_ERROR"
 msgstr "Un problème est survenu lors de l'import du fichier."
 
@@ -1049,8 +1044,16 @@ msgstr ""
 "FUSE n'a pas pu être chargé. \n"
 "Merci de vérifier votre installation."
 
+msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
+msgstr ""
+"Un problème est survenu lors d'une écriture sur le disque. Il est peut-"
+"être déjà plein, veuillez vérifier l'espace disponible sur le disque."
+
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
+
+msgid "TEXT_RUNNING_UNKNOWN_ERROR"
+msgstr "Une erreur inconnue est survenue. Vous allez être déconnecté(e)."
 
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "Cet appareil est déjà connecté, probablement dans un autre onglet."
@@ -2712,15 +2715,6 @@ msgstr "Sélectionnez le fichier de récupération"
 msgid "TEXT_RECOVERY_IMPORT_PASSPHRASE_LABEL"
 msgstr "La phrase secrète associée à cet appareil de récupération"
 
-msgid "TEXT_RECOVERY_IMPORT_DEVICE_NAME"
-msgstr "Nom de l'appareil"
-
-msgid "TEXT_RECOVERY_NEW_PASSWORD_INSTRUCTION"
-msgstr "Choisissez le nouveau mot de passe pour cet appareil."
-
-msgid "ACTION_RECOVERY_IMPORT_NEW_DEVICE"
-msgstr "Récupérer l'appareil"
-
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Inviter un nouvel appareil"
 
@@ -3115,6 +3109,3 @@ msgstr "Trouver un fichier via son lien"
 
 msgid "TEXT_WORKSPACES_HIDE_UNMOUNTED"
 msgstr "Masquer les espaces de travail désactivés"
-
-#~ msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
-#~ msgstr "Cet espace de travail est vide."
