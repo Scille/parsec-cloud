@@ -9,14 +9,13 @@ from functools import partial
 
 from parsec.utils import start_task
 from parsec.core.gui.lang import translate
-from parsec._parsec import DateTime, InvitationType
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
     DeviceLabel,
     InvitationDeletedReason,
     HumanHandle,
     UserProfile,
 )
-from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
 from parsec.core.gui.users_widget import UserInvitationButton, UserButton
@@ -42,7 +41,13 @@ def catch_greet_user_widget(widget_catcher_factory):
 
 @pytest.fixture
 def GreetUserTestBed(
-    aqtbot, catch_greet_user_widget, autoclose_dialog, backend, running_backend, logged_gui
+    aqtbot,
+    catch_greet_user_widget,
+    autoclose_dialog,
+    backend,
+    running_backend,
+    logged_gui,
+    monkeypatch,
 ):
     class _GreetUserTestBed:
         def __init__(self):
@@ -90,29 +95,27 @@ def GreetUserTestBed(
             author = logged_gui.test_get_central_widget().core.device
             claimer_email = self.requested_email
 
-            # Create new invitation
-
-            invitation = await backend.invite.new_for_user(
-                organization_id=author.organization_id,
-                greeter_user_id=author.user_id,
-                claimer_email=claimer_email,
-            )
-            invitation_addr = BackendInvitationAddr.build(
-                backend_addr=author.organization_addr.get_backend_addr(),
-                organization_id=author.organization_id,
-                invitation_type=InvitationType.USER,
-                token=invitation.token,
-            )
-
-            # Switch to users page
-
             users_widget = await logged_gui.test_switch_to_users_widget()
 
-            assert users_widget.layout_users.count() == 4
+            monkeypatch.setattr(
+                "parsec.core.gui.users_widget.get_text_input",
+                lambda *args, **kwargs: claimer_email,
+            )
+
+            # Create new invitation
+            aqtbot.mouse_click(users_widget.button_add_user, QtCore.Qt.LeftButton)
+
+            def _invitation_shown():
+                assert users_widget.layout_users.count() == 4
+                invitation_widget = users_widget.layout_users.itemAt(0).widget()
+                assert isinstance(invitation_widget, UserInvitationButton)
+
+            await aqtbot.wait_until(_invitation_shown)
 
             invitation_widget = users_widget.layout_users.itemAt(0).widget()
-            assert isinstance(invitation_widget, UserInvitationButton)
             assert invitation_widget.email == claimer_email
+
+            invitation_addr = invitation_widget.addr
 
             # Click on the invitation button
 
@@ -315,7 +318,26 @@ def GreetUserTestBed(
                 ]
                 # User list should be updated
                 assert u_w.layout_users.count() == 4
-                user_widget = u_w.layout_users.itemAt(3).widget()
+                # Should all be users, no invitation
+                assert all(
+                    isinstance(u_w.layout_users.itemAt(i).widget(), UserButton)
+                    for i in range(u_w.layout_users.count())
+                )
+
+                user_widget = None
+                # Order can change a little bit depending on whether the user has a human handle or not
+                for i in range(u_w.layout_users.count()):
+                    user_widget = u_w.layout_users.itemAt(i).widget()
+                    if (
+                        isinstance(user_widget, UserButton)
+                        and user_widget.user_info.human_handle is not None
+                    ):
+                        if (
+                            user_widget.user_info.human_handle.email == self.granted_email
+                            and user_widget.user_info.human_handle.label == self.granted_label
+                        ):
+                            break
+
                 assert isinstance(user_widget, UserButton)
                 assert user_widget.user_info.human_handle.email == self.granted_email
                 assert user_widget.user_info.human_handle.label == self.granted_label
@@ -330,7 +352,16 @@ def GreetUserTestBed(
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
-async def test_greet_user(GreetUserTestBed):
+@customize_fixtures(alice_has_human_handle=True)
+async def test_greet_user_greeter_has_human_handle(GreetUserTestBed):
+    await GreetUserTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(alice_has_human_handle=False)
+async def test_greet_user_greeter_does_not_have_human_handle(GreetUserTestBed):
     await GreetUserTestBed().run()
 
 
