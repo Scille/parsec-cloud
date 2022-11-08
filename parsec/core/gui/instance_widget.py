@@ -9,6 +9,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QMainWindow
 from packaging.version import Version
 import exceptiongroup
+from parsec.core.fs.exceptions import FSLocalStorageOperationalError
 
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import BackendActionAddr, BackendOrganizationFileLinkAddr, LocalDevice
@@ -216,6 +217,12 @@ class InstanceWidget(QWidget):
                 show_error(
                     self,
                     _("TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"),
+                    exception=self.running_core_job.exc,
+                )
+            elif isinstance(self.running_core_job.exc, FSLocalStorageOperationalError):
+                show_error(
+                    self,
+                    _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"),
                     exception=self.running_core_job.exc,
                 )
             else:
