@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-10-17 09:24+0200\n"
+"POT-Creation-Date: 2022-11-08 13:58+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -741,11 +741,6 @@ msgstr ""
 "You don't have the permission to access some of these files. Some files "
 "may not have been imported."
 
-msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
-msgstr ""
-"There has been an error while writing to the disk. It might be already "
-"full, please check your disk space."
-
 msgid "TEXT_FILE_IMPORT_ONE_ERROR"
 msgstr ""
 "There has been an error while import the file. The file could not be "
@@ -1003,8 +998,16 @@ msgstr ""
 "FUSE could not be loaded. \n"
 "Please check your installation."
 
+msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
+msgstr ""
+"There has been an error while writing to the disk. It might be already "
+"full, please check your disk space."
+
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Cannot log in."
+
+msgid "TEXT_RUNNING_UNKNOWN_ERROR"
+msgstr "An unknown error has occured. You will be disconnected."
 
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "This device is already logged in, probably in another tab."
@@ -2638,15 +2641,6 @@ msgstr "Select the recovery file"
 msgid "TEXT_RECOVERY_IMPORT_PASSPHRASE_LABEL"
 msgstr "Enter the passphrase associated with this recovery file"
 
-msgid "TEXT_RECOVERY_IMPORT_DEVICE_NAME"
-msgstr "Device name"
-
-msgid "TEXT_RECOVERY_NEW_PASSWORD_INSTRUCTION"
-msgstr "Choose the new password for this device."
-
-msgid "ACTION_RECOVERY_IMPORT_NEW_DEVICE"
-msgstr "Recover device"
-
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Invite a new device"
 
@@ -3035,6 +3029,3 @@ msgstr "Go to a file using a link"
 
 msgid "TEXT_WORKSPACES_HIDE_UNMOUNTED"
 msgstr "Hide deactivated workspaces"
-
-#~ msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
-#~ msgstr "This workspace is empty."
