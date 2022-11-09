@@ -20,15 +20,22 @@ from marshmallow.fields import (
     String,
 )
 
-from parsec._parsec import DateTime as RsDateTime
-from parsec.crypto import HashDigest as _HashDigest
-from parsec.crypto import PrivateKey as _PrivateKey
-from parsec.crypto import PublicKey as _PublicKey
-from parsec.crypto import SecretKey as _SecretKey
-from parsec.crypto import SigningKey as _SigningKey
-from parsec.crypto import VerifyKey as _VerifyKey
-from parsec.sequester_crypto import SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer
-from parsec.sequester_crypto import SequesterVerifyKeyDer as _SequesterVerifyKeyDer
+from parsec._parsec import (
+    DateTime as RsDateTime,
+    PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload,
+)
+from parsec.crypto import (
+    HashDigest as _HashDigest,
+    PrivateKey as _PrivateKey,
+    PublicKey as _PublicKey,
+    SecretKey as _SecretKey,
+    SigningKey as _SigningKey,
+    VerifyKey as _VerifyKey,
+)
+from parsec.sequester_crypto import (
+    SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer,
+    SequesterVerifyKeyDer as _SequesterVerifyKeyDer,
+)
 from parsec.types import FrozenDict as _FrozenDict
 
 __all__ = (
@@ -512,3 +519,23 @@ class SequesterEncryptionKeyDerField(Field[_SequesterEncryptionKeyDer]):
 
 
 SequesterEncryptionKeyDer = SequesterEncryptionKeyDerField
+
+
+class PkiEnrollmentSubmitPayloadField(Field[_PkiEnrollmentSubmitPayload]):
+    def _serialize(
+        self, value: _PkiEnrollmentSubmitPayload | None, attr: Any, obj: Any
+    ) -> bytes | None:
+        if value is None:
+            return None
+        assert isinstance(value, _PkiEnrollmentSubmitPayload)
+        return value.dump()
+
+    def _deserialize(
+        self, value: object, attr: str, data: dict[str, object]
+    ) -> _PkiEnrollmentSubmitPayload:
+        if not isinstance(value, bytes):
+            raise ValidationError("Expecting bytes")
+        try:
+            return _PkiEnrollmentSubmitPayload.load(value)
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc

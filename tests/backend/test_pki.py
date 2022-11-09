@@ -9,8 +9,11 @@ from parsec._parsec import (
     UserRevokeRepOk,
     EventsListenRepOkPkiEnrollmentUpdated,
 )
-from parsec.api.data import PkiEnrollmentSubmitPayload, RevokedUserCertificate
-from parsec.api.data.pki import PkiEnrollmentAcceptPayload
+from parsec.api.data import (
+    PkiEnrollmentAnswerPayload,
+    PkiEnrollmentSubmitPayload,
+    RevokedUserCertificate,
+)
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserProfile
 from parsec.backend.backend_events import BackendEvent
@@ -76,7 +79,7 @@ def _prepare_accept_reply(admin, invitee):
         admin.public_key,
         admin.verify_key,
     )
-    payload = PkiEnrollmentAcceptPayload(
+    payload = PkiEnrollmentAnswerPayload(
         device_id=invitee.device_id,
         device_label=invitee.device_label,
         human_handle=invitee.human_handle,

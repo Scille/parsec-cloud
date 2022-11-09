@@ -2,11 +2,15 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    # Message
     MessageContent,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
     PingMessageContent,
+    # Pki
+    PkiEnrollmentSubmitPayload,
+    PkiEnrollmentAnswerPayload,
 )
 from parsec.api.data.base import (
     DataError,
@@ -47,7 +51,6 @@ from parsec.api.data.manifest import (
     FileManifest,
     AnyRemoteManifest,
 )
-from parsec.api.data.pki import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 
 from parsec._parsec import (
     UserCertificate,
@@ -102,5 +105,5 @@ __all__ = (
     "AnyRemoteManifest",
     # PKI enrollment
     "PkiEnrollmentSubmitPayload",
-    "PkiEnrollmentAcceptPayload",
+    "PkiEnrollmentAnswerPayload",
 )

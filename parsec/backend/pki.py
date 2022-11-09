@@ -9,7 +9,7 @@ from parsec._parsec import DateTime
 from parsec.api.data import (
     DataError,
     PkiEnrollmentSubmitPayload,
-    PkiEnrollmentAcceptPayload,
+    PkiEnrollmentAnswerPayload,
 )
 from parsec.api.protocol import (
     OrganizationID,
@@ -280,7 +280,7 @@ class BasePkiEnrollmentComponent:
         msg = pki_enrollment_accept_serializer.req_load(msg)
 
         try:
-            PkiEnrollmentAcceptPayload.load(msg["accept_payload"])
+            PkiEnrollmentAnswerPayload.load(msg["accept_payload"])
 
         except DataError as exc:
             return {"status": "invalid_payload_data", "reason": str(exc)}

@@ -21,7 +21,7 @@ from parsec.api.data import (
     DeviceCertificate,
     RealmRoleCertificate,
     PkiEnrollmentSubmitPayload,
-    PkiEnrollmentAcceptPayload,
+    PkiEnrollmentAnswerPayload,
     DataError,
 )
 from parsec.api.protocol import (
@@ -892,12 +892,12 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             payload_signature: bytes,
             payload: bytes,
             extra_trust_roots: Iterable[Path] = (),
-        ) -> PkiEnrollmentAcceptPayload:
+        ) -> PkiEnrollmentAnswerPayload:
             computed_signature = self._compute_signature(der_x509_certificate, payload)
             if computed_signature != payload_signature:
                 raise LocalDeviceCryptoError()
             try:
-                accept_payload = PkiEnrollmentAcceptPayload.load(payload)
+                accept_payload = PkiEnrollmentAnswerPayload.load(payload)
             except DataError as exc:
                 raise LocalDevicePackingError(str(exc)) from exc
 

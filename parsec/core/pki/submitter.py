@@ -16,7 +16,7 @@ from parsec.core.backend_connection import (
 from parsec.core.types import BackendPkiEnrollmentAddr, BackendOrganizationAddr
 from parsec.core.pki.plumbing import (
     X509Certificate,
-    PkiEnrollmentAcceptPayload,
+    PkiEnrollmentAnswerPayload,
     pki_enrollment_select_certificate,
     pki_enrollment_sign_payload,
     pki_enrollment_create_local_pending,
@@ -447,7 +447,7 @@ class PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSu
 class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     accepted_on: DateTime
     accepter_x509_certificate: X509Certificate
-    accept_payload: PkiEnrollmentAcceptPayload
+    accept_payload: PkiEnrollmentAnswerPayload
 
     async def finalize(self) -> "PkiEnrollmentFinalizedCtx":
         """
