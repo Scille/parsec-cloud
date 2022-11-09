@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Type
+from typing import Any, Iterator, Type, cast
+
+from PyQt5.QtWidgets import QApplication, QWidget
 
 """
 Helper module used by `parsec.core.gui.custom_dialogs.QDialogInProcess`
@@ -14,12 +16,12 @@ import functools
 
 
 @functools.lru_cache()
-def get_parsec_icon_data():
+def get_parsec_icon_data() -> bytes:
     filename = "parsec.icns" if sys.platform == "darwin" else "parsec.ico"
     return importlib.resources.files("parsec.core.resources").joinpath(filename).read_bytes()
 
 
-def set_parsec_icon(app):
+def set_parsec_icon(app: QApplication) -> None:
     from PyQt5.QtGui import QIcon, QPixmap
 
     icon_data = get_parsec_icon_data()
@@ -31,7 +33,7 @@ def set_parsec_icon(app):
 
 class PrintHelper:
     @classmethod
-    def print_html(cls, parent, html):
+    def print_html(cls, parent: QWidget, html: str) -> int:
         from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
         from PyQt5.QtGui import QTextDocument
 
@@ -46,7 +48,7 @@ class PrintHelper:
 
 
 @contextlib.contextmanager
-def safe_app():
+def safe_app() -> Iterator[None]:
     from PyQt5.QtWidgets import QApplication
     from PyQt5.QtCore import QEventLoop
 
@@ -67,12 +69,12 @@ def safe_app():
         # Exiting the app, necessary on macos
         app.exit()
         # Let the app process its last events
-        app.processEvents(QEventLoop.AllEvents, 0)
+        QApplication.processEvents(QEventLoop.AllEvents, cast(QEventLoop.ProcessEventsFlag, 0))
         # Make sure we don't keep a reference to the app in this scope
         del app
 
 
-def load_resources(with_printer=False):
+def load_resources(with_printer: bool = False) -> None:
 
     # Loading resources require an application
     with safe_app():
@@ -87,7 +89,7 @@ def load_resources(with_printer=False):
 
 
 def run_dialog(
-    sub_cls: Type,
+    sub_cls: Type[Any],
     method_name: str,
     *args: Any,
     **kwargs: Any,
