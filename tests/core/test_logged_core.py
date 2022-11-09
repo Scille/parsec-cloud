@@ -8,7 +8,7 @@ from unittest.mock import ANY
 from parsec._parsec import (
     DateTime,
 )
-from parsec.api.protocol import UserProfile
+from parsec.api.protocol import UserProfile, UserID
 from parsec.core import logged_core_factory
 from parsec.core.types import UserInfo, DeviceInfo, OrganizationStats, UsersPerProfileDetailItem
 from parsec.core.backend_connection import (
@@ -19,7 +19,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.core_events import CoreEvent
 
-from tests.common import real_clock_timeout, correct_addr, server_factory
+from tests.common import real_clock_timeout, correct_addr, server_factory, customize_fixtures
 
 
 @pytest.mark.trio
@@ -69,6 +69,33 @@ async def test_init_offline_backend_late_reply(core_config, alice, event_bus):
                         CoreEvent.BACKEND_CONNECTION_CHANGED,
                         kwargs={"status": BackendConnStatus.LOST, "status_exc": ANY},
                     )
+
+
+@pytest.mark.trio
+@customize_fixtures(alice_has_human_handle=False)
+async def test_find_human_legacy(running_backend, alice_core, bob, alice, alice2):
+    infos, total = await alice_core.find_humans(query="alice")
+    assert total == 1
+    assert infos == [
+        UserInfo(
+            user_id=UserID("alice"),
+            human_handle=None,
+            profile=alice.profile,
+            created_on=DateTime(2000, 1, 1),
+            revoked_on=None,
+        )
+    ]
+    infos, total = await alice_core.find_humans(query="bob")
+    assert total == 1
+    assert infos == [
+        UserInfo(
+            user_id=bob.user_id,
+            human_handle=bob.human_handle,
+            profile=bob.profile,
+            created_on=DateTime(2000, 1, 1),
+            revoked_on=None,
+        )
+    ]
 
 
 @pytest.mark.trio

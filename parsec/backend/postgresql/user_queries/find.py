@@ -44,10 +44,12 @@ def _q_human_factory(with_query: bool, omit_revoked: bool, omit_non_human: bool)
     if omit_revoked:
         conditions.append("AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)")
     # We only query on human
-    if omit_non_human or with_query:
+    if omit_non_human:
         conditions.append("AND user_.human IS NOT NULL")
     if with_query:
-        conditions.append("AND ((human.label ILIKE $query) OR (human.email ILIKE $query))")
+        conditions.append(
+            "AND (((COALESCE(human.label,'') ILIKE $query) OR (COALESCE(human.email,'') ILIKE $query)) OR (human.label is NULL AND user_.user_id ILIKE $query))"
+        )
 
     # Query with pagination & total result not trivial in SQL:
     # - We do the query with order but without pagination to get all results

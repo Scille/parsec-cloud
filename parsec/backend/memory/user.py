@@ -247,10 +247,13 @@ class MemoryUserComponent(BaseUserComponent):
             users = []
             query_parts = query.lower().split()
             for user in org.users.values():
+                llabel: str = ""
+                lemail: str = ""
                 if not user.human_handle:
-                    continue
-                lemail = user.human_handle.email.lower()
-                llabel = user.human_handle.label.lower()
+                    llabel = user.user_id.str.lower()
+                else:
+                    lemail = user.human_handle.email.lower()
+                    llabel = user.human_handle.label.lower()
                 if all([part in lemail for part in query_parts]) or all(
                     [part in llabel for part in query_parts]
                 ):
