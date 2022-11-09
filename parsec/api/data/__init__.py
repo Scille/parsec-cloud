@@ -1,6 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from parsec._parsec import (
+    MessageContent,
+    SharingGrantedMessageContent,
+    SharingReencryptedMessageContent,
+    SharingRevokedMessageContent,
+    PingMessageContent,
+)
 from parsec.api.data.base import (
     DataError,
     BaseData,
@@ -30,13 +37,6 @@ from parsec.api.data.invite import (
     InviteUserConfirmation,
     InviteDeviceData,
     InviteDeviceConfirmation,
-)
-from parsec.api.data.message import (
-    BaseMessageContent,
-    SharingGrantedMessageContent,
-    SharingReencryptedMessageContent,
-    SharingRevokedMessageContent,
-    PingMessageContent,
 )
 from parsec.api.data.manifest import (
     BlockAccess,
@@ -87,7 +87,7 @@ __all__ = (
     "InviteDeviceData",
     "InviteDeviceConfirmation",
     # Messages
-    "BaseMessageContent",
+    "MessageContent",
     "SharingGrantedMessageContent",
     "SharingReencryptedMessageContent",
     "SharingRevokedMessageContent",

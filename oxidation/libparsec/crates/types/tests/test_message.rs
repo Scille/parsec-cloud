@@ -49,7 +49,7 @@ fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
         &bob.private_key,
         &alice.verify_key(),
         &alice.device_id,
-        &timestamp,
+        timestamp,
     )
     .unwrap();
 
@@ -63,7 +63,7 @@ fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
         &bob.private_key,
         &alice.verify_key(),
         &alice.device_id,
-        &timestamp,
+        timestamp,
     )
     .unwrap();
     assert_eq!(message2, expected);
@@ -110,7 +110,7 @@ fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
         &bob.private_key,
         &alice.verify_key(),
         &alice.device_id,
-        &timestamp,
+        timestamp,
     )
     .unwrap();
 
@@ -124,7 +124,7 @@ fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
         &bob.private_key,
         &alice.verify_key(),
         &alice.device_id,
-        &timestamp,
+        timestamp,
     )
     .unwrap();
     assert_eq!(message2, expected);
@@ -159,7 +159,7 @@ fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
         &bob.private_key,
         &alice.verify_key(),
         &alice.device_id,
-        &timestamp,
+        timestamp,
     )
     .unwrap();
 
@@ -173,7 +173,7 @@ fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
         &bob.private_key,
         &alice.verify_key(),
         &alice.device_id,
-        &timestamp,
+        timestamp,
     )
     .unwrap();
     assert_eq!(message2, expected);
@@ -207,7 +207,7 @@ fn serde_ping_message(alice: &Device, bob: &Device) {
         &bob.private_key,
         &alice.verify_key(),
         &alice.device_id,
-        &timestamp,
+        timestamp,
     )
     .unwrap();
 
@@ -221,7 +221,7 @@ fn serde_ping_message(alice: &Device, bob: &Device) {
         &bob.private_key,
         &alice.verify_key(),
         &alice.device_id,
-        &timestamp,
+        timestamp,
     )
     .unwrap();
     assert_eq!(message2, expected);

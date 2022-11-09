@@ -82,6 +82,14 @@ from parsec._parsec_pyi.manifest import (
     manifest_unverified_load,
 )
 
+from parsec._parsec_pyi.message import (
+    MessageContent,
+    SharingGrantedMessageContent,
+    SharingReencryptedMessageContent,
+    SharingRevokedMessageContent,
+    PingMessageContent,
+)
+
 from parsec._parsec_pyi.time import (
     DateTime,
     LocalDateTime,
@@ -522,6 +530,12 @@ __all__ = [
     "manifest_decrypt_verify_and_load",
     "manifest_verify_and_load",
     "manifest_unverified_load",
+    # Message
+    "MessageContent",
+    "SharingGrantedMessageContent",
+    "SharingReencryptedMessageContent",
+    "SharingRevokedMessageContent",
+    "PingMessageContent",
     # Time
     "DateTime",
     "LocalDateTime",
