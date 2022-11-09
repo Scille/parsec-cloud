@@ -353,7 +353,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 if self.get_owner():
                     owner = self.get_owner()
                     if owner:
-                        shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(user=owner)
+                        shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(
+                            user=owner.short_user_display
+                        )
                 # We don't know the owner's name, just display that the workspace is shared
                 else:
                     shared_message = _("TEXT_WORKSPACE_IS_SHARED")
