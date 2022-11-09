@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from trio_typing import TaskStatus
+
 """
 This `open_service_nursery` implementation is taken from @oremanj gist:
 https://gist.github.com/oremanj/8c137d7b1f820d441fbd32fb584e06fd
@@ -164,12 +166,12 @@ async def open_service_nursery_with_exception_group() -> AsyncIterator[trio.Nurs
         async def start(
             async_fn: Callable[..., Awaitable[Any]], *args: Any, name: Optional[str] = None
         ) -> Any:
-            async def wrap_child(*, task_status) -> None:
+            async def wrap_child(*, task_status: TaskStatus[Any]) -> None:
                 # For start(), the child doesn't get shielded until it
                 # calls task_status.started().
                 shield_scope = child_task_scopes.open_child(shield=False)
 
-                def wrap_started(value: object = None) -> None:
+                def wrap_started(value: Any = None) -> None:
                     type(task_status).started(task_status, value)
                     if trio.lowlevel.current_task().parent_nursery is not nursery:
                         # started() didn't move the task due to a cancellation,
@@ -177,15 +179,15 @@ async def open_service_nursery_with_exception_group() -> AsyncIterator[trio.Nurs
                         return
                     shield_scope.shield = child_task_scopes.shield
 
-                task_status.started = wrap_started  # type: ignore
+                task_status.started = wrap_started  # type: ignore[assignment]
                 with shield_scope:
                     await async_fn(*args, task_status=task_status)
 
             return await type(nursery).start(nursery, wrap_child, name=name or async_fn)
 
-        nursery.start_soon = start_soon  # type: ignore
-        nursery.start = start  # type: ignore
-        nursery.child_task_scopes = child_task_scopes
+        nursery.start_soon = start_soon  # type: ignore[assignment]
+        nursery.start = start  # type: ignore[assignment]
+        nursery.child_task_scopes = child_task_scopes  # type: ignore[attr-defined]
         try:
             yield nursery
         finally:
