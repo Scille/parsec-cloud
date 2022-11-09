@@ -9,7 +9,7 @@ use pyo3::{
 use crate::{
     addrs::BackendOrganizationAddr,
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
-    binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile},
+    enumerate::UserProfile,
     ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID},
     time::{DateTime, TimeProvider},
 };
@@ -37,7 +37,7 @@ impl LocalDevice {
             [human_handle: Option<HumanHandle>, "human_handle"],
             [signing_key: SigningKey, "signing_key"],
             [private_key: PrivateKey, "private_key"],
-            [profile, "profile", py_to_rs_user_profile],
+            [profile: UserProfile, "profile"],
             [user_manifest_id: EntryID, "user_manifest_id"],
             [user_manifest_key: SecretKey, "user_manifest_key"],
             [local_symkey: SecretKey, "local_symkey"],
@@ -50,7 +50,7 @@ impl LocalDevice {
             human_handle: human_handle.map(|x| x.0),
             signing_key: signing_key.0,
             private_key: private_key.0,
-            profile,
+            profile: profile.0,
             user_manifest_id: user_manifest_id.0,
             user_manifest_key: user_manifest_key.0,
             local_symkey: local_symkey.0,
@@ -71,7 +71,7 @@ impl LocalDevice {
             [human_handle: Option<HumanHandle>, "human_handle"],
             [signing_key: SigningKey, "signing_key"],
             [private_key: PrivateKey, "private_key"],
-            [profile, "profile", py_to_rs_user_profile],
+            [profile: UserProfile, "profile"],
             [user_manifest_id: EntryID, "user_manifest_id"],
             [user_manifest_key: SecretKey, "user_manifest_key"],
             [local_symkey: SecretKey, "local_symkey"],
@@ -98,7 +98,7 @@ impl LocalDevice {
             r.private_key = v.0;
         }
         if let Some(v) = profile {
-            r.profile = v;
+            r.profile = v.0;
         }
         if let Some(v) = user_manifest_id {
             r.user_manifest_id = v.0;
@@ -231,8 +231,8 @@ impl LocalDevice {
     }
 
     #[getter]
-    fn profile(&self) -> PyResult<Py<PyAny>> {
-        rs_to_py_user_profile(&self.0.profile)
+    fn profile(&self) -> PyResult<&'static PyObject> {
+        Ok(UserProfile::from_profile(self.0.profile))
     }
 
     #[getter]
@@ -296,7 +296,7 @@ impl UserInfo {
             py_kwargs,
             [user_id: UserID, "user_id"],
             [human_handle: Option<HumanHandle>, "human_handle"],
-            [profile, "profile", py_to_rs_user_profile],
+            [profile: UserProfile, "profile"],
             [created_on: DateTime, "created_on"],
             [revoked_on: Option<DateTime>, "revoked_on"],
         );
@@ -304,7 +304,7 @@ impl UserInfo {
         Ok(Self(libparsec::client_types::UserInfo {
             user_id: user_id.0,
             human_handle: human_handle.map(|x| x.0),
-            profile,
+            profile: profile.0,
             created_on: created_on.0,
             revoked_on: revoked_on.map(|x| x.0),
         }))
@@ -321,8 +321,8 @@ impl UserInfo {
     }
 
     #[getter]
-    fn profile(&self) -> PyResult<PyObject> {
-        rs_to_py_user_profile(&self.0.profile)
+    fn profile(&self) -> PyResult<&'static PyObject> {
+        Ok(UserProfile::from_profile(self.0.profile))
     }
 
     #[getter]

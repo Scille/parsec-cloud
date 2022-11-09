@@ -21,6 +21,7 @@ use libparsec::protocol::invited_cmds::v2::{
 use crate::{
     api_crypto,
     api_crypto::{HashDigest, PublicKey},
+    enumerate::{InvitationEmailSentStatus, InvitationType},
     ids::{HumanHandle, UserID},
     invite,
     invite::InvitationToken,
@@ -29,135 +30,6 @@ use crate::{
 };
 
 import_exception!(parsec.api.protocol, ProtocolError);
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct InvitationType(pub libparsec::types::InvitationType);
-
-crate::binding_utils::gen_proto!(InvitationType, __repr__);
-crate::binding_utils::gen_proto!(InvitationType, __richcmp__, eq);
-crate::binding_utils::gen_proto!(InvitationType, __hash__);
-
-#[pymethods]
-impl InvitationType {
-    #[classattr]
-    #[pyo3(name = "DEVICE")]
-    fn device() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                    InvitationType(libparsec::types::InvitationType::Device).into_py(py)
-                })
-            };
-        };
-        &VALUE
-    }
-
-    #[classattr]
-    #[pyo3(name = "USER")]
-    fn user() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                    InvitationType(libparsec::types::InvitationType::User).into_py(py)
-                })
-            };
-        };
-        &VALUE
-    }
-
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
-        PyList::new(py, [Self::device(), Self::user()]).as_ref()
-    }
-
-    #[getter]
-    fn str(&self) -> &str {
-        match self.0 {
-            libparsec::types::InvitationType::Device => "DEVICE",
-            libparsec::types::InvitationType::User => "USER",
-        }
-    }
-
-    #[classmethod]
-    fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
-        match value {
-            "DEVICE" => Ok(Self::device()),
-            "USER" => Ok(Self::user()),
-            _ => Err(PyValueError::new_err("")),
-        }
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus);
-
-crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __repr__);
-crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __richcmp__, eq);
-
-#[pymethods]
-impl InvitationEmailSentStatus {
-    #[classattr]
-    #[pyo3(name = "SUCCESS")]
-    fn success() -> PyResult<&'static PyObject> {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus::Success).into_py(py)
-                })
-            };
-        };
-
-        Ok(&VALUE)
-    }
-
-    #[classattr]
-    #[pyo3(name = "NOT_AVAILABLE")]
-    fn not_available() -> PyResult<&'static PyObject> {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus::NotAvailable).into_py(py)
-                })
-            };
-        };
-
-        Ok(&VALUE)
-    }
-
-    #[classattr]
-    #[pyo3(name = "BAD_RECIPIENT")]
-    fn bad_recipient() -> PyResult<&'static PyObject> {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus::BadRecipient).into_py(py)
-                })
-            };
-        };
-
-        Ok(&VALUE)
-    }
-
-    #[classmethod]
-    fn from_str(_cls: &PyType, value: &str) -> PyResult<Self> {
-        match value {
-            "SUCCESS" => Ok(Self(invite_new::InvitationEmailSentStatus::Success)),
-            "NOT_AVAILABLE" => Ok(Self(invite_new::InvitationEmailSentStatus::NotAvailable)),
-            "BAD_RECIPIENT" => Ok(Self(invite_new::InvitationEmailSentStatus::BadRecipient)),
-            _ => Err(PyValueError::new_err(format!("Invalid value `{}`", value))),
-        }
-    }
-
-    fn __str__(&self) -> &str {
-        match self.0 {
-            invite_new::InvitationEmailSentStatus::Success => "SUCCESS",
-            invite_new::InvitationEmailSentStatus::NotAvailable => "NOT_AVAILABLE",
-            invite_new::InvitationEmailSentStatus::BadRecipient => "BAD_RECIPIENT",
-        }
-    }
-}
 
 #[pyclass]
 #[derive(Clone)]

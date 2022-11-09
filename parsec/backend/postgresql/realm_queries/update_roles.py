@@ -138,7 +138,7 @@ async def query_update_roles(
     )
     if not rep:
         raise RealmNotFoundError(f"User `{new_role.user_id.str}` doesn't exist")
-    if rep["profile"] == UserProfile.OUTSIDER.value and new_role.role in (
+    if rep["profile"] == UserProfile.OUTSIDER.str and new_role.role in (
         RealmRole.MANAGER,
         RealmRole.OWNER,
     ):

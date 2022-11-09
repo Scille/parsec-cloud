@@ -1,5 +1,5 @@
 use crate::{
-    certif::RealmRole,
+    enumerate::RealmRole,
     ids::{RealmID, VlobID},
     invite::InvitationToken,
     protocol::{invite::InvitationStatus, Reason},

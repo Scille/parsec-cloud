@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    conversion::IntoPy, exceptions::PyNotImplementedError, pyclass::CompareOp, types::PyFrozenSet,
-    FromPyObject, PyAny, PyObject, PyResult, Python,
+    exceptions::PyNotImplementedError, pyclass::CompareOp, types::PyFrozenSet, FromPyObject, PyAny,
+    PyResult,
 };
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
@@ -32,30 +32,6 @@ pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
     let mut s = DefaultHasher::new();
     value_to_hash.hash(&mut s);
     Ok(s.finish())
-}
-
-pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<libparsec::types::UserProfile> {
-    use libparsec::types::UserProfile::*;
-    Ok(match profile.getattr("name")?.extract::<&str>()? {
-        "ADMIN" => Admin,
-        "STANDARD" => Standard,
-        "OUTSIDER" => Outsider,
-        _ => unreachable!(),
-    })
-}
-
-pub fn rs_to_py_user_profile(profile: &libparsec::types::UserProfile) -> PyResult<PyObject> {
-    use libparsec::types::UserProfile::*;
-    Python::with_gil(|py| -> PyResult<PyObject> {
-        let cls = py.import("parsec.api.protocol")?.getattr("UserProfile")?;
-        let profile_name = match profile {
-            Admin => "ADMIN",
-            Standard => "STANDARD",
-            Outsider => "OUTSIDER",
-        };
-        let obj = cls.getattr(profile_name)?;
-        Ok(obj.into_py(py))
-    })
 }
 
 // This implementation is due to

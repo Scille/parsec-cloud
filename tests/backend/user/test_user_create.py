@@ -22,7 +22,8 @@ from tests.backend.common import user_get, user_create
 
 @pytest.mark.trio
 @pytest.mark.parametrize(
-    "profile,with_labels", [(profile, profile != UserProfile.STANDARD) for profile in UserProfile]
+    "profile,with_labels",
+    [(profile, profile != UserProfile.STANDARD) for profile in UserProfile.values()],
 )
 async def test_user_create_ok(
     backend_asgi_app,

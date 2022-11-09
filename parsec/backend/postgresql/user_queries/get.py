@@ -229,7 +229,7 @@ async def _get_user(
     return User(
         user_id=user_id,
         human_handle=human_handle,
-        profile=UserProfile(row["profile"]),
+        profile=UserProfile.from_str(row["profile"]),
         user_certificate=row["user_certificate"],
         redacted_user_certificate=row["redacted_user_certificate"],
         user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
@@ -402,7 +402,7 @@ async def query_get_user_with_device(
     user = User(
         user_id=device_id.user_id,
         human_handle=human_handle,
-        profile=UserProfile(u_row["profile"]),
+        profile=UserProfile.from_str(u_row["profile"]),
         user_certificate=u_row["user_certificate"],
         redacted_user_certificate=u_row["redacted_user_certificate"],
         user_certifier=DeviceID(u_row["user_certifier"]) if u_row["user_certifier"] else None,
@@ -429,7 +429,7 @@ async def query_dump_users(
             User(
                 user_id=UserID(row["user_id"]),
                 human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
-                profile=UserProfile(row["profile"]),
+                profile=UserProfile.from_str(row["profile"]),
                 user_certificate=row["user_certificate"],
                 redacted_user_certificate=row["redacted_user_certificate"],
                 user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,

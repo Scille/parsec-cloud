@@ -1,30 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional, cast, Dict, Sequence, Union, Any
 from enum import Enum
 from secrets import token_bytes
+from typing import Any, Dict, Optional, Sequence, Union, cast
 
 from parsec._parsec import DateTime
-from parsec.crypto import SigningKey, VerifyKey, CryptoError
-from parsec.serde import BaseSchema, OneOfSchema, fields, validate, post_load
-from parsec.utils import (
-    BALLPARK_CLIENT_EARLY_OFFSET,
-    BALLPARK_CLIENT_LATE_OFFSET,
-    BALLPARK_CLIENT_TOLERANCE,
-    timestamps_in_the_ballpark,
-)
 from parsec.api.protocol.base import (
-    ProtocolError,
     InvalidMessageError,
+    ProtocolError,
     serializer_factory,
     settle_compatible_versions,
-)
-from parsec.api.protocol.types import (
-    OrganizationID,
-    DeviceID,
-    OrganizationIDField,
-    DeviceIDField,
 )
 from parsec.api.protocol.invite import (
     InvitationToken,
@@ -32,11 +18,15 @@ from parsec.api.protocol.invite import (
     InvitationType,
     InvitationTypeField,
 )
-from parsec.api.version import (
-    ApiVersion,
-    API_V1_VERSION,
-    API_V2_VERSION,
-    API_V3_VERSION,
+from parsec.api.protocol.types import DeviceID, DeviceIDField, OrganizationID, OrganizationIDField
+from parsec.api.version import API_V1_VERSION, API_V2_VERSION, API_V3_VERSION, ApiVersion
+from parsec.crypto import CryptoError, SigningKey, VerifyKey
+from parsec.serde import BaseSchema, OneOfSchema, fields, post_load, validate
+from parsec.utils import (
+    BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+    BALLPARK_CLIENT_TOLERANCE,
+    timestamps_in_the_ballpark,
 )
 
 

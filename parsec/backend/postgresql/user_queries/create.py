@@ -211,7 +211,7 @@ async def _do_create_user_with_human_handle(
             *_q_insert_user_with_human_handle(
                 organization_id=organization_id.str,
                 user_id=user.user_id.str,
-                profile=user.profile.value,
+                profile=user.profile.str,
                 user_certificate=user.user_certificate,
                 redacted_user_certificate=user.redacted_user_certificate,
                 user_certifier=user.user_certifier.str if user.user_certifier else None,
@@ -253,7 +253,7 @@ async def _do_create_user_without_human_handle(
             *_q_insert_user(
                 organization_id=organization_id.str,
                 user_id=user.user_id.str,
-                profile=user.profile.value,
+                profile=user.profile.str,
                 user_certificate=user.user_certificate,
                 redacted_user_certificate=user.redacted_user_certificate,
                 user_certifier=user.user_certifier.str if user.user_certifier else None,

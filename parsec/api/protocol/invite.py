@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Type
+from marshmallow.fields import Field
 
 from parsec._parsec import (
-    InvitationStatus,
     InvitationEmailSentStatus,
+    InvitationStatus,
     InvitationToken,
     InvitationType,
     Invite1ClaimerWaitPeerRep,
@@ -41,9 +43,8 @@ from parsec._parsec import (
     InviteNewRep,
     InviteNewReq,
 )
-from parsec.serde import fields
 from parsec.api.protocol.base import ApiCommandSerializer
-
+from parsec.serde import fields
 
 __all__ = (
     "InvitationStatus",
@@ -72,9 +73,11 @@ __all__ = (
 )
 
 
-InvitationTokenField = fields.uuid_based_field_factory(InvitationToken)
+InvitationTokenField: Type[Field[InvitationToken]] = fields.uuid_based_field_factory(
+    InvitationToken
+)
 InvitationStatusField = fields.rust_enum_field_factory(InvitationStatus)
-InvitationTypeField = fields.rust_enum_field_factory(InvitationType)
+InvitationTypeField: Type[Field[InvitationType]] = fields.rust_enum_field_factory(InvitationType)
 
 
 invite_new_serializer = ApiCommandSerializer(InviteNewReq, InviteNewRep)

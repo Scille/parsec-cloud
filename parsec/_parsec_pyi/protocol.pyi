@@ -1,6 +1,13 @@
 from __future__ import annotations
 from typing import Any, Iterable, List, Optional, Tuple, Literal
 
+from parsec._parsec_pyi.crypto import HashDigest, PublicKey
+from parsec._parsec_pyi.enumerate import (
+    InvitationEmailSentStatus,
+    InvitationType,
+    RealmRole,
+    UserProfile,
+)
 from parsec._parsec_pyi.ids import (
     BlockID,
     RealmID,
@@ -11,12 +18,8 @@ from parsec._parsec_pyi.ids import (
     UserID,
     HumanHandle,
 )
-from parsec._parsec_pyi.certif import RealmRole
-from parsec._parsec import PublicKey, InvitationToken
-from parsec._parsec_pyi.crypto import HashDigest
 from parsec._parsec_pyi.invite import InvitationToken
 from parsec._parsec_pyi.time import DateTime
-from parsec.api.protocol.types import UserProfile
 
 class AuthenticatedAnyCmdReq:
     def dump(self) -> bytes: ...
@@ -29,16 +32,6 @@ class InvitedAnyCmdReq:
     def load(cls, buf: bytes) -> Any: ...
 
 # Invite
-
-class InvitationType:
-    DEVICE: InvitationType
-    USER: InvitationType
-    @classmethod
-    def values(cls) -> List[InvitationType]: ...
-    @classmethod
-    def from_str(cls, value: str) -> InvitationType: ...
-    @property
-    def str(self) -> str: ...
 
 class Invite1GreeterWaitPeerReq:
     def __init__(self, token: InvitationToken, greeter_public_key: PublicKey) -> None: ...
@@ -304,14 +297,6 @@ class InviteNewRep:
     def dump(self) -> bytes: ...
     @classmethod
     def load(cls, buf: bytes) -> InviteNewRep: ...
-
-class InvitationEmailSentStatus:
-    SUCCESS: InvitationEmailSentStatus
-    NOT_AVAILABLE: InvitationEmailSentStatus
-    BAD_RECIPIENT: InvitationEmailSentStatus
-
-    @classmethod
-    def from_str(cls, value: str) -> InvitationEmailSentStatus: ...
 
 class InviteNewRepOk(InviteNewRep):
     def __init__(

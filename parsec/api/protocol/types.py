@@ -4,10 +4,10 @@ from __future__ import annotations
 from unicodedata import normalize
 from marshmallow import ValidationError
 from typing import Union, TypeVar, Optional, Tuple, Pattern
-from enum import Enum
 
 from parsec.serde import fields
 from parsec._parsec import (
+    UserProfile,
     OrganizationID,
     UserID,
     DeviceID,
@@ -95,21 +95,4 @@ class HumanHandleField(fields.Field[HumanHandle]):
             raise ValidationError(str(exc))
 
 
-class UserProfile(Enum):
-    """
-    Standard user can create new realms and invite new devices for himself.
-
-    Admin can invite and revoke users and on top of what standard user can do.
-
-    Outsider is only able to collaborate on existing realm and can only
-    access redacted certificates (i.e. the realms created by an outsider
-    cannot be shared and the outsider cannot be OWNER/MANAGER
-    on a realm shared with him)
-    """
-
-    ADMIN = "ADMIN"
-    STANDARD = "STANDARD"
-    OUTSIDER = "OUTSIDER"
-
-
-UserProfileField = fields.enum_field_factory(UserProfile)
+UserProfileField = fields.rust_enum_field_factory(UserProfile)

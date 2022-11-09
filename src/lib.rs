@@ -4,6 +4,7 @@ mod addrs;
 mod api_crypto;
 mod binding_utils;
 mod certif;
+mod enumerate;
 mod file_operations;
 mod ids;
 mod invite;
@@ -35,11 +36,15 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::PrivateKey>()?;
     m.add_class::<api_crypto::PublicKey>()?;
 
-    m.add_class::<certif::RealmRole>()?;
     m.add_class::<certif::UserCertificate>()?;
     m.add_class::<certif::RevokedUserCertificate>()?;
     m.add_class::<certif::DeviceCertificate>()?;
     m.add_class::<certif::RealmRoleCertificate>()?;
+
+    m.add_class::<enumerate::InvitationType>()?;
+    m.add_class::<enumerate::InvitationEmailSentStatus>()?;
+    m.add_class::<enumerate::RealmRole>()?;
+    m.add_class::<enumerate::UserProfile>()?;
 
     m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
     m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
@@ -232,7 +237,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::InvitedPingRepUnknownStatus>()?;
 
     // Invite
-    m.add_class::<protocol::InvitationType>()?;
     m.add_class::<protocol::InviteNewReq>()?;
     m.add_class::<protocol::InviteNewRep>()?;
     m.add_class::<protocol::InviteNewRepNotAllowed>()?;
@@ -350,7 +354,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::Invite4GreeterCommunicateRepOk>()?;
     m.add_class::<protocol::InviteListItem>()?;
     m.add_class::<protocol::InvitationStatus>()?;
-    m.add_class::<protocol::InvitationEmailSentStatus>()?;
     m.add_class::<protocol::InvitationDeletedReason>()?;
 
     // User

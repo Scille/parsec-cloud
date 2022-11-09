@@ -8,7 +8,7 @@ use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::{
     api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey},
-    certif::RealmRole,
+    enumerate::RealmRole,
     ids::{BlockID, DeviceID, EntryID},
     time::DateTime,
 };

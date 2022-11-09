@@ -57,12 +57,6 @@
             },
             "profile": {
                 "allow_none": false,
-                "enum_allowed_values": [
-                    "ADMIN",
-                    "STANDARD",
-                    "OUTSIDER"
-                ],
-                "enum_type": "UserProfile",
                 "required": true,
                 "type": "UserProfileField"
             },

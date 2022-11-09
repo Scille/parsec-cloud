@@ -224,15 +224,15 @@ async def _organization_stats(
 
     users = 0
     active_users = 0
-    users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
+    users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.values()}
     for u in result["users"]:
         is_revoked, profile = u
         users += 1
         if is_revoked:
-            users_per_profile_detail[UserProfile[profile]]["revoked"] += 1
+            users_per_profile_detail[UserProfile.from_str(profile)]["revoked"] += 1
         else:
             active_users += 1
-            users_per_profile_detail[UserProfile[profile]]["active"] += 1
+            users_per_profile_detail[UserProfile.from_str(profile)]["active"] += 1
 
     users_per_profile_detail = tuple(
         UsersPerProfileDetailItem(profile=profile, **data)
