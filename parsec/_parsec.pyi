@@ -90,6 +90,11 @@ from parsec._parsec_pyi.message import (
     PingMessageContent,
 )
 
+from parsec._parsec_pyi.pki import (
+    PkiEnrollmentAnswerPayload,
+    PkiEnrollmentSubmitPayload,
+)
+
 from parsec._parsec_pyi.time import (
     DateTime,
     LocalDateTime,
@@ -536,6 +541,9 @@ __all__ = [
     "SharingReencryptedMessageContent",
     "SharingRevokedMessageContent",
     "PingMessageContent",
+    # Pki
+    "PkiEnrollmentAnswerPayload",
+    "PkiEnrollmentSubmitPayload",
     # Time
     "DateTime",
     "LocalDateTime",
