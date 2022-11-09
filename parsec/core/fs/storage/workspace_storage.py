@@ -115,6 +115,7 @@ class WorkspaceStorage:
             yield instance
         finally:
             instance.sync_instance.clear_memory_cache(flush=True)
+            del instance.sync_instance
 
     # Helpers
 
