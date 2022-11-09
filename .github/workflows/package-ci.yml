@@ -386,19 +386,10 @@ jobs:
 
       - name: Install rust toolchain
         id: rust-toolchain
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # pin v1.0.6
+        uses: dtolnay/rust-toolchain@2e4fc08e24c79a982d0b6f4638011718d61c0eee
         with:
           toolchain: ${{ env.rust-version }}
-          profile: minimal
-          override: true
-
-      - name: Install additional targets for Rust
-        run: |
-          set -x
-          rustup target add armv7-linux-androideabi
-          rustup target add i686-linux-android
-          rustup target add aarch64-linux-android
-          rustup target add x86_64-linux-android
+          targets: armv7-linux-androideabi, i686-linux-android, aarch64-linux-android, x86_64-linux-android
 
       - name: Configure Runner environment
         run: |
