@@ -18,10 +18,10 @@ type Blake2bMac40 = Blake2bMac<U5>;
 /// Memory block size in bytes
 const BLOCKSIZE: u32 = 1024;
 /// The maximum amount of RAM that the functions in this module will use, in bytes.
-// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L128
-const MEMLIMIT_INTERACTIVE: u32 = 33554432;
+/// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L128
+const MEMLIMIT_INTERACTIVE: u32 = 33_554_432;
 /// The maximum number of computations to perform when using the functions.
-//§ https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L127
+/// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L127
 const OPSLIMIT_INTERACTIVE: u32 = 4;
 /// Degree of parallelism
 const PARALLELISM: u32 = 1;
