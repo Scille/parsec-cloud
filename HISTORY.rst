@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.14.0-rc2 (2022-11-09)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix user search to include legacy users  (`#3538
+  <https://github.com/Scille/parsec-cloud/issues/3538>`__)
+
+
 Parsec v2.14.0-rc1 (2022-11-08)
 -------------------------------
 
