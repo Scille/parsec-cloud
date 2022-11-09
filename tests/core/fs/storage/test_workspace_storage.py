@@ -1,14 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Type, TypeVar
+import gc
+from typing import Callable, Type, TypeVar
 
+import psutil
 import pytest
 
 from parsec._parsec import (
     Chunk,
     DateTime,
     EntryID,
+    EntryName,
     LocalDevice,
     LocalFileManifest,
     LocalFolderManifest,
@@ -19,10 +22,49 @@ from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
 from parsec.core.fs import FSError, FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.fs.storage import WorkspaceStorage
+from parsec.core.fs.userfs import UserFS
 from parsec.core.types import DEFAULT_BLOCK_SIZE
 from tests.common import customize_fixtures
 
 Manifest = TypeVar("Manifest", LocalWorkspaceManifest, LocalUserManifest)
+
+
+@pytest.mark.trio
+@pytest.mark.slow
+async def test_leaks(user_fs_factory: Callable[..., UserFS], alice: LocalDevice):
+
+    async with user_fs_factory(device=alice) as user_fs:
+        await user_fs.workspace_create(EntryName("w"))
+
+    async def repeat():
+        async with user_fs_factory(device=alice) as user_fs:
+            print(user_fs)
+
+    await check_for_leaking_resources(repeat)
+
+
+async def check_for_leaking_resources(afn: Callable[[], None], repeat=20, threshold=0.5):
+    proc = psutil.Process()
+    gc.collect()
+
+    before_open_files = proc.open_files()
+    before_connections = proc.connections(kind="all")
+
+    for i in range(repeat):
+        await afn()
+
+    gc.collect()
+
+    after_open_files = proc.open_files()
+    after_connections = proc.connections(kind="all")
+
+    assert len(after_open_files) - len(before_open_files) < repeat * threshold, set(
+        after_open_files
+    ) - set(before_open_files)
+
+    assert len(after_connections) - len(before_connections) < repeat * threshold, set(
+        after_connections
+    ) - set(before_connections)
 
 
 def create_manifest(
