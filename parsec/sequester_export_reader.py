@@ -1,31 +1,32 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import List, Dict, Iterator, Mapping, Optional, Tuple
-from pathlib import Path, PurePath
-from parsec._parsec import DateTime
-from contextlib import contextmanager
-import sqlite3
 import enum
-from oscrypto.asymmetric import PrivateKey
+import sqlite3
+from contextlib import contextmanager
 from dataclasses import dataclass
+from pathlib import Path, PurePath
+from typing import Dict, Iterator, List, Mapping, Optional, Tuple
 
-from parsec.crypto import VerifyKey, CryptoError
-from parsec.sequester_crypto import sequester_service_decrypt
-from parsec.api.protocol import RealmID, DeviceID
+from oscrypto.asymmetric import PrivateKey
+
+from parsec._parsec import DateTime
 from parsec.api.data import (
-    EntryName,
+    DataError,
+    DeviceCertificate,
     EntryID,
+    EntryName,
     FileManifest,
     FolderManifest,
-    WorkspaceManifest,
-    UserCertificate,
-    RevokedUserCertificate,
-    DeviceCertificate,
     RealmRoleCertificate,
-    DataError,
+    RevokedUserCertificate,
+    UserCertificate,
+    WorkspaceManifest,
 )
-from parsec.api.data.manifest import manifest_verify_and_load, AnyRemoteManifest
+from parsec.api.data.manifest import AnyRemoteManifest, manifest_verify_and_load
+from parsec.api.protocol import DeviceID, RealmID
+from parsec.crypto import CryptoError, VerifyKey
+from parsec.sequester_crypto import sequester_service_decrypt
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
 REALM_EXPORT_DB_VERSION = 1  # Only supported version so far
@@ -59,7 +60,7 @@ class RealmExportDb:
 
     @classmethod
     @contextmanager
-    def open(cls, path: Path) -> Iterator[Tuple[sqlite3.Connection, RealmID, VerifyKey]]:
+    def open(cls, path: Path) -> Iterator[RealmExportDb]:
         try:
             con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         except sqlite3.Error as exc:
@@ -188,9 +189,9 @@ class WorkspaceExport:
             )
 
         try:
-            version: bytes = row[0]
+            version: Optional[int] = row[0]
             blob: bytes = row[1]
-            author_internal_id: str = row[2]
+            author_internal_id: int = row[2]
             raw_timestamp: int = row[3]
 
             try:
@@ -321,8 +322,9 @@ class WorkspaceExport:
             try:
                 if fd.tell() != block.offset:
                     fd.seek(block.offset)
-                if block.size != len(clear_data):
-                    fd.write(clear_data[block.size])
+                if block.size < len(clear_data):
+                    # Shouldn't happen, block.size should be equal to len(clear_data)
+                    fd.write(clear_data[: block.size])
                 else:
                     fd.write(clear_data)
             except OSError as exc:
@@ -372,7 +374,7 @@ def extract_workspace(
     output: Path, export_db: Path, decryption_key: PrivateKey
 ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
     with RealmExportDb.open(export_db) as db:
-        out_certificates = []
+        out_certificates: list[Tuple[int, DeviceCertificate]] = []
         yield from db.load_device_certificates(out_certificates=out_certificates)
         devices_form_internal_id = {
             id: (certif.device_id, certif.verify_key) for id, certif in out_certificates
