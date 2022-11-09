@@ -120,7 +120,7 @@ async def initialize_test_organization(
                 author=alice_device,
                 device_label=DeviceLabel("laptop"),
                 human_handle=HumanHandle(email="toto@example.com", label="Toto"),
-                profile=UserProfile.STANDARD,
+                profile=UserProfile.OUTSIDER,
             )
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=toto_device

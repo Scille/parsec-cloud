@@ -19,14 +19,14 @@ from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobSc
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.workspace_roles import get_role_translation, NOT_SHARED_KEY
+from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.workspace_sharing_widget import Ui_WorkspaceSharingWidget
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 
 
-_ROLES_TO_INDEX: dict[Union[WorkspaceRole, str], int] = {
-    NOT_SHARED_KEY: 0,
+_ROLES_TO_INDEX: dict[Union[WorkspaceRole, None], int] = {
+    None: 0,
     WorkspaceRole.READER: 1,
     WorkspaceRole.CONTRIBUTOR: 2,
     WorkspaceRole.MANAGER: 3,
@@ -37,14 +37,14 @@ _ROLES_TO_INDEX: dict[Union[WorkspaceRole, str], int] = {
 def _index_to_role(index: int) -> Optional[RealmRole]:
     for role, idx in _ROLES_TO_INDEX.items():
         if index == idx:
-            return cast(RealmRole, role)
+            return role
     return None
 
 
 async def _do_get_users(
     core: LoggedCore, workspace_fs: WorkspaceFS
-) -> dict[UserInfo, WorkspaceRole | str]:
-    ret: dict[UserInfo, WorkspaceRole | str] = {}
+) -> dict[UserInfo, WorkspaceRole | None]:
+    ret: dict[UserInfo, WorkspaceRole | None] = {}
     try:
         participants = await workspace_fs.get_user_roles()
         updated_participants = {}
@@ -58,15 +58,15 @@ async def _do_get_users(
             ret[user_info] = role
         for user_info in users:
             if user_info not in ret:
-                ret[user_info] = NOT_SHARED_KEY
+                ret[user_info] = None
         return ret
     except (FSBackendOfflineError, BackendNotAvailable) as exc:
         raise JobResultError("offline") from exc
 
 
 async def _do_share_workspace(
-    user_fs: UserFS, workspace_fs: WorkspaceFS, user_info: UserInfo, role: WorkspaceRole
-) -> tuple[UserInfo, WorkspaceRole, EntryName]:
+    user_fs: UserFS, workspace_fs: WorkspaceFS, user_info: UserInfo, role: WorkspaceRole | None
+) -> tuple[UserInfo, WorkspaceRole | None, EntryName]:
     workspace_name = workspace_fs.get_workspace_name()
 
     try:
@@ -98,7 +98,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         user_info: UserInfo,
         is_current_user: bool,
         current_user_role: WorkspaceRole,
-        role: WorkspaceRole | str,
+        role: WorkspaceRole | None,
     ) -> None:
         super().__init__()
         self.setupUi(self)
@@ -121,7 +121,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         ):
             enabled = False
 
-        self._role: WorkspaceRole | str = role
+        self._role: WorkspaceRole | None = role
         self.current_user_role = current_user_role
         self.is_current_user = is_current_user
         self.user_info = user_info
@@ -174,12 +174,12 @@ class SharingWidget(QWidget, Ui_SharingWidget):
 
     @property
     def role(self) -> Optional[WorkspaceRole]:
-        return cast(Optional[WorkspaceRole], self._role if self._role != NOT_SHARED_KEY else None)
+        return self._role
 
     @role.setter
-    def role(self, val: str | WorkspaceRole) -> None:
+    def role(self, val: WorkspaceRole | None) -> None:
         self._role = val
-        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role or NOT_SHARED_KEY])
+        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role])
 
     def _refresh_status(self) -> None:
         self.label_status.setPixmap(QPixmap())
@@ -260,7 +260,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                     w.setVisible(False)
 
     def add_participant(
-        self, user_info: UserInfo, is_current_user: bool, role: WorkspaceRole | str
+        self, user_info: UserInfo, is_current_user: bool, role: WorkspaceRole | None
     ) -> None:
         assert self.current_user_role is not None
         w = SharingWidget(
@@ -279,7 +279,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                 return cast(SharingWidget, item.widget())
         return None
 
-    def on_role_changed(self, user_info: UserInfo, role: WorkspaceRole) -> None:
+    def on_role_changed(self, user_info: UserInfo, role: WorkspaceRole | None) -> None:
         sharing_widget = self._get_sharing_widget(user_info.user_id)
         if sharing_widget:
             sharing_widget.set_status_updating()
@@ -345,7 +345,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         if job.status == "offline":
             SnackbarManager.warn(_("TEXT_WORKSPACE_SHARING_OFFLINE"))
             reset = False
-        elif role == NOT_SHARED_KEY:
+        elif role is None:
             SnackbarManager.warn(
                 _("TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user").format(
                     workspace=workspace_name, user=user_info.short_user_display
@@ -360,7 +360,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         if reset:
             self.reset()
 
-    def _on_get_users_success(self, job: QtToTrioJob[dict[UserInfo, WorkspaceRole | str]]) -> None:
+    def _on_get_users_success(self, job: QtToTrioJob[dict[UserInfo, WorkspaceRole | None]]) -> None:
         assert job.ret is not None
         users = job.ret
         while self.scroll_content.layout().count() > 1:
@@ -374,12 +374,12 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                 self.add_participant(
                     user_info,
                     is_current_user=user_info.user_id == self.core.device.user_id,
-                    role=role or "NOT_SHARED",
+                    role=role,
                 )
         self.spinner.hide()
         self.widget_users.show()
 
-    def _on_get_users_error(self, job: QtToTrioJob[dict[UserInfo, WorkspaceRole | str]]) -> None:
+    def _on_get_users_error(self, job: QtToTrioJob[dict[UserInfo, WorkspaceRole | None]]) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
