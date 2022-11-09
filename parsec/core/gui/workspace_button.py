@@ -20,7 +20,7 @@ from parsec.core.fs.workspacefs import ReencryptionNeed
 
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec._parsec import DateTime
-from parsec.core.gui.workspace_roles import NOT_SHARED_KEY, get_role_translation
+from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.custom_widgets import ensure_string_size
 
@@ -151,7 +151,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         else:
             self.users_roles = users_roles
 
-        current_role = self.role or NOT_SHARED_KEY
+        current_role = self.role
 
         if not self.core.device.is_outsider and current_role not in (
             WorkspaceRole.READER,
