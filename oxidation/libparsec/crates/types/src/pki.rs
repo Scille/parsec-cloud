@@ -1,21 +1,35 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use serde::{Deserialize, Serialize};
+use std::io::{Read, Write};
+
+use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use libparsec_crypto::{PublicKey, VerifyKey};
 use serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion, DeviceID, DeviceLabel,
-    HumanHandle, UserProfile,
+    self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,
+    DeviceID, DeviceLabel, HumanHandle, UserProfile,
 };
 
-fn load<'a, T: Deserialize<'a>>(raw: &'a [u8]) -> Result<T, rmp_serde::decode::Error> {
-    rmp_serde::from_slice(raw)
+fn load<T: DeserializeOwned>(raw: &[u8]) -> DataResult<T> {
+    let mut decompressed = vec![];
+
+    ZlibDecoder::new(raw)
+        .read_to_end(&mut decompressed)
+        .map_err(|_| DataError::Compression)?;
+
+    rmp_serde::from_slice(&decompressed).map_err(|_| DataError::Serialization)
 }
 
 fn dump<T: Serialize>(data: &T) -> Vec<u8> {
-    rmp_serde::to_vec_named(data).expect("Unreachable")
+    let serialized = rmp_serde::to_vec_named(data).expect("Unreachable");
+
+    let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
+    e.write_all(&serialized).expect("Unreachable");
+
+    e.finish().expect("Unreachable")
 }
 
 /*
@@ -48,7 +62,7 @@ impl_transparent_data_format_conversion!(
 );
 
 impl PkiEnrollmentAnswerPayload {
-    pub fn load(raw: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
+    pub fn load(raw: &[u8]) -> DataResult<Self> {
         load(raw)
     }
     pub fn dump(&self) -> Vec<u8> {
@@ -82,7 +96,7 @@ impl_transparent_data_format_conversion!(
 );
 
 impl PkiEnrollmentSubmitPayload {
-    pub fn load(raw: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
+    pub fn load(raw: &[u8]) -> DataResult<Self> {
         load(raw)
     }
     pub fn dump(&self) -> Vec<u8> {
