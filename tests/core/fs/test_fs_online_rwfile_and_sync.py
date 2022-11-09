@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import pytest
+
 import structlog
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule

@@ -104,14 +104,14 @@ mod tests {
     use rstest::rstest;
     use tests_fixtures::{alice, timestamp, tmp_path, Device, TmpPath};
 
-    use super::super::local_database::SqlitePool;
+    use super::super::local_database::SqliteConn;
     use super::*;
 
     #[rstest]
     fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
         let db_path = tmp_path.join("user_storage.sqlite");
-        let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
-        let conn = Arc::new(Mutex::new(pool.conn().unwrap()));
+        let conn = SqliteConn::new(db_path.to_str().unwrap()).unwrap();
+        let conn = Arc::new(Mutex::new(conn));
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
         let user_manifest_id = alice.user_manifest_id;

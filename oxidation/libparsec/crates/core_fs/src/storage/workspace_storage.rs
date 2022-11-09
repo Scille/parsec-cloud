@@ -1,23 +1,29 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use regex::Regex;
-use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
-use std::path::Path;
-use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::Hash,
+    path::Path,
+    sync::{Arc, Mutex, MutexGuard, TryLockError},
+};
 
 use libparsec_client_types::{
     LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest,
 };
 use libparsec_types::{BlockID, ChunkID, DateTime, EntryID, FileDescriptor};
 
-use super::chunk_storage::ChunkStorage;
-use super::manifest_storage::{ChunkOrBlockID, ManifestStorage};
-use crate::error::{FSError, FSResult};
-use crate::storage::chunk_storage::{BlockStorage, BlockStorageTrait, ChunkStorageTrait};
-use crate::storage::local_database::SqlitePool;
-use crate::storage::version::{
-    get_workspace_cache_storage_db_path, get_workspace_data_storage_db_path,
+use super::{
+    chunk_storage::ChunkStorage,
+    manifest_storage::{ChunkOrBlockID, ManifestStorage},
+};
+use crate::{
+    error::{FSError, FSResult},
+    storage::{
+        chunk_storage::{BlockStorage, BlockStorageTrait, ChunkStorageTrait},
+        local_database::SqliteConn,
+        version::{get_workspace_cache_storage_db_path, get_workspace_data_storage_db_path},
+    },
 };
 
 pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
@@ -80,12 +86,12 @@ impl WorkspaceStorage {
         let cache_path =
             get_workspace_cache_storage_db_path(data_base_dir.as_ref(), &device, workspace_id);
 
-        let data_pool = SqlitePool::new(
+        let data_conn = SqliteConn::new(
             data_path
                 .to_str()
                 .expect("Non-Utf-8 character found in data_path"),
         )?;
-        let cache_pool = SqlitePool::new(
+        let cache_conn = SqliteConn::new(
             cache_path
                 .to_str()
                 .expect("Non-Utf-8 character found in cache_path"),
@@ -93,20 +99,20 @@ impl WorkspaceStorage {
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
-            Arc::new(Mutex::new(cache_pool.conn()?)),
+            Arc::new(Mutex::new(cache_conn)),
             cache_size,
             device.time_provider.clone(),
         )?;
 
         let manifest_storage = ManifestStorage::new(
             device.local_symkey.clone(),
-            Arc::new(Mutex::new(data_pool.conn()?)),
+            Arc::new(Mutex::new(data_conn.reopen()?)),
             workspace_id,
         )?;
 
         let chunk_storage = ChunkStorage::new(
             device.local_symkey.clone(),
-            Arc::new(Mutex::new(data_pool.conn()?)),
+            Arc::new(Mutex::new(data_conn)),
             device.time_provider.clone(),
         )?;
 
@@ -550,12 +556,12 @@ pub fn workspace_storage_non_speculative_init(
     timestamp: Option<DateTime>,
 ) -> FSResult<()> {
     let data_path = get_workspace_data_storage_db_path(data_base_dir, &device, workspace_id);
-    let data_pool = SqlitePool::new(
+    let conn = SqliteConn::new(
         data_path
             .to_str()
             .expect("Non-Utf-8 character found in data_path"),
     )?;
-    let conn = Arc::new(Mutex::new(data_pool.conn()?));
+    let conn = Arc::new(Mutex::new(conn));
     let manifest_storage = ManifestStorage::new(device.local_symkey.clone(), conn, workspace_id)?;
     let timestamp = timestamp.unwrap_or_else(|| device.now());
     let manifest =
