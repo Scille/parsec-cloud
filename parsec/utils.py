@@ -189,7 +189,7 @@ def trio_run(
 ) -> T:
     if use_asyncio:
         # trio_asyncio is an optional dependency
-        import trio_asyncio  # type: ignore[import]
+        import trio_asyncio
 
         return trio_asyncio.run(async_fn, *args)
     instruments = (TaskMonitoringInstrument(),) if monitor_tasks else ()
