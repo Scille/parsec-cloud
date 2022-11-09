@@ -417,7 +417,7 @@ async def test_bad_query(access_testbed):
 @customize_fixtures(
     alice_has_human_handle=False, bob_has_human_handle=False, adam_has_human_handle=False
 )
-async def test_find_with_query_ignore_non_human(alice_ws, alice, bob, adam):
+async def test_find_with_query_does_not_ignore_non_human(alice_ws, alice, bob, adam):
     # Find all first
     rep = await human_find(alice_ws)
 
@@ -434,7 +434,13 @@ async def test_find_with_query_ignore_non_human(alice_ws, alice, bob, adam):
     rep = await human_find(alice_ws, query=str(alice.user_id))
     assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
     rep = await human_find(alice_ws, query="alice")
-    assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
+    assert isinstance(rep, HumanFindRepOk)
+    assert rep.per_page == 100
+    assert rep.page == 1
+    assert rep.total == 1
+    assert sorted(rep.results, key=lambda x: x.user_id) == [
+        HumanFindResultItem(user_id=alice.user_id, revoked=False, human_handle=None),
+    ]
 
 
 @pytest.mark.trio
