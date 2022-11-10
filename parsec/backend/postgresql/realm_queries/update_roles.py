@@ -153,7 +153,7 @@ async def query_update_roles(
         *_q_get_realm_status(organization_id=organization_id.str, realm_id=new_role.realm_id.uuid)
     )
     if not rep:
-        raise RealmNotFoundError(f"Realm `{new_role.realm_id.str}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{new_role.realm_id.hex}` doesn't exist")
     if rep["maintenance_type"]:
         raise RealmInMaintenanceError("Data realm is currently under maintenance")
 

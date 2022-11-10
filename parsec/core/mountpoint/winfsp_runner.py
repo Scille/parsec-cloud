@@ -90,7 +90,7 @@ async def _get_available_drive(index: int, length: int) -> PurePath:
 
 def _generate_volume_serial_number(device: LocalDevice, workspace_id: EntryID) -> int:
     return adler32(
-        f"{device.organization_id.str}-{device.device_id.str}-{workspace_id.str}".encode()
+        f"{device.organization_id.str}-{device.device_id.str}-{workspace_id.hex}".encode()
     )
 
 

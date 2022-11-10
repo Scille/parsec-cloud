@@ -428,7 +428,7 @@ async def monitor_sync(
         except FSServerUploadTemporarilyUnavailableError as exc:
             logger.warning(
                 "Sync failure due to server upload temporarily unavailable",
-                workspace_id=ctx.id.str,
+                workspace_id=ctx.id.hex,
                 exc_info=exc,
             )
             delay = TICK_SERVER_UPLOAD_TEMPORARILY_UNAVAILABLE_COOLDOWN

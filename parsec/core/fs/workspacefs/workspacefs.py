@@ -242,7 +242,7 @@ class WorkspaceFS:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot retrieve remote status for workspace {self.workspace_id.str}: {exc}"
+                f"Cannot retrieve remote status for workspace {self.workspace_id.hex}: {exc}"
             ) from exc
 
         assert isinstance(rep, RealmStatusRepOk)
@@ -741,10 +741,10 @@ class WorkspaceFS:
                         )
                         logger.warning(
                             "Sync rejected by sequester service",
-                            workspace_id=self.workspace_id.str,
-                            entry_id=entry_id.str,
+                            workspace_id=self.workspace_id.hex,
+                            entry_id=entry_id.hex,
                             file_path=path,
-                            service_id=exc.service_id.str,
+                            service_id=exc.service_id.hex,
                             service_label=exc.service_label,
                             exc_info=exc,
                         )

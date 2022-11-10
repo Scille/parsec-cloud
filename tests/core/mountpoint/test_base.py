@@ -59,7 +59,7 @@ async def test_mount_unknown_workspace(base_mountpoint, alice_user_fs, event_bus
         with pytest.raises(MountpointConfigurationError) as exc:
             await mountpoint_manager.mount_workspace(wid)
 
-        assert exc.value.args == (f"Workspace `{wid.str}` doesn't exist",)
+        assert exc.value.args == (f"Workspace `{wid.hex}` doesn't exist",)
 
 
 @pytest.mark.trio

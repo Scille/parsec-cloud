@@ -60,7 +60,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block read error",
                 organization_id=organization_id.str,
-                block_id=block_id.str,
+                block_id=block_id.hex,
                 exc_info=exc,
             )
             raise BlockStoreError(exc) from exc
@@ -80,7 +80,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block create error",
                 organization_id=organization_id.str,
-                block_id=block_id.str,
+                block_id=block_id.hex,
                 exc_info=exc,
             )
             raise BlockStoreError(exc) from exc

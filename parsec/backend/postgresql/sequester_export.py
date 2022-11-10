@@ -139,7 +139,7 @@ async def _init_output_db(
     )
     if not row:
         raise RealmExporterInputError(
-            f"Realm `{realm_id.str}` doesn't exist in organization `{organization_id.str}`"
+            f"Realm `{realm_id.hex}` doesn't exist in organization `{organization_id.str}`"
         )
 
     row = await input_conn.fetchrow(

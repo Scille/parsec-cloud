@@ -174,11 +174,11 @@ class ReencryptionJob:
                 raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
             elif isinstance(rep, VlobMaintenanceGetReencryptionBatchRepNotAllowed):
                 raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep}"
                 )
             elif not isinstance(rep, VlobMaintenanceGetReencryptionBatchRepOk):
                 raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
+                    f"Cannot do reencryption maintenance on workspace {workspace_id.hex}: {rep}"
                 )
 
             done_batch = []
@@ -206,13 +206,13 @@ class ReencryptionJob:
                 rep_maitenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepNotAllowed
             ):
                 raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep_maitenance_save_reencryption}"
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep_maitenance_save_reencryption}"
                 )
             elif not isinstance(
                 rep_maitenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepOk
             ):
                 raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep_maitenance_save_reencryption}"
+                    f"Cannot do reencryption maintenance on workspace {workspace_id.hex}: {rep_maitenance_save_reencryption}"
                 )
 
             total = cast(
@@ -243,13 +243,13 @@ class ReencryptionJob:
                     rep_reencryption_maintenance, RealmFinishReencryptionMaintenanceRepNotAllowed
                 ):
                     raise FSWorkspaceNoAccess(
-                        f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep_reencryption_maintenance}"
+                        f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep_reencryption_maintenance}"
                     )
                 elif not isinstance(
                     rep_reencryption_maintenance, RealmFinishReencryptionMaintenanceRepOk
                 ):
                     raise FSError(
-                        f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep_reencryption_maintenance}"
+                        f"Cannot do reencryption maintenance on workspace {workspace_id.hex}: {rep_reencryption_maintenance}"
                     )
 
         except BackendNotAvailable as exc:
@@ -257,7 +257,7 @@ class ReencryptionJob:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {exc}"
+                f"Cannot do reencryption maintenance on workspace {workspace_id.hex}: {exc}"
             ) from exc
 
         return total, done
@@ -405,7 +405,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
-                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
+                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.hex}`")
             return workspace_entry
 
         async def get_previous_workspace_entry() -> Optional[WorkspaceEntry]:
@@ -478,7 +478,7 @@ class UserFS:
         try:
             workspace = self._workspaces[workspace_id]
         except KeyError:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.hex}`")
 
         # Sanity check to make sure workspace_id is valid
         workspace.get_workspace_entry()
@@ -531,7 +531,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
-                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
+                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.hex}`")
 
             timestamp = self.device.timestamp()
             updated_workspace_entry = workspace_entry.evolve(name=new_name)
@@ -892,7 +892,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.hex}`")
 
         # Make sure the workspace is not a placeholder
         await self._workspace_minimal_sync(workspace_entry)
@@ -1267,7 +1267,7 @@ class UserFS:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot start maintenance on workspace {workspace_id.str}: {exc}"
+                f"Cannot start maintenance on workspace {workspace_id.hex}: {exc}"
             ) from exc
 
         if isinstance(rep, RealmStartReencryptionMaintenanceRepParticipantMismatch):
@@ -1275,14 +1275,14 @@ class UserFS:
             return False
         elif isinstance(rep, RealmStartReencryptionMaintenanceRepInMaintenance):
             raise FSWorkspaceInMaintenance(
-                f"Workspace {workspace_id.str} already in maintenance: {rep}"
+                f"Workspace {workspace_id.hex} already in maintenance: {rep}"
             )
         elif isinstance(rep, RealmStartReencryptionMaintenanceRepNotAllowed):
             raise FSWorkspaceNoAccess(
-                f"Not allowed to start maintenance on workspace {workspace_id.str}: {rep}"
+                f"Not allowed to start maintenance on workspace {workspace_id.hex}: {rep}"
             )
         elif not isinstance(rep, RealmStartReencryptionMaintenanceRepOk):
-            raise FSError(f"Cannot start maintenance on workspace {workspace_id.str}: {rep}")
+            raise FSError(f"Cannot start maintenance on workspace {workspace_id.hex}: {rep}")
         return True
 
     async def workspace_start_reencryption(self, workspace_id: EntryID) -> ReencryptionJob:
@@ -1296,7 +1296,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.hex}`")
 
         timestamp = self.device.timestamp()
         new_workspace_entry = workspace_entry.evolve(
@@ -1343,7 +1343,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.hex}`")
 
         # First make sure the workspace is under maintenance
         try:
@@ -1354,13 +1354,13 @@ class UserFS:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot continue maintenance on workspace {workspace_id.str}: {exc}"
+                f"Cannot continue maintenance on workspace {workspace_id.hex}: {exc}"
             ) from exc
 
         if isinstance(rep, RealmStatusRepNotAllowed):
-            raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id.str}: {rep}")
+            raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id.hex}: {rep}")
         elif not isinstance(rep, RealmStatusRepOk):
-            raise FSError(f"Error while getting status for workspace {workspace_id.str}: {rep}")
+            raise FSError(f"Error while getting status for workspace {workspace_id.hex}: {rep}")
 
         if not rep.in_maintenance or rep.maintenance_type != MaintenanceType.REENCRYPTION():
             raise FSWorkspaceNotInMaintenance("Not in reencryption maintenance")

@@ -123,7 +123,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block read error: More than 1 nodes have failed",
                 organization_id=organization_id.str,
-                block_id=block_id.str,
+                block_id=block_id.hex,
             )
             raise BlockStoreError("More than 1 RAID5 nodes have failed")
 
@@ -168,7 +168,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: More than 1 nodes have failed",
                     organization_id=organization_id.str,
-                    block_id=block_id.str,
+                    block_id=block_id.hex,
                 )
                 raise BlockStoreError("More than 1 RAID5 nodes have failed")
 
@@ -177,6 +177,6 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: A node have failed",
                     organization_id=organization_id.str,
-                    block_id=block_id.str,
+                    block_id=block_id.hex,
                 )
                 raise BlockStoreError("A RAID5 node have failed")

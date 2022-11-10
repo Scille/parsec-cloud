@@ -54,7 +54,7 @@ async def get_realm_status(
         *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
     if not rep:
-        raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     return RealmStatus(
         maintenance_type=MaintenanceType(rep["maintenance_type"])
@@ -181,7 +181,7 @@ async def query_start_reencryption_maintenance(
     # Retrieve realm and make sure it is not under maintenance
     status = await get_realm_status(conn, organization_id, realm_id)
     if status.in_maintenance:
-        raise RealmInMaintenanceError(f"Realm `{realm_id.str}` alrealy in maintenance")
+        raise RealmInMaintenanceError(f"Realm `{realm_id.hex}` alrealy in maintenance")
     if encryption_revision != status.encryption_revision + 1:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
@@ -273,7 +273,7 @@ async def query_finish_reencryption_maintenance(
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
     if not status.in_maintenance:
-        raise RealmNotInMaintenanceError(f"Realm `{realm_id.str}` not under maintenance")
+        raise RealmNotInMaintenanceError(f"Realm `{realm_id.hex}` not under maintenance")
     if encryption_revision != status.encryption_revision:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
