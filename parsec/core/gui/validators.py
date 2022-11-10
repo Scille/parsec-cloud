@@ -113,16 +113,35 @@ class UserNameValidator(QValidator):
             # HumanHandle raises the same ValueError if either email or label are incorrect.
             # We trick it by using an email we know will be valid, so that the only ValueError
             # that can be raised will be because of an incorrect label.
-            HumanHandle(email="a@b.c", label=string)
+            HumanHandle(email="local@domain.com", label=string)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Invalid, string, pos
 
 
 class EmailValidator(QRegularExpressionValidator):
-    # We don't use the HumanHandle to validate the email because it's way too permissive.
     def __init__(self) -> None:
-        super().__init__(QRegularExpression(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"))
+        # Note: this regex is very approximative, but it's used for two reasons:
+        # - to get a sensible `QValidator.Intermediate` status
+        # - to ban weird-but-valid email addresses such as `example@example.com#` and `a@b.c`
+        # However, it might not be able to accurately detect invalid email addresses.
+        # For instance, it used to falsely report `example.@example.com` as a valid email.
+        # It will also report email with excessively long domain names as valid, although they are not.
+        # Ultimately, the actual validation is performed by ANDing the results of the regex
+        # and the `HumanHandle` constructor, which in turn uses the `email_address_parser` crate.
+        email_regex = r"^([a-zA-Z0-9_%+-]+\.)*([a-zA-Z0-9_%+-]+)@([a-zA-Z0-9-]+\.)+([a-zA-Z]{2,})$"
+        super().__init__(QRegularExpression(email_regex))
+
+    def validate(self, input: str, pos: int) -> tuple[QValidator.State, str, int]:
+        status, string, pos = super().validate(input, pos)
+        if status != QValidator.Acceptable:
+            return status, string, pos
+        try:
+            HumanHandle(email=input, label="Some Label")
+        except ValueError:
+            return QValidator.Invalid, string, pos
+        else:
+            return QValidator.Acceptable, string, pos
 
 
 class WorkspaceNameValidator(QValidator):
