@@ -19,7 +19,7 @@
                     "type": "Bytes"
                 },
                 "enrollment_id": {
-                    "type": "UUID"
+                    "type": "EnrollmentID"
                 },
                 "device_certificate": {
                     "type": "Bytes"
@@ -111,7 +111,7 @@
                     "type": "Bytes"
                 },
                 "enrollment_id": {
-                    "type": "UUID"
+                    "type": "EnrollmentID"
                 },
                 "device_certificate": {
                     "type": "Bytes"

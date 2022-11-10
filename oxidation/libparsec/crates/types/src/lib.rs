@@ -27,6 +27,3 @@ pub use manifest::*;
 pub use message::*;
 pub use pki::*;
 pub use time::*;
-
-/// Re-export `uuid` module.
-pub use uuid;

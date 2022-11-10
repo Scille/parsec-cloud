@@ -195,6 +195,7 @@ new_uuid_type!(pub VlobID);
 new_uuid_type!(pub ChunkID);
 new_uuid_type!(pub SequesterServiceID);
 new_uuid_type!(pub InvitationToken);
+new_uuid_type!(pub EnrollmentID);
 impl_from_maybe!(std::collections::HashSet<EntryID>);
 
 /*
