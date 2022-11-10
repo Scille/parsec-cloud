@@ -8,10 +8,10 @@ from uuid import UUID as _UUID
 
 from marshmallow import ValidationError
 from marshmallow.fields import (
+    Field,  # Republishing
     Boolean,
     Dict,
     Email,
-    Field,  # Republishing
     Float,
     Int,
     Integer,
@@ -22,10 +22,8 @@ from marshmallow.fields import (
 
 from parsec._parsec import (
     DateTime as RsDateTime,
-    PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload,
-)
-from parsec.crypto import (
     HashDigest as _HashDigest,
+    PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload,
     PrivateKey as _PrivateKey,
     PublicKey as _PublicKey,
     SecretKey as _SecretKey,
@@ -500,7 +498,7 @@ SequesterVerifyKeyDer = SequesterVerifyKeyDerField
 
 class SequesterEncryptionKeyDerField(Field[_SequesterEncryptionKeyDer]):
     def _serialize(
-        self, value: _SequesterEncryptionKeyDer | None, attr: Any, obj: Any
+        self, value: _SequesterEncryptionKeyDer | None, attr: str, obj: Any
     ) -> bytes | None:
         if value is None:
             return None
@@ -523,7 +521,7 @@ SequesterEncryptionKeyDer = SequesterEncryptionKeyDerField
 
 class PkiEnrollmentSubmitPayloadField(Field[_PkiEnrollmentSubmitPayload]):
     def _serialize(
-        self, value: _PkiEnrollmentSubmitPayload | None, attr: Any, obj: Any
+        self, value: _PkiEnrollmentSubmitPayload | None, attr: str, obj: Any
     ) -> bytes | None:
         if value is None:
             return None
