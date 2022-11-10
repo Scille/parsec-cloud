@@ -1,1 +1,0 @@
-Fix email validation in the application for some special cases

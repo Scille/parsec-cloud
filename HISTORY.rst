@@ -5,18 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v2.14.0-rc2 (2022-11-09)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix user search to include legacy users  (`#3538
-  <https://github.com/Scille/parsec-cloud/issues/3538>`__)
-
-
-Parsec v2.14.0-rc1 (2022-11-08)
--------------------------------
+Parsec v2.14.0 (2022-11-10)
+---------------------------
 
 Features
 ~~~~~~~~
@@ -46,6 +36,10 @@ Bugfixes
   <https://github.com/Scille/parsec-cloud/issues/3300>`__)
 * The device instance now gets logged off when an error occurs due to the disk
   being full  (`#3335 <https://github.com/Scille/parsec-cloud/issues/3335>`__)
+* Fix user search to include legacy users  (`#3538
+  <https://github.com/Scille/parsec-cloud/issues/3538>`__)
+* Fix email validation in the application for some special cases  (`#3555
+  <https://github.com/Scille/parsec-cloud/issues/3555>`__)
 
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
