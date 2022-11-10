@@ -218,14 +218,15 @@ class FileTable(QTableWidget):
                     row,
                     item_type,
                     item.data(NAME_DATA_INDEX),
-                    EntryID.from_hex(item.data(ENTRY_ID_DATA_INDEX)),
+                    EntryID.from_str(item.data(ENTRY_ID_DATA_INDEX)),
                 )
             )
         return files
 
     def has_file(self, entry_id: EntryID) -> bool:
         return any(
-            entry_id.hex == self.item(row, Column.NAME).data(ENTRY_ID_DATA_INDEX)  # type: ignore[union-attr]
+            entry_id.str
+            == cast(QTableWidgetItem, self.item(row, Column.NAME)).data(ENTRY_ID_DATA_INDEX)
             for row in range(self.rowCount())
             if self.item(row, Column.NAME)
         )
@@ -335,7 +336,7 @@ class FileTable(QTableWidget):
     ) -> None:
         for i in range(1, self.rowCount()):
             item = cast(IconTableItem, self.item(i, 0))
-            if item and item.data(ENTRY_ID_DATA_INDEX) == entry_id.hex:
+            if item and item.data(ENTRY_ID_DATA_INDEX) == entry_id.str:
                 if (
                     item.data(TYPE_DATA_INDEX) == FileType.File
                     or item.data(TYPE_DATA_INDEX) == FileType.Folder
@@ -418,7 +419,7 @@ class FileTable(QTableWidget):
     ) -> None:
         if is_confined and self.config and not self.config.gui_show_confined:
             return
-        entry_id_str = entry_id.hex
+        entry_id_str = entry_id.str
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FolderTableItem(is_synced, is_confined)
@@ -465,7 +466,7 @@ class FileTable(QTableWidget):
     ) -> None:
         if is_confined and self.config and not self.config.gui_show_confined:
             return
-        entry_id_str = entry_id.hex
+        entry_id_str = entry_id.str
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FileTableItem(is_synced, is_confined, file_name.str)
@@ -504,7 +505,7 @@ class FileTable(QTableWidget):
     def add_inconsistency(self, file_name: EntryName, entry_id: EntryID) -> None:
         inconsistency_color = QColor(255, 144, 155)
         row_idx = self.rowCount()
-        entry_id_str = entry_id.hex
+        entry_id_str = entry_id.str
         self.insertRow(row_idx)
         item = InconsistencyTableItem(False, False)
         item.setData(NAME_DATA_INDEX, 1)

@@ -14,7 +14,7 @@ from parsec.backend.swift_blockstore import SwiftBlockStoreComponent
 @pytest.mark.trio
 async def test_swift_get(caplog):
     org_id = OrganizationID("org42")
-    block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
+    block_id = BlockID.from_str("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
         log = caplog.assert_occured_once("[warning  ] Block read error")
@@ -53,7 +53,7 @@ async def test_swift_get(caplog):
 @pytest.mark.trio
 async def test_swift_create(caplog):
     org_id = OrganizationID("org42")
-    block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
+    block_id = BlockID.from_str("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
         log = caplog.assert_occured_once("[warning  ] Block create error")

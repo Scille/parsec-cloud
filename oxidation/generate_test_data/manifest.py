@@ -11,7 +11,7 @@ from parsec.api.data import *
 um = UserManifest(
     author=ALICE.device_id,
     timestamp=NOW,
-    id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+    id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
     version=42,
     created=NOW,
     updated=NOW,
@@ -19,7 +19,7 @@ um = UserManifest(
     workspaces=(
         WorkspaceEntry(
             name=EntryName("wksp1"),
-            id=EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
+            id=EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
             key=SecretKey(
                 unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
             ),
@@ -30,7 +30,7 @@ um = UserManifest(
         ),
         WorkspaceEntry(
             name=EntryName("wksp2"),
-            id=EntryID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b"),
+            id=EntryID.from_str("d7e3af6a03e1414db0f4682901e9aa4b"),
             key=SecretKey(
                 unhexlify("c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc")
             ),
@@ -46,13 +46,13 @@ display("user manifest", um, [KEY, ALICE.verify_key, "zip"])
 wm = WorkspaceManifest(
     author=ALICE.device_id,
     timestamp=NOW,
-    id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+    id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
     version=42,
     created=NOW,
     updated=NOW,
     children={
-        EntryName("wksp1"): EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
-        EntryName("wksp2"): EntryID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b"),
+        EntryName("wksp1"): EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
+        EntryName("wksp2"): EntryID.from_str("d7e3af6a03e1414db0f4682901e9aa4b"),
     },
 ).dump_sign_and_encrypt(author_signkey=ALICE.signing_key, key=KEY)
 display("workspace manifest", wm, [KEY, ALICE.verify_key, "zip"])
@@ -60,14 +60,14 @@ display("workspace manifest", wm, [KEY, ALICE.verify_key, "zip"])
 fdrm = FolderManifest(
     author=ALICE.device_id,
     timestamp=NOW,
-    id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
-    parent=EntryID.from_hex("07748fbf67a646428427865fd730bf3e"),
+    id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
+    parent=EntryID.from_str("07748fbf67a646428427865fd730bf3e"),
     version=42,
     created=NOW,
     updated=NOW,
     children={
-        EntryName("wksp1"): EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
-        EntryName("wksp2"): EntryID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b"),
+        EntryName("wksp1"): EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
+        EntryName("wksp2"): EntryID.from_str("d7e3af6a03e1414db0f4682901e9aa4b"),
     },
 ).dump_sign_and_encrypt(author_signkey=ALICE.signing_key, key=KEY)
 display("folder manifest", fdrm, [KEY, ALICE.verify_key, "zip"])
@@ -75,8 +75,8 @@ display("folder manifest", fdrm, [KEY, ALICE.verify_key, "zip"])
 film = FileManifest(
     author=ALICE.device_id,
     timestamp=NOW,
-    id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
-    parent=EntryID.from_hex("07748fbf67a646428427865fd730bf3e"),
+    id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
+    parent=EntryID.from_str("07748fbf67a646428427865fd730bf3e"),
     version=42,
     created=NOW,
     updated=NOW,
@@ -84,7 +84,7 @@ film = FileManifest(
     blocksize=512,
     blocks=(
         BlockAccess(
-            id=BlockID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
+            id=BlockID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
             key=SecretKey(
                 unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
             ),
@@ -95,7 +95,7 @@ film = FileManifest(
             ),
         ),
         BlockAccess(
-            id=BlockID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b"),
+            id=BlockID.from_str("d7e3af6a03e1414db0f4682901e9aa4b"),
             key=SecretKey(
                 unhexlify("c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc")
             ),
@@ -112,8 +112,8 @@ display("file manifest", film, [KEY, ALICE.verify_key, "zip"])
 film_invalid_blocksize = FileManifest(
     author=ALICE.device_id,
     timestamp=NOW,
-    id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
-    parent=EntryID.from_hex("07748fbf67a646428427865fd730bf3e"),
+    id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
+    parent=EntryID.from_str("07748fbf67a646428427865fd730bf3e"),
     version=42,
     created=NOW,
     updated=NOW,

@@ -21,7 +21,7 @@ async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath) -
     rep_manifest = await workspace.local_storage.get_manifest(cast(EntryID, rep_info["id"]))
     assert isinstance(rep_manifest, LocalFolderManifest)
     children = rep_manifest.children
-    children[EntryName("newfail.txt")] = EntryID.from_hex("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
+    children[EntryName("newfail.txt")] = EntryID.from_str("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
     rep_manifest = rep_manifest.evolve(children=children)
     async with workspace.local_storage.lock_manifest(cast(EntryID, rep_info["id"])):
         await workspace.local_storage.set_manifest(cast(EntryID, rep_info["id"]), rep_manifest)

@@ -284,7 +284,7 @@ def test_supports_legacy_is_admin_field(alice):
         "signing_key": alice.signing_key.encode(),
         "private_key": alice.private_key.encode(),
         "is_admin": True,
-        "user_manifest_id": UUID(alice.user_manifest_id.hex),
+        "user_manifest_id": UUID(alice.user_manifest_id.str),
         "user_manifest_key": bytes(alice.user_manifest_key.secret),
         "local_symkey": bytes(alice.local_symkey.secret),
     }

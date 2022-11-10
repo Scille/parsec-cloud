@@ -481,7 +481,7 @@ def list_services(
 @click.option("--organization", type=OrganizationID, help="Organization ID", required=True)
 @click.option(
     "--service",
-    type=SequesterServiceID.from_hex,
+    type=SequesterServiceID.from_str,
     help="ID of the sequester service to update",
     required=True,
 )
@@ -730,10 +730,10 @@ async def _export_realm(
 
 @click.command(short_help="Export a realm to consult it with a sequester service key")
 @click.option("--organization", type=OrganizationID, required=True)
-@click.option("--realm", type=RealmID.from_hex, required=True)
+@click.option("--realm", type=RealmID.from_str, required=True)
 @click.option(
     "--service",
-    type=SequesterServiceID.from_hex,
+    type=SequesterServiceID.from_str,
     help="ID of the sequester service to retreive data from",
     required=True,
 )

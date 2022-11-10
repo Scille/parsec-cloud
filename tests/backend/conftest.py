@@ -203,15 +203,15 @@ def realm_factory(next_timestamp):
 
 @pytest.fixture
 async def realm(backend, alice, realm_factory):
-    realm_id = RealmID.from_hex("A0000000000000000000000000000000")
+    realm_id = RealmID.from_str("A0000000000000000000000000000000")
     return await realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
 
 
 @pytest.fixture
 async def vlobs(backend, alice, realm):
     vlob_ids = (
-        VlobID.from_hex("10000000000000000000000000000000"),
-        VlobID.from_hex("20000000000000000000000000000000"),
+        VlobID.from_str("10000000000000000000000000000000"),
+        VlobID.from_str("20000000000000000000000000000000"),
     )
     await backend.vlob.create(
         organization_id=alice.organization_id,
@@ -250,11 +250,11 @@ async def vlob_atoms(vlobs):
 
 @pytest.fixture
 async def other_realm(backend, alice, realm_factory):
-    realm_id = RealmID.from_hex("B0000000000000000000000000000000")
+    realm_id = RealmID.from_str("B0000000000000000000000000000000")
     return await realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
 
 
 @pytest.fixture
 async def bob_realm(backend, bob, realm_factory):
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    realm_id = RealmID.from_str("C0000000000000000000000000000000")
     return await realm_factory(backend, bob, realm_id, DateTime(2000, 1, 2))

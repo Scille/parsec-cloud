@@ -367,10 +367,10 @@ def test_build_addrs():
 
     organization_file_link_addr = BackendOrganizationFileLinkAddr.build(
         organization_addr=organization_addr,
-        workspace_id=EntryID.from_hex("2d4ded12-7406-4608-833b-7f57f01156e2"),
+        workspace_id=EntryID.from_str("2d4ded12-7406-4608-833b-7f57f01156e2"),
         encrypted_path=b"<encrypted_payload>",
     )
-    assert organization_file_link_addr.workspace_id == EntryID.from_hex(
+    assert organization_file_link_addr.workspace_id == EntryID.from_str(
         "2d4ded12-7406-4608-833b-7f57f01156e2"
     )
     assert organization_file_link_addr.encrypted_path == b"<encrypted_payload>"

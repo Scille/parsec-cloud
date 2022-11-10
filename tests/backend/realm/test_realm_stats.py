@@ -14,7 +14,7 @@ from tests.backend.common import realm_stats
 from tests.backend.common import vlob_create, block_create
 
 
-REALM_ID_FAKE = RealmID.from_hex("00000000-0000-0000-0000-000000000001")
+REALM_ID_FAKE = RealmID.from_str("00000000-0000-0000-0000-000000000001")
 
 
 @pytest.mark.trio

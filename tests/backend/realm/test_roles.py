@@ -28,8 +28,8 @@ from tests.backend.common import realm_update_roles, realm_get_role_certificates
 
 
 NOW = DateTime(2000, 1, 1)
-VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
-REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
+VLOB_ID = VlobID.from_str("00000000000000000000000000000001")
+REALM_ID = RealmID.from_str("0000000000000000000000000000000A")
 
 
 @pytest.mark.trio

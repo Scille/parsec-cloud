@@ -51,7 +51,7 @@ from tests.backend.realm.test_roles import realm_generate_certif_and_update_role
 # Fixture
 realm_generate_certif_and_update_roles_or_fail
 
-VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
+VLOB_ID = VlobID.from_str("00000000000000000000000000000001")
 
 
 @pytest.mark.trio

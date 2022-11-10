@@ -205,7 +205,7 @@ def load_config(config_dir: Path, **extra_config: Any) -> CoreConfig:
 
     try:
         data_conf["disabled_workspaces"] = frozenset(
-            map(EntryID.from_hex, data_conf["disabled_workspaces"])
+            map(EntryID.from_str, data_conf["disabled_workspaces"])
         )
     except (KeyError, ValueError):
         pass

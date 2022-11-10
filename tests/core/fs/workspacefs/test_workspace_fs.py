@@ -411,7 +411,7 @@ async def test_path_info_remote_loader_exceptions(
 
     async def _vlob_read_patched(transport, encryption_revision, vlob_id, version, timestamp):
         ret = await vanilla_vlob_read(transport, encryption_revision, vlob_id, version, timestamp)
-        if vlob_id.hex == manifest.id.hex:
+        if vlob_id.str == manifest.id.str:
             modified_remote_manifest: Union[
                 FileManifest, FolderManifest, UserManifest, WorkspaceManifest
             ] = manifest.base.evolve(**manifest_modifiers)

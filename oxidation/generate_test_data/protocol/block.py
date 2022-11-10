@@ -14,8 +14,8 @@ serializer = block_create_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "block_create",
-        "block_id": BlockID.from_hex("57c629b69d6c4abbaf651cafa46dbc93"),
-        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "block_id": BlockID.from_str("57c629b69d6c4abbaf651cafa46dbc93"),
+        "realm_id": RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         "block": b"foobar",
     }
 )
@@ -51,7 +51,7 @@ display("block_create_rep_in_maintenance", serialized, [])
 serializer = block_read_serializer
 
 serialized = serializer.req_dumps(
-    {"cmd": "block_read", "block_id": BlockID.from_hex("57c629b69d6c4abbaf651cafa46dbc93")}
+    {"cmd": "block_read", "block_id": BlockID.from_str("57c629b69d6c4abbaf651cafa46dbc93")}
 )
 serializer.req_loads(serialized)
 display("block_read_req", serialized, [])

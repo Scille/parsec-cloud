@@ -50,7 +50,7 @@ display("events_listen_rep_invite_status_changed", serialized, [])
 
 serialized = serializer.rep_dumps(
     EventsListenRepOkRealmMaintenanceFinished(
-        realm_id=RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        realm_id=RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         encryption_revision=0,
     )
 )
@@ -59,7 +59,7 @@ display("events_listen_rep_realm_maintenance_finished", serialized, [])
 
 serialized = serializer.rep_dumps(
     EventsListenRepOkRealmMaintenanceStarted(
-        realm_id=RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        realm_id=RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         encryption_revision=0,
     )
 )
@@ -68,9 +68,9 @@ display("events_listen_rep_realm_maintenance_started", serialized, [])
 
 serialized = serializer.rep_dumps(
     EventsListenRepOkRealmVlobsUpdated(
-        realm_id=RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        realm_id=RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         checkpoint=0,
-        src_id=VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
+        src_id=VlobID.from_str("2b5f314728134a12863da1ce49c112f6"),
         src_version=0,
     )
 )
@@ -79,7 +79,7 @@ display("events_listen_rep_vlobs_updated", serialized, [])
 
 serialized = serializer.rep_dumps(
     EventsListenRepOkRealmRolesUpdated(
-        realm_id=RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        realm_id=RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         role=None,
     )
 )
@@ -88,7 +88,7 @@ display("events_listen_rep_realm_roles_updated_without", serialized, [])
 
 serialized = serializer.rep_dumps(
     EventsListenRepOkRealmRolesUpdated(
-        realm_id=RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        realm_id=RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         role=RealmRole.OWNER,
     )
 )

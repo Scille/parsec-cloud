@@ -97,7 +97,7 @@ serializer = realm_status_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "realm_status",
-        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "realm_id": RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
     }
 )
 serializer.req_loads(serialized)
@@ -142,7 +142,7 @@ serializer = realm_stats_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "realm_stats",
-        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "realm_id": RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
     }
 )
 serializer.req_loads(serialized)
@@ -167,7 +167,7 @@ serializer = realm_get_role_certificates_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "realm_get_role_certificates",
-        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "realm_id": RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
     }
 )
 serializer.req_loads(serialized)
@@ -270,7 +270,7 @@ serializer = realm_start_reencryption_maintenance_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "realm_start_reencryption_maintenance",
-        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "realm_id": RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         "encryption_revision": 8,
         "timestamp": DateTime(2000, 1, 2, 1),
         "per_participant_message": {UserID("109b68ba5cdf428ea0017fc6bcc04d4a"): b"foobar"},
@@ -330,7 +330,7 @@ serializer = realm_finish_reencryption_maintenance_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "realm_finish_reencryption_maintenance",
-        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "realm_id": RealmID.from_str("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         "encryption_revision": 8,
     }
 )

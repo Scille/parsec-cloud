@@ -19,7 +19,7 @@ lum = LocalUserManifest(
     base=UserManifest(
         author=ALICE.device_id,
         timestamp=NOW,
-        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+        id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
         version=42,
         created=NOW,
         updated=NOW,
@@ -27,7 +27,7 @@ lum = LocalUserManifest(
         workspaces=(
             WorkspaceEntry(
                 name=EntryName("wksp1"),
-                id=EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
+                id=EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
                 key=SecretKey(
                     unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
                 ),
@@ -42,7 +42,7 @@ lum = LocalUserManifest(
     workspaces=(
         WorkspaceEntry(
             name=EntryName("wksp1"),
-            id=EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
+            id=EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
             key=SecretKey(
                 unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
             ),
@@ -53,7 +53,7 @@ lum = LocalUserManifest(
         ),
         WorkspaceEntry(
             name=EntryName("wksp2"),
-            id=EntryID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b"),
+            id=EntryID.from_str("d7e3af6a03e1414db0f4682901e9aa4b"),
             key=SecretKey(
                 unhexlify("c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc")
             ),
@@ -73,7 +73,7 @@ lum_synced = LocalUserManifest(
     base=UserManifest(
         author=ALICE.device_id,
         timestamp=NOW,
-        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+        id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
         version=42,
         created=NOW,
         updated=NOW,
@@ -81,7 +81,7 @@ lum_synced = LocalUserManifest(
         workspaces=(
             WorkspaceEntry(
                 name=EntryName("wksp1"),
-                id=EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
+                id=EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
                 key=SecretKey(
                     unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
                 ),
@@ -96,7 +96,7 @@ lum_synced = LocalUserManifest(
     workspaces=(
         WorkspaceEntry(
             name=EntryName("wksp1"),
-            id=EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
+            id=EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
             key=SecretKey(
                 unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
             ),
@@ -116,7 +116,7 @@ lum_speculative = LocalUserManifest(
     base=UserManifest(
         author=ALICE.device_id,
         timestamp=NOW,
-        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+        id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
         version=0,
         created=NOW,
         updated=NOW,
@@ -165,17 +165,17 @@ wm = LocalWorkspaceManifest(
     base=WorkspaceManifest(
         author=ALICE.device_id,
         timestamp=NOW,
-        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+        id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
         version=42,
         created=NOW,
         updated=NOW,
-        children={EntryName("wksp1"): EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f")},
+        children={EntryName("wksp1"): EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f")},
     ),
     need_sync=True,
     updated=NOW,
-    children={EntryName("wksp2"): EntryID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b")},
-    local_confinement_points={EntryID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b")},
-    remote_confinement_points={EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f")},
+    children={EntryName("wksp2"): EntryID.from_str("d7e3af6a03e1414db0f4682901e9aa4b")},
+    local_confinement_points={EntryID.from_str("d7e3af6a03e1414db0f4682901e9aa4b")},
+    remote_confinement_points={EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f")},
     speculative=False,
 ).dump_and_encrypt(key=KEY)
 display("workspace manifest", wm, [KEY])
@@ -184,7 +184,7 @@ wm_speculative = LocalWorkspaceManifest(
     base=WorkspaceManifest(
         author=ALICE.device_id,
         timestamp=NOW,
-        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+        id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
         version=0,
         created=NOW,
         updated=NOW,
@@ -233,18 +233,18 @@ fm = LocalFolderManifest(
     base=FolderManifest(
         author=ALICE.device_id,
         timestamp=NOW,
-        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
-        parent=EntryID.from_hex("07748fbf67a646428427865fd730bf3e"),
+        id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
+        parent=EntryID.from_str("07748fbf67a646428427865fd730bf3e"),
         version=42,
         created=NOW,
         updated=NOW,
-        children={EntryName("wksp1"): EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f")},
+        children={EntryName("wksp1"): EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f")},
     ),
     need_sync=True,
     updated=NOW,
-    children={EntryName("wksp2"): EntryID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b")},
-    local_confinement_points={EntryID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b")},
-    remote_confinement_points={EntryID.from_hex("b82954f1138b4d719b7f5bd78915d20f")},
+    children={EntryName("wksp2"): EntryID.from_str("d7e3af6a03e1414db0f4682901e9aa4b")},
+    local_confinement_points={EntryID.from_str("d7e3af6a03e1414db0f4682901e9aa4b")},
+    remote_confinement_points={EntryID.from_str("b82954f1138b4d719b7f5bd78915d20f")},
 ).dump_and_encrypt(key=KEY)
 display("folder manifest", fm, [KEY])
 
@@ -281,13 +281,13 @@ fm = LocalFileManifest(
     blocks=(
         (
             Chunk(
-                id=ChunkID.from_hex("ad67b6b5b9ad4653bf8e2b405bb6115f"),
+                id=ChunkID.from_str("ad67b6b5b9ad4653bf8e2b405bb6115f"),
                 start=0,
                 stop=250,
                 raw_offset=0,
                 raw_size=512,
                 access=BlockAccess(
-                    id=BlockID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
+                    id=BlockID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
                     key=SecretKey(
                         unhexlify(
                             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
@@ -303,7 +303,7 @@ fm = LocalFileManifest(
                 ),
             ),
             Chunk(
-                id=ChunkID.from_hex("2f99258022a94555b3109e81d34bdf97"),
+                id=ChunkID.from_str("2f99258022a94555b3109e81d34bdf97"),
                 start=0,
                 stop=250,
                 raw_offset=250,
@@ -315,8 +315,8 @@ fm = LocalFileManifest(
     base=FileManifest(
         author=ALICE.device_id,
         timestamp=NOW,
-        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
-        parent=EntryID.from_hex("07748fbf67a646428427865fd730bf3e"),
+        id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
+        parent=EntryID.from_str("07748fbf67a646428427865fd730bf3e"),
         version=42,
         created=NOW,
         updated=NOW,
@@ -324,7 +324,7 @@ fm = LocalFileManifest(
         blocksize=512,
         blocks=[
             BlockAccess(
-                id=BlockID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
+                id=BlockID.from_str("b82954f1138b4d719b7f5bd78915d20f"),
                 key=SecretKey(
                     unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
                 ),
@@ -335,7 +335,7 @@ fm = LocalFileManifest(
                 ),
             ),
             BlockAccess(
-                id=BlockID.from_hex("d7e3af6a03e1414db0f4682901e9aa4b"),
+                id=BlockID.from_str("d7e3af6a03e1414db0f4682901e9aa4b"),
                 key=SecretKey(
                     unhexlify("c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc")
                 ),
@@ -360,8 +360,8 @@ fm_invalid_blocksize = LocalFileManifest(
     base=FileManifest(
         author=ALICE.device_id,
         timestamp=NOW,
-        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
-        parent=EntryID.from_hex("07748fbf67a646428427865fd730bf3e"),
+        id=EntryID.from_str("87c6b5fd3b454c94bab51d6af1c6930b"),
+        parent=EntryID.from_str("07748fbf67a646428427865fd730bf3e"),
         version=42,
         created=NOW,
         updated=NOW,

@@ -185,7 +185,7 @@ class WorkspaceExport:
         ).fetchone()
         if not row:
             raise InconsistentWorkspaceError(
-                f"Cannot retrieve workspace manifest: vlob {manifest_id.hex} doesn't exist"
+                f"Cannot retrieve workspace manifest: vlob {manifest_id.str} doesn't exist"
             )
 
         try:
@@ -216,7 +216,7 @@ class WorkspaceExport:
         except Exception as exc:
             # TODO: better exceptions handling
             raise InconsistentWorkspaceError(
-                f"Invalid manifest data from vlob {manifest_id.hex}: {exc}"
+                f"Invalid manifest data from vlob {manifest_id.str}: {exc}"
             ) from exc
 
     def load_workspace_manifest(self) -> WorkspaceManifest:
@@ -262,14 +262,14 @@ class WorkspaceExport:
                     yield (
                         child_fs_path,
                         RealmExportProgress.INCONSISTENT_MANIFEST,
-                        f"Vlob {child_id.hex} version {child_manifest.version}: Expected file or folder manifest, got instead {child_manifest}",
+                        f"Vlob {child_id.str} version {child_manifest.version}: Expected file or folder manifest, got instead {child_manifest}",
                     )
 
             except Exception as exc:
                 yield (
                     child_fs_path,
                     RealmExportProgress.INCONSISTENT_MANIFEST,
-                    f"Vlob {child_id.hex} version {child_manifest.version}: {exc}",
+                    f"Vlob {child_id.str} version {child_manifest.version}: {exc}",
                 )
 
     def extract_file(
@@ -304,7 +304,7 @@ class WorkspaceExport:
                 yield (
                     fs_path,
                     RealmExportProgress.INCONSISTENT_BLOCK,
-                    f"Block {block.id.hex} is missing",
+                    f"Block {block.id.str} is missing",
                 )
                 continue
 
@@ -315,7 +315,7 @@ class WorkspaceExport:
                 yield (
                     fs_path,
                     RealmExportProgress.INCONSISTENT_BLOCK,
-                    f"Block {block.id.hex}: {exc}",
+                    f"Block {block.id.str}: {exc}",
                 )
                 continue
 
@@ -331,7 +331,7 @@ class WorkspaceExport:
                 yield (
                     fs_path,
                     RealmExportProgress.GENERIC_ERROR,
-                    f"Failed to write block {block.id.hex} at offset {block.offset}: {exc}",
+                    f"Failed to write block {block.id.str} at offset {block.offset}: {exc}",
                 )
                 continue
 

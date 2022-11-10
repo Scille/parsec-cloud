@@ -69,7 +69,7 @@ ld_legagacy_admin = {
     "signing_key": ALICE.signing_key.encode(),
     "private_key": ALICE.private_key.encode(),
     "is_admin": True,
-    "user_manifest_id": UUID(ALICE.user_manifest_id.hex),
+    "user_manifest_id": UUID(ALICE.user_manifest_id.str),
     "user_manifest_key": bytes(ALICE.user_manifest_key.secret),
     "local_symkey": bytes(ALICE.local_symkey.secret),
 }
@@ -82,7 +82,7 @@ ld_legagacy_not_admin = {
     "signing_key": ALICE.signing_key.encode(),
     "private_key": ALICE.private_key.encode(),
     "is_admin": False,
-    "user_manifest_id": UUID(ALICE.user_manifest_id.hex),
+    "user_manifest_id": UUID(ALICE.user_manifest_id.str),
     "user_manifest_key": bytes(ALICE.user_manifest_key.secret),
     "local_symkey": bytes(ALICE.local_symkey.secret),
 }

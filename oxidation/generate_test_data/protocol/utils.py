@@ -28,7 +28,7 @@ def generate_ALICE_local_device():
             unhexlify("74e860967fd90d063ebd64fb1ba6824c4c010099dd37508b7f2875a5db2ef8c9")
         ),
         profile=UserProfile.ADMIN,
-        user_manifest_id=EntryID.from_hex("a4031e8bcdd84df8ae12bd3d05e6e20f"),
+        user_manifest_id=EntryID.from_str("a4031e8bcdd84df8ae12bd3d05e6e20f"),
         user_manifest_key=SecretKey(
             unhexlify("26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a")
         ),
@@ -53,7 +53,7 @@ def generate_BOB_local_device():
             unhexlify("16767ec446f2611f971c36f19c2dc11614d853475ac395d6c1d70ba46d07dd49")
         ),
         profile=UserProfile.STANDARD,
-        user_manifest_id=EntryID.from_hex("71568d41afcb4e2380b3d164ace4fb85"),
+        user_manifest_id=EntryID.from_str("71568d41afcb4e2380b3d164ace4fb85"),
         user_manifest_key=SecretKey(
             unhexlify("65de53d2c6cd965aa53a1ba5cc7e54b331419e6103466121996fa99a97197a48")
         ),

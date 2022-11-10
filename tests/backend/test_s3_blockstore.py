@@ -18,7 +18,7 @@ from parsec.backend.block import BlockStoreError
 @pytest.mark.trio
 async def test_s3_read(caplog):
     org_id = OrganizationID("org42")
-    block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
+    block_id = BlockID.from_str("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
         log = caplog.assert_occured_once("[warning  ] Block read error")
@@ -72,7 +72,7 @@ async def test_s3_read(caplog):
 @pytest.mark.flaky(reruns=3)
 async def test_s3_create(caplog):
     org_id = OrganizationID("org42")
-    block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
+    block_id = BlockID.from_str("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
         log = caplog.assert_occured_once("[warning  ] Block create error")

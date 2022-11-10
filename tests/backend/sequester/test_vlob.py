@@ -68,8 +68,8 @@ async def test_vlob_create_update_and_sequester_access(
         organization_id=coolorg.organization_id, service=s4.backend_service
     )
 
-    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
-    dummy_service_id = SequesterServiceID.from_hex("0000000000000000000000000000000A")
+    vlob_id = VlobID.from_str("00000000000000000000000000000001")
+    dummy_service_id = SequesterServiceID.from_str("0000000000000000000000000000000A")
     blob = b"<encrypted with workspace's key>"
     vlob_version = 0
 
@@ -220,7 +220,7 @@ async def _register_service_and_create_vlob(
 async def test_webhook_vlob_create_update(
     coolorg: OrganizationFullData, alice, alice_ws, realm, backend
 ):
-    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
+    vlob_id = VlobID.from_str("00000000000000000000000000000001")
     blob = b"<encrypted with workspace's key>"
     sequester_blob = b"<encrypted sequester blob>"
 
@@ -268,7 +268,7 @@ async def test_webhook_vlob_create_update(
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 @pytest.mark.trio
 async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, realm, backend):
-    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
+    vlob_id = VlobID.from_str("00000000000000000000000000000001")
     blob = b"<encrypted with workspace's key>"
     sequester_blob = b"<encrypted sequester blob>"
 
@@ -279,7 +279,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             coolorg, backend, alice_ws, realm, vlob_id, blob, sequester_blob, url
         )
 
-        new_vlob_id = VlobID.from_hex("00000000000000000000000000000002")
+        new_vlob_id = VlobID.from_str("00000000000000000000000000000002")
 
         # Test htttURLError
         def raise_urlerror(*args, **kwargs):
@@ -432,7 +432,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
 async def test_sequester_dump_realm(
     coolorg: OrganizationFullData, alice_ws, bob_ws, realm, backend
 ):
-    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
+    vlob_id = VlobID.from_str("00000000000000000000000000000001")
     blob = b"<encrypted with workspace's key>"
     sequester_blob = b"<encrypted sequester blob>"
 
@@ -478,7 +478,7 @@ async def test_sequester_dump_realm(
     assert dump == [(vlob_id, 3, sequester_blob), (vlob_id, 4, sequester_blob)]
 
     # Create another vlob
-    another_vlob_id = VlobID.from_hex("00000000000000000000000000000002")
+    another_vlob_id = VlobID.from_str("00000000000000000000000000000002")
     another_sequester_blob = b"<encrypted sequester blob 2>"
 
     await vlob_create(

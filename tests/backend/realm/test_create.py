@@ -25,7 +25,7 @@ from tests.backend.common import realm_create
 async def _test_create_ok(backend, device, ws):
     await events_subscribe(ws)
 
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    realm_id = RealmID.from_str("C0000000000000000000000000000000")
     certif = RealmRoleCertificate.build_realm_root_certif(
         author=device.device_id, timestamp=DateTime.now(), realm_id=realm_id
     ).dump_and_sign(device.signing_key)
@@ -48,7 +48,7 @@ async def test_create_allowed_for_outsider(backend, alice, alice_ws):
 
 @pytest.mark.trio
 async def test_create_invalid_certif(bob, alice_ws):
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    realm_id = RealmID.from_str("C0000000000000000000000000000000")
     certif = RealmRoleCertificate.build_realm_root_certif(
         author=bob.device_id, timestamp=DateTime.now(), realm_id=realm_id
     ).dump_and_sign(bob.signing_key)
@@ -59,7 +59,7 @@ async def test_create_invalid_certif(bob, alice_ws):
 
 @pytest.mark.trio
 async def test_create_certif_not_self_signed(alice, bob, alice_ws):
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    realm_id = RealmID.from_str("C0000000000000000000000000000000")
     certif = RealmRoleCertificate(
         author=alice.device_id,
         timestamp=DateTime.now(),
@@ -74,7 +74,7 @@ async def test_create_certif_not_self_signed(alice, bob, alice_ws):
 
 @pytest.mark.trio
 async def test_create_certif_role_not_owner(alice, alice_ws):
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    realm_id = RealmID.from_str("C0000000000000000000000000000000")
     certif = RealmRoleCertificate(
         author=alice.device_id,
         timestamp=DateTime.now(),
@@ -93,7 +93,7 @@ async def test_create_certif_too_old(alice, alice_ws):
 
     # Generate a certificate
 
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    realm_id = RealmID.from_str("C0000000000000000000000000000000")
     certif = RealmRoleCertificate.build_realm_root_certif(
         author=alice.device_id, timestamp=now, realm_id=realm_id
     ).dump_and_sign(alice.signing_key)
@@ -120,7 +120,7 @@ async def test_create_certif_too_old(alice, alice_ws):
 
     # Generate a new certificate
 
-    realm_id = RealmID.from_hex("C0000000000000000000000000000001")
+    realm_id = RealmID.from_str("C0000000000000000000000000000001")
     certif = RealmRoleCertificate.build_realm_root_certif(
         author=alice.device_id, timestamp=now, realm_id=realm_id
     ).dump_and_sign(alice.signing_key)

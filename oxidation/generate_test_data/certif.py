@@ -92,7 +92,7 @@ display("revoked user certificate", ruc, [ALICE.verify_key, "zip"])
 rrc = RealmRoleCertificate(
     author=ALICE.device_id,
     timestamp=NOW,
-    realm_id=RealmID.from_hex("4486e7cf02d747bd9126679ba58e0474"),
+    realm_id=RealmID.from_str("4486e7cf02d747bd9126679ba58e0474"),
     user_id=BOB.user_id,
     role=RealmRole.OWNER,
 ).dump_and_sign(ALICE.signing_key)
