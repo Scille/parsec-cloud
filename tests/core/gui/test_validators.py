@@ -49,6 +49,22 @@ def test_email_validator(qtbot, core_config):
     assert not le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Invalid
 
+    le.clear()
+    qtbot.keyClicks(le, "example.")
+    qtbot.wait_until(lambda: le.text() == "example.")
+    assert not le.is_input_valid()
+    assert le.property("validity") == QtGui.QValidator.Intermediate
+
+    qtbot.keyClicks(le, "@")
+    qtbot.wait_until(lambda: le.text() == "example.@")
+    assert not le.is_input_valid()
+    assert le.property("validity") == QtGui.QValidator.Invalid
+
+    qtbot.keyClicks(le, "example.com")
+    qtbot.wait_until(lambda: le.text() == "example.@example.com")
+    assert not le.is_input_valid()
+    assert le.property("validity") == QtGui.QValidator.Invalid
+
 
 @pytest.mark.gui
 def test_organization_validator(qtbot, core_config):
