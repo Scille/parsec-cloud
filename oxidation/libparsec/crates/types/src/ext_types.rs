@@ -98,20 +98,16 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
         #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Hash)]
-        pub struct $name(uuid::Uuid);
+        pub struct $name(::uuid::Uuid);
 
         impl $name {
-            pub fn as_bytes(&self) -> &uuid::Bytes {
-                self.0.as_bytes()
-            }
-
             pub fn as_hyphenated(&self) -> String {
                 self.0.as_hyphenated().to_string()
             }
         }
 
-        impl std::fmt::Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        impl ::std::fmt::Display for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 write!(f, "{}", self.0.as_simple())
             }
         }
@@ -119,12 +115,12 @@ macro_rules! new_uuid_type {
         impl Default for $name {
             #[inline]
             fn default() -> Self {
-                Self(uuid::Uuid::new_v4())
+                Self(::uuid::Uuid::new_v4())
             }
         }
 
-        impl std::ops::Deref for $name {
-            type Target = uuid::Uuid;
+        impl ::std::ops::Deref for $name {
+            type Target = ::uuid::Uuid;
 
             #[inline]
             fn deref(&self) -> &Self::Target {
@@ -132,66 +128,76 @@ macro_rules! new_uuid_type {
             }
         }
 
-        impl std::convert::AsRef<uuid::Uuid> for $name {
+        impl ::std::convert::AsRef<::uuid::Uuid> for $name {
             #[inline]
-            fn as_ref(&self) -> &uuid::Uuid {
+            fn as_ref(&self) -> &::uuid::Uuid {
                 &self.0
             }
         }
 
-        impl std::convert::From<uuid::Uuid> for $name {
+        impl ::std::convert::From<::uuid::Uuid> for $name {
             #[inline]
-            fn from(id: uuid::Uuid) -> Self {
+            fn from(id: ::uuid::Uuid) -> Self {
                 Self(id)
             }
         }
 
-        impl std::convert::From<uuid::Bytes> for $name {
+        impl ::std::convert::From<::uuid::Bytes> for $name {
             #[inline]
-            fn from(bytes: uuid::Bytes) -> Self {
-                Self(uuid::Uuid::from_bytes(bytes))
+            fn from(bytes: ::uuid::Bytes) -> Self {
+                Self(::uuid::Uuid::from_bytes(bytes))
             }
         }
 
-        impl std::str::FromStr for $name {
-            type Err = &'static str;
+        impl ::std::convert::TryFrom<&[u8]> for $name {
+            type Error = &'static str;
 
-            #[inline]
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                uuid::Uuid::parse_str(s)
+            fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+                ::uuid::Uuid::from_slice(bytes)
                     .map(Self)
                     .or(Err(concat!("Invalid ", stringify!($name))))
             }
         }
 
-        impl serde::Serialize for $name {
+        impl ::std::str::FromStr for $name {
+            type Err = &'static str;
+
+            #[inline]
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                ::uuid::Uuid::parse_str(s)
+                    .map(Self)
+                    .or(Err(concat!("Invalid ", stringify!($name))))
+            }
+        }
+
+        impl ::serde::Serialize for $name {
             #[inline]
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
-                S: serde::Serializer,
+                S: ::serde::Serializer,
             {
                 // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
                 // rmp_serde this should be treated as an extension type
                 serializer.serialize_newtype_struct(
-                    rmp_serde::MSGPACK_EXT_STRUCT_NAME,
+                    ::rmp_serde::MSGPACK_EXT_STRUCT_NAME,
                     &(
                         $crate::ext_types::UUID_EXT_ID,
-                        serde_bytes::Bytes::new(self.as_bytes()),
+                        ::serde_bytes::Bytes::new(self.as_bytes()),
                     ),
                 )
             }
         }
 
-        impl<'de> serde::Deserialize<'de> for $name {
+        impl<'de> ::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
             where
-                D: serde::Deserializer<'de>,
+                D: ::serde::Deserializer<'de>,
             {
                 // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
                 // rmp_serde this should be treated as an extension type
                 deserializer
                     .deserialize_newtype_struct(
-                        rmp_serde::MSGPACK_EXT_STRUCT_NAME,
+                        ::rmp_serde::MSGPACK_EXT_STRUCT_NAME,
                         $crate::ext_types::UuidExtVisitor,
                     )
                     .map($name)

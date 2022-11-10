@@ -670,8 +670,8 @@ impl BackendOrganizationFileLinkAddr {
         &self.organization_id
     }
 
-    pub fn workspace_id(&self) -> &EntryID {
-        &self.workspace_id
+    pub fn workspace_id(&self) -> EntryID {
+        self.workspace_id
     }
 
     pub fn encrypted_path(&self) -> &Vec<u8> {
