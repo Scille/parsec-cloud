@@ -36,7 +36,7 @@ fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
         author: alice.device_id.to_owned(),
         timestamp,
         name: "wksp1".parse().unwrap(),
-        id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         encryption_revision: 3,
         encrypted_on: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         key: SecretKey::from(hex!(
@@ -97,7 +97,7 @@ fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
         author: alice.device_id.to_owned(),
         timestamp,
         name: "wksp1".parse().unwrap(),
-        id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         encryption_revision: 3,
         encrypted_on: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         key: SecretKey::from(hex!(
@@ -151,7 +151,7 @@ fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
     let expected = MessageContent::SharingRevoked {
         author: alice.device_id.to_owned(),
         timestamp,
-        id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
     };
 
     let message = MessageContent::decrypt_verify_and_load_for(

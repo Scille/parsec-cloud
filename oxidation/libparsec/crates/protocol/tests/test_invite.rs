@@ -7,7 +7,7 @@ use libparsec_crypto::{HashDigest, PublicKey};
 use libparsec_protocol::{
     authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
 };
-use libparsec_types::{HumanHandle, InvitationStatus, Maybe};
+use libparsec_types::{HumanHandle, InvitationStatus, InvitationToken, Maybe};
 
 #[rstest]
 #[case::user(
@@ -75,7 +75,7 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
             "82a6737461747573a26f6ba5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
         )[..],
         authenticated_cmds::invite_new::Rep::Ok {
-            token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+            token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
             email_sent: Maybe::Absent,
         }
     )
@@ -92,7 +92,7 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
             "02d864b93ded264aae9ae583fd3d40c45a"
         )[..],
         authenticated_cmds::invite_new::Rep::Ok {
-            token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+            token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
             email_sent: Maybe::Present(authenticated_cmds::invite_new::InvitationEmailSentStatus::Success),
         }
     )
@@ -158,7 +158,7 @@ fn serde_invite_delete_req() {
     );
 
     let req = authenticated_cmds::invite_delete::Req {
-        token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
         reason: authenticated_cmds::invite_delete::InvitationDeletedReason::Finished,
     };
 
@@ -280,13 +280,13 @@ fn serde_invite_list_rep() {
     let expected = authenticated_cmds::invite_list::Rep::Ok {
         invitations: vec![
             authenticated_cmds::invite_list::InviteListItem::User {
-                token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 claimer_email: "alice@dev1".to_owned(),
                 status: InvitationStatus::Idle,
             },
             authenticated_cmds::invite_list::InviteListItem::Device {
-                token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 status: InvitationStatus::Idle,
             },
@@ -532,7 +532,7 @@ fn serde_invite_1_greeter_wait_peer_req() {
     );
 
     let req = authenticated_cmds::invite_1_greeter_wait_peer::Req {
-        token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
         greeter_public_key: PublicKey::from(hex!(
             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
         )),
@@ -732,7 +732,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_req() {
     );
 
     let req = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Req {
-        token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::Invite2aGreeterGetHashedNonce(req);
@@ -834,7 +834,7 @@ fn serde_invite_2b_greeter_send_nonce_req() {
     );
 
     let req = authenticated_cmds::invite_2b_greeter_send_nonce::Req {
-        token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
         greeter_nonce: b"foobar".to_vec(),
     };
 
@@ -1009,7 +1009,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
     );
 
     let req = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Req {
-        token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::Invite3aGreeterWaitPeerTrust(req);
@@ -1180,7 +1180,7 @@ fn serde_invite_3b_greeter_signify_trust_req() {
     );
 
     let req = authenticated_cmds::invite_3b_greeter_signify_trust::Req {
-        token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::Invite3bGreeterSignifyTrust(req);
@@ -1349,7 +1349,7 @@ fn serde_invite_4_greeter_communicate_req() {
     );
 
     let req = authenticated_cmds::invite_4_greeter_communicate::Req {
-        token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
         payload: b"foobar".to_vec(),
     };
 

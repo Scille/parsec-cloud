@@ -10,8 +10,7 @@ use std::str::FromStr;
 use crate::{
     api_crypto::VerifyKey,
     enumerate::InvitationType,
-    ids::{EntryID, OrganizationID},
-    invite::InvitationToken,
+    ids::{EntryID, InvitationToken, OrganizationID},
 };
 
 #[pyclass]
@@ -513,13 +512,8 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[getter]
-    fn workspace_id(&self) -> PyResult<EntryID> {
-        Python::with_gil(|py| {
-            EntryID::from_hex(
-                PyType::new::<EntryID>(py),
-                &self.0.workspace_id().to_string(),
-            )
-        })
+    fn workspace_id(&self) -> EntryID {
+        EntryID(self.0.workspace_id())
     }
 
     #[getter]

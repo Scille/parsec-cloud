@@ -8,11 +8,9 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use url::Url;
 
-use crate::InvitationType;
-
 use libparsec_crypto::VerifyKey;
 
-use super::{EntryID, InvitationToken, OrganizationID};
+use crate::{EntryID, InvitationToken, InvitationType, OrganizationID};
 
 const PARSEC_SCHEME: &str = "parsec";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
@@ -632,7 +630,7 @@ impl BackendOrganizationFileLinkAddr {
             organization_id,
             workspace_id: query_str_map
                 .get("workspace_id")
-                .map(|v| v.parse::<EntryID>())
+                .map(|v| EntryID::from_hex(v))
                 .ok_or("Missing mandatory `workspace_id` param")?
                 .map_err(|_| "Invalid `workspace_id` param value")?,
             encrypted_path: query_str_map
@@ -670,8 +668,8 @@ impl BackendOrganizationFileLinkAddr {
         &self.organization_id
     }
 
-    pub fn workspace_id(&self) -> &EntryID {
-        &self.workspace_id
+    pub fn workspace_id(&self) -> EntryID {
+        self.workspace_id
     }
 
     pub fn encrypted_path(&self) -> &Vec<u8> {
@@ -722,9 +720,9 @@ impl BackendInvitationAddr {
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
         let token = match token_queries.next() {
             None => return Err("Missing mandatory `token` param"),
-            Some((_, value)) => value
-                .parse::<InvitationToken>()
-                .or(Err("Invalid `token` param value"))?,
+            Some((_, value)) => {
+                InvitationToken::from_hex(&value).or(Err("Invalid `token` param value"))?
+            }
         };
         if token_queries.next().is_some() {
             return Err("Multiple values for param `token`");

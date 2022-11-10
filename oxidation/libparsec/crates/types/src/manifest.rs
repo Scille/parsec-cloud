@@ -15,8 +15,8 @@ use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, data_macros::impl_transparent_data_format_conversion,
-    ext_types::new_uuid_type, impl_from_maybe, DataError, DateTime, DeviceID, EntryNameError,
+    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
+    DataError, DateTime, DeviceID, EntryID, EntryNameError,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -132,18 +132,6 @@ macro_rules! impl_manifest_dump_load {
         }
     };
 }
-
-/*
- * EntryID, BlockID, RealmID, VlobID, ChunkID, SequesterServiceID
- */
-
-new_uuid_type!(pub EntryID);
-new_uuid_type!(pub BlockID);
-new_uuid_type!(pub RealmID);
-new_uuid_type!(pub VlobID);
-new_uuid_type!(pub ChunkID);
-new_uuid_type!(pub SequesterServiceID);
-impl_from_maybe!(std::collections::HashSet<EntryID>);
 
 /*
  * BlockAccess

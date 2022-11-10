@@ -6,7 +6,7 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
-use libparsec_types::{Maybe, ReencryptionBatchEntry};
+use libparsec_types::{Maybe, RealmID, ReencryptionBatchEntry, SequesterServiceID, VlobID};
 
 #[rstest]
 #[case::legacy(
@@ -27,9 +27,9 @@ use libparsec_types::{Maybe, ReencryptionBatchEntry};
         )[..],
         authenticated_cmds::AnyCmdReq::VlobCreate(
             authenticated_cmds::vlob_create::Req {
-                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+                realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
                 encryption_revision: 8,
-                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
                 blob: b"foobar".to_vec(),
                 sequester_blob: Maybe::Absent,
@@ -57,9 +57,9 @@ use libparsec_types::{Maybe, ReencryptionBatchEntry};
         )[..],
         authenticated_cmds::AnyCmdReq::VlobCreate(
             authenticated_cmds::vlob_create::Req {
-                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+                realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
                 encryption_revision: 8,
-                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
                 blob: b"foobar".to_vec(),
                 sequester_blob: Maybe::Present(None),
@@ -90,13 +90,13 @@ use libparsec_types::{Maybe, ReencryptionBatchEntry};
         )[..],
         authenticated_cmds::AnyCmdReq::VlobCreate(
             authenticated_cmds::vlob_create::Req {
-                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+                realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
                 encryption_revision: 8,
-                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
                 blob: b"foobar".to_vec(),
                 sequester_blob: Maybe::Present(Some(
-                    HashMap::from([("b5eb565343c442b3a26be44573813ff0".parse().unwrap(), b"foobar".to_vec())])
+                    HashMap::from([(SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(), b"foobar".to_vec())])
                 )),
             }
         )
@@ -299,7 +299,7 @@ fn serde_vlob_read_req() {
 
     let req = authenticated_cmds::vlob_read::Req {
         encryption_revision: 8,
-        vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+        vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
         version: Some(8),
         timestamp: Some("2000-1-2T01:00:00Z".parse().unwrap()),
     };
@@ -436,7 +436,7 @@ fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_re
         authenticated_cmds::AnyCmdReq::VlobUpdate(
             authenticated_cmds::vlob_update::Req {
                 encryption_revision: 8,
-                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
                 version: 8,
                 blob: b"foobar".to_vec(),
@@ -466,7 +466,7 @@ fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_re
         authenticated_cmds::AnyCmdReq::VlobUpdate(
             authenticated_cmds::vlob_update::Req {
                 encryption_revision: 8,
-                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
                 version: 8,
                 blob: b"foobar".to_vec(),
@@ -498,12 +498,12 @@ fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_re
         authenticated_cmds::AnyCmdReq::VlobUpdate(
             authenticated_cmds::vlob_update::Req {
                 encryption_revision: 8,
-                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
                 version: 8,
                 blob: b"foobar".to_vec(),
                 sequester_blob: Maybe::Present(Some(
-                    HashMap::from([("b5eb565343c442b3a26be44573813ff0".parse().unwrap(), b"foobar".to_vec())])
+                    HashMap::from([(SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(), b"foobar".to_vec())])
                 )),
             }
         )
@@ -713,7 +713,7 @@ fn serde_vlob_poll_changes_req() {
     );
 
     let req = authenticated_cmds::vlob_poll_changes::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         last_checkpoint: 8,
     };
 
@@ -744,7 +744,7 @@ fn serde_vlob_poll_changes_req() {
             "5f636865636b706f696e7408a6737461747573a26f6b"
         )[..],
         authenticated_cmds::vlob_poll_changes::Rep::Ok {
-            changes: HashMap::from([("2b5f314728134a12863da1ce49c112f6".parse().unwrap(), 8)]),
+            changes: HashMap::from([(VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(), 8)]),
             current_checkpoint: 8,
         }
     )
@@ -814,7 +814,7 @@ fn serde_vlob_list_versions_req() {
     );
 
     let req = authenticated_cmds::vlob_list_versions::Req {
-        vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+        vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::VlobListVersions(req);
@@ -921,7 +921,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
     );
 
     let req = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         encryption_revision: 8,
         size: 8,
     };
@@ -959,7 +959,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
         )[..],
         authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::Ok {
             batch: vec![ReencryptionBatchEntry {
-                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 version: 8,
                 blob: b"foobar".to_vec(),
             }],
@@ -1076,10 +1076,10 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
     );
 
     let req = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         encryption_revision: 8,
         batch: vec![ReencryptionBatchEntry {
-            vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+            vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             version: 8,
             blob: b"foobar".to_vec(),
         }],

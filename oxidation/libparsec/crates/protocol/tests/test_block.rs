@@ -4,6 +4,7 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_types::{BlockID, RealmID};
 
 #[rstest]
 fn serde_block_create_req() {
@@ -20,8 +21,8 @@ fn serde_block_create_req() {
     );
 
     let req = authenticated_cmds::block_create::Req {
-        block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        block_id: BlockID::from_hex("57c629b69d6c4abbaf651cafa46dbc93").unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         block: b"foobar".to_vec(),
     };
 
@@ -133,7 +134,7 @@ fn serde_block_read_req() {
     );
 
     let req = authenticated_cmds::block_read::Req {
-        block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
+        block_id: BlockID::from_hex("57c629b69d6c4abbaf651cafa46dbc93").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::BlockRead(req.clone());

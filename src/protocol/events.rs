@@ -1,7 +1,6 @@
 use crate::{
     enumerate::RealmRole,
-    ids::{RealmID, VlobID},
-    invite::InvitationToken,
+    ids::{InvitationToken, RealmID, VlobID},
     protocol::{invite::InvitationStatus, Reason},
 };
 use libparsec::protocol::authenticated_cmds::v2::{

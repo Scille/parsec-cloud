@@ -385,7 +385,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     let expected = RealmRoleCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        realm_id: "4486e7cf02d747bd9126679ba58e0474".parse().unwrap(),
+        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         user_id: bob.user_id().to_owned(),
         role: Some(RealmRole::Owner),
     };
@@ -430,7 +430,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     let expected = RealmRoleCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        realm_id: "4486e7cf02d747bd9126679ba58e0474".parse().unwrap(),
+        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         user_id: bob.user_id().to_owned(),
         role: None,
         // role: Some(RealmRole::Owner),

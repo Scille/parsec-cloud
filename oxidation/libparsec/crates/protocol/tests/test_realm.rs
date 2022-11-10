@@ -5,7 +5,7 @@ use rstest::rstest;
 use std::collections::HashMap;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
-use libparsec_types::Maybe;
+use libparsec_types::{Maybe, RealmID};
 
 #[rstest]
 fn serde_realm_create_req() {
@@ -171,7 +171,7 @@ fn serde_realm_status_req() {
     );
 
     let req = authenticated_cmds::realm_status::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::RealmStatus(req);
@@ -293,7 +293,7 @@ fn serde_realm_stats_req() {
     );
 
     let req = authenticated_cmds::realm_stats::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::RealmStats(req);
@@ -379,7 +379,7 @@ fn serde_realm_get_role_certificates_req() {
     );
 
     let req = authenticated_cmds::realm_get_role_certificates::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::RealmGetRoleCertificates(req);
@@ -714,7 +714,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
     );
 
     let req = authenticated_cmds::realm_start_reencryption_maintenance::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         encryption_revision: 8,
         timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         per_participant_message: HashMap::from([(
@@ -902,7 +902,7 @@ fn serde_realm_finish_reencryption_maintenance_req() {
     );
 
     let req = authenticated_cmds::realm_finish_reencryption_maintenance::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         encryption_revision: 8,
     };
 
