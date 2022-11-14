@@ -12,7 +12,7 @@ from uuid import UUID
 from pathlib import Path
 
 from parsec.crypto import SigningKey, PrivateKey
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload, DataError
+from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload, DataError
 from parsec.core.types import LocalDevice, BackendPkiEnrollmentAddr
 from parsec.core.local_device import (
     LocalDeviceNotFoundError,
@@ -191,12 +191,12 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             payload_signature: bytes,
             payload: bytes,
             extra_trust_roots: Iterable[Path] = (),
-        ) -> PkiEnrollmentAcceptPayload:
+        ) -> PkiEnrollmentAnswerPayload:
             computed_signature = self._compute_signature(der_x509_certificate, payload)
             if computed_signature != payload_signature:
                 raise LocalDeviceCryptoError()
             try:
-                accept_payload = PkiEnrollmentAcceptPayload.load(payload)
+                accept_payload = PkiEnrollmentAnswerPayload.load(payload)
             except DataError as exc:
                 raise LocalDevicePackingError(str(exc)) from exc
 

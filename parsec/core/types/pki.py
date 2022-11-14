@@ -86,7 +86,7 @@ class LocalPendingEnrollment(BaseLocalData):
         addr = BackendPkiEnrollmentAddrField(required=True)
         submitted_on = fields.DateTime(required=True)
         enrollment_id = fields.UUID(required=True)
-        submit_payload = fields.Nested(PkiEnrollmentSubmitPayload.SCHEMA_CLS, required=True)
+        submit_payload = fields.PkiEnrollmentSubmitPayloadField(required=True)
         encrypted_key = fields.Bytes(required=True)
         ciphertext = fields.Bytes(required=True)  # An encrypted PendingDeviceKeys
 

@@ -8,7 +8,7 @@ from hashlib import sha1
 from parsec._parsec import DateTime
 from typing import Iterable, Optional, cast
 
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
+from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload
 from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
 from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
 from parsec.core.invite.greeter import _create_new_user_certificates
@@ -209,7 +209,7 @@ class PkiEnrollmentAccepterValidSubmittedCtx:
         )
 
         # Build accept payload
-        accept_payload = PkiEnrollmentAcceptPayload(
+        accept_payload = PkiEnrollmentAnswerPayload(
             device_id=user_confirmation.device_id,
             device_label=user_confirmation.device_label,
             human_handle=user_confirmation.human_handle,

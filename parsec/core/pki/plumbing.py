@@ -12,7 +12,7 @@ from parsec._parsec import DateTime
 
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.crypto import PrivateKey, SigningKey
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
+from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload
 from parsec.core.types import LocalDevice
 from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
 
@@ -156,7 +156,7 @@ def pki_enrollment_load_accept_payload(
     payload_signature: bytes,
     payload: bytes,
     extra_trust_roots: Iterable[Path] = (),
-) -> PkiEnrollmentAcceptPayload:
+) -> PkiEnrollmentAnswerPayload:
     """
     Raises:
         PkiEnrollmentCertificateError
