@@ -22,6 +22,7 @@ class WorkspaceStorage:
         data_base_dir: Path,
         device: LocalDevice,
         workspace_id: EntryID,
+        prevent_sync_pattern: Regex,
         cache_size: int,
     ) -> None: ...
     def set_prevent_sync_pattern(self, pattern: Regex) -> None: ...

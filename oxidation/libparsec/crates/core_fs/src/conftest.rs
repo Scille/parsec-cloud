@@ -2,7 +2,7 @@
 
 use rstest::fixture;
 
-use crate::{WorkspaceStorage, DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE};
+use crate::{WorkspaceStorage, DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE, FAILSAFE_PATTERN_FILTER};
 use libparsec_types::EntryID;
 use tests_fixtures::{alice, tmp_path, Device, TmpPath};
 
@@ -33,6 +33,7 @@ pub fn alice_workspace_storage(alice: &Device, tmp_path: TmpPath) -> TmpWorkspac
         db_path,
         alice.local_device(),
         EntryID::default(),
+        FAILSAFE_PATTERN_FILTER.clone(),
         DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     )
     .unwrap();

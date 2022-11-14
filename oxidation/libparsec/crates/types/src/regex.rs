@@ -60,6 +60,10 @@ impl Regex {
     pub fn is_match(&self, string: &str) -> bool {
         self.0.iter().any(|r| r.is_match(string))
     }
+
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
 }
 
 impl From<regex::Regex> for Regex {

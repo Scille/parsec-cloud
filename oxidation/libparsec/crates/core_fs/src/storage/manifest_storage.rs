@@ -4,7 +4,6 @@ use diesel::{
     sql_query, table, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl,
     RunQueryDsl,
 };
-use regex::Regex;
 use std::{
     collections::{hash_map::RandomState, HashMap, HashSet},
     ops::DerefMut,
@@ -13,7 +12,7 @@ use std::{
 
 use libparsec_client_types::LocalManifest;
 use libparsec_crypto::{CryptoError, SecretKey};
-use libparsec_types::{BlockID, ChunkID, EntryID};
+use libparsec_types::{BlockID, ChunkID, EntryID, Regex};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::{
@@ -127,8 +126,8 @@ impl Drop for ManifestStorage {
 impl ManifestStorage {
     pub fn new(
         local_symkey: SecretKey,
-        conn: Arc<Mutex<SqliteConn>>,
         realm_id: EntryID,
+        conn: Arc<Mutex<SqliteConn>>,
     ) -> FSResult<Self> {
         let instance = Self {
             local_symkey,
@@ -225,25 +224,16 @@ impl ManifestStorage {
 
     // "Prevent sync" pattern operations
 
+    #[cfg(test)]
     pub fn get_prevent_sync_pattern(&self) -> FSResult<(Regex, bool)> {
         let mut conn_guard = self.get_db_conn();
         let conn = conn_guard.deref_mut();
+        let connection = &mut conn.connection;
 
-        let (re, fully_applied) = prevent_sync_pattern::table
-            .select((
-                prevent_sync_pattern::pattern,
-                prevent_sync_pattern::fully_applied,
-            ))
-            .filter(prevent_sync_pattern::_id.eq(0))
-            .first::<(String, _)>(&mut conn.connection)
-            .map_err(|e| {
-                FSError::QueryTable(format!(
-                    "prevent_sync_pattern: get_prevent_sync_pattern {e}"
-                ))
-            })?;
+        let (re, fully_applied) = get_prevent_sync_pattern_raw(connection)?;
 
-        let re = Regex::new(&re).map_err(|e| {
-            FSError::QueryTable(format!("prevent_sync_pattern: corrupted pattern {e}"))
+        let re = Regex::from_regex_str(&re).map_err(|e| {
+            FSError::QueryTable(format!("prevent_sync_pattern: corrupted pattern: {e}"))
         })?;
 
         Ok((re, fully_applied))
@@ -252,57 +242,59 @@ impl ManifestStorage {
     /// Set the "prevent sync" pattern for the corresponding workspace
     /// This operation is idempotent,
     /// i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
-    pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<()> {
+    pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<bool> {
         let pattern = pattern.as_str();
         let mut conn_guard = self.get_db_conn();
         let conn = conn_guard.deref_mut();
 
-        diesel::update(
-            prevent_sync_pattern::table.filter(
-                prevent_sync_pattern::_id
-                    .eq(0)
-                    .and(prevent_sync_pattern::pattern.ne(pattern)),
-            ),
-        )
-        .set((
-            prevent_sync_pattern::pattern.eq(pattern),
-            prevent_sync_pattern::fully_applied.eq(false),
-        ))
-        .execute(&mut conn.connection)
-        .map_err(|e| {
-            FSError::UpdateTable(format!(
-                "prevent_sync_pattern: set_prevent_sync_pattern {e}"
+        conn.connection.exclusive_transaction(|conn| {
+            diesel::update(
+                prevent_sync_pattern::table.filter(
+                    prevent_sync_pattern::_id
+                        .eq(0)
+                        .and(prevent_sync_pattern::pattern.ne(pattern)),
+                ),
+            )
+            .set((
+                prevent_sync_pattern::pattern.eq(pattern),
+                prevent_sync_pattern::fully_applied.eq(false),
             ))
-        })?;
-
-        Ok(())
+            .execute(conn)
+            .map_err(|e| {
+                FSError::UpdateTable(format!(
+                    "prevent_sync_pattern: set_prevent_sync_pattern {e}"
+                ))
+            })?;
+            Ok(get_prevent_sync_pattern_raw(conn)?.1)
+        })
     }
 
     /// Mark the provided pattern as fully applied.
     /// This is meant to be called after one made sure that all the manifests in the
     /// workspace are compliant with the new pattern. The applied pattern is provided
     /// as an argument in order to avoid concurrency issues.
-    pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<()> {
+    pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<bool> {
         let pattern = pattern.as_str();
         let mut conn_guard = self.get_db_conn();
         let conn = conn_guard.deref_mut();
 
-        diesel::update(
-            prevent_sync_pattern::table.filter(
-                prevent_sync_pattern::_id
-                    .eq(0)
-                    .and(prevent_sync_pattern::pattern.eq(pattern)),
-            ),
-        )
-        .set(prevent_sync_pattern::fully_applied.eq(true))
-        .execute(&mut conn.connection)
-        .map_err(|e| {
-            FSError::UpdateTable(format!(
-                "prevent_sync_pattern: mark_prevent_sync_pattern_fully_applied {e}"
-            ))
-        })?;
-
-        Ok(())
+        conn.connection.exclusive_transaction(|conn| {
+            diesel::update(
+                prevent_sync_pattern::table.filter(
+                    prevent_sync_pattern::_id
+                        .eq(0)
+                        .and(prevent_sync_pattern::pattern.eq(pattern)),
+                ),
+            )
+            .set(prevent_sync_pattern::fully_applied.eq(true))
+            .execute(conn)
+            .map_err(|e| {
+                FSError::UpdateTable(format!(
+                    "prevent_sync_pattern: mark_prevent_sync_pattern_fully_applied {e}"
+                ))
+            })?;
+            Ok(get_prevent_sync_pattern_raw(conn)?.1)
+        })
     }
 
     // Checkpoint operations
@@ -633,11 +625,29 @@ impl ManifestStorage {
     }
 }
 
+fn get_prevent_sync_pattern_raw(
+    connection: &mut diesel::SqliteConnection,
+) -> Result<(String, bool), FSError> {
+    let (re, fully_applied) = prevent_sync_pattern::table
+        .select((
+            prevent_sync_pattern::pattern,
+            prevent_sync_pattern::fully_applied,
+        ))
+        .filter(prevent_sync_pattern::_id.eq(0))
+        .first::<(String, _)>(connection)
+        .map_err(|e| {
+            FSError::QueryTable(format!(
+                "prevent_sync_pattern: get_prevent_sync_pattern {e}"
+            ))
+        })?;
+    Ok((re, fully_applied))
+}
+
 #[cfg(test)]
 mod tests {
     use libparsec_client_types::{Chunk, LocalFileManifest};
     use libparsec_crypto::{prelude::*, HashDigest};
-    use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
+    use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest, Regex};
 
     use rstest::rstest;
     use tests_fixtures::{timestamp, tmp_path, TmpPath};
@@ -655,7 +665,7 @@ mod tests {
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
 
-        let manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id).unwrap();
+        let manifest_storage = ManifestStorage::new(local_symkey, realm_id, conn).unwrap();
         manifest_storage.drop_db().unwrap();
         manifest_storage.create_db().unwrap();
 
@@ -665,7 +675,7 @@ mod tests {
         assert!(!fully_applied);
 
         manifest_storage
-            .set_prevent_sync_pattern(&Regex::new(r"\z").unwrap())
+            .set_prevent_sync_pattern(&Regex::from_regex_str(r"\z").unwrap())
             .unwrap();
 
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
@@ -674,7 +684,7 @@ mod tests {
         assert!(!fully_applied);
 
         manifest_storage
-            .mark_prevent_sync_pattern_fully_applied(&Regex::new(EMPTY_PATTERN).unwrap())
+            .mark_prevent_sync_pattern_fully_applied(&Regex::from_regex_str(EMPTY_PATTERN).unwrap())
             .unwrap();
 
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();

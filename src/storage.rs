@@ -41,6 +41,7 @@ impl WorkspaceStorage {
         data_base_dir: PathBuf,
         device: LocalDevice,
         workspace_id: EntryID,
+        prevent_sync_pattern: Regex,
         cache_size: u64,
     ) -> PyResult<Self> {
         Ok(Self(
@@ -48,6 +49,7 @@ impl WorkspaceStorage {
                 data_base_dir,
                 device.0,
                 workspace_id.0,
+                prevent_sync_pattern.0,
                 cache_size,
             )
             .map_err(fs_to_python_error)?,
@@ -60,7 +62,7 @@ impl WorkspaceStorage {
         let pattern = &pattern.0;
         py.allow_threads(|| {
             self.0
-                .set_prevent_sync_pattern(&pattern.0)
+                .set_prevent_sync_pattern(pattern)
                 .map_err(fs_to_python_error)?;
             Ok(())
         })
@@ -70,7 +72,7 @@ impl WorkspaceStorage {
         let pattern = &pattern.0;
         py.allow_threads(|| {
             self.0
-                .mark_prevent_sync_pattern_fully_applied(&pattern.0)
+                .mark_prevent_sync_pattern_fully_applied(pattern)
                 .map_err(fs_to_python_error)
         })
     }

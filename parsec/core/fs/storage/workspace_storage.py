@@ -71,12 +71,14 @@ class WorkspaceStorage:
         data_base_dir: Path,
         device: LocalDevice,
         workspace_id: EntryID,
+        prevent_sync_pattern: Regex,
         cache_size: int,
     ):
         self.sync_instance = _SyncWorkspaceStorage(
             data_base_dir,
             device,
             workspace_id,
+            prevent_sync_pattern,
             cache_size,
         )
         # Locking structures
@@ -105,6 +107,7 @@ class WorkspaceStorage:
             data_base_dir,
             device,
             workspace_id,
+            prevent_sync_pattern,
             cache_size,
         )
         try:
