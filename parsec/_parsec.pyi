@@ -18,7 +18,9 @@ from parsec._parsec_pyi.crypto import (
 )
 
 from parsec._parsec_pyi.enumerate import (
+    ClientType,
     InvitationDeletedReason,
+    InvitationType,
     InvitationEmailSentStatus,
     InvitationStatus,
     InvitationType,
@@ -486,7 +488,9 @@ __all__ = [
     "PublicKey",
     "generate_nonce",
     # Enumerate
+    "ClientType",
     "InvitationDeletedReason",
+    "InvitationType",
     "InvitationEmailSentStatus",
     "InvitationStatus",
     "InvitationType",
