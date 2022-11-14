@@ -123,7 +123,6 @@ from parsec.api.protocol.vlob import (
 )
 from parsec.api.protocol.pki import (
     PkiEnrollmentStatus,
-    PkiEnrollmentStatusField,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
     pki_enrollment_list_serializer,
@@ -262,7 +261,6 @@ __all__ = (
     "BlockCreateRep",
     # PKI enrollment
     "PkiEnrollmentStatus",
-    "PkiEnrollmentStatusField",
     "pki_enrollment_submit_serializer",
     "pki_enrollment_info_serializer",
     "pki_enrollment_list_serializer",

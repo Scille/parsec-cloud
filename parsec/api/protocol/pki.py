@@ -15,9 +15,6 @@ class PkiEnrollmentStatus(Enum):
     CANCELLED = "CANCELLED"
 
 
-PkiEnrollmentStatusField = fields.enum_field_factory(PkiEnrollmentStatus)
-
-
 # pki_enrollment_submit
 
 
