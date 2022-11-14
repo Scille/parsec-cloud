@@ -112,6 +112,12 @@ jobs:
       - name: Check Newsfragment
         if: |
           startsWith(github.ref, 'refs/pull/')
+          && !(
+            startsWith(github.head_ref, 'dependabot')
+            || startsWith(github.head_ref, 'yolo')
+            || startsWith(github.head_ref, 'release')
+            || startsWith(github.head_ref, 'revert')
+            )
           && steps.changes.outputs.newsfragments == 'true'
         run: |
           whereis git
