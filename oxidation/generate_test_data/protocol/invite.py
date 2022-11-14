@@ -129,7 +129,7 @@ serialized = serializer.req_dumps(
     {
         "cmd": "invite_delete",
         "token": InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
-        "reason": InvitationDeletedReason.FINISHED(),
+        "reason": InvitationDeletedReason.FINISHED,
     }
 )
 serializer.req_loads(serialized)

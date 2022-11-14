@@ -48,8 +48,10 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<data::PkiEnrollmentAnswerPayload>()?;
     m.add_class::<data::PkiEnrollmentSubmitPayload>()?;
 
-    m.add_class::<enumerate::InvitationType>()?;
     m.add_class::<enumerate::InvitationEmailSentStatus>()?;
+    m.add_class::<enumerate::InvitationDeletedReason>()?;
+    m.add_class::<enumerate::InvitationStatus>()?;
+    m.add_class::<enumerate::InvitationType>()?;
     m.add_class::<enumerate::RealmRole>()?;
     m.add_class::<enumerate::UserProfile>()?;
 
@@ -366,8 +368,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::Invite4GreeterCommunicateRepUnknownStatus>()?;
     m.add_class::<protocol::Invite4GreeterCommunicateRepOk>()?;
     m.add_class::<protocol::InviteListItem>()?;
-    m.add_class::<protocol::InvitationStatus>()?;
-    m.add_class::<protocol::InvitationDeletedReason>()?;
 
     // User
     m.add_class::<protocol::UserGetReq>()?;

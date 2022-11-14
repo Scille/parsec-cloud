@@ -1,7 +1,7 @@
 use crate::{
-    enumerate::RealmRole,
+    enumerate::{InvitationStatus, RealmRole},
     ids::{InvitationToken, RealmID, VlobID},
-    protocol::{invite::InvitationStatus, Reason},
+    protocol::Reason,
 };
 use libparsec::protocol::authenticated_cmds::v2::{
     events_listen::{self, APIEvent},

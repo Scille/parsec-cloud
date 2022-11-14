@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::{PyAttributeError, PyNotImplementedError, PyValueError},
+    exceptions::{PyAttributeError, PyNotImplementedError},
     import_exception,
     prelude::*,
-    types::{PyBytes, PyList, PyType},
+    types::{PyBytes, PyType},
 };
 
 use libparsec::protocol::authenticated_cmds::v2::{
@@ -21,124 +21,15 @@ use libparsec::protocol::invited_cmds::v2::{
 use crate::{
     api_crypto,
     api_crypto::{HashDigest, PublicKey},
-    enumerate::{InvitationEmailSentStatus, InvitationType},
+    enumerate::{
+        InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InvitationType,
+    },
     ids::{HumanHandle, InvitationToken, UserID},
     protocol::gen_rep,
     time::DateTime,
 };
 
 import_exception!(parsec.api.protocol, ProtocolError);
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct InvitationDeletedReason(pub invite_delete::InvitationDeletedReason);
-
-crate::binding_utils::gen_proto!(InvitationDeletedReason, __repr__);
-crate::binding_utils::gen_proto!(InvitationDeletedReason, __richcmp__, eq);
-
-#[pymethods]
-impl InvitationDeletedReason {
-    #[classmethod]
-    #[pyo3(name = "FINISHED")]
-    fn finished(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_delete::InvitationDeletedReason::Finished))
-    }
-
-    #[classmethod]
-    #[pyo3(name = "CANCELLED")]
-    fn cancelled(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_delete::InvitationDeletedReason::Cancelled))
-    }
-
-    #[classmethod]
-    #[pyo3(name = "ROTTEN")]
-    fn rotten(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(invite_delete::InvitationDeletedReason::Rotten))
-    }
-
-    #[getter]
-    fn value(&self) -> PyResult<&str> {
-        Ok(match self.0 {
-            invite_delete::InvitationDeletedReason::Finished => "FINISHED",
-            invite_delete::InvitationDeletedReason::Cancelled => "CANCELLED",
-            invite_delete::InvitationDeletedReason::Rotten => "ROTTEN",
-        })
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct InvitationStatus(pub libparsec::types::InvitationStatus);
-
-crate::binding_utils::gen_proto!(InvitationStatus, __repr__);
-crate::binding_utils::gen_proto!(InvitationStatus, __richcmp__, eq);
-crate::binding_utils::gen_proto!(InvitationStatus, __hash__);
-
-#[pymethods]
-impl InvitationStatus {
-    #[classattr]
-    #[pyo3(name = "IDLE")]
-    fn idle() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                    InvitationStatus(libparsec::types::InvitationStatus::Idle).into_py(py)
-                })
-            };
-        };
-        &VALUE
-    }
-
-    #[classattr]
-    #[pyo3(name = "READY")]
-    fn ready() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                    InvitationStatus(libparsec::types::InvitationStatus::Ready).into_py(py)
-                })
-            };
-        };
-        &VALUE
-    }
-
-    #[classattr]
-    #[pyo3(name = "DELETED")]
-    fn deleted() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                    InvitationStatus(libparsec::types::InvitationStatus::Deleted).into_py(py)
-                })
-            };
-        };
-        &VALUE
-    }
-
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyAny {
-        PyList::new(py, [Self::idle(), Self::ready(), Self::deleted()]).as_ref()
-    }
-
-    #[getter]
-    fn str(&self) -> &str {
-        match self.0 {
-            libparsec::types::InvitationStatus::Idle => "IDLE",
-            libparsec::types::InvitationStatus::Ready => "READY",
-            libparsec::types::InvitationStatus::Deleted => "DELETED",
-        }
-    }
-
-    #[classmethod]
-    fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
-        match value {
-            "IDLE" => Ok(Self::idle()),
-            "READY" => Ok(Self::ready()),
-            "DELETED" => Ok(Self::deleted()),
-            _ => Err(PyValueError::new_err("")),
-        }
-    }
-}
 
 #[pyclass]
 #[derive(Clone)]

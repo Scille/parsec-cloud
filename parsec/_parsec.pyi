@@ -18,8 +18,10 @@ from parsec._parsec_pyi.crypto import (
 )
 
 from parsec._parsec_pyi.enumerate import (
-    InvitationType,
+    InvitationDeletedReason,
     InvitationEmailSentStatus,
+    InvitationStatus,
+    InvitationType,
     RealmRole,
     UserProfile,
 )
@@ -144,8 +146,6 @@ from parsec._parsec_pyi.protocol import (
     BlockReadRepTimeout,
     BlockReadRepUnknownStatus,
     # Invite
-    InvitationDeletedReason,
-    InvitationStatus,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,
@@ -486,8 +486,10 @@ __all__ = [
     "PublicKey",
     "generate_nonce",
     # Enumerate
-    "InvitationType",
+    "InvitationDeletedReason",
     "InvitationEmailSentStatus",
+    "InvitationStatus",
+    "InvitationType",
     "RealmRole",
     "UserProfile",
     # Ids
@@ -591,8 +593,6 @@ __all__ = [
     "BlockReadRepTimeout",
     "BlockReadRepUnknownStatus",
     # Invite protocol
-    "InvitationDeletedReason",
-    "InvitationStatus",
     "Invite1ClaimerWaitPeerRep",
     "Invite1ClaimerWaitPeerRepInvalidState",
     "Invite1ClaimerWaitPeerRepNotFound",

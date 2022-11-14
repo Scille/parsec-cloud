@@ -1,5 +1,38 @@
 from __future__ import annotations
 
+class InvitationDeletedReason:
+    FINISHED: InvitationDeletedReason
+    CANCELLED: InvitationDeletedReason
+    ROTTEN: InvitationDeletedReason
+    @classmethod
+    def values(cls) -> list[InvitationDeletedReason]: ...
+    @classmethod
+    def from_str(cls, value: str) -> InvitationDeletedReason: ...
+    @property
+    def str(self) -> str: ...
+
+class InvitationEmailSentStatus:
+    SUCCESS: InvitationEmailSentStatus
+    NOT_AVAILABLE: InvitationEmailSentStatus
+    BAD_RECIPIENT: InvitationEmailSentStatus
+    @classmethod
+    def values(cls) -> list[InvitationEmailSentStatus]: ...
+    @classmethod
+    def from_str(cls, value: str) -> InvitationEmailSentStatus: ...
+    @property
+    def str(self) -> str: ...
+
+class InvitationStatus:
+    IDLE: InvitationStatus
+    READY: InvitationStatus
+    DELETED: InvitationStatus
+    @classmethod
+    def values(cls) -> list[InvitationStatus]: ...
+    @classmethod
+    def from_str(cls, value: str) -> InvitationStatus: ...
+    @property
+    def str(self) -> str: ...
+
 class InvitationType:
     DEVICE: InvitationType
     USER: InvitationType
@@ -9,16 +42,6 @@ class InvitationType:
     def from_str(cls, value: str) -> InvitationType: ...
     @property
     def str(self) -> str: ...
-
-class InvitationEmailSentStatus:
-    SUCCESS: InvitationEmailSentStatus
-    NOT_AVAILABLE: InvitationEmailSentStatus
-    BAD_RECIPIENT: InvitationEmailSentStatus
-    def __str__(self) -> str: ...
-    @classmethod
-    def values(cls) -> list[InvitationEmailSentStatus]: ...
-    @classmethod
-    def from_str(cls, value: str) -> InvitationEmailSentStatus: ...
 
 class RealmRole:
     OWNER: RealmRole

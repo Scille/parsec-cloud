@@ -1,9 +1,11 @@
 from __future__ import annotations
-from typing import Any, Iterable, List, Optional, Tuple, Literal
+from typing import Any, Iterable, List, Optional, Tuple
 
 from parsec._parsec_pyi.crypto import HashDigest, PublicKey
 from parsec._parsec_pyi.enumerate import (
+    InvitationDeletedReason,
     InvitationEmailSentStatus,
+    InvitationStatus,
     InvitationType,
     RealmRole,
     UserProfile,
@@ -193,16 +195,6 @@ class Invite4GreeterCommunicateRepUnknownStatus(Invite4GreeterCommunicateRep):
     @property
     def reason(self) -> Optional[str]: ...
 
-class InvitationDeletedReason:
-    @classmethod
-    def FINISHED(cls) -> InvitationDeletedReason: ...
-    @classmethod
-    def CANCELLED(cls) -> InvitationDeletedReason: ...
-    @classmethod
-    def ROTTEN(cls) -> InvitationDeletedReason: ...
-    @property
-    def value(self) -> str: ...
-
 class InviteDeleteReq:
     def __init__(self, token: InvitationToken, reason: InvitationDeletedReason) -> None: ...
     def dump(self) -> bytes: ...
@@ -240,17 +232,6 @@ class InviteListRepUnknownStatus(InviteListRep):
     def status(self) -> str: ...
     @property
     def reason(self) -> Optional[str]: ...
-
-class InvitationStatus:
-    IDLE: InvitationStatus
-    READY: InvitationStatus
-    DELETED: InvitationStatus
-    @classmethod
-    def values(cls) -> List[InvitationStatus]: ...
-    @classmethod
-    def from_str(cls, value: str) -> InvitationStatus: ...
-    @property
-    def str(self) -> str: ...
 
 class InviteListItem:
     @classmethod
