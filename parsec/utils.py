@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import cast
+from typing import Any, AsyncIterator, Awaitable, Callable, Generic, Optional, TypeVar, cast
 
 import attr
 import trio
+import trio_typing
 from parsec._parsec import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
@@ -20,6 +21,8 @@ __all__ = [
 ]
 
 logger = get_logger()
+
+T = TypeVar("T")
 
 # Those values are used by the backend to determine whether the client
 # operates in an acceptable time window. A client early offset of
@@ -99,57 +102,62 @@ def timestamps_in_the_ballpark(
 
 
 @attr.s
-class TaskStatus:
+class TaskStatus(Generic[T]):
 
     # Internal state
-    _trio_task_status = attr.ib()
-    _cancel_scope = attr.ib(default=None)
-    _started_value = attr.ib(default=None)
-    _finished_event = attr.ib(factory=trio.Event)
+    _trio_task_status: trio_typing.TaskStatus[TaskStatus[T]] = attr.ib()
+    _cancel_scope: Optional[trio.CancelScope] = attr.ib(default=None)
+    _started_value: Optional[T] = attr.ib(default=None)
+    _finished_event: trio.Event = attr.ib(factory=trio.Event)
 
-    def _set_cancel_scope(self, scope):
+    def _set_cancel_scope(self, scope: trio.CancelScope) -> None:
         self._cancel_scope = scope
 
-    def _set_finished(self):
+    def _set_finished(self) -> None:
         self._finished_event.set()
 
     # Trio-like methods
 
-    def started(self, value=None):
+    def started(self, value: Optional[T] = None) -> None:
         self._started_value = value
         self._trio_task_status.started(self)
 
     # Properties
 
     @property
-    def cancel_called(self):
+    def cancel_called(self) -> bool:
+        assert self._cancel_scope is not None
         return self._cancel_scope.cancel_called
 
     @property
-    def finished(self):
+    def finished(self) -> bool:
         return self._finished_event.is_set()
 
     @property
-    def value(self):
+    def value(self) -> Optional[T]:
         return self._started_value
 
     # Methods
 
-    def cancel(self):
+    def cancel(self) -> None:
+        assert self._cancel_scope is not None
         self._cancel_scope.cancel()
 
-    async def join(self):
+    async def join(self) -> None:
         await self._finished_event.wait()
         await trio.sleep(0)  # Checkpoint
 
-    async def cancel_and_join(self):
+    async def cancel_and_join(self) -> None:
         self.cancel()
         await self.join()
 
-    # Class methods
-
     @classmethod
-    async def wrap_task(cls, corofn, *args, task_status=trio.TASK_STATUS_IGNORED):
+    async def wrap_task(  # type: ignore[misc]
+        cls,
+        corofn: Callable[..., Awaitable[T]],
+        *args: Any,
+        task_status: trio_typing.TaskStatus[TaskStatus[T]] = trio.TASK_STATUS_IGNORED,
+    ) -> None:
         status = cls(task_status)
         try:
             with trio.CancelScope() as cancel_scope:
@@ -159,7 +167,12 @@ class TaskStatus:
             status._set_finished()
 
 
-async def start_task(nursery, corofn, *args, name=None) -> TaskStatus:
+async def start_task(
+    nursery: trio.Nursery,
+    corofn: Callable[..., Awaitable[T]],
+    *args: Any,
+    name: Optional[str] = None,
+) -> TaskStatus[T]:
     """Equivalent to nursery.start but return a TaskStatus object.
 
     This object can be used to cancel and/or join the task.
@@ -168,7 +181,12 @@ async def start_task(nursery, corofn, *args, name=None) -> TaskStatus:
     return await nursery.start(TaskStatus.wrap_task, corofn, *args, name=name)
 
 
-def trio_run(async_fn, *args, use_asyncio=False, monitor_tasks=True):
+def trio_run(
+    async_fn: Callable[..., Awaitable[T]],
+    *args: Any,
+    use_asyncio: bool = False,
+    monitor_tasks: bool = True,
+) -> T:
     if use_asyncio:
         # trio_asyncio is an optional dependency
         import trio_asyncio
@@ -181,7 +199,7 @@ def trio_run(async_fn, *args, use_asyncio=False, monitor_tasks=True):
 # BaseExceptionGroup handling
 
 
-async def check_cancellation(exc):
+async def check_cancellation(exc: BaseExceptionGroup[Any]) -> None:
     # If the exception group contains a Cancelled(), that means a cancellation
     # has leaked outside of the nursery. This indicates the current scope
     # has likely been cancelled. In this case, there is no point in handling
@@ -193,7 +211,10 @@ async def check_cancellation(exc):
         await trio.lowlevel.checkpoint_if_cancelled()
 
 
-def collapse_exception_group(exception_group: BaseExceptionGroup):
+E = TypeVar("E", bound=BaseException)
+
+
+def collapse_exception_group(exception_group: BaseExceptionGroup[E]) -> Exception:
     # Pick the first exception as the reference exception
     pick = cast(Exception, exception_group.exceptions[0])
     try:
@@ -202,7 +223,7 @@ def collapse_exception_group(exception_group: BaseExceptionGroup):
         # Init method should be ignored as it might get called by `BaseExceptionGroup([result])`
         attrs = {"__init__": lambda *args, **kwargs: None}
         # Craft the specific class, inheriting from BaseExceptionGroup
-        cls = type(name, (type(pick), BaseExceptionGroup), attrs)
+        cls: Any = type(name, (type(pick), BaseExceptionGroup), attrs)
         # Instantiate the instance
         result = cls()
         # Replicate the picked exception inner state
@@ -224,7 +245,7 @@ def collapse_exception_group(exception_group: BaseExceptionGroup):
 
 
 @asynccontextmanager
-async def open_service_nursery():
+async def open_service_nursery() -> AsyncIterator[trio.Nursery]:
     """Open a service nursery.
 
     This nursery does not raise BaseExceptionGroup exceptions.
@@ -243,11 +264,11 @@ async def open_service_nursery():
         raise collapse_exception_group(exc)
 
 
-async def cancel_and_checkpoint(scope):
+async def cancel_and_checkpoint(scope: trio.CancelScope) -> None:
     scope.cancel()
     await trio.lowlevel.checkpoint_if_cancelled()
 
 
 # Add it to trio
-trio.open_service_nursery = open_service_nursery
-trio.CancelScope.cancel_and_checkpoint = cancel_and_checkpoint
+trio.open_service_nursery = open_service_nursery  # type: ignore[attr-defined]
+trio.CancelScope.cancel_and_checkpoint = cancel_and_checkpoint  # type: ignore[attr-defined]
