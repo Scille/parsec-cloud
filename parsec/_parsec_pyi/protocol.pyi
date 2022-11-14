@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Iterable, List, Optional, Tuple, Literal
+from typing import Any, Iterable, List, Optional, Tuple
 
 from parsec._parsec_pyi.crypto import HashDigest, PublicKey
 from parsec._parsec_pyi.enumerate import (
@@ -17,8 +17,8 @@ from parsec._parsec_pyi.ids import (
     DeviceID,
     UserID,
     HumanHandle,
+    InvitationToken,
 )
-from parsec._parsec_pyi.invite import InvitationToken
 from parsec._parsec_pyi.time import DateTime
 
 class AuthenticatedAnyCmdReq:

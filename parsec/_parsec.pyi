@@ -38,10 +38,10 @@ from parsec._parsec_pyi.ids import (
     RealmID,
     SequesterServiceID,
     EnrollmentID,
+    InvitationToken,
 )
 
 from parsec._parsec_pyi.invite import (
-    InvitationToken,
     SASCode,
     generate_sas_code_candidates,
     generate_sas_codes,
@@ -504,8 +504,8 @@ __all__ = [
     "RealmID",
     "SequesterServiceID",
     "EnrollmentID",
-    # Invite
     "InvitationToken",
+    # Invite
     "SASCode",
     "generate_sas_code_candidates",
     "generate_sas_codes",
