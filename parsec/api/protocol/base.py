@@ -221,16 +221,6 @@ class CmdSerializer:
         self.rep_loads = self._rep_serializer.loads
         self.rep_dumps = self._rep_serializer.dumps
 
-    def require_greater_timestamp_rep_dump(
-        self, strictly_greater_than: DateTime
-    ) -> Dict[str, object]:
-        return self.rep_dump(
-            {
-                "status": "require_greater_timestamp",
-                "strictly_greater_than": strictly_greater_than,
-            }
-        )
-
     def timestamp_out_of_ballpark_rep_dump(
         self, backend_timestamp: DateTime, client_timestamp: DateTime
     ) -> Dict[str, object]:
