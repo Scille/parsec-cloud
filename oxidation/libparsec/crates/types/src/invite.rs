@@ -10,8 +10,8 @@ use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, data_macros::impl_transparent_data_format_conversion,
-    ext_types::new_uuid_type, DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile,
+    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DeviceID,
+    DeviceLabel, EntryID, HumanHandle, UserProfile,
 };
 
 /*
@@ -57,12 +57,6 @@ impl ToString for InvitationType {
         }
     }
 }
-
-/*
- * InvitationToken
- */
-
-new_uuid_type!(pub InvitationToken);
 
 /*
  * SASCode

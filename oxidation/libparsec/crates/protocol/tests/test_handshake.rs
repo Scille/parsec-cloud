@@ -254,7 +254,7 @@ fn test_good_invited_handshake_server(
         "737570706f727465645f6170695f76657273696f6e7392920205920103"
     )[..],
     InvitationType::User,
-    "9931e631856a44709c825d7f7d339197".parse().unwrap(),
+    InvitationToken::from_hex("9931e631856a44709c825d7f7d339197").unwrap(),
 ))]
 #[case::device((
     // Generated from Python implementation (Parsec v2.6.0+dev)
@@ -277,7 +277,7 @@ fn test_good_invited_handshake_server(
         "737570706f727465645f6170695f76657273696f6e7392920205920103"
     )[..],
     InvitationType::Device,
-    "4e12636f08c840c4bb09404e1e696b09".parse().unwrap(),
+    InvitationToken::from_hex("4e12636f08c840c4bb09404e1e696b09").unwrap(),
 ))]
 fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, InvitationToken)) {
     let organization_id = OrganizationID::from_str("Org").unwrap();

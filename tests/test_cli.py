@@ -1176,7 +1176,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         async def export_service(service_id: str, realm: RealmID, path: str) -> CliResult:
             return await _cli_invoke_in_thread(
                 runner,
-                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm.str} --output {path} -b MOCKED",
+                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm.hex} --output {path} -b MOCKED",
             )
 
         # Assert no service configured
@@ -1233,7 +1233,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         result = await export_service(service_id, realm_id, output_dir)
         files = list(output_dir.iterdir())
         assert len(files) == 1
-        assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id.str}.sqlite")
+        assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id.hex}.sqlite")
 
         # Create service using generate/import commands
         service_certif_pem = tmp_path / "certif.pem"

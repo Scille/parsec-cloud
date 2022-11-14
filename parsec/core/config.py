@@ -259,7 +259,7 @@ def save_config(config: CoreConfig) -> None:
                 "data_base_dir": str(config.data_base_dir),
                 "prevent_sync_pattern": str(config.prevent_sync_pattern_path),
                 "telemetry_enabled": config.telemetry_enabled,
-                "disabled_workspaces": list(map(lambda e: e.str, config.disabled_workspaces)),
+                "disabled_workspaces": list(map(lambda e: e.hex, config.disabled_workspaces)),
                 "backend_max_cooldown": config.backend_max_cooldown,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
                 "workspace_storage_cache_size": config.workspace_storage_cache_size,

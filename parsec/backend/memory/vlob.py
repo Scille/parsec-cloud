@@ -175,7 +175,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             return self._vlobs[(organization_id, vlob_id)]
 
         except KeyError:
-            raise VlobNotFoundError(f"Vlob `{vlob_id.str}` doesn't exist")
+            raise VlobNotFoundError(f"Vlob `{vlob_id.hex}` doesn't exist")
 
     def _check_sequestered_organization(
         self,
@@ -289,7 +289,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
-            raise VlobRealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
+            raise VlobRealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
         allowed_roles: Tuple[RealmRole, ...]
         # Only an owner can perform maintenance operation
@@ -339,7 +339,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                 and encryption_revision == realm.status.encryption_revision
             ):
                 raise VlobInMaintenanceError(
-                    f"Realm `{realm_id.str}` is currently under maintenance"
+                    f"Realm `{realm_id.hex}` is currently under maintenance"
                 )
 
             # The vlob is only available at the previous revision
@@ -354,12 +354,12 @@ class MemoryVlobComponent(BaseVlobComponent):
             # Writing during maintenance is forbidden
             if operation_kind != OperationKind.MAINTENANCE and realm.status.in_maintenance:
                 raise VlobInMaintenanceError(
-                    f"Realm `{realm_id.str}` is currently under maintenance"
+                    f"Realm `{realm_id.hex}` is currently under maintenance"
                 )
 
             # A maintenance state was expected
             if operation_kind == OperationKind.MAINTENANCE and not realm.status.in_maintenance:
-                raise VlobNotInMaintenanceError(f"Realm `{realm_id.str}` not under maintenance")
+                raise VlobNotInMaintenanceError(f"Realm `{realm_id.hex}` not under maintenance")
 
             # Otherwise, simply check that the revisions match
             if (

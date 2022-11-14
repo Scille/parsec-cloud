@@ -237,7 +237,7 @@ def generate_service_certificate(
         )
         output.write(pem_content)
 
-        display_service = f"{click.style(service_label, fg='yellow')} (id: {click.style(service_id.str, fg='yellow')})"
+        display_service = f"{click.style(service_label, fg='yellow')} (id: {click.style(service_id.hex, fg='yellow')})"
         display_file = click.style(output.name, fg="green")
         click.echo(f"Sequester service certificate {display_service} exported in {display_file}")
         click.echo(
@@ -592,7 +592,7 @@ async def _human_accesses(
                 user_info += f", revoked on {user.revoked_on}"
             print(base_indent + f"User {display_user} ({user_info})")
             for realm_id, granted_roles in per_realm_granted_role.items():
-                display_realm = click.style(realm_id.str, fg="yellow")
+                display_realm = click.style(realm_id.hex, fg="yellow")
                 print(base_indent + f"\tRealm {display_realm}")
                 for granted_role in granted_roles:
                     if granted_role.role is None:
@@ -640,7 +640,7 @@ async def _export_realm(
 ) -> None:
     if output.is_dir():
         # Output is pointing to a directory, use a default name for the database extract
-        output_db_path = output / f"parsec-sequester-export-realm-{realm_id.str}.sqlite"
+        output_db_path = output / f"parsec-sequester-export-realm-{realm_id.hex}.sqlite"
     else:
         output_db_path = output
 

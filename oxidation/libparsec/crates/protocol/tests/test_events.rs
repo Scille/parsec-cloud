@@ -4,7 +4,7 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
-use libparsec_types::{InvitationStatus, RealmRole};
+use libparsec_types::{InvitationStatus, InvitationToken, RealmID, RealmRole, VlobID};
 
 #[rstest]
 fn serde_events_listen_req() {
@@ -77,7 +77,7 @@ fn serde_events_listen_req() {
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::InviteStatusChanged {
             invitation_status: InvitationStatus::Idle,
-            token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+            token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
         })
     )
 )]
@@ -95,7 +95,7 @@ fn serde_events_listen_req() {
             "ad2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmMaintenanceFinished{
-            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
             encryption_revision: 0,
         })
     )
@@ -114,7 +114,7 @@ fn serde_events_listen_req() {
             "2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmMaintenanceStarted {
-            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
             encryption_revision: 0,
         })
     )
@@ -136,9 +136,9 @@ fn serde_events_listen_req() {
             "a26f6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmVlobsUpdated {
-            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
             checkpoint: 0,
-            src_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+            src_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             src_version: 0,
         })
     )
@@ -157,7 +157,7 @@ fn serde_events_listen_req() {
             "a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5a4726f6c65c0"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmRolesUpdated {
-            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
             role: None,
         })
     )
@@ -176,7 +176,7 @@ fn serde_events_listen_req() {
             "6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmRolesUpdated {
-            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
             role: Some(RealmRole::Owner),
         })
     )

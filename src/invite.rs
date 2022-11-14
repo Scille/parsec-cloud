@@ -2,79 +2,15 @@
 
 use pyo3::{
     exceptions::PyValueError,
-    prelude::{pyclass, pyfunction, pymethods, IntoPy, PyModule, PyObject, PyResult, Python},
-    types::{IntoPyDict, PyAny, PyBytes, PyDict, PyList, PyString, PyTuple, PyType},
+    prelude::{pyclass, pyfunction, pymethods, IntoPy, PyObject, PyResult, Python},
+    types::{PyBytes, PyDict, PyList, PyTuple, PyType},
 };
-use uuid::Uuid;
 
 use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey},
     enumerate::UserProfile,
     ids::{DeviceID, DeviceLabel, EntryID, HumanHandle},
 };
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct InvitationToken(pub libparsec::types::InvitationToken);
-
-crate::binding_utils::gen_proto!(InvitationToken, __repr__);
-crate::binding_utils::gen_proto!(InvitationToken, __str__);
-crate::binding_utils::gen_proto!(InvitationToken, __richcmp__, eq);
-crate::binding_utils::gen_proto!(InvitationToken, __hash__);
-
-#[pymethods]
-impl InvitationToken {
-    #[new]
-    pub fn new(uuid: &PyAny) -> PyResult<Self> {
-        match Uuid::parse_str(uuid.getattr("hex")?.extract::<&str>()?) {
-            Ok(u) => Ok(Self(libparsec::types::InvitationToken::from(u))),
-            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
-        }
-    }
-
-    #[getter]
-    fn uuid<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let uuid = PyModule::import(py, "uuid")?;
-        let kwargs = vec![("hex", self.hex().unwrap())].into_py_dict(py);
-        match uuid.getattr("UUID")?.call((), Some(kwargs)) {
-            Ok(any) => Ok(any),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::InvitationToken::default()))
-    }
-
-    #[getter]
-    fn bytes<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_bytes()))
-    }
-
-    #[getter]
-    fn hex(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
-        let b = bytes.as_bytes();
-        match uuid::Uuid::from_slice(b) {
-            Ok(uuid) => Ok(Self(libparsec::types::InvitationToken::from(uuid))),
-            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
-        }
-    }
-
-    #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<libparsec::types::InvitationToken>() {
-            Ok(entry_id) => Ok(Self(entry_id)),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-}
 
 /*
 * SASCode

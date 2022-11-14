@@ -81,7 +81,7 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: All nodes have failed",
                     organization_id=organization_id.str,
-                    block_id=block_id.str,
+                    block_id=block_id.hex,
                 )
                 raise BlockStoreError("All RAID1 nodes have failed")
         else:
@@ -89,6 +89,6 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: A node have failed",
                     organization_id=organization_id.str,
-                    block_id=block_id.str,
+                    block_id=block_id.hex,
                 )
                 raise BlockStoreError("A RAID1 node have failed")

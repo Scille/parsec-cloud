@@ -437,7 +437,7 @@ async def test_path_info_remote_loader_exceptions(
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
     assert (
-        f"Cannot decrypt vlob: Invalid entry ID: expected `{manifest.id.str}`, got `{manifest_modifiers['id'].str}`"
+        f"Cannot decrypt vlob: Invalid entry ID: expected `{manifest.id.hex}`, got `{manifest_modifiers['id'].hex}`"
         in str(exc.value)
     )
 

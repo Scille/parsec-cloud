@@ -205,7 +205,7 @@ def build_sequester_service_obj(row: dict[str, Any]) -> BaseSequesterService:
         webhook_url = row["webhook_url"]
         if webhook_url is None:
             raise ValueError(
-                f"Database inconsistency: sequester service `{service_id.str}` is of type WEBHOOK but has an empty `webhook_url` column"
+                f"Database inconsistency: sequester service `{service_id.hex}` is of type WEBHOOK but has an empty `webhook_url` column"
             )
         return WebhookSequesterService(
             service_id=service_id,

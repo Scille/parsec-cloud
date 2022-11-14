@@ -51,7 +51,7 @@ async def alice_workspace_storage(data_base_dir, alice, workspace_id):
 @customize_fixtures(real_data_storage=True)
 async def test_lock_required(alice_workspace_storage):
     manifest = create_manifest(alice_workspace_storage.device)
-    msg = f"Entry `{manifest.id.str}` modified without being locked"
+    msg = f"Entry `{manifest.id.hex}` modified without being locked"
 
     with pytest.raises(RuntimeError) as exc:
         await alice_workspace_storage.set_manifest(manifest.id, manifest)
@@ -578,9 +578,9 @@ async def test_garbage_collection(data_base_dir, alice, workspace_id):
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
 async def test_storage_file_tree(data_base_dir, alice, workspace_id):
-    manifest_sqlite_db = data_base_dir / alice.slug / workspace_id.str / "workspace_data-v1.sqlite"
-    chunk_sqlite_db = data_base_dir / alice.slug / workspace_id.str / "workspace_data-v1.sqlite"
-    block_sqlite_db = data_base_dir / alice.slug / workspace_id.str / "workspace_cache-v1.sqlite"
+    manifest_sqlite_db = data_base_dir / alice.slug / workspace_id.hex / "workspace_data-v1.sqlite"
+    chunk_sqlite_db = data_base_dir / alice.slug / workspace_id.hex / "workspace_data-v1.sqlite"
+    block_sqlite_db = data_base_dir / alice.slug / workspace_id.hex / "workspace_cache-v1.sqlite"
 
     async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         assert aws.manifest_storage.path == manifest_sqlite_db

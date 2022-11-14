@@ -66,7 +66,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
-            raise BlockNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
+            raise BlockNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
         allowed_roles: Tuple[RealmRole, ...]
         if operation_kind == operation_kind.DATA_READ:
@@ -91,7 +91,7 @@ class MemoryBlockComponent(BaseBlockComponent):
             pass
         # Access is not allowed while in maintenance
         elif realm.status.in_maintenance:
-            raise BlockInMaintenanceError(f"Realm `{realm_id.str}` is currently under maintenance")
+            raise BlockInMaintenanceError(f"Realm `{realm_id.hex}` is currently under maintenance")
 
     async def read(
         self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID

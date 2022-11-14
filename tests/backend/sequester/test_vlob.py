@@ -242,7 +242,7 @@ async def test_webhook_vlob_create_update(
             # Extract url params
             params = parse_qs(urlsplit(args[0]).query)
             assert coolorg.organization_id.str == params["organization_id"][0]
-            assert service.service_id.str == params["service_id"][0]
+            assert service.service_id.hex == params["service_id"][0]
             # Extract http data
             assert expected_sequester_data == kwargs["data"]
             # Reset
@@ -296,7 +296,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
         )
         assert isinstance(rep, VlobCreateRepTimeout)
         caplog.assert_occured_once(
-            f"[warning  ] Cannot reach webhook server    [parsec.backend.vlob] service_id={service.service_id.str} service_label=TestWebhookService"
+            f"[warning  ] Cannot reach webhook server    [parsec.backend.vlob] service_id={service.service_id.hex} service_label=TestWebhookService"
         )
         caplog.clear()
 
@@ -310,7 +310,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
         )
         assert isinstance(rep, VlobUpdateRepTimeout)
         caplog.assert_occured_once(
-            f"[warning  ] Cannot reach webhook server    [parsec.backend.vlob] service_id={service.service_id.str} service_label=TestWebhookService"
+            f"[warning  ] Cannot reach webhook server    [parsec.backend.vlob] service_id={service.service_id.hex} service_label=TestWebhookService"
         )
         caplog.clear()
 
@@ -330,7 +330,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
         )
         assert isinstance(rep, VlobCreateRepTimeout)
         caplog.assert_occured_once(
-            f"[warning  ] Invalid HTTP status returned by webhook [parsec.backend.vlob] service_id={service.service_id.str} service_label=TestWebhookService status=405"
+            f"[warning  ] Invalid HTTP status returned by webhook [parsec.backend.vlob] service_id={service.service_id.hex} service_label=TestWebhookService status=405"
         )
         caplog.clear()
 
@@ -344,7 +344,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
         )
         assert isinstance(rep, VlobUpdateRepTimeout)
         caplog.assert_occured_once(
-            f"[warning  ] Invalid HTTP status returned by webhook [parsec.backend.vlob] service_id={service.service_id.str} service_label=TestWebhookService status=405"
+            f"[warning  ] Invalid HTTP status returned by webhook [parsec.backend.vlob] service_id={service.service_id.hex} service_label=TestWebhookService status=405"
         )
         caplog.clear()
 
@@ -401,7 +401,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             check_rep=False,
         )
         caplog.assert_occured_once(
-            f"[warning  ] Invalid rejection reason body returned by webhook [parsec.backend.vlob] body=b'not a json' service_id={service.service_id.str} service_label=TestWebhookService"
+            f"[warning  ] Invalid rejection reason body returned by webhook [parsec.backend.vlob] body=b'not a json' service_id={service.service_id.hex} service_label=TestWebhookService"
         )
         caplog.clear()
         assert isinstance(rep, VlobCreateRepRejectedBySequesterService)
@@ -418,7 +418,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             check_rep=False,
         )
         caplog.assert_occured_once(
-            f"[warning  ] Invalid rejection reason body returned by webhook [parsec.backend.vlob] body=b'not a json' service_id={service.service_id.str} service_label=TestWebhookService"
+            f"[warning  ] Invalid rejection reason body returned by webhook [parsec.backend.vlob] body=b'not a json' service_id={service.service_id.hex} service_label=TestWebhookService"
         )
         caplog.clear()
         assert isinstance(rep, VlobUpdateRepRejectedBySequesterService)

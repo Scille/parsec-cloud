@@ -22,9 +22,7 @@ use crate::{
     api_crypto,
     api_crypto::{HashDigest, PublicKey},
     enumerate::{InvitationEmailSentStatus, InvitationType},
-    ids::{HumanHandle, UserID},
-    invite,
-    invite::InvitationToken,
+    ids::{HumanHandle, InvitationToken, UserID},
     protocol::gen_rep,
     time::DateTime,
 };
@@ -351,7 +349,7 @@ impl InviteNewRepOk {
     #[getter]
     fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
         match &_self.as_ref().0 {
-            invite_new::Rep::Ok { token, .. } => Ok(invite::InvitationToken(*token)),
+            invite_new::Rep::Ok { token, .. } => Ok(InvitationToken(*token)),
             _ => Err(PyAttributeError::new_err("No attribute token")),
         }
     }
@@ -399,7 +397,7 @@ impl InviteDeleteReq {
 
     #[getter]
     fn token(&self) -> PyResult<InvitationToken> {
-        Ok(invite::InvitationToken(self.0.token))
+        Ok(InvitationToken(self.0.token))
     }
 
     #[getter]
@@ -692,7 +690,7 @@ impl Invite1GreeterWaitPeerReq {
 
     #[getter]
     fn token(&self) -> PyResult<InvitationToken> {
-        Ok(invite::InvitationToken(self.0.token))
+        Ok(InvitationToken(self.0.token))
     }
 
     #[getter]
@@ -832,7 +830,7 @@ impl Invite2aGreeterGetHashedNonceReq {
 
     #[getter]
     fn token(&self) -> PyResult<InvitationToken> {
-        Ok(invite::InvitationToken(self.0.token))
+        Ok(InvitationToken(self.0.token))
     }
 }
 
@@ -957,7 +955,7 @@ impl Invite2bGreeterSendNonceReq {
 
     #[getter]
     fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
-        Ok(invite::InvitationToken(_self.0.token))
+        Ok(InvitationToken(_self.0.token))
     }
 
     #[getter]
@@ -1076,7 +1074,7 @@ impl Invite3aGreeterWaitPeerTrustReq {
 
     #[getter]
     fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
-        Ok(invite::InvitationToken(_self.0.token))
+        Ok(InvitationToken(_self.0.token))
     }
 }
 
@@ -1180,7 +1178,7 @@ impl Invite3bGreeterSignifyTrustReq {
 
     #[getter]
     fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
-        Ok(invite::InvitationToken(_self.0.token))
+        Ok(InvitationToken(_self.0.token))
     }
 }
 
@@ -1299,7 +1297,7 @@ impl Invite4GreeterCommunicateReq {
 
     #[getter]
     fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
-        Ok(invite::InvitationToken(_self.0.token))
+        Ok(InvitationToken(_self.0.token))
     }
 
     #[getter]

@@ -195,7 +195,7 @@ async def extract_sequestered_data_and_proceed_webhook(
                 url=f"{service.webhook_url}",
                 url_params={
                     "organization_id": organization_id.str,
-                    "service_id": service.service_id.str,
+                    "service_id": service.service_id.hex,
                 },
                 method="POST",
                 data=sequester_data,
@@ -211,7 +211,7 @@ async def extract_sequestered_data_and_proceed_webhook(
                 except (json.JSONDecodeError, ValueError):
                     logger.warning(
                         "Invalid rejection reason body returned by webhook",
-                        service_id=service.service_id.str,
+                        service_id=service.service_id.hex,
                         service_label=service.service_label,
                         body=raw_body,
                     )
@@ -226,7 +226,7 @@ async def extract_sequestered_data_and_proceed_webhook(
             else:
                 logger.warning(
                     "Invalid HTTP status returned by webhook",
-                    service_id=service.service_id.str,
+                    service_id=service.service_id.hex,
                     service_label=service.service_label,
                     status=exc.code,
                     exc_info=exc,
@@ -239,7 +239,7 @@ async def extract_sequestered_data_and_proceed_webhook(
         except urllib.error.URLError as exc:
             logger.warning(
                 "Cannot reach webhook server",
-                service_id=service.service_id.str,
+                service_id=service.service_id.hex,
                 service_label=service.service_label,
                 exc_info=exc,
             )
