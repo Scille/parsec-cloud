@@ -1,2 +1,0 @@
-Make CLI case insensitive on option `--log-level` & `--log-format`.
-Thus allowing to provide the argument in upper or lower case.
