@@ -403,7 +403,7 @@ class UserGreetInProgress4Ctx:
         # Invitation deletion is not strictly necessary (enrollment has succeeded
         # anyway) so it's no big deal if something goes wrong before it can be
         # done (and it can be manually deleted from invitation list).
-        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED())
+        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -474,4 +474,4 @@ class DeviceGreetInProgress4Ctx:
         # Invitation deletion is not strictly necessary (enrollment has succeeded
         # anyway) so it's no big deal if something goes wrong before it can be
         # done (and it can be manually deleted from invitation list).
-        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED())
+        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)

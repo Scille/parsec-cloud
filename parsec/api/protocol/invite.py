@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from enum import Enum
 from typing import Type
 from marshmallow.fields import Field
 
 from parsec._parsec import (
+    InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationStatus,
     InvitationToken,
@@ -47,6 +47,7 @@ from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.serde import fields
 
 __all__ = (
+    "InvitationDeletedReason",
     "InvitationStatus",
     "InvitationStatusField",
     "InvitationEmailSentStatus",
@@ -81,13 +82,6 @@ InvitationTypeField: Type[Field[InvitationType]] = fields.rust_enum_field_factor
 
 
 invite_new_serializer = ApiCommandSerializer(InviteNewReq, InviteNewRep)
-
-
-class InvitationDeletedReason(Enum):
-    FINISHED = "FINISHED"
-    CANCELLED = "CANCELLED"
-    ROTTEN = "ROTTEN"
-
 
 invite_delete_serializer = ApiCommandSerializer(InviteDeleteReq, InviteDeleteRep)
 
