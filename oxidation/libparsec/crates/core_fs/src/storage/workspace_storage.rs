@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use regex::Regex;
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
@@ -11,7 +10,7 @@ use std::{
 use libparsec_client_types::{
     LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest,
 };
-use libparsec_types::{BlockID, ChunkID, DateTime, EntryID, FileDescriptor};
+use libparsec_types::{BlockID, ChunkID, DateTime, EntryID, FileDescriptor, Regex};
 
 use super::{
     chunk_storage::ChunkStorage,
@@ -27,6 +26,12 @@ use crate::{
 };
 
 pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
+
+lazy_static::lazy_static! {
+    pub static ref FAILSAFE_PATTERN_FILTER: Regex = {
+        Regex::from_regex_str("^\\b$").expect("Must be a valid regex")
+    };
+}
 
 #[derive(Default, Clone)]
 struct Locker<T: Eq + Hash>(Arc<Mutex<HashMap<T, Arc<Mutex<()>>>>>);
@@ -79,6 +84,7 @@ impl WorkspaceStorage {
         data_base_dir: impl AsRef<Path>,
         device: LocalDevice,
         workspace_id: EntryID,
+        prevent_sync_pattern: Regex,
         cache_size: u64,
     ) -> FSResult<Self> {
         let data_path =
@@ -106,8 +112,8 @@ impl WorkspaceStorage {
 
         let manifest_storage = ManifestStorage::new(
             device.local_symkey.clone(),
-            Arc::new(Mutex::new(data_conn.reopen()?)),
             workspace_id,
+            Arc::new(Mutex::new(data_conn.reopen()?)),
         )?;
 
         let chunk_storage = ChunkStorage::new(
@@ -115,9 +121,6 @@ impl WorkspaceStorage {
             Arc::new(Mutex::new(data_conn)),
             device.time_provider.clone(),
         )?;
-
-        let (prevent_sync_pattern, prevent_sync_pattern_fully_applied) =
-            manifest_storage.get_prevent_sync_pattern()?;
 
         // Instantiate workspace storage
         let instance = Self {
@@ -131,13 +134,13 @@ impl WorkspaceStorage {
             chunk_storage,
             manifest_storage,
             // Pattern attributes
-            prevent_sync_pattern: Arc::new(Mutex::new(prevent_sync_pattern)),
-            prevent_sync_pattern_fully_applied: Arc::new(Mutex::new(
-                prevent_sync_pattern_fully_applied,
-            )),
+            prevent_sync_pattern: Arc::new(Mutex::new(prevent_sync_pattern.clone())),
+            prevent_sync_pattern_fully_applied: Arc::new(Mutex::new(false)),
             // Locking structure
             entry_locks: Locker::default(),
         };
+
+        instance.set_prevent_sync_pattern(&prevent_sync_pattern)?;
 
         instance.block_storage.cleanup()?;
         instance.block_storage.run_vacuum()?;
@@ -173,7 +176,6 @@ impl WorkspaceStorage {
             .lock()
             .expect("Mutex is poisoned")
             .clone()
-            .into()
     }
 
     pub fn get_prevent_sync_pattern_fully_applied(&self) -> bool {
@@ -357,26 +359,26 @@ impl WorkspaceStorage {
 
     // Prevent sync pattern interface
 
-    fn load_prevent_sync_pattern(&self) -> FSResult<()> {
-        (
-            *self.prevent_sync_pattern.lock().expect("Mutex is poisoned"),
-            *self
-                .prevent_sync_pattern_fully_applied
-                .lock()
-                .expect("Mutex is poisoned"),
-        ) = self.manifest_storage.get_prevent_sync_pattern()?;
-        Ok(())
+    fn load_prevent_sync_pattern(&self, re: &Regex, fully_applied: bool) {
+        *self.prevent_sync_pattern.lock().expect("Mutex is poisoned") = re.clone();
+        *self
+            .prevent_sync_pattern_fully_applied
+            .lock()
+            .expect("Mutex is poisoned") = fully_applied;
     }
 
     pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<()> {
-        self.manifest_storage.set_prevent_sync_pattern(pattern)?;
-        self.load_prevent_sync_pattern()
+        let fully_applied = self.manifest_storage.set_prevent_sync_pattern(pattern)?;
+        self.load_prevent_sync_pattern(pattern, fully_applied);
+        Ok(())
     }
 
     pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<()> {
-        self.manifest_storage
+        let fully_applied = self
+            .manifest_storage
             .mark_prevent_sync_pattern_fully_applied(pattern)?;
-        self.load_prevent_sync_pattern()
+        self.load_prevent_sync_pattern(pattern, fully_applied);
+        Ok(())
     }
 
     pub fn get_local_block_ids(&self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
@@ -562,7 +564,7 @@ pub fn workspace_storage_non_speculative_init(
             .expect("Non-Utf-8 character found in data_path"),
     )?;
     let conn = Arc::new(Mutex::new(conn));
-    let manifest_storage = ManifestStorage::new(device.local_symkey.clone(), conn, workspace_id)?;
+    let manifest_storage = ManifestStorage::new(device.local_symkey.clone(), workspace_id, conn)?;
     let timestamp = timestamp.unwrap_or_else(|| device.now());
     let manifest =
         LocalWorkspaceManifest::new(device.device_id, timestamp, Some(workspace_id), false);
@@ -578,7 +580,7 @@ pub fn workspace_storage_non_speculative_init(
 mod tests {
     use crate::conftest::{alice_workspace_storage, TmpWorkspaceStorage};
     use libparsec_client_types::Chunk;
-    use libparsec_types::{Blocksize, DEFAULT_BLOCK_SIZE};
+    use libparsec_types::{Blocksize, Regex, DEFAULT_BLOCK_SIZE};
     use rstest::rstest;
     use std::num::NonZeroU64;
     use tests_fixtures::{alice, tmp_path, Device, TmpPath};
@@ -819,6 +821,7 @@ mod tests {
             Path::new(&db_path),
             alice.local_device(),
             workspace_id,
+            FAILSAFE_PATTERN_FILTER.clone(),
             DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
         )
         .unwrap();
@@ -837,6 +840,7 @@ mod tests {
             Path::new(&db_path),
             alice.local_device(),
             workspace_id,
+            FAILSAFE_PATTERN_FILTER.clone(),
             DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
         )
         .unwrap();
@@ -1122,6 +1126,7 @@ mod tests {
             Path::new(&db_path),
             alice.local_device(),
             EntryID::default(),
+            FAILSAFE_PATTERN_FILTER.clone(),
             *DEFAULT_BLOCK_SIZE,
         )
         .unwrap();
@@ -1144,5 +1149,67 @@ mod tests {
         assert_eq!(aws.block_storage.get_nb_blocks().unwrap(), 1);
         aws.block_storage.clear_all_blocks().unwrap();
         assert_eq!(aws.block_storage.get_nb_blocks().unwrap(), 0);
+    }
+
+    #[rstest]
+    fn test_invalid_regex(tmp_path: TmpPath, alice: &Device) {
+        use crate::storage::manifest_storage::prevent_sync_pattern;
+        use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
+
+        const INVALID_REGEX: &str = "[";
+        let wid = EntryID::default();
+        let valid_regex = Regex::from_regex_str("ok").unwrap();
+
+        let db_dir = tmp_path.join("invalid-regex");
+        let db_path = get_workspace_data_storage_db_path(&db_dir, &alice.local_device(), wid);
+        let conn = SqliteConn::new(db_path.to_str().unwrap()).unwrap();
+        let conn = Arc::new(Mutex::new(conn));
+
+        let workspace_storage = WorkspaceStorage::new(
+            db_dir.clone(),
+            alice.local_device(),
+            wid,
+            FAILSAFE_PATTERN_FILTER.clone(),
+            *DEFAULT_BLOCK_SIZE,
+        )
+        .unwrap();
+
+        // Ensure the entry is present.
+        workspace_storage
+            .set_prevent_sync_pattern(&valid_regex)
+            .unwrap();
+
+        // Corrupt the db with an invalid regex.
+        conn.lock()
+            .unwrap()
+            .connection
+            .exclusive_transaction(|conn| {
+                diesel::update(
+                    prevent_sync_pattern::table.filter(
+                        prevent_sync_pattern::_id
+                            .eq(0)
+                            .and(prevent_sync_pattern::pattern.ne(INVALID_REGEX)),
+                    ),
+                )
+                .set((
+                    prevent_sync_pattern::pattern.eq(INVALID_REGEX),
+                    prevent_sync_pattern::fully_applied.eq(false),
+                ))
+                .execute(conn)
+            })
+            .unwrap();
+
+        drop(workspace_storage);
+        drop(conn);
+
+        let workspace_storage = WorkspaceStorage::new(
+            db_dir,
+            alice.local_device(),
+            wid,
+            FAILSAFE_PATTERN_FILTER.clone(),
+            *DEFAULT_BLOCK_SIZE,
+        )
+        .unwrap();
+        workspace_storage.get_prevent_sync_pattern();
     }
 }

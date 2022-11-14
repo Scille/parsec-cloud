@@ -1270,6 +1270,7 @@ name = "libparsec_core_fs"
 version = "0.0.0"
 dependencies = [
  "diesel",
+ "lazy_static",
  "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_types",
