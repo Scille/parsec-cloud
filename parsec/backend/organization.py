@@ -6,6 +6,7 @@ from typing import Any, List, Dict, Optional, Tuple, Union
 from secrets import token_hex
 
 from parsec._parsec import (
+    ClientType,
     DateTime,
     OrganizationStatsReq,
     OrganizationStatsRep,
@@ -34,7 +35,6 @@ from parsec.api.protocol import (
     apiv1_organization_bootstrap_serializer,
 )
 from parsec.backend.utils import (
-    ClientType,
     catch_protocol_errors,
     api,
     Unset,

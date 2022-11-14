@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Awaitable, Sequence, Dict, Callable, Type
 
 from parsec._parsec import (
     AuthenticatedAnyCmdReq,
+    ClientType,
     InvitedAnyCmdReq,
 )
 
@@ -32,8 +33,6 @@ ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
 
 # Enumeration used to check access rights for a given kind of operation
 OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
-
-from parsec.api.protocol.base import ClientType
 
 
 # TODO: temporary hack that should be removed once all cmds are typed, at this point we

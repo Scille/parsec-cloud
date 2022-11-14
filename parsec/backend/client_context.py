@@ -6,7 +6,7 @@ from typing import Optional, Set
 from structlog import BoundLogger, get_logger
 import trio
 
-from parsec._parsec import EventsListenRep
+from parsec._parsec import ClientType, EventsListenRep
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBusConnectionContext
 from parsec.api.version import ApiVersion, API_V2_VERSION
@@ -20,7 +20,6 @@ from parsec.api.protocol import (
     DeviceLabel,
     UserProfile,
 )
-from parsec.backend.utils import ClientType
 from parsec.backend.invite import Invitation
 
 

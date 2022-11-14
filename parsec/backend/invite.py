@@ -18,6 +18,7 @@ from structlog import get_logger
 
 from parsec._parsec import (
     BackendInvitationAddr,
+    ClientType,
     InvitationEmailSentStatus,
     InvitationType,
     InvitationDeletedReason,
@@ -118,7 +119,7 @@ from parsec.api.protocol import (
 )
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.templates import get_template
-from parsec.backend.utils import catch_protocol_errors, api, ClientType, api_typed_msg_adapter
+from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 from parsec.backend.config import (
     BackendConfig,
     EmailConfig,

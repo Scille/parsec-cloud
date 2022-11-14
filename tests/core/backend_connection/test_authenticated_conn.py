@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 from typing import Optional
-from parsec.core.fs.userfs.userfs import UserFS
-from parsec.event_bus import EventBus
 
 import pytest
 import trio
 
 from parsec._parsec import (
     AuthenticatedPingRepOk,
+    ClientType,
     EventsListenRepOkRealmRolesUpdated,
     EventsListenRepOkRealmVlobsUpdated,
     RealmID,
@@ -16,8 +15,6 @@ from parsec._parsec import (
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, VlobID
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.utils import ClientType
-from parsec.core.types import OrganizationConfig
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnStatus,
@@ -25,6 +22,9 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
 )
 from parsec.core.core_events import CoreEvent
+from parsec.core.fs.userfs.userfs import UserFS
+from parsec.core.types import OrganizationConfig
+from parsec.event_bus import EventBus
 
 from tests.common import real_clock_timeout
 
