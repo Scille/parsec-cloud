@@ -79,7 +79,7 @@ def _patch_signals() -> None:
 
 
 # Mypy reports a missing return statement, hovewer it's not possible to exit this
-# function without raising an exception or sucessfully return
+# function without raising an exception or successfully return
 async def _bootstrap_mountpoint(base_mountpoint_path: Path, workspace_fs: WorkspaceFS) -> Tuple[Path, int]:  # type: ignore[return]
     # Find a suitable path where to mount the workspace. The check we are doing
     # here are not atomic (and the mount operation is not itself atomic anyway),

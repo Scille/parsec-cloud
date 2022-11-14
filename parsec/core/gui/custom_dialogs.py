@@ -80,7 +80,7 @@ def bring_process_window_to_top(
         yield
         return
 
-    def _bring_to_top(pid_target):
+    def _bring_to_top(pid_target: int) -> bool:
         import ctypes
         from ctypes import wintypes as win
 
@@ -90,8 +90,11 @@ def bring_process_window_to_top(
         set_foreground_window = ctypes.windll.user32.SetForegroundWindow
         callback_type = ctypes.WINFUNCTYPE(win.BOOL, win.HWND, win.LPARAM)
 
+        # Does the callback finished successfully?
+        success = False
+
         # Callback enumerating the windows
-        def enum_windows_callback(hwnd, param):
+        def enum_windows_callback(hwnd: win.HWND, param: object) -> bool:
             nonlocal success
             # Get pid of the current window
             pid = win.DWORD()
@@ -104,7 +107,6 @@ def bring_process_window_to_top(
             return False
 
         # Run the callback in a loop
-        success = False
         deadline = time.monotonic() + timeout
         callback = callback_type(enum_windows_callback)
         while not success:

@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from pathlib import Path
+from pathlib import Path, PurePath
 
 import trio
 import logging
 import sys
 
 from structlog import get_logger
-from typing import Any, AsyncGenerator, Sequence, Optional, Callable, Dict, Tuple, cast
+from typing import Any, AsyncGenerator, Sequence, Optional, Callable, Union, cast
 from importlib import __import__ as import_function
 from subprocess import CalledProcessError
 from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
@@ -35,7 +35,7 @@ from parsec.core.win_registry import cleanup_parsec_drive_icons
 
 RunnerType = Callable[
     [UserFS, WorkspaceFS, Path, dict[Any, Any], EventBus],
-    _AsyncGeneratorContextManager[Path],
+    _AsyncGeneratorContextManager[Union[Path, PurePath]],
 ]
 
 # Importing winfspy can take some time (about 0.4 seconds)
@@ -98,8 +98,8 @@ class MountpointManager:
         self.config = config
         self._runner = runner
         self._nursery = nursery
-        self._mountpoint_tasks: Dict[Tuple[EntryID, Optional[DateTime]], TaskStatus[Any]] = {}
-        self._timestamped_workspacefs: Dict[EntryID, Dict[DateTime, WorkspaceFSTimestamped]] = {}
+        self._mountpoint_tasks: dict[tuple[EntryID, Optional[DateTime]], TaskStatus[Any]] = {}
+        self._timestamped_workspacefs: dict[EntryID, dict[DateTime, WorkspaceFSTimestamped]] = {}
 
         if sys.platform == "win32":
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
@@ -170,7 +170,7 @@ class MountpointManager:
         workspace_id = workspace_fs.workspace_id
         key = workspace_id, timestamp
 
-        async def curried_runner(task_status: TaskStatus[Path]) -> None:
+        async def curried_runner(task_status: TaskStatus[PurePath]) -> None:
             event_kwargs = {}
 
             try:
@@ -284,7 +284,7 @@ class MountpointManager:
 
     async def get_timestamped_mounted(
         self,
-    ) -> dict[Tuple[EntryID, Optional[DateTime]], WorkspaceFSTimestamped]:
+    ) -> dict[tuple[EntryID, Optional[DateTime]], WorkspaceFSTimestamped]:
         return {
             # workspace_id_and_ts[1] will never be `None` because of the filter check
             workspace_id_and_ts: self._get_workspace_timestamped(*workspace_id_and_ts)  # type: ignore[arg-type]
