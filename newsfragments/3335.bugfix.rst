@@ -1,1 +1,0 @@
-The device instance now gets logged off when an error occurs due to the disk being full
