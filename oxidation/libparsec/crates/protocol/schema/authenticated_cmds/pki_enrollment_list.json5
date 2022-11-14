@@ -29,7 +29,7 @@
                 "type": "struct",
                 "fields": {
                     "enrollment_id": {
-                        "type": "UUID"
+                        "type": "EnrollmentID"
                     },
                     // Signature should be checked before loading.
                     "submit_payload": {
@@ -78,7 +78,7 @@
                 "type": "struct",
                 "fields": {
                     "enrollment_id": {
-                        "type": "UUID"
+                        "type": "EnrollmentID"
                     },
                     // Signature should be checked before loading.
                     "submit_payload": {

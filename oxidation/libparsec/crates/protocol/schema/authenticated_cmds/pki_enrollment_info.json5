@@ -9,7 +9,7 @@
             "cmd": "pki_enrollment_info",
             "fields": {
                 "enrollment_id": {
-                    "type": "UUID"
+                    "type": "EnrollmentID"
                 }
             }
         },
@@ -95,7 +95,7 @@
             "cmd": "pki_enrollment_info",
             "fields": {
                 "enrollment_id": {
-                    "type": "UUID"
+                    "type": "EnrollmentID"
                 }
             }
         },

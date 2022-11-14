@@ -37,6 +37,7 @@ from parsec._parsec_pyi.ids import (
     UserID,
     RealmID,
     SequesterServiceID,
+    EnrollmentID,
 )
 
 from parsec._parsec_pyi.invite import (
@@ -502,6 +503,7 @@ __all__ = [
     "UserID",
     "RealmID",
     "SequesterServiceID",
+    "EnrollmentID",
     # Invite
     "InvitationToken",
     "SASCode",
