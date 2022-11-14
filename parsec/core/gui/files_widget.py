@@ -939,6 +939,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 files.extend(child_files)
                 errors.extend(child_errors)
                 total_size += child_size
+            if not files and not errors:
+                # Importing an empty dir
+                files.append((source, dest / source.name))
             return files, total_size, errors
 
         # Source is not available (e.g `PermissionDenied`)
@@ -968,6 +971,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         errors = []
         current_size = 0
         assert isinstance(loading_dialog.center_widget, LoadingWidget)
+        assert self.workspace_fs is not None
         loading_dialog.center_widget.set_progress(current_size)
 
         # Loop over files to import
@@ -975,7 +979,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
             # Import the corresponding file and update the current size
             try:
-                current_size = await self._import_one(source, dest, loading_dialog, current_size)
+                if await source.is_file():
+                    current_size = await self._import_one(
+                        source, dest, loading_dialog, current_size
+                    )
+                else:
+                    await self.workspace_fs.mkdir(dest, parents=True, exist_ok=True)
 
             # Register permission errors and keep going
             except PermissionError as exc:
