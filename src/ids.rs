@@ -135,6 +135,14 @@ crate::binding_utils::gen_proto!(InvitationToken, __richcmp__, eq);
 crate::binding_utils::gen_proto!(InvitationToken, __hash__);
 gen_uuid!(InvitationToken);
 
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct EnrollmentID(pub libparsec::types::EnrollmentID);
+
+crate::binding_utils::gen_proto!(EnrollmentID, __repr__);
+crate::binding_utils::gen_proto!(EnrollmentID, __richcmp__, eq);
+gen_uuid!(EnrollmentID);
+
 // Other ids
 
 #[pyclass]
