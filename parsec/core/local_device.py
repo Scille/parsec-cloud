@@ -233,7 +233,7 @@ def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:
     return get_devices_dir(config_dir) / f"{device.slughash}{DEVICE_FILE_SUFFIX}"
 
 
-def get_recovery_device_file_name(recovery_device: LocalDevice) -> str:
+def get_recovery_device_file_name(recovery_device: LocalDevice | AvailableDevice) -> str:
     return f"parsec-recovery-{recovery_device.organization_id.str}-{recovery_device.short_user_display}{RECOVERY_DEVICE_FILE_SUFFIX}"
 
 
