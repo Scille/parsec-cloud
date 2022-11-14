@@ -148,7 +148,7 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
 
     def __init__(
         self,
-        pending: PkiEnrollmentAccepterValidSubmittedCtx,
+        pending: PkiEnrollmentAccepterValidSubmittedCtx | PkiEnrollmentAccepterInvalidSubmittedCtx,
     ) -> None:
         super().__init__()
         self.setupUi(self)
@@ -279,9 +279,6 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
             self.label_empty_list.show()
             return
         for pending in pendings:
-            assert isinstance(
-                pending, PkiEnrollmentAccepterValidSubmittedCtx
-            ), "Got an invalid enrollment request"
             eb = EnrollmentButton(pending)
             eb.accept_clicked.connect(self._on_accept_clicked)
             eb.reject_clicked.connect(self._on_reject_clicked)
@@ -305,6 +302,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 )
 
         enrollment_button.set_buttons_enabled(False)
+        assert isinstance(enrollment_button.pending, PkiEnrollmentAccepterValidSubmittedCtx)
         AcceptCheckInfoWidget.show_modal(
             enrollment_button.pending,
             self,
