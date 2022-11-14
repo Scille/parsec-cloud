@@ -29,6 +29,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<addrs::BackendOrganizationFileLinkAddr>()?;
     m.add_class::<addrs::BackendInvitationAddr>()?;
     m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
+    m.add_function(wrap_pyfunction!(addrs::export_root_verify_key, m)?)?;
 
     m.add_class::<api_crypto::HashDigest>()?;
     m.add_class::<api_crypto::SigningKey>()?;
@@ -36,6 +37,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::SecretKey>()?;
     m.add_class::<api_crypto::PrivateKey>()?;
     m.add_class::<api_crypto::PublicKey>()?;
+    m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
 
     m.add_class::<certif::UserCertificate>()?;
     m.add_class::<certif::RevokedUserCertificate>()?;

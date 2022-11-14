@@ -2,10 +2,18 @@
 
 use serde::Deserialize;
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::secretbox::{
-    gen_nonce, open, seal,
-    xsalsa20poly1305::{gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES},
-    Nonce,
+use sodiumoxide::{
+    crypto::{
+        pwhash::argon2i13::{
+            derive_key, Salt, MEMLIMIT_INTERACTIVE, OPSLIMIT_INTERACTIVE, SALTBYTES,
+        },
+        secretbox::{
+            gen_nonce, open, seal,
+            xsalsa20poly1305::{gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES},
+            Nonce,
+        },
+    },
+    randombytes::randombytes,
 };
 
 use crate::CryptoError;
@@ -66,6 +74,26 @@ impl SecretKey {
             out.set_len(digest_size);
             out
         }
+    }
+
+    pub fn generate_salt() -> Vec<u8> {
+        randombytes(SALTBYTES)
+    }
+
+    pub fn from_password(password: &str, salt: &[u8]) -> Self {
+        let mut key = [0; KEYBYTES];
+        let salt = Salt::from_slice(&salt).expect("Invalid salt");
+
+        derive_key(
+            &mut key,
+            password.as_bytes(),
+            &salt,
+            OPSLIMIT_INTERACTIVE,
+            MEMLIMIT_INTERACTIVE,
+        )
+        .expect("Can't fail");
+
+        Self::from(key)
     }
 }
 

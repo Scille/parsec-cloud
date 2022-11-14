@@ -4,8 +4,10 @@ mod hash;
 mod private;
 mod secret;
 mod sign;
+mod utils;
 
 pub use hash::*;
 pub use private::*;
 pub use secret::*;
 pub use sign::*;
+pub use utils::*;

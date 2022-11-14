@@ -10,3 +10,4 @@ pub use hash::*;
 pub use private::*;
 pub use secret::*;
 pub use sign::*;
+pub use utils::*;

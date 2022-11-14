@@ -5,7 +5,6 @@ import attr
 from typing import Any, Type, TypeVar, Union, Optional, List, Tuple
 
 from parsec.crypto import (
-    generate_nonce,
     SecretKey,
     PrivateKey,
     SigningKey,
@@ -35,6 +34,7 @@ from parsec.core.invite.exceptions import (
 from parsec._parsec import (
     BackendActionAddr,
     BackendAddr,
+    generate_nonce,
     InvitationType,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,

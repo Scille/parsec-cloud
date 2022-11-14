@@ -5,6 +5,7 @@ import attr
 from typing import Any, Optional, List, Tuple, Type
 
 from parsec._parsec import (
+    generate_nonce,
     InvitationDeletedReason,
     Invite4GreeterCommunicateRepOk,
     Invite2aGreeterGetHashedNonceRepOk,
@@ -16,7 +17,6 @@ from parsec._parsec import (
     Invite1GreeterWaitPeerRepOk,
 )
 from parsec.crypto import (
-    generate_nonce,
     SecretKey,
     PrivateKey,
     HashDigest,

@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import DateTime
+from parsec._parsec import export_root_verify_key, DateTime
 from parsec.api.protocol import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.api.protocol.types import DeviceLabel, HumanHandle
-from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
+from parsec.crypto import SigningKey, PrivateKey, SecretKey
 from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 
 

@@ -10,7 +10,7 @@ use pyo3::{
 import_exception!(nacl.exceptions, CryptoError);
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct HashDigest(pub libparsec::crypto::HashDigest);
 
 crate::binding_utils::gen_proto!(HashDigest, __repr__);
@@ -27,7 +27,7 @@ impl HashDigest {
     }
 
     #[staticmethod]
-    fn from_data(py: Python, data: PyObject) -> PyResult<HashDigest> {
+    fn from_data(py: Python, data: PyObject) -> PyResult<Self> {
         let bytes = match data.extract::<&PyByteArray>(py) {
             // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
             // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
@@ -49,7 +49,7 @@ impl HashDigest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct SigningKey(pub libparsec::crypto::SigningKey);
 
 crate::binding_utils::gen_proto!(SigningKey, __repr__);
@@ -94,7 +94,7 @@ impl SigningKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct VerifyKey(pub libparsec::crypto::VerifyKey);
 
 crate::binding_utils::gen_proto!(VerifyKey, __repr__);
@@ -154,8 +154,8 @@ impl VerifyKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
-pub struct SecretKey(pub libparsec::crypto::SecretKey);
+#[derive(Clone)]
+pub(crate) struct SecretKey(pub libparsec::crypto::SecretKey);
 
 crate::binding_utils::gen_proto!(SecretKey, __repr__);
 crate::binding_utils::gen_proto!(SecretKey, __richcmp__, eq);
@@ -171,8 +171,8 @@ impl SecretKey {
     }
 
     #[classmethod]
-    fn generate(_cls: &PyType) -> PyResult<SecretKey> {
-        Ok(SecretKey(libparsec::crypto::SecretKey::generate()))
+    fn generate(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(libparsec::crypto::SecretKey::generate()))
     }
 
     #[getter]
@@ -180,7 +180,7 @@ impl SecretKey {
         Ok(PyBytes::new(py, self.0.as_ref()))
     }
 
-    pub fn encrypt<'p>(&self, py: Python<'p>, data: PyObject) -> PyResult<&'p PyBytes> {
+    fn encrypt<'p>(&self, py: Python<'p>, data: PyObject) -> PyResult<&'p PyBytes> {
         let bytes = match data.extract::<&PyByteArray>(py) {
             // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
             // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
@@ -191,25 +191,43 @@ impl SecretKey {
         Ok(PyBytes::new(py, &self.0.encrypt(bytes)))
     }
 
-    pub fn decrypt<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
+    fn decrypt<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
         match self.0.decrypt(ciphered) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(err) => Err(CryptoError::new_err(err.to_string())),
         }
     }
 
-    pub fn hmac<'p>(
-        &self,
-        py: Python<'p>,
-        data: &[u8],
-        digest_size: usize,
-    ) -> PyResult<&'p PyBytes> {
+    fn hmac<'p>(&self, py: Python<'p>, data: &[u8], digest_size: usize) -> PyResult<&'p PyBytes> {
         Ok(PyBytes::new(py, &self.0.hmac(data, digest_size)))
+    }
+
+    #[classmethod]
+    fn generate_salt<'py>(_cls: &PyType, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &libparsec::crypto::SecretKey::generate_salt())
+    }
+
+    #[classmethod]
+    fn from_password(_cls: &PyType, password: &str, salt: &[u8]) -> Self {
+        Self(libparsec::crypto::SecretKey::from_password(password, salt))
+    }
+
+    #[classmethod]
+    fn generate_recovery_passphrase(_cls: &PyType) -> (String, Self) {
+        let (passphrase, key) = libparsec::crypto::SecretKey::generate_recovery_passphrase();
+        (passphrase, Self(key))
+    }
+
+    #[classmethod]
+    fn from_recovery_passphrase(_cls: &PyType, passphrase: &str) -> PyResult<Self> {
+        libparsec::crypto::SecretKey::from_recovery_passphrase(passphrase)
+            .map(Self)
+            .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct PrivateKey(pub libparsec::crypto::PrivateKey);
 
 crate::binding_utils::gen_proto!(PrivateKey, __repr__);
@@ -252,7 +270,7 @@ impl PrivateKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct PublicKey(pub libparsec::crypto::PublicKey);
 
 crate::binding_utils::gen_proto!(PublicKey, __repr__);
@@ -282,4 +300,9 @@ impl PublicKey {
     fn encode(&self) -> &[u8] {
         self.0.as_ref()
     }
+}
+
+#[pyfunction]
+pub(crate) fn generate_nonce(py: Python<'_>) -> &PyBytes {
+    PyBytes::new(py, &libparsec::crypto::generate_nonce())
 }
