@@ -494,7 +494,7 @@ def persistent_mockup(monkeypatch, fixtures_customization):
 
 @pytest.fixture
 def data_base_dir(tmp_path: Path) -> Path:
-    return tmp_path / "local_data"
+    return tmp_path / "data"
 
 
 @pytest.fixture
