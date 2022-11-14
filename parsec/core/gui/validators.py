@@ -125,7 +125,7 @@ class EmailValidator(QRegularExpressionValidator):
         # - to get a sensible `QValidator.Intermediate` status
         # - to ban weird-but-valid email addresses such as `example@example.com#` and `a@b.c`
         # However, it might not be able to accurately detect invalid email addresses.
-        # For instance, it used to falsely report `example.@example.com` as a valid email.
+        # For instance, it will falsely report `example@-example.com` as a valid email.
         # It will also report email with excessively long domain names as valid, although they are not.
         # Ultimately, the actual validation is performed by ANDing the results of the regex
         # and the `HumanHandle` constructor, which in turn uses the `email_address_parser` crate.
