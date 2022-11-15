@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Awaitable, Dict, List, Tuple, Union, cast
+from typing import Any, Tuple, List, Union, cast, Awaitable
 
 from parsec._parsec import (
     AuthenticatedPingRep,
@@ -18,6 +18,7 @@ from parsec._parsec import (
     EventsListenRepUnknownStatus,
     EventsSubscribeRep,
     EventsSubscribeRepUnknownStatus,
+    HashDigest,
     HumanFindRep,
     HumanFindRepUnknownStatus,
     InvitationDeletedReason,
@@ -61,6 +62,14 @@ from parsec._parsec import (
     OrganizationConfigRepUnknownStatus,
     OrganizationStatsRep,
     OrganizationStatsRepUnknownStatus,
+    PkiEnrollmentAcceptRep,
+    PkiEnrollmentAcceptRepUnknownStatus,
+    PkiEnrollmentInfoRep,
+    PkiEnrollmentInfoRepUnknownStatus,
+    PkiEnrollmentListRep,
+    PkiEnrollmentListRepUnknownStatus,
+    PkiEnrollmentRejectRep,
+    PkiEnrollmentRejectRepUnknownStatus,
     RealmCreateRep,
     RealmCreateRepBadTimestamp,
     RealmCreateRepUnknownStatus,
@@ -101,68 +110,67 @@ from parsec._parsec import (
     VlobUpdateRep,
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepUnknownStatus,
-    HashDigest,
 )
 from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
-    RealmID,
-    VlobID,
     BlockID,
-    SequesterServiceID,
     InvitationToken,
-    ProtocolError,
     InvitationType,
-    invite_new_serializer,
-    invite_delete_serializer,
-    invite_list_serializer,
-    invite_info_serializer,
+    OrganizationID,
+    ProtocolError,
+    RealmID,
+    SequesterServiceID,
+    UserID,
+    VlobID,
+    apiv1_organization_bootstrap_serializer,
+    authenticated_ping_serializer,
+    block_create_serializer,
+    block_read_serializer,
+    device_create_serializer,
+    events_listen_serializer,
+    events_subscribe_serializer,
+    human_find_serializer,
     invite_1_claimer_wait_peer_serializer,
     invite_1_greeter_wait_peer_serializer,
     invite_2a_claimer_send_hashed_nonce_serializer,
     invite_2a_greeter_get_hashed_nonce_serializer,
-    invite_2b_greeter_send_nonce_serializer,
     invite_2b_claimer_send_nonce_serializer,
+    invite_2b_greeter_send_nonce_serializer,
+    invite_3a_claimer_signify_trust_serializer,
     invite_3a_greeter_wait_peer_trust_serializer,
     invite_3b_claimer_wait_peer_trust_serializer,
     invite_3b_greeter_signify_trust_serializer,
-    invite_3a_claimer_signify_trust_serializer,
-    invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
-    authenticated_ping_serializer,
+    invite_4_greeter_communicate_serializer,
+    invite_delete_serializer,
+    invite_info_serializer,
+    invite_list_serializer,
+    invite_new_serializer,
     invited_ping_serializer,
-    organization_stats_serializer,
-    organization_config_serializer,
-    apiv1_organization_bootstrap_serializer,
-    events_subscribe_serializer,
-    events_listen_serializer,
     message_get_serializer,
-    vlob_read_serializer,
+    organization_config_serializer,
+    organization_stats_serializer,
+    pki_enrollment_accept_serializer,
+    pki_enrollment_list_serializer,
+    pki_enrollment_reject_serializer,
+    realm_create_serializer,
+    realm_finish_reencryption_maintenance_serializer,
+    realm_get_role_certificates_serializer,
+    realm_start_reencryption_maintenance_serializer,
+    realm_status_serializer,
+    realm_update_roles_serializer,
+    user_create_serializer,
+    user_get_serializer,
+    user_revoke_serializer,
     vlob_create_serializer,
-    vlob_update_serializer,
-    vlob_poll_changes_serializer,
     vlob_list_versions_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
-    realm_create_serializer,
-    realm_status_serializer,
-    realm_get_role_certificates_serializer,
-    realm_update_roles_serializer,
-    realm_start_reencryption_maintenance_serializer,
-    realm_finish_reencryption_maintenance_serializer,
-    block_create_serializer,
-    block_read_serializer,
-    user_get_serializer,
-    human_find_serializer,
-    user_create_serializer,
-    user_revoke_serializer,
-    device_create_serializer,
-    pki_enrollment_list_serializer,
-    pki_enrollment_reject_serializer,
-    pki_enrollment_accept_serializer,
+    vlob_poll_changes_serializer,
+    vlob_read_serializer,
+    vlob_update_serializer,
 )
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
@@ -172,12 +180,13 @@ from parsec.core.backend_connection.exceptions import (
 
 
 COMMAND_RETURN_TYPE = Union[
-    dict[str, object],
     AuthenticatedPingRep,
     BlockCreateRep,
     BlockReadRep,
+    DeviceCreateRep,
     EventsListenRep,
     EventsSubscribeRep,
+    HumanFindRep,
     Invite1ClaimerWaitPeerRep,
     Invite1GreeterWaitPeerRep,
     Invite2aClaimerSendHashedNonceRep,
@@ -199,19 +208,21 @@ COMMAND_RETURN_TYPE = Union[
     MessageGetRep,
     OrganizationConfigRep,
     OrganizationStatsRep,
+    PkiEnrollmentAcceptRep,
+    PkiEnrollmentInfoRep,
+    PkiEnrollmentListRep,
+    PkiEnrollmentRejectRep,
     RealmCreateRep,
+    RealmFinishReencryptionMaintenanceRep,
     RealmFinishReencryptionMaintenanceRep,
     RealmGetRoleCertificatesRep,
     RealmStartReencryptionMaintenanceRep,
     RealmStatsRep,
     RealmStatusRep,
     RealmUpdateRolesRep,
-    RealmFinishReencryptionMaintenanceRep,
-    UserGetRep,
     UserCreateRep,
+    UserGetRep,
     UserRevokeRep,
-    DeviceCreateRep,
-    HumanFindRep,
     VlobCreateRep,
     VlobListVersionsRep,
     VlobMaintenanceGetReencryptionBatchRep,
@@ -219,6 +230,7 @@ COMMAND_RETURN_TYPE = Union[
     VlobPollChangesRep,
     VlobReadRep,
     VlobUpdateRep,
+    dict[str, object],
 ]
 
 
@@ -254,7 +266,7 @@ async def _send_cmd(
         raise BackendNotAvailable(exc) from exc
 
     try:
-        rep = serializer.rep_loads(raw_rep)
+        rep: dict[str, Any] = serializer.rep_loads(raw_rep)
 
     except ProtocolError as exc:
         transport.logger.exception("Invalid response data", cmd=cmd, error=exc)
@@ -323,6 +335,10 @@ async def _send_cmd(
             VlobPollChangesRep,
             VlobReadRep,
             VlobUpdateRep,
+            PkiEnrollmentAcceptRep,
+            PkiEnrollmentInfoRep,
+            PkiEnrollmentListRep,
+            PkiEnrollmentRejectRep,
         ),
     ):
         if isinstance(
@@ -372,6 +388,10 @@ async def _send_cmd(
                 VlobPollChangesRepUnknownStatus,
                 VlobReadRepUnknownStatus,
                 VlobUpdateRepUnknownStatus,
+                PkiEnrollmentAcceptRepUnknownStatus,
+                PkiEnrollmentInfoRepUnknownStatus,
+                PkiEnrollmentListRepUnknownStatus,
+                PkiEnrollmentRejectRepUnknownStatus,
             ),
         ):
             if rep.status == "invalid_msg_format":
@@ -477,7 +497,7 @@ async def vlob_create(
     vlob_id: VlobID,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Dict[SequesterServiceID, bytes] | None,
+    sequester_blob: dict[SequesterServiceID, bytes] | None,
 ) -> VlobCreateRep:
     return cast(
         VlobCreateRep,
@@ -523,7 +543,7 @@ async def vlob_update(
     version: int,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Dict[SequesterServiceID, bytes] | None,
+    sequester_blob: dict[SequesterServiceID, bytes] | None,
 ) -> VlobUpdateRep:
     return cast(
         VlobUpdateRep,
@@ -659,7 +679,7 @@ async def realm_start_reencryption_maintenance(
     realm_id: RealmID,
     encryption_revision: int,
     timestamp: DateTime,
-    per_participant_message: Dict[UserID, bytes],
+    per_participant_message: dict[UserID, bytes],
 ) -> RealmStartReencryptionMaintenanceRep:
     return cast(
         RealmStartReencryptionMaintenanceRep,

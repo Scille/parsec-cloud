@@ -6,8 +6,18 @@ import pytest
 from parsec._parsec import (
     DateTime,
     EnrollmentID,
-    UserRevokeRepOk,
     EventsListenRepOkPkiEnrollmentUpdated,
+    PkiEnrollmentAcceptRepActiveUsersLimitReached,
+    PkiEnrollmentAcceptRepAlreadyExists,
+    PkiEnrollmentAcceptRepInvalidCertification,
+    PkiEnrollmentAcceptRepNoLongerAvailable,
+    PkiEnrollmentAcceptRepNotFound,
+    PkiEnrollmentAcceptRepOk,
+    PkiEnrollmentListRepOk,
+    PkiEnrollmentRejectRepNoLongerAvailable,
+    PkiEnrollmentRejectRepNotFound,
+    PkiEnrollmentRejectRepOk,
+    UserRevokeRepOk,
 )
 from parsec.api.data import (
     PkiEnrollmentAnswerPayload,
@@ -270,17 +280,17 @@ async def test_pki_list(anonymous_backend_ws, bob, adam, alice_ws):
 
     rep = await pki_enrollment_list(alice_ws)
 
-    assert rep["status"] == "ok"
-    assert len(rep["enrollments"]) == 1
+    assert isinstance(rep, PkiEnrollmentListRepOk)
+    assert len(rep.enrollments) == 1
 
-    submited_request = rep["enrollments"][0]
-    assert submited_request["enrollment_id"] == bob_request_id
-    assert submited_request["submitter_der_x509_certificate"] == bob_certif
-    assert submited_request["submit_payload_signature"] == bob_certif_signature
+    submited_request = rep.enrollments[0]
+    assert submited_request.enrollment_id == bob_request_id
+    assert submited_request.submitter_der_x509_certificate == bob_certif
+    assert submited_request.submit_payload_signature == bob_certif_signature
     # In theory we should have sumitted_on > ref_time, but clock resolution on Windows is poor
-    assert submited_request["submitted_on"] >= ref_time
+    assert submited_request.submitted_on >= ref_time
 
-    submited_payload = PkiEnrollmentSubmitPayload.load(submited_request["submit_payload"])
+    submited_payload = PkiEnrollmentSubmitPayload.load(submited_request.submit_payload)
     assert submited_payload.verify_key == bob.verify_key
     assert submited_payload.public_key == bob.public_key
     assert submited_payload.requested_device_label == bob.device_label
@@ -292,14 +302,15 @@ async def test_pki_list(anonymous_backend_ws, bob, adam, alice_ws):
     )
     rep = await pki_enrollment_list(alice_ws)
 
-    assert rep["status"] == "ok"
-    assert len(rep["enrollments"]) == 2
+    assert isinstance(rep, PkiEnrollmentListRepOk)
+    assert len(rep.enrollments) == 2
 
 
 @pytest.mark.trio
 async def test_pki_list_empty(alice_ws):
     rep = await pki_enrollment_list(alice_ws)
-    assert rep == {"status": "ok", "enrollments": []}
+    assert isinstance(rep, PkiEnrollmentListRepOk)
+    assert rep.enrollments == []
 
 
 # Test pki_enrollment_accept
@@ -323,7 +334,7 @@ async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_w
     with backend.event_bus.listen() as spy:
         user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, PkiEnrollmentAcceptRepOk)
         await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
     assert await events_listen_nowait(alice_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
@@ -341,7 +352,7 @@ async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_w
     user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-        assert rep["status"] == "no_longer_available"
+        assert isinstance(rep, PkiEnrollmentAcceptRepNoLongerAvailable)
         assert not spy.events
 
 
@@ -351,7 +362,7 @@ async def test_pki_accept_not_found(mallory, alice, alice_ws, backend):
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep["status"] == "not_found"
+    assert isinstance(rep, PkiEnrollmentAcceptRepNotFound)
 
     rep = await backend.user.find_humans(
         organization_id=alice.organization_id, query=mallory.human_handle.email
@@ -366,7 +377,7 @@ async def test_pki_accept_invalid_certificate(mallory, alice, alice_ws, backend)
     # Create certificate with mallory user instead of alice
     _, kwargs = _prepare_accept_reply(admin=mallory, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep["status"] == "invalid_certification"
+    assert isinstance(rep, PkiEnrollmentAcceptRepInvalidCertification)
 
     rep = await backend.user.find_humans(
         organization_id=alice.organization_id, query=mallory.human_handle.email
@@ -384,7 +395,7 @@ async def test_pki_accept_outdated_submit(anonymous_backend_ws, mallory, alice, 
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep["status"] == "no_longer_available"
+    assert isinstance(rep, PkiEnrollmentAcceptRepNoLongerAvailable)
 
     rep = await backend.user.find_humans(
         organization_id=alice.organization_id, query=mallory.human_handle.email
@@ -399,7 +410,7 @@ async def test_pki_accept_user_already_exist(anonymous_backend_ws, bob, alice, a
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=bob)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep["status"] == "already_exists"
+    assert isinstance(rep, PkiEnrollmentAcceptRepAlreadyExists)
 
     # Revoke user
     now = DateTime.now()
@@ -412,7 +423,7 @@ async def test_pki_accept_user_already_exist(anonymous_backend_ws, bob, alice, a
 
     # Accept revoked user
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep["status"] == "ok"
+    assert isinstance(rep, PkiEnrollmentAcceptRepOk)
 
 
 @pytest.mark.trio
@@ -424,7 +435,8 @@ async def test_pki_accept_limit_reached(backend, anonymous_backend_ws, mallory, 
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep["status"] == "active_users_limit_reached"
+
+    assert isinstance(rep, PkiEnrollmentAcceptRepActiveUsersLimitReached)
 
 
 @pytest.mark.trio
@@ -434,11 +446,11 @@ async def test_pki_accept_already_rejected(backend, anonymous_backend_ws, mallor
 
     # Reject
     rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-    assert rep["status"] == "ok"
+    assert isinstance(rep, PkiEnrollmentRejectRepOk)
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep["status"] == "no_longer_available"
+    assert isinstance(rep, PkiEnrollmentAcceptRepNoLongerAvailable)
 
 
 # TODO: test_pki_accept_limit_expired ??
@@ -456,14 +468,14 @@ async def test_pki_reject(backend, anonymous_backend_ws, mallory, alice_ws):
 
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, PkiEnrollmentRejectRepOk)
         await spy.wait_with_timeout(BackendEvent.PKI_ENROLLMENTS_UPDATED)
     assert await events_listen_nowait(alice_ws) == EventsListenRepOkPkiEnrollmentUpdated()
 
     # Reject twice
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-        assert rep["status"] == "no_longer_available"
+        assert isinstance(rep, PkiEnrollmentRejectRepNoLongerAvailable)
         assert not spy.events
 
 
@@ -472,7 +484,7 @@ async def test_pki_reject_not_found(alice_ws):
     request_id = EnrollmentID.new()
 
     rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-    assert rep["status"] == "not_found"
+    assert isinstance(rep, PkiEnrollmentRejectRepNotFound)
 
 
 @pytest.mark.trio
@@ -482,11 +494,11 @@ async def test_pki_reject_already_accepted(anonymous_backend_ws, mallory, alice,
     # Accept request
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, PkiEnrollmentAcceptRepOk)
 
     # Reject accepted request
     rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-    assert rep["status"] == "no_longer_available"
+    assert isinstance(rep, PkiEnrollmentRejectRepNoLongerAvailable)
 
 
 @pytest.mark.trio
@@ -496,7 +508,7 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
 
     user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, PkiEnrollmentAcceptRepOk)
 
     # Pki enrollment is accepted and user not revoked
     payload = PkiEnrollmentSubmitPayload(
@@ -547,7 +559,7 @@ async def test_pki_info(anonymous_backend_ws, mallory, alice, alice_ws):
 
     # Request not found
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
-    assert rep == {"reason": "", "status": "not_found"}
+    assert rep["status"] == "not_found"
 
     # Request submitted
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
@@ -570,7 +582,7 @@ async def test_pki_info_accepted(anonymous_backend_ws, mallory, alice, alice_ws)
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, PkiEnrollmentAcceptRepOk)
 
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
     assert rep["status"] == "ok"
@@ -583,7 +595,7 @@ async def test_pki_info_rejected(anonymous_backend_ws, mallory, alice_ws):
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-    assert rep["status"] == "ok"
+    assert isinstance(rep, PkiEnrollmentRejectRepOk)
 
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
     assert rep["status"] == "ok"
@@ -602,14 +614,14 @@ async def test_pki_complete_sequence(anonymous_backend_ws, mallory, alice_ws, al
         request_id = EnrollmentID.new()
         await _submit_request(anonymous_backend_ws, mallory, request_id=request_id, force=True)
         rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
-        assert rep["status"] == "ok"
+        assert isinstance(rep, PkiEnrollmentRejectRepOk)
 
     async def _accept():
         request_id = EnrollmentID.new()
         await _submit_request(anonymous_backend_ws, mallory, request_id=request_id, force=True)
         user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, PkiEnrollmentAcceptRepOk)
         return user_confirmation.device_id.user_id
 
     async def _revoke(user_id):

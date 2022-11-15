@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Union
+from typing import Iterable, Dict, Union
 from pathlib import Path
 import attr
 
@@ -184,7 +184,7 @@ class LocalPendingEnrollment(BaseLocalData):
             ) from exc
 
     @classmethod
-    def list(cls, config_dir: Path) -> List["LocalPendingEnrollment"]:
+    def list(cls, config_dir: Path) -> list[LocalPendingEnrollment]:
         """Raises: Nothing"""
         result = []
         for path in cls.iter_path(config_dir):

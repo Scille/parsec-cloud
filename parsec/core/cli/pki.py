@@ -113,7 +113,6 @@ async def _pki_enrollment_poll(
     for enrollment_id_len in range(3, 64):
         if len({h.hex[:enrollment_id_len] for h in enrollment_ids}) == len(enrollment_ids):
             break
-
     # Manage pre-selected actions
     preselected_actions = {x: "finalize" for x in finalize}
 
