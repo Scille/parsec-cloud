@@ -7,6 +7,7 @@ mod invite;
 mod message;
 mod organization;
 mod ping;
+mod pki;
 mod realm;
 mod user;
 mod vlob;
@@ -18,6 +19,7 @@ pub use invite::*;
 pub use message::*;
 pub use organization::*;
 pub use ping::*;
+pub use pki::*;
 pub use realm::*;
 pub use user::*;
 pub use vlob::*;
@@ -279,6 +281,39 @@ pub(crate) fn add_mod(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<MessageGetRepOk>()?;
     m.add_class::<MessageGetRepUnknownStatus>()?;
     m.add_class::<Message>()?;
+
+    // Pki commands
+    m.add_class::<PkiEnrollmentAcceptReq>()?;
+    m.add_class::<PkiEnrollmentAcceptRep>()?;
+    m.add_class::<PkiEnrollmentAcceptRepOk>()?;
+    m.add_class::<PkiEnrollmentAcceptRepInvalidPayloadData>()?;
+    m.add_class::<PkiEnrollmentAcceptRepInvalidCertification>()?;
+    m.add_class::<PkiEnrollmentAcceptRepInvalidData>()?;
+    m.add_class::<PkiEnrollmentAcceptRepNotAllowed>()?;
+    m.add_class::<PkiEnrollmentAcceptRepNotFound>()?;
+    m.add_class::<PkiEnrollmentAcceptRepNoLongerAvailable>()?;
+    m.add_class::<PkiEnrollmentAcceptRepAlreadyExists>()?;
+    m.add_class::<PkiEnrollmentAcceptRepActiveUsersLimitReached>()?;
+    m.add_class::<PkiEnrollmentInfoReq>()?;
+    m.add_class::<PkiEnrollmentInfoRep>()?;
+    m.add_class::<PkiEnrollmentInfoRepOk>()?;
+    m.add_class::<PkiEnrollmentInfoRepNotFound>()?;
+    m.add_class::<PkiEnrollmentInfoStatus>()?;
+    m.add_class::<PkiEnrollmentListReq>()?;
+    m.add_class::<PkiEnrollmentListItem>()?;
+    m.add_class::<PkiEnrollmentListRep>()?;
+    m.add_class::<PkiEnrollmentListRepOk>()?;
+    m.add_class::<PkiEnrollmentListRepNotAllowed>()?;
+    m.add_class::<PkiEnrollmentRejectReq>()?;
+    m.add_class::<PkiEnrollmentRejectRep>()?;
+    m.add_class::<PkiEnrollmentRejectRepOk>()?;
+    m.add_class::<PkiEnrollmentRejectRepNotAllowed>()?;
+    m.add_class::<PkiEnrollmentRejectRepNotFound>()?;
+    m.add_class::<PkiEnrollmentRejectRepNoLongerAvailable>()?;
+    m.add_class::<PkiEnrollmentAcceptRepUnknownStatus>()?;
+    m.add_class::<PkiEnrollmentInfoRepUnknownStatus>()?;
+    m.add_class::<PkiEnrollmentListRepUnknownStatus>()?;
+    m.add_class::<PkiEnrollmentRejectRepUnknownStatus>()?;
 
     // Organization
     m.add_class::<OrganizationStatsReq>()?;
