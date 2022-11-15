@@ -48,6 +48,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<data::PkiEnrollmentAnswerPayload>()?;
     m.add_class::<data::PkiEnrollmentSubmitPayload>()?;
 
+    m.add_class::<enumerate::ClientType>()?;
     m.add_class::<enumerate::InvitationEmailSentStatus>()?;
     m.add_class::<enumerate::InvitationDeletedReason>()?;
     m.add_class::<enumerate::InvitationStatus>()?;

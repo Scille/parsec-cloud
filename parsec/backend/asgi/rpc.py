@@ -6,7 +6,7 @@ from typing import NoReturn, Tuple, Optional
 from quart import Response, Blueprint, request, g, current_app
 from nacl.exceptions import CryptoError
 
-from parsec._parsec import DateTime
+from parsec._parsec import ClientType, DateTime
 from parsec.api.version import API_V2_VERSION, API_V3_VERSION, ApiVersion
 from parsec.api.protocol import DeviceID
 from parsec.backend.user import UserNotFoundError
@@ -21,7 +21,6 @@ from parsec.backend.app import BackendApp
 from parsec.backend.client_context import (
     AnonymousClientContext,
     AuthenticatedClientContext,
-    ClientType,
 )
 from parsec.backend.organization import (
     Organization,

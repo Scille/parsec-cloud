@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from enum import Enum
 from parsec._parsec import DateTime
 from typing import (
     Dict,
@@ -36,10 +35,6 @@ __all__ = (
     "BaseRepSchema",
     "CmdSerializer",
     "ApiCommandSerializer",
-)
-
-ClientType = Enum(
-    "ClientType", "AUTHENTICATED INVITED ANONYMOUS APIV1_ANONYMOUS APIV1_ADMINISTRATION"
 )
 
 

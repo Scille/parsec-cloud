@@ -5,7 +5,89 @@ use pyo3::{
     IntoPy, PyObject, PyResult, Python,
 };
 
+use libparsec::client_types;
 use libparsec::protocol::authenticated_cmds::v2::{invite_delete, invite_new};
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct ClientType(pub client_types::ClientType);
+
+crate::binding_utils::gen_proto!(ClientType, __repr__);
+crate::binding_utils::gen_proto!(ClientType, __richcmp__, eq);
+crate::binding_utils::gen_proto!(ClientType, __hash__);
+
+#[pymethods]
+impl ClientType {
+    #[classattr]
+    #[pyo3(name = "AUTHENTICATED")]
+    fn authenticated() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     ClientType(client_types::ClientType::Authenticated).into_py(py)
+                })
+            };
+        };
+
+        &VALUE
+    }
+
+    #[classattr]
+    #[pyo3(name = "INVITED")]
+    fn invited() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     ClientType(client_types::ClientType::Invited).into_py(py)
+                })
+            };
+        };
+
+        &VALUE
+    }
+
+    #[classattr]
+    #[pyo3(name = "ANONYMOUS")]
+    fn anonymous() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     ClientType(client_types::ClientType::Anonymous).into_py(py)
+                })
+            };
+        };
+
+        &VALUE
+    }
+
+    #[classattr]
+    #[pyo3(name = "APIV1_ANONYMOUS")]
+    fn apiv1_anonymous() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     ClientType(client_types::ClientType::Apiv1Anonymous).into_py(py)
+                })
+            };
+        };
+
+        &VALUE
+    }
+
+    #[classattr]
+    #[pyo3(name = "APIV1_ADMINISTRATION")]
+    fn apiv1_administration() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                     ClientType(client_types::ClientType::Apiv1Administration).into_py(py)
+                })
+            };
+        };
+
+        &VALUE
+    }
+}
 
 #[pyclass]
 #[derive(Clone)]

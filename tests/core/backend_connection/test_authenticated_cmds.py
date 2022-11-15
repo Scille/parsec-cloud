@@ -5,8 +5,7 @@ import trio
 import pytest
 from functools import partial
 
-from parsec._parsec import DateTime, AuthenticatedPingRepOk, EventsListenRepOkPinged
-from parsec.backend.utils import ClientType
+from parsec._parsec import ClientType, DateTime, AuthenticatedPingRepOk, EventsListenRepOkPinged
 from parsec.api.transport import Transport, Ping, Pong
 from parsec.api.data import RevokedUserCertificate
 from parsec.api.protocol import ServerHandshake, AUTHENTICATED_CMDS, OrganizationID

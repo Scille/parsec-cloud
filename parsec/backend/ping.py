@@ -7,13 +7,14 @@ from parsec._parsec import (
     AuthenticatedPingReq,
     AuthenticatedPingRep,
     AuthenticatedPingRepOk,
+    ClientType,
     InvitedPingReq,
     InvitedPingRep,
     InvitedPingRepOk,
 )
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.client_context import AuthenticatedClientContext, BaseClientContext
-from parsec.backend.utils import catch_protocol_errors, api, ClientType, api_typed_msg_adapter
+from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 
 
 class BasePingComponent:

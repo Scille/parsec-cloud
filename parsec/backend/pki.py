@@ -4,8 +4,8 @@ from __future__ import annotations
 import attr
 from typing import Any, List
 from uuid import UUID
-from parsec._parsec import DateTime
 
+from parsec._parsec import ClientType, DateTime
 from parsec.api.data import (
     DataError,
     PkiEnrollmentSubmitPayload,
@@ -31,7 +31,7 @@ from parsec.backend.client_context import (
     AuthenticatedClientContext,
     AnonymousClientContext,
 )
-from parsec.backend.utils import api, catch_protocol_errors, ClientType
+from parsec.backend.utils import api, catch_protocol_errors
 from parsec.event_bus import EventBus
 
 

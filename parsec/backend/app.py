@@ -6,8 +6,9 @@ import attr
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
+from parsec._parsec import ClientType
 from parsec.event_bus import EventBus
-from parsec.backend.utils import collect_apis, ClientType
+from parsec.backend.utils import collect_apis
 from parsec.backend.config import BackendConfig
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import (
