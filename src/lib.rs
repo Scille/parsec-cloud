@@ -12,9 +12,9 @@ mod misc;
 mod protocol;
 mod regex;
 mod runtime;
-mod storage;
 mod time;
 mod trustchain;
+mod workspace_storage;
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -77,10 +77,10 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<local_device::UserInfo>()?;
     m.add_class::<local_device::DeviceInfo>()?;
 
-    m.add_class::<storage::WorkspaceStorage>()?;
-    m.add_class::<storage::WorkspaceStorageSnapshot>()?;
+    m.add_class::<workspace_storage::WorkspaceStorage>()?;
+    m.add_class::<workspace_storage::WorkspaceStorageSnapshot>()?;
     m.add_function(wrap_pyfunction!(
-        storage::workspace_storage_non_speculative_init,
+        workspace_storage::workspace_storage_non_speculative_init,
         m
     )?)?;
 

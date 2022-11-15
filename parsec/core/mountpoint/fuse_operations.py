@@ -17,7 +17,7 @@ from structlog import get_logger
 from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
 from parsec.core.fs import FSLocalOperationError, FsPath, FSRemoteOperationError
-from parsec.core.fs.exceptions import FSReadOnlyError
+from parsec.core.fs.exceptions import FSFileNotFoundError, FSReadOnlyError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 from parsec.core.types import FileDescriptor
 
@@ -195,6 +195,8 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
     def getattr(self, path: FsPath, fh: int | None = None) -> dict[str, Any]:
         if self._need_exit:
             fuse_exit()
+            if path == FsPath("/.__shutdown_fuse__"):
+                raise FSFileNotFoundError
 
         stat = self.fs_access.entry_info(path)
 

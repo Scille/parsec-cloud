@@ -6,15 +6,14 @@ use diesel::{
 };
 use std::{
     collections::{hash_map::RandomState, HashMap, HashSet},
-    ops::DerefMut,
-    sync::{Arc, Mutex, MutexGuard},
+    sync::{Arc, Mutex},
 };
 
 use libparsec_client_types::LocalManifest;
 use libparsec_crypto::{CryptoError, SecretKey};
 use libparsec_types::{BlockID, ChunkID, EntryID, Regex};
 
-use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
+use super::local_database::{LockedSqliteConnection, SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::{
     error::{FSError, FSResult},
     storage::chunk_storage::chunks,
@@ -90,7 +89,7 @@ struct NewPreventSyncPattern<'a> {
 #[derive(Clone)]
 pub struct ManifestStorage {
     local_symkey: SecretKey,
-    conn: Arc<Mutex<SqliteConn>>,
+    conn: SqliteConn,
     pub realm_id: EntryID,
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
@@ -124,11 +123,7 @@ impl Drop for ManifestStorage {
 }
 
 impl ManifestStorage {
-    pub fn new(
-        local_symkey: SecretKey,
-        realm_id: EntryID,
-        conn: Arc<Mutex<SqliteConn>>,
-    ) -> FSResult<Self> {
+    pub fn new(local_symkey: SecretKey, realm_id: EntryID, conn: SqliteConn) -> FSResult<Self> {
         let instance = Self {
             local_symkey,
             conn,
@@ -139,45 +134,52 @@ impl ManifestStorage {
         Ok(instance)
     }
 
-    fn get_db_conn(&self) -> MutexGuard<SqliteConn> {
-        self.conn.lock().expect("Mutex is poisoned")
-    }
-
     /// Database initialization
     pub fn create_db(&self) -> FSResult<()> {
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
+        let mut conn = self.conn.lock_connection();
 
-        sql_query(
-            "CREATE TABLE IF NOT EXISTS vlobs (
-              vlob_id BLOB PRIMARY KEY NOT NULL, -- UUID
-              base_version INTEGER NOT NULL,
-              remote_version INTEGER NOT NULL,
-              need_sync BOOLEAN NOT NULL,
-              blob BLOB NOT NULL
-            );",
-        )
-        .execute(&mut conn.connection)
-        .map_err(|e| FSError::CreateTable(format!("vlobs {e}")))?;
+        conn.exec_with_handler(
+            |conn| {
+                sql_query(
+                    "CREATE TABLE IF NOT EXISTS vlobs (
+                    vlob_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                    base_version INTEGER NOT NULL,
+                    remote_version INTEGER NOT NULL,
+                    need_sync BOOLEAN NOT NULL,
+                    blob BLOB NOT NULL
+                    );",
+                )
+                .execute(conn)
+            },
+            |e| FSError::CreateTable(format!("vlobs {e}")),
+        )?;
         // Singleton storing the checkpoint
-        sql_query(
-            "CREATE TABLE IF NOT EXISTS realm_checkpoint (
-              _id INTEGER PRIMARY KEY NOT NULL,
-              checkpoint INTEGER NOT NULL
-            );",
-        )
-        .execute(&mut conn.connection)
-        .map_err(|e| FSError::CreateTable(format!("realm_checkpoint {e}")))?;
+        conn.exec_with_handler(
+            |conn| {
+                sql_query(
+                    "CREATE TABLE IF NOT EXISTS realm_checkpoint (
+                    _id INTEGER PRIMARY KEY NOT NULL,
+                    checkpoint INTEGER NOT NULL
+                    );",
+                )
+                .execute(conn)
+            },
+            |e| FSError::CreateTable(format!("realm_checkpoint {e}")),
+        )?;
         // Singleton storing the prevent_sync_pattern
-        sql_query(
-            "CREATE TABLE IF NOT EXISTS prevent_sync_pattern (
-              _id INTEGER PRIMARY KEY NOT NULL,
-              pattern TEXT NOT NULL,
-              fully_applied BOOLEAN NOT NULL
-            );",
-        )
-        .execute(&mut conn.connection)
-        .map_err(|e| FSError::CreateTable(format!("prevent_sync_pattern {e}")))?;
+        conn.exec_with_handler(
+            |conn| {
+                sql_query(
+                    "CREATE TABLE IF NOT EXISTS prevent_sync_pattern (
+                    _id INTEGER PRIMARY KEY NOT NULL,
+                    pattern TEXT NOT NULL,
+                    fully_applied BOOLEAN NOT NULL
+                    );",
+                )
+                .execute(conn)
+            },
+            |e| FSError::CreateTable(format!("prevent_sync_pattern {e}")),
+        )?;
 
         let pattern = NewPreventSyncPattern {
             _id: 0,
@@ -185,23 +187,24 @@ impl ManifestStorage {
             fully_applied: false,
         };
         // Set the default "prevent sync" pattern if it doesn't exist
-        diesel::insert_or_ignore_into(prevent_sync_pattern::table)
-            .values(pattern)
-            .execute(&mut conn.connection)?;
+        conn.exec(|conn| {
+            diesel::insert_or_ignore_into(prevent_sync_pattern::table)
+                .values(pattern)
+                .execute(conn)
+        })?;
 
         Ok(())
     }
 
     #[cfg(test)]
     fn drop_db(&self) -> FSResult<()> {
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
+        let mut conn = self.conn.lock_connection();
 
-        sql_query("DROP TABLE IF EXISTS vlobs;").execute(&mut conn.connection)?;
-
-        sql_query("DROP TABLE IF EXISTS realm_checkpoints;").execute(&mut conn.connection)?;
-
-        sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;").execute(&mut conn.connection)?;
+        conn.exec(|conn| {
+            sql_query("DROP TABLE IF EXISTS vlobs;").execute(conn)?;
+            sql_query("DROP TABLE IF EXISTS realm_checkpoints;").execute(conn)?;
+            sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;").execute(conn)
+        })?;
 
         Ok(())
     }
@@ -226,11 +229,7 @@ impl ManifestStorage {
 
     #[cfg(test)]
     pub fn get_prevent_sync_pattern(&self) -> FSResult<(Regex, bool)> {
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
-        let connection = &mut conn.connection;
-
-        let (re, fully_applied) = get_prevent_sync_pattern_raw(connection)?;
+        let (re, fully_applied) = get_prevent_sync_pattern_raw(&mut self.conn.lock_connection())?;
 
         let re = Regex::from_regex_str(&re).map_err(|e| {
             FSError::QueryTable(format!("prevent_sync_pattern: corrupted pattern: {e}"))
@@ -243,30 +242,32 @@ impl ManifestStorage {
     /// This operation is idempotent,
     /// i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
     pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<bool> {
-        let pattern = pattern.as_str();
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
+        let pattern = pattern.to_string();
+        let mut lock_conn = self.conn.lock_connection();
 
-        conn.connection.exclusive_transaction(|conn| {
-            diesel::update(
-                prevent_sync_pattern::table.filter(
-                    prevent_sync_pattern::_id
-                        .eq(0)
-                        .and(prevent_sync_pattern::pattern.ne(pattern)),
-                ),
+        lock_conn
+            .exec_with_handler(
+                |conn| {
+                    diesel::update(
+                        prevent_sync_pattern::table.filter(
+                            prevent_sync_pattern::_id
+                                .eq(0)
+                                .and(prevent_sync_pattern::pattern.ne(&pattern)),
+                        ),
+                    )
+                    .set((
+                        prevent_sync_pattern::pattern.eq(&pattern),
+                        prevent_sync_pattern::fully_applied.eq(false),
+                    ))
+                    .execute(conn)
+                },
+                |e| {
+                    FSError::UpdateTable(format!(
+                        "prevent_sync_pattern: set_prevent_sync_pattern {e}"
+                    ))
+                },
             )
-            .set((
-                prevent_sync_pattern::pattern.eq(pattern),
-                prevent_sync_pattern::fully_applied.eq(false),
-            ))
-            .execute(conn)
-            .map_err(|e| {
-                FSError::UpdateTable(format!(
-                    "prevent_sync_pattern: set_prevent_sync_pattern {e}"
-                ))
-            })?;
-            Ok(get_prevent_sync_pattern_raw(conn)?.1)
-        })
+            .and_then(|_| Ok(get_prevent_sync_pattern_raw(&mut lock_conn)?.1))
     }
 
     /// Mark the provided pattern as fully applied.
@@ -274,39 +275,41 @@ impl ManifestStorage {
     /// workspace are compliant with the new pattern. The applied pattern is provided
     /// as an argument in order to avoid concurrency issues.
     pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<bool> {
-        let pattern = pattern.as_str();
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
+        let pattern = pattern.to_string();
+        let mut lock_conn = self.conn.lock_connection();
 
-        conn.connection.exclusive_transaction(|conn| {
-            diesel::update(
-                prevent_sync_pattern::table.filter(
-                    prevent_sync_pattern::_id
-                        .eq(0)
-                        .and(prevent_sync_pattern::pattern.eq(pattern)),
-                ),
+        lock_conn
+            .exec_with_handler(
+                |conn| {
+                    diesel::update(
+                        prevent_sync_pattern::table.filter(
+                            prevent_sync_pattern::_id
+                                .eq(0)
+                                .and(prevent_sync_pattern::pattern.eq(pattern)),
+                        ),
+                    )
+                    .set(prevent_sync_pattern::fully_applied.eq(true))
+                    .execute(conn)
+                },
+                |e| {
+                    FSError::UpdateTable(format!(
+                        "prevent_sync_pattern: mark_prevent_sync_pattern_fully_applied {e}"
+                    ))
+                },
             )
-            .set(prevent_sync_pattern::fully_applied.eq(true))
-            .execute(conn)
-            .map_err(|e| {
-                FSError::UpdateTable(format!(
-                    "prevent_sync_pattern: mark_prevent_sync_pattern_fully_applied {e}"
-                ))
-            })?;
-            Ok(get_prevent_sync_pattern_raw(conn)?.1)
-        })
+            .and_then(|_| Ok(get_prevent_sync_pattern_raw(&mut lock_conn)?.1))
     }
 
     // Checkpoint operations
 
     pub fn get_realm_checkpoint(&self) -> i64 {
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
-
-        realm_checkpoint::table
-            .select(realm_checkpoint::checkpoint)
-            .filter(realm_checkpoint::_id.eq(0))
-            .first(&mut conn.connection)
+        self.conn
+            .exec(|conn| {
+                realm_checkpoint::table
+                    .select(realm_checkpoint::checkpoint)
+                    .filter(realm_checkpoint::_id.eq(0))
+                    .first(conn)
+            })
             .unwrap_or(0)
     }
 
@@ -324,23 +327,28 @@ impl ManifestStorage {
         // TODO: How to improve ?
         // It is difficult to build a raw sql query with bind in a for loop
         // Another solution is to query all data then insert
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
+        let mut conn = self.conn.lock_connection();
 
         for (id, version) in changed_vlobs {
-            sql_query("UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?;")
-                .bind::<diesel::sql_types::BigInt, _>(version)
-                .bind::<diesel::sql_types::Binary, _>((**id).as_ref())
-                .execute(&mut conn.connection)
-                .map_err(|e| FSError::UpdateTable(format!("vlobs: update_realm_checkpoint {e}")))?;
+            conn.exec_with_handler(
+                |conn| {
+                    sql_query("UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?;")
+                        .bind::<diesel::sql_types::BigInt, _>(version)
+                        .bind::<diesel::sql_types::Binary, _>((**id).as_ref())
+                        .execute(conn)
+                },
+                |e| FSError::UpdateTable(format!("vlobs: update_realm_checkpoint {e}")),
+            )?;
         }
 
-        diesel::insert_into(realm_checkpoint::table)
-            .values(&new_realm_checkpoint)
-            .on_conflict(realm_checkpoint::_id)
-            .do_update()
-            .set(&new_realm_checkpoint)
-            .execute(&mut conn.connection)?;
+        conn.exec(|conn| {
+            diesel::insert_into(realm_checkpoint::table)
+                .values(&new_realm_checkpoint)
+                .on_conflict(realm_checkpoint::_id)
+                .do_update()
+                .set(&new_realm_checkpoint)
+                .execute(conn)
+        })?;
 
         Ok(())
     }
@@ -364,24 +372,26 @@ impl ManifestStorage {
                 }
             }));
 
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
+        let vlobs_that_need_sync = self.conn.exec_with_handler(
+            |conn| {
+                vlobs::table
+                    .select((
+                        vlobs::vlob_id,
+                        vlobs::need_sync,
+                        vlobs::base_version,
+                        vlobs::remote_version,
+                    ))
+                    .filter(
+                        vlobs::need_sync
+                            .eq(true)
+                            .or(vlobs::base_version.ne(vlobs::remote_version)),
+                    )
+                    .load::<(Vec<u8>, bool, i64, i64)>(conn)
+            },
+            |e| FSError::QueryTable(format!("vlobs: get_need_sync_entries {e}")),
+        )?;
 
-        for (manifest_id, need_sync, bv, rv) in vlobs::table
-            .select((
-                vlobs::vlob_id,
-                vlobs::need_sync,
-                vlobs::base_version,
-                vlobs::remote_version,
-            ))
-            .filter(
-                vlobs::need_sync
-                    .eq(true)
-                    .or(vlobs::base_version.ne(vlobs::remote_version)),
-            )
-            .load::<(Vec<u8>, bool, i64, i64)>(&mut conn.connection)
-            .map_err(|e| FSError::QueryTable(format!("vlobs: get_need_sync_entries {e}")))?
-        {
+        for (manifest_id, need_sync, bv, rv) in vlobs_that_need_sync {
             let manifest_id =
                 EntryID::from(<[u8; 16]>::try_from(&manifest_id[..]).map_err(|e| {
                     FSError::QueryTable(format!("vlobs: corrupted manifest_id {e}"))
@@ -423,13 +433,14 @@ impl ManifestStorage {
         }
 
         // Look into the database
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
-
-        let manifest = vlobs::table
-            .select(vlobs::blob)
-            .filter(vlobs::vlob_id.eq((*entry_id).as_ref()))
-            .first::<Vec<u8>>(&mut conn.connection)
+        let manifest = self
+            .conn
+            .exec(|conn| {
+                vlobs::table
+                    .select(vlobs::blob)
+                    .filter(vlobs::vlob_id.eq((*entry_id).as_ref()))
+                    .first::<Vec<u8>>(conn)
+            })
             .map_err(|_| FSError::LocalMiss(*entry_id))?;
 
         let manifest = LocalManifest::decrypt_and_load(&manifest, &self.local_symkey)
@@ -521,10 +532,9 @@ impl ManifestStorage {
 
             let vlob_id = (*entry_id).as_ref();
 
-            let mut conn_guard = self.get_db_conn();
-            let conn = conn_guard.deref_mut();
+            let mut conn = self.conn.lock_connection();
 
-            sql_query("INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
+            conn.exec(|conn| sql_query("INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
                         VALUES (
                         ?, ?, ?, ?,
                             max(
@@ -538,13 +548,15 @@ impl ManifestStorage {
                         .bind::<diesel::sql_types::BigInt, _>(manifest.base_version() as i64)
                         .bind::<diesel::sql_types::BigInt, _>(manifest.base_version() as i64)
                         .bind::<diesel::sql_types::Binary, _>(vlob_id)
-                        .execute(&mut conn.connection) ?;
+                        .execute(conn))?;
 
             for pending_chunk_ids_chunk in pending_chunk_ids.chunks(SQLITE_MAX_VARIABLE_NUMBER) {
-                diesel::delete(
-                    chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
-                )
-                .execute(&mut conn.connection)?;
+                conn.exec(|conn| {
+                    diesel::delete(
+                        chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
+                    )
+                    .execute(conn)
+                })?;
             }
             cache.pending_chunk_ids = None;
         }
@@ -574,12 +586,12 @@ impl ManifestStorage {
         let mut cache_unlock = cache_entry.lock().expect("Mutex is poisoned");
 
         // Remove from local database
-        let mut conn_guard = self.get_db_conn();
-        let conn = conn_guard.deref_mut();
+        let mut conn = self.conn.lock_connection();
 
-        let deleted = diesel::delete(vlobs::table.filter(vlobs::vlob_id.eq((*entry_id).as_ref())))
-            .execute(&mut conn.connection)?
-            > 0;
+        let deleted = conn.exec(|conn| {
+            diesel::delete(vlobs::table.filter(vlobs::vlob_id.eq((*entry_id).as_ref())))
+                .execute(conn)
+        })? > 0;
 
         if let Some(pending_chunk_ids) = &cache_unlock.pending_chunk_ids {
             let pending_chunk_ids = pending_chunk_ids
@@ -588,10 +600,12 @@ impl ManifestStorage {
                 .collect::<Vec<_>>();
 
             for pending_chunk_ids_chunk in pending_chunk_ids.chunks(SQLITE_MAX_VARIABLE_NUMBER) {
-                diesel::delete(
-                    chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
-                )
-                .execute(&mut conn.connection)?;
+                conn.exec(|conn| {
+                    diesel::delete(
+                        chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
+                    )
+                    .execute(conn)
+                })?;
             }
         }
         let is_manifest_cached = cache_unlock.manifest.is_some();
@@ -626,21 +640,24 @@ impl ManifestStorage {
 }
 
 fn get_prevent_sync_pattern_raw(
-    connection: &mut diesel::SqliteConnection,
+    connection: &mut LockedSqliteConnection,
 ) -> Result<(String, bool), FSError> {
-    let (re, fully_applied) = prevent_sync_pattern::table
-        .select((
-            prevent_sync_pattern::pattern,
-            prevent_sync_pattern::fully_applied,
-        ))
-        .filter(prevent_sync_pattern::_id.eq(0))
-        .first::<(String, _)>(connection)
-        .map_err(|e| {
+    connection.exec_with_handler(
+        |conn| {
+            prevent_sync_pattern::table
+                .select((
+                    prevent_sync_pattern::pattern,
+                    prevent_sync_pattern::fully_applied,
+                ))
+                .filter(prevent_sync_pattern::_id.eq(0))
+                .first::<(String, _)>(conn)
+        },
+        |e| {
             FSError::QueryTable(format!(
                 "prevent_sync_pattern: get_prevent_sync_pattern {e}"
             ))
-        })?;
-    Ok((re, fully_applied))
+        },
+    )
 }
 
 #[cfg(test)]
@@ -661,7 +678,6 @@ mod tests {
         let t2 = t1.add_us(1);
         let db_path = tmp_path.join("manifest_storage.sqlite");
         let conn = SqliteConn::new(db_path.to_str().unwrap()).unwrap();
-        let conn = Arc::new(Mutex::new(conn));
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
 
@@ -671,7 +687,7 @@ mod tests {
 
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
 
-        assert_eq!(re.as_str(), EMPTY_PATTERN);
+        assert_eq!(re.to_string(), EMPTY_PATTERN);
         assert!(!fully_applied);
 
         manifest_storage
@@ -680,7 +696,7 @@ mod tests {
 
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
 
-        assert_eq!(re.as_str(), r"\z");
+        assert_eq!(re.to_string(), r"\z");
         assert!(!fully_applied);
 
         manifest_storage
@@ -689,7 +705,7 @@ mod tests {
 
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
 
-        assert_eq!(re.as_str(), r"\z");
+        assert_eq!(re.to_string(), r"\z");
         assert!(!fully_applied);
 
         let entry_id = EntryID::default();
