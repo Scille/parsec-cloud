@@ -19,8 +19,8 @@ from parsec._parsec_pyi.ids import (
     DeviceID,
     UserID,
     HumanHandle,
+    InvitationToken,
 )
-from parsec._parsec_pyi.invite import InvitationToken
 from parsec._parsec_pyi.time import DateTime
 
 class AuthenticatedAnyCmdReq:
