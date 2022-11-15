@@ -105,20 +105,17 @@ impl WorkspaceStorage {
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
-            Arc::new(Mutex::new(cache_conn)),
+            cache_conn,
             cache_size,
             device.time_provider.clone(),
         )?;
 
-        let manifest_storage = ManifestStorage::new(
-            device.local_symkey.clone(),
-            workspace_id,
-            Arc::new(Mutex::new(data_conn.reopen()?)),
-        )?;
+        let manifest_storage =
+            ManifestStorage::new(device.local_symkey.clone(), workspace_id, data_conn.clone())?;
 
         let chunk_storage = ChunkStorage::new(
             device.local_symkey.clone(),
-            Arc::new(Mutex::new(data_conn)),
+            data_conn,
             device.time_provider.clone(),
         )?;
 
@@ -563,7 +560,6 @@ pub fn workspace_storage_non_speculative_init(
             .to_str()
             .expect("Non-Utf-8 character found in data_path"),
     )?;
-    let conn = Arc::new(Mutex::new(conn));
     let manifest_storage = ManifestStorage::new(device.local_symkey.clone(), workspace_id, conn)?;
     let timestamp = timestamp.unwrap_or_else(|| device.now());
     let manifest =
@@ -1163,7 +1159,6 @@ mod tests {
         let db_dir = tmp_path.join("invalid-regex");
         let db_path = get_workspace_data_storage_db_path(&db_dir, &alice.local_device(), wid);
         let conn = SqliteConn::new(db_path.to_str().unwrap()).unwrap();
-        let conn = Arc::new(Mutex::new(conn));
 
         let workspace_storage = WorkspaceStorage::new(
             db_dir.clone(),
@@ -1180,24 +1175,21 @@ mod tests {
             .unwrap();
 
         // Corrupt the db with an invalid regex.
-        conn.lock()
-            .unwrap()
-            .connection
-            .exclusive_transaction(|conn| {
-                diesel::update(
-                    prevent_sync_pattern::table.filter(
-                        prevent_sync_pattern::_id
-                            .eq(0)
-                            .and(prevent_sync_pattern::pattern.ne(INVALID_REGEX)),
-                    ),
-                )
-                .set((
-                    prevent_sync_pattern::pattern.eq(INVALID_REGEX),
-                    prevent_sync_pattern::fully_applied.eq(false),
-                ))
-                .execute(conn)
-            })
-            .unwrap();
+        conn.exec(|conn| {
+            diesel::update(
+                prevent_sync_pattern::table.filter(
+                    prevent_sync_pattern::_id
+                        .eq(0)
+                        .and(prevent_sync_pattern::pattern.ne(INVALID_REGEX)),
+                ),
+            )
+            .set((
+                prevent_sync_pattern::pattern.eq(INVALID_REGEX),
+                prevent_sync_pattern::fully_applied.eq(false),
+            ))
+            .execute(conn)
+        })
+        .unwrap();
 
         drop(workspace_storage);
         drop(conn);
