@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Optional
 
 import pytest
 import trio
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QGuiApplication
 
-from parsec.api.data import EntryName
+from parsec._parsec import ChunkID, EntryID, EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.gui.file_items import TYPE_DATA_INDEX, FileType
@@ -18,12 +19,12 @@ from parsec.core.gui.file_table import Column
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.main_window import MainWindow
-from parsec.core.types import WorkspaceRole
+from parsec.core.types import AnyLocalManifest, WorkspaceRole
 from parsec.test_utils import create_inconsistent_workspace
 
 
 def create_files_widget_testbed(
-    monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w: FilesWidget, c_w
+    monkeypatch: pytest.MonkeyPatch, aqtbot, logged_gui, user_fs, wfs, f_w: FilesWidget, c_w
 ):
     # === Testbed class is full of helpers ===
     class FilesWidgetTestbed:
@@ -910,10 +911,10 @@ async def test_show_file_status(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_import_file_disk_full(
-    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
+    monkeypatch: pytest.MonkeyPatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
     tb = files_widget_testbed
-    f_w = files_widget_testbed.files_widget
+    f_w: FilesWidget = files_widget_testbed.files_widget
 
     # Populate some files for import
     out_of_parsec_data = Path(tmpdir) / "out_of_parsec_data"
@@ -924,9 +925,15 @@ async def test_import_file_disk_full(
     file2.touch()
 
     @staticmethod
-    def run_in_thread_patched(fn, *args):
-        from parsec.core.fs.exceptions import FSLocalStorageOperationalError
+    def rust_impl_set_manifest_patched(
+        entry_id: EntryID,
+        manifest: AnyLocalManifest,
+        cache_only: bool = False,
+        removed_ids: Optional[set[ChunkID]] = None,
+    ):
         import sqlite3
+
+        from parsec.core.fs.exceptions import FSLocalStorageOperationalError
 
         try:
             raise sqlite3.OperationalError("database or disk is full")
@@ -934,7 +941,9 @@ async def test_import_file_disk_full(
             raise FSLocalStorageOperationalError from exc
 
     # Patch `run_in_thread` to raise an OperationError at the next commit
-    monkeypatch.setattr("parsec._parsec.WorkspaceStorage.set_manifest", run_in_thread_patched)
+    monkeypatch.setattr(
+        "parsec._parsec.WorkspaceStorage.set_manifest", rust_impl_set_manifest_patched
+    )
 
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
@@ -948,7 +957,7 @@ async def test_import_file_disk_full(
         assert set(autoclose_dialog.dialogs) == {
             ("Error", _("TEXT_FILE_IMPORT_ONE_ERROR")),
             ("Error", _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR")),
-        }
+        }, f"dialogs={autoclose_dialog.dialogs}"
         assert tb.ls() == []
         assert tb.pwd() == "/"
 

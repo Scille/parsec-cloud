@@ -529,6 +529,9 @@ pub(crate) fn workspace_storage_non_speculative_init(
 fn fs_to_python_error(e: FSError) -> PyErr {
     match e {
         FSError::DatabaseQueryError(_) => FSLocalStorageOperationError::new_err(e.to_string()),
+        FSError::NoSpaceLeftOnDevice => {
+            FSLocalStorageOperationError::new_err("database or disk is full".to_string())
+        }
         FSError::DatabaseClosed(_) => FSLocalStorageClosedError::new_err(e.to_string()),
         _ => FSInternalError::new_err(e.to_string()),
     }

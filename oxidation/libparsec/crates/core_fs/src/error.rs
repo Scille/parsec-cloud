@@ -6,6 +6,20 @@ use uuid::Uuid;
 use libparsec_crypto::CryptoError;
 use libparsec_types::{EntryID, FileDescriptor};
 
+lazy_static::lazy_static! {
+    pub static ref SQLITE_DISK_FULL_MSG: String = {
+        use std::ffi::CStr;
+
+        // SAFETY: `sqlite3_errstr` convert an sqlite3 error code into an error message.
+        // Here we want to get the error message for the `disk full` error type.
+        // for that we have the correct error type `SQLITE_FULL`.
+        let disk_full_error_msg_raw = unsafe {
+            CStr::from_ptr(libsqlite3_sys::sqlite3_errstr(libsqlite3_sys::SQLITE_FULL))
+        };
+        disk_full_error_msg_raw.to_string_lossy().to_string()
+    };
+}
+
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum FSError {
     #[error("ConfigurationError")]
@@ -29,6 +43,12 @@ pub enum FSError {
     #[error("Database is closed: {0}")]
     DatabaseClosed(String),
 
+    #[error("No space left on device")]
+    NoSpaceLeftOnDevice,
+
+    #[error("Database operational error: {0}")]
+    DatabaseOperationalError(String),
+
     #[error("Invalid FileDescriptor {0:?}")]
     InvalidFileDescriptor(FileDescriptor),
 
@@ -51,7 +71,7 @@ pub enum FSError {
     #[error("PoolError")]
     Pool,
 
-    #[error("Entry `{0}` modified without beeing locked")]
+    #[error("Entry `{0}` modified without being locked")]
     Runtime(EntryID),
 
     #[error("UpdateTableError: {0}")]
@@ -84,6 +104,12 @@ impl From<diesel::result::Error> for FSError {
         match e {
             Error::DatabaseError(DatabaseErrorKind::ClosedConnection, e) => {
                 Self::DatabaseClosed(e.message().to_string())
+            }
+            Error::DatabaseError(_, err_msg) if err_msg.message() == *SQLITE_DISK_FULL_MSG => {
+                Self::NoSpaceLeftOnDevice
+            }
+            Error::DatabaseError(_kind, msg) => {
+                Self::DatabaseOperationalError(msg.message().to_string())
             }
             _ => Self::DatabaseQueryError(e.to_string()),
         }
