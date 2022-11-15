@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Tuple, Type, TypeVar
+from typing import Type, TypeVar
 
 from marshmallow import ValidationError
 from marshmallow.fields import Field
@@ -34,7 +34,7 @@ class HumanHandleField(fields.Field[HumanHandle]):
 
     def _serialize(
         self, value: HumanHandle | None, attr: str, data: object
-    ) -> Tuple[str, str] | None:
+    ) -> tuple[str, str] | None:
         if value is None:
             return None
         return (value.email, value.label)
