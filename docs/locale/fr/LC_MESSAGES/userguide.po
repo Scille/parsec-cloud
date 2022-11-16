@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-13 11:21+0200\n"
+"POT-Creation-Date: 2022-11-16 10:57+0100\n"
 "PO-Revision-Date: 2020-02-27 17:57+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -128,15 +128,11 @@ msgid ""
 " the OS' limitations."
 msgstr ""
 "La version MacOS nécessite l'installation de `macFUSE "
-"<https://osxfuse.github.io/>`_, ce qui peut être problématique sur Big Sur"
-" et Monterey. Voir `cette discussion "
+"<https://osxfuse.github.io/>`_, ce qui peut être problématique sur Big "
+"Sur et Monterey. Voir `cette discussion "
 "<https://github.com/osxfuse/osxfuse/issues/814>`_."
 
 #: ../../userguide/installation.rst:65
-msgid "macFUSE installation"
-msgstr "Installation de macFUSE"
-
-#: ../../userguide/installation.rst:69
 msgid ""
 "Parsec uses userspace filesystems for a smooth integration of created "
 "repositories and ease of access to stored files. This core feature is "
@@ -148,7 +144,11 @@ msgstr ""
 "fonctionnalité est dépendante de l'extension macFUSE, et est nécessaire "
 "pour garantir une expérience native sur cette plateforme."
 
-#: ../../userguide/installation.rst:72
+#: ../../userguide/installation.rst:70
+msgid "MacFUSE installation on MacOS 13"
+msgstr "Installation de macFUSE sur MacOS 13"
+
+#: ../../userguide/installation.rst:72 ../../userguide/installation.rst:90
 msgid ""
 "From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find "
 "the lastest version to download at the indicated location."
@@ -163,6 +163,38 @@ msgstr "Écran de téléchargement de macFUSE"
 #: ../../userguide/installation.rst:78
 msgid ""
 "Open the ``.dmg`` file and follow its instructions to install. If the "
+"opening fails, two options are available in `System Settings > Privacy "
+"and Security`: either check the `App Store and identified developers` "
+"box, or click `Open Anyway` if you don't want to change this setting, "
+"which will need to be done once to open the ``.dmg``, and possibly once "
+"more to start the installer."
+msgstr ""
+"Ouvrez le ``.dmg`` et suivez les instructions d'installation. Si "
+"l'ouverture échoue, il y a deux solutions dans `Réglages du système > "
+"Confidentialité et sécurité` : soit activer l'autorisation pour `L'app "
+"store et les développeurs identifiés`, soit autoriser l'ouverture "
+"directement via le bouton `Ouvrir quand même` si vous ne souhaitez pas "
+"activer cette option. Dans ce deuxième cas, il faudra l'utiliser pour ouvrir "
+"le ``.dmg`` et possiblement une deuxième fois pour lancer l'installeur "
+"compris dedans."
+
+#: ../../userguide/installation.rst:-1
+msgid "macFUSE current allow screen"
+msgstr "Macos actuel écran autorisation"
+
+#: ../../userguide/installation.rst:85
+msgid "A reboot might be prompted then to finalize the installation."
+msgstr ""
+"Selon les paramètres de votre Mac, un remémarrage vous sera alors peut-"
+"être demandé pour finaliser l'installation."
+
+#: ../../userguide/installation.rst:88
+msgid "MacFUSE installation on MacOS versions 12 and lower"
+msgstr "Installation de MacFUSE sur MacOS 12 ou antérieur"
+
+#: ../../userguide/installation.rst:96
+msgid ""
+"Open the ``.dmg`` file and follow its instructions to install. If the "
 "opening fails, check the `App Store and identified developers` box in "
 "System Preferences > Security & Privacy:"
 msgstr ""
@@ -172,14 +204,14 @@ msgstr ""
 "confidentialité :"
 
 #: ../../userguide/installation.rst:-1
-msgid "MacOS path to Security and Privacy"
-msgstr "Chemin vers Sécurité et confidentialité MacOS"
+msgid "MacOS previous path to Security and Privacy"
+msgstr "Ancien chemin vers Sécurité et confidentialité MacOS"
 
 #: ../../userguide/installation.rst:-1
-msgid "MacOS allow identified developer"
-msgstr "MacOS autoriser développeurs identifiés"
+msgid "MacOS previous allow identified developer"
+msgstr "MacOS ancien autoriser développeurs identifiés"
 
-#: ../../userguide/installation.rst:88
+#: ../../userguide/installation.rst:106
 msgid ""
 "To change this setting, click the lock first which will require admin "
 "rights."
@@ -187,7 +219,7 @@ msgstr ""
 "Pour changer ce paramètre, cliquez d'abord sur le cadenas, qui requiert "
 "les droits d'administrateur."
 
-#: ../../userguide/installation.rst:90
+#: ../../userguide/installation.rst:108
 msgid ""
 "Once the installation is done, a `System Extension Updated` window will "
 "pop up. Click `Open Security Preferences`, and click the lock, then click"
@@ -199,14 +231,14 @@ msgstr ""
 "le cadenas :"
 
 #: ../../userguide/installation.rst:-1
-msgid "System Extension Updated window"
-msgstr "Fenêtre de mise à jour d'extension système"
+msgid "Previous System Extension Updated window"
+msgstr "Ancienne fenêtre de mise à jour d'extension système"
 
 #: ../../userguide/installation.rst:-1
-msgid "MacOS allow extension"
-msgstr "Autoriser extension MacOS"
+msgid "MacOS previous allow extension"
+msgstr "Ancien autoriser extension MacOS"
 
-#: ../../userguide/installation.rst:100
+#: ../../userguide/installation.rst:118
 msgid "Finally, reboot your Mac to complete the installation."
 msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
 
