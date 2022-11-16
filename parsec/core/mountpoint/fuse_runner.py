@@ -67,15 +67,18 @@ def _patch_signals() -> None:
     using the `mountpoint_service` fixture, which starts by calling `_patch_signals`
     directly before delegating to subthreads.
     """
-    # The default value for SIGPIPE in python is IGN
-    if signal.getsignal(signal.SIGPIPE) == signal.SIG_IGN:
-        signal.signal(signal.SIGPIPE, _sig_ign)
-    # The default value for SIGHUP in python is DFL
-    if signal.getsignal(signal.SIGHUP) == signal.SIG_DFL:
-        signal.signal(signal.SIGHUP, _sig_dfl)
-    # The default value for SIGTERM in python is DFL
-    if signal.getsignal(signal.SIGTERM) == signal.SIG_DFL:
-        signal.signal(signal.SIGTERM, _sig_dfl)
+    if sys.platform != "win32":
+        # The default value for SIGPIPE in python is IGN
+        if signal.getsignal(signal.SIGPIPE) == signal.SIG_IGN:
+            signal.signal(signal.SIGPIPE, _sig_ign)
+        # The default value for SIGHUP in python is DFL
+        if signal.getsignal(signal.SIGHUP) == signal.SIG_DFL:
+            signal.signal(signal.SIGHUP, _sig_dfl)
+        # The default value for SIGTERM in python is DFL
+        if signal.getsignal(signal.SIGTERM) == signal.SIG_DFL:
+            signal.signal(signal.SIGTERM, _sig_dfl)
+    else:
+        raise RuntimeError("Attempted to patch unix signals on windows")
 
 
 # Mypy reports a missing return statement, hovewer it's not possible to exit this
