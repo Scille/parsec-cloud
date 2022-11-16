@@ -463,7 +463,7 @@ fn serde_user_manifest(alice: &Device) {
     None,
     Some(EntryID::from_hex("6b398b3dc6804bb784bb07b0d7038c63").unwrap()),
     None,
-    Some("Invalid entry ID: expected `6b398b3dc6804bb784bb07b0d7038c63`, got `87c6b5fd3b454c94bab51d6af1c6930b`".to_string())
+    Some("Invalid entry ID: expected `6b398b3d-c680-4bb7-84bb-07b0d7038c63`, got `87c6b5fd-3b45-4c94-bab5-1d6af1c6930b`".to_string())
 )]
 #[case::invalid_version(None, None, None, Some(0x1337), Some("Invalid version: expected `4919`, got `42`".to_string()))]
 fn test_file_manifest_verify(
