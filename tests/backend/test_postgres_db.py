@@ -4,16 +4,17 @@ from __future__ import annotations
 import sys
 import logging
 from datetime import datetime, timezone
+from uuid import uuid4
 
 import trio
 import pytest
 import triopg
 from asyncio import InvalidStateError
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, EntryID
 from parsec.backend.cli.run import _run_backend, RetryPolicy
 from parsec.backend.config import BackendConfig, PostgreSQLBlockStoreConfig
-from parsec.backend.postgresql.handler import handle_datetime
+from parsec.backend.postgresql.handler import handle_datetime, handle_uuid
 
 from tests.common import real_clock_timeout
 
@@ -255,4 +256,59 @@ async def test_rust_datetime_correctly_serialized(postgresql_url, backend_factor
                 == from_patched_to_rs.timestamp()
                 == now_py.timestamp()
                 == now_rs.timestamp()
+            )
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_rust_uuid_correctly_serialized(postgresql_url, backend_factory):
+    id_py = uuid4()
+    id_rs = EntryID.from_hex(id_py.hex)
+
+    async with triopg.connect(postgresql_url) as vanilla_conn:
+        async with triopg.connect(postgresql_url) as patched_conn:
+            await handle_uuid(patched_conn)
+
+            await vanilla_conn.execute(
+                f"""
+                DROP TABLE IF EXISTS uuid;
+                CREATE TABLE IF NOT EXISTS uuid (
+                    _id SERIAL PRIMARY KEY,
+                    id UUID
+                )"""
+            )
+
+            # Insert DateTime
+            await vanilla_conn.execute(
+                "INSERT INTO uuid (_id, id) VALUES (0, $1)",
+                id_py,
+            )
+            await patched_conn.execute(
+                "INSERT INTO uuid (_id, id) VALUES (1, $1)",
+                id_rs,
+            )
+
+            # Retrieve uuid inserted by vanilla
+            from_vanilla_to_py = await vanilla_conn.fetchval("SELECT id FROM uuid WHERE _id = 0")
+            # Retrieve uuid inserted by patched
+            from_patched_to_py = await vanilla_conn.fetchval("SELECT id FROM uuid WHERE _id = 1")
+            # Retrieve hex inserted by vanilla
+            from_vanilla_to_rs = await patched_conn.fetchval("SELECT id FROM uuid WHERE _id = 0")
+            # Retrieve hex inserted by patched
+            from_patched_to_rs = await patched_conn.fetchval("SELECT id FROM uuid WHERE _id = 1")
+
+            # Test that we can retrieve our EntryIDs
+            # because deserializer doesn't know which ID
+            from_vanilla_to_rs = EntryID.from_hex(from_vanilla_to_rs)
+            from_patched_to_rs = EntryID.from_hex(from_patched_to_rs)
+
+            assert from_vanilla_to_py == from_patched_to_py
+            assert from_vanilla_to_rs == from_patched_to_rs
+            assert (
+                from_vanilla_to_py.hex
+                == from_patched_to_py.hex
+                == from_vanilla_to_rs.hex
+                == from_patched_to_rs.hex
+                == id_py.hex
+                == id_rs.hex
             )
