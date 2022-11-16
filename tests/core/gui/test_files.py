@@ -144,6 +144,7 @@ def create_files_widget_testbed(
                 # Now check actual files view
                 assert f_w.workspace_fs.get_workspace_name() == workspace_name
                 assert f_w.table_files.rowCount() == len(expected_table_files)
+
                 for i, (name, type) in enumerate(expected_table_files):
                     assert f_w.table_files.item(i, 1).text() == name
                     for j in range(5):
@@ -391,8 +392,7 @@ async def test_file_browsing_and_edit(
 
     # Create folder in the sub folder
     await tb.create_folder("dir33")
-    # await tb.check_files_view(path="/dir3", expected_entries=["dir31", "dir32", "dir33/"]) # TODO
-    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir33/"])
+    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"])
 
     # Retry to create another folder with the same name !
     def _error_displayed():
@@ -420,8 +420,7 @@ async def test_file_browsing_and_edit(
 
     # Go back into the original /dir3/dir31/
     await tb.cd("../..")
-    # await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"]) # TODO
-    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir33/"])
+    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"])
     await tb.cd("dir31")
     await tb.check_files_view(path="/dir3/dir31", expected_entries=["file311.txt"])
 
@@ -433,8 +432,7 @@ async def test_file_browsing_and_edit(
 
     # Go back into /dir3 and cut /dir3/dir31
     await tb.cd("..")
-    # await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"]) # TODO
-    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir33/"])
+    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"])
     await tb.cut("dir31")
 
     # Jump back into root /, and do the paste
@@ -444,7 +442,7 @@ async def test_file_browsing_and_edit(
         path="/", expected_entries=["dir1/", "dir3/", "dir31/", "zdir2/", "file1.txt"]
     )
     await tb.cd("dir3")
-    await tb.check_files_view(path="/dir3", expected_entries=["dir33/"])
+    await tb.check_files_view(path="/dir3", expected_entries=["dir32/", "dir33/"])
     await tb.cd("../dir31")
     await tb.check_files_view(path="/dir31", expected_entries=["file311 (2).txt", "file311.txt"])
 
