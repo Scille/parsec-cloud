@@ -437,7 +437,7 @@ async def test_path_info_remote_loader_exceptions(
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
     assert (
-        f"Cannot decrypt vlob: Invalid entry ID: expected `{manifest.id.hex}`, got `{manifest_modifiers['id'].hex}`"
+        f"Cannot decrypt vlob: Invalid entry ID: expected `{manifest.id}`, got `{manifest_modifiers['id']}`"
         in str(exc.value)
     )
 
@@ -463,7 +463,7 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
     # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
     reply = await alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates(
-        RealmID(alice_workspace.workspace_id.uuid)
+        RealmID(alice_workspace.workspace_id)
     )
     original = alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates
 

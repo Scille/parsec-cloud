@@ -52,7 +52,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
                     {
                         "organization_id": alice.organization_id,
                         "author": alice.device_id,
-                        "realm_id": RealmID(workspace.uuid),
+                        "realm_id": RealmID(workspace),
                         "encryption_revision": 2,
                     },
                 ),

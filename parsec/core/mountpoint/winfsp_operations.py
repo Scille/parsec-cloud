@@ -169,7 +169,7 @@ def stat_to_winfsp_attributes(stat: dict[str, Any]) -> dict[str, Any]:
         "last_access_time": updated,
         "last_write_time": updated,
         "change_time": updated,
-        "index_number": stat["id"].uuid.int & 0xFFFFFFFF,  # uint64_t
+        "index_number": stat["id"].int & 0xFFFFFFFF,  # uint64_t
     }
 
     if stat["type"] == "folder":

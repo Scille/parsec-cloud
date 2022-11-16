@@ -190,7 +190,7 @@ async def get_sequester_services(
 
 
 def build_sequester_service_obj(row: dict[str, Any]) -> BaseSequesterService:
-    service_id = SequesterServiceID(row["service_id"])
+    service_id = SequesterServiceID.from_hex(row["service_id"])
     service_type = SequesterServiceType(row["service_type"].lower())
     if service_type == SequesterServiceType.STORAGE:
         return StorageSequesterService(
@@ -394,7 +394,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 *_get_sequester_blob(
                     organization_id=organization_id.str,
                     service_id=service_id,
-                    realm_id=realm_id.uuid,
+                    realm_id=realm_id,
                 )
             )
 

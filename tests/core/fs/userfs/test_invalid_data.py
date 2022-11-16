@@ -40,7 +40,7 @@ def testbed(running_backend, alice_user_fs, alice):
                 organization_id=alice.organization_id,
                 author=options["backend_author"],
                 encryption_revision=1,
-                vlob_id=VlobID(alice.user_manifest_id.uuid),
+                vlob_id=VlobID(alice.user_manifest_id),
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],

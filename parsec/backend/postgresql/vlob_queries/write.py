@@ -83,7 +83,7 @@ async def _set_vlob_updated(
     index = await conn.fetchval(
         *_q_vlob_updated(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             vlob_atom_internal_id=vlob_atom_internal_id,
         )
     )
@@ -91,7 +91,7 @@ async def _set_vlob_updated(
     await conn.execute(
         *_q_set_last_vlob_update(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             user_id=author.user_id.str,
             timestamp=timestamp,
         )
@@ -173,7 +173,7 @@ async def query_update(
     )
 
     previous = await conn.fetchrow(
-        *_q_get_vlob_version(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
+        *_q_get_vlob_version(organization_id=organization_id.str, vlob_id=vlob_id)
     )
     if not previous:
         raise VlobNotFoundError(f"Vlob `{vlob_id.hex}` doesn't exist")
@@ -189,9 +189,9 @@ async def query_update(
             *_q_insert_vlob_atom(
                 organization_id=organization_id.str,
                 author=author.str,
-                realm_id=realm_id.uuid,
+                realm_id=realm_id,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id.uuid,
+                vlob_id=vlob_id,
                 blob=blob,
                 blob_len=len(blob),
                 timestamp=timestamp,
@@ -288,9 +288,9 @@ async def query_create(
             *_q_create(
                 organization_id=organization_id.str,
                 author=author.str,
-                realm_id=realm_id.uuid,
+                realm_id=realm_id,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id.uuid,
+                vlob_id=vlob_id,
                 blob=blob,
                 blob_len=len(blob),
                 timestamp=timestamp,

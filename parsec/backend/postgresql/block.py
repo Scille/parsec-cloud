@@ -132,7 +132,7 @@ class PGBlockComponent(BaseBlockComponent):
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             realm_id_uuid = await conn.fetchval(
                 *_q_get_realm_id_from_block_id(
-                    organization_id=organization_id.str, block_id=block_id.uuid
+                    organization_id=organization_id.str, block_id=block_id
                 )
             )
             if not realm_id_uuid:
@@ -142,7 +142,7 @@ class PGBlockComponent(BaseBlockComponent):
             ret = await conn.fetchrow(
                 *_q_get_block_meta(
                     organization_id=organization_id.str,
-                    block_id=block_id.uuid,
+                    block_id=block_id,
                     user_id=author.user_id.str,
                 )
             )
@@ -176,8 +176,8 @@ class PGBlockComponent(BaseBlockComponent):
                 *_q_get_block_write_right_and_unicity(
                     organization_id=organization_id.str,
                     user_id=author.user_id.str,
-                    realm_id=realm_id.uuid,
-                    block_id=block_id.uuid,
+                    realm_id=realm_id,
+                    block_id=block_id,
                 )
             )
 
@@ -205,8 +205,8 @@ class PGBlockComponent(BaseBlockComponent):
                 ret = await conn.execute(
                     *_q_insert_block(
                         organization_id=organization_id.str,
-                        block_id=block_id.uuid,
-                        realm_id=realm_id.uuid,
+                        block_id=block_id,
+                        realm_id=realm_id,
                         author=author.str,
                         size=len(block),
                         created_on=created_on,
@@ -248,7 +248,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
     async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         async with self.dbh.pool.acquire() as conn:
             ret = await conn.fetchrow(
-                *_q_get_block_data(organization_id=organization_id.str, block_id=block_id.uuid)
+                *_q_get_block_data(organization_id=organization_id.str, block_id=block_id)
             )
             if not ret:
                 raise BlockStoreError("Block not found")
@@ -262,7 +262,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
             try:
                 ret = await conn.execute(
                     *_q_insert_block_data(
-                        organization_id=organization_id.str, block_id=block_id.uuid, data=block
+                        organization_id=organization_id.str, block_id=block_id, data=block
                     )
                 )
                 if ret != "INSERT 0 1":

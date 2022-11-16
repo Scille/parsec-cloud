@@ -135,7 +135,7 @@ async def _init_output_db(
     row = await input_conn.fetchrow(
         "SELECT 1 FROM realm WHERE organization = $1 AND realm_id = $2",
         organization_internal_id,
-        realm_id.uuid,
+        realm_id,
     )
     if not row:
         raise RealmExporterInputError(
@@ -145,7 +145,7 @@ async def _init_output_db(
     row = await input_conn.fetchrow(
         "SELECT 1 FROM sequester_service WHERE organization = $1 AND service_id = $2",
         organization_internal_id,
-        service_id.uuid,
+        service_id,
     )
     if not row:
         raise RealmExporterInputError(
@@ -276,7 +276,7 @@ AND organization = (SELECT _id FROM organization WHERE organization_id = $1)
 )
 """,
         organization_id.str,
-        realm_id.uuid,
+        realm_id,
     )
 
     def _sqlite_save_realm_role_certifs() -> None:
@@ -368,7 +368,7 @@ WHERE
             AND organization = (SELECT _id FROM organization WHERE organization_id = $2)
     )
 """,
-                self.realm_id.uuid,
+                self.realm_id,
                 self.organization_id.str,
             )
             to_export_count = rows[0][0]
@@ -409,7 +409,7 @@ WHERE
     AND sequester_service_vlob_atom.service = (SELECT _id FROM sequester_service WHERE service_id = $4)
 LIMIT $5
 """,
-                self.realm_id.uuid,
+                self.realm_id,
                 self.organization_id.str,
                 batch_offset_marker,
                 self.service_id,
@@ -477,7 +477,7 @@ WHERE
             AND organization = (SELECT _id FROM organization WHERE organization_id = $2)
     )
 """,
-                self.realm_id.uuid,
+                self.realm_id,
                 self.organization_id.str,
             )
             to_export_count = rows[0][0]
@@ -509,7 +509,7 @@ WHERE
     AND _id >= $3
 LIMIT $4
 """,
-                self.realm_id.uuid,
+                self.realm_id,
                 self.organization_id.str,
                 batch_offset_marker,
                 batch_size,
@@ -517,7 +517,7 @@ LIMIT $4
             cooked_rows = []
             for row in rows:
                 block = await self.input_blockstore.read(
-                    organization_id=self.organization_id, block_id=BlockID(row["block_id"])
+                    organization_id=self.organization_id, block_id=BlockID.from_hex(row["block_id"])
                 )
                 cooked_rows.append(
                     (

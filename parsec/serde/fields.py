@@ -90,13 +90,16 @@ class RustEnum(Protocol):
         ...
 
 
+UUIDSelf = TypeVar("UUIDSelf", bound="UUIDProtocol")
+
+
 class UUIDProtocol(Protocol):
     @classmethod
-    def __init__(self, value: _UUID) -> None:
+    def from_hex(cls: Type[UUIDSelf], hex: str) -> UUIDSelf:
         ...
 
     @property
-    def uuid(self) -> _UUID:
+    def hex(self) -> str:
         ...
 
 
@@ -211,13 +214,13 @@ def uuid_based_field_factory(value_type: Type[U]) -> Type[Field[U]]:
         if value is None:
             return None
         assert isinstance(value, value_type)
-        return value.uuid
+        return _UUID(value.hex)
 
     def _deserialize(self: Field[U], value: object, attr: str, data: dict[str, object]) -> U:
         if not isinstance(value, _UUID):
             raise ValidationError("Not an UUID")
         try:
-            return value_type(value)
+            return value_type.from_hex(value.hex)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 

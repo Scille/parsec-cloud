@@ -118,7 +118,7 @@ class SyncContext:
         realm_checkpoint: int = await self._get_local_storage().get_realm_checkpoint()
         try:
             rep = await self._get_backend_cmds().vlob_poll_changes(
-                RealmID(self.id.uuid), realm_checkpoint
+                RealmID(self.id), realm_checkpoint
             )
 
         except BackendNotAvailable:

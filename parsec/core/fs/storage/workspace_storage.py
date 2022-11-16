@@ -191,17 +191,17 @@ class BaseWorkspaceStorage:
 
     async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
         assert isinstance(block_id, BlockID)
-        return await self.block_storage.set_chunk(ChunkID(block_id.uuid), block)
+        return await self.block_storage.set_chunk(ChunkID(block_id), block)
 
     async def clear_clean_block(self, block_id: BlockID) -> None:
         assert isinstance(block_id, BlockID)
         try:
-            await self.block_storage.clear_chunk(ChunkID(block_id.uuid))
+            await self.block_storage.clear_chunk(ChunkID(block_id))
         except FSLocalMissError:
             pass
 
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
-        return await self.chunk_storage.get_chunk(ChunkID(block_id.uuid))
+        return await self.chunk_storage.get_chunk(ChunkID(block_id))
 
     # Chunk interface
 

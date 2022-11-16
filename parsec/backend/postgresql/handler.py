@@ -174,6 +174,15 @@ async def handle_datetime(conn: triopg._triopg.TrioConnectionProxy) -> None:
     )
 
 
+async def handle_uuid(conn: triopg._triopg.TrioConnectionProxy) -> None:
+    await conn.set_type_codec(
+        "uuid",
+        encoder=lambda x: x.hex,
+        decoder=lambda x: x,
+        schema="pg_catalog",
+    )
+
+
 # TODO: replace by a fonction
 class PGHandler:
     def __init__(self, url: str, min_connections: int, max_connections: int, event_bus: EventBus):
@@ -195,9 +204,11 @@ class PGHandler:
 
         # By default AsyncPG only work with Python standard `datetime.DateTime`
         # for timestamp types, here we override this behavior to uses our own custom
-        # DateTime type
+        # - DateTime type
+        # - Uuid type
         async def _init_connection(conn: triopg._triopg.TrioConnectionProxy) -> None:
             await handle_datetime(conn)
+            await handle_uuid(conn)
 
         async with triopg.create_pool(
             self.url,

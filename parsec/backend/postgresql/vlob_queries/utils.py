@@ -102,7 +102,7 @@ async def _check_realm_access(
 ) -> DateTime:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
-            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
+            organization_id=organization_id.str, realm_id=realm_id, user_id=author.user_id.str
         )
     )
 
@@ -177,7 +177,7 @@ async def _get_realm_id_from_vlob_id(
     conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, vlob_id: VlobID
 ) -> RealmID:
     realm_id_uuid = await conn.fetchval(
-        *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
+        *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id)
     )
     if not realm_id_uuid:
         raise VlobNotFoundError(f"Vlob `{vlob_id.hex}` doesn't exist")
@@ -192,7 +192,7 @@ async def _get_last_role_granted_on(
 ) -> DateTime | None:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
-            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
+            organization_id=organization_id.str, realm_id=realm_id, user_id=author.user_id.str
         )
     )
     return None if rep is None else rep[1]
