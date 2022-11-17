@@ -1,0 +1,112 @@
+[
+    {
+        "label": "PkiEnrollmentSubmit",
+        "major_versions": [
+            3
+        ],
+        "introduced_in": "3.2",
+        "req": {
+            "cmd": "pki_enrollment_submit",
+            "fields": {
+                "enrollment_id": {
+                    "type": "EnrollmentID"
+                },
+                "force": {
+                    "type": "bool"
+                },
+                "submitter_der_x509_certificate": {
+                    "type": "Bytes"
+                },
+                "submitter_der_x509_certificate_email": {
+                    "type": "NonRequiredOption<String>"
+                },
+                "submit_payload_signature": {
+                    "type": "Bytes"
+                },
+                "submit_payload": {
+                    "type": "Bytes"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "submitted_on": {
+                        "type": "DateTime"
+                    }
+                }
+            },
+            "already_submitted": {
+                "fields": {
+                    "submitted_on": {
+                        "type": "DateTime"
+                    }
+                }
+            },
+            "id_already_used": {
+                "fields": {}
+            },
+            "email_already_used": {
+                "fields": {}
+            },
+            "already_enrolled": {
+                "fields": {}
+            }
+        }
+    },
+    {
+        "label": "PkiEnrollmentSubmit",
+        "major_versions": [
+            2
+        ],
+        "introduced_in": "2.8",
+        "req": {
+            "cmd": "pki_enrollment_submit",
+            "fields": {
+                "enrollment_id": {
+                    "type": "EnrollmentID"
+                },
+                "force": {
+                    "type": "bool"
+                },
+                "submitter_der_x509_certificate": {
+                    "type": "Bytes"
+                },
+                "submitter_der_x509_certificate_email": {
+                    "type": "NonRequiredOption<String>"
+                },
+                "submit_payload_signature": {
+                    "type": "Bytes"
+                },
+                "submit_payload": {
+                    "type": "Bytes"
+                }
+            }
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "submitted_on": {
+                        "type": "DateTime"
+                    }
+                }
+            },
+            "already_submitted": {
+                "fields": {
+                    "submitted_on": {
+                        "type": "DateTime"
+                    }
+                }
+            },
+            "id_already_used": {
+                "fields": {}
+            },
+            "email_already_used": {
+                "fields": {}
+            },
+            "already_enrolled": {
+                "fields": {}
+            }
+        }
+    }
+]
