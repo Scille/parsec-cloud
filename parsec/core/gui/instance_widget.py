@@ -41,7 +41,7 @@ from parsec.core.gui.central_widget import CentralWidget
 
 logger = get_logger()
 
-MIN_MACFUSE_VERSION = Version("4.4.0")
+MIN_MACFUSE_VERSION = Version("4.4.1")
 
 
 async def _do_run_core(
