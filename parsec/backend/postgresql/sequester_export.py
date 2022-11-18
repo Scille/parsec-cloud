@@ -8,7 +8,7 @@ import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from parsec.api.protocol import OrganizationID, RealmID, BlockID, SequesterServiceID
+from parsec.api.protocol import OrganizationID, RealmID, BlockID, SequesterServiceID, VlobID
 from parsec.backend.postgresql import PGHandler
 from parsec.backend.blockstore import BaseBlockStoreComponent
 
@@ -420,7 +420,14 @@ LIMIT $5
                 # Must convert `vlob_id`` fields from UUID to bytes given SQLite doesn't handle the former
                 # Must also convert datetime to a number of ms since UNIX epoch
                 cooked_rows = [
-                    (r[0], r[1].bytes, r[2], r[3], r[4], int(r[5].timestamp() * 1000000))
+                    (
+                        r[0],
+                        VlobID.from_hex(r[1]).bytes,
+                        r[2],
+                        r[3],
+                        r[4],
+                        int(r[5].timestamp() * 1000000),
+                    )
                     for r in rows
                 ]
                 con = sqlite3.connect(self.output_db_path)
@@ -523,7 +530,7 @@ LIMIT $4
                     (
                         row["_id"],
                         # Must convert `block_id`` fields from UUID to bytes given SQLite doesn't handle the former
-                        row["block_id"].bytes,
+                        RealmID.from_hex(row["block_id"]).bytes,
                         block,
                         row["author"],
                     )

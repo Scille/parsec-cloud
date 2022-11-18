@@ -154,7 +154,7 @@ async def query_maintenance_get_reencryption_batch(
             size=size,
         )
     )
-    return [(VlobID(row["vlob_id"]), row["version"], row["blob"]) for row in rep]
+    return [(VlobID.from_hex(row["vlob_id"]), row["version"], row["blob"]) for row in rep]
 
 
 @query(in_transaction=True)

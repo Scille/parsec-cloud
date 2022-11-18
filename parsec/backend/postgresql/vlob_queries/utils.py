@@ -181,7 +181,7 @@ async def _get_realm_id_from_vlob_id(
     )
     if not realm_id_uuid:
         raise VlobNotFoundError(f"Vlob `{vlob_id.hex}` doesn't exist")
-    return RealmID(realm_id_uuid)
+    return RealmID.from_hex(realm_id_uuid)
 
 
 async def _get_last_role_granted_on(

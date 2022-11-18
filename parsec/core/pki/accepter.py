@@ -66,7 +66,7 @@ async def accepter_list_submitted_from_backend(
 
     for enrollment in cast(list[dict[str, object]], rep["enrollments"]):
 
-        enrollment_id: UUID = cast(UUID, enrollment["enrollment_id"])
+        enrollment_id = cast(UUID, enrollment["enrollment_id"])
         submitted_on: DateTime = cast(DateTime, enrollment["submitted_on"])
         submitter_der_x509_certificate: bytes = cast(
             bytes, enrollment["submitter_der_x509_certificate"]

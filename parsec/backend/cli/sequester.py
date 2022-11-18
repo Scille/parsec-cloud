@@ -129,7 +129,7 @@ async def _create_service(
 
 
 def _display_service(service: BaseSequesterService) -> None:
-    display_service_id = click.style(service.service_id, fg="yellow")
+    display_service_id = click.style(service.service_id.hex, fg="yellow")
     display_service_label = click.style(service.service_label, fg="green")
     click.echo(f"Service {display_service_label} (id: {display_service_id})")
     click.echo(f"\tCreated on: {service.created_on}")

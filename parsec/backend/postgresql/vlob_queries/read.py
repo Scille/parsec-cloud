@@ -201,7 +201,7 @@ async def query_poll_changes(
     )
 
     changes_since_checkpoint: Dict[VlobID, int] = {
-        VlobID(src_id): src_version for _, src_id, src_version in ret
+        VlobID.from_hex(src_id): src_version for _, src_id, src_version in ret
     }
     new_checkpoint: int = ret[-1][0] if ret else checkpoint
     return (new_checkpoint, changes_since_checkpoint)

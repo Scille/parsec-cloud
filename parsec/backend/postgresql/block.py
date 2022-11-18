@@ -137,7 +137,7 @@ class PGBlockComponent(BaseBlockComponent):
             )
             if not realm_id_uuid:
                 raise BlockNotFoundError()
-            realm_id = RealmID(realm_id_uuid)
+            realm_id = RealmID.from_hex(realm_id_uuid)
             await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_READ)
             ret = await conn.fetchrow(
                 *_q_get_block_meta(

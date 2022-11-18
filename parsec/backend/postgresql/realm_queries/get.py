@@ -233,7 +233,7 @@ async def query_get_realms_for_user(
         *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
     )
     return {
-        RealmID(row["realm_id"]): RealmRole.from_str(row["role"])
+        RealmID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
         for row in rep
         if row["role"] is not None
     }
@@ -252,7 +252,7 @@ async def query_dump_realms_granted_roles(
         granted_roles.append(
             RealmGrantedRole(
                 certificate=row["certificate"],
-                realm_id=RealmID(row["realm_id"]),
+                realm_id=RealmID.from_hex(row["realm_id"]),
                 user_id=UserID(row["user_id"]),
                 role=RealmRole.from_str(row["role"]),
                 granted_by=DeviceID(row["granted_by"]),
