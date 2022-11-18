@@ -32,6 +32,10 @@ macro_rules! new_uuid_type {
         pub struct $name(::uuid::Uuid);
 
         impl $name {
+            pub fn as_hyphenated(&self) -> &::uuid::fmt::Hyphenated {
+                self.0.as_hyphenated()
+            }
+
             pub fn from_hex(hex: &str) -> Result<Self, &'static str> {
                 ::uuid::Uuid::parse_str(hex)
                     .map(Self)

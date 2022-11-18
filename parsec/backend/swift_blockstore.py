@@ -34,7 +34,7 @@ logger = get_logger()
 def build_swift_slug(organization_id: OrganizationID, id: BlockID) -> str:
     # The slug uses the UUID canonical textual representation (eg.
     # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`)
-    return f"{organization_id.str}/{id}"
+    return f"{organization_id.str}/{id.hyphenated}"
 
 
 class SwiftBlockStoreComponent(BaseBlockStoreComponent):

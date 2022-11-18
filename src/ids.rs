@@ -42,6 +42,11 @@ macro_rules! gen_uuid {
             fn int(&self) -> u128 {
                 self.0.as_u128()
             }
+
+            #[getter]
+            fn hyphenated(&self) -> String {
+                self.0.as_hyphenated().to_string()
+            }
         }
     };
 }

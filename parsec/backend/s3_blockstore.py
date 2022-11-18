@@ -18,7 +18,7 @@ logger = get_logger()
 def build_s3_slug(organization_id: OrganizationID, block_id: BlockID) -> str:
     # The slug uses the UUID canonical textual representation (eg.
     # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`)
-    return f"{organization_id.str}/{block_id}"
+    return f"{organization_id.str}/{block_id.hyphenated}"
 
 
 class S3BlockStoreComponent(BaseBlockStoreComponent):
