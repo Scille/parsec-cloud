@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Union, Dict, Type
+from typing import Any, Iterable, TypeVar, Union, Dict, Type
 from enum import Enum
 from marshmallow import (
     Schema as MarshmallowSchema,
@@ -22,6 +22,8 @@ except ImportError:
     BaseSchema = MarshmallowSchema  # type: ignore[misc, assignment]
 
 from parsec.serde.fields import String
+
+T = TypeVar("T", bound=Iterable[Any])
 
 
 class BaseCmdSchema(BaseSchema):
@@ -130,8 +132,8 @@ class OneOfSchema(BaseSchema):
         raise NotImplementedError()
 
     def dump(
-        self, obj: Any, many: Any = None, update_fields: bool = True, **kwargs: Any
-    ) -> MarshalResult:
+        self, obj: T, many: Any = None, update_fields: bool = True, **kwargs: Any
+    ) -> MarshalResult[T]:
         many = self.many if many is None else bool(many)
         if not many:
             result = self._dump(obj, update_fields, **kwargs)
@@ -152,7 +154,7 @@ class OneOfSchema(BaseSchema):
 
         return result
 
-    def _dump(self, obj: Any, update_fields: bool = True, **kwargs: Any) -> MarshalResult:
+    def _dump(self, obj: Any, update_fields: bool = True, **kwargs: Any) -> MarshalResult[Any]:
         obj_type = self.get_obj_type(obj)
         if not obj_type:
             return MarshalResult(
@@ -166,7 +168,9 @@ class OneOfSchema(BaseSchema):
         result = schema.dump(obj, many=False, update_fields=update_fields, **kwargs)
         return result
 
-    def load(self, data: dict[Any, Any], many: Any = None, partial: Any = None) -> UnmarshalResult:
+    def load(  # type: ignore[override]
+        self, data: Dict[Any, Any], many: Any | None = None, partial: Any | None = None
+    ) -> MarshalResult[Any]:
         many = self.many if many is None else bool(many)
         if partial is None:
             partial = self.partial
