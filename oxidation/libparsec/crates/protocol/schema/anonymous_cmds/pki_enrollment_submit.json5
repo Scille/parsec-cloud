@@ -12,7 +12,7 @@
                     "type": "EnrollmentID"
                 },
                 "force": {
-                    "type": "bool"
+                    "type": "Boolean"
                 },
                 "submitter_der_x509_certificate": {
                     "type": "Bytes"
@@ -67,7 +67,7 @@
                     "type": "EnrollmentID"
                 },
                 "force": {
-                    "type": "bool"
+                    "type": "Boolean"
                 },
                 "submitter_der_x509_certificate": {
                     "type": "Bytes"

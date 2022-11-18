@@ -8,6 +8,7 @@ mod test_invite;
 mod test_message;
 mod test_organization;
 mod test_ping;
+mod test_pki;
 mod test_realm;
 mod test_user;
 mod test_vlob;
