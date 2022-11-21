@@ -82,7 +82,7 @@ pbr = { version="^5.9", optional=true }
 packaging = "^21.3"
 PyQt5 = { version="^5.15", optional=true }
 pyqt5-sip = { version="^12.9", optional=true }
-qtrio = { version="^0.5.1", optional=true }
+qtrio = { version="^0.6.0", optional=true }
 qrcode = { version="^7.3", optional=true }
 fusepy = { version="^3.0", markers="platform_system=='Linux' or platform_system=='Darwin'", optional=true }
 winfspy = { version="^0.8", markers="platform_system=='Windows'", optional=true }
@@ -146,7 +146,7 @@ maturin = "~=0.13"
 cibuildwheel = "2.10.0"
 editorconfig-checker = "2.4.0"
 types-requests = "^2.28"
-boto3-stubs = "^1.21"
+boto3-stubs = "^1.26"
 
 [tool.poetry.build]
 generate-setup-file = false
