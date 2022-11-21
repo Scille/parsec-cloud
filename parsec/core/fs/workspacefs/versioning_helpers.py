@@ -21,7 +21,7 @@ import attr
 import math
 import typing
 from functools import partial
-from typing import Awaitable, Dict, List, NamedTuple, Tuple, Union, cast
+from typing import Awaitable, Dict, List, NamedTuple, Tuple, Union, cast, TYPE_CHECKING
 from parsec._parsec import DateTime
 from collections import defaultdict
 
@@ -31,6 +31,11 @@ from parsec.utils import open_service_nursery
 from parsec.core.fs.path import FsPath
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 from parsec.api.data import FileManifest, UserManifest, FolderManifest, WorkspaceManifest
+
+if TYPE_CHECKING:
+    from parsec.core.fs.remote_loader import RemoteLoader
+    from parsec.core.fs import WorkspaceFS
+
 
 RemoteManifest = Union[FileManifest, FolderManifest, UserManifest, WorkspaceManifest]
 
@@ -91,34 +96,44 @@ class ManifestDataAndMutablePaths:
     """
 
     manifest: ManifestData = attr.ib()
-    source_path: FsPath = attr.ib(default=None)
-    destination_path: FsPath = attr.ib(default=None)
-    current_path: FsPath = attr.ib(default=None)
+    source_path: FsPath | None = attr.ib(default=None)
+    destination_path: FsPath | None = attr.ib(default=None)
+    current_path: FsPath | None = attr.ib(default=None)
 
     async def try_get_path_at_timestamp(
-        self, manifest_cache, entry_id: EntryID, timestamp: DateTime
+        self, manifest_cache: ManifestCacheCounter, entry_id: EntryID, timestamp: DateTime
     ) -> FsPath | None:
         try:
             return await manifest_cache.get_path_at_timestamp(entry_id, timestamp)
         except EntryNotFound:
             return None  # Just ignore when path is inconsistent
 
-    async def populate_source_path(self, manifest_cache, entry_id, timestamp):
+    async def populate_source_path(
+        self, manifest_cache: ManifestCacheCounter, entry_id: EntryID, timestamp: DateTime
+    ) -> None:
         self.source_path = await self.try_get_path_at_timestamp(manifest_cache, entry_id, timestamp)
 
-    async def populate_destination_path(self, manifest_cache, entry_id, timestamp):
+    async def populate_destination_path(
+        self, manifest_cache: ManifestCacheCounter, entry_id: EntryID, timestamp: DateTime
+    ) -> None:
         self.destination_path = await self.try_get_path_at_timestamp(
             manifest_cache, entry_id, timestamp
         )
 
-    async def populate_current_path(self, manifest_cache, entry_id, timestamp):
+    async def populate_current_path(
+        self, manifest_cache: ManifestCacheCounter, entry_id: EntryID, timestamp: DateTime
+    ) -> None:
         self.current_path = await self.try_get_path_at_timestamp(
             manifest_cache, entry_id, timestamp
         )
 
     async def populate_paths(
-        self, manifest_cache, entry_id: EntryID, early: DateTime, late: DateTime
-    ):
+        self,
+        manifest_cache: ManifestCacheCounter,
+        entry_id: EntryID,
+        early: DateTime,
+        late: DateTime,
+    ) -> None:
         # TODO : Use future manifest source field to follow files and directories
         async with open_service_nursery() as child_nursery:
             child_nursery.start_soon(
@@ -133,8 +148,8 @@ class CacheEntry(NamedTuple):
     Contains a manifest and the earliest and last timestamp for which its version has been returned
     """
 
-    early: DateTime
-    late: DateTime
+    early: DateTime | None
+    late: DateTime | None
     manifest: RemoteManifest
 
 
@@ -144,12 +159,16 @@ class ManifestCache:
     obtained.
     """
 
-    def __init__(self, remote_loader):
-        self._manifest_cache = {}
-        self._remote_loader = remote_loader
+    def __init__(self, remote_loader: RemoteLoader):
+        self._manifest_cache: Dict[EntryID, Dict[int, CacheEntry]] = {}
+        self._remote_loader: RemoteLoader = remote_loader
 
     def get(
-        self, entry_id: EntryID, version=None, timestamp=None, expected_backend_timestamp=None
+        self,
+        entry_id: EntryID,
+        version: int | None,
+        timestamp: DateTime | None,
+        expected_backend_timestamp: DateTime | None = None,
     ) -> RemoteManifest:
         """
         Tries to find specified manifest in cache, raises ManifestCacheNotFound otherwise
@@ -174,7 +193,13 @@ class ManifestCache:
         else:
             raise ManifestCacheNotFound
 
-    def update(self, manifest: RemoteManifest, entry_id: EntryID, version=None, timestamp=None):
+    def update(
+        self,
+        manifest: RemoteManifest,
+        entry_id: EntryID,
+        version: int | None,
+        timestamp: DateTime | None,
+    ) -> None:
         """
         Updates manifest cache, increasing timeframe for a specified version if possible
 
@@ -188,26 +213,22 @@ class ManifestCache:
                 timestamp, timestamp, manifest
             )
         elif timestamp:
-            if (
-                self._manifest_cache[manifest.id][manifest.version].late is None
-                or timestamp > self._manifest_cache[manifest.id][manifest.version].late
-            ):
+            late = self._manifest_cache[manifest.id][manifest.version].late
+            early = self._manifest_cache[manifest.id][manifest.version].early
+            if late is None or timestamp > late:
                 self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                    self._manifest_cache[manifest.id][manifest.version].early, timestamp, manifest
+                    early, timestamp, manifest
                 )
-            if (
-                self._manifest_cache[manifest.id][manifest.version].early is None
-                or timestamp < self._manifest_cache[manifest.id][manifest.version].early
-            ):
+            if early is None or timestamp < early:
                 self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                    timestamp, self._manifest_cache[manifest.id][manifest.version].late, manifest
+                    timestamp, late, manifest
                 )
 
     async def load(
         self,
         entry_id: EntryID,
-        version: int | None = None,
-        timestamp: DateTime | None = None,
+        version: int | None,
+        timestamp: DateTime | None,
         expected_backend_timestamp: DateTime | None = None,
     ) -> Tuple[RemoteManifest, bool]:
         """
@@ -264,7 +285,7 @@ class ManifestCache:
         # Get first manifest
         try:
             current_id = entry_id
-            current_manifest, _ = await self.load(current_id, timestamp=timestamp)
+            current_manifest, _ = await self.load(current_id, version=None, timestamp=timestamp)
         except FSRemoteManifestNotFound:
             raise EntryNotFound(entry_id)
 
@@ -274,7 +295,9 @@ class ManifestCache:
             # Get the manifest
             try:
                 current_manifest = cast(Union[FolderManifest, FileManifest], current_manifest)
-                parent_manifest, _ = await self.load(current_manifest.parent, timestamp=timestamp)
+                parent_manifest, _ = await self.load(
+                    current_manifest.parent, version=None, timestamp=timestamp
+                )
                 parent_manifest = cast(Union[FolderManifest, WorkspaceManifest], parent_manifest)
             except FSRemoteManifestNotFound:
                 raise EntryNotFound(entry_id)
@@ -311,7 +334,11 @@ class ManifestCacheCounter:
         self.limit = limit or math.inf
 
     async def load(
-        self, entry_id: EntryID, version=None, timestamp=None, expected_backend_timestamp=None
+        self,
+        entry_id: EntryID,
+        version: int | None,
+        timestamp: DateTime | None,
+        expected_backend_timestamp: DateTime | None = None,
     ) -> RemoteManifest:
         if self.limit == self.counter:
             raise ManifestCacheDownloadLimitReached
@@ -337,11 +364,11 @@ class VersionsListCache:
     class is only instanciated during the list_versions execution.
     """
 
-    def __init__(self, remote_loader):
-        self._versions_list_cache = {}
-        self._remote_loader = remote_loader
+    def __init__(self, remote_loader: RemoteLoader):
+        self._versions_list_cache: dict[EntryID, dict[int, tuple[DateTime, DeviceID]]] = {}
+        self._remote_loader: RemoteLoader = remote_loader
 
-    async def load(self, entry_id: EntryID):
+    async def load(self, entry_id: EntryID) -> dict[int, tuple[DateTime, DeviceID]]:
         """
         Raises:
             FSError
@@ -355,6 +382,9 @@ class VersionsListCache:
         return self._versions_list_cache[entry_id]
 
 
+Task = typing.Callable[[], Awaitable[None]]
+
+
 class VersionListerTaskList:
     """
     Enables prioritization of tasks, as it is better to be able to configure it that way
@@ -364,21 +394,23 @@ class VersionListerTaskList:
     """
 
     # TODO : use nursery for coroutines
-    def __init__(self, manifest_cache, versions_list_cache):
-        self.tasks = defaultdict(list)
-        self.heapq_tasks = []
+    def __init__(
+        self, manifest_cache: ManifestCacheCounter, versions_list_cache: VersionsListCache
+    ):
+        self.tasks: defaultdict[DateTime, list[Task]] = defaultdict(list)
+        self.heapq_tasks: list[DateTime] = []
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
 
-    def add(self, timestamp: DateTime, task: typing.Callable[[], Awaitable[None]]):
+    def add(self, timestamp: DateTime, task: Task) -> None:
         if timestamp not in self.tasks:
             heappush(self.heapq_tasks, timestamp)
         self.tasks[timestamp].append(task)
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return not bool(self.tasks)
 
-    async def execute_one(self):
+    async def execute_one(self) -> None:
         min = heappop(self.heapq_tasks)
         task = self.tasks[min].pop()
         if len(self.tasks[min]) == 0:
@@ -387,7 +419,7 @@ class VersionListerTaskList:
             heappush(self.heapq_tasks, min)
         await task()
 
-    async def execute(self, number: int = 1):
+    async def execute(self, number: int = 1) -> None:
         for i in range(number):
             await self.execute_one()
 
@@ -409,7 +441,7 @@ class VersionLister:
 
     def __init__(
         self,
-        workspace_fs,
+        workspace_fs: WorkspaceFS,
         manifest_cache: ManifestCache | None = None,
         versions_list_cache: VersionsListCache | None = None,
     ):
@@ -452,8 +484,8 @@ class VersionLister:
 class VersionListerOneShot:
     def __init__(
         self,
-        workspace_fs,
-        path,
+        workspace_fs: WorkspaceFS,
+        path: FsPath,
         manifest_cache: ManifestCache | None = None,
         versions_list_cache: VersionsListCache | None = None,
     ):
@@ -527,7 +559,9 @@ class VersionListerOneShot:
         ]
         return (self._sanitize_list(versions_list, skip_minimal_sync), download_limit_reached)
 
-    def _sanitize_list(self, versions_list, skip_minimal_sync):
+    def _sanitize_list(
+        self, versions_list: List[TimestampBoundedData], skip_minimal_sync: bool
+    ) -> List[TimestampBoundedData]:
         previous = None
         new_list = []
         # Merge duplicates with overlapping time frames as it can be caused by an update of a
@@ -582,11 +616,14 @@ class VersionListerOneShot:
         version_number: int,
         expected_timestamp: DateTime,
         next_version_number: int,
-    ):
+    ) -> None:
         if early > late:
             return
         manifest = await self.task_list.manifest_cache.load(
-            entry_id, version=version_number, expected_backend_timestamp=expected_timestamp
+            entry_id,
+            version=version_number,
+            timestamp=None,
+            expected_backend_timestamp=expected_timestamp,
         )
         data = ManifestDataAndMutablePaths(
             ManifestData(
@@ -608,7 +645,9 @@ class VersionListerOneShot:
                 else None,
             )
         else:
-            if not isinstance(manifest, FileManifest):  # If it is a file, just ignores current path
+            if isinstance(
+                manifest, (FolderManifest, WorkspaceManifest)
+            ):  # If it is a file, just ignores current path
                 for child_name, child_id in manifest.children.items():
                     if child_name == self.target.parts[path_level]:
                         return await self._populate_tree_list_versions(
@@ -617,7 +656,7 @@ class VersionListerOneShot:
 
     async def _populate_tree_list_versions(
         self, path_level: int, entry_id: EntryID, early: DateTime, late: DateTime
-    ):
+    ) -> None:
         # TODO : Check if directory, melt the same entries through different parent
         versions = await self.task_list.versions_list_cache.load(entry_id)
         for version, (timestamp, creator) in versions.items():
