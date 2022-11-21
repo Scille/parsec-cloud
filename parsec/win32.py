@@ -24,9 +24,8 @@ def make_error(function: Any, function_name: str | None = None) -> WindowsError:
     description = FormatError(code).strip()
     if function_name is None:
         function_name = function.__name__
-    exception = WindowsError()
+    exception = WindowsError(function_name)
     exception.winerror = code
-    exception.function = function_name  # type: ignore[attr-defined]
     exception.strerror = description
     return exception
 
@@ -64,7 +63,7 @@ def function_factory(
     function.restype = return_type
     if error_checking is not None:
         # Assign to this method is valid
-        function.errcheck = error_checking  # type: ignore[assignment, misc]
+        function.errcheck = error_checking
     return function
 
 
