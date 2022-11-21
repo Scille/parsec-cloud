@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import click
 import platform
-from typing import Optional, Protocol, Any
+from typing import Any, Protocol
 
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.utils import trio_run
@@ -44,11 +44,11 @@ class SaveDeviceWithSelectedAuth(Protocol):
 async def _bootstrap_organization(
     config: CoreConfig,
     addr: BackendOrganizationBootstrapAddr,
-    device_label: Optional[str],
-    human_label: Optional[str],
-    human_email: Optional[str],
+    device_label: str | None,
+    human_label: str | None,
+    human_email: str | None,
     save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
-    sequester_verify_key: Optional[Path],
+    sequester_verify_key: Path | None,
 ) -> None:
     sequester_vrf_key = None
     if sequester_verify_key is not None:
@@ -107,11 +107,11 @@ Do you want to continue ?""",
 def bootstrap_organization(
     config: CoreConfig,
     addr: BackendOrganizationBootstrapAddr,
-    device_label: Optional[str],
-    human_label: Optional[str],
-    human_email: Optional[str],
+    device_label: str | None,
+    human_label: str | None,
+    human_email: str | None,
     save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
-    sequester_verify_key: Optional[Path],
+    sequester_verify_key: Path | None,
     **kwargs: Any,
 ) -> None:
     """

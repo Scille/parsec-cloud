@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Dict, List, Tuple
+from typing import Any, Dict, List, TYPE_CHECKING, Tuple
 from collections import defaultdict
 from parsec._parsec import DateTime
 
@@ -29,8 +29,8 @@ if TYPE_CHECKING:
 
 class MemorySequesterComponent(BaseSequesterComponent):
     def __init__(self) -> None:
-        self._organization_component: Optional[MemoryOrganizationComponent] = None
-        self._vlob_component: Optional[MemoryVlobComponent] = None
+        self._organization_component: MemoryOrganizationComponent | None = None
+        self._vlob_component: MemoryVlobComponent | None = None
         self._services: Dict[
             OrganizationID, Dict[SequesterServiceID, BaseSequesterService]
         ] = defaultdict(dict)
@@ -103,7 +103,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-        disabled_on: Optional[DateTime] = None,
+        disabled_on: DateTime | None = None,
     ) -> None:
         disabled_on = disabled_on or DateTime.now()
         service = self._get_service(organization_id=organization_id, service_id=service_id)

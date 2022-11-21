@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Callable, Optional, cast, Awaitable
+from typing import Awaitable, Callable, cast
 from structlog import get_logger
 from distutils.version import LooseVersion
 
@@ -84,7 +84,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         event_bus: EventBus,
         config: CoreConfig,
         minimize_on_close: bool = False,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent=parent)
         self.setupUi(self)
@@ -372,9 +372,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return wrapper.__get__(self)
 
-    def _on_create_org_clicked(
-        self, addr: Optional[BackendOrganizationBootstrapAddr] = None
-    ) -> None:
+    def _on_create_org_clicked(self, addr: BackendOrganizationBootstrapAddr | None = None) -> None:
         widget: CreateOrgWidget
 
         @self._bind_async_callback
@@ -573,7 +571,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_foreground_needed(self) -> None:
         self.show_top()
 
-    def _on_new_instance_needed(self, start_arg: Optional[str]) -> None:
+    def _on_new_instance_needed(self, start_arg: str | None) -> None:
         self.add_instance(start_arg)
         self.show_top()
 
@@ -709,7 +707,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setCurrentIndex(idx)
 
     def switch_to_login_tab(
-        self, file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None
+        self, file_link_addr: BackendOrganizationFileLinkAddr | None = None
     ) -> None:
         # Retrieve the login tab
         idx = self._get_login_tab_index()
@@ -819,7 +817,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.switch_to_login_tab()
         self._on_claim_pki_clicked(action_addr)
 
-    def add_instance(self, start_arg: Optional[str] = None) -> None:
+    def add_instance(self, start_arg: str | None = None) -> None:
         action_addr = None
         if start_arg:
             try:

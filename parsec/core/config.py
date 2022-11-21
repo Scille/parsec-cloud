@@ -5,7 +5,7 @@ import os
 import sys
 import attr
 import json
-from typing import Any, Optional, FrozenSet, Mapping
+from typing import Any, FrozenSet, Mapping
 from pathlib import Path
 from structlog import get_logger
 import binascii
@@ -47,12 +47,12 @@ class CoreConfig:
     config_dir: Path
     data_base_dir: Path
     mountpoint_base_dir: Path
-    prevent_sync_pattern_path: Optional[Path] = None  # Use `default_pattern.ignore` by default
+    prevent_sync_pattern_path: Path | None = None  # Use `default_pattern.ignore` by default
     preferred_org_creation_backend_addr: BackendAddr
     debug: bool = False
 
     backend_max_cooldown: int = 30
-    backend_connection_keepalive: Optional[int] = 29
+    backend_connection_keepalive: int | None = 29
     backend_max_connections: int = 4
 
     invitation_token_size: int = 8
@@ -60,17 +60,17 @@ class CoreConfig:
     mountpoint_enabled: bool = False
     disabled_workspaces: FrozenSet[EntryID] = frozenset()
 
-    sentry_dsn: Optional[str] = None
+    sentry_dsn: str | None = None
     sentry_environment: str = ""
     telemetry_enabled: bool = True
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
     pki_extra_trust_roots: FrozenSet[Path] = frozenset()
 
-    gui_last_device: Optional[str] = None
+    gui_last_device: str | None = None
     gui_tray_enabled: bool = True
-    gui_language: Optional[str] = None
+    gui_language: str | None = None
     gui_first_launch: bool = True
-    gui_last_version: Optional[str] = None
+    gui_last_version: str | None = None
     gui_check_version_at_startup: bool = True
     gui_check_version_url: str = "https://github.com/Scille/parsec-cloud/releases/latest"
     gui_check_version_api_url: str = "https://api.github.com/repos/Scille/parsec-cloud/releases"
@@ -78,7 +78,7 @@ class CoreConfig:
     gui_confirmation_before_close: bool = True
     gui_allow_multiple_instances: bool = False
     gui_show_confined: bool = False
-    gui_geometry: Optional[bytes] = None
+    gui_geometry: bytes | None = None
 
     ipc_win32_mutex_name: str = "parsec-cloud"
 
@@ -91,32 +91,32 @@ class CoreConfig:
 
 
 def config_factory(
-    config_dir: Optional[Path] = None,
-    data_base_dir: Optional[Path] = None,
-    mountpoint_base_dir: Optional[Path] = None,
-    prevent_sync_pattern_path: Optional[Path] = None,
+    config_dir: Path | None = None,
+    data_base_dir: Path | None = None,
+    mountpoint_base_dir: Path | None = None,
+    prevent_sync_pattern_path: Path | None = None,
     mountpoint_enabled: bool = False,
     disabled_workspaces: FrozenSet[EntryID] = frozenset(),
     backend_max_cooldown: int = 30,
-    backend_connection_keepalive: Optional[int] = 29,
+    backend_connection_keepalive: int | None = 29,
     backend_max_connections: int = 4,
-    sentry_dsn: Optional[str] = None,
+    sentry_dsn: str | None = None,
     sentry_environment: str = "",
     telemetry_enabled: bool = True,
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     pki_extra_trust_roots: FrozenSet[Path] = frozenset(),
     debug: bool = False,
-    gui_last_device: Optional[str] = None,
+    gui_last_device: str | None = None,
     gui_tray_enabled: bool = True,
-    gui_language: Optional[str] = None,
+    gui_language: str | None = None,
     gui_first_launch: bool = True,
-    gui_last_version: Optional[str] = None,
+    gui_last_version: str | None = None,
     gui_check_version_at_startup: bool = True,
     gui_check_version_allow_pre_release: bool = False,
     gui_allow_multiple_instances: bool = False,
-    preferred_org_creation_backend_addr: Optional[BackendAddr] = None,
+    preferred_org_creation_backend_addr: BackendAddr | None = None,
     gui_show_confined: bool = False,
-    gui_geometry: Optional[bytes] = None,
+    gui_geometry: bytes | None = None,
     ipc_win32_mutex_name: str = "parsec-cloud",
     environ: Mapping[str, str] = {},
     **_: object,

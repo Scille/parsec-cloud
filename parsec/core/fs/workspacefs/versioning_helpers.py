@@ -21,7 +21,7 @@ import attr
 import math
 import typing
 from functools import partial
-from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict, Awaitable
+from typing import Awaitable, Dict, List, NamedTuple, Tuple, Union, cast
 from parsec._parsec import DateTime
 from collections import defaultdict
 
@@ -58,9 +58,9 @@ class TimestampBoundedData(NamedTuple):
     creator: DeviceID
     updated: DateTime
     is_folder: bool
-    size: Optional[int]
-    source: Optional[FsPath]
-    destination: Optional[FsPath]
+    size: int | None
+    source: FsPath | None
+    destination: FsPath | None
 
 
 class TimestampBoundedEntry(NamedTuple):
@@ -74,13 +74,13 @@ class ManifestData(NamedTuple):
     creator: DeviceID
     updated: DateTime
     is_folder: bool
-    size: Optional[int]
+    size: int | None
 
 
 class ManifestDataAndPaths(NamedTuple):
     data: ManifestData
-    source: Optional[FsPath]
-    destination: Optional[FsPath]
+    source: FsPath | None
+    destination: FsPath | None
 
 
 @attr.s
@@ -97,7 +97,7 @@ class ManifestDataAndMutablePaths:
 
     async def try_get_path_at_timestamp(
         self, manifest_cache, entry_id: EntryID, timestamp: DateTime
-    ) -> Optional[FsPath]:
+    ) -> FsPath | None:
         try:
             return await manifest_cache.get_path_at_timestamp(entry_id, timestamp)
         except EntryNotFound:
@@ -206,9 +206,9 @@ class ManifestCache:
     async def load(
         self,
         entry_id: EntryID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
-        expected_backend_timestamp: Optional[DateTime] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
+        expected_backend_timestamp: DateTime | None = None,
     ) -> Tuple[RemoteManifest, bool]:
         """
         Tries to find specified manifest in cache, tries to download it otherwise and updates cache
@@ -305,7 +305,7 @@ class ManifestCacheCounter:
         ManifestCacheDownloadLimitReached
     """
 
-    def __init__(self, manifest_cache: ManifestCache, limit: Optional[int]):
+    def __init__(self, manifest_cache: ManifestCache, limit: int | None):
         self._manifest_cache = manifest_cache
         self.counter = 0
         self.limit = limit or math.inf
@@ -410,8 +410,8 @@ class VersionLister:
     def __init__(
         self,
         workspace_fs,
-        manifest_cache: Optional[ManifestCache] = None,
-        versions_list_cache: Optional[VersionsListCache] = None,
+        manifest_cache: ManifestCache | None = None,
+        versions_list_cache: VersionsListCache | None = None,
     ):
         self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
         self.versions_list_cache = versions_list_cache or VersionsListCache(
@@ -423,9 +423,9 @@ class VersionLister:
         self,
         path: FsPath,
         skip_minimal_sync: bool = True,
-        starting_timestamp: Optional[DateTime] = None,
-        ending_timestamp: Optional[DateTime] = None,
-        max_manifest_queries: Optional[int] = None,
+        starting_timestamp: DateTime | None = None,
+        ending_timestamp: DateTime | None = None,
+        max_manifest_queries: int | None = None,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
@@ -454,8 +454,8 @@ class VersionListerOneShot:
         self,
         workspace_fs,
         path,
-        manifest_cache: Optional[ManifestCache] = None,
-        versions_list_cache: Optional[VersionsListCache] = None,
+        manifest_cache: ManifestCache | None = None,
+        versions_list_cache: VersionsListCache | None = None,
     ):
         self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
         self.versions_list_cache = versions_list_cache or VersionsListCache(
@@ -469,9 +469,9 @@ class VersionListerOneShot:
         self,
         path: FsPath,
         skip_minimal_sync: bool = True,
-        starting_timestamp: Optional[DateTime] = None,
-        ending_timestamp: Optional[DateTime] = None,
-        max_manifest_queries: Optional[int] = None,
+        starting_timestamp: DateTime | None = None,
+        ending_timestamp: DateTime | None = None,
+        max_manifest_queries: int | None = None,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:

@@ -11,7 +11,7 @@ https://gist.github.com/oremanj/8c137d7b1f820d441fbd32fb584e06fd
 import weakref
 import collections
 from functools import partial
-from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet, Optional
+from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet
 
 import attr
 import trio
@@ -73,7 +73,7 @@ class MultiCancelScope:
                 scope.cancel()
             self._cancel_called = True
 
-    def open_child(self, *, shield: Optional[bool] = None) -> trio.CancelScope:
+    def open_child(self, *, shield: bool | None = None) -> trio.CancelScope:
         """Return a new child cancel scope.
         The child will start out cancelled if the parent
         :meth:`cancel` method has been called. Its initial shield state
@@ -154,7 +154,7 @@ async def open_service_nursery_with_exception_group() -> AsyncIterator[trio.Nurs
         child_task_scopes = MultiCancelScope(shield=True)
 
         def start_soon(
-            async_fn: Callable[..., Awaitable[Any]], *args: Any, name: Optional[str] = None
+            async_fn: Callable[..., Awaitable[Any]], *args: Any, name: str | None = None
         ) -> None:
             async def wrap_child(coroutine: Awaitable[Any]) -> None:
                 with child_task_scopes.open_child():
@@ -164,7 +164,7 @@ async def open_service_nursery_with_exception_group() -> AsyncIterator[trio.Nurs
             type(nursery).start_soon(nursery, wrap_child, coroutine, name=name or async_fn)
 
         async def start(
-            async_fn: Callable[..., Awaitable[Any]], *args: Any, name: Optional[str] = None
+            async_fn: Callable[..., Awaitable[Any]], *args: Any, name: str | None = None
         ) -> Any:
             async def wrap_child(*, task_status: TaskStatus[Any]) -> None:
                 # For start(), the child doesn't get shielded until it

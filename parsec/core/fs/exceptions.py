@@ -13,7 +13,7 @@ Define all the FSError classes, using the following hierarchy:
 
 """
 
-from typing import Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 import os
 import errno
 import io
@@ -37,15 +37,11 @@ class FSInternalError(Exception):
     Base class for exceptions that are not meant to propagate out of the fs module
     """
 
-    pass
-
 
 class FSError(Exception):
     """
     Base class for all fs exceptions
     """
-
-    pass
 
 
 class FSMiscError(FSError):
@@ -59,15 +55,15 @@ class FSOperationError(OSError, FSError):
     Base class for the exceptions that may be raised during the execution of an operation
     """
 
-    ERRNO: Optional[int] = None
-    WINERROR: Optional[int] = None
-    NTSTATUS: Optional[ntstatus] = None
+    ERRNO: int | None = None
+    WINERROR: int | None = None
+    NTSTATUS: ntstatus | None = None
 
     def __init__(
         self,
         arg: object = None,
-        filename: Optional[AnyPath] = None,
-        filename2: Optional[AnyPath] = None,
+        filename: AnyPath | None = None,
+        filename2: AnyPath | None = None,
     ):
         # Get the actual message and save it
         if arg is None and self.ERRNO is not None:
@@ -257,7 +253,7 @@ class FSSequesterServiceRejectedError(FSRemoteOperationError):
         service_id: SequesterServiceID,
         service_label: str,
         reason: str,
-        manifest: Optional[AnyRemoteManifest] = None,
+        manifest: AnyRemoteManifest | None = None,
     ):
         super().__init__(id)
         self.id = id

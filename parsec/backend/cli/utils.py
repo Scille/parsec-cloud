@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import click
-from typing import Callable, Optional, List, TypeVar
+from typing import Callable, List, TypeVar
 from typing_extensions import ParamSpec
 from itertools import count
 from collections import defaultdict
@@ -148,8 +148,8 @@ def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
 def _parse_blockstore_params(raw_params: str) -> BaseBlockStoreConfig:
     raid_configs = defaultdict(list)
     for raw_param in raw_params:
-        raid_mode: Optional[str]
-        raid_node: Optional[int]
+        raid_mode: str | None
+        raid_node: int | None
         raw_param_parts = raw_param.split(":", 2)
         if raw_param_parts[0].upper() in ("RAID0", "RAID1", "RAID5") and len(raw_param_parts) == 3:
             raid_mode, raw_raid_node, node_param = raw_param_parts

@@ -7,7 +7,6 @@ from trio_typing import TaskStatus
 from typing import (
     TYPE_CHECKING,
     Tuple,
-    Optional,
     Union,
     Dict,
     Sequence,
@@ -296,7 +295,7 @@ class UserFS:
         self._update_user_manifest_lock = trio.Lock()
         self._workspaces: Dict[EntryID, WorkspaceFS] = {}
 
-        self._sequester_services_cache: Optional[List[SequesterServiceCertificate]] = None
+        self._sequester_services_cache: List[SequesterServiceCertificate] | None = None
 
         timestamp = self.device.timestamp()
         wentry = WorkspaceEntry(
@@ -331,7 +330,7 @@ class UserFS:
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Regex,
-        preferred_language: Optional[str] = None,
+        preferred_language: str | None = None,
         workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     ) -> AsyncIterator[UserFSTypeVar]:
         if preferred_language is None:
@@ -408,7 +407,7 @@ class UserFS:
                 raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.hex}`")
             return workspace_entry
 
-        async def get_previous_workspace_entry() -> Optional[WorkspaceEntry]:
+        async def get_previous_workspace_entry() -> WorkspaceEntry | None:
             """
             Return the most recent workspace entry using the previous encryption revision.
             This requires one or several calls to the backend.
@@ -541,7 +540,7 @@ class UserFS:
             await self.set_user_manifest(updated_user_manifest)
             self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
 
-    async def _fetch_remote_user_manifest(self, version: Optional[int] = None) -> UserManifest:
+    async def _fetch_remote_user_manifest(self, version: int | None = None) -> UserManifest:
         """
         Raises:
             FSError
@@ -684,7 +683,7 @@ class UserFS:
                 # retrying the sync
                 await self._inbound_sync()
 
-    async def _outbound_sync_inner(self, timestamp_greater_than: Optional[DateTime] = None) -> bool:
+    async def _outbound_sync_inner(self, timestamp_greater_than: DateTime | None = None) -> bool:
         base_um = self.get_user_manifest()
         if not base_um.need_sync:
             return True
@@ -737,8 +736,8 @@ class UserFS:
         return True
 
     async def _upload_manifest(
-        self, base_um: LocalUserManifest, timestamp_greater_than: Optional[DateTime]
-    ) -> Optional[UserManifest]:
+        self, base_um: LocalUserManifest, timestamp_greater_than: DateTime | None
+    ) -> UserManifest | None:
         # Build vlob
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
@@ -876,8 +875,8 @@ class UserFS:
         self,
         workspace_id: EntryID,
         recipient: UserID,
-        role: Optional[WorkspaceRole],
-        timestamp_greater_than: Optional[DateTime] = None,
+        role: WorkspaceRole | None,
+        timestamp_greater_than: DateTime | None = None,
     ) -> None:
         """
         Raises:
@@ -1376,7 +1375,7 @@ class UserFS:
 
     async def _get_previous_workspace_entry(
         self, workspace_entry: WorkspaceEntry
-    ) -> Optional[WorkspaceEntry]:
+    ) -> WorkspaceEntry | None:
         """
         Return the most recent workspace entry using the previous encryption revision.
 

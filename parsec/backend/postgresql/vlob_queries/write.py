@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import Dict, Optional
+from typing import Dict
 from triopg import UniqueViolationError
 
 from parsec._parsec import DateTime
@@ -165,7 +165,7 @@ async def query_update(
     version: int,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+    sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
 ) -> None:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_write_access(
@@ -276,7 +276,7 @@ async def query_create(
     vlob_id: VlobID,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+    sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
 ) -> None:
     await _check_realm_and_write_access(
         conn, organization_id, author, realm_id, encryption_revision, timestamp

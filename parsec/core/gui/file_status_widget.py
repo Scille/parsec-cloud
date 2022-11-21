@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Callable, Optional, cast
+from typing import Callable, cast
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -35,7 +35,7 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.workspace_fs = workspace_fs
         self.path = path
         self.core = core
-        self.dialog: Optional[GreyedDialog] = None
+        self.dialog: GreyedDialog | None = None
 
         _ = self.jobs_ctx.submit_job(
             (self, "get_status_success"), (self, "get_status_error"), self.get_status
@@ -43,7 +43,7 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
 
     async def get_status(self) -> None:
         path_info = await self.workspace_fs.path_info(self.path)
-        block_info: Optional[BlockInfo] = None
+        block_info: BlockInfo | None = None
         if path_info["type"] == "file":
             block_info = await self.workspace_fs.get_blocks_by_type(self.path)
             self.label_size.setText(get_filesize(cast(int, path_info["size"])))
@@ -125,7 +125,7 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         path: FsPath,
         core: LoggedCore,
         parent: QWidget,
-        on_finished: Optional[Callable[..., None]],
+        on_finished: Callable[..., None] | None,
     ) -> FileStatusWidget:
         w = cls(jobs_ctx=jobs_ctx, workspace_fs=workspace_fs, path=path, core=core)
         d = GreyedDialog(

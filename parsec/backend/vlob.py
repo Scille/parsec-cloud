@@ -5,7 +5,7 @@ import json
 import urllib.error
 from parsec.backend.client_context import AuthenticatedClientContext
 from structlog import get_logger
-from typing import List, Tuple, Dict, Optional
+from typing import Dict, List, Tuple
 
 from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import (
@@ -576,7 +576,7 @@ class BaseVlobComponent:
         timestamp: DateTime,
         blob: bytes,
         # Sequester is a special case, so give it a default version to simplify tests
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         """
         Raises:
@@ -594,8 +594,8 @@ class BaseVlobComponent:
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
     ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         """
         Raises:
@@ -617,7 +617,7 @@ class BaseVlobComponent:
         timestamp: DateTime,
         blob: bytes,
         # Sequester is a special case, so give it a default version to simplify tests
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         """
         Raises:

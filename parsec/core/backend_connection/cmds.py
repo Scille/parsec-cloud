@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Tuple, List, Dict, Optional, Union, cast, Awaitable
+from typing import Awaitable, Dict, List, Tuple, Union, cast
 from uuid import UUID
 
 from parsec._parsec import (
@@ -477,7 +477,7 @@ async def vlob_create(
     vlob_id: VlobID,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+    sequester_blob: Dict[SequesterServiceID, bytes] | None,
 ) -> VlobCreateRep:
     return cast(
         VlobCreateRep,
@@ -499,8 +499,8 @@ async def vlob_read(
     transport: Transport,
     encryption_revision: int,
     vlob_id: VlobID,
-    version: Optional[int] = None,
-    timestamp: Optional[DateTime] = None,
+    version: int | None = None,
+    timestamp: DateTime | None = None,
 ) -> VlobReadRep:
     return cast(
         VlobReadRep,
@@ -523,7 +523,7 @@ async def vlob_update(
     version: int,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+    sequester_blob: Dict[SequesterServiceID, bytes] | None,
 ) -> VlobUpdateRep:
     return cast(
         VlobUpdateRep,
@@ -723,7 +723,7 @@ async def invite_new(
     transport: Transport,
     type: InvitationType,
     send_email: bool = False,
-    claimer_email: Optional[str] = None,
+    claimer_email: str | None = None,
 ) -> InviteNewRep:
     return cast(
         InviteNewRep,
@@ -908,7 +908,7 @@ async def invite_3b_greeter_signify_trust(
 
 
 async def invite_4_greeter_communicate(
-    transport: Transport, token: InvitationToken, payload: Optional[bytes]
+    transport: Transport, token: InvitationToken, payload: bytes | None
 ) -> Invite4GreeterCommunicateRep:
     return cast(
         Invite4GreeterCommunicateRep,
@@ -923,7 +923,7 @@ async def invite_4_greeter_communicate(
 
 
 async def invite_4_claimer_communicate(
-    transport: Transport, payload: Optional[bytes]
+    transport: Transport, payload: bytes | None
 ) -> Invite4ClaimerCommunicateRep:
     return cast(
         Invite4ClaimerCommunicateRep,
@@ -948,7 +948,7 @@ async def user_get(transport: Transport, user_id: UserID) -> UserGetRep:
 
 async def human_find(
     transport: Transport,
-    query: Optional[str] = None,
+    query: str | None = None,
     page: int = 1,
     per_page: int = 100,
     omit_revoked: bool = False,

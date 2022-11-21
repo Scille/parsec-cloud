@@ -5,7 +5,7 @@ import struct
 from structlog import get_logger
 from sys import byteorder
 from trio import Nursery
-from typing import List, Optional, Union
+from typing import List, Union
 
 from parsec.utils import open_service_nursery
 from parsec.api.protocol import OrganizationID, BlockID
@@ -41,9 +41,7 @@ def generate_checksum_chunk(chunks: List[bytes]) -> bytes:
     return _xor_buffers(*chunks)
 
 
-def rebuild_block_from_chunks(
-    chunks: List[Optional[bytes]], checksum_chunk: Optional[bytes]
-) -> bytes:
+def rebuild_block_from_chunks(chunks: List[bytes | None], checksum_chunk: bytes | None) -> bytes:
     valid_chunks = [chunk for chunk in chunks if chunk is not None]
     assert len(chunks) - len(valid_chunks) <= 1  # Cannot correct more than 1 chunk
     try:
@@ -71,7 +69,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
 
     async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         error_count = 0
-        fetch_results: List[Union[Exception, Optional[bytes]]] = [None] * len(self.blockstores)
+        fetch_results: List[Union[Exception, bytes | None]] = [None] * len(self.blockstores)
 
         async def _partial_blockstore_read(nursery: Nursery, blockstore_index: int) -> None:
             nonlocal error_count

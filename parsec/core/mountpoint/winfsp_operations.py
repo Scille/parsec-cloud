@@ -5,7 +5,7 @@ from pathlib import PurePath
 from parsec._parsec import DateTime
 from functools import partial, wraps
 from contextlib import contextmanager
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, Iterator, cast
+from typing import Any, Callable, Iterator, List, Tuple, TypeVar, Union, cast
 from typing_extensions import Concatenate, ParamSpec
 from trio import Cancelled, RunFinishedError
 from structlog import get_logger
@@ -55,7 +55,7 @@ class OpenedFolder:
 
 
 class OpenedFile:
-    def __init__(self, path: FsPath, fd: Optional[FileDescriptor]) -> None:
+    def __init__(self, path: FsPath, fd: FileDescriptor | None) -> None:
         self.path = path
         self.fd = fd
         self.deleted = False
@@ -68,7 +68,7 @@ def get_path_and_translate_error(
     file_context: Union[OpenedFile, OpenedFolder, str],
     mountpoint: PurePath,
     workspace_id: EntryID,
-    timestamp: Optional[DateTime],
+    timestamp: DateTime | None,
 ) -> Iterator[FsPath]:
     path: FsPath = FsPath("/<unkonwn>")
     try:
@@ -220,7 +220,7 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
         volume_label: str,
         mountpoint: PurePath,
         workspace_id: EntryID,
-        timestamp: Optional[DateTime],
+        timestamp: DateTime | None,
     ) -> None:
         super().__init__()
         # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
@@ -382,9 +382,7 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
             raise NTStatusError(NTSTATUS.STATUS_DIRECTORY_NOT_EMPTY)
 
     @handle_error
-    def read_directory(
-        self, file_context: FileContext, marker: Optional[str]
-    ) -> List[dict[str, Any]]:
+    def read_directory(self, file_context: FileContext, marker: str | None) -> List[dict[str, Any]]:
         assert isinstance(file_context, OpenedFolder)
         entries = []
         stat = self.fs_access.entry_info(file_context.path)

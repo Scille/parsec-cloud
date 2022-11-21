@@ -5,7 +5,7 @@ import trio
 from contextlib import (
     asynccontextmanager,
 )
-from typing import TYPE_CHECKING, AsyncIterator, Optional, AsyncGenerator, TypeVar
+from typing import AsyncGenerator, AsyncIterator, TYPE_CHECKING, TypeVar
 from parsec.api.transport import Transport
 
 from parsec.core.types import BackendAddrType, BackendOrganizationBootstrapAddr
@@ -39,14 +39,14 @@ for cmd in APIV1_ANONYMOUS_CMDS:
 
 @asynccontextmanager
 async def apiv1_backend_anonymous_cmds_factory(
-    addr: BackendOrganizationBootstrapAddr, keepalive: Optional[int] = None
+    addr: BackendOrganizationBootstrapAddr, keepalive: int | None = None
 ) -> AsyncGenerator[APIV1_BackendAnonymousCmds, None]:
     """
     Raises:
         BackendConnectionError
     """
     transport_lock = trio.Lock()
-    transport: Optional[Transport] = None
+    transport: Transport | None = None
     closed = False
 
     async def _init_transport() -> Transport:

@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional
-
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import (
@@ -43,9 +41,9 @@ def _check_rep(rep: dict[str, object], step_name: str) -> None:
 
 async def bootstrap_organization(
     addr: BackendOrganizationBootstrapAddr,
-    human_handle: Optional[HumanHandle],
-    device_label: Optional[DeviceLabel],
-    sequester_authority_verify_key: Optional[SequesterVerifyKeyDer] = None,
+    human_handle: HumanHandle | None,
+    device_label: DeviceLabel | None,
+    sequester_authority_verify_key: SequesterVerifyKeyDer | None = None,
 ) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
@@ -93,9 +91,9 @@ async def bootstrap_organization(
             timestamp=timestamp,
             verify_key_der=sequester_authority_verify_key,
         )
-        sequester_authority_certificate_signed: Optional[
-            bytes
-        ] = sequester_authority_certificate.dump_and_sign(root_signing_key)
+        sequester_authority_certificate_signed: bytes | None = (
+            sequester_authority_certificate.dump_and_sign(root_signing_key)
+        )
     else:
         sequester_authority_certificate_signed = None
 
@@ -120,7 +118,7 @@ async def failsafe_organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-    sequester_authority_certificate: Optional[bytes] = None,
+    sequester_authority_certificate: bytes | None = None,
 ) -> dict[str, object]:
     # Try the new anonymous API
     try:

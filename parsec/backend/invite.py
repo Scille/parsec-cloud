@@ -9,7 +9,7 @@ import sys
 import tempfile
 from enum import Enum
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Set, cast
+from typing import Any, Dict, List, Set, TYPE_CHECKING, Union, cast
 from parsec._parsec import DateTime
 from email.message import Message
 from email.mime.text import MIMEText
@@ -189,11 +189,11 @@ NEXT_CONDUIT_STATE = {
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ConduitListenCtx:
     organization_id: OrganizationID
-    greeter: Optional[UserID]
+    greeter: UserID | None
     token: InvitationToken
     state: ConduitState
     payload: bytes
-    peer_payload: Optional[bytes]
+    peer_payload: bytes | None
 
     @property
     def is_greeter(self) -> bool:
@@ -204,7 +204,7 @@ class ConduitListenCtx:
 class UserInvitation:
     TYPE = InvitationType.USER
     greeter_user_id: UserID
-    greeter_human_handle: Optional[HumanHandle]
+    greeter_human_handle: HumanHandle | None
     claimer_email: str
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=DateTime.now)
@@ -218,7 +218,7 @@ class UserInvitation:
 class DeviceInvitation:
     TYPE = InvitationType.DEVICE
     greeter_user_id: UserID
-    greeter_human_handle: Optional[HumanHandle]
+    greeter_human_handle: HumanHandle | None
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
@@ -233,8 +233,8 @@ Invitation = Union[UserInvitation, DeviceInvitation]
 def generate_invite_email(
     from_addr: str,
     to_addr: str,
-    reply_to: Optional[str],
-    greeter_name: Optional[str],  # Noe for device invitation
+    reply_to: str | None,
+    greeter_name: str | None,  # Noe for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
     backend_url: str,
@@ -921,7 +921,7 @@ class BaseInviteComponent:
     async def conduit_exchange(
         self,
         organization_id: OrganizationID,
-        greeter: Optional[UserID],
+        greeter: UserID | None,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
@@ -969,7 +969,7 @@ class BaseInviteComponent:
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: Optional[UserID],  # None for claimer
+        greeter: UserID | None,  # None for claimer
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
@@ -982,7 +982,7 @@ class BaseInviteComponent:
         """
         raise NotImplementedError()
 
-    async def _conduit_listen(self, ctx: ConduitListenCtx) -> Optional[bytes]:
+    async def _conduit_listen(self, ctx: ConduitListenCtx) -> bytes | None:
         """
         Returns ``None`` is listen is still needed
         Raises:
@@ -997,7 +997,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         claimer_email: str,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> UserInvitation:
         """
         Raise: Nothing
@@ -1008,7 +1008,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> DeviceInvitation:
         """
         Raise: Nothing

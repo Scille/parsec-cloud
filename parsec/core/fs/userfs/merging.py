@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Tuple, Optional, Dict
+from typing import Dict, Tuple
 
 from parsec.api.data import UserManifest, WorkspaceEntry
 from parsec.core.types import LocalUserManifest
@@ -13,7 +13,7 @@ from parsec.api.data.entry import EntryID
 
 
 def merge_workspace_entry(
-    base: Optional[WorkspaceEntry], diverged: WorkspaceEntry, target: WorkspaceEntry
+    base: WorkspaceEntry | None, diverged: WorkspaceEntry, target: WorkspaceEntry
 ) -> WorkspaceEntry:
     assert diverged.id == target.id
     assert not base or base.id == target.id
@@ -67,7 +67,7 @@ def merge_workspace_entry(
 
 
 def merge_workspace_entries(
-    base: Optional[Tuple[WorkspaceEntry, ...]],
+    base: Tuple[WorkspaceEntry, ...] | None,
     diverged: Tuple[WorkspaceEntry, ...],
     target: Tuple[WorkspaceEntry, ...],
 ) -> Tuple[Tuple[WorkspaceEntry, ...], bool]:
@@ -84,7 +84,7 @@ def merge_workspace_entries(
 
     resolved: Dict[EntryID, WorkspaceEntry] = {we.id: we for we in target}
     for d_entry in diverged:
-        t_entry: Optional[WorkspaceEntry] = resolved.get(d_entry.id)
+        t_entry: WorkspaceEntry | None = resolved.get(d_entry.id)
 
         if t_entry == d_entry:
             # Target and diverged agree on the entry, nothing more to do

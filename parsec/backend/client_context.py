@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
-from typing import Optional, Set
+from typing import Set
 from structlog import BoundLogger, get_logger
 import trio
 
@@ -36,7 +36,7 @@ class BaseClientContext:
     def __init__(self, api_version: ApiVersion):
         self.api_version = api_version
         self.conn_id = uuid4().hex
-        self.cancel_scope: Optional[trio.CancelScope] = None
+        self.cancel_scope: trio.CancelScope | None = None
 
     def close_connection_asap(self) -> None:
         if self.cancel_scope is not None:
@@ -66,8 +66,8 @@ class AuthenticatedClientContext(BaseClientContext):
         api_version: ApiVersion,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        human_handle: Optional[HumanHandle],
-        device_label: Optional[DeviceLabel],
+        human_handle: HumanHandle | None,
+        device_label: DeviceLabel | None,
         profile: UserProfile,
         public_key: PublicKey,
         verify_key: VerifyKey,

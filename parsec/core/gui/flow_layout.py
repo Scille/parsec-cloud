@@ -123,7 +123,7 @@ class FlowLayout(QLayout):
         elif parent.isWidgetType():
             assert isinstance(parent, QWidget)
             # FIXME: what does the `0` mean here ?
-            # The second argument is `Optional[QStyleOption]`
+            # The second argument is `QStyleOption | None`
             return parent.style().pixelMetric(pixel_metric, cast(Any, 0), parent)
         else:
             assert isinstance(parent, QLayout)

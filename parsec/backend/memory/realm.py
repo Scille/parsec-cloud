@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import attr
 from parsec._parsec import DateTime
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Dict, Optional, Tuple
+from typing import Any, Callable, Coroutine, Dict, List, TYPE_CHECKING, Tuple
 
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, UserProfile
 from parsec.backend.backend_events import BackendEvent
@@ -56,7 +56,7 @@ class Realm:
                 roles[x.user_id] = x.role
         return roles
 
-    def get_last_role(self, user_id: UserID) -> Optional[RealmGrantedRole]:
+    def get_last_role(self, user_id: UserID) -> RealmGrantedRole | None:
         filtered_roles = [role for role in self.granted_roles if role.user_id == user_id]
         try:
             return max(filtered_roles, key=lambda role: role.granted_on)
@@ -67,10 +67,10 @@ class Realm:
 class MemoryRealmComponent(BaseRealmComponent):
     def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._user_component: Optional[MemoryUserComponent] = None
-        self._message_component: Optional[MemoryMessageComponent] = None
-        self._vlob_component: Optional[MemoryVlobComponent] = None
-        self._block_component: Optional[MemoryBlockComponent] = None
+        self._user_component: MemoryUserComponent | None = None
+        self._message_component: MemoryMessageComponent | None = None
+        self._vlob_component: MemoryVlobComponent | None = None
+        self._block_component: MemoryBlockComponent | None = None
         self._realms: Dict[Tuple[OrganizationID, RealmID], Realm] = {}
         self._maintenance_reencryption_is_finished_hook = None
 
@@ -169,7 +169,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: Optional[bytes] = None,
+        recipient_message: bytes | None = None,
     ) -> None:
         assert new_role.granted_by is not None
         assert new_role.granted_by.user_id != new_role.user_id

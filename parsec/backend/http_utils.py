@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict
 import trio
 import urllib.request
 import urllib.parse
@@ -10,10 +10,10 @@ import urllib.parse
 
 async def http_request(
     url: str,
-    url_params: Optional[Dict[str, Any]] = None,
-    data: Optional[bytes] = None,
-    headers: Optional[Dict[str, str]] = None,
-    method: Optional[str] = None,
+    url_params: Dict[str, Any] | None = None,
+    data: bytes | None = None,
+    headers: Dict[str, str] | None = None,
+    method: str | None = None,
 ) -> bytes:
     """Raises: urllib.error.URLError or OSError"""
 

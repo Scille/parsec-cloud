@@ -2,7 +2,6 @@
 from __future__ import annotations
 from typing import Any, TextIO
 
-from typing import Optional
 import click
 import urllib.parse
 
@@ -50,7 +49,7 @@ def stats_organization(
 async def _stats_server(
     backend_addr: BackendAddr,
     administration_token: str,
-    at: Optional[DateTime],
+    at: DateTime | None,
     format: str,
 ) -> str:
     query_args = {"format": format}

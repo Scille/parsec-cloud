@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, AsyncIterator, Awaitable, Callable, Generic, Optional, TypeVar, cast
+from typing import Any, AsyncIterator, Awaitable, Callable, Generic, TypeVar, cast
 
 import attr
 import trio
@@ -106,8 +106,8 @@ class TaskStatus(Generic[T]):
 
     # Internal state
     _trio_task_status: trio_typing.TaskStatus[TaskStatus[T]] = attr.ib()
-    _cancel_scope: Optional[trio.CancelScope] = attr.ib(default=None)
-    _started_value: Optional[T] = attr.ib(default=None)
+    _cancel_scope: trio.CancelScope | None = attr.ib(default=None)
+    _started_value: T | None = attr.ib(default=None)
     _finished_event: trio.Event = attr.ib(factory=trio.Event)
 
     def _set_cancel_scope(self, scope: trio.CancelScope) -> None:
@@ -118,7 +118,7 @@ class TaskStatus(Generic[T]):
 
     # Trio-like methods
 
-    def started(self, value: Optional[T] = None) -> None:
+    def started(self, value: T | None = None) -> None:
         self._started_value = value
         self._trio_task_status.started(self)
 
@@ -134,7 +134,7 @@ class TaskStatus(Generic[T]):
         return self._finished_event.is_set()
 
     @property
-    def value(self) -> Optional[T]:
+    def value(self) -> T | None:
         return self._started_value
 
     # Methods
@@ -171,7 +171,7 @@ async def start_task(
     nursery: trio.Nursery,
     corofn: Callable[..., Awaitable[T]],
     *args: Any,
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> TaskStatus[T]:
     """Equivalent to nursery.start but return a TaskStatus object.
 

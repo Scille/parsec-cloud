@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional, Union, Dict
+from typing import Any, Callable, Coroutine, Dict, TYPE_CHECKING, Union
 import trio
 from collections import defaultdict
 
@@ -36,10 +36,10 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self, send_event: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
-        self._user_component: Optional[MemoryUserComponent] = None
-        self._vlob_component: Optional[MemoryVlobComponent] = None
-        self._block_component: Optional[MemoryBlockComponent] = None
-        self._realm_component: Optional[MemoryRealmComponent] = None
+        self._user_component: MemoryUserComponent | None = None
+        self._vlob_component: MemoryVlobComponent | None = None
+        self._block_component: MemoryBlockComponent | None = None
+        self._realm_component: MemoryRealmComponent | None = None
         self._organizations: Dict[OrganizationID, Organization] = {}
         self._send_event = send_event
         self._organization_bootstrap_lock: dict[OrganizationID, trio.Lock] = defaultdict(trio.Lock)
@@ -61,9 +61,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, int | None] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> None:
         created_on = created_on or DateTime.now()
         org = self._organizations.get(id)
@@ -102,8 +102,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        bootstrapped_on: Optional[DateTime] = None,
-        sequester_authority: Optional[SequesterAuthority] = None,
+        bootstrapped_on: DateTime | None = None,
+        sequester_authority: SequesterAuthority | None = None,
     ) -> None:
         assert self._user_component is not None
 
@@ -140,7 +140,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     async def stats(
         self,
         id: OrganizationID,
-        at: Optional[DateTime] = None,
+        at: DateTime | None = None,
     ) -> OrganizationStats:
         assert self._vlob_component is not None
         assert self._block_component is not None
@@ -194,7 +194,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         )
 
     async def server_stats(
-        self, at: Optional[DateTime] = None
+        self, at: DateTime | None = None
     ) -> Dict[OrganizationID, OrganizationStats]:
         at = at or DateTime.now()
         result = {}
@@ -211,7 +211,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         is_expired: Union[UnsetType, bool] = Unset,
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, int | None] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """

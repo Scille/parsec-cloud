@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Callable, Coroutine, Dict, List, Optional
+from typing import Any, Callable, Coroutine, Dict, List
 from uuid import UUID
 from collections import defaultdict
 import attr
@@ -41,14 +41,14 @@ class PkiEnrollment:
     submitter_der_x509_certificate: bytes
     submit_payload_signature: bytes
     submit_payload: bytes
-    accepter: Optional[DeviceID] = None
-    accepted: Optional[DeviceID] = None
+    accepter: DeviceID | None = None
+    accepted: DeviceID | None = None
 
 
 class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._user_component: Optional[MemoryUserComponent] = None
+        self._user_component: MemoryUserComponent | None = None
         self._enrollments: Dict[OrganizationID, List[PkiEnrollment]] = defaultdict(list)
 
     def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:

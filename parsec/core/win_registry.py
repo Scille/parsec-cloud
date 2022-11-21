@@ -7,7 +7,7 @@ import string
 import sys
 import importlib.resources
 from types import ModuleType
-from typing import Any, Iterator, Optional
+from typing import Any, Iterator
 from structlog import get_logger
 from contextlib import contextmanager
 
@@ -128,7 +128,7 @@ def del_acrobat_app_container_enabled() -> None:
 # Drive icon management
 
 
-def get_parsec_drive_icon(letter: str) -> tuple[Optional[str], Optional[object]]:
+def get_parsec_drive_icon(letter: str) -> tuple[str | None, object | None]:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     assert len(letter) == 1 and letter.upper() in string.ascii_uppercase

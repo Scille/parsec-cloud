@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import click
-from typing import Any, Optional
+from typing import Any
 
 
 from parsec.utils import trio_run
@@ -25,8 +25,8 @@ async def _share_workspace(
     config: CoreConfig,
     device: LocalDevice,
     name: EntryName,
-    user_id: Optional[UserID],
-    recipient: Optional[str],
+    user_id: UserID | None,
+    recipient: str | None,
     user_role: RealmRole,
 ) -> None:
     if recipient and user_id or not recipient and not user_id:
@@ -64,9 +64,9 @@ def share_workspace(
     config: CoreConfig,
     device: LocalDevice,
     workspace_name: EntryName,
-    user_id: Optional[UserID],
-    recipient: Optional[str],
-    role: Optional[RealmRole],
+    user_id: UserID | None,
+    recipient: str | None,
+    role: RealmRole | None,
     **kwargs: Any,
 ) -> None:
     """

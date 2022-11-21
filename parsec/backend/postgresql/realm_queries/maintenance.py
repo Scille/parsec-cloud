@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from parsec._parsec import DateTime
 from parsec.backend.backend_events import BackendEvent
@@ -104,11 +104,11 @@ async def _get_realm_role_for_not_revoked(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_id: RealmID,
-    users: Optional[List[UserID]] = None,
-) -> dict[UserID, Optional[RealmRole]]:
+    users: List[UserID] | None = None,
+) -> dict[UserID, RealmRole | None]:
     now = DateTime.now()
 
-    def _cook_role(row: dict[str, Any]) -> Optional[RealmRole]:
+    def _cook_role(row: dict[str, Any]) -> RealmRole | None:
         if row["revoked_on"] and row["revoked_on"] <= now:
             return None
         if row["role"] is None:

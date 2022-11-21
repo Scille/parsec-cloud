@@ -4,7 +4,7 @@ from PyQt5.QtGui import QKeyEvent
 
 import trio
 import pathlib
-from typing import Any, Optional, Iterable, cast, NoReturn, Sequence
+from typing import Any, Iterable, cast, NoReturn, Sequence
 from parsec._parsec import DateTime
 from enum import IntEnum
 from structlog import get_logger
@@ -91,7 +91,7 @@ async def _do_copy_files(
     source_files: list[tuple[FsPath, FileType]],
     source_workspace: WorkspaceFS,
 ) -> None:
-    last_exc: Optional[Exception] = None
+    last_exc: Exception | None = None
     error_count = 0
     for src, src_type in source_files:
         # In order to be able to rename the file if a file of the same name already exists
@@ -140,7 +140,7 @@ async def _do_move_files(
     source_workspace: WorkspaceFS,
 ) -> None:
     error_count = 0
-    last_exc: Optional[Exception] = None
+    last_exc: Exception | None = None
     for src, src_type in source_files:
         # In order to be able to rename the file if a file of the same name already exists
         # we need the name without extensions.
@@ -179,8 +179,8 @@ async def _do_move_files(
 
 
 async def _do_folder_stat(
-    workspace_fs: WorkspaceFS, path: FsPath, default_selection: Optional[EntryName]
-) -> tuple[FsPath, EntryID, dict[EntryName, dict[str, object]], Optional[EntryName]]:
+    workspace_fs: WorkspaceFS, path: FsPath, default_selection: EntryName | None
+) -> tuple[FsPath, EntryID, dict[EntryName, dict[str, object]], EntryName | None]:
     stats = {}
     dir_stat = await workspace_fs.path_info(path)
     # Retrieve children info, this is not an atomic operation so our view
@@ -242,7 +242,7 @@ class Clipboard:
         self,
         files: list[tuple[FsPath, FileType]],
         status: Clipboard.Status,
-        source_workspace: Optional[WorkspaceFS] = None,
+        source_workspace: WorkspaceFS | None = None,
     ) -> None:
         self.files = files
         self.source_workspace = source_workspace
@@ -302,8 +302,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
-        self.workspace_fs: Optional[WorkspaceFS] = None
-        self.clipboard: Optional[Clipboard] = None
+        self.workspace_fs: WorkspaceFS | None = None
+        self.clipboard: Clipboard | None = None
 
         self.button_back.clicked.connect(self.back_clicked)
         self.button_back.apply_style()
@@ -322,7 +322,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # the job has failed to return properly, maybe because the directory
         # no longer exists
         self.current_directory: FsPath = FsPath("/")
-        self.current_directory_id: Optional[EntryID] = None
+        self.current_directory_id: EntryID | None = None
 
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.config = self.core.config
@@ -389,8 +389,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self,
         wk_fs: WorkspaceFS,
         current_directory: FsPath = FsPath("/"),
-        default_selection: Optional[EntryName] = None,
-        clipboard: Optional[Clipboard] = None,
+        default_selection: EntryName | None = None,
+        clipboard: Clipboard | None = None,
     ) -> None:
         self.table_files.clear()
         self.current_directory = current_directory
@@ -448,7 +448,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 T("TEXT_FILE_FOLDER_INFO_NO_SELECTED_count").format(count=file_count)
             )
 
-    def reset(self, default_selection: Optional[EntryName] = None) -> None:
+    def reset(self, default_selection: EntryName | None = None) -> None:
         assert self.workspace_fs is not None
         workspace_name = self.workspace_fs.get_workspace_name()
         # Reload without any delay
@@ -712,7 +712,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def on_open_current_dir_clicked(self) -> None:
         self.desktop_open_files([None])
 
-    def desktop_open_files(self, names: Iterable[Optional[str]]) -> None:
+    def desktop_open_files(self, names: Iterable[str | None]) -> None:
         assert self.workspace_fs is not None
         paths = [
             self.core.mountpoint_manager.get_path_in_mountpoint(
@@ -767,7 +767,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def reload(
         self,
-        default_selection: Optional[EntryName] = None,
+        default_selection: EntryName | None = None,
         delay: int = RELOAD_FILES_LIST_THROTTLE_DELAY,
     ) -> None:
         assert self.workspace_fs is not None
@@ -783,7 +783,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             default_selection=default_selection,
         )
 
-    def load(self, directory: FsPath, default_selection: Optional[EntryName] = None) -> None:
+    def load(self, directory: FsPath, default_selection: EntryName | None = None) -> None:
         assert self.workspace_fs is not None
         self.spinner.show()
         self.label_elements.hide()
@@ -1132,7 +1132,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_folder_stat_success(
         self,
         job: QtToTrioJob[
-            tuple[FsPath, EntryID, dict[EntryName, dict[str, object]], Optional[EntryName]]
+            tuple[FsPath, EntryID, dict[EntryName, dict[str, object]], EntryName | None]
         ],
     ) -> None:
         assert job.ret is not None
@@ -1213,7 +1213,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_folder_stat_error(
         self,
         job: QtToTrioJob[
-            tuple[FsPath, EntryID, dict[EntryName, dict[str, object]], Optional[EntryName]]
+            tuple[FsPath, EntryID, dict[EntryName, dict[str, object]], EntryName | None]
         ],
     ) -> None:
         self.table_files.clear()
@@ -1240,7 +1240,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, T("TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"))
 
     def _on_fs_entry_downsynced(
-        self, event: CoreEvent, workspace_id: Optional[EntryID] = None, id: Optional[EntryID] = None
+        self, event: CoreEvent, workspace_id: EntryID | None = None, id: EntryID | None = None
     ) -> None:
         # No workspace FS
         if not self.workspace_fs:
@@ -1258,7 +1258,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
 
     def _on_fs_entry_synced(
-        self, event: CoreEvent, id: EntryID, workspace_id: Optional[EntryID] = None
+        self, event: CoreEvent, id: EntryID, workspace_id: EntryID | None = None
     ) -> None:
         # Extract job information
         if not self.workspace_fs:
@@ -1270,7 +1270,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.set_file_status(id, synced=True, confined=False)
 
     def _on_fs_entry_updated(
-        self, event: CoreEvent, workspace_id: Optional[EntryID] = None, id: Optional[EntryID] = None
+        self, event: CoreEvent, workspace_id: EntryID | None = None, id: EntryID | None = None
     ) -> None:
         assert id is not None
         # No workspace FS

@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import re
 from enum import IntEnum
-from typing import Union, Optional, NoReturn, Type, Dict
+from typing import Dict, NoReturn, Type, Union
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.types import FileDescriptor
@@ -43,7 +43,7 @@ class WorkspaceFile:
     """
 
     def __init__(self, transactions: EntryTransactions, path: AnyPath, mode: str = "rb"):
-        self._fd: Optional[FileDescriptor] = None
+        self._fd: FileDescriptor | None = None
         self._offset = 0
         self._state = FileState.INIT
         self._path = FsPath(path)
@@ -65,9 +65,9 @@ class WorkspaceFile:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[Exception]],
-        exc_value: Optional[Exception],
-        traceback: Optional[object],
+        exc_type: Type[Exception] | None,
+        exc_value: Exception | None,
+        traceback: object | None,
     ) -> None:
         await self.close()
 
@@ -240,7 +240,7 @@ class WorkspaceFile:
             raise FSUnsupportedOperation
         return self._offset
 
-    async def truncate(self, size: Optional[int] = None) -> int:
+    async def truncate(self, size: int | None = None) -> int:
         """Resize the stream to the given size in bytes.
         Resize to the current position if size is not specified.
         The current stream position isn't changed.

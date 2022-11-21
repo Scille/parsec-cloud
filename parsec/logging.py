@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sys
 from datetime import date, datetime
-from typing import Any, MutableMapping, Optional, TextIO, Tuple, Union, cast
+from typing import Any, MutableMapping, Union, TextIO, cast
 import structlog
 import logging
 from sentry_sdk import Hub as sentry_Hub, init as sentry_init
@@ -72,7 +72,7 @@ def _format_timestamp(
     return event
 
 
-def _cook_log_level(log_level: Optional[str]) -> int:
+def _cook_log_level(log_level: str | None) -> int:
     if log_level is not None:
         log_level = log_level.upper()
     if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "FATAL"):
@@ -87,7 +87,6 @@ _SENTRY_EVENT_LEVELS = {"error", "exception"}
 def _structlog_to_sentry_processor(
     logger: logging.Logger, method_name: str, event: dict[str, object]
 ) -> dict[str, object]:
-    ExcInfoOptType = Optional[Union[Optional[ExcInfo], Tuple[Any, Any, Any]]]
     sentry_client = sentry_Hub.current.client
     if not sentry_client:
         return event
@@ -103,8 +102,8 @@ def _structlog_to_sentry_processor(
 
     if level in _SENTRY_EVENT_LEVELS:
         # Cook the exception as a (class, exc, traceback) tuple
-        v = cast(ExcInfoOptType, data.pop("exc_info", None))
-        exc_info: ExcInfoOptType
+        v = cast(Union[ExcInfo, Exception, None], data.pop("exc_info", None))
+        exc_info: ExcInfo | None
         if isinstance(v, BaseException):
             exc_info = (v.__class__, v, v.__traceback__)
         elif isinstance(v, tuple):

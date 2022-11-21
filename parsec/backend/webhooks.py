@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import trio
-from typing import Optional
 from structlog import get_logger
 from urllib.request import urlopen, Request
 
@@ -47,9 +46,9 @@ class WebhooksComponent:
         self,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        device_label: Optional[DeviceLabel],
-        human_email: Optional[str],
-        human_label: Optional[str],
+        device_label: DeviceLabel | None,
+        human_email: str | None,
+        human_label: str | None,
     ) -> None:
         if not self._config.organization_bootstrap_webhook_url:
             return

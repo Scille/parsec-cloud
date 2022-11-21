@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Tuple
 from PyQt5.QtCore import QPoint, pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
 from PyQt5.QtGui import QColor, QCursor, QMouseEvent
@@ -57,7 +57,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         core: LoggedCore,
         jobs_ctx: QtToTrioJobScheduler,
         workspace_fs: WorkspaceFS,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         # Initialize UI
         super().__init__(parent=parent)
@@ -69,9 +69,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.jobs_ctx = jobs_ctx
 
         # Property inner state
-        self._reencryption: Optional[Tuple[int, int]] = None
-        self._reencryption_needs: Optional[ReencryptionNeed] = None
-        self.users_roles: Optional[dict[UserID, Tuple[RealmRole, UserInfo]]] = None
+        self._reencryption: Tuple[int, int] | None = None
+        self._reencryption_needs: ReencryptionNeed | None = None
+        self.users_roles: dict[UserID, Tuple[RealmRole, UserInfo]] | None = None
         self.workspace_name = workspace_fs.get_workspace_name()
 
         # Static initialization
@@ -178,7 +178,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
         self.set_mountpoint_state(self.is_mounted())
 
-    def get_owner(self) -> Optional[UserInfo]:
+    def get_owner(self) -> UserInfo | None:
         if self.users_roles:
             for user_id, (role, user_info) in self.users_roles.items():
                 if role == WorkspaceRole.OWNER and user_info:
@@ -206,7 +206,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         return SharingStatus.Shared if self.get_others() else SharingStatus.NotShared
 
     @property
-    def role(self) -> Optional[RealmRole]:
+    def role(self) -> RealmRole | None:
         return self.workspace_fs.get_workspace_entry().role
 
     def get_others(self) -> list[UserInfo]:
@@ -275,7 +275,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.remount_ts_clicked.emit(self.workspace_fs)
 
     @property
-    def name(self) -> Optional[EntryName]:
+    def name(self) -> EntryName | None:
         return self.workspace_name
 
     @property
@@ -286,7 +286,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         return self.switch_button.isChecked()
 
     @property
-    def timestamp(self) -> Optional[DateTime]:
+    def timestamp(self) -> DateTime | None:
         return getattr(self.workspace_fs, "timestamp", None)
 
     @property
@@ -294,11 +294,11 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         return self.timestamp is not None
 
     @property
-    def reencryption_needs(self) -> Optional[ReencryptionNeed]:
+    def reencryption_needs(self) -> ReencryptionNeed | None:
         return self._reencryption_needs
 
     @reencryption_needs.setter
-    def reencryption_needs(self, val: Optional[ReencryptionNeed]) -> None:
+    def reencryption_needs(self, val: ReencryptionNeed | None) -> None:
         self._reencryption_needs = val
         if val and val.need_reencryption and self.is_owner:
             self.button_reencrypt.show()
@@ -306,7 +306,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.button_reencrypt.hide()
 
     @property
-    def reencryption(self) -> Optional[object]:
+    def reencryption(self) -> object | None:
         return self._reencryption
 
     @reencryption.setter

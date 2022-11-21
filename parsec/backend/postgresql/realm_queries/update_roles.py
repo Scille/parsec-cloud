@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import Optional, Tuple
+from typing import Tuple
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import OrganizationID, RealmRole, UserProfile
@@ -126,7 +126,7 @@ async def query_update_roles(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     new_role: RealmGrantedRole,
-    recipient_message: Optional[bytes],
+    recipient_message: bytes | None,
 ) -> None:
     assert new_role.granted_by is not None
     if new_role.granted_by.user_id == new_role.user_id:

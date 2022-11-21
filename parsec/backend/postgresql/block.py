@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional
 import triopg
 from triopg.exceptions import UniqueViolationError
 
@@ -164,7 +163,7 @@ class PGBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> None:
         created_on = created_on or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():

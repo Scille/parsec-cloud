@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 from PyQt5.QtCore import QPoint, Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
@@ -212,7 +212,7 @@ async def _do_revoke_user(core: LoggedCore, user_info: UserInfo) -> UserInfo:
 async def _do_list_users_and_invitations(
     core: LoggedCore,
     page: int,
-    pattern: Optional[str] = None,
+    pattern: str | None = None,
     omit_revoked: bool = False,
     omit_invitation: bool = False,
 ) -> tuple[int, list[UserInfo], list[InviteListItem]]:

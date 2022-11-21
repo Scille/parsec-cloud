@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Optional, Tuple
+from typing import Tuple
 
 from parsec._parsec import UsersPerProfileDetailItem
 
@@ -20,11 +20,11 @@ class OrganizationStats:
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class OrganizationConfig:
     user_profile_outsider_allowed: bool
-    active_users_limit: Optional[int]
+    active_users_limit: int | None
     # TODO: Should this be `SequesterAuthorityCertificate` instead of bytes?
-    sequester_authority: Optional[bytes]
+    sequester_authority: bytes | None
     # TODO: Should this be `SequesterServiceCertificate` instead of bytes?
-    sequester_services: Optional[Tuple[bytes, ...]]
+    sequester_services: Tuple[bytes, ...] | None
 
     @property
     def is_sequestered_organization(self) -> bool:

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import triopg
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
 
 from parsec.event_bus import EventBus
@@ -33,7 +33,7 @@ async def components_factory(  # type: ignore[misc]
 
     async def _send_event(
         event: BackendEvent,
-        conn: Optional[triopg._triopg.TrioConnectionProxy] = None,
+        conn: triopg._triopg.TrioConnectionProxy | None = None,
         **kwargs: Any,
     ) -> None:
         if conn is None:

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import trio
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, AsyncIterator, Optional, AsyncGenerator
+from typing import AsyncGenerator, AsyncIterator, TYPE_CHECKING
 
 from parsec.api.protocol import INVITED_CMDS
 from parsec.core.types import BackendAddrType, BackendInvitationAddr
@@ -45,14 +45,14 @@ for cmd in INVITED_CMDS:
 
 @asynccontextmanager
 async def backend_invited_cmds_factory(
-    addr: BackendInvitationAddr, keepalive: Optional[int] = None
+    addr: BackendInvitationAddr, keepalive: int | None = None
 ) -> AsyncGenerator[BackendInvitedCmds, None]:
     """
     Raises:
         BackendConnectionError
     """
     transport_lock = trio.Lock()
-    transport: Optional[Transport] = None
+    transport: Transport | None = None
     closed = False
 
     async def _init_transport() -> Transport:

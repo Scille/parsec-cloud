@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from itertools import count
-from typing import Optional, Dict, AsyncIterator, Union, Iterable
+from typing import AsyncIterator, Dict, Iterable, Union
 
 from parsec._parsec import DateTime, Regex
 
@@ -62,7 +62,7 @@ def get_translated_message(preferred_language: str, key: str) -> str:
     return translations.get(key, key)
 
 
-def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Optional[EntryName]:
+def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> EntryName | None:
     gen = (name for name, child_id in manifest.children.items() if child_id == entry_id)
     return next(gen, None)
 
@@ -198,8 +198,8 @@ def merge_manifests(
     timestamp: DateTime,
     prevent_sync_pattern: Regex,
     local_manifest: AnyLocalManifest,
-    remote_manifest: Optional[AnyRemoteManifest] = None,
-    force_apply_pattern: Optional[bool] = False,
+    remote_manifest: AnyRemoteManifest | None = None,
+    force_apply_pattern: bool | None = False,
     preferred_language: str = "en",
 ) -> AnyLocalManifest:
     # Start by re-applying pattern (idempotent)
@@ -313,7 +313,7 @@ class SyncTransactions(EntryTransactions):
             if child_manifest.is_placeholder:
                 yield child_entry_id
 
-    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[AnyRemoteManifest]:
+    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> AnyRemoteManifest | None:
         manifest = await self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
@@ -345,9 +345,9 @@ class SyncTransactions(EntryTransactions):
     async def synchronization_step(
         self,
         entry_id: EntryID,
-        remote_manifest: Optional[AnyRemoteManifest] = None,
+        remote_manifest: AnyRemoteManifest | None = None,
         final: bool = False,
-    ) -> Optional[AnyRemoteManifest]:
+    ) -> AnyRemoteManifest | None:
         """Perform a synchronization step.
 
         This step is meant to be called several times until the right state is reached.

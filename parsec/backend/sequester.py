@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Optional, List, Tuple
+from typing import Any, List, Tuple
 import attr
 
 from parsec._parsec import DateTime
@@ -69,7 +69,7 @@ class BaseSequesterService:
     service_label: str
     service_certificate: bytes
     created_on: DateTime = attr.ib(factory=DateTime.now)
-    disabled_on: Optional[DateTime] = None
+    disabled_on: DateTime | None = None
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.service_id})"
@@ -121,7 +121,7 @@ class BaseSequesterComponent:
         self,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-        disabled_on: Optional[DateTime] = None,
+        disabled_on: DateTime | None = None,
     ) -> None:
         """
         Raises:

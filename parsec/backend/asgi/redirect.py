@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, quote_plus
 from quart import g, Blueprint, redirect, abort, request
 
@@ -16,8 +16,8 @@ redirect_bp = Blueprint("redirect", __name__)
 
 @redirect_bp.route("/redirect/<path:path>", methods=["GET"])
 def redirect_parsec_url(path: str) -> Any:  # type: ignore[misc]
-    backend: "BackendApp" = g.backend
-    backend_addr: Optional["BackendAddr"] = backend.config.backend_addr
+    backend: BackendApp = g.backend
+    backend_addr: BackendAddr | None = backend.config.backend_addr
     if not backend_addr:
         abort(501, description="Url redirection is not available")
 

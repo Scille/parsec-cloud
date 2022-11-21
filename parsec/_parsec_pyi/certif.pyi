@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 from parsec._parsec_pyi.crypto import PublicKey, SigningKey, VerifyKey
 from parsec._parsec_pyi.enumerate import RealmRole, UserProfile
@@ -9,23 +9,23 @@ from parsec._parsec_pyi.time import DateTime
 class UserCertificate:
     def __init__(
         self,
-        author: Optional[DeviceID],
+        author: DeviceID | None,
         timestamp: DateTime,
         user_id: UserID,
-        human_handle: Optional[HumanHandle],
+        human_handle: HumanHandle | None,
         public_key: PublicKey,
         profile: UserProfile,
     ) -> None: ...
     @property
     def is_admin(self) -> bool: ...
     @property
-    def author(self) -> Optional[DeviceID]: ...
+    def author(self) -> DeviceID | None: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property
     def user_id(self) -> UserID: ...
     @property
-    def human_handle(self) -> Optional[HumanHandle]: ...
+    def human_handle(self) -> HumanHandle | None: ...
     @property
     def public_key(self) -> PublicKey: ...
     @property
@@ -36,9 +36,9 @@ class UserCertificate:
         cls,
         signed: bytes,
         author_verify_key: VerifyKey,
-        expected_author: Optional[DeviceID] = None,
-        expected_user: Optional[UserID] = None,
-        expected_human_handle: Optional[HumanHandle] = None,
+        expected_author: DeviceID | None = None,
+        expected_user: UserID | None = None,
+        expected_human_handle: HumanHandle | None = None,
     ) -> UserCertificate: ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
@@ -47,20 +47,20 @@ class UserCertificate:
 class DeviceCertificate:
     def __init__(
         self,
-        author: Optional[DeviceID],
+        author: DeviceID | None,
         timestamp: DateTime,
         device_id: DeviceID,
-        device_label: Optional[DeviceLabel],
+        device_label: DeviceLabel | None,
         verify_key: VerifyKey,
     ) -> None: ...
     @property
-    def author(self) -> Optional[DeviceID]: ...
+    def author(self) -> DeviceID | None: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property
     def device_id(self) -> DeviceID: ...
     @property
-    def device_label(self) -> Optional[DeviceLabel]: ...
+    def device_label(self) -> DeviceLabel | None: ...
     @property
     def verify_key(self) -> VerifyKey: ...
     def evolve(self, **kwargs: Any) -> DeviceCertificate: ...
@@ -69,8 +69,8 @@ class DeviceCertificate:
         cls,
         signed: bytes,
         author_verify_key: VerifyKey,
-        expected_author: Optional[DeviceID] = None,
-        expected_device: Optional[DeviceID] = None,
+        expected_author: DeviceID | None = None,
+        expected_device: DeviceID | None = None,
     ) -> DeviceCertificate: ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
@@ -90,8 +90,8 @@ class RevokedUserCertificate:
         cls,
         signed: bytes,
         author_verify_key: VerifyKey,
-        expected_author: Optional[DeviceID] = None,
-        expected_device: Optional[DeviceID] = None,
+        expected_author: DeviceID | None = None,
+        expected_device: DeviceID | None = None,
     ) -> RevokedUserCertificate: ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
@@ -100,14 +100,14 @@ class RevokedUserCertificate:
 class RealmRoleCertificate:
     def __init__(
         self,
-        author: Optional[DeviceID],
+        author: DeviceID | None,
         timestamp: DateTime,
         realm_id: RealmID,
         user_id: UserID,
-        role: Optional[RealmRole],
+        role: RealmRole | None,
     ) -> None: ...
     @property
-    def author(self) -> Optional[DeviceID]: ...
+    def author(self) -> DeviceID | None: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property
@@ -115,16 +115,16 @@ class RealmRoleCertificate:
     @property
     def user_id(self) -> UserID: ...
     @property
-    def role(self) -> Optional[RealmRole]: ...
+    def role(self) -> RealmRole | None: ...
     def evolve(self, **kwargs: Any) -> RealmRoleCertificate: ...
     @classmethod
     def verify_and_load(
         cls,
         signed: bytes,
         author_verify_key: VerifyKey,
-        expected_author: Optional[DeviceID] = None,
-        expected_realm: Optional[RealmID] = None,
-        expected_user: Optional[UserID] = None,
+        expected_author: DeviceID | None = None,
+        expected_realm: RealmID | None = None,
+        expected_user: UserID | None = None,
     ) -> RealmRoleCertificate: ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod

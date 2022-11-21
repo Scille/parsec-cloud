@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Tuple, Union
 from parsec._parsec import (
     EntryID,
     SecretKey,
@@ -117,8 +117,8 @@ class FolderManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Optional[EntryID] = None,
-        expected_version: Optional[int] = None,
+        expected_id: EntryID | None = None,
+        expected_version: int | None = None,
     ) -> FolderManifest: ...
 
 class FileManifest:
@@ -166,8 +166,8 @@ class FileManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Optional[EntryID] = None,
-        expected_version: Optional[int] = None,
+        expected_id: EntryID | None = None,
+        expected_version: int | None = None,
     ) -> FileManifest: ...
 
 class WorkspaceManifest:
@@ -206,8 +206,8 @@ class WorkspaceManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Optional[EntryID] = None,
-        expected_version: Optional[int] = None,
+        expected_id: EntryID | None = None,
+        expected_version: int | None = None,
     ) -> WorkspaceManifest: ...
 
 class UserManifest:
@@ -249,10 +249,10 @@ class UserManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Optional[EntryID] = None,
-        expected_version: Optional[int] = None,
+        expected_id: EntryID | None = None,
+        expected_version: int | None = None,
     ) -> UserManifest: ...
-    def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]: ...
+    def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry | None: ...
 
 def manifest_decrypt_and_load(encrypted: bytes, key: SecretKey) -> AnyRemoteManifest: ...
 def manifest_decrypt_verify_and_load(
@@ -261,16 +261,16 @@ def manifest_decrypt_verify_and_load(
     author_verify_key: VerifyKey,
     expected_author: DeviceID,
     expected_timestamp: DateTime,
-    expected_id: Optional[EntryID] = None,
-    expected_version: Optional[int] = None,
+    expected_id: EntryID | None = None,
+    expected_version: int | None = None,
 ) -> AnyRemoteManifest: ...
 def manifest_verify_and_load(
     signed: bytes,
     author_verify_key: VerifyKey,
     expected_author: DeviceID,
     expected_timestamp: DateTime,
-    expected_id: Optional[EntryID] = None,
-    expected_version: Optional[int] = None,
+    expected_id: EntryID | None = None,
+    expected_version: int | None = None,
 ) -> AnyRemoteManifest: ...
 def manifest_unverified_load(
     data: bytes,

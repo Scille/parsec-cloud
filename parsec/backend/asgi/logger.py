@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from hypercorn.logging import Logger, AccessLogAtoms
-from typing import TYPE_CHECKING, Mapping, Optional
+from typing import Mapping, TYPE_CHECKING
 
 import base64
 import binascii
@@ -27,7 +27,7 @@ class ParsecLogger(Logger):
 
         return access_log
 
-    def _try_decode_base64(self, value: str) -> Optional[str]:
+    def _try_decode_base64(self, value: str) -> str | None:
         try:
             return base64.b64decode(value, validate=True).decode()
         except (binascii.Error, UnicodeDecodeError):

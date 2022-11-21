@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from base64 import b64decode
-from typing import NoReturn, Tuple, Optional
+from typing import NoReturn, Tuple
 from quart import Response, Blueprint, request, g, current_app
 from nacl.exceptions import CryptoError
 
@@ -78,7 +78,7 @@ async def _do_handshake(
     backend: BackendApp,
     allow_missing_organization: bool,
     check_authentication: bool,
-) -> Tuple[ApiVersion, OrganizationID, Optional[Organization], Optional[User], Optional[Device]]:
+) -> Tuple[ApiVersion, OrganizationID, Organization | None, User | None, Device | None]:
     # The anonymous RPC API existed before the `Api-Version`/`Content-Type` fields
     # check where introduced, hence we have this workaround to provide backward compatibility
     # TODO: remove me once Parsec 2.11.1 is deprecated
@@ -113,7 +113,7 @@ async def _do_handshake(
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
         _handshake_abort(404, api_version=api_version)
-    organization: Optional[Organization]
+    organization: Organization | None
     try:
         organization = await backend.organization.get(organization_id)
     except OrganizationNotFoundError:

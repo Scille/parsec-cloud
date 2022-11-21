@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Optional, Tuple, Dict, Any, TypeVar, Type
+from typing import Any, Dict, Tuple, Type, TypeVar
 from parsec._parsec import DateTime
 
 from parsec.serde import (
@@ -174,8 +174,8 @@ class BaseSignedData(metaclass=SignedDataMeta):
         cls: Type[BaseSignedDataTypeVar],
         signed: bytes,
         author_verify_key: VerifyKey,
-        expected_author: Optional[DeviceID],
-        expected_timestamp: Optional[DateTime] = None,
+        expected_author: DeviceID | None,
+        expected_timestamp: DateTime | None = None,
         **kwargs: Any,
     ) -> BaseSignedDataTypeVar:
         """

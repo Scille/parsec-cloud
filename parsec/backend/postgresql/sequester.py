@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import triopg
 from collections import defaultdict
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import DataError, SequesterServiceCertificate
@@ -257,7 +257,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             )
             if row:
                 raise SequesterServiceAlreadyExists
-            webhook_url: Optional[str]
+            webhook_url: str | None
             if isinstance(service, WebhookSequesterService):
                 webhook_url = service.webhook_url
             else:
@@ -291,7 +291,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
         self,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-        disabled_on: Optional[DateTime] = None,
+        disabled_on: DateTime | None = None,
     ) -> None:
 
         disabled_on = disabled_on or DateTime.now()

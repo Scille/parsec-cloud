@@ -6,7 +6,6 @@ from contextlib import contextmanager
 from typing import (
     TYPE_CHECKING,
     Dict,
-    Optional,
     List,
     Iterable,
     Tuple,
@@ -146,9 +145,9 @@ class VlobSequesterInconsistencyError(Exception):
 
 def _validate_sequester_config(
     root_verify_key: VerifyKey,
-    sequester_authority_certificate: Optional[bytes],
-    sequester_services_certificates: Optional[Iterable[bytes]],
-) -> Tuple[Optional[SequesterAuthorityCertificate], Optional[List[SequesterServiceCertificate]]]:
+    sequester_authority_certificate: bytes | None,
+    sequester_services_certificates: Iterable[bytes] | None,
+) -> Tuple[SequesterAuthorityCertificate | None, List[SequesterServiceCertificate] | None]:
     if sequester_authority_certificate is None:
         return None, None
 
@@ -212,7 +211,7 @@ class UserRemoteLoader:
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
     ):
@@ -222,15 +221,15 @@ class UserRemoteLoader:
         self.get_previous_workspace_entry = get_previous_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
-        self._realm_role_certificates_cache: Optional[List[RealmRoleCertificate]] = None
-        self._sequester_services_cache: Optional[List[SequesterServiceCertificate]] = None
+        self._realm_role_certificates_cache: List[RealmRoleCertificate] | None = None
+        self._sequester_services_cache: List[SequesterServiceCertificate] | None = None
 
     def clear_realm_role_certificate_cache(self) -> None:
         self._realm_role_certificates_cache = None
 
     async def _get_user_realm_role_at(
         self, user_id: UserID, timestamp: DateTime, author_last_role_granted_on: DateTime
-    ) -> Optional[RealmRole]:
+    ) -> RealmRole | None:
 
         # Lazily iterate over user certificates from newest to oldest
         def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificate]:
@@ -257,7 +256,7 @@ class UserRemoteLoader:
             return None
 
     async def _load_realm_role_certificates(
-        self, realm_id: Optional[EntryID] = None
+        self, realm_id: EntryID | None = None
     ) -> Tuple[List[RealmRoleCertificate], Dict[UserID, RealmRole]]:
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.realm_get_role_certificates(
@@ -302,7 +301,7 @@ class UserRemoteLoader:
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
                 if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
                     # First user is auto-signed
-                    needed_roles: Tuple[Optional[RealmRole], ...] = (None,)
+                    needed_roles: Tuple[RealmRole | None, ...] = (None,)
                 elif (
                     existing_user_role in owner_or_manager
                     or unsecure_certif.role in owner_or_manager
@@ -332,7 +331,7 @@ class UserRemoteLoader:
         return [c for c, _ in unsecure_certifs], current_roles
 
     async def load_realm_role_certificates(
-        self, realm_id: Optional[EntryID] = None
+        self, realm_id: EntryID | None = None
     ) -> List[RealmRoleCertificate]:
         """
         Raises:
@@ -348,7 +347,7 @@ class UserRemoteLoader:
         return certificates
 
     async def load_realm_current_roles(
-        self, realm_id: Optional[EntryID] = None
+        self, realm_id: EntryID | None = None
     ) -> Dict[UserID, RealmRole]:
         """
         Raises:
@@ -365,7 +364,7 @@ class UserRemoteLoader:
 
     async def get_user(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate]]:
+    ) -> Tuple[UserCertificate, RevokedUserCertificate | None]:
         """
         Raises:
             FSRemoteOperationError
@@ -443,7 +442,7 @@ class RemoteLoader(UserRemoteLoader):
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: BaseWorkspaceStorage,
@@ -592,10 +591,10 @@ class RemoteLoader(UserRemoteLoader):
     async def load_manifest(
         self,
         entry_id: EntryID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
-        expected_backend_timestamp: Optional[DateTime] = None,
-        workspace_entry: Optional[WorkspaceEntry] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
+        expected_backend_timestamp: DateTime | None = None,
+        workspace_entry: WorkspaceEntry | None = None,
     ) -> AnyRemoteManifest:
         """
         Download a manifest.
@@ -737,7 +736,7 @@ class RemoteLoader(UserRemoteLoader):
         self,
         entry_id: EntryID,
         manifest: AnyRemoteManifest,
-        timestamp_greater_than: Optional[DateTime] = None,
+        timestamp_greater_than: DateTime | None = None,
     ) -> AnyRemoteManifest:
         """
         Raises:
@@ -832,7 +831,7 @@ class RemoteLoader(UserRemoteLoader):
         entry_id: EntryID,
         ciphered: bytes,
         now: DateTime,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         """
         Raises:
@@ -894,7 +893,7 @@ class RemoteLoader(UserRemoteLoader):
         ciphered: bytes,
         now: DateTime,
         version: int,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         """
         Raises:
@@ -968,10 +967,10 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def load_manifest(
         self,
         entry_id: EntryID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
-        expected_backend_timestamp: Optional[DateTime] = None,
-        workspace_entry: Optional[WorkspaceEntry] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
+        expected_backend_timestamp: DateTime | None = None,
+        workspace_entry: WorkspaceEntry | None = None,
     ) -> AnyRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
@@ -1003,7 +1002,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self,
         entry_id: EntryID,
         manifest: AnyRemoteManifest,
-        timestamp_greater_than: Optional[DateTime] = None,
+        timestamp_greater_than: DateTime | None = None,
     ) -> AnyRemoteManifest:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
@@ -1013,7 +1012,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         entry_id: EntryID,
         ciphered: bytes,
         now: DateTime,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         raise FSError("Cannot create vlob through a timestamped remote loader")
 
@@ -1024,6 +1023,6 @@ class RemoteLoaderTimestamped(RemoteLoader):
         ciphered: bytes,
         now: DateTime,
         version: int,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         raise FSError("Cannot update vlob through a timestamped remote loader")

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import (
     DefaultDict,
-    Optional,
     Tuple,
     List,
     Dict,
@@ -48,10 +47,10 @@ class EventFilterCallback(Protocol):
 
 
 class EventWaiter:
-    def __init__(self, filter: Optional[EventFilterCallback]):
+    def __init__(self, filter: EventFilterCallback | None):
         self._filter = filter
         self._event_occurred = trio.Event()
-        self._event_result: Optional[Tuple[Enum, Dict[str, object]]] = None
+        self._event_result: Tuple[Enum, Dict[str, object]] | None = None
 
     def _cb(self, event: Enum, **kwargs: object) -> None:
         if self._event_occurred.is_set():
@@ -98,7 +97,7 @@ class EventBus:
 
     @contextmanager
     def waiter_on(
-        self, event: Enum, *, filter: Optional[EventFilterCallback] = None
+        self, event: Enum, *, filter: EventFilterCallback | None = None
     ) -> Iterator[EventWaiter]:
         ew = EventWaiter(filter)
         self.connect(event, ew._cb)
@@ -110,7 +109,7 @@ class EventBus:
 
     @contextmanager
     def waiter_on_first(
-        self, *events: Enum, filter: Optional[EventFilterCallback] = None
+        self, *events: Enum, filter: EventFilterCallback | None = None
     ) -> Iterator[EventWaiter]:
         ew = EventWaiter(filter)
         for event in events:

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import Any, Dict, TYPE_CHECKING, Tuple
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole, BlockID
@@ -32,8 +32,8 @@ class BlockMeta:
 class MemoryBlockComponent(BaseBlockComponent):
     def __init__(self) -> None:
         self._blockmetas: dict[Tuple[OrganizationID, BlockID], BlockMeta] = {}
-        self._blockstore_component: Optional[MemoryBlockStoreComponent] = None
-        self._realm_component: Optional[MemoryRealmComponent] = None
+        self._blockstore_component: MemoryBlockStoreComponent | None = None
+        self._realm_component: MemoryRealmComponent | None = None
 
     def register_components(
         self,
@@ -115,7 +115,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> None:
         assert self._blockstore_component is not None
 

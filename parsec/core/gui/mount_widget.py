@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -32,7 +32,7 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
-        self.global_clipboard: Optional[Clipboard] = None
+        self.global_clipboard: Clipboard | None = None
         self.workspaces_widget = WorkspacesWidget(
             self.core, self.jobs_ctx, self.event_bus, parent=self
         )
@@ -61,7 +61,7 @@ class MountWidget(QWidget, Ui_MountWidget):
         default_path: FsPath,
         selected: bool = False,
         mount_it: bool = False,
-        timestamp: Optional[DateTime] = None,
+        timestamp: DateTime | None = None,
     ) -> None:
         self.workspaces_widget.hide()
 
@@ -86,5 +86,5 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.workspaces_widget.show()
         self.workspaces_widget.reset()
 
-    def clipboard_updated(self, clipboard: Optional[Clipboard] = None) -> None:
+    def clipboard_updated(self, clipboard: Clipboard | None = None) -> None:
         self.global_clipboard = clipboard

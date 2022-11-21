@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Callable, Optional, Tuple, TypeVar
+from typing import Callable, Tuple, TypeVar
 
 from PyQt5.QtCore import Qt, QDate, QTime, pyqtSignal
 from PyQt5.QtGui import QColor
@@ -34,11 +34,11 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
     def __init__(self, workspace_fs: WorkspaceFS, jobs_ctx: QtToTrioJobScheduler) -> None:
         super().__init__()
         self.setupUi(self)
-        self.dialog: Optional[GreyedDialog] = None
+        self.dialog: GreyedDialog | None = None
         self.workspace_fs = workspace_fs
         self.jobs_ctx = jobs_ctx
-        self.creation_date: Optional[Tuple[int, int, int]] = None
-        self.creation_time: Optional[Tuple[int, int, int]] = None
+        self.creation_date: Tuple[int, int, int] | None = None
+        self.creation_time: Tuple[int, int, int] | None = None
         self.calendar_widget.setLocale(get_qlocale())
         for d in (Qt.Saturday, Qt.Sunday):
             fmt = self.calendar_widget.weekdayTextFormat(d)
@@ -46,7 +46,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
             self.calendar_widget.setWeekdayTextFormat(d, fmt)
         self.get_creation_timestamp_success.connect(self.on_success)
         self.get_creation_timestamp_error.connect(self.on_error)
-        self.limits_job: Optional[QtToTrioJob[DateTime]] = self.jobs_ctx.submit_job(
+        self.limits_job: QtToTrioJob[DateTime] | None = self.jobs_ctx.submit_job(
             (self, "get_creation_timestamp_success"),
             (self, "get_creation_timestamp_error"),
             _do_workspace_get_creation_timestamp,

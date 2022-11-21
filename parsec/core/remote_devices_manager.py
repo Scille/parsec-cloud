@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Optional, List
+from typing import List, TYPE_CHECKING, Tuple
 
 from parsec._parsec import (
     UserGetRepOk,
@@ -81,7 +81,7 @@ class RemoteDevicesManager:
 
     async def get_user(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate]]:
+    ) -> Tuple[UserCertificate, RevokedUserCertificate | None]:
         """
         Raises:
             RemoteDevicesManagerError
@@ -130,7 +130,7 @@ class RemoteDevicesManager:
 
     async def get_user_and_devices(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate], List[DeviceCertificate]]:
+    ) -> Tuple[UserCertificate, RevokedUserCertificate | None, List[DeviceCertificate]]:
         """
         Note: unlike `get_user` and `get_device`, this method don't rely on cache
         considering only part of the devices to retrieve could be in cache.

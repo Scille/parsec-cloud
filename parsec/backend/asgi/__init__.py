@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Type, Optional, List, Tuple, TypeVar
+from typing import Any, List, Tuple, Type, TypeVar
 from pathlib import Path
 import logging
 import trio
@@ -68,7 +68,7 @@ def app_factory(
         header_key, header_expected_value = backend.config.forward_proto_enforce_https
 
         @app.before_request
-        def redirect_unsecure() -> Optional[ResponseReturnValue]:  # type: ignore[misc]
+        def redirect_unsecure() -> ResponseReturnValue | None:  # type: ignore[misc]
             header_value = request.headers.get(header_key)
             # If redirection header match and protocol match, then no need for a redirection.
             if header_value is not None and header_value != header_expected_value:
@@ -119,8 +119,8 @@ async def serve_backend_with_asgi(
     backend: BackendApp,
     host: str,
     port: int,
-    ssl_certfile: Optional[Path] = None,
-    ssl_keyfile: Optional[Path] = None,
+    ssl_certfile: Path | None = None,
+    ssl_keyfile: Path | None = None,
     task_status: trio_typing.TaskStatus[T] = trio.TASK_STATUS_IGNORED,
 ) -> None:
     app = app_factory(backend)

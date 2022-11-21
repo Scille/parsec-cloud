@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import triopg
-from typing import Optional
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserID, DeviceID
@@ -45,7 +44,7 @@ async def query_revoke_user(
     user_id: UserID,
     revoked_user_certificate: bytes,
     revoked_user_certifier: DeviceID,
-    revoked_on: Optional[DateTime] = None,
+    revoked_on: DateTime | None = None,
 ) -> None:
     await q_take_user_device_write_lock(conn, organization_id)
     result = await conn.execute(

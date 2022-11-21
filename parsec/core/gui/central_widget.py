@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional, cast
+from typing import cast
 from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
@@ -86,8 +86,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         jobs_ctx: QtToTrioJobScheduler,
         event_bus: EventBus,
         systray_notification: pyqtBoundSignal,
-        file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None,
-        parent: Optional[QWidget] = None,
+        file_link_addr: BackendOrganizationFileLinkAddr | None = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent=parent)
 
@@ -232,7 +232,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     def _on_route_clicked(self, path: FsPath) -> None:
         self.mount_widget.load_path(path)
 
-    def _on_folder_changed(self, workspace_name: Optional[EntryName], path: Optional[str]) -> None:
+    def _on_folder_changed(self, workspace_name: EntryName | None, path: str | None) -> None:
         if workspace_name and path:
             self.navigation_bar_widget.from_path(workspace_name, path)
         else:
@@ -301,7 +301,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 kwargs["previous_entry"], WorkspaceEntry
             )
             new_entry: WorkspaceEntry = kwargs["new_entry"]
-            previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]
+            previous_entry: WorkspaceEntry | None = kwargs["previous_entry"]
             new_role = new_entry.role
             previous_role = previous_entry.role if previous_entry is not None else None
             if new_role is not None and previous_role is None:
@@ -326,11 +326,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 )
 
     def _on_connection_state_changed(
-        self, status: BackendConnStatus, status_exc: Optional[Exception], allow_systray: bool = True
+        self, status: BackendConnStatus, status_exc: Exception | None, allow_systray: bool = True
     ) -> None:
-        text: Optional[str] = None
-        icon: Optional[QPixmap] = None
-        tooltip: Optional[str] = None
+        text: str | None = None
+        icon: QPixmap | None = None
+        tooltip: str | None = None
         notif = None
         disconnected = None
 
@@ -441,7 +441,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             timestamp=ts,
         )
 
-    def show_mount_widget(self, user_info: Optional[UserInfo] = None) -> None:
+    def show_mount_widget(self, user_info: UserInfo | None = None) -> None:
         self.clear_widgets()
         self.menu.activate_files()
         self.label_title.setText(_("ACTION_MENU_DOCUMENTS"))

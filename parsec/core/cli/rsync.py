@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import trio
 import click
-from typing import Any, Optional, Union, List, Tuple
+from typing import Any, List, Tuple, Union
 from parsec._parsec import EntryName
 
 from parsec.utils import trio_run
@@ -63,7 +63,7 @@ async def _update_file(
 
 async def _create_path(
     workspace_fs: WorkspaceFS, is_dir: bool, local_path: trio.Path, workspace_path: FsPath
-) -> Optional[FolderManifest]:
+) -> FolderManifest | None:
     print(f"Create {workspace_path}")
     if is_dir:
         await workspace_fs.mkdir(workspace_path)
@@ -103,11 +103,11 @@ async def _clear_directory(
 
 
 async def _get_or_create_directory(
-    entry_id: Optional[EntryID],
+    entry_id: EntryID | None,
     workspace_fs: WorkspaceFS,
     local_path: trio.Path,
     workspace_path: FsPath,
-) -> Optional[FolderManifest]:
+) -> FolderManifest | None:
     if entry_id:
         manifest = await workspace_fs.remote_loader.load_manifest(entry_id)
         assert manifest is None or isinstance(
@@ -120,7 +120,7 @@ async def _get_or_create_directory(
 
 
 async def _upsert_file(
-    entry_id: Optional[EntryID],
+    entry_id: EntryID | None,
     workspace_fs: WorkspaceFS,
     local_path: trio.Path,
     workspace_path: FsPath,
@@ -132,7 +132,7 @@ async def _upsert_file(
 
 
 async def _sync_directory(
-    entry_id: Optional[EntryID],
+    entry_id: EntryID | None,
     workspace_fs: WorkspaceFS,
     local_path: trio.Path,
     workspace_path: FsPath,
@@ -162,9 +162,7 @@ async def _sync_directory_content(
             await _upsert_file(entry_id, workspace_fs, local_path, workspace_path)
 
 
-def _parse_destination(
-    core: LoggedCore, destination: str
-) -> Tuple[WorkspaceEntry, Optional[FsPath]]:
+def _parse_destination(core: LoggedCore, destination: str) -> Tuple[WorkspaceEntry, FsPath | None]:
     try:
         workspace_name, path = destination.split(":")
     except ValueError:

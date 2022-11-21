@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Tuple, List, Optional
+from typing import Any, List, Tuple
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
@@ -78,7 +78,7 @@ class PGUserComponent(BaseUserComponent):
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: Optional[str] = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -101,7 +101,7 @@ class PGUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[DateTime] = None,
+        revoked_on: DateTime | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             return await query_revoke_user(

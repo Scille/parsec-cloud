@@ -11,7 +11,7 @@ from base64 import b64decode, b64encode
 from datetime import datetime
 from functools import wraps
 from structlog import get_logger
-from typing import Any, Awaitable, Callable, Coroutine, List, Tuple, Optional, Iterable
+from typing import Any, Awaitable, Callable, Coroutine, Iterable, List, Tuple
 from typing_extensions import ParamSpec
 from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
@@ -74,7 +74,7 @@ def retrieve_migrations() -> List[MigrationItem]:
 class MigrationResult:
     already_applied: List[MigrationItem]
     new_apply: List[MigrationItem]
-    error: Optional[Tuple[MigrationItem, str]]
+    error: Tuple[MigrationItem, str] | None
 
 
 async def apply_migrations(
@@ -183,7 +183,7 @@ class PGHandler:
         self.event_bus = event_bus
         self.pool: triopg._triopg.TrioPoolProxy
         self.notification_conn: triopg._triopg.TrioConnectionProxy
-        self._task_status: Optional[TaskStatus[None]] = None
+        self._task_status: TaskStatus[None] | None = None
         self._connection_lost = False
 
     async def init(self, nursery: trio.Nursery) -> None:

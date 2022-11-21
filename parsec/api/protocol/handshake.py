@@ -305,7 +305,7 @@ class ServerHandshake:
             {"handshake": "result", "result": "organization_expired", "help": help}
         )
 
-    def build_rvk_mismatch_result_req(self, help: Optional[str] = None) -> bytes:
+    def build_rvk_mismatch_result_req(self, help: str | None = None) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
@@ -325,7 +325,7 @@ class ServerHandshake:
             {"handshake": "result", "result": "revoked_device", "help": help}
         )
 
-    def build_result_req(self, verify_key: Optional[VerifyKey] = None) -> bytes:
+    def build_result_req(self, verify_key: VerifyKey | None = None) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
@@ -523,7 +523,7 @@ class APIV1_AnonymousClientHandshake(BaseClientHandshake):
     def __init__(
         self,
         organization_id: OrganizationID,
-        root_verify_key: Optional[VerifyKey] = None,
+        root_verify_key: VerifyKey | None = None,
     ):
         super().__init__()
         self.organization_id = organization_id

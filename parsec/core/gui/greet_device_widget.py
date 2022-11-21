@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import trio
 from enum import IntEnum
@@ -506,7 +506,7 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.invite_addr = invite_addr
-        self.dialog: Optional[QDialog] = None
+        self.dialog: QDialog | None = None
         self.greeter = Greeter()
         self.greeter_job: QtToTrioJob[None] | None = None
         self.greeter_success.connect(self._on_greeter_success)
