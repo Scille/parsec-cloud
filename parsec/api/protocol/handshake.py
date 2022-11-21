@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from enum import Enum
 from secrets import token_bytes
-from typing import Any, Dict, Optional, Sequence, Union, cast
+from typing import Dict, Sequence, Union, TypedDict, cast
 
 from parsec._parsec import DateTime
 from parsec.api.protocol.base import (
@@ -89,6 +89,15 @@ class ApiVersionField(fields.Tuple):
         return ApiVersion(*result)
 
 
+class ChallengeData(TypedDict):
+    challenge: bytes
+    supported_api_versions: Sequence[ApiVersion]
+    client_timestamp: DateTime | None
+    backend_timestamp: DateTime | None
+    ballpark_client_early_offset: float | None
+    ballpark_client_late_offset: float | None
+
+
 class HandshakeChallengeSchema(BaseSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
@@ -103,12 +112,13 @@ class HandshakeChallengeSchema(BaseSchema):
     backend_timestamp = fields.DateTime(required=False, allow_none=False)
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore[misc]
+    def make_obj(self, data: Dict[str, object]) -> ChallengeData:
         # Cannot use `missing=None` with `allow_none=False`
+        data.setdefault("client_timestamp", None)
+        data.setdefault("backend_timestamp", None)
         data.setdefault("ballpark_client_early_offset", None)
         data.setdefault("ballpark_client_late_offset", None)
-        data.setdefault("backend_timestamp", None)
-        return data
+        return cast(ChallengeData, data)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -364,7 +374,7 @@ class BaseClientHandshake:
     SUPPORTED_API_VERSIONS: Sequence[ApiVersion]  # Overwritten by subclasses
 
     def __init__(self) -> None:
-        self.challenge_data: Dict[str, object]
+        self.challenge_data: ChallengeData
         self.backend_api_version: ApiVersion
         self.client_api_version: ApiVersion
         self.client_timestamp = self.timestamp()
@@ -374,24 +384,18 @@ class BaseClientHandshake:
         return DateTime.now()
 
     def load_challenge_req(self, req: bytes) -> None:
-        self.challenge_data = handshake_challenge_serializer.loads(req)
+        self.challenge_data = cast(ChallengeData, handshake_challenge_serializer.loads(req))
 
         # API version matching
-        supported_api_version = cast(
-            Sequence[ApiVersion], self.challenge_data["supported_api_versions"]
-        )
+        supported_api_version = self.challenge_data["supported_api_versions"]
         self.backend_api_version, self.client_api_version = settle_compatible_versions(
             supported_api_version, self.SUPPORTED_API_VERSIONS
         )
 
         # Parse and cast the challenge content
-        backend_timestamp = cast(Optional[DateTime], self.challenge_data.get("backend_timestamp"))
-        ballpark_client_early_offset = cast(
-            Optional[float], self.challenge_data.get("ballpark_client_early_offset")
-        )
-        ballpark_client_late_offset = cast(
-            Optional[float], self.challenge_data.get("ballpark_client_late_offset")
-        )
+        backend_timestamp = self.challenge_data["backend_timestamp"]
+        ballpark_client_early_offset = self.challenge_data["ballpark_client_early_offset"]
+        ballpark_client_late_offset = self.challenge_data["ballpark_client_late_offset"]
 
         # Those fields are missing with parsec API 2.3 and lower
         if (

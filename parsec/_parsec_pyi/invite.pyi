@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from parsec._parsec_pyi.crypto import (
     PrivateKey,

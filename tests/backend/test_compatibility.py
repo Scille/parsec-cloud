@@ -73,7 +73,7 @@ def test_handshake_challenge_schema_compatibility():
 
     # Backend API < 2.4 with newer clients
     data = older_handshake_challenge_serializer.dumps(old_data)
-    assert handshake_challenge_serializer.loads(data) == compat_data
+    assert handshake_challenge_serializer.loads(data) == {**compat_data, "client_timestamp": None}
 
 
 def test_handshake_challenge_schema_for_client_server_api_compatibility(
