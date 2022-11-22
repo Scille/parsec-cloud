@@ -644,21 +644,29 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
             self.dialog.reject()
             return
         # No reason to restart the process if offline, simply close the dialog
-        if isinstance(job.exc, JobResultError) and isinstance(job.exc.origin, BackendNotAvailable):
+        if (
+            job is not None
+            and isinstance(job.exc, JobResultError)
+            and isinstance(job.exc.origin, BackendNotAvailable)
+        ):
             assert self.dialog is not None
             self.dialog.reject()
             return
         # No reason to restart the process if the invitation is already used, simply close the dialog
-        if isinstance(job.exc, JobResultError) and isinstance(
-            job.exc.origin, InviteAlreadyUsedError
+        if (
+            job is not None
+            and isinstance(job.exc, JobResultError)
+            and isinstance(job.exc.origin, InviteAlreadyUsedError)
         ):
             assert self.dialog is not None
             self.dialog.reject()
             return
 
         # No reason to restart the process if active users limit has been reached
-        if isinstance(job.exc, JobResultError) and isinstance(
-            job.exc.origin, InviteActiveUsersLimitReachedError
+        if (
+            job is not None
+            and isinstance(job.exc, JobResultError)
+            and isinstance(job.exc.origin, InviteActiveUsersLimitReachedError)
         ):
             assert self.dialog is not None
             self.dialog.reject()
