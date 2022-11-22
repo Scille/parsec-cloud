@@ -58,3 +58,4 @@ impl From<IntegerBetween1And100> for u64 {
 // authenticated_cmds::v2::block_create::Rep::load(..)
 parsec_protocol!("schema/invited_cmds");
 parsec_protocol!("schema/authenticated_cmds");
+parsec_protocol!("schema/anonymous_cmds");

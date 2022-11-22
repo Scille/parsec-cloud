@@ -89,9 +89,6 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::PkiEnrollmentAccept(_) => {
                 todo!("missing python binding for `pki_enrollment_accept`")
             }
-            AnyCmdReq::PkiEnrollmentInfo(_) => {
-                todo!("missing python binding for `pki_enrollment_info`")
-            }
             AnyCmdReq::PkiEnrollmentList(_) => {
                 todo!("missing python binding for `pki_enrollment_list`")
             }
