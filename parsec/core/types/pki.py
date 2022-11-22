@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List, Union
 from pathlib import Path
-from uuid import UUID
-from parsec._parsec import DateTime
 import attr
+
+from parsec._parsec import DateTime, EnrollmentID
+from parsec.api.protocol.pki import EnrollmentIDField
 from parsec.core.types.backend_address import (
     BackendPkiEnrollmentAddr,
     BackendPkiEnrollmentAddrField,
@@ -85,7 +86,7 @@ class LocalPendingEnrollment(BaseLocalData):
         x509_certificate = fields.Nested(X509Certificate.SCHEMA_CLS, required=True)
         addr = BackendPkiEnrollmentAddrField(required=True)
         submitted_on = fields.DateTime(required=True)
-        enrollment_id = fields.UUID(required=True)
+        enrollment_id = EnrollmentIDField(required=True)
         submit_payload = fields.PkiEnrollmentSubmitPayloadField(required=True)
         encrypted_key = fields.Bytes(required=True)
         ciphertext = fields.Bytes(required=True)  # An encrypted PendingDeviceKeys
@@ -101,7 +102,7 @@ class LocalPendingEnrollment(BaseLocalData):
     x509_certificate: X509Certificate
     addr: BackendPkiEnrollmentAddr
     submitted_on: DateTime
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submit_payload: PkiEnrollmentSubmitPayload
     encrypted_key: bytes
     ciphertext: bytes
@@ -160,7 +161,7 @@ class LocalPendingEnrollment(BaseLocalData):
 
     @classmethod
     def load_from_enrollment_id(
-        cls, config_dir: Path, enrollment_id: UUID
+        cls, config_dir: Path, enrollment_id: EnrollmentID
     ) -> "LocalPendingEnrollment":
         """
         Raises:
@@ -195,7 +196,7 @@ class LocalPendingEnrollment(BaseLocalData):
         return result
 
     @classmethod
-    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: UUID) -> None:
+    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: EnrollmentID) -> None:
         """
         Raises:
             PkiEnrollmentLocalPendingError

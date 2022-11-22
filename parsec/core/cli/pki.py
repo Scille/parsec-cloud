@@ -3,11 +3,10 @@ from __future__ import annotations
 
 import attr
 from typing import Any, Sequence, Union
-from uuid import UUID
 import platform
-from parsec._parsec import DateTime
 import click
 
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.api.protocol import DeviceLabel
 from parsec.cli_utils import async_confirm, cli_exception_handler, spinner, async_prompt
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
@@ -118,7 +117,7 @@ async def _pki_enrollment_poll(
     # Manage pre-selected actions
     preselected_actions = {x: "finalize" for x in finalize}
 
-    def _preselected_actions_lookup(enrollment_id: UUID) -> str | None:
+    def _preselected_actions_lookup(enrollment_id: EnrollmentID) -> str | None:
         for preselected in preselected_actions:
             if len(preselected) < enrollment_id_len:
                 continue
@@ -270,7 +269,7 @@ def pki_enrollment_poll(
 
 @attr.s
 class CookedPendingEnrollment:
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     short_enrollment_id: str
     display: str
     fingerprint: str
@@ -309,7 +308,7 @@ async def _pki_enrollment_review_pendings(
 
         preselected_actions = {**{x: "accept" for x in accept}, **{x: "reject" for x in reject}}
 
-        def _preselected_actions_lookup(enrollment_id: UUID) -> str | None:
+        def _preselected_actions_lookup(enrollment_id: EnrollmentID) -> str | None:
             for preselected in preselected_actions:
                 if len(preselected) < enrollment_id_len:
                     continue

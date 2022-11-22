@@ -4,11 +4,10 @@ from __future__ import annotations
 import pytest
 import trio
 import triopg
-from uuid import uuid4
 from contextlib import contextmanager
-from parsec._parsec import DateTime
 from unittest.mock import patch
 
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.backend.organization import OrganizationAlreadyBootstrappedError
 from parsec.backend.user import UserAlreadyExistsError, UserActiveUsersLimitReached
 from parsec.backend.pki import PkiEnrollmentNoLongerAvailableError
@@ -210,7 +209,7 @@ async def test_concurrency_pki_enrollment_accept(
     postgresql_url, backend_factory, backend_data_binder_factory, coolorg, alice, bob
 ):
     results = []
-    enrollment_id = uuid4()
+    enrollment_id = EnrollmentID.new()
 
     backend_user, backend_first_device = local_device_to_backend_user(bob, alice)
 

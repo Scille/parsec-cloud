@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from uuid import UUID
 from structlog import get_logger
 
+from parsec._parsec import EnrollmentID
 from parsec._version import __version__
 from parsec.api.protocol.base import CmdSerializer
 from parsec.crypto import VerifyKey
@@ -81,7 +81,7 @@ async def _anonymous_cmd(
 
 async def pki_enrollment_submit(
     addr: BackendPkiEnrollmentAddr,
-    enrollment_id: UUID,
+    enrollment_id: EnrollmentID,
     force: bool,
     submitter_der_x509_certificate: bytes,
     submitter_der_x509_certificate_email: str,
@@ -103,7 +103,7 @@ async def pki_enrollment_submit(
 
 
 async def pki_enrollment_info(
-    addr: BackendPkiEnrollmentAddr, enrollment_id: UUID
+    addr: BackendPkiEnrollmentAddr, enrollment_id: EnrollmentID
 ) -> dict[str, object]:
     return await _anonymous_cmd(
         serializer=pki_enrollment_info_serializer,

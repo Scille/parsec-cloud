@@ -252,7 +252,7 @@
                         "enrollment_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "EnrollmentIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -285,7 +285,7 @@
                         "enrollment_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "EnrollmentIDField"
                         },
                         "force": {
                             "allow_none": false,
@@ -360,7 +360,7 @@
                         "enrollment_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "EnrollmentIDField"
                         },
                         "redacted_device_certificate": {
                             "allow_none": false,
@@ -394,7 +394,7 @@
                                         "enrollment_id": {
                                             "allow_none": false,
                                             "required": true,
-                                            "type": "UUID"
+                                            "type": "EnrollmentIDField"
                                         },
                                         "submit_payload": {
                                             "allow_none": false,
@@ -465,7 +465,7 @@
                         "enrollment_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "EnrollmentIDField"
                         }
                     },
                     "serializing": "msgpack"

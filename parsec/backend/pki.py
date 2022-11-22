@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import attr
 from typing import Any, List
-from uuid import UUID
 
-from parsec._parsec import ClientType, DateTime
+from parsec._parsec import ClientType, DateTime, EnrollmentID
 from parsec.api.data import (
     DataError,
     PkiEnrollmentSubmitPayload,
@@ -85,7 +84,7 @@ class PkiEnrollmentReplacedError(PkiEnrollmentError):  # TODO
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentInfo:
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -116,7 +115,7 @@ class PkiEnrollmentInfoCancelled(PkiEnrollmentInfo):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentListItem:
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
     submit_payload_signature: bytes
@@ -330,7 +329,7 @@ class BasePkiEnrollmentComponent:
     async def submit(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
         submitter_der_x509_certificate_email: str,
@@ -347,7 +346,9 @@ class BasePkiEnrollmentComponent:
         """
         raise NotImplementedError()
 
-    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+    async def info(
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID
+    ) -> PkiEnrollmentInfo:
         """
         Raises:
             PkiEnrollmentNotFoundError
@@ -363,7 +364,7 @@ class BasePkiEnrollmentComponent:
     async def reject(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         rejected_on: DateTime,
     ) -> None:
         """
@@ -376,7 +377,7 @@ class BasePkiEnrollmentComponent:
     async def accept(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         accepter_der_x509_certificate: bytes,
         accept_payload_signature: bytes,
         accept_payload: bytes,

@@ -249,7 +249,7 @@
             "enrollment_id": {
                 "allow_none": false,
                 "required": true,
-                "type": "UUID"
+                "type": "EnrollmentIDField"
             },
             "submit_payload": {
                 "allow_none": false,

@@ -68,6 +68,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ids::VlobID>()?;
     m.add_class::<ids::ChunkID>()?;
     m.add_class::<ids::SequesterServiceID>()?;
+    m.add_class::<ids::EnrollmentID>()?;
     m.add_class::<ids::HumanHandle>()?;
     m.add_class::<ids::DeviceID>()?;
     m.add_class::<ids::DeviceName>()?;

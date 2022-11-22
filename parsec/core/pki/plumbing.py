@@ -4,12 +4,11 @@ from __future__ import annotations
 from types import ModuleType
 from typing import Iterable, Tuple
 from pathlib import Path
-from uuid import UUID
 from importlib import import_module
 
 import trio
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload
@@ -70,7 +69,7 @@ def pki_enrollment_create_local_pending(
     config_dir: Path,
     x509_certificate: X509Certificate,
     addr: BackendPkiEnrollmentAddr,
-    enrollment_id: UUID,
+    enrollment_id: EnrollmentID,
     submitted_on: DateTime,
     submit_payload: PkiEnrollmentSubmitPayload,
     signing_key: SigningKey,
@@ -97,7 +96,7 @@ def pki_enrollment_create_local_pending(
 
 
 async def pki_enrollment_load_local_pending_secret_part(
-    config_dir: Path, enrollment_id: UUID
+    config_dir: Path, enrollment_id: EnrollmentID
 ) -> Tuple[SigningKey, PrivateKey]:
     """
     Raises:
