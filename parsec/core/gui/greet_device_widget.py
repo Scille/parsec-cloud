@@ -541,7 +541,6 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         # No reason to restart the process if offline, simply close the dialog
         if (
             job is not None
-            and job.exc is not None
             and isinstance(job.exc, JobResultError)
             and isinstance(job.exc.origin, BackendNotAvailable)
         ):
@@ -549,7 +548,6 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
             self.dialog.reject()
             return
         # No reason to restart the process if the invitation is already used, simply close the dialog
-        assert job.exc is not None
         if (
             job is not None
             and isinstance(job.exc, JobResultError)
