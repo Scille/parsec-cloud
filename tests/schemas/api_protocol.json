@@ -316,8 +316,6 @@
                     "serializing": "msgpack"
                 }
             }
-        },
-        "AUTHENTICATED": {},
-        "INVITED": {}
+        }
     }
 }
