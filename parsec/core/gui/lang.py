@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import io
 import gettext
-from typing import Optional
 
 from structlog import get_logger
 
@@ -51,7 +50,7 @@ def get_qlocale() -> QLocale:
     return QLocale(_current_locale_language)
 
 
-def switch_language(core_config: CoreConfig, lang_key: Optional[str] = None) -> Optional[str]:
+def switch_language(core_config: CoreConfig, lang_key: str | None = None) -> str | None:
     global _current_translator
     global _current_locale_language
 

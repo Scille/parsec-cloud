@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Optional, Sequence, cast
+from typing import Any, Sequence, cast
 
 from parsec._parsec import DateTime
 import pathlib
@@ -56,7 +56,7 @@ class PasteStatus:
         Disabled = 1
         Enabled = 2
 
-    def __init__(self, status: PasteStatus.Status, source_workspace: Optional[str] = None) -> None:
+    def __init__(self, status: PasteStatus.Status, source_workspace: str | None = None) -> None:
         self.source_workspace = source_workspace
         self.status = status
 
@@ -118,7 +118,7 @@ class FileTable(QTableWidget):
         super().__init__(*args, **kwargs)
         self.previous_selection: Sequence[QTableWidgetItem] = []
         self.setColumnCount(len(Column))
-        self.config: Optional[CoreConfig] = None
+        self.config: CoreConfig | None = None
         self.is_timestamped_workspace = False
 
         h_header = self.horizontalHeader()
@@ -321,7 +321,6 @@ class FileTable(QTableWidget):
         try:
             if file_type == FileType.ParentFolder or file_type == FileType.ParentWorkspace:
                 self.item_activated.emit(file_type, item.data(NAME_DATA_INDEX))
-            pass
         except AttributeError:
             pass
 

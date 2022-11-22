@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pathlib
 from enum import IntEnum
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidgetItem
@@ -78,7 +78,7 @@ class IconTableItem(CustomTableItem):
 
     def _draw_pixmap(
         self, source: str, selected: bool, synced: bool, confined: bool
-    ) -> Optional[QPixmap]:
+    ) -> QPixmap | None:
         color = QColor(0x99, 0x99, 0x99)
         if confined:
             color = QColor(0xDD, 0xDD, 0xDD)

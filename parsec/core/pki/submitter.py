@@ -5,7 +5,7 @@ import attr
 from pathlib import Path
 from uuid import UUID, uuid4
 from parsec._parsec import DateTime
-from typing import Iterable, List, Union, Optional, cast
+from typing import Iterable, List, Union, cast
 
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.protocol import DeviceLabel, PkiEnrollmentStatus
@@ -236,7 +236,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
             PkiEnrollmentInfoError
             PkiEnrollmentInfoNotFoundError
         """
-        #  Tuple[PkiEnrollmentStatus, DateTime, Optional[LocalDevice]]:
+        #  Tuple[PkiEnrollmentStatus, DateTime, LocalDevice | None]:
         rep = await cmd_pki_enrollment_info(addr=self.addr, enrollment_id=self.enrollment_id)
 
         if rep["status"] == "not_found":
@@ -428,7 +428,7 @@ class PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSu
     """
 
     accepted_on: DateTime
-    accepter_x509_certificate: Optional[X509Certificate]
+    accepter_x509_certificate: X509Certificate | None
     error: PkiEnrollmentError
 
     async def remove_from_disk(self) -> None:

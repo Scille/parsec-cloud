@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Tuple, cast, Optional, AsyncIterator, Dict, List, NamedTuple
+from typing import AsyncIterator, Dict, List, NamedTuple, Tuple, cast
 from contextlib import asynccontextmanager
 
 from parsec.api.data import BlockAccess
@@ -37,9 +37,9 @@ WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.C
 
 
 class BlockInfo(NamedTuple):
-    local_and_remote_blocks: List[Optional[BlockAccess]]
-    local_only_blocks: List[Optional[BlockAccess]]
-    remote_only_blocks: List[Optional[BlockAccess]]
+    local_and_remote_blocks: List[BlockAccess | None]
+    local_only_blocks: List[BlockAccess | None]
+    remote_only_blocks: List[BlockAccess | None]
     file_size: int
     proper_blocks_size: int
     pending_chunks_size: int
@@ -87,7 +87,7 @@ class EntryTransactions(FileTransactions):
         async with self._load_and_lock_manifest(entry_id) as manifest:
             return manifest
 
-    async def _entry_id_from_path(self, path: FsPath) -> Tuple[EntryID, Optional[EntryID]]:
+    async def _entry_id_from_path(self, path: FsPath) -> Tuple[EntryID, EntryID | None]:
         """Returns a tuple (entry_id, confinement_point).
 
         The confinement point corresponds to the entry id of the folderish manifest
@@ -122,7 +122,7 @@ class EntryTransactions(FileTransactions):
 
     async def _get_manifest_from_path(
         self, path: FsPath
-    ) -> Tuple[AnyLocalManifest, Optional[EntryID]]:
+    ) -> Tuple[AnyLocalManifest, EntryID | None]:
         """Returns a tuple (manifest, confinement_point).
 
         The confinement point corresponds to the entry id of the folderish manifest
@@ -137,7 +137,7 @@ class EntryTransactions(FileTransactions):
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> AsyncIterator[Tuple[LocalFolderishManifests, Optional[AnyLocalManifest]]]:
+    ) -> AsyncIterator[Tuple[LocalFolderishManifests, AnyLocalManifest | None]]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.
@@ -248,7 +248,7 @@ class EntryTransactions(FileTransactions):
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
-    ) -> Optional[EntryID]:
+    ) -> EntryID | None:
         # Check write rights
         self.check_write_rights(source)
 
@@ -425,7 +425,7 @@ class EntryTransactions(FileTransactions):
 
     async def file_create(
         self, path: FsPath, open: bool = True
-    ) -> Tuple[EntryID, Optional[FileDescriptor]]:
+    ) -> Tuple[EntryID, FileDescriptor | None]:
         # Check write rights
         self.check_write_rights(path)
 

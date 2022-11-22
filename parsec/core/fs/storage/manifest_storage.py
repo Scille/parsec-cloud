@@ -8,7 +8,6 @@ from typing import (
     Dict,
     Tuple,
     Set,
-    Optional,
     Union,
     AsyncIterator,
     AsyncContextManager,
@@ -249,7 +248,7 @@ class ManifestStorage:
         entry_id: EntryID,
         manifest: AnyLocalManifest,
         cache_only: bool = False,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Set[ChunkID] | None = None,
     ) -> None:
         """
         Raises: Nothing !

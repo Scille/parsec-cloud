@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Any, List, Dict, Optional, Tuple, Union
+from typing import Any, List, Dict, Tuple, Union
 from secrets import token_hex
 
 from parsec._parsec import (
@@ -91,12 +91,12 @@ class Organization:
     bootstrap_token: str
     is_expired: bool
     created_on: DateTime
-    bootstrapped_on: Optional[DateTime]
-    root_verify_key: Optional[VerifyKey]
+    bootstrapped_on: DateTime | None
+    root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
-    active_users_limit: Optional[int]
-    sequester_authority: Optional[SequesterAuthority]
-    sequester_services_certificates: Optional[Tuple[bytes, ...]]
+    active_users_limit: int | None
+    sequester_authority: SequesterAuthority | None
+    sequester_services_certificates: Tuple[bytes, ...] | None
 
     def is_bootstrapped(self) -> bool:
         return self.root_verify_key is not None
@@ -138,10 +138,10 @@ class BaseOrganizationComponent:
             return OrganizationConfigRepNotFound()
 
         if organization.sequester_authority:
-            sequester_authority_certificate: Optional[
-                bytes
-            ] = organization.sequester_authority.certificate
-            sequester_services_certificates: Optional[List[bytes]] = (
+            sequester_authority_certificate: bytes | None = (
+                organization.sequester_authority.certificate
+            )
+            sequester_services_certificates: List[bytes] | None = (
                 list(organization.sequester_services_certificates)
                 if organization.sequester_services_certificates
                 else []
@@ -390,9 +390,9 @@ class BaseOrganizationComponent:
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         # `None` stands for "no limit"
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, int | None] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> None:
         """
         Raises:
@@ -414,8 +414,8 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        bootstrapped_on: Optional[DateTime] = None,
-        sequester_authority: Optional[SequesterAuthority] = None,
+        bootstrapped_on: DateTime | None = None,
+        sequester_authority: SequesterAuthority | None = None,
     ) -> None:
         """
         Raises:
@@ -429,7 +429,7 @@ class BaseOrganizationComponent:
     async def stats(
         self,
         id: OrganizationID,
-        at: Optional[DateTime] = None,
+        at: DateTime | None = None,
     ) -> OrganizationStats:
         """
         Raises:
@@ -441,7 +441,7 @@ class BaseOrganizationComponent:
         raise NotImplementedError()
 
     async def server_stats(
-        self, at: Optional[DateTime] = None
+        self, at: DateTime | None = None
     ) -> Dict[OrganizationID, OrganizationStats]:
         """
         Raises: Nothing !
@@ -455,7 +455,7 @@ class BaseOrganizationComponent:
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         is_expired: Union[UnsetType, bool] = Unset,
         # `None` stands for "no limit"
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, int | None] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """

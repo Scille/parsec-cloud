@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field as dataclass_field
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, AbstractSet, Tuple, Dict, Optional
+from typing import AbstractSet, Any, Callable, Coroutine, Dict, List, TYPE_CHECKING, Tuple
 from collections import defaultdict
 
 from parsec._parsec import DateTime
@@ -50,7 +50,7 @@ SequesteredVlobData = List[Dict[SequesterServiceID, bytes]]
 class Vlob:
     realm_id: RealmID
     data: VlobData
-    sequestered_data: Optional[SequesteredVlobData]
+    sequestered_data: SequesteredVlobData | None
 
     @property
     def current_version(self) -> int:
@@ -118,16 +118,16 @@ class Reencryption:
 class Changes:
     checkpoint: int = dataclass_field(default=0)
     changes: Dict[VlobID, Tuple[DeviceID, int, int]] = dataclass_field(default_factory=dict)
-    reencryption: Optional[Reencryption] = dataclass_field(default=None)
+    reencryption: Reencryption | None = dataclass_field(default=None)
     last_vlob_update_per_user: Dict[UserID, DateTime] = dataclass_field(default_factory=dict)
 
 
 class MemoryVlobComponent(BaseVlobComponent):
     def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._organization_component: Optional[MemoryOrganizationComponent] = None
-        self._realm_component: Optional[MemoryRealmComponent] = None
-        self._sequester_component: Optional[MemorySequesterComponent] = None
+        self._organization_component: MemoryOrganizationComponent | None = None
+        self._realm_component: MemoryRealmComponent | None = None
+        self._sequester_component: MemorySequesterComponent | None = None
         self._vlobs: Dict[Tuple[OrganizationID, VlobID], Vlob] = {}
         self._per_realm_changes: Dict[Tuple[OrganizationID, RealmID], Changes] = defaultdict(
             Changes
@@ -217,8 +217,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         encryption_revision: int,
         vlob_id: VlobID,
         timestamp: DateTime,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
-    ) -> Optional[Dict[SequesterServiceID, bytes]]:
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+    ) -> Dict[SequesterServiceID, bytes] | None:
         if sequester_blob is None:
             self._check_sequestered_organization(
                 organization_id=organization_id, expect_sequestered_organization=False
@@ -246,8 +246,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         realm_id: RealmID,
         user_id: UserID,
-        encryption_revision: Optional[int],
-        timestamp: Optional[DateTime],
+        encryption_revision: int | None,
+        timestamp: DateTime | None,
     ) -> "Realm":
         return self._check_realm_access(
             organization_id,
@@ -263,8 +263,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         realm_id: RealmID,
         user_id: UserID,
-        encryption_revision: Optional[int],
-        timestamp: Optional[DateTime],
+        encryption_revision: int | None,
+        timestamp: DateTime | None,
     ) -> "Realm":
         return self._check_realm_access(
             organization_id,
@@ -280,8 +280,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         realm_id: RealmID,
         user_id: UserID,
-        encryption_revision: Optional[int],
-        timestamp: Optional[DateTime],
+        encryption_revision: int | None,
+        timestamp: DateTime | None,
         operation_kind: OperationKind,
     ) -> "Realm":
         assert self._realm_component is not None
@@ -384,7 +384,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     def _get_last_vlob_update(
         self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
-    ) -> Optional[DateTime]:
+    ) -> DateTime | None:
         changes = self._per_realm_changes[(organization_id, realm_id)]
         return changes.last_vlob_update_per_user.get(user_id)
 
@@ -424,7 +424,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         self._check_realm_write_access(
             organization_id, realm_id, author.user_id, encryption_revision, timestamp
@@ -456,8 +456,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
     ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
@@ -494,7 +494,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         vlob = self._get_vlob(organization_id, vlob_id)
 

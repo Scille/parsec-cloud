@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import AsyncGenerator, Optional, NewType, Tuple, cast
+from typing import AsyncGenerator, NewType, Tuple, cast
 import trio
 import sqlite3
 from contextlib import asynccontextmanager
@@ -376,7 +376,7 @@ WHERE
         return (cast(int, to_export_count), cast(BatchOffsetMarker, last_exported_index))
 
     async def export_vlobs(
-        self, batch_size: int = 1000, batch_offset_marker: Optional[BatchOffsetMarker] = None
+        self, batch_size: int = 1000, batch_offset_marker: BatchOffsetMarker | None = None
     ) -> BatchOffsetMarker:
         batch_offset_marker = batch_offset_marker or 0
 
@@ -485,7 +485,7 @@ WHERE
         return (cast(int, to_export_count), cast(BatchOffsetMarker, last_exported_index))
 
     async def export_blocks(
-        self, batch_size: int = 100, batch_offset_marker: Optional[BatchOffsetMarker] = None
+        self, batch_size: int = 100, batch_offset_marker: BatchOffsetMarker | None = None
     ) -> BatchOffsetMarker:
         batch_offset_marker = batch_offset_marker or 0
 

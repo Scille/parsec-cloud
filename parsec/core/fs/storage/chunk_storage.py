@@ -6,7 +6,7 @@ import time
 
 import trio
 from pathlib import Path
-from typing import AsyncIterator, AsyncContextManager, TypeVar, List, Optional
+from typing import AsyncContextManager, AsyncIterator, List, TypeVar
 from contextlib import asynccontextmanager
 
 
@@ -204,7 +204,7 @@ class BlockStorage(ChunkStorage):
         return self.localdb.open_cursor(commit=True)
 
     @asynccontextmanager
-    async def _reenter_cursor(self, cursor: Optional[Cursor]) -> AsyncIterator[Cursor]:
+    async def _reenter_cursor(self, cursor: Cursor | None) -> AsyncIterator[Cursor]:
         if cursor is not None:
             yield cursor
             return
@@ -243,7 +243,7 @@ class BlockStorage(ChunkStorage):
             # Perform cleanup if necessary
             await self.cleanup(cursor)
 
-    async def cleanup(self, cursor: Optional[Cursor] = None) -> None:
+    async def cleanup(self, cursor: Cursor | None = None) -> None:
 
         # Update database
         async with self._reenter_cursor(cursor) as cursor:

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import attr
 from parsec._parsec import DateTime
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Iterable, Tuple, List, Dict, Optional
+from typing import Any, Callable, Coroutine, Dict, Iterable, List, TYPE_CHECKING, Tuple
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
@@ -109,7 +109,7 @@ class MemoryUserComponent(BaseUserComponent):
     async def _get_trustchain(
         self,
         organization_id: OrganizationID,
-        *devices_ids: Optional[DeviceID],
+        *devices_ids: DeviceID | None,
         redacted: bool = False,
     ) -> Trustchain:
         trustchain_devices = set()
@@ -120,7 +120,7 @@ class MemoryUserComponent(BaseUserComponent):
         user_certif_field = "redacted_user_certificate" if redacted else "user_certificate"
         device_certif_field = "redacted_device_certificate" if redacted else "device_certificate"
 
-        async def _recursive_extract_creators(device_id: Optional[DeviceID]) -> None:
+        async def _recursive_extract_creators(device_id: DeviceID | None) -> None:
             if not device_id or device_id in in_trustchain:
                 return
             in_trustchain.add(device_id)
@@ -229,7 +229,7 @@ class MemoryUserComponent(BaseUserComponent):
     def _find_humans(
         self,
         organization_id: OrganizationID,
-        query: Optional[str] = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -293,7 +293,7 @@ class MemoryUserComponent(BaseUserComponent):
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: Optional[str] = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -314,7 +314,7 @@ class MemoryUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[DateTime] = None,
+        revoked_on: DateTime | None = None,
     ) -> None:
         org = self._organizations[organization_id]
 

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Any, Optional, List, Tuple, Type
+from typing import Any, List, Tuple, Type
 
 from parsec._parsec import (
     generate_nonce,
@@ -282,8 +282,8 @@ class DeviceGreetInProgress3Ctx:
 
 def _create_new_user_certificates(
     author: LocalDevice,
-    device_label: Optional[DeviceLabel],
-    human_handle: Optional[HumanHandle],
+    device_label: DeviceLabel | None,
+    human_handle: HumanHandle | None,
     profile: UserProfile,
     public_key: PublicKey,
     verify_key: VerifyKey,
@@ -344,8 +344,8 @@ def _create_new_user_certificates(
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress4Ctx:
     token: InvitationToken
-    requested_device_label: Optional[DeviceLabel]
-    requested_human_handle: Optional[HumanHandle]
+    requested_device_label: DeviceLabel | None
+    requested_human_handle: HumanHandle | None
 
     _public_key: PublicKey
     _verify_key: VerifyKey
@@ -355,8 +355,8 @@ class UserGreetInProgress4Ctx:
     async def do_create_new_user(
         self,
         author: LocalDevice,
-        device_label: Optional[DeviceLabel],
-        human_handle: Optional[HumanHandle],
+        device_label: DeviceLabel | None,
+        human_handle: HumanHandle | None,
         profile: UserProfile,
     ) -> None:
 
@@ -409,14 +409,14 @@ class UserGreetInProgress4Ctx:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress4Ctx:
     token: InvitationToken
-    requested_device_label: Optional[DeviceLabel]
+    requested_device_label: DeviceLabel | None
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
     _cmds: BackendAuthenticatedCmds
 
     async def do_create_new_device(
-        self, author: LocalDevice, device_label: Optional[DeviceLabel]
+        self, author: LocalDevice, device_label: DeviceLabel | None
     ) -> None:
         device_id = author.user_id.to_device_id(DeviceName.new())
         try:

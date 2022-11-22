@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from PyQt5.QtWidgets import QWidget
 
-from typing import Optional
 
 from parsec.core.types import OrganizationConfig, OrganizationStats
 from parsec.api.protocol import OrganizationID, UserProfile
@@ -22,8 +21,8 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
         self,
         profile: UserProfile,
         org_addr: str,
-        stats: Optional[OrganizationStats] = None,
-        config: Optional[OrganizationConfig] = None,
+        stats: OrganizationStats | None = None,
+        config: OrganizationConfig | None = None,
     ):
         super().__init__()
         self.setupUi(self)
@@ -109,8 +108,8 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
         profile: UserProfile,
         org_id: OrganizationID,
         org_addr: str,
-        stats: Optional[OrganizationStats] = None,
-        config: Optional[OrganizationConfig] = None,
+        stats: OrganizationStats | None = None,
+        config: OrganizationConfig | None = None,
         parent: QWidget | None = None,
     ) -> GreyedDialog:
         w = cls(profile, org_addr=org_addr, stats=stats, config=config)

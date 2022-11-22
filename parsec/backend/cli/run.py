@@ -4,7 +4,7 @@ from __future__ import annotations
 import trio
 import click
 from structlog import get_logger
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 from functools import partial
 import tempfile
 from pathlib import Path
@@ -36,8 +36,8 @@ DEFAULT_EMAIL_SENDER = "no-reply@parsec.com"
 
 
 def _parse_forward_proto_enforce_https_check_param(
-    raw_param: Optional[str],
-) -> Optional[Tuple[str, str]]:
+    raw_param: str | None,
+) -> Tuple[str, str] | None:
     if raw_param is None:
         return None
     try:
@@ -292,18 +292,18 @@ def run_cmd(
     backend_addr: BackendAddr,
     email_host: str,
     email_port: int,
-    email_host_user: Optional[str],
-    email_host_password: Optional[str],
+    email_host_user: str | None,
+    email_host_password: str | None,
     email_use_ssl: bool,
     email_use_tls: bool,
     email_sender: str,
-    forward_proto_enforce_https: Optional[Tuple[str, str]],
-    ssl_keyfile: Optional[Path],
-    ssl_certfile: Optional[Path],
+    forward_proto_enforce_https: Tuple[str, str] | None,
+    ssl_keyfile: Path | None,
+    ssl_certfile: Path | None,
     log_level: str,
     log_format: str,
-    log_file: Optional[str],
-    sentry_dsn: Optional[str],
+    log_file: str | None,
+    sentry_dsn: str | None,
     sentry_environment: str,
     debug: bool,
     dev: bool,
@@ -398,8 +398,8 @@ class RetryPolicy:
 async def _run_backend(
     host: str,
     port: int,
-    ssl_certfile: Optional[Path],
-    ssl_keyfile: Optional[Path],
+    ssl_certfile: Path | None,
+    ssl_keyfile: Path | None,
     retry_policy: RetryPolicy,
     app_config: BackendConfig,
 ) -> None:

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 from parsec._parsec import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
@@ -39,10 +39,10 @@ class Device:
         return DeviceCertificate.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
-    device_label: Optional[DeviceLabel]
+    device_label: DeviceLabel | None
     device_certificate: bytes
     redacted_device_certificate: bytes
-    device_certifier: Optional[DeviceID]
+    device_certifier: DeviceID | None
     created_on: DateTime = attr.ib(factory=DateTime.now)
 
 
@@ -62,15 +62,15 @@ class User:
         return UserCertificate.unsecure_load(self.user_certificate).public_key
 
     user_id: UserID
-    human_handle: Optional[HumanHandle]
+    human_handle: HumanHandle | None
     user_certificate: bytes
     redacted_user_certificate: bytes
-    user_certifier: Optional[DeviceID]
+    user_certifier: DeviceID | None
     profile: UserProfile = UserProfile.STANDARD
     created_on: DateTime = attr.ib(factory=DateTime.now)
-    revoked_on: Optional[DateTime] = None
-    revoked_user_certificate: Optional[bytes] = None
-    revoked_user_certifier: Optional[DeviceID] = None
+    revoked_on: DateTime | None = None
+    revoked_user_certificate: bytes | None = None
+    revoked_user_certifier: DeviceID | None = None
 
 
 def validate_new_user_certificates(

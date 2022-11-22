@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import DateTime
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole
 from parsec.backend.realm import BaseRealmComponent, RealmStatus, RealmGrantedRole, RealmStats
@@ -65,7 +65,7 @@ class PGRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: Optional[bytes] = None,
+        recipient_message: bytes | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_update_roles(conn, organization_id, new_role, recipient_message)

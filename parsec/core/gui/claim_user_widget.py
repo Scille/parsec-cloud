@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Awaitable, Callable, Tuple, cast, Optional
+from typing import Any, Awaitable, Callable, Tuple, cast
 
 import trio
 from enum import IntEnum
@@ -494,7 +494,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.button_ok.clicked.connect(self._on_claim_clicked)
         self.check_infos()
 
-    def check_infos(self, _: Optional[str] = None) -> None:
+    def check_infos(self, _: str | None = None) -> None:
         if (
             self.line_edit_user_full_name.is_input_valid()
             and self.line_edit_user_email.is_input_valid()
@@ -569,7 +569,7 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
     wait_peer_error = pyqtSignal(QtToTrioJob)
 
     def __init__(
-        self, jobs_ctx: QtToTrioJobScheduler, claimer: Claimer, user_email: Optional[str]
+        self, jobs_ctx: QtToTrioJobScheduler, claimer: Claimer, user_email: str | None
     ) -> None:
         super().__init__()
         self.setupUi(self)
@@ -641,10 +641,10 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
-        self.dialog: Optional[GreyedDialog] = None
+        self.dialog: GreyedDialog | None = None
         self.addr = addr
-        self.status: Optional[Tuple[LocalDevice, DeviceFileType, str]] = None
-        self.user_email: Optional[str] = None
+        self.status: Tuple[LocalDevice, DeviceFileType, str] | None = None
+        self.user_email: str | None = None
         self.claimer_job: QtToTrioJob[None] | None = None
         self.retrieve_info_job: QtToTrioJob[str] | None = None
         self.claimer_success.connect(self._on_claimer_success)

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
@@ -31,9 +31,9 @@ from parsec.backend.postgresql.sequester import get_sequester_services, get_sequ
 async def _check_sequestered_organization(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    sequester_authority: Optional[SequesterAuthority],
-    sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
-) -> Optional[Dict[SequesterServiceID, BaseSequesterService]]:
+    sequester_authority: SequesterAuthority | None,
+    sequester_blob: Dict[SequesterServiceID, bytes] | None,
+) -> Dict[SequesterServiceID, BaseSequesterService] | None:
     if sequester_blob is None and sequester_authority is None:
         # Sequester is disable, fetching sequester services is pointless
         return None
@@ -64,13 +64,13 @@ class PGVlobComponent(BaseVlobComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
         self._sequester_organization_authority_cache: Dict[
-            OrganizationID, Optional[SequesterAuthority]
+            OrganizationID, SequesterAuthority | None
         ] = {}
 
     async def _fetch_organization_sequester_authority(
         self, conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
     ) -> None:
-        sequester_authority: Optional[SequesterAuthority]
+        sequester_authority: SequesterAuthority | None
         try:
             sequester_authority = await get_sequester_authority(conn, organization_id)
         except SequesterDisabledError:
@@ -79,7 +79,7 @@ class PGVlobComponent(BaseVlobComponent):
 
     async def _get_sequester_organization_authority(
         self, conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
-    ) -> Optional[SequesterAuthority]:
+    ) -> SequesterAuthority | None:
         if organization_id not in self._sequester_organization_authority_cache:
             await self._fetch_organization_sequester_authority(conn, organization_id)
         return self._sequester_organization_authority_cache[organization_id]
@@ -88,12 +88,12 @@ class PGVlobComponent(BaseVlobComponent):
         self,
         conn: triopg._triopg.TrioConnectionProxy,
         organization_id: OrganizationID,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
         timestamp: DateTime,
-    ) -> Optional[Dict[SequesterServiceID, bytes]]:
+    ) -> Dict[SequesterServiceID, bytes] | None:
         sequester_authority = await self._get_sequester_organization_authority(
             conn, organization_id
         )
@@ -128,7 +128,7 @@ class PGVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
@@ -159,8 +159,8 @@ class PGVlobComponent(BaseVlobComponent):
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
     ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         async with self.dbh.pool.acquire() as conn:
             return await query_read(
@@ -177,7 +177,7 @@ class PGVlobComponent(BaseVlobComponent):
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(

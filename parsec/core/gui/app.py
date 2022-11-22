@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 import signal
 from types import TracebackType
-from typing import Any, Callable, Iterator, Optional, Type
+from typing import Any, Callable, Iterator, Type
 from contextlib import contextmanager
 
 import trio
@@ -138,7 +138,7 @@ def log_pyqt_exceptions() -> Iterator[None]:
         sys.excepthook = previous_hook
 
 
-def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool = False) -> object:
+def run_gui(config: CoreConfig, start_arg: str | None = None, diagnose: bool = False) -> object:
     logger.info("Starting UI")
 
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled

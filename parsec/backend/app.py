@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import AsyncGenerator, Awaitable, Optional, Dict, Callable
+from typing import AsyncGenerator, Awaitable, Callable, Dict
 import attr
 from structlog import get_logger
 from contextlib import asynccontextmanager
@@ -34,7 +34,7 @@ logger = get_logger()
 
 @asynccontextmanager
 async def backend_app_factory(
-    config: BackendConfig, event_bus: Optional[EventBus] = None
+    config: BackendConfig, event_bus: EventBus | None = None
 ) -> AsyncGenerator[BackendApp, None]:
     event_bus = event_bus or EventBus()
 

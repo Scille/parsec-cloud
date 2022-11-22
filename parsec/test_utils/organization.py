@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 import random
-from typing import Tuple, Optional, cast
+from typing import Tuple, cast
 from pathlib import Path
 from uuid import uuid4
 
@@ -267,7 +267,7 @@ async def _invite_device_task(
 async def _claim_user(
     cmds: BackendInvitedCmds,
     claimer_email: str,
-    requested_device_label: Optional[DeviceLabel],
+    requested_device_label: DeviceLabel | None,
     requested_user_label: str,
 ) -> LocalDevice:
     in_progress_ctx = await _init_ctx_claim(cmds)
@@ -280,7 +280,7 @@ async def _claim_user(
 
 
 async def _claim_device(
-    cmds: BackendInvitedCmds, requested_device_label: Optional[DeviceLabel]
+    cmds: BackendInvitedCmds, requested_device_label: DeviceLabel | None
 ) -> LocalDevice:
     initial_ctx = await claimer_retrieve_info(cmds=cmds)
     in_progress_ctx = await initial_ctx.do_wait_peer()
@@ -295,8 +295,8 @@ async def _claim_device(
 async def _register_new_user(
     cmds: BackendAuthenticatedCmds,
     author: LocalDevice,
-    device_label: Optional[DeviceLabel],
-    human_handle: Optional[HumanHandle],
+    device_label: DeviceLabel | None,
+    human_handle: HumanHandle | None,
     profile: UserProfile,
 ) -> LocalDevice:
     new_device = generate_new_device(
@@ -346,7 +346,7 @@ async def _register_new_user(
 async def _register_new_device(
     cmds: BackendAuthenticatedCmds,
     author: LocalDevice,
-    device_label: Optional[DeviceLabel],
+    device_label: DeviceLabel | None,
 ) -> LocalDevice:
 
     new_device = LocalDevice(

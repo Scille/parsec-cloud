@@ -6,7 +6,7 @@ import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePath
-from typing import Dict, Iterator, List, Mapping, Optional, Tuple
+from typing import Dict, Iterator, List, Mapping, Tuple
 
 from oscrypto.asymmetric import PrivateKey
 
@@ -109,8 +109,8 @@ class RealmExportDb:
 
     def load_user_certificates(
         self,
-        out_certificates: List[Tuple[UserCertificate, Optional[RevokedUserCertificate]]],
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+        out_certificates: List[Tuple[UserCertificate, RevokedUserCertificate | None]],
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute(
             "SELECT _id, user_certificate, revoked_user_certificate FROM user_"
         ).fetchall()
@@ -141,7 +141,7 @@ class RealmExportDb:
 
     def load_device_certificates(
         self, out_certificates: List[Tuple[int, DeviceCertificate]]
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, device_certificate FROM device").fetchall()
         for row in rows:
             try:
@@ -157,7 +157,7 @@ class RealmExportDb:
 
     def load_role_certificates(
         self, out_certificates: List[RealmRoleCertificate]
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, role_certificate FROM realm_role").fetchall()
         for row in rows:
             try:
@@ -189,7 +189,7 @@ class WorkspaceExport:
             )
 
         try:
-            version: Optional[int] = row[0]
+            version: int | None = row[0]
             blob: bytes = row[1]
             author_internal_id: int = row[2]
             raw_timestamp: int = row[3]
@@ -229,7 +229,7 @@ class WorkspaceExport:
 
     def extract_children(
         self, output: Path, fs_path: PurePath, children: Mapping[EntryName, EntryID]
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -274,7 +274,7 @@ class WorkspaceExport:
 
     def extract_file(
         self, output: Path, fs_path: PurePath, manifest: FileManifest
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -346,7 +346,7 @@ class WorkspaceExport:
 
     def extract_workspace(
         self, output: Path
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -372,7 +372,7 @@ class WorkspaceExport:
 
 def extract_workspace(
     output: Path, export_db: Path, decryption_key: PrivateKey
-) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
     with RealmExportDb.open(export_db) as db:
         out_certificates: list[Tuple[int, DeviceCertificate]] = []
         yield from db.load_device_certificates(out_certificates=out_certificates)

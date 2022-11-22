@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import trio
-from typing import Any, Optional, Tuple, cast
+from typing import Any, Tuple, cast
 from structlog import get_logger
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QMainWindow
@@ -145,7 +145,7 @@ class InstanceWidget(QWidget):
         self.setLayout(layout)
 
     @property
-    def current_device(self) -> Optional[LocalDevice]:
+    def current_device(self) -> LocalDevice | None:
         if self.core:
             return self.core.device
         return None
@@ -274,7 +274,7 @@ class InstanceWidget(QWidget):
 
     def login_with_password(self, key_file: Path, password: str) -> None:
         message = None
-        exception: Optional[Exception] = None
+        exception: Exception | None = None
         try:
             device = load_device_with_password(key_file, password)
             if ParsecApp.is_device_connected(
@@ -302,7 +302,7 @@ class InstanceWidget(QWidget):
 
     async def login_with_smartcard(self, key_file: Path) -> None:
         message = None
-        exception: Optional[Exception] = None
+        exception: Exception | None = None
         try:
             device = await load_device_with_smartcard(key_file)
             if ParsecApp.is_device_connected(
@@ -367,14 +367,14 @@ class InstanceWidget(QWidget):
         login_widget.login_canceled.connect(self.reset_workspace_path)
         login_widget.show()
 
-    def get_central_widget(self) -> Optional[CentralWidget]:
+    def get_central_widget(self) -> CentralWidget | None:
         item = self.layout().itemAt(0)
         if item:
             if isinstance(item.widget(), CentralWidget):
                 return cast(CentralWidget, item.widget())
         return None
 
-    def get_login_widget(self) -> Optional[LoginWidget]:
+    def get_login_widget(self) -> LoginWidget | None:
         item = self.layout().itemAt(0)
         if item:
             if isinstance(item.widget(), LoginWidget):

@@ -8,7 +8,7 @@ from structlog import get_logger
 from base64 import b64encode
 from urllib.request import getproxies, proxy_bypass
 from urllib.parse import urlsplit, SplitResult
-from typing import Optional, List, Tuple
+from typing import List, Tuple
 import pypac
 
 from parsec.api.transport import USER_AGENT
@@ -36,7 +36,7 @@ def _build_http_url(hostname: str, port: int, use_ssl: bool) -> str:
     return url
 
 
-def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
+def _get_proxy_from_pac(url: str, hostname: str) -> str | None:
     """
     Returns:
         proxy url to use
@@ -121,7 +121,7 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
         return None
 
 
-def _get_proxy_from_environ_or_os_config(url: str, hostname: str) -> Optional[str]:
+def _get_proxy_from_environ_or_os_config(url: str, hostname: str) -> str | None:
     """
     Returns:
         proxy url to use
@@ -137,7 +137,7 @@ def _get_proxy_from_environ_or_os_config(url: str, hostname: str) -> Optional[st
     return proxy_url
 
 
-def blocking_io_get_proxy(target_url: str, hostname: str) -> Optional[str]:
+def blocking_io_get_proxy(target_url: str, hostname: str) -> str | None:
     """
     Returns: proxy url to use or `None`
 
@@ -194,7 +194,7 @@ def blocking_io_get_proxy(target_url: str, hostname: str) -> Optional[str]:
 
 async def maybe_connect_through_proxy(
     hostname: str, port: int, use_ssl: bool
-) -> Optional[trio.abc.Stream]:
+) -> trio.abc.Stream | None:
     target_url = _build_http_url(hostname, port, use_ssl)
 
     proxy_url = await trio.to_thread.run_sync(blocking_io_get_proxy, target_url, hostname)

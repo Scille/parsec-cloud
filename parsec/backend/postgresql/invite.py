@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import Any, List, Optional
+from typing import Any, List
 
 from parsec._parsec import DateTime, InvitationDeletedReason
 from parsec.api.protocol import (
@@ -250,7 +250,7 @@ WHERE
 async def _conduit_talk(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    greeter: Optional[UserID],
+    greeter: UserID | None,
     token: InvitationToken,
     state: ConduitState,
     payload: bytes,
@@ -340,7 +340,7 @@ async def _conduit_talk(
 
 async def _conduit_listen(
     conn: triopg._triopg.TrioConnectionProxy, ctx: ConduitListenCtx
-) -> Optional[bytes]:
+) -> bytes | None:
     async with conn.transaction():
         if ctx.is_greeter:
             row = await conn.fetchrow(
@@ -423,7 +423,7 @@ async def _do_new_user_invitation(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     greeter_user_id: UserID,
-    claimer_email: Optional[str],
+    claimer_email: str | None,
     created_on: DateTime,
 ) -> InvitationToken:
     if claimer_email:
@@ -480,7 +480,7 @@ class PGInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         claimer_email: str,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> UserInvitation:
         """
         Raise: InvitationAlreadyMemberError
@@ -512,7 +512,7 @@ class PGInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> DeviceInvitation:
         """
         Raise: Nothing
@@ -649,7 +649,7 @@ class PGInviteComponent(BaseInviteComponent):
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: Optional[UserID],
+        greeter: UserID | None,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
@@ -657,7 +657,7 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             return await _conduit_talk(conn, organization_id, greeter, token, state, payload)
 
-    async def _conduit_listen(self, ctx: ConduitListenCtx) -> Optional[bytes]:
+    async def _conduit_listen(self, ctx: ConduitListenCtx) -> bytes | None:
         async with self.dbh.pool.acquire() as conn:
             return await _conduit_listen(conn, ctx)
 

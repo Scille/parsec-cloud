@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Callable, Union, cast, Optional
+from typing import Callable, Union, cast
 
 from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QEvent, QTimer
 from PyQt5.QtGui import QPixmap, QColor
@@ -34,7 +34,7 @@ _ROLES_TO_INDEX: dict[Union[WorkspaceRole, None], int] = {
 }
 
 
-def _index_to_role(index: int) -> Optional[RealmRole]:
+def _index_to_role(index: int) -> RealmRole | None:
     for role, idx in _ROLES_TO_INDEX.items():
         if index == idx:
             return role
@@ -173,7 +173,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
             self.status_timer.timeout.connect(self._refresh_status)
 
     @property
-    def role(self) -> Optional[WorkspaceRole]:
+    def role(self) -> WorkspaceRole | None:
         return self._role
 
     @role.setter
@@ -235,7 +235,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.workspace_fs = workspace_fs
-        self.dialog: Optional[GreyedDialog] = None
+        self.dialog: GreyedDialog | None = None
 
         self.has_changes = False
 
@@ -272,7 +272,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         w.role_changed.connect(self.on_role_changed)
         self.scroll_content.layout().insertWidget(self.scroll_content.layout().count() - 1, w)
 
-    def _get_sharing_widget(self, user_id: UserID) -> Optional[SharingWidget]:
+    def _get_sharing_widget(self, user_id: UserID) -> SharingWidget | None:
         for i in range(self.scroll_content.layout().count() - 1):
             item = self.scroll_content.layout().itemAt(i)
             if item and item.widget() and item.widget().user_id == user_id:

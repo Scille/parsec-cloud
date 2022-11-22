@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import List, Optional, Union, Tuple
+from typing import List, Tuple, Union
 
 from parsec._parsec import BackendAddr
 
@@ -41,7 +41,7 @@ class RAID5BlockStoreConfig(BaseBlockStoreConfig):
 class S3BlockStoreConfig(BaseBlockStoreConfig):
     type = "S3"
 
-    s3_endpoint_url: Optional[str]
+    s3_endpoint_url: str | None
     s3_region: str
     s3_bucket: str
     s3_key: str
@@ -75,8 +75,8 @@ class SmtpEmailConfig:
 
     host: str
     port: int
-    host_user: Optional[str]
-    host_password: Optional[str]
+    host_user: str | None
+    host_password: str | None
     use_ssl: bool
     use_tls: bool
     sender: str
@@ -110,14 +110,14 @@ class BackendConfig:
     blockstore_config: BaseBlockStoreConfig
 
     email_config: Union[SmtpEmailConfig, MockedEmailConfig]
-    forward_proto_enforce_https: Optional[Tuple[str, str]]
-    backend_addr: Optional[BackendAddr]
+    forward_proto_enforce_https: Tuple[str, str] | None
+    backend_addr: BackendAddr | None
 
     debug: bool
 
-    organization_bootstrap_webhook_url: Optional[str] = None
+    organization_bootstrap_webhook_url: str | None = None
     organization_spontaneous_bootstrap: bool = False
-    organization_initial_active_users_limit: Optional[int] = None
+    organization_initial_active_users_limit: int | None = None
     organization_initial_user_profile_outsider_allowed: bool = True
 
     @property

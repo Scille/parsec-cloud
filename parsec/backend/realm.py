@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import attr
 
 from parsec._parsec import (
@@ -133,9 +133,9 @@ class RealmRoleRequireGreaterTimestampError(RealmError):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
-    maintenance_type: Optional[MaintenanceType]
-    maintenance_started_on: Optional[DateTime]
-    maintenance_started_by: Optional[DeviceID]
+    maintenance_type: MaintenanceType | None
+    maintenance_started_on: DateTime | None
+    maintenance_started_by: DeviceID | None
     encryption_revision: int
 
     @property
@@ -168,8 +168,8 @@ class RealmGrantedRole:
     certificate: bytes
     realm_id: RealmID
     user_id: UserID
-    role: Optional[RealmRole]
-    granted_by: Optional[DeviceID]
+    role: RealmRole | None
+    granted_by: DeviceID | None
     granted_on: DateTime
 
 
@@ -515,7 +515,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: Optional[bytes] = None,
+        recipient_message: bytes | None = None,
     ) -> None:
         """
         Raises:

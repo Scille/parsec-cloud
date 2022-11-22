@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Optional
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QLineEdit, QWidget
@@ -18,9 +17,9 @@ from parsec.core.gui.validators import trim_string
 class ValidatedLineEdit(QLineEdit):
     validity_changed = pyqtSignal(QValidator.State)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._validator: Optional[QValidator] = None
+        self._validator: QValidator | None = None
         self.textChanged.connect(self._on_text_edited)
 
     # Override of Qt just to avoid mistakes

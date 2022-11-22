@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Any, Sequence, Optional, Union
+from typing import Any, Sequence, Union
 from uuid import UUID
 import platform
 from parsec._parsec import DateTime
@@ -102,7 +102,7 @@ def pki_enrollment_submit(
 
 async def _pki_enrollment_poll(
     config: CoreConfig,
-    enrollment_id_filter: Optional[str],
+    enrollment_id_filter: str | None,
     dry_run: bool,
     save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
     finalize: Sequence[str],
@@ -118,7 +118,7 @@ async def _pki_enrollment_poll(
     # Manage pre-selected actions
     preselected_actions = {x: "finalize" for x in finalize}
 
-    def _preselected_actions_lookup(enrollment_id: UUID) -> Optional[str]:
+    def _preselected_actions_lookup(enrollment_id: UUID) -> str | None:
         for preselected in preselected_actions:
             if len(preselected) < enrollment_id_len:
                 continue
@@ -249,7 +249,7 @@ async def _pki_enrollment_poll(
 @cli_command_base_options
 def pki_enrollment_poll(
     config: CoreConfig,
-    enrollment_id: Optional[str],
+    enrollment_id: str | None,
     dry_run: bool,
     save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
     finalize: Sequence[str],
@@ -278,7 +278,7 @@ class CookedPendingEnrollment:
     submitter_der_x509_certificate: bytes
     submit_payload_signature: bytes
     raw_submit_payload: bytes
-    action: Optional[str]  # None/accept/reject
+    action: str | None  # None/accept/reject
 
 
 async def _pki_enrollment_review_pendings(
@@ -309,7 +309,7 @@ async def _pki_enrollment_review_pendings(
 
         preselected_actions = {**{x: "accept" for x in accept}, **{x: "reject" for x in reject}}
 
-        def _preselected_actions_lookup(enrollment_id: UUID) -> Optional[str]:
+        def _preselected_actions_lookup(enrollment_id: UUID) -> str | None:
             for preselected in preselected_actions:
                 if len(preselected) < enrollment_id_len:
                     continue

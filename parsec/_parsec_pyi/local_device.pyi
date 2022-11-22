@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Tuple
+from typing import Tuple
 from parsec._parsec_pyi.addrs import BackendOrganizationAddr
 from parsec._parsec_pyi.crypto import (
     PrivateKey,
@@ -25,8 +25,8 @@ class LocalDevice:
         self,
         organization_addr: BackendOrganizationAddr,
         device_id: DeviceID,
-        device_label: Optional[DeviceLabel],
-        human_handle: Optional[HumanHandle],
+        device_label: DeviceLabel | None,
+        human_handle: HumanHandle | None,
         signing_key: SigningKey,
         private_key: PrivateKey,
         profile: UserProfile,
@@ -36,16 +36,16 @@ class LocalDevice:
     ) -> None: ...
     def evolve(
         self,
-        organization_addr: Optional[BackendOrganizationAddr],
-        device_id: Optional[DeviceID],
-        device_label: Optional[DeviceLabel],
-        human_handle: Optional[HumanHandle],
-        signing_key: Optional[SigningKey],
-        private_key: Optional[PrivateKey],
-        profile: Optional[UserProfile],
-        user_manifest_id: Optional[EntryID],
-        user_manifest_key: Optional[SecretKey],
-        local_symkey: Optional[SecretKey],
+        organization_addr: BackendOrganizationAddr | None,
+        device_id: DeviceID | None,
+        device_label: DeviceLabel | None,
+        human_handle: HumanHandle | None,
+        signing_key: SigningKey | None,
+        private_key: PrivateKey | None,
+        profile: UserProfile | None,
+        user_manifest_id: EntryID | None,
+        user_manifest_key: SecretKey | None,
+        local_symkey: SecretKey | None,
     ) -> LocalDevice: ...
     @property
     def is_admin(self) -> bool: ...
@@ -78,9 +78,9 @@ class LocalDevice:
     @property
     def device_id(self) -> DeviceID: ...
     @property
-    def device_label(self) -> Optional[DeviceLabel]: ...
+    def device_label(self) -> DeviceLabel | None: ...
     @property
-    def human_handle(self) -> Optional[HumanHandle]: ...
+    def human_handle(self) -> HumanHandle | None: ...
     @property
     def signing_key(self) -> SigningKey: ...
     @property
@@ -106,10 +106,10 @@ class UserInfo:
     def __init__(
         self,
         user_id: UserID,
-        human_handle: Optional[HumanHandle],
+        human_handle: HumanHandle | None,
         profile: UserProfile,
         created_on: DateTime,
-        revoked_on: Optional[DateTime],
+        revoked_on: DateTime | None,
     ) -> None: ...
     def __lt__(self, other: UserInfo) -> bool: ...
     def __gt__(self, other: UserInfo) -> bool: ...
@@ -119,13 +119,13 @@ class UserInfo:
     @property
     def user_id(self) -> UserID: ...
     @property
-    def human_handle(self) -> Optional[HumanHandle]: ...
+    def human_handle(self) -> HumanHandle | None: ...
     @property
     def profile(self) -> UserProfile: ...
     @property
     def created_on(self) -> DateTime: ...
     @property
-    def revoked_on(self) -> Optional[DateTime]: ...
+    def revoked_on(self) -> DateTime | None: ...
     @property
     def user_display(self) -> str: ...
     @property
@@ -137,7 +137,7 @@ class DeviceInfo:
     def __init__(
         self,
         device_id: DeviceID,
-        device_label: Optional[DeviceLabel],
+        device_label: DeviceLabel | None,
         created_on: DateTime,
     ) -> None: ...
     def __lt__(self, other: DeviceInfo) -> bool: ...
@@ -148,7 +148,7 @@ class DeviceInfo:
     @property
     def device_id(self) -> DeviceID: ...
     @property
-    def device_label(self) -> Optional[DeviceLabel]: ...
+    def device_label(self) -> DeviceLabel | None: ...
     @property
     def created_on(self) -> DateTime: ...
     @property

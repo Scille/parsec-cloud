@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 from marshmallow.decorators import post_load
 import json
-from typing import Any, Optional
+from typing import Any
 from json import JSONDecodeError
 from packaging.version import Version
 from structlog import get_logger
@@ -74,7 +74,7 @@ async def fetch_json_releases(api_url: str) -> None | list[dict[str, Any]]:
 
 async def do_check_new_version(
     api_url: str, allow_prerelease: bool = False
-) -> Optional[tuple[Version, str]]:
+) -> tuple[Version, str] | None:
     # Retrieve the releases from Github
     json_releases = await fetch_json_releases(api_url)
     if json_releases is None:

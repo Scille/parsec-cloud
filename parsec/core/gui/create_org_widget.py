@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable
 from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication
@@ -145,7 +145,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self,
         jobs_ctx: QtToTrioJobScheduler,
         config: CoreConfig,
-        start_addr: Optional[BackendOrganizationBootstrapAddr],
+        start_addr: BackendOrganizationBootstrapAddr | None,
     ) -> None:
         super().__init__()
         self.setupUi(self)

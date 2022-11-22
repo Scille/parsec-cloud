@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from parsec.core.core_events import CoreEvent
-from typing import Tuple, List, Callable, Dict, Optional, cast, AsyncIterator
+from typing import AsyncIterator, Callable, Dict, List, Tuple, cast
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
@@ -149,7 +149,7 @@ class FileTransactions:
 
     # Confinement helper
 
-    async def _get_confinement_point(self, entry_id: EntryID) -> Optional[EntryID]:
+    async def _get_confinement_point(self, entry_id: EntryID) -> EntryID | None:
         # Load the corresponding manifest
         try:
             current_manifest = await self.local_storage.get_manifest(entry_id)

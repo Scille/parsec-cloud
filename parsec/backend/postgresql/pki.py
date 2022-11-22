@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any, List
 from uuid import UUID
-from asyncpg import UniqueViolationError
+from triopg import UniqueViolationError
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID

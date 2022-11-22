@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Optional
 
 class TimeProvider:
     """
@@ -16,8 +15,8 @@ class TimeProvider:
     def new_child(self) -> "TimeProvider": ...
     def mock_time(
         self,
-        freeze: Optional[DateTime] = None,
-        shift: Optional[float] = None,
+        freeze: DateTime | None = None,
+        shift: float | None = None,
         realtime: bool = False,
     ) -> None: ...
 

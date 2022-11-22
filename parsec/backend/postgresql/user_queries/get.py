@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import Tuple, List, Optional
+from typing import List, Tuple
 
 from parsec.api.protocol import (
     OrganizationID,
@@ -264,7 +264,7 @@ async def _get_device(
 async def _get_trustchain(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    *device_ids: Optional[DeviceID],
+    *device_ids: DeviceID | None,
     redacted: bool = False,
 ) -> Trustchain:
     rows = await conn.fetch(

@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import QWidget
 from parsec._parsec import DateTime
 from parsec.api.protocol.types import UserID
 from parsec.core.fs import FsPath, WorkspaceFS
-from parsec.core.gui.file_items import Optional
 from parsec.core.logged_core import LoggedCore
 from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.fs.workspacefs.versioning_helpers import TimestampBoundedData, VersionLister
@@ -86,7 +85,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             tuple[list[tuple[UserInfo, TimestampBoundedData]], bool]
         ] | None = None
         self.jobs_ctx = jobs_ctx
-        self.dialog: Optional[GreyedDialog] = None
+        self.dialog: GreyedDialog | None = None
         self.core = core
         update_version_list.connect(self.reset_dialog)
         self.get_versions_success.connect(self.on_get_version_success)
@@ -202,7 +201,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         close_version_list: pyqtBoundSignal,
         core: LoggedCore,
         parent: QWidget,
-        on_finished: Optional[Callable[..., None]],
+        on_finished: Callable[..., None] | None,
     ) -> FileHistoryWidget:
         w = cls(
             jobs_ctx=jobs_ctx,

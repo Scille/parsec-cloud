@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 import triopg
-from typing import Awaitable, Callable, Dict, List, Any, Optional, Tuple, TypeVar
+from typing import Any, Awaitable, Callable, Dict, List, Tuple, TypeVar
 from typing_extensions import ParamSpec, Concatenate
 from functools import wraps
 
@@ -52,8 +52,8 @@ class Q:
 
 
 def q_organization(
-    organization_id: Optional[str] = None,
-    _id: Optional[str] = None,
+    organization_id: str | None = None,
+    _id: str | None = None,
     table: str = "organization",
     select: str = "*",
 ) -> str:
@@ -73,12 +73,12 @@ def _table_q_factory(
     table: str, public_id_field: str
 ) -> Tuple[Callable[..., str], Callable[..., str]]:
     def _q(
-        organization_id: Optional[str] = None,
-        organization: Optional[str] = None,
-        _id: Optional[str] = None,
-        table_alias: Optional[str] = None,
+        organization_id: str | None = None,
+        organization: str | None = None,
+        _id: str | None = None,
+        table_alias: str | None = None,
         select: str = "*",
-        suffix: Optional[str] = None,
+        suffix: str | None = None,
         **kwargs: Any,
     ) -> str:
         if table_alias:
@@ -120,10 +120,10 @@ q_human, q_human_internal_id = _table_q_factory("human", "email")
 
 def q_vlob_encryption_revision_internal_id(
     encryption_revision: str,
-    organization_id: Optional[str] = None,
-    organization: Optional[str] = None,
-    realm_id: Optional[str] = None,
-    realm: Optional[str] = None,
+    organization_id: str | None = None,
+    organization: str | None = None,
+    realm_id: str | None = None,
+    realm: str | None = None,
     table: str = "vlob_encryption_revision",
 ) -> str:
     if realm is None:
@@ -147,12 +147,12 @@ WHERE
 
 
 def q_user_can_read_vlob(
-    user: Optional[str] = None,
-    user_id: Optional[str] = None,
-    realm: Optional[str] = None,
-    realm_id: Optional[str] = None,
-    organization: Optional[str] = None,
-    organization_id: Optional[str] = None,
+    user: str | None = None,
+    user_id: str | None = None,
+    realm: str | None = None,
+    realm_id: str | None = None,
+    organization: str | None = None,
+    organization_id: str | None = None,
     table: str = "realm_user_role",
 ) -> str:
     if user is None:
@@ -188,12 +188,12 @@ COALESCE(
 
 
 def q_user_can_write_vlob(
-    user: Optional[str] = None,
-    user_id: Optional[str] = None,
-    realm: Optional[str] = None,
-    realm_id: Optional[str] = None,
-    organization: Optional[str] = None,
-    organization_id: Optional[str] = None,
+    user: str | None = None,
+    user_id: str | None = None,
+    realm: str | None = None,
+    realm_id: str | None = None,
+    organization: str | None = None,
+    organization_id: str | None = None,
     table: str = "realm_user_role",
 ) -> str:
     if user is None:

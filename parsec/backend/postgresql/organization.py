@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
 
@@ -217,7 +217,7 @@ async def _organization_stats(
     conn: triopg._triopg.TrioConnectionProxy,
     id: OrganizationID,
     at: DateTime,
-) -> Optional[OrganizationStats]:
+) -> OrganizationStats | None:
     result = await conn.fetchrow(*_q_get_stats(organization_id=id.str, at=at))
     if not result["exist"]:
         return None
@@ -258,9 +258,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, int | None] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> None:
         created_on = created_on or DateTime.now()
         if active_users_limit is Unset:
@@ -340,8 +340,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        bootstrapped_on: Optional[DateTime] = None,
-        sequester_authority: Optional[SequesterAuthority] = None,
+        bootstrapped_on: DateTime | None = None,
+        sequester_authority: SequesterAuthority | None = None,
     ) -> None:
         bootstrapped_on = bootstrapped_on or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
@@ -382,7 +382,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def stats(
         self,
         id: OrganizationID,
-        at: Optional[DateTime] = None,
+        at: DateTime | None = None,
     ) -> OrganizationStats:
         at = at or DateTime.now()
         async with self.dbh.pool.acquire() as conn:
@@ -392,7 +392,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             return stats
 
     async def server_stats(
-        self, at: Optional[DateTime] = None
+        self, at: DateTime | None = None
     ) -> Dict[OrganizationID, OrganizationStats]:
         at = at or DateTime.now()
         results = {}
@@ -410,7 +410,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         is_expired: Union[UnsetType, bool] = Unset,
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, int | None] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """

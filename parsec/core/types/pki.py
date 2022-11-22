@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Dict, Union
+from typing import Dict, Iterable, List, Union
 from pathlib import Path
 from uuid import UUID
 from parsec._parsec import DateTime
@@ -43,22 +43,22 @@ class X509Certificate:
     subject: Dict[str, str]
     der_x509_certificate: bytes
     certificate_sha1: bytes
-    certificate_id: Optional[str]
+    certificate_id: str | None
 
     def is_available_locally(self) -> bool:
         """Certificates that are received from another peer are not available locally."""
         return self.certificate_id is not None
 
     @property
-    def subject_common_name(self) -> Optional[str]:
+    def subject_common_name(self) -> str | None:
         return self.subject.get("common_name")
 
     @property
-    def subject_email_address(self) -> Optional[str]:
+    def subject_email_address(self) -> str | None:
         return self.subject.get("email_address")
 
     @property
-    def issuer_common_name(self) -> Optional[str]:
+    def issuer_common_name(self) -> str | None:
         return self.issuer.get("common_name")
 
 

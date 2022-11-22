@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import AsyncIterator, Optional, Union
+from typing import AsyncIterator, Union
 import trio
 from trio_typing import TaskStatus
 from contextlib import asynccontextmanager
@@ -18,7 +18,7 @@ class LocalDatabase:
     # Make the trio run_sync function patchable for the tests
     run_in_thread = staticmethod(trio.to_thread.run_sync)
 
-    def __init__(self, path: Union[str, Path, trio.Path], vacuum_threshold: Optional[int] = None):
+    def __init__(self, path: Union[str, Path, trio.Path], vacuum_threshold: int | None = None):
         # Make sure only a single task access the connection object at a time
         self._lock = trio.Lock()
 
@@ -56,7 +56,7 @@ class LocalDatabase:
     @classmethod
     @asynccontextmanager
     async def run(
-        cls, path: Union[str, Path], vacuum_threshold: Optional[int] = None
+        cls, path: Union[str, Path], vacuum_threshold: int | None = None
     ) -> AsyncIterator["LocalDatabase"]:
         # Instanciate the local database
         self = cls(path, vacuum_threshold)

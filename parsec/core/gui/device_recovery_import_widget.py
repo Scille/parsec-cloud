@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Callable
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -38,7 +38,7 @@ from parsec.core.gui.ui.device_recovery_import_page1_widget import (
 class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widget):
     info_filled = pyqtSignal(bool)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setupUi(self)
         self.button_import_key.clicked.connect(self._on_import_key_clicked)
@@ -99,11 +99,11 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
     create_new_device_failure = pyqtSignal(QtToTrioJob)
 
     def __init__(
-        self, config: CoreConfig, jobs_ctx: QtToTrioJobScheduler, parent: Optional[QWidget] = None
+        self, config: CoreConfig, jobs_ctx: QtToTrioJobScheduler, parent: QWidget | None = None
     ) -> None:
         super().__init__(parent)
         self.setupUi(self)
-        self.dialog: Optional[GreyedDialog] = None
+        self.dialog: GreyedDialog | None = None
         self.config = config
         self.jobs_ctx = jobs_ctx
         self.recovery_device = None

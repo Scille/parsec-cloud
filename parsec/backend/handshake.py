@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import DateTime
-from typing import Tuple, Optional, cast, Union
+from typing import Tuple, cast, Union
 from quart import Websocket
 
 from parsec.api.protocol import (
@@ -38,7 +38,7 @@ from parsec.backend.invite import (
 
 async def do_handshake(
     backend: BackendApp, websocket: Websocket
-) -> Tuple[Optional[BaseClientContext], Optional[dict[str, object]]]:
+) -> Tuple[BaseClientContext | None, dict[str, object] | None]:
     try:
         handshake = ServerHandshake()
         challenge_req = handshake.build_challenge_req()
@@ -75,13 +75,13 @@ async def do_handshake(
 
 async def _process_authenticated_answer(
     backend: BackendApp, handshake: ServerHandshake
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[dict[str, object]]]:
+) -> Tuple[BaseClientContext | None, bytes, dict[str, object] | None]:
     return await _do_process_authenticated_answer(backend, handshake, HandshakeType.AUTHENTICATED)
 
 
 async def _do_process_authenticated_answer(
     backend: BackendApp, handshake: ServerHandshake, handshake_type: HandshakeType
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[dict[str, object]]]:
+) -> Tuple[BaseClientContext | None, bytes, dict[str, object] | None]:
 
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     device_id = cast(DeviceID, handshake.answer_data["device_id"])
@@ -131,7 +131,7 @@ async def _do_process_authenticated_answer(
 
 async def _process_invited_answer(
     backend: BackendApp, handshake: ServerHandshake
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[dict[str, object]]]:
+) -> Tuple[BaseClientContext | None, bytes, dict[str, object] | None]:
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     invitation_type = cast(InvitationType, handshake.answer_data["invitation_type"])
     token = handshake.answer_data["token"]
@@ -196,7 +196,7 @@ async def _process_invited_answer(
 
 async def _apiv1_process_anonymous_answer(
     backend: BackendApp, handshake: ServerHandshake
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[dict[str, object]]]:
+) -> Tuple[BaseClientContext | None, bytes, dict[str, object] | None]:
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     expected_rvk = handshake.answer_data["rvk"]
 

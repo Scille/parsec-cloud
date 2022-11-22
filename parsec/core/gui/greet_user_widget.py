@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import trio
 from enum import IntEnum
@@ -300,7 +300,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             self.greeter.get_claim_requests,
         )
 
-    def check_infos(self, _: Optional[Any] = None) -> None:
+    def check_infos(self, _: Any | None = None) -> None:
         if (
             self.line_edit_user_full_name.is_input_valid()
             and self.line_edit_device.is_input_valid()
@@ -611,7 +611,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.token = token
-        self.dialog: Optional[QDialog] = None
+        self.dialog: QDialog | None = None
         self.greeter = Greeter()
         self.greeter_job: QtToTrioJob[None] | None = None
         self.greeter_success.connect(self._on_greeter_success)

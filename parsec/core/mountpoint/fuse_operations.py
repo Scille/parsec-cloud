@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import PurePath
 from parsec._parsec import DateTime
 from structlog import get_logger
-from typing import Any, List, Optional, Iterator
+from typing import Any, Iterator, List
 from contextlib import contextmanager
 from stat import S_IRWXU, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
@@ -43,10 +43,10 @@ def is_banned(name: EntryName) -> bool:
 def get_path_and_translate_error(
     fs_access: ThreadFSAccess,
     operation: str,
-    context: Optional[str],
+    context: str | None,
     mountpoint: PurePath,
     workspace_id: EntryID,
-    timestamp: Optional[DateTime],
+    timestamp: DateTime | None,
 ) -> Iterator[FsPath]:
     path: FsPath = FsPath("/<unknown>")
     try:
@@ -154,7 +154,7 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
         fs_access: ThreadFSAccess,
         mountpoint: PurePath,
         workspace_id: EntryID,
-        timestamp: Optional[DateTime],
+        timestamp: DateTime | None,
     ) -> None:
         super().__init__()
         self.fs_access = fs_access
@@ -168,7 +168,7 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
             timestamp=timestamp,
         )
 
-    def __call__(self, operation: str, context: Optional[str], *args: Any, **kwargs: Any) -> Any:
+    def __call__(self, operation: str, context: str | None, *args: Any, **kwargs: Any) -> Any:
         with self._get_path_and_translate_error(operation=operation, context=context) as path:
             return super().__call__(operation, path, *args, **kwargs)
 
@@ -193,7 +193,7 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
             "f_namemax": 255,  # 255 bytes as maximum length for filenames
         }
 
-    def getattr(self, path: FsPath, fh: Optional[int] = None) -> dict[str, Any]:
+    def getattr(self, path: FsPath, fh: int | None = None) -> dict[str, Any]:
         if self._need_exit:
             fuse_exit()
 
@@ -238,7 +238,7 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
 
         return [".", ".."] + list(c.str for c in stat["children"])
 
-    def create(self, path: FsPath, mode: int) -> Optional[FileDescriptor]:
+    def create(self, path: FsPath, mode: int) -> FileDescriptor | None:
         if is_banned(path.name):
             raise FuseOSError(errno.EACCES)
         _, fd = self.fs_access.file_create(path, open=True)
@@ -262,7 +262,7 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
     def write(self, path: FsPath, data: bytes, offset: int, fh: FileDescriptor) -> int:
         return self.fs_access.fd_write(fh, data, offset)
 
-    def truncate(self, path: FsPath, length: int, fh: Optional[FileDescriptor] = None) -> None:
+    def truncate(self, path: FsPath, length: int, fh: FileDescriptor | None = None) -> None:
         if fh:
             self.fs_access.fd_resize(fh, length)
         else:

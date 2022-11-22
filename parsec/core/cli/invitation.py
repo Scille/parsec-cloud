@@ -4,7 +4,7 @@ from __future__ import annotations
 import click
 import platform
 from functools import partial
-from typing import Any, Optional, Union, Tuple
+from typing import Any, Tuple, Union
 
 from parsec._parsec import (
     InvitationDeletedReason,
@@ -142,9 +142,9 @@ def invite_user(
 
 
 async def ask_info_new_user(
-    default_device_label: Optional[DeviceLabel],
-    default_user_label: Optional[str],
-    default_user_email: Optional[str],
+    default_device_label: DeviceLabel | None,
+    default_user_label: str | None,
+    default_user_email: str | None,
 ) -> Tuple[DeviceLabel, HumanHandle, UserProfile]:
     while True:
         granted_label = await async_prompt("New user label", default=default_user_label)
@@ -344,7 +344,7 @@ def greet_invitation(
         trio_run(_greet_invitation, config, device, token)
 
 
-async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> Optional[LocalDevice]:
+async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> LocalDevice | None:
     async with spinner("Initializing connection with greeter for claiming user"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -377,7 +377,7 @@ async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> Optional[LocalDevi
     return new_device
 
 
-async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> Optional[LocalDevice]:
+async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> LocalDevice | None:
     async with spinner("Initializing connection with greeter for claiming device"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 

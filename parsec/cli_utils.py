@@ -8,7 +8,6 @@ import datetime
 import traceback
 from typing import (
     Any,
-    Optional,
     Dict,
     Iterator,
     AsyncIterator,
@@ -37,15 +36,10 @@ class SchemesInternalType(TypedDict):
     frames: list[str]
 
 
-class SchemesType(TypedDict):
-
-    dots: SchemesInternalType
-
-
 # Scheme stolen from py-spinners
 # MIT License Copyright (c) 2017 Manraj Singh
 # (https://github.com/manrajgrover/py-spinners)
-SCHEMES: SchemesType = {
+SCHEMES: dict[str, SchemesInternalType] = {
     "dots": {"interval": 80, "frames": ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]}
 }
 
@@ -73,8 +67,7 @@ def operation(txt: str) -> Iterator[None]:
 async def spinner(
     txt: str, sep: str = " ", scheme: str = "dots", color: str = "magenta"
 ) -> AsyncIterator[None]:
-    scheme_theme = cast(Optional[SchemesInternalType], SCHEMES.get(scheme))
-    assert scheme_theme is not None
+    scheme_theme = SCHEMES[scheme]
     interval = scheme_theme["interval"]
     frames = scheme_theme["frames"]
     result: str | None = None
@@ -345,14 +338,14 @@ class ParsecDateTimeClickType(click.ParamType):
         return f"[2000-01-01|2000-01-01T00:00:00Z]"
 
     def convert(
-        self, value: Any, param: Optional[click.Parameter], ctx: Optional[click.Context]
+        self, value: Any, param: click.Parameter | None, ctx: click.Context | None
     ) -> DateTime:
         if isinstance(value, DateTime):
             return value
 
         assert isinstance(value, str)
 
-        py_datetime: Optional[datetime.datetime] = None
+        py_datetime: datetime.datetime | None = None
         try:
             # Try short format
             py_datetime = datetime.datetime.strptime(value, self.formats["short"])

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Any, Type, TypeVar, Union, Optional, List, Tuple
+from typing import Any, List, Tuple, Type, TypeVar, Union
 
 from parsec.crypto import (
     SecretKey,
@@ -193,7 +193,7 @@ async def claimer_retrieve_info(
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseClaimInitialCtx:
     greeter_user_id: UserID
-    greeter_human_handle: Optional[HumanHandle]
+    greeter_human_handle: HumanHandle | None
 
     _cmds: BackendInvitedCmds
 
@@ -323,8 +323,8 @@ class UserClaimInProgress3Ctx:
 
     async def do_claim_user(
         self,
-        requested_device_label: Optional[DeviceLabel],
-        requested_human_handle: Optional[HumanHandle],
+        requested_device_label: DeviceLabel | None,
+        requested_human_handle: HumanHandle | None,
     ) -> LocalDevice:
         # User&device keys are generated here and kept in memory until the end of
         # the enrollment process. This mean we can lost it if something goes wrong.
@@ -391,7 +391,7 @@ class DeviceClaimInProgress3Ctx:
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_claim_device(self, requested_device_label: Optional[DeviceLabel]) -> LocalDevice:
+    async def do_claim_device(self, requested_device_label: DeviceLabel | None) -> LocalDevice:
         # Device key is generated here and kept in memory until the end of
         # the enrollment process. This mean we can lost it if something goes wrong.
         # This has no impact until step 4 (somewhere between data exchange and

@@ -9,7 +9,7 @@ from oscrypto.asymmetric import PrivateKey
 from async_generator import asynccontextmanager
 from base64 import b64encode, b64decode
 from pathlib import Path
-from typing import AsyncGenerator, Optional, Dict, List, Tuple
+from typing import AsyncGenerator, Dict, List, Tuple
 from uuid import uuid4
 
 from parsec._parsec import DateTime
@@ -281,7 +281,7 @@ def import_service_certificate(
     db_max_connections: int,
     db_min_connections: int,
     service_type: str,
-    webhook_url: Optional[str],
+    webhook_url: str | None,
     debug: bool,
 ) -> None:
     with cli_exception_handler(debug):
@@ -316,7 +316,7 @@ async def _import_service_certificate(
     organization_id: OrganizationID,
     service_certificate_pem: str,
     service_type: SequesterServiceType,
-    webhook_url: Optional[None],
+    webhook_url: None | None,
 ) -> None:
     async with run_pg_db_handler(db_config) as dbh:
 
@@ -412,7 +412,7 @@ def create_service(
     db_max_connections: int,
     db_min_connections: int,
     service_type: str,
-    webhook_url: Optional[str],
+    webhook_url: str | None,
     debug: bool,
 ) -> None:
     with cli_exception_handler(debug):
@@ -540,7 +540,7 @@ async def _human_accesses(
             user_granted_roles.append(granted_role)
 
         humans: Dict[
-            Optional[HumanHandle], List[Tuple[User, Dict[RealmID, List[RealmGrantedRole]]]]
+            HumanHandle | None, List[Tuple[User, Dict[RealmID, List[RealmGrantedRole]]]]
         ] = {
             None: []
         }  # Non-human are all stored in `None` key

@@ -5,7 +5,7 @@ import trio
 import click
 import multiprocessing
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from parsec.utils import trio_run
 from parsec.logging import configure_sentry_logging
@@ -38,7 +38,7 @@ else:
         config: CoreConfig,
         url: str,
         diagnose: bool,
-        sentry_dsn: Optional[str],
+        sentry_dsn: str | None,
         sentry_environment: str,
         **kwargs: Any,
     ) -> None:

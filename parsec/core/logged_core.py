@@ -4,7 +4,7 @@ from __future__ import annotations
 import attr
 from pathlib import Path
 import importlib.resources
-from typing import AsyncIterator, Optional, Tuple, List, Union
+from typing import AsyncIterator, List, Tuple, Union
 from structlog import get_logger
 from functools import partial
 from contextlib import asynccontextmanager
@@ -73,7 +73,7 @@ from parsec.core.fs.storage.workspace_storage import FAILSAFE_PATTERN_FILTER
 logger = get_logger()
 
 
-def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Regex]:
+def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Regex | None:
     try:
         data = prevent_sync_pattern_path.read_text()
     except OSError as exc:
@@ -104,7 +104,7 @@ def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Regex
         return None
 
 
-def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -> Regex:
+def get_prevent_sync_pattern(prevent_sync_pattern_path: Path | None = None) -> Regex:
     pattern = None
     # Get the pattern from the path defined in the core config
     if prevent_sync_pattern_path is not None:
@@ -140,7 +140,7 @@ class LoggedCore:
         return self._backend_conn.status
 
     @property
-    def backend_status_exc(self) -> Optional[Exception]:
+    def backend_status_exc(self) -> Exception | None:
         return self._backend_conn.status_exc
 
     def find_workspace_from_name(self, workspace_name: EntryName) -> WorkspaceEntry:
@@ -151,7 +151,7 @@ class LoggedCore:
 
     async def find_humans(
         self,
-        query: Optional[str] = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -220,7 +220,7 @@ class LoggedCore:
             created_on=user_certif.timestamp,
         )
 
-    async def get_user_devices_info(self, user_id: Optional[UserID] = None) -> List[DeviceInfo]:
+    async def get_user_devices_info(self, user_id: UserID | None = None) -> List[DeviceInfo]:
         """
         Raises:
             BackendConnectionError
@@ -389,7 +389,7 @@ class LoggedCore:
 
 @asynccontextmanager
 async def logged_core_factory(
-    config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
+    config: CoreConfig, device: LocalDevice, event_bus: EventBus | None = None
 ) -> AsyncIterator[LoggedCore]:
     event_bus = event_bus or EventBus()
     prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)

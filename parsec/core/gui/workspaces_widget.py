@@ -4,7 +4,7 @@ from enum import Enum
 
 from PyQt5.QtCore import QDate, QEvent, QObject, QTime, pyqtSignal, pyqtBoundSignal, Qt, QTimer
 from PyQt5.QtWidgets import QAbstractButton, QWidget, QLabel
-from typing import Any, Iterator, Optional, cast, Sequence
+from typing import Any, Iterator, cast, Sequence
 from contextlib import contextmanager
 from pathlib import PurePath
 from structlog import get_logger
@@ -96,7 +96,7 @@ async def _do_workspace_list(core: LoggedCore) -> list[WorkspaceFS]:
 
 
 async def _do_workspace_mount(
-    core: LoggedCore, workspace_id: EntryID, timestamp: Optional[DateTime] = None
+    core: LoggedCore, workspace_id: EntryID, timestamp: DateTime | None = None
 ) -> None:
     try:
         await core.mountpoint_manager.mount_workspace(workspace_id, timestamp)
@@ -105,7 +105,7 @@ async def _do_workspace_mount(
 
 
 async def _do_workspace_unmount(
-    core: LoggedCore, workspace_id: EntryID, timestamp: Optional[DateTime] = None
+    core: LoggedCore, workspace_id: EntryID, timestamp: DateTime | None = None
 ) -> None:
     try:
         await core.mountpoint_manager.unmount_workspace(workspace_id, timestamp)
@@ -148,9 +148,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus = event_bus
         self.reencrypting: set[EntryID] = set()
         self.disabled_workspaces = self.core.config.disabled_workspaces
-        self.workspace_button_mapping: dict[
-            tuple[EntryID, Optional[DateTime]], WorkspaceButton
-        ] = {}
+        self.workspace_button_mapping: dict[tuple[EntryID, DateTime | None], WorkspaceButton] = {}
 
         self.layout_workspaces = FlowLayout(spacing=40)
         self.layout_content.addLayout(self.layout_workspaces)
@@ -193,7 +191,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.filter_remove_button.clicked.connect(self.remove_user_filter)
         self.filter_remove_button.apply_style()
 
-        self.filter_user_info: Optional[UserInfo] = None
+        self.filter_user_info: UserInfo | None = None
         self.filter_layout_widget.hide()
 
     def remove_user_filter(self) -> None:
@@ -351,7 +349,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspaces: list[WorkspaceFS] = job.ret
 
         # Use temporary dict to update the workspace mapping
-        new_mapping: dict[tuple[EntryID, Optional[DateTime]], WorkspaceButton] = {}
+        new_mapping: dict[tuple[EntryID, DateTime | None], WorkspaceButton] = {}
         old_mapping = dict(self.workspace_button_mapping)
 
         # Loop over the resulting workspaces
@@ -501,7 +499,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def open_workspace(self, workspace_fs: WorkspaceFS) -> None:
         self.open_workspace_file(workspace_fs, None)
 
-    def open_workspace_file(self, workspace_fs: WorkspaceFS, file_name: Optional[str]) -> None:
+    def open_workspace_file(self, workspace_fs: WorkspaceFS, file_name: str | None) -> None:
         file_name = FsPath("/", file_name) if file_name else FsPath("/")  # type: ignore[call-arg]
 
         try:
@@ -547,7 +545,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_fs=workspace_fs, jobs_ctx=self.jobs_ctx, parent=self, on_finished=_on_finished
         )
 
-    def mount_workspace(self, workspace_id: EntryID, timestamp: Optional[DateTime] = None) -> None:
+    def mount_workspace(self, workspace_id: EntryID, timestamp: DateTime | None = None) -> None:
         # In successful cases, the events MOUNTPOINT_STARTED
         # will take care of refreshing the state of the button,
         # the mount_success signal is not connected to anything but
@@ -561,9 +559,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             timestamp=timestamp,
         )
 
-    def unmount_workspace(
-        self, workspace_id: EntryID, timestamp: Optional[DateTime] = None
-    ) -> None:
+    def unmount_workspace(self, workspace_id: EntryID, timestamp: DateTime | None = None) -> None:
         # In successful cases, the event MOUNTPOINT_STOPPED
         # will take care of refreshing the state of the button,
         # the unmount_success signal is not connected to anything but
@@ -587,7 +583,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def is_workspace_mounted(
-        self, workspace_id: EntryID, timestamp: Optional[DateTime] = None
+        self, workspace_id: EntryID, timestamp: DateTime | None = None
     ) -> bool:
         return self.core.mountpoint_manager.is_workspace_mounted(workspace_id, timestamp)
 
@@ -746,8 +742,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         show_error(self, err_msg, exception=job.exc)
 
     def get_workspace_button(
-        self, workspace_id: EntryID, timestamp: Optional[DateTime] = None
-    ) -> Optional[WorkspaceButton]:
+        self, workspace_id: EntryID, timestamp: DateTime | None = None
+    ) -> WorkspaceButton | None:
         key = (workspace_id, timestamp)
         return self.workspace_button_mapping.get(key)
 
@@ -803,24 +799,24 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset()
 
     def _on_fs_entry_synced(
-        self, event: QEvent, id: str, workspace_id: Optional[EntryID] = None
+        self, event: QEvent, id: str, workspace_id: EntryID | None = None
     ) -> None:
         self.reset()
 
     def _on_fs_entry_updated(
-        self, event: QEvent, workspace_id: Optional[EntryID] = None, id: Optional[EntryID] = None
+        self, event: QEvent, workspace_id: EntryID | None = None, id: EntryID | None = None
     ) -> None:
         assert id is not None
         if workspace_id and id == workspace_id:
             self.reset()
 
     def _on_entry_downsynced(
-        self, event: QEvent, workspace_id: Optional[EntryID] = None, id: Optional[str] = None
+        self, event: QEvent, workspace_id: EntryID | None = None, id: str | None = None
     ) -> None:
         self.reset()
 
     def _on_mountpoint_state_updated(
-        self, workspace_id: EntryID, timestamp: Optional[DateTime]
+        self, workspace_id: EntryID, timestamp: DateTime | None
     ) -> None:
         wb = self.get_workspace_button(workspace_id, timestamp)
         if wb:
@@ -833,7 +829,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         event: QEvent,
         mountpoint: object,
         workspace_id: EntryID,
-        timestamp: Optional[DateTime],
+        timestamp: DateTime | None,
     ) -> None:
         self._on_mountpoint_state_updated(workspace_id, timestamp)
 
@@ -842,6 +838,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         event: QEvent,
         mountpoint: object,
         workspace_id: EntryID,
-        timestamp: Optional[DateTime],
+        timestamp: DateTime | None,
     ) -> None:
         self._on_mountpoint_state_updated(workspace_id, timestamp)

@@ -9,7 +9,6 @@ from typing import (
     Dict,
     Tuple,
     Set,
-    Optional,
     AsyncIterator,
     NoReturn,
     List,
@@ -123,7 +122,7 @@ class BaseWorkspaceStorage:
         manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Set[ChunkID] | None = None,
     ) -> None:
         raise NotImplementedError
 
@@ -400,7 +399,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Set[ChunkID] | None = None,
     ) -> None:
         if check_lock_status:
             self._check_lock_status(entry_id)
@@ -542,7 +541,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
         manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Set[ChunkID] | None = None,
     ) -> None:
         assert isinstance(entry_id, EntryID)
         if manifest.need_sync:

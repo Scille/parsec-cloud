@@ -8,7 +8,6 @@ from typing import (
     AsyncIterator,
     Awaitable,
     Callable,
-    Optional,
     List,
     AsyncGenerator,
     Protocol,
@@ -87,8 +86,8 @@ class MonitorCallback(Protocol):
     def __call__(
         self,
         task_status: MonitorTaskStatus,
-        user_fs: Optional[UserFS] = None,
-        event_bus: Optional[EventBus] = None,
+        user_fs: UserFS | None = None,
+        event_bus: EventBus | None = None,
     ) -> Awaitable[None]:
         ...
 
@@ -214,7 +213,7 @@ def _transport_pool_factory(
     device_id: DeviceID,
     signing_key: SigningKey,
     max_pool: int,
-    keepalive: Optional[int],
+    keepalive: int | None,
 ) -> TransportPool:
     async def _connect() -> Transport:
         transport = await connect_as_authenticated(
@@ -274,7 +273,7 @@ class BackendAuthenticatedConn:
         event_bus: EventBus,
         max_cooldown: int = 30,
         max_pool: int = 4,
-        keepalive: Optional[int] = None,
+        keepalive: int | None = None,
     ):
         if max_pool < 2:
             raise ValueError("max_pool must be at least 2 (for event listener + query sender)")
@@ -286,10 +285,10 @@ class BackendAuthenticatedConn:
             addr, device.device_id, device.signing_key, max_pool, keepalive
         )
         self._status = BackendConnStatus.LOST
-        self._status_exc: Optional[Exception] = None
+        self._status_exc: Exception | None = None
         self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
-        self._manager_connect_cancel_scope: Optional[trio.CancelScope] = None
+        self._manager_connect_cancel_scope: trio.CancelScope | None = None
         self._monitors_task_statuses: List[MonitorTaskStatus] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
@@ -312,7 +311,7 @@ class BackendAuthenticatedConn:
         return self._status
 
     @property
-    def status_exc(self) -> Optional[Exception]:
+    def status_exc(self) -> Exception | None:
         # This exception still contains contextual information (e.g. cause, traceback)
         # For this reason, it shouldn't be re-raised as it mutates its internal state
         # Instead, the exception should be copied using `copy_exception`
@@ -323,7 +322,7 @@ class BackendAuthenticatedConn:
         return self._cmds
 
     async def set_status(
-        self, status: BackendConnStatus, status_exc: Optional[Exception] = None
+        self, status: BackendConnStatus, status_exc: Exception | None = None
     ) -> None:
         # Do not set the status if we're being cancelled
         # Not performing this check can lead to complicated race conditions.
@@ -543,14 +542,14 @@ async def backend_authenticated_cmds_factory(
     addr: BackendOrganizationAddr,
     device_id: DeviceID,
     signing_key: SigningKey,
-    keepalive: Optional[int] = None,
+    keepalive: int | None = None,
 ) -> AsyncGenerator[BackendAuthenticatedCmds, None]:
     """
     Raises:
         BackendConnectionError
     """
     transport_lock = trio.Lock()
-    transport: Optional[Transport] = None
+    transport: Transport | None = None
     closed = False
 
     async def _init_transport() -> Transport:

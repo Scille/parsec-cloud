@@ -19,7 +19,6 @@ async def freeze_messages_monitor_mockpoint() -> None:
     Noop function that could be mocked during tests to be able to freeze the
     monitor coroutine running in background
     """
-    pass
 
 
 async def monitor_messages(

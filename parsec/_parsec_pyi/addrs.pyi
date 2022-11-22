@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
 from parsec._parsec_pyi.ids import OrganizationID, EntryID, InvitationToken
 
 class BackendAddr:
-    def __init__(self, hostname: str, port: Optional[int], use_ssl: bool) -> None: ...
+    def __init__(self, hostname: str, port: int | None, use_ssl: bool) -> None: ...
     def __lt__(self, other: BackendAddr) -> bool: ...
     def __gt__(self, other: BackendAddr) -> bool: ...
     def __le__(self, other: BackendAddr) -> bool: ...
@@ -32,7 +32,7 @@ class BackendOrganizationAddr(BackendAddr):
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
         hostname: str,
-        port: Optional[int],
+        port: int | None,
         use_ssl: bool = True,
     ) -> None: ...
     def __hash__(self) -> int: ...
@@ -78,16 +78,16 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
     def __init__(
         self,
         organization_id: OrganizationID,
-        token: Optional[str],
+        token: str | None,
         hostname: str,
-        port: Optional[int],
+        port: int | None,
         use_ssl: bool = True,
     ) -> None: ...
     def __hash__(self) -> int: ...
     @property
     def organization_id(self) -> OrganizationID: ...
     @property
-    def token(self) -> Optional[str]: ...
+    def token(self) -> str | None: ...
     @property
     def hostname(self) -> str: ...
     @property
@@ -110,7 +110,7 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
         cls,
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
-        token: Optional[str],
+        token: str | None,
     ) -> BackendOrganizationBootstrapAddr: ...
 
 class BackendOrganizationFileLinkAddr(BackendAddr):
@@ -120,9 +120,9 @@ class BackendOrganizationFileLinkAddr(BackendAddr):
         workspace_id: EntryID,
         encrypted_path: bytes,
         hostname: str,
-        port: Optional[int],
+        port: int | None,
         use_ssl: bool = True,
-        encrypted_timestamp: Optional[bytes] = None,
+        encrypted_timestamp: bytes | None = None,
     ) -> None: ...
     def __hash__(self) -> int: ...
     @property
@@ -140,7 +140,7 @@ class BackendOrganizationFileLinkAddr(BackendAddr):
     @property
     def encrypted_path(self) -> bytes: ...
     @property
-    def encrypted_timestamp(self) -> Optional[bytes]: ...
+    def encrypted_timestamp(self) -> bytes | None: ...
     def get_backend_addr(self) -> BackendAddr: ...
     def to_url(self) -> str: ...
     def to_http_redirection_url(self) -> str: ...
@@ -154,7 +154,7 @@ class BackendOrganizationFileLinkAddr(BackendAddr):
         organization_addr: BackendOrganizationAddr,
         workspace_id: EntryID,
         encrypted_path: bytes,
-        encrypted_timestamp: Optional[bytes] = None,
+        encrypted_timestamp: bytes | None = None,
     ) -> BackendOrganizationFileLinkAddr: ...
 
 class BackendInvitationAddr(BackendAddr):
@@ -164,7 +164,7 @@ class BackendInvitationAddr(BackendAddr):
         invitation_type: Any,  # TODO: find correct type
         token: InvitationToken,
         hostname: str,
-        port: Optional[int],
+        port: int | None,
         use_ssl: bool = True,
     ) -> None: ...
     def __hash__(self) -> int: ...
@@ -202,7 +202,7 @@ class BackendPkiEnrollmentAddr(BackendAddr):
         self,
         organization_id: OrganizationID,
         hostname: str,
-        port: Optional[int],
+        port: int | None,
         use_ssl: bool = True,
     ) -> None: ...
     def __hash__(self) -> int: ...

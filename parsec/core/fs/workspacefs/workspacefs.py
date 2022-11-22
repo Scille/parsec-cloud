@@ -12,7 +12,6 @@ from typing import (
     AsyncIterator,
     cast,
     Callable,
-    Optional,
     Awaitable,
 )
 import structlog
@@ -92,7 +91,7 @@ class WorkspaceFS:
         self,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
@@ -444,7 +443,7 @@ class WorkspaceFS:
         self,
         source: AnyPath,
         destination: AnyPath,
-        source_workspace: Optional["WorkspaceFS"] = None,
+        source_workspace: WorkspaceFS | None = None,
     ) -> None:
         """
         Raises:
@@ -497,7 +496,7 @@ class WorkspaceFS:
         self,
         source_path: AnyPath,
         target_path: AnyPath,
-        source_workspace: Optional["WorkspaceFS"] = None,
+        source_workspace: WorkspaceFS | None = None,
     ) -> None:
         source_path = FsPath(source_path)
         target_path = FsPath(target_path)
@@ -523,7 +522,7 @@ class WorkspaceFS:
         self,
         source_path: AnyPath,
         target_path: AnyPath,
-        source_workspace: Optional["WorkspaceFS"] = None,
+        source_workspace: WorkspaceFS | None = None,
         buffer_size: int = DEFAULT_BLOCK_SIZE,
         exist_ok: bool = False,
     ) -> None:
@@ -605,10 +604,10 @@ class WorkspaceFS:
 
     async def entry_id_to_path(
         self, needle_entry_id: EntryID
-    ) -> Optional[Tuple[FsPath, Dict[str, object]]]:
+    ) -> Tuple[FsPath, Dict[str, object]] | None:
         async def _recursive_search(
             path: FsPath,
-        ) -> Optional[Tuple[FsPath, Dict[str, object]]]:
+        ) -> Tuple[FsPath, Dict[str, object]] | None:
             entry_info = await self.path_info(path=path)
             if entry_info["id"] == needle_entry_id:
                 return path, entry_info
@@ -846,7 +845,7 @@ class WorkspaceFS:
         return await rec(self.workspace_id)
 
     def generate_file_link(
-        self, path: AnyPath, timestamp: Optional[DateTime] = None
+        self, path: AnyPath, timestamp: DateTime | None = None
     ) -> BackendOrganizationFileLinkAddr:
         """
         Raises: Nothing
@@ -877,7 +876,7 @@ class WorkspaceFS:
         # FsPath raises ValueError, decode() raises UnicodeDecodeError which is a subclass of ValueError
         return FsPath(raw_path.decode("utf-8"))
 
-    def decrypt_timestamp(self, addr: BackendOrganizationFileLinkAddr) -> Optional[DateTime]:
+    def decrypt_timestamp(self, addr: BackendOrganizationFileLinkAddr) -> DateTime | None:
         """
         Raises: ValueError
         """

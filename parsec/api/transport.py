@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
-from typing import Optional, Type, Union
+from typing import Type, Union
 import trio
 from trio import BrokenResourceError
 from trio.abc import Stream
@@ -48,7 +48,7 @@ class TransportClosedByPeer(TransportError):
 class Transport:
     RECEIVE_BYTES = 2**20  # 1Mo
 
-    def __init__(self, stream: Stream, ws: WSConnection, keepalive: Optional[int] = None):
+    def __init__(self, stream: Stream, ws: WSConnection, keepalive: int | None = None):
         self.stream = stream
         self.ws = ws
         self.keepalive = keepalive
@@ -99,7 +99,7 @@ class Transport:
         cls: Type["Transport"],
         stream: Stream,
         host: str,
-        keepalive: Optional[int] = None,
+        keepalive: int | None = None,
     ) -> "Transport":
         ws = WSConnection(ConnectionType.CLIENT)
         transport = cls(stream, ws, keepalive)
@@ -131,7 +131,7 @@ class Transport:
     async def init_for_server(
         cls: Type["Transport"],
         stream: Stream,
-        upgrade_request: Optional[H11Request] = None,
+        upgrade_request: H11Request | None = None,
     ) -> "Transport":
         ws = WSConnection(ConnectionType.SERVER)
         if upgrade_request:

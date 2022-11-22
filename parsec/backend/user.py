@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from parsec._parsec import (
     DateTime,
@@ -99,7 +99,7 @@ INVITATION_VALIDITY = 3600
 class GetUserAndDevicesResult:
     user_certificate: bytes
     device_certificates: Tuple[bytes, ...]
-    revoked_user_certificate: Optional[bytes]
+    revoked_user_certificate: bytes | None
     trustchain_user_certificates: Tuple[bytes, ...]
     trustchain_device_certificates: Tuple[bytes, ...]
     trustchain_revoked_user_certificates: Tuple[bytes, ...]
@@ -295,7 +295,7 @@ class BaseUserComponent:
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[DateTime] = None,
+        revoked_on: DateTime | None = None,
     ) -> None:
         """
         Raises:
@@ -350,7 +350,7 @@ class BaseUserComponent:
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: Optional[str] = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,

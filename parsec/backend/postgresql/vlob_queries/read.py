@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, VlobID, RealmID
@@ -97,8 +97,8 @@ async def query_read(
     author: DeviceID,
     encryption_revision: int,
     vlob_id: VlobID,
-    version: Optional[int] = None,
-    timestamp: Optional[DateTime] = None,
+    version: int | None = None,
+    timestamp: DateTime | None = None,
 ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_read_access(conn, organization_id, author, realm_id, encryption_revision)

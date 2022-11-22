@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import attr
-from typing import Optional, Tuple, Dict, Any, TypeVar, Type
+from typing import Dict, Iterable, Tuple, Type, TypeVar
 from parsec._parsec import DateTime
 
 from parsec.serde import (
@@ -36,38 +36,43 @@ class BaseSignedDataSchema(BaseSchema):
 
 class DataMeta(type):
 
+    SERIALIZER: BaseSerializer
     BASE_SCHEMA_CLS = BaseSchema
 
-    def __new__(cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]):  # type: ignore[no-untyped-def]
+    def __new__(cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, object]) -> DataMeta:
         # Sanity checks
-        if "SCHEMA_CLS" not in nmspc:
+        SCHEMA_CLS = nmspc.get("SCHEMA_CLS")
+        if SCHEMA_CLS is None:
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
-        if not issubclass(nmspc["SCHEMA_CLS"], cls.BASE_SCHEMA_CLS):
+        if not isinstance(SCHEMA_CLS, type):
+            raise RuntimeError("SCHEMA_CLS is not a type")
+        if not issubclass(SCHEMA_CLS, cls.BASE_SCHEMA_CLS):
             raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {cls.BASE_SCHEMA_CLS!r}")
 
         raw_cls = type.__new__(cls, name, bases, nmspc)
 
         # Sanity checks: class SCHEMA_CLS needs to define parents SCHEMA_CLS fields
-        schema_cls_fields = set(nmspc["SCHEMA_CLS"]._declared_fields)
-        bases_schema_cls = (base for base in bases if hasattr(base, "SCHEMA_CLS"))
-        for base in bases_schema_cls:
-            assert (
-                base.SCHEMA_CLS._declared_fields.keys()  # type: ignore[attr-defined]
-                <= schema_cls_fields
-            )
+        schema_cls_fields = set(SCHEMA_CLS._declared_fields)
+        for base in bases:
+            BASE_SCHEMA_CLS = getattr(base, "SCHEMA_CLS", None)
+            if BASE_SCHEMA_CLS is not None:
+                assert issubclass(BASE_SCHEMA_CLS, BaseSchema)
+                assert BASE_SCHEMA_CLS._declared_fields.keys() <= schema_cls_fields
 
         # Sanity check: attr fields need to be defined in SCHEMA_CLS
-        if "__attrs_attrs__" in nmspc:
-            assert {att.name for att in nmspc["__attrs_attrs__"]} <= schema_cls_fields
-        try:
-            serializer_cls = raw_cls.SERIALIZER_CLS  # type: ignore[attr-defined]
-        except AttributeError:
+        attrs = nmspc.get("__attrs_attrs__")
+        if attrs is not None:
+            assert isinstance(attrs, Iterable)
+            assert {att.name for att in attrs} <= schema_cls_fields
+
+        serializer_cls = getattr(raw_cls, "SERIALIZER_CLS", None)
+        if serializer_cls is None:
             raise RuntimeError("Missing attribute `SERIALIZER_CLS` in class definition")
 
         if not issubclass(serializer_cls, BaseSerializer):
             raise RuntimeError(f"Attribute `SERIALIZER_CLS` must inherit {BaseSerializer!r}")
 
-        raw_cls.SERIALIZER = serializer_cls(  # type: ignore[attr-defined]
+        raw_cls.SERIALIZER = serializer_cls(
             nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
         )
 
@@ -97,12 +102,12 @@ class BaseSignedData(metaclass=SignedDataMeta):
     author: DeviceID = attr.ib()
     timestamp: DateTime = attr.ib()
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
-    def evolve(self: BaseSignedDataTypeVar, **kwargs: Any) -> BaseSignedDataTypeVar:
+    def evolve(self: BaseSignedDataTypeVar, **kwargs: object) -> BaseSignedDataTypeVar:
         return attr.evolve(self, **kwargs)
 
     def _serialize(self) -> bytes:
@@ -174,9 +179,9 @@ class BaseSignedData(metaclass=SignedDataMeta):
         cls: Type[BaseSignedDataTypeVar],
         signed: bytes,
         author_verify_key: VerifyKey,
-        expected_author: Optional[DeviceID],
-        expected_timestamp: Optional[DateTime] = None,
-        **kwargs: Any,
+        expected_author: DeviceID | None,
+        expected_timestamp: DateTime | None = None,
+        **kwargs: object,
     ) -> BaseSignedDataTypeVar:
         """
         Raises:
@@ -208,7 +213,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> BaseSignedDataTypeVar:
         """
         Raises:
@@ -236,7 +241,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> BaseSignedDataTypeVar:
         """
         Raises:
@@ -274,12 +279,12 @@ class BaseData(metaclass=DataMeta):
     SERIALIZER_CLS = BaseSerializer
     SERIALIZER: BaseSerializer  # Configured by the metaclass
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
-    def evolve(self: BaseDataTypeVar, **kwargs: Any) -> BaseDataTypeVar:
+    def evolve(self: BaseDataTypeVar, **kwargs: object) -> BaseDataTypeVar:
         return attr.evolve(self, **kwargs)
 
     def dump(self) -> bytes:
@@ -290,7 +295,7 @@ class BaseData(metaclass=DataMeta):
         return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def load(cls: Type[BaseDataTypeVar], raw: bytes, **kwargs: Any) -> BaseDataTypeVar:
+    def load(cls: Type[BaseDataTypeVar], raw: bytes, **kwargs: object) -> BaseDataTypeVar:
         """
         Raises:
             DataError
@@ -323,7 +328,7 @@ class BaseData(metaclass=DataMeta):
 
     @classmethod
     def decrypt_and_load(
-        cls: Type[BaseDataTypeVar], encrypted: bytes, key: SecretKey, **kwargs: Any
+        cls: Type[BaseDataTypeVar], encrypted: bytes, key: SecretKey, **kwargs: object
     ) -> BaseDataTypeVar:
         """
         Raises:
@@ -342,7 +347,7 @@ class BaseData(metaclass=DataMeta):
         cls: Type[BaseDataTypeVar],
         encrypted: bytes,
         recipient_privkey: PrivateKey,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> BaseDataTypeVar:
         """
         Raises:

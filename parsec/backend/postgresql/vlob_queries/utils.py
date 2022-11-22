@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import triopg
-from typing import Optional, Tuple
+from typing import Tuple
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, RealmID, DeviceID, VlobID
@@ -30,7 +30,7 @@ async def _check_realm(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_id: RealmID,
-    encryption_revision: Optional[int],
+    encryption_revision: int | None,
     operation_kind: OperationKind,
 ) -> None:
     # Get the current realm status
@@ -122,7 +122,7 @@ async def _check_realm_and_read_access(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
-    encryption_revision: Optional[int],
+    encryption_revision: int | None,
 ) -> None:
     await _check_realm(
         conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_READ
@@ -136,7 +136,7 @@ async def _check_realm_and_write_access(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
-    encryption_revision: Optional[int],
+    encryption_revision: int | None,
     timestamp: DateTime,
 ) -> None:
     await _check_realm(
@@ -189,7 +189,7 @@ async def _get_last_role_granted_on(
     organization_id: OrganizationID,
     realm_id: RealmID,
     author: DeviceID,
-) -> Optional[DateTime]:
+) -> DateTime | None:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
             organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str

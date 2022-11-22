@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, List, cast
+from typing import Any, Callable, List, cast
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPixmap, QColor
@@ -53,7 +53,7 @@ class NavigationBarWidget(QWidget):
         self.inner_widget.layout().setContentsMargins(0, 3, 0, 0)
         self.inner_widget.layout().addItem(QSpacerItem(10, 0, QSizePolicy.Policy.MinimumExpanding))
         self.paths: List[EntryName] = []
-        self.workspace_name: Optional[EntryName] = None
+        self.workspace_name: EntryName | None = None
 
     def _on_range_changed(self, min: int, max: int) -> None:
         self.scroll_area.horizontalScrollBar().setSliderPosition(max)

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, Optional, Tuple, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Tuple, TypeVar
 from typing_extensions import ParamSpec
 import trio
 import outcome
@@ -145,7 +145,7 @@ class ThreadFSAccess:
 
     def entry_rename(
         self, source: FsPath, destination: FsPath, *, overwrite: bool = True
-    ) -> Optional[EntryID]:
+    ) -> EntryID | None:
         return self._run(
             self.workspace_fs.transactions.entry_rename, source, destination, overwrite
         )
@@ -162,7 +162,7 @@ class ThreadFSAccess:
 
     def file_create(
         self, path: FsPath, *, open: bool = True
-    ) -> Tuple[EntryID, Optional[FileDescriptor]]:
+    ) -> Tuple[EntryID, FileDescriptor | None]:
         return self._run(self.workspace_fs.transactions.file_create, path, open)
 
     def file_open(self, path: FsPath, *, write_mode: bool) -> Tuple[EntryID, FileDescriptor]:

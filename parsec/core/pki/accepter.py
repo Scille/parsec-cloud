@@ -6,7 +6,7 @@ from uuid import UUID
 from pathlib import Path
 from hashlib import sha1
 from parsec._parsec import DateTime
-from typing import Iterable, Optional, cast
+from typing import Iterable, cast
 
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload
 from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
@@ -290,7 +290,7 @@ class PkiEnrollmentAccepterInvalidSubmittedCtx:
     enrollment_id: UUID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
-    submitter_x509_certificate: Optional[X509Certificate]
+    submitter_x509_certificate: X509Certificate | None
     submit_payload_signature: bytes
     raw_submit_payload: bytes
     error: PkiEnrollmentError

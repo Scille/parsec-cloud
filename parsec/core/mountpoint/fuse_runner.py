@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import sys
 from types import FrameType
-from typing import Any, AsyncGenerator, Optional, Tuple, cast
+from typing import AsyncGenerator, Tuple, cast
 import trio
 import errno
 import signal
@@ -33,12 +33,11 @@ __all__ = ("fuse_mountpoint_runner",)
 logger = get_logger()
 
 
-def _sig_ign(sig: int, stack: Optional[FrameType]) -> Any:
+def _sig_ign(sig: int, stack: FrameType | None) -> None:
     """A signal handler behaving like signal.SIG_IGN"""
-    pass
 
 
-def _sig_dfl(sig: int, stack: Optional[FrameType]) -> Any:
+def _sig_dfl(sig: int, stack: FrameType | None) -> None:
     """A signal handler behaving like signal.SIG_DFL"""
     # Restore the DLF handler
     signal.signal(sig, signal.SIG_DFL)
@@ -147,7 +146,7 @@ async def fuse_mountpoint_runner(
     )
 
     # Prepare event information
-    event_kwargs: dict[str, Path | EntryID | Optional[DateTime]] = {
+    event_kwargs: dict[str, Path | EntryID | DateTime | None] = {
         "mountpoint": mountpoint_path,
         "workspace_id": workspace_fs.workspace_id,
         "timestamp": cast(DateTime, getattr(workspace_fs, "timestamp", None)),

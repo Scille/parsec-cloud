@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from types import ModuleType
-from typing import Iterable, Tuple, Optional
+from typing import Iterable, Tuple
 from pathlib import Path
 from uuid import UUID
 from importlib import import_module
@@ -33,7 +33,7 @@ def is_pki_enrollment_available() -> bool:
 
 
 async def pki_enrollment_select_certificate(
-    owner_hint: Optional[LocalDevice] = None,
+    owner_hint: LocalDevice | None = None,
 ) -> X509Certificate:
     """
     Raises:

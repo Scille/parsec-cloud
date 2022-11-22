@@ -8,7 +8,7 @@ import trio
 from enum import Enum
 from pathlib import Path, PurePath
 from hashlib import sha256
-from typing import Callable, List, Optional, Iterator, Dict, Tuple, cast
+from typing import Callable, Dict, Iterator, List, Tuple, cast
 from importlib import import_module
 
 from parsec.serde import BaseSchema, fields, MsgpackSerializer, OneOfSchema
@@ -83,8 +83,6 @@ class LocalDevicePackingError(LocalDeviceError):
 
 class LocalDeviceCertificateNotFoundError(LocalDeviceError):
     """Used in parsec-extensions for smartcard devices."""
-
-    pass
 
 
 class DeviceFileType(Enum):
@@ -167,12 +165,12 @@ key_file_serializer = MsgpackSerializer(
 
 def generate_new_device(
     organization_addr: BackendOrganizationAddr,
-    device_id: Optional[DeviceID] = None,
+    device_id: DeviceID | None = None,
     profile: UserProfile = UserProfile.STANDARD,
-    human_handle: Optional[HumanHandle] = None,
-    device_label: Optional[DeviceLabel] = None,
-    signing_key: Optional[SigningKey] = None,
-    private_key: Optional[PrivateKey] = None,
+    human_handle: HumanHandle | None = None,
+    device_label: DeviceLabel | None = None,
+    signing_key: SigningKey | None = None,
+    private_key: PrivateKey | None = None,
 ) -> LocalDevice:
     return LocalDevice(
         organization_addr=organization_addr,
@@ -193,8 +191,8 @@ class AvailableDevice:
     key_file_path: Path
     organization_id: OrganizationID
     device_id: DeviceID
-    human_handle: Optional[HumanHandle]
-    device_label: Optional[DeviceLabel]
+    human_handle: HumanHandle | None
+    device_label: DeviceLabel | None
     slug: str
     type: DeviceFileType
 
@@ -243,7 +241,7 @@ def get_devices_dir(config_dir: Path) -> Path:
     return config_dir / "devices"
 
 
-def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
+def _load_legacy_device_file(key_file_path: Path) -> AvailableDevice | None:
     # For the legacy device files, the slug is contained in the device filename
     slug = key_file_path.stem
 
@@ -271,7 +269,7 @@ def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
     )
 
 
-def load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
+def load_device_file(key_file_path: Path) -> AvailableDevice | None:
     try:
         data = key_file_serializer.loads(key_file_path.read_bytes())
 
@@ -584,8 +582,8 @@ async def load_device_with_smartcard(key_file: Path) -> LocalDevice:
 async def save_device_with_smartcard_in_config(
     config_dir: Path,
     device: LocalDevice,
-    certificate_id: Optional[str] = None,
-    certificate_sha1: Optional[bytes] = None,
+    certificate_id: str | None = None,
+    certificate_sha1: bytes | None = None,
 ) -> Path:
     """
     Raises:

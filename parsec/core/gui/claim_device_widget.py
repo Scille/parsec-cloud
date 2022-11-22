@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable
 
 import trio
 from enum import IntEnum
@@ -554,9 +554,9 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
-        self.dialog: Optional[GreyedDialog] = None
+        self.dialog: GreyedDialog | None = None
         self.addr = addr
-        self.status: Optional[tuple[LocalDevice, DeviceFileType, str]] = None
+        self.status: tuple[LocalDevice, DeviceFileType, str] | None = None
         self.claimer_job: QtToTrioJob[None] | None = None
         self.retrieve_info_job: QtToTrioJob[None] | None = None
         self.claimer_success.connect(self._on_claimer_success)

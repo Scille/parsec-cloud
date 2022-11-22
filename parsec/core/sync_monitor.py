@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Union, Dict, cast
+from typing import Any, Dict, Iterable, TYPE_CHECKING, Union, cast
 import trio
 from structlog import get_logger
 
@@ -53,7 +53,6 @@ async def freeze_sync_monitor_mockpoint() -> None:
     Noop function that could be mocked during tests to be able to freeze the
     monitor coroutine running in background
     """
-    pass
 
 
 class LocalChange:
@@ -200,7 +199,7 @@ class SyncContext:
         self._local_confinement_points[cause_id].add(entry_id)
 
     def _compute_due_time(
-        self, now: Optional[float] = None, min_due_time: Optional[float] = None
+        self, now: float | None = None, min_due_time: float | None = None
     ) -> float:
         if self._remote_changes:
             self.due_time = now or self.device.timestamp().timestamp()
@@ -344,7 +343,7 @@ class SyncContextStore:
     def iter(self) -> Iterable[SyncContext]:
         return self._ctxs.copy().values()
 
-    def get(self, entry_id: EntryID) -> Optional[SyncContext]:
+    def get(self, entry_id: EntryID) -> SyncContext | None:
         try:
             return self._ctxs[entry_id]
         except KeyError:
@@ -381,7 +380,7 @@ async def monitor_sync(
         task_status.awake()
 
     def _on_entry_updated(
-        event: CoreEvent, id: EntryID, workspace_id: Optional[EntryID] = None
+        event: CoreEvent, id: EntryID, workspace_id: EntryID | None = None
     ) -> None:
         if workspace_id is None:
             # User manifest

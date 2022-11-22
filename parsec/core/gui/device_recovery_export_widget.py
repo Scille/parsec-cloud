@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Optional, Sequence
+from typing import Sequence
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -48,7 +48,7 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
         device: LocalDevice,
         save_path: PurePath,
         passphrase: str,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
@@ -80,9 +80,7 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
 class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widget):
     info_filled = pyqtSignal(bool)
 
-    def __init__(
-        self, devices: Sequence[AvailableDevice], parent: Optional[QWidget] = None
-    ) -> None:
+    def __init__(self, devices: Sequence[AvailableDevice], parent: QWidget | None = None) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
         self.button_select_file.clicked.connect(self._on_select_file_clicked)
@@ -121,11 +119,11 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         config: CoreConfig,
         jobs_ctx: QtToTrioJobScheduler,
         devices: Sequence[AvailableDevice],
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
-        self.dialog: Optional[GreyedDialog] = None
+        self.dialog: GreyedDialog | None = None
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.button_validate.clicked.connect(self._on_validate_clicked)

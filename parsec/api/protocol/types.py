@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from unicodedata import normalize
 from marshmallow import ValidationError
-from typing import Union, TypeVar, Optional, Tuple, Pattern
+from typing import Pattern, Tuple, TypeVar, Union
 
 from parsec.serde import fields
 from parsec._parsec import (
@@ -25,7 +25,7 @@ def _bytes_size(txt: str) -> int:
 
 class StrBased:
     __slots__ = ("_str",)
-    REGEX: Optional[Pattern[str]]
+    REGEX: Pattern[str] | None
     MAX_BYTE_SIZE: int
 
     def __init__(self, raw: Union[str, "StrBased"]):
@@ -75,7 +75,7 @@ class HumanHandleField(fields.Field[HumanHandle]):
 
     def _serialize(
         self, value: HumanHandle | None, attr: str, data: object
-    ) -> Optional[Tuple[str, str]]:
+    ) -> Tuple[str, str] | None:
         if value is None:
             return None
         return (value.email, value.label)

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import triopg
 from functools import lru_cache
-from typing import Tuple, List, Optional
+from typing import List, Tuple
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import UserID, OrganizationID, HumanHandle
@@ -106,7 +106,7 @@ ORDER BY row_order
 @query()
 async def query_retrieve_active_human_by_email(
     conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, email: str
-) -> Optional[UserID]:
+) -> UserID | None:
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
             organization_id=organization_id.str,
@@ -127,7 +127,7 @@ async def query_find_humans(
     omit_non_human: bool = False,
     page: int = 1,
     per_page: int = 100,
-    query: Optional[str] = None,
+    query: str | None = None,
 ) -> Tuple[List[HumanFindResultItem], int]:
     if page >= 1:
         offset = (page - 1) * per_page

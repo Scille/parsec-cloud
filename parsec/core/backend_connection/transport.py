@@ -10,7 +10,6 @@ from structlog import get_logger
 from contextlib import asynccontextmanager
 from typing import (
     AsyncIterator,
-    Optional,
     Dict,
     Callable,
     Awaitable,
@@ -55,7 +54,7 @@ CLIENT_HANDSHAKE_TYPE = Union[
 
 
 async def apiv1_connect(
-    addr: BackendOrganizationBootstrapAddr, keepalive: Optional[int] = None
+    addr: BackendOrganizationBootstrapAddr, keepalive: int | None = None
 ) -> Transport:
     """
     Raises:
@@ -66,7 +65,7 @@ async def apiv1_connect(
 
 
 async def connect_as_invited(
-    addr: BackendInvitationAddr, keepalive: Optional[int] = None
+    addr: BackendInvitationAddr, keepalive: int | None = None
 ) -> Transport:
     handshake = InvitedClientHandshake(
         organization_id=addr.organization_id,
@@ -81,7 +80,7 @@ async def connect_as_authenticated(
     addr: BackendOrganizationAddr,
     device_id: DeviceID,
     signing_key: SigningKey,
-    keepalive: Optional[int] = None,
+    keepalive: int | None = None,
 ) -> Transport:
     handshake = AuthenticatedClientHandshake(
         organization_id=addr.organization_id,
@@ -97,7 +96,7 @@ async def _connect(
     hostname: str,
     port: int,
     use_ssl: bool,
-    keepalive: Optional[int],
+    keepalive: int | None,
     handshake: CLIENT_HANDSHAKE_TYPE,
 ) -> Transport:
     stream = await maybe_connect_through_proxy(hostname, port, use_ssl)
@@ -237,9 +236,9 @@ class TransportPool:
 
 async def http_request(
     url: str,
-    data: Optional[bytes] = None,
+    data: bytes | None = None,
     headers: Dict[str, str] = {},
-    method: Optional[str] = None,
+    method: str | None = None,
 ) -> bytes:
     """Raises: urllib.error.URLError or OSError"""
 
