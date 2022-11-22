@@ -94,6 +94,9 @@ class Transport:
         except RemoteProtocolError as exc:
             raise TransportError(*exc.args) from exc
 
+        except LocalProtocolError as exc:
+            raise TransportError(*exc.args) from exc
+
     @classmethod
     async def init_for_client(
         cls: Type["Transport"],

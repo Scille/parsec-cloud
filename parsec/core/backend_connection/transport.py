@@ -121,6 +121,8 @@ async def _connect(
         stream = _upgrade_stream_to_ssl(stream, hostname)
 
     try:
+        # TODO: explain why keepalive is not passed as a parameter
+        # It may be a good reason, but I'm not entirely sure
         transport = await Transport.init_for_client(stream, host=hostname)
         transport.keepalive = keepalive
 
