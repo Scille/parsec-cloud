@@ -650,7 +650,7 @@ impl BackendOrganizationFileLinkAddr {
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair("action", "file_link")
-            .append_pair("workspace_id", &self.workspace_id.to_string())
+            .append_pair("workspace_id", &self.workspace_id.hex())
             .append_pair("path", &binary_urlsafe_encode(&self.encrypted_path));
         if let Some(ts) = &self.encrypted_timestamp {
             url.query_pairs_mut()
@@ -750,7 +750,7 @@ impl BackendInvitationAddr {
                     InvitationType::Device => "claim_device",
                 },
             )
-            .append_pair("token", &self.token.to_string());
+            .append_pair("token", &self.token.hex());
         url
     }
 

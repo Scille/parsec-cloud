@@ -77,9 +77,7 @@ async def query_create(
     assert self_granted_role.role == RealmRole.OWNER
 
     realm_internal_id = await conn.fetchval(
-        *_q_insert_realm(
-            organization_id=organization_id.str, realm_id=self_granted_role.realm_id.uuid
-        )
+        *_q_insert_realm(organization_id=organization_id.str, realm_id=self_granted_role.realm_id)
     )
     if not realm_internal_id:
         raise RealmAlreadyExistsError()

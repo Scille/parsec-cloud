@@ -260,7 +260,7 @@ class UserRemoteLoader:
     ) -> Tuple[List[RealmRoleCertificate], Dict[UserID, RealmRole]]:
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.realm_get_role_certificates(
-                RealmID((realm_id or self.workspace_id).uuid)
+                RealmID.from_entry_id(realm_id or self.workspace_id)
             )
         if isinstance(rep, RealmGetRoleCertificatesRepNotAllowed):
             # Seems we lost the access to the realm
@@ -397,7 +397,7 @@ class UserRemoteLoader:
             FSRemoteManifestNotFound
         """
         with translate_backend_cmds_errors():
-            rep = await self.backend_cmds.vlob_list_versions(VlobID(entry_id.uuid))
+            rep = await self.backend_cmds.vlob_list_versions(VlobID.from_entry_id(entry_id))
         if isinstance(rep, VlobListVersionsRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
@@ -421,7 +421,9 @@ class UserRemoteLoader:
         """
         timestamp = self.device.timestamp()
         certif = RealmRoleCertificate.build_realm_root_certif(
-            author=self.device.device_id, timestamp=timestamp, realm_id=RealmID(realm_id.uuid)
+            author=self.device.device_id,
+            timestamp=timestamp,
+            realm_id=RealmID.from_entry_id(realm_id),
         ).dump_and_sign(self.device.signing_key)
 
         with translate_backend_cmds_errors():
@@ -567,7 +569,7 @@ class RemoteLoader(UserRemoteLoader):
         # Upload block
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.block_create(
-                access.id, RealmID(self.workspace_id.uuid), ciphered
+                access.id, RealmID.from_entry_id(self.workspace_id), ciphered
             )
 
         if isinstance(rep, BlockCreateRepAlreadyExists):
@@ -586,7 +588,7 @@ class RemoteLoader(UserRemoteLoader):
 
         # Update local storage
         await self.local_storage.set_clean_block(access.id, data)
-        await self.local_storage.clear_chunk(ChunkID(access.id.uuid), miss_ok=True)
+        await self.local_storage.clear_chunk(ChunkID.from_block_id(access.id), miss_ok=True)
 
     async def load_manifest(
         self,
@@ -626,7 +628,7 @@ class RemoteLoader(UserRemoteLoader):
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_read(
                 workspace_entry.encryption_revision,
-                VlobID(entry_id.uuid),
+                VlobID.from_entry_id(entry_id),
                 version=version,
                 timestamp=timestamp if version is None else None,
             )
@@ -847,9 +849,9 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_create(
-                RealmID(self.workspace_id.uuid),
+                RealmID.from_entry_id(self.workspace_id),
                 encryption_revision,
-                VlobID(entry_id.uuid),
+                VlobID.from_entry_id(entry_id),
                 now,
                 ciphered,
                 sequester_blob,
@@ -908,7 +910,12 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_update(
-                encryption_revision, VlobID(entry_id.uuid), version, now, ciphered, sequester_blob
+                encryption_revision,
+                VlobID.from_entry_id(entry_id),
+                version,
+                now,
+                ciphered,
+                sequester_blob,
             )
 
         if isinstance(rep, VlobUpdateRepNotFound):

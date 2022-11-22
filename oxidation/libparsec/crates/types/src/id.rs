@@ -32,8 +32,8 @@ macro_rules! new_uuid_type {
         pub struct $name(::uuid::Uuid);
 
         impl $name {
-            pub fn as_hyphenated(&self) -> String {
-                self.0.as_hyphenated().to_string()
+            pub fn as_hyphenated(&self) -> &::uuid::fmt::Hyphenated {
+                self.0.as_hyphenated()
             }
 
             pub fn from_hex(hex: &str) -> Result<Self, &'static str> {
@@ -41,11 +41,19 @@ macro_rules! new_uuid_type {
                     .map(Self)
                     .or(Err(concat!("Invalid ", stringify!($name))))
             }
+
+            pub fn hex(&self) -> String {
+                self.0.as_simple().to_string()
+            }
+
+            pub fn as_u128(&self) -> u128 {
+                self.0.as_u128()
+            }
         }
 
         impl ::std::fmt::Display for $name {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                write!(f, "{}", self.0.as_simple())
+                write!(f, "{}", self.0.as_hyphenated())
             }
         }
 

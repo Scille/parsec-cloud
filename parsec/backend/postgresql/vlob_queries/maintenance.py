@@ -149,12 +149,12 @@ async def query_maintenance_get_reencryption_batch(
     rep = await conn.fetch(
         *_q_maintenance_get_reencryption_batch(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             encryption_revision=encryption_revision,
             size=size,
         )
     )
-    return [(VlobID(row["vlob_id"]), row["version"], row["blob"]) for row in rep]
+    return [(VlobID.from_hex(row["vlob_id"]), row["version"], row["blob"]) for row in rep]
 
 
 @query(in_transaction=True)
@@ -173,8 +173,8 @@ async def query_maintenance_save_reencryption_batch(
         await conn.execute(
             *_q_maintenance_save_reencryption_batch(
                 organization_id=organization_id.str,
-                realm_id=realm_id.uuid,
-                vlob_id=vlob_id.uuid,
+                realm_id=realm_id,
+                vlob_id=vlob_id,
                 version=version,
                 encryption_revision=encryption_revision,
                 blob=blob,
@@ -185,7 +185,7 @@ async def query_maintenance_save_reencryption_batch(
     rep = await conn.fetchrow(
         *_q_maintenance_save_reencryption_batch_get_stat(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
     )

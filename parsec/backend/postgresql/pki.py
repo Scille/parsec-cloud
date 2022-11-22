@@ -297,7 +297,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         await conn.execute(
                             *_q_cancel_pki_enrollment(
                                 organization_id=organization_id.str,
-                                enrollment_id=row["enrollment_id"],
+                                enrollment_id=UUID(row["enrollment_id"]),
                                 enrollment_state=PkiEnrollmentStatus.CANCELLED.value,
                                 cancelled_on=submitted_on,
                             )
@@ -413,7 +413,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             )
             return [
                 PkiEnrollmentListItem(
-                    enrollment_id=entry["enrollment_id"],
+                    enrollment_id=UUID(entry["enrollment_id"]),
                     submitted_on=entry["submitted_on"],
                     submitter_der_x509_certificate=entry["submitter_der_x509_certificate"],
                     submit_payload_signature=entry["submit_payload_signature"],

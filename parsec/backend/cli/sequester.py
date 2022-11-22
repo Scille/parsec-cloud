@@ -10,7 +10,6 @@ from async_generator import asynccontextmanager
 from base64 import b64encode, b64decode
 from pathlib import Path
 from typing import AsyncGenerator, Dict, List, Tuple
-from uuid import uuid4
 
 from parsec._parsec import DateTime
 from parsec.backend.postgresql.organization import PGOrganizationComponent
@@ -130,7 +129,7 @@ async def _create_service(
 
 
 def _display_service(service: BaseSequesterService) -> None:
-    display_service_id = click.style(service.service_id, fg="yellow")
+    display_service_id = click.style(service.service_id.hex, fg="yellow")
     display_service_label = click.style(service.service_label, fg="green")
     click.echo(f"Service {display_service_label} (id: {display_service_id})")
     click.echo(f"\tCreated on: {service.created_on}")
@@ -221,7 +220,7 @@ def generate_service_certificate(
         authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
 
         # Generate data schema
-        service_id = SequesterServiceID(uuid4())
+        service_id = SequesterServiceID.new()
         now = DateTime.now()
         certificate_data = SequesterServiceCertificate(
             timestamp=now,
@@ -430,7 +429,7 @@ def create_service(
         service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())
         authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
         # Generate data schema
-        service_id = SequesterServiceID(uuid4())
+        service_id = SequesterServiceID.new()
         now = DateTime.now()
         certif_data = SequesterServiceCertificate(
             timestamp=now,

@@ -190,7 +190,7 @@ async def get_sequester_services(
 
 
 def build_sequester_service_obj(row: dict[str, Any]) -> BaseSequesterService:
-    service_id = SequesterServiceID(row["service_id"])
+    service_id = SequesterServiceID.from_hex(row["service_id"])
     service_type = SequesterServiceType(row["service_type"].lower())
     if service_type == SequesterServiceType.STORAGE:
         return StorageSequesterService(
@@ -394,16 +394,19 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 *_get_sequester_blob(
                     organization_id=organization_id.str,
                     service_id=service_id,
-                    realm_id=realm_id.uuid,
+                    realm_id=realm_id,
                 )
             )
 
             # Sort data by postgresql table index
             sequester_blob = {
-                data["_id"]: (data["vlob_id"], data["blob"]) for data in raw_sequester_data
+                data["_id"]: (VlobID.from_hex(data["vlob_id"]), data["blob"])
+                for data in raw_sequester_data
             }
             # Get vlob ids
-            sequester_vlob_ids = set([data["vlob_id"] for data in raw_sequester_data])
+            sequester_vlob_ids = set(
+                [VlobID.from_hex(data["vlob_id"]) for data in raw_sequester_data]
+            )
 
             # Only vlob that contains sequester data has been downloaded.
             # A vlob_id can be in different vlob atoms.
@@ -426,7 +429,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
 
             vlobs_ids = defaultdict(list)
             for entry in all_vlob_ids:
-                vlobs_ids[entry["vlob_id"]].append(entry["_id"])
+                vlobs_ids[VlobID.from_hex(entry["vlob_id"])].append(entry["_id"])
 
             # Generate dump data
             dump = []
@@ -439,7 +442,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     try:
                         sequester_vlob_id, blob = sequester_blob[vlob_atom_index]
                         assert sequester_vlob_id == vlob_id
-                        dump.append((VlobID(vlob_id), version, blob))
+                        dump.append((vlob_id, version, blob))
                     except KeyError:
                         pass
 

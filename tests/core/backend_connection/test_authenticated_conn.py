@@ -283,12 +283,22 @@ async def test_realm_notif_on_new_entry_sync(running_backend, alice_backend_conn
                 # File manifest creation
                 (
                     CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-                    {"realm_id": wid, "checkpoint": 1, "src_id": entry_id, "src_version": 1},
+                    {
+                        "realm_id": wid,
+                        "checkpoint": 1,
+                        "src_id": entry_id,
+                        "src_version": 1,
+                    },
                 ),
                 # Workspace manifest creation containing the file entry
                 (
                     CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-                    {"realm_id": wid, "checkpoint": 2, "src_id": wid, "src_version": 1},
+                    {
+                        "realm_id": wid,
+                        "checkpoint": 2,
+                        "src_id": wid,
+                        "src_version": 1,
+                    },
                 ),
             ]
         )

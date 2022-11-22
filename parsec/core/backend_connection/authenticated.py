@@ -37,7 +37,6 @@ from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.protocol import DeviceID, AUTHENTICATED_CMDS
 from parsec.core.types import (
-    EntryID,
     BackendOrganizationAddr,
     OrganizationConfig,
     LocalDevice,
@@ -163,6 +162,7 @@ for cmd in AUTHENTICATED_CMDS:
     assert hasattr(BackendAuthenticatedCmds, cmd)
 
 
+# TODO: can we avoid the conversions RealmID/VlobID -> EntryID
 def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
     if not isinstance(rep, EventsListenRepOk):
         logger.warning("Bad response to `events_listen` command", rep=rep)
@@ -177,30 +177,30 @@ def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
     elif isinstance(rep, EventsListenRepOkRealmRolesUpdated):
         event_bus.send(
             CoreEvent.BACKEND_REALM_ROLES_UPDATED,
-            realm_id=EntryID(rep.realm_id.uuid),
+            realm_id=rep.realm_id.to_entry_id(),
             role=rep.role,
         )
 
     elif isinstance(rep, EventsListenRepOkRealmVlobsUpdated):
         event_bus.send(
             CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-            realm_id=EntryID(rep.realm_id.uuid),
+            realm_id=rep.realm_id.to_entry_id(),
             checkpoint=rep.checkpoint,
-            src_id=EntryID(rep.src_id.uuid),
+            src_id=rep.src_id.to_entry_id(),
             src_version=rep.src_version,
         )
 
     elif isinstance(rep, EventsListenRepOkRealmMaintenanceStarted):
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
-            realm_id=EntryID(rep.realm_id.uuid),
+            realm_id=rep.realm_id.to_entry_id(),
             encryption_revision=rep.encryption_revision,
         )
 
     elif isinstance(rep, EventsListenRepOkRealmMaintenanceFinished):
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
-            realm_id=EntryID(rep.realm_id.uuid),
+            realm_id=rep.realm_id.to_entry_id(),
             encryption_revision=rep.encryption_revision,
         )
 

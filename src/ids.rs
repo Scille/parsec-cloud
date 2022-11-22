@@ -1,10 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{
-    exceptions::PyValueError,
-    prelude::*,
-    types::{IntoPyDict, PyType},
-};
+use pyo3::{exceptions::PyValueError, prelude::*, types::PyType};
 
 // UUID based type
 
@@ -12,31 +8,6 @@ macro_rules! gen_uuid {
     ($class: ident) => {
         #[pymethods]
         impl $class {
-            #[new]
-            fn new(uuid: &PyAny) -> PyResult<Self> {
-                // Check if the PyAny as a hex parameter (meaning it's probably a uuid.UUID)
-                match uuid.getattr("hex") {
-                    Ok(as_hex) => {
-                        // Convert to string
-                        let u = as_hex.extract::<&str>()?;
-                        // Parse it as a Rust Uuid
-                        ::uuid::Uuid::parse_str(u)
-                            .map(|as_uuid| Self(libparsec::types::$class::from(as_uuid)))
-                            .map_err(|_| ::pyo3::exceptions::PyValueError::new_err("Not a UUID"))
-                    }
-                    Err(_) => Err(::pyo3::exceptions::PyValueError::new_err("Not a UUID")),
-                }
-            }
-
-            #[getter]
-            fn uuid<'py>(&self, py: ::pyo3::Python<'py>) -> PyResult<&'py PyAny> {
-                let uuid = PyModule::import(py, "uuid")?;
-                let kwargs = [("hex", self.0.to_string())].into_py_dict(py);
-                uuid.getattr("UUID")?
-                    .call((), Some(kwargs))
-                    .map_err(::pyo3::exceptions::PyValueError::new_err)
-            }
-
             #[classmethod]
             fn from_bytes(_cls: &::pyo3::types::PyType, bytes: &[u8]) -> PyResult<Self> {
                 libparsec::types::$class::try_from(bytes)
@@ -64,7 +35,17 @@ macro_rules! gen_uuid {
 
             #[getter]
             fn hex(&self) -> String {
-                self.0.to_string()
+                self.0.hex()
+            }
+
+            #[getter]
+            fn int(&self) -> u128 {
+                self.0.as_u128()
+            }
+
+            #[getter]
+            fn hyphenated(&self) -> String {
+                self.0.as_hyphenated().to_string()
             }
         }
     };
@@ -75,6 +56,7 @@ macro_rules! gen_uuid {
 pub(crate) struct EntryID(pub libparsec::types::EntryID);
 
 crate::binding_utils::gen_proto!(EntryID, __repr__);
+crate::binding_utils::gen_proto!(EntryID, __str__);
 crate::binding_utils::gen_proto!(EntryID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(EntryID, __hash__);
 gen_uuid!(EntryID);
@@ -84,6 +66,7 @@ gen_uuid!(EntryID);
 pub(crate) struct BlockID(pub libparsec::types::BlockID);
 
 crate::binding_utils::gen_proto!(BlockID, __repr__);
+crate::binding_utils::gen_proto!(BlockID, __str__);
 crate::binding_utils::gen_proto!(BlockID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(BlockID, __hash__);
 gen_uuid!(BlockID);
@@ -97,6 +80,17 @@ crate::binding_utils::gen_proto!(RealmID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(RealmID, __hash__);
 gen_uuid!(RealmID);
 
+#[pymethods]
+impl RealmID {
+    fn to_entry_id(&self) -> EntryID {
+        EntryID(libparsec::types::EntryID::from(*self.0))
+    }
+    #[classmethod]
+    fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
+        Self(libparsec::types::RealmID::from(*id.0))
+    }
+}
+
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct VlobID(pub libparsec::types::VlobID);
@@ -105,6 +99,17 @@ crate::binding_utils::gen_proto!(VlobID, __repr__);
 crate::binding_utils::gen_proto!(VlobID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(VlobID, __hash__);
 gen_uuid!(VlobID);
+
+#[pymethods]
+impl VlobID {
+    fn to_entry_id(&self) -> EntryID {
+        EntryID(libparsec::types::EntryID::from(*self.0))
+    }
+    #[classmethod]
+    fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
+        Self(libparsec::types::VlobID::from(*id.0))
+    }
+}
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
@@ -115,12 +120,19 @@ crate::binding_utils::gen_proto!(ChunkID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(ChunkID, __hash__);
 gen_uuid!(ChunkID);
 
+#[pymethods]
+impl ChunkID {
+    #[classmethod]
+    fn from_block_id(_cls: &PyType, id: BlockID) -> Self {
+        Self(libparsec::types::ChunkID::from(*id.0))
+    }
+}
+
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct SequesterServiceID(pub libparsec::types::SequesterServiceID);
 
 crate::binding_utils::gen_proto!(SequesterServiceID, __repr__);
-crate::binding_utils::gen_proto!(SequesterServiceID, __str__);
 crate::binding_utils::gen_proto!(SequesterServiceID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(SequesterServiceID, __hash__);
 gen_uuid!(SequesterServiceID);
@@ -130,7 +142,6 @@ gen_uuid!(SequesterServiceID);
 pub(crate) struct InvitationToken(pub libparsec::types::InvitationToken);
 
 crate::binding_utils::gen_proto!(InvitationToken, __repr__);
-crate::binding_utils::gen_proto!(InvitationToken, __str__);
 crate::binding_utils::gen_proto!(InvitationToken, __richcmp__, eq);
 crate::binding_utils::gen_proto!(InvitationToken, __hash__);
 gen_uuid!(InvitationToken);

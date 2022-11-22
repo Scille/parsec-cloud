@@ -108,7 +108,7 @@ async def query_read(
             data = await conn.fetchrow(
                 *_q_read_data_without_timestamp(
                     organization_id=organization_id.str,
-                    realm_id=realm_id.uuid,
+                    realm_id=realm_id,
                     encryption_revision=encryption_revision,
                     vlob_id=vlob_id,
                 )
@@ -119,9 +119,9 @@ async def query_read(
             data = await conn.fetchrow(
                 *_q_read_data_with_timestamp(
                     organization_id=organization_id.str,
-                    realm_id=realm_id.uuid,
+                    realm_id=realm_id,
                     encryption_revision=encryption_revision,
-                    vlob_id=vlob_id.uuid,
+                    vlob_id=vlob_id,
                     timestamp=timestamp,
                 )
             )
@@ -132,9 +132,9 @@ async def query_read(
         data = await conn.fetchrow(
             *_q_read_data_with_version(
                 organization_id=organization_id.str,
-                realm_id=realm_id.uuid,
+                realm_id=realm_id,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id.uuid,
+                vlob_id=vlob_id,
                 version=version,
             )
         )
@@ -196,12 +196,12 @@ async def query_poll_changes(
 
     ret = await conn.fetch(
         *_q_poll_changes(
-            organization_id=organization_id.str, realm_id=realm_id.uuid, checkpoint=checkpoint
+            organization_id=organization_id.str, realm_id=realm_id, checkpoint=checkpoint
         )
     )
 
     changes_since_checkpoint: Dict[VlobID, int] = {
-        VlobID(src_id): src_version for _, src_id, src_version in ret
+        VlobID.from_hex(src_id): src_version for _, src_id, src_version in ret
     }
     new_checkpoint: int = ret[-1][0] if ret else checkpoint
     return (new_checkpoint, changes_since_checkpoint)
@@ -217,9 +217,7 @@ async def query_list_versions(
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
-    rows = await conn.fetch(
-        *_q_list_versions(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
-    )
+    rows = await conn.fetch(*_q_list_versions(organization_id=organization_id.str, vlob_id=vlob_id))
     assert rows
 
     if not rows:

@@ -150,7 +150,7 @@ async def query_update_roles(
 
     # Retrieve realm and make sure it is not under maintenance
     rep = await conn.fetchrow(
-        *_q_get_realm_status(organization_id=organization_id.str, realm_id=new_role.realm_id.uuid)
+        *_q_get_realm_status(organization_id=organization_id.str, realm_id=new_role.realm_id)
     )
     if not rep:
         raise RealmNotFoundError(f"Realm `{new_role.realm_id.hex}` doesn't exist")
@@ -161,7 +161,7 @@ async def query_update_roles(
     ((author_id, author_role), (user_id, existing_user_role)) = await conn.fetch(
         *_q_get_roles(
             organization_id=organization_id.str,
-            realm_id=new_role.realm_id.uuid,
+            realm_id=new_role.realm_id,
             users_ids=(new_role.granted_by.user_id.str, new_role.user_id.str),
         )
     )
@@ -205,7 +205,7 @@ async def query_update_roles(
         rep = await conn.fetchrow(
             *_q_get_last_vlob_update(
                 organization_id=organization_id.str,
-                realm_id=new_role.realm_id.uuid,
+                realm_id=new_role.realm_id,
                 user_id=new_role.user_id.str,
             )
         )
@@ -220,7 +220,7 @@ async def query_update_roles(
         rep = await conn.fetchrow(
             *_q_get_last_role_change(
                 organization_id=organization_id.str,
-                realm_id=new_role.realm_id.uuid,
+                realm_id=new_role.realm_id,
                 user_id=new_role.user_id.str,
             )
         )
@@ -231,7 +231,7 @@ async def query_update_roles(
     await conn.execute(
         *_q_insert_realm_user_role(
             organization_id=organization_id.str,
-            realm_id=new_role.realm_id.uuid,
+            realm_id=new_role.realm_id,
             user_id=new_role.user_id.str,
             role=new_role.role.str if new_role.role else None,
             certificate=new_role.certificate,
@@ -243,7 +243,7 @@ async def query_update_roles(
     await conn.execute(
         *_q_set_last_role_change(
             organization_id=organization_id.str,
-            realm_id=new_role.realm_id.uuid,
+            realm_id=new_role.realm_id,
             user_id=new_role.granted_by.user_id.str,
             granted_on=new_role.granted_on,
         )

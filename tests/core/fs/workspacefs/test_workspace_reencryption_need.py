@@ -83,7 +83,7 @@ def test_workspace_reencryption_need(
             certif = RealmRoleCertificate(
                 author=author.device_id,
                 timestamp=now,
-                realm_id=RealmID(self.wid.uuid),
+                realm_id=RealmID.from_entry_id(self.wid),
                 user_id=user.user_id,
                 role=role,
             ).dump_and_sign(author.signing_key)
@@ -91,7 +91,7 @@ def test_workspace_reencryption_need(
                 author.organization_id,
                 RealmGrantedRole(
                     certificate=certif,
-                    realm_id=RealmID(self.wid.uuid),
+                    realm_id=RealmID.from_entry_id(self.wid),
                     user_id=user.user_id,
                     role=role,
                     granted_by=author.device_id,

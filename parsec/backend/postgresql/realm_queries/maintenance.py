@@ -51,7 +51,7 @@ async def get_realm_status(
     conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
 ) -> RealmStatus:
     rep = await conn.fetchrow(
-        *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id.uuid)
+        *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id)
     )
     if not rep:
         raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
@@ -119,7 +119,7 @@ async def _get_realm_role_for_not_revoked(
         rep = await conn.fetch(
             *_q_get_realm_role_for_not_revoked_with_users(
                 organization_id=organization_id.str,
-                realm_id=realm_id.uuid,
+                realm_id=realm_id,
                 users_ids=[u.str for u in users],
             )
         )
@@ -133,7 +133,7 @@ async def _get_realm_role_for_not_revoked(
     else:
         rep = await conn.fetch(
             *_q_get_realm_role_for_not_revoked(
-                organization_id=organization_id.str, realm_id=realm_id.uuid
+                organization_id=organization_id.str, realm_id=realm_id
             )
         )
 
@@ -196,7 +196,7 @@ async def query_start_reencryption_maintenance(
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_realm(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             maintenance_started_by=author.str,
             maintenance_started_on=timestamp,
             maintenance_type="REENCRYPTION",
@@ -207,7 +207,7 @@ async def query_start_reencryption_maintenance(
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_vlob_encryption_revision(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
     )

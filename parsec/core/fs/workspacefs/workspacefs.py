@@ -234,7 +234,7 @@ class WorkspaceFS:
             pass
 
         try:
-            rep = await self.backend_cmds.realm_status(RealmID(self.workspace_id.uuid))
+            rep = await self.backend_cmds.realm_status(RealmID.from_entry_id(self.workspace_id))
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
