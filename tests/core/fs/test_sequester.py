@@ -38,9 +38,9 @@ async def test_userfs_sequester_sync(
         realm_dump = await backend.sequester.dump_realm(
             organization_id=coolorg.organization_id,
             service_id=service.service_id,
-            realm_id=RealmID(local_device.user_manifest_id),
+            realm_id=RealmID.from_entry_id(local_device.user_manifest_id),
         )
-        user_manifest_vlob_id = VlobID(local_device.user_manifest_id)
+        user_manifest_vlob_id = VlobID.from_entry_id(local_device.user_manifest_id)
 
         # Simple check: make sure we retreive the expected items
         items = {(vlob_id, version) for (vlob_id, version, _) in realm_dump}
@@ -105,7 +105,7 @@ async def test_workspacefs_sequester_sync(running_backend, backend, alice_user_f
         return service
 
     async def _assert_sequester_dump(service, workspace, expected_items):
-        realm_id = RealmID(workspace.workspace_id)
+        realm_id = RealmID.from_entry_id(workspace.workspace_id)
         realm_dump = await backend.sequester.dump_realm(
             organization_id=coolorg.organization_id,
             service_id=service.service_id,
@@ -114,7 +114,9 @@ async def test_workspacefs_sequester_sync(running_backend, backend, alice_user_f
 
         # Simple check: make sure we retreive the expected items
         items = {(vlob_id, version) for (vlob_id, version, _) in realm_dump}
-        expected_items = {(VlobID(entry_id), version) for (entry_id, version) in expected_items}
+        expected_items = {
+            (VlobID.from_entry_id(entry_id), version) for (entry_id, version) in expected_items
+        }
         assert items == expected_items
 
         # Advanced check: make sure each item contain the valid data

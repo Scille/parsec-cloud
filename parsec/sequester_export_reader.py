@@ -220,7 +220,7 @@ class WorkspaceExport:
             ) from exc
 
     def load_workspace_manifest(self) -> WorkspaceManifest:
-        manifest = self.load_manifest(EntryID(self.db.realm_id))
+        manifest = self.load_manifest(self.db.realm_id.to_entry_id())
         if not isinstance(manifest, WorkspaceManifest):
             raise InconsistentWorkspaceError(
                 f"Vlob with realm id is expected to contain a Workspace manifest, but actually contained {manifest}"

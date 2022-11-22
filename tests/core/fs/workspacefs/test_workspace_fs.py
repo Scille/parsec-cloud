@@ -463,7 +463,7 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
     # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
     reply = await alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates(
-        RealmID(alice_workspace.workspace_id)
+        RealmID.from_entry_id(alice_workspace.workspace_id)
     )
     original = alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates
 

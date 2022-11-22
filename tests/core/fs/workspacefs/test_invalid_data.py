@@ -51,7 +51,7 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
                 organization_id=alice.organization_id,
                 author=options["backend_author"],
                 encryption_revision=1,
-                vlob_id=VlobID(wid),
+                vlob_id=VlobID.from_entry_id(wid),
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],

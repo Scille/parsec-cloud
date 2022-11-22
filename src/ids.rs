@@ -61,22 +61,6 @@ crate::binding_utils::gen_proto!(EntryID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(EntryID, __hash__);
 gen_uuid!(EntryID);
 
-#[pymethods]
-impl EntryID {
-    #[new]
-    fn new(id: &PyAny) -> PyResult<Self> {
-        Ok(Self(if let Ok(RealmID(id)) = id.extract() {
-            libparsec::types::EntryID::from(*id)
-        } else if let Ok(VlobID(id)) = id.extract() {
-            libparsec::types::EntryID::from(*id)
-        } else {
-            return Err(PyValueError::new_err(format!(
-                "Cannot convert {id} into `EntryID`"
-            )));
-        }))
-    }
-}
-
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct BlockID(pub libparsec::types::BlockID);
@@ -98,8 +82,11 @@ gen_uuid!(RealmID);
 
 #[pymethods]
 impl RealmID {
-    #[new]
-    fn new(id: EntryID) -> Self {
+    fn to_entry_id(&self) -> EntryID {
+        EntryID(libparsec::types::EntryID::from(*self.0))
+    }
+    #[classmethod]
+    fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
         Self(libparsec::types::RealmID::from(*id.0))
     }
 }
@@ -115,8 +102,11 @@ gen_uuid!(VlobID);
 
 #[pymethods]
 impl VlobID {
-    #[new]
-    fn new(id: EntryID) -> Self {
+    fn to_entry_id(&self) -> EntryID {
+        EntryID(libparsec::types::EntryID::from(*self.0))
+    }
+    #[classmethod]
+    fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
         Self(libparsec::types::VlobID::from(*id.0))
     }
 }
@@ -132,8 +122,8 @@ gen_uuid!(ChunkID);
 
 #[pymethods]
 impl ChunkID {
-    #[new]
-    fn new(id: BlockID) -> Self {
+    #[classmethod]
+    fn from_block_id(_cls: &PyType, id: BlockID) -> Self {
         Self(libparsec::types::ChunkID::from(*id.0))
     }
 }

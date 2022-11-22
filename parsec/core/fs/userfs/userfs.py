@@ -155,7 +155,7 @@ class ReencryptionJob:
             FSWorkspaceInMaintenance
             FSWorkspaceNoAccess
         """
-        workspace_id = RealmID(self.new_workspace_entry.id)
+        workspace_id = RealmID.from_entry_id(self.new_workspace_entry.id)
         new_encryption_revision = self.new_workspace_entry.encryption_revision
 
         # Get the batch
@@ -550,7 +550,9 @@ class UserFS:
         try:
             # Note encryption_revision is always 1 given we never re-encrypt
             # the user manifest's realm
-            rep = await self.backend_cmds.vlob_read(1, VlobID(self.user_manifest_id), version)
+            rep = await self.backend_cmds.vlob_read(
+                1, VlobID.from_entry_id(self.user_manifest_id), version
+            )
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -693,7 +695,7 @@ class UserFS:
             certif = RealmRoleCertificate.build_realm_root_certif(
                 author=self.device.device_id,
                 timestamp=self.device.timestamp(),
-                realm_id=RealmID(self.device.user_manifest_id),
+                realm_id=RealmID.from_entry_id(self.device.user_manifest_id),
             ).dump_and_sign(self.device.signing_key)
 
             try:
@@ -776,9 +778,9 @@ class UserFS:
             rep: VlobCreateRep | VlobUpdateRep
             if to_sync_um.version == 1:
                 rep = await self.backend_cmds.vlob_create(
-                    realm_id=RealmID(self.user_manifest_id),
+                    realm_id=RealmID.from_entry_id(self.user_manifest_id),
                     encryption_revision=1,
-                    vlob_id=VlobID(self.user_manifest_id),
+                    vlob_id=VlobID.from_entry_id(self.user_manifest_id),
                     timestamp=timestamp,
                     blob=ciphered,
                     sequester_blob=sequester_blob,
@@ -786,7 +788,7 @@ class UserFS:
             else:
                 rep = await self.backend_cmds.vlob_update(
                     encryption_revision=1,
-                    vlob_id=VlobID(self.user_manifest_id),
+                    vlob_id=VlobID.from_entry_id(self.user_manifest_id),
                     version=to_sync_um.version,
                     timestamp=timestamp,
                     blob=ciphered,
@@ -941,7 +943,7 @@ class UserFS:
         role_certificate = RealmRoleCertificate(
             author=self.device.device_id,
             timestamp=timestamp,
-            realm_id=RealmID(workspace_id),
+            realm_id=RealmID.from_entry_id(workspace_id),
             user_id=recipient,
             role=role,
         ).dump_and_sign(self.device.signing_key)
@@ -1258,7 +1260,10 @@ class UserFS:
         # Finally send command to the backend
         try:
             rep = await self.backend_cmds.realm_start_reencryption_maintenance(
-                RealmID(workspace_id), encryption_revision, timestamp, per_user_ciphered_msgs
+                RealmID.from_entry_id(workspace_id),
+                encryption_revision,
+                timestamp,
+                per_user_ciphered_msgs,
             )
 
         except BackendNotAvailable as exc:
@@ -1346,7 +1351,7 @@ class UserFS:
 
         # First make sure the workspace is under maintenance
         try:
-            rep = await self.backend_cmds.realm_status(RealmID(workspace_entry.id))
+            rep = await self.backend_cmds.realm_status(RealmID.from_entry_id(workspace_entry.id))
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc

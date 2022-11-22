@@ -380,7 +380,7 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
     await running_backend.backend.realm.update_roles(
         alice.organization_id,
         RealmGrantedRole(
-            realm_id=RealmID(wid),
+            realm_id=RealmID.from_entry_id(wid),
             user_id=bob.user_id,
             certificate=b"<dummy>",
             role=RealmRole.OWNER,
@@ -391,7 +391,7 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
     await running_backend.backend.realm.update_roles(
         alice.organization_id,
         RealmGrantedRole(
-            realm_id=RealmID(wid),
+            realm_id=RealmID.from_entry_id(wid),
             user_id=alice.user_id,
             certificate=b"<dummy>",
             role=RealmRole.CONTRIBUTOR,

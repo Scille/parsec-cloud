@@ -282,8 +282,8 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 author = device
             else:
                 author = self.get_device(device.organization_id, manifest.author)
-            realm_id = RealmID(author.user_manifest_id)
-            vlob_id = VlobID(author.user_manifest_id)
+            realm_id = RealmID.from_entry_id(author.user_manifest_id)
+            vlob_id = VlobID.from_entry_id(author.user_manifest_id)
 
             with self.backend.event_bus.listen() as spy:
 

@@ -606,7 +606,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     con.executemany("INSERT INTO block(_id, block_id, data, author) VALUES (?, ?, ?, ?)", blocks)
 
     # Populate `vlob` table
-    workspace_id = EntryID(realm1)
+    workspace_id = realm1.to_entry_id()
     file1 = EntryID.new()
     file2 = EntryID.new()
     folder1 = EntryID.new()
