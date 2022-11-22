@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.14.1-rc1 (2022-11-22)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix an issue that prevented proper reconnection of the client in some specific
+  cases  (`#3595 <https://github.com/Scille/parsec-cloud/issues/3595>`__)
+
+
 Parsec v2.14.0 (2022-11-10)
 ---------------------------
 
