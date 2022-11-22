@@ -4,13 +4,12 @@ from __future__ import annotations
 import sys
 import subprocess
 import pytest
-from parsec._parsec import DateTime
 from collections import defaultdict
 from typing import Optional, Tuple, Iterable
 from hashlib import sha1
-from uuid import UUID
 from pathlib import Path
 
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.crypto import SigningKey, PrivateKey
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload, DataError
 from parsec.core.types import LocalDevice, BackendPkiEnrollmentAddr
@@ -140,7 +139,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             config_dir: Path,
             x509_certificate: X509Certificate,
             addr: BackendPkiEnrollmentAddr,
-            enrollment_id: UUID,
+            enrollment_id: EnrollmentID,
             submitted_on: DateTime,
             submit_payload: PkiEnrollmentSubmitPayload,
             signing_key: SigningKey,
@@ -160,7 +159,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             return pending
 
         def pki_enrollment_load_local_pending_secret_part(
-            self, config_dir: Path, enrollment_id: UUID
+            self, config_dir: Path, enrollment_id: EnrollmentID
         ) -> Tuple[SigningKey, PrivateKey]:
             for (pending, secret_part) in self._pending_enrollments[config_dir]:
                 if pending.enrollment_id == enrollment_id:

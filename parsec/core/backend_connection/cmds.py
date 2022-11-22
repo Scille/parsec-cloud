@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from typing import Awaitable, Dict, List, Tuple, Union, cast
-from uuid import UUID
 
 from parsec._parsec import (
     AuthenticatedPingRep,
@@ -14,6 +13,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCreateRep,
     DeviceCreateRepUnknownStatus,
+    EnrollmentID,
     EventsListenRep,
     EventsListenRepUnknownStatus,
     EventsSubscribeRep,
@@ -1057,7 +1057,9 @@ async def pki_enrollment_list(transport: Transport) -> dict[str, object]:
     )
 
 
-async def pki_enrollment_reject(transport: Transport, enrollment_id: UUID) -> dict[str, object]:
+async def pki_enrollment_reject(
+    transport: Transport, enrollment_id: EnrollmentID
+) -> dict[str, object]:
     return cast(
         dict[str, object],
         await _send_cmd(
@@ -1071,7 +1073,7 @@ async def pki_enrollment_reject(transport: Transport, enrollment_id: UUID) -> di
 
 async def pki_enrollment_accept(
     transport: Transport,
-    enrollment_id: UUID,
+    enrollment_id: EnrollmentID,
     accepter_der_x509_certificate: bytes,
     accept_payload_signature: bytes,
     accept_payload: bytes,

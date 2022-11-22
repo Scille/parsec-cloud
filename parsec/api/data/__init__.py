@@ -2,6 +2,11 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    # Certificate
+    UserCertificate,
+    DeviceCertificate,
+    RevokedUserCertificate,
+    RealmRoleCertificate,
     # Message
     MessageContent,
     SharingGrantedMessageContent,
@@ -50,13 +55,6 @@ from parsec.api.data.manifest import (
     FolderManifest,
     FileManifest,
     AnyRemoteManifest,
-)
-
-from parsec._parsec import (
-    UserCertificate,
-    DeviceCertificate,
-    RevokedUserCertificate,
-    RealmRoleCertificate,
 )
 
 __all__ = (

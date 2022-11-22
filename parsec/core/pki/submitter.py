@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import attr
 from pathlib import Path
-from uuid import UUID, uuid4
-from parsec._parsec import DateTime
 from typing import Iterable, List, Union, cast
 
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.protocol import DeviceLabel, PkiEnrollmentStatus
 from parsec.core.backend_connection import (
@@ -44,7 +43,7 @@ from parsec.core.pki.exceptions import (
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentSubmitterInitialCtx:
     addr: BackendPkiEnrollmentAddr
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     signing_key: SigningKey
     private_key: PrivateKey
     x509_certificate: X509Certificate
@@ -57,7 +56,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             PkiEnrollmentCertificateCryptoError
             PkiEnrollmentCertificateNotFoundError
         """
-        enrollment_id = uuid4()
+        enrollment_id = EnrollmentID.new()
         signing_key = SigningKey.generate()
         private_key = PrivateKey.generate()
 
@@ -205,7 +204,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
     x509_certificate: X509Certificate
     addr: BackendPkiEnrollmentAddr
     submitted_on: DateTime
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submit_payload: PkiEnrollmentSubmitPayload
 
     @classmethod
@@ -361,7 +360,7 @@ class BasePkiEnrollmentSubmitterStatusCtx:
     x509_certificate: X509Certificate
     addr: BackendPkiEnrollmentAddr
     submitted_on: DateTime
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submit_payload: PkiEnrollmentSubmitPayload
 
 
@@ -489,7 +488,7 @@ class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentFinalizedCtx:
     config_dir: Path
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     new_device: LocalDevice
     x509_certificate: X509Certificate
 

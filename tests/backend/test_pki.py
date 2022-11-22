@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from uuid import uuid4
 import pytest
 
 from parsec._parsec import (
     DateTime,
+    EnrollmentID,
     UserRevokeRepOk,
     EventsListenRepOkPkiEnrollmentUpdated,
 )
@@ -46,7 +46,7 @@ async def _submit_request(
     certif_email="new_challenger@jointhebattle.com",
 ):
     if not request_id:
-        request_id = uuid4()
+        request_id = EnrollmentID.new()
     payload = PkiEnrollmentSubmitPayload(
         verify_key=bob.verify_key,
         public_key=bob.public_key,
@@ -115,7 +115,7 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_submit(
             anonymous_backend_ws,
-            enrollment_id=uuid4(),
+            enrollment_id=EnrollmentID.new(),
             force=False,
             submitter_der_x509_certificate=b"<x509 certif>",
             submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
@@ -131,7 +131,7 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_submit(
             anonymous_backend_ws,
-            enrollment_id=uuid4(),
+            enrollment_id=EnrollmentID.new(),
             force=False,
             submitter_der_x509_certificate=b"<x509 certif>",
             submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
@@ -148,7 +148,7 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_submit(
             anonymous_backend_ws,
-            enrollment_id=uuid4(),
+            enrollment_id=EnrollmentID.new(),
             force=True,
             submitter_der_x509_certificate=b"<x509 certif>",
             submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
@@ -167,7 +167,7 @@ async def test_pki_submit_same_id(anonymous_backend_ws, bob):
         public_key=bob.public_key,
         requested_device_label=bob.device_label,
     ).dump()
-    enrollment_id = uuid4()
+    enrollment_id = EnrollmentID.new()
 
     rep = await pki_enrollment_submit(
         anonymous_backend_ws,
@@ -212,7 +212,7 @@ async def test_pki_submit_already_used_email(anonymous_backend_ws, bob):
         public_key=bob.public_key,
         requested_device_label=bob.device_label,
     ).dump()
-    enrollment_id = uuid4()
+    enrollment_id = EnrollmentID.new()
 
     rep = await pki_enrollment_submit(
         anonymous_backend_ws,
@@ -234,7 +234,7 @@ async def test_pki_submit_no_email_provided(anonymous_backend_ws, bob):
         public_key=bob.public_key,
         requested_device_label=bob.device_label,
     ).dump()
-    enrollment_id = uuid4()
+    enrollment_id = EnrollmentID.new()
 
     def _req_without_email_field(req):
         req.pop("submitter_der_x509_certificate_email")
@@ -261,7 +261,7 @@ async def test_pki_submit_no_email_provided(anonymous_backend_ws, bob):
 async def test_pki_list(anonymous_backend_ws, bob, adam, alice_ws):
     ref_time = DateTime.now()
     bob_certif = b"<x509 certif>"
-    bob_request_id = uuid4()
+    bob_request_id = EnrollmentID.new()
     bob_certif_signature = b"<signature>"
 
     await _submit_request(
@@ -288,7 +288,7 @@ async def test_pki_list(anonymous_backend_ws, bob, adam, alice_ws):
     # Add another user
 
     await _submit_request(
-        anonymous_backend_ws, adam, b"<adam's x509 certif>", b"<signature>", uuid4()
+        anonymous_backend_ws, adam, b"<adam's x509 certif>", b"<signature>", EnrollmentID.new()
     )
     rep = await pki_enrollment_list(alice_ws)
 
@@ -316,7 +316,7 @@ async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_w
     assert rep == ([], 0)
 
     # Create request
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     # Send reply
@@ -347,7 +347,7 @@ async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_w
 
 @pytest.mark.trio
 async def test_pki_accept_not_found(mallory, alice, alice_ws, backend):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
@@ -361,7 +361,7 @@ async def test_pki_accept_not_found(mallory, alice, alice_ws, backend):
 
 @pytest.mark.trio
 async def test_pki_accept_invalid_certificate(mallory, alice, alice_ws, backend):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
 
     # Create certificate with mallory user instead of alice
     _, kwargs = _prepare_accept_reply(admin=mallory, invitee=mallory)
@@ -377,7 +377,7 @@ async def test_pki_accept_invalid_certificate(mallory, alice, alice_ws, backend)
 @pytest.mark.trio
 async def test_pki_accept_outdated_submit(anonymous_backend_ws, mallory, alice, alice_ws, backend):
     # First request
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
     # Second request
     await _submit_request(anonymous_backend_ws, mallory, force=True)
@@ -394,7 +394,7 @@ async def test_pki_accept_outdated_submit(anonymous_backend_ws, mallory, alice, 
 
 @pytest.mark.trio
 async def test_pki_accept_user_already_exist(anonymous_backend_ws, bob, alice, alice_ws):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, bob, request_id=request_id)
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=bob)
@@ -419,7 +419,7 @@ async def test_pki_accept_user_already_exist(anonymous_backend_ws, bob, alice, a
 async def test_pki_accept_limit_reached(backend, anonymous_backend_ws, mallory, alice, alice_ws):
     # Change organization settings
     await backend.organization.update(alice.organization_id, is_expired=False, active_users_limit=1)
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
@@ -429,7 +429,7 @@ async def test_pki_accept_limit_reached(backend, anonymous_backend_ws, mallory, 
 
 @pytest.mark.trio
 async def test_pki_accept_already_rejected(backend, anonymous_backend_ws, mallory, alice, alice_ws):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     # Reject
@@ -451,7 +451,7 @@ async def test_pki_reject(backend, anonymous_backend_ws, mallory, alice_ws):
     await events_subscribe(alice_ws)
 
     # Create request
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     with backend.event_bus.listen() as spy:
@@ -469,7 +469,7 @@ async def test_pki_reject(backend, anonymous_backend_ws, mallory, alice_ws):
 
 @pytest.mark.trio
 async def test_pki_reject_not_found(alice_ws):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
 
     rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
     assert rep["status"] == "not_found"
@@ -477,7 +477,7 @@ async def test_pki_reject_not_found(alice_ws):
 
 @pytest.mark.trio
 async def test_pki_reject_already_accepted(anonymous_backend_ws, mallory, alice, alice_ws):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
     # Accept request
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
@@ -491,7 +491,7 @@ async def test_pki_reject_already_accepted(anonymous_backend_ws, mallory, alice,
 
 @pytest.mark.trio
 async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice, alice_ws, backend):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
@@ -506,7 +506,7 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
     ).dump()
     rep = await pki_enrollment_submit(
         anonymous_backend_ws,
-        enrollment_id=uuid4(),
+        enrollment_id=EnrollmentID.new(),
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
         submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
@@ -527,7 +527,7 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
     # Pki enrollment is accepted and user revoked
     rep = await pki_enrollment_submit(
         anonymous_backend_ws,
-        enrollment_id=uuid4(),
+        enrollment_id=EnrollmentID.new(),
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
         submitter_der_x509_certificate_email="new_challenger@jointhebattle.com",
@@ -543,7 +543,7 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
 
 @pytest.mark.trio
 async def test_pki_info(anonymous_backend_ws, mallory, alice, alice_ws):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
 
     # Request not found
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
@@ -556,7 +556,7 @@ async def test_pki_info(anonymous_backend_ws, mallory, alice, alice_ws):
     assert rep["enrollment_status"] == PkiEnrollmentStatus.SUBMITTED
 
     # Request cancelled
-    new_request_id = uuid4()
+    new_request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=new_request_id, force=True)
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
     assert rep["status"] == "ok"
@@ -565,7 +565,7 @@ async def test_pki_info(anonymous_backend_ws, mallory, alice, alice_ws):
 
 @pytest.mark.trio
 async def test_pki_info_accepted(anonymous_backend_ws, mallory, alice, alice_ws):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
@@ -579,7 +579,7 @@ async def test_pki_info_accepted(anonymous_backend_ws, mallory, alice, alice_ws)
 
 @pytest.mark.trio
 async def test_pki_info_rejected(anonymous_backend_ws, mallory, alice_ws):
-    request_id = uuid4()
+    request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
     rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
@@ -599,13 +599,13 @@ async def test_pki_complete_sequence(anonymous_backend_ws, mallory, alice_ws, al
 
     async def _reject():
 
-        request_id = uuid4()
+        request_id = EnrollmentID.new()
         await _submit_request(anonymous_backend_ws, mallory, request_id=request_id, force=True)
         rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
         assert rep["status"] == "ok"
 
     async def _accept():
-        request_id = uuid4()
+        request_id = EnrollmentID.new()
         await _submit_request(anonymous_backend_ws, mallory, request_id=request_id, force=True)
         user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)

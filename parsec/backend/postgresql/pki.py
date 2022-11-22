@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import hashlib
 from typing import Any, List
-from uuid import UUID
 from triopg import UniqueViolationError
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserID, UserProfile
@@ -220,23 +219,24 @@ _q_retrieve_active_human_by_email_for_update = Q(
 def _build_enrollment_info(entry: dict[str, Any]) -> PkiEnrollmentInfo:
     if entry["enrollment_state"] == PkiEnrollmentStatus.SUBMITTED.value:
         return PkiEnrollmentInfoSubmitted(
-            enrollment_id=entry["enrollment_id"], submitted_on=entry["submitted_on"]
+            enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
+            submitted_on=entry["submitted_on"],
         )
     elif entry["enrollment_state"] == PkiEnrollmentStatus.CANCELLED.value:
         return PkiEnrollmentInfoCancelled(
-            enrollment_id=entry["enrollment_id"],
+            enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
             submitted_on=entry["submitted_on"],
             cancelled_on=entry["info_cancelled"]["cancelled_on"],
         )
     elif entry["enrollment_state"] == PkiEnrollmentStatus.REJECTED.value:
         return PkiEnrollmentInfoRejected(
-            enrollment_id=entry["enrollment_id"],
+            enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
             submitted_on=entry["submitted_on"],
             rejected_on=entry["info_rejected"]["rejected_on"],
         )
     elif entry["enrollment_state"] == PkiEnrollmentStatus.ACCEPTED.value:
         return PkiEnrollmentInfoAccepted(
-            enrollment_id=entry["enrollment_id"],
+            enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
             submitted_on=entry["submitted_on"],
             accepted_on=entry["info_accepted"]["accepted_on"],
             accepter_der_x509_certificate=entry["info_accepted"]["accepter_der_x509_certificate"],
@@ -254,7 +254,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def submit(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
         submitter_der_x509_certificate_email: str,
@@ -297,7 +297,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         await conn.execute(
                             *_q_cancel_pki_enrollment(
                                 organization_id=organization_id.str,
-                                enrollment_id=UUID(row["enrollment_id"]),
+                                enrollment_id=EnrollmentID.from_hex(row["enrollment_id"]),
                                 enrollment_state=PkiEnrollmentStatus.CANCELLED.value,
                                 cancelled_on=submitted_on,
                             )
@@ -383,7 +383,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
             )
 
-    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+    async def info(
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID
+    ) -> PkiEnrollmentInfo:
         """
         Raises:
             PkiEnrollmentNotFoundError
@@ -413,7 +415,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             )
             return [
                 PkiEnrollmentListItem(
-                    enrollment_id=UUID(entry["enrollment_id"]),
+                    enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
                     submitted_on=entry["submitted_on"],
                     submitter_der_x509_certificate=entry["submitter_der_x509_certificate"],
                     submit_payload_signature=entry["submit_payload_signature"],
@@ -423,7 +425,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             ]
 
     async def reject(
-        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID, rejected_on: DateTime
     ) -> None:
         """
         Raises:
@@ -461,7 +463,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def accept(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         accepter_der_x509_certificate: bytes,
         accept_payload_signature: bytes,
         accept_payload: bytes,

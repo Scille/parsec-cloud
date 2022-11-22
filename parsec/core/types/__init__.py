@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Union, NewType
 
+from parsec._parsec import LocalDevice, UserInfo, DeviceInfo
 from parsec.api.data import EntryID, EntryIDField, EntryName, EntryNameField
-
 from parsec.core.types.backend_address import (
     BackendAddr,
     BackendOrganizationAddr,
@@ -41,13 +41,10 @@ from parsec.core.types.organizations import (
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
 
-from parsec._parsec import LocalDevice, UserInfo, DeviceInfo
-
 FileDescriptor = NewType("FileDescriptor", int)
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
 RemoteFolderishManifests = Union[RemoteFolderManifest, RemoteWorkspaceManifest]
 LocalNonRootManifests = Union[LocalFileManifest, LocalFolderManifest]
-
 
 __all__ = (
     "FileDescriptor",

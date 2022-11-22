@@ -2,20 +2,19 @@
 
 # flake8: noqa
 
-from parsec._parsec import DateTime
-from uuid import uuid4
 from utils import *
+
+from parsec._parsec import DateTime
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
 
 ################### Pki submit ##################
 serializer = pki_enrollment_submit_serializer
-uuid = uuid4()
 serialized = serializer.req_dumps(
     {
         "cmd": "pki_enrollment_submit",
-        "enrollment_id": uuid4(),
+        "enrollment_id": EnrollmentID.new(),
         "force": False,
         "submit_payload": b"dummy",
         "submit_payload_signature": b"dummy",
@@ -31,11 +30,10 @@ display("pki enrollment submit rep", serialized, [])
 
 ################### Pki info ##################
 serializer = pki_enrollment_info_serializer
-uuid = uuid4()
 serialized = serializer.req_dumps(
     {
         "cmd": "pki_enrollment_info",
-        "enrollment_id": uuid4(),
+        "enrollment_id": EnrollmentID.new(),
     }
 )
 serializer.req_loads(serialized)

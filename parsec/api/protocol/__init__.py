@@ -122,6 +122,8 @@ from parsec.api.protocol.vlob import (
     vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.api.protocol.pki import (
+    EnrollmentID,
+    EnrollmentIDField,
     PkiEnrollmentStatus,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
@@ -266,6 +268,8 @@ __all__ = (
     "pki_enrollment_list_serializer",
     "pki_enrollment_reject_serializer",
     "pki_enrollment_accept_serializer",
+    "EnrollmentID",
+    "EnrollmentIDField",
     # Sequester
     "SequesterServiceID",
     "SequesterServiceIDField",

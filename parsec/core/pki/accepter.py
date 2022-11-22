@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 import attr
-from uuid import UUID
 from pathlib import Path
 from hashlib import sha1
-from parsec._parsec import DateTime
 from typing import Iterable, cast
 
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload
 from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
 from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
@@ -66,7 +65,7 @@ async def accepter_list_submitted_from_backend(
 
     for enrollment in cast(list[dict[str, object]], rep["enrollments"]):
 
-        enrollment_id = cast(UUID, enrollment["enrollment_id"])
+        enrollment_id = cast(EnrollmentID, enrollment["enrollment_id"])
         submitted_on: DateTime = cast(DateTime, enrollment["submitted_on"])
         submitter_der_x509_certificate: bytes = cast(
             bytes, enrollment["submitter_der_x509_certificate"]
@@ -138,7 +137,7 @@ async def accepter_list_submitted_from_backend(
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentAccepterValidSubmittedCtx:
     _cmds: BackendAuthenticatedCmds
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
     submit_payload_signature: bytes
@@ -287,7 +286,7 @@ class PkiEnrollmentAccepterInvalidSubmittedCtx:
     """
 
     _cmds: BackendAuthenticatedCmds
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
     submitter_x509_certificate: X509Certificate | None
@@ -313,7 +312,7 @@ class PkiEnrollmentAccepterInvalidSubmittedCtx:
         await _reject(self._cmds, self.enrollment_id)
 
 
-async def _reject(cmds: BackendAuthenticatedCmds, enrollment_id: UUID) -> None:
+async def _reject(cmds: BackendAuthenticatedCmds, enrollment_id: EnrollmentID) -> None:
     """
     Raises:
         BackendNotAvailable

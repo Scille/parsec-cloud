@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Dict, cast
 from enum import Enum
 
+from parsec._parsec import EnrollmentID
 from parsec.api.protocol.base import BaseRepSchema, BaseReqSchema, CmdSerializer
 from parsec.serde import BaseSchema, OneOfSchema, fields
 
@@ -15,11 +16,13 @@ class PkiEnrollmentStatus(Enum):
     CANCELLED = "CANCELLED"
 
 
+EnrollmentIDField = fields.uuid_based_field_factory(EnrollmentID)
+
 # pki_enrollment_submit
 
 
 class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
-    enrollment_id = fields.UUID(required=True)
+    enrollment_id = EnrollmentIDField(required=True)
     # Existing enrollment with SUMBITTED status prevent submitting new
     # enrollment with similir x509 certificate unless force flag is set.
     force = fields.Boolean(required=True)
@@ -54,7 +57,7 @@ pki_enrollment_submit_serializer = CmdSerializer(
 
 
 class PkiEnrollmentInfoReqSchema(BaseReqSchema):
-    enrollment_id = fields.UUID(required=True)
+    enrollment_id = EnrollmentIDField(required=True)
 
 
 class PkiEnrollmentInfoRepSubmittedSchema(BaseRepSchema):
@@ -107,7 +110,7 @@ pki_enrollment_info_serializer = CmdSerializer(
 
 
 class PkiEnrollmentListItemSchema(BaseSchema):
-    enrollment_id = fields.UUID(required=True)
+    enrollment_id = EnrollmentIDField(required=True)
     submitted_on = fields.DateTime(required=True)
     submitter_der_x509_certificate = fields.Bytes(required=True)
     submit_payload_signature = fields.Bytes(required=True)
@@ -131,7 +134,7 @@ pki_enrollment_list_serializer = CmdSerializer(
 
 
 class PkiEnrollmentRejectReqSchema(BaseReqSchema):
-    enrollment_id = fields.UUID(required=True)
+    enrollment_id = EnrollmentIDField(required=True)
 
 
 class PkiEnrollmentRejectRepSchema(BaseRepSchema):
@@ -147,7 +150,7 @@ pki_enrollment_reject_serializer = CmdSerializer(
 
 
 class PkiEnrollmentAcceptReqSchema(BaseReqSchema):
-    enrollment_id = fields.UUID(required=True)
+    enrollment_id = EnrollmentIDField(required=True)
 
     accepter_der_x509_certificate = fields.Bytes(required=True)
     accept_payload_signature = fields.Bytes(required=True)

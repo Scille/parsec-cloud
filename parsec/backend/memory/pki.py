@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 from typing import Any, Callable, Coroutine, Dict, List
-from uuid import UUID
 from collections import defaultdict
 import attr
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.memory.user import (
@@ -36,7 +35,7 @@ from parsec.backend.pki import (
 
 @attr.s(slots=True, auto_attribs=True)
 class PkiEnrollment:
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     info: PkiEnrollmentInfo
     submitter_der_x509_certificate: bytes
     submit_payload_signature: bytes
@@ -57,7 +56,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def submit(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
         submitter_der_x509_certificate_email: str,
@@ -136,7 +135,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
         )
 
-    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+    async def info(
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID
+    ) -> PkiEnrollmentInfo:
         for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
                 return enrollment.info
@@ -159,7 +160,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         return items
 
     async def reject(
-        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID, rejected_on: DateTime
     ) -> None:
         for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
@@ -184,7 +185,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def accept(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         accepter_der_x509_certificate: bytes,
         accept_payload_signature: bytes,
         accept_payload: bytes,
