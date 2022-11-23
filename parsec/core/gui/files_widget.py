@@ -895,7 +895,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     show_error(self, text, exception=errors[0])
                     raise JobResultError("error", exceptions=errors)
 
-            if cancel_scope.cancel_called:
+            if cancel_scope.cancelled_caught:
                 raise JobResultError("cancelled")
 
         # Propagate job result errors
