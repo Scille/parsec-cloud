@@ -5,6 +5,7 @@ import pytest
 import zlib
 from unicodedata import normalize
 
+from parsec._parsec import LocalDevice, EntryNameError
 from parsec.serde import packb
 from parsec.crypto import SecretKey
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
@@ -12,7 +13,6 @@ from parsec.api.data import (
     DataError,
     SASCode,
     EntryName,
-    EntryNameTooLongError,
     FileManifest as RemoteFileManifest,
     FolderManifest as RemoteFolderManifest,
     WorkspaceManifest as RemoteWorkspaceManifest,
@@ -24,7 +24,6 @@ from parsec.core.types import (
     LocalWorkspaceManifest,
     LocalUserManifest,
 )
-from parsec._parsec import LocalDevice
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -202,7 +201,7 @@ def test_valid_entry_name(data):
 
 @pytest.mark.parametrize("data", ("x" * 256, "飞" * 85 + "x"))
 def test_entry_name_too_long(data):
-    with pytest.raises(EntryNameTooLongError):
+    with pytest.raises(EntryNameError):
         EntryName(data)
 
 

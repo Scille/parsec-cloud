@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import attr
 from typing import Dict, Iterable, Tuple, Type, TypeVar
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, DataError
 from parsec.serde import (
     BaseSchema,
     fields,
@@ -15,10 +15,6 @@ from parsec.serde import (
 )
 from parsec.crypto import CryptoError, PrivateKey, PublicKey, SigningKey, VerifyKey, SecretKey
 from parsec.api.protocol import DeviceID, DeviceIDField
-
-
-class DataError(Exception):
-    pass
 
 
 class DataValidationError(SerdeValidationError, DataError):

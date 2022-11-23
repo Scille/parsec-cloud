@@ -16,7 +16,11 @@ pub(crate) use pki::*;
 
 use pyo3::{types::PyModule, wrap_pyfunction, PyResult, Python};
 
-pub(crate) fn add_mod(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    // Error
+    m.add("DataError", py.get_type::<DataError>())?;
+    m.add("EntryNameError", py.get_type::<EntryNameError>())?;
+
     // Certif
     m.add_class::<UserCertificate>()?;
     m.add_class::<RevokedUserCertificate>()?;

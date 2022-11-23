@@ -31,7 +31,6 @@ from parsec.api.data.entry import (
     EntryIDField,
     EntryName,
     EntryNameField,
-    EntryNameTooLongError,
 )
 
 from parsec.api.data.certif import (
@@ -71,7 +70,6 @@ __all__ = (
     "EntryIDField",
     "EntryName",
     "EntryNameField",
-    "EntryNameTooLongError",
     # Certifs
     "UserCertificate",
     "DeviceCertificate",

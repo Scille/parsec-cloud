@@ -4,11 +4,10 @@ from __future__ import annotations
 from itertools import count
 from typing import AsyncIterator, Dict, Iterable, Union
 
-from parsec._parsec import DateTime, Regex
-
+from parsec._parsec import DateTime, Regex, EntryNameError
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.api.data import EntryNameTooLongError, AnyRemoteManifest
+from parsec.api.data import AnyRemoteManifest
 from parsec.core.types import (
     Chunk,
     EntryID,
@@ -98,7 +97,7 @@ def full_name(name: EntryName, suffix: str) -> EntryName:
         try:
             return EntryName(".".join([f"{base_name} ({suffix})", *extensions]))
         # Entry name too long
-        except EntryNameTooLongError:
+        except EntryNameError:
             # Simply strip 10 characters from the first name then try again
             if len(base_name) > 10:
                 base_name = base_name[:-10]
