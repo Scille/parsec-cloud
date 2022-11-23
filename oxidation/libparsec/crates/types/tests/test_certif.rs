@@ -46,6 +46,8 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -60,6 +62,8 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -98,6 +102,8 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -112,6 +118,8 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -171,6 +179,8 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
             data,
             &alice.verify_key(),
             CertificateSignerRef::User(&alice.device_id),
+            None,
+            None,
         )
         .unwrap();
         assert_eq!(&certif, expected);
@@ -214,6 +224,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -228,6 +239,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -264,6 +276,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -278,6 +291,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -312,6 +326,7 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -345,16 +360,20 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     assert_eq!(unsecure_certif, expected);
 
     let certif =
-        RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id)
+        RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
             .unwrap();
     assert_eq!(certif, expected);
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
     // Note we cannot just compare with `data` due to signature and keys order
-    let certif2 =
-        RevokedUserCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id)
-            .unwrap();
+    let certif2 = RevokedUserCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
     assert_eq!(certif2, expected);
 }
 
@@ -379,6 +398,8 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
 
@@ -398,6 +419,8 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -424,6 +447,8 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
 
@@ -444,6 +469,8 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);

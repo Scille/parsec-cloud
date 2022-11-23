@@ -146,6 +146,31 @@ macro_rules! gen_proto {
     };
 }
 
+macro_rules! create_exception {
+    ($name: ident, $py_exc: ident, $rs_err: path) => {
+        ::paste::paste! {
+            ::pyo3::create_exception!(_parsec, [<$name Error>], $py_exc);
+
+            pub(crate) struct [<$name Exc>]($rs_err);
+
+            impl From<[<$name Exc>]> for ::pyo3::PyErr {
+                fn from(err: [<$name Exc>]) -> Self {
+                    <[<$name Error>]>::new_err(err.0.to_string())
+                }
+            }
+
+            impl From<$rs_err> for [<$name Exc>] {
+                fn from(err: $rs_err) -> Self {
+                    Self(err)
+                }
+            }
+
+            pub(crate) type [<$name Result>]<T> = Result<T, [<$name Exc>]>;
+        }
+    };
+}
+
+pub(crate) use create_exception;
 pub(crate) use gen_proto;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;

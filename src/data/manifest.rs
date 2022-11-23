@@ -1,6 +1,6 @@
 use pyo3::{
     exceptions::PyValueError,
-    import_exception, pyclass, pyfunction, pymethods,
+    pyclass, pyfunction, pymethods,
     types::{PyBytes, PyDict, PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
@@ -8,15 +8,12 @@ use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::{
     api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey},
+    data::{DataResult, EntryNameResult},
     enumerate::RealmRole,
     ids::{BlockID, DeviceID, EntryID},
     time::DateTime,
 };
 use libparsec::types::Manifest;
-
-import_exception!(parsec.api.data, EntryNameTooLongError);
-import_exception!(parsec.api.data, DataError);
-import_exception!(parsec.api.data, DataValidationError);
 
 #[pyclass]
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -29,16 +26,8 @@ crate::binding_utils::gen_proto!(EntryName, __hash__);
 #[pymethods]
 impl EntryName {
     #[new]
-    fn new(name: String) -> PyResult<Self> {
-        match name.parse::<libparsec::types::EntryName>() {
-            Ok(en) => Ok(Self(en)),
-            Err(err) => match err {
-                libparsec::types::EntryNameError::NameTooLong => {
-                    Err(EntryNameTooLongError::new_err("Invalid data"))
-                }
-                _ => Err(PyValueError::new_err("Invalid data")),
-            },
-        }
+    fn new(name: &str) -> EntryNameResult<Self> {
+        Ok(libparsec::types::EntryName::try_from(name).map(Self)?)
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -335,8 +324,8 @@ impl FileManifest {
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
-    ) -> PyResult<Self> {
-        libparsec::types::FileManifest::decrypt_verify_and_load(
+    ) -> DataResult<Self> {
+        Ok(libparsec::types::FileManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -345,8 +334,7 @@ impl FileManifest {
             expected_id.map(|id| id.0),
             expected_version,
         )
-        .map(Self)
-        .map_err(|e| DataError::new_err(e.to_string()))
+        .map(Self)?)
     }
 
     #[args(py_kwargs = "**")]
@@ -529,8 +517,8 @@ impl FolderManifest {
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
-    ) -> PyResult<Self> {
-        libparsec::types::FolderManifest::decrypt_verify_and_load(
+    ) -> DataResult<Self> {
+        Ok(libparsec::types::FolderManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -539,8 +527,7 @@ impl FolderManifest {
             expected_id.map(|id| id.0),
             expected_version,
         )
-        .map(Self)
-        .map_err(|e| DataError::new_err(e.to_string()))
+        .map(Self)?)
     }
 
     #[args(py_kwargs = "**")]
@@ -703,18 +690,19 @@ impl WorkspaceManifest {
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
-    ) -> PyResult<Self> {
-        libparsec::types::WorkspaceManifest::decrypt_verify_and_load(
-            encrypted,
-            &key.0,
-            &author_verify_key.0,
-            &expected_author.0,
-            expected_timestamp.0,
-            expected_id.map(|id| id.0),
-            expected_version,
+    ) -> DataResult<Self> {
+        Ok(
+            libparsec::types::WorkspaceManifest::decrypt_verify_and_load(
+                encrypted,
+                &key.0,
+                &author_verify_key.0,
+                &expected_author.0,
+                expected_timestamp.0,
+                expected_id.map(|id| id.0),
+                expected_version,
+            )
+            .map(Self)?,
         )
-        .map(Self)
-        .map_err(|e| DataError::new_err(e.to_string()))
     }
 
     #[args(py_kwargs = "**")]
@@ -867,8 +855,8 @@ impl UserManifest {
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
-    ) -> PyResult<Self> {
-        libparsec::types::UserManifest::decrypt_verify_and_load(
+    ) -> DataResult<Self> {
+        Ok(libparsec::types::UserManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -877,8 +865,7 @@ impl UserManifest {
             expected_id.map(|id| id.0),
             expected_version,
         )
-        .map(Self)
-        .map_err(|e| DataError::new_err(e.to_string()))
+        .map(Self)?)
     }
 
     #[args(py_kwargs = "**")]
@@ -986,13 +973,8 @@ pub(crate) fn manifest_decrypt_and_load<'py>(
     py: Python<'py>,
     encrypted: &[u8],
     key: &SecretKey,
-) -> PyResult<PyObject> {
-    let decrypt_and_load = match Manifest::decrypt_and_load(encrypted, &key.0) {
-        Ok(value) => value,
-        Err(err) => return Err(DataError::new_err(err)),
-    };
-
-    unwrap_manifest(py, decrypt_and_load)
+) -> DataResult<PyObject> {
+    Ok(Manifest::decrypt_and_load(encrypted, &key.0).map(|blob| unwrap_manifest(py, blob))?)
 }
 
 #[pyfunction]
@@ -1006,8 +988,8 @@ pub(crate) fn manifest_decrypt_verify_and_load<'py>(
     expected_timestamp: DateTime,
     expected_id: Option<EntryID>,
     expected_version: Option<u32>,
-) -> PyResult<PyObject> {
-    let blob = match Manifest::decrypt_verify_and_load(
+) -> DataResult<PyObject> {
+    Ok(Manifest::decrypt_verify_and_load(
         encrypted,
         &key.0,
         &author_verify_key.0,
@@ -1015,12 +997,8 @@ pub(crate) fn manifest_decrypt_verify_and_load<'py>(
         expected_timestamp.0,
         expected_id.map(|id| id.0),
         expected_version,
-    ) {
-        Ok(value) => value,
-        Err(err) => return Err(DataError::new_err(err.to_string())),
-    };
-
-    unwrap_manifest(py, blob)
+    )
+    .map(|blob| unwrap_manifest(py, blob))?)
 }
 
 #[pyfunction]
@@ -1032,37 +1010,28 @@ pub(crate) fn manifest_verify_and_load<'py>(
     expected_timestamp: DateTime,
     expected_id: Option<EntryID>,
     expected_version: Option<u32>,
-) -> PyResult<PyObject> {
-    let blob = match Manifest::verify_and_load(
+) -> DataResult<PyObject> {
+    Ok(Manifest::verify_and_load(
         signed,
         &author_verify_key.0,
         &expected_author.0,
         expected_timestamp.0,
         expected_id.map(|id| id.0),
         expected_version,
-    ) {
-        Ok(value) => value,
-        Err(err) => return Err(DataError::new_err(err.to_string())),
-    };
-
-    unwrap_manifest(py, blob)
+    )
+    .map(|blob| unwrap_manifest(py, blob))?)
 }
 
 #[pyfunction]
-pub(crate) fn manifest_unverified_load(py: Python, data: &[u8]) -> PyResult<PyObject> {
-    let blob = match Manifest::unverified_load(data) {
-        Ok(value) => value,
-        Err(err) => return Err(DataError::new_err(err.to_string())),
-    };
-
-    unwrap_manifest(py, blob)
+pub(crate) fn manifest_unverified_load(py: Python, data: &[u8]) -> DataResult<PyObject> {
+    Ok(Manifest::unverified_load(data).map(|blob| unwrap_manifest(py, blob))?)
 }
 
-fn unwrap_manifest(py: Python, manifest: Manifest) -> PyResult<PyObject> {
+fn unwrap_manifest(py: Python, manifest: Manifest) -> PyObject {
     match manifest {
-        Manifest::File(file) => Ok(FileManifest(file).into_py(py)),
-        Manifest::Folder(folder) => Ok(FolderManifest(folder).into_py(py)),
-        Manifest::Workspace(workspace) => Ok(WorkspaceManifest(workspace).into_py(py)),
-        Manifest::User(user) => Ok(UserManifest(user).into_py(py)),
+        Manifest::File(file) => FileManifest(file).into_py(py),
+        Manifest::Folder(folder) => FolderManifest(folder).into_py(py),
+        Manifest::Workspace(workspace) => WorkspaceManifest(workspace).into_py(py),
+        Manifest::User(user) => UserManifest(user).into_py(py),
     }
 }

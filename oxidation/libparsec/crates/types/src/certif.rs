@@ -16,81 +16,53 @@ use crate::{
     DateTime, DeviceID, DeviceLabel, HumanHandle, RealmID, RealmRole, UserID, UserProfile,
 };
 
-macro_rules! impl_verify_and_load_allow_root {
-    ($name:ident) => {
-        impl $name {
-            pub fn verify_and_load<'a>(
-                signed: &[u8],
-                author_verify_key: &VerifyKey,
-                expected_author: CertificateSignerRef<'a>,
-            ) -> DataResult<$name> {
-                let compressed = author_verify_key.verify(signed)?;
-                let mut serialized = vec![];
-                ZlibDecoder::new(&compressed[..])
-                    .read_to_end(&mut serialized)
-                    .map_err(|_| DataError::Compression)?;
-                let obj: $name =
-                    ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)?;
-                match (&obj.author, expected_author) {
-                    (CertificateSignerOwned::User(ref a_id), CertificateSignerRef::User(ea_id)) => {
-                        if a_id == ea_id {
-                            Ok(obj)
-                        } else {
-                            Err(DataError::UnexpectedAuthor {
-                                expected: ea_id.clone(),
-                                got: Some(a_id.clone()),
-                            })
-                        }
-                    }
-                    (_, CertificateSignerRef::Root) => Ok(obj),
-                    (_, CertificateSignerRef::User(ea_id)) => Err(DataError::UnexpectedAuthor {
-                        expected: ea_id.clone(),
-                        got: None,
-                    }),
-                }
-            }
-        }
-    };
+fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
+where
+    T: for<'a> Deserialize<'a>,
+{
+    let compressed = author_verify_key.verify(signed)?;
+    let mut serialized = vec![];
+    ZlibDecoder::new(&compressed[..])
+        .read_to_end(&mut serialized)
+        .map_err(|_| DataError::Compression)?;
+    rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
 }
 
-macro_rules! impl_verify_and_load_no_root {
-    ($name:ident) => {
-        impl $name {
-            pub fn verify_and_load(
-                signed: &[u8],
-                author_verify_key: &VerifyKey,
-                expected_author: &DeviceID,
-            ) -> DataResult<$name> {
-                let compressed = author_verify_key.verify(signed)?;
-                let mut serialized = vec![];
-                ZlibDecoder::new(&compressed[..])
-                    .read_to_end(&mut serialized)
-                    .map_err(|_| DataError::Compression)?;
-                let obj: $name =
-                    ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)?;
-                if &obj.author != expected_author {
-                    Err(DataError::UnexpectedAuthor {
-                        expected: expected_author.clone(),
-                        got: Some(obj.author.clone()),
-                    })
-                } else {
-                    Ok(obj)
-                }
-            }
+fn check_author_allow_root(
+    author: &CertificateSignerOwned,
+    expected_author: CertificateSignerRef,
+) -> DataResult<()> {
+    match (author, expected_author) {
+        (CertificateSignerOwned::User(a_id), CertificateSignerRef::User(ea_id))
+            if a_id != ea_id =>
+        {
+            return Err(DataError::UnexpectedAuthor {
+                expected: ea_id.clone(),
+                got: Some(a_id.clone()),
+            })
         }
-    };
+        (CertificateSignerOwned::Root, CertificateSignerRef::User(ea_id)) => {
+            return Err(DataError::UnexpectedAuthor {
+                expected: ea_id.clone(),
+                got: None,
+            })
+        }
+        _ => (),
+    }
+
+    Ok(())
 }
 
 macro_rules! impl_unsecure_load {
     ($name:ident) => {
         impl $name {
-            pub fn unsecure_load(signed: &[u8]) -> Result<$name, &'static str> {
-                let compressed = VerifyKey::unsecure_unwrap(signed).ok_or("Invalid signature")?;
+            pub fn unsecure_load(signed: &[u8]) -> Result<$name, DataError> {
+                let compressed = VerifyKey::unsecure_unwrap(signed).ok_or(DataError::Signature)?;
                 let mut serialized = vec![];
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
-                ::rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")
+                    .map_err(|_| DataError::Compression)?;
+                ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
             }
         }
     };
@@ -184,9 +156,38 @@ pub struct UserCertificate {
     pub profile: UserProfile,
 }
 
-impl_verify_and_load_allow_root!(UserCertificate);
 impl_unsecure_load!(UserCertificate);
 impl_dump_and_sign!(UserCertificate);
+
+impl UserCertificate {
+    pub fn verify_and_load<'a>(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: CertificateSignerRef<'a>,
+        expected_user_id: Option<&UserID>,
+        expected_human_handle: Option<&HumanHandle>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        check_author_allow_root(&r.author, expected_author)?;
+
+        if let Some(expected_user_id) = expected_user_id {
+            if &r.user_id != expected_user_id {
+                return Err(DataError::UnexpectedUserID {
+                    expected: expected_user_id.clone(),
+                    got: r.user_id,
+                });
+            }
+        }
+
+        if let Some(expected_human_handle) = expected_human_handle {
+            if r.human_handle.as_ref() != Some(expected_human_handle) {
+                return Err(DataError::InvalidHumanHandle);
+            }
+        }
+
+        Ok(r)
+    }
+}
 
 parsec_data!("schema/certif/user_certificate.json");
 
@@ -238,9 +239,37 @@ pub struct RevokedUserCertificate {
     pub user_id: UserID,
 }
 
-impl_verify_and_load_no_root!(RevokedUserCertificate);
 impl_unsecure_load!(RevokedUserCertificate);
 impl_dump_and_sign!(RevokedUserCertificate);
+
+impl RevokedUserCertificate {
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_user_id: Option<&UserID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        if &r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: expected_author.clone(),
+                got: Some(r.author),
+            });
+        }
+
+        if let Some(expected_user_id) = expected_user_id {
+            if &r.user_id != expected_user_id {
+                return Err(DataError::UnexpectedUserID {
+                    expected: expected_user_id.clone(),
+                    got: r.user_id,
+                });
+            }
+        }
+
+        Ok(r)
+    }
+}
 
 parsec_data!("schema/certif/revoked_user_certificate.json");
 
@@ -270,9 +299,31 @@ pub struct DeviceCertificate {
 
 parsec_data!("schema/certif/device_certificate.json");
 
-impl_verify_and_load_allow_root!(DeviceCertificate);
 impl_unsecure_load!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
+
+impl DeviceCertificate {
+    pub fn verify_and_load<'a>(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: CertificateSignerRef<'a>,
+        expected_device_id: Option<&DeviceID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        check_author_allow_root(&r.author, expected_author)?;
+
+        if let Some(expected_device_id) = expected_device_id {
+            if &r.device_id != expected_device_id {
+                return Err(DataError::UnexpectedDeviceID {
+                    expected: expected_device_id.clone(),
+                    got: r.device_id,
+                });
+            }
+        }
+
+        Ok(r)
+    }
+}
 
 impl_transparent_data_format_conversion!(
     DeviceCertificate,
@@ -300,9 +351,41 @@ pub struct RealmRoleCertificate {
     pub role: Option<RealmRole>, // TODO: use a custom type instead
 }
 
-impl_verify_and_load_allow_root!(RealmRoleCertificate);
 impl_unsecure_load!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
+
+impl RealmRoleCertificate {
+    pub fn verify_and_load<'a>(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: CertificateSignerRef<'a>,
+        expected_realm_id: Option<RealmID>,
+        expected_user_id: Option<&UserID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        check_author_allow_root(&r.author, expected_author)?;
+
+        if let Some(expected_realm_id) = expected_realm_id {
+            if r.realm_id != expected_realm_id {
+                return Err(DataError::UnexpectedRealmID {
+                    expected: expected_realm_id,
+                    got: r.realm_id,
+                });
+            }
+        }
+
+        if let Some(expected_user_id) = expected_user_id {
+            if &r.user_id != expected_user_id {
+                return Err(DataError::UnexpectedUserID {
+                    expected: expected_user_id.clone(),
+                    got: r.user_id,
+                });
+            }
+        }
+
+        Ok(r)
+    }
+}
 
 parsec_data!("schema/certif/realm_role_certificate.json");
 

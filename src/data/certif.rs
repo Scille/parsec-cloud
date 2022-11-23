@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    import_exception,
     prelude::*,
     types::{PyBytes, PyDict, PyType},
 };
@@ -10,12 +9,11 @@ use libparsec::types::{CertificateSignerOwned, CertificateSignerRef};
 
 use crate::{
     api_crypto::{PublicKey, SigningKey, VerifyKey},
+    data::DataResult,
     enumerate::{RealmRole, UserProfile},
     ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, UserID},
     time::DateTime,
 };
-
-import_exception!(parsec.api.data, DataError);
 
 #[pyclass]
 pub(crate) struct UserCertificate(pub libparsec::types::UserCertificate);
@@ -98,87 +96,65 @@ impl UserCertificate {
         expected_author: Option<&DeviceID>,
         expected_user: Option<&UserID>,
         expected_human_handle: Option<&HumanHandle>,
-    ) -> PyResult<Self> {
-        let r = Self(
-            libparsec::types::UserCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                match expected_author {
-                    Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                    None => CertificateSignerRef::Root,
-                },
-            )
-            .map_err(|err| DataError::new_err(err.to_string()))?,
-        );
-
-        if let Some(expected_user_id) = expected_user {
-            if r.0.user_id != expected_user_id.0 {
-                return Err(DataError::new_err(format!(
-                    "Invalid user ID: expected `{}`, got `{}`",
-                    expected_user_id.0, r.0.user_id
-                )));
-            }
-        }
-        if let Some(expected_human_handle) = expected_human_handle {
-            if r.0.human_handle.as_ref() != Some(&expected_human_handle.0) {
-                return Err(DataError::new_err("Invalid HumanHandle"));
-            }
-        }
-
-        Ok(r)
+    ) -> DataResult<Self> {
+        Ok(libparsec::types::UserCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            match expected_author {
+                Some(device_id) => CertificateSignerRef::User(&device_id.0),
+                None => CertificateSignerRef::Root,
+            },
+            expected_user.map(|x| &x.0),
+            expected_human_handle.map(|x| &x.0),
+        )
+        .map(Self)?)
     }
 
-    fn dump_and_sign<'py>(
-        &self,
-        author_signkey: &SigningKey,
-        py: Python<'py>,
-    ) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::types::UserCertificate::unsecure_load(signed).map_err(DataError::new_err)?,
-        ))
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::UserCertificate::unsecure_load(signed).map(Self)?)
     }
 
     #[getter]
-    fn is_admin(&self) -> PyResult<bool> {
-        Ok(self.0.profile == libparsec::types::UserProfile::Admin)
+    fn is_admin(&self) -> bool {
+        self.0.profile == libparsec::types::UserProfile::Admin
     }
 
     #[getter]
-    fn author(&self) -> PyResult<Option<DeviceID>> {
-        Ok(match &self.0.author {
+    fn author(&self) -> Option<DeviceID> {
+        match &self.0.author {
             CertificateSignerOwned::Root => None,
             CertificateSignerOwned::User(device_id) => Some(DeviceID(device_id.clone())),
-        })
+        }
     }
 
     #[getter]
-    fn timestamp(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.timestamp))
+    fn timestamp(&self) -> DateTime {
+        DateTime(self.0.timestamp)
     }
 
     #[getter]
-    fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID(self.0.user_id.clone()))
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id.clone())
     }
 
     #[getter]
-    fn human_handle(&self) -> PyResult<Option<HumanHandle>> {
-        Ok(self.0.human_handle.clone().map(HumanHandle))
+    fn human_handle(&self) -> Option<HumanHandle> {
+        self.0.human_handle.clone().map(HumanHandle)
     }
 
     #[getter]
-    fn public_key(&self) -> PyResult<PublicKey> {
-        Ok(PublicKey(self.0.public_key.clone()))
+    fn public_key(&self) -> PublicKey {
+        PublicKey(self.0.public_key.clone())
     }
 
     #[getter]
-    fn profile(&self) -> PyResult<&'static PyObject> {
-        Ok(UserProfile::from_profile(self.0.profile))
+    fn profile(&self) -> &'static PyObject {
+        UserProfile::from_profile(self.0.profile)
     }
 }
 
@@ -256,73 +232,54 @@ impl DeviceCertificate {
         author_verify_key: &VerifyKey,
         expected_author: Option<&DeviceID>,
         expected_device: Option<&DeviceID>,
-    ) -> PyResult<Self> {
-        let r = Self(
-            libparsec::types::DeviceCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                match &expected_author {
-                    Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                    None => CertificateSignerRef::Root,
-                },
-            )
-            .map_err(|err| DataError::new_err(err.to_string()))?,
-        );
-
-        if let Some(expected_device_id) = expected_device {
-            if r.0.device_id != expected_device_id.0 {
-                return Err(DataError::new_err(format!(
-                    "Invalid device ID: expected `{}`, got `{}`",
-                    expected_device_id.0, r.0.device_id
-                )));
-            }
-        }
-
-        Ok(r)
+    ) -> DataResult<Self> {
+        Ok(libparsec::types::DeviceCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            match &expected_author {
+                Some(device_id) => CertificateSignerRef::User(&device_id.0),
+                None => CertificateSignerRef::Root,
+            },
+            expected_device.map(|x| &x.0),
+        )
+        .map(Self)?)
     }
 
-    fn dump_and_sign<'py>(
-        &self,
-        author_signkey: &SigningKey,
-        py: Python<'py>,
-    ) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::types::DeviceCertificate::unsecure_load(signed)
-                .map_err(DataError::new_err)?,
-        ))
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::DeviceCertificate::unsecure_load(signed).map(Self)?)
     }
 
     #[getter]
-    fn author(&self) -> PyResult<Option<DeviceID>> {
-        Ok(match &self.0.author {
+    fn author(&self) -> Option<DeviceID> {
+        match &self.0.author {
             CertificateSignerOwned::Root => None,
             CertificateSignerOwned::User(device_id) => Some(DeviceID(device_id.clone())),
-        })
+        }
     }
 
     #[getter]
-    fn timestamp(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.timestamp))
+    fn timestamp(&self) -> DateTime {
+        DateTime(self.0.timestamp)
     }
 
     #[getter]
-    fn device_id(&self) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.device_id.clone()))
+    fn device_id(&self) -> DeviceID {
+        DeviceID(self.0.device_id.clone())
     }
 
     #[getter]
-    fn device_label(&self) -> PyResult<Option<DeviceLabel>> {
-        Ok(self.0.device_label.clone().map(DeviceLabel))
+    fn device_label(&self) -> Option<DeviceLabel> {
+        self.0.device_label.clone().map(DeviceLabel)
     }
 
     #[getter]
-    fn verify_key(&self) -> PyResult<VerifyKey> {
-        Ok(VerifyKey(self.0.verify_key.clone()))
+    fn verify_key(&self) -> VerifyKey {
+        VerifyKey(self.0.verify_key.clone())
     }
 }
 
@@ -382,57 +339,38 @@ impl RevokedUserCertificate {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_user: Option<&UserID>,
-    ) -> PyResult<Self> {
-        let r = Self(
-            libparsec::types::RevokedUserCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                &expected_author.0,
-            )
-            .map_err(|err| DataError::new_err(err.to_string()))?,
-        );
-
-        if let Some(expected_user_id) = expected_user {
-            if r.0.user_id != expected_user_id.0 {
-                return Err(DataError::new_err(format!(
-                    "Invalid user ID: expected `{}`, got `{}`",
-                    expected_user_id.0, r.0.user_id
-                )));
-            }
-        }
-
-        Ok(r)
+    ) -> DataResult<Self> {
+        Ok(libparsec::types::RevokedUserCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_user.map(|x| &x.0),
+        )
+        .map(Self)?)
     }
 
-    fn dump_and_sign<'py>(
-        &self,
-        author_signkey: &SigningKey,
-        py: Python<'py>,
-    ) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::types::RevokedUserCertificate::unsecure_load(signed)
-                .map_err(DataError::new_err)?,
-        ))
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::RevokedUserCertificate::unsecure_load(signed).map(Self)?)
     }
 
     #[getter]
-    fn author(&self) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.author.clone()))
+    fn author(&self) -> DeviceID {
+        DeviceID(self.0.author.clone())
     }
 
     #[getter]
-    fn timestamp(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.timestamp))
+    fn timestamp(&self) -> DateTime {
+        DateTime(self.0.timestamp)
     }
 
     #[getter]
-    fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID(self.0.user_id.clone()))
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id.clone())
     }
 }
 
@@ -508,57 +446,30 @@ impl RealmRoleCertificate {
         _cls: &PyType,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: Option<DeviceID>,
+        expected_author: Option<&DeviceID>,
         expected_realm: Option<RealmID>,
-        expected_user: Option<UserID>,
-    ) -> PyResult<Self> {
-        let r = Self(
-            libparsec::types::RealmRoleCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                match &expected_author {
-                    Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                    None => CertificateSignerRef::Root,
-                },
-            )
-            .map_err(|err| DataError::new_err(err.to_string()))?,
-        );
-
-        if let Some(expected_realm_id) = expected_realm {
-            if r.0.realm_id != expected_realm_id.0 {
-                return Err(DataError::new_err(format!(
-                    "Invalid realm ID: expected `{}`, got `{}`",
-                    expected_realm_id.0, r.0.realm_id
-                )));
-            }
-        }
-
-        if let Some(expected_user_id) = expected_user {
-            if r.0.user_id != expected_user_id.0 {
-                return Err(DataError::new_err(format!(
-                    "Invalid user ID: expected `{}`, got `{}`",
-                    expected_user_id.0, r.0.user_id
-                )));
-            }
-        }
-
-        Ok(r)
+        expected_user: Option<&UserID>,
+    ) -> DataResult<Self> {
+        Ok(libparsec::types::RealmRoleCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            match &expected_author {
+                Some(device_id) => CertificateSignerRef::User(&device_id.0),
+                None => CertificateSignerRef::Root,
+            },
+            expected_realm.map(|x| x.0),
+            expected_user.map(|x| &x.0),
+        )
+        .map(Self)?)
     }
 
-    fn dump_and_sign<'py>(
-        &self,
-        author_signkey: &SigningKey,
-        py: Python<'py>,
-    ) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::types::RealmRoleCertificate::unsecure_load(signed)
-                .map_err(DataError::new_err)?,
-        ))
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::RealmRoleCertificate::unsecure_load(signed).map(Self)?)
     }
 
     #[classmethod]
