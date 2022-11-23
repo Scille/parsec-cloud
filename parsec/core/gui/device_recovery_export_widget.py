@@ -69,7 +69,7 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
 
     def _print_recovery_key(self) -> None:
         html = translate("TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password").format(
-            organization=self.device.organization_id,
+            organization=self.device.organization_id.str,
             label=self.device.user_display,
             password=self.passphrase,
             keyname=PurePath(self.label_file_path.text()).name,
