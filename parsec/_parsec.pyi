@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from parsec._parsec_pyi import (
+    DataError,
+    EntryNameError,
+)
+
 from parsec._parsec_pyi.certif import (
     UserCertificate,
     DeviceCertificate,
@@ -474,6 +479,9 @@ from parsec._parsec_pyi.protocol import (
 from parsec._parsec_pyi.regex import Regex
 
 __all__ = [
+    # Data Error
+    "DataError",
+    "EntryNameError",
     # Certif
     "UserCertificate",
     "DeviceCertificate",
