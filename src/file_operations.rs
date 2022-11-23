@@ -7,8 +7,8 @@ use pyo3::types::{PyList, PySet, PyTuple};
 
 use libparsec::core_fs::file_operations;
 
+use crate::data::{Chunk, LocalFileManifest};
 use crate::ids::ChunkID;
-use crate::local_manifest::{Chunk, LocalFileManifest};
 use crate::time::DateTime;
 
 // Conversion helpers

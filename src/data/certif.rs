@@ -27,7 +27,7 @@ crate::binding_utils::gen_proto!(UserCertificate, __richcmp__, eq);
 impl UserCertificate {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],
@@ -192,7 +192,7 @@ crate::binding_utils::gen_proto!(DeviceCertificate, __richcmp__, eq);
 impl DeviceCertificate {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],
@@ -336,7 +336,7 @@ crate::binding_utils::gen_proto!(RevokedUserCertificate, __richcmp__, eq);
 impl RevokedUserCertificate {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],
@@ -446,7 +446,7 @@ crate::binding_utils::gen_proto!(RealmRoleCertificate, __richcmp__, eq);
 impl RealmRoleCertificate {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],

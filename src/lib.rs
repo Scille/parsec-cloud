@@ -3,122 +3,69 @@ use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 mod addrs;
 mod api_crypto;
 mod binding_utils;
-mod certif;
 mod data;
 mod enumerate;
 mod file_operations;
 mod ids;
-mod invite;
 mod local_device;
-mod local_manifest;
-mod manifest;
-mod message;
 mod protocol;
 mod regex;
 mod runtime;
 mod time;
 mod trustchain;
 
-/// A Python module implemented in Rust.
-#[pymodule]
-#[pyo3(name = "_parsec")]
-fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<addrs::BackendAddr>()?;
-    m.add_class::<addrs::BackendOrganizationAddr>()?;
-    m.add_class::<addrs::BackendActionAddr>()?;
-    m.add_class::<addrs::BackendOrganizationBootstrapAddr>()?;
-    m.add_class::<addrs::BackendOrganizationFileLinkAddr>()?;
-    m.add_class::<addrs::BackendInvitationAddr>()?;
-    m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
-    m.add_function(wrap_pyfunction!(addrs::export_root_verify_key, m)?)?;
+fn add_data_module(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    // Certif
+    m.add_class::<data::UserCertificate>()?;
+    m.add_class::<data::RevokedUserCertificate>()?;
+    m.add_class::<data::DeviceCertificate>()?;
+    m.add_class::<data::RealmRoleCertificate>()?;
 
-    m.add_class::<api_crypto::HashDigest>()?;
-    m.add_class::<api_crypto::SigningKey>()?;
-    m.add_class::<api_crypto::VerifyKey>()?;
-    m.add_class::<api_crypto::SecretKey>()?;
-    m.add_class::<api_crypto::PrivateKey>()?;
-    m.add_class::<api_crypto::PublicKey>()?;
-    m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
+    // Invite
+    m.add_class::<data::SASCode>()?;
+    m.add_function(wrap_pyfunction!(data::generate_sas_codes, m)?)?;
+    m.add_function(wrap_pyfunction!(data::generate_sas_code_candidates, m)?)?;
+    m.add_class::<data::InviteUserData>()?;
+    m.add_class::<data::InviteUserConfirmation>()?;
+    m.add_class::<data::InviteDeviceData>()?;
+    m.add_class::<data::InviteDeviceConfirmation>()?;
 
-    m.add_class::<certif::UserCertificate>()?;
-    m.add_class::<certif::RevokedUserCertificate>()?;
-    m.add_class::<certif::DeviceCertificate>()?;
-    m.add_class::<certif::RealmRoleCertificate>()?;
+    // Local Manifest
+    m.add_class::<data::Chunk>()?;
+    m.add_class::<data::LocalFileManifest>()?;
+    m.add_class::<data::LocalFolderManifest>()?;
+    m.add_class::<data::LocalWorkspaceManifest>()?;
+    m.add_class::<data::LocalUserManifest>()?;
+    m.add_function(wrap_pyfunction!(data::local_manifest_decrypt_and_load, m)?)?;
 
+    // Manifest
+    m.add_class::<data::EntryName>()?;
+    m.add_class::<data::WorkspaceEntry>()?;
+    m.add_class::<data::BlockAccess>()?;
+    m.add_class::<data::FolderManifest>()?;
+    m.add_class::<data::FileManifest>()?;
+    m.add_class::<data::WorkspaceManifest>()?;
+    m.add_class::<data::UserManifest>()?;
+    m.add_function(wrap_pyfunction!(data::manifest_decrypt_and_load, m)?)?;
+    m.add_function(wrap_pyfunction!(data::manifest_decrypt_verify_and_load, m)?)?;
+    m.add_function(wrap_pyfunction!(data::manifest_verify_and_load, m)?)?;
+    m.add_function(wrap_pyfunction!(data::manifest_unverified_load, m)?)?;
+
+    // Message
+    m.add_class::<data::MessageContent>()?;
+    m.add_class::<data::SharingGrantedMessageContent>()?;
+    m.add_class::<data::SharingReencryptedMessageContent>()?;
+    m.add_class::<data::SharingRevokedMessageContent>()?;
+    m.add_class::<data::PingMessageContent>()?;
+
+    // Pki
     m.add_class::<data::PkiEnrollmentAnswerPayload>()?;
     m.add_class::<data::PkiEnrollmentSubmitPayload>()?;
 
-    m.add_class::<enumerate::ClientType>()?;
-    m.add_class::<enumerate::InvitationEmailSentStatus>()?;
-    m.add_class::<enumerate::InvitationDeletedReason>()?;
-    m.add_class::<enumerate::InvitationStatus>()?;
-    m.add_class::<enumerate::InvitationType>()?;
-    m.add_class::<enumerate::RealmRole>()?;
-    m.add_class::<enumerate::UserProfile>()?;
+    Ok(())
+}
 
-    m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
-
-    m.add_class::<ids::OrganizationID>()?;
-    m.add_class::<ids::EntryID>()?;
-    m.add_class::<ids::BlockID>()?;
-    m.add_class::<ids::RealmID>()?;
-    m.add_class::<ids::VlobID>()?;
-    m.add_class::<ids::ChunkID>()?;
-    m.add_class::<ids::SequesterServiceID>()?;
-    m.add_class::<ids::EnrollmentID>()?;
-    m.add_class::<ids::HumanHandle>()?;
-    m.add_class::<ids::DeviceID>()?;
-    m.add_class::<ids::DeviceName>()?;
-    m.add_class::<ids::DeviceLabel>()?;
-    m.add_class::<ids::UserID>()?;
-    m.add_class::<ids::InvitationToken>()?;
-
-    m.add_class::<invite::SASCode>()?;
-    m.add_function(wrap_pyfunction!(invite::generate_sas_codes, m)?)?;
-    m.add_function(wrap_pyfunction!(invite::generate_sas_code_candidates, m)?)?;
-    m.add_class::<invite::InviteUserData>()?;
-    m.add_class::<invite::InviteUserConfirmation>()?;
-    m.add_class::<invite::InviteDeviceData>()?;
-    m.add_class::<invite::InviteDeviceConfirmation>()?;
-
-    m.add_class::<local_device::LocalDevice>()?;
-    m.add_class::<local_device::UserInfo>()?;
-    m.add_class::<local_device::DeviceInfo>()?;
-
-    m.add_class::<local_manifest::Chunk>()?;
-    m.add_class::<local_manifest::LocalFileManifest>()?;
-    m.add_class::<local_manifest::LocalFolderManifest>()?;
-    m.add_class::<local_manifest::LocalWorkspaceManifest>()?;
-    m.add_class::<local_manifest::LocalUserManifest>()?;
-    m.add_function(wrap_pyfunction!(
-        local_manifest::local_manifest_decrypt_and_load,
-        m
-    )?)?;
-
-    m.add_class::<manifest::EntryName>()?;
-    m.add_class::<manifest::WorkspaceEntry>()?;
-    m.add_class::<manifest::BlockAccess>()?;
-    m.add_class::<manifest::FolderManifest>()?;
-    m.add_class::<manifest::FileManifest>()?;
-    m.add_class::<manifest::WorkspaceManifest>()?;
-    m.add_class::<manifest::UserManifest>()?;
-    m.add_function(wrap_pyfunction!(manifest::manifest_decrypt_and_load, m)?)?;
-    m.add_function(wrap_pyfunction!(
-        manifest::manifest_decrypt_verify_and_load,
-        m
-    )?)?;
-    m.add_function(wrap_pyfunction!(manifest::manifest_verify_and_load, m)?)?;
-    m.add_function(wrap_pyfunction!(manifest::manifest_unverified_load, m)?)?;
-
-    m.add_class::<message::MessageContent>()?;
-    m.add_class::<message::SharingGrantedMessageContent>()?;
-    m.add_class::<message::SharingReencryptedMessageContent>()?;
-    m.add_class::<message::SharingRevokedMessageContent>()?;
-    m.add_class::<message::PingMessageContent>()?;
-
+fn add_protocol_module(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Block
     m.add_class::<protocol::BlockCreateReq>()?;
     m.add_class::<protocol::BlockCreateRep>()?;
@@ -487,6 +434,65 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     // Cmd
     m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
     m.add_class::<protocol::InvitedAnyCmdReq>()?;
+
+    Ok(())
+}
+
+/// A Python module implemented in Rust.
+#[pymodule]
+#[pyo3(name = "_parsec")]
+fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
+    add_data_module(py, m)?;
+    add_protocol_module(py, m)?;
+
+    m.add_class::<addrs::BackendAddr>()?;
+    m.add_class::<addrs::BackendOrganizationAddr>()?;
+    m.add_class::<addrs::BackendActionAddr>()?;
+    m.add_class::<addrs::BackendOrganizationBootstrapAddr>()?;
+    m.add_class::<addrs::BackendOrganizationFileLinkAddr>()?;
+    m.add_class::<addrs::BackendInvitationAddr>()?;
+    m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
+    m.add_function(wrap_pyfunction!(addrs::export_root_verify_key, m)?)?;
+
+    m.add_class::<api_crypto::HashDigest>()?;
+    m.add_class::<api_crypto::SigningKey>()?;
+    m.add_class::<api_crypto::VerifyKey>()?;
+    m.add_class::<api_crypto::SecretKey>()?;
+    m.add_class::<api_crypto::PrivateKey>()?;
+    m.add_class::<api_crypto::PublicKey>()?;
+    m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
+
+    m.add_class::<enumerate::ClientType>()?;
+    m.add_class::<enumerate::InvitationEmailSentStatus>()?;
+    m.add_class::<enumerate::InvitationDeletedReason>()?;
+    m.add_class::<enumerate::InvitationStatus>()?;
+    m.add_class::<enumerate::InvitationType>()?;
+    m.add_class::<enumerate::RealmRole>()?;
+    m.add_class::<enumerate::UserProfile>()?;
+
+    m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
+
+    m.add_class::<ids::OrganizationID>()?;
+    m.add_class::<ids::EntryID>()?;
+    m.add_class::<ids::BlockID>()?;
+    m.add_class::<ids::RealmID>()?;
+    m.add_class::<ids::VlobID>()?;
+    m.add_class::<ids::ChunkID>()?;
+    m.add_class::<ids::SequesterServiceID>()?;
+    m.add_class::<ids::EnrollmentID>()?;
+    m.add_class::<ids::HumanHandle>()?;
+    m.add_class::<ids::DeviceID>()?;
+    m.add_class::<ids::DeviceName>()?;
+    m.add_class::<ids::DeviceLabel>()?;
+    m.add_class::<ids::UserID>()?;
+    m.add_class::<ids::InvitationToken>()?;
+
+    m.add_class::<local_device::LocalDevice>()?;
+    m.add_class::<local_device::UserInfo>()?;
+    m.add_class::<local_device::DeviceInfo>()?;
 
     // Time
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;

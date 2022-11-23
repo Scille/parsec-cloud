@@ -24,11 +24,11 @@ import_exception!(parsec.api.data, DataError);
 use crate::{
     api_crypto::SecretKey,
     binding_utils::py_to_rs_set,
-    ids::{ChunkID, DeviceID, EntryID},
-    manifest::{
+    data::{
         BlockAccess, EntryName, FileManifest, FolderManifest, UserManifest, WorkspaceEntry,
         WorkspaceManifest,
     },
+    ids::{ChunkID, DeviceID, EntryID},
     regex::Regex,
     time::DateTime,
 };
