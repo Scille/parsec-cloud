@@ -190,7 +190,7 @@ class Transport:
             if self.keepalive:
                 with trio.move_on_after(self.keepalive) as cancel_scope:
                     event = await self._next_ws_event()
-                if cancel_scope.cancel_called:
+                if cancel_scope.cancelled_caught:
                     self.logger.debug("Sending keep alive ping")
                     await self._net_send(Ping())
                     continue
