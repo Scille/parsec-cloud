@@ -679,7 +679,7 @@ async def test_greet_user_but_active_user_limit_reached(
                 assert autoclose_dialog.dialogs == [
                     (
                         "Error",
-                        "Active users limit reached, increase the limit or revoke some users before retrying.",
+                        "Active users limit reached, increase the limit or revoke some users before trying again.",
                     )
                 ]
                 assert not self.greet_user_widget.isVisible()
