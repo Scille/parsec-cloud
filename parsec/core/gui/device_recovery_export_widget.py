@@ -19,8 +19,8 @@ from parsec.core.local_device import (
     get_recovery_device_file_name,
     save_recovery_device,
     get_available_device,
-    LocalDeviceAlreadyExistsError,
     DeviceFileType,
+    RECOVERY_DEVICE_FILE_SUFFIX,
 )
 from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError, QtToTrioJobScheduler
 from parsec.core.gui.lang import translate
@@ -69,7 +69,7 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
 
     def _print_recovery_key(self) -> None:
         html = translate("TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password").format(
-            organization=self.device.organization_id,
+            organization=self.device.organization_id.str,
             label=self.device.user_display,
             password=self.passphrase,
             keyname=PurePath(self.label_file_path.text()).name,
@@ -93,11 +93,14 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
             )
 
     def _on_select_file_clicked(self) -> None:
-        key_dir = QDialogInProcess.getExistingDirectory(
-            self, translate("TEXT_EXPORT_KEY"), str(Path.home())
+        key_file, _ = QDialogInProcess.getSaveFileName(
+            self,
+            translate("TEXT_EXPORT_KEY"),
+            str(Path.home() / get_recovery_device_file_name(self.get_selected_device())),
+            f"*{RECOVERY_DEVICE_FILE_SUFFIX}",
         )
-        if key_dir:
-            self.label_file_path.setText(key_dir)
+        if key_file:
+            self.label_file_path.setText(key_file)
         self._check_infos()
 
     def _check_infos(self) -> None:
@@ -162,19 +165,14 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
     ) -> tuple[LocalDevice, PurePath, str]:
         try:
             recovery_device = await generate_recovery_device(device)
-            file_name = get_recovery_device_file_name(recovery_device)
-            file_path = export_path / file_name
-            passphrase = await save_recovery_device(file_path, recovery_device)
-            return recovery_device, file_path, passphrase
+            passphrase = await save_recovery_device(export_path, recovery_device, force=True)
+            return recovery_device, export_path, passphrase
         except BackendNotAvailable as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_OFFLINE"), exception=exc)
             raise JobResultError("backend-error") from exc
         except BackendConnectionError as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_ERROR"), exception=exc)
             raise JobResultError("backend-error") from exc
-        except LocalDeviceAlreadyExistsError as exc:
-            show_error(self, translate("TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"), exception=exc)
-            raise JobResultError("already-exists") from exc
         except Exception as exc:
             show_error(self, translate("EXPORT_KEY_ERROR"), exception=exc)
             raise JobResultError("error") from exc
