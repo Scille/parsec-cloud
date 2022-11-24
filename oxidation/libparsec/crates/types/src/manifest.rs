@@ -16,7 +16,7 @@ use serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DateTime, DeviceID, EntryID, EntryNameError,
+    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -513,9 +513,11 @@ pub enum Manifest {
 }
 
 impl Manifest {
-    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
-        let blob = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        rmp_serde::from_slice(&blob).map_err(|_| "Invalid deserialization")
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
+        let blob = key
+            .decrypt(encrypted)
+            .map_err(|exc| DataError::Crypto { exc })?;
+        rmp_serde::from_slice(&blob).map_err(|_| DataError::Serialization)
     }
 
     pub fn decrypt_verify_and_load(
@@ -526,7 +528,7 @@ impl Manifest {
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
-    ) -> Result<Self, DataError> {
+    ) -> DataResult<Self> {
         let signed = key.decrypt(encrypted)?;
 
         Self::verify_and_load(
@@ -546,7 +548,7 @@ impl Manifest {
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
-    ) -> Result<Self, DataError> {
+    ) -> DataResult<Self> {
         let compressed = author_verify_key.verify(signed)?;
 
         let obj = Manifest::deserialize_data(&compressed)?;
@@ -576,13 +578,13 @@ impl Manifest {
     }
 
     /// Load the manifest without checking the signature header.
-    pub fn unverified_load(data: &[u8]) -> Result<Self, DataError> {
+    pub fn unverified_load(data: &[u8]) -> DataResult<Self> {
         let compressed = VerifyKey::unsecure_unwrap(data).unwrap();
 
         Manifest::deserialize_data(compressed)
     }
 
-    fn deserialize_data(data: &[u8]) -> Result<Self, DataError> {
+    fn deserialize_data(data: &[u8]) -> DataResult<Self> {
         let mut deserialized = Vec::new();
 
         ZlibDecoder::new(data)

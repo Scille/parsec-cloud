@@ -106,6 +106,7 @@ impl TrustchainContext {
                 state.certif,
                 &self.root_verify_key,
                 CertificateSignerRef::Root,
+                None,
             )
             .map_err(|exc| TrustchainError::InvalidCertificate {
                 path: build_signature_path(sign_chain),
@@ -124,6 +125,7 @@ impl TrustchainContext {
                     state.certif,
                     &author_device.verify_key,
                     CertificateSignerRef::User(&author_device.device_id),
+                    None,
                 )
                 .map_err(|exc| TrustchainError::InvalidCertificate {
                     path: build_signature_path(sign_chain),
@@ -159,6 +161,8 @@ impl TrustchainContext {
                 certif,
                 &self.root_verify_key,
                 CertificateSignerRef::Root,
+                None,
+                None,
             )
             .map_err(|exc| TrustchainError::InvalidCertificate {
                 path: build_signature_path(&[format!("{user_id}'s creation")]),
@@ -184,6 +188,8 @@ impl TrustchainContext {
                     certif,
                     &author_device.verify_key,
                     CertificateSignerRef::User(&author_device.device_id),
+                    None,
+                    None,
                 )
                 .map_err(|exc| TrustchainError::InvalidCertificate {
                     path: build_signature_path(&sign_chain),
@@ -236,6 +242,7 @@ impl TrustchainContext {
                 certif,
                 &author_device.verify_key,
                 &author_device.device_id,
+                None,
             )
             .map_err(|exc| TrustchainError::InvalidCertificate {
                 path: build_signature_path(&sign_chain),

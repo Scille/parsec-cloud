@@ -5,14 +5,16 @@ from pathlib import PurePath
 
 from typing import Tuple, List, Iterable, Union, TypeVar
 from trio import Path as TrioPath
-from parsec.api.data import EntryName, EntryNameTooLongError
+
+from parsec._parsec import EntryNameError
+from parsec.api.data import EntryName
 from parsec.core.fs.exceptions import FSNameTooLongError
 
 
 def _entry_name_for_fspath(raw_part: str) -> EntryName:
     try:
         return EntryName(raw_part)
-    except EntryNameTooLongError:
+    except EntryNameError:
         raise FSNameTooLongError(raw_part)
 
 

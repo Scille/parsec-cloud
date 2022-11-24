@@ -1,16 +1,15 @@
 use pyo3::{
-    import_exception, pyclass, pymethods,
+    pyclass, pymethods,
     types::{PyBytes, PyType},
-    PyResult, Python,
+    Python,
 };
 
 use crate::{
     api_crypto::{PublicKey, VerifyKey},
+    data::DataResult,
     enumerate::UserProfile,
     ids::{DeviceID, DeviceLabel, HumanHandle},
 };
-
-import_exception!(parsec.api.data, DataError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -64,10 +63,8 @@ impl PkiEnrollmentAnswerPayload {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
-        libparsec::types::PkiEnrollmentAnswerPayload::load(raw)
-            .map(Self)
-            .map_err(|e| DataError::new_err(e.to_string()))
+    fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::PkiEnrollmentAnswerPayload::load(raw).map(Self)?)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
@@ -113,10 +110,8 @@ impl PkiEnrollmentSubmitPayload {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
-        libparsec::types::PkiEnrollmentSubmitPayload::load(raw)
-            .map(Self)
-            .map_err(|e| DataError::new_err(e.to_string()))
+    fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::PkiEnrollmentSubmitPayload::load(raw).map(Self)?)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {

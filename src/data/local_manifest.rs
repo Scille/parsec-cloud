@@ -9,7 +9,6 @@ use pyo3::{
     exceptions::{
         PyAssertionError, PyIndexError, PyNotImplementedError, PyTypeError, PyValueError,
     },
-    import_exception,
     prelude::*,
     types::{IntoPyDict, PyByteArray, PyBytes, PyDict, PyTuple, PyType},
 };
@@ -19,14 +18,12 @@ use std::{
     panic,
 };
 
-import_exception!(parsec.api.data, DataError);
-
 use crate::{
     api_crypto::SecretKey,
     binding_utils::py_to_rs_set,
     data::{
-        BlockAccess, EntryName, FileManifest, FolderManifest, UserManifest, WorkspaceEntry,
-        WorkspaceManifest,
+        BlockAccess, DataResult, EntryName, FileManifest, FolderManifest, UserManifest,
+        WorkspaceEntry, WorkspaceManifest,
     },
     ids::{ChunkID, DeviceID, EntryID},
     regex::Regex,
@@ -128,10 +125,9 @@ impl Chunk {
 
     #[classmethod]
     fn from_block_access(_cls: &PyType, block_access: BlockAccess) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::client_types::Chunk::from_block_access(block_access.0)
-                .map_err(PyValueError::new_err)?,
-        ))
+        libparsec::client_types::Chunk::from_block_access(block_access.0)
+            .map(Self)
+            .map_err(PyValueError::new_err)
     }
 
     fn evolve_as_block(&self, py: Python, data: PyObject) -> PyResult<Self> {
@@ -155,12 +151,12 @@ impl Chunk {
         ))
     }
 
-    fn is_block(&self) -> PyResult<bool> {
-        Ok(self.0.is_block())
+    fn is_block(&self) -> bool {
+        self.0.is_block()
     }
 
-    fn is_pseudo_block(&self) -> PyResult<bool> {
-        Ok(self.0.is_pseudo_block())
+    fn is_pseudo_block(&self) -> bool {
+        self.0.is_pseudo_block()
     }
 
     fn get_block_access(&self) -> PyResult<BlockAccess> {
@@ -182,33 +178,33 @@ impl Chunk {
     }
 
     #[getter]
-    fn id(&self) -> PyResult<ChunkID> {
-        Ok(ChunkID(self.0.id))
+    fn id(&self) -> ChunkID {
+        ChunkID(self.0.id)
     }
 
     #[getter]
-    fn start(&self) -> PyResult<u64> {
-        Ok(self.0.start)
+    fn start(&self) -> u64 {
+        self.0.start
     }
 
     #[getter]
-    fn stop(&self) -> PyResult<u64> {
-        Ok(self.0.stop.into())
+    fn stop(&self) -> u64 {
+        self.0.stop.into()
     }
 
     #[getter]
-    fn raw_offset(&self) -> PyResult<u64> {
-        Ok(self.0.raw_offset)
+    fn raw_offset(&self) -> u64 {
+        self.0.raw_offset
     }
 
     #[getter]
-    fn raw_size(&self) -> PyResult<u64> {
-        Ok(self.0.raw_size.into())
+    fn raw_size(&self) -> u64 {
+        self.0.raw_size.into()
     }
 
     #[getter]
-    fn access(&self) -> PyResult<Option<BlockAccess>> {
-        Ok(self.0.access.clone().map(BlockAccess))
+    fn access(&self) -> Option<BlockAccess> {
+        self.0.access.clone().map(BlockAccess)
     }
 }
 
@@ -296,7 +292,7 @@ impl LocalFileManifest {
         Ok(Self(new_manifest))
     }
 
-    fn get_chunks<'p>(&self, py: Python<'p>, block: usize) -> PyResult<&'p PyTuple> {
+    fn get_chunks<'py>(&self, py: Python<'py>, block: usize) -> &'py PyTuple {
         let elements = self
             .0
             .get_chunks(block)
@@ -304,11 +300,11 @@ impl LocalFileManifest {
             .unwrap_or_default()
             .into_iter()
             .map(|x| Chunk(x).into_py(py));
-        Ok(PyTuple::new(py, elements))
+        PyTuple::new(py, elements)
     }
 
-    fn is_reshaped(&self) -> PyResult<bool> {
-        Ok(self.0.is_reshaped())
+    fn is_reshaped(&self) -> bool {
+        self.0.is_reshaped()
     }
 
     fn assert_integrity(&self) -> PyResult<()> {
@@ -321,18 +317,16 @@ impl LocalFileManifest {
 
     #[classmethod]
     fn from_remote(_cls: &PyType, remote: FileManifest) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::client_types::LocalFileManifest::from_remote(remote.0)
-                .map_err(PyValueError::new_err)?,
-        ))
+        libparsec::client_types::LocalFileManifest::from_remote(remote.0)
+            .map(Self)
+            .map_err(PyValueError::new_err)
     }
 
     fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> PyResult<FileManifest> {
-        Ok(FileManifest(
-            self.0
-                .to_remote(author.0, timestamp.0)
-                .map_err(PyValueError::new_err)?,
-        ))
+        self.0
+            .to_remote(author.0, timestamp.0)
+            .map(FileManifest)
+            .map_err(PyValueError::new_err)
     }
 
     #[classmethod]
@@ -348,8 +342,8 @@ impl LocalFileManifest {
         Self::from_remote(_cls, remote)
     }
 
-    fn match_remote(&self, remote_manifest: &FileManifest) -> PyResult<bool> {
-        Ok(self.0.match_remote(&remote_manifest.0))
+    fn match_remote(&self, remote_manifest: &FileManifest) -> bool {
+        self.0.match_remote(&remote_manifest.0)
     }
 
     /*
@@ -357,35 +351,35 @@ impl LocalFileManifest {
      */
 
     #[getter]
-    fn base_version(&self) -> PyResult<u32> {
-        Ok(self.0.base.version)
+    fn base_version(&self) -> u32 {
+        self.0.base.version
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.base.id))
+    fn id(&self) -> EntryID {
+        EntryID(self.0.base.id)
     }
 
     #[getter]
-    fn created(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.base.created))
+    fn created(&self) -> DateTime {
+        DateTime(self.0.base.created)
     }
 
     #[getter]
-    fn is_placeholder(&self) -> PyResult<bool> {
-        Ok(self.0.base.version == 0)
+    fn is_placeholder(&self) -> bool {
+        self.0.base.version == 0
     }
 
-    fn dump_and_encrypt<'p>(&self, py: Python<'p>, key: &SecretKey) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_encrypt(&key.0)))
+    fn dump_and_encrypt<'py>(&self, py: Python<'py>, key: &SecretKey) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_encrypt(&key.0))
     }
 
     #[classmethod]
-    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match libparsec::client_types::LocalFileManifest::decrypt_and_load(encrypted, &key.0) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(DataError::new_err(err)),
-        }
+    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
+        Ok(
+            libparsec::client_types::LocalFileManifest::decrypt_and_load(encrypted, &key.0)
+                .map(Self)?,
+        )
     }
 
     #[classmethod]
@@ -431,49 +425,49 @@ impl LocalFileManifest {
     }
 
     #[getter]
-    fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.base.parent))
+    fn parent(&self) -> EntryID {
+        EntryID(self.0.base.parent)
     }
 
     #[getter]
-    fn base(&self) -> PyResult<FileManifest> {
-        Ok(FileManifest(self.0.base.clone()))
+    fn base(&self) -> FileManifest {
+        FileManifest(self.0.base.clone())
     }
 
     #[getter]
-    fn need_sync(&self) -> PyResult<bool> {
-        Ok(self.0.need_sync)
+    fn need_sync(&self) -> bool {
+        self.0.need_sync
     }
 
     #[getter]
-    fn updated(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.updated))
+    fn updated(&self) -> DateTime {
+        DateTime(self.0.updated)
     }
 
     #[getter]
-    fn size(&self) -> PyResult<u64> {
-        Ok(self.0.size)
+    fn size(&self) -> u64 {
+        self.0.size
     }
 
     #[getter]
-    fn blocksize(&self) -> PyResult<u64> {
-        Ok(self.0.blocksize.into())
+    fn blocksize(&self) -> u64 {
+        self.0.blocksize.into()
     }
 
     #[getter]
-    fn blocks<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
-        Ok(PyTuple::new(
+    fn blocks<'py>(&self, py: Python<'py>) -> &'py PyTuple {
+        PyTuple::new(
             py,
             self.0
                 .blocks
                 .iter()
                 .cloned()
                 .map(|chunks| PyTuple::new(py, chunks.into_iter().map(|c| Chunk(c).into_py(py)))),
-        ))
+        )
     }
 
-    fn to_stats<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        Ok([
+    fn to_stats<'py>(&self, py: Python<'py>) -> &'py PyDict {
+        [
             ("id", EntryID(self.0.base.id).into_py(py).to_object(py)),
             (
                 "created",
@@ -489,10 +483,10 @@ impl LocalFileManifest {
             ("type", "file".to_object(py)),
             ("size", self.0.size.to_object(py)),
         ]
-        .into_py_dict(py))
+        .into_py_dict(py)
     }
 
-    fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
+    fn asdict<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let parent = EntryID(self.0.base.parent).into_py(py);
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
@@ -503,7 +497,7 @@ impl LocalFileManifest {
             .map(|b| b.iter().cloned().map(|c| Chunk(c).into_py(py)).collect())
             .collect::<Vec<Vec<_>>>()
             .into_py(py);
-        Ok([
+        [
             ("parent", parent.to_object(py)),
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),
@@ -514,7 +508,7 @@ impl LocalFileManifest {
             ("size", self.0.size.to_object(py)),
             ("blocksize", u64::from(self.0.blocksize).to_object(py)),
         ]
-        .into_py_dict(py))
+        .into_py_dict(py)
     }
 }
 
@@ -602,27 +596,27 @@ impl LocalFolderManifest {
      */
 
     #[getter]
-    fn base_version(&self) -> PyResult<u32> {
-        Ok(self.0.base.version)
+    fn base_version(&self) -> u32 {
+        self.0.base.version
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.base.id))
+    fn id(&self) -> EntryID {
+        EntryID(self.0.base.id)
     }
 
     #[getter]
-    fn created(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.base.created))
+    fn created(&self) -> DateTime {
+        DateTime(self.0.base.created)
     }
 
     #[getter]
-    fn is_placeholder(&self) -> PyResult<bool> {
-        Ok(self.0.base.version == 0)
+    fn is_placeholder(&self) -> bool {
+        self.0.base.version == 0
     }
 
-    fn match_remote(&self, remote_manifest: FolderManifest) -> PyResult<bool> {
-        Ok(self.0.match_remote(&remote_manifest.0))
+    fn match_remote(&self, remote_manifest: FolderManifest) -> bool {
+        self.0.match_remote(&remote_manifest.0)
     }
 
     /*
@@ -634,39 +628,39 @@ impl LocalFolderManifest {
         data: HashMap<EntryName, Option<EntryID>>,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
-    ) -> PyResult<Self> {
+    ) -> Self {
         let data = data
             .into_iter()
             .map(|(en, ei)| (en.0, ei.map(|ei| ei.0)))
             .collect();
-        Ok(Self(self.0.clone().evolve_children_and_mark_updated(
+        Self(self.0.clone().evolve_children_and_mark_updated(
             data,
             &prevent_sync_pattern.0,
             timestamp.0,
-        )))
+        ))
     }
 
     fn apply_prevent_sync_pattern(
         &self,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
-    ) -> PyResult<Self> {
-        Ok(Self(self.0.apply_prevent_sync_pattern(
-            &prevent_sync_pattern.0,
-            timestamp.0,
-        )))
+    ) -> Self {
+        Self(
+            self.0
+                .apply_prevent_sync_pattern(&prevent_sync_pattern.0, timestamp.0),
+        )
     }
 
-    fn dump_and_encrypt<'p>(&self, py: Python<'p>, key: &SecretKey) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_encrypt(&key.0)))
+    fn dump_and_encrypt<'py>(&self, py: Python<'py>, key: &SecretKey) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_encrypt(&key.0))
     }
 
     #[classmethod]
-    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match libparsec::client_types::LocalFolderManifest::decrypt_and_load(encrypted, &key.0) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(DataError::new_err(err)),
-        }
+    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
+        Ok(
+            libparsec::client_types::LocalFolderManifest::decrypt_and_load(encrypted, &key.0)
+                .map(Self)?,
+        )
     }
 
     #[classmethod]
@@ -675,12 +669,12 @@ impl LocalFolderManifest {
         author: DeviceID,
         parent: EntryID,
         timestamp: DateTime,
-    ) -> PyResult<Self> {
-        Ok(Self(libparsec::client_types::LocalFolderManifest::new(
+    ) -> Self {
+        Self(libparsec::client_types::LocalFolderManifest::new(
             author.0,
             parent.0,
             timestamp.0,
-        )))
+        ))
     }
 
     #[args(data = "**")]
@@ -706,16 +700,10 @@ impl LocalFolderManifest {
     }
 
     #[classmethod]
-    fn from_remote(
-        _cls: &PyType,
-        remote: FolderManifest,
-        prevent_sync_pattern: &Regex,
-    ) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::client_types::LocalFolderManifest::from_remote(
-                remote.0,
-                &prevent_sync_pattern.0,
-            ),
+    fn from_remote(_cls: &PyType, remote: FolderManifest, prevent_sync_pattern: &Regex) -> Self {
+        Self(libparsec::client_types::LocalFolderManifest::from_remote(
+            remote.0,
+            &prevent_sync_pattern.0,
         ))
     }
 
@@ -726,75 +714,72 @@ impl LocalFolderManifest {
         prevent_sync_pattern: &Regex,
         local_manifest: &Self,
         timestamp: DateTime,
-    ) -> PyResult<Self> {
-        Ok(Self(
+    ) -> Self {
+        Self(
             libparsec::client_types::LocalFolderManifest::from_remote_with_local_context(
                 remote.0,
                 &prevent_sync_pattern.0,
                 &local_manifest.0,
                 timestamp.0,
             ),
-        ))
+        )
     }
 
-    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> PyResult<FolderManifest> {
-        Ok(FolderManifest(self.0.to_remote(author.0, timestamp.0)))
-    }
-
-    #[getter]
-    fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.base.parent))
+    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
+        FolderManifest(self.0.to_remote(author.0, timestamp.0))
     }
 
     #[getter]
-    fn base(&self) -> PyResult<FolderManifest> {
-        Ok(FolderManifest(self.0.base.clone()))
+    fn parent(&self) -> EntryID {
+        EntryID(self.0.base.parent)
     }
 
     #[getter]
-    fn need_sync(&self) -> PyResult<bool> {
-        Ok(self.0.need_sync)
+    fn base(&self) -> FolderManifest {
+        FolderManifest(self.0.base.clone())
     }
 
     #[getter]
-    fn updated(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.updated))
+    fn need_sync(&self) -> bool {
+        self.0.need_sync
     }
 
     #[getter]
-    fn children(&self) -> PyResult<HashMap<EntryName, EntryID>> {
-        Ok(self
-            .0
+    fn updated(&self) -> DateTime {
+        DateTime(self.0.updated)
+    }
+
+    #[getter]
+    fn children(&self) -> HashMap<EntryName, EntryID> {
+        self.0
             .children
             .clone()
             .into_iter()
             .map(|(name, id)| (EntryName(name), EntryID(id)))
-            .collect())
+            .collect()
     }
 
     #[getter]
-    fn local_confinement_points(&self) -> PyResult<HashSet<EntryID>> {
-        Ok(self
-            .0
+    fn local_confinement_points(&self) -> HashSet<EntryID> {
+        self.0
             .local_confinement_points
             .clone()
             .into_iter()
             .map(EntryID)
-            .collect())
+            .collect()
     }
 
     #[getter]
-    fn remote_confinement_points(&self) -> PyResult<HashSet<EntryID>> {
-        Ok(self
-            .0
+    fn remote_confinement_points(&self) -> HashSet<EntryID> {
+        self.0
             .remote_confinement_points
             .clone()
             .into_iter()
             .map(EntryID)
-            .collect())
+            .collect()
     }
 
-    fn to_stats<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
+    fn to_stats<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
         let mut children = self
@@ -813,7 +798,7 @@ impl LocalFolderManifest {
             .collect::<Vec<_>>()
             .into_py(py);
 
-        Ok([
+        [
             ("id", EntryID(self.0.base.id).into_py(py).to_object(py)),
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),
@@ -823,10 +808,10 @@ impl LocalFolderManifest {
             ("type", "folder".to_object(py)),
             ("children", children.to_object(py)),
         ]
-        .into_py_dict(py))
+        .into_py_dict(py)
     }
 
-    fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
+    fn asdict<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let parent = EntryID(self.0.base.parent).into_py(py);
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
@@ -854,7 +839,7 @@ impl LocalFolderManifest {
             .map(EntryID)
             .collect::<Vec<_>>()
             .into_py(py);
-        Ok([
+        [
             ("parent", parent.to_object(py)),
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),
@@ -871,7 +856,7 @@ impl LocalFolderManifest {
                 remote_confinement_points.to_object(py),
             ),
         ]
-        .into_py_dict(py))
+        .into_py_dict(py)
     }
 }
 
@@ -957,27 +942,27 @@ impl LocalWorkspaceManifest {
      */
 
     #[getter]
-    fn base_version(&self) -> PyResult<u32> {
-        Ok(self.0.base.version)
+    fn base_version(&self) -> u32 {
+        self.0.base.version
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.base.id))
+    fn id(&self) -> EntryID {
+        EntryID(self.0.base.id)
     }
 
     #[getter]
-    fn created(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.base.created))
+    fn created(&self) -> DateTime {
+        DateTime(self.0.base.created)
     }
 
     #[getter]
-    fn is_placeholder(&self) -> PyResult<bool> {
-        Ok(self.0.base.version == 0)
+    fn is_placeholder(&self) -> bool {
+        self.0.base.version == 0
     }
 
-    fn match_remote(&self, remote_manifest: &WorkspaceManifest) -> PyResult<bool> {
-        Ok(self.0.match_remote(&remote_manifest.0))
+    fn match_remote(&self, remote_manifest: &WorkspaceManifest) -> bool {
+        self.0.match_remote(&remote_manifest.0)
     }
 
     /*
@@ -989,39 +974,39 @@ impl LocalWorkspaceManifest {
         data: HashMap<EntryName, Option<EntryID>>,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
-    ) -> PyResult<Self> {
+    ) -> Self {
         let data = data
             .into_iter()
             .map(|(en, ei)| (en.0, ei.map(|ei| ei.0)))
             .collect();
-        Ok(Self(self.0.clone().evolve_children_and_mark_updated(
+        Self(self.0.clone().evolve_children_and_mark_updated(
             data,
             &prevent_sync_pattern.0,
             timestamp.0,
-        )))
+        ))
     }
 
     fn apply_prevent_sync_pattern(
         &self,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
-    ) -> PyResult<Self> {
-        Ok(Self(self.0.apply_prevent_sync_pattern(
-            &prevent_sync_pattern.0,
-            timestamp.0,
-        )))
+    ) -> Self {
+        Self(
+            self.0
+                .apply_prevent_sync_pattern(&prevent_sync_pattern.0, timestamp.0),
+        )
     }
 
-    fn dump_and_encrypt<'p>(&self, py: Python<'p>, key: &SecretKey) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_encrypt(&key.0)))
+    fn dump_and_encrypt<'py>(&self, py: Python<'py>, key: &SecretKey) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_encrypt(&key.0))
     }
 
     #[classmethod]
-    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match libparsec::client_types::LocalWorkspaceManifest::decrypt_and_load(encrypted, &key.0) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(DataError::new_err(err)),
-        }
+    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
+        Ok(
+            libparsec::client_types::LocalWorkspaceManifest::decrypt_and_load(encrypted, &key.0)
+                .map(Self)?,
+        )
     }
 
     #[classmethod]
@@ -1032,13 +1017,13 @@ impl LocalWorkspaceManifest {
         timestamp: DateTime,
         id: Option<EntryID>,
         speculative: bool,
-    ) -> PyResult<Self> {
-        Ok(Self(libparsec::client_types::LocalWorkspaceManifest::new(
+    ) -> Self {
+        Self(libparsec::client_types::LocalWorkspaceManifest::new(
             author.0,
             timestamp.0,
             id.map(|id| id.0),
             speculative,
-        )))
+        ))
     }
 
     #[args(data = "**")]
@@ -1064,17 +1049,13 @@ impl LocalWorkspaceManifest {
     }
 
     #[classmethod]
-    fn from_remote(
-        _cls: &PyType,
-        remote: WorkspaceManifest,
-        prevent_sync_pattern: &Regex,
-    ) -> PyResult<Self> {
-        Ok(Self(
+    fn from_remote(_cls: &PyType, remote: WorkspaceManifest, prevent_sync_pattern: &Regex) -> Self {
+        Self(
             libparsec::client_types::LocalWorkspaceManifest::from_remote(
                 remote.0,
                 &prevent_sync_pattern.0,
             ),
-        ))
+        )
     }
 
     #[classmethod]
@@ -1084,34 +1065,34 @@ impl LocalWorkspaceManifest {
         prevent_sync_pattern: &Regex,
         local_manifest: &Self,
         timestamp: DateTime,
-    ) -> PyResult<Self> {
-        Ok(Self(
+    ) -> Self {
+        Self(
             libparsec::client_types::LocalWorkspaceManifest::from_remote_with_local_context(
                 remote.0,
                 &prevent_sync_pattern.0,
                 &local_manifest.0,
                 timestamp.0,
             ),
-        ))
+        )
     }
 
-    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> PyResult<WorkspaceManifest> {
-        Ok(WorkspaceManifest(self.0.to_remote(author.0, timestamp.0)))
-    }
-
-    #[getter]
-    fn base(&self) -> PyResult<WorkspaceManifest> {
-        Ok(WorkspaceManifest(self.0.base.clone()))
+    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest {
+        WorkspaceManifest(self.0.to_remote(author.0, timestamp.0))
     }
 
     #[getter]
-    fn need_sync(&self) -> PyResult<bool> {
-        Ok(self.0.need_sync)
+    fn base(&self) -> WorkspaceManifest {
+        WorkspaceManifest(self.0.base.clone())
     }
 
     #[getter]
-    fn updated(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.updated))
+    fn need_sync(&self) -> bool {
+        self.0.need_sync
+    }
+
+    #[getter]
+    fn updated(&self) -> DateTime {
+        DateTime(self.0.updated)
     }
 
     #[getter]
@@ -1131,33 +1112,31 @@ impl LocalWorkspaceManifest {
     }
 
     #[getter]
-    fn local_confinement_points(&self) -> PyResult<HashSet<EntryID>> {
-        Ok(self
-            .0
+    fn local_confinement_points(&self) -> HashSet<EntryID> {
+        self.0
             .local_confinement_points
             .clone()
             .into_iter()
             .map(EntryID)
-            .collect())
+            .collect()
     }
 
     #[getter]
-    fn remote_confinement_points(&self) -> PyResult<HashSet<EntryID>> {
-        Ok(self
-            .0
+    fn remote_confinement_points(&self) -> HashSet<EntryID> {
+        self.0
             .remote_confinement_points
             .clone()
             .into_iter()
             .map(EntryID)
-            .collect())
+            .collect()
     }
 
     #[getter]
-    fn speculative(&self) -> PyResult<bool> {
-        Ok(self.0.speculative)
+    fn speculative(&self) -> bool {
+        self.0.speculative
     }
 
-    fn to_stats<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
+    fn to_stats<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
         let mut children = self
@@ -1176,7 +1155,7 @@ impl LocalWorkspaceManifest {
             .collect::<Vec<_>>()
             .into_py(py);
 
-        Ok([
+        [
             ("id", EntryID(self.0.base.id).into_py(py).to_object(py)),
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),
@@ -1186,10 +1165,10 @@ impl LocalWorkspaceManifest {
             ("type", "folder".to_object(py)),
             ("children", children.to_object(py)),
         ]
-        .into_py_dict(py))
+        .into_py_dict(py)
     }
 
-    fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
+    fn asdict<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
         let children = self
@@ -1216,7 +1195,7 @@ impl LocalWorkspaceManifest {
             .map(EntryID)
             .collect::<Vec<_>>()
             .into_py(py);
-        Ok([
+        [
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),
             ("base_version", self.0.base.version.to_object(py)),
@@ -1233,7 +1212,7 @@ impl LocalWorkspaceManifest {
                 remote_confinement_points.to_object(py),
             ),
         ]
-        .into_py_dict(py))
+        .into_py_dict(py)
     }
 }
 
@@ -1310,23 +1289,23 @@ impl LocalUserManifest {
      */
 
     #[getter]
-    fn base_version(&self) -> PyResult<u32> {
-        Ok(self.0.base.version)
+    fn base_version(&self) -> u32 {
+        self.0.base.version
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.base.id))
+    fn id(&self) -> EntryID {
+        EntryID(self.0.base.id)
     }
 
     #[getter]
-    fn created(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.base.created))
+    fn created(&self) -> DateTime {
+        DateTime(self.0.base.created)
     }
 
     #[getter]
-    fn is_placeholder(&self) -> PyResult<bool> {
-        Ok(self.0.base.version == 0)
+    fn is_placeholder(&self) -> bool {
+        self.0.base.version == 0
     }
 
     #[args(data = "**")]
@@ -1360,20 +1339,20 @@ impl LocalUserManifest {
         Ok(Self(out.0.evolve_workspaces(workspace.0)))
     }
 
-    fn evolve_workspaces(&self, workspace: WorkspaceEntry) -> PyResult<Self> {
-        Ok(Self(self.0.clone().evolve_workspaces(workspace.0)))
+    fn evolve_workspaces(&self, workspace: WorkspaceEntry) -> Self {
+        Self(self.0.clone().evolve_workspaces(workspace.0))
     }
 
-    fn dump_and_encrypt<'p>(&self, py: Python<'p>, key: &SecretKey) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_encrypt(&key.0)))
+    fn dump_and_encrypt<'p>(&self, py: Python<'p>, key: &SecretKey) -> &'p PyBytes {
+        PyBytes::new(py, &self.0.dump_and_encrypt(&key.0))
     }
 
     #[classmethod]
-    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match libparsec::client_types::LocalUserManifest::decrypt_and_load(encrypted, &key.0) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(DataError::new_err(err)),
-        }
+    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
+        Ok(
+            libparsec::client_types::LocalUserManifest::decrypt_and_load(encrypted, &key.0)
+                .map(Self)?,
+        )
     }
 
     #[classmethod]
@@ -1384,27 +1363,26 @@ impl LocalUserManifest {
         timestamp: DateTime,
         id: Option<EntryID>,
         speculative: bool,
-    ) -> PyResult<Self> {
-        Ok(Self(libparsec::client_types::LocalUserManifest::new(
+    ) -> Self {
+        Self(libparsec::client_types::LocalUserManifest::new(
             author.0,
             timestamp.0,
             id.map(|id| id.0),
             speculative,
-        )))
+        ))
     }
 
-    fn get_workspace_entry(&self, workspace_id: EntryID) -> PyResult<Option<WorkspaceEntry>> {
-        Ok(self
-            .0
+    fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<WorkspaceEntry> {
+        self.0
             .get_workspace_entry(workspace_id.0)
             .cloned()
-            .map(WorkspaceEntry))
+            .map(WorkspaceEntry)
     }
 
     #[classmethod]
-    fn from_remote(_cls: &PyType, remote: UserManifest) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::client_types::LocalUserManifest::from_remote(remote.0),
+    fn from_remote(_cls: &PyType, remote: UserManifest) -> Self {
+        Self(libparsec::client_types::LocalUserManifest::from_remote(
+            remote.0,
         ))
     }
 
@@ -1417,60 +1395,60 @@ impl LocalUserManifest {
         prevent_sync_pattern: &PyAny,
         local_manifest: Self,
         timestamp: &PyAny,
-    ) -> PyResult<Self> {
+    ) -> Self {
         Self::from_remote(_cls, remote)
     }
 
-    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> PyResult<UserManifest> {
-        Ok(UserManifest(self.0.to_remote(author.0, timestamp.0)))
+    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> UserManifest {
+        UserManifest(self.0.to_remote(author.0, timestamp.0))
     }
 
     #[getter]
-    fn base(&self) -> PyResult<UserManifest> {
-        Ok(UserManifest(self.0.base.clone()))
+    fn base(&self) -> UserManifest {
+        UserManifest(self.0.base.clone())
     }
 
     #[getter]
-    fn need_sync(&self) -> PyResult<bool> {
-        Ok(self.0.need_sync)
+    fn need_sync(&self) -> bool {
+        self.0.need_sync
     }
 
     #[getter]
-    fn updated(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.updated))
+    fn updated(&self) -> DateTime {
+        DateTime(self.0.updated)
     }
 
     #[getter]
-    fn last_processed_message(&self) -> PyResult<u64> {
-        Ok(self.0.last_processed_message)
+    fn last_processed_message(&self) -> u64 {
+        self.0.last_processed_message
     }
 
     #[getter]
-    fn workspaces<'py>(&self, py: Python<'py>) -> PyResult<&'py PyTuple> {
-        Ok(PyTuple::new(
+    fn workspaces<'py>(&self, py: Python<'py>) -> &'py PyTuple {
+        PyTuple::new(
             py,
             self.0
                 .workspaces
                 .clone()
                 .into_iter()
                 .map(|w| WorkspaceEntry(w).into_py(py)),
-        ))
+        )
     }
 
     #[getter]
-    fn speculative(&self) -> PyResult<bool> {
-        Ok(self.0.speculative)
+    fn speculative(&self) -> bool {
+        self.0.speculative
     }
 
-    fn match_remote(&self, remote_manifest: &UserManifest) -> PyResult<bool> {
-        Ok(self.0.match_remote(&remote_manifest.0))
+    fn match_remote(&self, remote_manifest: &UserManifest) -> bool {
+        self.0.match_remote(&remote_manifest.0)
     }
 
-    fn to_stats<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
+    fn to_stats<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
 
-        Ok([
+        [
             ("id", EntryID(self.0.base.id).into_py(py).to_object(py)),
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),
@@ -1478,10 +1456,10 @@ impl LocalUserManifest {
             ("is_placeholder", (self.0.base.version == 0).to_object(py)),
             ("need_sync", self.0.need_sync.to_object(py)),
         ]
-        .into_py_dict(py))
+        .into_py_dict(py)
     }
 
-    fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
+    fn asdict<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
         let workspaces: Vec<PyObject> = self
@@ -1490,7 +1468,7 @@ impl LocalUserManifest {
             .iter()
             .map(|x| WorkspaceEntry(x.clone()).into_py(py))
             .collect();
-        Ok([
+        [
             ("base_version", self.0.base.version.to_object(py)),
             ("is_placeholder", (self.0.base.version == 0).to_object(py)),
             ("need_sync", self.0.need_sync.to_object(py)),
@@ -1503,7 +1481,7 @@ impl LocalUserManifest {
             ("speculative", self.0.speculative.to_object(py)),
             ("workspaces", workspaces.to_object(py)),
         ]
-        .into_py_dict(py))
+        .into_py_dict(py)
     }
 }
 
@@ -1512,11 +1490,8 @@ pub(crate) fn local_manifest_decrypt_and_load<'py>(
     py: Python<'py>,
     encrypted: &[u8],
     key: &SecretKey,
-) -> PyResult<PyObject> {
-    let decrypt_and_load = match LocalManifest::decrypt_and_load(encrypted, &key.0) {
-        Ok(value) => value,
-        Err(err) => return Err(DataError::new_err(err)),
-    };
+) -> DataResult<PyObject> {
+    let decrypt_and_load = LocalManifest::decrypt_and_load(encrypted, &key.0)?;
 
     match decrypt_and_load {
         LocalManifest::File(file) => Ok(LocalFileManifest(file).into_py(py)),
