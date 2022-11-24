@@ -76,6 +76,10 @@ pub struct WorkspaceStorage {
     prevent_sync_pattern: Arc<Mutex<Regex>>,
     prevent_sync_pattern_fully_applied: Arc<Mutex<bool>>,
     entry_locks: Locker<EntryID>,
+    /// Connection to the Data database.
+    data_conn: SqliteConn,
+    /// Connection to the Cache database.
+    cache_conn: SqliteConn,
 }
 
 impl WorkspaceStorage {
@@ -105,7 +109,7 @@ impl WorkspaceStorage {
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
-            cache_conn,
+            cache_conn.clone(),
             cache_size,
             device.time_provider.clone(),
         )?;
@@ -115,7 +119,7 @@ impl WorkspaceStorage {
 
         let chunk_storage = ChunkStorage::new(
             device.local_symkey.clone(),
-            data_conn,
+            data_conn.clone(),
             device.time_provider.clone(),
         )?;
 
@@ -135,6 +139,8 @@ impl WorkspaceStorage {
             prevent_sync_pattern_fully_applied: Arc::new(Mutex::new(false)),
             // Locking structure
             entry_locks: Locker::default(),
+            data_conn,
+            cache_conn,
         };
 
         instance.set_prevent_sync_pattern(&prevent_sync_pattern)?;
@@ -352,6 +358,14 @@ impl WorkspaceStorage {
             self.check_lock_status(entry_id)?;
         }
         self.manifest_storage.clear_manifest(entry_id)
+    }
+
+    /// Close the connections to the databases.
+    /// Provide a way to manually close those connections.
+    /// Event tho they will be closes when [WorkspaceStorage] is dropped.
+    pub fn close_connections(&self) {
+        self.data_conn.close_connection();
+        self.cache_conn.close_connection();
     }
 
     // Prevent sync pattern interface

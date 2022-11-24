@@ -7,7 +7,6 @@ import re
 import shutil
 import sqlite3
 import sys
-import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable
@@ -15,6 +14,7 @@ from unittest.mock import patch
 
 import attr
 import hypothesis
+import psutil
 import pytest
 import structlog
 import trio
@@ -499,11 +499,12 @@ def data_base_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
-    MAX_RETRY = 5
-    RETRY_AFTER = 2
     db_dir = data_base_dir
+    proc = psutil.Process()
 
     def _clear_database_dir(allow_missing_path: bool):
+        for open_file in proc.open_files():
+            assert not Path(open_file.path).is_relative_to(db_dir)
         print(f"Clearing database dir at `{db_dir}`")
         if not db_dir.exists():
             if allow_missing_path:
@@ -514,17 +515,7 @@ def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
         if db_dir.is_file():
             os.remove(db_dir)
         elif db_dir.is_dir():
-            for _ in range(MAX_RETRY):
-                try:
-                    shutil.rmtree(db_dir)
-                except PermissionError as e:
-                    print(f"Failed to delete directory {db_dir}: {e}")
-                else:
-                    break
-                finally:
-                    print("Waiting some time before retrying to delete the folder")
-                    time.sleep(RETRY_AFTER)
-
+            shutil.rmtree(db_dir)
         else:
             raise RuntimeError(
                 f"database path `{db_dir}` not a file nor a directory ({{}})".format(db_dir.stat())
