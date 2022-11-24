@@ -1,0 +1,18 @@
+[
+    {
+        "label": "InviteDeviceData",
+        "major_versions": [
+            1
+        ],
+        "type": "invite_device_data",
+        "fields": {
+            "requested_device_label": {
+                // Claimer ask for device_label, but greeter has final word on this
+                "type": "RequiredOption<DeviceLabel>"
+            },
+            "verify_key": {
+                "type": "VerifyKey"
+            }
+        }
+    }
+]

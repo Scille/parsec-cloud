@@ -264,6 +264,18 @@ mod test {
             foo: Option<i64>
         }
     )]
+    #[case::with_default_function(
+        syn::Visibility::Inherited,
+        Field {
+            default: Some("fn_to_call".to_string()),
+            ..Default::default()
+        },
+        quote! {
+            #[serde_as(as = "_")]
+            #[serde(default = "fn_to_call")]
+            foo: String
+        }
+    )]
     fn test_quote(
         #[case] vis: syn::Visibility,
         #[case] field: Field,

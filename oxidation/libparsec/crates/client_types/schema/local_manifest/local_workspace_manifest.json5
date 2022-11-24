@@ -1,0 +1,59 @@
+[
+    {
+        "label": "LocalWorkspaceManifest",
+        "major_versions": [
+            1
+        ],
+        "type": "local_workspace_manifest",
+        "fields": {
+            "base": {
+                "type": "WorkspaceManifest"
+            },
+            "need_sync": {
+                "type": "Boolean"
+            },
+            "updated": {
+                "type": "DateTime"
+            },
+            "children": {
+                "type": "Map<EntryName, EntryID>"
+            },
+            "local_confinement_points": {
+                // Added in Parsec v1.15
+                // Confined entries are entries that are meant to stay locally and not be added
+                // to the uploaded remote manifest when synchronizing. The criteria for being
+                // confined is to have a filename that matched the "prevent sync" pattern at the time of
+                // the last change (or when a new filter was successfully applied)
+                "type": "Set<EntryID>",
+                // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+                "introduced_in": "1.15"
+            },
+            "remote_confinement_points": {
+                // Added in Parsec v1.15
+                // Filtered entries are entries present in the base manifest that are not exposed
+                // locally. We keep track of them to remember that those entries have not been
+                // deleted locally and hence should be restored when crafting the remote manifest
+                // to upload.
+                "type": "Set<EntryID>",
+                // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+                "introduced_in": "1.15"
+            },
+            "speculative": {
+                // Added in Parsec v1.15
+                // Speculative placeholders are created when we want to access a workspace
+                // but didn't retrieve manifest data from backend yet. This implies:
+                // - non-placeholders cannot be speculative
+                // - the only non-speculative placeholder is the placeholder initialized
+                //   during the initial workspace creation
+                // This speculative information is useful during merge to understand if
+                // a data is not present in the placeholder compared with a remote because:
+                // a) the data is not locally known (speculative is True)
+                // b) the data is known, but has been locally removed (speculative is False)
+                // Prevented to be `required=True` by backward compatibility
+                "type": "Boolean",
+                // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+                "introduced_in": "1.15"
+            }
+        }
+    }
+]

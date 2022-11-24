@@ -1,0 +1,38 @@
+[
+    {
+        "label": "UserCertificate",
+        "major_versions": [
+            1
+        ],
+        "type": "user_certificate",
+        "fields": {
+            "author": {
+                "type": "CertificateSignerOwned"
+            },
+            "timestamp": {
+                "type": "DateTime"
+            },
+            "user_id": {
+                "type": "UserID"
+            },
+            "human_handle": {
+                "type": "RequiredOption<HumanHandle>",
+                // Hack to indicate this field was added in Parsec v1.13, given revision is meaningless for data
+                "introduced_in": "1.13"
+            },
+            "public_key": {
+                "type": "PublicKey"
+            },
+            "is_admin": {
+                // `profile` replaces `is_admin` field (which is still required for backward
+                // compatibility), hence `None` is not allowed
+                "type": "Boolean"
+            },
+            "profile": {
+                "type": "UserProfile",
+                // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
+                "introduced_in": "1.14"
+            }
+        }
+    }
+]

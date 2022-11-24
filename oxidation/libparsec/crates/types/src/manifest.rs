@@ -340,7 +340,7 @@ pub struct FileManifest {
 
 impl_manifest_dump_load!(FileManifest);
 
-parsec_data!("schema/manifest/file_manifest.json");
+parsec_data!("schema/manifest/file_manifest.json5");
 
 impl TryFrom<FileManifestData> for FileManifest {
     type Error = &'static str;
@@ -399,7 +399,7 @@ pub struct FolderManifest {
 
 impl_manifest_dump_load!(FolderManifest);
 
-parsec_data!("schema/manifest/folder_manifest.json");
+parsec_data!("schema/manifest/folder_manifest.json5");
 
 impl_transparent_data_format_conversion!(
     FolderManifest,
@@ -432,7 +432,7 @@ pub struct WorkspaceManifest {
     pub children: HashMap<EntryName, EntryID>,
 }
 
-parsec_data!("schema/manifest/workspace_manifest.json");
+parsec_data!("schema/manifest/workspace_manifest.json5");
 
 impl_manifest_dump_load!(WorkspaceManifest);
 
@@ -473,7 +473,7 @@ impl UserManifest {
     }
 }
 
-parsec_data!("schema/manifest/user_manifest.json");
+parsec_data!("schema/manifest/user_manifest.json5");
 
 impl_manifest_dump_load!(UserManifest);
 

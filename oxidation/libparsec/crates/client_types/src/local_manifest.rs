@@ -176,7 +176,7 @@ pub struct LocalFileManifest {
     pub blocks: Vec<Vec<Chunk>>,
 }
 
-parsec_data!("schema/local_file_manifest.json");
+parsec_data!("schema/local_file_manifest.json5");
 
 impl TryFrom<LocalFileManifestData> for LocalFileManifest {
     type Error = &'static str;
@@ -356,7 +356,7 @@ pub struct LocalFolderManifest {
     pub remote_confinement_points: HashSet<EntryID>,
 }
 
-parsec_data!("schema/local_folder_manifest.json");
+parsec_data!("schema/local_folder_manifest.json5");
 
 impl_transparent_data_format_conversion!(
     LocalFolderManifest,
@@ -642,7 +642,7 @@ pub struct LocalWorkspaceManifest {
     pub speculative: bool,
 }
 
-parsec_data!("schema/local_workspace_manifest.json");
+parsec_data!("schema/local_workspace_manifest.json5");
 
 impl_local_manifest_dump_load!(LocalWorkspaceManifest);
 
@@ -924,7 +924,7 @@ pub struct LocalUserManifest {
 
 impl_local_manifest_dump_load!(LocalUserManifest);
 
-parsec_data!("schema/local_user_manifest.json");
+parsec_data!("schema/local_user_manifest.json5");
 
 impl_transparent_data_format_conversion!(
     LocalUserManifest,

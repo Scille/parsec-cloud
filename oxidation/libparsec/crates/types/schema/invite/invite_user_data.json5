@@ -1,0 +1,25 @@
+[
+    {
+        "label": "InviteUserData",
+        "major_versions": [
+            1
+        ],
+        "type": "invite_user_data",
+        "fields": {
+            "requested_device_label": {
+                // Claimer ask for device_label/human_handle, but greeter has final word on this
+                "type": "RequiredOption<DeviceLabel>"
+            },
+            "requested_human_handle": {
+                "type": "RequiredOption<HumanHandle>"
+            },
+            "public_key": {
+                // Note claiming user also imply creating a first device
+                "type": "PublicKey"
+            },
+            "verify_key": {
+                "type": "VerifyKey"
+            }
+        }
+    }
+]

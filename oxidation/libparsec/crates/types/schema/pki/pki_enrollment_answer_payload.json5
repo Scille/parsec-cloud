@@ -1,0 +1,26 @@
+[
+    {
+        "label": "PkiEnrollmentAnswerPayload",
+        "major_versions": [
+            1
+        ],
+        "type": "pki_enrollment_answer_payload",
+        "fields": {
+            "device_id": {
+                "type": "DeviceID"
+            },
+            "device_label": {
+                "type": "RequiredOption<DeviceLabel>"
+            },
+            "human_handle": {
+                "type": "RequiredOption<HumanHandle>"
+            },
+            "profile": {
+                "type": "UserProfile"
+            },
+            "root_verify_key": {
+                "type": "VerifyKey"
+            }
+        }
+    }
+]

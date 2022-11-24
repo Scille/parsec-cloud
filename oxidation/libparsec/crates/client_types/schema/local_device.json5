@@ -1,0 +1,49 @@
+[
+    {
+        "label": "LocalDevice",
+        "major_versions": [
+            1
+        ],
+        "fields": {
+            "organization_addr": {
+                "type": "BackendOrganizationAddr"
+            },
+            "device_id": {
+                "type": "DeviceID"
+            },
+            "device_label": {
+                "type": "RequiredOption<DeviceLabel>",
+                // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
+                "introduced_in": "1.14"
+            },
+            "human_handle": {
+                "type": "RequiredOption<HumanHandle>",
+                // Hack to indicate this field was added in Parsec v1.13, given revision is meaningless for data
+                "introduced_in": "1.13"
+            },
+            "signing_key": {
+                "type": "SigningKey"
+            },
+            "private_key": {
+                "type": "PrivateKey"
+            },
+            "is_admin": {
+                "type": "Boolean"
+            },
+            "profile": {
+                "type": "UserProfile",
+                // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
+                "introduced_in": "1.14"
+            },
+            "user_manifest_id": {
+                "type": "EntryID"
+            },
+            "user_manifest_key": {
+                "type": "SecretKey"
+            },
+            "local_symkey": {
+                "type": "SecretKey"
+            }
+        }
+    }
+]

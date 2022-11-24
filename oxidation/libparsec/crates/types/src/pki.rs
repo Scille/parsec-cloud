@@ -49,7 +49,7 @@ pub struct PkiEnrollmentAnswerPayload {
     pub root_verify_key: VerifyKey,
 }
 
-parsec_data!("schema/pki/pki_enrollment_answer_payload.json");
+parsec_data!("schema/pki/pki_enrollment_answer_payload.json5");
 
 impl_transparent_data_format_conversion!(
     PkiEnrollmentAnswerPayload,
@@ -85,7 +85,7 @@ pub struct PkiEnrollmentSubmitPayload {
     pub requested_device_label: DeviceLabel,
 }
 
-parsec_data!("schema/pki/pki_enrollment_submit_payload.json");
+parsec_data!("schema/pki/pki_enrollment_submit_payload.json5");
 
 impl_transparent_data_format_conversion!(
     PkiEnrollmentSubmitPayload,

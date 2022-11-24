@@ -1,0 +1,26 @@
+[
+    {
+        "label": "RealmRoleCertificate",
+        "major_versions": [
+            1
+        ],
+        "type": "realm_role_certificate",
+        "fields": {
+            "author": {
+                "type": "RequiredOption<DeviceID>"
+            },
+            "timestamp": {
+                "type": "DateTime"
+            },
+            "realm_id": {
+                "type": "RealmID"
+            },
+            "user_id": {
+                "type": "UserID"
+            },
+            "role": {
+                "type": "RequiredOption<RealmRole>"
+            }
+        }
+    }
+]

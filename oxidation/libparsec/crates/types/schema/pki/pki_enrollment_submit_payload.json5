@@ -1,0 +1,22 @@
+[
+    {
+        "label": "PkiEnrollmentSubmitPayload",
+        "major_versions": [
+            1
+        ],
+        "type": "pki_enrollment_submit_payload",
+        "fields": {
+            "verify_key": {
+                "type": "VerifyKey"
+            },
+            "public_key": {
+                "type": "PublicKey"
+            },
+            "requested_device_label": {
+                "type": "DeviceLabel"
+            }
+            // No requested human handle given the accepter should use instead the
+            // information from the submitter's X509 certificate
+        }
+    }
+]

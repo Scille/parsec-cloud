@@ -1,0 +1,43 @@
+[
+    {
+        "label": "LocalUserManifest",
+        "major_versions": [
+            1
+        ],
+        "type": "local_user_manifest",
+        "fields": {
+            "base": {
+                "type": "UserManifest"
+            },
+            "need_sync": {
+                "type": "Boolean"
+            },
+            "updated": {
+                "type": "DateTime"
+            },
+            "last_processed_message": {
+                "type": "Index"
+            },
+            "workspaces": {
+                "type": "List<WorkspaceEntry>"
+            },
+            "speculative": {
+                // Added in Parsec v1.15
+                // Speculative placeholders are created when we want to access the
+                // user manifest but didn't retrieve it from backend yet. This implies:
+                // - non-placeholders cannot be speculative
+                // - the only non-speculative placeholder is the placeholder initialized
+                //   during the initial user claim (by opposition of subsequent device
+                //   claims on the same user)
+                // This speculative information is useful during merge to understand if
+                // a data is not present in the placeholder compared with a remote because:
+                // a) the data is not locally known (speculative is True)
+                // b) the data is known, but has been locally removed (speculative is False)
+                // Prevented to be `required=True` by backward compatibility
+                "type": "Boolean",
+                // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+                "introduced_in": "1.15"
+            }
+        }
+    }
+]

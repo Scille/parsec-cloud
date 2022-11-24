@@ -1,0 +1,29 @@
+[
+    {
+        "label": "LocalFileManifest",
+        "major_versions": [
+            1
+        ],
+        "type": "local_file_manifest",
+        "fields": {
+            "base": {
+                "type": "FileManifest"
+            },
+            "need_sync": {
+                "type": "Boolean"
+            },
+            "updated": {
+                "type": "DateTime"
+            },
+            "size": {
+                "type": "Size"
+            },
+            "blocksize": {
+                "type": "Size"
+            },
+            "blocks": {
+                "type": "List<List<Chunk>>"
+            }
+        }
+    }
+]

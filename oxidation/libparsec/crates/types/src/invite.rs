@@ -239,7 +239,7 @@ pub struct InviteUserData {
     pub verify_key: VerifyKey,
 }
 
-parsec_data!("schema/invite/invite_user_data.json");
+parsec_data!("schema/invite/invite_user_data.json5");
 
 impl_dump_and_encrypt!(InviteUserData);
 impl_decrypt_and_load!(InviteUserData);
@@ -270,7 +270,7 @@ pub struct InviteUserConfirmation {
     pub root_verify_key: VerifyKey,
 }
 
-parsec_data!("schema/invite/invite_user_confirmation.json");
+parsec_data!("schema/invite/invite_user_confirmation.json5");
 
 impl_dump_and_encrypt!(InviteUserConfirmation);
 impl_decrypt_and_load!(InviteUserConfirmation);
@@ -296,7 +296,7 @@ pub struct InviteDeviceData {
     pub verify_key: VerifyKey,
 }
 
-parsec_data!("schema/invite/invite_device_data.json");
+parsec_data!("schema/invite/invite_device_data.json5");
 
 impl_dump_and_encrypt!(InviteDeviceData);
 impl_decrypt_and_load!(InviteDeviceData);
@@ -328,7 +328,7 @@ pub struct InviteDeviceConfirmation {
     pub root_verify_key: VerifyKey,
 }
 
-parsec_data!("schema/invite/invite_device_confirmation.json");
+parsec_data!("schema/invite/invite_device_confirmation.json5");
 
 impl_dump_and_encrypt!(InviteDeviceConfirmation);
 impl_decrypt_and_load!(InviteDeviceConfirmation);

@@ -1,0 +1,29 @@
+[
+    {
+        "label": "DeviceCertificate",
+        "major_versions": [
+            1
+        ],
+        "type": "device_certificate",
+        "fields": {
+            "author": {
+                "type": "CertificateSignerOwned"
+            },
+            "timestamp": {
+                "type": "DateTime"
+            },
+            "device_id": {
+                "type": "DeviceID"
+            },
+            "device_label": {
+                // Device label can be none in case of redacted certificate
+                "type": "RequiredOption<DeviceLabel>",
+                // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
+                "introduced_in": "1.14"
+            },
+            "verify_key": {
+                "type": "VerifyKey"
+            }
+        }
+    }
+]

@@ -1,0 +1,36 @@
+[
+    {
+        "label": "UserManifest",
+        "major_versions": [
+            1
+        ],
+        "type": "user_manifest",
+        "fields": {
+            "author": {
+                "type": "DeviceID",
+                "default": "crate::manifest::generate_local_author_legacy_placeholder"
+            },
+            "timestamp": {
+                "type": "DateTime"
+            },
+            "id": {
+                "type": "EntryID"
+            },
+            "version": {
+                "type": "Version"
+            },
+            "created": {
+                "type": "DateTime"
+            },
+            "updated": {
+                "type": "DateTime"
+            },
+            "last_processed_message": {
+                "type": "Index"
+            },
+            "workspaces": {
+                "type": "List<WorkspaceEntry>"
+            }
+        }
+    }
+]

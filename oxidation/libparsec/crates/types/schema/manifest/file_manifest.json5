@@ -1,0 +1,42 @@
+[
+    {
+        "label": "FileManifest",
+        "major_versions": [
+            1
+        ],
+        "type": "file_manifest",
+        "fields": {
+            "author": {
+                "type": "DeviceID",
+                "default": "crate::manifest::generate_local_author_legacy_placeholder"
+            },
+            "timestamp": {
+                "type": "DateTime"
+            },
+            "id": {
+                "type": "EntryID"
+            },
+            "parent": {
+                "type": "EntryID"
+            },
+            "version": {
+                "type": "Version"
+            },
+            "created": {
+                "type": "DateTime"
+            },
+            "updated": {
+                "type": "DateTime"
+            },
+            "size": {
+                "type": "Size"
+            },
+            "blocksize": {
+                "type": "Size"
+            },
+            "blocks": {
+                "type": "List<BlockAccess>"
+            }
+        }
+    }
+]

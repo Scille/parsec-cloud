@@ -1,0 +1,36 @@
+{
+    "title": "Type schema",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": [
+            "label",
+            "major_versions",
+            "fields"
+        ],
+        "additionalProperties": false,
+        "properties": {
+            "label": {
+                "type": "string",
+                "description": "Name of the custom type"
+            },
+            "major_versions": {
+                "type": "array",
+                "description": "The list of MAJOR versions where the type is present",
+                "items": {
+                    "type": "number"
+                }
+            },
+            "introduced_in": {
+                "$ref": "./major-minor-string.schema.json"
+            },
+            "fields": {
+                "$ref": "./fields.schema.json"
+            },
+            "type": {
+                "type": "string",
+                "description": "type identifier"
+            }
+        }
+    }
+}

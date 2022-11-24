@@ -1,0 +1,33 @@
+[
+    {
+        "label": "WorkspaceManifest",
+        "major_versions": [
+            1
+        ],
+        "type": "workspace_manifest",
+        "fields": {
+            "author": {
+                "type": "DeviceID",
+                "default": "crate::manifest::generate_local_author_legacy_placeholder"
+            },
+            "timestamp": {
+                "type": "DateTime"
+            },
+            "id": {
+                "type": "EntryID"
+            },
+            "version": {
+                "type": "Version"
+            },
+            "created": {
+                "type": "DateTime"
+            },
+            "updated": {
+                "type": "DateTime"
+            },
+            "children": {
+                "type": "Map<EntryName, EntryID>"
+            }
+        }
+    }
+]

@@ -146,8 +146,16 @@ repos:
     rev: 0.18.4
     hooks:
       - id: check-jsonschema
-        name: Validate protocol files with jsonschema
+        alias: prot-json
+        name: Validate protocol files with json schema
         files: ^oxidation/libparsec/crates/protocol/schema/
         types_or: [ json5 ]
         args: [ --schemafile, json_schema/protocol.schema.json ]
+        additional_dependencies: [ json5 ]
+      - id: check-jsonschema
+        alias: type-json
+        name: Validate type files with json schema
+        files: ^oxidation/libparsec/crates/(types|client_types)/schema/
+        types_or: [ json5 ]
+        args: [ --schemafile, json_schema/type.schema.json ]
         additional_dependencies: [ json5 ]
