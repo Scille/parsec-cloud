@@ -17,7 +17,7 @@ use crate::{
 */
 
 #[pyclass]
-pub struct SASCode(pub libparsec::types::SASCode);
+pub(crate) struct SASCode(pub libparsec::types::SASCode);
 
 crate::binding_utils::gen_proto!(SASCode, __repr__);
 crate::binding_utils::gen_proto!(SASCode, __str__);
@@ -27,7 +27,7 @@ crate::binding_utils::gen_proto!(SASCode, __hash__);
 #[pymethods]
 impl SASCode {
     #[new]
-    pub fn new(code: &str) -> PyResult<Self> {
+    fn new(code: &str) -> PyResult<Self> {
         match code.parse::<libparsec::types::SASCode>() {
             Ok(sas) => Ok(Self(sas)),
             Err(err) => Err(PyValueError::new_err(err)),
@@ -35,7 +35,7 @@ impl SASCode {
     }
 
     #[classmethod]
-    pub fn from_int(_cls: &PyType, num: u32) -> PyResult<Self> {
+    fn from_int(_cls: &PyType, num: u32) -> PyResult<Self> {
         match libparsec::types::SASCode::try_from(num) {
             Ok(sas) => Ok(Self(sas)),
             Err(err) => Err(PyValueError::new_err(err)),
@@ -70,7 +70,7 @@ pub(crate) fn generate_sas_codes<'p>(
 }
 
 #[pyfunction]
-pub fn generate_sas_code_candidates<'p>(
+pub(crate) fn generate_sas_code_candidates<'p>(
     py: Python<'p>,
     valid_sas: &SASCode,
     size: usize,
@@ -89,7 +89,7 @@ pub fn generate_sas_code_candidates<'p>(
 */
 
 #[pyclass]
-pub struct InviteUserData(pub libparsec::types::InviteUserData);
+pub(crate) struct InviteUserData(pub libparsec::types::InviteUserData);
 
 crate::binding_utils::gen_proto!(InviteUserData, __repr__);
 
@@ -97,7 +97,7 @@ crate::binding_utils::gen_proto!(InviteUserData, __repr__);
 impl InviteUserData {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [
@@ -164,7 +164,7 @@ impl InviteUserData {
 */
 
 #[pyclass]
-pub struct InviteUserConfirmation(pub libparsec::types::InviteUserConfirmation);
+pub(crate) struct InviteUserConfirmation(pub libparsec::types::InviteUserConfirmation);
 
 crate::binding_utils::gen_proto!(InviteUserConfirmation, __repr__);
 
@@ -172,7 +172,7 @@ crate::binding_utils::gen_proto!(InviteUserConfirmation, __repr__);
 impl InviteUserConfirmation {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [device_id: DeviceID, "device_id"],
@@ -245,7 +245,7 @@ impl InviteUserConfirmation {
 */
 
 #[pyclass]
-pub struct InviteDeviceData(pub libparsec::types::InviteDeviceData);
+pub(crate) struct InviteDeviceData(pub libparsec::types::InviteDeviceData);
 
 crate::binding_utils::gen_proto!(InviteDeviceData, __repr__);
 
@@ -253,7 +253,7 @@ crate::binding_utils::gen_proto!(InviteDeviceData, __repr__);
 impl InviteDeviceData {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [
@@ -300,7 +300,7 @@ impl InviteDeviceData {
 */
 
 #[pyclass]
-pub struct InviteDeviceConfirmation(pub libparsec::types::InviteDeviceConfirmation);
+pub(crate) struct InviteDeviceConfirmation(pub libparsec::types::InviteDeviceConfirmation);
 
 crate::binding_utils::gen_proto!(InviteDeviceConfirmation, __repr__);
 
@@ -308,7 +308,7 @@ crate::binding_utils::gen_proto!(InviteDeviceConfirmation, __repr__);
 impl InviteDeviceConfirmation {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [device_id: DeviceID, "device_id"],

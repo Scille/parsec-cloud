@@ -29,7 +29,7 @@ crate::binding_utils::gen_proto!(EntryName, __hash__);
 #[pymethods]
 impl EntryName {
     #[new]
-    pub fn new(name: String) -> PyResult<Self> {
+    fn new(name: String) -> PyResult<Self> {
         match name.parse::<libparsec::types::EntryName>() {
             Ok(en) => Ok(Self(en)),
             Err(err) => match err {
@@ -62,7 +62,7 @@ crate::binding_utils::gen_proto!(WorkspaceEntry, __richcmp__, eq);
 impl WorkspaceEntry {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [id: EntryID, "id"],
@@ -185,7 +185,7 @@ crate::binding_utils::gen_proto!(BlockAccess, __richcmp__, eq);
 impl BlockAccess {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [id: BlockID, "id"],
@@ -274,7 +274,7 @@ crate::binding_utils::gen_proto!(FileManifest, __richcmp__, eq);
 impl FileManifest {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],
@@ -470,7 +470,7 @@ crate::binding_utils::gen_proto!(FolderManifest, __richcmp__, eq);
 impl FolderManifest {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],
@@ -646,7 +646,7 @@ crate::binding_utils::gen_proto!(WorkspaceManifest, __richcmp__, eq);
 impl WorkspaceManifest {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],
@@ -811,7 +811,7 @@ crate::binding_utils::gen_proto!(UserManifest, __richcmp__, eq);
 impl UserManifest {
     #[new]
     #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],

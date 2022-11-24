@@ -40,7 +40,7 @@ def catch_export_recovery_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.parametrize("kind", ["ok", "offline", "already_exists"])
+@pytest.mark.parametrize("kind", ["ok", "offline"])
 async def test_export_recovery_device(
     gui,
     aqtbot,
@@ -72,7 +72,7 @@ async def test_export_recovery_device(
     assert exp_w.current_page.combo_devices.count() == 1
     assert exp_w.current_page.combo_devices.currentData() == alice.slug
 
-    exp_w.current_page.label_file_path.setText(str(tmp_path))
+    exp_w.current_page.label_file_path.setText(str(tmp_path / get_recovery_device_file_name(alice)))
 
     exp_w.current_page._check_infos()
 
@@ -109,19 +109,6 @@ async def test_export_recovery_device(
                 ]
 
             await aqtbot.wait_until(_error_shown)
-
-    elif kind == "already_exists":
-        file_name = get_recovery_device_file_name(alice)
-        (tmp_path / file_name).touch()
-
-        aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
-
-        def _error_shown():
-            assert autoclose_dialog.dialogs == [
-                ("Error", translate("TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"))
-            ]
-
-        await aqtbot.wait_until(_error_shown)
 
 
 @pytest.mark.gui
