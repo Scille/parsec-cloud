@@ -386,7 +386,7 @@ jobs:
 
       - name: Install rust toolchain
         id: rust-toolchain
-        uses: dtolnay/rust-toolchain@2e4fc08e24c79a982d0b6f4638011718d61c0eee
+        uses: dtolnay/rust-toolchain@55c7845fad90d0ae8b2e83715cb900e5e861e8cb
         with:
           toolchain: ${{ env.rust-version }}
           targets: armv7-linux-androideabi, i686-linux-android, aarch64-linux-android, x86_64-linux-android
