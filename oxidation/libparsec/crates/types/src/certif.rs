@@ -33,17 +33,18 @@ fn check_author_allow_root(
     expected_author: CertificateSignerRef,
 ) -> DataResult<()> {
     match (author, expected_author) {
-        (CertificateSignerOwned::User(a_id), CertificateSignerRef::User(ea_id))
-            if a_id != ea_id =>
-        {
+        (
+            CertificateSignerOwned::User(author_id),
+            CertificateSignerRef::User(expected_author_id),
+        ) if author_id != expected_author_id => {
             return Err(DataError::UnexpectedAuthor {
-                expected: ea_id.clone(),
-                got: Some(a_id.clone()),
+                expected: expected_author_id.clone(),
+                got: Some(author_id.clone()),
             })
         }
-        (CertificateSignerOwned::Root, CertificateSignerRef::User(ea_id)) => {
+        (CertificateSignerOwned::Root, CertificateSignerRef::User(expected_author_id)) => {
             return Err(DataError::UnexpectedAuthor {
-                expected: ea_id.clone(),
+                expected: expected_author_id.clone(),
                 got: None,
             })
         }
