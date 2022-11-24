@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import AsyncIterator, Callable
 
 import pytest
+import trio
 from hypothesis_trio.stateful import TrioAsyncioRuleBasedStateMachine, run_state_machine_as_test
 
 from parsec._parsec import (
@@ -151,9 +152,8 @@ def user_fs_offline_state_machine(
                 async with user_fs_factory(device=device) as user_fs:
                     await started_cb(user_fs=user_fs)
 
-            self.user_fs_controller = await self.get_root_nursery().start(
-                call_with_control, _user_fs_controlled_cb
-            )
+            nursery: trio.Nursery = self.get_root_nursery()
+            self.user_fs_controller = await nursery.start(call_with_control, _user_fs_controlled_cb)
             return self.user_fs_controller
 
         async def stop_user_fs(self):
@@ -169,6 +169,8 @@ def user_fs_offline_state_machine(
         async def reset_user_fs(self, device):
             await self.stop_user_fs()
             persistent_mockup.clear()
+            del self.user_fs_controller.user_fs
+            del self.user_fs_controller
             clear_database_dir(True)
             await self.start_user_fs(device)
 
