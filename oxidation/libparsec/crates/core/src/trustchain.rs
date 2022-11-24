@@ -515,7 +515,7 @@ impl TrustchainContext {
         user_certif: Vec<u8>,
         revoked_user_certif: Option<Vec<u8>>,
         devices_certifs: Vec<Vec<u8>>,
-        expected_user_id: Option<UserID>,
+        expected_user_id: Option<&UserID>,
     ) -> TrustchainResult<(
         UserCertificate,
         Option<RevokedUserCertificate>,
@@ -525,9 +525,9 @@ impl TrustchainContext {
             UserCertificate::unsecure_load(&user_certif).unwrap_or_else(|_| unreachable!());
 
         if let Some(expected_user_id) = expected_user_id {
-            if expected_user_id != user_id {
+            if expected_user_id != &user_id {
                 return Err(TrustchainError::UnexpectedCertificate {
-                    expected: expected_user_id,
+                    expected: expected_user_id.clone(),
                     got: user_id,
                 });
             }

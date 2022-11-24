@@ -39,7 +39,7 @@ fn test_bad_expected_user(
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
-            Some(bob.user_id().clone()),
+            Some(bob.user_id()),
         )
         .unwrap_err();
 
@@ -89,7 +89,7 @@ fn test_verify_no_trustchain(
                 alice2_device_certif.dump_and_sign(&alice.signing_key),
                 alice3_device_certif.dump_and_sign(&alice.signing_key),
             ],
-            Some(alice.user_id().clone()),
+            Some(alice.user_id()),
         )
         .unwrap();
 
@@ -128,7 +128,7 @@ fn test_bad_user_self_signed(
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
-            Some(alice.user_id().clone()),
+            Some(alice.user_id()),
         )
         .unwrap_err();
 
@@ -166,7 +166,7 @@ fn test_bad_revoked_user_self_signed(
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             Some(alice_revoked_user_certif.dump_and_sign(&alice.signing_key)),
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
-            Some(alice.user_id().clone()),
+            Some(alice.user_id()),
         )
         .unwrap_err();
 
@@ -212,7 +212,7 @@ fn test_invalid_loop_on_device_certif_trustchain_error(
                 alice_device_certif.dump_and_sign(&coolorg.signing_key),
                 alice_device_loop_certif.dump_and_sign(&bob.signing_key),
             ],
-            Some(alice.user_id().clone()),
+            Some(alice.user_id()),
         )
         .unwrap_err();
 
@@ -269,7 +269,7 @@ fn test_device_signature_while_revoked(
             mallory_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![mallory_device_certif.dump_and_sign(&alice.signing_key)],
-            Some(mallory.user_id().clone()),
+            Some(mallory.user_id()),
         )
         .unwrap_err();
 
@@ -326,7 +326,7 @@ fn test_user_signature_while_revoked(
             mallory_user_certif.dump_and_sign(&alice.signing_key),
             None,
             vec![mallory_device_certif.dump_and_sign(&coolorg.signing_key)],
-            Some(mallory.user_id().clone()),
+            Some(mallory.user_id()),
         )
         .unwrap_err();
 
@@ -389,7 +389,7 @@ fn test_revoked_user_signature_while_revoked(
             mallory_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![mallory_device_certif.dump_and_sign(&coolorg.signing_key)],
-            Some(mallory.user_id().clone()),
+            Some(mallory.user_id()),
         )
         .unwrap_err();
 
@@ -437,7 +437,7 @@ fn test_create_user_not_admin(
             alice_user_certif.dump_and_sign(&bob.signing_key),
             None,
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
-            Some(alice.user_id().clone()),
+            Some(alice.user_id()),
         )
         .unwrap_err();
 
@@ -482,7 +482,7 @@ fn test_revoked_user_not_admin(
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
-            Some(alice.user_id().clone()),
+            Some(alice.user_id()),
         )
         .unwrap_err();
 
@@ -534,7 +534,7 @@ fn test_verify_user_with_broken_trustchain(
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
-            Some(alice.user_id().clone()),
+            Some(alice.user_id()),
         )
         .unwrap_err();
 
