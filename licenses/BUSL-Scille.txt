@@ -2,7 +2,7 @@ PARSEC BUSINESS SOURCE LICENSE AGREEMENT
 
 Business Source License 1.1
 Licensor:  Scille SAS
-Licensed Work:  Parsec v2.14.1
+Licensed Work:  Parsec v2.14.1+dev
 The Licensed Work is © 2016-2021 Scille SAS
 
 Additional Use Grant: You may make production use of the Licensed Work, provided
