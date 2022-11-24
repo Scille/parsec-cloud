@@ -180,7 +180,9 @@ class Greeter:
 
 class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal(object)  # QtToTrioJob or None
+    failed = pyqtSignal(
+        object
+    )  # Usually a QtToTrioJob but can be None, we have to type it as object for Qt signals
 
     wait_peer_success = pyqtSignal(QtToTrioJob)
     wait_peer_error = pyqtSignal(QtToTrioJob)

@@ -201,7 +201,9 @@ class Claimer:
 
 class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
     succeeded = pyqtSignal(LocalDevice, DeviceFileType, str)
-    failed = pyqtSignal(QtToTrioJob)  # QtToTrioJob or None
+    failed = pyqtSignal(
+        object
+    )  # Usually a QtToTrioJob but can be None, we have to type it as object for Qt signals
 
     def __init__(
         self, config: CoreConfig, jobs_ctx: QtToTrioJobScheduler, new_device: LocalDevice
@@ -267,7 +269,9 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
 
 class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal(QtToTrioJob)  # QtToTrioJob or None
+    failed = pyqtSignal(
+        object
+    )  # Usually a QtToTrioJob but can be None, we have to type it as object for Qt signals
 
     signify_trust_success = pyqtSignal(QtToTrioJob)
     signify_trust_error = pyqtSignal(QtToTrioJob)
@@ -464,7 +468,9 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
 
 class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal(object)  # QtToTrioJob or None
+    failed = pyqtSignal(
+        object
+    )  # Usually a QtToTrioJob but can be None, we have to type it as object for Qt signals
 
     claim_success = pyqtSignal(QtToTrioJob)
     claim_error = pyqtSignal(QtToTrioJob)
@@ -563,7 +569,9 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
 
 class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal(object)  # QtToTrioJob or None
+    failed = pyqtSignal(
+        object
+    )  # Usually a QtToTrioJob but can be None, we have to type it as object for Qt signals
 
     wait_peer_success = pyqtSignal(QtToTrioJob)
     wait_peer_error = pyqtSignal(QtToTrioJob)

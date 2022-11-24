@@ -146,7 +146,9 @@ async def _do_send_email(
 
 class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal(object)  # QtToTrioJob or None
+    failed = pyqtSignal(
+        object
+    )  # Usually a QtToTrioJob but can be None, we have to type it as object for Qt signals
 
     wait_peer_success = pyqtSignal(QtToTrioJob)
     wait_peer_error = pyqtSignal(QtToTrioJob)
@@ -292,7 +294,9 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
 
 class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal(object)
+    failed = pyqtSignal(
+        object
+    )  # Usually a QtToTrioJob but can be None, we have to type it as object for Qt signals
 
     signify_trust_success = pyqtSignal(QtToTrioJob)
     signify_trust_error = pyqtSignal(QtToTrioJob)
