@@ -3,7 +3,7 @@
 use crate::{
     api_crypto::VerifyKey,
     binding_utils::gen_proto,
-    certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate},
+    data::{DeviceCertificate, RevokedUserCertificate, UserCertificate},
     ids::{DeviceID, UserID},
     protocol::Trustchain,
     time::{self, DateTime, TimeProvider},

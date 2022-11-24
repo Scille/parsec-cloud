@@ -9,8 +9,8 @@ use pyo3::{
 
 use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
+    data::EntryName,
     ids::{DeviceID, EntryID},
-    manifest::EntryName,
     time::DateTime,
 };
 
@@ -56,7 +56,7 @@ impl MessageContent {
     }
 
     #[classmethod]
-    pub fn decrypt_verify_and_load_for(
+    fn decrypt_verify_and_load_for(
         _cls: &PyType,
         ciphered: &[u8],
         recipient_privkey: &PrivateKey,
@@ -90,7 +90,7 @@ impl MessageContent {
         })
     }
 
-    pub fn dump_sign_and_encrypt_for<'py>(
+    fn dump_sign_and_encrypt_for<'py>(
         &self,
         author_signkey: &SigningKey,
         recipient_pubkey: &PublicKey,
