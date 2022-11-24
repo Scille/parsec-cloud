@@ -57,6 +57,10 @@ impl WorkspaceStorage {
         ))
     }
 
+    fn close_connections(&self) {
+        self.0.close_connections()
+    }
+
     fn set_prevent_sync_pattern(&mut self, py: Python, pattern: &Regex) -> PyResult<()> {
         self.1 = Some(pattern.clone());
         let pattern = &pattern.0;
