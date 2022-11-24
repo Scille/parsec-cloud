@@ -1,14 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use crate::{FSError, FSResult, SQLITE_DISK_FULL_MSG};
-
 use diesel::{connection::SimpleConnection, Connection, SqliteConnection};
-
 use std::{
     ops::DerefMut,
     path::PathBuf,
     sync::{Arc, Mutex, MutexGuard},
 };
+
+use crate::{FSError, FSResult};
 
 /// Maximum Number Of Host Parameters In A Single SQL Statement
 /// https://www.sqlite.org/limits.html#max_variable_number
@@ -96,17 +95,15 @@ impl<'a> LockedSqliteConnection<'a> {
     where
         F: FnOnce(&mut SqliteConnection) -> Result<T, diesel::result::Error>,
     {
-        let conn = self.deref_mut().map_err(ExecError::Internal)?;
+        let conn = self.get_raw_conn().map_err(ExecError::Internal)?;
 
         let res = f(conn);
 
         match res {
             // We've got a disk full error, we need to stop sending request to the database.
-            Err(diesel::result::Error::DatabaseError(_, err_msg))
-                if err_msg.message() == *SQLITE_DISK_FULL_MSG =>
-            {
+            Err(err @ diesel::result::Error::DatabaseError(_, _)) => {
                 *self.conn = None;
-                Err(ExecError::Internal(FSError::NoSpaceLeftOnDevice))
+                Err(ExecError::Internal(FSError::from(err)))
             }
             Err(e) => Err(ExecError::DieselError(e)),
             Ok(ok) => Ok(ok),
@@ -124,7 +121,7 @@ impl<'a> LockedSqliteConnection<'a> {
         })
     }
 
-    fn deref_mut(&mut self) -> FSResult<&mut SqliteConnection> {
+    fn get_raw_conn(&mut self) -> FSResult<&mut SqliteConnection> {
         self.conn
             .deref_mut()
             .as_mut()
