@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import logging
 from unittest.mock import ANY
 
 import pytest
@@ -143,6 +144,37 @@ async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitati
 
         assert ch.client_api_version == API_VERSION
         assert ch.backend_api_version == API_VERSION
+
+
+@pytest.mark.trio
+async def test_api_version_in_logs_on_handshake(backend_asgi_app, backend, alice, caplog):
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="zack@example.com",
+    )
+
+    ch = InvitedClientHandshake(
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.USER,
+        token=invitation.token,
+    )
+    client = backend_asgi_app.test_client()
+    with caplog.at_level(logging.INFO):
+        async with client.websocket("/ws") as ws:
+
+            challenge_req = await ws.receive()
+            answer_req = ch.process_challenge_req(challenge_req)
+
+            await ws.send(answer_req)
+            result_req = await ws.receive()
+            ch.process_result_req(result_req)
+
+            # Sanity checks
+            assert ch.client_api_version == API_VERSION
+            assert ch.backend_api_version == API_VERSION
+
+        assert f"(client version: {API_VERSION})" in caplog.text
 
 
 @pytest.mark.trio
