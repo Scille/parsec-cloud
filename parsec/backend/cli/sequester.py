@@ -777,10 +777,20 @@ def export_realm(
 @click.option(
     "--output", type=Path, required=True, help="Directory where to dump the content of the realm"
 )
+@click.option(
+    "--filter-date",
+    type=click.DateTime(formats=["%Y-%m-%d"]),
+    required=False,
+    help="Extract at a specific date; format year-month-day",
+)
 # Add --debug
 @debug_config_options
 def extract_realm_export(
-    service_decryption_key: Path, input: Path, output: Path, debug: bool
+    service_decryption_key: Path,
+    input: Path,
+    output: Path,
+    filter_date: click.DateTime,
+    debug: bool,
 ) -> int:
     with cli_exception_handler(debug):
         # Finally a command that is not async !
@@ -788,9 +798,15 @@ def extract_realm_export(
         # a synchronous api anyway
         decryption_key = oscrypto.asymmetric.load_private_key(service_decryption_key.read_bytes())
 
+        # Convert filter_date from click.Datetime to parsec.Datetime
+        date: DateTime
+        if filter_date:
+            date = DateTime.from_timestamp(date.timestamp())
+        else:
+            date = DateTime.now()
         ret = 0
         for fs_path, event_type, event_msg in extract_workspace(
-            output=output, export_db=input, decryption_key=decryption_key
+            output=output, export_db=input, decryption_key=decryption_key, filter_on_date=date
         ):
             if event_type == RealmExportProgress.EXTRACT_IN_PROGRESS:
                 fs_path_display = click.style(str(fs_path), fg="yellow")
