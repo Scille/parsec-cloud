@@ -817,7 +817,10 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     dump_path = tmp_path / "extract_dump"
     list(
         extract_workspace(
-            output=dump_path, export_db=output_db_path, decryption_key=service_decryption_key
+            output=dump_path,
+            export_db=output_db_path,
+            decryption_key=service_decryption_key,
+            filter_on_date=DateTime.now(),
         )
     )
 
@@ -828,3 +831,19 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     assert {x.name for x in (dump_path / "folder2").iterdir()} == {"file2", "folder3"}
     assert (dump_path / "folder2/file2").read_bytes() == b"a" * 10 + b"b" * 10
     assert {x.name for x in (dump_path / "folder2/folder3").iterdir()} == set()
+
+    # Extract dump at 2000-03-14, where folder2 was empty
+    dump_path_ts = tmp_path / "extract_dump_ts"
+    list(
+        extract_workspace(
+            output=dump_path_ts,
+            export_db=output_db_path,
+            decryption_key=service_decryption_key,
+            filter_on_date=DateTime(2000, 3, 14),
+        )
+    )
+    # Check the result
+    assert {x.name for x in dump_path_ts.iterdir()} == {"file1", "folder1", "folder2"}
+    assert (dump_path_ts / "file1").read_bytes() == b""
+    assert {x.name for x in (dump_path_ts / "folder1").iterdir()} == set()
+    assert {x.name for x in (dump_path_ts / "folder2").iterdir()} == set()
