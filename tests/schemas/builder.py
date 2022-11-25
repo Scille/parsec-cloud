@@ -295,6 +295,10 @@ def generate_api_protocol_specs():
                         "organization_config",
                         "organization_stats",
                         "ping",
+                        "pki_enrollment_info",
+                        "pki_enrollment_accept",
+                        "pki_enrollment_reject",
+                        "pki_enrollment_list",
                         "realm_create",
                         "realm_finish_reencryption_maintenance",
                         "realm_get_role_certificates",
@@ -322,7 +326,9 @@ def generate_api_protocol_specs():
             used_cmds_serializers.add(cmd_serializer)  # Keep track for sanity check
             cmds_set_specs[cmd_name] = cmd_serializer_to_spec(cmd_serializer)
 
-        specs["APIv1" if cmds_set_is_apiv1 else "APIv2"][cmds_set_name] = cmds_set_specs
+        # Don't generate category when spec_set is empty
+        if len(cmds_set_specs) > 0:
+            specs["APIv1" if cmds_set_is_apiv1 else "APIv2"][cmds_set_name] = cmds_set_specs
 
     # Finally ensure no command serializer has been omitted
     unused_cmds_serializers = set(cmd_serializers.values()) - used_cmds_serializers

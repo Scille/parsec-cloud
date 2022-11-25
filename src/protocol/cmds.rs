@@ -86,15 +86,9 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(x) => {
                 VlobMaintenanceSaveReencryptionBatchReq(x).into_py(py)
             }
-            AnyCmdReq::PkiEnrollmentAccept(_) => {
-                todo!("missing python binding for `pki_enrollment_accept`")
-            }
-            AnyCmdReq::PkiEnrollmentList(_) => {
-                todo!("missing python binding for `pki_enrollment_list`")
-            }
-            AnyCmdReq::PkiEnrollmentReject(_) => {
-                todo!("missing python binding for `pki_enrollment_reject`")
-            }
+            AnyCmdReq::PkiEnrollmentAccept(x) => PkiEnrollmentAcceptReq(x).into_py(py),
+            AnyCmdReq::PkiEnrollmentList(x) => PkiEnrollmentListReq(x).into_py(py),
+            AnyCmdReq::PkiEnrollmentReject(x) => PkiEnrollmentRejectReq(x).into_py(py),
         })
     }
 }

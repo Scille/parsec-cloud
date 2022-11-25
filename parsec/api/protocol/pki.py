@@ -4,8 +4,21 @@ from __future__ import annotations
 from typing import Dict, cast
 from enum import Enum
 
-from parsec._parsec import EnrollmentID
-from parsec.api.protocol.base import BaseRepSchema, BaseReqSchema, CmdSerializer
+from parsec._parsec import (
+    EnrollmentID,
+    PkiEnrollmentAcceptRep,
+    PkiEnrollmentAcceptReq,
+    PkiEnrollmentListRep,
+    PkiEnrollmentListReq,
+    PkiEnrollmentRejectRep,
+    PkiEnrollmentRejectReq,
+)
+from parsec.api.protocol.base import (
+    ApiCommandSerializer,
+    BaseRepSchema,
+    BaseReqSchema,
+    CmdSerializer,
+)
 from parsec.serde import BaseSchema, OneOfSchema, fields
 
 
@@ -125,9 +138,7 @@ class PkiEnrollmentListRepSchema(BaseRepSchema):
     enrollments = fields.List(fields.Nested(PkiEnrollmentListItemSchema), required=True)
 
 
-pki_enrollment_list_serializer = CmdSerializer(
-    PkiEnrollmentListReqSchema, PkiEnrollmentListRepSchema
-)
+pki_enrollment_list_serializer = ApiCommandSerializer(PkiEnrollmentListReq, PkiEnrollmentListRep)
 
 
 # pki_enrollment_reject
@@ -141,8 +152,8 @@ class PkiEnrollmentRejectRepSchema(BaseRepSchema):
     pass
 
 
-pki_enrollment_reject_serializer = CmdSerializer(
-    PkiEnrollmentRejectReqSchema, PkiEnrollmentRejectRepSchema
+pki_enrollment_reject_serializer = ApiCommandSerializer(
+    PkiEnrollmentRejectReq, PkiEnrollmentRejectRep
 )
 
 
@@ -167,6 +178,6 @@ class PkiEnrollmentAcceptRepSchema(BaseRepSchema):
     pass
 
 
-pki_enrollment_accept_serializer = CmdSerializer(
-    PkiEnrollmentAcceptReqSchema, PkiEnrollmentAcceptRepSchema
+pki_enrollment_accept_serializer = ApiCommandSerializer(
+    PkiEnrollmentAcceptReq, PkiEnrollmentAcceptRep
 )

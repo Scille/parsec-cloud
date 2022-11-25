@@ -4,8 +4,8 @@ from __future__ import annotations
 from typing import Any, Callable, Coroutine, Dict, List
 from collections import defaultdict
 import attr
-
 from parsec._parsec import DateTime, EnrollmentID
+
 from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.memory.user import (
