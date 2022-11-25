@@ -30,15 +30,6 @@ def test_timestamp_out_of_ballpark_rep_schema_compatibility():
         client_timestamp=client_timestamp,
     )
 
-    # Backend API < 2.4 with newer clients
-    RealmCreateRepBadTimestamp(
-        reason=None,
-        ballpark_client_early_offset=None,
-        ballpark_client_late_offset=None,
-        backend_timestamp=None,
-        client_timestamp=None,
-    )
-
 
 def test_handshake_challenge_schema_compatibility():
 

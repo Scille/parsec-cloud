@@ -611,16 +611,17 @@ fn serde_realm_update_roles_req(#[case] raw_expected: (&[u8], authenticated_cmds
         authenticated_cmds::realm_update_roles::Rep::InMaintenance
     )
 )]
-#[case::user_revoked(
-    (
-        // Generated from Python implementation (Parsec v2.11.1+dev)
-        // Content:
-        //   status: "user_revoked"
-        //
-        &hex!("81a6737461747573ac757365725f7265766f6b6564")[..],
-        authenticated_cmds::realm_update_roles::Rep::UserRevoked
-    )
-)]
+// TODO: Test me on API-v3
+// #[case::user_revoked(
+//     (
+//         // Generated from Python implementation (Parsec v2.11.1+dev)
+//         // Content:
+//         //   status: "user_revoked"
+//         //
+//         &hex!("81a6737461747573ac757365725f7265766f6b6564")[..],
+//         authenticated_cmds::realm_update_roles::Rep::UserRevoked
+//     )
+// )]
 #[case::require_greater_timestamp(
     (
         // Generated from Python implementation (Parsec v2.11.1+dev)

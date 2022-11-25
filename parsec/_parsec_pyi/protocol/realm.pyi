@@ -41,10 +41,10 @@ class RealmCreateRepBadTimestamp(RealmCreateRep):
     def __init__(
         self,
         reason: str | None,
-        ballpark_client_early_offset: float | None,
-        ballpark_client_late_offset: float | None,
-        backend_timestamp: DateTime | None,
-        client_timestamp: DateTime | None,
+        ballpark_client_early_offset: float,
+        ballpark_client_late_offset: float,
+        backend_timestamp: DateTime,
+        client_timestamp: DateTime,
     ) -> None: ...
     @property
     def reason(self) -> str | None: ...

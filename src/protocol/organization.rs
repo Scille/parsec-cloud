@@ -6,7 +6,7 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::v2::{organization_config, organization_stats};
+use libparsec::protocol::authenticated_cmds::v3::{organization_config, organization_stats};
 
 use crate::{
     enumerate::UserProfile,
@@ -226,12 +226,8 @@ impl OrganizationConfigRepOk {
             OrganizationConfigRep(organization_config::Rep::Ok {
                 user_profile_outsider_allowed,
                 active_users_limit,
-                sequester_authority_certificate: libparsec::types::Maybe::Present(
-                    sequester_authority_certificate,
-                ),
-                sequester_services_certificates: libparsec::types::Maybe::Present(
-                    sequester_services_certificates,
-                ),
+                sequester_authority_certificate,
+                sequester_services_certificates,
             }),
         ))
     }
@@ -266,10 +262,9 @@ impl OrganizationConfigRepOk {
             organization_config::Rep::Ok {
                 sequester_authority_certificate,
                 ..
-            } => match sequester_authority_certificate {
-                libparsec::types::Maybe::Present(x) => x.as_ref().map(|x| PyBytes::new(py, x)),
-                _ => None,
-            },
+            } => sequester_authority_certificate
+                .as_ref()
+                .map(|x| PyBytes::new(py, x)),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -283,12 +278,9 @@ impl OrganizationConfigRepOk {
             organization_config::Rep::Ok {
                 sequester_services_certificates,
                 ..
-            } => match sequester_services_certificates {
-                libparsec::types::Maybe::Present(x) => x
-                    .as_ref()
-                    .map(|x| PyTuple::new(py, x.iter().map(|x| PyBytes::new(py, x)))),
-                _ => None,
-            },
+            } => sequester_services_certificates
+                .as_ref()
+                .map(|x| PyTuple::new(py, x.iter().map(|x| PyBytes::new(py, x)))),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }

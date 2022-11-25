@@ -1,9 +1,6 @@
 use libparsec::protocol::{
-    anonymous_cmds::v2::{pki_enrollment_info, pki_enrollment_submit},
-    authenticated_cmds::{
-        v2::pki_enrollment_accept,
-        v2::{pki_enrollment_list, pki_enrollment_reject},
-    },
+    anonymous_cmds::v3::{pki_enrollment_info, pki_enrollment_submit},
+    authenticated_cmds::v3::{pki_enrollment_accept, pki_enrollment_list, pki_enrollment_reject},
 };
 use pyo3::{
     exceptions::PyAttributeError,

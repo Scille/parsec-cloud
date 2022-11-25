@@ -9,7 +9,7 @@ use pyo3::{
 use std::num::NonZeroU64;
 
 use libparsec::protocol::{
-    authenticated_cmds::v2::{device_create, human_find, user_create, user_get, user_revoke},
+    authenticated_cmds::v3::{device_create, human_find, user_create, user_get, user_revoke},
     IntegerBetween1And100,
 };
 

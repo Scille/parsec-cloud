@@ -7,7 +7,7 @@ use pyo3::{
 };
 use std::collections::HashMap;
 
-use libparsec::protocol::authenticated_cmds::v2::{
+use libparsec::protocol::authenticated_cmds::v3::{
     realm_create, realm_finish_reencryption_maintenance, realm_get_role_certificates,
     realm_start_reencryption_maintenance, realm_stats, realm_status, realm_update_roles,
 };
@@ -16,7 +16,7 @@ use crate::{
     ids::{DeviceID, RealmID, UserID},
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
-        gen_rep, OptionalDateTime, OptionalFloat, Reason,
+        gen_rep, Reason,
     },
     time::DateTime,
 };
@@ -93,10 +93,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: OptionalFloat,
-        ballpark_client_late_offset: OptionalFloat,
-        backend_timestamp: OptionalDateTime,
-        client_timestamp: OptionalDateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+        backend_timestamp: DateTime,
+        client_timestamp: DateTime,
     ],
 );
 
@@ -419,10 +419,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: OptionalFloat,
-        ballpark_client_late_offset: OptionalFloat,
-        backend_timestamp: OptionalDateTime,
-        client_timestamp: OptionalDateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+        backend_timestamp: DateTime,
+        client_timestamp: DateTime,
     ],
 );
 
@@ -521,10 +521,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: OptionalFloat,
-        ballpark_client_late_offset: OptionalFloat,
-        backend_timestamp: OptionalDateTime,
-        client_timestamp: OptionalDateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+        backend_timestamp: DateTime,
+        client_timestamp: DateTime,
     ],
 );
 

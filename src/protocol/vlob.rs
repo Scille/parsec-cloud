@@ -8,7 +8,7 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::v2::{
+use libparsec::protocol::authenticated_cmds::v3::{
     vlob_create, vlob_list_versions, vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch, vlob_poll_changes, vlob_read, vlob_update,
 };
@@ -17,7 +17,7 @@ use crate::{
     ids::{DeviceID, RealmID, SequesterServiceID, VlobID},
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
-        gen_rep, Bytes, ListOfBytes, OptionalDateTime, OptionalFloat, Reason,
+        gen_rep, Bytes, ListOfBytes, Reason,
     },
     time::DateTime,
 };
@@ -154,10 +154,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: OptionalFloat,
-        ballpark_client_late_offset: OptionalFloat,
-        backend_timestamp: OptionalDateTime,
-        client_timestamp: OptionalDateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+        backend_timestamp: DateTime,
+        client_timestamp: DateTime,
     ],
     [NotASequesteredOrganization],
     [
@@ -274,9 +274,7 @@ impl VlobReadRepOk {
                 blob,
                 author: author.0,
                 timestamp: timestamp.0,
-                author_last_role_granted_on: libparsec::types::Maybe::Present(
-                    author_last_role_granted_on.0,
-                ),
+                author_last_role_granted_on: author_last_role_granted_on.0,
             }),
         ))
     }
@@ -319,10 +317,7 @@ impl VlobReadRepOk {
             vlob_read::Rep::Ok {
                 author_last_role_granted_on,
                 ..
-            } => match author_last_role_granted_on {
-                libparsec::types::Maybe::Present(x) => Some(DateTime(*x)),
-                _ => None,
-            },
+            } => Some(DateTime(*author_last_role_granted_on)),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -425,10 +420,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: OptionalFloat,
-        ballpark_client_late_offset: OptionalFloat,
-        backend_timestamp: OptionalDateTime,
-        client_timestamp: OptionalDateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+        backend_timestamp: DateTime,
+        client_timestamp: DateTime,
     ],
     [NotASequesteredOrganization],
     [

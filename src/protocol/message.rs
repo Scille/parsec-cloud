@@ -6,7 +6,7 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::v2::message_get;
+use libparsec::protocol::authenticated_cmds::v3::message_get;
 
 use crate::ids::DeviceID;
 use crate::protocol::{

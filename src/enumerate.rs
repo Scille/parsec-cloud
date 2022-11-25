@@ -6,7 +6,7 @@ use pyo3::{
 };
 
 use libparsec::client_types;
-use libparsec::protocol::authenticated_cmds::v2::{invite_delete, invite_new};
+use libparsec::protocol::authenticated_cmds::v3::{invite_delete, invite_new};
 
 #[pyclass]
 #[derive(Clone)]

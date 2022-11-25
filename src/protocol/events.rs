@@ -6,7 +6,7 @@ use crate::{
         Reason,
     },
 };
-use libparsec::protocol::authenticated_cmds::v2::{
+use libparsec::protocol::authenticated_cmds::v3::{
     events_listen::{self, APIEvent},
     events_subscribe,
 };

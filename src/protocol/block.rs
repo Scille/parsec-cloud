@@ -9,7 +9,7 @@ use crate::{
         gen_rep,
     },
 };
-use libparsec::protocol::authenticated_cmds::v2::{block_create, block_read};
+use libparsec::protocol::authenticated_cmds::v3::{block_create, block_read};
 
 #[pyclass]
 #[derive(Clone)]

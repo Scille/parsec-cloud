@@ -31,8 +31,6 @@ use pyo3::{types::PyModule, PyResult, Python};
 pub(crate) type Reason = Option<String>;
 pub(crate) type Bytes = Vec<u8>;
 pub(crate) type ListOfBytes = Vec<Vec<u8>>;
-pub(crate) type OptionalFloat = Option<f64>;
-pub(crate) type OptionalDateTime = Option<crate::time::DateTime>;
 
 macro_rules! rs_to_py {
     ($v: ident, Reason, $py: ident) => {
@@ -53,18 +51,6 @@ macro_rules! rs_to_py {
     };
     ($v: ident, SequesterServiceID, $py: ident) => {
         SequesterServiceID(*$v)
-    };
-    ($v: ident, OptionalDateTime, $py: ident) => {
-        match *$v {
-            libparsec::types::Maybe::Present(v) => Some(DateTime(v)),
-            libparsec::types::Maybe::Absent => None,
-        }
-    };
-    ($v: ident, OptionalFloat, $py: ident) => {
-        match *$v {
-            libparsec::types::Maybe::Present(v) => Some(v),
-            libparsec::types::Maybe::Absent => None,
-        }
     };
     ($v: ident, $ty: ty, $py: ident) => {
         *$v
