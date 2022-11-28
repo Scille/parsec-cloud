@@ -44,24 +44,19 @@ async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("apiv22_organization_cmd_supported", (True, False))
-async def test_init_with_backend_online(
-    running_backend, event_bus, alice, apiv22_organization_cmd_supported
-):
+async def test_init_with_backend_online(running_backend, event_bus, alice):
     monitor_initialized = False
     monitor_teardown = False
 
     # Mock organization config command
     async def _mocked_organization_config(client_ctx, msg):
-        if apiv22_organization_cmd_supported:
-            return {
-                "user_profile_outsider_allowed": True,
-                "active_users_limit": None,
-                "status": "ok",
-            }
-        else:
-            # Backend with API support <2.2, the client should be able to fallback
-            return {"status": "unknown_command"}
+        return {
+            "user_profile_outsider_allowed": True,
+            "active_users_limit": None,
+            "status": "ok",
+            "sequester_authority_certificate": None,
+            "sequester_services_certificates": None,
+        }
 
     _mocked_organization_config._api_info = running_backend.backend.apis[ClientType.AUTHENTICATED][
         "organization_config"
@@ -114,16 +109,12 @@ async def test_init_with_backend_online(
             assert not monitor_teardown
 
             # Test organization config retrieval
-            if apiv22_organization_cmd_supported:
-                assert conn.get_organization_config() == OrganizationConfig(
-                    user_profile_outsider_allowed=True,
-                    active_users_limit=None,
-                    sequester_authority=None,
-                    sequester_services=None,
-                )
-            else:
-                # Default value
-                assert conn.get_organization_config() == default_organization_config
+            assert conn.get_organization_config() == OrganizationConfig(
+                user_profile_outsider_allowed=True,
+                active_users_limit=None,
+                sequester_authority=None,
+                sequester_services=None,
+            )
 
             # Test command
             rep = await conn.cmds.ping("foo")
