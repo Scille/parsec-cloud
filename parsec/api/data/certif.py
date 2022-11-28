@@ -5,10 +5,9 @@ from typing import Any, Dict, Literal
 
 import attr
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, SequesterPublicKeyDer, SequesterVerifyKeyDer
 from parsec.api.data.base import BaseAPIData, BaseAPISignedData, BaseSignedDataSchema
 from parsec.api.protocol import SequesterServiceID, SequesterServiceIDField
-from parsec.sequester_crypto import SequesterEncryptionKeyDer, SequesterVerifyKeyDer
 from parsec.serde import fields, post_load
 from parsec.serde.schema import BaseSchema
 
@@ -41,7 +40,7 @@ class SequesterServiceCertificate(BaseAPIData):
         timestamp = fields.DateTime(required=True)
         service_id = SequesterServiceIDField(required=True)
         service_label = fields.String(required=True)
-        encryption_key_der = fields.SequesterEncryptionKeyDerField(required=True)
+        encryption_key_der = fields.SequesterPublicKeyDerField(required=True)
 
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "SequesterServiceCertificate":  # type: ignore[misc]
@@ -51,4 +50,4 @@ class SequesterServiceCertificate(BaseAPIData):
     timestamp: DateTime
     service_id: SequesterServiceID
     service_label: str
-    encryption_key_der: SequesterEncryptionKeyDer
+    encryption_key_der: SequesterPublicKeyDer

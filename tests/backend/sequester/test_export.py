@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import sqlite3
 
-import oscrypto.asymmetric
 import pytest
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, HashDigest, SecretKey, SequesterPrivateKeyDer
 from parsec.api.data import (
     BlockAccess,
     DeviceCertificate,
@@ -36,7 +35,6 @@ from parsec.backend.postgresql.sequester_export import (
 )
 from parsec.backend.realm import RealmGrantedRole
 from parsec.crypto import HashDigest, SecretKey
-from parsec.sequester_crypto import SequesterEncryptionKeyDer
 from parsec.sequester_export_reader import extract_workspace
 from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
@@ -436,10 +434,8 @@ async def test_sequester_export_full_run(
 async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, alice, bob, adam):
     output_db_path = tmp_path / "export.sqlite"
     realm1 = RealmID.new()
-    service_encryption_key, service_decryption_key = oscrypto.asymmetric.generate_pair(
-        "rsa", bit_size=1024
-    )
-    service_encryption_key = SequesterEncryptionKeyDer(service_encryption_key)
+    service_decryption_key = SequesterPrivateKeyDer.generate()
+    service_encryption_key = service_decryption_key.public_key
 
     # Generate the export db by hand here
     con = sqlite3.connect(output_db_path)

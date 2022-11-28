@@ -1,16 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import oscrypto
 import pytest
 from quart import Response
 
+from parsec._parsec import SequesterPrivateKeyDer
 from parsec.api.data import EntryName
 from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID, UserProfile
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import InviteAlreadyUsedError, InviteNotFoundError, bootstrap_organization
 from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.sequester_crypto import SequesterVerifyKeyDer, sequester_authority_sign
 from parsec.serde import packb
 
 
@@ -115,16 +114,18 @@ async def test_bootstrap_sequester_verify_key(running_backend, backend):
     human_handle = HumanHandle(email="zack@example.com", label="Zack")
     device_label = DeviceLabel("PC1")
 
-    verify_key, signing_key = oscrypto.asymmetric.generate_pair("rsa", bit_size=1024)
+    priv_key = SequesterPrivateKeyDer.generate()
+    verify_key = priv_key.public_key.verify_key
+    signing_key = priv_key.signing_key
+
     ref_data = b"SomeData"
-    ref_data_sign = sequester_authority_sign(signing_key, ref_data)
-    der_verify_key = SequesterVerifyKeyDer(verify_key)
+    ref_data_sign = signing_key.sign(ref_data)
 
     await bootstrap_organization(
         organization_addr,
         human_handle=human_handle,
         device_label=device_label,
-        sequester_authority_verify_key=der_verify_key,
+        sequester_authority_verify_key=verify_key,
     )
 
     organization = await backend.organization.get(org_id)

@@ -8,9 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import Dict, Iterator, List, Mapping, Tuple
 
-from oscrypto.asymmetric import PrivateKey
-
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, SequesterPrivateKeyDer
 from parsec.api.data import (
     DataError,
     DeviceCertificate,
@@ -26,7 +24,6 @@ from parsec.api.data import (
 from parsec.api.data.manifest import AnyRemoteManifest, manifest_verify_and_load
 from parsec.api.protocol import DeviceID, RealmID
 from parsec.crypto import CryptoError, VerifyKey
-from parsec.sequester_crypto import sequester_service_decrypt
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
 REALM_EXPORT_DB_VERSION = 1  # Only supported version so far
@@ -175,7 +172,7 @@ class RealmExportDb:
 @dataclass
 class WorkspaceExport:
     db: RealmExportDb
-    decryption_key: PrivateKey
+    decryption_key: SequesterPrivateKeyDer
     devices_form_internal_id: Dict[int, Tuple[DeviceID, VerifyKey]]
     filter_on_date: DateTime
 
@@ -203,9 +200,8 @@ class WorkspaceExport:
                 raise InconsistentWorkspaceError(f"Missing device certificate for `{author}`")
             timestamp = DateTime.from_timestamp(raw_timestamp / 1000000)
 
-            decrypted_blob = sequester_service_decrypt(
-                decryption_key=self.decryption_key, data=blob
-            )
+            decrypted_blob = self.decryption_key.decrypt(blob)
+
             manifest = manifest_verify_and_load(
                 signed=decrypted_blob,
                 author_verify_key=author_verify_key,
@@ -374,7 +370,7 @@ class WorkspaceExport:
 
 
 def extract_workspace(
-    output: Path, export_db: Path, decryption_key: PrivateKey, filter_on_date: DateTime
+    output: Path, export_db: Path, decryption_key: SequesterPrivateKeyDer, filter_on_date: DateTime
 ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
     with RealmExportDb.open(export_db) as db:
         out_certificates: list[Tuple[int, DeviceCertificate]] = []

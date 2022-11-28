@@ -26,10 +26,10 @@ from parsec._parsec import PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPay
 from parsec._parsec import PrivateKey as _PrivateKey
 from parsec._parsec import PublicKey as _PublicKey
 from parsec._parsec import SecretKey as _SecretKey
+from parsec._parsec import SequesterPublicKeyDer as _SequesterPublicKeyDer
+from parsec._parsec import SequesterVerifyKeyDer as _SequesterVerifyKeyDer
 from parsec._parsec import SigningKey as _SigningKey
 from parsec._parsec import VerifyKey as _VerifyKey
-from parsec.sequester_crypto import SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer
-from parsec.sequester_crypto import SequesterVerifyKeyDer as _SequesterVerifyKeyDer
 from parsec.types import FrozenDict as _FrozenDict
 
 __all__ = (
@@ -495,27 +495,25 @@ class SequesterVerifyKeyDerField(Field[_SequesterVerifyKeyDer]):
 SequesterVerifyKeyDer = SequesterVerifyKeyDerField
 
 
-class SequesterEncryptionKeyDerField(Field[_SequesterEncryptionKeyDer]):
-    def _serialize(
-        self, value: _SequesterEncryptionKeyDer | None, attr: str, obj: Any
-    ) -> bytes | None:
+class SequesterPublicKeyDerField(Field[_SequesterPublicKeyDer]):
+    def _serialize(self, value: _SequesterPublicKeyDer | None, attr: str, obj: Any) -> bytes | None:
         if value is None:
             return None
-        assert isinstance(value, _SequesterEncryptionKeyDer)
+        assert isinstance(value, _SequesterPublicKeyDer)
         return value.dump()
 
     def _deserialize(
         self, value: object, attr: str, data: dict[str, object]
-    ) -> _SequesterEncryptionKeyDer:
+    ) -> _SequesterPublicKeyDer:
         if not isinstance(value, bytes):
             raise ValidationError("Expecting bytes")
         try:
-            return _SequesterEncryptionKeyDer(value)
+            return _SequesterPublicKeyDer(value)
         except Exception as exc:
             raise ValidationError(str(exc)) from exc
 
 
-SequesterEncryptionKeyDer = SequesterEncryptionKeyDerField
+SequesterPublicKeyDer = SequesterPublicKeyDerField
 
 
 class PkiEnrollmentSubmitPayloadField(Field[_PkiEnrollmentSubmitPayload]):

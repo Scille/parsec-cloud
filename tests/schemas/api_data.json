@@ -31,7 +31,7 @@
             "encryption_key_der": {
                 "allow_none": false,
                 "required": true,
-                "type": "SequesterEncryptionKeyDerField"
+                "type": "SequesterPublicKeyDerField"
             },
             "service_id": {
                 "allow_none": false,
