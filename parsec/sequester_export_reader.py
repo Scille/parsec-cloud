@@ -177,11 +177,14 @@ class WorkspaceExport:
     db: RealmExportDb
     decryption_key: PrivateKey
     devices_form_internal_id: Dict[int, Tuple[DeviceID, VerifyKey]]
+    filter_on_date: DateTime
 
     def load_manifest(self, manifest_id: EntryID) -> AnyRemoteManifest:
+        # Convert datetime to integer timestamp with us precision (format used in sqlite dump).
+        filter_timestamp = int(self.filter_on_date.timestamp() * 1000000)
         row = self.db.con.execute(
-            "SELECT version, blob, author, timestamp FROM vlob_atom WHERE vlob_id = ? ORDER BY version DESC LIMIT 1",
-            (manifest_id.bytes,),
+            "SELECT version, blob, author, timestamp FROM vlob_atom WHERE vlob_id = ? and timestamp <= ? ORDER BY version DESC LIMIT 1",
+            (manifest_id.bytes, filter_timestamp),
         ).fetchone()
         if not row:
             raise InconsistentWorkspaceError(
@@ -371,7 +374,7 @@ class WorkspaceExport:
 
 
 def extract_workspace(
-    output: Path, export_db: Path, decryption_key: PrivateKey
+    output: Path, export_db: Path, decryption_key: PrivateKey, filter_on_date: DateTime
 ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
     with RealmExportDb.open(export_db) as db:
         out_certificates: list[Tuple[int, DeviceCertificate]] = []
@@ -380,6 +383,9 @@ def extract_workspace(
             id: (certif.device_id, certif.verify_key) for id, certif in out_certificates
         }
         wksp = WorkspaceExport(
-            db=db, decryption_key=decryption_key, devices_form_internal_id=devices_form_internal_id
+            db=db,
+            decryption_key=decryption_key,
+            devices_form_internal_id=devices_form_internal_id,
+            filter_on_date=filter_on_date,
         )
         yield from wksp.extract_workspace(output=output)
