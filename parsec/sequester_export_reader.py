@@ -180,6 +180,7 @@ class WorkspaceExport:
     filter_on_date: DateTime
 
     def load_manifest(self, manifest_id: EntryID) -> AnyRemoteManifest:
+        # Convert datetime to integer timestamp with us precision (format used in sqlite dump).
         filter_timestamp = int(self.filter_on_date.timestamp() * 1000000)
         row = self.db.con.execute(
             "SELECT version, blob, author, timestamp FROM vlob_atom WHERE vlob_id = ? and timestamp <= ? ORDER BY version DESC LIMIT 1",
