@@ -314,6 +314,15 @@ pub(crate) fn add_mod(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<PkiEnrollmentInfoRepUnknownStatus>()?;
     m.add_class::<PkiEnrollmentListRepUnknownStatus>()?;
     m.add_class::<PkiEnrollmentRejectRepUnknownStatus>()?;
+    m.add_class::<PkiEnrollmentSubmitReq>()?;
+    m.add_class::<PkiEnrollmentSubmitRep>()?;
+    m.add_class::<PkiEnrollmentSubmitRepOk>()?;
+    m.add_class::<PkiEnrollmentSubmitRepInvalidPayloadData>()?;
+    m.add_class::<PkiEnrollmentSubmitRepAlreadySubmitted>()?;
+    m.add_class::<PkiEnrollmentSubmitRepIdAlreadyUsed>()?;
+    m.add_class::<PkiEnrollmentSubmitRepEmailAlreadyUsed>()?;
+    m.add_class::<PkiEnrollmentSubmitRepAlreadyEnrolled>()?;
+    m.add_class::<PkiEnrollmentSubmitRepUnknownStatus>()?;
 
     // Organization
     m.add_class::<OrganizationStatsReq>()?;
@@ -637,6 +646,7 @@ pub(crate) fn add_mod(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Cmd
     m.add_class::<AuthenticatedAnyCmdReq>()?;
     m.add_class::<InvitedAnyCmdReq>()?;
+    m.add_class::<AnonymousAnyCmdReq>()?;
 
     Ok(())
 }

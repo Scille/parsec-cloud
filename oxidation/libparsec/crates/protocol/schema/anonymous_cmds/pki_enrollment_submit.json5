@@ -51,6 +51,13 @@
             },
             "already_enrolled": {
                 "fields": {}
+            },
+            "invalid_payload_data": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
             }
         }
     },
@@ -106,6 +113,13 @@
             },
             "already_enrolled": {
                 "fields": {}
+            },
+            "invalid_payload_data": {
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
+                }
             }
         }
     }
