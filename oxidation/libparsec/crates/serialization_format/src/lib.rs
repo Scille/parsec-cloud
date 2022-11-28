@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 pub(crate) mod config;
-mod old_parser;
 pub(crate) mod protocol;
 pub(crate) mod shared;
+pub(crate) mod ty;
 
 use std::{
     fs::File,
@@ -12,6 +12,7 @@ use std::{
 };
 
 use anyhow::Context;
+use itertools::Itertools;
 use proc_macro::TokenStream;
 use quote::ToTokens;
 use syn::{parse_macro_input, LitStr};
@@ -55,16 +56,31 @@ pub(crate) fn path_from_str(path: &str) -> PathBuf {
     manifest_dir_path.join(path)
 }
 
-pub(crate) fn content_from_dir(path: &PathBuf) -> anyhow::Result<Vec<parser::Protocol>> {
+pub(crate) fn content_from_dir<T>(path: &PathBuf) -> anyhow::Result<Vec<T>>
+where
+    T: for<'a> serde::de::Deserialize<'a>,
+{
     let dir = std::fs::read_dir(path)
         .map_err(anyhow::Error::new)
         .context(format!("Reading directory `{}`", path.to_string_lossy()))?;
-    dir.filter_map(|entry| entry.ok())
-        .map(|entry| content_from_file(&entry.path()))
-        .collect()
+
+    let (contents, errors): (Vec<_>, Vec<_>) = dir
+        .filter_map(|entry| entry.ok())
+        .map(|entry| content_from_file::<T>(&entry.path()))
+        .partition_result();
+
+    anyhow::ensure!(
+        errors.is_empty(),
+        "Failed to serialize directory:\n{}",
+        errors.iter().map(|e| e.to_string()).join(",\n")
+    );
+    Ok(contents)
 }
 
-pub(crate) fn content_from_file(path: &PathBuf) -> anyhow::Result<parser::Protocol> {
+pub(crate) fn content_from_file<T>(path: &PathBuf) -> anyhow::Result<T>
+where
+    T: for<'a> serde::de::Deserialize<'a>,
+{
     let filename = path.to_string_lossy();
     let file = File::open(path)
         .map_err(anyhow::Error::new)
@@ -84,43 +100,42 @@ pub(crate) fn content_from_file(path: &PathBuf) -> anyhow::Result<parser::Protoc
     content_from_str(&content, &filename)
 }
 
-pub(crate) fn content_from_str(
-    content: &str,
-    origin: &str,
-) -> Result<parser::Protocol, anyhow::Error> {
+pub(crate) fn content_from_str<T>(content: &str, origin: &str) -> anyhow::Result<T>
+where
+    T: for<'a> serde::de::Deserialize<'a>,
+{
     serde_json::from_str(content)
         .map_err(anyhow::Error::new)
         .context(format!("current file `{origin}`"))
 }
 
+/// Procedural macro that take a json file path.
+/// The json file can contain comment.
 #[proc_macro]
 pub fn parsec_data(path: TokenStream) -> TokenStream {
-    let path = parse_macro_input!(path as LitStr).value();
-    let content = type_data::content_from_file(&path_from_str(&path));
-
-    let data: old_parser::Data = miniserde::json::from_str(&content).expect("Data is not valid");
-    TokenStream::from(data.quote())
-}
-
-mod type_data {
-    use std::{
-        fs::File,
-        io::{BufRead, BufReader},
-        path::PathBuf,
+    let config = parse_macro_input!(path as MacroConfig);
+    let path = path_from_str(&config.raw_path);
+    let collection = if path.is_dir() {
+        let data: Vec<ty::parser::VersionedType> =
+            content_from_dir(&path).expect("Failed to parse data");
+        ty::intermediate::TypeCollection::from(data)
+    } else {
+        let data: ty::parser::VersionedType =
+            content_from_file(&path).expect("Failed to parse data");
+        ty::intermediate::TypeCollection::from(data)
     };
-
-    pub fn content_from_file(path: &PathBuf) -> String {
-        let file = File::open(path).expect("Cannot open the json file");
-        let buf = BufReader::new(file);
-        let mut content = String::new();
-        for (i, line) in buf.lines().enumerate() {
-            let line = line.unwrap_or_else(|_| panic!("Non-Utf-8 character found in line {i}"));
-            let line = match line.split_once("//") {
-                Some((line, _)) => line,
-                None => &line,
-            };
-            content.push_str(line)
+    let res = collection.quote(&config.crates_override);
+    match res {
+        Ok(mods) => quote::quote! {
+            #(#mods)*
         }
-        content
+        .into_token_stream()
+        .into(),
+        Err(e) => {
+            panic!(
+                "Got error when quoting `{}`:\n{}\nConfig: {:?}",
+                config.raw_path, e, config
+            );
+        }
     }
 }
