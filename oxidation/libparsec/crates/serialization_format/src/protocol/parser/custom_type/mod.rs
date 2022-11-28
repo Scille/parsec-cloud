@@ -48,7 +48,7 @@ mod test {
         variant::{Variant, Variants},
         CustomEnum, CustomStruct, CustomType,
     };
-    use crate::protocol::parser::field::{Field, Fields};
+    use crate::shared::{Field, Fields};
     use rstest::rstest;
 
     #[rstest]

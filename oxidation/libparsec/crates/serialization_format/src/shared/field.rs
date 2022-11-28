@@ -2,9 +2,10 @@
 
 use std::collections::HashMap;
 
-use crate::protocol::utils::{quote_serde_as, validate_raw_type};
-
-use super::MajorMinorVersion;
+use crate::shared::{
+    utils::{quote_serde_as, validate_raw_type},
+    MajorMinorVersion,
+};
 
 use itertools::Itertools;
 use serde::Deserialize;
@@ -290,3 +291,36 @@ mod test {
         )
     }
 }
+
+/// Filter out fields that will be introduced in a future major version.
+macro_rules! filter_out_future_fields {
+    ($current_version:expr, $fields:expr) => {
+        $fields
+            .iter()
+            .filter_map(move |(name, field)| {
+                // We check if the current field need to be present at the `current_version`
+                if field
+                    .introduced_in
+                    .map(|mj_version| mj_version.major <= $current_version)
+                    .unwrap_or(true)
+                {
+                    let mut dup_field = field.clone();
+                    // We remove the `introduced_in` tag if the field was introduced in a prior version to the current version.
+                    // We consider at this step that the field is now `stable`.
+                    if dup_field
+                        .introduced_in
+                        .map(|mj_version| mj_version.major < $current_version)
+                        .unwrap_or_default()
+                    {
+                        dup_field.introduced_in = None;
+                    }
+                    Some((name.clone(), dup_field))
+                } else {
+                    None
+                }
+            })
+            .collect()
+    };
+}
+
+pub(crate) use filter_out_future_fields;

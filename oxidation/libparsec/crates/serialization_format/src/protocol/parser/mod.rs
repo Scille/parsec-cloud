@@ -2,17 +2,15 @@
 
 pub mod collection;
 pub mod custom_type;
-pub mod field;
-pub mod major_minor_version;
 pub mod request;
 pub mod response;
 
 pub use collection::ProtocolCollection;
 pub use custom_type::{CustomEnum, CustomStruct, CustomType, CustomTypes, Variant, Variants};
-pub use field::{Field, Fields};
-pub use major_minor_version::MajorMinorVersion;
 pub use request::Request;
 pub use response::{Response, Responses};
+
+use crate::shared::MajorMinorVersion;
 
 use serde::Deserialize;
 

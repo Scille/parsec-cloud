@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use serde::Deserialize;
 
-use crate::protocol::parser::field::{quote_fields, Fields};
+use crate::shared::{quote_fields, Fields};
 
 /// A collection of [Variant] for an `enum`.
 /// Each key of the Dict is a variant name.
@@ -73,7 +73,7 @@ mod test {
     use quote::{quote, ToTokens};
     use rstest::rstest;
 
-    use crate::protocol::parser::field::Field;
+    use crate::shared::Field;
 
     use super::{Fields, HashMap, Variant};
 

@@ -8,6 +8,5 @@ pub use cmd::Cmd;
 pub use collection::ProtocolCollection;
 
 pub use parser::{
-    CustomEnum, CustomStruct, CustomType, CustomTypes, Field, MajorMinorVersion, Request, Response,
-    Responses, Variant,
+    CustomEnum, CustomStruct, CustomType, CustomTypes, Request, Response, Responses, Variant,
 };

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::protocol::parser::field::{quote_fields, Fields};
+use crate::shared::{quote_fields, Fields};
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
@@ -86,7 +86,7 @@ mod test {
 
     use super::{Fields, HashMap, Request};
 
-    use crate::protocol::parser::Field;
+    use crate::shared::Field;
 
     #[rstest]
     #[case::unit(

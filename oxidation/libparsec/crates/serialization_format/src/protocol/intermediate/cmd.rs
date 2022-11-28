@@ -4,38 +4,12 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use super::{CustomType, CustomTypes, MajorMinorVersion, Request, Responses};
-use crate::protocol::parser;
+use super::{CustomType, CustomTypes, Request, Responses};
+use crate::{
+    protocol::parser,
+    shared::{filter_out_future_fields, MajorMinorVersion},
+};
 
-macro_rules! filter_out_future_fields {
-    ($current_version:expr, $fields:expr) => {
-        $fields
-            .iter()
-            .filter_map(move |(name, field)| {
-                // We check if the current field need to be present at the `current_version`
-                if field
-                    .introduced_in
-                    .map(|mj_version| mj_version.major <= $current_version)
-                    .unwrap_or(true)
-                {
-                    let mut dup_field = field.clone();
-                    // We remove the `introduced_in` tag if the field was introduced in a prior version to the current version.
-                    // We consider at this step that the field is now `stable`.
-                    if dup_field
-                        .introduced_in
-                        .map(|mj_version| mj_version.major < $current_version)
-                        .unwrap_or_default()
-                    {
-                        dup_field.introduced_in = None;
-                    }
-                    Some((name.clone(), dup_field))
-                } else {
-                    None
-                }
-            })
-            .collect()
-    };
-}
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug)]
 pub struct Cmd {
@@ -238,15 +212,18 @@ mod test {
 
     use super::{parser, Cmd, Responses};
 
-    use crate::protocol::intermediate::Response;
+    use crate::{
+        protocol::intermediate::Response,
+        shared::{Field, Fields},
+    };
 
     #[rstest]
     #[case::basic(parser::Cmd::default(), Cmd::default())]
     #[case::request_with_previously_introduced_field(
         parser::Cmd {
             req: parser::Request {
-                fields: parser::Fields::from([
-                    ("foo".to_string(), parser::Field {
+                fields: Fields::from([
+                    ("foo".to_string(), Field {
                         introduced_in: Some("0.4".parse().unwrap()),
                         ..Default::default()
                     })
@@ -257,8 +234,8 @@ mod test {
         },
         Cmd {
             req: parser::Request {
-                fields: parser::Fields::from([
-                    ("foo".to_string(), parser::Field {
+                fields: Fields::from([
+                    ("foo".to_string(), Field {
                         ..Default::default()
                     })
                 ]),
@@ -270,8 +247,8 @@ mod test {
     #[case::request_with_not_yet_introduced_field(
         parser::Cmd {
             req: parser::Request {
-                fields: parser::Fields::from([
-                    ("foo".to_string(), parser::Field {
+                fields: Fields::from([
+                    ("foo".to_string(), Field {
                         introduced_in: Some("2.4".parse().unwrap()),
                         ..Default::default()
                     })
@@ -282,7 +259,7 @@ mod test {
         },
         Cmd {
             req: parser::Request {
-                fields: parser::Fields::default(),
+                fields: Fields::default(),
                 ..Default::default()
             },
             ..Default::default()
@@ -292,8 +269,8 @@ mod test {
         parser::Cmd {
             possible_responses: Responses::from([
                 ("ok".to_string(), parser::Response {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             introduced_in: Some("0.5".parse().unwrap()),
                             ..Default::default()
                         })
@@ -306,8 +283,8 @@ mod test {
         Cmd {
             possible_responses: parser::Responses::from([
                 ("ok".to_string(), parser::Response {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             ..Default::default()
                         })
                     ]),
@@ -321,8 +298,8 @@ mod test {
         parser::Cmd {
             possible_responses: parser::Responses::from([
                 ("ok".to_string(), parser::Response {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             introduced_in: Some("2.5".parse().unwrap()),
                             ..Default::default()
                         })
@@ -335,7 +312,7 @@ mod test {
         Cmd {
             possible_responses: parser::Responses::from([
                 ("ok".to_string(), parser::Response {
-                    fields: parser::Fields::default(),
+                    fields: Fields::default(),
                     ..Default::default()
                 })
             ]),
@@ -348,8 +325,8 @@ mod test {
                 ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
                     variants: parser::Variants::from([
                         ("Bar".to_string(), parser::Variant {
-                            fields: parser::Fields::from([
-                                ("foo".to_string(), parser::Field {
+                            fields: Fields::from([
+                                ("foo".to_string(), Field {
                                     introduced_in: Some("0.2".parse().unwrap()),
                                     ..Default::default()
                                 })
@@ -367,8 +344,8 @@ mod test {
                 ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
                     variants: parser::Variants::from([
                         ("Bar".to_string(), parser::Variant {
-                            fields: parser::Fields::from([
-                                ("foo".to_string(), parser::Field {
+                            fields: Fields::from([
+                                ("foo".to_string(), Field {
                                     ..Default::default()
                                 })
                             ]),
@@ -387,8 +364,8 @@ mod test {
                 ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
                     variants: parser::Variants::from([
                         ("Bar".to_string(), parser::Variant {
-                            fields: parser::Fields::from([
-                                ("foo".to_string(), parser::Field {
+                            fields: Fields::from([
+                                ("foo".to_string(), Field {
                                     introduced_in: Some("6.2".parse().unwrap()),
                                     ..Default::default()
                                 })
@@ -406,7 +383,7 @@ mod test {
                 ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
                     variants: parser::Variants::from([
                         ("Bar".to_string(), parser::Variant {
-                            fields: parser::Fields::default(),
+                            fields: Fields::default(),
                             ..Default::default()
                         })
                     ]),
@@ -420,8 +397,8 @@ mod test {
         parser::Cmd {
             nested_types: parser::CustomTypes::from([
                 ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             introduced_in: Some("0.1".parse().unwrap()),
                             ..Default::default()
                         })
@@ -433,8 +410,8 @@ mod test {
         Cmd {
             nested_types: parser::CustomTypes::from([
                 ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             ..Default::default()
                         })
                     ])
@@ -447,8 +424,8 @@ mod test {
         parser::Cmd {
             nested_types: parser::CustomTypes::from([
                 ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             introduced_in: Some("3.1".parse().unwrap()),
                             ..Default::default()
                         })
@@ -460,7 +437,7 @@ mod test {
         Cmd {
             nested_types: parser::CustomTypes::from([
                 ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
-                    fields: parser::Fields::default()
+                    fields: Fields::default()
                 }))
             ]),
             ..Default::default()
@@ -469,8 +446,8 @@ mod test {
     #[case::request_with_static_field(
         parser::Cmd {
             req: parser::Request {
-                fields: parser::Fields::from([
-                    ("foo".to_string(), parser::Field {
+                fields: Fields::from([
+                    ("foo".to_string(), Field {
                         introduced_in: None,
                         ..Default::default()
                     })
@@ -481,8 +458,8 @@ mod test {
         },
         Cmd {
             req: parser::Request {
-                fields: parser::Fields::from([
-                    ("foo".to_string(), parser::Field {
+                fields: Fields::from([
+                    ("foo".to_string(), Field {
                         introduced_in: None,
                         ..Default::default()
                     })
@@ -496,8 +473,8 @@ mod test {
         parser::Cmd {
             possible_responses: parser::Responses::from([
                 ("ok".to_string(), parser::Response {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             introduced_in: None,
                             ..Default::default()
                         })
@@ -510,8 +487,8 @@ mod test {
         Cmd {
             possible_responses: parser::Responses::from([
                 ("ok".to_string(), parser::Response {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             introduced_in: None,
                             ..Default::default()
                         })
@@ -528,8 +505,8 @@ mod test {
                 ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
                     variants: parser::Variants::from([
                         ("Bar".to_string(), parser::Variant {
-                            fields: parser::Fields::from([
-                                ("foo".to_string(), parser::Field {
+                            fields: Fields::from([
+                                ("foo".to_string(), Field {
                                     introduced_in: None,
                                     ..Default::default()
                                 })
@@ -547,8 +524,8 @@ mod test {
                 ("Foo".to_string(), parser::CustomType::Enum(parser::CustomEnum {
                     variants: parser::Variants::from([
                         ("Bar".to_string(), parser::Variant {
-                            fields: parser::Fields::from([
-                                ("foo".to_string(), parser::Field {
+                            fields: Fields::from([
+                                ("foo".to_string(), Field {
                                     introduced_in: None,
                                     ..Default::default()
                                 })
@@ -566,8 +543,8 @@ mod test {
         parser::Cmd {
             nested_types: parser::CustomTypes::from([
                 ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             introduced_in: None,
                             ..Default::default()
                         })
@@ -579,8 +556,8 @@ mod test {
         Cmd {
             nested_types: parser::CustomTypes::from([
                 ("Foo".to_string(), parser::CustomType::Struct(parser::CustomStruct {
-                    fields: parser::Fields::from([
-                        ("foo".to_string(), parser::Field {
+                    fields: Fields::from([
+                        ("foo".to_string(), Field {
                             introduced_in: None,
                             ..Default::default()
                         })

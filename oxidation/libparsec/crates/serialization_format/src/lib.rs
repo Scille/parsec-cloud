@@ -2,6 +2,7 @@
 
 mod old_parser;
 pub(crate) mod protocol;
+pub(crate) mod shared;
 
 use std::{
     fs::File,

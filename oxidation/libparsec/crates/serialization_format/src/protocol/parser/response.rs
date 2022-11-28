@@ -4,8 +4,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::protocol::parser::field::{quote_fields, Fields};
-use crate::protocol::utils::to_pascal_case;
+use crate::shared::{quote_fields, to_pascal_case, Fields};
 
 /// A collection of [Response].
 /// Each keys correspond to a response type/status.
@@ -78,7 +77,7 @@ mod test {
 
     use super::{Fields, HashMap, Response};
 
-    use crate::protocol::parser::Field;
+    use crate::shared::Field;
 
     #[rstest]
     #[case::empty(

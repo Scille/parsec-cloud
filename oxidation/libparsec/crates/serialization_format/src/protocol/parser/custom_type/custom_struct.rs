@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::protocol::parser::field::{quote_fields, Fields};
+use crate::shared::{quote_fields, Fields};
 
 use super::shared_attribute;
 
@@ -45,10 +45,11 @@ mod test {
     use pretty_assertions::assert_eq;
     use quote::{quote, ToTokens};
     use rstest::rstest;
+    use std::collections::HashMap;
 
-    use crate::protocol::parser::field::Field;
+    use crate::shared::{Field, Fields};
 
-    use super::{CustomStruct, Fields, HashMap};
+    use super::CustomStruct;
 
     #[rstest]
     #[case::basic(
