@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Optional
 
 import trio
 from enum import IntEnum
@@ -613,7 +613,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         assert self.dialog is not None
         self.dialog.reject()
 
-    def _on_page_failed(self, job: QtToTrioJob[None]) -> None:
+    def _on_page_failed(self, job: Optional[QtToTrioJob[None]]) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return

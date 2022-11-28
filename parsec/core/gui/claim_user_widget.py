@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Awaitable, Callable, Tuple, cast
+from typing import Any, Awaitable, Callable, Tuple, Optional, cast
 
 import trio
 from enum import IntEnum
@@ -710,7 +710,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         if self.dialog:
             self.dialog.reject()
 
-    def _on_page_failed_force_reject(self, job: QtToTrioJob[None]) -> None:
+    def _on_page_failed_force_reject(self, job: Optional[QtToTrioJob[None]]) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return
@@ -718,7 +718,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         assert self.dialog is not None
         self.dialog.reject()
 
-    def _on_page_failed(self, job: QtToTrioJob[None]) -> None:
+    def _on_page_failed(self, job: Optional[QtToTrioJob[None]]) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return
