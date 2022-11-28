@@ -53,6 +53,7 @@ from parsec._parsec import (
     VlobReadRepOk,
     VlobUpdateRepOk,
 )
+from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.serde import packb
 from parsec.api.protocol import (
     authenticated_ping_serializer,
@@ -199,7 +200,11 @@ class CmdSock:
     async def _do_send(self, ws, req_post_processing, args, kwargs):
         req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
         if req_post_processing:
-            raw_req = packb(req_post_processing(self.serializer.req_dump(req)))
+            if not isinstance(self.serializer, ApiCommandSerializer):
+                pre_processed_req = req_post_processing(self.serializer.req_dump(req))
+                raw_req = packb(pre_processed_req)
+            else:
+                raw_req = self.serializer.req_dumps(req_post_processing(req))
         else:
             raw_req = self.serializer.req_dumps(req)
         await ws.send(raw_req)
