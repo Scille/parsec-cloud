@@ -3,11 +3,21 @@ from __future__ import annotations
 
 import attr
 from pathlib import Path
-from typing import Iterable, List, Union, cast
+from typing import Iterable, List, Union
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import (
+    DateTime,
+    EnrollmentID,
+    PkiEnrollmentInfoRepNotFound,
+    PkiEnrollmentInfoRepOk,
+    PkiEnrollmentSubmitRepAlreadyEnrolled,
+    PkiEnrollmentSubmitRepAlreadySubmitted,
+    PkiEnrollmentSubmitRepEmailAlreadyUsed,
+    PkiEnrollmentSubmitRepIdAlreadyUsed,
+    PkiEnrollmentSubmitRepOk,
+)
 from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.api.protocol import DeviceLabel, PkiEnrollmentStatus
+from parsec.api.protocol import DeviceLabel
 from parsec.core.backend_connection import (
     pki_enrollment_submit as cmd_pki_enrollment_submit,
     pki_enrollment_info as cmd_pki_enrollment_info,
@@ -118,8 +128,8 @@ class PkiEnrollmentSubmitterInitialCtx:
             submit_payload=raw_submit_payload,
         )
 
-        if rep["status"] == "already_submitted":
-            submitted_on = rep["submitted_on"]
+        if isinstance(rep, PkiEnrollmentSubmitRepAlreadySubmitted):
+            submitted_on = rep.submitted_on
             raise PkiEnrollmentSubmitCertificateAlreadySubmittedError(
                 f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been submitted on {submitted_on}",
                 rep,
@@ -127,7 +137,7 @@ class PkiEnrollmentSubmitterInitialCtx:
                 self.x509_certificate,
             )
 
-        if rep["status"] == "enrollment_id_already_used":
+        if isinstance(rep, PkiEnrollmentSubmitRepIdAlreadyUsed):
             raise PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError(
                 f"The enrollment ID {self.enrollment_id.hex} is already used",
                 rep,
@@ -135,7 +145,7 @@ class PkiEnrollmentSubmitterInitialCtx:
                 self.x509_certificate,
             )
 
-        if rep["status"] == "already_enrolled":
+        if isinstance(rep, PkiEnrollmentSubmitRepAlreadyEnrolled):
             raise PkiEnrollmentSubmitCertificateAlreadyEnrolledError(
                 f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been enrolled",
                 rep,
@@ -143,7 +153,7 @@ class PkiEnrollmentSubmitterInitialCtx:
                 self.x509_certificate,
             )
 
-        if rep["status"] == "email_already_used":
+        if isinstance(rep, PkiEnrollmentSubmitRepEmailAlreadyUsed):
             raise PkiEnrollmentSubmitCertificateEmailAlreadyUsedError(
                 f"The email address `{self.x509_certificate.subject_email_address}` is already used by an active user",
                 rep,
@@ -151,14 +161,14 @@ class PkiEnrollmentSubmitterInitialCtx:
                 self.x509_certificate,
             )
 
-        if rep["status"] != "ok":
+        if not isinstance(rep, PkiEnrollmentSubmitRepOk):
             raise PkiEnrollmentSubmitError(
-                f"Backend refused to create enrollment: {rep['status']}",
+                f"Backend refused to create enrollment: {type(rep).__name__}",
                 rep,
                 self.enrollment_id,
                 self.x509_certificate,
             )
-        submitted_on = cast(DateTime, rep["submitted_on"])
+        submitted_on = rep.submitted_on
 
         # Save the enrollment request on disk.
         # Note there is not atomicity with the request to the backend, but it's
@@ -238,25 +248,25 @@ class PkiEnrollmentSubmitterSubmittedCtx:
         #  Tuple[PkiEnrollmentStatus, DateTime, LocalDevice | None]:
         rep = await cmd_pki_enrollment_info(addr=self.addr, enrollment_id=self.enrollment_id)
 
-        if rep["status"] == "not_found":
+        if isinstance(rep, PkiEnrollmentInfoRepNotFound):
             raise PkiEnrollmentInfoNotFoundError(
-                f"The provided enrollment could not be found: {rep['reason']}",
+                f"The provided enrollment could not be found: {rep.reason}",
                 rep,
                 self.enrollment_id,
                 self.x509_certificate,
             )
 
-        if rep["status"] != "ok":
+        if not isinstance(rep, PkiEnrollmentInfoRepOk):
             raise PkiEnrollmentInfoError(
-                f"Backend refused to provide the enrollment info: {rep['status']}",
+                f"Backend refused to provide the enrollment info: {rep}",
                 rep,
                 self.enrollment_id,
                 self.x509_certificate,
             )
 
-        enrollment_status = rep["enrollment_status"]
+        enrollment_status = rep.enrollment_status
 
-        if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
+        if enrollment_status.is_submitted():
             return PkiEnrollmentSubmitterSubmittedStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
@@ -266,8 +276,8 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 submit_payload=self.submit_payload,
             )
 
-        elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
-            cancelled_on = cast(DateTime, rep["cancelled_on"])
+        elif enrollment_status.is_cancelled():
+            cancelled_on = rep.cancelled_on
             return PkiEnrollmentSubmitterCancelledStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
@@ -278,8 +288,8 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 cancelled_on=cancelled_on,
             )
 
-        elif enrollment_status == PkiEnrollmentStatus.REJECTED:
-            rejected_on = cast(DateTime, rep["rejected_on"])
+        elif enrollment_status.is_rejected():
+            rejected_on = rep.rejected_on
             return PkiEnrollmentSubmitterRejectedStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
@@ -291,11 +301,11 @@ class PkiEnrollmentSubmitterSubmittedCtx:
             )
 
         else:
-            assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
-            accepter_der_x509_certificate: bytes = cast(bytes, rep["accepter_der_x509_certificate"])
-            payload_signature: bytes = cast(bytes, rep["accept_payload_signature"])
-            payload: bytes = cast(bytes, rep["accept_payload"])
-            accepted_on: DateTime = cast(DateTime, rep["accepted_on"])
+            assert enrollment_status.is_accepted()
+            accepter_der_x509_certificate = rep.accepter_der_x509_certificate
+            payload_signature = rep.accept_payload_signature
+            payload = rep.accept_payload
+            accepted_on = rep.accepted_on
 
             # Load peer certificate
             try:

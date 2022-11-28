@@ -70,6 +70,8 @@ from parsec._parsec import (
     PkiEnrollmentListRepUnknownStatus,
     PkiEnrollmentRejectRep,
     PkiEnrollmentRejectRepUnknownStatus,
+    PkiEnrollmentSubmitRep,
+    PkiEnrollmentSubmitRepUnknownStatus,
     RealmCreateRep,
     RealmCreateRepBadTimestamp,
     RealmCreateRepUnknownStatus,
@@ -212,6 +214,7 @@ COMMAND_RETURN_TYPE = Union[
     PkiEnrollmentInfoRep,
     PkiEnrollmentListRep,
     PkiEnrollmentRejectRep,
+    PkiEnrollmentSubmitRep,
     RealmCreateRep,
     RealmFinishReencryptionMaintenanceRep,
     RealmFinishReencryptionMaintenanceRep,
@@ -339,6 +342,8 @@ async def _send_cmd(
             PkiEnrollmentInfoRep,
             PkiEnrollmentListRep,
             PkiEnrollmentRejectRep,
+            PkiEnrollmentSubmitRep,
+            PkiEnrollmentInfoRep,
         ),
     ):
         if isinstance(
@@ -392,6 +397,7 @@ async def _send_cmd(
                 PkiEnrollmentInfoRepUnknownStatus,
                 PkiEnrollmentListRepUnknownStatus,
                 PkiEnrollmentRejectRepUnknownStatus,
+                PkiEnrollmentSubmitRepUnknownStatus,
             ),
         ):
             if rep.status == "invalid_msg_format":

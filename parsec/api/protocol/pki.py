@@ -8,16 +8,19 @@ from parsec._parsec import (
     EnrollmentID,
     PkiEnrollmentAcceptRep,
     PkiEnrollmentAcceptReq,
+    PkiEnrollmentInfoRep,
+    PkiEnrollmentInfoReq,
     PkiEnrollmentListRep,
     PkiEnrollmentListReq,
     PkiEnrollmentRejectRep,
     PkiEnrollmentRejectReq,
+    PkiEnrollmentSubmitRep,
+    PkiEnrollmentSubmitReq,
 )
 from parsec.api.protocol.base import (
     ApiCommandSerializer,
     BaseRepSchema,
     BaseReqSchema,
-    CmdSerializer,
 )
 from parsec.serde import BaseSchema, OneOfSchema, fields
 
@@ -59,10 +62,8 @@ class PkiEnrollmentErrorSubmitRepSchema(BaseRepSchema):
     submitted_on = fields.DateTime(required=True)
 
 
-pki_enrollment_submit_serializer = CmdSerializer(
-    PkiEnrollmentSubmitReqSchema,
-    PkiEnrollmentSubmitRepSchema,
-    extra_error_schemas={"already_submitted": PkiEnrollmentErrorSubmitRepSchema},
+pki_enrollment_submit_serializer = ApiCommandSerializer(
+    PkiEnrollmentSubmitReq, PkiEnrollmentSubmitRep
 )
 
 
@@ -113,9 +114,7 @@ class PkiEnrollmentInfoRepSchema(OneOfSchema):
         return cast(PkiEnrollmentStatus, obj["enrollment_status"])
 
 
-pki_enrollment_info_serializer = CmdSerializer(
-    PkiEnrollmentInfoReqSchema, PkiEnrollmentInfoRepSchema
-)
+pki_enrollment_info_serializer = ApiCommandSerializer(PkiEnrollmentInfoReq, PkiEnrollmentInfoRep)
 
 
 # TODO: rename to pki_enrollment_list_submitted ?
