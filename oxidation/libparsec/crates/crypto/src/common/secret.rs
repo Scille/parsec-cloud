@@ -61,7 +61,7 @@ macro_rules! impl_secret_key {
             fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
                 <[u8; Self::SIZE]>::try_from(data)
                     .map(Self::from)
-                    .map_err(|_| CryptoError::DataSize)
+                    .map_err(|_| CryptoError::KeySize)
             }
         }
 

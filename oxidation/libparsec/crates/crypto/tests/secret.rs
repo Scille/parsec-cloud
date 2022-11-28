@@ -73,7 +73,7 @@ fn secret_key_should_verify_length_when_deserialize() {
         rmp_serde::from_slice::<SecretKey>(&data)
             .unwrap_err()
             .to_string(),
-        "Invalid data size"
+        "Invalid key size"
     );
 }
 
@@ -98,7 +98,7 @@ fn test_recovery_passphrase() {
 fn test_invalid_passphrase(#[case] bad_passphrase: &str) {
     assert_eq!(
         SecretKey::from_recovery_passphrase(bad_passphrase).unwrap_err(),
-        CryptoError::DataSize
+        CryptoError::KeySize
     );
 }
 

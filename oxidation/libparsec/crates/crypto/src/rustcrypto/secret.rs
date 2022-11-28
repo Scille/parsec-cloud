@@ -2,14 +2,12 @@
 
 use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::Blake2bMac;
-use digest::{consts::U5, Mac};
+use crypto_box::aead::Aead;
+use digest::{consts::U5, KeyInit, Mac};
 use rand_08::{rngs::OsRng, RngCore};
 use serde::Deserialize;
 use serde_bytes::Bytes;
-use xsalsa20poly1305::{
-    aead::{Aead, NewAead},
-    generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE,
-};
+use xsalsa20poly1305::{Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
 
 use crate::CryptoError;
 
@@ -58,7 +56,7 @@ impl SecretKey {
         // TODO: zero copy with preallocated buffer
         // let mut ciphered = Vec::with_capacity(NONCE_SIZE + TAG_SIZE + data.len());
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce = generate_nonce(&mut rand_08::thread_rng());
+        let nonce = XSalsa20Poly1305::generate_nonce(&mut rand_08::thread_rng());
         // TODO: handle this error ?
         let mut ciphered = cipher.encrypt(&nonce, data).expect("encryption failure !");
         let mut res = vec![];
@@ -83,8 +81,8 @@ impl SecretKey {
         // TODO investigate why new() is not working
         // let mut hasher = Blake2bMac40::new(&self.0);
         // &self.0 always provide the correct key size
-        let mut hasher =
-            Blake2bMac40::new_from_slice(self.0.as_ref()).unwrap_or_else(|_| unreachable!());
+        let mut hasher = <Blake2bMac40 as KeyInit>::new_from_slice(self.0.as_ref())
+            .unwrap_or_else(|_| unreachable!());
         hasher.update(data);
         let res = hasher.finalize();
         res.into_bytes().to_vec()
