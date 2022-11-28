@@ -19,11 +19,10 @@ crate::binding_utils::gen_proto!(HashDigest, __richcmp__, eq);
 #[pymethods]
 impl HashDigest {
     #[new]
-    fn new(hash: &[u8]) -> PyResult<Self> {
-        match libparsec::crypto::HashDigest::try_from(hash) {
-            Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
-        }
+    fn new(data: &[u8]) -> PyResult<Self> {
+        libparsec::crypto::HashDigest::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[staticmethod]
@@ -39,12 +38,12 @@ impl HashDigest {
     }
 
     #[getter]
-    fn digest<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_ref()))
+    fn digest<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, self.0.as_ref())
     }
 
-    fn hexdigest(&self) -> PyResult<String> {
-        Ok(self.0.hexdigest())
+    fn hexdigest(&self) -> String {
+        self.0.hexdigest()
     }
 }
 
@@ -59,15 +58,14 @@ crate::binding_utils::gen_proto!(SigningKey, __richcmp__, eq);
 impl SigningKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        match libparsec::crypto::SigningKey::try_from(data) {
-            Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
-        }
+        libparsec::crypto::SigningKey::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[getter]
-    fn verify_key(&self) -> PyResult<VerifyKey> {
-        Ok(VerifyKey(self.0.verify_key()))
+    fn verify_key(&self) -> VerifyKey {
+        VerifyKey(self.0.verify_key())
     }
 
     #[classmethod]
@@ -76,20 +74,17 @@ impl SigningKey {
     }
 
     /// Return the signature + the signed data
-    fn sign<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.sign(data).as_slice()))
+    fn sign<'py>(&self, py: Python<'py>, data: &[u8]) -> &'py PyBytes {
+        PyBytes::new(py, self.0.sign(data).as_slice())
     }
 
     /// Return only the signature of the data
-    fn sign_only_signature<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            self.0.sign_only_signature(data).as_slice(),
-        ))
+    fn sign_only_signature<'py>(&self, py: Python<'py>, data: &[u8]) -> &'py PyBytes {
+        PyBytes::new(py, self.0.sign_only_signature(data).as_slice())
     }
 
-    fn encode<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_ref()))
+    fn encode<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, self.0.as_ref())
     }
 }
 
@@ -104,15 +99,14 @@ crate::binding_utils::gen_proto!(VerifyKey, __richcmp__, eq);
 impl VerifyKey {
     #[new]
     pub fn new(data: &[u8]) -> PyResult<Self> {
-        match libparsec::crypto::VerifyKey::try_from(data) {
-            Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
-        }
+        libparsec::crypto::VerifyKey::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     /// Verify a message using the given `VerifyKey` and `signed` data
     /// `signed` data is the concatenation of the `signature` + `data`
-    fn verify<'p>(&self, py: Python<'p>, signed: &[u8]) -> PyResult<&'p PyBytes> {
+    fn verify<'py>(&self, py: Python<'py>, signed: &[u8]) -> PyResult<&'py PyBytes> {
         match self.0.verify(signed) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(_) => Err(CryptoError::new_err("Signature was forged or corrupt")),
@@ -120,12 +114,12 @@ impl VerifyKey {
     }
 
     /// Verify a message using the given `VerifyKey`, `Signature` and `message`
-    fn verify_with_signature<'p>(
+    fn verify_with_signature<'py>(
         &self,
-        py: Python<'p>,
+        py: Python<'py>,
         signature: &[u8],
         message: &[u8],
-    ) -> PyResult<&'p PyBytes> {
+    ) -> PyResult<&'py PyBytes> {
         match self.0.verify_with_signature(signature, message) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(_) => Err(CryptoError::new_err("Signature was forged or corrupt")),
@@ -133,23 +127,19 @@ impl VerifyKey {
     }
 
     #[classmethod]
-    fn unsecure_unwrap<'p>(
-        _cls: &PyType,
-        py: Python<'p>,
-        signed: &[u8],
-    ) -> PyResult<Option<&'p PyBytes>> {
-        match libparsec::crypto::VerifyKey::unsecure_unwrap(signed) {
-            Some(v) => Ok(Some(PyBytes::new(py, v))),
-            None => Ok(Some(PyBytes::new(py, &[]))),
-        }
+    fn unsecure_unwrap<'py>(_cls: &PyType, py: Python<'py>, signed: &[u8]) -> &'py PyBytes {
+        PyBytes::new(
+            py,
+            libparsec::crypto::VerifyKey::unsecure_unwrap(signed).unwrap_or_default(),
+        )
     }
 
-    fn encode<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_ref()))
+    fn encode<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, self.0.as_ref())
     }
 
-    fn __bytes__<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_ref()))
+    fn __bytes__<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, self.0.as_ref())
     }
 }
 
@@ -164,23 +154,22 @@ crate::binding_utils::gen_proto!(SecretKey, __richcmp__, eq);
 impl SecretKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        match libparsec::crypto::SecretKey::try_from(data) {
-            Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
-        }
+        libparsec::crypto::SecretKey::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[classmethod]
-    fn generate(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::crypto::SecretKey::generate()))
+    fn generate(_cls: &PyType) -> Self {
+        Self(libparsec::crypto::SecretKey::generate())
     }
 
     #[getter]
-    fn secret<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_ref()))
+    fn secret<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, self.0.as_ref())
     }
 
-    fn encrypt<'p>(&self, py: Python<'p>, data: PyObject) -> PyResult<&'p PyBytes> {
+    fn encrypt<'py>(&self, py: Python<'py>, data: PyObject) -> PyResult<&'py PyBytes> {
         let bytes = match data.extract::<&PyByteArray>(py) {
             // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
             // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
@@ -191,15 +180,15 @@ impl SecretKey {
         Ok(PyBytes::new(py, &self.0.encrypt(bytes)))
     }
 
-    fn decrypt<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
+    fn decrypt<'py>(&self, py: Python<'py>, ciphered: &[u8]) -> PyResult<&'py PyBytes> {
         match self.0.decrypt(ciphered) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(err) => Err(CryptoError::new_err(err.to_string())),
         }
     }
 
-    fn hmac<'p>(&self, py: Python<'p>, data: &[u8], digest_size: usize) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.hmac(data, digest_size)))
+    fn hmac<'py>(&self, py: Python<'py>, data: &[u8], digest_size: usize) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.hmac(data, digest_size))
     }
 
     #[classmethod]
@@ -237,15 +226,14 @@ crate::binding_utils::gen_proto!(PrivateKey, __richcmp__, eq);
 impl PrivateKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        match libparsec::crypto::PrivateKey::try_from(data) {
-            Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
-        }
+        libparsec::crypto::PrivateKey::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[classmethod]
-    fn generate(_cls: &PyType) -> PyResult<PrivateKey> {
-        Ok(PrivateKey(libparsec::crypto::PrivateKey::generate()))
+    fn generate(_cls: &PyType) -> Self {
+        PrivateKey(libparsec::crypto::PrivateKey::generate())
     }
 
     #[getter]
@@ -253,7 +241,7 @@ impl PrivateKey {
         PublicKey(libparsec::crypto::PrivateKey::public_key(&self.0))
     }
 
-    fn decrypt_from_self<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
+    fn decrypt_from_self<'py>(&self, py: Python<'py>, ciphered: &[u8]) -> PyResult<&'py PyBytes> {
         match self.0.decrypt_from_self(ciphered) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(err) => Err(CryptoError::new_err(err.to_string())),
@@ -280,13 +268,12 @@ crate::binding_utils::gen_proto!(PublicKey, __richcmp__, eq);
 impl PublicKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        match libparsec::crypto::PublicKey::try_from(data) {
-            Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
-        }
+        libparsec::crypto::PublicKey::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
-    fn encrypt_for_self<'p>(&self, py: Python<'p>, data: PyObject) -> PyResult<&'p PyBytes> {
+    fn encrypt_for_self<'py>(&self, py: Python<'py>, data: PyObject) -> PyResult<&'py PyBytes> {
         let bytes = match data.extract::<&PyByteArray>(py) {
             // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
             // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
@@ -299,6 +286,172 @@ impl PublicKey {
 
     fn encode(&self) -> &[u8] {
         self.0.as_ref()
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct SequesterPrivateKeyDer(pub libparsec::crypto::SequesterPrivateKeyDer);
+
+crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __repr__);
+
+#[pymethods]
+impl SequesterPrivateKeyDer {
+    #[new]
+    pub fn new(data: &[u8]) -> PyResult<Self> {
+        libparsec::crypto::SequesterPrivateKeyDer::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    #[classmethod]
+    fn generate(_cls: &PyType) -> Self {
+        Self(libparsec::crypto::SequesterPrivateKeyDer::default())
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+
+    fn dump_pem(&self) -> String {
+        self.0.dump_pem().to_string()
+    }
+
+    #[classmethod]
+    fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
+        libparsec::crypto::SequesterPrivateKeyDer::load_pem(s)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    fn decrypt<'py>(&self, py: Python<'py>, data: &[u8]) -> PyResult<&'py PyBytes> {
+        self.0
+            .decrypt(data)
+            .map(|x| PyBytes::new(py, &x))
+            .map_err(|err| CryptoError::new_err(err.to_string()))
+    }
+
+    #[getter]
+    fn public_key(&self) -> SequesterPublicKeyDer {
+        SequesterPublicKeyDer(libparsec::crypto::SequesterPublicKeyDer::from(
+            self.0.clone(),
+        ))
+    }
+
+    #[getter]
+    fn signing_key(&self) -> SequesterSigningKeyDer {
+        SequesterSigningKeyDer(libparsec::crypto::SequesterSigningKeyDer::from(
+            self.0.clone(),
+        ))
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct SequesterPublicKeyDer(pub libparsec::crypto::SequesterPublicKeyDer);
+
+crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __repr__);
+crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __richcmp__, eq);
+
+#[pymethods]
+impl SequesterPublicKeyDer {
+    #[new]
+    fn new(data: &[u8]) -> PyResult<Self> {
+        libparsec::crypto::SequesterPublicKeyDer::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+
+    fn dump_pem(&self) -> String {
+        self.0.dump_pem()
+    }
+
+    #[classmethod]
+    fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
+        libparsec::crypto::SequesterPublicKeyDer::load_pem(s)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    fn encrypt<'py>(&self, py: Python<'py>, data: &[u8]) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.encrypt(data))
+    }
+
+    #[getter]
+    fn verify_key(&self) -> SequesterVerifyKeyDer {
+        SequesterVerifyKeyDer(libparsec::crypto::SequesterVerifyKeyDer::from(
+            self.0.clone(),
+        ))
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct SequesterSigningKeyDer(pub libparsec::crypto::SequesterSigningKeyDer);
+
+crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __repr__);
+
+#[pymethods]
+impl SequesterSigningKeyDer {
+    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+
+    fn dump_pem(&self) -> String {
+        self.0.dump_pem().to_string()
+    }
+
+    #[classmethod]
+    fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
+        libparsec::crypto::SequesterSigningKeyDer::load_pem(s)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    fn sign<'py>(&self, py: Python<'py>, data: &[u8]) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.sign(data))
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct SequesterVerifyKeyDer(pub libparsec::crypto::SequesterVerifyKeyDer);
+
+crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __repr__);
+
+#[pymethods]
+impl SequesterVerifyKeyDer {
+    #[new]
+    fn new(data: &[u8]) -> PyResult<Self> {
+        libparsec::crypto::SequesterVerifyKeyDer::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+
+    fn dump_pem(&self) -> String {
+        self.0.dump_pem()
+    }
+
+    #[classmethod]
+    fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
+        libparsec::crypto::SequesterVerifyKeyDer::load_pem(s)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    fn verify<'py>(&self, py: Python<'py>, data: &[u8]) -> PyResult<&'py PyBytes> {
+        self.0
+            .verify(data)
+            .map(|x| PyBytes::new(py, &x))
+            .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 }
 
