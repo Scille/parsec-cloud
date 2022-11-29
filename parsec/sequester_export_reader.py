@@ -8,22 +8,26 @@ from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import Dict, Iterator, List, Mapping, Tuple
 
-from parsec._parsec import DateTime, SequesterPrivateKeyDer
-from parsec.api.data import (
+from parsec._parsec import (
     DataError,
+    DateTime,
     DeviceCertificate,
+    DeviceID,
     EntryID,
     EntryName,
     FileManifest,
     FolderManifest,
+    RealmID,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    SequesterPrivateKeyDer,
     UserCertificate,
+    VerifyKey,
     WorkspaceManifest,
+    manifest_verify_and_load,
 )
-from parsec.api.data.manifest import AnyRemoteManifest, manifest_verify_and_load
-from parsec.api.protocol import DeviceID, RealmID
-from parsec.crypto import CryptoError, VerifyKey
+from parsec.api.data.manifest import AnyRemoteManifest
+from parsec.crypto import CryptoError
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
 REALM_EXPORT_DB_VERSION = 1  # Only supported version so far

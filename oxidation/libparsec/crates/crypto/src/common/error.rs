@@ -4,8 +4,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CryptoError {
-    #[error("Unsupported algorithm")]
-    Algorithm,
+    #[error("Unsupported algorithm: {0}")]
+    Algorithm(String),
     #[error("Invalid signature")]
     Signature,
     #[error("Signature was forged or corrupt")]
@@ -14,8 +14,8 @@ pub enum CryptoError {
     DataSize,
     #[error("Decryption error")]
     Decryption,
-    #[error("Invalid key size")]
-    KeySize,
+    #[error("Invalid key size: expected {expected} bytes, got {got} bytes")]
+    KeySize { expected: usize, got: usize },
     #[error("The nonce must be exactly 24 bytes long")]
     Nonce,
     #[error("Invalid SequesterPrivateKeyDer {0}")]

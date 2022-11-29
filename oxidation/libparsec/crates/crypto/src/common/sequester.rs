@@ -18,19 +18,19 @@ use crate::{CryptoError, CryptoResult, SecretKey};
 
 trait EnforceSerialize {
     const ALGORITHM: &'static [u8];
-    const SIZE: usize;
-    const BYTE_SIZE: usize = Self::SIZE / 8;
+    const SIZE_IN_BITS: usize;
+    const SIZE_IN_BYTES: usize = Self::SIZE_IN_BITS / 8;
 
     /// Here we avoid uncessary allocation & enforce output has `key_size`
     fn serialize(&self, output: &[u8], data: &[u8]) -> Vec<u8> {
-        let mut res = vec![0; Self::ALGORITHM.len() + 1 + Self::BYTE_SIZE + data.len()];
+        assert!(output.len() <= Self::SIZE_IN_BYTES);
+        let mut res = vec![0; Self::ALGORITHM.len() + 1 + Self::SIZE_IN_BYTES + data.len()];
 
         let (algorithm_part, others) = res.split_at_mut(Self::ALGORITHM.len());
         let (colon, others) = others.split_at_mut(1);
         // Here we enforce output has key size with zeros
-        let (_zeros, others) = others.split_at_mut(Self::BYTE_SIZE - output.len());
+        let (_zeros, others) = others.split_at_mut(Self::SIZE_IN_BYTES - output.len());
         let (output_part, data_part) = others.split_at_mut(output.len());
-        assert_eq!(data_part.len(), data.len());
 
         algorithm_part.copy_from_slice(Self::ALGORITHM);
         colon[0] = b':';
@@ -43,8 +43,8 @@ trait EnforceSerialize {
 
 trait EnforceDeserialize {
     const ALGORITHM: &'static [u8];
-    const SIZE: usize;
-    const BYTE_SIZE: usize = Self::SIZE / 8;
+    const SIZE_IN_BITS: usize;
+    const SIZE_IN_BYTES: usize = Self::SIZE_IN_BITS / 8;
 
     fn deserialize(data: &[u8]) -> CryptoResult<(&[u8], &[u8])> {
         let index = data
@@ -54,10 +54,12 @@ trait EnforceDeserialize {
         let (algo, output_and_data) = data.split_at(index + 1);
 
         if &algo[..index] != Self::ALGORITHM {
-            return Err(CryptoError::Algorithm);
+            return Err(CryptoError::Algorithm(
+                String::from_utf8_lossy(&algo[..index]).into(),
+            ));
         }
 
-        Ok(output_and_data.split_at(Self::BYTE_SIZE))
+        Ok(output_and_data.split_at(Self::SIZE_IN_BYTES))
     }
 }
 
@@ -73,7 +75,7 @@ crate::impl_key_debug!(SequesterPrivateKeyDer);
 impl Default for SequesterPrivateKeyDer {
     fn default() -> Self {
         let mut rng = rand_08::thread_rng();
-        Self(RsaPrivateKey::new(&mut rng, Self::SIZE).expect("Unreachable"))
+        Self(RsaPrivateKey::new(&mut rng, Self::SIZE_IN_BITS).expect("Unreachable"))
     }
 }
 
@@ -88,15 +90,15 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
 }
 
 impl EnforceDeserialize for SequesterPrivateKeyDer {
-    const SIZE: usize = Self::SIZE;
+    const SIZE_IN_BITS: usize = Self::SIZE_IN_BITS;
     const ALGORITHM: &'static [u8] = b"RSAES-OAEP-XSALSA20-POLY1305";
 }
 
 impl SequesterPrivateKeyDer {
     #[cfg(test)]
-    pub const SIZE: usize = 1024;
+    pub const SIZE_IN_BITS: usize = 1024;
     #[cfg(not(test))]
-    pub const SIZE: usize = 4096;
+    pub const SIZE_IN_BITS: usize = 4096;
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
         self.0.to_pkcs8_der().expect("Unreachable").to_bytes()
@@ -146,15 +148,15 @@ impl From<SequesterPrivateKeyDer> for SequesterPublicKeyDer {
 }
 
 impl EnforceSerialize for SequesterPublicKeyDer {
-    const SIZE: usize = Self::SIZE;
+    const SIZE_IN_BITS: usize = Self::SIZE_IN_BITS;
     const ALGORITHM: &'static [u8] = b"RSAES-OAEP-XSALSA20-POLY1305";
 }
 
 impl SequesterPublicKeyDer {
     #[cfg(test)]
-    pub const SIZE: usize = 1024;
+    pub const SIZE_IN_BITS: usize = 1024;
     #[cfg(not(test))]
-    pub const SIZE: usize = 4096;
+    pub const SIZE_IN_BITS: usize = 4096;
 
     pub fn dump(&self) -> Vec<u8> {
         self.0.to_public_key_der().expect("Unreachable").into_vec()
@@ -199,6 +201,7 @@ impl TryFrom<&[u8]> for SequesterPublicKeyDer {
 
 impl TryFrom<&Bytes> for SequesterPublicKeyDer {
     type Error = CryptoError;
+
     fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
         Self::try_from(data.as_ref())
     }
@@ -223,7 +226,7 @@ pub struct SequesterSigningKeyDer(SigningKey<Sha256>);
 crate::impl_key_debug!(SequesterSigningKeyDer);
 
 impl EnforceSerialize for SequesterSigningKeyDer {
-    const SIZE: usize = Self::SIZE;
+    const SIZE_IN_BITS: usize = Self::SIZE_IN_BITS;
     const ALGORITHM: &'static [u8] = b"RSASSA-PSS-SHA256";
 }
 
@@ -235,9 +238,9 @@ impl From<SequesterPrivateKeyDer> for SequesterSigningKeyDer {
 
 impl SequesterSigningKeyDer {
     #[cfg(test)]
-    pub const SIZE: usize = 1024;
+    pub const SIZE_IN_BITS: usize = 1024;
     #[cfg(not(test))]
-    pub const SIZE: usize = 4096;
+    pub const SIZE_IN_BITS: usize = 4096;
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
         self.0.to_pkcs8_der().expect("Unreachable").to_bytes()
@@ -281,15 +284,15 @@ impl From<SequesterPublicKeyDer> for SequesterVerifyKeyDer {
 }
 
 impl EnforceDeserialize for SequesterVerifyKeyDer {
-    const SIZE: usize = Self::SIZE;
+    const SIZE_IN_BITS: usize = Self::SIZE_IN_BITS;
     const ALGORITHM: &'static [u8] = b"RSASSA-PSS-SHA256";
 }
 
 impl SequesterVerifyKeyDer {
     #[cfg(test)]
-    pub const SIZE: usize = 1024;
+    pub const SIZE_IN_BITS: usize = 1024;
     #[cfg(not(test))]
-    pub const SIZE: usize = 4096;
+    pub const SIZE_IN_BITS: usize = 4096;
 
     pub fn dump(&self) -> Vec<u8> {
         self.0.to_public_key_der().expect("Unreachable").into_vec()
@@ -332,6 +335,7 @@ impl TryFrom<&[u8]> for SequesterVerifyKeyDer {
 
 impl TryFrom<&Bytes> for SequesterVerifyKeyDer {
     type Error = CryptoError;
+
     fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
         Self::try_from(data.as_ref())
     }
@@ -349,7 +353,7 @@ impl Serialize for SequesterVerifyKeyDer {
 #[test]
 fn test_keys() {
     use hex_literal::hex;
-    assert_eq!(SequesterPrivateKeyDer::SIZE, 1024);
+    assert_eq!(SequesterPrivateKeyDer::SIZE_IN_BITS, 1024);
 
     let priv_key = SequesterPrivateKeyDer::try_from(
         &hex!(
