@@ -4,7 +4,10 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::shared::{quote_fields, Fields};
+use crate::{
+    config::CratesPaths,
+    shared::{quote_fields, Fields},
+};
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
@@ -64,7 +67,7 @@ impl Request {
 
     fn quote_fields(&self, types: &HashMap<String, String>) -> anyhow::Result<syn::ItemStruct> {
         let shared_derive = Request::shared_derive();
-        let fields = quote_fields(&self.fields, None, types)?;
+        let fields = quote_fields(&self.fields, None, types, &CratesPaths::default())?;
 
         Ok(syn::parse_quote! {
             #[::serde_with::serde_as]

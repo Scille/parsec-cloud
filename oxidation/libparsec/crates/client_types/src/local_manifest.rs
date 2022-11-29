@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+use serialization_format::parsec_data;
 use std::{
     cmp::Ordering,
     collections::{hash_map::RandomState, HashMap, HashSet},
@@ -10,9 +10,11 @@ use std::{
 
 use libparsec_crypto::{HashDigest, SecretKey};
 use libparsec_types::*;
-use serialization_format::parsec_data;
 
-use crate as libparsec_client_types;
+parsec_data!({
+    path = "schema/local_manifest";
+    crates = { libparsec_client_types = "crate" }
+});
 
 macro_rules! impl_local_manifest_dump_load {
     ($name:ident) => {
@@ -166,7 +168,10 @@ impl Chunk {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "LocalFileManifestData", try_from = "LocalFileManifestData")]
+#[serde(
+    into = "v1::LocalFileManifestData",
+    try_from = "v1::LocalFileManifestData"
+)]
 pub struct LocalFileManifest {
     pub base: FileManifest,
     pub need_sync: bool,
@@ -176,11 +181,9 @@ pub struct LocalFileManifest {
     pub blocks: Vec<Vec<Chunk>>,
 }
 
-parsec_data!("schema/local_file_manifest.json5");
-
-impl TryFrom<LocalFileManifestData> for LocalFileManifest {
+impl TryFrom<v1::LocalFileManifestData> for LocalFileManifest {
     type Error = &'static str;
-    fn try_from(data: LocalFileManifestData) -> Result<Self, Self::Error> {
+    fn try_from(data: v1::LocalFileManifestData) -> Result<Self, Self::Error> {
         Ok(Self {
             base: data.base,
             need_sync: data.need_sync,
@@ -192,7 +195,7 @@ impl TryFrom<LocalFileManifestData> for LocalFileManifest {
     }
 }
 
-impl From<LocalFileManifest> for LocalFileManifestData {
+impl From<LocalFileManifest> for v1::LocalFileManifestData {
     fn from(obj: LocalFileManifest) -> Self {
         Self {
             ty: Default::default(),
@@ -338,7 +341,10 @@ impl LocalFileManifest {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "LocalFolderManifestData", from = "LocalFolderManifestData")]
+#[serde(
+    into = "v1::LocalFolderManifestData",
+    from = "v1::LocalFolderManifestData"
+)]
 pub struct LocalFolderManifest {
     pub base: FolderManifest,
     pub need_sync: bool,
@@ -356,11 +362,9 @@ pub struct LocalFolderManifest {
     pub remote_confinement_points: HashSet<EntryID>,
 }
 
-parsec_data!("schema/local_folder_manifest.json5");
-
 impl_transparent_data_format_conversion!(
     LocalFolderManifest,
-    LocalFolderManifestData,
+    v1::LocalFolderManifestData,
     base,
     need_sync,
     updated,
@@ -611,8 +615,8 @@ impl LocalFolderManifest {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
-    into = "LocalWorkspaceManifestData",
-    from = "LocalWorkspaceManifestData"
+    into = "v1::LocalWorkspaceManifestData",
+    from = "v1::LocalWorkspaceManifestData"
 )]
 pub struct LocalWorkspaceManifest {
     pub base: WorkspaceManifest,
@@ -642,13 +646,11 @@ pub struct LocalWorkspaceManifest {
     pub speculative: bool,
 }
 
-parsec_data!("schema/local_workspace_manifest.json5");
-
 impl_local_manifest_dump_load!(LocalWorkspaceManifest);
 
 impl_transparent_data_format_conversion!(
     LocalWorkspaceManifest,
-    LocalWorkspaceManifestData,
+    v1::LocalWorkspaceManifestData,
     base,
     need_sync,
     updated,
@@ -902,7 +904,7 @@ impl LocalWorkspaceManifest {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "LocalUserManifestData", from = "LocalUserManifestData")]
+#[serde(into = "v1::LocalUserManifestData", from = "v1::LocalUserManifestData")]
 pub struct LocalUserManifest {
     pub base: UserManifest,
     pub need_sync: bool,
@@ -924,11 +926,9 @@ pub struct LocalUserManifest {
 
 impl_local_manifest_dump_load!(LocalUserManifest);
 
-parsec_data!("schema/local_user_manifest.json5");
-
 impl_transparent_data_format_conversion!(
     LocalUserManifest,
-    LocalUserManifestData,
+    v1::LocalUserManifestData,
     base,
     need_sync,
     updated,

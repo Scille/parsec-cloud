@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+pub(crate) mod config;
 mod old_parser;
 pub(crate) mod protocol;
 pub(crate) mod shared;
@@ -15,6 +16,7 @@ use proc_macro::TokenStream;
 use quote::ToTokens;
 use syn::{parse_macro_input, LitStr};
 
+use config::MacroConfig;
 use protocol::{intermediate, parser};
 
 /// Procedural macro that take a directory or a file path.

@@ -5,7 +5,10 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use serde::Deserialize;
 
-use crate::shared::{quote_fields, Fields};
+use crate::{
+    config::CratesPaths,
+    shared::{quote_fields, Fields},
+};
 
 /// A collection of [Variant] for an `enum`.
 /// Each key of the Dict is a variant name.
@@ -42,7 +45,12 @@ impl Variant {
             attrs.push(syn::parse_quote!(#[serde(rename = #rename)]))
         }
 
-        let fields = quote_fields(&self.fields, Some(syn::Visibility::Inherited), types)?;
+        let fields = quote_fields(
+            &self.fields,
+            Some(syn::Visibility::Inherited),
+            types,
+            &CratesPaths::default(),
+        )?;
 
         if fields.is_empty() {
             Ok(syn::parse_quote! {

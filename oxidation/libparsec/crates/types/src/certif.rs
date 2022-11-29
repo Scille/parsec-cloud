@@ -9,12 +9,16 @@ use std::io::{Read, Write};
 use libparsec_crypto::{PublicKey, SigningKey, VerifyKey};
 use serialization_format::parsec_data;
 
-use crate as libparsec_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{DataError, DataResult};
 use crate::{
     DateTime, DeviceID, DeviceLabel, HumanHandle, RealmID, RealmRole, UserID, UserProfile,
 };
+
+parsec_data!({
+    path = "schema/certif";
+    crates = { libparsec_types = "crate" }
+});
 
 fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
 where
@@ -145,7 +149,7 @@ impl From<CertificateSignerOwned> for Option<DeviceID> {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "UserCertificateData", from = "UserCertificateData")]
+#[serde(into = "v1::UserCertificateData", from = "v1::UserCertificateData")]
 pub struct UserCertificate {
     pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
@@ -190,10 +194,8 @@ impl UserCertificate {
     }
 }
 
-parsec_data!("schema/certif/user_certificate.json5");
-
-impl From<UserCertificateData> for UserCertificate {
-    fn from(data: UserCertificateData) -> Self {
+impl From<v1::UserCertificateData> for UserCertificate {
+    fn from(data: v1::UserCertificateData) -> Self {
         let profile = data.profile.unwrap_or(match data.is_admin {
             true => UserProfile::Admin,
             false => UserProfile::Standard,
@@ -209,7 +211,7 @@ impl From<UserCertificateData> for UserCertificate {
     }
 }
 
-impl From<UserCertificate> for UserCertificateData {
+impl From<UserCertificate> for v1::UserCertificateData {
     fn from(obj: UserCertificate) -> Self {
         Self {
             ty: Default::default(),
@@ -230,8 +232,8 @@ impl From<UserCertificate> for UserCertificateData {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
-    into = "RevokedUserCertificateData",
-    from = "RevokedUserCertificateData"
+    into = "v1::RevokedUserCertificateData",
+    from = "v1::RevokedUserCertificateData"
 )]
 pub struct RevokedUserCertificate {
     pub author: DeviceID,
@@ -272,11 +274,9 @@ impl RevokedUserCertificate {
     }
 }
 
-parsec_data!("schema/certif/revoked_user_certificate.json5");
-
 impl_transparent_data_format_conversion!(
     RevokedUserCertificate,
-    RevokedUserCertificateData,
+    v1::RevokedUserCertificateData,
     author,
     timestamp,
     user_id,
@@ -287,7 +287,7 @@ impl_transparent_data_format_conversion!(
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceCertificateData", from = "DeviceCertificateData")]
+#[serde(into = "v1::DeviceCertificateData", from = "v1::DeviceCertificateData")]
 pub struct DeviceCertificate {
     pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
@@ -297,8 +297,6 @@ pub struct DeviceCertificate {
     pub device_label: Option<DeviceLabel>,
     pub verify_key: VerifyKey,
 }
-
-parsec_data!("schema/certif/device_certificate.json5");
 
 impl_unsecure_load!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
@@ -328,7 +326,7 @@ impl DeviceCertificate {
 
 impl_transparent_data_format_conversion!(
     DeviceCertificate,
-    DeviceCertificateData,
+    v1::DeviceCertificateData,
     author,
     timestamp,
     device_id,
@@ -341,7 +339,10 @@ impl_transparent_data_format_conversion!(
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]
+#[serde(
+    into = "v1::RealmRoleCertificateData",
+    from = "v1::RealmRoleCertificateData"
+)]
 pub struct RealmRoleCertificate {
     pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
@@ -388,11 +389,9 @@ impl RealmRoleCertificate {
     }
 }
 
-parsec_data!("schema/certif/realm_role_certificate.json5");
-
 impl_transparent_data_format_conversion!(
     RealmRoleCertificate,
-    RealmRoleCertificateData,
+    v1::RealmRoleCertificateData,
     author,
     timestamp,
     realm_id,

@@ -4,7 +4,10 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::shared::{quote_fields, to_pascal_case, Fields};
+use crate::{
+    config::CratesPaths,
+    shared::{quote_fields, to_pascal_case, Fields},
+};
 
 /// A collection of [Response].
 /// Each keys correspond to a response type/status.
@@ -64,7 +67,12 @@ impl Response {
     ) -> anyhow::Result<syn::Variant> {
         let name_ident = self.quote_name(name)?;
         let rename = name;
-        let fields = quote_fields(&self.fields, Some(syn::Visibility::Inherited), types)?;
+        let fields = quote_fields(
+            &self.fields,
+            Some(syn::Visibility::Inherited),
+            types,
+            &CratesPaths::default(),
+        )?;
 
         Ok(syn::parse_quote! {
             #[serde(rename = #rename)]

@@ -15,11 +15,16 @@ use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError,
+    data_macros::impl_transparent_data_format_conversion, BlockID, DataError, DataResult, DateTime,
+    DeviceID, EntryID, EntryNameError,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
+
+parsec_data!({
+    path = "schema/manifest";
+    crates = { libparsec_types = "crate" }
+});
 
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
@@ -320,7 +325,7 @@ impl Deref for Blocksize {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "FileManifestData", try_from = "FileManifestData")]
+#[serde(into = "v1::FileManifestData", try_from = "v1::FileManifestData")]
 pub struct FileManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
@@ -340,11 +345,9 @@ pub struct FileManifest {
 
 impl_manifest_dump_load!(FileManifest);
 
-parsec_data!("schema/manifest/file_manifest.json5");
-
-impl TryFrom<FileManifestData> for FileManifest {
+impl TryFrom<v1::FileManifestData> for FileManifest {
     type Error = &'static str;
-    fn try_from(data: FileManifestData) -> Result<Self, Self::Error> {
+    fn try_from(data: v1::FileManifestData) -> Result<Self, Self::Error> {
         Ok(Self {
             author: data.author,
             timestamp: data.timestamp,
@@ -360,7 +363,7 @@ impl TryFrom<FileManifestData> for FileManifest {
     }
 }
 
-impl From<FileManifest> for FileManifestData {
+impl From<FileManifest> for v1::FileManifestData {
     fn from(obj: FileManifest) -> Self {
         Self {
             ty: Default::default(),
@@ -383,7 +386,7 @@ impl From<FileManifest> for FileManifestData {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "FolderManifestData", from = "FolderManifestData")]
+#[serde(into = "v1::FolderManifestData", from = "v1::FolderManifestData")]
 pub struct FolderManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
@@ -399,11 +402,9 @@ pub struct FolderManifest {
 
 impl_manifest_dump_load!(FolderManifest);
 
-parsec_data!("schema/manifest/folder_manifest.json5");
-
 impl_transparent_data_format_conversion!(
     FolderManifest,
-    FolderManifestData,
+    v1::FolderManifestData,
     author,
     timestamp,
     id,
@@ -419,7 +420,7 @@ impl_transparent_data_format_conversion!(
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "WorkspaceManifestData", from = "WorkspaceManifestData")]
+#[serde(into = "v1::WorkspaceManifestData", from = "v1::WorkspaceManifestData")]
 pub struct WorkspaceManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
@@ -432,13 +433,11 @@ pub struct WorkspaceManifest {
     pub children: HashMap<EntryName, EntryID>,
 }
 
-parsec_data!("schema/manifest/workspace_manifest.json5");
-
 impl_manifest_dump_load!(WorkspaceManifest);
 
 impl_transparent_data_format_conversion!(
     WorkspaceManifest,
-    WorkspaceManifestData,
+    v1::WorkspaceManifestData,
     author,
     timestamp,
     id,
@@ -453,7 +452,7 @@ impl_transparent_data_format_conversion!(
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "UserManifestData", from = "UserManifestData")]
+#[serde(into = "v1::UserManifestData", from = "v1::UserManifestData")]
 pub struct UserManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
@@ -473,13 +472,11 @@ impl UserManifest {
     }
 }
 
-parsec_data!("schema/manifest/user_manifest.json5");
-
 impl_manifest_dump_load!(UserManifest);
 
 impl_transparent_data_format_conversion!(
     UserManifest,
-    UserManifestData,
+    v1::UserManifestData,
     author,
     timestamp,
     id,

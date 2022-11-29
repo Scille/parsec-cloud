@@ -8,8 +8,13 @@ use sha2::Digest;
 use libparsec_crypto::prelude::*;
 use libparsec_types::*;
 
+parsec_data!({
+    path = "schema/local_device.json5";
+    crates = { libparsec_client_types = "crate" }
+});
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
+#[serde(into = "v1::LocalDeviceData", try_from = "v1::LocalDeviceData")]
 pub struct LocalDevice {
     pub organization_addr: BackendOrganizationAddr,
     pub device_id: DeviceID,
@@ -140,12 +145,10 @@ impl LocalDevice {
     }
 }
 
-parsec_data!("schema/local_device.json5");
-
-impl TryFrom<LocalDeviceData> for LocalDevice {
+impl TryFrom<v1::LocalDeviceData> for LocalDevice {
     type Error = &'static str;
 
-    fn try_from(data: LocalDeviceData) -> Result<Self, Self::Error> {
+    fn try_from(data: v1::LocalDeviceData) -> Result<Self, Self::Error> {
         let profile = match data.profile {
             Maybe::Present(profile) => {
                 // `profile` field is defined, however `is_admin` is also present for
@@ -183,7 +186,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
     }
 }
 
-impl From<LocalDevice> for LocalDeviceData {
+impl From<LocalDevice> for v1::LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
         // Handle legacy `is_admin` field
         let is_admin = obj.profile == UserProfile::Admin;

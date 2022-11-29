@@ -4,7 +4,10 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::shared::{quote_fields, Fields};
+use crate::{
+    config::CratesPaths,
+    shared::{quote_fields, Fields},
+};
 
 use super::shared_attribute;
 
@@ -21,7 +24,7 @@ impl CustomStruct {
         types: &HashMap<String, String>,
     ) -> anyhow::Result<syn::ItemStruct> {
         let name = self.quote_label(name)?;
-        let fields = quote_fields(&self.fields, None, types)?;
+        let fields = quote_fields(&self.fields, None, types, &CratesPaths::default())?;
         let attrs = shared_attribute();
 
         if fields.is_empty() {

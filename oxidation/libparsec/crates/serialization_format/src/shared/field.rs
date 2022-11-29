@@ -2,9 +2,12 @@
 
 use std::collections::HashMap;
 
-use crate::shared::{
-    utils::{quote_serde_as, validate_raw_type},
-    MajorMinorVersion,
+use crate::{
+    config::CratesPaths,
+    shared::{
+        utils::{quote_serde_as, validate_raw_type},
+        MajorMinorVersion,
+    },
 };
 
 use itertools::Itertools;
@@ -45,11 +48,12 @@ impl Field {
         name: &str,
         visibility: syn::Visibility,
         types: &HashMap<String, String>,
+        crates_override: &CratesPaths,
     ) -> anyhow::Result<syn::Field> {
         let (rename, name) = self
             .quote_name(name)
             .map_err(|e| anyhow::anyhow!("Invalid field name `{name}`: {e}"))?;
-        let (ty, serde_attr) = self.quote_type(types).map_err(|e| {
+        let (ty, serde_attr) = self.quote_type(types, crates_override).map_err(|e| {
             anyhow::anyhow!(
                 "Cannot quote type `{}` for field `{}`: {}",
                 self.ty,
@@ -102,15 +106,19 @@ impl Field {
     fn quote_type(
         &self,
         types: &HashMap<String, String>,
+        crates_override: &CratesPaths,
     ) -> anyhow::Result<(syn::Type, Option<syn::Attribute>)> {
-        let ty = validate_raw_type(&self.ty, types)?;
+        let ty = validate_raw_type(&self.ty, types, crates_override)?;
 
         if self.introduced_in.is_some() {
+            let libparsec_types = &crates_override["libparsec_types"];
+            let maybe_root_path = syn::parse_str::<syn::Path>(libparsec_types)
+                .map_err(|e| anyhow::anyhow!("Invalid maybe root path `{libparsec_types}`: {e}"))?;
+            let maybe_is_absent = format!("{libparsec_types}::Maybe::is_absent");
+
             Ok((
-                syn::parse_quote!(libparsec_types::Maybe<#ty>),
-                Some(
-                    syn::parse_quote!(#[serde(default, skip_serializing_if = "libparsec_types::Maybe::is_absent")]),
-                ),
+                syn::parse_quote!(#maybe_root_path::Maybe<#ty>),
+                Some(syn::parse_quote!(#[serde(default, skip_serializing_if = #maybe_is_absent)])),
             ))
         } else {
             Ok((ty, None))
@@ -136,12 +144,13 @@ pub fn quote_fields(
     fields: &Fields,
     visibility: Option<syn::Visibility>,
     types: &HashMap<String, String>,
+    crates_override: &CratesPaths,
 ) -> anyhow::Result<Vec<syn::Field>> {
     let visibility = visibility.unwrap_or_else(|| syn::parse_quote!(pub));
     let (fields, errors): (Vec<_>, Vec<_>) = fields
         .iter()
         .sorted_by_key(|(name, _)| *name)
-        .map(|(name, field)| field.quote(name, visibility.clone(), types))
+        .map(|(name, field)| field.quote(name, visibility.clone(), types, crates_override))
         .partition_result();
 
     anyhow::ensure!(
@@ -163,6 +172,7 @@ mod test {
     use rstest::rstest;
 
     use super::{Field, MajorMinorVersion};
+    use crate::config::CratesPaths;
 
     #[rstest]
     #[case::basic_field(
@@ -304,7 +314,7 @@ mod test {
     ) {
         assert_eq!(
             field
-                .quote("foo", vis, &HashMap::new())
+                .quote("foo", vis, &HashMap::new(), &CratesPaths::default())
                 .unwrap()
                 .into_token_stream()
                 .to_string(),

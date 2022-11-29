@@ -9,8 +9,8 @@ use libparsec_crypto::{PublicKey, VerifyKey};
 use serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,
-    DeviceID, DeviceLabel, HumanHandle, UserProfile,
+    impl_transparent_data_format_conversion, DataError, DataResult, DeviceID, DeviceLabel,
+    HumanHandle, UserProfile,
 };
 
 fn load<T: DeserializeOwned>(raw: &[u8]) -> DataResult<T> {
@@ -38,8 +38,8 @@ fn dump<T: Serialize>(data: &T) -> Vec<u8> {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
-    into = "PkiEnrollmentAnswerPayloadData",
-    from = "PkiEnrollmentAnswerPayloadData"
+    into = "v1::PkiEnrollmentAnswerPayloadData",
+    from = "v1::PkiEnrollmentAnswerPayloadData"
 )]
 pub struct PkiEnrollmentAnswerPayload {
     pub device_id: DeviceID,
@@ -49,11 +49,14 @@ pub struct PkiEnrollmentAnswerPayload {
     pub root_verify_key: VerifyKey,
 }
 
-parsec_data!("schema/pki/pki_enrollment_answer_payload.json5");
+parsec_data!({
+    path = "schema/pki";
+    crates = { libparsec_types = "crate" }
+});
 
 impl_transparent_data_format_conversion!(
     PkiEnrollmentAnswerPayload,
-    PkiEnrollmentAnswerPayloadData,
+    v1::PkiEnrollmentAnswerPayloadData,
     device_id,
     device_label,
     human_handle,
@@ -76,8 +79,8 @@ impl PkiEnrollmentAnswerPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
-    into = "PkiEnrollmentSubmitPayloadData",
-    from = "PkiEnrollmentSubmitPayloadData"
+    into = "v1::PkiEnrollmentSubmitPayloadData",
+    from = "v1::PkiEnrollmentSubmitPayloadData"
 )]
 pub struct PkiEnrollmentSubmitPayload {
     pub verify_key: VerifyKey,
@@ -85,11 +88,9 @@ pub struct PkiEnrollmentSubmitPayload {
     pub requested_device_label: DeviceLabel,
 }
 
-parsec_data!("schema/pki/pki_enrollment_submit_payload.json5");
-
 impl_transparent_data_format_conversion!(
     PkiEnrollmentSubmitPayload,
-    PkiEnrollmentSubmitPayloadData,
+    v1::PkiEnrollmentSubmitPayloadData,
     verify_key,
     public_key,
     requested_device_label,
