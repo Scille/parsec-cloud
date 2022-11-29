@@ -90,11 +90,11 @@ def settle_compatible_versions(
     raise IncompatibleAPIVersionsError(backend_versions, client_versions)
 
 
-def packb(data: Mapping) -> bytes:  # type: ignore[type-arg]
+def packb(data: Mapping[str, Any]) -> bytes:
     return _packb(data, MessageSerializationError)
 
 
-def unpackb(data: bytes) -> dict:  # type: ignore[type-arg]
+def unpackb(data: bytes) -> dict[str, Any]:
     return _unpackb(data, MessageSerializationError)
 
 
@@ -247,12 +247,15 @@ class ApiCommandSerializer:
 
     # Temporary Used for generate_data
     def req_loads(self, raw: bytes) -> Any:
-        from parsec._parsec import AuthenticatedAnyCmdReq, InvitedAnyCmdReq
+        from parsec._parsec import AuthenticatedAnyCmdReq, InvitedAnyCmdReq, AnonymousAnyCmdReq
 
         try:
             return AuthenticatedAnyCmdReq.load(raw)
         except ProtocolError:
-            return InvitedAnyCmdReq.load(raw)
+            try:
+                return AnonymousAnyCmdReq.load(raw)
+            except ProtocolError:
+                return InvitedAnyCmdReq.load(raw)
 
     def rep_dumps(self, rep: Any) -> bytes:
         return rep.dump()

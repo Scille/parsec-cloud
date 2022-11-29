@@ -345,17 +345,13 @@ async def _reject(cmds: BackendAuthenticatedCmds, enrollment_id: EnrollmentID) -
 
     if isinstance(rep, PkiEnrollmentRejectRepNotAllowed):
         raise PkiEnrollmentRejectNotAllowedError(
-            f"Rejecting the enrollment is not allowed: {rep['reason']}", rep
+            f"Rejecting the enrollment is not allowed: {rep.reason}", rep
         )
     if isinstance(rep, PkiEnrollmentRejectRepNotFound):
-        raise PkiEnrollmentRejectNotFoundError(
-            f"The enrollment cannot be found: {rep['reason']}", rep
-        )
+        raise PkiEnrollmentRejectNotFoundError(f"The enrollment cannot be found: {rep.reason}", rep)
     if isinstance(rep, PkiEnrollmentRejectRepNoLongerAvailable):
         raise PkiEnrollmentRejectNoLongerAvailableError(
-            f"The enrollment is not longer available: {rep['reason']}", rep
+            f"The enrollment is not longer available: {rep.reason}", rep
         )
     if not isinstance(rep, PkiEnrollmentRejectRepOk):
-        raise PkiEnrollmentRejectError(
-            f"Backend refused to reject the enrollment: {rep['status']}", rep
-        )
+        raise PkiEnrollmentRejectError(f"Backend refused to reject the enrollment: {rep}", rep)

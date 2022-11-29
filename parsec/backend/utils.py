@@ -51,11 +51,15 @@ def api_typed_msg_adapter(
             # Here packb&unpackb should never fail given they are only undoing
             # work we've just done in another layer
             if client_ctx.TYPE == ClientType.INVITED:
-                from parsec.api.protocol import InvitedAnyCmdReq
+                from parsec._parsec import InvitedAnyCmdReq
 
                 typed_req = InvitedAnyCmdReq.load(packb(msg))
+            elif client_ctx.TYPE == ClientType.ANONYMOUS:
+                from parsec._parsec import AnonymousAnyCmdReq
+
+                typed_req = AnonymousAnyCmdReq.load(packb(msg))
             else:
-                from parsec.api.protocol import AuthenticatedAnyCmdReq
+                from parsec._parsec import AuthenticatedAnyCmdReq
 
                 typed_req = AuthenticatedAnyCmdReq.load(packb(msg))
 

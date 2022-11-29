@@ -299,6 +299,7 @@ def generate_api_protocol_specs():
                         "pki_enrollment_accept",
                         "pki_enrollment_reject",
                         "pki_enrollment_list",
+                        "pki_enrollment_submit",
                         "realm_create",
                         "realm_finish_reencryption_maintenance",
                         "realm_get_role_certificates",

@@ -1,14 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+from typing import cast
 
 from structlog import get_logger
 
-from parsec._parsec import EnrollmentID
-from parsec._version import __version__
-from parsec.api.protocol.base import CmdSerializer
-from parsec.crypto import VerifyKey
-from parsec.api.protocol import (
+from parsec._parsec import (
+    EnrollmentID,
     OrganizationID,
+    PkiEnrollmentInfoRep,
+    PkiEnrollmentSubmitRep,
+    VerifyKey,
+)
+from parsec._version import __version__
+from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
+from parsec.api.protocol import (
     ProtocolError,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
@@ -36,11 +41,11 @@ REQUEST_HEADERS = {
 
 
 async def _anonymous_cmd(
-    serializer: CmdSerializer,
+    serializer: ApiCommandSerializer | CmdSerializer,
     addr: BackendPkiEnrollmentAddr | BackendOrganizationBootstrapAddr,
     organization_id: OrganizationID,
     **req: object,
-) -> dict[str, object]:
+) -> PkiEnrollmentSubmitRep | PkiEnrollmentInfoRep | dict[str, object]:
     """
     Raises:
         BackendNotAvailable
@@ -69,6 +74,15 @@ async def _anonymous_cmd(
         logger.exception("Invalid response data", cmd=req["cmd"], error=exc)
         raise BackendProtocolError("Invalid response data") from exc
 
+    if isinstance(
+        rep,
+        (
+            PkiEnrollmentSubmitRep,
+            PkiEnrollmentInfoRep,
+        ),
+    ):
+        return rep
+
     if rep["status"] == "invalid_msg_format":
         logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
@@ -87,30 +101,36 @@ async def pki_enrollment_submit(
     submitter_der_x509_certificate_email: str,
     submit_payload_signature: bytes,
     submit_payload: bytes,
-) -> dict[str, object]:
-    return await _anonymous_cmd(
-        serializer=pki_enrollment_submit_serializer,
-        cmd="pki_enrollment_submit",
-        addr=addr,
-        organization_id=addr.organization_id,
-        enrollment_id=enrollment_id,
-        force=force,
-        submitter_der_x509_certificate=submitter_der_x509_certificate,
-        submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
-        submit_payload_signature=submit_payload_signature,
-        submit_payload=submit_payload,
+) -> PkiEnrollmentSubmitRep:
+    return cast(
+        PkiEnrollmentSubmitRep,
+        await _anonymous_cmd(
+            serializer=pki_enrollment_submit_serializer,
+            cmd="pki_enrollment_submit",
+            addr=addr,
+            organization_id=addr.organization_id,
+            enrollment_id=enrollment_id,
+            force=force,
+            submitter_der_x509_certificate=submitter_der_x509_certificate,
+            submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
+            submit_payload_signature=submit_payload_signature,
+            submit_payload=submit_payload,
+        ),
     )
 
 
 async def pki_enrollment_info(
     addr: BackendPkiEnrollmentAddr, enrollment_id: EnrollmentID
-) -> dict[str, object]:
-    return await _anonymous_cmd(
-        serializer=pki_enrollment_info_serializer,
-        cmd="pki_enrollment_info",
-        addr=addr,
-        organization_id=addr.organization_id,
-        enrollment_id=enrollment_id,
+) -> PkiEnrollmentInfoRep:
+    return cast(
+        PkiEnrollmentInfoRep,
+        await _anonymous_cmd(
+            serializer=pki_enrollment_info_serializer,
+            cmd="pki_enrollment_info",
+            addr=addr,
+            organization_id=addr.organization_id,
+            enrollment_id=enrollment_id,
+        ),
     )
 
 
@@ -123,16 +143,19 @@ async def organization_bootstrap(
     redacted_device_certificate: bytes,
     sequester_authority_certificate: bytes | None,
 ) -> dict[str, object]:
-    return await _anonymous_cmd(
-        organization_bootstrap_serializer,
-        cmd="organization_bootstrap",
-        addr=addr,
-        organization_id=addr.organization_id,
-        bootstrap_token=addr.token,
-        root_verify_key=root_verify_key,
-        user_certificate=user_certificate,
-        device_certificate=device_certificate,
-        redacted_user_certificate=redacted_user_certificate,
-        redacted_device_certificate=redacted_device_certificate,
-        sequester_authority_certificate=sequester_authority_certificate,
+    return cast(
+        dict[str, object],
+        await _anonymous_cmd(
+            organization_bootstrap_serializer,
+            cmd="organization_bootstrap",
+            addr=addr,
+            organization_id=addr.organization_id,
+            bootstrap_token=addr.token,
+            root_verify_key=root_verify_key,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+            sequester_authority_certificate=sequester_authority_certificate,
+        ),
     )

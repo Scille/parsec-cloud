@@ -1,5 +1,5 @@
 use libparsec::protocol::{
-    anonymous_cmds::v2::pki_enrollment_info,
+    anonymous_cmds::v2::{pki_enrollment_info, pki_enrollment_submit},
     authenticated_cmds::{
         v2::pki_enrollment_accept,
         v2::{pki_enrollment_list, pki_enrollment_reject},
@@ -121,66 +121,6 @@ impl PkiEnrollmentAcceptRepOk {
     #[new]
     fn new() -> (Self, PkiEnrollmentAcceptRep) {
         (Self, PkiEnrollmentAcceptRep(pki_enrollment_accept::Rep::Ok))
-    }
-}
-
-#[pyclass]
-pub(crate) struct PkiEnrollmentInfoReq(pub pki_enrollment_info::Req);
-
-#[pymethods]
-impl PkiEnrollmentInfoReq {
-    #[new]
-    fn new(enrollment_id: EnrollmentID) -> Self {
-        PkiEnrollmentInfoReq(pki_enrollment_info::Req {
-            enrollment_id: enrollment_id.0,
-        })
-    }
-
-    #[getter]
-    fn enrollment_id(&self) -> EnrollmentID {
-        EnrollmentID(self.0.enrollment_id)
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
-        ))
-    }
-}
-
-gen_rep!(
-    pki_enrollment_info,
-    PkiEnrollmentInfoRep,
-    { .. },
-    [NotFound, reason: Reason],
-);
-
-#[pyclass(extends = PkiEnrollmentInfoRep)]
-#[derive(Clone)]
-pub(crate) struct PkiEnrollmentInfoRepOk;
-
-#[pymethods]
-impl PkiEnrollmentInfoRepOk {
-    #[new]
-    fn new(info_status: PkiEnrollmentInfoStatus) -> (Self, PkiEnrollmentInfoRep) {
-        (
-            Self,
-            PkiEnrollmentInfoRep(pki_enrollment_info::Rep::Ok(info_status.0)),
-        )
-    }
-
-    #[getter]
-    fn enrollment_status(_self: PyRef<'_, Self>) -> PyResult<PkiEnrollmentInfoStatus> {
-        if let pki_enrollment_info::Rep::Ok(infos) = &_self.as_ref().0 {
-            Ok(PkiEnrollmentInfoStatus(infos.clone()))
-        } else {
-            Err(PyAttributeError::new_err("No such field"))
-        }
     }
 }
 
@@ -422,5 +362,262 @@ impl PkiEnrollmentRejectRepOk {
     #[new]
     fn new() -> (Self, PkiEnrollmentRejectRep) {
         (Self, PkiEnrollmentRejectRep(pki_enrollment_reject::Rep::Ok))
+    }
+}
+
+#[derive(Clone)]
+#[pyclass]
+pub(crate) struct PkiEnrollmentSubmitReq(pub pki_enrollment_submit::Req);
+
+#[pymethods]
+impl PkiEnrollmentSubmitReq {
+    #[new]
+    #[args(submitter_der_x509_certificate_email = "None")]
+    fn new(
+        enrollment_id: EnrollmentID,
+        force: bool,
+        submitter_der_x509_certificate: Vec<u8>,
+        submit_payload_signature: Vec<u8>,
+        submit_payload: Vec<u8>,
+        submitter_der_x509_certificate_email: Option<String>,
+    ) -> Self {
+        Self(pki_enrollment_submit::Req {
+            enrollment_id: enrollment_id.0,
+            force,
+            submitter_der_x509_certificate,
+            submitter_der_x509_certificate_email,
+            submit_payload_signature,
+            submit_payload,
+        })
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+        ))
+    }
+
+    #[getter]
+    fn enrollment_id(&self) -> EnrollmentID {
+        EnrollmentID(self.0.enrollment_id)
+    }
+
+    #[getter]
+    fn force(&self) -> bool {
+        self.0.force
+    }
+
+    #[getter]
+    fn submitter_der_x509_certificate<'py>(&self, python: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(python, &self.0.submitter_der_x509_certificate)
+    }
+
+    #[getter]
+    fn submitter_der_x509_certificate_email(&self) -> Option<&'_ String> {
+        self.0.submitter_der_x509_certificate_email.as_ref()
+    }
+
+    #[getter]
+    fn submit_payload_signature<'py>(&self, python: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(python, &self.0.submit_payload_signature)
+    }
+
+    #[getter]
+    fn submit_payload<'py>(&self, python: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(python, &self.0.submit_payload)
+    }
+}
+
+gen_rep!(
+    pki_enrollment_submit,
+    PkiEnrollmentSubmitRep,
+    { .. },
+    [AlreadySubmitted, submitted_on: DateTime],
+    [InvalidPayloadData, reason: Reason],
+    [IdAlreadyUsed],
+    [EmailAlreadyUsed],
+    [AlreadyEnrolled],
+);
+
+#[derive(Clone)]
+#[pyclass(extends = PkiEnrollmentSubmitRep)]
+pub(crate) struct PkiEnrollmentSubmitRepOk;
+
+#[pymethods]
+impl PkiEnrollmentSubmitRepOk {
+    #[new]
+    fn new(submitted_on: DateTime) -> (Self, PkiEnrollmentSubmitRep) {
+        (
+            Self,
+            PkiEnrollmentSubmitRep(pki_enrollment_submit::Rep::Ok {
+                submitted_on: submitted_on.0,
+            }),
+        )
+    }
+
+    #[getter]
+    fn submitted_on(_self: PyRef<Self, '_>) -> PyResult<DateTime> {
+        if let pki_enrollment_submit::Rep::Ok { submitted_on } = _self.as_ref().0 {
+            Ok(DateTime(submitted_on))
+        } else {
+            Err(PyAttributeError::new_err(
+                "No such attribute `submitted_on`",
+            ))
+        }
+    }
+}
+
+#[pyclass]
+pub(crate) struct PkiEnrollmentInfoReq(pub pki_enrollment_info::Req);
+
+#[pymethods]
+impl PkiEnrollmentInfoReq {
+    #[new]
+    fn new(enrollment_id: EnrollmentID) -> Self {
+        PkiEnrollmentInfoReq(pki_enrollment_info::Req {
+            enrollment_id: enrollment_id.0,
+        })
+    }
+
+    #[getter]
+    fn enrollment_id(&self) -> EnrollmentID {
+        EnrollmentID(self.0.enrollment_id)
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+        ))
+    }
+}
+
+gen_rep!(
+    pki_enrollment_info,
+    PkiEnrollmentInfoRep,
+    { .. },
+    [NotFound, reason: Reason],
+);
+
+#[pyclass(extends = PkiEnrollmentInfoRep)]
+#[derive(Clone)]
+pub(crate) struct PkiEnrollmentInfoRepOk;
+
+#[pymethods]
+impl PkiEnrollmentInfoRepOk {
+    #[new]
+    fn new(info_status: PkiEnrollmentInfoStatus) -> (Self, PkiEnrollmentInfoRep) {
+        (
+            Self,
+            PkiEnrollmentInfoRep(pki_enrollment_info::Rep::Ok(info_status.0)),
+        )
+    }
+
+    #[getter]
+    fn enrollment_status(_self: PyRef<'_, Self>) -> PyResult<PkiEnrollmentInfoStatus> {
+        if let pki_enrollment_info::Rep::Ok(infos) = &_self.as_ref().0 {
+            Ok(PkiEnrollmentInfoStatus(infos.clone()))
+        } else {
+            Err(PyAttributeError::new_err(
+                "No such field 'enrollment_status'",
+            ))
+        }
+    }
+
+    #[getter]
+    fn accepter_der_x509_certificate<'py>(
+        _self: PyRef<'py, Self>,
+        python: Python<'py>,
+    ) -> PyResult<&'py PyBytes> {
+        if let pki_enrollment_info::Rep::Ok(
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted {
+                accepter_der_x509_certificate,
+                ..
+            },
+        ) = &_self.as_ref().0
+        {
+            Ok(PyBytes::new(python, accepter_der_x509_certificate))
+        } else {
+            Err(PyAttributeError::new_err(
+                "No such field 'accepter_der_x509_certificate'",
+            ))
+        }
+    }
+
+    #[getter]
+    fn accept_payload_signature<'py>(
+        _self: PyRef<'py, Self>,
+        python: Python<'py>,
+    ) -> PyResult<&'py PyBytes> {
+        if let pki_enrollment_info::Rep::Ok(
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted {
+                accept_payload_signature,
+                ..
+            },
+        ) = &_self.as_ref().0
+        {
+            Ok(PyBytes::new(python, accept_payload_signature))
+        } else {
+            Err(PyAttributeError::new_err(
+                "No such field 'accept_payload_signature'",
+            ))
+        }
+    }
+
+    #[getter]
+    fn accept_payload<'py>(_self: PyRef<'py, Self>, python: Python<'py>) -> PyResult<&'py PyBytes> {
+        if let pki_enrollment_info::Rep::Ok(
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted { accept_payload, .. },
+        ) = &_self.as_ref().0
+        {
+            Ok(PyBytes::new(python, accept_payload))
+        } else {
+            Err(PyAttributeError::new_err("No such field 'accept_payload'"))
+        }
+    }
+
+    #[getter]
+    fn accepted_on(_self: PyRef<'_, Self>) -> PyResult<DateTime> {
+        if let pki_enrollment_info::Rep::Ok(
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted { accepted_on, .. },
+        ) = &_self.as_ref().0
+        {
+            Ok(DateTime(*accepted_on))
+        } else {
+            Err(PyAttributeError::new_err("No such field 'accept_payload'"))
+        }
+    }
+
+    #[getter]
+    fn rejected_on(_self: PyRef<'_, Self>) -> PyResult<DateTime> {
+        if let pki_enrollment_info::Rep::Ok(
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Rejected { rejected_on, .. },
+        ) = &_self.as_ref().0
+        {
+            Ok(DateTime(*rejected_on))
+        } else {
+            Err(PyAttributeError::new_err("No such field 'rejected_on'"))
+        }
+    }
+
+    #[getter]
+    fn cancelled_on(_self: PyRef<'_, Self>) -> PyResult<DateTime> {
+        if let pki_enrollment_info::Rep::Ok(
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Cancelled { cancelled_on, .. },
+        ) = &_self.as_ref().0
+        {
+            Ok(DateTime(*cancelled_on))
+        } else {
+            Err(PyAttributeError::new_err("No such field 'cancelled_on'"))
+        }
     }
 }

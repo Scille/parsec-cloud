@@ -7,7 +7,8 @@ use pyo3::{
 };
 
 use libparsec::protocol::{
-    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+    anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
+    invited_cmds::v2 as invited_cmds,
 };
 
 use crate::protocol::*;
@@ -31,9 +32,9 @@ impl AuthenticatedAnyCmdReq {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, buf: Vec<u8>, py: Python) -> PyResult<PyObject> {
+    fn load(_cls: &PyType, buf: &[u8], py: Python) -> PyResult<PyObject> {
         use authenticated_cmds::AnyCmdReq;
-        let cmd = AnyCmdReq::load(&buf)
+        let cmd = AnyCmdReq::load(buf)
             .map_err(|e| ProtocolError::new_err(format!("decoding error: {e}")))?;
         Ok(match cmd {
             AnyCmdReq::BlockRead(x) => BlockReadReq(x).into_py(py),
@@ -110,9 +111,9 @@ impl InvitedAnyCmdReq {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, buf: Vec<u8>, py: Python) -> PyResult<PyObject> {
+    fn load(_cls: &PyType, buf: &[u8], py: Python) -> PyResult<PyObject> {
         use invited_cmds::AnyCmdReq;
-        let cmd = AnyCmdReq::load(&buf)
+        let cmd = AnyCmdReq::load(buf)
             .map_err(|e| ProtocolError::new_err(format!("decoding error: {e}")))?;
         Ok(match cmd {
             AnyCmdReq::Invite1ClaimerWaitPeer(x) => Invite1ClaimerWaitPeerReq(x).into_py(py),
@@ -129,6 +130,35 @@ impl InvitedAnyCmdReq {
             AnyCmdReq::Invite4ClaimerCommunicate(x) => Invite4ClaimerCommunicateReq(x).into_py(py),
             AnyCmdReq::InviteInfo(x) => InviteInfoReq(x).into_py(py),
             AnyCmdReq::Ping(x) => InvitedPingReq(x).into_py(py),
+        })
+    }
+}
+
+#[derive(Clone)]
+#[pyclass]
+pub(crate) struct AnonymousAnyCmdReq(pub anonymous_cmds::AnyCmdReq);
+
+#[pymethods]
+impl AnonymousAnyCmdReq {
+    fn dump<'py>(&self, python: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            python,
+            &self
+                .0
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+        ))
+    }
+
+    #[classmethod]
+    fn load(_cls: &PyType, buf: &[u8], py: Python) -> PyResult<PyObject> {
+        use anonymous_cmds::AnyCmdReq;
+
+        let cmd = AnyCmdReq::load(buf)
+            .map_err(|e| ProtocolError::new_err(format!("decoding error: {e}")))?;
+        Ok(match cmd {
+            AnyCmdReq::PkiEnrollmentSubmit(x) => PkiEnrollmentSubmitReq(x).into_py(py),
+            AnyCmdReq::PkiEnrollmentInfo(x) => PkiEnrollmentInfoReq(x).into_py(py),
         })
     }
 }
