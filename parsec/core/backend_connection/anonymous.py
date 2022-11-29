@@ -6,14 +6,14 @@ from structlog import get_logger
 
 from parsec._parsec import (
     EnrollmentID,
+    OrganizationID,
     PkiEnrollmentInfoRep,
     PkiEnrollmentSubmitRep,
+    VerifyKey,
 )
 from parsec._version import __version__
 from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
-from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
-    OrganizationID,
     ProtocolError,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
