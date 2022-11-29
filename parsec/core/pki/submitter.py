@@ -11,6 +11,7 @@ from parsec._parsec import (
     EnrollmentID,
     PkiEnrollmentInfoRepNotFound,
     PkiEnrollmentInfoRepOk,
+    PkiEnrollmentStatus,
     PkiEnrollmentSubmitRepAlreadyEnrolled,
     PkiEnrollmentSubmitRepAlreadySubmitted,
     PkiEnrollmentSubmitRepEmailAlreadyUsed,
@@ -266,7 +267,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
 
         enrollment_status = rep.enrollment_status
 
-        if enrollment_status.is_submitted():
+        if enrollment_status.status == PkiEnrollmentStatus.SUBMITTED:
             return PkiEnrollmentSubmitterSubmittedStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
@@ -276,7 +277,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 submit_payload=self.submit_payload,
             )
 
-        elif enrollment_status.is_cancelled():
+        elif enrollment_status.status == PkiEnrollmentStatus.CANCELLED:
             cancelled_on = rep.cancelled_on
             return PkiEnrollmentSubmitterCancelledStatusCtx(
                 config_dir=self.config_dir,
@@ -288,7 +289,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 cancelled_on=cancelled_on,
             )
 
-        elif enrollment_status.is_rejected():
+        elif enrollment_status.status == PkiEnrollmentStatus.REJECTED:
             rejected_on = rep.rejected_on
             return PkiEnrollmentSubmitterRejectedStatusCtx(
                 config_dir=self.config_dir,
@@ -301,7 +302,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
             )
 
         else:
-            assert enrollment_status.is_accepted()
+            assert enrollment_status.status == PkiEnrollmentStatus.ACCEPTED
             accepter_der_x509_certificate = rep.accepter_der_x509_certificate
             payload_signature = rep.accept_payload_signature
             payload = rep.accept_payload

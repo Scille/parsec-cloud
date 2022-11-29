@@ -6,9 +6,8 @@ from typing import Any, List
 
 from triopg import UniqueViolationError
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import DateTime, EnrollmentID, PkiEnrollmentStatus
 from parsec.api.protocol import OrganizationID
-from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserID, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.pki import (
