@@ -15,28 +15,32 @@ pub struct CustomStruct {
 }
 
 impl CustomStruct {
-    pub fn quote(&self, name: &str, types: &HashMap<String, String>) -> syn::ItemStruct {
-        let name = self.quote_label(name);
-        let fields = quote_fields(&self.fields, None, types);
+    pub fn quote(
+        &self,
+        name: &str,
+        types: &HashMap<String, String>,
+    ) -> anyhow::Result<syn::ItemStruct> {
+        let name = self.quote_label(name)?;
+        let fields = quote_fields(&self.fields, None, types)?;
         let attrs = shared_attribute();
 
         if fields.is_empty() {
-            syn::parse_quote! {
+            Ok(syn::parse_quote! {
                 #(#attrs)*
                 pub struct #name;
-            }
+            })
         } else {
-            syn::parse_quote! {
+            Ok(syn::parse_quote! {
                 #(#attrs)*
                 pub struct #name {
                     #(#fields),*
                 }
-            }
+            })
         }
     }
 
-    pub fn quote_label(&self, name: &str) -> syn::Ident {
-        syn::parse_str(name).expect("A valid label for Custom struct")
+    pub fn quote_label(&self, name: &str) -> anyhow::Result<syn::Ident> {
+        syn::parse_str(name).map_err(|e| anyhow::anyhow!("Invalid CustomStruct name `{name}`: {e}"))
     }
 }
 
@@ -84,6 +88,7 @@ mod test {
         assert_eq!(
             custom_struct
                 .quote("FooBar", &HashMap::new())
+                .unwrap()
                 .into_token_stream()
                 .to_string(),
             expected.to_string()

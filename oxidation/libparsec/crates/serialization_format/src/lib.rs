@@ -38,7 +38,11 @@ pub fn parsec_protocol(path: TokenStream) -> TokenStream {
         parser::ProtocolCollection::with_protocol(family, content)
     };
     let collection = intermediate::ProtocolCollection::from(collection);
-    collection.quote().into_token_stream().into()
+    collection
+        .quote()
+        .expect("Got errors while quote the file/folder")
+        .into_token_stream()
+        .into()
 }
 
 pub(crate) fn path_from_str(path: &str) -> PathBuf {

@@ -20,14 +20,18 @@ pub struct Variant {
 }
 
 impl Variant {
-    pub fn quote(&self, name: &str, types: &HashMap<String, String>) -> syn::Variant {
+    pub fn quote(
+        &self,
+        name: &str,
+        types: &HashMap<String, String>,
+    ) -> anyhow::Result<syn::Variant> {
         let rename = match name {
             "type" => Some("ty"),
             _ => None,
         };
         // TODO: Format the name in pascal case
-        let ident_name =
-            syn::parse_str::<syn::Ident>(rename.unwrap_or(name)).expect("A valid variant name");
+        let ident_name = syn::parse_str::<syn::Ident>(rename.unwrap_or(name))
+            .map_err(|e| anyhow::anyhow!("Invalid Variant name `{name}`: {e}"))?;
 
         let mut attrs: Vec<syn::Attribute> = Vec::new();
         // Add the serde attribute to rename the variant during serialization
@@ -38,20 +42,20 @@ impl Variant {
             attrs.push(syn::parse_quote!(#[serde(rename = #rename)]))
         }
 
-        let fields = quote_fields(&self.fields, Some(syn::Visibility::Inherited), types);
+        let fields = quote_fields(&self.fields, Some(syn::Visibility::Inherited), types)?;
 
         if fields.is_empty() {
-            syn::parse_quote! {
+            Ok(syn::parse_quote! {
                 #(#attrs)*
                 #ident_name
-            }
+            })
         } else {
-            syn::parse_quote! {
+            Ok(syn::parse_quote! {
                 #(#attrs)*
                 #ident_name {
                     #(#fields),*
                 }
-            }
+            })
         }
     }
 }
@@ -59,12 +63,22 @@ impl Variant {
 /// Quotify the variants of an enum.
 ///
 /// > The variants will be sorted in binary mode.
-pub fn quote_variants(variants: &Variants, types: &HashMap<String, String>) -> Vec<syn::Variant> {
-    variants
+pub fn quote_variants(
+    variants: &Variants,
+    types: &HashMap<String, String>,
+) -> anyhow::Result<Vec<syn::Variant>> {
+    let (variants, errors): (Vec<_>, Vec<_>) = variants
         .iter()
         .sorted_by_key(|(name, _)| *name)
         .map(|(name, variant)| variant.quote(name, types))
-        .collect()
+        .partition_result();
+
+    anyhow::ensure!(
+        errors.is_empty(),
+        "Cannot quote all variants:\n{}",
+        errors.into_iter().map(|e| e.to_string()).join(",\n")
+    );
+    Ok(variants)
 }
 
 #[cfg(test)]
@@ -169,6 +183,7 @@ mod test {
         assert_eq!(
             variant
                 .quote(name, &HashMap::new())
+                .unwrap()
                 .into_token_stream()
                 .to_string(),
             expected.to_string()

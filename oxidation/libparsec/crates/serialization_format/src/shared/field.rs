@@ -45,13 +45,22 @@ impl Field {
         name: &str,
         visibility: syn::Visibility,
         types: &HashMap<String, String>,
-    ) -> syn::Field {
-        let (rename, name) = self.quote_name(name);
-        let (ty, serde_attr) = self.quote_type(types);
+    ) -> anyhow::Result<syn::Field> {
+        let (rename, name) = self
+            .quote_name(name)
+            .map_err(|e| anyhow::anyhow!("Invalid field name `{name}`: {e}"))?;
+        let (ty, serde_attr) = self.quote_type(types).map_err(|e| {
+            anyhow::anyhow!(
+                "Cannot quote type `{}` for field `{}`: {}",
+                self.ty,
+                name,
+                e
+            )
+        })?;
 
         let mut attrs: Vec<syn::Attribute> = serde_attr.into_iter().collect_vec();
 
-        attrs.push(quote_serde_as(&ty, self.can_only_be_null()));
+        attrs.push(quote_serde_as(&ty, self.can_only_be_null())?);
         if self.can_only_be_null() {
             attrs.push(syn::parse_quote!(#[doc = "The field may be null."]))
         } else if self.can_be_missing_or_null() {
@@ -77,31 +86,34 @@ impl Field {
                 #visibility #name: #ty
             },
         )
-        .unwrap()
+        .map_err(|e| anyhow::Error::from(e).context(format!("quoting Field `{name}`")))
     }
 
-    fn quote_name(&self, name: &str) -> (Option<&'static str>, syn::Ident) {
+    fn quote_name(&self, name: &str) -> anyhow::Result<(Option<&'static str>, syn::Ident)> {
         let rename = match name {
             "type" => Some("ty"),
             _ => None,
         };
-        let quote = syn::parse_str(rename.unwrap_or(name)).expect("A valid name");
+        let quote = syn::parse_str(rename.unwrap_or(name)).map_err(anyhow::Error::from)?;
 
-        (rename, quote)
+        Ok((rename, quote))
     }
 
-    fn quote_type(&self, types: &HashMap<String, String>) -> (syn::Type, Option<syn::Attribute>) {
-        let ty = validate_raw_type(&self.ty, types).expect("A valid type");
+    fn quote_type(
+        &self,
+        types: &HashMap<String, String>,
+    ) -> anyhow::Result<(syn::Type, Option<syn::Attribute>)> {
+        let ty = validate_raw_type(&self.ty, types)?;
 
         if self.introduced_in.is_some() {
-            (
+            Ok((
                 syn::parse_quote!(libparsec_types::Maybe<#ty>),
                 Some(
                     syn::parse_quote!(#[serde(default, skip_serializing_if = "libparsec_types::Maybe::is_absent")]),
                 ),
-            )
+            ))
         } else {
-            (ty, None)
+            Ok((ty, None))
         }
     }
 
@@ -124,13 +136,21 @@ pub fn quote_fields(
     fields: &Fields,
     visibility: Option<syn::Visibility>,
     types: &HashMap<String, String>,
-) -> Vec<syn::Field> {
+) -> anyhow::Result<Vec<syn::Field>> {
     let visibility = visibility.unwrap_or_else(|| syn::parse_quote!(pub));
-    fields
+    let (fields, errors): (Vec<_>, Vec<_>) = fields
         .iter()
         .sorted_by_key(|(name, _)| *name)
         .map(|(name, field)| field.quote(name, visibility.clone(), types))
-        .collect()
+        .partition_result();
+
+    anyhow::ensure!(
+        errors.is_empty(),
+        "Cannot quote all fields:\n{}",
+        errors.into_iter().map(|e| e.to_string()).join(",\n")
+    );
+
+    Ok(fields)
 }
 
 #[cfg(test)]
@@ -285,6 +305,7 @@ mod test {
         assert_eq!(
             field
                 .quote("foo", vis, &HashMap::new())
+                .unwrap()
                 .into_token_stream()
                 .to_string(),
             expected.to_string()

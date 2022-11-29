@@ -20,7 +20,11 @@ pub struct Response {
 }
 
 impl Response {
-    pub fn quote(&self, name: &str, types: &HashMap<String, String>) -> syn::Variant {
+    pub fn quote(
+        &self,
+        name: &str,
+        types: &HashMap<String, String>,
+    ) -> anyhow::Result<syn::Variant> {
         if let Some(unit) = &self.unit {
             self.quote_unit(name, unit)
         } else if self.fields.is_empty() {
@@ -30,42 +34,49 @@ impl Response {
         }
     }
 
-    fn quote_unit(&self, name: &str, unit: &str) -> syn::Variant {
-        let name_ident = self.quote_name(name);
+    fn quote_unit(&self, name: &str, unit: &str) -> anyhow::Result<syn::Variant> {
+        let name_ident = self.quote_name(name)?;
         let rename = name;
-        let unit = syn::parse_str::<syn::Type>(unit).expect("A valid unit");
+        let unit = syn::parse_str::<syn::Type>(unit).map_err(|e| {
+            anyhow::anyhow!("Invalid unit name `{unit}` for response `{name}`: {e}")
+        })?;
 
-        syn::parse_quote! {
+        Ok(syn::parse_quote! {
             #[serde(rename = #rename)]
             #name_ident(#unit)
-        }
+        })
     }
 
-    fn quote_empty(&self, name: &str) -> syn::Variant {
-        let name_ident = self.quote_name(name);
+    fn quote_empty(&self, name: &str) -> anyhow::Result<syn::Variant> {
+        let name_ident = self.quote_name(name)?;
         let rename = name;
 
-        syn::parse_quote! {
+        Ok(syn::parse_quote! {
             #[serde(rename = #rename)]
             #name_ident
-        }
+        })
     }
 
-    fn quote_fields(&self, name: &str, types: &HashMap<String, String>) -> syn::Variant {
-        let name_ident = self.quote_name(name);
+    fn quote_fields(
+        &self,
+        name: &str,
+        types: &HashMap<String, String>,
+    ) -> anyhow::Result<syn::Variant> {
+        let name_ident = self.quote_name(name)?;
         let rename = name;
-        let fields = quote_fields(&self.fields, Some(syn::Visibility::Inherited), types);
+        let fields = quote_fields(&self.fields, Some(syn::Visibility::Inherited), types)?;
 
-        syn::parse_quote! {
+        Ok(syn::parse_quote! {
             #[serde(rename = #rename)]
             #name_ident {
                 #(#fields),*
             }
-        }
+        })
     }
 
-    fn quote_name(&self, name: &str) -> syn::Ident {
-        syn::parse_str(&to_pascal_case(name)).expect("A valid status")
+    fn quote_name(&self, name: &str) -> anyhow::Result<syn::Ident> {
+        syn::parse_str(&to_pascal_case(name))
+            .map_err(|e| anyhow::anyhow!("Invalid Status name `{name}` for response variant: {e}"))
     }
 }
 
@@ -119,6 +130,7 @@ mod test {
         assert_eq!(
             request
                 .quote("foo_response", &HashMap::new())
+                .unwrap()
                 .into_token_stream()
                 .to_string(),
             expected.to_string()

@@ -27,28 +27,30 @@ impl Default for Request {
 }
 
 impl Request {
-    pub fn quote_name(&self) -> syn::Ident {
-        syn::parse_str(&self.cmd).expect("A valid request cmd name")
+    pub fn quote_name(&self) -> anyhow::Result<syn::Ident> {
+        syn::parse_str(&self.cmd)
+            .map_err(|e| anyhow::anyhow!("Invalid request name `{}`: {}", self.cmd, e))
     }
 
-    pub fn quote(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
+    pub fn quote(&self, types: &HashMap<String, String>) -> anyhow::Result<syn::ItemStruct> {
         if let Some(unit) = &self.unit {
             self.quote_unit(unit)
         } else if self.fields.is_empty() {
-            self.quote_empty()
+            Ok(self.quote_empty())
         } else {
             self.quote_fields(types)
         }
     }
 
-    fn quote_unit(&self, unit: &str) -> syn::ItemStruct {
-        let unit = syn::parse_str::<syn::Ident>(unit).expect("A valid unit name");
+    fn quote_unit(&self, unit: &str) -> anyhow::Result<syn::ItemStruct> {
+        let unit = syn::parse_str::<syn::Ident>(unit)
+            .map_err(|e| anyhow::anyhow!("Invalid Request Unit name `{unit}`: {e}"))?;
         let shared_attr = Request::shared_derive();
 
-        syn::parse_quote! {
+        Ok(syn::parse_quote! {
             #shared_attr
             pub struct Req(pub #unit);
-        }
+        })
     }
 
     fn quote_empty(&self) -> syn::ItemStruct {
@@ -60,17 +62,17 @@ impl Request {
         }
     }
 
-    fn quote_fields(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
+    fn quote_fields(&self, types: &HashMap<String, String>) -> anyhow::Result<syn::ItemStruct> {
         let shared_derive = Request::shared_derive();
-        let fields = quote_fields(&self.fields, None, types);
+        let fields = quote_fields(&self.fields, None, types)?;
 
-        syn::parse_quote! {
+        Ok(syn::parse_quote! {
             #[::serde_with::serde_as]
             #shared_derive
             pub struct Req {
                 #(#fields),*
             }
-        }
+        })
     }
 
     fn shared_derive() -> syn::Attribute {
@@ -159,6 +161,7 @@ mod test {
         assert_eq!(
             request
                 .quote(&HashMap::new())
+                .unwrap()
                 .into_token_stream()
                 .to_string(),
             expected_definition.to_string()

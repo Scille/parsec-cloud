@@ -86,9 +86,9 @@ impl Cmd {
 }
 
 impl Cmd {
-    pub fn quote(&self) -> syn::ItemMod {
-        let name = self.quote_label();
-        let module = self.req.quote_name();
+    pub fn quote(&self) -> anyhow::Result<syn::ItemMod> {
+        let name = self.quote_label()?;
+        let module = self.req.quote_name()?;
         let module_attrs = self
             .introduced_in
             .map(|version| {
@@ -105,15 +105,15 @@ impl Cmd {
         self.nested_types.iter().for_each(|(name, _nested_type)| {
             types.insert(name.clone(), name.clone());
         });
-        let nested_types = self.quote_nested_types(&types);
-        let req = self.req.quote(&types);
+        let nested_types = self.quote_nested_types(&types)?;
+        let req = self.req.quote(&types)?;
         let valid_statuses = self
             .possible_responses
             .keys()
             .sorted()
             .cloned()
             .collect::<Vec<String>>();
-        let mut variants_rep = self.quote_reps(&types);
+        let mut variants_rep = self.quote_reps(&types)?;
 
         variants_rep.push(syn::parse_quote! {
             /// `UnknownStatus` covers the case the server returns a valid message but with
@@ -127,7 +127,7 @@ impl Cmd {
             }
         });
 
-        syn::parse_quote! {
+        Ok(syn::parse_quote! {
             #(#module_attrs)*
             pub mod #module {
                 use super::AnyCmdReq;
@@ -180,26 +180,46 @@ impl Cmd {
                     }
                 }
             }
-        }
+        })
     }
 
-    pub fn quote_label(&self) -> syn::Ident {
-        syn::parse_str(&self.label).expect("A valid command label")
+    pub fn quote_label(&self) -> anyhow::Result<syn::Ident> {
+        syn::parse_str(&self.label)
+            .map_err(|e| anyhow::anyhow!("Invalid Command name `{}`: {}", self.label, e))
     }
 
-    pub fn quote_nested_types(&self, types: &HashMap<String, String>) -> Vec<syn::Item> {
-        self.nested_types
+    pub fn quote_nested_types(
+        &self,
+        types: &HashMap<String, String>,
+    ) -> anyhow::Result<Vec<syn::Item>> {
+        let (nested_types, errors): (Vec<_>, Vec<_>) = self
+            .nested_types
             .iter()
             .map(|(name, nested_type)| nested_type.quote(name, types))
-            .collect()
+            .partition_result();
+
+        anyhow::ensure!(
+            errors.is_empty(),
+            "Cannot quote all nested types:\n{}",
+            errors.iter().map(|e| e.to_string()).join(",\n")
+        );
+        Ok(nested_types)
     }
 
-    pub fn quote_reps(&self, types: &HashMap<String, String>) -> Vec<syn::Variant> {
-        self.possible_responses
+    pub fn quote_reps(&self, types: &HashMap<String, String>) -> anyhow::Result<Vec<syn::Variant>> {
+        let (reps, errors): (Vec<_>, Vec<_>) = self
+            .possible_responses
             .iter()
             .sorted_by_key(|(name, _)| *name)
             .map(|(name, response)| response.quote(name, types))
-            .collect()
+            .partition_result();
+
+        anyhow::ensure!(
+            errors.is_empty(),
+            "Cannot quote all responses:\n{}",
+            errors.into_iter().map(|e| e.to_string()).join(",\n")
+        );
+        Ok(reps)
     }
 }
 
@@ -856,7 +876,7 @@ mod test {
     )]
     fn test_quote(#[case] cmd: Cmd, #[case] expected: TokenStream) {
         assert_eq!(
-            cmd.quote().into_token_stream().to_string(),
+            cmd.quote().unwrap().into_token_stream().to_string(),
             expected.to_string()
         )
     }

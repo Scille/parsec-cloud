@@ -44,22 +44,23 @@ impl ProtocolCollection {
 }
 
 impl ProtocolCollection {
-    pub fn quote(&self) -> syn::ItemMod {
-        let family = self.quote_family();
-        let versioned_cmds = self.quote_versioned_collection_cmds();
+    pub fn quote(&self) -> anyhow::Result<syn::ItemMod> {
+        let family = self.quote_family()?;
+        let versioned_cmds = self.quote_versioned_collection_cmds()?;
 
-        syn::parse_quote! {
+        Ok(syn::parse_quote! {
             pub mod #family {
                 #(#versioned_cmds)*
             }
-        }
+        })
     }
 
-    fn quote_family(&self) -> syn::Ident {
-        syn::parse_str(&self.family).expect("Invalid family")
+    fn quote_family(&self) -> anyhow::Result<syn::Ident> {
+        syn::parse_str(&self.family)
+            .map_err(|e| anyhow::anyhow!("Invalid family name `{}`: {}", self.family, e))
     }
 
-    fn quote_versioned_collection_cmds(&self) -> Vec<syn::ItemMod> {
+    fn quote_versioned_collection_cmds(&self) -> anyhow::Result<Vec<syn::ItemMod>> {
         self.versioned_cmds
             .iter()
             .sorted_by_key(|(v, _)| *v)
@@ -68,13 +69,19 @@ impl ProtocolCollection {
     }
 }
 
-fn quote_versioned_cmds(version: u32, cmds: &[Cmd]) -> syn::ItemMod {
+fn quote_versioned_cmds(version: u32, cmds: &[Cmd]) -> anyhow::Result<syn::ItemMod> {
     let versioned_cmds_mod = syn::parse_str::<syn::Ident>(&format!("v{version}"))
-        .expect("Should be a valid module name");
-    let (cmds_req, cmds): (Vec<syn::Variant>, Vec<syn::ItemMod>) =
-        cmds.iter().map(quote_cmd).unzip();
+        .expect("Name in the format `vN` should be valid");
+    let (cmds, errors): (Vec<_>, Vec<_>) = cmds.iter().map(quote_cmd).partition_result();
 
-    syn::parse_quote! {
+    anyhow::ensure!(
+        errors.is_empty(),
+        "Cannot quote all commands:\n{}",
+        errors.iter().map(|e| e.to_string()).join(",\n")
+    );
+    let (cmds_req, cmds): (Vec<syn::Variant>, Vec<syn::ItemMod>) = cmds.into_iter().unzip();
+
+    Ok(syn::parse_quote! {
         pub mod #versioned_cmds_mod {
             #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
             #[serde(tag = "cmd")]
@@ -94,21 +101,22 @@ fn quote_versioned_cmds(version: u32, cmds: &[Cmd]) -> syn::ItemMod {
 
             #(#cmds)*
         }
-    }
+    })
 }
 
-fn quote_cmd(command: &Cmd) -> (syn::Variant, syn::ItemMod) {
-    let name = command.quote_label();
+fn quote_cmd(command: &Cmd) -> anyhow::Result<(syn::Variant, syn::ItemMod)> {
+    let name = command.quote_label()?;
     let command_name = &command.command_name();
 
-    let module = command.quote();
+    let module = command.quote()?;
     let module_ident = module.ident.clone();
+
     let variant = syn::parse_quote! {
         #[serde(rename = #command_name)]
         #name(#module_ident::Req)
     };
 
-    (variant, module)
+    Ok((variant, module))
 }
 
 #[cfg(test)]
@@ -374,7 +382,7 @@ mod test {
     )]
     fn test_quote(#[case] collection: ProtocolCollection, #[case] expected: TokenStream) {
         assert_eq!(
-            collection.quote().into_token_stream().to_string(),
+            collection.quote().unwrap().into_token_stream().to_string(),
             expected.to_string()
         );
     }

@@ -21,14 +21,14 @@ pub(crate) fn to_pascal_case(s: &str) -> String {
     out
 }
 
-pub fn validate_raw_type(raw_type: &str, types: &HashMap<String, String>) -> Result<Type, String> {
+pub fn validate_raw_type(raw_type: &str, types: &HashMap<String, String>) -> anyhow::Result<Type> {
     syn::parse_str(raw_type)
-        .map_err(|e| format!("Invalid type value `{raw_type}`: {e}"))
+        .map_err(|e| anyhow::anyhow!("Invalid raw type `{raw_type}`: {e}"))
         .and_then(|raw_type| inspect_type(&raw_type, types))
-        .and_then(|raw_type| syn::parse_str(&raw_type).map_err(|e| e.to_string()))
+        .and_then(|raw_type| syn::parse_str(&raw_type).map_err(anyhow::Error::from))
 }
 
-pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<String, String> {
+pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> anyhow::Result<String> {
     match raw_type {
         Type::Path(p) => {
             let ty = p.path.segments.last().unwrap_or_else(|| unreachable!());
@@ -86,7 +86,7 @@ pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }
-                ident => return Err(format!("{ident} isn't allowed as type")),
+                ident => return Err(anyhow::anyhow!("{ident} isn't allowed as type")),
             })
             .to_string();
             match &ty.arguments {
@@ -100,7 +100,7 @@ pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<
                             GenericArgument::Type(ty) => inspect_type(ty, types),
                             _ => unimplemented!("for arg {:?}", arg),
                         })
-                        .collect::<Result<Vec<_>, String>>()?
+                        .collect::<anyhow::Result<Vec<_>>>()?
                         .join(",");
                     ident.push('>');
                     Ok(ident)
@@ -115,29 +115,29 @@ pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<
                 .elems
                 .iter()
                 .map(|ty| inspect_type(ty, types))
-                .collect::<Result<Vec<_>, String>>()?
+                .collect::<anyhow::Result<Vec<_>>>()?
                 .join(",");
             ident.push(')');
             Ok(ident)
         }
-        ty => Err(format!("{ty:?} encountered")),
+        ty => Err(anyhow::anyhow!("{ty:?} encountered")),
     }
 }
 
-pub fn quote_serde_as(ty: &Type, no_default: bool) -> syn::Attribute {
-    let serde_as = extract_serde_as(ty)
+pub fn quote_serde_as(ty: &Type, no_default: bool) -> anyhow::Result<syn::Attribute> {
+    let serde_as = extract_serde_as(ty)?
         .replace("Vec<u8>", "::serde_with::Bytes")
         .replace("u8", "_");
     if no_default {
-        syn::parse_quote!(#[serde_as(as = #serde_as, no_default)])
+        Ok(syn::parse_quote!(#[serde_as(as = #serde_as, no_default)]))
     } else {
-        syn::parse_quote!(#[serde_as(as = #serde_as)])
+        Ok(syn::parse_quote!(#[serde_as(as = #serde_as)]))
     }
 }
 
 /// Extract the type recursively by changing all unit type except u8 by _
-pub fn extract_serde_as(ty: &Type) -> String {
-    match ty {
+pub fn extract_serde_as(ty: &Type) -> anyhow::Result<String> {
+    let res = match ty {
         Type::Path(p) => {
             let ty = p.path.segments.last().unwrap_or_else(|| unreachable!());
             let mut ident = p
@@ -159,7 +159,7 @@ pub fn extract_serde_as(ty: &Type) -> String {
                             GenericArgument::Type(ty) => extract_serde_as(ty),
                             _ => unimplemented!(),
                         })
-                        .collect::<Vec<_>>()
+                        .collect::<anyhow::Result<Vec<_>>>()?
                         .join(",");
                     ident.push('>');
                     ident
@@ -174,13 +174,15 @@ pub fn extract_serde_as(ty: &Type) -> String {
                 .elems
                 .iter()
                 .map(extract_serde_as)
-                .collect::<Vec<_>>()
+                .collect::<anyhow::Result<Vec<_>>>()?
                 .join(",");
             ident.push(')');
             ident
         }
-        ty => panic!("{ty:?} encountered"),
-    }
+        ty => return Err(anyhow::anyhow!("{ty:?} encountered")),
+    };
+
+    Ok(res)
 }
 
 #[cfg(test)]
@@ -192,7 +194,7 @@ fn test_extract_serde_as(#[case] raw_type: &str, #[case] expected: &str) {
     use pretty_assertions::assert_eq;
 
     let ty = syn::parse_str::<Type>(raw_type).expect("A valid type to be parsed by syn");
-    let res = extract_serde_as(&ty);
+    let res = extract_serde_as(&ty).unwrap();
 
     assert_eq!(res.as_str(), expected)
 }

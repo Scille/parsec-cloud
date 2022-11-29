@@ -18,26 +18,30 @@ pub struct CustomEnum {
 }
 
 impl CustomEnum {
-    pub fn quote(&self, name: &str, types: &HashMap<String, String>) -> syn::ItemEnum {
-        let name = self.quote_label(name);
+    pub fn quote(
+        &self,
+        name: &str,
+        types: &HashMap<String, String>,
+    ) -> anyhow::Result<syn::ItemEnum> {
+        let name = self.quote_label(name)?;
 
         let mut attrs = shared_attribute().to_vec();
         if let Some(discriminant_field) = &self.discriminant_field {
             attrs.push(syn::parse_quote!(#[serde(tag = #discriminant_field)]))
         }
 
-        let variants = quote_variants(&self.variants, types);
+        let variants = quote_variants(&self.variants, types)?;
 
-        syn::parse_quote! {
+        Ok(syn::parse_quote! {
             #(#attrs)*
             pub enum #name {
                 #(#variants),*
             }
-        }
+        })
     }
 
-    pub fn quote_label(&self, name: &str) -> syn::Ident {
-        syn::parse_str(name).expect("A valid label for Custom struct")
+    pub fn quote_label(&self, name: &str) -> anyhow::Result<syn::Ident> {
+        syn::parse_str(name).map_err(|e| anyhow::anyhow!("Invalid Custom Enum name `{name}`: {e}"))
     }
 }
 
@@ -93,6 +97,7 @@ mod test {
         assert_eq!(
             custom_enum
                 .quote("FooEnum", &HashMap::new())
+                .unwrap()
                 .into_token_stream()
                 .to_string(),
             expected.to_string()

@@ -25,12 +25,12 @@ pub enum CustomType {
 }
 
 impl CustomType {
-    pub fn quote(&self, name: &str, types: &HashMap<String, String>) -> syn::Item {
+    pub fn quote(&self, name: &str, types: &HashMap<String, String>) -> anyhow::Result<syn::Item> {
         match self {
             CustomType::Struct(custom_struct) => {
-                syn::Item::Struct(custom_struct.quote(name, types))
+                custom_struct.quote(name, types).map(syn::Item::Struct)
             }
-            CustomType::Enum(custom_enum) => syn::Item::Enum(custom_enum.quote(name, types)),
+            CustomType::Enum(custom_enum) => custom_enum.quote(name, types).map(syn::Item::Enum),
         }
     }
 }
