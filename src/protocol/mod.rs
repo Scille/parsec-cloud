@@ -326,6 +326,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<PkiEnrollmentSubmitRepEmailAlreadyUsed>()?;
     m.add_class::<PkiEnrollmentSubmitRepAlreadyEnrolled>()?;
     m.add_class::<PkiEnrollmentSubmitRepUnknownStatus>()?;
+    m.add_class::<PkiEnrollmentStatus>()?;
 
     // Organization
     m.add_class::<OrganizationStatsReq>()?;
