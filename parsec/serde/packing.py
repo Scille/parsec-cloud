@@ -5,13 +5,13 @@ from typing import Any, Mapping
 from uuid import UUID
 from parsec._parsec import DateTime
 from struct import pack as struct_pack, unpack as struct_unpack
-from msgpack import (  # type: ignore[import]
+from msgpack import (
     packb as msgpack_packb,
     unpackb as msgpack_unpackb,
     Unpacker as msgpack_Unpacker,
     ExtType,
 )
-from msgpack.exceptions import ExtraData, FormatError, StackError  # type: ignore[import]
+from msgpack.exceptions import ExtraData, FormatError, StackError
 
 from parsec.serde.exceptions import SerdePackingError
 
