@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import trio
 from enum import IntEnum
@@ -533,7 +533,7 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.greeter = Greeter()
         self._run_greeter()
 
-    def _on_page_failed(self, job: Optional[QtToTrioJob[None]]) -> None:
+    def _on_page_failed(self, job: QtToTrioJob[None] | None) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return
