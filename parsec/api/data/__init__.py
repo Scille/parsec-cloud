@@ -19,15 +19,7 @@ from parsec._parsec import (
     # Certificate
     UserCertificate,
 )
-from parsec.api.data.base import (
-    BaseAPIData,
-    BaseAPISignedData,
-    BaseData,
-    BaseSchema,
-    BaseSignedData,
-    BaseSignedDataSchema,
-    DataError,
-)
+from parsec.api.data.base import BaseData, BaseSchema, DataError
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from parsec.api.data.invite import (
     InviteDeviceConfirmation,
@@ -52,11 +44,7 @@ __all__ = (
     # Base
     "DataError",
     "BaseData",
-    "BaseAPIData",
     "BaseSchema",
-    "BaseSignedData",
-    "BaseAPISignedData",
-    "BaseSignedDataSchema",
     # Entry
     "EntryID",
     "EntryIDField",

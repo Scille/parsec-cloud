@@ -8,7 +8,7 @@ import re
 from types import ModuleType
 
 from parsec.api.data import MessageContent
-from parsec.api.data.base import BaseAPIData, BaseAPISignedData, BaseData, BaseSignedData
+from parsec.api.data.base import BaseData
 from parsec.api.protocol.base import CmdSerializer
 from parsec.api.protocol.types import HumanHandleField
 from parsec.core.types.base import BaseLocalData
@@ -37,9 +37,6 @@ _SERIALIZER_TO_STR = {
 }
 _BASE_DATA_CLASSES = (
     BaseData,
-    BaseAPIData,
-    BaseSignedData,
-    BaseAPISignedData,
     BaseLocalData,
     MessageContent,
 )
