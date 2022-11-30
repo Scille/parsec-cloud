@@ -8,10 +8,10 @@ use pyo3::{
 use libparsec::types::{CertificateSignerOwned, CertificateSignerRef};
 
 use crate::{
-    api_crypto::{PublicKey, SigningKey, VerifyKey},
+    api_crypto::{PublicKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey, VerifyKey},
     data::DataResult,
     enumerate::{RealmRole, UserProfile},
-    ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, UserID},
+    ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, SequesterServiceID, UserID},
     time::DateTime,
 };
 
@@ -514,5 +514,106 @@ impl RealmRoleCertificate {
     #[getter]
     fn role(&self) -> Option<RealmRole> {
         self.0.role.map(RealmRole)
+    }
+}
+
+#[pyclass]
+pub(crate) struct SequesterAuthorityCertificate(
+    pub libparsec::types::SequesterAuthorityCertificate,
+);
+
+crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __repr__);
+crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __richcmp__, eq);
+
+#[pymethods]
+impl SequesterAuthorityCertificate {
+    #[new]
+    fn new(timestamp: DateTime, verify_key_der: SequesterVerifyKeyDer) -> Self {
+        Self(libparsec::types::SequesterAuthorityCertificate {
+            timestamp: timestamp.0,
+            verify_key_der: verify_key_der.0,
+        })
+    }
+
+    #[classmethod]
+    fn verify_and_load(
+        _cls: &PyType,
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+    ) -> DataResult<Self> {
+        Ok(
+            libparsec::types::SequesterAuthorityCertificate::verify_and_load(
+                signed,
+                &author_verify_key.0,
+            )
+            .map(Self)?,
+        )
+    }
+
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    }
+
+    #[getter]
+    fn timestamp(&self) -> DateTime {
+        DateTime(self.0.timestamp)
+    }
+
+    #[getter]
+    fn verify_key_der(&self) -> SequesterVerifyKeyDer {
+        SequesterVerifyKeyDer(self.0.verify_key_der.clone())
+    }
+}
+
+#[pyclass]
+pub(crate) struct SequesterServiceCertificate(pub libparsec::types::SequesterServiceCertificate);
+
+crate::binding_utils::gen_proto!(SequesterServiceCertificate, __repr__);
+crate::binding_utils::gen_proto!(SequesterServiceCertificate, __richcmp__, eq);
+
+#[pymethods]
+impl SequesterServiceCertificate {
+    #[new]
+    fn new(
+        timestamp: DateTime,
+        service_id: SequesterServiceID,
+        service_label: String,
+        encryption_key_der: SequesterPublicKeyDer,
+    ) -> Self {
+        Self(libparsec::types::SequesterServiceCertificate {
+            timestamp: timestamp.0,
+            service_id: service_id.0,
+            service_label,
+            encryption_key_der: encryption_key_der.0,
+        })
+    }
+
+    #[classmethod]
+    fn load(_cls: &PyType, data: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::SequesterServiceCertificate::load(data).map(Self)?)
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+
+    #[getter]
+    fn timestamp(&self) -> DateTime {
+        DateTime(self.0.timestamp)
+    }
+
+    #[getter]
+    fn service_id(&self) -> SequesterServiceID {
+        SequesterServiceID(self.0.service_id)
+    }
+
+    #[getter]
+    fn service_label(&self) -> &str {
+        &self.0.service_label
+    }
+
+    #[getter]
+    fn encryption_key_der(&self) -> SequesterPublicKeyDer {
+        SequesterPublicKeyDer(self.0.encryption_key_der.clone())
     }
 }

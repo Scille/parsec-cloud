@@ -26,6 +26,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RevokedUserCertificate>()?;
     m.add_class::<DeviceCertificate>()?;
     m.add_class::<RealmRoleCertificate>()?;
+    m.add_class::<SequesterAuthorityCertificate>()?;
+    m.add_class::<SequesterServiceCertificate>()?;
 
     // Invite
     m.add_class::<SASCode>()?;
