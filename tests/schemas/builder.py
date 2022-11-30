@@ -130,19 +130,6 @@ def collect_data_classes_from_module(mod: ModuleType):
     return data_classes
 
 
-def generate_api_data_specs():
-    import parsec.api.data
-
-    package = parsec.api.data
-
-    data_classes = set()
-    for sub_module_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        sub_module = importlib.import_module(sub_module_info.name)
-        data_classes.update(collect_data_classes_from_module(sub_module))
-
-    return {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
-
-
 def generate_core_data_specs():
     import parsec.core.types
     from parsec.core.local_device import key_file_serializer, legacy_key_file_serializer

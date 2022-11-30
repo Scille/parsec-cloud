@@ -37,7 +37,6 @@ def sequester_authority_factory(
     # (RSA key generation gets ~10x slower between 1024 and 4096)
     signing_key, verify_key = SequesterSigningKeyDer.generate_pair(1024)
     certif = SequesterAuthorityCertificate(
-        author=None,
         timestamp=timestamp,
         verify_key_der=verify_key,
     )
