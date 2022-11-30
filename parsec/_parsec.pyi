@@ -17,6 +17,8 @@ from parsec._parsec_pyi.certif import (
     DeviceCertificate,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    SequesterAuthorityCertificate,
+    SequesterServiceCertificate,
     UserCertificate,
 )
 from parsec._parsec_pyi.crypto import (
@@ -513,6 +515,8 @@ __all__ = [
     "DeviceCertificate",
     "RevokedUserCertificate",
     "RealmRoleCertificate",
+    "SequesterAuthorityCertificate",
+    "SequesterServiceCertificate",
     # Crypto
     "SecretKey",
     "HashDigest",

@@ -4,9 +4,22 @@ from __future__ import annotations
 
 from typing import Any
 
-from parsec._parsec_pyi.crypto import PublicKey, SigningKey, VerifyKey
+from parsec._parsec_pyi.crypto import (
+    PublicKey,
+    SigningKey,
+    VerifyKey,
+    SequesterVerifyKeyDer,
+    SequesterPublicKeyDer,
+)
 from parsec._parsec_pyi.enumerate import RealmRole, UserProfile
-from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, HumanHandle, RealmID, UserID
+from parsec._parsec_pyi.ids import (
+    DeviceID,
+    DeviceLabel,
+    HumanHandle,
+    RealmID,
+    UserID,
+    SequesterServiceID,
+)
 from parsec._parsec_pyi.time import DateTime
 
 class UserCertificate:
@@ -136,3 +149,35 @@ class RealmRoleCertificate:
     def build_realm_root_certif(
         cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID
     ) -> RealmRoleCertificate: ...
+
+class SequesterAuthorityCertificate:
+    def __init__(self, timestamp: DateTime, verify_key_der: SequesterVerifyKeyDer) -> None: ...
+    @classmethod
+    def verify_and_load(
+        cls, signed: bytes, author_verify_key: VerifyKey
+    ) -> SequesterAuthorityCertificate: ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def verify_key_der(self) -> SequesterVerifyKeyDer: ...
+
+class SequesterServiceCertificate:
+    def __init__(
+        self,
+        timestamp: DateTime,
+        service_id: SequesterServiceID,
+        service_label: str,
+        encryption_key_der: SequesterPublicKeyDer,
+    ) -> None: ...
+    @classmethod
+    def load(cls, data: bytes) -> SequesterServiceCertificate: ...
+    def dump(self) -> bytes: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def service_id(self) -> SequesterServiceID: ...
+    @property
+    def service_label(self) -> str: ...
+    @property
+    def encryption_key_der(self) -> SequesterPublicKeyDer: ...
