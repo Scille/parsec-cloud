@@ -636,7 +636,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter = Greeter()
         self._run_greeter()
 
-    def _on_page_failed(self, job: QtToTrioJob[None]) -> None:
+    def _on_page_failed(self, job: QtToTrioJob[None] | None) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return

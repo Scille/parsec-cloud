@@ -710,7 +710,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         if self.dialog:
             self.dialog.reject()
 
-    def _on_page_failed_force_reject(self, job: QtToTrioJob[None]) -> None:
+    def _on_page_failed_force_reject(self, job: QtToTrioJob[None] | None) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return
@@ -718,7 +718,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         assert self.dialog is not None
         self.dialog.reject()
 
-    def _on_page_failed(self, job: QtToTrioJob[None]) -> None:
+    def _on_page_failed(self, job: QtToTrioJob[None] | None) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return

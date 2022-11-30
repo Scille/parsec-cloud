@@ -613,7 +613,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         assert self.dialog is not None
         self.dialog.reject()
 
-    def _on_page_failed(self, job: QtToTrioJob[None]) -> None:
+    def _on_page_failed(self, job: QtToTrioJob[None] | None) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
             return
