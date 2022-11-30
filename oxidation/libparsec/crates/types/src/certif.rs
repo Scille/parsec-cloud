@@ -6,14 +6,17 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
-use libparsec_crypto::{PublicKey, SigningKey, VerifyKey};
+use libparsec_crypto::{
+    PublicKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey, VerifyKey,
+};
 use libparsec_serialization_format::parsec_data;
 
 use crate as libparsec_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{DataError, DataResult};
 use crate::{
-    DateTime, DeviceID, DeviceLabel, HumanHandle, RealmID, RealmRole, UserID, UserProfile,
+    DateTime, DeviceID, DeviceLabel, HumanHandle, RealmID, RealmRole, SequesterServiceID, UserID,
+    UserProfile,
 };
 
 fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
@@ -398,4 +401,98 @@ impl_transparent_data_format_conversion!(
     realm_id,
     user_id,
     role,
+);
+
+/*
+ * SequesterAuthorityCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "SequesterAuthorityCertificateData",
+    try_from = "SequesterAuthorityCertificateData"
+)]
+pub struct SequesterAuthorityCertificate {
+    pub timestamp: DateTime,
+    pub verify_key_der: SequesterVerifyKeyDer,
+}
+
+impl_unsecure_load!(SequesterAuthorityCertificate);
+impl_dump_and_sign!(SequesterAuthorityCertificate);
+
+impl SequesterAuthorityCertificate {
+    pub fn verify_and_load(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<Self> {
+        verify_and_load::<Self>(signed, author_verify_key)
+    }
+}
+
+parsec_data!("schema/certif/sequester_authority_certificate.json");
+
+impl TryFrom<SequesterAuthorityCertificateData> for SequesterAuthorityCertificate {
+    type Error = DataError;
+    fn try_from(data: SequesterAuthorityCertificateData) -> Result<Self, Self::Error> {
+        if let Some(author) = data.author {
+            return Err(DataError::Root(author));
+        }
+
+        Ok(Self {
+            timestamp: data.timestamp,
+            verify_key_der: data.verify_key_der,
+        })
+    }
+}
+
+impl From<SequesterAuthorityCertificate> for SequesterAuthorityCertificateData {
+    fn from(obj: SequesterAuthorityCertificate) -> Self {
+        Self {
+            ty: Default::default(),
+            author: None,
+            timestamp: obj.timestamp,
+            verify_key_der: obj.verify_key_der,
+        }
+    }
+}
+
+/*
+ * SequesterServiceCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "SequesterServiceCertificateData",
+    from = "SequesterServiceCertificateData"
+)]
+pub struct SequesterServiceCertificate {
+    pub timestamp: DateTime,
+    pub service_id: SequesterServiceID,
+    pub service_label: String,
+    pub encryption_key_der: SequesterPublicKeyDer,
+}
+
+impl SequesterServiceCertificate {
+    pub fn dump(&self) -> Vec<u8> {
+        let serialized = rmp_serde::to_vec_named(self).expect("Unreachable");
+        let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+        e.write_all(&serialized).expect("Unreachable");
+        e.finish().expect("Unreachable")
+    }
+
+    pub fn load(buf: &[u8]) -> DataResult<Self> {
+        let mut serialized = vec![];
+        ZlibDecoder::new(buf)
+            .read_to_end(&mut serialized)
+            .map_err(|_| DataError::Compression)?;
+        rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
+    }
+}
+
+parsec_data!("schema/certif/sequester_service_certificate.json");
+
+impl_transparent_data_format_conversion!(
+    SequesterServiceCertificate,
+    SequesterServiceCertificateData,
+    timestamp,
+    service_id,
+    service_label,
+    encryption_key_der,
 );

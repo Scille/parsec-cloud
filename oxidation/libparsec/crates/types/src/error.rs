@@ -45,6 +45,9 @@ pub enum DataError {
     #[error("Invalid HumanHandle")]
     InvalidHumanHandle,
 
+    #[error("Invalid author: expected Root(None), got `{0}`")]
+    Root(DeviceID),
+
     #[error("Invalid author: expected `{expected}`, got `{}`", match .got { Some(got) => got.to_string(), None => "None".to_string() })]
     UnexpectedAuthor {
         expected: DeviceID,
