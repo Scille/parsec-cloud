@@ -63,7 +63,7 @@ async def backend_app_factory(
         )
 
 
-@attr.s(slots=True, auto_attribs=True, kw_only=True, eq=False)
+@attr.s(slots=True, auto_attribs=True, kw_only=True, eq=False, repr=False)
 class BackendApp:
     config: BackendConfig
     event_bus: EventBus
