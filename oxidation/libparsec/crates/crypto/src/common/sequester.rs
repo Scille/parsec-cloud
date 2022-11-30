@@ -272,7 +272,8 @@ impl SequesterSigningKeyDer {
  * VerifyKey
  */
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct SequesterVerifyKeyDer(VerifyingKey<Sha256>);
 
 crate::impl_key_debug!(SequesterVerifyKeyDer);
@@ -282,6 +283,14 @@ impl From<SequesterPublicKeyDer> for SequesterVerifyKeyDer {
         Self(VerifyingKey::from(pub_key.0))
     }
 }
+
+impl PartialEq for SequesterVerifyKeyDer {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.as_ref() == other.0.as_ref()
+    }
+}
+
+impl Eq for SequesterVerifyKeyDer {}
 
 impl EnforceDeserialize for SequesterVerifyKeyDer {
     const SIZE_IN_BITS: usize = Self::SIZE_IN_BITS;
@@ -311,7 +320,7 @@ impl SequesterVerifyKeyDer {
     }
 
     pub fn verify(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
-        let (signature, data) = Self::deserialize(data)?;
+        let (signature, data) = <Self as EnforceDeserialize>::deserialize(data)?;
 
         // TODO: It Seems to be a mistake from RustCrypto/RSA
         // Why should we allocate there ?

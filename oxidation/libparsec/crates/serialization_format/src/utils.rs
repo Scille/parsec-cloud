@@ -55,6 +55,8 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "PrivateKey" => "libparsec_crypto::PrivateKey",
                 "SecretKey" => "libparsec_crypto::SecretKey",
                 "HashDigest" => "libparsec_crypto::HashDigest",
+                "SequesterVerifyKeyDer" => "libparsec_crypto::SequesterVerifyKeyDer",
+                "SequesterPublicKeyDer" => "libparsec_crypto::SequesterPublicKeyDer",
                 "DateTime" => "libparsec_types::DateTime",
                 "BlockID" => "libparsec_types::BlockID",
                 "DeviceID" => "libparsec_types::DeviceID",
