@@ -13,7 +13,7 @@ name = "parsec"
 crate-type = ["cdylib"]
 
 [dependencies]
-libparsec = { version = "0.1.0", path = "oxidation/libparsec" }
+libparsec = { path = "oxidation/libparsec" }
 
 regex = "1.6.0"
 paste = "1.0.9"

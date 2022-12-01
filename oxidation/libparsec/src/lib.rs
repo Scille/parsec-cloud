@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 #[cfg(not(target_arch = "wasm32"))]
 pub use libparsec_platform_native::{create_context, RuntimeContext};
 
