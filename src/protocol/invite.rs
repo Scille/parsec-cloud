@@ -2,7 +2,6 @@
 
 use pyo3::{
     exceptions::{PyAttributeError, PyNotImplementedError},
-    import_exception,
     prelude::*,
     types::{PyBytes, PyType},
 };
@@ -25,11 +24,12 @@ use crate::{
         InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InvitationType,
     },
     ids::{HumanHandle, InvitationToken, UserID},
-    protocol::gen_rep,
+    protocol::{
+        error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+        gen_rep,
+    },
     time::DateTime,
 };
-
-import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -196,14 +196,14 @@ impl InviteNewReq {
         })
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -275,14 +275,14 @@ impl InviteDeleteReq {
         }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -330,14 +330,14 @@ impl InviteListReq {
         Ok(Self(invite_list::Req))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -381,14 +381,14 @@ impl InviteInfoReq {
         Ok(Self(invite_info::Req))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -498,14 +498,14 @@ impl Invite1ClaimerWaitPeerReq {
         Ok(Self(invite_1_claimer_wait_peer::Req { claimer_public_key }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -568,14 +568,14 @@ impl Invite1GreeterWaitPeerReq {
         }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -641,14 +641,14 @@ impl Invite2aClaimerSendHashedNonceReq {
         }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -708,14 +708,14 @@ impl Invite2aGreeterGetHashedNonceReq {
         Ok(Self(invite_2a_greeter_get_hashed_nonce::Req { token }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -775,14 +775,14 @@ impl Invite2bClaimerSendNonceReq {
         Ok(Self(invite_2b_claimer_send_nonce::Req { claimer_nonce }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -833,14 +833,14 @@ impl Invite2bGreeterSendNonceReq {
         }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -902,14 +902,14 @@ impl Invite3aClaimerSignifyTrustReq {
         Ok(Self(invite_3a_claimer_signify_trust::Req))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -952,14 +952,14 @@ impl Invite3aGreeterWaitPeerTrustReq {
         Ok(Self(invite_3a_greeter_wait_peer_trust::Req { token }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -1006,14 +1006,14 @@ impl Invite3bClaimerWaitPeerTrustReq {
         Ok(Self(invite_3b_claimer_wait_peer_trust::Req))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -1056,14 +1056,14 @@ impl Invite3bGreeterSignifyTrustReq {
         Ok(Self(invite_3b_greeter_signify_trust::Req { token }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -1110,14 +1110,14 @@ impl Invite4ClaimerCommunicateReq {
         Ok(Self(invite_4_claimer_communicate::Req { payload }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -1175,14 +1175,14 @@ impl Invite4GreeterCommunicateReq {
         Ok(Self(invite_4_greeter_communicate::Req { token, payload }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 

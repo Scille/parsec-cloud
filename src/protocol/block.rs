@@ -1,12 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{exceptions::PyNotImplementedError, import_exception, prelude::*, types::PyBytes};
+use pyo3::{exceptions::PyNotImplementedError, prelude::*, types::PyBytes};
 
-use crate::ids::{BlockID, RealmID};
-use crate::protocol::gen_rep;
+use crate::{
+    ids::{BlockID, RealmID},
+    protocol::{
+        error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+        gen_rep,
+    },
+};
 use libparsec::protocol::authenticated_cmds::v2::{block_create, block_read};
-
-import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -26,14 +29,14 @@ impl BlockCreateReq {
         }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -90,14 +93,14 @@ impl BlockReadReq {
         }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 

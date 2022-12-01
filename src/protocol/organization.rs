@@ -2,7 +2,6 @@
 
 use pyo3::{
     exceptions::PyNotImplementedError,
-    import_exception,
     prelude::*,
     types::{PyBytes, PyTuple},
 };
@@ -11,10 +10,11 @@ use libparsec::protocol::authenticated_cmds::v2::{organization_config, organizat
 
 use crate::{
     enumerate::UserProfile,
-    protocol::{gen_rep, Reason},
+    protocol::{
+        error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+        gen_rep, Reason,
+    },
 };
-
-import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -64,14 +64,14 @@ impl OrganizationStatsReq {
         Ok(Self(organization_stats::Req))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -190,14 +190,14 @@ impl OrganizationConfigReq {
         Ok(Self(organization_config::Req))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
