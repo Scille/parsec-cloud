@@ -25,7 +25,7 @@ class MessageContent:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-    ) -> MessageContent: ...
+    ) -> "MessageContent": ...
     def dump_sign_and_encrypt_for(
         self,
         author_signkey: SigningKey,

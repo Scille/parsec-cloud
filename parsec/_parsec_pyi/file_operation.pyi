@@ -1,6 +1,5 @@
 from __future__ import annotations
-from sre_constants import ANY
-from typing import Any, List, Set, Tuple
+from typing import List, Set, Tuple
 
 from parsec._parsec_pyi.local_manifest import LocalFileManifest, Chunk
 from parsec._parsec_pyi.ids import ChunkID

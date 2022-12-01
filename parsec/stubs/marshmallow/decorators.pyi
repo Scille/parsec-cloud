@@ -1,5 +1,4 @@
-import functools
-from typing import Callable, TypeVar, overload
+from typing import Callable, TypeVar
 from typing_extensions import ParamSpec
 
 P = ParamSpec("P")

@@ -277,7 +277,6 @@ class FileTableItem(IconTableItem):
         ".pages": "pages-file-format-symbol",
         ".pct": "pct-file-format-symbol",
         ".pdb": "pdb-file-format-variant",
-        ".pdf": "pdf-file-format-symbol",
         ".pif": "pif-file-format-variant",
         ".pkg": "pkg-file-format-variant",
         ".pl": "pl-file-format-variant",

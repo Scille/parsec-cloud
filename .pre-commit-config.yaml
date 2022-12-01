@@ -49,10 +49,18 @@ repos:
           ]
         language_version: python3
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.149
     hooks:
-      - id: flake8
+      - id: ruff
+        require_serial: true
+        args:
+          [
+            --extend-exclude=parsec/core/gui/_resources_rc.py,
+            --extend-exclude=parsec/core/gui/ui/*,
+            --extend-exclude=oxidation/*,
+            --fix,
+          ]
 
   # Long story short we cannot use pre-commit isolated venv system for mypy
   # given mypy requires to have access to the project dependencies.
