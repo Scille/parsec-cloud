@@ -307,22 +307,5 @@
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>button_close</sender>
-   <signal>clicked()</signal>
-   <receiver>GreyedDialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>576</x>
-     <y>191</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>423</x>
-     <y>294</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

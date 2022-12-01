@@ -13,7 +13,13 @@ from parsec._parsec import InvitationEmailSentStatus, SASCode
 from parsec.api.protocol import InvitationToken
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info, show_info_copy_link
+from parsec.core.gui.custom_dialogs import (
+    GreyedDialog,
+    ask_question,
+    show_error,
+    show_info,
+    show_info_copy_link,
+)
 from parsec.core.gui.greet_user_widget import QDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.qrcode_widget import generate_qr_code
@@ -44,34 +50,40 @@ class Greeter:
         self.job_mc_recv: trio.MemoryReceiveChannel[Any]
         self.job_mc_send, self.job_mc_recv = trio.open_memory_channel(0)
 
+        self._current_step: Greeter.Step | None = None
+
+    @property
+    def onboarding_has_started(self) -> bool:
+        return self._current_step is not None and self._current_step > Greeter.Step.WaitPeer
+
     async def run(self, core: LoggedCore, token: InvitationToken) -> None:
         try:
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.WaitPeer
+            assert self._current_step == self.Step.WaitPeer
             try:
                 in_progress_ctx = await core.start_greeting_device(token=token)
                 await self.job_mc_send.send((True, None))
             except Exception as exc:
                 await self.job_mc_send.send((False, exc))
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.GetGreeterSas
+            assert self._current_step == self.Step.GetGreeterSas
             await self.job_mc_send.send(in_progress_ctx.greeter_sas)
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.WaitPeerTrust
+            assert self._current_step == self.Step.WaitPeerTrust
             try:
                 in_progress_ctx_peer_trust = await in_progress_ctx.do_wait_peer_trust()
                 await self.job_mc_send.send((True, None))
             except Exception as exc:
                 await self.job_mc_send.send((False, exc))
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.GetClaimerSas
+            assert self._current_step == self.Step.GetClaimerSas
             try:
                 choices = in_progress_ctx_peer_trust.generate_claimer_sas_choices(size=4)
                 await self.job_mc_send.send(
@@ -80,9 +92,9 @@ class Greeter:
             except Exception as exc:
                 await self.job_mc_send.send((False, exc, None, None))
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.SignifyTrust
+            assert self._current_step == self.Step.SignifyTrust
             try:
                 in_progress_ctx_signify_trust = await in_progress_ctx_peer_trust.do_signify_trust()
                 in_progress_ctx_claim_request = (
@@ -534,6 +546,10 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.greeter = Greeter()
         self._run_greeter()
 
+    @property
+    def onboarding_has_started(self) -> bool:
+        return self.greeter.onboarding_has_started
+
     def _on_page_failed(self, job: QtToTrioJob[None] | None) -> None:
         # The dialog has already been rejected
         if not self.isVisible():
@@ -648,7 +664,22 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         on_finished: Callable[..., None],
     ) -> GreetDeviceWidget:
         w = cls(core=core, jobs_ctx=jobs_ctx, invite_addr=invite_addr)
-        d = GreyedDialog(w, _("TEXT_GREET_DEVICE_TITLE"), parent=parent, width=1000)
+
+        def confirm_close() -> bool:
+            return not w.onboarding_has_started or ask_question(
+                parent,
+                _("TEXT_GREET_DEVICE_CLOSE_REQUESTED_TITLE"),
+                _("TEXT_GREET_DEVICE_CLOSE_REQUESTED_TEXT"),
+                [_("ACTION_CANCEL_GREET_DEVICE"), _("ACTION_NO")],
+            ) == _("ACTION_CANCEL_GREET_DEVICE")
+
+        d = GreyedDialog(
+            w,
+            _("TEXT_GREET_DEVICE_TITLE"),
+            parent=parent,
+            width=1000,
+            on_close_requested=confirm_close,
+        )
         w.dialog = d
 
         d.finished.connect(on_finished)

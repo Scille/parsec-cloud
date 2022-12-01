@@ -176,7 +176,7 @@ def ClaimUserTestBed(
 
             def _claimer_started():
                 assert not cui_w.button_start.isEnabled()
-                assert cui_w.button_start.text() == "Waiting for the other user"
+                assert cui_w.button_start.text() == translate("TEXT_CLAIM_USER_WAITING")
 
             await aqtbot.wait_until(_claimer_started)
 

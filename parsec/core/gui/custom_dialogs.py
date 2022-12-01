@@ -141,6 +141,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         hide_close: bool = False,
         width: int | None = None,
         close_on_click: bool = False,
+        on_close_requested: Callable[[], bool] | None = None,
     ) -> None:
         super().__init__(None)
         self.setupUi(self)
@@ -148,6 +149,8 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         self.setObjectName("GreyedDialog")
         self.setWindowModality(Qt.ApplicationModal)
         self.button_close.apply_style()
+        self.button_close.clicked.connect(self._on_close_clicked)
+        self.on_close_requested = on_close_requested
         self.close_on_click = close_on_click
         if sys.platform == "win32":
             # SplashScreen on Windows freezes the Window
@@ -186,6 +189,10 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         self.setFocus()
         self.accepted.connect(self.on_finished)
         self.rejected.connect(self.on_finished)
+
+    def _on_close_clicked(self) -> None:
+        if not self.on_close_requested or self.on_close_requested():
+            self.reject()
 
     def _get_spacer_top(self) -> QSpacerItem:
         return self.vertical_layout.itemAt(0).spacerItem()
