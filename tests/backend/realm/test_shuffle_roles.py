@@ -158,7 +158,7 @@ def test_shuffle_roles(
                     assert rep == RealmGetRoleCertificatesRepOk(certificates=self.certifs)
                 except TypeError:
                     assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-                except:
+                except Exception:
                     assert False
             else:
                 assert rep == {}

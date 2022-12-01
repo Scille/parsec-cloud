@@ -456,7 +456,7 @@ _PyWorkspaceStorage = WorkspaceStorage
 if not TYPE_CHECKING:
     try:
         from libparsec.types import WorkspaceStorage as _RsWorkspaceStorage
-    except:
+    except ImportError:
         pass
     else:
         WorkspaceStorage = _RsWorkspaceStorage
