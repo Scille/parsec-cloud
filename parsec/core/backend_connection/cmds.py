@@ -72,6 +72,8 @@ from parsec._parsec import (
     PkiEnrollmentRejectRepUnknownStatus,
     PkiEnrollmentSubmitRep,
     PkiEnrollmentSubmitRepUnknownStatus,
+    ProtocolError,
+    ProtocolErrorFields,
     RealmCreateRep,
     RealmCreateRepBadTimestamp,
     RealmCreateRepUnknownStatus,
@@ -118,7 +120,6 @@ from parsec.api.protocol import (
     InvitationToken,
     InvitationType,
     OrganizationID,
-    ProtocolError,
     RealmID,
     SequesterServiceID,
     UserID,
@@ -426,7 +427,7 @@ async def _send_cmd(
             raise BackendOutOfBallparkError(rep)
 
     else:
-        raise ProtocolError("Your protocol is not handled")
+        raise ProtocolError(ProtocolErrorFields.NotHandled())
 
     return rep
 

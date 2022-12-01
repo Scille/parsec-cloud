@@ -5,7 +5,7 @@ from typing import Tuple, Union, cast
 
 from quart import Websocket
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, ProtocolError, ProtocolErrorFields
 from parsec.api.protocol import (
     APIV1_HandshakeType,
     DeviceID,
@@ -13,7 +13,6 @@ from parsec.api.protocol import (
     InvitationToken,
     InvitationType,
     OrganizationID,
-    ProtocolError,
     ServerHandshake,
 )
 from parsec.backend.app import BackendApp
@@ -44,7 +43,9 @@ async def do_handshake(
         # Websocket can return both bytes or utf8-string messages, we only accept the former
         answer_req: Union[bytes, str] = await websocket.receive()
         if not isinstance(answer_req, bytes):
-            raise ProtocolError("Expected bytes message in websocket")
+            raise ProtocolError(
+                ProtocolErrorFields.BadRequest("Expected bytes message in websocket")
+            )
 
         handshake.process_answer_req(answer_req)
         if handshake.answer_type == HandshakeType.AUTHENTICATED:

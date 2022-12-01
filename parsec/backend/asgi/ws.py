@@ -8,12 +8,12 @@ import trio
 from quart import Blueprint, Websocket, g, websocket
 from structlog import get_logger
 
+from parsec._parsec import ProtocolError
 from parsec.api.protocol import (
     InvalidMessageError,
     InvitationStatus,
     InvitationToken,
     OrganizationID,
-    ProtocolError,
     UserID,
     packb,
     unpackb,

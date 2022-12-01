@@ -88,7 +88,6 @@ class PkiEnrollmentSubmitterInitialCtx:
         """
         Raises:
             BackendNotAvailable
-            BackendProtocolError
 
             PkiEnrollmentSubmitError
             PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError
@@ -242,7 +241,6 @@ class PkiEnrollmentSubmitterSubmittedCtx:
         """
         Raises:
             BackendNotAvailable
-            BackendProtocolError
 
             PkiEnrollmentInfoError
             PkiEnrollmentInfoNotFoundError

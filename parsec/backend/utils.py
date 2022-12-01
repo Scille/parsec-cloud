@@ -9,8 +9,8 @@ from quart import Websocket
 from trio import CancelScope
 from typing_extensions import Final, Literal, ParamSpec
 
-from parsec._parsec import AuthenticatedAnyCmdReq, ClientType, InvitedAnyCmdReq
-from parsec.api.protocol import InvalidMessageError, ProtocolError
+from parsec._parsec import AuthenticatedAnyCmdReq, ClientType, InvitedAnyCmdReq, ProtocolError
+from parsec.api.protocol import InvalidMessageError
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
 from parsec.serde.packing import packb, unpackb
 from parsec.utils import open_service_nursery
