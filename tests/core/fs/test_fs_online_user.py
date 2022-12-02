@@ -10,6 +10,7 @@ from hypothesis_trio.stateful import Bundle, initialize, rule
 
 from parsec.api.data import EntryID, EntryName
 from parsec.core.fs import FSWorkspaceNotFoundError
+from tests.common import customize_fixtures
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
@@ -17,6 +18,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
 def test_fs_online_user(user_fs_online_state_machine, oracle_fs_with_sync_factory, alice):
     class FSOfflineUser(user_fs_online_state_machine):
         Workspaces = Bundle("workspace")

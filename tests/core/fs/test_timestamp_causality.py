@@ -9,6 +9,7 @@ from parsec._parsec import DateTime, mock_time
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, UserProfile
 from parsec.core.fs.exceptions import FSReadOnlyError, FSWorkspaceNoWriteAccess
+from tests.common import customize_fixtures
 
 
 @pytest.fixture
@@ -50,6 +51,7 @@ def set_device_time_offset(monkeypatch):
 
 
 @pytest.mark.slow
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
 def test_timestamp_causality(
     user_fs_online_state_machine,
     coolorg,

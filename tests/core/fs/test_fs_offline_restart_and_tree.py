@@ -9,6 +9,7 @@ from hypothesis import strategies as st
 from hypothesis_trio.stateful import Bundle, initialize, rule
 
 from parsec.api.data import EntryName
+from tests.common import customize_fixtures
 
 
 def get_path(path):
@@ -21,6 +22,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
 def test_fs_offline_restart_and_tree(user_fs_offline_state_machine, oracle_fs_factory, alice):
     class FSOfflineRestartAndTree(user_fs_offline_state_machine):
         Files = Bundle("file")
