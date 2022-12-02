@@ -223,7 +223,7 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
         timestamp: DateTime | None,
     ) -> None:
         super().__init__()
-        # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
+        # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format
         self._security_descriptor = SecurityDescriptor.from_string(
             # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
             "O:BAG:BAD:NO_ACCESS_CONTROL"

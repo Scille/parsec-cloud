@@ -155,7 +155,7 @@ async def winfsp_mountpoint_runner(
     volume_serial_number = _generate_volume_serial_number(device, workspace_fs.workspace_id)
     # Types can't be checked when unpacking `event_kwargs`
     operations = WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs)  # type: ignore[arg-type]
-    # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
+    # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa
     fs = FileSystem(
         mountpoint_path.drive,
         operations,

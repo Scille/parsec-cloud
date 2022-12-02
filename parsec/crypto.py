@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from nacl.exceptions import CryptoError  # noqa: republishing
+from nacl.exceptions import CryptoError
 from nacl.pwhash import argon2i
 
 from parsec._parsec import SecretKey, HashDigest, SigningKey, VerifyKey, PrivateKey, PublicKey
