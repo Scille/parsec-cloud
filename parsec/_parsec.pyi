@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec_pyi import DataError, EntryNameError
+from parsec._parsec_pyi import DataError, EntryNameError, PkiEnrollmentLocalPendingError
 from parsec._parsec_pyi.addrs import (
     BackendActionAddr,
     BackendAddr,
@@ -107,7 +107,12 @@ from parsec._parsec_pyi.message import (
 )
 from parsec._parsec_pyi.misc import ApiVersion
 from parsec._parsec_pyi.organization import OrganizationConfig, OrganizationStats
-from parsec._parsec_pyi.pki import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
+from parsec._parsec_pyi.pki import (
+    LocalPendingEnrollment,
+    PkiEnrollmentAnswerPayload,
+    PkiEnrollmentSubmitPayload,
+    X509Certificate,
+)
 from parsec._parsec_pyi.protocol import (
     ActiveUsersLimit,
     # Cmd
@@ -522,6 +527,7 @@ __all__ = [
     # Data Error
     "DataError",
     "EntryNameError",
+    "PkiEnrollmentLocalPendingError",
     # Certif
     "UserCertificate",
     "DeviceCertificate",
@@ -614,6 +620,8 @@ __all__ = [
     # Pki
     "PkiEnrollmentAnswerPayload",
     "PkiEnrollmentSubmitPayload",
+    "X509Certificate",
+    "LocalPendingEnrollment",
     # User
     "UsersPerProfileDetailItem",
     # Time
