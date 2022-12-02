@@ -12,7 +12,7 @@ proc-macro = true
 anyhow = "1.0.65"
 itertools = "0.10.5"
 miniserde = "0.1.27"
-proc-macro2 = "1.0.43"
+proc-macro2 = "1.0.47"
 quote = "1.0.21"
 serde = { version = "1.0.144", features = ["derive"] }
 serde_json = "1.0.85"
