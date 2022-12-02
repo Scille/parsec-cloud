@@ -1,18 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-from parsec._parsec import DateTime
 import zlib
 
-from parsec.serde import packb, unpackb
-from parsec.api.data import (
-    DataError,
-    UserCertificate,
-    DeviceCertificate,
-    RevokedUserCertificate,
-)
+import pytest
+
+from parsec._parsec import DateTime
+from parsec.api.data import DataError, DeviceCertificate, RevokedUserCertificate, UserCertificate
 from parsec.api.protocol import UserProfile
+from parsec.serde import packb, unpackb
 
 
 @pytest.fixture(autouse=True, scope="module")

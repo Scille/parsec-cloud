@@ -1,19 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-from contextlib import (
-    asynccontextmanager,
-)
-from typing import AsyncGenerator, AsyncIterator, TYPE_CHECKING, TypeVar
-from parsec.api.transport import Transport
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator, TypeVar
 
-from parsec.core.types import BackendAddrType, BackendOrganizationBootstrapAddr
+import trio
+
+from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
+from parsec.api.transport import Transport
 from parsec.core.backend_connection import cmds
-from parsec.core.backend_connection.transport import apiv1_connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.expose_cmds import expose_cmds
-from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
+from parsec.core.backend_connection.transport import apiv1_connect
+from parsec.core.types import BackendAddrType, BackendOrganizationBootstrapAddr
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection.authenticated import AcquireTransport

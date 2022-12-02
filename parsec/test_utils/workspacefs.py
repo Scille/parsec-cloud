@@ -5,7 +5,7 @@ import string
 from typing import cast
 
 from parsec.api.data.entry import EntryName
-from parsec.core.fs import FsPath, UserFS, WorkspaceFS, FSFileNotFoundError
+from parsec.core.fs import FSFileNotFoundError, FsPath, UserFS, WorkspaceFS
 from parsec.core.types import EntryID, LocalFolderManifest
 
 

@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-import pytest
 from contextlib import asynccontextmanager
+
+import pytest
+import trio
 
 try:
     from tests.fuse_loopback import loopback_fs
@@ -11,11 +12,11 @@ except ImportError:
     pytest.skip("Fuse is required", allow_module_level=True)
 
 from parsec.api.data import EntryName
+from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.fs import UserFS
+from parsec.core.fs.exceptions import FSLocalStorageClosedError, FSLocalStorageOperationalError
 from parsec.core.logged_core import get_prevent_sync_pattern
 from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.backend_connection import backend_authenticated_cmds_factory
-from parsec.core.fs.exceptions import FSLocalStorageOperationalError, FSLocalStorageClosedError
 from tests.common import customize_fixtures
 
 fixtures = (loopback_fs,)

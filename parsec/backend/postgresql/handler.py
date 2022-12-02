@@ -1,27 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 import importlib.resources
 import re
-import trio
-import trio_typing
-import triopg
 from base64 import b64decode, b64encode
 from datetime import datetime
 from functools import wraps
-from structlog import get_logger
 from typing import Any, Awaitable, Callable, Coroutine, Iterable, List, Tuple
-from typing_extensions import ParamSpec
-from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
 
+import attr
+import trio
+import trio_typing
+import triopg
+from structlog import get_logger
+from triopg import PostgresError, UndefinedTableError, UniqueViolationError
+from typing_extensions import ParamSpec
+
 from parsec._parsec import DateTime
-from parsec.event_bus import EventBus
-from parsec.serde import SerdeValidationError, SerdePackingError
-from parsec.utils import start_task, TaskStatus
-from parsec.backend.postgresql import migrations as migrations_module
 from parsec.backend.backend_events import BackendEvent, backend_event_serializer
+from parsec.backend.postgresql import migrations as migrations_module
+from parsec.event_bus import EventBus
+from parsec.serde import SerdePackingError, SerdeValidationError
+from parsec.utils import TaskStatus, start_task
 
 P = ParamSpec("P")
 

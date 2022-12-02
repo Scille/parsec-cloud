@@ -5,7 +5,6 @@ import pytest
 
 from parsec.api.data import EntryName
 from parsec.core.fs import FSWorkspaceNoAccess
-
 from tests.common import create_shared_workspace
 
 

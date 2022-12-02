@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import List
 import re
-from zxcvbn import zxcvbn
+from typing import List
+
 from PyQt5.QtWidgets import QWidget
+from zxcvbn import zxcvbn
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.password_strength_widget import Ui_PasswordStrengthWidget

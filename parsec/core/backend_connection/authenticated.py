@@ -1,28 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-from enum import Enum
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import (
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    List,
-    AsyncGenerator,
-    Protocol,
-    TypeVar,
-)
-from structlog import get_logger
+from enum import Enum
+from typing import AsyncGenerator, AsyncIterator, Awaitable, Callable, List, Protocol, TypeVar
 
+import trio
+from structlog import get_logger
 from trio_typing import TaskStatus
 
 from parsec._parsec import (
-    EventsListenRepOkPkiEnrollmentUpdated,
     EventsListenRep,
     EventsListenRepOk,
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
+    EventsListenRepOkPkiEnrollmentUpdated,
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
@@ -31,28 +23,21 @@ from parsec._parsec import (
     OrganizationConfigRepOk,
     OrganizationConfigRepUnknownStatus,
 )
+from parsec.api.protocol import AUTHENTICATED_CMDS, DeviceID
 from parsec.api.transport import Transport
-from parsec.core.fs.userfs.userfs import UserFS
-from parsec.crypto import SigningKey
-from parsec.event_bus import EventBus
-from parsec.api.protocol import DeviceID, AUTHENTICATED_CMDS
-from parsec.core.types import (
-    BackendOrganizationAddr,
-    OrganizationConfig,
-    LocalDevice,
-)
 from parsec.core.backend_connection import cmds
-from parsec.core.backend_connection.transport import (
-    connect_as_authenticated,
-    TransportPool,
-)
 from parsec.core.backend_connection.exceptions import (
-    BackendNotAvailable,
     BackendConnectionRefused,
+    BackendNotAvailable,
     BackendOutOfBallparkError,
 )
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
+from parsec.core.backend_connection.transport import TransportPool, connect_as_authenticated
 from parsec.core.core_events import CoreEvent
+from parsec.core.fs.userfs.userfs import UserFS
+from parsec.core.types import BackendOrganizationAddr, LocalDevice, OrganizationConfig
+from parsec.crypto import SigningKey
+from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 
 logger = get_logger()

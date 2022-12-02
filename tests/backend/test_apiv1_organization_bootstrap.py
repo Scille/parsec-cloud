@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-import pytest
-from parsec._parsec import DateTime
 from collections import defaultdict
 
-from parsec.api.data import UserCertificate, DeviceCertificate
-from parsec.api.protocol import UserID, apiv1_organization_bootstrap_serializer, UserProfile
-from parsec.api.protocol.handshake import HandshakeOrganizationExpired
+import pytest
+import trio
 
-from tests.common import customize_fixtures, local_device_to_backend_user
+from parsec._parsec import DateTime
+from parsec.api.data import DeviceCertificate, UserCertificate
+from parsec.api.protocol import UserID, UserProfile, apiv1_organization_bootstrap_serializer
+from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 from tests.backend.common import authenticated_ping
+from tests.common import customize_fixtures, local_device_to_backend_user
 
 
 _missing = object()

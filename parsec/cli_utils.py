@@ -1,31 +1,32 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import sys
-import trio
-import click
 import datetime
+import sys
 import traceback
+from contextlib import asynccontextmanager, contextmanager
+from functools import partial, wraps
 from typing import (
     Any,
+    AsyncIterator,
+    Awaitable,
+    Callable,
     Dict,
     Iterator,
-    AsyncIterator,
     NoReturn,
-    TypedDict,
-    cast,
-    Callable,
-    TypeVar,
-    Awaitable,
     TextIO,
+    TypedDict,
+    TypeVar,
+    cast,
 )
-from typing_extensions import ParamSpec, Concatenate
-from functools import partial, wraps
-from contextlib import contextmanager, asynccontextmanager
 
-from parsec.utils import open_service_nursery
+import click
+import trio
+from typing_extensions import Concatenate, ParamSpec
+
 from parsec._parsec import DateTime
 from parsec.logging import configure_logging, configure_sentry_logging
+from parsec.utils import open_service_nursery
 
 P = ParamSpec("P")
 R = TypeVar("R")

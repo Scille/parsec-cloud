@@ -1,28 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-
 from parsec._parsec import (
-    RealmRole,
-    RealmCreateReq,
-    RealmCreateRep,
-    RealmStatusReq,
-    RealmStatusRep,
-    RealmStatsReq,
-    RealmStatsRep,
-    RealmGetRoleCertificatesReq,
-    RealmGetRoleCertificatesRep,
-    RealmUpdateRolesReq,
-    RealmUpdateRolesRep,
-    RealmStartReencryptionMaintenanceReq,
-    RealmStartReencryptionMaintenanceRep,
-    RealmFinishReencryptionMaintenanceReq,
-    RealmFinishReencryptionMaintenanceRep,
     MaintenanceType,
+    RealmCreateRep,
+    RealmCreateReq,
+    RealmFinishReencryptionMaintenanceRep,
+    RealmFinishReencryptionMaintenanceReq,
+    RealmGetRoleCertificatesRep,
+    RealmGetRoleCertificatesReq,
+    RealmID,
+    RealmRole,
+    RealmStartReencryptionMaintenanceRep,
+    RealmStartReencryptionMaintenanceReq,
+    RealmStatsRep,
+    RealmStatsReq,
+    RealmStatusRep,
+    RealmStatusReq,
+    RealmUpdateRolesRep,
+    RealmUpdateRolesReq,
 )
-from parsec.serde import fields
 from parsec.api.protocol.base import ApiCommandSerializer
-from parsec._parsec import RealmID
+from parsec.serde import fields
 
 __all__ = (
     "RealmID",

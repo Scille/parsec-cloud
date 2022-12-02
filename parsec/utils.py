@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
+from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Awaitable, Callable, Generic, TypeVar, cast
 
 import attr
 import trio
 import trio_typing
-from parsec._parsec import DateTime
-from structlog import get_logger
-from contextlib import asynccontextmanager
 from exceptiongroup import BaseExceptionGroup
+from structlog import get_logger
 
 from parsec import service_nursery
+from parsec._parsec import DateTime
 from parsec.monitoring import TaskMonitoringInstrument
 
 __all__ = [

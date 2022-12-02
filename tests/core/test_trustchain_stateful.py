@@ -2,26 +2,27 @@
 from __future__ import annotations
 
 import pytest
-from hypothesis import strategies as st, note
+from hypothesis import note
+from hypothesis import strategies as st
 from hypothesis.stateful import (
-    run_state_machine_as_test,
     Bundle,
-    precondition,
-    initialize,
-    rule,
-    consumes,
     RuleBasedStateMachine,
+    consumes,
+    initialize,
+    precondition,
+    rule,
+    run_state_machine_as_test,
 )
 
-from parsec.api.protocol import UserID, DeviceName, UserProfile
 from parsec._parsec import (
+    DeviceCertificate,
+    RevokedUserCertificate,
+    TimeProvider,
     Trustchain,
     TrustchainContext,
     UserCertificate,
-    RevokedUserCertificate,
-    DeviceCertificate,
-    TimeProvider,
 )
+from parsec.api.protocol import DeviceName, UserID, UserProfile
 
 
 @pytest.mark.slow

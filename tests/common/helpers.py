@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
+from contextlib import ExitStack
+from inspect import iscoroutinefunction
+from unittest.mock import Mock
+
 import attr
 import pytest
-from unittest.mock import Mock
-from inspect import iscoroutinefunction
-from contextlib import ExitStack
+import trio
+
 from parsec._parsec import DateTime
-
-from parsec.core.core_events import CoreEvent
-from parsec.core.types import WorkspaceRole
-from parsec.core.logged_core import LoggedCore
-from parsec.core.fs import UserFS
 from parsec.api.transport import Transport, TransportError
-
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs import UserFS
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import WorkspaceRole
 from tests.common.trio_clock import real_clock_timeout
 
 

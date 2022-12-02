@@ -1,18 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from struct import pack as struct_pack
+from struct import unpack as struct_unpack
 from typing import Any, Mapping
 from uuid import UUID
-from parsec._parsec import DateTime
-from struct import pack as struct_pack, unpack as struct_unpack
-from msgpack import (
-    packb as msgpack_packb,
-    unpackb as msgpack_unpackb,
-    Unpacker as msgpack_Unpacker,
-    ExtType,
-)
+
+from msgpack import ExtType
+from msgpack import Unpacker as msgpack_Unpacker
+from msgpack import packb as msgpack_packb
+from msgpack import unpackb as msgpack_unpackb
 from msgpack.exceptions import ExtraData, FormatError, StackError
 
+from parsec._parsec import DateTime
 from parsec.serde.exceptions import SerdePackingError
 
 

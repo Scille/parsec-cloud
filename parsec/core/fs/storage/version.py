@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from parsec.core.types import LocalDevice, EntryID
+from parsec.core.types import EntryID, LocalDevice
 
 
 STORAGE_REVISION = 1

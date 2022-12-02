@@ -2,16 +2,16 @@
 from __future__ import annotations
 
 import re
-import pytest
 from collections import defaultdict
-from typing import Union, Optional
 from contextlib import asynccontextmanager
+from typing import Optional, Union
 
-from parsec.crypto import SigningKey
-from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle, UserProfile
-from parsec.core.types import BackendOrganizationBootstrapAddr
+import pytest
+
+from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserProfile
 from parsec.core.local_device import generate_new_device
-
+from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.crypto import SigningKey
 from tests.common.binder import OrganizationFullData
 from tests.common.freeze_time import freeze_time
 from tests.common.sequester import sequester_authority_factory

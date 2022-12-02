@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from typing import Any, Callable, Dict, Generic, Iterable, TypeVar
 
-from typing import Dict, Callable, Generic, Iterable, TypeVar, Any
 from .fields import Field
 
 class ValidationError(Exception):

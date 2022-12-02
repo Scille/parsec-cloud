@@ -1,31 +1,32 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import Dict, List, Tuple
+
 import triopg
-from typing import List, Tuple, Dict
 
 from parsec._parsec import DateTime
-from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
 from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.organization import SequesterAuthority
-from parsec.backend.sequester import SequesterDisabledError, BaseSequesterService
+from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
+from parsec.backend.postgresql.sequester import get_sequester_authority, get_sequester_services
+from parsec.backend.postgresql.vlob_queries import (
+    query_create,
+    query_list_versions,
+    query_maintenance_get_reencryption_batch,
+    query_maintenance_save_reencryption_batch,
+    query_poll_changes,
+    query_read,
+    query_update,
+)
+from parsec.backend.sequester import BaseSequesterService, SequesterDisabledError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
     extract_sequestered_data_and_proceed_webhook,
 )
-from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
-from parsec.backend.postgresql.vlob_queries import (
-    query_update,
-    query_maintenance_save_reencryption_batch,
-    query_maintenance_get_reencryption_batch,
-    query_read,
-    query_poll_changes,
-    query_list_versions,
-    query_create,
-)
-from parsec.backend.postgresql.sequester import get_sequester_services, get_sequester_authority
 
 
 async def _check_sequestered_organization(

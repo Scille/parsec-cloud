@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any, List, Tuple
+
 import attr
 
 from parsec._parsec import DateTime
-from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, VlobID
+from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 
 
 class SequesterError(Exception):

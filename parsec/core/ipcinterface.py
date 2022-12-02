@@ -2,23 +2,24 @@
 from __future__ import annotations
 
 import sys
-from typing import Any, AsyncIterator, Awaitable, Callable, Iterator, Mapping
-import trio
-from trio.abc import Stream
-from functools import partial
-from contextlib import contextmanager, asynccontextmanager
-from structlog import get_logger
-from pathlib import Path
+from contextlib import asynccontextmanager, contextmanager
 from enum import Enum
+from functools import partial
+from pathlib import Path
+from typing import Any, AsyncIterator, Awaitable, Callable, Iterator, Mapping
+
+import trio
+from structlog import get_logger
+from trio.abc import Stream
 
 from parsec.serde import (
     BaseSchema,
+    MsgpackSerializer,
     OneOfSchema,
+    SerdeError,
+    Unpacker,
     fields,
     packb,
-    Unpacker,
-    SerdeError,
-    MsgpackSerializer,
 )
 from parsec.utils import open_service_nursery
 
@@ -90,7 +91,7 @@ def _install_win32_mutex(mutex_name: str) -> Iterator[None]:
     # mypy: This tells mypy to do type check only on windows platform. (avoid undefined symbols
     # errors on linux and macos) This function is not meant to be called on other platforms
     if sys.platform == "win32":
-        from parsec.win32 import CreateMutex, CloseHandle, GetLastError, ERROR_ALREADY_EXISTS
+        from parsec.win32 import ERROR_ALREADY_EXISTS, CloseHandle, CreateMutex, GetLastError
 
         try:
             mutex = CreateMutex(None, False, mutex_name)

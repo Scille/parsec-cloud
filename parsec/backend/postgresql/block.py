@@ -5,31 +5,31 @@ import triopg
 from triopg.exceptions import UniqueViolationError
 
 from parsec._parsec import DateTime
-from parsec.api.protocol import OrganizationID, DeviceID, RealmID, BlockID
-from parsec.backend.utils import OperationKind
-from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.api.protocol import BlockID, DeviceID, OrganizationID, RealmID
 from parsec.backend.block import (
     BaseBlockComponent,
-    BlockError,
-    BlockAlreadyExistsError,
-    BlockNotFoundError,
     BlockAccessError,
+    BlockAlreadyExistsError,
+    BlockError,
     BlockInMaintenanceError,
+    BlockNotFoundError,
     BlockStoreError,
 )
+from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
-    q_organization_internal_id,
-    q_user_internal_id,
-    q_user_can_read_vlob,
-    q_user_can_write_vlob,
+    q_block,
     q_device_internal_id,
+    q_organization_internal_id,
     q_realm,
     q_realm_internal_id,
-    q_block,
+    q_user_can_read_vlob,
+    q_user_can_write_vlob,
+    q_user_internal_id,
 )
-from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
+from parsec.backend.utils import OperationKind
 
 
 _q_get_realm_id_from_block_id = Q(

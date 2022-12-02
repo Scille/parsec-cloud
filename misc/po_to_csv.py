@@ -2,9 +2,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 
-import csv
 import argparse
+import csv
 import os
+
 from babel.messages.pofile import read_po
 
 

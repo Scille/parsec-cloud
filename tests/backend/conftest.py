@@ -1,24 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-from parsec._parsec import DateTime
 from contextlib import asynccontextmanager
 
+import pytest
+
+from parsec._parsec import DateTime
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
-    OrganizationID,
-    VlobID,
-    RealmID,
-    RealmRole,
+    APIV1_AnonymousClientHandshake,
+    AuthenticatedClientHandshake,
     InvitationToken,
     InvitationType,
-    AuthenticatedClientHandshake,
     InvitedClientHandshake,
-    APIV1_AnonymousClientHandshake,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    VlobID,
 )
-from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.backend_events import BackendEvent
+from parsec.backend.realm import RealmGrantedRole
 from parsec.core.types import LocalDevice
 
 

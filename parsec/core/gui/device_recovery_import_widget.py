@@ -1,38 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from pathlib import Path, PurePath
 from typing import Callable
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
-from pathlib import Path, PurePath
 
 from parsec._parsec import SecretKey
 from parsec.api.protocol import DeviceLabel
 from parsec.core import CoreConfig
-from parsec.core.types import LocalDevice
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
-from parsec.core.recovery import generate_new_device_from_recovery
-from parsec.core.local_device import (
-    save_device_with_password_in_config,
-    save_device_with_smartcard_in_config,
-    DeviceFileType,
-    load_recovery_device,
-    LocalDeviceError,
-    LocalDeviceCryptoError,
-    LocalDeviceNotFoundError,
-)
-from parsec.crypto import CryptoError
-from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
-from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError, QtToTrioJobScheduler
-from parsec.core.gui.lang import translate
-from parsec.core.gui.custom_dialogs import GreyedDialog, QDialogInProcess, show_error, show_info
 from parsec.core.gui import validators
+from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
+from parsec.core.gui.custom_dialogs import GreyedDialog, QDialogInProcess, show_error, show_info
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.ui.device_recovery_import_widget import Ui_DeviceRecoveryImportWidget
+from parsec.core.gui.lang import translate
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.device_recovery_import_page1_widget import (
     Ui_DeviceRecoveryImportPage1Widget,
 )
+from parsec.core.gui.ui.device_recovery_import_widget import Ui_DeviceRecoveryImportWidget
+from parsec.core.local_device import (
+    DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+    load_recovery_device,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+)
+from parsec.core.recovery import generate_new_device_from_recovery
+from parsec.core.types import LocalDevice
+from parsec.crypto import CryptoError
 
 
 class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widget):

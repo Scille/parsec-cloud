@@ -1,43 +1,43 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 import sqlite3
-from parsec._parsec import DateTime
-import oscrypto.asymmetric
 
-from parsec.crypto import SecretKey, HashDigest
-from parsec.sequester_crypto import SequesterEncryptionKeyDer
-from parsec.api.protocol import (
-    OrganizationID,
-    VlobID,
-    RealmID,
-    RealmRole,
-    BlockID,
-    SequesterServiceID,
-    UserProfile,
-)
+import oscrypto.asymmetric
+import pytest
+
+from parsec._parsec import DateTime
 from parsec.api.data import (
-    UserCertificate,
-    RevokedUserCertificate,
+    BlockAccess,
     DeviceCertificate,
-    RealmRoleCertificate,
     EntryID,
     EntryName,
     FileManifest,
     FolderManifest,
+    RealmRoleCertificate,
+    RevokedUserCertificate,
+    UserCertificate,
     WorkspaceManifest,
-    BlockAccess,
 )
-from parsec.backend.realm import RealmGrantedRole
+from parsec.api.protocol import (
+    BlockID,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    SequesterServiceID,
+    UserProfile,
+    VlobID,
+)
 from parsec.backend.postgresql.sequester_export import (
     OUTPUT_DB_INIT_QUERY,
     RealmExporter,
-    RealmExporterOutputDbError,
     RealmExporterInputError,
+    RealmExporterOutputDbError,
 )
+from parsec.backend.realm import RealmGrantedRole
+from parsec.crypto import HashDigest, SecretKey
+from parsec.sequester_crypto import SequesterEncryptionKeyDer
 from parsec.sequester_export_reader import extract_workspace
-
 from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
 

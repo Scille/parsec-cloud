@@ -6,7 +6,6 @@ from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
 from parsec.api.data import EntryName
-
 from tests.common import FileOracle
 
 

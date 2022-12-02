@@ -1,34 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import Dict
+
+import triopg
 from triopg import UniqueViolationError
 
 from parsec._parsec import DateTime
-from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
 from parsec.api.protocol.sequester import SequesterServiceID
+from parsec.backend.backend_events import BackendEvent
+from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
     q_device_internal_id,
+    q_organization_internal_id,
     q_realm_internal_id,
-    q_vlob_encryption_revision_internal_id,
     q_user_internal_id,
+    q_vlob_encryption_revision_internal_id,
+    query,
+)
+from parsec.backend.postgresql.vlob_queries.utils import (
+    _check_realm_and_write_access,
+    _get_realm_id_from_vlob_id,
 )
 from parsec.backend.vlob import (
+    VlobAlreadyExistsError,
+    VlobNotFoundError,
     VlobRequireGreaterTimestampError,
     VlobVersionError,
-    VlobNotFoundError,
-    VlobAlreadyExistsError,
 )
-from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.vlob_queries.utils import (
-    _get_realm_id_from_vlob_id,
-    _check_realm_and_write_access,
-)
-from parsec.backend.backend_events import BackendEvent
 
 
 _q_vlob_updated = Q(

@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-from parsec._parsec import DateTime
 from contextlib import asynccontextmanager
-from hypothesis_trio.stateful import run_state_machine_as_test, TrioAsyncioRuleBasedStateMachine
 
+import pytest
+from hypothesis_trio.stateful import TrioAsyncioRuleBasedStateMachine, run_state_machine_as_test
+
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
-from parsec.core.fs.storage import WorkspaceStorage
-from parsec.core.fs.workspacefs.file_transactions import FileTransactions
-from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.backend_connection.authenticated import backend_authenticated_cmds_factory
-from parsec.core.types import LocalWorkspaceManifest, WorkspaceEntry, EntryID
-
+from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.storage import WorkspaceStorage
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
+from parsec.core.fs.workspacefs.file_transactions import FileTransactions
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
+from parsec.core.types import EntryID, LocalWorkspaceManifest, WorkspaceEntry
 from tests.common import call_with_control
 
 

@@ -1,24 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import errno
 import os
 import re
-import errno
-import trio
+from contextlib import contextmanager
 from functools import partial
 from pathlib import PurePath
-from parsec._parsec import DateTime
-from structlog import get_logger
+from stat import S_IFDIR, S_IFREG, S_IRWXU
 from typing import Any, Iterator, List
-from contextlib import contextmanager
-from stat import S_IRWXU, S_IFDIR, S_IFREG
-from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
+import trio
+from fuse import FuseOSError, LoggingMixIn, Operations, fuse_exit, fuse_get_context
+from structlog import get_logger
+
+from parsec._parsec import DateTime
 from parsec.api.data import EntryID, EntryName
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
-from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
+from parsec.core.fs import FSLocalOperationError, FsPath, FSRemoteOperationError
 from parsec.core.fs.exceptions import FSReadOnlyError
+from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 from parsec.core.types import FileDescriptor
 
 

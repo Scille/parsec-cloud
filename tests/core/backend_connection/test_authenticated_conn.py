@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Optional
 
 import pytest
@@ -17,15 +18,14 @@ from parsec.api.protocol import RealmRole, VlobID
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
+    BackendConnectionRefused,
     BackendConnStatus,
     BackendNotAvailable,
-    BackendConnectionRefused,
 )
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.userfs.userfs import UserFS
 from parsec.core.types import OrganizationConfig
 from parsec.event_bus import EventBus
-
 from tests.common import real_clock_timeout
 
 

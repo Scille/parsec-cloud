@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from typing import Any, List, cast
+
+import attr
 
 from parsec._parsec import (
     ClientType,
@@ -18,7 +19,11 @@ from parsec._parsec import (
     PkiEnrollmentAcceptRepNotFound,
     PkiEnrollmentAcceptRepOk,
     PkiEnrollmentAcceptReq,
-    PkiEnrollmentListItem as RustPkiEnrollmentListItem,
+    PkiEnrollmentInfoRep,
+    PkiEnrollmentInfoRepNotFound,
+    PkiEnrollmentInfoRepOk,
+    PkiEnrollmentInfoReq,
+    PkiEnrollmentInfoStatus,
     PkiEnrollmentListRep,
     PkiEnrollmentListRepNotAllowed,
     PkiEnrollmentListRepOk,
@@ -29,11 +34,6 @@ from parsec._parsec import (
     PkiEnrollmentRejectRepNotFound,
     PkiEnrollmentRejectRepOk,
     PkiEnrollmentRejectReq,
-    PkiEnrollmentInfoRep,
-    PkiEnrollmentInfoRepNotFound,
-    PkiEnrollmentInfoRepOk,
-    PkiEnrollmentInfoReq,
-    PkiEnrollmentInfoStatus,
     PkiEnrollmentSubmitRep,
     PkiEnrollmentSubmitRepAlreadyEnrolled,
     PkiEnrollmentSubmitRepAlreadySubmitted,
@@ -43,24 +43,15 @@ from parsec._parsec import (
     PkiEnrollmentSubmitRepOk,
     PkiEnrollmentSubmitReq,
 )
-from parsec.api.data import (
-    DataError,
-    PkiEnrollmentSubmitPayload,
-    PkiEnrollmentAnswerPayload,
-)
-from parsec.api.protocol import (
-    OrganizationID,
-    UserProfile,
-)
+from parsec._parsec import PkiEnrollmentListItem as RustPkiEnrollmentListItem
+from parsec.api.data import DataError, PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
+from parsec.api.protocol import OrganizationID, UserProfile
+from parsec.backend.client_context import AnonymousClientContext, AuthenticatedClientContext
 from parsec.backend.user_type import (
-    User,
-    Device,
-    validate_new_user_certificates,
     CertificateValidationError,
-)
-from parsec.backend.client_context import (
-    AuthenticatedClientContext,
-    AnonymousClientContext,
+    Device,
+    User,
+    validate_new_user_certificates,
 )
 from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 from parsec.event_bus import EventBus

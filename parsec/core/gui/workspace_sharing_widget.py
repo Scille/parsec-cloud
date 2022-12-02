@@ -1,28 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Callable, Union, cast
 
-from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QEvent, QTimer
-from PyQt5.QtGui import QPixmap, QColor
-from PyQt5.QtWidgets import QWidget, QComboBox
+from PyQt5.QtCore import QCoreApplication, QEvent, QObject, QTimer, pyqtSignal
+from PyQt5.QtGui import QColor, QPixmap
+from PyQt5.QtWidgets import QComboBox, QWidget
+
 from parsec.api.protocol import RealmRole
-
 from parsec.api.protocol.types import UserProfile
-from parsec.core.logged_core import LoggedCore, UserID
-from parsec.core.types import EntryName, UserInfo
-from parsec.core.fs import FSError, FSBackendOfflineError, UserFS, WorkspaceFS
-from parsec.core.types import WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
-
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
-
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
+from parsec.core.fs import FSBackendOfflineError, FSError, UserFS, WorkspaceFS
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.ui.workspace_sharing_widget import Ui_WorkspaceSharingWidget
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
+from parsec.core.gui.ui.workspace_sharing_widget import Ui_WorkspaceSharingWidget
+from parsec.core.gui.workspace_roles import get_role_translation
+from parsec.core.logged_core import LoggedCore, UserID
+from parsec.core.types import EntryName, UserInfo, WorkspaceRole
 
 
 _ROLES_TO_INDEX: dict[Union[WorkspaceRole, None], int] = {

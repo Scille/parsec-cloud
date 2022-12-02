@@ -1,21 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from pathlib import Path
+from unittest.mock import Mock
+
 import pytest
 from PyQt5 import QtCore
-from unittest.mock import Mock
-from pathlib import Path
+
 from parsec._parsec import DateTime
-
-from parsec.api.data import EntryName, EntryID
-from parsec.core.types import WorkspaceRole
+from parsec.api.data import EntryID, EntryName
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs import FSWorkspaceNoReadAccess, FsPath
-from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.fs import FsPath, FSWorkspaceNoReadAccess
+from parsec.core.gui.lang import format_datetime, translate
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
-from parsec.core.gui.lang import translate, format_datetime
-
-from tests.common import freeze_time, customize_fixtures
+from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.types import WorkspaceRole
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture

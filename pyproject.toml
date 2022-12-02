@@ -183,6 +183,8 @@ select = [
     "W",
     # Unused noqa directive
     "M",
+    # isort
+    "I",
 ]
 
 # Handled by black:

@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-from typing import Sequence
-from pathlib import PurePath
 import re
+from pathlib import PurePath
+from typing import Sequence
 
-from PyQt5.QtCore import QUrl, QSysInfo, QLocale
-from PyQt5.QtGui import QDesktopServices, QGuiApplication, QClipboard
+import trio
+from PyQt5.QtCore import QLocale, QSysInfo, QUrl
+from PyQt5.QtGui import QClipboard, QDesktopServices, QGuiApplication
 
 
 async def open_files_job(paths: Sequence[PurePath]) -> tuple[bool, Sequence[PurePath]]:

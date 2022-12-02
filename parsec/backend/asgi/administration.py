@@ -1,23 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, NoReturn, Dict, Tuple, TypeVar
-from typing_extensions import ParamSpec
 import csv
-from io import StringIO
 from functools import wraps
-from parsec.serde.serializer import JSONSerializer
-from quart import current_app, Response, Blueprint, request, jsonify, make_response, g
+from io import StringIO
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, NoReturn, Tuple, TypeVar
+
+from quart import Blueprint, Response, current_app, g, jsonify, make_response, request
+from typing_extensions import ParamSpec
 
 from parsec._parsec import DateTime
-from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.api.rest import (
     organization_config_rep_serializer,
-    organization_create_req_serializer,
     organization_create_rep_serializer,
-    organization_update_req_serializer,
+    organization_create_req_serializer,
     organization_stats_rep_serializer,
+    organization_update_req_serializer,
     server_stats_rep_serializer,
 )
 from parsec.backend.organization import (
@@ -26,6 +25,8 @@ from parsec.backend.organization import (
     OrganizationStats,
     generate_bootstrap_token,
 )
+from parsec.serde import SerdePackingError, SerdeValidationError
+from parsec.serde.serializer import JSONSerializer
 
 if TYPE_CHECKING:
     from parsec.backend.app import BackendApp

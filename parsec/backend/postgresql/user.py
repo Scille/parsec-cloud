@@ -4,27 +4,27 @@ from __future__ import annotations
 from typing import Any, List, Tuple
 
 from parsec._parsec import DateTime
-from parsec.api.protocol import UserID, DeviceID, OrganizationID
-from parsec.backend.user import (
-    BaseUserComponent,
-    User,
-    Device,
-    Trustchain,
-    GetUserAndDevicesResult,
-    HumanFindResultItem,
-)
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries import (
-    query_create_user,
     query_create_device,
+    query_create_user,
+    query_dump_users,
     query_find_humans,
     query_get_user,
-    query_get_user_with_trustchain,
+    query_get_user_with_device,
     query_get_user_with_device_and_trustchain,
     query_get_user_with_devices_and_trustchain,
-    query_get_user_with_device,
+    query_get_user_with_trustchain,
     query_revoke_user,
-    query_dump_users,
+)
+from parsec.backend.user import (
+    BaseUserComponent,
+    Device,
+    GetUserAndDevicesResult,
+    HumanFindResultItem,
+    Trustchain,
+    User,
 )
 
 

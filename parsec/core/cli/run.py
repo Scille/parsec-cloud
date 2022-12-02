@@ -1,24 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-import click
 import multiprocessing
 from pathlib import Path
 from typing import Any
 
-from parsec.utils import trio_run
-from parsec.logging import configure_sentry_logging
+import click
+import trio
+
 from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
 from parsec.core import logged_core_factory
-from parsec.core.types import LocalDevice
-from parsec.core.config import CoreConfig
 from parsec.core.cli.utils import (
     cli_command_base_options,
-    gui_command_base_options,
     core_config_and_device_options,
     core_config_options,
+    gui_command_base_options,
 )
+from parsec.core.config import CoreConfig
+from parsec.core.types import LocalDevice
+from parsec.logging import configure_sentry_logging
+from parsec.utils import trio_run
 
 try:
     from parsec.core.gui import run_gui as _run_gui

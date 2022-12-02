@@ -1,39 +1,37 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
-from typing import Tuple, cast, Union
+from typing import Tuple, Union, cast
+
 from quart import Websocket
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
+    APIV1_HandshakeType,
     DeviceID,
+    HandshakeType,
+    InvitationToken,
+    InvitationType,
     OrganizationID,
     ProtocolError,
-    InvitationType,
-    HandshakeType,
-    APIV1_HandshakeType,
     ServerHandshake,
-    InvitationToken,
 )
 from parsec.backend.app import BackendApp
 from parsec.backend.client_context import (
-    BaseClientContext,
-    AuthenticatedClientContext,
-    InvitedClientContext,
     APIV1_AnonymousClientContext,
-)
-from parsec.backend.user import UserNotFoundError
-from parsec.backend.organization import (
-    OrganizationNotFoundError,
-    OrganizationAlreadyExistsError,
+    AuthenticatedClientContext,
+    BaseClientContext,
+    InvitedClientContext,
 )
 from parsec.backend.invite import (
-    InvitationError,
-    UserInvitation,
     DeviceInvitation,
     InvitationAlreadyDeletedError,
+    InvitationError,
     InvitationNotFoundError,
+    UserInvitation,
 )
+from parsec.backend.organization import OrganizationAlreadyExistsError, OrganizationNotFoundError
+from parsec.backend.user import UserNotFoundError
 
 
 async def do_handshake(

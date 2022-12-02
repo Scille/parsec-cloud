@@ -2,27 +2,28 @@
 from __future__ import annotations
 
 import math
-from enum import Enum
-from typing import Any, AsyncGenerator, Tuple, Dict
-import trio
 from contextlib import asynccontextmanager
-from parsec.backend.memory.sequester import MemorySequesterComponent
+from enum import Enum
+from typing import Any, AsyncGenerator, Dict, Tuple
 
-from parsec.event_bus import EventBus
-from parsec.utils import open_service_nursery
-from parsec.backend.config import BackendConfig
+import trio
+
 from parsec.backend.blockstore import blockstore_factory
+from parsec.backend.config import BackendConfig
 from parsec.backend.events import EventsComponent
-from parsec.backend.memory.organization import MemoryOrganizationComponent
-from parsec.backend.memory.ping import MemoryPingComponent
-from parsec.backend.memory.user import MemoryUserComponent
+from parsec.backend.memory.block import MemoryBlockComponent
 from parsec.backend.memory.invite import MemoryInviteComponent
 from parsec.backend.memory.message import MemoryMessageComponent
-from parsec.backend.memory.realm import MemoryRealmComponent
-from parsec.backend.memory.vlob import MemoryVlobComponent
-from parsec.backend.memory.block import MemoryBlockComponent
+from parsec.backend.memory.organization import MemoryOrganizationComponent
+from parsec.backend.memory.ping import MemoryPingComponent
 from parsec.backend.memory.pki import MemoryPkiEnrollmentComponent
+from parsec.backend.memory.realm import MemoryRealmComponent
+from parsec.backend.memory.sequester import MemorySequesterComponent
+from parsec.backend.memory.user import MemoryUserComponent
+from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.webhooks import WebhooksComponent
+from parsec.event_bus import EventBus
+from parsec.utils import open_service_nursery
 
 
 @asynccontextmanager

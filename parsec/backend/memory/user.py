@@ -1,24 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-from parsec._parsec import DateTime
-from typing import Any, Callable, Coroutine, Dict, Iterable, List, TYPE_CHECKING, Tuple
 from collections import defaultdict
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterable, List, Tuple
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
+import attr
+
+from parsec._parsec import DateTime
+from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, OrganizationID, UserID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import (
     BaseUserComponent,
-    User,
     Device,
-    Trustchain,
     GetUserAndDevicesResult,
     HumanFindResultItem,
+    Trustchain,
+    User,
+    UserActiveUsersLimitReached,
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
     UserNotFoundError,
-    UserActiveUsersLimitReached,
 )
 
 if TYPE_CHECKING:

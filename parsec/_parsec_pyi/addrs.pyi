@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 from typing import Any, Union
 
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
-from parsec._parsec_pyi.ids import OrganizationID, EntryID, InvitationToken
+from parsec._parsec_pyi.ids import EntryID, InvitationToken, OrganizationID
 
 class BackendAddr:
     def __init__(self, hostname: str, port: int | None, use_ssl: bool) -> None: ...

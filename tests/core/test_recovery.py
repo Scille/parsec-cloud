@@ -4,15 +4,15 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import SecretKey
-from parsec.crypto import CryptoError
 from parsec.api.protocol.types import DeviceLabel
+from parsec.core.backend_connection import BackendConnectionRefused, BackendNotAvailable
 from parsec.core.local_device import (
     get_recovery_device_file_name,
     load_recovery_device,
     save_recovery_device,
 )
-from parsec.core.recovery import generate_recovery_device, generate_new_device_from_recovery
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionRefused
+from parsec.core.recovery import generate_new_device_from_recovery, generate_recovery_device
+from parsec.crypto import CryptoError
 
 
 def test_recovery_passphrase():

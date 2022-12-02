@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import QRegularExpression
-from PyQt5.QtGui import QValidator, QIntValidator, QRegularExpressionValidator
+from PyQt5.QtGui import QIntValidator, QRegularExpressionValidator, QValidator
 
 from parsec.api.data import EntryName
-from parsec.api.protocol import OrganizationID, UserID, DeviceLabel, HumanHandle
+from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID, UserID
 from parsec.core.types import (
-    BackendAddr,
     BackendActionAddr,
+    BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
 )

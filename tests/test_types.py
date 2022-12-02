@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import export_root_verify_key, DateTime
-from parsec.api.protocol import DeviceID, UserID, DeviceName, OrganizationID
+from parsec._parsec import DateTime, export_root_verify_key
+from parsec.api.protocol import DeviceID, DeviceName, OrganizationID, UserID
 from parsec.api.protocol.types import DeviceLabel, HumanHandle
-from parsec.crypto import SigningKey, PrivateKey, SecretKey
 from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
+from parsec.crypto import PrivateKey, SecretKey, SigningKey
 
 
 @pytest.mark.parametrize("raw", ["foo42", "FOO", "f", "f-o-o", "f_o_o", "x" * 32, "三国"])

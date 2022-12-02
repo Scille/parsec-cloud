@@ -1,18 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import click
 from typing import Any
 
+import click
 
-from parsec.utils import trio_run
-from parsec.api.protocol import UserID, RealmRole
 from parsec.api.data import EntryName
+from parsec.api.protocol import RealmRole, UserID
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
-from parsec.core.types import WorkspaceRole, LocalDevice
-from parsec.core.config import CoreConfig
 from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
+from parsec.core.config import CoreConfig
+from parsec.core.types import LocalDevice, WorkspaceRole
+from parsec.utils import trio_run
 
 
 WORKSPACE_ROLE_CHOICES: dict[str, None | RealmRole] = {

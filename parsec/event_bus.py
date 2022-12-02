@@ -1,27 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import (
-    DefaultDict,
-    Tuple,
-    List,
-    Dict,
-    Iterator,
-    ContextManager,
-    TypeVar,
-    Union,
-)
+from typing import ContextManager, DefaultDict, Dict, Iterator, List, Tuple, TypeVar, Union
 
 try:
     # Introduced in Python 3.8
     from typing import Protocol
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
-import trio
-from structlog import get_logger
 from collections import defaultdict
 from contextlib import contextmanager
 from enum import Enum
+
+import trio
+from structlog import get_logger
 
 
 logger = get_logger()

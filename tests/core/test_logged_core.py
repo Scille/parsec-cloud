@@ -1,25 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-import trio
 from unittest.mock import ANY
 
-from parsec._parsec import (
-    DateTime,
-)
-from parsec.api.protocol import UserProfile, UserID
+import pytest
+import trio
+
+from parsec._parsec import DateTime
+from parsec.api.protocol import UserID, UserProfile
 from parsec.core import logged_core_factory
-from parsec.core.types import UserInfo, DeviceInfo, OrganizationStats, UsersPerProfileDetailItem
 from parsec.core.backend_connection import (
-    BackendConnStatus,
     BackendConnectionError,
+    BackendConnStatus,
     BackendNotAvailable,
     BackendNotFoundError,
 )
 from parsec.core.core_events import CoreEvent
-
-from tests.common import real_clock_timeout, correct_addr, server_factory, customize_fixtures
+from parsec.core.types import DeviceInfo, OrganizationStats, UserInfo, UsersPerProfileDetailItem
+from tests.common import correct_addr, customize_fixtures, real_clock_timeout, server_factory
 
 
 @pytest.mark.trio

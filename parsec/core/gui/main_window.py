@@ -2,67 +2,65 @@
 from __future__ import annotations
 
 import sys
-from typing import Awaitable, Callable, cast
-from structlog import get_logger
 from distutils.version import LooseVersion
+from typing import Awaitable, Callable, cast
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
-from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
-from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
+from PyQt5.QtCore import QCoreApplication, QSize, Qt, pyqtSignal
+from PyQt5.QtGui import QCloseEvent, QColor, QIcon, QKeySequence, QResizeEvent
+from PyQt5.QtWidgets import QMainWindow, QMenu, QMenuBar, QShortcut, QWidget
+from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
-from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
-from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
-from parsec.event_bus import EventBus, EventCallback
 from parsec._parsec import InvitationType
-from parsec.core.types import (
-    LocalDevice,
-    BackendActionAddr,
-    BackendInvitationAddr,
-    BackendOrganizationBootstrapAddr,
-    BackendOrganizationFileLinkAddr,
-)
-from parsec.core.core_events import CoreEvent
-from parsec.core.config import CoreConfig, save_config
-from parsec.core.pki import is_pki_enrollment_available
-from parsec.core.local_device import (
-    get_available_device,
-    list_available_devices,
-    get_key_file,
-    DeviceFileType,
-)
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.instance_widget import InstanceWidget
-from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.gui import telemetry
-from parsec.core.gui import desktop
 from parsec.core import win_registry
-from parsec.core.gui import validators
-from parsec.core.gui.changelog_widget import ChangelogWidget
-from parsec.core.gui.claim_user_widget import ClaimUserWidget
-from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
-from parsec.core.gui.license_widget import LicenseWidget
+from parsec.core.config import CoreConfig, save_config
+from parsec.core.core_events import CoreEvent
+from parsec.core.gui import desktop, telemetry, validators
 from parsec.core.gui.about_widget import AboutWidget
-from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.custom_dialogs import (
-    ask_question,
-    show_error,
-    show_info,
-    GreyedDialog,
-    get_text_input,
-)
-from parsec.core.gui.device_recovery_export_widget import DeviceRecoveryExportWidget
-from parsec.core.gui.device_recovery_import_widget import DeviceRecoveryImportWidget
-from parsec.core.gui.custom_widgets import Button, ensure_string_size
-from parsec.core.gui.create_org_widget import CreateOrgWidget
-from parsec.core.gui.ui.main_window import Ui_MainWindow
 from parsec.core.gui.central_widget import (
     GoToFileLinkBadOrganizationIDError,
     GoToFileLinkBadWorkspaceIDError,
     GoToFileLinkPathDecryptionError,
 )
+from parsec.core.gui.changelog_widget import ChangelogWidget
+from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
+from parsec.core.gui.claim_user_widget import ClaimUserWidget
+from parsec.core.gui.create_org_widget import CreateOrgWidget
+from parsec.core.gui.custom_dialogs import (
+    GreyedDialog,
+    ask_question,
+    get_text_input,
+    show_error,
+    show_info,
+)
+from parsec.core.gui.custom_widgets import Button, ensure_string_size
+from parsec.core.gui.device_recovery_export_widget import DeviceRecoveryExportWidget
+from parsec.core.gui.device_recovery_import_widget import DeviceRecoveryImportWidget
+from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
+from parsec.core.gui.instance_widget import InstanceWidget
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.license_widget import LicenseWidget
+from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.settings_widget import SettingsWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.ui.main_window import Ui_MainWindow
+from parsec.core.local_device import (
+    DeviceFileType,
+    get_available_device,
+    get_key_file,
+    list_available_devices,
+)
+from parsec.core.pki import is_pki_enrollment_available
+from parsec.core.types import (
+    BackendActionAddr,
+    BackendInvitationAddr,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationFileLinkAddr,
+    LocalDevice,
+)
+from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
+from parsec.event_bus import EventBus, EventCallback
 
 
 logger = get_logger()

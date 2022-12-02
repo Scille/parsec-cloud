@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QLineEdit, QWidget
 from PyQt5.QtGui import QValidator
+from PyQt5.QtWidgets import QLineEdit, QWidget
 
 from parsec.core.gui.validators import trim_string
 

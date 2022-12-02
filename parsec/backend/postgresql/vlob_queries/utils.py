@@ -1,29 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import Tuple
 
+import triopg
+
 from parsec._parsec import DateTime
-from parsec.api.protocol import OrganizationID, RealmID, DeviceID, VlobID
-from parsec.backend.utils import OperationKind
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
+from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
+    q_organization_internal_id,
     q_realm_internal_id,
     q_user_internal_id,
-    q_organization_internal_id,
 )
 from parsec.backend.realm import RealmRole
+from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import (
-    VlobNotFoundError,
-    VlobRealmNotFoundError,
-    VlobInMaintenanceError,
-    VlobNotInMaintenanceError,
-    VlobEncryptionRevisionError,
     VlobAccessError,
+    VlobEncryptionRevisionError,
+    VlobInMaintenanceError,
+    VlobNotFoundError,
+    VlobNotInMaintenanceError,
+    VlobRealmNotFoundError,
     VlobRequireGreaterTimestampError,
 )
-from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
 
 
 async def _check_realm(

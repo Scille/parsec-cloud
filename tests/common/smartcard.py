@@ -1,27 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import sys
 import subprocess
-import pytest
+import sys
 from collections import defaultdict
-from typing import Optional, Tuple, Iterable
 from hashlib import sha1
 from pathlib import Path
+from typing import Iterable, Optional, Tuple
+
+import pytest
 
 from parsec._parsec import DateTime, EnrollmentID
-from parsec.crypto import SigningKey, PrivateKey
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload, DataError
-from parsec.core.types import LocalDevice, BackendPkiEnrollmentAddr
+from parsec.api.data import DataError, PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec.core.local_device import (
-    LocalDeviceNotFoundError,
-    LocalDeviceCryptoError,
-    LocalDevicePackingError,
     DeviceFileType,
-    _save_device,
+    LocalDeviceCryptoError,
+    LocalDeviceNotFoundError,
+    LocalDevicePackingError,
     _load_device,
+    _save_device,
 )
-from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
+from parsec.core.types import BackendPkiEnrollmentAddr, LocalDevice
+from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
+from parsec.crypto import PrivateKey, SigningKey
 
 
 def create_test_certificates(tmp_path):

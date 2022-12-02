@@ -1,21 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 from unittest.mock import ANY
 
+import pytest
+
 from parsec._parsec import DateTime, VlobUpdateRepBadTimestamp
+from parsec.api.data import EntryName
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.backend_connection.exceptions import BackendOutOfBallparkError
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
-from parsec.crypto import SecretKey
-from parsec.api.data import EntryName
-from parsec.core.types import WorkspaceEntry, WorkspaceRole
-from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.exceptions import FSBackendOfflineError, FSRemoteOperationError
+from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
+from parsec.core.types import WorkspaceEntry, WorkspaceRole
+from parsec.crypto import SecretKey
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
-
-from tests.common import freeze_time, create_shared_workspace
+from tests.common import create_shared_workspace, freeze_time
 
 
 async def assert_same_workspace(workspace, workspace2):

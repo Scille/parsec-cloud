@@ -2,29 +2,29 @@
 from __future__ import annotations
 
 import sys
-import pytest
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from parsec.crypto import SigningKey
-from parsec.serde import packb, unpackb
-from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle
-from parsec.core.types import LocalDevice
+import pytest
+
+from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID
 from parsec.core.local_device import (
     AvailableDevice,
     DeviceFileType,
-    get_key_file,
-    get_default_key_file,
-    get_devices_dir,
-    list_available_devices,
-    load_device_with_password,
-    save_device_with_password_in_config,
-    change_device_password,
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
     LocalDevicePackingError,
+    change_device_password,
+    get_default_key_file,
+    get_devices_dir,
+    get_key_file,
+    list_available_devices,
+    load_device_with_password,
+    save_device_with_password_in_config,
 )
-
+from parsec.core.types import LocalDevice
+from parsec.crypto import SigningKey
+from parsec.serde import packb, unpackb
 from tests.common import customize_fixtures
 
 

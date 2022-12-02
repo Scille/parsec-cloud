@@ -2,7 +2,7 @@
 
 from typing import Iterable
 
-from parsec._parsec import UserProfile, UserID, HumanHandle
+from parsec._parsec import HumanHandle, UserID, UserProfile
 
 # Users
 class UsersPerProfileDetailItem:

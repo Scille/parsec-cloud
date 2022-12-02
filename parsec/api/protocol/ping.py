@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 from parsec._parsec import (
-    AuthenticatedPingReq,
     AuthenticatedPingRep,
-    InvitedPingReq,
+    AuthenticatedPingReq,
     InvitedPingRep,
+    InvitedPingReq,
 )
 from parsec.api.protocol.base import ApiCommandSerializer
 

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pytest
-
 from PyQt5 import QtGui
 
 from parsec.core.gui import validators

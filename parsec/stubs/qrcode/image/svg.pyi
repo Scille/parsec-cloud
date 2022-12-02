@@ -1,4 +1,5 @@
 from typing import Any, BinaryIO
+
 import qrcode.image.base
 
 class SvgFragmentImage(qrcode.image.base.BaseImage):

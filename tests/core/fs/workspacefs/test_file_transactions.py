@@ -3,17 +3,17 @@ from __future__ import annotations
 
 import os
 import sys
-import pytest
-from parsec._parsec import DateTime
-from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
-from hypothesis import strategies as st
 
-from parsec.core.types import EntryID, LocalFileManifest, Chunk
+import pytest
+from hypothesis import strategies as st
+from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
+
+from parsec._parsec import DateTime
+from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
-from parsec.core.fs.exceptions import FSRemoteBlockNotFound
-
-from tests.common import freeze_time, call_with_control
+from parsec.core.types import Chunk, EntryID, LocalFileManifest
+from tests.common import call_with_control, freeze_time
 
 
 class File:

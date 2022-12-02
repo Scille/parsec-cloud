@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-import click
 from typing import Any, List, Tuple, Union
-from parsec._parsec import EntryName
 
-from parsec.utils import trio_run
-from parsec.crypto import HashDigest
-from parsec.api.data.manifest import WorkspaceEntry, WorkspaceManifest, FolderManifest
-from parsec.core import logged_core_factory
-from parsec.core.logged_core import LoggedCore
-from parsec.core.config import CoreConfig
+import click
+import trio
+
+from parsec._parsec import EntryName
 from parsec.api.data.entry import EntryID
-from parsec.core.types import DEFAULT_BLOCK_SIZE, LocalDevice
-from parsec.core.fs import FsPath, WorkspaceFS
-from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
+from parsec.api.data.manifest import FolderManifest, WorkspaceEntry, WorkspaceManifest
 from parsec.cli_utils import cli_exception_handler
+from parsec.core import logged_core_factory
+from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
+from parsec.core.config import CoreConfig
+from parsec.core.fs import FsPath, WorkspaceFS
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import DEFAULT_BLOCK_SIZE, LocalDevice
+from parsec.crypto import HashDigest
+from parsec.utils import trio_run
 
 
 async def _import_file(workspace_fs: WorkspaceFS, local_path: trio.Path, dest: FsPath) -> None:

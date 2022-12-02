@@ -5,6 +5,7 @@ import pytest
 import trio
 
 from parsec._parsec import DateTime, InvitationType, InviteListRepOk
+from parsec.api.data import EntryName
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
@@ -12,26 +13,23 @@ from parsec.api.protocol import (
     InvitationStatus,
     UserProfile,
 )
-
-from parsec.api.data import EntryName
-from parsec.core.backend_connection import (
-    backend_invited_cmds_factory,
-    backend_authenticated_cmds_factory,
-)
-from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
-from parsec.core.invite import (
-    InvitePeerResetError,
-    InviteActiveUsersLimitReachedError,
-    claimer_retrieve_info,
-    DeviceClaimInitialCtx,
-    UserClaimInitialCtx,
-    DeviceGreetInitialCtx,
-    UserGreetInitialCtx,
-)
 from parsec.backend.backend_events import BackendEvent
+from parsec.core.backend_connection import (
+    backend_authenticated_cmds_factory,
+    backend_invited_cmds_factory,
+)
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-
+from parsec.core.invite import (
+    DeviceClaimInitialCtx,
+    DeviceGreetInitialCtx,
+    InviteActiveUsersLimitReachedError,
+    InvitePeerResetError,
+    UserClaimInitialCtx,
+    UserGreetInitialCtx,
+    claimer_retrieve_info,
+)
+from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
 from tests.common import real_clock_timeout
 
 

@@ -3,17 +3,17 @@ from __future__ import annotations
 
 import click
 
-from parsec.backend.cli.run import run_cmd
 from parsec.backend.cli.migration import migrate
+from parsec.backend.cli.run import run_cmd
 from parsec.backend.cli.sequester import (
-    generate_service_certificate,
-    import_service_certificate,
     create_service,
-    list_services,
-    update_service,
-    human_accesses,
     export_realm,
     extract_realm_export,
+    generate_service_certificate,
+    human_accesses,
+    import_service_certificate,
+    list_services,
+    update_service,
 )
 
 

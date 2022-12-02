@@ -2,30 +2,31 @@
 from __future__ import annotations
 
 import os
-import trio
-import click
-from typing import Any, List, TypeVar, Callable, cast
-from functools import wraps, partial
+from functools import partial, wraps
 from pathlib import Path
+from typing import Any, Callable, List, TypeVar, cast
 
+import click
+import trio
+
+from parsec.cli_utils import (
+    async_prompt,
+    debug_config_options,
+    logging_config_options,
+    operation,
+    sentry_config_options,
+)
 from parsec.core.config import CoreConfig, get_default_config_dir, load_config
 from parsec.core.local_device import (
-    LocalDeviceError,
-    DeviceFileType,
     AvailableDevice,
-    list_available_devices,
+    DeviceFileType,
+    LocalDeviceError,
     is_smartcard_extension_available,
+    list_available_devices,
     load_device_with_password,
     load_device_with_smartcard_sync,
     save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
-)
-from parsec.cli_utils import (
-    logging_config_options,
-    debug_config_options,
-    sentry_config_options,
-    operation,
-    async_prompt,
 )
 from parsec.core.types import LocalDevice
 

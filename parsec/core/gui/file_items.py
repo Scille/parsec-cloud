@@ -6,11 +6,11 @@ from enum import IntEnum
 from typing import Any, cast
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor, QIcon, QPainter, QPixmap
 from PyQt5.QtWidgets import QTableWidgetItem
-from PyQt5.QtGui import QIcon, QPainter, QColor, QPixmap
 
-from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import Pixmap
+from parsec.core.gui.lang import translate as _
 
 NAME_DATA_INDEX = Qt.UserRole
 TYPE_DATA_INDEX = Qt.UserRole + 1

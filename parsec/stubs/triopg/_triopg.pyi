@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator
 
 def connect(*args: Any, **kwargs: Any) -> TrioConnectionProxy: ...
 def create_pool(*args: Any, **kwargs: Any) -> TrioPoolProxy: ...

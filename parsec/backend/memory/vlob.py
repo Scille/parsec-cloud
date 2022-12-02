@@ -1,44 +1,45 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from dataclasses import dataclass, field as dataclass_field
-from typing import AbstractSet, Any, Callable, Coroutine, Dict, List, TYPE_CHECKING, Tuple
 from collections import defaultdict
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
+from typing import TYPE_CHECKING, AbstractSet, Any, Callable, Coroutine, Dict, List, Tuple
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import (
     DeviceID,
     OrganizationID,
-    UserID,
     RealmID,
     RealmRole,
-    VlobID,
     SequesterServiceID,
+    UserID,
+    VlobID,
 )
-from parsec.backend.utils import OperationKind
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmNotFoundError
 from parsec.backend.sequester import BaseSequesterService
+from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
-    VlobVersionError,
-    VlobNotFoundError,
-    VlobRealmNotFoundError,
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
+    VlobNotFoundError,
     VlobNotInMaintenanceError,
+    VlobRealmNotFoundError,
     VlobRequireGreaterTimestampError,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
+    VlobVersionError,
     extract_sequestered_data_and_proceed_webhook,
 )
 
 
 if TYPE_CHECKING:
-    from parsec.backend.memory.realm import Realm, MemoryRealmComponent
     from parsec.backend.memory.organization import MemoryOrganizationComponent
+    from parsec.backend.memory.realm import MemoryRealmComponent, Realm
     from parsec.backend.memory.sequester import MemorySequesterComponent
 
 

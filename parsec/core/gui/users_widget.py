@@ -1,44 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
+from math import ceil
 from typing import Any
 
-from PyQt5.QtCore import QPoint, Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
+from PyQt5.QtCore import QPoint, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor
-from math import ceil
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel, QMenu, QWidget
 
-from parsec._parsec import InvitationType, InvitationEmailSentStatus, InviteListItem
-from parsec.api.protocol import (
-    InvitationToken,
-    UserProfile,
-)
-
-from parsec.core.types import BackendInvitationAddr, UserInfo
-
+from parsec._parsec import InvitationEmailSentStatus, InvitationType, InviteListItem
+from parsec.api.protocol import InvitationToken, UserProfile
 from parsec.core.backend_connection import (
     BackendConnectionError,
-    BackendNotAvailable,
     BackendInvitationOnExistingMember,
+    BackendNotAvailable,
 )
-
-from parsec.core.logged_core import LoggedCore
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
+from parsec.core.gui import desktop, validators
 from parsec.core.gui.custom_dialogs import (
-    show_error,
     ask_question,
     get_text_input,
+    show_error,
     show_info_copy_link,
 )
-from parsec.core.gui.custom_widgets import ensure_string_size, Pixmap
-from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.custom_widgets import Pixmap, ensure_string_size
 from parsec.core.gui.flow_layout import FlowLayout
-from parsec.core.gui import validators
-from parsec.core.gui import desktop
-from parsec.core.gui.lang import translate as T
 from parsec.core.gui.greet_user_widget import GreetUserWidget
+from parsec.core.gui.lang import translate as T
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.user_invitation_button import Ui_UserInvitationButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import BackendInvitationAddr, UserInfo
 from parsec.event_bus import EventBus
 
 USERS_PER_PAGE = 100

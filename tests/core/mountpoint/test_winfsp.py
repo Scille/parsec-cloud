@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 import os
-import time
 import threading
+import time
 from pathlib import Path
+
+import pytest
 
 from parsec.api.data import EntryName
 from parsec.core.fs.utils import ntstatus
@@ -43,8 +44,9 @@ def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
     mountpoint_winfsp_stop = threading.Event()
     mountpoint_stopped = threading.Event()
 
-    from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
     from winfspy import FileSystem
+
+    from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 
     # Monkeypatch to trigger mountpoint teardown during an operation
 

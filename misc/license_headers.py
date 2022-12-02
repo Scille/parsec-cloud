@@ -2,11 +2,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 
-import sys
-import re
 import argparse
-from pathlib import Path
+import re
+import sys
 from itertools import chain, dropwhile
+from pathlib import Path
 from typing import Iterable, Iterator
 
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import OrganizationConfigRepOk
-from tests.common import customize_fixtures, OrganizationFullData, sequester_service_factory
 from tests.backend.common import organization_config
+from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
 
 @pytest.mark.trio

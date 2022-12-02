@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-from typing import Any, Awaitable, Callable, Union, Type
 from functools import partial
+from typing import Any, Awaitable, Callable, Type, Union
+
+import trio
 
 from parsec._parsec import (
     EventsListenRep,
@@ -22,19 +23,19 @@ from parsec._parsec import (
     EventsSubscribeReq,
 )
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
-    UserID,
-    RealmID,
-    RealmRole,
     InvitationStatus,
     InvitationToken,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    UserID,
 )
 from parsec.api.protocol.types import UserProfile
-from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.realm import BaseRealmComponent
-from parsec.backend.backend_events import BackendEvent
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 
 
 class EventsComponent:

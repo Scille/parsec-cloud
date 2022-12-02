@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 from unittest.mock import ANY
+
+import pytest
 from PyQt5 import QtCore, QtGui
 
-from parsec.core.gui.users_widget import UserInvitationButton
 from parsec.core.gui.lang import translate as _
-
+from parsec.core.gui.users_widget import UserInvitationButton
 from tests.common import customize_fixtures
 
 

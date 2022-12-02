@@ -3,16 +3,15 @@ from __future__ import annotations
 
 import pytest
 import trio
-from parsec._parsec import DateTime
 from PyQt5 import QtCore
 
-from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
-from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.core.invite import bootstrap_organization
-from parsec.core.gui.create_org_widget import CreateOrgUserInfoWidget
+from parsec._parsec import DateTime
+from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
+from parsec.core.gui.create_org_widget import CreateOrgUserInfoWidget
 from parsec.core.gui.lang import translate
-
+from parsec.core.invite import bootstrap_organization
+from parsec.core.types import BackendOrganizationBootstrapAddr
 from tests.common import customize_fixtures, freeze_time, local_device_to_backend_user
 
 

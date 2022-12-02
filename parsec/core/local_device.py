@@ -1,36 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from enum import Enum
+from hashlib import sha256
+from importlib import import_module
+from pathlib import Path, PurePath
 from types import ModuleType
+from typing import Callable, Dict, Iterator, List, Tuple, cast
 
 import attr
 import trio
-from enum import Enum
-from pathlib import Path, PurePath
-from hashlib import sha256
-from typing import Callable, Dict, Iterator, List, Tuple, cast
-from importlib import import_module
 
-from parsec.serde import BaseSchema, fields, MsgpackSerializer, OneOfSchema
-from parsec.crypto import (
-    SecretKey,
-    SigningKey,
-    PrivateKey,
-    CryptoError,
-)
+from parsec.api.data import DataError
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
-    HumanHandle,
-    HumanHandleField,
-    OrganizationIDField,
     DeviceIDField,
     DeviceLabel,
     DeviceLabelField,
+    HumanHandle,
+    HumanHandleField,
+    OrganizationID,
+    OrganizationIDField,
     UserProfile,
 )
-from parsec.api.data import DataError
-from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr
+from parsec.core.types import BackendOrganizationAddr, EntryID, LocalDevice
+from parsec.crypto import CryptoError, PrivateKey, SecretKey, SigningKey
+from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
 
 # .keys files are not supposed to leave the parsec configuration folder,

@@ -5,7 +5,6 @@ import pytest
 
 from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
-
 from tests.common import real_clock_timeout
 
 

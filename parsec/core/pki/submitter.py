@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from pathlib import Path
 from typing import Iterable, List, Union
+
+import attr
 
 from parsec._parsec import (
     DateTime,
@@ -18,36 +19,37 @@ from parsec._parsec import (
 )
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.protocol import DeviceLabel
-from parsec.core.backend_connection import (
-    pki_enrollment_submit as cmd_pki_enrollment_submit,
-    pki_enrollment_info as cmd_pki_enrollment_info,
-)
-from parsec.core.types import BackendPkiEnrollmentAddr, BackendOrganizationAddr
-from parsec.core.pki.plumbing import (
-    X509Certificate,
-    PkiEnrollmentAnswerPayload,
-    pki_enrollment_select_certificate,
-    pki_enrollment_sign_payload,
-    pki_enrollment_create_local_pending,
-    pki_enrollment_load_local_pending_secret_part,
-    pki_enrollment_load_peer_certificate,
-    pki_enrollment_load_accept_payload,
-)
-from parsec.core.types import LocalDevice, BackendAddr
-from parsec.core.types.pki import LocalPendingEnrollment
+from parsec.core.backend_connection import pki_enrollment_info as cmd_pki_enrollment_info
+from parsec.core.backend_connection import pki_enrollment_submit as cmd_pki_enrollment_submit
 from parsec.core.local_device import generate_new_device
-from parsec.crypto import PrivateKey, SigningKey
-
 from parsec.core.pki.exceptions import (
     PkiEnrollmentError,
-    PkiEnrollmentSubmitCertificateEmailAlreadyUsedError,
-    PkiEnrollmentSubmitError,
-    PkiEnrollmentSubmitCertificateAlreadySubmittedError,
-    PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError,
-    PkiEnrollmentSubmitCertificateAlreadyEnrolledError,
     PkiEnrollmentInfoError,
     PkiEnrollmentInfoNotFoundError,
+    PkiEnrollmentSubmitCertificateAlreadyEnrolledError,
+    PkiEnrollmentSubmitCertificateAlreadySubmittedError,
+    PkiEnrollmentSubmitCertificateEmailAlreadyUsedError,
+    PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError,
+    PkiEnrollmentSubmitError,
 )
+from parsec.core.pki.plumbing import (
+    PkiEnrollmentAnswerPayload,
+    X509Certificate,
+    pki_enrollment_create_local_pending,
+    pki_enrollment_load_accept_payload,
+    pki_enrollment_load_local_pending_secret_part,
+    pki_enrollment_load_peer_certificate,
+    pki_enrollment_select_certificate,
+    pki_enrollment_sign_payload,
+)
+from parsec.core.types import (
+    BackendAddr,
+    BackendOrganizationAddr,
+    BackendPkiEnrollmentAddr,
+    LocalDevice,
+)
+from parsec.core.types.pki import LocalPendingEnrollment
+from parsec.crypto import PrivateKey, SigningKey
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

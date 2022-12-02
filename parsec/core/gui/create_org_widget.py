@@ -2,17 +2,18 @@
 from __future__ import annotations
 
 from typing import Any, Awaitable, Callable
-from structlog import get_logger
+
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QApplication
+from PyQt5.QtWidgets import QApplication, QWidget
+from structlog import get_logger
 
 from parsec._parsec import (
-    LocalDevice,
-    OrganizationID,
-    HumanHandle,
-    DeviceLabel,
     BackendAddr,
     BackendOrganizationBootstrapAddr,
+    DeviceLabel,
+    HumanHandle,
+    LocalDevice,
+    OrganizationID,
 )
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
@@ -20,30 +21,29 @@ from parsec.core.backend_connection import (
     BackendOutOfBallparkError,
 )
 from parsec.core.config import CoreConfig
-from parsec.core.invite import (
-    bootstrap_organization,
-    InviteNotFoundError,
-    InviteAlreadyUsedError,
-    InviteError,
-)
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.local_device import (
-    DeviceFileType,
-    save_device_with_password_in_config,
-    save_device_with_smartcard_in_config,
-    LocalDeviceError,
-    LocalDeviceCryptoError,
-    LocalDeviceNotFoundError,
-)
-from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
-from parsec.core.gui.trio_jobs import JobResultError
-from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.lang import translate as _
 from parsec.core.gui import validators
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
-from parsec.core.gui.ui.create_org_widget import Ui_CreateOrgWidget
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
+from parsec.core.gui.desktop import get_default_device
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.create_org_user_info_widget import Ui_CreateOrgUserInfoWidget
+from parsec.core.gui.ui.create_org_widget import Ui_CreateOrgWidget
+from parsec.core.invite import (
+    InviteAlreadyUsedError,
+    InviteError,
+    InviteNotFoundError,
+    bootstrap_organization,
+)
+from parsec.core.local_device import (
+    DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+)
 
 
 logger = get_logger()

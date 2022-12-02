@@ -2,14 +2,13 @@
 from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
-
-from tests.common import freeze_time, customize_fixtures
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture
@@ -109,9 +108,9 @@ async def test_invalid_timestamp(testbed, alice, alice2):
 
 
 def backend_disable_vlob_checks(backend):
+    from parsec.backend.memory.vlob import MemoryVlobComponent
     from parsec.backend.realm import RealmNotFoundError
     from parsec.backend.vlob import VlobRealmNotFoundError
-    from parsec.backend.memory.vlob import MemoryVlobComponent
 
     # Disable checks in the backend to allow invalid data to be stored
 

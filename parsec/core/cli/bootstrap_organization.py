@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from pathlib import Path
-import click
 import platform
+from pathlib import Path
 from typing import Any, Protocol
 
-from parsec.sequester_crypto import SequesterVerifyKeyDer
-from parsec.utils import trio_run
-from parsec.cli_utils import spinner, cli_exception_handler, async_prompt, async_confirm
-from parsec.api.protocol import HumanHandle, DeviceLabel
-from parsec.core.config import CoreConfig
-from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
-from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
+import click
 
 from parsec._parsec import LocalDevice
+from parsec.api.protocol import DeviceLabel, HumanHandle
+from parsec.cli_utils import async_confirm, async_prompt, cli_exception_handler, spinner
+from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
+from parsec.core.config import CoreConfig
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
+from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.sequester_crypto import SequesterVerifyKeyDer
+from parsec.utils import trio_run
 
 
 SEQUESTER_BRIEF = """A sequestered organization is able to ask it users to encrypt

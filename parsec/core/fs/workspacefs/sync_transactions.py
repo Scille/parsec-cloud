@@ -4,31 +4,30 @@ from __future__ import annotations
 from itertools import count
 from typing import AsyncIterator, Dict, Iterable, Union
 
-from parsec._parsec import DateTime, Regex, EntryNameError
+from parsec._parsec import DateTime, EntryNameError, Regex
+from parsec.api.data import AnyRemoteManifest
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.api.data import AnyRemoteManifest
+from parsec.core.fs.exceptions import (
+    FSFileConflictError,
+    FSIsADirectoryError,
+    FSLocalMissError,
+    FSNotADirectoryError,
+    FSReshapingRequiredError,
+)
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.types import (
+    AnyLocalManifest,
     Chunk,
     EntryID,
     EntryName,
     LocalFileManifest,
+    LocalFolderishManifests,
     LocalFolderManifest,
     LocalWorkspaceManifest,
-    LocalFolderishManifests,
     RemoteFolderishManifests,
-    AnyLocalManifest,
     local_manifest_from_remote,
     local_manifest_from_remote_with_local_context,
-)
-
-from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.fs.exceptions import (
-    FSFileConflictError,
-    FSReshapingRequiredError,
-    FSLocalMissError,
-    FSIsADirectoryError,
-    FSNotADirectoryError,
 )
 
 

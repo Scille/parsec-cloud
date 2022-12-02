@@ -3,17 +3,15 @@ from __future__ import annotations
 
 import secrets
 import time
-
-import trio
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncContextManager, AsyncIterator, List, TypeVar
-from contextlib import asynccontextmanager
 
+import trio
 
-from parsec.core.types import ChunkID
-from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
-from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
+from parsec.core.fs.storage.local_database import Cursor, LocalDatabase
+from parsec.core.types import DEFAULT_BLOCK_SIZE, ChunkID, LocalDevice
 
 T = TypeVar("T", bound="ChunkStorage")
 

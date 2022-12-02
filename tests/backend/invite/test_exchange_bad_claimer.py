@@ -3,13 +3,11 @@ from __future__ import annotations
 
 import pytest
 import trio
-from parsec._parsec import DateTime
-
-from parsec.api.protocol import InvitationDeletedReason
-from parsec.backend.events import BackendEvent
-
 from quart.testing.connections import WebsocketDisconnectError
 
+from parsec._parsec import DateTime
+from parsec.api.protocol import InvitationDeletedReason
+from parsec.backend.events import BackendEvent
 from tests.common import real_clock_timeout
 
 

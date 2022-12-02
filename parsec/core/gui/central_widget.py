@@ -1,52 +1,54 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import cast
-from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
-from PyQt5.QtGui import QPixmap, QColor, QIcon
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
+import time
 from pathlib import PurePath
+from typing import cast
 
-from parsec.event_bus import EventBus, EventCallback
-from parsec.api.protocol import (
-    HandshakeRevokedDevice,
-    HandshakeOrganizationExpired,
-    IncompatibleAPIVersionsError,
-)
+from PyQt5.QtCore import pyqtBoundSignal, pyqtSignal
+from PyQt5.QtGui import QColor, QIcon, QPixmap
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QMenu, QWidget
+
 from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
-from parsec.core.core_events import CoreEvent
-from parsec.core.logged_core import LoggedCore
-from parsec.core.types import UserInfo, BackendOrganizationFileLinkAddr
-from parsec.core.fs import FsPath, WorkspaceFSTimestamped
+from parsec.api.protocol import (
+    HandshakeOrganizationExpired,
+    HandshakeRevokedDevice,
+    IncompatibleAPIVersionsError,
+)
 from parsec.core.backend_connection import (
     BackendConnectionError,
-    BackendNotAvailable,
     BackendConnStatus,
+    BackendNotAvailable,
 )
-from parsec.core.pki import is_pki_enrollment_available
-from parsec.core.fs import FSWorkspaceNotFoundError
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs import (
-    FSWorkspaceNoReadAccess,
-    FSWorkspaceNoWriteAccess,
+    FsPath,
     FSWorkspaceInMaintenance,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNotFoundError,
+    FSWorkspaceNoWriteAccess,
+    WorkspaceFSTimestamped,
 )
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.mount_widget import MountWidget
-from parsec.core.gui.users_widget import UsersWidget
-from parsec.core.gui.devices_widget import DevicesWidget
-from parsec.core.gui.enrollment_widget import EnrollmentWidget
-from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui import desktop
 from parsec.core.gui.authentication_change_widget import AuthenticationChangeWidget
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.commercial import is_saas_addr
 from parsec.core.gui.custom_dialogs import show_error
-from parsec.core.gui.ui.central_widget import Ui_CentralWidget
+from parsec.core.gui.custom_widgets import Pixmap
+from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.enrollment_widget import EnrollmentWidget
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.menu_widget import MenuWidget
+from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.organization_info_widget import OrganizationInfoWidget
-import time
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.ui.central_widget import Ui_CentralWidget
+from parsec.core.gui.users_widget import UsersWidget
+from parsec.core.logged_core import LoggedCore
+from parsec.core.pki import is_pki_enrollment_available
+from parsec.core.types import BackendOrganizationFileLinkAddr, UserInfo
+from parsec.event_bus import EventBus, EventCallback
 
 
 class GoToFileLinkError(Exception):

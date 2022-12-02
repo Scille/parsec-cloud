@@ -3,47 +3,46 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Union, cast
-from PyQt5.QtGui import QKeyEvent, QMouseEvent
 
 import trio
-
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QKeyEvent, QMouseEvent
 from PyQt5.QtWidgets import QWidget
+
 from parsec.core import CoreConfig
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-
-from parsec.core.pki import (
-    PkiEnrollmentFinalizedCtx,
-    PkiEnrollmentSubmitterSubmittedCtx,
-    PkiEnrollmentSubmitterSubmittedStatusCtx,
-    PkiEnrollmentSubmitterCancelledStatusCtx,
-    PkiEnrollmentSubmitterRejectedStatusCtx,
-    PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx,
-    PkiEnrollmentSubmitterAcceptedStatusCtx,
-)
-from parsec.core.pki.exceptions import (
-    PkiEnrollmentCertificateValidationError,
-    PkiEnrollmentCertificateNotFoundError,
-    PkiEnrollmentCertificatePinCodeUnavailableError,
-)
-from parsec.core.pki.submitter import BasePkiEnrollmentSubmitterStatusCtx
-
-from parsec.core.local_device import save_device_with_smartcard_in_config
-
-
-from parsec.core.local_device import list_available_devices, AvailableDevice, DeviceFileType
-
-from parsec.core.gui.lang import translate as T
 from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.lang import translate as T
 from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.ui.account_button import Ui_AccountButton
+from parsec.core.gui.ui.enrollment_pending_button import Ui_EnrollmentPendingButton
 from parsec.core.gui.ui.login_accounts_widget import Ui_LoginAccountsWidget
+from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
 from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInputWidget
 from parsec.core.gui.ui.login_smartcard_input_widget import Ui_LoginSmartcardInputWidget
-from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
-from parsec.core.gui.ui.enrollment_pending_button import Ui_EnrollmentPendingButton
+from parsec.core.gui.ui.login_widget import Ui_LoginWidget
+from parsec.core.local_device import (
+    AvailableDevice,
+    DeviceFileType,
+    list_available_devices,
+    save_device_with_smartcard_in_config,
+)
+from parsec.core.pki import (
+    PkiEnrollmentFinalizedCtx,
+    PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx,
+    PkiEnrollmentSubmitterAcceptedStatusCtx,
+    PkiEnrollmentSubmitterCancelledStatusCtx,
+    PkiEnrollmentSubmitterRejectedStatusCtx,
+    PkiEnrollmentSubmitterSubmittedCtx,
+    PkiEnrollmentSubmitterSubmittedStatusCtx,
+)
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentCertificateNotFoundError,
+    PkiEnrollmentCertificatePinCodeUnavailableError,
+    PkiEnrollmentCertificateValidationError,
+)
+from parsec.core.pki.submitter import BasePkiEnrollmentSubmitterStatusCtx
 from parsec.event_bus import EventBus
 
 AnyContextType = Union[

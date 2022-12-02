@@ -2,18 +2,19 @@
 from __future__ import annotations
 
 from typing import Any
+
 import click
 
-from parsec.utils import trio_run
+from parsec.backend.postgresql import apply_migrations, retrieve_migrations
 from parsec.cli_utils import (
-    logging_config_options,
-    spinner,
     cli_exception_handler,
     debug_config_options,
-    ok,
     ko,
+    logging_config_options,
+    ok,
+    spinner,
 )
-from parsec.backend.postgresql import apply_migrations, retrieve_migrations
+from parsec.utils import trio_run
 
 
 def _validate_postgres_db_url(ctx: Any, param: Any, value: str) -> str:

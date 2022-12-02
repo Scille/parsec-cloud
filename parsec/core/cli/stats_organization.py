@@ -1,17 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
+import urllib.parse
 from typing import Any, TextIO
 
 import click
-import urllib.parse
 
-from parsec.utils import DateTime, trio_run
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import organization_stats_rep_serializer
-from parsec.cli_utils import cli_exception_handler, ParsecDateTimeClickType
-from parsec.core.types import BackendAddr
+from parsec.cli_utils import ParsecDateTimeClickType, cli_exception_handler
 from parsec.core.backend_connection.transport import http_request
 from parsec.core.cli.utils import cli_command_base_options
+from parsec.core.types import BackendAddr
+from parsec.utils import DateTime, trio_run
 
 
 async def _stats_organization(

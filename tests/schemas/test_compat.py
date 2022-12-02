@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import json
 import importlib.resources
+import json
 
 import tests.schemas
 from tests.schemas.builder import (
-    generate_api_protocol_specs,
     generate_api_data_specs,
+    generate_api_protocol_specs,
     generate_core_data_specs,
 )
 

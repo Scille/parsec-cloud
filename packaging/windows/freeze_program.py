@@ -1,16 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import os
-import sys
-import re
-from typing import Optional
-import shutil
 import argparse
+import os
 import platform
+import re
+import shutil
 import subprocess
+import sys
 from hashlib import sha256
-from urllib.request import urlopen
 from pathlib import Path
+from typing import Optional
+from urllib.request import urlopen
 
 
 # Fully-qualified path for the executable should be used with subprocess to

@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from pathlib import PurePath
+from typing import Iterable, List, Tuple, TypeVar, Union
 
-from typing import Tuple, List, Iterable, Union, TypeVar
 from trio import Path as TrioPath
 
 from parsec._parsec import EntryNameError

@@ -2,26 +2,27 @@
 from __future__ import annotations
 
 import math
-from typing import Any, AsyncIterator
-import trio
 import unicodedata
-from zlib import adler32
-from pathlib import PurePath
-from functools import partial
-from structlog import get_logger
 from contextlib import asynccontextmanager
-from parsec.core.types import EntryID, LocalDevice
-from winfspy import FileSystem, enable_debug_log
-from winfspy.plumbing import filetime_now, FileSystemNotStarted
+from functools import partial
+from pathlib import PurePath
+from typing import Any, AsyncIterator
+from zlib import adler32
 
-from parsec.event_bus import EventBus
+import trio
+from structlog import get_logger
+from winfspy import FileSystem, enable_debug_log
+from winfspy.plumbing import FileSystemNotStarted, filetime_now
+
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.core_events import CoreEvent
-from parsec.core.win_registry import parsec_drive_icon_context
+from parsec.core.mountpoint.exceptions import MountpointDriverCrash, MountpointNoDriveAvailable
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
-from parsec.core.mountpoint.exceptions import MountpointDriverCrash, MountpointNoDriveAvailable
+from parsec.core.types import EntryID, LocalDevice
+from parsec.core.win_registry import parsec_drive_icon_context
+from parsec.event_bus import EventBus
 
 
 __all__ = ("winfsp_mountpoint_runner",)

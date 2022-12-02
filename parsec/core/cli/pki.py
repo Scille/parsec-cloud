@@ -1,41 +1,41 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-from typing import Any, Sequence, Union
 import platform
+from typing import Any, Sequence, Union
+
+import attr
 import click
 
 from parsec._parsec import DateTime, EnrollmentID
 from parsec.api.protocol import DeviceLabel
-from parsec.cli_utils import async_confirm, cli_exception_handler, spinner, async_prompt
+from parsec.cli_utils import async_confirm, async_prompt, cli_exception_handler, spinner
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
+from parsec.core.cli.bootstrap_organization import SaveDeviceWithSelectedAuth
 from parsec.core.cli.invitation import ask_info_new_user
-from parsec.core.config import CoreConfig
-from parsec.core.local_device import save_device_with_smartcard_in_config
-from parsec.core.types import BackendPkiEnrollmentAddr
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
     core_config_options,
     save_device_options,
 )
+from parsec.core.config import CoreConfig
+from parsec.core.local_device import save_device_with_smartcard_in_config
 from parsec.core.pki import (
-    is_pki_enrollment_available,
-    PkiEnrollmentSubmitterInitialCtx,
-    PkiEnrollmentSubmitterSubmittedCtx,
-    PkiEnrollmentSubmitterSubmittedStatusCtx,
-    PkiEnrollmentSubmitterCancelledStatusCtx,
-    PkiEnrollmentSubmitterRejectedStatusCtx,
+    PkiEnrollmentAccepterInvalidSubmittedCtx,
+    PkiEnrollmentAccepterValidSubmittedCtx,
     PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx,
     PkiEnrollmentSubmitterAcceptedStatusCtx,
+    PkiEnrollmentSubmitterCancelledStatusCtx,
+    PkiEnrollmentSubmitterInitialCtx,
+    PkiEnrollmentSubmitterRejectedStatusCtx,
+    PkiEnrollmentSubmitterSubmittedCtx,
+    PkiEnrollmentSubmitterSubmittedStatusCtx,
     accepter_list_submitted_from_backend,
-    PkiEnrollmentAccepterValidSubmittedCtx,
-    PkiEnrollmentAccepterInvalidSubmittedCtx,
+    is_pki_enrollment_available,
 )
-from parsec.core.types import LocalDevice
+from parsec.core.types import BackendPkiEnrollmentAddr, LocalDevice
 from parsec.utils import trio_run
-from parsec.core.cli.bootstrap_organization import SaveDeviceWithSelectedAuth
 
 
 def _ensure_pki_enrollment_available() -> None:

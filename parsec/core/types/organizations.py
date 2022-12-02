@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from typing import Tuple
+
+import attr
 
 from parsec._parsec import UsersPerProfileDetailItem
 

@@ -1,8 +1,8 @@
 from typing import Any, Type
 
 from qrcode.image.base import BaseImage
-from qrcode.util import QRData
 from qrcode.image.pil import PilImage
+from qrcode.util import QRData
 
 ERROR_CORRECT_H: int = ...
 

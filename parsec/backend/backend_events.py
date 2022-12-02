@@ -2,17 +2,18 @@
 from __future__ import annotations
 
 from enum import Enum
+
 from parsec.api.protocol import (
-    OrganizationIDField,
     DeviceIDField,
-    UserIDField,
-    InvitationTokenField,
     InvitationStatusField,
-    VlobIDField,
+    InvitationTokenField,
+    OrganizationIDField,
     RealmIDField,
     RealmRoleField,
+    UserIDField,
+    VlobIDField,
 )
-from parsec.serde import fields, OneOfSchema, BaseSchema, MsgpackSerializer
+from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
 
 __all__ = ("BackendEvent",)

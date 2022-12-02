@@ -1,26 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
-import pytest
 from unittest.mock import ANY
 
+import pytest
+
+from parsec._parsec import DateTime
 from parsec.api.protocol.base import (
+    IncompatibleAPIVersionsError,
+    InvalidMessageError,
     packb,
     unpackb,
-    InvalidMessageError,
-    IncompatibleAPIVersionsError,
 )
 from parsec.api.protocol.handshake import (
-    HandshakeBadIdentity,
-    HandshakeBadAdministrationToken,
-    HandshakeRVKMismatch,
-    HandshakeRevokedDevice,
-    ServerHandshake,
-    BaseClientHandshake,
     APIV1_AnonymousClientHandshake,
     APIV1_HandshakeType,
+    BaseClientHandshake,
+    HandshakeBadAdministrationToken,
+    HandshakeBadIdentity,
     HandshakeOrganizationExpired,
+    HandshakeRevokedDevice,
+    HandshakeRVKMismatch,
+    ServerHandshake,
 )
 from parsec.api.version import API_V1_VERSION, ApiVersion
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET

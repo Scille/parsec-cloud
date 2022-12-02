@@ -2,17 +2,17 @@
 from __future__ import annotations
 
 from base64 import b64encode
+from typing import Callable, Dict, Optional
+
 import pytest
-from typing import Dict, Optional, Callable
 from quart.typing import TestClientProtocol
 from werkzeug.datastructures import Headers
 
 from parsec._parsec import DateTime, OrganizationID
+from parsec.api.protocol import authenticated_ping_serializer, invited_ping_serializer
 from parsec.api.version import API_VERSION
 from parsec.core.types import LocalDevice
-from parsec.api.protocol import authenticated_ping_serializer, invited_ping_serializer
-
-from tests.common import RunningBackend, OrganizationFullData
+from tests.common import OrganizationFullData, RunningBackend
 
 
 class AuthenticatedRpcApiClient:

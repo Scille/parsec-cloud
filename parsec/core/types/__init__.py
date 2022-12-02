@@ -1,45 +1,46 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Union, NewType
+from typing import NewType, Union
 
-from parsec._parsec import LocalDevice, UserInfo, DeviceInfo
+from parsec._parsec import DeviceInfo, LocalDevice, UserInfo
 from parsec.api.data import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data import FolderManifest as RemoteFolderManifest
+from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.core.types.backend_address import (
-    BackendAddr,
-    BackendOrganizationAddr,
     BackendActionAddr,
-    BackendOrganizationBootstrapAddr,
-    BackendOrganizationAddrField,
-    BackendOrganizationFileLinkAddr,
-    BackendInvitationAddr,
-    BackendPkiEnrollmentAddr,
+    BackendAddr,
     BackendAddrType,
+    BackendInvitationAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationAddrField,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationFileLinkAddr,
+    BackendPkiEnrollmentAddr,
 )
 from parsec.core.types.manifest import (
     DEFAULT_BLOCK_SIZE,
-    LocalFileManifest,
-    LocalFolderManifest,
-    LocalWorkspaceManifest,
-    LocalUserManifest,
-    WorkspaceEntry,
-    WorkspaceRole,
+    AnyLocalManifest,
     BlockAccess,
     BlockID,
     Chunk,
     ChunkID,
-    manifest_from_remote as local_manifest_from_remote,
-    manifest_from_remote_with_local_context as local_manifest_from_remote_with_local_context,
-    AnyLocalManifest,
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalUserManifest,
+    LocalWorkspaceManifest,
+    WorkspaceEntry,
+    WorkspaceRole,
 )
-
+from parsec.core.types.manifest import manifest_from_remote as local_manifest_from_remote
+from parsec.core.types.manifest import (
+    manifest_from_remote_with_local_context as local_manifest_from_remote_with_local_context,
+)
 from parsec.core.types.organizations import (
+    OrganizationConfig,
     OrganizationStats,
     UsersPerProfileDetailItem,
-    OrganizationConfig,
 )
-from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
-from parsec.api.data import FolderManifest as RemoteFolderManifest
 
 FileDescriptor = NewType("FileDescriptor", int)
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]

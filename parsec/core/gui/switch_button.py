@@ -8,8 +8,8 @@ Taken from:
 - https://stackoverflow.com/a/51825815/2846140
 """
 
-from PyQt5.QtCore import QPropertyAnimation, QEvent, QRectF, QSize, Qt, pyqtProperty
-from PyQt5.QtGui import QPainter, QMouseEvent, QResizeEvent, QPaintEvent
+from PyQt5.QtCore import QEvent, QPropertyAnimation, QRectF, QSize, Qt, pyqtProperty
+from PyQt5.QtGui import QMouseEvent, QPainter, QPaintEvent, QResizeEvent
 from PyQt5.QtWidgets import QAbstractButton, QSizePolicy, QWidget
 
 

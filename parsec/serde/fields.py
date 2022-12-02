@@ -8,10 +8,10 @@ from uuid import UUID as _UUID
 
 from marshmallow import ValidationError
 from marshmallow.fields import (
-    Field,  # Republishing
     Boolean,
     Dict,
     Email,
+    Field,  # Republishing
     Float,
     Int,
     Integer,
@@ -20,20 +20,16 @@ from marshmallow.fields import (
     String,
 )
 
-from parsec._parsec import (
-    DateTime as RsDateTime,
-    HashDigest as _HashDigest,
-    PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload,
-    PrivateKey as _PrivateKey,
-    PublicKey as _PublicKey,
-    SecretKey as _SecretKey,
-    SigningKey as _SigningKey,
-    VerifyKey as _VerifyKey,
-)
-from parsec.sequester_crypto import (
-    SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer,
-    SequesterVerifyKeyDer as _SequesterVerifyKeyDer,
-)
+from parsec._parsec import DateTime as RsDateTime
+from parsec._parsec import HashDigest as _HashDigest
+from parsec._parsec import PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload
+from parsec._parsec import PrivateKey as _PrivateKey
+from parsec._parsec import PublicKey as _PublicKey
+from parsec._parsec import SecretKey as _SecretKey
+from parsec._parsec import SigningKey as _SigningKey
+from parsec._parsec import VerifyKey as _VerifyKey
+from parsec.sequester_crypto import SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer
+from parsec.sequester_crypto import SequesterVerifyKeyDer as _SequesterVerifyKeyDer
 from parsec.types import FrozenDict as _FrozenDict
 
 __all__ = (

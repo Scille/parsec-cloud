@@ -1,40 +1,41 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import Any, List
+
+import triopg
 
 from parsec._parsec import DateTime, InvitationDeletedReason
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
     HumanHandle,
+    InvitationStatus,
     InvitationToken,
     InvitationType,
-    InvitationStatus,
+    OrganizationID,
+    UserID,
 )
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.postgresql.handler import send_signal, PGHandler
 from parsec.backend.invite import (
-    ConduitState,
     NEXT_CONDUIT_STATE,
-    ConduitListenCtx,
     BaseInviteComponent,
-    Invitation,
-    UserInvitation,
+    ConduitListenCtx,
+    ConduitState,
     DeviceInvitation,
-    InvitationNotFoundError,
+    Invitation,
     InvitationAlreadyDeletedError,
-    InvitationInvalidStateError,
     InvitationAlreadyMemberError,
+    InvitationInvalidStateError,
+    InvitationNotFoundError,
+    UserInvitation,
 )
+from parsec.backend.postgresql.handler import PGHandler, send_signal
+from parsec.backend.postgresql.user_queries.find import query_retrieve_active_human_by_email
 from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
     q_user,
     q_user_internal_id,
 )
-from parsec.backend.postgresql.user_queries.find import query_retrieve_active_human_by_email
 
 _q_retrieve_compatible_user_invitation = Q(
     f"""

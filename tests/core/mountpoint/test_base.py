@@ -1,29 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import errno
 import os
 import sys
-import errno
 from itertools import count
-import trio
-import pytest
 from pathlib import Path, PurePath
 
+import pytest
+import trio
+
 from parsec.api.data import EntryID, EntryName
-from parsec.core.mountpoint import (
-    mountpoint_manager_factory,
-    MountpointConfigurationError,
-    MountpointAlreadyMounted,
-    MountpointNotMounted,
-    MountpointFuseNotAvailable,
-    MountpointWinfspNotAvailable,
-)
-
-from parsec.core.core_events import CoreEvent
 from parsec.core import logged_core_factory
-from parsec.core.types import WorkspaceRole
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath
-
+from parsec.core.mountpoint import (
+    MountpointAlreadyMounted,
+    MountpointConfigurationError,
+    MountpointFuseNotAvailable,
+    MountpointNotMounted,
+    MountpointWinfspNotAvailable,
+    mountpoint_manager_factory,
+)
+from parsec.core.types import WorkspaceRole
 from tests.common import create_shared_workspace, real_clock_timeout
 
 

@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Callable, Coroutine, Dict, TYPE_CHECKING, Union
-import trio
 from collections import defaultdict
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, Union
+
+import trio
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserProfile
-from parsec.crypto import VerifyKey
-from parsec.backend.user import UserError, User, Device
+from parsec.backend.events import BackendEvent
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
@@ -21,14 +21,15 @@ from parsec.backend.organization import (
     SequesterAuthority,
     UsersPerProfileDetailItem,
 )
+from parsec.backend.user import Device, User, UserError
 from parsec.backend.utils import Unset, UnsetType
-from parsec.backend.events import BackendEvent
+from parsec.crypto import VerifyKey
 
 if TYPE_CHECKING:
-    from parsec.backend.memory.user import MemoryUserComponent
-    from parsec.backend.memory.vlob import MemoryVlobComponent
     from parsec.backend.memory.block import MemoryBlockComponent
     from parsec.backend.memory.realm import MemoryRealmComponent
+    from parsec.backend.memory.user import MemoryUserComponent
+    from parsec.backend.memory.vlob import MemoryVlobComponent
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):

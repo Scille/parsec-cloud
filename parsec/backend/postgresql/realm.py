@@ -1,24 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
 from typing import Dict, List
 
-from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole
-from parsec.backend.realm import BaseRealmComponent, RealmStatus, RealmGrantedRole, RealmStats
+from parsec._parsec import DateTime
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, RealmRole, UserID
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.realm_queries import (
     query_create,
-    query_get_status,
-    query_get_stats,
-    query_get_current_roles,
-    query_get_role_certificates,
-    query_get_realms_for_user,
-    query_update_roles,
-    query_start_reencryption_maintenance,
-    query_finish_reencryption_maintenance,
     query_dump_realms_granted_roles,
+    query_finish_reencryption_maintenance,
+    query_get_current_roles,
+    query_get_realms_for_user,
+    query_get_role_certificates,
+    query_get_stats,
+    query_get_status,
+    query_start_reencryption_maintenance,
+    query_update_roles,
 )
+from parsec.backend.realm import BaseRealmComponent, RealmGrantedRole, RealmStats, RealmStatus
 
 
 class PGRealmComponent(BaseRealmComponent):

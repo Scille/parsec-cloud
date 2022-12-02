@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import errno
 import os
 import sys
-import errno
 from pathlib import Path
 from string import ascii_lowercase
 
 import attr
 import pytest
+from hypothesis import strategies as st
 from hypothesis.stateful import (
-    RuleBasedStateMachine,
     Bundle,
+    RuleBasedStateMachine,
     initialize,
     rule,
     run_state_machine_as_test,
 )
-from hypothesis import strategies as st
+
 from parsec.api.data import EntryName
 
 

@@ -1,26 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+from functools import partial
+
 import pytest
 import trio
 from PyQt5 import QtCore
-from functools import partial
-from contextlib import asynccontextmanager
 
 from parsec._parsec import DateTime, InvitationType
-from parsec.utils import start_task
-from parsec.api.protocol import HumanHandle, InvitationDeletedReason, DeviceLabel
-from parsec.core.gui.lang import translate
-from parsec.core.types import BackendInvitationAddr
+from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationDeletedReason
 from parsec.core.backend_connection import backend_invited_cmds_factory
-from parsec.core.invite import claimer_retrieve_info
+from parsec.core.gui.devices_widget import DeviceButton
 from parsec.core.gui.greet_device_widget import (
     GreetDeviceCodeExchangeWidget,
     GreetDeviceInstructionsWidget,
     GreetDeviceWidget,
 )
-from parsec.core.gui.devices_widget import DeviceButton
-
+from parsec.core.gui.lang import translate
+from parsec.core.invite import claimer_retrieve_info
+from parsec.core.types import BackendInvitationAddr
+from parsec.utils import start_task
 from tests.common import customize_fixtures, real_clock_timeout
 
 

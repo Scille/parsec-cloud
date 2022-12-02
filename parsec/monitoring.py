@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import gc
-import time
 import inspect
+import time
 import traceback
 from typing import Any, Iterable, Tuple
 
-import trio
 import structlog
+import trio
 from trio.lowlevel import Task
 
 logger = structlog.get_logger()

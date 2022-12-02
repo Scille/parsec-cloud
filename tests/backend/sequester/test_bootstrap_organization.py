@@ -1,19 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 from unittest.mock import ANY
+
+import pytest
+
 from parsec._parsec import DateTime
-
 from parsec.core.types import LocalDevice
-
+from tests.backend.common import organization_bootstrap
 from tests.common import (
-    customize_fixtures,
     OrganizationFullData,
+    customize_fixtures,
     local_device_to_backend_user,
     sequester_authority_factory,
 )
-from tests.backend.common import organization_bootstrap
 
 
 # Sequester service modification is exposed as server API, so we only test the internals

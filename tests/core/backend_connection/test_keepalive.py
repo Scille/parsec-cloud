@@ -5,12 +5,12 @@ import pytest
 import trio
 
 from parsec._parsec import InvitationType
-from parsec.api.transport import Transport, BytesMessage, Ping, Pong
-from parsec.core.types import BackendInvitationAddr
+from parsec.api.transport import BytesMessage, Ping, Pong, Transport
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
 )
+from parsec.core.types import BackendInvitationAddr
 
 
 async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):

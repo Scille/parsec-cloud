@@ -1,54 +1,52 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import sys
-import time
 import multiprocessing
 import multiprocessing.pool
-from contextlib import contextmanager
+import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from typing import Callable, Collection, Iterator, TypeVar, cast
-from typing_extensions import Concatenate, ParamSpec
 
-from PyQt5.QtCore import Qt, pyqtSignal, QEventLoop
+from PyQt5.QtCore import QEventLoop, Qt, pyqtSignal
 from PyQt5.QtGui import (
-    QPainter,
-    QValidator,
     QIcon,
+    QKeyEvent,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
     QPixmap,
     QTextDocument,
-    QPaintEvent,
-    QMouseEvent,
-    QKeyEvent,
+    QValidator,
 )
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
 from PyQt5.QtWidgets import (
-    QSpacerItem,
-    QWidget,
-    QCompleter,
-    QLineEdit,
-    QDialog,
     QApplication,
-    QStyleOption,
-    QStyle,
-    QSizePolicy,
+    QCompleter,
+    QDialog,
     QFileDialog,
+    QLineEdit,
+    QSizePolicy,
+    QSpacerItem,
+    QStyle,
+    QStyleOption,
+    QWidget,
 )
-
 from structlog import get_logger
+from typing_extensions import Concatenate, ParamSpec
 
 from parsec import _subprocess_dialog
-from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import Button
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.snackbar_widget import SnackbarManager
-
 from parsec.core.gui.ui.error_widget import Ui_ErrorWidget
-from parsec.core.gui.ui.info_widget import Ui_InfoWidget
-from parsec.core.gui.ui.question_widget import Ui_QuestionWidget
-from parsec.core.gui.ui.input_widget import Ui_InputWidget
 from parsec.core.gui.ui.greyed_dialog import Ui_GreyedDialog
+from parsec.core.gui.ui.info_widget import Ui_InfoWidget
+from parsec.core.gui.ui.input_widget import Ui_InputWidget
+from parsec.core.gui.ui.question_widget import Ui_QuestionWidget
 
 
 logger = get_logger()

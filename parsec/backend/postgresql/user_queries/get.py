@@ -1,26 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import List, Tuple
 
+import triopg
+
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
     DeviceID,
     DeviceLabel,
     HumanHandle,
+    OrganizationID,
+    UserID,
     UserProfile,
 )
-from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
     q_device,
-    q_user_internal_id,
     q_human,
+    q_organization_internal_id,
+    q_user_internal_id,
+    query,
 )
+from parsec.backend.user import Device, GetUserAndDevicesResult, Trustchain, User, UserNotFoundError
 
 _q_get_organization_users = Q(
     f"""

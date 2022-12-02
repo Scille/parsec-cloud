@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Iterable, Literal, Tuple
 
 import xml.etree.ElementTree as ET
+from typing import Iterable, Literal, Tuple
 
 
 IGNORE_LIST = ["Dialog", "Form"]

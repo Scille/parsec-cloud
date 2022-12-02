@@ -1,28 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
-from parsec.backend.postgresql.sequester import PGPSequesterComponent
 
-from parsec.event_bus import EventBus
-from parsec.utils import open_service_nursery
+import triopg
+
+from parsec.backend.backend_events import BackendEvent
+from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.config import BackendConfig
 from parsec.backend.events import EventsComponent
-from parsec.backend.blockstore import blockstore_factory
-from parsec.backend.webhooks import WebhooksComponent
+from parsec.backend.postgresql.block import PGBlockComponent
 from parsec.backend.postgresql.handler import PGHandler, send_signal
-from parsec.backend.postgresql.organization import PGOrganizationComponent
-from parsec.backend.postgresql.ping import PGPingComponent
-from parsec.backend.postgresql.user import PGUserComponent
 from parsec.backend.postgresql.invite import PGInviteComponent
 from parsec.backend.postgresql.message import PGMessageComponent
-from parsec.backend.postgresql.realm import PGRealmComponent
-from parsec.backend.postgresql.vlob import PGVlobComponent
-from parsec.backend.postgresql.block import PGBlockComponent
+from parsec.backend.postgresql.organization import PGOrganizationComponent
+from parsec.backend.postgresql.ping import PGPingComponent
 from parsec.backend.postgresql.pki import PGPkiEnrollmentComponent
-from parsec.backend.backend_events import BackendEvent
+from parsec.backend.postgresql.realm import PGRealmComponent
+from parsec.backend.postgresql.sequester import PGPSequesterComponent
+from parsec.backend.postgresql.user import PGUserComponent
+from parsec.backend.postgresql.vlob import PGVlobComponent
+from parsec.backend.webhooks import WebhooksComponent
+from parsec.event_bus import EventBus
+from parsec.utils import open_service_nursery
 
 
 @asynccontextmanager

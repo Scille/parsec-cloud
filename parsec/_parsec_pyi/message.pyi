@@ -1,14 +1,5 @@
-from parsec._parsec_pyi.crypto import (
-    PublicKey,
-    PrivateKey,
-    SecretKey,
-    VerifyKey,
-    SigningKey,
-)
-from parsec._parsec_pyi.ids import (
-    EntryID,
-    DeviceID,
-)
+from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
+from parsec._parsec_pyi.ids import DeviceID, EntryID
 from parsec._parsec_pyi.manifest import EntryName
 from parsec._parsec_pyi.time import DateTime
 

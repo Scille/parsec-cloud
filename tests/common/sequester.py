@@ -1,24 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional
 from dataclasses import dataclass
-from parsec._parsec import DateTime
+from typing import Optional
+
 import oscrypto.asymmetric
 
-from parsec.crypto import SigningKey
-from parsec.sequester_crypto import (
-    sequester_authority_sign,
-    SequesterVerifyKeyDer,
-    SequesterEncryptionKeyDer,
-)
+from parsec._parsec import DateTime
 from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
 from parsec.api.protocol import SequesterServiceID
 from parsec.backend.sequester import (
     BaseSequesterService,
+    SequesterServiceType,
     StorageSequesterService,
     WebhookSequesterService,
-    SequesterServiceType,
+)
+from parsec.crypto import SigningKey
+from parsec.sequester_crypto import (
+    SequesterEncryptionKeyDer,
+    SequesterVerifyKeyDer,
+    sequester_authority_sign,
 )
 
 

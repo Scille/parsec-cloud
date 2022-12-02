@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Tuple, List, Union, cast, Awaitable
+from typing import Any, Awaitable, List, Tuple, Union, cast
 
 from parsec._parsec import (
     AuthenticatedPingRep,
@@ -48,14 +48,14 @@ from parsec._parsec import (
     Invite4GreeterCommunicateRepUnknownStatus,
     InviteDeleteRep,
     InviteDeleteRepUnknownStatus,
+    InvitedPingRep,
+    InvitedPingRepUnknownStatus,
     InviteInfoRep,
     InviteInfoRepUnknownStatus,
     InviteListRep,
     InviteListRepUnknownStatus,
     InviteNewRep,
     InviteNewRepUnknownStatus,
-    InvitedPingRep,
-    InvitedPingRepUnknownStatus,
     MessageGetRep,
     MessageGetRepUnknownStatus,
     OrganizationConfigRep,
@@ -113,9 +113,6 @@ from parsec._parsec import (
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepUnknownStatus,
 )
-from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
-from parsec.crypto import VerifyKey, PublicKey
-from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
     BlockID,
     InvitationToken,
@@ -174,11 +171,14 @@ from parsec.api.protocol import (
     vlob_read_serializer,
     vlob_update_serializer,
 )
+from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
+from parsec.api.transport import Transport, TransportError
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendOutOfBallparkError,
     BackendProtocolError,
 )
+from parsec.crypto import PublicKey, VerifyKey
 
 
 COMMAND_RETURN_TYPE = Union[

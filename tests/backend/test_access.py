@@ -4,12 +4,12 @@ from __future__ import annotations
 import pytest
 
 from parsec.api.protocol import (
-    packb,
-    unpackb,
-    InvitationType,
+    APIV1_ANONYMOUS_CMDS,
     AUTHENTICATED_CMDS,
     INVITED_CMDS,
-    APIV1_ANONYMOUS_CMDS,
+    InvitationType,
+    packb,
+    unpackb,
 )
 
 

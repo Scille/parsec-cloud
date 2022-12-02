@@ -6,7 +6,7 @@ from typing import Any, Callable, TypeVar
 
 # Stop mypy type analysis here on non-win32 platforms
 assert sys.platform == "win32"
-from ctypes import GetLastError, FormatError, WinDLL
+from ctypes import FormatError, GetLastError, WinDLL
 from ctypes.wintypes import BOOL, HANDLE, LPCWSTR, LPVOID
 
 

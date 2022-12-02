@@ -34,17 +34,14 @@ from parsec.api.data import (
 from parsec.api.protocol.types import UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.invite.greeter import _create_new_user_certificates
-
 from tests.backend.common import (
-    pki_enrollment_submit,
-    pki_enrollment_info,
-    events_subscribe,
     events_listen_nowait,
-)
-from tests.backend.common import (
+    events_subscribe,
     pki_enrollment_accept,
+    pki_enrollment_info,
     pki_enrollment_list,
     pki_enrollment_reject,
+    pki_enrollment_submit,
     user_revoke,
 )
 

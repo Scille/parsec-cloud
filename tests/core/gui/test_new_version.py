@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.core.gui.new_version import do_check_new_version, Version
+from parsec.core.gui.new_version import Version, do_check_new_version
 
 
 @pytest.mark.trio

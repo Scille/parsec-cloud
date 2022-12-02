@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, Tuple, TypeVar
-from typing_extensions import ParamSpec
-import trio
-import outcome
 import functools
 import threading
+from enum import Enum
 from queue import Queue
+from typing import Any, Awaitable, Callable, Dict, Tuple, TypeVar
 
+import outcome
+import trio
 from trio.lowlevel import TrioToken
+from typing_extensions import ParamSpec
+
+from parsec.core.fs import AnyPath, WorkspaceFS
 from parsec.core.fs.path import FsPath
 from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
 from parsec.core.fs.workspacefs.workspacefs import EntryID
-
 from parsec.event_bus import EventBus
-from parsec.core.fs import AnyPath, WorkspaceFS
 
 
 class TrioDealockTimeoutError(Exception):

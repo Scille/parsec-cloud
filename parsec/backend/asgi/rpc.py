@@ -3,30 +3,28 @@ from __future__ import annotations
 
 from base64 import b64decode
 from typing import NoReturn, Tuple
-from quart import Response, Blueprint, request, g, current_app
+
 from nacl.exceptions import CryptoError
+from quart import Blueprint, Response, current_app, g, request
 
 from parsec._parsec import ClientType, DateTime
+from parsec.api.protocol import (
+    DeviceID,
+    IncompatibleAPIVersionsError,
+    OrganizationID,
+    settle_compatible_versions,
+)
 from parsec.api.version import API_V2_VERSION, API_V3_VERSION, ApiVersion
-from parsec.api.protocol import DeviceID
+from parsec.backend.app import BackendApp
+from parsec.backend.client_context import AnonymousClientContext, AuthenticatedClientContext
+from parsec.backend.organization import (
+    Organization,
+    OrganizationAlreadyExistsError,
+    OrganizationNotFoundError,
+)
 from parsec.backend.user import UserNotFoundError
 from parsec.backend.user_type import Device, User
 from parsec.serde import SerdePackingError, packb, unpackb
-from parsec.api.protocol import (
-    OrganizationID,
-    IncompatibleAPIVersionsError,
-    settle_compatible_versions,
-)
-from parsec.backend.app import BackendApp
-from parsec.backend.client_context import (
-    AnonymousClientContext,
-    AuthenticatedClientContext,
-)
-from parsec.backend.organization import (
-    Organization,
-    OrganizationNotFoundError,
-    OrganizationAlreadyExistsError,
-)
 
 
 CONTENT_TYPE_MSGPACK = "application/msgpack"

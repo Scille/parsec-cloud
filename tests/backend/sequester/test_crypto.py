@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 import oscrypto.asymmetric
+import pytest
 
 from parsec.sequester_crypto import (
-    SequesterVerifyKeyDer,
     SequesterEncryptionKeyDer,
-    sequester_service_decrypt,
+    SequesterVerifyKeyDer,
     sequester_authority_sign,
+    sequester_service_decrypt,
 )
 
 

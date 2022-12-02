@@ -1,62 +1,58 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from typing import List, Tuple
+
+import attr
 
 from parsec._parsec import (
     DateTime,
-    UserGetReq,
-    UserGetRep,
-    UserGetRepOk,
-    UserGetRepNotFound,
-    UserCreateReq,
+    DeviceCreateRep,
+    DeviceCreateRepAlreadyExists,
+    DeviceCreateRepBadUserId,
+    DeviceCreateRepInvalidCertification,
+    DeviceCreateRepInvalidData,
+    DeviceCreateRepOk,
+    DeviceCreateReq,
+    HumanFindRep,
+    HumanFindRepNotAllowed,
+    HumanFindRepOk,
+    HumanFindReq,
+    HumanFindResultItem,
+    Trustchain,
     UserCreateRep,
-    UserCreateRepOk,
     UserCreateRepActiveUsersLimitReached,
     UserCreateRepAlreadyExists,
     UserCreateRepInvalidCertification,
     UserCreateRepInvalidData,
     UserCreateRepNotAllowed,
-    UserRevokeReq,
+    UserCreateRepOk,
+    UserCreateReq,
+    UserGetRep,
+    UserGetRepNotFound,
+    UserGetRepOk,
+    UserGetReq,
     UserRevokeRep,
-    UserRevokeRepOk,
     UserRevokeRepAlreadyRevoked,
-    UserRevokeRepNotFound,
     UserRevokeRepInvalidCertification,
     UserRevokeRepNotAllowed,
-    DeviceCreateReq,
-    DeviceCreateRep,
-    DeviceCreateRepOk,
-    DeviceCreateRepAlreadyExists,
-    DeviceCreateRepBadUserId,
-    DeviceCreateRepInvalidCertification,
-    DeviceCreateRepInvalidData,
-    HumanFindReq,
-    HumanFindRep,
-    HumanFindRepOk,
-    HumanFindRepNotAllowed,
-    Trustchain,
-    HumanFindResultItem,
+    UserRevokeRepNotFound,
+    UserRevokeRepOk,
+    UserRevokeReq,
 )
+from parsec.api.data import DataError, RevokedUserCertificate
+from parsec.api.protocol import DeviceID, OrganizationID, UserID, UserProfile
 from parsec.backend.client_context import AuthenticatedClientContext
-from parsec.utils import timestamps_in_the_ballpark
-from parsec.event_bus import EventBus
-from parsec.api.data import RevokedUserCertificate, DataError
-from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
-    DeviceID,
-    UserProfile,
-)
-from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
 from parsec.backend.user_type import (
-    User,
-    Device,
-    validate_new_user_certificates,
-    validate_new_device_certificate,
     CertificateValidationError,
+    Device,
+    User,
+    validate_new_device_certificate,
+    validate_new_user_certificates,
 )
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.event_bus import EventBus
+from parsec.utils import timestamps_in_the_ballpark
 
 
 class UserError(Exception):

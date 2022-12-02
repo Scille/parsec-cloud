@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Any, Iterator, Type, cast
 
 from PyQt5.QtWidgets import QApplication, QWidget
@@ -9,10 +10,10 @@ Helper module used by `parsec.core.gui.custom_dialogs.QDialogInProcess`
 to run the file selection dialog in a subprocess.
 """
 
-import sys
 import contextlib
-import importlib.resources
 import functools
+import importlib.resources
+import sys
 
 
 @functools.lru_cache()
@@ -34,8 +35,8 @@ def set_parsec_icon(app: QApplication) -> None:
 class PrintHelper:
     @classmethod
     def print_html(cls, parent: QWidget, html: str) -> int:
-        from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
         from PyQt5.QtGui import QTextDocument
+        from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
 
         printer = QPrinter(QPrinter.HighResolution)
         dialog = QPrintDialog(printer, parent)
@@ -49,8 +50,8 @@ class PrintHelper:
 
 @contextlib.contextmanager
 def safe_app() -> Iterator[None]:
-    from PyQt5.QtWidgets import QApplication
     from PyQt5.QtCore import QEventLoop
+    from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     try:

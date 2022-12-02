@@ -3,19 +3,17 @@ from __future__ import annotations
 
 import pytest
 import trio
-
 from quart.testing.connections import WebsocketDisconnectError
 
 from parsec._parsec import AuthenticatedPingRepOk, EventsListenRepNoEvents, EventsListenRepOkPinged
 from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
-
 from tests.backend.common import (
-    events_subscribe,
-    events_listen,
-    events_listen_wait,
-    events_listen_nowait,
     authenticated_ping,
+    events_listen,
+    events_listen_nowait,
+    events_listen_wait,
+    events_subscribe,
     real_clock_timeout,
 )
 

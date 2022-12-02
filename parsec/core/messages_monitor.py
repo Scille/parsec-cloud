@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
 from typing import TYPE_CHECKING, cast
 
+import trio
+
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSBackendOfflineError
-from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.userfs import UserFS
 from parsec.event_bus import EventBus, EventCallback
 

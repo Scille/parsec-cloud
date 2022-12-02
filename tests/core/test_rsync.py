@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from unittest import mock
+
 import pytest
 import trio
-from unittest import mock
-from parsec._parsec import WorkspaceEntry
-from parsec.api.data.manifest import WorkspaceManifest
 
-from parsec.crypto import HashDigest
-from parsec.api.data import EntryID, FolderManifest, EntryName
+from parsec._parsec import WorkspaceEntry
+from parsec.api.data import EntryID, EntryName, FolderManifest
+from parsec.api.data.manifest import WorkspaceManifest
 from parsec.core.cli import rsync
 from parsec.core.fs import FsPath
-
+from parsec.crypto import HashDigest
 from tests.common import AsyncMock
 
 

@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import re
-import triopg
-from typing import Any, Awaitable, Callable, Dict, List, Tuple, TypeVar
-from typing_extensions import ParamSpec, Concatenate
 from functools import wraps
+from typing import Any, Awaitable, Callable, Dict, List, Tuple, TypeVar
+
+import triopg
+from typing_extensions import Concatenate, ParamSpec
 
 T = TypeVar("T")
 P = ParamSpec("P")

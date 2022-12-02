@@ -2,16 +2,16 @@
 from __future__ import annotations
 
 from parsec._parsec import (
-    UserGetReq,
-    UserGetRep,
-    UserCreateReq,
-    UserCreateRep,
-    UserRevokeReq,
-    UserRevokeRep,
-    DeviceCreateReq,
     DeviceCreateRep,
-    HumanFindReq,
+    DeviceCreateReq,
     HumanFindRep,
+    HumanFindReq,
+    UserCreateRep,
+    UserCreateReq,
+    UserGetRep,
+    UserGetReq,
+    UserRevokeRep,
+    UserRevokeReq,
 )
 from parsec.api.protocol.base import ApiCommandSerializer
 

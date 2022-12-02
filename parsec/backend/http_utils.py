@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-
-from typing import Any, Dict
-import trio
-import urllib.request
 import urllib.parse
+import urllib.request
+from typing import Any, Dict
+
+import trio
 
 
 async def http_request(

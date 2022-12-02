@@ -1,15 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-from pathlib import Path
 import importlib.resources
-from typing import AsyncIterator, List, Tuple, Union
-from structlog import get_logger
-from functools import partial
 from contextlib import asynccontextmanager
+from functools import partial
+from pathlib import Path
+from typing import AsyncIterator, List, Tuple, Union
+
+import attr
+from structlog import get_logger
 
 from parsec._parsec import (
+    HumanFindRepOk,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationType,
@@ -20,55 +22,57 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepOk,
-    Regex,
     OrganizationStatsRepOk,
+    Regex,
     UserRevokeRepOk,
-    HumanFindRepOk,
     WorkspaceEntry,
 )
+from parsec.api.data import EntryName, RevokedUserCertificate
+from parsec.api.protocol import InvitationToken, UserID
+from parsec.core import resources as core_resources
+from parsec.core.backend_connection import (
+    BackendAuthenticatedConn,
+    BackendConnectionError,
+    BackendConnStatus,
+    BackendInvitationAlreadyUsed,
+    BackendInvitationNotFound,
+    BackendInvitationOnExistingMember,
+    BackendNotAvailable,
+    BackendNotFoundError,
+)
+from parsec.core.config import CoreConfig
+from parsec.core.fs import UserFS
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
+from parsec.core.fs.storage.workspace_storage import FAILSAFE_PATTERN_FILTER
+from parsec.core.invite import (
+    DeviceGreetInitialCtx,
+    DeviceGreetInProgress1Ctx,
+    UserGreetInitialCtx,
+    UserGreetInProgress1Ctx,
+)
+from parsec.core.messages_monitor import monitor_messages
+from parsec.core.mountpoint import MountpointManager, mountpoint_manager_factory
+from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.pki.accepter import (
     PkiEnrollmentAccepterInvalidSubmittedCtx,
     PkiEnrollmentAccepterValidSubmittedCtx,
 )
-from parsec.event_bus import EventBus
-from parsec.api.protocol import (
-    UserID,
-    InvitationToken,
-)
-from parsec.api.data import RevokedUserCertificate, EntryName
-from parsec.core.pki import accepter_list_submitted_from_backend
-from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
-from parsec.core import resources as core_resources
-from parsec.core.config import CoreConfig
-from parsec.core.types import OrganizationConfig, OrganizationStats
-from parsec.core.backend_connection import (
-    BackendAuthenticatedConn,
-    BackendConnectionError,
-    BackendNotFoundError,
-    BackendInvitationNotFound,
-    BackendInvitationAlreadyUsed,
-    BackendInvitationOnExistingMember,
-    BackendConnStatus,
-    BackendNotAvailable,
-)
-from parsec.core.invite import (
-    UserGreetInitialCtx,
-    UserGreetInProgress1Ctx,
-    DeviceGreetInitialCtx,
-    DeviceGreetInProgress1Ctx,
-)
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
-    RemoteDevicesManagerError,
     RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerError,
     RemoteDevicesManagerNotFoundError,
 )
-from parsec.core.mountpoint import mountpoint_manager_factory, MountpointManager
-from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
-from parsec.core.fs import UserFS
-from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
-from parsec.core.fs.storage.workspace_storage import FAILSAFE_PATTERN_FILTER
+from parsec.core.types import (
+    BackendInvitationAddr,
+    DeviceInfo,
+    LocalDevice,
+    OrganizationConfig,
+    OrganizationStats,
+    UserInfo,
+)
+from parsec.event_bus import EventBus
 
 logger = get_logger()
 

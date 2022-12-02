@@ -1,19 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
+from base64 import b64encode
 from typing import Union
 from unittest.mock import patch
-from base64 import b64encode
 
-from parsec._parsec import DateTime, LocalDevice, DeviceID
-from parsec.api.version import ApiVersion, API_VERSION
+import pytest
+
+from parsec._parsec import DateTime, DeviceID, LocalDevice
+from parsec.api.version import API_VERSION, ApiVersion
 from parsec.serde import unpackb
-
-from tests.common import (
-    AuthenticatedRpcApiClient,
-    AnonymousRpcApiClient,
-)
+from tests.common import AnonymousRpcApiClient, AuthenticatedRpcApiClient
 
 
 async def _test_good_handshake(client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient]):

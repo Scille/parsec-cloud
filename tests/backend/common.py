@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-from typing import Optional, Callable
-from functools import partial
-from parsec._parsec import DateTime
 from contextlib import asynccontextmanager
+from functools import partial
+from typing import Callable, Optional
+
+import trio
 
 from parsec._parsec import (
     AuthenticatedPingRepOk,
     BlockCreateRepOk,
     BlockReadRepOk,
+    DateTime,
     DeviceCreateRepOk,
     HumanFindRepOk,
     Invite1ClaimerWaitPeerRepOk,
@@ -53,8 +54,6 @@ from parsec._parsec import (
     VlobReadRepOk,
     VlobUpdateRepOk,
 )
-from parsec.api.protocol.base import ApiCommandSerializer
-from parsec.serde import packb
 from parsec.api.protocol import (
     authenticated_ping_serializer,
     block_create_serializer,
@@ -106,7 +105,8 @@ from parsec.api.protocol import (
     vlob_read_serializer,
     vlob_update_serializer,
 )
-
+from parsec.api.protocol.base import ApiCommandSerializer
+from parsec.serde import packb
 from tests.common import real_clock_timeout
 
 

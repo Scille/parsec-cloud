@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.core.gui.password_validation import get_password_strength, get_password_strength_text
 from parsec.core.gui.lang import switch_language
 from parsec.core.gui.password_authentication_widget import PasswordAuthenticationWidget
+from parsec.core.gui.password_validation import get_password_strength, get_password_strength_text
 
 
 @pytest.mark.gui

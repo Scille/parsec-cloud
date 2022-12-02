@@ -1,30 +1,36 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import Dict, List
 
+import triopg
+
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
-    UserID,
+    MaintenanceType,
+    OrganizationID,
     RealmID,
     RealmRole,
-    MaintenanceType,
+    UserID,
 )
-from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError, RealmGrantedRole
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
-    q_user,
-    q_user_internal_id,
-    q_user_can_read_vlob,
     q_device,
+    q_organization_internal_id,
     q_realm,
     q_realm_internal_id,
+    q_user,
+    q_user_can_read_vlob,
+    q_user_internal_id,
+    query,
 )
-from parsec.backend.realm import RealmStats
+from parsec.backend.realm import (
+    RealmAccessError,
+    RealmGrantedRole,
+    RealmNotFoundError,
+    RealmStats,
+    RealmStatus,
+)
 
 _q_get_realm_status = Q(
     f"""

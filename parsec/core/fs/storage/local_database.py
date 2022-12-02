@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
+from sqlite3 import Connection, Cursor, OperationalError
+from sqlite3 import connect as sqlite_connect
 from typing import AsyncIterator, Union
+
 import trio
 from trio_typing import TaskStatus
-from contextlib import asynccontextmanager
-from sqlite3 import Connection, Cursor, OperationalError, connect as sqlite_connect
 
 from parsec.core.fs.exceptions import FSLocalStorageClosedError, FSLocalStorageOperationalError
 from parsec.utils import open_service_nursery

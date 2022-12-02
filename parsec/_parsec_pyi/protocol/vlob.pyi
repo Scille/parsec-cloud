@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from typing import Iterable
-from parsec._parsec import RealmID, VlobID, DateTime, SequesterServiceID, DeviceID
+
+from parsec._parsec import DateTime, DeviceID, RealmID, SequesterServiceID, VlobID
 
 # Vlob
 class VlobCreateReq:

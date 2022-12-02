@@ -5,13 +5,13 @@ import oscrypto
 import pytest
 from quart import Response
 
-from parsec.serde import packb
 from parsec.api.data import EntryName
-from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle, UserProfile
-from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
+from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID, UserProfile
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.invite import InviteAlreadyUsedError, InviteNotFoundError, bootstrap_organization
+from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.sequester_crypto import SequesterVerifyKeyDer, sequester_authority_sign
+from parsec.serde import packb
 
 
 @pytest.mark.trio

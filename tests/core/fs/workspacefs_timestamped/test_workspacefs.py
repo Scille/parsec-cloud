@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime, VlobReadRepOk
 
-from parsec.core.fs import FsPath
-from parsec.core.fs import FSError
+from parsec._parsec import DateTime, VlobReadRepOk
+from parsec.core.fs import FSError, FsPath
 
 
 def _day(d):

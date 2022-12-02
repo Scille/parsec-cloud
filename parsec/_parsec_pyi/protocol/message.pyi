@@ -3,7 +3,7 @@
 # Message
 from typing import Iterable
 
-from parsec._parsec import DeviceID, DateTime
+from parsec._parsec import DateTime, DeviceID
 
 class MessageGetReq:
     def __init__(self, offset: int) -> None: ...

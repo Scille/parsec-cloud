@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Any, Literal, Union, cast
 
-from PyQt5.QtCore import Qt, QRect, QPoint, QSize
-from PyQt5.QtWidgets import QLayout, QStyle, QSizePolicy, QWidget, QLayoutItem
+from PyQt5.QtCore import QPoint, QRect, QSize, Qt
+from PyQt5.QtWidgets import QLayout, QLayoutItem, QSizePolicy, QStyle, QWidget
 
 
 class FlowLayout(QLayout):

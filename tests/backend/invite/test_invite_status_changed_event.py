@@ -2,23 +2,22 @@
 from __future__ import annotations
 
 import pytest
+
 from parsec._parsec import (
     DateTime,
+    EventsListenRepNoEvents,
+    EventsListenRepOkInviteStatusChanged,
     InviteListItem,
     InviteListRepOk,
-    EventsListenRepOkInviteStatusChanged,
-    EventsListenRepNoEvents,
 )
-
-from parsec.api.protocol import InvitationType, InvitationStatus
-
-from tests.common import real_clock_timeout
+from parsec.api.protocol import InvitationStatus, InvitationType
 from tests.backend.common import (
-    events_subscribe,
-    events_listen_wait,
     events_listen_nowait,
+    events_listen_wait,
+    events_subscribe,
     invite_list,
 )
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio

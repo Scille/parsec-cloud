@@ -1,13 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from collections import defaultdict
+from random import choice, randrange
+from string import ascii_lowercase
+from time import monotonic
+
+import attr
 import pytest
 import trio
-import attr
-from time import monotonic
-from collections import defaultdict
-from random import randrange, choice
-from string import ascii_lowercase
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import UserID

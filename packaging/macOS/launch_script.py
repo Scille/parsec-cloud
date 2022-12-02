@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import sys
-import os
 import multiprocessing
+import os
+import sys
 
 # Enable freeze support for supporting the multiprocessing module
 # This is useful for running qt dialogs in subprocesses.

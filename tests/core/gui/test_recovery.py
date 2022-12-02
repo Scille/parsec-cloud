@@ -1,27 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-
-from PyQt5 import QtCore
-
 from pathlib import Path
 
-from parsec.core.local_device import (
-    save_device_with_password_in_config,
-    get_recovery_device_file_name,
-    save_recovery_device,
-)
-from parsec.core.recovery import generate_recovery_device
-from parsec.api.protocol import DeviceLabel
+import pytest
+from PyQt5 import QtCore
 
-from parsec.core.gui.lang import translate
+from parsec.api.protocol import DeviceLabel
+from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 from parsec.core.gui.device_recovery_export_widget import (
     DeviceRecoveryExportPage1Widget,
     DeviceRecoveryExportPage2Widget,
 )
 from parsec.core.gui.device_recovery_import_widget import DeviceRecoveryImportPage1Widget
-from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
+from parsec.core.gui.lang import translate
+from parsec.core.local_device import (
+    get_recovery_device_file_name,
+    save_device_with_password_in_config,
+    save_recovery_device,
+)
+from parsec.core.recovery import generate_recovery_device
 
 
 @pytest.fixture

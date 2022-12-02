@@ -4,7 +4,7 @@ from __future__ import annotations
 from nacl.exceptions import CryptoError
 from nacl.pwhash import argon2i
 
-from parsec._parsec import SecretKey, HashDigest, SigningKey, VerifyKey, PrivateKey, PublicKey
+from parsec._parsec import HashDigest, PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 

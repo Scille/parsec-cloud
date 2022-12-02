@@ -1,15 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Any
 
-from parsec._parsec import DateTime
-
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
-from PyQt5.QtGui import QPixmap, QPainter, QPaintEvent
+from PyQt5.QtGui import QPainter, QPaintEvent, QPixmap
+from PyQt5.QtWidgets import QStyle, QStyleOption, QWidget
 
-from parsec.core.gui.ui.notification_widget import Ui_NotificationWidget
+from parsec._parsec import DateTime
 from parsec.core.gui.lang import format_datetime
+from parsec.core.gui.ui.notification_widget import Ui_NotificationWidget
 
 
 class NotificationWidget(QWidget, Ui_NotificationWidget):

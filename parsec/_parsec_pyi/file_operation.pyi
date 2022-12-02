@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from typing import List, Set, Tuple
 
-from parsec._parsec_pyi.local_manifest import LocalFileManifest, Chunk
 from parsec._parsec_pyi.ids import ChunkID
+from parsec._parsec_pyi.local_manifest import Chunk, LocalFileManifest
 from parsec._parsec_pyi.time import DateTime
 
 def prepare_read(manifest: LocalFileManifest, size: int, offset: int) -> Tuple[Chunk, ...]: ...

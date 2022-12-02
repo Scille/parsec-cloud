@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import logging
 import sys
 from datetime import date, datetime
-from typing import Any, MutableMapping, Union, TextIO, cast
+from typing import Any, MutableMapping, TextIO, Union, cast
+
 import structlog
-import logging
-from sentry_sdk import Hub as sentry_Hub, init as sentry_init
+from sentry_sdk import Hub as sentry_Hub
+from sentry_sdk import init as sentry_init
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.utils import event_from_exception
 from structlog.dev import ConsoleRenderer

@@ -6,8 +6,8 @@ import pytest
 from parsec._parsec import Regex
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
-from tests.common import create_shared_workspace
 from parsec.core.logged_core import get_prevent_sync_pattern
+from tests.common import create_shared_workspace
 
 
 async def assert_path_info(workspace, path, **kwargs):

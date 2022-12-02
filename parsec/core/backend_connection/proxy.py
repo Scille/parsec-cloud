@@ -2,14 +2,15 @@
 from __future__ import annotations
 
 import os
-import trio
-import h11
-from structlog import get_logger
 from base64 import b64encode
-from urllib.request import getproxies, proxy_bypass
-from urllib.parse import urlsplit, SplitResult
 from typing import List, Tuple
+from urllib.parse import SplitResult, urlsplit
+from urllib.request import getproxies, proxy_bypass
+
+import h11
 import pypac
+import trio
+from structlog import get_logger
 
 from parsec.api.transport import USER_AGENT
 from parsec.core.backend_connection.exceptions import BackendNotAvailable

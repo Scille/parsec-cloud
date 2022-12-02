@@ -3,51 +3,48 @@ from __future__ import annotations
 
 import os
 import random
-from typing import Tuple, cast
 from pathlib import Path
+from typing import Tuple, cast
 from uuid import uuid4
 
 from parsec._parsec import DateTime, DeviceCreateRepOk, UserCreateRepOk
-from parsec.api.data import UserCertificate, DeviceCertificate, EntryID, EntryName
+from parsec.api.data import DeviceCertificate, EntryID, EntryName, UserCertificate
 from parsec.api.protocol import (
+    DeviceID,
+    DeviceLabel,
+    DeviceName,
+    HumanHandle,
     InvitationToken,
     OrganizationID,
-    DeviceID,
-    HumanHandle,
-    DeviceName,
-    DeviceLabel,
     UserProfile,
 )
-from parsec.crypto import SigningKey
 from parsec.core import logged_core_factory
-from parsec.core.logged_core import LoggedCore
-from parsec.core.types import (
-    WorkspaceRole,
-    BackendAddr,
-    BackendOrganizationBootstrapAddr,
-    LocalDevice,
-)
-from parsec.core.config import load_config
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
     BackendInvitedCmds,
     backend_authenticated_cmds_factory,
 )
+from parsec.core.cli.create_organization import create_organization_req
+from parsec.core.config import load_config
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.local_device import (
-    generate_new_device,
-    save_device_with_password_in_config,
-)
 from parsec.core.invite import (
     DeviceClaimInProgress3Ctx,
+    DeviceGreetInitialCtx,
     UserClaimInProgress3Ctx,
+    UserGreetInitialCtx,
     UserGreetInProgress4Ctx,
     bootstrap_organization,
-    DeviceGreetInitialCtx,
-    UserGreetInitialCtx,
     claimer_retrieve_info,
 )
-from parsec.core.cli.create_organization import create_organization_req
+from parsec.core.local_device import generate_new_device, save_device_with_password_in_config
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import (
+    BackendAddr,
+    BackendOrganizationBootstrapAddr,
+    LocalDevice,
+    WorkspaceRole,
+)
+from parsec.crypto import SigningKey
 
 
 async def initialize_test_organization(

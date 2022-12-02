@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import argparse
-from pathlib import Path
-import subprocess
-import shutil
 import re
+import shutil
+import subprocess
+from pathlib import Path
 
 
 # Fully-qualified path for the executable should be used with subprocess to

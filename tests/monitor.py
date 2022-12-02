@@ -1,16 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-# Monitor POC, shamelessly taken from curio
+import argparse
+import logging
 
+# Monitor POC, shamelessly taken from curio
 import os
 import signal
 import socket
-import traceback
-import threading
 import telnetlib
-import argparse
-import logging
+import threading
+import traceback
 
 import trio
 from trio.abc import Instrument

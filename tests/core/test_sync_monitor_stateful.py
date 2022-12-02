@@ -5,17 +5,16 @@ import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     Bundle,
+    TrioAsyncioRuleBasedStateMachine,
     initialize,
+    multiple,
     rule,
     run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
-    multiple,
 )
 
 from parsec.api.data import EntryName
+from parsec.core.fs import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
 from parsec.core.types import WorkspaceRole
-from parsec.core.fs import FSWorkspaceNotFoundError, FSWorkspaceNoAccess
-
 from tests.common import call_with_control
 
 

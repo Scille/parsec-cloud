@@ -1,19 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Callable, Tuple, TypeVar
 
-from PyQt5.QtCore import Qt, QDate, QTime, pyqtSignal
+from PyQt5.QtCore import QDate, Qt, QTime, pyqtSignal
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QWidget, QDialog, QApplication
-
+from PyQt5.QtWidgets import QApplication, QDialog, QWidget
 from structlog import get_logger
 
 from parsec._parsec import DateTime
 from parsec.core.fs.workspacefs.workspacefs import WorkspaceFS
-
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
+from parsec.core.gui.lang import format_datetime, get_qlocale
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
-from parsec.core.gui.lang import get_qlocale, translate as _, format_datetime
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.ui.timestamped_workspace_widget import Ui_TimestampedWorkspaceWidget
 
 

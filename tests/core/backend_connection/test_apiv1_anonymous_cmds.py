@@ -5,7 +5,6 @@ import pytest
 
 from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
-
 from tests.core.backend_connection.common import ALL_CMDS
 
 

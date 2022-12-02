@@ -1,47 +1,47 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from PyQt5.QtGui import QKeyEvent
+
+import pathlib
+from enum import IntEnum
+from pathlib import PurePath
+from typing import Any, Iterable, NoReturn, Sequence, cast
 
 import trio
-import pathlib
-from typing import Any, Iterable, cast, NoReturn, Sequence
-from parsec._parsec import DateTime
-from enum import IntEnum
-from structlog import get_logger
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtWidgets import QWidget
-from pathlib import PurePath
+from structlog import get_logger
 
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
 from parsec.core.core_events import CoreEvent
-from parsec.core.gui.file_status_widget import FileStatusWidget
-from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.logged_core import EventBus, LoggedCore, MountpointManager
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, EntryID
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
-    FSRemoteManifestNotFound,
-    FSInvalidArgumentError,
     FSFileNotFoundError,
+    FSInvalidArgumentError,
+    FSRemoteManifestNotFound,
 )
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui import desktop, validators
-from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.core.gui.custom_dialogs import (
-    ask_question,
-    show_error,
-    get_text_input,
-    show_info,
     GreyedDialog,
     QDialogInProcess,
+    ask_question,
+    get_text_input,
+    show_error,
+    show_info,
 )
 from parsec.core.gui.file_history_widget import FileHistoryWidget
-from parsec.core.gui.loading_widget import LoadingWidget
-from parsec.core.gui.lang import translate as T
-from parsec.core.gui.workspace_roles import get_role_translation
-from parsec.core.gui.ui.files_widget import Ui_FilesWidget
+from parsec.core.gui.file_items import TYPE_DATA_INDEX, FileType
+from parsec.core.gui.file_status_widget import FileStatusWidget
 from parsec.core.gui.file_table import Column, PasteStatus
-from parsec.core.types import DEFAULT_BLOCK_SIZE
+from parsec.core.gui.lang import translate as T
+from parsec.core.gui.loading_widget import LoadingWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
+from parsec.core.gui.ui.files_widget import Ui_FilesWidget
+from parsec.core.gui.workspace_roles import get_role_translation
+from parsec.core.logged_core import EventBus, LoggedCore, MountpointManager
+from parsec.core.types import DEFAULT_BLOCK_SIZE, EntryID, WorkspaceEntry, WorkspaceRole
 from parsec.event_bus import EventCallback
 
 

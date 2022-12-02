@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Callable, cast
 
 from PyQt5.QtCore import pyqtSignal
@@ -7,14 +8,15 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec._parsec import DateTime
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
-from parsec.core.logged_core import LoggedCore
-from parsec.core.types import DEFAULT_BLOCK_SIZE
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui.file_size import get_filesize
+from parsec.core.gui.lang import format_datetime
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.file_status_widget import Ui_FileInfoWidget
-from parsec.core.gui.lang import translate as _, format_datetime
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
 class FileStatusWidget(QWidget, Ui_FileInfoWidget):

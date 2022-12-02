@@ -1,32 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from enum import Enum
 from typing import TypeVar, Union
 
-from parsec.serde import fields
-from parsec.api.protocol import RealmRole, BlockID
-from parsec.api.data import (
-    WorkspaceEntry,
-    BlockAccess,
-    UserManifest as RemoteUserManifest,
-    WorkspaceManifest as RemoteWorkspaceManifest,
-    FolderManifest as RemoteFolderManifest,
-    FileManifest as RemoteFileManifest,
-    AnyRemoteManifest,
-)
-from enum import Enum
-
 from parsec._parsec import (
-    ChunkID,
     Chunk,
+    ChunkID,
+    DateTime,
     LocalFileManifest,
     LocalFolderManifest,
     LocalUserManifest,
     LocalWorkspaceManifest,
-    DateTime,
-    local_manifest_decrypt_and_load,
     Regex,
+    local_manifest_decrypt_and_load,
 )
+from parsec.api.data import AnyRemoteManifest, BlockAccess, WorkspaceEntry
+from parsec.api.data import FileManifest as RemoteFileManifest
+from parsec.api.data import FolderManifest as RemoteFolderManifest
+from parsec.api.data import UserManifest as RemoteUserManifest
+from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
+from parsec.api.protocol import BlockID, RealmRole
+from parsec.serde import fields
 
 AnyLocalManifest = Union[
     LocalFileManifest,

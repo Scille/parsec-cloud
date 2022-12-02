@@ -2,32 +2,29 @@
 from __future__ import annotations
 
 import sys
-
 from enum import Enum
 from typing import Tuple
-from PyQt5.QtCore import QPoint, pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
+
+from PyQt5.QtCore import QPoint, Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QCursor, QMouseEvent
-from parsec.api.protocol import RealmRole
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QMenu, QWidget
 
-from parsec.core.backend_connection import BackendNotAvailable
-
-from parsec.core.fs import WorkspaceFS, FSBackendOfflineError, WorkspaceFSTimestamped
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.logged_core import LoggedCore, UserID
-from parsec.core.types import EntryID, EntryName, WorkspaceRole, UserInfo
-from parsec.core.fs.workspacefs import ReencryptionNeed
-
-from parsec.core.gui.lang import translate as _, format_datetime
 from parsec._parsec import DateTime
-from parsec.core.gui.workspace_roles import get_role_translation
+from parsec.api.protocol import RealmRole
+from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.fs import FSBackendOfflineError, WorkspaceFS, WorkspaceFSTimestamped
+from parsec.core.fs.workspacefs import ReencryptionNeed
 from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.custom_widgets import ensure_string_size
-
-from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
-from parsec.core.gui.ui.temporary_workspace_widget import Ui_TemporaryWorkspaceWidget
-
+from parsec.core.gui.lang import format_datetime
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.switch_button import SwitchButton
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.ui.temporary_workspace_widget import Ui_TemporaryWorkspaceWidget
+from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
+from parsec.core.gui.workspace_roles import get_role_translation
+from parsec.core.logged_core import LoggedCore, UserID
+from parsec.core.types import EntryID, EntryName, UserInfo, WorkspaceRole
 
 
 class TemporaryWorkspaceWidget(QWidget, Ui_TemporaryWorkspaceWidget):

@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 from unittest.mock import ANY
+
+import pytest
+
 from parsec._parsec import (
     DateTime,
     EventsListenRepOkInviteStatusChanged,
@@ -20,23 +22,17 @@ from parsec._parsec import (
     InviteNewRepNotAvailable,
     InviteNewRepOk,
 )
-
+from parsec.api.protocol import HandshakeBadIdentity, InvitationStatus, UserProfile
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import (
-    InvitationStatus,
-    HandshakeBadIdentity,
-    UserProfile,
-)
-
-from tests.common import freeze_time, customize_fixtures, real_clock_timeout
 from tests.backend.common import (
-    invite_new,
-    invite_list,
+    events_listen_wait,
+    events_subscribe,
     invite_delete,
     invite_info,
-    events_subscribe,
-    events_listen_wait,
+    invite_list,
+    invite_new,
 )
+from tests.common import customize_fixtures, freeze_time, real_clock_timeout
 
 
 @pytest.mark.trio

@@ -1,42 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from pathlib import Path
 from collections import defaultdict
-from typing import (
-    TYPE_CHECKING,
-    cast,
-    Dict,
-    Tuple,
-    Set,
-    AsyncIterator,
-    NoReturn,
-    List,
-)
-import trio
-from trio import lowlevel
-from parsec._parsec import DateTime
-from structlog import get_logger
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import TYPE_CHECKING, AsyncIterator, Dict, List, NoReturn, Set, Tuple, cast
 
-from parsec._parsec import Regex
-from parsec.core.types import (
-    EntryID,
-    BlockID,
-    ChunkID,
-    LocalDevice,
-    FileDescriptor,
-    LocalFileManifest,
-    LocalWorkspaceManifest,
-)
+import trio
+from structlog import get_logger
+from trio import lowlevel
+
+from parsec._parsec import DateTime, Regex
 from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
-from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
+from parsec.core.fs.exceptions import FSError, FSInvalidFileDescriptor, FSLocalMissError
+from parsec.core.fs.storage.chunk_storage import BlockStorage, ChunkStorage
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
-from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
 from parsec.core.fs.storage.version import (
-    get_workspace_data_storage_db_path,
     get_workspace_cache_storage_db_path,
+    get_workspace_data_storage_db_path,
+)
+from parsec.core.types import (
+    BlockID,
+    ChunkID,
+    EntryID,
+    FileDescriptor,
+    LocalDevice,
+    LocalFileManifest,
+    LocalWorkspaceManifest,
 )
 from parsec.core.types.manifest import AnyLocalManifest
 

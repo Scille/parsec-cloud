@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Any, cast
 
-from PyQt5.QtCore import Qt, pyqtSignal, QModelIndex
+from PyQt5.QtCore import QModelIndex, Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QPaintEvent
-from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption, QStyledItemDelegate, QStyleOptionViewItem
+from PyQt5.QtWidgets import QStyle, QStyledItemDelegate, QStyleOption, QStyleOptionViewItem, QWidget
 
 from parsec.core.gui.notification_widget import (
     ErrorNotificationWidget,
+    InfoNotificationWidget,
     NotificationWidget,
     WarningNotificationWidget,
-    InfoNotificationWidget,
 )
 from parsec.core.gui.ui.notification_center_widget import Ui_NotificationCenterWidget
 

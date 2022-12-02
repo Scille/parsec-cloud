@@ -1,26 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-
 from parsec._parsec import (
-    VlobID,
-    VlobCreateReq,
     VlobCreateRep,
-    VlobReadReq,
-    VlobReadRep,
-    VlobUpdateReq,
-    VlobUpdateRep,
-    VlobPollChangesReq,
-    VlobPollChangesRep,
-    VlobListVersionsReq,
+    VlobCreateReq,
+    VlobID,
     VlobListVersionsRep,
-    VlobMaintenanceGetReencryptionBatchReq,
+    VlobListVersionsReq,
     VlobMaintenanceGetReencryptionBatchRep,
-    VlobMaintenanceSaveReencryptionBatchReq,
+    VlobMaintenanceGetReencryptionBatchReq,
     VlobMaintenanceSaveReencryptionBatchRep,
+    VlobMaintenanceSaveReencryptionBatchReq,
+    VlobPollChangesRep,
+    VlobPollChangesReq,
+    VlobReadRep,
+    VlobReadReq,
+    VlobUpdateRep,
+    VlobUpdateReq,
 )
+from parsec.api.protocol.base import ApiCommandSerializer, BaseRepSchema
 from parsec.serde import fields
-from parsec.api.protocol.base import BaseRepSchema, ApiCommandSerializer
 
 __all__ = (
     "VlobID",

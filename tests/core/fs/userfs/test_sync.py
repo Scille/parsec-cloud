@@ -2,19 +2,18 @@
 from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
-from parsec.api.data import UserManifest, EntryID, EntryName
-from parsec.crypto import SecretKey
+from parsec._parsec import DateTime
+from parsec.api.data import EntryID, EntryName, UserManifest
+from parsec.core.fs import FSBackendOfflineError, FSWorkspaceNotFoundError
 from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 from parsec.core.types import (
-    WorkspaceEntry,
-    WorkspaceRole,
     LocalUserManifest,
     LocalWorkspaceManifest,
+    WorkspaceEntry,
+    WorkspaceRole,
 )
-from parsec.core.fs import FSWorkspaceNotFoundError, FSBackendOfflineError
-
+from parsec.crypto import SecretKey
 from tests.common import freeze_time
 
 

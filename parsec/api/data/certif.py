@@ -1,22 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
 from typing import Any, Dict, Literal
 
-from parsec.sequester_crypto import SequesterVerifyKeyDer, SequesterEncryptionKeyDer
-from parsec.serde import fields, post_load
-from parsec.api.protocol import (
-    SequesterServiceID,
-    SequesterServiceIDField,
-)
-from parsec.api.data.base import (
-    BaseAPIData,
-    BaseAPISignedData,
-    BaseSignedDataSchema,
-)
 import attr
 
+from parsec._parsec import DateTime
+from parsec.api.data.base import BaseAPIData, BaseAPISignedData, BaseSignedDataSchema
+from parsec.api.protocol import SequesterServiceID, SequesterServiceIDField
+from parsec.sequester_crypto import SequesterEncryptionKeyDer, SequesterVerifyKeyDer
+from parsec.serde import fields, post_load
 from parsec.serde.schema import BaseSchema
 
 

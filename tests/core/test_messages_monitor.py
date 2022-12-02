@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
 import pytest
-from parsec._parsec import DateTime
+import trio
 
-from parsec.api.data import PingMessageContent, EntryName
+from parsec._parsec import DateTime
+from parsec.api.data import EntryName, PingMessageContent
 from parsec.api.protocol import UserID
+from parsec.core.backend_connection import BackendConnStatus
+from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
 from parsec.crypto import SecretKey
-from parsec.core.core_events import CoreEvent
-from parsec.core.backend_connection import BackendConnStatus
-
 from tests.common import create_shared_workspace, freeze_time
 
 

@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from collections import defaultdict
 from typing import Any, List, Tuple
 
-from parsec.sequester_crypto import SequesterVerifyKeyDer
+import triopg
+
+from parsec._parsec import DateTime
 from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.organization import SequesterAuthority
@@ -14,21 +15,21 @@ from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_rea
 from parsec.backend.sequester import (
     BaseSequesterComponent,
     BaseSequesterService,
-    StorageSequesterService,
-    WebhookSequesterService,
-    SequesterServiceType,
-    SequesterError,
     SequesterCertificateValidationError,
     SequesterDisabledError,
+    SequesterError,
     SequesterOrganizationNotFoundError,
     SequesterServiceAlreadyDisabledError,
     SequesterServiceAlreadyEnabledError,
     SequesterServiceAlreadyExists,
     SequesterServiceNotFoundError,
+    SequesterServiceType,
     SequesterWrongServiceTypeError,
+    StorageSequesterService,
+    WebhookSequesterService,
 )
 from parsec.crypto import CryptoError
-from parsec._parsec import DateTime
+from parsec.sequester_crypto import SequesterVerifyKeyDer
 
 
 # Sequester authority never gets modified past organization bootstrap, hence no need

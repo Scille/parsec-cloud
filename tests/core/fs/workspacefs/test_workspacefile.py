@@ -1,14 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-import trio
+import io
 from enum import IntEnum
 from typing import Union
-import io
-from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError, FSInvalidFileDescriptor
-from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
+
+import pytest
+import trio
+
 from parsec.core.fs import FsPath
+from parsec.core.fs.exceptions import FSInvalidFileDescriptor, FSOffsetError, FSUnsupportedOperation
+from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 
 AnyPath = Union[FsPath, str]
 

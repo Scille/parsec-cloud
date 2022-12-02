@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import pytest
+
 from parsec._parsec import DateTime
-
 from parsec.api.data import EntryName
-
 from tests.common import freeze_time
 
 day0 = DateTime(1999, 12, 31)

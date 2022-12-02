@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from marshmallow import validate, pre_dump, post_load, pre_load
+from marshmallow import post_load, pre_dump, pre_load, validate
 
 from parsec.serde import fields
-from parsec.serde.exceptions import SerdeError, SerdeValidationError, SerdePackingError
-from parsec.serde.schema import BaseSchema, OneOfSchema, BaseCmdSchema
-from parsec.serde.packing import packb, unpackb, Unpacker
+from parsec.serde.exceptions import SerdeError, SerdePackingError, SerdeValidationError
+from parsec.serde.packing import Unpacker, packb, unpackb
+from parsec.serde.schema import BaseCmdSchema, BaseSchema, OneOfSchema
 from parsec.serde.serializer import (
     BaseSerializer,
     JSONSerializer,

@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
+
+import importlib.resources
 from typing import Any, Callable, Tuple
 
-from jinja2 import Environment, BaseLoader, TemplateNotFound, StrictUndefined, Template
-import importlib.resources
+from jinja2 import BaseLoader, Environment, StrictUndefined, Template, TemplateNotFound
 
 
 class PackageLoader(BaseLoader):

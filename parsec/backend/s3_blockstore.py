@@ -1,13 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
-from structlog import get_logger
 from functools import partial
 
-from parsec.api.protocol import OrganizationID, BlockID
+import boto3
+import trio
+from botocore.exceptions import BotoCoreError, ClientError
+from structlog import get_logger
+
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 

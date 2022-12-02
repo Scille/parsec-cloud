@@ -1,25 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from uuid import uuid4
 from typing import Type, Union
+from uuid import uuid4
+
 import trio
+from h11 import Request as H11Request
+from structlog import get_logger
 from trio import BrokenResourceError
 from trio.abc import Stream
-from structlog import get_logger
-from h11 import Request as H11Request
-from wsproto import WSConnection, ConnectionType
-from wsproto.utilities import LocalProtocolError, RemoteProtocolError
-from wsproto.frame_protocol import CloseReason
+from wsproto import ConnectionType, WSConnection
 from wsproto.events import (
-    Event,
-    CloseConnection,
     AcceptConnection,
-    Request,
     BytesMessage,
+    CloseConnection,
+    Event,
     Ping,
     Pong,
+    Request,
 )
+from wsproto.frame_protocol import CloseReason
+from wsproto.utilities import LocalProtocolError, RemoteProtocolError
 
 from parsec._version import __version__
 

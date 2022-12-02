@@ -3,20 +3,22 @@ from __future__ import annotations
 
 import click
 
-from parsec.core.cli import human_find
-from parsec.core.cli import list_devices
-from parsec.core.cli import status_organization
-from parsec.core.cli import recovery
-from parsec.core.cli import invitation
-from parsec.core.cli import create_organization
-from parsec.core.cli import stats_organization
-from parsec.core.cli import create_workspace
-from parsec.core.cli import share_workspace
-from parsec.core.cli import reencrypt_workspace
-from parsec.core.cli import bootstrap_organization
-from parsec.core.cli import rsync
-from parsec.core.cli import run
-from parsec.core.cli import pki
+from parsec.core.cli import (
+    bootstrap_organization,
+    create_organization,
+    create_workspace,
+    human_find,
+    invitation,
+    list_devices,
+    pki,
+    recovery,
+    reencrypt_workspace,
+    rsync,
+    run,
+    share_workspace,
+    stats_organization,
+    status_organization,
+)
 
 
 __all__ = ("core_cmd_group",)

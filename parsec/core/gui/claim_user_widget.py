@@ -1,46 +1,46 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
+from enum import IntEnum
 from typing import Any, Awaitable, Callable, Tuple, cast
 
 import trio
-from enum import IntEnum
-from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
+from structlog import get_logger
 
+from parsec._parsec import SASCode
 from parsec.api.protocol import DeviceLabel, HumanHandle
 from parsec.core import CoreConfig
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.types import BackendInvitationAddr, LocalDevice
-from parsec.core.local_device import (
-    save_device_with_password_in_config,
-    save_device_with_smartcard_in_config,
-    DeviceFileType,
-    LocalDeviceCryptoError,
-    LocalDeviceError,
-    LocalDeviceNotFoundError,
-)
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.invite import UserClaimInitialCtx, claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
-    backend_invited_cmds_factory,
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendNotAvailable,
     BackendOutOfBallparkError,
+    backend_invited_cmds_factory,
 )
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.gui import validators
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.claim_user_code_exchange_widget import Ui_ClaimUserCodeExchangeWidget
-from parsec.core.gui.ui.claim_user_provide_info_widget import Ui_ClaimUserProvideInfoWidget
-from parsec.core.gui.ui.claim_user_instructions_widget import Ui_ClaimUserInstructionsWidget
 from parsec.core.gui.ui.claim_user_finalize_widget import Ui_ClaimUserFinalizeWidget
-from parsec._parsec import SASCode
+from parsec.core.gui.ui.claim_user_instructions_widget import Ui_ClaimUserInstructionsWidget
+from parsec.core.gui.ui.claim_user_provide_info_widget import Ui_ClaimUserProvideInfoWidget
+from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
+from parsec.core.invite import InvitePeerResetError, UserClaimInitialCtx, claimer_retrieve_info
+from parsec.core.local_device import (
+    DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+)
+from parsec.core.types import BackendInvitationAddr, LocalDevice
 
 logger = get_logger()
 
