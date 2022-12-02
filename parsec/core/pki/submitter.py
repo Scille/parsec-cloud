@@ -9,6 +9,7 @@ import attr
 from parsec._parsec import (
     DateTime,
     EnrollmentID,
+    LocalPendingEnrollment,
     PkiEnrollmentInfoRepNotFound,
     PkiEnrollmentInfoRepOk,
     PkiEnrollmentStatus,
@@ -49,7 +50,6 @@ from parsec.core.types import (
     BackendPkiEnrollmentAddr,
     LocalDevice,
 )
-from parsec.core.types.pki import LocalPendingEnrollment
 from parsec.crypto import PrivateKey, SigningKey
 
 

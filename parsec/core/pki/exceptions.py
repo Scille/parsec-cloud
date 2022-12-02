@@ -46,29 +46,6 @@ class PkiEnrollmentError(Exception):
     pass
 
 
-# Local pending enrollment errors
-
-
-class PkiEnrollmentLocalPendingError(PkiEnrollmentError):
-    pass
-
-
-class PkiEnrollmentLocalPendingNotFoundError(PkiEnrollmentLocalPendingError):
-    pass
-
-
-class PkiEnrollmentLocalPendingValidationError(PkiEnrollmentLocalPendingError):
-    pass
-
-
-class PkiEnrollmentLocalPendingPackingError(PkiEnrollmentLocalPendingError):
-    pass
-
-
-class PkiEnrollmentLocalPendingCryptoError(PkiEnrollmentLocalPendingError):
-    pass
-
-
 # Certificate errors
 
 
