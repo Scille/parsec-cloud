@@ -42,7 +42,7 @@ def check_true(result: T, function: Any, arguments: object, *args: Any) -> T:
     return result
 
 
-class Libraries(object):
+class Libraries:
     def __getattr__(self, name: str) -> WinDLL:
         library = WinDLL(name)
         self.__dict__[name] = library

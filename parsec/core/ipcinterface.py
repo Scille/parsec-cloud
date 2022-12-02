@@ -95,7 +95,7 @@ def _install_win32_mutex(mutex_name: str) -> Iterator[None]:
 
         try:
             mutex = CreateMutex(None, False, mutex_name)
-        except WindowsError as exc:
+        except OSError as exc:
             raise IPCServerError(f"Cannot create mutex `{mutex_name}`: {exc}") from exc
         status = GetLastError()
         if status == ERROR_ALREADY_EXISTS:
