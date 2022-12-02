@@ -63,7 +63,7 @@ jobs:
             VERSION="$VERSION.$COMMIT"
             # Customize version with tag
             sed -i.back -e "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
-            test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
+            test $(grep -E '^version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
             sed -i.back -e "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
           fi
 
