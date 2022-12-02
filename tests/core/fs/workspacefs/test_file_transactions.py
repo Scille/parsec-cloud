@@ -13,7 +13,7 @@ from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions, FSInvalidFileDescriptor
 from parsec.core.types import AnyLocalManifest, FileDescriptor
-from tests.common import call_with_control, freeze_time
+from tests.common import call_with_control, customize_fixtures, freeze_time
 
 
 class File:
@@ -214,6 +214,7 @@ size = st.integers(min_value=0, max_value=4 * 1024**2)  # Between 0 and 4MB
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
 def test_file_operations(
     tmpdir,
     hypothesis_settings,

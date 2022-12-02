@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import Any, Callable, TypeVar
+
 import pytest
 
 _FIXTURES_CUSTOMIZATIONS = {
@@ -37,16 +39,19 @@ _FIXTURES_CUSTOMIZATIONS = {
     "blockstore_mode",
     "real_data_storage",
     "gui_language",
+    "alternate_workspace_storage",
 }
 
+F = TypeVar("F")
 
-def customize_fixtures(**customizations):
+
+def customize_fixtures(**customizations: Any) -> Callable[[F], F]:
     """
     Should be used as a decorator on tests to provide custom settings to fixtures.
     """
     assert not customizations.keys() - _FIXTURES_CUSTOMIZATIONS
 
-    def wrapper(fn):
+    def wrapper(fn: F) -> F:
         try:
             getattr(fn, "_fixtures_customization").update(customizations)
         except AttributeError:
@@ -57,7 +62,7 @@ def customize_fixtures(**customizations):
 
 
 @pytest.fixture
-def fixtures_customization(request):
+def fixtures_customization(request) -> dict[str, Any]:
     try:
         return request.node.function._fixtures_customization
     except AttributeError:

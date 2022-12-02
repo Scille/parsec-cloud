@@ -531,7 +531,7 @@ def reset_testbed(request, caplog, persistent_mockup, clear_database_dir: Callab
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
         if persistent_mockup is not None:
             persistent_mockup.clear()
-            clear_database_dir(True)
+        clear_database_dir(True)
         if not keep_logs:
             caplog.clear()
 

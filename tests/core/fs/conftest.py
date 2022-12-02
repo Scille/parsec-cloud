@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncIterator, Callable
+from typing import Any, AsyncIterator, Callable
 
 import pytest
 import trio
@@ -15,6 +15,7 @@ from parsec._parsec import (
     EntryName,
     LocalDevice,
     LocalWorkspaceManifest,
+    Regex,
     WorkspaceEntry,
 )
 from parsec.core.backend_connection.authenticated import backend_authenticated_cmds_factory
@@ -24,6 +25,7 @@ from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from tests.common import call_with_control
+from tests.core.conftest import UserFsFactory
 
 
 @pytest.fixture
@@ -138,16 +140,22 @@ async def alice_sync_transactions(transactions_factory, alice, alice_transaction
         yield transactions
 
 
-@pytest.fixture
+@pytest.fixture(params=[True, False], ids=["compatibility_between_rust_and_python", "vanilla"])
 def user_fs_offline_state_machine(
-    user_fs_factory,
+    monkeypatch: pytest.MonkeyPatch,
+    user_fs_factory: UserFsFactory,
     persistent_mockup,
     clear_database_dir: Callable[[bool], None],
     reset_testbed,
     hypothesis_settings,
+    fixtures_customization: dict[str, Any],
+    request: pytest.FixtureRequest,
 ):
     class UserFSOfflineStateMachine(TrioAsyncioRuleBasedStateMachine):
-        async def start_user_fs(self, device):
+        def __init__(self):
+            super().__init__()
+
+        async def start_user_fs(self, device: LocalDevice):
             async def _user_fs_controlled_cb(started_cb):
                 async with user_fs_factory(device=device) as user_fs:
                     await started_cb(user_fs=user_fs)
@@ -162,13 +170,14 @@ def user_fs_offline_state_machine(
             except AttributeError:
                 pass
 
-        async def restart_user_fs(self, device):
+        async def restart_user_fs(self, device: LocalDevice):
             await self.stop_user_fs()
             await self.start_user_fs(device)
 
-        async def reset_user_fs(self, device):
+        async def reset_user_fs(self, device: LocalDevice):
             await self.stop_user_fs()
-            persistent_mockup.clear()
+            if persistent_mockup:
+                persistent_mockup.clear()
             del self.user_fs_controller.user_fs
             del self.user_fs_controller
             clear_database_dir(True)
@@ -186,12 +195,122 @@ def user_fs_offline_state_machine(
         def run_as_test(cls):
             run_state_machine_as_test(cls, settings=hypothesis_settings)
 
+    param: bool = request.param
+
+    patched_wk_storage = bool(fixtures_customization.get("alternate_workspace_storage", False))
+    if not patched_wk_storage and param:
+        pytest.skip()
+
+    if param:
+        from parsec.core.fs.storage import WorkspaceStorage as RSWorkspaceStorage
+        from parsec.core.fs.storage import (
+            workspace_storage_non_speculative_init as rs_workspace_init,
+        )
+        from parsec.core.fs.storage.workspace_storage import (
+            DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+            FAILSAFE_PATTERN_FILTER,
+        )
+        from tests.core.fs.old_workspace_storage import WorkspaceStorage as PyWorkspaceStorage
+        from tests.core.fs.old_workspace_storage import (
+            workspace_storage_non_speculative_init as py_workspace_init,
+        )
+
+        use_original_wk_storage = True
+        original_restart_user_fs = UserFSOfflineStateMachine.restart_user_fs
+        original_wk_storage_run = RSWorkspaceStorage.run
+        original_wk_init = rs_workspace_init
+
+        async def toggle_restart_user_fs(self: UserFSOfflineStateMachine, device: LocalDevice):
+            nonlocal use_original_wk_storage
+
+            use_original_wk_storage = not use_original_wk_storage
+            await original_restart_user_fs(self, device=device)
+
+        monkeypatch.setattr(UserFSOfflineStateMachine, "restart_user_fs", toggle_restart_user_fs)
+
+        # original_init = UserFSOfflineStateMachine.init
+
+        async def reset_choice_init(self: object, *args):
+            nonlocal use_original_wk_storage
+
+            use_original_wk_storage = True
+            # await original_init(self, *args)
+
+        monkeypatch.setattr(UserFSOfflineStateMachine, "init", reset_choice_init, raising=False)
+
+        @asynccontextmanager
+        async def switching_wk_storage_run(
+            data_base_dir: Path,
+            device: LocalDevice,
+            workspace_id: EntryID,
+            prevent_sync_pattern: Regex = FAILSAFE_PATTERN_FILTER,
+            cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+        ) -> AsyncIterator[RSWorkspaceStorage | PyWorkspaceStorage]:
+            nonlocal use_original_wk_storage
+
+            if use_original_wk_storage:
+                print("[WorkspaceStorage::run] Using original impl")
+                async with original_wk_storage_run(
+                    data_base_dir=data_base_dir,
+                    device=device,
+                    workspace_id=workspace_id,
+                    prevent_sync_pattern=prevent_sync_pattern,
+                    cache_size=cache_size,
+                ) as workspace:
+                    yield workspace
+            else:
+                print("[WorkspaceStorage::run] Using older impl")
+                async with PyWorkspaceStorage.run(
+                    data_base_dir=data_base_dir,
+                    device=device,
+                    workspace_id=workspace_id,
+                    prevent_sync_pattern=prevent_sync_pattern,
+                    cache_size=cache_size,
+                ) as workspace:
+                    yield workspace
+
+        monkeypatch.setattr("parsec.core.fs.storage.WorkspaceStorage.run", switching_wk_storage_run)
+
+        async def switching_wk_init(
+            data_base_dir: Path,
+            device: LocalDevice,
+            workspace_id: EntryID,
+        ) -> None:
+            nonlocal use_original_wk_storage
+
+            if use_original_wk_storage:
+                print("[workspace_storage_non_speculative_init] Using original impl")
+                await original_wk_init(
+                    data_base_dir=data_base_dir, device=device, workspace_id=workspace_id
+                )
+            else:
+                print("[workspace_storage_non_speculative_init] Using older impl")
+                await py_workspace_init(
+                    data_base_dir=data_base_dir, device=device, workspace_id=workspace_id
+                )
+
+        monkeypatch.setattr(
+            "parsec.core.fs.storage.workspace_storage_non_speculative_init",
+            switching_wk_init,
+        )
+        monkeypatch.setattr(
+            "parsec.core.fs.storage.workspace_storage.workspace_storage_non_speculative_init",
+            switching_wk_init,
+        )
+        monkeypatch.setattr(
+            "parsec.core.fs.userfs.userfs.workspace_storage_non_speculative_init",
+            switching_wk_init,
+        )
+
     return UserFSOfflineStateMachine
 
 
 @pytest.fixture
 def user_fs_online_state_machine(
-    user_fs_offline_state_machine, backend_factory, running_backend_factory, reset_testbed
+    user_fs_offline_state_machine,
+    backend_factory,
+    running_backend_factory,
+    reset_testbed,
 ):
     class UserFSOnlineStateMachine(user_fs_offline_state_machine):
         async def start_backend(self, **kwargs):
