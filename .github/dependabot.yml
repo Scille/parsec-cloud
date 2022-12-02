@@ -1,6 +1,46 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
+    directory: /.github/actions/paths-filter
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "00:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /.github/actions/setup-python-poetry
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "00:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /.github/actions/setup-rust
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "00:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /.github/actions/use-pre-commit
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "00:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
     directory: /
     pull-request-branch-name:
       separator: "-"
