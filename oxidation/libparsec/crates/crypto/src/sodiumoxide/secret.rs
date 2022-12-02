@@ -47,10 +47,15 @@ impl SecretKey {
         Ok(plaintext)
     }
 
+    /// # Safety
+    ///
+    /// This function requires access to libsodium methods that are not
+    /// exposed directly, so it uses the unsafe C API
+    /// ...
     pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
+        // SAFETY: Sodiumoxide doesn't expose those methods, so we have to access
+        // the libsodium C API directly
         unsafe {
-            // SAFETY: Sodiumoxide doesn't expose those methods, so we have to access
-            // the libsodium C API directly
             let mut state = libsodium_sys::crypto_generichash_blake2b_state {
                 opaque: [0u8; 384usize],
             };
@@ -82,7 +87,7 @@ impl SecretKey {
 
     pub fn from_password(password: &str, salt: &[u8]) -> Self {
         let mut key = [0; KEYBYTES];
-        let salt = Salt::from_slice(&salt).expect("Invalid salt");
+        let salt = Salt::from_slice(salt).expect("Invalid salt");
 
         derive_key(
             &mut key,
