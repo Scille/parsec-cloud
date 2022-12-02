@@ -1,0 +1,34 @@
+{
+    "label": "LocalPendingEnrollment",
+    "type": "local_pending_enrollment",
+    "other_fields": [
+        {
+            "name": "x509_certificate",
+            "type": "X509Certificate"
+        },
+        {
+            "name": "addr",
+            "type": "BackendPkiEnrollmentAddr"
+        },
+        {
+            "name": "submitted_on",
+            "type": "DateTime"
+        },
+        {
+            "name": "enrollment_id",
+            "type": "EnrollmentID"
+        },
+        {
+            "name": "submit_payload",
+            "type": "PkiEnrollmentSubmitPayload"
+        },
+        {
+            "name": "encrypted_key",
+            "type": "Bytes"
+        },
+        {
+            "name": "ciphertext",
+            "type": "Bytes"
+        }
+    ]
+}
