@@ -68,6 +68,7 @@ async def workspace_storage_non_speculative_init(
     device: LocalDevice,
     workspace_id: EntryID,
 ) -> None:
+
     return await trio.to_thread.run_sync(
         _sync_workspace_storage_non_speculative_init,
         data_base_dir,

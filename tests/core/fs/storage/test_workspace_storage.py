@@ -22,16 +22,16 @@ from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
 from parsec.core.fs import FSError, FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.fs.storage import WorkspaceStorage
-from parsec.core.fs.userfs import UserFS
 from parsec.core.types import DEFAULT_BLOCK_SIZE
 from tests.common import customize_fixtures
+from tests.core.conftest import UserFsFactory
 
 Manifest = TypeVar("Manifest", LocalWorkspaceManifest, LocalUserManifest)
 
 
 @pytest.mark.trio
 @pytest.mark.slow
-async def test_leaks(user_fs_factory: Callable[..., UserFS], alice: LocalDevice):
+async def test_leaks(user_fs_factory: UserFsFactory, alice: LocalDevice):
 
     async with user_fs_factory(device=alice) as user_fs:
         await user_fs.workspace_create(EntryName("w"))
