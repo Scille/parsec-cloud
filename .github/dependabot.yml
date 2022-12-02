@@ -21,16 +21,6 @@ updates:
     open-pull-requests-limit: 2
 
   - package-ecosystem: pip
-    directory: /oxidation/libparsec_python
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: monthly
-      time: "00:30"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 2
-
-  - package-ecosystem: pip
     directory: /
     ignore:
       - dependency-name: toastedmarshmallow
