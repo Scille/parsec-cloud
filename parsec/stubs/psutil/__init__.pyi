@@ -1,1 +1,3 @@
+from __future__ import annotations
+
 def pid_exists(pid: int) -> bool: ...

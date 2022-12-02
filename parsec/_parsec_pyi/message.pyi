@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
 from parsec._parsec_pyi.ids import DeviceID, EntryID
 from parsec._parsec_pyi.manifest import EntryName
@@ -16,7 +18,7 @@ class MessageContent:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-    ) -> "MessageContent": ...
+    ) -> MessageContent: ...
     def dump_sign_and_encrypt_for(
         self,
         author_signkey: SigningKey,

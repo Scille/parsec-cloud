@@ -1,4 +1,5 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
 from typing import Iterable
 
 from parsec._parsec import UsersPerProfileDetailItem
@@ -10,7 +11,7 @@ class OrganizationStatsReq:
 class OrganizationStatsRep:
     def dump(self) -> bytes: ...
     @classmethod
-    def load(cls, buf: bytes) -> "OrganizationStatsRep": ...
+    def load(cls, buf: bytes) -> OrganizationStatsRep: ...
 
 class OrganizationStatsRepOk(OrganizationStatsRep):
     def __init__(
@@ -55,7 +56,7 @@ class OrganizationConfigReq:
 class OrganizationConfigRep:
     def dump(self) -> bytes: ...
     @classmethod
-    def load(cls, buf: bytes) -> "OrganizationConfigRep": ...
+    def load(cls, buf: bytes) -> OrganizationConfigRep: ...
 
 class OrganizationConfigRepOk(OrganizationConfigRep):
     def __init__(
