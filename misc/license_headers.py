@@ -206,14 +206,14 @@ class SkipLicenser(Licenser):
 LICENSERS_MAP = {
     # First match is used
     re.compile(r"^parsec/backend/.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^parsec/backend/.*\.py"): PythonBuslLicenser,
+    re.compile(r"^parsec/backend/.*\.(py|pyi)"): PythonBuslLicenser,
     re.compile(r"^parsec/core/gui/_resources_rc.py$"): SkipLicenser,
     re.compile(r"^parsec/core/gui/ui/"): SkipLicenser,
     re.compile(r"^oxidation/(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
     re.compile(r"^oxidation/.*\.rs$"): RustBuslLicenser,
-    re.compile(r"^oxidation/.*\.py$"): PythonBuslLicenser,
+    re.compile(r"^oxidation/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^oxidation/.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^docs/.*\.py$"): PythonBuslLicenser,
+    re.compile(r"^docs/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
     # Js project is a minefield full of node_modules/build/dist/assets etc.
     # so we just cut simple and add copyright only to the important stuff
@@ -221,7 +221,7 @@ LICENSERS_MAP = {
     re.compile(r"^oxidation/client/src/.*\.vue$"): VueBuslLicenser,
     # Special case for ourself given we contain the license headers in the source code !
     re.compile(r"^misc/license_headers.py$"): SkipLicenser,
-    re.compile(r"^.*\.py$"): PythonAgplLicenser,
+    re.compile(r"^.*\.(py|pyi)$"): PythonAgplLicenser,
     re.compile(r"^.*\.sql$"): SqlAgplLicenser,
 }
 
@@ -231,6 +231,7 @@ def get_files(pathes: Iterable[Path]) -> Iterator[Path]:
         if path.is_dir():
             for f in chain(
                 path.glob("**/*.py"),
+                path.glob("**/*.pyi"),
                 path.glob("**/*.sql"),
                 path.glob("**/*.rst"),
                 path.glob("**/*.rs"),
