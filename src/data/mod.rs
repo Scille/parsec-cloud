@@ -24,6 +24,10 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Error
     m.add("DataError", py.get_type::<DataError>())?;
     m.add("EntryNameError", py.get_type::<EntryNameError>())?;
+    m.add(
+        "PkiEnrollmentLocalPendingError",
+        py.get_type::<PkiEnrollmentLocalPendingError>(),
+    )?;
 
     // Certif
     m.add_class::<UserCertificate>()?;
@@ -77,6 +81,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Pki
     m.add_class::<PkiEnrollmentAnswerPayload>()?;
     m.add_class::<PkiEnrollmentSubmitPayload>()?;
+    m.add_class::<X509Certificate>()?;
+    m.add_class::<LocalPendingEnrollment>()?;
 
     // User
     m.add_class::<UsersPerProfileDetailItem>()?;

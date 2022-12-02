@@ -1,14 +1,17 @@
 use pyo3::{
     pyclass, pymethods,
-    types::{PyBytes, PyType},
-    Python,
+    types::{IntoPyDict, PyBytes, PyDict, PyType},
+    PyAny, Python,
 };
+use std::{collections::HashMap, path::Path};
 
 use crate::{
+    addrs::BackendPkiEnrollmentAddr,
     api_crypto::{PublicKey, VerifyKey},
-    data::DataResult,
+    data::{DataResult, PkiEnrollmentLocalPendingResult},
     enumerate::UserProfile,
-    ids::{DeviceID, DeviceLabel, HumanHandle},
+    ids::{DeviceID, DeviceLabel, EnrollmentID, HumanHandle},
+    time::DateTime,
 };
 
 #[pyclass]
@@ -116,5 +119,230 @@ impl PkiEnrollmentSubmitPayload {
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
         PyBytes::new(py, &self.0.dump())
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct X509Certificate(pub libparsec::types::X509Certificate);
+
+crate::binding_utils::gen_proto!(X509Certificate, __repr__);
+crate::binding_utils::gen_proto!(X509Certificate, __richcmp__, eq);
+
+#[pymethods]
+impl X509Certificate {
+    #[new]
+    fn new(
+        issuer: HashMap<String, String>,
+        subject: HashMap<String, String>,
+        der_x509_certificate: Vec<u8>,
+        certificate_sha1: Vec<u8>,
+        certificate_id: Option<String>,
+    ) -> Self {
+        Self(libparsec::types::X509Certificate {
+            issuer,
+            subject,
+            der_x509_certificate,
+            certificate_sha1,
+            certificate_id,
+        })
+    }
+
+    fn is_avaiblable_locally(&self) -> bool {
+        self.0.is_avaiblable_locally()
+    }
+
+    #[getter]
+    fn subject_common_name(&self) -> Option<&String> {
+        self.0.subject_common_name()
+    }
+
+    #[getter]
+    fn subject_email_address(&self) -> Option<&String> {
+        self.0.subject_email_address()
+    }
+
+    #[getter]
+    fn issuer_common_name(&self) -> Option<&String> {
+        self.0.issuer_common_name()
+    }
+
+    #[getter]
+    fn issuer<'py>(&self, py: Python<'py>) -> &'py PyDict {
+        self.0.issuer.clone().into_py_dict(py)
+    }
+
+    #[getter]
+    fn subject<'py>(&self, py: Python<'py>) -> &'py PyDict {
+        self.0.subject.clone().into_py_dict(py)
+    }
+
+    #[getter]
+    fn der_x509_certificate<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.der_x509_certificate)
+    }
+
+    #[getter]
+    fn certificate_sha1<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.certificate_sha1)
+    }
+
+    #[getter]
+    fn certificate_id(&self) -> Option<&String> {
+        self.0.certificate_id.as_ref()
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct LocalPendingEnrollment(pub libparsec::types::LocalPendingEnrollment);
+
+crate::binding_utils::gen_proto!(LocalPendingEnrollment, __repr__);
+crate::binding_utils::gen_proto!(LocalPendingEnrollment, __richcmp__, eq);
+
+#[pymethods]
+impl LocalPendingEnrollment {
+    #[new]
+    fn new(
+        x509_certificate: X509Certificate,
+        addr: BackendPkiEnrollmentAddr,
+        submitted_on: DateTime,
+        enrollment_id: EnrollmentID,
+        submit_payload: PkiEnrollmentSubmitPayload,
+        encrypted_key: Vec<u8>,
+        ciphertext: Vec<u8>,
+    ) -> Self {
+        Self(libparsec::types::LocalPendingEnrollment {
+            x509_certificate: x509_certificate.0,
+            addr: addr.0,
+            submitted_on: submitted_on.0,
+            enrollment_id: enrollment_id.0,
+            submit_payload: submit_payload.0,
+            encrypted_key,
+            ciphertext,
+        })
+    }
+
+    #[classmethod]
+    fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::LocalPendingEnrollment::load(raw).map(Self)?)
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+
+    fn save(&self, config_dir: &PyAny) -> PkiEnrollmentLocalPendingResult<String> {
+        let config_dir = config_dir
+            .call_method0("__str__")
+            .expect("config_dir should be a Path")
+            .extract::<&str>()
+            .map(Path::new)
+            .expect("Unreachable");
+        Ok(self
+            .0
+            .save(config_dir)
+            .map(|x| x.to_str().expect("Unreachable").to_string())?)
+    }
+
+    #[classmethod]
+    fn load_from_path(_cls: &PyType, path: &PyAny) -> PkiEnrollmentLocalPendingResult<Self> {
+        let path = path
+            .call_method0("__str__")
+            .expect("path should be a Path")
+            .extract::<&str>()
+            .map(Path::new)
+            .expect("Unreachable");
+        Ok(libparsec::types::LocalPendingEnrollment::load_from_path(path).map(Self)?)
+    }
+
+    #[classmethod]
+    fn load_from_enrollment_id(
+        _cls: &PyType,
+        config_dir: &PyAny,
+        enrollment_id: EnrollmentID,
+    ) -> PkiEnrollmentLocalPendingResult<Self> {
+        let config_dir = config_dir
+            .call_method0("__str__")
+            .expect("config_dir should be a Path")
+            .extract::<&str>()
+            .map(Path::new)
+            .expect("Unreachable");
+        Ok(
+            libparsec::types::LocalPendingEnrollment::load_from_enrollment_id(
+                config_dir,
+                enrollment_id.0,
+            )
+            .map(Self)?,
+        )
+    }
+
+    #[classmethod]
+    fn remove_from_enrollment_id(
+        _cls: &PyType,
+        config_dir: &PyAny,
+        enrollment_id: EnrollmentID,
+    ) -> PkiEnrollmentLocalPendingResult<()> {
+        let config_dir = config_dir
+            .call_method0("__str__")
+            .expect("config_dir should be a Path")
+            .extract::<&str>()
+            .map(Path::new)
+            .expect("Unreachable");
+        Ok(
+            libparsec::types::LocalPendingEnrollment::remove_from_enrollment_id(
+                config_dir,
+                enrollment_id.0,
+            )?,
+        )
+    }
+
+    #[classmethod]
+    fn list(_cls: &PyType, config_dir: &PyAny) -> Vec<Self> {
+        let config_dir = config_dir
+            .call_method0("__str__")
+            .expect("config_dir should be a Path")
+            .extract::<&str>()
+            .map(Path::new)
+            .expect("Unreachable");
+        libparsec::types::LocalPendingEnrollment::list(config_dir)
+            .into_iter()
+            .map(Self)
+            .collect()
+    }
+
+    #[getter]
+    fn x509_certificate(&self) -> X509Certificate {
+        X509Certificate(self.0.x509_certificate.clone())
+    }
+
+    #[getter]
+    fn addr(&self) -> BackendPkiEnrollmentAddr {
+        BackendPkiEnrollmentAddr(self.0.addr.clone())
+    }
+
+    #[getter]
+    fn submitted_on(&self) -> DateTime {
+        DateTime(self.0.submitted_on)
+    }
+
+    #[getter]
+    fn enrollment_id(&self) -> EnrollmentID {
+        EnrollmentID(self.0.enrollment_id)
+    }
+
+    #[getter]
+    fn submit_payload(&self) -> PkiEnrollmentSubmitPayload {
+        PkiEnrollmentSubmitPayload(self.0.submit_payload.clone())
+    }
+
+    #[getter]
+    fn encrypted_key<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.encrypted_key)
+    }
+
+    #[getter]
+    fn ciphertext<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.ciphertext)
     }
 }

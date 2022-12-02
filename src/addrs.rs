@@ -267,7 +267,9 @@ impl BackendActionAddr {
 }
 
 #[pyclass]
-pub struct BackendOrganizationBootstrapAddr(libparsec::types::BackendOrganizationBootstrapAddr);
+pub(crate) struct BackendOrganizationBootstrapAddr(
+    libparsec::types::BackendOrganizationBootstrapAddr,
+);
 
 crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __richcmp__, eq);
@@ -430,7 +432,9 @@ impl BackendOrganizationBootstrapAddr {
 
 #[pyclass]
 #[derive(Clone)]
-pub struct BackendOrganizationFileLinkAddr(libparsec::types::BackendOrganizationFileLinkAddr);
+pub(crate) struct BackendOrganizationFileLinkAddr(
+    libparsec::types::BackendOrganizationFileLinkAddr,
+);
 
 crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __richcmp__, eq);
@@ -581,7 +585,7 @@ impl BackendOrganizationFileLinkAddr {
 
 #[pyclass]
 #[derive(Clone)]
-pub struct BackendInvitationAddr(libparsec::types::BackendInvitationAddr);
+pub(crate) struct BackendInvitationAddr(libparsec::types::BackendInvitationAddr);
 
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __richcmp__, eq);
@@ -740,7 +744,8 @@ impl BackendInvitationAddr {
 }
 
 #[pyclass]
-pub struct BackendPkiEnrollmentAddr(libparsec::types::BackendPkiEnrollmentAddr);
+#[derive(Clone)]
+pub(crate) struct BackendPkiEnrollmentAddr(pub libparsec::types::BackendPkiEnrollmentAddr);
 
 crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __richcmp__, eq);
