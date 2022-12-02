@@ -173,11 +173,11 @@ impl LocalPendingEnrollment {
     }
 
     pub fn load(raw: &[u8]) -> DataResult<Self> {
-        load(raw)
+        rmp_serde::from_slice(raw).map_err(|_| DataError::Serialization)
     }
 
     pub fn dump(&self) -> Vec<u8> {
-        dump(&self)
+        rmp_serde::to_vec_named(&self).expect("Unreachable")
     }
 
     pub fn save(&self, config_dir: &Path) -> PkiEnrollmentLocalPendingResult<PathBuf> {
