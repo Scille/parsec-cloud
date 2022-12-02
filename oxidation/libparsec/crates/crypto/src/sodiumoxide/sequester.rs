@@ -1,16 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-/* use ed25519_dalek::Verifier;
-use rsa::{
-    pkcs8::{
-        der::zeroize::Zeroizing, DecodePrivateKey, DecodePublicKey, EncodePrivateKey,
-        EncodePublicKey,
-    },
-    pss::{Signature, SigningKey, VerifyingKey},
-    signature::RandomizedSigner,
-    PaddingScheme, PublicKey, RsaPrivateKey, RsaPublicKey,
-}; */
-
 use zeroize::Zeroizing;
 
 use openssl::hash::MessageDigest;
@@ -20,7 +9,6 @@ use openssl::sign::{Signer, Verifier};
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-/* use sha2::Sha256; */
 
 use crate::{CryptoError, CryptoResult, SecretKey};
 
@@ -83,7 +71,7 @@ crate::impl_key_debug!(SequesterPrivateKeyDer);
 impl Default for SequesterPrivateKeyDer {
     fn default() -> Self {
         Self(
-            PKey::from_rsa(Rsa::generate(Self::SIZE_IN_BITS.try_into().unwrap()).unwrap())
+            PKey::from_rsa(Rsa::generate(Self::SIZE_IN_BITS as u32).expect("Unreachable"))
                 .expect("Unreachable"),
         )
     }
@@ -118,7 +106,7 @@ impl SequesterPrivateKeyDer {
         let pkey_pem = self.0.private_key_to_pem_pkcs8().expect("Unreachable");
 
         Zeroizing::new(
-            std::str::from_utf8(&pkey_pem)
+            String::from_utf8(pkey_pem)
                 .expect("Unreachable")
                 .to_string(),
         )
@@ -133,7 +121,7 @@ impl SequesterPrivateKeyDer {
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
         let (cipherkey, ciphertext) = Self::deserialize(data)?;
 
-        let mut decrypted_key_der: Vec<u8> = vec![0; cipherkey.len()];
+        let mut decrypted_key_der = vec![0; cipherkey.len()];
         let decrypted_key_bytecount = self
             .0
             .rsa()
@@ -189,7 +177,7 @@ impl SequesterPublicKeyDer {
     pub fn dump_pem(&self) -> String {
         let pkey_pem = self.0.public_key_to_pem().expect("Unreachable");
 
-        std::str::from_utf8(&pkey_pem)
+        String::from_utf8(pkey_pem)
             .expect("Unreachable")
             .to_string()
     }
@@ -205,7 +193,7 @@ impl SequesterPublicKeyDer {
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         let secret_key = SecretKey::generate();
 
-        let mut encrypted_secret_key: Vec<u8> = vec![0; self.0.size() as usize];
+        let mut encrypted_secret_key = vec![0; self.0.size() as usize];
 
         let encrypted_key_bytes = self
             .0
@@ -214,7 +202,7 @@ impl SequesterPublicKeyDer {
                 &mut encrypted_secret_key,
                 Padding::PKCS1_OAEP,
             )
-            .unwrap();
+            .expect("Unable to decrypt a secret key");
 
         EnforceSerialize::serialize(
             self,
@@ -253,8 +241,8 @@ impl Serialize for SequesterPublicKeyDer {
 
 impl PartialEq for SequesterPublicKeyDer {
     fn eq(&self, other: &Self) -> bool {
-        let public_key = PKey::from_rsa(self.0.to_owned()).unwrap();
-        public_key.public_eq(&PKey::from_rsa(other.0.to_owned()).unwrap())
+        let public_key = PKey::from_rsa(self.0.to_owned()).expect("Unreachable");
+        public_key.public_eq(&PKey::from_rsa(other.0.to_owned()).expect("Unreachable"))
     }
 }
 
@@ -299,7 +287,7 @@ impl SequesterSigningKeyDer {
             .expect("Unreachable");
 
         Zeroizing::new(
-            std::str::from_utf8(&pkey_pem)
+            String::from_utf8(pkey_pem)
                 .expect("Unreachable")
                 .to_string(),
         )
@@ -314,10 +302,13 @@ impl SequesterSigningKeyDer {
     // Signature format:
     //   <algorithm name>:<signature><data>
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let mut signer = Signer::new(MessageDigest::sha256(), &self.0).expect("What");
-        signer.update(data).expect("Unable to sign");
+        let mut signer =
+            Signer::new(MessageDigest::sha256(), &self.0).expect("Unable to build a Signer");
 
-        self.serialize(&signer.sign_to_vec().unwrap(), data)
+        signer.update(data).expect("Unreachable");
+        let signed_data = signer.sign_to_vec().expect("Unable to sign a message");
+
+        self.serialize(&signed_data, data)
     }
 }
 
@@ -360,7 +351,7 @@ impl SequesterVerifyKeyDer {
             .expect("Unreachable");
 
         Zeroizing::new(
-            std::str::from_utf8(&pkey_pem)
+            String::from_utf8(pkey_pem)
                 .expect("Unable to get UTF-8 String from public key PEM")
                 .to_string(),
         )
