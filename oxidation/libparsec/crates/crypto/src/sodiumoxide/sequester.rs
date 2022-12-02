@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use ed25519_dalek::Verifier;
+/* use ed25519_dalek::Verifier;
 use rsa::{
     pkcs8::{
         der::zeroize::Zeroizing, DecodePrivateKey, DecodePublicKey, EncodePrivateKey,
@@ -9,10 +9,18 @@ use rsa::{
     pss::{Signature, SigningKey, VerifyingKey},
     signature::RandomizedSigner,
     PaddingScheme, PublicKey, RsaPrivateKey, RsaPublicKey,
-};
+}; */
+
+use zeroize::Zeroizing;
+
+use openssl::hash::MessageDigest;
+use openssl::pkey::{PKey, Private, Public};
+use openssl::rsa::{Padding, Rsa};
+use openssl::sign::{Signer, Verifier};
+
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sha2::Sha256;
+/* use sha2::Sha256; */
 
 use crate::{CryptoError, CryptoResult, SecretKey};
 
@@ -68,14 +76,16 @@ trait EnforceDeserialize {
  */
 
 #[derive(Clone)]
-pub struct SequesterPrivateKeyDer(RsaPrivateKey);
+pub struct SequesterPrivateKeyDer(PKey<Private>);
 
 crate::impl_key_debug!(SequesterPrivateKeyDer);
 
 impl Default for SequesterPrivateKeyDer {
     fn default() -> Self {
-        let mut rng = rand_08::thread_rng();
-        Self(RsaPrivateKey::new(&mut rng, Self::SIZE_IN_BITS).expect("Unreachable"))
+        Self(
+            PKey::from_rsa(Rsa::generate(Self::SIZE_IN_BITS.try_into().unwrap()).unwrap())
+                .expect("Unreachable"),
+        )
     }
 }
 
@@ -83,7 +93,7 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        RsaPrivateKey::from_pkcs8_der(bytes)
+        PKey::private_key_from_der(bytes)
             .map(Self)
             .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
     }
@@ -101,31 +111,37 @@ impl SequesterPrivateKeyDer {
     pub const SIZE_IN_BITS: usize = 4096;
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
-        self.0.to_pkcs8_der().expect("Unreachable").to_bytes()
+        Zeroizing::new(self.0.private_key_to_der().expect("Unreachable"))
     }
 
     pub fn dump_pem(&self) -> Zeroizing<String> {
-        self.0
-            .to_pkcs8_pem(rsa::pkcs8::LineEnding::default())
-            .expect("Unreachable")
+        let pkey_pem = self.0.private_key_to_pem_pkcs8().expect("Unreachable");
+
+        Zeroizing::new(
+            std::str::from_utf8(&pkey_pem)
+                .expect("Unreachable")
+                .to_string(),
+        )
     }
 
     pub fn load_pem(s: &str) -> CryptoResult<Self> {
-        RsaPrivateKey::from_pkcs8_pem(s)
+        PKey::private_key_from_pem(s.as_bytes())
             .map(Self)
             .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
     }
 
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
         let (cipherkey, ciphertext) = Self::deserialize(data)?;
-        let padding = PaddingScheme::new_oaep::<Sha256>();
 
-        let clearkey = SecretKey::try_from(
-            &self
-                .0
-                .decrypt(padding, cipherkey)
-                .map_err(|_| CryptoError::Decryption)?[..],
-        )?;
+        let mut decrypted_key_der: Vec<u8> = vec![0; cipherkey.len()];
+        let decrypted_key_bytecount = self
+            .0
+            .rsa()
+            .expect("Unreachable")
+            .private_decrypt(cipherkey, &mut decrypted_key_der, Padding::PKCS1_OAEP)
+            .map_err(|_| CryptoError::Decryption)?;
+
+        let clearkey = SecretKey::try_from(&decrypted_key_der[0..decrypted_key_bytecount])?;
 
         clearkey.decrypt(ciphertext)
     }
@@ -135,15 +151,23 @@ impl SequesterPrivateKeyDer {
  * PublicKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct SequesterPublicKeyDer(RsaPublicKey);
+pub struct SequesterPublicKeyDer(Rsa<Public>);
 
 crate::impl_key_debug!(SequesterPublicKeyDer);
 
 impl From<SequesterPrivateKeyDer> for SequesterPublicKeyDer {
     fn from(priv_key: SequesterPrivateKeyDer) -> Self {
-        Self(RsaPublicKey::from(priv_key.0))
+        let private_key = priv_key.0.rsa().expect("Unreachable");
+
+        Self(
+            Rsa::from_public_components(
+                private_key.n().to_owned().expect("?"),
+                private_key.e().to_owned().expect("?"),
+            )
+            .expect("Unreachable"),
+        )
     }
 }
 
@@ -159,17 +183,19 @@ impl SequesterPublicKeyDer {
     pub const SIZE_IN_BITS: usize = 4096;
 
     pub fn dump(&self) -> Vec<u8> {
-        self.0.to_public_key_der().expect("Unreachable").into_vec()
+        self.0.public_key_to_der().expect("Unreachable")
     }
 
     pub fn dump_pem(&self) -> String {
-        self.0
-            .to_public_key_pem(rsa::pkcs8::LineEnding::default())
+        let pkey_pem = self.0.public_key_to_pem().expect("Unreachable");
+
+        std::str::from_utf8(&pkey_pem)
             .expect("Unreachable")
+            .to_string()
     }
 
     pub fn load_pem(s: &str) -> CryptoResult<Self> {
-        RsaPublicKey::from_public_key_pem(s)
+        Rsa::public_key_from_pem(s.as_bytes())
             .map(Self)
             .map_err(|err| CryptoError::SequesterPublicKeyDer(err.to_string()))
     }
@@ -177,15 +203,24 @@ impl SequesterPublicKeyDer {
     // Encryption format:
     //   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
-        let mut rng = rand_08::thread_rng();
-        let padding = PaddingScheme::new_oaep::<Sha256>();
         let secret_key = SecretKey::generate();
-        let secret_key_encrypted = self
-            .0
-            .encrypt(&mut rng, padding, secret_key.as_ref())
-            .expect("Unreachable");
 
-        EnforceSerialize::serialize(self, &secret_key_encrypted, &secret_key.encrypt(data))
+        let mut encrypted_secret_key: Vec<u8> = vec![0; self.0.size() as usize];
+
+        let encrypted_key_bytes = self
+            .0
+            .public_encrypt(
+                secret_key.as_ref(),
+                &mut encrypted_secret_key,
+                Padding::PKCS1_OAEP,
+            )
+            .unwrap();
+
+        EnforceSerialize::serialize(
+            self,
+            &encrypted_secret_key[0..encrypted_key_bytes],
+            &secret_key.encrypt(data),
+        )
     }
 }
 
@@ -193,7 +228,7 @@ impl TryFrom<&[u8]> for SequesterPublicKeyDer {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        RsaPublicKey::from_public_key_der(bytes)
+        Rsa::public_key_from_der(bytes)
             .map(Self)
             .map_err(|err| CryptoError::SequesterPublicKeyDer(err.to_string()))
     }
@@ -216,12 +251,21 @@ impl Serialize for SequesterPublicKeyDer {
     }
 }
 
+impl PartialEq for SequesterPublicKeyDer {
+    fn eq(&self, other: &Self) -> bool {
+        let public_key = PKey::from_rsa(self.0.to_owned()).unwrap();
+        public_key.public_eq(&PKey::from_rsa(other.0.to_owned()).unwrap())
+    }
+}
+
+impl Eq for SequesterPublicKeyDer {}
+
 /*
  * SigningKey
  */
 
 #[derive(Clone)]
-pub struct SequesterSigningKeyDer(SigningKey<Sha256>);
+pub struct SequesterSigningKeyDer(PKey<Private>);
 
 crate::impl_key_debug!(SequesterSigningKeyDer);
 
@@ -232,7 +276,7 @@ impl EnforceSerialize for SequesterSigningKeyDer {
 
 impl From<SequesterPrivateKeyDer> for SequesterSigningKeyDer {
     fn from(priv_key: SequesterPrivateKeyDer) -> Self {
-        Self(SigningKey::from(priv_key.0))
+        Self(priv_key.0)
     }
 }
 
@@ -243,28 +287,37 @@ impl SequesterSigningKeyDer {
     pub const SIZE_IN_BITS: usize = 4096;
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
-        self.0.to_pkcs8_der().expect("Unreachable").to_bytes()
+        Zeroizing::new(self.0.private_key_to_der().expect("Unreachable"))
     }
 
     pub fn dump_pem(&self) -> Zeroizing<String> {
-        self.0
-            .to_pkcs8_pem(rsa::pkcs8::LineEnding::default())
+        let pkey_pem = self
+            .0
+            .rsa()
             .expect("Unreachable")
+            .private_key_to_pem()
+            .expect("Unreachable");
+
+        Zeroizing::new(
+            std::str::from_utf8(&pkey_pem)
+                .expect("Unreachable")
+                .to_string(),
+        )
     }
 
     pub fn load_pem(s: &str) -> CryptoResult<Self> {
-        RsaPrivateKey::from_pkcs8_pem(s)
-            .map(|x| Self(SigningKey::from(x)))
+        PKey::private_key_from_pkcs8(s.as_bytes())
+            .map(Self)
             .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
     }
 
     // Signature format:
     //   <algorithm name>:<signature><data>
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let mut rng = rand_08::thread_rng();
-        let signature = self.0.sign_with_rng(&mut rng, data);
+        let mut signer = Signer::new(MessageDigest::sha256(), &self.0).expect("What");
+        signer.update(data).expect("Unable to sign");
 
-        self.serialize(signature.as_ref(), data)
+        self.serialize(&signer.sign_to_vec().unwrap(), data)
     }
 }
 
@@ -272,25 +325,16 @@ impl SequesterSigningKeyDer {
  * VerifyKey
  */
 
-#[derive(Clone, Deserialize)]
-#[serde(try_from = "&Bytes")]
-pub struct SequesterVerifyKeyDer(VerifyingKey<Sha256>);
+#[derive(Clone)]
+pub struct SequesterVerifyKeyDer(PKey<Public>);
 
 crate::impl_key_debug!(SequesterVerifyKeyDer);
 
 impl From<SequesterPublicKeyDer> for SequesterVerifyKeyDer {
     fn from(pub_key: SequesterPublicKeyDer) -> Self {
-        Self(VerifyingKey::from(pub_key.0))
+        Self(PKey::from_rsa(pub_key.0).expect("Unreachable"))
     }
 }
-
-impl PartialEq for SequesterVerifyKeyDer {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.as_ref() == other.0.as_ref()
-    }
-}
-
-impl Eq for SequesterVerifyKeyDer {}
 
 impl EnforceDeserialize for SequesterVerifyKeyDer {
     const SIZE_IN_BITS: usize = Self::SIZE_IN_BITS;
@@ -303,32 +347,42 @@ impl SequesterVerifyKeyDer {
     #[cfg(not(test))]
     pub const SIZE_IN_BITS: usize = 4096;
 
-    pub fn dump(&self) -> Vec<u8> {
-        self.0.to_public_key_der().expect("Unreachable").into_vec()
+    pub fn dump(&self) -> Zeroizing<Vec<u8>> {
+        Zeroizing::new(self.0.public_key_to_der().expect("Unreachable"))
     }
 
-    pub fn dump_pem(&self) -> String {
-        self.0
-            .to_public_key_pem(rsa::pkcs8::LineEnding::default())
+    pub fn dump_pem(&self) -> Zeroizing<String> {
+        let pkey_pem = self
+            .0
+            .rsa()
             .expect("Unreachable")
-    }
+            .public_key_to_pem()
+            .expect("Unreachable");
 
-    pub fn load_pem(s: &str) -> CryptoResult<Self> {
-        RsaPublicKey::from_public_key_pem(s)
-            .map(|x| Self(VerifyingKey::from(x)))
-            .map_err(|err| CryptoError::SequesterPublicKeyDer(err.to_string()))
+        Zeroizing::new(
+            std::str::from_utf8(&pkey_pem)
+                .expect("Unable to get UTF-8 String from public key PEM")
+                .to_string(),
+        )
     }
 
     pub fn verify(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
-        let (signature, data) = <Self as EnforceDeserialize>::deserialize(data)?;
+        let (signature, data) = Self::deserialize(data)?;
 
-        // TODO: It Seems to be a mistake from RustCrypto/RSA
-        // Why should we allocate there ?
-        self.0
-            .verify(data, &Signature::from(signature.to_vec()))
+        let mut verifier = Verifier::new(MessageDigest::sha256(), &self.0)
             .map_err(|_| CryptoError::SignatureVerification)?;
 
-        Ok(data.to_vec())
+        verifier
+            .update(data)
+            .map_err(|_| CryptoError::SignatureVerification)?;
+
+        match verifier.verify(signature) {
+            Ok(signature_is_valid) => match signature_is_valid {
+                true => Ok(data.to_vec()),
+                false => Err(CryptoError::Signature),
+            },
+            Err(_) => Err(CryptoError::SignatureVerification),
+        }
     }
 }
 
@@ -336,8 +390,8 @@ impl TryFrom<&[u8]> for SequesterVerifyKeyDer {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        RsaPublicKey::from_public_key_der(bytes)
-            .map(|x| Self(VerifyingKey::from(x)))
+        PKey::public_key_from_der(bytes)
+            .map(Self)
             .map_err(|err| CryptoError::SequesterPublicKeyDer(err.to_string()))
     }
 }

@@ -19,9 +19,9 @@ pub enum CryptoError {
     #[error("The nonce must be exactly 24 bytes long")]
     Nonce,
     #[error("Invalid SequesterPrivateKeyDer {0}")]
-    SequesterPrivateKeyDer(rsa::pkcs8::Error),
+    SequesterPrivateKeyDer(String),
     #[error("Invalid SequesterPublicKeyDer {0}")]
-    SequesterPublicKeyDer(rsa::pkcs8::spki::Error),
+    SequesterPublicKeyDer(String),
 }
 
 pub type CryptoResult<T> = Result<T, CryptoError>;
