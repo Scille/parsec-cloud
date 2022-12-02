@@ -6,6 +6,8 @@ mod sequester;
 
 pub use error::*;
 pub(crate) use secret::*;
+
+#[cfg(all(feature = "use-rustcrypto", not(feature = "use-sodiumoxide")))]
 pub use sequester::*;
 
 macro_rules! impl_key_debug {
