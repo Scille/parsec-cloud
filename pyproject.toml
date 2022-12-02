@@ -137,7 +137,7 @@ PyQt5_stubs = "^5.15"
 # it dependencies won't clash with the rest of the project.
 pyinstaller = "^5.3"
 
-flake8 = "6.0.0"
+ruff = "^0.0.149"
 black = "^22.6.0"
 mypy = "^0.982"
 
@@ -170,6 +170,41 @@ PATH = "$PATH:$HOME/.cargo/bin"
 
 [tool.maturin]
 features = ["extension-module"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+select = [
+    # Pyflakes
+    "F",
+    # Pycodestyle
+    "E",
+    "W",
+    # Unused noqa directive
+    "M",
+    # isort
+    "I",
+]
+
+# Handled by black:
+# E501: Line too long
+#
+# Currently not passing errors:
+# E402 Module level import not at top of file
+# F541 f-string without any placeholders
+ignore = ["E501", "E402", "F541"]
+
+extend-exclude = [
+    "docs",
+    "oxidation/",
+    "parsec/core/gui/_resources_rc.py",
+    "parsec/core/gui/ui/",
+    "misc/bench.py",
+]
+
+[tool.ruff.isort]
+known-first-party = ["parsec"]
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,

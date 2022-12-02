@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-import pytest
 from unittest.mock import ANY
+
+import pytest
+import trio
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import (
-    VlobID,
     BlockID,
+    HandshakeOrganizationExpired,
     OrganizationID,
     UserProfile,
-    HandshakeOrganizationExpired,
+    VlobID,
 )
 from parsec.api.rest import organization_stats_rep_serializer
-from parsec.backend.organization import Organization
 from parsec.backend.backend_events import BackendEvent
-
+from parsec.backend.organization import Organization
 from tests.common import customize_fixtures, local_device_to_backend_user
 
 

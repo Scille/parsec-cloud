@@ -1,7 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import pytest
+import trio
+
 from parsec._parsec import (
+    DateTime,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
     Invite2aClaimerSendHashedNonceRepInvalidState,
@@ -29,30 +33,24 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepOk,
 )
-
-from parsec.backend.backend_events import BackendEvent
-import pytest
-import trio
-from parsec._parsec import DateTime
-
-from parsec.crypto import PrivateKey, HashDigest
 from parsec.api.protocol import InvitationType
-
-from tests.common import real_clock_timeout
+from parsec.backend.backend_events import BackendEvent
+from parsec.crypto import HashDigest, PrivateKey
 from tests.backend.common import (
     invite_1_claimer_wait_peer,
     invite_1_greeter_wait_peer,
     invite_2a_claimer_send_hashed_nonce,
     invite_2a_greeter_get_hashed_nonce,
-    invite_2b_greeter_send_nonce,
     invite_2b_claimer_send_nonce,
-    invite_3a_greeter_wait_peer_trust,
+    invite_2b_greeter_send_nonce,
     invite_3a_claimer_signify_trust,
+    invite_3a_greeter_wait_peer_trust,
     invite_3b_claimer_wait_peer_trust,
     invite_3b_greeter_signify_trust,
-    invite_4_greeter_communicate,
     invite_4_claimer_communicate,
+    invite_4_greeter_communicate,
 )
+from tests.common import real_clock_timeout
 
 
 @pytest.fixture

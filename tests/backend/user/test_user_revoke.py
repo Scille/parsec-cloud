@@ -7,19 +7,18 @@ from quart.testing.connections import WebsocketDisconnectError
 
 from parsec._parsec import (
     DateTime,
-    UserRevokeRepOk,
     UserRevokeRepAlreadyRevoked,
     UserRevokeRepInvalidCertification,
     UserRevokeRepNotAllowed,
     UserRevokeRepNotFound,
+    UserRevokeRepOk,
 )
-from parsec.backend.backend_events import BackendEvent
-from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.data import RevokedUserCertificate
 from parsec.api.protocol import HandshakeRevokedDevice, UserProfile
-
+from parsec.backend.backend_events import BackendEvent
+from parsec.backend.user import INVITATION_VALIDITY
+from tests.backend.common import authenticated_ping, user_revoke
 from tests.common import freeze_time
-from tests.backend.common import user_revoke, authenticated_ping
 
 
 @pytest.mark.trio

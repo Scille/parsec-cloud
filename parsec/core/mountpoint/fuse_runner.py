@@ -1,30 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import os
-import sys
-from types import FrameType
-from typing import AsyncGenerator, Tuple, cast
-import trio
 import errno
-import signal
-import threading
 import importlib.resources
-from pathlib import Path
-from fuse import FUSE
-from structlog import get_logger
+import os
+import signal
+import sys
+import threading
 from contextlib import asynccontextmanager
 from itertools import count
+from pathlib import Path
+from types import FrameType
+from typing import AsyncGenerator, Tuple, cast
 
-from parsec._parsec import EntryID, DateTime
-from parsec.event_bus import EventBus
+import trio
+from fuse import FUSE
+from structlog import get_logger
+
+from parsec._parsec import DateTime, EntryID
 from parsec.core import resources as resources_module
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.core_events import CoreEvent
+from parsec.core.mountpoint.exceptions import MountpointDriverCrash
 from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
-from parsec.core.mountpoint.exceptions import MountpointDriverCrash
+from parsec.event_bus import EventBus
 
 
 __all__ = ("fuse_mountpoint_runner",)

@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import attr
 
-
-from parsec.serde import BaseSchema, MsgpackSerializer
 from parsec.api.data import BaseData
+from parsec.serde import BaseSchema, MsgpackSerializer
 
 __all__ = ("BaseLocalData",)
 

@@ -4,18 +4,18 @@ from __future__ import annotations
 import triopg
 
 from parsec._parsec import DateTime
-from parsec.api.protocol import OrganizationID, UserID, DeviceID
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyRevokedError
 from parsec.backend.postgresql.handler import send_signal
+from parsec.backend.postgresql.user_queries.create import q_take_user_device_write_lock
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
     q_device_internal_id,
+    q_organization_internal_id,
     q_user,
+    query,
 )
-from parsec.backend.postgresql.user_queries.create import q_take_user_device_write_lock
+from parsec.backend.user import UserAlreadyRevokedError, UserError, UserNotFoundError
 
 
 _q_revoke_user = Q(

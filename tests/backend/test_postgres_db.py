@@ -1,21 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import sys
 import logging
+import sys
+from asyncio import InvalidStateError
 from datetime import datetime, timezone
 from uuid import uuid4
 
-import trio
 import pytest
+import trio
 import triopg
-from asyncio import InvalidStateError
 
 from parsec._parsec import DateTime, EntryID
-from parsec.backend.cli.run import _run_backend, RetryPolicy
+from parsec.backend.cli.run import RetryPolicy, _run_backend
 from parsec.backend.config import BackendConfig, PostgreSQLBlockStoreConfig
 from parsec.backend.postgresql.handler import handle_datetime, handle_uuid
-
 from tests.common import real_clock_timeout
 
 

@@ -1,61 +1,62 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 import re
-import sys
 import subprocess
-import pytest
+import sys
 from collections import defaultdict
-from typing import Union, Optional, Tuple, Iterable
 from hashlib import sha1
 from pathlib import Path
+from typing import Iterable, Optional, Tuple, Union
+
+import attr
+import pytest
 
 from parsec._parsec import DateTime, EnrollmentID
-from parsec.crypto import SigningKey, PrivateKey
 from parsec.api.data import (
+    DataError,
+    DeviceCertificate,
+    PkiEnrollmentAnswerPayload,
+    PkiEnrollmentSubmitPayload,
+    RealmRoleCertificate,
+    RevokedUserCertificate,
     UserCertificate,
     UserManifest,
-    RevokedUserCertificate,
-    DeviceCertificate,
-    RealmRoleCertificate,
-    PkiEnrollmentSubmitPayload,
-    PkiEnrollmentAnswerPayload,
-    DataError,
 )
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
     DeviceID,
     DeviceLabel,
     HumanHandle,
-    RealmRole,
+    OrganizationID,
     RealmID,
-    VlobID,
+    RealmRole,
+    UserID,
     UserProfile,
+    VlobID,
 )
-from parsec.core.types import (
-    LocalDevice,
-    LocalUserManifest,
-    BackendOrganizationBootstrapAddr,
-    BackendPkiEnrollmentAddr,
-)
+from parsec.backend.backend_events import BackendEvent
+from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.user import Device as BackendDevice
+from parsec.backend.user import User as BackendUser
+from parsec.core.fs.storage import UserStorage
 from parsec.core.local_device import (
-    LocalDeviceNotFoundError,
-    LocalDeviceCryptoError,
-    LocalDevicePackingError,
     DeviceFileType,
-    _save_device,
+    LocalDeviceCryptoError,
+    LocalDeviceNotFoundError,
+    LocalDevicePackingError,
     _load_device,
+    _save_device,
     generate_new_device,
 )
-from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
-from parsec.core.fs.storage import UserStorage
-from parsec.backend.backend_events import BackendEvent
-from parsec.backend.user import User as BackendUser, Device as BackendDevice
-from parsec.backend.realm import RealmGrantedRole
-
-from tests.common import freeze_time, addr_with_device_subdomain
+from parsec.core.types import (
+    BackendOrganizationBootstrapAddr,
+    BackendPkiEnrollmentAddr,
+    LocalDevice,
+    LocalUserManifest,
+)
+from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
+from parsec.crypto import PrivateKey, SigningKey
+from tests.common import addr_with_device_subdomain, freeze_time
 
 
 @pytest.fixture

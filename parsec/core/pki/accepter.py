@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-from pathlib import Path
 from hashlib import sha1
+from pathlib import Path
 from typing import Iterable, cast
+
+import attr
 
 from parsec._parsec import (
     DateTime,
@@ -26,10 +27,28 @@ from parsec._parsec import (
     PkiEnrollmentRejectRepNotFound,
     PkiEnrollmentRejectRepOk,
 )
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload
-from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
+from parsec.api.data import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
+from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
 from parsec.core.invite.greeter import _create_new_user_certificates
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentAcceptActiveUsersLimitReachedError,
+    PkiEnrollmentAcceptAlreadyExistsError,
+    PkiEnrollmentAcceptError,
+    PkiEnrollmentAcceptInvalidCertificationError,
+    PkiEnrollmentAcceptInvalidDataError,
+    PkiEnrollmentAcceptInvalidPayloadDataError,
+    PkiEnrollmentAcceptNoLongerAvailableError,
+    PkiEnrollmentAcceptNotAllowedError,
+    PkiEnrollmentAcceptNotFoundError,
+    PkiEnrollmentError,
+    PkiEnrollmentListError,
+    PkiEnrollmentListNotAllowedError,
+    PkiEnrollmentRejectError,
+    PkiEnrollmentRejectNoLongerAvailableError,
+    PkiEnrollmentRejectNotAllowedError,
+    PkiEnrollmentRejectNotFoundError,
+)
 from parsec.core.pki.plumbing import (
     X509Certificate,
     pki_enrollment_load_peer_certificate,
@@ -38,24 +57,6 @@ from parsec.core.pki.plumbing import (
     pki_enrollment_sign_payload,
 )
 from parsec.core.types import LocalDevice
-from parsec.core.pki.exceptions import (
-    PkiEnrollmentError,
-    PkiEnrollmentListError,
-    PkiEnrollmentListNotAllowedError,
-    PkiEnrollmentRejectError,
-    PkiEnrollmentRejectNotFoundError,
-    PkiEnrollmentRejectNotAllowedError,
-    PkiEnrollmentRejectNoLongerAvailableError,
-    PkiEnrollmentAcceptError,
-    PkiEnrollmentAcceptNotAllowedError,
-    PkiEnrollmentAcceptInvalidPayloadDataError,
-    PkiEnrollmentAcceptInvalidDataError,
-    PkiEnrollmentAcceptInvalidCertificationError,
-    PkiEnrollmentAcceptNotFoundError,
-    PkiEnrollmentAcceptNoLongerAvailableError,
-    PkiEnrollmentAcceptAlreadyExistsError,
-    PkiEnrollmentAcceptActiveUsersLimitReachedError,
-)
 
 
 async def accepter_list_submitted_from_backend(

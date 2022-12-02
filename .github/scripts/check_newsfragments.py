@@ -4,14 +4,14 @@
 PRs must contain a newsfragment that reference an opened issue
 """
 
-import re
-import json
 import argparse
+import json
+import re
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from subprocess import run
 from typing import Optional
-from urllib.request import urlopen, Request, HTTPError
-from concurrent.futures import ThreadPoolExecutor
+from urllib.request import HTTPError, Request, urlopen
 
 
 # If file never existed in master, consider as a new newsfragment

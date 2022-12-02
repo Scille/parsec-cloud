@@ -8,11 +8,10 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec._parsec import DateTime
 from parsec.core.fs import FsPath, WorkspaceFS
-
-from parsec.core.gui.files_widget import FilesWidget, Clipboard
+from parsec.core.gui.files_widget import Clipboard, FilesWidget
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.workspaces_widget import WorkspacesWidget
 from parsec.core.gui.ui.mount_widget import Ui_MountWidget
+from parsec.core.gui.workspaces_widget import WorkspacesWidget
 from parsec.core.logged_core import LoggedCore
 from parsec.event_bus import EventBus
 

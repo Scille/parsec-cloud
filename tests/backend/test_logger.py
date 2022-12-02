@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional
 import base64
+from typing import Optional
+
 from hypercorn.config import Config as HyperConfig
-from hypercorn.typing import ResponseSummary, HTTPScope
+from hypercorn.typing import HTTPScope, ResponseSummary
 
 from parsec.backend.asgi.logger import ParsecLogger
 

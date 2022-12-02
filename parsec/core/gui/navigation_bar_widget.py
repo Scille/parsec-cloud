@@ -3,17 +3,17 @@ from __future__ import annotations
 
 from typing import Any, Callable, List, cast
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QPixmap, QColor
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QColor, QPixmap
 from PyQt5.QtWidgets import (
+    QFrame,
     QHBoxLayout,
-    QWidget,
-    QSpacerItem,
-    QSizePolicy,
     QLabel,
     QScrollArea,
-    QFrame,
     QScroller,
+    QSizePolicy,
+    QSpacerItem,
+    QWidget,
 )
 
 from parsec.api.data import EntryName

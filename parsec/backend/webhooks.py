@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+from urllib.request import Request, urlopen
+
 import trio
 from structlog import get_logger
-from urllib.request import urlopen, Request
 
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
     DeviceLabel,
+    OrganizationID,
     organization_bootstrap_webhook_serializer,
 )
 from parsec.backend.config import BackendConfig

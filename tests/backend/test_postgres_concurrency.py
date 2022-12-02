@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-import trio
-import triopg
 from contextlib import contextmanager
 from unittest.mock import patch
 
+import pytest
+import trio
+import triopg
+
 from parsec._parsec import DateTime, EnrollmentID
 from parsec.backend.organization import OrganizationAlreadyBootstrappedError
-from parsec.backend.user import UserAlreadyExistsError, UserActiveUsersLimitReached
 from parsec.backend.pki import PkiEnrollmentNoLongerAvailableError
-
+from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
 from tests.common import local_device_to_backend_user
 
 

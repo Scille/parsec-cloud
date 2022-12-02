@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import pytest
+
 from parsec._parsec import DateTime
-
 from parsec.core.remote_devices_manager import RemoteDevicesManagerBackendOfflineError
-
 from tests.common import freeze_time
 
 

@@ -3,16 +3,15 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.api.version import ApiVersion
 from parsec.api.protocol import (
+    APIV1_AnonymousClientHandshake,
+    HandshakeBadIdentity,
+    HandshakeRVKMismatch,
+    ServerHandshake,
     packb,
     unpackb,
-    ServerHandshake,
-    APIV1_AnonymousClientHandshake,
-    HandshakeRVKMismatch,
-    HandshakeBadIdentity,
 )
-
+from parsec.api.version import ApiVersion
 from tests.common import customize_fixtures
 
 

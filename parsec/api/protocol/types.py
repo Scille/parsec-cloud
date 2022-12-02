@@ -1,19 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from unicodedata import normalize
-from marshmallow import ValidationError
 from typing import Pattern, Tuple, TypeVar, Union
+from unicodedata import normalize
 
+from marshmallow import ValidationError
+
+from parsec._parsec import DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserID, UserProfile
 from parsec.serde import fields
-from parsec._parsec import (
-    UserProfile,
-    OrganizationID,
-    UserID,
-    DeviceID,
-    DeviceLabel,
-    HumanHandle,
-)
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")

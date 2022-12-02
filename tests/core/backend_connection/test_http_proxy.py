@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import re
-import pytest
 import os
-import trio
+import re
 from functools import partial
 
+import pytest
+import trio
+
 from parsec.api.protocol import DeviceID
-from parsec.crypto import SigningKey
-from parsec.core.types import BackendOrganizationAddr, BackendInvitationAddr
 from parsec.core.backend_connection.transport import (
-    connect_as_invited,
-    connect_as_authenticated,
     BackendNotAvailable,
+    connect_as_authenticated,
+    connect_as_invited,
     http_request,
 )
-
+from parsec.core.types import BackendInvitationAddr, BackendOrganizationAddr
+from parsec.crypto import SigningKey
 from tests.common import real_clock_timeout
 
 

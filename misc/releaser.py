@@ -28,16 +28,16 @@ A typical release process looks as follow:
 
 """
 
-import sys
 import argparse
+import math
 import pathlib
+import re
+import subprocess
+import sys
+import textwrap
+from collections import defaultdict
 from copy import copy
 from datetime import date, datetime
-from collections import defaultdict
-import subprocess
-import re
-import textwrap
-import math
 
 
 LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years

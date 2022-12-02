@@ -4,23 +4,18 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import DateTime, InvitedPingRepOk
-from parsec.api.protocol import (
-    INVITED_CMDS,
-    InvitationToken,
-    InvitationDeletedReason,
-)
-from parsec.core.types import BackendInvitationAddr
+from parsec._parsec import DateTime, InvitationType, InvitedPingRepOk
+from parsec.api.protocol import INVITED_CMDS, InvitationDeletedReason, InvitationToken
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
-    BackendNotAvailable,
     BackendConnectionRefused,
-    BackendInvitationNotFound,
     BackendInvitationAlreadyUsed,
+    BackendInvitationNotFound,
+    BackendNotAvailable,
     backend_invited_cmds_factory,
 )
-from parsec.backend.backend_events import BackendEvent
+from parsec.core.types import BackendInvitationAddr
 from tests.core.backend_connection.common import ALL_CMDS
-from parsec._parsec import InvitationType
 
 
 @pytest.fixture

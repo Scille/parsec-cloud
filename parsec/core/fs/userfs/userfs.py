@@ -1,112 +1,108 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
+from contextlib import asynccontextmanager
 from pathlib import Path
-from trio_typing import TaskStatus
 from typing import (
     TYPE_CHECKING,
-    Tuple,
-    Union,
+    AsyncIterator,
     Dict,
+    List,
     Sequence,
+    Tuple,
     Type,
     TypeVar,
-    AsyncIterator,
-    List,
+    Union,
     cast,
 )
+
+import trio
 from structlog import get_logger
-from contextlib import asynccontextmanager
+from trio_typing import TaskStatus
 
 from parsec._parsec import (
-    Regex,
     DateTime,
     MessageGetRepOk,
-    RealmCreateRepOk,
     RealmCreateRepAlreadyExists,
-    RealmStatusRepOk,
-    RealmStatusRepNotAllowed,
-    RealmUpdateRolesRepOk,
-    RealmUpdateRolesRepAlreadyGranted,
-    RealmUpdateRolesRepInMaintenance,
-    RealmUpdateRolesRepNotAllowed,
-    RealmUpdateRolesRepRequireGreaterTimestamp,
-    RealmUpdateRolesRepUserRevoked,
-    RealmStartReencryptionMaintenanceRepOk,
-    RealmStartReencryptionMaintenanceRepNotAllowed,
-    RealmStartReencryptionMaintenanceRepInMaintenance,
-    RealmStartReencryptionMaintenanceRepParticipantMismatch,
-    RealmFinishReencryptionMaintenanceRepOk,
+    RealmCreateRepOk,
     RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
     RealmFinishReencryptionMaintenanceRepNotAllowed,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
-    VlobCreateRepOk,
+    RealmFinishReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepInMaintenance,
+    RealmStartReencryptionMaintenanceRepNotAllowed,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStatusRepNotAllowed,
+    RealmStatusRepOk,
+    RealmUpdateRolesRepAlreadyGranted,
+    RealmUpdateRolesRepInMaintenance,
+    RealmUpdateRolesRepNotAllowed,
+    RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepRequireGreaterTimestamp,
+    RealmUpdateRolesRepUserRevoked,
+    Regex,
+    VlobCreateRep,
     VlobCreateRepAlreadyExists,
     VlobCreateRepInMaintenance,
+    VlobCreateRepOk,
+    VlobCreateRepRejectedBySequesterService,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
-    VlobCreateRepRejectedBySequesterService,
     VlobCreateRepTimeout,
-    VlobReadRepOk,
-    VlobReadRepInMaintenance,
-    VlobUpdateRepOk,
-    VlobUpdateRepBadVersion,
-    VlobUpdateRepInMaintenance,
-    VlobUpdateRepRequireGreaterTimestamp,
-    VlobUpdateRepSequesterInconsistency,
-    VlobUpdateRepRejectedBySequesterService,
-    VlobUpdateRepTimeout,
-    VlobMaintenanceGetReencryptionBatchRepOk,
     VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceGetReencryptionBatchRepNotAllowed,
     VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
-    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepOk,
     VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
-    VlobCreateRep,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobReadRepInMaintenance,
+    VlobReadRepOk,
     VlobUpdateRep,
+    VlobUpdateRepBadVersion,
+    VlobUpdateRepInMaintenance,
+    VlobUpdateRepOk,
+    VlobUpdateRepRejectedBySequesterService,
+    VlobUpdateRepRequireGreaterTimestamp,
+    VlobUpdateRepSequesterInconsistency,
+    VlobUpdateRepTimeout,
 )
-from parsec.utils import open_service_nursery
-from parsec.core.core_events import CoreEvent
-from parsec.event_bus import EventBus
-from parsec.crypto import SecretKey
 from parsec.api.data import (
     DataError,
-    RealmRoleCertificate,
     MessageContent,
-    UserCertificate,
+    PingMessageContent,
+    RealmRoleCertificate,
+    SequesterServiceCertificate,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
-    PingMessageContent,
+    UserCertificate,
     UserManifest,
-    SequesterServiceCertificate,
 )
-from parsec.api.protocol import UserID, DeviceID, MaintenanceType, RealmID, VlobID
-from parsec.core.types import (
-    EntryID,
-    EntryName,
-    LocalDevice,
-    WorkspaceEntry,
-    WorkspaceRole,
-    LocalUserManifest,
-)
-from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
+from parsec.api.protocol import DeviceID, MaintenanceType, RealmID, UserID, VlobID
 
 # TODO: handle exceptions status...
-from parsec.core.backend_connection import (
-    BackendConnectionError,
-    BackendNotAvailable,
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs.exceptions import (
+    FSBackendOfflineError,
+    FSError,
+    FSSequesterServiceRejectedError,
+    FSServerUploadTemporarilyUnavailableError,
+    FSSharingNotAllowedError,
+    FSWorkspaceInMaintenance,
+    FSWorkspaceNoAccess,
+    FSWorkspaceNotFoundError,
+    FSWorkspaceNotInMaintenance,
 )
-from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import (
+    MANIFEST_STAMP_AHEAD_US,
+    ROLE_CERTIFICATE_STAMP_AHEAD_US,
     UserRemoteLoader,
     _validate_sequester_config,
-    ROLE_CERTIFICATE_STAMP_AHEAD_US,
-    MANIFEST_STAMP_AHEAD_US,
 )
 from parsec.core.fs.storage import (
     UserStorage,
@@ -114,17 +110,19 @@ from parsec.core.fs.storage import (
     workspace_storage_non_speculative_init,
 )
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
-from parsec.core.fs.exceptions import (
-    FSError,
-    FSWorkspaceNoAccess,
-    FSWorkspaceNotFoundError,
-    FSBackendOfflineError,
-    FSSharingNotAllowedError,
-    FSWorkspaceInMaintenance,
-    FSWorkspaceNotInMaintenance,
-    FSServerUploadTemporarilyUnavailableError,
-    FSSequesterServiceRejectedError,
+from parsec.core.fs.workspacefs import WorkspaceFS
+from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.types import (
+    EntryID,
+    EntryName,
+    LocalDevice,
+    LocalUserManifest,
+    WorkspaceEntry,
+    WorkspaceRole,
 )
+from parsec.crypto import SecretKey
+from parsec.event_bus import EventBus
+from parsec.utils import open_service_nursery
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection import BackendAuthenticatedCmds

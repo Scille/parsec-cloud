@@ -6,14 +6,14 @@ import pytest
 from parsec._parsec import Regex
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.core.types import EntryID, EntryName, Chunk, LocalFolderManifest, LocalFileManifest
 from parsec.core.fs import FsPath
 from parsec.core.fs.workspacefs.sync_transactions import (
-    full_name,
-    merge_manifests,
-    merge_folder_children,
     FSFileConflictError,
+    full_name,
+    merge_folder_children,
+    merge_manifests,
 )
+from parsec.core.types import Chunk, EntryID, EntryName, LocalFileManifest, LocalFolderManifest
 
 
 empty_pattern = Regex.from_regex_str(r"^\b$")

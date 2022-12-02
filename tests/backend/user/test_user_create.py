@@ -2,22 +2,22 @@
 from __future__ import annotations
 
 import pytest
+
 from parsec._parsec import (
     DateTime,
-    UserGetRepOk,
-    UserCreateRepOk,
-    UserCreateRepAlreadyExists,
     UserCreateRepActiveUsersLimitReached,
+    UserCreateRepAlreadyExists,
     UserCreateRepInvalidCertification,
     UserCreateRepInvalidData,
     UserCreateRepNotAllowed,
+    UserCreateRepOk,
+    UserGetRepOk,
 )
-from parsec.backend.user import INVITATION_VALIDITY, User, Device
-from parsec.api.data import UserCertificate, DeviceCertificate
+from parsec.api.data import DeviceCertificate, UserCertificate
 from parsec.api.protocol import DeviceID, DeviceLabel, UserProfile
-
+from parsec.backend.user import INVITATION_VALIDITY, Device, User
+from tests.backend.common import user_create, user_get
 from tests.common import customize_fixtures, freeze_time
-from tests.backend.common import user_get, user_create
 
 
 @pytest.mark.trio

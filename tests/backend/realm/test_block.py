@@ -1,40 +1,40 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
 import pytest
-from hypothesis import given, strategies as st
+import trio
+from hypothesis import given
+from hypothesis import strategies as st
 
 from parsec._parsec import (
-    DateTime,
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
     BlockCreateRepOk,
     BlockCreateRepTimeout,
     BlockReadRepNotAllowed,
-    BlockReadRepOk,
     BlockReadRepNotFound,
+    BlockReadRepOk,
     BlockReadRepTimeout,
-)
-from parsec.backend.realm import RealmGrantedRole
-from parsec.backend.block import BlockStoreError
-from parsec.backend.raid5_blockstore import (
-    split_block_in_chunks,
-    generate_checksum_chunk,
-    rebuild_block_from_chunks,
+    DateTime,
 )
 from parsec.api.protocol import (
     BlockID,
+    RealmRole,
     VlobID,
     block_create_serializer,
     block_read_serializer,
     packb,
-    RealmRole,
 )
-
-from tests.common import customize_fixtures
+from parsec.backend.block import BlockStoreError
+from parsec.backend.raid5_blockstore import (
+    generate_checksum_chunk,
+    rebuild_block_from_chunks,
+    split_block_in_chunks,
+)
+from parsec.backend.realm import RealmGrantedRole
 from tests.backend.common import block_create, block_read
+from tests.common import customize_fixtures
 
 
 BLOCK_ID = BlockID.from_hex("00000000000000000000000000000001")

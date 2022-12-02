@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import pytest
+
 from parsec._parsec import (
     DateTime,
     Invite1ClaimerWaitPeerRepNotFound,
@@ -26,11 +27,8 @@ from parsec._parsec import (
     InviteDeleteRepAlreadyDeleted,
     InviteDeleteRepNotFound,
 )
-
-from parsec.crypto import PrivateKey
 from parsec.api.protocol import InvitationDeletedReason, InvitationToken
-
-from tests.common import real_clock_timeout
+from parsec.crypto import PrivateKey
 from tests.backend.common import (
     invite_1_greeter_wait_peer,
     invite_2a_greeter_get_hashed_nonce,
@@ -39,6 +37,7 @@ from tests.backend.common import (
     invite_3b_greeter_signify_trust,
     invite_4_greeter_communicate,
 )
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio

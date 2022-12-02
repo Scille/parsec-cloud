@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from urllib.request import HTTPError, Request, urlopen
+
 import pytest
 import trio
-from urllib.request import urlopen, Request, HTTPError
 
 from parsec import __version__ as parsec_version
-from parsec.api.protocol import OrganizationID, InvitationToken
-from parsec.core.types.backend_address import BackendInvitationAddr
-from parsec.backend.asgi import MAX_CONTENT_LENGTH, serve_backend_with_asgi
-
 from parsec._parsec import InvitationType
-
+from parsec.api.protocol import InvitationToken, OrganizationID
+from parsec.backend.asgi import MAX_CONTENT_LENGTH, serve_backend_with_asgi
+from parsec.core.types.backend_address import BackendInvitationAddr
 from tests.common import customize_fixtures
 
 

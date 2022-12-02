@@ -1,19 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from importlib import import_module
+from pathlib import Path
 from types import ModuleType
 from typing import Iterable, Tuple
-from pathlib import Path
-from importlib import import_module
 
 import trio
 
 from parsec._parsec import DateTime, EnrollmentID
-from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
-from parsec.crypto import PrivateKey, SigningKey
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAnswerPayload
+from parsec.api.data import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec.core.types import LocalDevice
-from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
+from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
+from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
+from parsec.crypto import PrivateKey, SigningKey
 
 
 def _load_smartcard_extension() -> ModuleType:

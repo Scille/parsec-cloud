@@ -1,27 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-import trio
 import smtplib
 import ssl
 import sys
 import tempfile
-from enum import Enum
 from collections import defaultdict
-from typing import Any, Dict, List, Set, TYPE_CHECKING, Union, cast
-from parsec._parsec import DateTime
 from email.message import Message
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Dict, List, Set, Union, cast
+
+import attr
+import trio
 from structlog import get_logger
 
 from parsec._parsec import (
     BackendInvitationAddr,
     ClientType,
+    DateTime,
+    InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationType,
-    InvitationDeletedReason,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,
@@ -107,25 +108,20 @@ from parsec._parsec import (
     InviteNewRepOk,
     InviteNewReq,
 )
-from parsec.crypto import PublicKey, HashDigest
-from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 from parsec.api.protocol import (
+    HumanHandle,
+    InvitationStatus,
+    InvitationToken,
     OrganizationID,
     UserID,
-    HumanHandle,
-    InvitationToken,
-    InvitationStatus,
     UserProfile,
 )
 from parsec.backend.backend_events import BackendEvent
+from parsec.backend.config import BackendConfig, EmailConfig, MockedEmailConfig, SmtpEmailConfig
 from parsec.backend.templates import get_template
-from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
-from parsec.backend.config import (
-    BackendConfig,
-    EmailConfig,
-    SmtpEmailConfig,
-    MockedEmailConfig,
-)
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.crypto import HashDigest, PublicKey
+from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 
 if TYPE_CHECKING:
     from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext

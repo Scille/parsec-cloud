@@ -1,28 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Iterable, Dict, Union
 from pathlib import Path
+from typing import Dict, Iterable, Union
+
 import attr
 
 from parsec._parsec import DateTime, EnrollmentID
+from parsec.api.data import DataError, PkiEnrollmentSubmitPayload
 from parsec.api.protocol.pki import EnrollmentIDField
+from parsec.core.local_device import MsgpackSerializer
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentLocalPendingError,
+    PkiEnrollmentLocalPendingNotFoundError,
+    PkiEnrollmentLocalPendingPackingError,
+    PkiEnrollmentLocalPendingValidationError,
+)
 from parsec.core.types.backend_address import (
     BackendPkiEnrollmentAddr,
     BackendPkiEnrollmentAddrField,
 )
 from parsec.core.types.base import BaseLocalData
-from parsec.core.pki.exceptions import (
-    PkiEnrollmentLocalPendingError,
-    PkiEnrollmentLocalPendingPackingError,
-    PkiEnrollmentLocalPendingNotFoundError,
-    PkiEnrollmentLocalPendingValidationError,
-)
-
 from parsec.serde import BaseSchema, fields, post_load
-from parsec.api.data import DataError
-from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.core.local_device import MsgpackSerializer
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

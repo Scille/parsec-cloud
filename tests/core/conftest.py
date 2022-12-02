@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 from contextlib import asynccontextmanager
 
+import pytest
+
 from parsec.core.backend_connection import (
-    backend_authenticated_cmds_factory,
     apiv1_backend_anonymous_cmds_factory,
+    backend_authenticated_cmds_factory,
 )
-from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import UserFS
 from parsec.core.logged_core import get_prevent_sync_pattern
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 
 @pytest.fixture

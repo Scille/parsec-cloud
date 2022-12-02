@@ -1,64 +1,59 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from typing import Any, List, Tuple, Type
 
+import attr
+
 from parsec._parsec import (
-    generate_nonce,
-    InvitationDeletedReason,
-    Invite4GreeterCommunicateRepOk,
-    Invite2aGreeterGetHashedNonceRepOk,
     DeviceCreateRepOk,
+    InvitationDeletedReason,
+    Invite1GreeterWaitPeerRepOk,
+    Invite2aGreeterGetHashedNonceRepOk,
     Invite2bGreeterSendNonceRepOk,
     Invite3aGreeterWaitPeerTrustRepOk,
     Invite3bGreeterSignifyTrustRepOk,
+    Invite4GreeterCommunicateRepOk,
     UserCreateRepOk,
-    Invite1GreeterWaitPeerRepOk,
-)
-from parsec.crypto import (
-    SecretKey,
-    PrivateKey,
-    HashDigest,
-    PublicKey,
-    VerifyKey,
+    generate_nonce,
 )
 from parsec.api.data import (
     DataError,
-    SASCode,
-    generate_sas_codes,
-    generate_sas_code_candidates,
-    InviteUserData,
-    InviteUserConfirmation,
-    InviteDeviceData,
-    InviteDeviceConfirmation,
     DeviceCertificate,
+    InviteDeviceConfirmation,
+    InviteDeviceData,
+    InviteUserConfirmation,
+    InviteUserData,
+    SASCode,
     UserCertificate,
+    generate_sas_code_candidates,
+    generate_sas_codes,
 )
 from parsec.api.protocol import (
-    DeviceName,
     DeviceID,
+    DeviceLabel,
+    DeviceName,
     HumanHandle,
     InvitationToken,
-    DeviceLabel,
     UserProfile,
 )
 from parsec.core.backend_connection import BackendAuthenticatedCmds
-from parsec.core.types import LocalDevice
-from parsec.core.invite.exceptions import (
-    InviteError,
-    InvitePeerResetError,
-    InviteNotFoundError,
-    InviteAlreadyUsedError,
-    InviteActiveUsersLimitReachedError,
-)
 from parsec.core.invite.claimer import (
-    NOT_FOUND_TYPES,
+    ACTIVE_USERS_LIMIT_REACHED_TYPES,
     ALREADY_DELETED_TYPES,
     INVALID_STATE_TYPES,
-    ACTIVE_USERS_LIMIT_REACHED_TYPES,
+    NOT_FOUND_TYPES,
     T_OK_TYPES,
 )
+from parsec.core.invite.exceptions import (
+    InviteActiveUsersLimitReachedError,
+    InviteAlreadyUsedError,
+    InviteError,
+    InviteNotFoundError,
+    InvitePeerResetError,
+)
+from parsec.core.types import LocalDevice
+from parsec.crypto import HashDigest, PrivateKey, PublicKey, SecretKey, VerifyKey
 
 
 def _check_rep(rep: Any, step_name: str, ok_type: Type[T_OK_TYPES]) -> T_OK_TYPES:

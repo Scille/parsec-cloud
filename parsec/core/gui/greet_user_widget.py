@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
+from enum import IntEnum
 from typing import Any, Callable
 
 import trio
-from enum import IntEnum
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QWidget
@@ -11,22 +12,22 @@ from PyQt5.QtWidgets import QDialog, QWidget
 from parsec._parsec import SASCode
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationToken, UserProfile
 from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.gui import validators
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
+from parsec.core.gui.ui.greet_user_check_info_widget import Ui_GreetUserCheckInfoWidget
+from parsec.core.gui.ui.greet_user_code_exchange_widget import Ui_GreetUserCodeExchangeWidget
+from parsec.core.gui.ui.greet_user_instructions_widget import Ui_GreetUserInstructionsWidget
+from parsec.core.gui.ui.greet_user_widget import Ui_GreetUserWidget
 from parsec.core.invite import (
-    InviteError,
-    InvitePeerResetError,
     InviteActiveUsersLimitReachedError,
     InviteAlreadyUsedError,
+    InviteError,
+    InvitePeerResetError,
     UserGreetInProgress2Ctx,
 )
 from parsec.core.logged_core import LoggedCore
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
-from parsec.core.gui import validators
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.ui.greet_user_widget import Ui_GreetUserWidget
-from parsec.core.gui.ui.greet_user_code_exchange_widget import Ui_GreetUserCodeExchangeWidget
-from parsec.core.gui.ui.greet_user_check_info_widget import Ui_GreetUserCheckInfoWidget
-from parsec.core.gui.ui.greet_user_instructions_widget import Ui_GreetUserInstructionsWidget
 
 
 class Greeter:

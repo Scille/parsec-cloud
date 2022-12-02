@@ -1,32 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-import click
-from structlog import get_logger
-from typing import Any, Tuple
-from functools import partial
 import tempfile
+from functools import partial
 from pathlib import Path
+from typing import Any, Tuple
 
-from parsec.utils import trio_run
-from parsec.cli_utils import (
-    cli_exception_handler,
-    logging_config_options,
-    sentry_config_options,
-    debug_config_options,
-)
-from parsec.backend.cli.utils import db_backend_options, blockstore_backend_options
+import click
+import trio
+from structlog import get_logger
+
+from parsec._parsec import BackendAddr
 from parsec.backend import backend_app_factory
 from parsec.backend.asgi import serve_backend_with_asgi
+from parsec.backend.cli.utils import blockstore_backend_options, db_backend_options
 from parsec.backend.config import (
     BackendConfig,
-    EmailConfig,
     BaseBlockStoreConfig,
-    SmtpEmailConfig,
+    EmailConfig,
     MockedEmailConfig,
+    SmtpEmailConfig,
 )
-from parsec._parsec import BackendAddr
+from parsec.cli_utils import (
+    cli_exception_handler,
+    debug_config_options,
+    logging_config_options,
+    sentry_config_options,
+)
+from parsec.utils import trio_run
 
 
 logger = get_logger()

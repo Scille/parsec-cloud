@@ -37,23 +37,6 @@ repos:
   ########
   # Python
 
-  - repo: https://github.com/ambv/black
-    rev: 22.10.0
-    hooks:
-      - id: black
-        args:
-          [
-            --line-length=100,
-            --exclude=parsec/core/gui/_resources_rc.py,
-            --exclude=parsec/core/gui/ui/,
-          ]
-        language_version: python3
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-
   # Long story short we cannot use pre-commit isolated venv system for mypy
   # given mypy requires to have access to the project dependencies.
   # We used to specify the list of dependencies actually needed by mypy as
@@ -64,8 +47,45 @@ repos:
   # - if the shell is not into a virtual env, poetry will create one and install Parsec&deps
   # - lastly, mypy is started
   # So this is similar to what the developer does when running mypy from it dev shell \o/
+  #
+  # Now that we use poetry to run mypy, why not also use it for ruff & black !
+  # This have the following benefits:
+  # - It prevents going out of sync in tools version between pre-commit-config
+  #   and poetry.lock
+  # - It saves time on initial run because we don't have to create isolated
+  #   virtualenv for those tools
+  # - Pre-commit hook are really simple, so it's no big deal to inline them.
+  # - Pre-commit hook need sometime tweaks (e.g. ruff hook not correctly
+  #   handling .pyi), it's more readable then to have all the config here then.
   - repo: local
     hooks:
+      - id: ruff
+        name: ruff (using `poetry run ruff`)
+        entry: poetry run ruff
+        require_serial: true
+        language: system
+        types_or: [ python, pyi ]
+        args:
+          [
+            --extend-exclude=parsec/core/gui/_resources_rc.py,
+            --extend-exclude=parsec/core/gui/ui/*,
+            --extend-exclude=oxidation/*,
+            --fix,
+          ]
+
+      - id: black
+        name: black (using `poetry run black`)
+        entry: poetry run black
+        require_serial: true
+        language: system
+        types_or: [ python, pyi ]
+        args:
+          [
+            --line-length=100,
+            --exclude=parsec/core/gui/_resources_rc.py,
+            --exclude=parsec/core/gui/ui/,
+          ]
+
       - id: mypy
         name: Mypy (using `poetry run mypy`)
         entry: poetry run mypy

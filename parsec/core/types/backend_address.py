@@ -1,18 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import Union
+
 from marshmallow import ValidationError
-from parsec.serde import fields
+
 from parsec._parsec import (
-    BackendAddr,
     BackendActionAddr,
+    BackendAddr,
     BackendInvitationAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
     BackendPkiEnrollmentAddr,
 )
-from typing import Union
+from parsec.serde import fields
 
 PARSEC_SCHEME = "parsec"
 

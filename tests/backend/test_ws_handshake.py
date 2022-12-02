@@ -1,21 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 from unittest.mock import ANY
 
-from parsec.api.protocol import packb, unpackb
-from parsec.api.protocol.handshake import ServerHandshake
-from parsec.api.version import ApiVersion, API_VERSION
+import pytest
+
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
+    HandshakeBadIdentity,
+    HandshakeOrganizationExpired,
+    HandshakeRVKMismatch,
     InvitationToken,
     InvitationType,
     InvitedClientHandshake,
-    HandshakeRVKMismatch,
-    HandshakeBadIdentity,
-    HandshakeOrganizationExpired,
+    packb,
+    unpackb,
 )
+from parsec.api.protocol.handshake import ServerHandshake
+from parsec.api.version import API_VERSION, ApiVersion
 from parsec.backend.backend_events import BackendEvent
 
 

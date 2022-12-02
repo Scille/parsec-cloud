@@ -1,19 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import List, Tuple
 
-from parsec.backend.utils import OperationKind
-from parsec.backend.realm import RealmRole
-from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
+import triopg
+
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_vlob_encryption_revision_internal_id,
     q_organization_internal_id,
+    q_vlob_encryption_revision_internal_id,
+    query,
 )
 from parsec.backend.postgresql.vlob_queries.utils import _check_realm, _check_realm_access
+from parsec.backend.realm import RealmRole
+from parsec.backend.utils import OperationKind
 
 
 _q_maintenance_get_reencryption_batch = Q(

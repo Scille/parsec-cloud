@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Callable
 
 from PyQt5.QtCore import pyqtBoundSignal, pyqtSignal
@@ -8,14 +9,15 @@ from PyQt5.QtWidgets import QWidget
 from parsec._parsec import DateTime
 from parsec.api.protocol.types import UserID
 from parsec.core.fs import FsPath, WorkspaceFS
-from parsec.core.logged_core import LoggedCore
-from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.fs.workspacefs.versioning_helpers import TimestampBoundedData, VersionLister
-from parsec.core.gui.lang import translate as _, format_datetime
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.file_size import get_filesize
-from parsec.core.gui.ui.file_history_widget import Ui_FileHistoryWidget
+from parsec.core.gui.lang import format_datetime
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.file_history_button import Ui_FileHistoryButton
+from parsec.core.gui.ui.file_history_widget import Ui_FileHistoryWidget
+from parsec.core.logged_core import LoggedCore
 from parsec.core.types import UserInfo
 
 

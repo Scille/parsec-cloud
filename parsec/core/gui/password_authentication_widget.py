@@ -4,12 +4,11 @@ from __future__ import annotations
 from typing import List
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QValidator
+from PyQt5.QtWidgets import QWidget
 
-from parsec.core.gui.password_validation import PasswordStrengthWidget
 from parsec.core.gui.lang import translate as _
-
+from parsec.core.gui.password_validation import PasswordStrengthWidget
 from parsec.core.gui.ui.password_authentication_widget import Ui_PasswordAuthenticationWidget
 
 

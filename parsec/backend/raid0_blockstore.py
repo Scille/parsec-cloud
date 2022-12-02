@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import List
 
-from parsec.api.protocol import OrganizationID, BlockID
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 
 

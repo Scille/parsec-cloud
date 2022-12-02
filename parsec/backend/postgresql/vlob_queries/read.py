@@ -1,25 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import Dict, Tuple
 
+import triopg
+
 from parsec._parsec import DateTime
-from parsec.api.protocol import OrganizationID, DeviceID, VlobID, RealmID
-from parsec.backend.vlob import VlobVersionError, VlobNotFoundError
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
     q_device,
-    q_realm_internal_id,
     q_organization_internal_id,
+    q_realm_internal_id,
     q_vlob_encryption_revision_internal_id,
+    query,
 )
 from parsec.backend.postgresql.vlob_queries.utils import (
-    _get_realm_id_from_vlob_id,
     _check_realm_and_read_access,
     _get_last_role_granted_on,
+    _get_realm_id_from_vlob_id,
 )
+from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 
 
 _q_read_data_without_timestamp = Q(

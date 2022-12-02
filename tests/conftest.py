@@ -1,39 +1,40 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
+import logging
 import os
 import re
+import sqlite3
 import sys
-import attr
+from contextlib import contextmanager
 from unittest.mock import patch
-import logging
+
+import attr
+import hypothesis
+import pytest
 import structlog
 import trio
 import trio_asyncio
-from contextlib import contextmanager
-import hypothesis
-import sqlite3
 
-from parsec.monitoring import TaskMonitoringInstrument
-from parsec.core.mountpoint.manager import get_mountpoint_runner
-from parsec.core.fs.storage import LocalDatabase
 from parsec.backend.config import (
-    PostgreSQLBlockStoreConfig,
     MockedBlockStoreConfig,
+    PostgreSQLBlockStoreConfig,
     RAID0BlockStoreConfig,
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
 )
+from parsec.core.fs.storage import LocalDatabase
+from parsec.core.mountpoint.manager import get_mountpoint_runner
+from parsec.monitoring import TaskMonitoringInstrument
 
 # TODO: needed ?
 # Must be done before the module has any chance to be imported
 pytest.register_assert_rewrite("tests.common.event_bus_spy")
 from tests.common import (
-    get_side_effects_timeout,
+    asyncio_reset_postgresql_testbed,
     bootstrap_postgresql_testbed,
     get_postgresql_url,
-    asyncio_reset_postgresql_testbed,
+    get_side_effects_timeout,
     reset_postgresql_testbed,
 )
 

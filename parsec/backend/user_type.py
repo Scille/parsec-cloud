@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from typing import Any, Tuple
-from parsec._parsec import DateTime
 
-from parsec.crypto import VerifyKey, PublicKey
+import attr
+
+from parsec._parsec import DateTime
+from parsec.api.data import DataError, DeviceCertificate, UserCertificate
+from parsec.api.protocol import DeviceID, DeviceLabel, DeviceName, HumanHandle, UserID, UserProfile
+from parsec.crypto import PublicKey, VerifyKey
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.api.data import UserCertificate, DeviceCertificate, DataError
-from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel, UserProfile, DeviceName
 
 
 class CertificateValidationError(Exception):

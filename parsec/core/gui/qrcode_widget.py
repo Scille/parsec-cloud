@@ -1,20 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from PyQt5.QtCore import QRectF
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
-from PyQt5.QtGui import QPixmap, QPainter, QImage, QColor
-from PyQt5.QtSvg import QSvgRenderer
+import io
 
 import qrcode
 import qrcode.image.svg
+from PyQt5.QtCore import QRectF
+from PyQt5.QtGui import QColor, QImage, QPainter, QPixmap
+from PyQt5.QtSvg import QSvgRenderer
+from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
-import io
-
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import OverlayLabel, Pixmap
 from parsec.core.gui.custom_dialogs import GreyedDialog
-
+from parsec.core.gui.custom_widgets import OverlayLabel, Pixmap
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.qrcode_widget import Ui_QRCodeWidget
 
 

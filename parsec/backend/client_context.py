@@ -1,26 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from uuid import uuid4
 from typing import Set
-from structlog import BoundLogger, get_logger
+from uuid import uuid4
+
 import trio
+from structlog import BoundLogger, get_logger
 
 from parsec._parsec import ClientType, EventsListenRep
-from parsec.crypto import VerifyKey, PublicKey
-from parsec.event_bus import EventBusConnectionContext
-from parsec.api.version import ApiVersion, API_V2_VERSION
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
-    DeviceName,
     DeviceID,
-    RealmID,
-    HumanHandle,
     DeviceLabel,
+    DeviceName,
+    HumanHandle,
+    OrganizationID,
+    RealmID,
+    UserID,
     UserProfile,
 )
+from parsec.api.version import API_V2_VERSION, ApiVersion
 from parsec.backend.invite import Invitation
+from parsec.crypto import PublicKey, VerifyKey
+from parsec.event_bus import EventBusConnectionContext
 
 
 logger = get_logger()

@@ -1,26 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Dict, List, TYPE_CHECKING, Tuple
 from collections import defaultdict
-from parsec._parsec import DateTime
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-from parsec.crypto import CryptoError
-from parsec.api.data import SequesterServiceCertificate, DataError
-from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, VlobID
+from parsec._parsec import DateTime
+from parsec.api.data import DataError, SequesterServiceCertificate
+from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.sequester import (
     BaseSequesterComponent,
     BaseSequesterService,
-    SequesterServiceAlreadyEnabledError,
-    SequesterServiceNotFoundError,
-    SequesterOrganizationNotFoundError,
-    SequesterDisabledError,
-    SequesterServiceAlreadyExists,
-    SequesterServiceAlreadyDisabledError,
     SequesterCertificateValidationError,
+    SequesterDisabledError,
+    SequesterOrganizationNotFoundError,
+    SequesterServiceAlreadyDisabledError,
+    SequesterServiceAlreadyEnabledError,
+    SequesterServiceAlreadyExists,
+    SequesterServiceNotFoundError,
     SequesterServiceType,
     SequesterWrongServiceTypeError,
 )
+from parsec.crypto import CryptoError
 
 if TYPE_CHECKING:
     from parsec.backend.memory.organization import MemoryOrganizationComponent

@@ -1,54 +1,49 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-from typing import Any, List, Dict, Tuple, Union
 from secrets import token_hex
+from typing import Any, Dict, List, Tuple, Union
+
+import attr
 
 from parsec._parsec import (
     ClientType,
     DateTime,
-    OrganizationStatsReq,
+    OrganizationConfigRep,
+    OrganizationConfigRepNotFound,
+    OrganizationConfigRepOk,
+    OrganizationConfigReq,
     OrganizationStatsRep,
-    OrganizationStatsRepOk,
     OrganizationStatsRepNotAllowed,
     OrganizationStatsRepNotFound,
-    OrganizationConfigReq,
-    OrganizationConfigRep,
-    OrganizationConfigRepOk,
-    OrganizationConfigRepNotFound,
+    OrganizationStatsRepOk,
+    OrganizationStatsReq,
     UsersPerProfileDetailItem,
 )
-from parsec.utils import timestamps_in_the_ballpark
-from parsec.crypto import VerifyKey
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import (
-    UserCertificate,
-    DeviceCertificate,
     DataError,
+    DeviceCertificate,
     SequesterAuthorityCertificate,
+    UserCertificate,
 )
 from parsec.api.protocol import (
     OrganizationID,
     UserProfile,
-    organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
+    organization_bootstrap_serializer,
 )
-from parsec.backend.utils import (
-    catch_protocol_errors,
-    api,
-    Unset,
-    UnsetType,
-    api_typed_msg_adapter,
-)
-from parsec.backend.user import User, Device
-from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.config import BackendConfig
 from parsec.backend.client_context import (
     AnonymousClientContext,
     APIV1_AnonymousClientContext,
     AuthenticatedClientContext,
 )
+from parsec.backend.config import BackendConfig
+from parsec.backend.user import Device, User
+from parsec.backend.utils import Unset, UnsetType, api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.backend.webhooks import WebhooksComponent
+from parsec.crypto import VerifyKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer
+from parsec.utils import timestamps_in_the_ballpark
 
 
 class OrganizationError(Exception):

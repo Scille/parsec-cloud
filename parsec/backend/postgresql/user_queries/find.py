@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from functools import lru_cache
 from typing import List, Tuple
 
+import triopg
+
 from parsec._parsec import DateTime
-from parsec.api.protocol import UserID, OrganizationID, HumanHandle
-from parsec.backend.user import HumanFindResultItem
+from parsec.api.protocol import HumanHandle, OrganizationID, UserID
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
+from parsec.backend.user import HumanFindResultItem
 
 
 LIKE_TRANSLATION = {ord("%"): "\\%", ord("_"): "\\_", ord("\\"): "\\\\"}

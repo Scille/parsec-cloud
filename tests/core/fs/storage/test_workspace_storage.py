@@ -2,22 +2,21 @@
 from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
-from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs import FSError, FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSLocalMissError
+from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.types import (
     DEFAULT_BLOCK_SIZE,
+    Chunk,
+    EntryID,
+    LocalFileManifest,
+    LocalFolderManifest,
     LocalUserManifest,
     LocalWorkspaceManifest,
-    LocalFolderManifest,
-    LocalFileManifest,
-    EntryID,
-    Chunk,
 )
-
 from tests.common import customize_fixtures
 
 

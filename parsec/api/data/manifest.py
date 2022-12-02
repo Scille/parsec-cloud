@@ -3,19 +3,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Type
 
-from parsec.api.protocol import DeviceID
 from parsec._parsec import (
     BlockAccess,
-    WorkspaceEntry,
-    FolderManifest,
     FileManifest,
-    WorkspaceManifest,
+    FolderManifest,
     UserManifest,
+    WorkspaceEntry,
+    WorkspaceManifest,
     manifest_decrypt_and_load,
-    manifest_verify_and_load,
     manifest_decrypt_verify_and_load,
     manifest_unverified_load,
+    manifest_verify_and_load,
 )
+from parsec.api.protocol import DeviceID
 
 if TYPE_CHECKING:
     from parsec._parsec import AnyRemoteManifest

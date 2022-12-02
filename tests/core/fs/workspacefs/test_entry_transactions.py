@@ -1,25 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import errno
 import os
 import sys
-import errno
+from contextlib import contextmanager
 from pathlib import Path
 from string import ascii_lowercase
-from contextlib import contextmanager
+
 import attr
 import pytest
-from parsec._parsec import DateTime
-from hypothesis_trio.stateful import initialize, invariant, rule, run_state_machine_as_test, Bundle
 from hypothesis import strategies as st
+from hypothesis_trio.stateful import Bundle, initialize, invariant, rule, run_state_machine_as_test
 
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
-from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
+from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.types import EntryID, LocalFolderManifest
-
-from tests.common import freeze_time, call_with_control
+from tests.common import call_with_control, freeze_time
 
 
 @pytest.mark.trio

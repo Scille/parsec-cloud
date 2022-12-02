@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-from parsec._parsec import DateTime, mock_time
 from contextlib import contextmanager
 
+import trio
+
+from parsec._parsec import DateTime, mock_time
 from parsec.api.protocol import DeviceID
 from parsec.core.types import LocalDevice
 

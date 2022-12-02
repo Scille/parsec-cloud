@@ -1,32 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime
-from typing import (
-    Dict,
-    Type,
-    Union,
-    cast,
-    TypeVar,
-    Mapping,
-    Any,
-    Tuple,
-    Sequence,
-)
+from typing import Any, Dict, Mapping, Sequence, Tuple, Type, TypeVar, Union, cast
 
+from parsec._parsec import DateTime
 from parsec.api.version import ApiVersion
-from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
     BaseSchema,
+    MsgpackSerializer,
+    SerdePackingError,
+    SerdeValidationError,
     fields,
     post_load,
-    MsgpackSerializer,
-    SerdeValidationError,
-    SerdePackingError,
-    packb as _packb,
-    unpackb as _unpackb,
 )
+from parsec.serde import packb as _packb
+from parsec.serde import unpackb as _unpackb
 from parsec.serde.schema import OneOfSchemaLegacy
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 
 __all__ = (
@@ -247,7 +237,7 @@ class ApiCommandSerializer:
 
     # Temporary Used for generate_data
     def req_loads(self, raw: bytes) -> Any:
-        from parsec._parsec import AuthenticatedAnyCmdReq, InvitedAnyCmdReq, AnonymousAnyCmdReq
+        from parsec._parsec import AnonymousAnyCmdReq, AuthenticatedAnyCmdReq, InvitedAnyCmdReq
 
         try:
             return AuthenticatedAnyCmdReq.load(raw)

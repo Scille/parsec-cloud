@@ -1,23 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-from pathlib import Path
-from structlog import get_logger
-from typing import (
-    Dict,
-    Tuple,
-    Set,
-    Union,
-    AsyncIterator,
-    AsyncContextManager,
-)
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import AsyncContextManager, AsyncIterator, Dict, Set, Tuple, Union
+
+import trio
+from structlog import get_logger
 
 from parsec._parsec import Regex
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
-from parsec.core.types import EntryID, ChunkID, LocalDevice, BlockID
-from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
+from parsec.core.fs.storage.local_database import Cursor, LocalDatabase
+from parsec.core.types import BlockID, ChunkID, EntryID, LocalDevice
 from parsec.core.types.manifest import AnyLocalManifest, local_manifest_decrypt_and_load
 
 logger = get_logger()

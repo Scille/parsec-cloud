@@ -1,36 +1,37 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Callable, Coroutine, Dict, List
 from collections import defaultdict
-import attr
-from parsec._parsec import DateTime, EnrollmentID
+from typing import Any, Callable, Coroutine, Dict, List
 
-from parsec.api.protocol import OrganizationID, DeviceID
+import attr
+
+from parsec._parsec import DateTime, EnrollmentID
+from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.memory.user import (
     MemoryUserComponent,
-    UserAlreadyExistsError,
     UserActiveUsersLimitReached,
+    UserAlreadyExistsError,
 )
-from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
+    BasePkiEnrollmentComponent,
     PkiEnrollementEmailAlreadyUsedError,
+    PkiEnrollmentActiveUsersLimitReached,
+    PkiEnrollmentAlreadyEnrolledError,
+    PkiEnrollmentAlreadyExistError,
+    PkiEnrollmentCertificateAlreadySubmittedError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
-    PkiEnrollmentInfoSubmitted,
     PkiEnrollmentInfoAccepted,
-    PkiEnrollmentInfoRejected,
     PkiEnrollmentInfoCancelled,
+    PkiEnrollmentInfoRejected,
+    PkiEnrollmentInfoSubmitted,
     PkiEnrollmentListItem,
-    BasePkiEnrollmentComponent,
-    PkiEnrollmentAlreadyEnrolledError,
-    PkiEnrollmentCertificateAlreadySubmittedError,
     PkiEnrollmentNoLongerAvailableError,
-    PkiEnrollmentAlreadyExistError,
-    PkiEnrollmentActiveUsersLimitReached,
     PkiEnrollmentNotFoundError,
 )
+from parsec.backend.user_type import Device, User
 
 
 @attr.s(slots=True, auto_attribs=True)

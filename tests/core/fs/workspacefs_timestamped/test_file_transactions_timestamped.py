@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.core.fs import FsPath, FSError, FSInvalidFileDescriptor
+from parsec.core.fs import FSError, FSInvalidFileDescriptor, FsPath
 
 
 @pytest.mark.trio

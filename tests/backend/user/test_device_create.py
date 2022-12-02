@@ -4,21 +4,20 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
-    DateTime,
     AuthenticatedPingRepOk,
-    DeviceCreateRepOk,
+    DateTime,
     DeviceCreateRepAlreadyExists,
     DeviceCreateRepBadUserId,
     DeviceCreateRepInvalidCertification,
     DeviceCreateRepInvalidData,
+    DeviceCreateRepOk,
 )
 from parsec.api.data import DeviceCertificate
 from parsec.api.protocol import UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import INVITATION_VALIDITY, Device
-
-from tests.common import freeze_time, customize_fixtures
-from tests.backend.common import device_create, authenticated_ping
+from tests.backend.common import authenticated_ping, device_create
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture

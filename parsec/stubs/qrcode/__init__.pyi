@@ -1,8 +1,12 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
+from __future__ import annotations
+
 from typing import Any, Type
 
 from qrcode.image.base import BaseImage
-from qrcode.util import QRData
 from qrcode.image.pil import PilImage
+from qrcode.util import QRData
 
 ERROR_CORRECT_H: int = ...
 

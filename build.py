@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
-import sys
+import pathlib
 import subprocess
+import sys
 import tempfile
 import zipfile
-import pathlib
 
 # The default rust build profile to use when compiling the rust extension.
 DEFAULT_CARGO_PROFILE = "release"

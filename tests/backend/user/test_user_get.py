@@ -3,17 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import (
-    DateTime,
-    UserGetRepOk,
-    UserGetRepNotFound,
-    Trustchain,
-)
-from parsec.api.protocol import packb, user_get_serializer, UserID, UserProfile
+from parsec._parsec import DateTime, Trustchain, UserGetRepNotFound, UserGetRepOk
+from parsec.api.protocol import UserID, UserProfile, packb, user_get_serializer
 from parsec.backend.asgi import app_factory
-
-from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import user_get
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture

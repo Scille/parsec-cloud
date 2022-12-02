@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from enum import Enum
 from secrets import token_bytes
-from typing import Dict, Sequence, Union, TypedDict, cast
+from typing import Dict, Sequence, TypedDict, Union, cast
 
 from parsec._parsec import DateTime
 from parsec.api.protocol.base import (

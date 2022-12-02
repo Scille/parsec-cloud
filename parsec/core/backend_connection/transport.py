@@ -2,48 +2,40 @@
 from __future__ import annotations
 
 import os
-import trio
 import ssl
-import certifi
 import urllib.request
-from structlog import get_logger
 from contextlib import asynccontextmanager
-from typing import (
-    AsyncIterator,
-    Dict,
-    Callable,
-    Awaitable,
-    Union,
-)
+from typing import AsyncIterator, Awaitable, Callable, Dict, Union
 
-from parsec.crypto import SigningKey
-from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
+import certifi
+import trio
+from structlog import get_logger
+
 from parsec.api.protocol import (
-    DeviceID,
-    ProtocolError,
-    HandshakeError,
-    AuthenticatedClientHandshake,
-    InvitedClientHandshake,
     APIV1_AnonymousClientHandshake,
+    AuthenticatedClientHandshake,
+    DeviceID,
+    HandshakeError,
     HandshakeOutOfBallparkError,
+    InvitedClientHandshake,
+    ProtocolError,
 )
-from parsec.core.types import (
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-    BackendInvitationAddr,
-)
+from parsec.api.transport import Transport, TransportClosedByPeer, TransportError
 from parsec.core.backend_connection.exceptions import (
-    BackendNotAvailable,
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendInvitationNotFound,
+    BackendNotAvailable,
     BackendOutOfBallparkError,
     BackendProtocolError,
 )
-from parsec.core.backend_connection.proxy import (
-    maybe_connect_through_proxy,
-    blocking_io_get_proxy,
+from parsec.core.backend_connection.proxy import blocking_io_get_proxy, maybe_connect_through_proxy
+from parsec.core.types import (
+    BackendInvitationAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
 )
+from parsec.crypto import SigningKey
 
 
 logger = get_logger()

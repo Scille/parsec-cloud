@@ -1,15 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import base64
+import binascii
+import json
 import os
 import sys
-import attr
-import json
-from typing import Any, FrozenSet, Mapping
 from pathlib import Path
+from typing import Any, FrozenSet, Mapping
+
+import attr
 from structlog import get_logger
-import binascii
-import base64
+
 from parsec.api.data import EntryID
 from parsec.core.types import BackendAddr
 

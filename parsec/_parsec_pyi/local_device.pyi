@@ -1,13 +1,11 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 from __future__ import annotations
+
 from typing import Tuple
+
 from parsec._parsec_pyi.addrs import BackendOrganizationAddr
-from parsec._parsec_pyi.crypto import (
-    PrivateKey,
-    PublicKey,
-    SecretKey,
-    SigningKey,
-    VerifyKey,
-)
+from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
 from parsec._parsec_pyi.enumerate import UserProfile
 from parsec._parsec_pyi.ids import (
     DeviceID,

@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import click
 import platform
 from functools import partial
 from typing import Any, Tuple, Union
+
+import click
 
 from parsec._parsec import (
     InvitationDeletedReason,
@@ -15,37 +16,32 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepOk,
 )
-from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler, spinner, async_prompt
-from parsec.api.protocol import (
-    DeviceLabel,
-    HumanHandle,
-    InvitationToken,
-    UserProfile,
-)
-from parsec.core.types import BackendInvitationAddr, LocalDevice
-from parsec.core.config import CoreConfig
+from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationToken, UserProfile
+from parsec.cli_utils import async_prompt, cli_exception_handler, spinner
 from parsec.core.backend_connection import (
+    BackendConnectionRefused,
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
-    BackendConnectionRefused,
 )
-from parsec.core.invite import (
-    InviteError,
-    DeviceClaimInitialCtx,
-    DeviceGreetInitialCtx,
-    UserClaimInitialCtx,
-    UserGreetInitialCtx,
-    claimer_retrieve_info,
-)
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.cli.bootstrap_organization import SaveDeviceWithSelectedAuth
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
     core_config_options,
     save_device_options,
 )
-from parsec.core.cli.bootstrap_organization import SaveDeviceWithSelectedAuth
+from parsec.core.config import CoreConfig
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.invite import (
+    DeviceClaimInitialCtx,
+    DeviceGreetInitialCtx,
+    InviteError,
+    UserClaimInitialCtx,
+    UserGreetInitialCtx,
+    claimer_retrieve_info,
+)
+from parsec.core.types import BackendInvitationAddr, LocalDevice
+from parsec.utils import trio_run
 
 
 async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:

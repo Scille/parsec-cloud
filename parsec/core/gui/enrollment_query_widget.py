@@ -1,23 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Callable
 
 from PyQt5.QtWidgets import QWidget
+
 from parsec._parsec import BackendPkiEnrollmentAddr, DeviceLabel
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-
-from parsec.core.pki import PkiEnrollmentSubmitterInitialCtx
 from parsec.core.config import CoreConfig
-
-
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, ask_question
-from parsec.core.gui.lang import translate
 from parsec.core.gui import desktop, validators
-
+from parsec.core.gui.custom_dialogs import GreyedDialog, ask_question, show_error
+from parsec.core.gui.lang import translate
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.ui.enrollment_query_widget import Ui_EnrollmentQueryWidget
+from parsec.core.pki import PkiEnrollmentSubmitterInitialCtx
 from parsec.core.pki.exceptions import (
-    PkiEnrollmentCertificatePinCodeUnavailableError,
     PkiEnrollmentCertificateNotFoundError,
+    PkiEnrollmentCertificatePinCodeUnavailableError,
     PkiEnrollmentSubmitCertificateAlreadySubmittedError,
     PkiEnrollmentSubmitCertificateEmailAlreadyUsedError,
 )

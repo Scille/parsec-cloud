@@ -2,13 +2,12 @@
 from __future__ import annotations
 
 import pytest
-from parsec.core.gui.users_widget import UserButton
-
-from tests.common import customize_fixtures
-from PyQt5.QtWidgets import QLabel
 from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import QLabel
 
 from parsec.core.gui.lang import translate
+from parsec.core.gui.users_widget import UserButton
+from tests.common import customize_fixtures
 
 
 @pytest.fixture

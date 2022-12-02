@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import cast
 
 from structlog import get_logger
@@ -12,23 +13,20 @@ from parsec._parsec import (
     VerifyKey,
 )
 from parsec._version import __version__
-from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
 from parsec.api.protocol import (
     ProtocolError,
-    pki_enrollment_submit_serializer,
-    pki_enrollment_info_serializer,
     organization_bootstrap_serializer,
+    pki_enrollment_info_serializer,
+    pki_enrollment_submit_serializer,
 )
-from parsec.core.types import (
-    BackendPkiEnrollmentAddr,
-    BackendOrganizationBootstrapAddr,
-)
-from parsec.core.backend_connection.transport import http_request
+from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
-    BackendProtocolError,
     BackendOutOfBallparkError,
+    BackendProtocolError,
 )
+from parsec.core.backend_connection.transport import http_request
+from parsec.core.types import BackendOrganizationBootstrapAddr, BackendPkiEnrollmentAddr
 
 
 logger = get_logger()

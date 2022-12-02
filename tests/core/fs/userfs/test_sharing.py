@@ -1,24 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 from unittest.mock import ANY
 
-from parsec._parsec import DateTime, UserRevokeRepOk
-from parsec.api.data import UserManifest, WorkspaceEntry, EntryName, RevokedUserCertificate
-from parsec.api.protocol import RealmID
-from parsec.crypto import SecretKey
-from parsec.core.core_events import CoreEvent
-from parsec.core.types import WorkspaceRole, LocalUserManifest, EntryID
-from parsec.core.fs import (
-    FSError,
-    FSWorkspaceNotFoundError,
-    FSBackendOfflineError,
-    FSSharingNotAllowedError,
-)
-from parsec.backend.realm import RealmGrantedRole, RealmRole
+import pytest
 
-from tests.common import freeze_time, create_shared_workspace
+from parsec._parsec import DateTime, UserRevokeRepOk
+from parsec.api.data import EntryName, RevokedUserCertificate, UserManifest, WorkspaceEntry
+from parsec.api.protocol import RealmID
+from parsec.backend.realm import RealmGrantedRole, RealmRole
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs import (
+    FSBackendOfflineError,
+    FSError,
+    FSSharingNotAllowedError,
+    FSWorkspaceNotFoundError,
+)
+from parsec.core.types import EntryID, LocalUserManifest, WorkspaceRole
+from parsec.crypto import SecretKey
+from tests.common import create_shared_workspace, freeze_time
 
 
 KEY = SecretKey.generate()

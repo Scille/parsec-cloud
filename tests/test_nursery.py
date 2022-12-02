@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
 import pytest
-import parsec
-
+import trio
 from exceptiongroup import BaseExceptionGroup
+
+import parsec
 
 # Importing parsec is enough to add open_service_nursery to trio
 parsec

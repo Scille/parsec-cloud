@@ -1,37 +1,36 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from pathlib import Path, PurePath
 
-import trio
 import logging
 import sys
-
-from structlog import get_logger
-from typing import Any, AsyncGenerator, Callable, Sequence, Union, cast
-from importlib import __import__ as import_function
-from subprocess import CalledProcessError
 from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
+from importlib import __import__ as import_function
+from pathlib import Path, PurePath
+from subprocess import CalledProcessError
+from typing import Any, AsyncGenerator, Callable, Sequence, Union, cast
+
+import trio
+from structlog import get_logger
 
 from parsec._parsec import DateTime
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs import UserFS, WorkspaceFS
-from parsec.core.logged_core import WorkspaceEntry
-from parsec.core.types import EntryID
-from parsec.core.fs import FsPath, WorkspaceFSTimestamped
-from parsec.event_bus import EventBus
-from parsec.utils import TaskStatus, start_task, open_service_nursery
+from parsec.core.fs import FsPath, UserFS, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
+from parsec.core.logged_core import WorkspaceEntry
 from parsec.core.mountpoint.exceptions import (
+    MountpointAlreadyMounted,
     MountpointConfigurationError,
     MountpointConfigurationWorkspaceFSTimestampedError,
-    MountpointAlreadyMounted,
+    MountpointError,
+    MountpointFuseNotAvailable,
     MountpointNotMounted,
     MountpointWinfspNotAvailable,
-    MountpointFuseNotAvailable,
-    MountpointError,
 )
 from parsec.core.mountpoint.winify import winify_entry_name
+from parsec.core.types import EntryID
 from parsec.core.win_registry import cleanup_parsec_drive_icons
+from parsec.event_bus import EventBus
+from parsec.utils import TaskStatus, open_service_nursery, start_task
 
 RunnerType = Callable[
     [UserFS, WorkspaceFS, Path, dict[Any, Any], EventBus],

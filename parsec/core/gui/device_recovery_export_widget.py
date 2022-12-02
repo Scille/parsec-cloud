@@ -1,44 +1,43 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
+from pathlib import Path, PurePath
 from typing import Sequence
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from pathlib import Path, PurePath
-
 from parsec.core import CoreConfig
-from parsec.core.recovery import generate_recovery_device
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
-from parsec.core.types import LocalDevice
-from parsec.core.local_device import (
-    AvailableDevice,
-    load_device_with_password,
-    load_device_with_smartcard,
-    LocalDeviceError,
-    get_recovery_device_file_name,
-    save_recovery_device,
-    get_available_device,
-    DeviceFileType,
-    RECOVERY_DEVICE_FILE_SUFFIX,
-)
-from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError, QtToTrioJobScheduler
-from parsec.core.gui.lang import translate
-from parsec.core.gui.desktop import open_files_job
 from parsec.core.gui.custom_dialogs import (
     GreyedDialog,
     QDialogInProcess,
-    show_error,
     get_text_input,
+    show_error,
 )
-
-from parsec.core.gui.ui.device_recovery_export_widget import Ui_DeviceRecoveryExportWidget
+from parsec.core.gui.desktop import open_files_job
+from parsec.core.gui.lang import translate
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.device_recovery_export_page1_widget import (
     Ui_DeviceRecoveryExportPage1Widget,
 )
 from parsec.core.gui.ui.device_recovery_export_page2_widget import (
     Ui_DeviceRecoveryExportPage2Widget,
 )
+from parsec.core.gui.ui.device_recovery_export_widget import Ui_DeviceRecoveryExportWidget
+from parsec.core.local_device import (
+    RECOVERY_DEVICE_FILE_SUFFIX,
+    AvailableDevice,
+    DeviceFileType,
+    LocalDeviceError,
+    get_available_device,
+    get_recovery_device_file_name,
+    load_device_with_password,
+    load_device_with_smartcard,
+    save_recovery_device,
+)
+from parsec.core.recovery import generate_recovery_device
+from parsec.core.types import LocalDevice
 
 
 class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widget):

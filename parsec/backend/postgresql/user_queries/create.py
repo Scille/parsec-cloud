@@ -2,28 +2,29 @@
 from __future__ import annotations
 
 import itertools
+
 import triopg
 from triopg import UniqueViolationError
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.user import (
-    User,
-    Device,
-    UserError,
-    UserNotFoundError,
-    UserAlreadyExistsError,
-    UserActiveUsersLimitReached,
-)
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
     q_device_internal_id,
-    q_user_internal_id,
     q_human_internal_id,
+    q_organization_internal_id,
+    q_user_internal_id,
+    query,
+)
+from parsec.backend.user import (
+    Device,
+    User,
+    UserActiveUsersLimitReached,
+    UserAlreadyExistsError,
+    UserError,
+    UserNotFoundError,
 )
 
 

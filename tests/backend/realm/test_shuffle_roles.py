@@ -1,34 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from unittest.mock import ANY
+
 import pytest
 import trio
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     Bundle,
-    initialize,
-    rule,
-    invariant,
-    run_state_machine_as_test,
     TrioAsyncioRuleBasedStateMachine,
+    initialize,
+    invariant,
     multiple,
+    rule,
+    run_state_machine_as_test,
 )
-from unittest.mock import ANY
 
 from parsec._parsec import (
-    RealmUpdateRolesRepOk,
-    RealmUpdateRolesRepAlreadyGranted,
-    RealmUpdateRolesRepNotAllowed,
-    RealmUpdateRolesRepInvalidData,
     RealmGetRoleCertificatesRepOk,
+    RealmUpdateRolesRepAlreadyGranted,
+    RealmUpdateRolesRepInvalidData,
+    RealmUpdateRolesRepNotAllowed,
+    RealmUpdateRolesRepOk,
 )
-
-from parsec.backend.asgi import app_factory
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmRole
-
-from tests.common import call_with_control
+from parsec.backend.asgi import app_factory
 from tests.backend.common import realm_get_role_certificates, realm_update_roles
+from tests.common import call_with_control
 
 
 @pytest.mark.slow
@@ -158,7 +157,7 @@ def test_shuffle_roles(
                     assert rep == RealmGetRoleCertificatesRepOk(certificates=self.certifs)
                 except TypeError:
                     assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-                except:
+                except Exception:
                     assert False
             else:
                 assert rep == {}

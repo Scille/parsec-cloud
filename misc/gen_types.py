@@ -3,9 +3,9 @@
 
 
 import argparse
-from pathlib import Path
 import json
 import re
+from pathlib import Path
 
 FIELDS_TEMPLATE = """
     @property

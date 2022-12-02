@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import inspect
 import functools
+import inspect
 from typing import Any
-from parsec.core.gui.app import run_gui
+
 from PyQt5.QtCore import QMetaObject, QObject, pyqtBoundSignal
+
+from parsec.core.gui.app import run_gui
 
 __all__ = ("run_gui",)
 

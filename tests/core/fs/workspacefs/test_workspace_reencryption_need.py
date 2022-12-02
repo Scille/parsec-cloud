@@ -3,20 +3,19 @@ from __future__ import annotations
 
 import pytest
 from hypothesis_trio.stateful import (
-    initialize,
-    rule,
-    consumes,
-    invariant,
-    run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
     Bundle,
+    TrioAsyncioRuleBasedStateMachine,
+    consumes,
+    initialize,
+    invariant,
+    rule,
+    run_state_machine_as_test,
 )
+
 from parsec._parsec import DateTime
-
+from parsec.api.data import EntryName, RealmRoleCertificate
 from parsec.api.protocol import RealmID, RealmRole
-from parsec.api.data import RealmRoleCertificate, EntryName
 from parsec.backend.realm import RealmGrantedRole
-
 from tests.common import call_with_control
 
 

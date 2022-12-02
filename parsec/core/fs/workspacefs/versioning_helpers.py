@@ -16,25 +16,26 @@ the download of the soonest needed manifests (which is already implemented), or 
 concurrent downloads (which will be implemented in a next version).
 """
 
-from heapq import heappush, heappop
-import attr
 import math
 import typing
-from functools import partial
-from typing import Awaitable, Dict, List, NamedTuple, Tuple, Union, cast, TYPE_CHECKING
-from parsec._parsec import DateTime
 from collections import defaultdict
+from functools import partial
+from heapq import heappop, heappush
+from typing import TYPE_CHECKING, Awaitable, Dict, List, NamedTuple, Tuple, Union, cast
 
+import attr
+
+from parsec._parsec import DateTime
+from parsec.api.data import FileManifest, FolderManifest, UserManifest, WorkspaceManifest
 from parsec.api.protocol import DeviceID
+from parsec.core.fs.exceptions import FSRemoteManifestNotFound
+from parsec.core.fs.path import FsPath
 from parsec.core.types import EntryID
 from parsec.utils import open_service_nursery
-from parsec.core.fs.path import FsPath
-from parsec.core.fs.exceptions import FSRemoteManifestNotFound
-from parsec.api.data import FileManifest, UserManifest, FolderManifest, WorkspaceManifest
 
 if TYPE_CHECKING:
-    from parsec.core.fs.remote_loader import RemoteLoader
     from parsec.core.fs import WorkspaceFS
+    from parsec.core.fs.remote_loader import RemoteLoader
 
 
 RemoteManifest = Union[FileManifest, FolderManifest, UserManifest, WorkspaceManifest]

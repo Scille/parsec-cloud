@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import os
+
 import pytest
-from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
+from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test
+
 from parsec.api.data import EntryName
 
 

@@ -1,39 +1,40 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from importlib import import_module
-from async_exit_stack import AsyncExitStack
 from contextlib import asynccontextmanager
+from importlib import import_module
+from typing import Callable, Type
 
-import trio
-import qtrio
 import pytest
+import qtrio
+import trio
+from async_exit_stack import AsyncExitStack
 from PyQt5 import QtCore, QtTest
-from typing import Type, Callable
 
 from parsec import __version__ as parsec_version
-from parsec.api.data import EntryName
-from parsec.core.local_device import save_device_with_password_in_config, DeviceFileType
-from parsec.core.gui.main_window import MainWindow
-from parsec.core.gui.workspaces_widget import WorkspaceButton
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.login_widget import (
-    LoginWidget,
-    LoginPasswordInputWidget,
-    LoginAccountsWidget,
-    AccountButton,
-    LoginSmartcardInputWidget,
-)
-from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.lang import switch_language
-from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.gui.files_widget import FilesWidget
-from parsec.core.gui.workspaces_widget import WorkspacesWidget
-from parsec.core.local_device import LocalDeviceAlreadyExistsError
-from parsec.event_bus import EventBus
-from parsec.core.config import CoreConfig
 from parsec._parsec import LocalDevice
-
+from parsec.api.data import EntryName
+from parsec.core.config import CoreConfig
+from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.files_widget import FilesWidget
+from parsec.core.gui.lang import switch_language
+from parsec.core.gui.login_widget import (
+    AccountButton,
+    LoginAccountsWidget,
+    LoginPasswordInputWidget,
+    LoginSmartcardInputWidget,
+    LoginWidget,
+)
+from parsec.core.gui.main_window import MainWindow
+from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.workspaces_widget import WorkspaceButton, WorkspacesWidget
+from parsec.core.local_device import (
+    DeviceFileType,
+    LocalDeviceAlreadyExistsError,
+    save_device_with_password_in_config,
+)
+from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
 
 

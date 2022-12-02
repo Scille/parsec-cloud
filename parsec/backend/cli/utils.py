@@ -1,21 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import click
-from typing import Callable, List, TypeVar
-from typing_extensions import ParamSpec
-from itertools import count
 from collections import defaultdict
+from itertools import count
+from typing import Callable, List, TypeVar
+
+import click
+from typing_extensions import ParamSpec
 
 from parsec.backend.config import (
     BaseBlockStoreConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
-    S3BlockStoreConfig,
-    SWIFTBlockStoreConfig,
     RAID0BlockStoreConfig,
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
+    S3BlockStoreConfig,
+    SWIFTBlockStoreConfig,
 )
 
 T = TypeVar("T")

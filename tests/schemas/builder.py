@@ -1,34 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import re
+import importlib
 import json
 import pkgutil
-import importlib
+import re
 from types import ModuleType
+
+from parsec.api.data import MessageContent
+from parsec.api.data.base import BaseAPIData, BaseAPISignedData, BaseData, BaseSignedData
+from parsec.api.protocol.base import CmdSerializer
+from parsec.api.protocol.types import HumanHandleField
+from parsec.core.types.base import BaseLocalData
 from parsec.serde import (
     BaseSerializer,
     JSONSerializer,
     MsgpackSerializer,
-    ZipMsgpackSerializer,
     OneOfSchema,
+    ZipMsgpackSerializer,
 )
 from parsec.serde.fields import (
-    List,
-    Map,
-    Tuple,
-    Nested,
+    BaseEnumField,
     CheckedConstant,
     EnumCheckedConstant,
-    BaseEnumField,
+    List,
+    Map,
+    Nested,
+    Tuple,
 )
-from parsec.api.protocol.types import HumanHandleField
-
-from parsec.api.protocol.base import CmdSerializer
-from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
-from parsec.api.data import MessageContent
-
-from parsec.core.types.base import BaseLocalData
 
 
 _SERIALIZER_TO_STR = {

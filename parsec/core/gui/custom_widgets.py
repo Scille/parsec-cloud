@@ -2,40 +2,38 @@
 from __future__ import annotations
 
 import math
-
 from enum import Enum
 from typing import Any
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QEvent
+from PyQt5.QtCore import QEvent, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import (
-    QIcon,
-    QPainter,
     QColor,
-    QPaintEvent,
-    QPen,
     QCursor,
-    QPixmap,
     QFont,
     QFontMetrics,
+    QIcon,
     QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QPixmap,
     QResizeEvent,
 )
-from PyQt5.QtWidgets import (
-    QPushButton,
-    QLabel,
-    QGraphicsDropShadowEffect,
-    QWidget,
-    QListView,
-    QComboBox,
-    QLineEdit,
-    QToolButton,
-)
 from PyQt5.QtSvg import QSvgWidget
-
-from parsec.core.gui.ui.code_input_widget import Ui_CodeInputWidget
-from parsec.core.gui.ui.spinner_widget import Ui_SpinnerWidget
+from PyQt5.QtWidgets import (
+    QComboBox,
+    QGraphicsDropShadowEffect,
+    QLabel,
+    QLineEdit,
+    QListView,
+    QPushButton,
+    QToolButton,
+    QWidget,
+)
 
 from parsec._parsec import SASCode
+from parsec.core.gui.ui.code_input_widget import Ui_CodeInputWidget
+from parsec.core.gui.ui.spinner_widget import Ui_SpinnerWidget
 
 
 class SpinnerWidget(QWidget, Ui_SpinnerWidget):

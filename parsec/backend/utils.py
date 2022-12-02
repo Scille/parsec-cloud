@@ -3,18 +3,14 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import wraps
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, Sequence, TypeVar, Union
+
 from quart import Websocket
 from trio import CancelScope
 from typing_extensions import Final, Literal, ParamSpec
-from typing import TYPE_CHECKING, Any, Awaitable, Sequence, Dict, Callable, TypeVar, Union
 
-from parsec._parsec import (
-    AuthenticatedAnyCmdReq,
-    ClientType,
-    InvitedAnyCmdReq,
-)
-
-from parsec.api.protocol import ProtocolError, InvalidMessageError
+from parsec._parsec import AuthenticatedAnyCmdReq, ClientType, InvitedAnyCmdReq
+from parsec.api.protocol import InvalidMessageError, ProtocolError
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
 from parsec.serde.packing import packb, unpackb
 from parsec.utils import open_service_nursery

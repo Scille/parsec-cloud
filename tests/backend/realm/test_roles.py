@@ -5,26 +5,25 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
-    RealmUpdateRolesRepOk,
+    RealmGetRoleCertificatesRepNotAllowed,
+    RealmGetRoleCertificatesRepNotFound,
+    RealmGetRoleCertificatesRepOk,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepIncompatibleProfile,
     RealmUpdateRolesRepInMaintenance,
     RealmUpdateRolesRepInvalidData,
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepNotFound,
+    RealmUpdateRolesRepOk,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
-    RealmGetRoleCertificatesRepOk,
-    RealmGetRoleCertificatesRepNotFound,
-    RealmGetRoleCertificatesRepNotAllowed,
     VlobCreateRepOk,
 )
-from parsec.api.protocol import VlobID, RealmID, RealmRole, UserProfile
 from parsec.api.data import RealmRoleCertificate
+from parsec.api.protocol import RealmID, RealmRole, UserProfile, VlobID
 from parsec.backend.realm import RealmGrantedRole
-
-from tests.common import freeze_time, customize_fixtures
-from tests.backend.common import realm_update_roles, realm_get_role_certificates, vlob_create
+from tests.backend.common import realm_get_role_certificates, realm_update_roles, vlob_create
+from tests.common import customize_fixtures, freeze_time
 
 
 NOW = DateTime(2000, 1, 1)

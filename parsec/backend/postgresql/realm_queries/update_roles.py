@@ -1,32 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import Tuple
 
-from parsec.backend.backend_events import BackendEvent
+import triopg
+
 from parsec.api.protocol import OrganizationID, RealmRole, UserProfile
-from parsec.backend.realm import (
-    RealmGrantedRole,
-    RealmAccessError,
-    RealmIncompatibleProfileError,
-    RealmRoleAlreadyGranted,
-    RealmNotFoundError,
-    RealmInMaintenanceError,
-    RealmRoleRequireGreaterTimestampError,
-)
-from parsec.backend.user import UserAlreadyRevokedError
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_user,
-    q_user_internal_id,
     q_device_internal_id,
     q_realm,
     q_realm_internal_id,
+    q_user,
+    q_user_internal_id,
+    query,
 )
+from parsec.backend.realm import (
+    RealmAccessError,
+    RealmGrantedRole,
+    RealmIncompatibleProfileError,
+    RealmInMaintenanceError,
+    RealmNotFoundError,
+    RealmRoleAlreadyGranted,
+    RealmRoleRequireGreaterTimestampError,
+)
+from parsec.backend.user import UserAlreadyRevokedError
 
 
 _q_get_user_profile = Q(

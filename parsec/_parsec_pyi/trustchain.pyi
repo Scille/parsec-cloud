@@ -1,15 +1,14 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 from __future__ import annotations
+
 from typing import List, Sequence, Tuple
 
+from parsec._parsec_pyi.certif import DeviceCertificate, RevokedUserCertificate, UserCertificate
 from parsec._parsec_pyi.crypto import VerifyKey
-from parsec._parsec_pyi.ids import UserID, DeviceID
+from parsec._parsec_pyi.ids import DeviceID, UserID
 from parsec._parsec_pyi.protocol import Trustchain
 from parsec._parsec_pyi.time import DateTime, TimeProvider
-from parsec._parsec_pyi.certif import (
-    UserCertificate,
-    RevokedUserCertificate,
-    DeviceCertificate,
-)
 
 class TrustchainContext:
     def __init__(
@@ -39,8 +38,6 @@ class TrustchainContext:
         devices: Sequence[bytes] = (),
     ) -> Tuple[List[UserCertificate], List[RevokedUserCertificate], List[DeviceCertificate],]: ...
 
-class TrustchainErrorException(BaseException, TrustchainError): ...
-
 class TrustchainError:
     @property
     def path(self) -> str: ...
@@ -58,3 +55,5 @@ class TrustchainError:
     def expected(self) -> UserID: ...
     @property
     def got(self) -> UserID: ...
+
+class TrustchainErrorException(BaseException, TrustchainError): ...

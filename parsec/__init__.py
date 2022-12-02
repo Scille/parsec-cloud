@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+
 from parsec._version import __version__
 
 # The oscrypto library relies on `ctypes.util.find_library`,

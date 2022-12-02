@@ -3,112 +3,101 @@ from __future__ import annotations
 
 import math
 from contextlib import contextmanager
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    List,
-    Iterable,
-    Tuple,
-    Iterator,
-    Callable,
-    Awaitable,
-)
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, Iterable, Iterator, List, Tuple
+
 import trio
-from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
+from trio import MemoryReceiveChannel, MemorySendChannel, open_memory_channel
 
 from parsec._parsec import (
-    DateTime,
-    BlockCreateRepOk,
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
+    BlockCreateRepOk,
     BlockCreateRepTimeout,
-    BlockReadRepOk,
-    BlockReadRepNotFound,
     BlockReadRepInMaintenance,
     BlockReadRepNotAllowed,
-    RealmCreateRepOk,
+    BlockReadRepNotFound,
+    BlockReadRepOk,
+    DateTime,
     RealmCreateRepAlreadyExists,
-    RealmGetRoleCertificatesRepOk,
+    RealmCreateRepOk,
     RealmGetRoleCertificatesRepNotAllowed,
-    VlobCreateRepOk,
-    VlobCreateRepSequesterInconsistency,
+    RealmGetRoleCertificatesRepOk,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
-    VlobCreateRepRequireGreaterTimestamp,
+    VlobCreateRepOk,
     VlobCreateRepRejectedBySequesterService,
+    VlobCreateRepRequireGreaterTimestamp,
+    VlobCreateRepSequesterInconsistency,
     VlobCreateRepTimeout,
-    VlobReadRepOk,
-    VlobReadRepNotAllowed,
+    VlobListVersionsRepInMaintenance,
+    VlobListVersionsRepNotAllowed,
+    VlobListVersionsRepNotFound,
+    VlobListVersionsRepOk,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepBadVersion,
     VlobReadRepInMaintenance,
+    VlobReadRepNotAllowed,
     VlobReadRepNotFound,
-    VlobUpdateRepOk,
+    VlobReadRepOk,
     VlobUpdateRepBadEncryptionRevision,
     VlobUpdateRepBadVersion,
     VlobUpdateRepInMaintenance,
     VlobUpdateRepNotAllowed,
     VlobUpdateRepNotFound,
+    VlobUpdateRepOk,
+    VlobUpdateRepRejectedBySequesterService,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
-    VlobUpdateRepRejectedBySequesterService,
     VlobUpdateRepTimeout,
-    VlobListVersionsRepOk,
-    VlobListVersionsRepInMaintenance,
-    VlobListVersionsRepNotAllowed,
-    VlobListVersionsRepNotFound,
 )
-from parsec.crypto import HashDigest, CryptoError, VerifyKey
-from parsec.utils import open_service_nursery
-from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID, SequesterServiceID
 from parsec.api.data import (
-    DataError,
-    BlockAccess,
-    RealmRoleCertificate,
     AnyRemoteManifest,
-    UserCertificate,
+    BlockAccess,
+    DataError,
     DeviceCertificate,
+    RealmRoleCertificate,
     RevokedUserCertificate,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
+    UserCertificate,
 )
 from parsec.api.data.manifest import manifest_decrypt_verify_and_load
-from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
-from parsec.core.backend_connection import (
-    BackendConnectionError,
-    BackendNotAvailable,
+from parsec.api.protocol import DeviceID, RealmID, RealmRole, SequesterServiceID, UserID, VlobID
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.fs.exceptions import (
+    FSBackendOfflineError,
+    FSBadEncryptionRevision,
+    FSDeviceNotFoundError,
+    FSError,
+    FSInvalidTrustchainError,
+    FSLocalMissError,
+    FSRemoteBlockNotFound,
+    FSRemoteManifestNotFound,
+    FSRemoteManifestNotFoundBadVersion,
+    FSRemoteOperationError,
+    FSRemoteSyncError,
+    FSSequesterServiceRejectedError,
+    FSServerUploadTemporarilyUnavailableError,
+    FSUserNotFoundError,
+    FSWorkspaceInMaintenance,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNoWriteAccess,
 )
+from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
     RemoteDevicesManagerBackendOfflineError,
-    RemoteDevicesManagerError,
-    RemoteDevicesManagerUserNotFoundError,
     RemoteDevicesManagerDeviceNotFoundError,
+    RemoteDevicesManagerError,
     RemoteDevicesManagerInvalidTrustchainError,
+    RemoteDevicesManagerUserNotFoundError,
 )
-from parsec.core.fs.exceptions import (
-    FSError,
-    FSRemoteSyncError,
-    FSRemoteOperationError,
-    FSRemoteManifestNotFound,
-    FSRemoteManifestNotFoundBadVersion,
-    FSRemoteBlockNotFound,
-    FSBackendOfflineError,
-    FSServerUploadTemporarilyUnavailableError,
-    FSWorkspaceInMaintenance,
-    FSBadEncryptionRevision,
-    FSWorkspaceNoReadAccess,
-    FSWorkspaceNoWriteAccess,
-    FSUserNotFoundError,
-    FSDeviceNotFoundError,
-    FSInvalidTrustchainError,
-    FSLocalMissError,
-    FSSequesterServiceRejectedError,
-)
-from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.types import ChunkID, EntryID, LocalDevice, WorkspaceEntry
+from parsec.crypto import CryptoError, HashDigest, VerifyKey
+from parsec.utils import open_service_nursery
 
 
 if TYPE_CHECKING:

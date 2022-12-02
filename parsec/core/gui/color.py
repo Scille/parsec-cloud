@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import colorsys
-
 from binascii import crc32
 from typing import Tuple, cast
 

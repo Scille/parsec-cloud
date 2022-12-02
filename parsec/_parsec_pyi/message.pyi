@@ -1,14 +1,9 @@
-from parsec._parsec_pyi.crypto import (
-    PublicKey,
-    PrivateKey,
-    SecretKey,
-    VerifyKey,
-    SigningKey,
-)
-from parsec._parsec_pyi.ids import (
-    EntryID,
-    DeviceID,
-)
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
+from __future__ import annotations
+
+from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
+from parsec._parsec_pyi.ids import DeviceID, EntryID
 from parsec._parsec_pyi.manifest import EntryName
 from parsec._parsec_pyi.time import DateTime
 

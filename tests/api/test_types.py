@@ -1,29 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 import zlib
 from unicodedata import normalize
 
-from parsec._parsec import LocalDevice, EntryNameError
-from parsec.serde import packb
-from parsec.crypto import SecretKey
-from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
-from parsec.api.data import (
-    DataError,
-    SASCode,
-    EntryName,
-    FileManifest as RemoteFileManifest,
-    FolderManifest as RemoteFolderManifest,
-    WorkspaceManifest as RemoteWorkspaceManifest,
-    UserManifest as RemoteUserManifest,
-)
+import pytest
+
+from parsec._parsec import EntryNameError, LocalDevice
+from parsec.api.data import DataError, EntryName, SASCode
+from parsec.api.data import FileManifest as RemoteFileManifest
+from parsec.api.data import FolderManifest as RemoteFolderManifest
+from parsec.api.data import UserManifest as RemoteUserManifest
+from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
+from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, OrganizationID, UserID
 from parsec.core.types import (
     LocalFileManifest,
     LocalFolderManifest,
-    LocalWorkspaceManifest,
     LocalUserManifest,
+    LocalWorkspaceManifest,
 )
+from parsec.crypto import SecretKey
+from parsec.serde import packb
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))

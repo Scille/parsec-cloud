@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
-from unittest.mock import Mock
-import pbr.version
 from functools import partial
+from unittest.mock import Mock
+
+import pbr.version
+import trio
 
 original_version_info = pbr.version.VersionInfo
 
@@ -20,10 +21,10 @@ def side_effect(key: str) -> str:
 pbr.version.VersionInfo = Mock(side_effect=side_effect)
 
 import swiftclient
-from swiftclient.exceptions import ClientException
 from structlog import get_logger
+from swiftclient.exceptions import ClientException
 
-from parsec.api.protocol import OrganizationID, BlockID
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 

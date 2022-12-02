@@ -15,24 +15,24 @@ import pkg_resources
 # Make sure parsec is fully installed (core, backend)
 pkg_resources.require("parsec-cloud[core,backend]")
 
-import os
-import sys
-import re
-import tempfile
-import subprocess
 import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
 import uuid
 
-import trio
 import click
 import psutil
+import trio
 
 from parsec import __version__ as PARSEC_VERSION
-from parsec.utils import trio_run
 from parsec.cli_utils import logging_config_options
-from parsec.core.types import BackendAddr
 from parsec.core.config import get_default_config_dir
+from parsec.core.types import BackendAddr
 from parsec.test_utils import initialize_test_organization
+from parsec.utils import trio_run
 
 
 DEFAULT_BACKEND_PORT = 6888

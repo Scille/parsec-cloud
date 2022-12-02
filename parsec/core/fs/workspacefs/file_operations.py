@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 # Imports
-
-from parsec._parsec import prepare_read, prepare_write, prepare_resize, prepare_reshape
+from parsec._parsec import prepare_read, prepare_reshape, prepare_resize, prepare_write
 
 __all__ = [
     "prepare_read",

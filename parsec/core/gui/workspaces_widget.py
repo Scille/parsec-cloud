@@ -1,49 +1,43 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from enum import Enum
 
-from PyQt5.QtCore import QDate, QEvent, QObject, QTime, pyqtSignal, pyqtBoundSignal, Qt, QTimer
-from PyQt5.QtWidgets import QAbstractButton, QWidget, QLabel
-from typing import Any, Iterator, cast, Sequence
 from contextlib import contextmanager
+from enum import Enum
 from pathlib import PurePath
+from typing import Any, Iterator, Sequence, cast
+
+from PyQt5.QtCore import QDate, QEvent, QObject, Qt, QTime, QTimer, pyqtBoundSignal, pyqtSignal
+from PyQt5.QtWidgets import QAbstractButton, QLabel, QWidget
 from structlog import get_logger
 
 from parsec._parsec import DateTime, LocalDateTime
-from parsec.core.logged_core import EventBus, LoggedCore
-from parsec.core.types import (
-    EntryID,
-    EntryName,
-    BackendOrganizationFileLinkAddr,
-    UserInfo,
-)
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import (
-    FsPath,
-    WorkspaceFS,
-    WorkspaceFSTimestamped,
     FSBackendOfflineError,
     FSError,
+    FsPath,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
+    WorkspaceFS,
+    WorkspaceFSTimestamped,
 )
+from parsec.core.gui import desktop, validators
+from parsec.core.gui.custom_dialogs import ask_question, get_text_input, show_error
+from parsec.core.gui.flow_layout import FlowLayout
+from parsec.core.gui.lang import translate as T
+from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
+from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
+from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.workspace_sharing_widget import WorkspaceSharingWidget
+from parsec.core.logged_core import EventBus, LoggedCore
 from parsec.core.mountpoint.exceptions import (
     MountpointAlreadyMounted,
-    MountpointNotMounted,
     MountpointError,
     MountpointNoDriveAvailable,
+    MountpointNotMounted,
 )
-
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
-from parsec.core.gui import desktop
-from parsec.core.gui.custom_dialogs import show_error, get_text_input, ask_question
-from parsec.core.gui.flow_layout import FlowLayout
-from parsec.core.gui import validators
-from parsec.core.gui.lang import translate as T
-from parsec.core.gui.workspace_button import WorkspaceButton
-from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
-from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
-from parsec.core.gui.workspace_sharing_widget import WorkspaceSharingWidget
+from parsec.core.types import BackendOrganizationFileLinkAddr, EntryID, EntryName, UserInfo
 from parsec.event_bus import EventCallback
 
 

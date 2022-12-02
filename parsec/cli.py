@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import click
-import sys
 import os
+import sys
+from typing import Any, Sequence
 
-from typing import Sequence, Any
+import click
 
 from parsec._version import __version__
 from parsec.cli_utils import generate_not_available_cmd_group

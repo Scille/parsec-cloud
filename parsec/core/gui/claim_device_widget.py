@@ -1,44 +1,44 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
+from enum import IntEnum
 from typing import Any, Awaitable, Callable
 
 import trio
-from enum import IntEnum
-from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
+from structlog import get_logger
 
-from parsec.core import CoreConfig
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.types import BackendInvitationAddr, LocalDevice
-from parsec.core.local_device import (
-    save_device_with_password_in_config,
-    save_device_with_smartcard_in_config,
-    DeviceFileType,
-    LocalDeviceCryptoError,
-    LocalDeviceError,
-    LocalDeviceNotFoundError,
-)
+from parsec._parsec import SASCode
 from parsec.api.protocol import DeviceLabel
-from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
+from parsec.core import CoreConfig
 from parsec.core.backend_connection import (
-    backend_invited_cmds_factory,
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendNotAvailable,
     BackendOutOfBallparkError,
+    backend_invited_cmds_factory,
 )
 from parsec.core.gui import validators
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.claim_device_code_exchange_widget import Ui_ClaimDeviceCodeExchangeWidget
-from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDeviceProvideInfoWidget
 from parsec.core.gui.ui.claim_device_instructions_widget import Ui_ClaimDeviceInstructionsWidget
-from parsec._parsec import SASCode
+from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDeviceProvideInfoWidget
+from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
+from parsec.core.invite import InvitePeerResetError, claimer_retrieve_info
+from parsec.core.local_device import (
+    DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+)
+from parsec.core.types import BackendInvitationAddr, LocalDevice
 
 logger = get_logger()
 

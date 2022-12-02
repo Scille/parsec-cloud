@@ -1,39 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from enum import Enum
 
 import textwrap
+from enum import Enum
 from typing import Any, Callable
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QIcon, QColor
+from PyQt5.QtGui import QColor, QIcon
 from PyQt5.QtWidgets import QWidget
 
-from parsec.api.protocol import UserProfile, HumanHandle, DeviceLabel
+from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection.exceptions import BackendConnectionError
-from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
-from parsec.core.logged_core import LoggedCore
-
-from parsec.core.types import BackendPkiEnrollmentAddr
-
 from parsec.core.core_events import CoreEvent
-from parsec.event_bus import EventBus
-
+from parsec.core.gui import desktop, validators
+from parsec.core.gui.custom_dialogs import GreyedDialog
+from parsec.core.gui.custom_widgets import Pixmap
+from parsec.core.gui.lang import format_datetime, translate
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
+from parsec.core.gui.ui.enrollment_button import Ui_EnrollmentButton
+from parsec.core.gui.ui.enrollment_widget import Ui_EnrollmentWidget
+from parsec.core.gui.ui.greet_user_check_info_widget import Ui_GreetUserCheckInfoWidget
+from parsec.core.logged_core import LoggedCore
 from parsec.core.pki import (
-    PkiEnrollmentAccepterValidSubmittedCtx,
     PkiEnrollmentAccepterInvalidSubmittedCtx,
+    PkiEnrollmentAccepterValidSubmittedCtx,
 )
 from parsec.core.pki.exceptions import PkiEnrollmentListError
-
-from parsec.core.gui.custom_dialogs import GreyedDialog
-from parsec.core.gui import validators, desktop
-from parsec.core.gui.lang import translate, format_datetime
-from parsec.core.gui.custom_widgets import Pixmap
-from parsec.core.gui.snackbar_widget import SnackbarManager
-
-from parsec.core.gui.ui.enrollment_widget import Ui_EnrollmentWidget
-from parsec.core.gui.ui.enrollment_button import Ui_EnrollmentButton
-from parsec.core.gui.ui.greet_user_check_info_widget import Ui_GreetUserCheckInfoWidget
+from parsec.core.types import BackendPkiEnrollmentAddr
+from parsec.event_bus import EventBus
 
 
 class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):

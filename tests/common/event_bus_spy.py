@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from contextlib import contextmanager
+from enum import Enum
+from unittest.mock import ANY
+
+import attr
 import pytest
 import trio
-import attr
-
-from contextlib import contextmanager
-from unittest.mock import ANY
-from enum import Enum
 
 from parsec._parsec import DateTime, EventsListenRep
 from parsec.event_bus import EventBus
-
 from tests.common import real_clock_timeout
 
 

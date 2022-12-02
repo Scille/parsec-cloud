@@ -1,20 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 import re
 
+import pytest
+
 from parsec._parsec import InvitationType
-from parsec.crypto import SigningKey
-from parsec.api.protocol import OrganizationID, InvitationToken
+from parsec.api.protocol import InvitationToken, OrganizationID
 from parsec.core.types import (
-    EntryID,
     BackendAddr,
+    BackendInvitationAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
-    BackendInvitationAddr,
+    EntryID,
 )
+from parsec.crypto import SigningKey
 
 
 DEFAULT_ARGS = {

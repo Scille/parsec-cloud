@@ -1,38 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import sys
 import signal
+import sys
+from contextlib import contextmanager
 from types import TracebackType
 from typing import Any, Callable, Iterator, Type
-from contextlib import contextmanager
 
+import qtrio
 import trio
 import trio_typing
-import qtrio
-from structlog import get_logger
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication
+from structlog import get_logger
 
-from parsec.event_bus import EventBus
-from parsec.core.core_events import CoreEvent
 from parsec.core.config import CoreConfig
+from parsec.core.core_events import CoreEvent
 from parsec.core.ipcinterface import (
-    run_ipc_server,
-    send_to_ipc_server,
+    IPCCommand,
     IPCServerAlreadyRunning,
     IPCServerNotRunning,
-    IPCCommand,
+    run_ipc_server,
+    send_to_ipc_server,
 )
+from parsec.event_bus import EventBus
 
 try:
     from parsec.core.gui import lang
-    from parsec.core.gui.parsec_application import ParsecApp
-    from parsec.core.gui.new_version import CheckNewVersion
-    from parsec.core.gui.systray import systray_available, Systray
-    from parsec.core.gui.main_window import MainWindow
-    from parsec.core.gui.trio_jobs import run_trio_job_scheduler
     from parsec.core.gui.custom_dialogs import QDialogInProcess
+    from parsec.core.gui.main_window import MainWindow
+    from parsec.core.gui.new_version import CheckNewVersion
+    from parsec.core.gui.parsec_application import ParsecApp
+    from parsec.core.gui.systray import Systray, systray_available
+    from parsec.core.gui.trio_jobs import run_trio_job_scheduler
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.

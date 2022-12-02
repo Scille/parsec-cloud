@@ -13,15 +13,15 @@ Define all the FSError classes, using the following hierarchy:
 
 """
 
-from typing import TYPE_CHECKING, Union
-import os
 import errno
 import io
+import os
+from typing import TYPE_CHECKING, Union
 
 from parsec._parsec import SequesterServiceID
-from parsec.core.types import EntryID, ChunkID
-from parsec.core.fs.utils import ntstatus
 from parsec.api.data import AnyRemoteManifest
+from parsec.core.fs.utils import ntstatus
+from parsec.core.types import ChunkID, EntryID
 
 # Avoid cyclic imports:
 # - `FsPath` methods might raise an `FSNameTooLongError` which inherits from `FsOperationError`

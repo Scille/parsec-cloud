@@ -5,17 +5,16 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
-    MessageGetRepOk,
-    Message,
-    EventsListenRepOkMessageReceived,
     EventsListenRepNoEvents,
+    EventsListenRepOkMessageReceived,
+    Message,
+    MessageGetRepOk,
 )
 from parsec.api.protocol import message_get_serializer
 from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.config import PostgreSQLBlockStoreConfig
-
-from tests.backend.test_events import events_subscribe, events_listen, events_listen_nowait
+from tests.backend.test_events import events_listen, events_listen_nowait, events_subscribe
 
 
 async def message_get(sock, offset=0):

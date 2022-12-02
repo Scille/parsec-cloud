@@ -1,54 +1,56 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Sequence, cast
 
-from parsec._parsec import DateTime
 import pathlib
 import sys
 from enum import IntEnum
+from typing import Any, Sequence, cast
+
 import attr
 from PyQt5.QtCore import QEvent, QModelIndex, QPoint, Qt, pyqtSignal
 from PyQt5.QtGui import (
+    QColor,
     QDragMoveEvent,
     QDropEvent,
     QIcon,
-    QColor,
     QKeyEvent,
     QKeySequence,
     QPainter,
     QResizeEvent,
 )
 from PyQt5.QtWidgets import (
-    QTableWidget,
+    QGraphicsDropShadowEffect,
     QHeaderView,
+    QMenu,
+    QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
-    QStyle,
-    QMenu,
+    QTableWidget,
     QTableWidgetItem,
     QTableWidgetSelectionRange,
-    QGraphicsDropShadowEffect,
 )
+
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
 from parsec.core import CoreConfig
-
-from parsec.core.types import EntryID, WorkspaceRole
-from parsec.core.gui.lang import translate as _, format_datetime
+from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.file_items import (
-    FileTableItem,
+    COPY_STATUS_DATA_INDEX,
+    ENTRY_ID_DATA_INDEX,
+    NAME_DATA_INDEX,
+    TYPE_DATA_INDEX,
     CustomTableItem,
+    FileTableItem,
+    FileType,
     FolderTableItem,
     IconTableItem,
     InconsistencyTableItem,
-    FileType,
-    NAME_DATA_INDEX,
-    TYPE_DATA_INDEX,
-    ENTRY_ID_DATA_INDEX,
-    COPY_STATUS_DATA_INDEX,
 )
-from parsec.core.gui.custom_widgets import Pixmap
-from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.file_size import get_filesize
+from parsec.core.gui.lang import format_datetime
+from parsec.core.gui.lang import translate as _
+from parsec.core.types import EntryID, WorkspaceRole
 
 
 class PasteStatus:

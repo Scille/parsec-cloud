@@ -1,33 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import re
 import os
-import trio
-from uuid import UUID
-import click
-from pathlib import Path
+import re
 from functools import partial
+from pathlib import Path
+from uuid import UUID
+
+import click
 import oscrypto.asymmetric
+import trio
 
 try:
     import fcntl
 except ModuleNotFoundError:  # Not available on Windows
     pass
-import sys
 import subprocess
+import sys
+from contextlib import asynccontextmanager, contextmanager
 from time import sleep
-from contextlib import contextmanager, asynccontextmanager
 from unittest.mock import ANY, patch
+
 import attr
 import pytest
 import trustme
-from click.testing import CliRunner, Result as CliResult
+from click.testing import CliRunner
+from click.testing import Result as CliResult
 
 from parsec import __version__ as parsec_version
 from parsec._parsec import DateTime
-from parsec.cli import cli
-from parsec.cli_utils import ParsecDateTimeClickType
 from parsec.api.protocol import RealmID
 from parsec.backend.postgresql import MigrationItem
 from parsec.backend.sequester import (
@@ -35,21 +36,23 @@ from parsec.backend.sequester import (
     SequesterServiceAlreadyEnabledError,
     SequesterServiceType,
 )
-from parsec.core.types import BackendAddr, EntryID
+from parsec.cli import cli
+from parsec.cli_utils import ParsecDateTimeClickType
+from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types import (
-    LocalDevice,
-    UserInfo,
+    BackendAddr,
     BackendOrganizationAddr,
     BackendPkiEnrollmentAddr,
+    EntryID,
+    LocalDevice,
+    UserInfo,
 )
-from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
-
 from tests.common import (
     AsyncMock,
-    real_clock_timeout,
     asgi_app_handle_client_factory,
     customize_fixtures,
+    real_clock_timeout,
     sequester_service_factory,
 )
 

@@ -1,34 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import trio
 from functools import partial
-from quart import g, websocket, Websocket, Blueprint
-from structlog import get_logger
-from typing import Awaitable, NoReturn, Callable, TypeVar, Union
+from typing import Awaitable, Callable, NoReturn, TypeVar, Union
 
-from parsec.api.protocol.base import MessageSerializationError
+import trio
+from quart import Blueprint, Websocket, g, websocket
+from structlog import get_logger
+
 from parsec.api.protocol import (
-    packb,
-    unpackb,
-    ProtocolError,
     InvalidMessageError,
     InvitationStatus,
-    OrganizationID,
-    UserID,
     InvitationToken,
+    OrganizationID,
+    ProtocolError,
+    UserID,
+    packb,
+    unpackb,
 )
+from parsec.api.protocol.base import MessageSerializationError
 from parsec.backend.app import BackendApp
-from parsec.backend.utils import run_with_cancel_on_client_sending_new_cmd, CancelledByNewCmd
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.client_context import (
+    APIV1_AnonymousClientContext,
     AuthenticatedClientContext,
     BaseClientContext,
     InvitedClientContext,
-    APIV1_AnonymousClientContext,
 )
 from parsec.backend.handshake import do_handshake
 from parsec.backend.invite import CloseInviteConnection
+from parsec.backend.utils import CancelledByNewCmd, run_with_cancel_on_client_sending_new_cmd
 
 Ctx = TypeVar("Ctx", bound=BaseClientContext)
 R = dict[str, object]

@@ -1,18 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from unittest.mock import ANY, Mock
+from urllib.error import HTTPError, URLError
+
 import pytest
-from unittest.mock import Mock, ANY
-from urllib.error import URLError, HTTPError
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
-from parsec.core.core_events import CoreEvent
-from parsec.core.fs.path import FsPath
-from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
-from parsec.sequester_crypto import sequester_service_decrypt
 from parsec.backend.sequester import SequesterServiceType
-
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
+from parsec.core.fs.path import FsPath
+from parsec.sequester_crypto import sequester_service_decrypt
 from tests.common import customize_fixtures, sequester_service_factory
 
 

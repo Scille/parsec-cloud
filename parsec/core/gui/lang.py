@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import io
 import gettext
+import io
 
+from PyQt5.QtCore import QCoreApplication, QDataStream, QFile, QIODevice, QLocale
 from structlog import get_logger
-
-from PyQt5.QtCore import QCoreApplication, QIODevice, QFile, QDataStream, QLocale
 
 from parsec._parsec import DateTime, LocalDateTime
 from parsec.core.config import CoreConfig

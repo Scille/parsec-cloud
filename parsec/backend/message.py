@@ -3,16 +3,10 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
-from parsec._parsec import (
-    DateTime,
-    MessageGetReq,
-    MessageGetRep,
-    MessageGetRepOk,
-    Message,
-)
-from parsec.api.protocol import DeviceID, UserID, OrganizationID
+from parsec._parsec import DateTime, Message, MessageGetRep, MessageGetRepOk, MessageGetReq
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.client_context import AuthenticatedClientContext
-from parsec.backend.utils import catch_protocol_errors, api, api_typed_msg_adapter
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 
 
 class MessageError(Exception):

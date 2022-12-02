@@ -6,47 +6,46 @@ import pytest
 from parsec._parsec import (
     DateTime,
     RealmUpdateRolesRepOk,
-    VlobCreateRepOk,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
+    VlobCreateRepBadTimestamp,
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
+    VlobCreateRepOk,
     VlobCreateRepRequireGreaterTimestamp,
-    VlobCreateRepBadTimestamp,
-    VlobReadRepOk,
+    VlobListVersionsRepNotAllowed,
+    VlobListVersionsRepNotFound,
+    VlobListVersionsRepOk,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepBadVersion,
     VlobReadRepInMaintenance,
     VlobReadRepNotAllowed,
     VlobReadRepNotFound,
-    VlobUpdateRepOk,
+    VlobReadRepOk,
     VlobUpdateRepBadEncryptionRevision,
+    VlobUpdateRepBadTimestamp,
     VlobUpdateRepBadVersion,
     VlobUpdateRepInMaintenance,
     VlobUpdateRepNotAllowed,
     VlobUpdateRepNotFound,
+    VlobUpdateRepOk,
     VlobUpdateRepRequireGreaterTimestamp,
-    VlobUpdateRepBadTimestamp,
-    VlobListVersionsRepOk,
-    VlobListVersionsRepNotFound,
-    VlobListVersionsRepNotAllowed,
 )
 from parsec.api.protocol import (
-    packb,
     RealmID,
-    VlobID,
     RealmRole,
+    VlobID,
+    packb,
     vlob_create_serializer,
+    vlob_list_versions_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
-    vlob_list_versions_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
-
-from tests.common import freeze_time
-from tests.backend.common import vlob_create, vlob_update, vlob_read, vlob_list_versions
+from tests.backend.common import vlob_create, vlob_list_versions, vlob_read, vlob_update
 from tests.backend.realm.test_roles import realm_generate_certif_and_update_roles_or_fail
+from tests.common import freeze_time
 
 # Fixture
 realm_generate_certif_and_update_roles_or_fail

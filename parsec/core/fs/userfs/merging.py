@@ -4,8 +4,8 @@ from __future__ import annotations
 from typing import Dict, Tuple
 
 from parsec.api.data import UserManifest, WorkspaceEntry
-from parsec.core.types import LocalUserManifest
 from parsec.api.data.entry import EntryID
+from parsec.core.types import LocalUserManifest
 
 
 # TODO: replace sanity asserts by cleaner exceptions given they could be

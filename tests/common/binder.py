@@ -1,34 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-from typing import Union, Optional, Tuple
-from parsec._parsec import DateTime
-from functools import partial
 from dataclasses import dataclass
+from functools import partial
+from typing import Optional, Tuple, Union
 
-from parsec.crypto import SigningKey
+import pytest
+
+from parsec._parsec import DateTime
 from parsec.api.data import (
-    UserCertificate,
-    UserManifest,
-    RevokedUserCertificate,
     DeviceCertificate,
     RealmRoleCertificate,
+    RevokedUserCertificate,
+    UserCertificate,
+    UserManifest,
 )
-from parsec.api.protocol import UserID, RealmRole, RealmID, VlobID
-from parsec.core.types import (
-    LocalDevice,
-    LocalUserManifest,
-    BackendOrganizationBootstrapAddr,
-    BackendOrganizationAddr,
-)
-from parsec.core.fs.storage import UserStorage
+from parsec.api.protocol import RealmID, RealmRole, UserID, VlobID
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.user import Device as BackendDevice
+from parsec.backend.user import User as BackendUser
 from parsec.backend.vlob import VlobSequesterServiceInconsistencyError
-
+from parsec.core.fs.storage import UserStorage
+from parsec.core.types import (
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+    LocalDevice,
+    LocalUserManifest,
+)
+from parsec.crypto import SigningKey
 from tests.common.freeze_time import freeze_time
 from tests.common.sequester import SequesterAuthorityFullData
 

@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-from contextlib import asynccontextmanager
-import time
 import math
+import time
+from contextlib import asynccontextmanager
+
+import pytest
 import trio
 from trio.testing import MockClock
 

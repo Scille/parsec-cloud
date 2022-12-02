@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Any
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QPaintEvent, QPainter, QPixmap
-from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
+from PyQt5.QtGui import QPainter, QPaintEvent, QPixmap
+from PyQt5.QtWidgets import QStyle, QStyleOption, QWidget
 
 from parsec.core.gui.ui.menu_widget import Ui_MenuWidget
 

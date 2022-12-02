@@ -2,23 +2,19 @@
 from __future__ import annotations
 
 from parsec._parsec import (
-    OrganizationStatsReq,
-    OrganizationStatsRep,
-    OrganizationConfigReq,
     OrganizationConfigRep,
+    OrganizationConfigReq,
+    OrganizationStatsRep,
+    OrganizationStatsReq,
 )
-from parsec.serde import fields, BaseSchema, JSONSerializer
 from parsec.api.protocol.base import (
     ApiCommandSerializer,
-    BaseReqSchema,
     BaseRepSchema,
+    BaseReqSchema,
     CmdSerializer,
 )
-from parsec.api.protocol.types import (
-    OrganizationIDField,
-    DeviceIDField,
-    DeviceLabelField,
-)
+from parsec.api.protocol.types import DeviceIDField, DeviceLabelField, OrganizationIDField
+from parsec.serde import BaseSchema, JSONSerializer, fields
 
 
 class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):

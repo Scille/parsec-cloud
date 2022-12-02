@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.ping import BasePingComponent
-from parsec.backend.postgresql.handler import send_signal, PGHandler
+from parsec.backend.postgresql.handler import PGHandler, send_signal
 
 
 class PGPingComponent(BasePingComponent):

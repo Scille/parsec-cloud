@@ -6,14 +6,13 @@ import pytest
 from parsec._parsec import (
     DateTime,
     EventsListenRepNoEvents,
-    EventsListenRepOkRealmVlobsUpdated,
     EventsListenRepOkRealmRolesUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
 )
-from parsec.api.protocol import VlobID, RealmID, RealmRole
-from parsec.backend.realm import RealmGrantedRole
+from parsec.api.protocol import RealmID, RealmRole, VlobID
 from parsec.backend.backend_events import BackendEvent
-
-from tests.backend.common import events_subscribe, events_listen_nowait
+from parsec.backend.realm import RealmGrantedRole
+from tests.backend.common import events_listen_nowait, events_subscribe
 
 
 NOW = DateTime(2000, 1, 3)

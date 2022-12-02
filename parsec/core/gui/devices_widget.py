@@ -1,21 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Any
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QLabel
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
-from parsec.api.protocol import InvitationEmailSentStatus
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel, QWidget
 
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
+from parsec.api.protocol import InvitationEmailSentStatus
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.custom_widgets import ensure_string_size
+from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui.greet_device_widget import GreetDeviceWidget
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import ensure_string_size
-from parsec.core.gui.custom_dialogs import show_error
-from parsec.core.gui.flow_layout import FlowLayout
-from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
+from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import BackendInvitationAddr, DeviceInfo
 from parsec.event_bus import EventBus

@@ -1,30 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from pathlib import PurePath
-from parsec._parsec import DateTime
-from functools import partial, wraps
 from contextlib import contextmanager
-from typing import Any, Callable, Iterator, List, Tuple, TypeVar, Union, cast
-from typing_extensions import Concatenate, ParamSpec
-from trio import Cancelled, RunFinishedError
-from structlog import get_logger
-from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
-from winfspy import (
-    NTStatusError,
-    BaseFileSystemOperations,
-    FILE_ATTRIBUTE,
-    CREATE_FILE_CREATE_OPTIONS,
-)
-from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
 from datetime import datetime
+from functools import partial, wraps
+from pathlib import PurePath
+from typing import Any, Callable, Iterator, List, Tuple, TypeVar, Union, cast
 
+from structlog import get_logger
+from trio import Cancelled, RunFinishedError
+from typing_extensions import Concatenate, ParamSpec
+from winfspy import (
+    CREATE_FILE_CREATE_OPTIONS,
+    FILE_ATTRIBUTE,
+    BaseFileSystemOperations,
+    NTStatusError,
+)
+from winfspy.plumbing import NTSTATUS, SecurityDescriptor, dt_to_filetime
+
+from parsec._parsec import DateTime
 from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
+from parsec.core.fs import FSLocalOperationError, FsPath, FSRemoteOperationError
+from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
-from parsec.core.mountpoint.winify import winify_entry_name, unwinify_entry_name
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
+from parsec.core.mountpoint.winify import unwinify_entry_name, winify_entry_name
 
 
 logger = get_logger()
@@ -223,7 +224,7 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
         timestamp: DateTime | None,
     ) -> None:
         super().__init__()
-        # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
+        # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format
         self._security_descriptor = SecurityDescriptor.from_string(
             # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
             "O:BAG:BAD:NO_ACCESS_CONTROL"

@@ -4,9 +4,9 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING, Set, Tuple, cast
 
+from PyQt5.QtCore import QEvent, QFile
+from PyQt5.QtGui import QColor, QFileOpenEvent, QFont, QFontDatabase, QGuiApplication, QPalette
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QFile, QEvent
-from PyQt5.QtGui import QFont, QFontDatabase, QPalette, QColor, QFileOpenEvent, QGuiApplication
 from structlog import get_logger
 
 from parsec._parsec import DeviceID, OrganizationID

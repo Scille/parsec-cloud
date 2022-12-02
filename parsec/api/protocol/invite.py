@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Type
+
 from marshmallow.fields import Field
 
 from parsec._parsec import (

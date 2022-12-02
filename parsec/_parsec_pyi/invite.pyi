@@ -1,19 +1,12 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 from __future__ import annotations
+
 from typing import List, Tuple
 
-from parsec._parsec_pyi.crypto import (
-    PrivateKey,
-    SecretKey,
-    VerifyKey,
-    PublicKey,
-)
+from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, VerifyKey
 from parsec._parsec_pyi.enumerate import UserProfile
-from parsec._parsec_pyi.ids import (
-    DeviceID,
-    EntryID,
-    DeviceLabel,
-    HumanHandle,
-)
+from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, EntryID, HumanHandle
 
 class SASCode:
     def __init__(self, code: str) -> None: ...

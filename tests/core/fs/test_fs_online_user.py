@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import sys
-import pytest
-from hypothesis import strategies as st
-from hypothesis_trio.stateful import initialize, rule, Bundle
 from string import ascii_lowercase
 
-from parsec.api.data import EntryName, EntryID
+import pytest
+from hypothesis import strategies as st
+from hypothesis_trio.stateful import Bundle, initialize, rule
+
+from parsec.api.data import EntryID, EntryName
 from parsec.core.fs import FSWorkspaceNotFoundError
 
 

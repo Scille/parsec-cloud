@@ -5,18 +5,18 @@ import platform
 from typing import Any, Callable, Literal, cast
 
 from PyQt5.QtCore import (
+    QEasingCurve,
+    QEvent,
+    QObject,
+    QPropertyAnimation,
+    QRect,
+    QSize,
     Qt,
     QTimer,
-    QPropertyAnimation,
-    QEvent,
-    QRect,
-    pyqtSignal,
     pyqtProperty,
-    QEasingCurve,
-    QObject,
-    QSize,
+    pyqtSignal,
 )
-from PyQt5.QtGui import QPainter, QBrush, QColor, QCursor, QPixmap
+from PyQt5.QtGui import QBrush, QColor, QCursor, QPainter, QPixmap
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.custom_widgets import Pixmap

@@ -2,30 +2,30 @@
 from __future__ import annotations
 
 import json
-import pytest
-from unittest.mock import patch, Mock
-
 import urllib.error
-from urllib.parse import urlsplit, parse_qs
+from unittest.mock import Mock, patch
+from urllib.parse import parse_qs, urlsplit
+
+import pytest
+
 from parsec._parsec import (
     VlobCreateRepOk,
-    VlobCreateRepSequesterInconsistency,
     VlobCreateRepRejectedBySequesterService,
+    VlobCreateRepSequesterInconsistency,
     VlobCreateRepTimeout,
     VlobUpdateRepOk,
-    VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepRejectedBySequesterService,
+    VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepTimeout,
 )
-from parsec.api.protocol import OrganizationID, VlobID, SequesterServiceID
+from parsec.api.protocol import OrganizationID, SequesterServiceID, VlobID
 from parsec.backend.sequester import (
     SequesterOrganizationNotFoundError,
     SequesterServiceNotFoundError,
     SequesterServiceType,
 )
-
-from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 from tests.backend.common import vlob_create, vlob_update
+from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)

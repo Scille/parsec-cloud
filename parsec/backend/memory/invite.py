@@ -1,30 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from collections import defaultdict
-from typing import Any, Callable, Coroutine, List, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Tuple
+
+import attr
 
 from parsec._parsec import DateTime, InvitationDeletedReason
+from parsec.api.protocol import InvitationStatus, InvitationToken, OrganizationID, UserID
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
-    InvitationToken,
-    InvitationStatus,
-)
 from parsec.backend.invite import (
-    ConduitState,
     NEXT_CONDUIT_STATE,
-    ConduitListenCtx,
     BaseInviteComponent,
-    Invitation,
-    UserInvitation,
+    ConduitListenCtx,
+    ConduitState,
     DeviceInvitation,
-    InvitationNotFoundError,
+    Invitation,
     InvitationAlreadyDeletedError,
-    InvitationInvalidStateError,
     InvitationAlreadyMemberError,
+    InvitationInvalidStateError,
+    InvitationNotFoundError,
+    UserInvitation,
 )
 
 if TYPE_CHECKING:

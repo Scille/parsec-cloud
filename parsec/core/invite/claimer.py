@@ -1,40 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from typing import Any, List, Tuple, Type, TypeVar, Union
 
-from parsec.crypto import (
-    SecretKey,
-    PrivateKey,
-    SigningKey,
-    HashDigest,
-)
-from parsec.api.data import (
-    DataError,
-    SASCode,
-    generate_sas_codes,
-    generate_sas_code_candidates,
-    InviteUserData,
-    InviteUserConfirmation,
-    InviteDeviceData,
-    InviteDeviceConfirmation,
-)
-from parsec.api.protocol import UserID, HumanHandle, DeviceLabel
-from parsec.core.local_device import generate_new_device
-from parsec.core.backend_connection import BackendInvitedCmds
-from parsec.core.types import LocalDevice, BackendOrganizationAddr
-from parsec.core.invite.exceptions import (
-    InviteError,
-    InviteNotFoundError,
-    InviteAlreadyUsedError,
-    InvitePeerResetError,
-)
+import attr
 
 from parsec._parsec import (
     BackendActionAddr,
     BackendAddr,
-    generate_nonce,
+    DeviceCreateRepOk,
     InvitationType,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,
@@ -85,10 +59,31 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
-    DeviceCreateRepOk,
-    UserCreateRepOk,
     UserCreateRepActiveUsersLimitReached,
+    UserCreateRepOk,
+    generate_nonce,
 )
+from parsec.api.data import (
+    DataError,
+    InviteDeviceConfirmation,
+    InviteDeviceData,
+    InviteUserConfirmation,
+    InviteUserData,
+    SASCode,
+    generate_sas_code_candidates,
+    generate_sas_codes,
+)
+from parsec.api.protocol import DeviceLabel, HumanHandle, UserID
+from parsec.core.backend_connection import BackendInvitedCmds
+from parsec.core.invite.exceptions import (
+    InviteAlreadyUsedError,
+    InviteError,
+    InviteNotFoundError,
+    InvitePeerResetError,
+)
+from parsec.core.local_device import generate_new_device
+from parsec.core.types import BackendOrganizationAddr, LocalDevice
+from parsec.crypto import HashDigest, PrivateKey, SecretKey, SigningKey
 
 NOT_FOUND_TYPES = (
     Invite1ClaimerWaitPeerRepNotFound,

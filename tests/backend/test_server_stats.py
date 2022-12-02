@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import pytest
 from typing import Optional
 
-from parsec._parsec import VlobID, DateTime, BlockID, RealmID, RealmRole
+import pytest
+
+from parsec._parsec import BlockID, DateTime, RealmID, RealmRole, VlobID
 from parsec.api.protocol.types import UserProfile
 from parsec.backend.app import BackendApp
 from parsec.backend.realm import RealmGrantedRole
-
 from tests.common import customize_fixtures
 
 

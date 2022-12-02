@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import os
-import re
-import sys
-import pytest
-import psutil
 import pathlib
-import tempfile
+import re
 import subprocess
+import sys
+import tempfile
+
+import psutil
+import pytest
 
 from parsec.core.config import config_factory
 from parsec.core.local_device import list_available_devices

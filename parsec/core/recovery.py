@@ -5,13 +5,13 @@ import secrets
 
 from parsec._parsec import DateTime, DeviceCreateRepOk
 from parsec.api.data import DeviceCertificate
-from parsec.api.protocol import DeviceID, DeviceName, DeviceLabel
+from parsec.api.protocol import DeviceID, DeviceLabel, DeviceName
 from parsec.core.backend_connection import (
-    backend_authenticated_cmds_factory,
     BackendConnectionError,
+    backend_authenticated_cmds_factory,
 )
 from parsec.core.types import LocalDevice
-from parsec.crypto import SigningKey, SecretKey
+from parsec.crypto import SecretKey, SigningKey
 
 
 async def _create_new_device_for_self(

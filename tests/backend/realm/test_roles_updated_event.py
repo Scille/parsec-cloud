@@ -5,17 +5,16 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
-    RealmCreateRepOk,
-    RealmUpdateRolesRepOk,
     EventsListenRepNoEvents,
     EventsListenRepOkRealmRolesUpdated,
+    RealmCreateRepOk,
+    RealmUpdateRolesRepOk,
 )
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmID, RealmRole
 from parsec.backend.backend_events import BackendEvent
-
-from tests.backend.test_events import events_subscribe, events_listen_nowait
 from tests.backend.common import realm_create, realm_update_roles
+from tests.backend.test_events import events_listen_nowait, events_subscribe
 
 
 @pytest.mark.trio

@@ -1,7 +1,9 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 from __future__ import annotations
+
 from typing import Any, Dict, FrozenSet, Set, Tuple, Union
 
-from parsec.crypto import SecretKey
 from parsec._parsec_pyi.ids import ChunkID, DeviceID, EntryID
 from parsec._parsec_pyi.manifest import (
     BlockAccess,
@@ -12,8 +14,9 @@ from parsec._parsec_pyi.manifest import (
     WorkspaceEntry,
     WorkspaceManifest,
 )
-from parsec._parsec_pyi.time import DateTime
 from parsec._parsec_pyi.regex import Regex
+from parsec._parsec_pyi.time import DateTime
+from parsec.crypto import SecretKey
 
 AnyLocalManifest = Union[
     LocalFileManifest,

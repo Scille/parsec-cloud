@@ -3,17 +3,17 @@ from __future__ import annotations
 
 import triopg
 
-from parsec.api.protocol import RealmRole, OrganizationID
+from parsec.api.protocol import OrganizationID, RealmRole
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.realm import RealmGrantedRole, RealmAlreadyExistsError
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
+    q_device_internal_id,
     q_organization_internal_id,
     q_user_internal_id,
-    q_device_internal_id,
+    query,
 )
+from parsec.backend.realm import RealmAlreadyExistsError, RealmGrantedRole
 
 
 _q_insert_realm = Q(

@@ -1,38 +1,39 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-from parsec._parsec import DateTime
-from typing import Any, Callable, Coroutine, Dict, List, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, Tuple
 
-from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, UserProfile
+import attr
+
+from parsec._parsec import DateTime
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, UserID, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import (
-    MaintenanceType,
-    RealmGrantedRole,
     BaseRealmComponent,
-    RealmRole,
-    RealmStatus,
-    RealmStats,
+    MaintenanceType,
     RealmAccessError,
-    RealmIncompatibleProfileError,
     RealmAlreadyExistsError,
+    RealmEncryptionRevisionError,
+    RealmGrantedRole,
+    RealmIncompatibleProfileError,
+    RealmInMaintenanceError,
+    RealmMaintenanceError,
+    RealmNotFoundError,
+    RealmNotInMaintenanceError,
+    RealmParticipantsMismatchError,
+    RealmRole,
     RealmRoleAlreadyGranted,
     RealmRoleRequireGreaterTimestampError,
-    RealmNotFoundError,
-    RealmEncryptionRevisionError,
-    RealmParticipantsMismatchError,
-    RealmMaintenanceError,
-    RealmInMaintenanceError,
-    RealmNotInMaintenanceError,
+    RealmStats,
+    RealmStatus,
 )
 from parsec.backend.user import UserAlreadyRevokedError, UserNotFoundError
 
 if TYPE_CHECKING:
-    from parsec.backend.memory.user import MemoryUserComponent
-    from parsec.backend.memory.message import MemoryMessageComponent
-    from parsec.backend.memory.vlob import MemoryVlobComponent
     from parsec.backend.memory.block import MemoryBlockComponent
+    from parsec.backend.memory.message import MemoryMessageComponent
+    from parsec.backend.memory.user import MemoryUserComponent
+    from parsec.backend.memory.vlob import MemoryVlobComponent
 
 
 @attr.s

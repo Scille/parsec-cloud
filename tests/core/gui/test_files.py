@@ -2,23 +2,23 @@
 from __future__ import annotations
 
 import os
-import trio
 from pathlib import Path
+
 import pytest
-from PyQt5 import QtCore, QtWidgets, QtGui
+import trio
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QGuiApplication
 
 from parsec.api.data import EntryName
-from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
-from parsec.core.gui.file_size import get_filesize
-from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
-
-from parsec.core.gui.main_window import MainWindow
-from parsec.core.gui.lang import translate as _
+from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
+from parsec.core.gui.file_items import TYPE_DATA_INDEX, FileType
+from parsec.core.gui.file_size import get_filesize
 from parsec.core.gui.file_table import Column
-from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.core.gui.files_widget import FilesWidget
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.main_window import MainWindow
+from parsec.core.types import WorkspaceRole
 from parsec.test_utils import create_inconsistent_workspace
 
 

@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 from typing import List
-from trio import CancelScope, Nursery
-from structlog import get_logger
 
-from parsec.utils import open_service_nursery
-from parsec.api.protocol import OrganizationID, BlockID
+from structlog import get_logger
+from trio import CancelScope, Nursery
+
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.utils import open_service_nursery
 
 
 logger = get_logger()

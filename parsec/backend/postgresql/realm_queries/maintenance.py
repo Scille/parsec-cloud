@@ -1,40 +1,41 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import Any, Dict, List
 
+import triopg
+
 from parsec._parsec import DateTime
-from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
     DeviceID,
-    UserID,
+    MaintenanceType,
     OrganizationID,
     RealmID,
     RealmRole,
-    MaintenanceType,
+    UserID,
 )
-from parsec.backend.realm import (
-    RealmStatus,
-    RealmAccessError,
-    RealmNotFoundError,
-    RealmEncryptionRevisionError,
-    RealmParticipantsMismatchError,
-    RealmMaintenanceError,
-    RealmInMaintenanceError,
-    RealmNotInMaintenanceError,
-)
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
-    q_user,
     q_device,
     q_device_internal_id,
+    q_organization_internal_id,
     q_realm,
     q_realm_internal_id,
+    q_user,
+    query,
+)
+from parsec.backend.realm import (
+    RealmAccessError,
+    RealmEncryptionRevisionError,
+    RealmInMaintenanceError,
+    RealmMaintenanceError,
+    RealmNotFoundError,
+    RealmNotInMaintenanceError,
+    RealmParticipantsMismatchError,
+    RealmStatus,
 )
 
 

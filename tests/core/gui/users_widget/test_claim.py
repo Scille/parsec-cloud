@@ -1,30 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+from functools import partial
+
 import pytest
 import trio
 from PyQt5 import QtCore
-from contextlib import asynccontextmanager
-from functools import partial
 
 from parsec._parsec import DateTime, InvitationType
 from parsec.api.protocol import (
     DeviceLabel,
-    InvitationToken,
     HumanHandle,
     InvitationDeletedReason,
+    InvitationToken,
     UserProfile,
 )
-from parsec.core.types import BackendInvitationAddr
-from parsec.core.invite import UserGreetInitialCtx
-from parsec.core.gui.lang import translate
 from parsec.core.gui.claim_user_widget import (
-    ClaimUserFinalizeWidget,
     ClaimUserCodeExchangeWidget,
-    ClaimUserProvideInfoWidget,
+    ClaimUserFinalizeWidget,
     ClaimUserInstructionsWidget,
+    ClaimUserProvideInfoWidget,
     ClaimUserWidget,
 )
+from parsec.core.gui.lang import translate
+from parsec.core.invite import UserGreetInitialCtx
+from parsec.core.types import BackendInvitationAddr
 
 
 @pytest.fixture

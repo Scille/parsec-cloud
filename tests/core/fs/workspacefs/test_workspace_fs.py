@@ -3,26 +3,26 @@ from __future__ import annotations
 
 import errno
 from typing import Union
-import pytest
 from unittest.mock import ANY
 
+import pytest
 from trio import open_nursery
+
 from parsec._parsec import (
-    LocalDevice,
     FileManifest,
     FolderManifest,
+    LocalDevice,
     UserManifest,
-    WorkspaceManifest,
     VlobReadRepOk,
+    WorkspaceManifest,
 )
-
-from parsec.api.protocol import DeviceID, RealmID, RealmRole
 from parsec.api.data import EntryName
-from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
-from parsec.core.fs import FsPath
-from parsec.core.fs.exceptions import FSError, FSBackendOfflineError, FSLocalMissError
-from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed, WorkspaceFS
+from parsec.api.protocol import DeviceID, RealmID, RealmRole
 from parsec.backend.block import BlockNotFoundError
+from parsec.core.fs import FsPath
+from parsec.core.fs.exceptions import FSBackendOfflineError, FSError, FSLocalMissError
+from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed, WorkspaceFS
+from parsec.core.types import DEFAULT_BLOCK_SIZE, EntryID
 
 
 @pytest.mark.trio

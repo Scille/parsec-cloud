@@ -1,22 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, List, Tuple
 
 from parsec._parsec import (
-    UserGetRepOk,
-    UserGetRepNotFound,
-    TrustchainContext,
     TimeProvider,
+    TrustchainContext,
     TrustchainErrorException,
+    UserGetRepNotFound,
+    UserGetRepOk,
 )
-from parsec.crypto import VerifyKey
+from parsec.api.data import DeviceCertificate, RevokedUserCertificate, UserCertificate
 from parsec.api.protocol import DeviceID, UserID
-from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
-from parsec.core.backend_connection import (
-    BackendConnectionError,
-    BackendNotAvailable,
-)
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.crypto import VerifyKey
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection import BackendAuthenticatedCmds

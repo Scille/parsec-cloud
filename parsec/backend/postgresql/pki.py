@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 from typing import Any, List
+
 from triopg import UniqueViolationError
 
 from parsec._parsec import DateTime, EnrollmentID
@@ -10,10 +11,8 @@ from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserID, UserProfile
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
-from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
+    BasePkiEnrollmentComponent,
     PkiEnrollementEmailAlreadyUsedError,
     PkiEnrollmentActiveUsersLimitReached,
     PkiEnrollmentAlreadyEnrolledError,
@@ -27,16 +26,17 @@ from parsec.backend.pki import (
     PkiEnrollmentInfoRejected,
     PkiEnrollmentInfoSubmitted,
     PkiEnrollmentListItem,
-    BasePkiEnrollmentComponent,
     PkiEnrollmentNoLongerAvailableError,
     PkiEnrollmentNotFoundError,
 )
-from parsec.backend.postgresql import PGHandler
-from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_device_internal_id
+from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import (
     q_create_user,
     q_take_user_device_write_lock,
 )
+from parsec.backend.postgresql.utils import Q, q_device_internal_id, q_organization_internal_id
+from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
+from parsec.backend.user_type import Device, User
 
 _q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
     f"""

@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from hypercorn.logging import Logger, AccessLogAtoms
-from typing import Mapping, TYPE_CHECKING
-
 import base64
 import binascii
+from typing import TYPE_CHECKING, Mapping
+
+from hypercorn.logging import AccessLogAtoms, Logger
 
 if TYPE_CHECKING:
     from hypercorn.typing import ResponseSummary, WWWScope

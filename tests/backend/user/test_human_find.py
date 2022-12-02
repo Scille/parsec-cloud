@@ -3,16 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import (
-    HumanFindRepOk,
-    HumanFindRepNotAllowed,
-    HumanFindResultItem,
-)
+from parsec._parsec import HumanFindRepNotAllowed, HumanFindRepOk, HumanFindResultItem
 from parsec.api.protocol import UserProfile
 from parsec.backend.asgi import app_factory
-
-from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import human_find
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture

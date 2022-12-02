@@ -26,11 +26,12 @@ So the idea is simple here:
   queue to inform what is going in the child).
 """
 
+import multiprocessing
+import queue
+import sys
 from collections import defaultdict
 from typing import List
-import sys
-import queue
-import multiprocessing
+
 import pytest
 
 
@@ -91,8 +92,8 @@ class TestStatusReportPlugin:
 
 
 def _run_pytest(job_index, args, plugins):
-    import sys
     import os
+    import sys
 
     # Stdout is shared with parent process, so we must disable it to keep it readable
     sys.stdout = open(os.devnull, "w")

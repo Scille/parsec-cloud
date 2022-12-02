@@ -2,19 +2,18 @@
 from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, SequesterServiceID
 from parsec.backend.sequester import (
-    SequesterOrganizationNotFoundError,
-    SequesterServiceNotFoundError,
-    SequesterDisabledError,
     SequesterCertificateValidationError,
-    SequesterServiceAlreadyExists,
+    SequesterDisabledError,
+    SequesterOrganizationNotFoundError,
     SequesterServiceAlreadyDisabledError,
+    SequesterServiceAlreadyExists,
+    SequesterServiceNotFoundError,
     SequesterServiceType,
 )
-
 from tests.common import (
     OrganizationFullData,
     customize_fixtures,

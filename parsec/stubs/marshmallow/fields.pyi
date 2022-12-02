@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from typing import Any, Generic, TypeVar, Callable, Mapping
+
+from typing import Any, Callable, Generic, Mapping, TypeVar
 
 missing_: object = object()
 

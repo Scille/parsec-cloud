@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from typing import Any, Callable, Coroutine
+
 from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.backend.ping import BasePingComponent
 from parsec.backend.backend_events import BackendEvent
+from parsec.backend.ping import BasePingComponent
 
 
 class MemoryPingComponent(BasePingComponent):

@@ -1,20 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
 from typing import List, Tuple
 
+import triopg
+
 from parsec._parsec import DateTime
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
-from parsec.backend.postgresql.handler import send_signal, PGHandler
+from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.utils import (
     Q,
-    q_organization_internal_id,
-    q_user_internal_id,
     q_device,
     q_device_internal_id,
+    q_organization_internal_id,
+    q_user_internal_id,
 )
 
 

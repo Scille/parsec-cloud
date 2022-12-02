@@ -1,27 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
+from enum import IntEnum
 from typing import Any, Callable
 
 import trio
-from enum import IntEnum
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
 from parsec._parsec import InvitationEmailSentStatus, SASCode
 from parsec.api.protocol import InvitationToken
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.gui import desktop
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info, show_info_copy_link
 from parsec.core.gui.greet_user_widget import QDialog
-from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info, show_info_copy_link
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.qrcode_widget import generate_qr_code
 from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui import desktop
-from parsec.core.gui.ui.greet_device_widget import Ui_GreetDeviceWidget
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.greet_device_code_exchange_widget import Ui_GreetDeviceCodeExchangeWidget
 from parsec.core.gui.ui.greet_device_instructions_widget import Ui_GreetDeviceInstructionsWidget
+from parsec.core.gui.ui.greet_device_widget import Ui_GreetDeviceWidget
+from parsec.core.invite import InviteAlreadyUsedError, InviteError, InvitePeerResetError
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import BackendInvitationAddr
 

@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import pytest
-
 from PyQt5.QtWidgets import QLabel
-from tests.common import customize_fixtures
+
 from parsec.core.gui.lang import translate
+from tests.common import customize_fixtures
 
 
 @pytest.mark.gui

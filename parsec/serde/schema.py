@@ -1,15 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Iterable, TypeVar, Union, Dict, Type
 from enum import Enum
-from marshmallow import (
-    Schema as MarshmallowSchema,
-    MarshalResult,
-    UnmarshalResult,
-    ValidationError,
-    post_load,
-)
+from typing import Any, Dict, Iterable, Type, TypeVar, Union
+
+from marshmallow import MarshalResult, UnmarshalResult, ValidationError, post_load
+from marshmallow import Schema as MarshmallowSchema
 
 try:
     import toastedmarshmallow

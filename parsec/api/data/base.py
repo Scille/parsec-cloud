@@ -1,20 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
 from typing import Dict, Iterable, Tuple, Type, TypeVar
 
-from parsec._parsec import DateTime, DataError
+import attr
+
+from parsec._parsec import DataError, DateTime
+from parsec.api.protocol import DeviceID, DeviceIDField
+from parsec.crypto import CryptoError, PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
 from parsec.serde import (
     BaseSchema,
-    fields,
-    SerdeValidationError,
-    SerdePackingError,
     BaseSerializer,
+    SerdePackingError,
+    SerdeValidationError,
     ZipMsgpackSerializer,
+    fields,
 )
-from parsec.crypto import CryptoError, PrivateKey, PublicKey, SigningKey, VerifyKey, SecretKey
-from parsec.api.protocol import DeviceID, DeviceIDField
 
 
 class DataValidationError(SerdeValidationError, DataError):

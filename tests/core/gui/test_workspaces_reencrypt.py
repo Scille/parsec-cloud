@@ -6,13 +6,13 @@ from functools import partial
 import pytest
 from PyQt5 import QtCore
 
+from parsec.api.data import EntryName
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSError,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
 )
-from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.types import WorkspaceRole

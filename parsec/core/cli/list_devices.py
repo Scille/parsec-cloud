@@ -2,18 +2,19 @@
 from __future__ import annotations
 
 import os
-from typing import Any
-import click
 from pathlib import Path
+from typing import Any
+
+import click
 
 from parsec.cli_utils import cli_exception_handler
-from parsec.core.config import get_default_config_dir
-from parsec.core.local_device import AvailableDevice, list_available_devices
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_available_device_options,
     format_available_devices,
 )
+from parsec.core.config import get_default_config_dir
+from parsec.core.local_device import AvailableDevice, list_available_devices
 
 
 @click.command()

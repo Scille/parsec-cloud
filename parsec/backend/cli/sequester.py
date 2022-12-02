@@ -1,46 +1,47 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-import click
-import oscrypto
 import textwrap
-from oscrypto.asymmetric import PrivateKey
-from async_generator import asynccontextmanager
-from base64 import b64encode, b64decode
+from base64 import b64decode, b64encode
 from pathlib import Path
 from typing import AsyncGenerator, Dict, List, Tuple
 
+import attr
+import click
+import oscrypto
+from async_generator import asynccontextmanager
+from oscrypto.asymmetric import PrivateKey
+
 from parsec._parsec import DateTime
-from parsec.backend.postgresql.organization import PGOrganizationComponent
-from parsec.event_bus import EventBus
-from parsec.utils import open_service_nursery, trio_run
-from parsec.cli_utils import operation, cli_exception_handler, debug_config_options
-from parsec.sequester_crypto import (
-    sequester_authority_sign,
-    SequesterEncryptionKeyDer,
-    SequesterVerifyKeyDer,
-    CryptoError,
-)
-from parsec.sequester_export_reader import extract_workspace, RealmExportProgress
-from parsec.api.data import SequesterServiceCertificate, DataError
-from parsec.api.protocol import OrganizationID, UserID, RealmID, SequesterServiceID, HumanHandle
-from parsec.backend.cli.utils import db_backend_options, blockstore_backend_options
-from parsec.backend.config import BaseBlockStoreConfig
-from parsec.backend.realm import RealmGrantedRole
-from parsec.backend.user import User
-from parsec.backend.sequester import (
-    BaseSequesterService,
-    StorageSequesterService,
-    WebhookSequesterService,
-    SequesterServiceType,
-)
+from parsec.api.data import DataError, SequesterServiceCertificate
+from parsec.api.protocol import HumanHandle, OrganizationID, RealmID, SequesterServiceID, UserID
 from parsec.backend.blockstore import blockstore_factory
+from parsec.backend.cli.utils import blockstore_backend_options, db_backend_options
+from parsec.backend.config import BaseBlockStoreConfig
 from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.organization import PGOrganizationComponent
+from parsec.backend.postgresql.realm import PGRealmComponent
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
 from parsec.backend.postgresql.sequester_export import RealmExporter
 from parsec.backend.postgresql.user import PGUserComponent
-from parsec.backend.postgresql.realm import PGRealmComponent
+from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.sequester import (
+    BaseSequesterService,
+    SequesterServiceType,
+    StorageSequesterService,
+    WebhookSequesterService,
+)
+from parsec.backend.user import User
+from parsec.cli_utils import cli_exception_handler, debug_config_options, operation
+from parsec.event_bus import EventBus
+from parsec.sequester_crypto import (
+    CryptoError,
+    SequesterEncryptionKeyDer,
+    SequesterVerifyKeyDer,
+    sequester_authority_sign,
+)
+from parsec.sequester_export_reader import RealmExportProgress, extract_workspace
+from parsec.utils import open_service_nursery, trio_run
 
 
 SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER = "-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----"

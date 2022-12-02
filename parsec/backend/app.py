@@ -1,32 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Awaitable, Callable, Dict
+
 import attr
 from structlog import get_logger
-from contextlib import asynccontextmanager
 
 from parsec._parsec import ClientType
-from parsec.event_bus import EventBus
-from parsec.backend.utils import collect_apis
-from parsec.backend.config import BackendConfig
-from parsec.backend.memory import components_factory as mocked_components_factory
-from parsec.backend.postgresql import (
-    components_factory as postgresql_components_factory,
-)
-from parsec.backend.events import EventsComponent
-from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.user import BaseUserComponent
-from parsec.backend.invite import BaseInviteComponent
-from parsec.backend.organization import BaseOrganizationComponent
-from parsec.backend.message import BaseMessageComponent
-from parsec.backend.realm import BaseRealmComponent
-from parsec.backend.vlob import BaseVlobComponent
-from parsec.backend.ping import BasePingComponent
-from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BaseBlockComponent
-from parsec.backend.sequester import BaseSequesterComponent
+from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.config import BackendConfig
+from parsec.backend.events import EventsComponent
+from parsec.backend.invite import BaseInviteComponent
+from parsec.backend.memory import components_factory as mocked_components_factory
+from parsec.backend.message import BaseMessageComponent
+from parsec.backend.organization import BaseOrganizationComponent
+from parsec.backend.ping import BasePingComponent
 from parsec.backend.pki import BasePkiEnrollmentComponent
+from parsec.backend.postgresql import components_factory as postgresql_components_factory
+from parsec.backend.realm import BaseRealmComponent
+from parsec.backend.sequester import BaseSequesterComponent
+from parsec.backend.user import BaseUserComponent
+from parsec.backend.utils import collect_apis
+from parsec.backend.vlob import BaseVlobComponent
+from parsec.backend.webhooks import WebhooksComponent
+from parsec.event_bus import EventBus
 
 
 logger = get_logger()

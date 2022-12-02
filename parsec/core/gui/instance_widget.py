@@ -1,42 +1,42 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from pathlib import Path
-
-import trio
 from typing import Any, Tuple, cast
-from structlog import get_logger
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QMainWindow
-from packaging.version import Version
-import exceptiongroup
-from parsec.core.fs.exceptions import FSLocalStorageOperationalError
 
-from parsec.core.logged_core import LoggedCore
-from parsec.core.types import BackendActionAddr, BackendOrganizationFileLinkAddr, LocalDevice
-from parsec.event_bus import EventBus, EventCallback
+import exceptiongroup
+import trio
+from PyQt5.QtCore import QObject, pyqtBoundSignal, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+from structlog import get_logger
+
+from packaging.version import Version
 from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.core import logged_core_factory
+from parsec.core.config import CoreConfig
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs.exceptions import FSLocalStorageOperationalError
+from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.custom_dialogs import show_error, show_info_link
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.login_widget import LoginWidget
+from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler, run_trio_job_scheduler
 from parsec.core.local_device import (
-    LocalDeviceError,
     LocalDeviceCertificatePinCodeUnavailableError,
+    LocalDeviceError,
     load_device_with_password,
     load_device_with_smartcard,
 )
+from parsec.core.logged_core import LoggedCore
 from parsec.core.mountpoint import (
     MountpointConfigurationError,
     MountpointDriverCrash,
     MountpointFuseNotAvailable,
     MountpointWinfspNotAvailable,
 )
-
-from parsec.core.config import CoreConfig
-from parsec.core.core_events import CoreEvent
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler, QtToTrioJob, run_trio_job_scheduler
-from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.gui.custom_dialogs import show_error, show_info_link
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.login_widget import LoginWidget
-from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.types import BackendActionAddr, BackendOrganizationFileLinkAddr, LocalDevice
+from parsec.event_bus import EventBus, EventCallback
 
 
 logger = get_logger()

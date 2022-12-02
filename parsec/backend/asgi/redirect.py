@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
-from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, quote_plus
-from quart import g, Blueprint, redirect, abort, request
+from typing import TYPE_CHECKING, Any
+from urllib.parse import parse_qs, quote_plus, urlencode, urlsplit, urlunsplit
+
+from quart import Blueprint, abort, g, redirect, request
 
 
 if TYPE_CHECKING:
-    from parsec.backend.app import BackendApp
     from parsec._parsec import BackendAddr
+    from parsec.backend.app import BackendApp
 
 
 redirect_bp = Blueprint("redirect", __name__)

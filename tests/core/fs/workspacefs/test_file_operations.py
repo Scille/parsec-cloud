@@ -1,23 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
 from typing import Tuple
-from parsec._parsec import DateTime
 
+import pytest
 from hypothesis import strategies
-from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test
+from hypothesis.stateful import RuleBasedStateMachine, invariant, rule, run_state_machine_as_test
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import DeviceID
-from parsec.core.types import EntryID, ChunkID, Chunk, LocalFileManifest
-from parsec.core.fs.workspacefs.file_transactions import padded_data
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
-    prepare_write,
-    prepare_resize,
     prepare_reshape,
+    prepare_resize,
+    prepare_write,
 )
-
+from parsec.core.fs.workspacefs.file_transactions import padded_data
+from parsec.core.types import Chunk, ChunkID, EntryID, LocalFileManifest
 from tests.common import freeze_time
 
 

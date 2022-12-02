@@ -4,8 +4,7 @@ from __future__ import annotations
 import pytest
 
 from parsec.core.fs.storage import UserStorage
-from parsec.core.types import LocalUserManifest, EntryID
-
+from parsec.core.types import EntryID, LocalUserManifest
 from tests.common import customize_fixtures
 
 

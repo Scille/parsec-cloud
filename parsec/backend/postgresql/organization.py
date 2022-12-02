@@ -1,35 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import triopg
-from typing import Any, Dict, Union
 from functools import lru_cache
+from typing import Any, Dict, Union
+
+import triopg
 from triopg import UniqueViolationError
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserProfile
-from parsec.crypto import VerifyKey
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.backend.events import BackendEvent
-from parsec.backend.user import UserError, User, Device
-from parsec.backend.utils import UnsetType, Unset
 from parsec.backend.organization import (
     BaseOrganizationComponent,
-    SequesterAuthority,
-    OrganizationStats,
     Organization,
-    OrganizationError,
-    OrganizationAlreadyExistsError,
-    OrganizationInvalidBootstrapTokenError,
     OrganizationAlreadyBootstrappedError,
-    OrganizationNotFoundError,
+    OrganizationAlreadyExistsError,
+    OrganizationError,
     OrganizationFirstUserCreationError,
+    OrganizationInvalidBootstrapTokenError,
+    OrganizationNotFoundError,
+    OrganizationStats,
+    SequesterAuthority,
     UsersPerProfileDetailItem,
 )
-from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import q_create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
-from parsec.backend.postgresql.handler import send_signal
+from parsec.backend.user import Device, User, UserError
+from parsec.backend.utils import Unset, UnsetType
+from parsec.crypto import VerifyKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer
 
 
 _q_insert_organization = Q(

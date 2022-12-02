@@ -4,18 +4,18 @@ from __future__ import annotations
 import pytest
 from PyQt5 import QtCore, QtWidgets
 
-from parsec.core.local_device import (
-    load_device_file,
-    save_device_with_password_in_config,
-    list_available_devices,
-)
-from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.login_widget import (
-    LoginPasswordInputWidget,
     LoginAccountsWidget,
     LoginNoDevicesWidget,
+    LoginPasswordInputWidget,
     LoginWidget,
+)
+from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.local_device import (
+    list_available_devices,
+    load_device_file,
+    save_device_with_password_in_config,
 )
 
 

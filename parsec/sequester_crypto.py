@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Union
 from enum import Enum
+from typing import Union
+
 import oscrypto.asymmetric
 import oscrypto.errors
 

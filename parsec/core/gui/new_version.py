@@ -1,29 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import sys
-from marshmallow.decorators import post_load
 import json
-from typing import Any
+import sys
 from json import JSONDecodeError
-from packaging.version import Version
+from typing import Any
+
+from marshmallow.decorators import post_load
+from PyQt5.QtCore import QSysInfo, Qt, pyqtSignal
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import QDialog, QLayout, QWidget
 from structlog import get_logger
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
-from PyQt5.QtWidgets import QDialog, QWidget, QLayout
-from PyQt5.QtGui import QCloseEvent
-
+from packaging.version import Version
 from parsec import __version__
-from parsec.serde import BaseSchema, fields, JSONSerializer, SerdeError
 from parsec.core.backend_connection.transport import http_request
+from parsec.core.config import CoreConfig
 from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
+from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
 from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
-from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
 from parsec.event_bus import EventBus
-from parsec.core.config import CoreConfig
+from parsec.serde import BaseSchema, JSONSerializer, SerdeError, fields
 
 logger = get_logger()
 

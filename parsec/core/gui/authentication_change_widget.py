@@ -1,29 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+
 from typing import Any
 
-from PyQt5.QtWidgets import QWidget, QApplication
-
+from PyQt5.QtWidgets import QApplication, QWidget
 from structlog import get_logger
-from parsec._parsec import LocalDevice
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 
+from parsec._parsec import LocalDevice
+from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_error, show_info
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.ui.authentication_change_widget import Ui_AuthenticationChangeWidget
 from parsec.core.local_device import (
+    DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+    get_available_device,
     load_device_with_password,
     load_device_with_smartcard,
     save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
-    LocalDeviceError,
-    LocalDeviceNotFoundError,
-    LocalDeviceCryptoError,
-    DeviceFileType,
-    get_available_device,
 )
-
-from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_error, show_info
-from parsec.core.gui.lang import translate as _
-
-from parsec.core.gui.ui.authentication_change_widget import Ui_AuthenticationChangeWidget
 from parsec.core.logged_core import LoggedCore
 
 

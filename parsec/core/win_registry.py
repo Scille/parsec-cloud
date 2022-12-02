@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-from importlib.abc import Traversable
 
+import importlib.resources
 import os
 import string
 import sys
-import importlib.resources
+from contextlib import contextmanager
+from importlib.abc import Traversable
 from types import ModuleType
 from typing import Any, Iterator
+
 from structlog import get_logger
-from contextlib import contextmanager
 
 from parsec.core import resources
 

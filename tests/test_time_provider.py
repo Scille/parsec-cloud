@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import TimeProvider, DateTime
+from parsec._parsec import DateTime, TimeProvider
 
 
 async def wait_for_sleeping_stat(tp, expected):

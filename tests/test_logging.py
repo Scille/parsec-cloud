@@ -1,18 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import pytest
-from unittest.mock import ANY
-from io import StringIO
-import re
 import logging
+import re
+from io import StringIO
+from unittest.mock import ANY
+
+import pytest
 import sentry_sdk
 
 from parsec._version import __version__ as parsec_version
 from parsec.logging import (
+    build_sentry_configuration,
     build_structlog_configuration,
     configure_stdlib_logger,
-    build_sentry_configuration,
 )
 
 

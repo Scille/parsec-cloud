@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from functools import partial
+
 import pytest
 
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
-
 from tests.common import create_shared_workspace
 
 

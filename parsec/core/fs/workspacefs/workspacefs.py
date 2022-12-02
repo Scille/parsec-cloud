@@ -1,72 +1,61 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import attr
-import trio
 from collections import defaultdict
-from typing import (
-    TYPE_CHECKING,
-    List,
-    Dict,
-    Tuple,
-    AsyncIterator,
-    cast,
-    Callable,
-    Awaitable,
-)
-import structlog
+from typing import TYPE_CHECKING, AsyncIterator, Awaitable, Callable, Dict, List, Tuple, cast
 
-from parsec._parsec import DateTime, FileManifest, Regex, RealmStatusRepOk
-from parsec.core.core_events import CoreEvent
-from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
-from parsec.crypto import CryptoError
-from parsec.event_bus import EventBus
+import attr
+import structlog
+import trio
+
+from parsec._parsec import DateTime, FileManifest, RealmStatusRepOk, Regex
 from parsec.api.data import AnyRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
-from parsec.api.protocol import UserID, MaintenanceType, RealmID
-from parsec.core.types import (
-    EntryID,
-    EntryName,
-    LocalDevice,
-    WorkspaceRole,
-    WorkspaceEntry,
-    LocalFileManifest,
-    LocalFolderManifest,
-    LocalWorkspaceManifest,
-    RemoteFolderManifest,
-    RemoteWorkspaceManifest,
-    RemoteFolderishManifests,
-    DEFAULT_BLOCK_SIZE,
-    BackendOrganizationFileLinkAddr,
-)
-from parsec.core.fs.path import AnyPath, FsPath
-from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.backend_connection import (
-    BackendNotAvailable,
-    BackendConnectionError,
-)
-from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.api.protocol import MaintenanceType, RealmID, UserID
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
-from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.fs.exceptions import (
+    FSBackendOfflineError,
+    FSError,
+    FSFileConflictError,
+    FSInvalidArgumentError,
+    FSLocalMissError,
+    FSNoSynchronizationRequired,
+    FSNotADirectoryError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
     FSRemoteSyncError,
-    FSNoSynchronizationRequired,
-    FSFileConflictError,
     FSReshapingRequiredError,
+    FSSequesterServiceRejectedError,
     FSWorkspaceNoAccess,
     FSWorkspaceTimestampedTooEarly,
-    FSLocalMissError,
-    FSInvalidArgumentError,
-    FSNotADirectoryError,
-    FSBackendOfflineError,
-    FSError,
-    FSSequesterServiceRejectedError,
 )
-from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
+from parsec.core.fs.path import AnyPath, FsPath
+from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
+from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
+from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
+from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.types import (
+    DEFAULT_BLOCK_SIZE,
+    BackendOrganizationFileLinkAddr,
+    EntryID,
+    EntryName,
+    LocalDevice,
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
+    RemoteFolderishManifests,
+    RemoteFolderManifest,
+    RemoteWorkspaceManifest,
+    WorkspaceEntry,
+    WorkspaceRole,
+)
+from parsec.crypto import CryptoError
+from parsec.event_bus import EventBus
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection import BackendAuthenticatedCmds

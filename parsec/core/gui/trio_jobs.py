@@ -2,29 +2,30 @@
 from __future__ import annotations
 
 import threading
+from contextlib import asynccontextmanager
+from inspect import iscoroutinefunction, signature
 from typing import (
     Any,
     AsyncGenerator,
+    Awaitable,
+    Callable,
+    Generic,
     OrderedDict,
     Tuple,
-    Callable,
     TypeVar,
-    Awaitable,
     cast,
-    Generic,
 )
-from typing_extensions import ParamSpec
-from inspect import iscoroutinefunction, signature
-from contextlib import asynccontextmanager
+
 import trio
 import trio_typing
-from parsec.utils import open_service_nursery
-from structlog import get_logger
-from PyQt5.QtCore import QObject, pyqtBoundSignal
 from exceptiongroup import BaseExceptionGroup
+from PyQt5.QtCore import QObject, pyqtBoundSignal
+from structlog import get_logger
+from typing_extensions import ParamSpec
 
 from parsec.core.fs import FSError
 from parsec.core.mountpoint import MountpointError
+from parsec.utils import open_service_nursery
 
 
 P = ParamSpec("P")

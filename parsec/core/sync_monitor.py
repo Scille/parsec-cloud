@@ -3,36 +3,37 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from typing import Any, Dict, Iterable, TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Union, cast
+
 import trio
 from structlog import get_logger
 
 from parsec._parsec import (
-    VlobPollChangesRepOk,
     VlobPollChangesRepInMaintenance,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
+    VlobPollChangesRepOk,
     WorkspaceEntry,
 )
 from parsec.api.protocol import RealmID
-from parsec.core.core_events import CoreEvent
-from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
-from parsec.core.types import EntryID, WorkspaceRole
-from parsec.core.fs import (
-    UserFS,
-    FSBackendOfflineError,
-    FSBadEncryptionRevision,
-    FSWorkspaceNotFoundError,
-    FSWorkspaceNoReadAccess,
-    FSWorkspaceNoWriteAccess,
-    FSWorkspaceInMaintenance,
-)
 from parsec.core.backend_connection import (
+    BackendAuthenticatedCmds,
     BackendConnectionError,
     BackendNotAvailable,
-    BackendAuthenticatedCmds,
 )
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs import (
+    FSBackendOfflineError,
+    FSBadEncryptionRevision,
+    FSWorkspaceInMaintenance,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNotFoundError,
+    FSWorkspaceNoWriteAccess,
+    UserFS,
+)
+from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
 from parsec.core.fs.storage import UserStorage, WorkspaceStorage
+from parsec.core.types import EntryID, WorkspaceRole
 from parsec.event_bus import EventBus, EventCallback
 
 if TYPE_CHECKING:

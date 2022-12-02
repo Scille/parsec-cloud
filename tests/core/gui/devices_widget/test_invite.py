@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from unittest.mock import ANY
+
 import pytest
 import trio
 from PyQt5 import QtCore
-from unittest.mock import ANY
 
 from parsec.api.protocol import DeviceLabel
 from parsec.core.backend_connection import backend_invited_cmds_factory
-from parsec.core.invite import claimer_retrieve_info
 from parsec.core.gui.greet_device_widget import (
-    GreetDeviceInstructionsWidget,
     GreetDeviceCodeExchangeWidget,
+    GreetDeviceInstructionsWidget,
     GreetDeviceWidget,
 )
-
+from parsec.core.invite import claimer_retrieve_info
 from tests.common import customize_fixtures, real_clock_timeout
 
 

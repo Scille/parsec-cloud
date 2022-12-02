@@ -4,8 +4,8 @@ from __future__ import annotations
 import pytest
 
 from parsec.api.data import EntryName
-from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FSBackendOfflineError
+from parsec.core.types import WorkspaceRole
 
 
 @pytest.mark.trio

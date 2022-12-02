@@ -1,9 +1,11 @@
-from __future__ import annotations
-from sre_constants import ANY
-from typing import Any, List, Set, Tuple
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec._parsec_pyi.local_manifest import LocalFileManifest, Chunk
+from __future__ import annotations
+
+from typing import List, Set, Tuple
+
 from parsec._parsec_pyi.ids import ChunkID
+from parsec._parsec_pyi.local_manifest import Chunk, LocalFileManifest
 from parsec._parsec_pyi.time import DateTime
 
 def prepare_read(manifest: LocalFileManifest, size: int, offset: int) -> Tuple[Chunk, ...]: ...
