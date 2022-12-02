@@ -229,7 +229,7 @@ LICENSERS_MAP = {
 def get_files(paths: Iterable[Path]) -> Iterator[Path]:
     for path in paths:
         if path.is_dir():
-            for f in chain(
+            yield from chain(
                 path.glob("**/*.py"),
                 path.glob("**/*.pyi"),
                 path.glob("**/*.sql"),
@@ -238,8 +238,7 @@ def get_files(paths: Iterable[Path]) -> Iterator[Path]:
                 path.glob("**/*.js"),
                 path.glob("**/*.ts"),
                 path.glob("**/*.vue"),
-            ):
-                yield f
+            )
         elif path.is_file():
             yield path
         elif not path.exists():
