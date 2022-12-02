@@ -3,7 +3,16 @@ from __future__ import annotations
 
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from enum import Enum
-from typing import AsyncGenerator, AsyncIterator, Awaitable, Callable, List, Protocol, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    AsyncGenerator,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    List,
+    Protocol,
+    TypeVar,
+)
 
 import trio
 from structlog import get_logger
@@ -34,7 +43,9 @@ from parsec.core.backend_connection.exceptions import (
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 from parsec.core.backend_connection.transport import TransportPool, connect_as_authenticated
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs.userfs.userfs import UserFS
+
+if TYPE_CHECKING:
+    from parsec.core.fs.userfs.userfs import UserFS
 from parsec.core.types import BackendOrganizationAddr, LocalDevice, OrganizationConfig
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus

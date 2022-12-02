@@ -29,8 +29,7 @@ from parsec.backend.pki import (
     PkiEnrollmentNoLongerAvailableError,
     PkiEnrollmentNotFoundError,
 )
-from parsec.backend.postgresql import PGHandler
-from parsec.backend.postgresql.handler import send_signal
+from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import (
     q_create_user,
     q_take_user_device_write_lock,
