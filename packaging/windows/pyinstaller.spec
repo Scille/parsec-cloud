@@ -14,7 +14,7 @@ EXCLUDED_MODULES = {"parsec.backend"}
 
 # In all it zeal, Pyinstaller finds itself very smart by not including
 # resource data (i.e. non-python files contained within a python package).
-# So we have to manually retreive those resource data and explicitly
+# So we have to manually retrieve those resource data and explicitly
 # tell Pyinstaller it has to ship them...
 
 

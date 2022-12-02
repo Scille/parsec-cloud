@@ -248,7 +248,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 ) from exc
 
             # Note that unlike for other signed data, we don't check the certificate's
-            # timestamp. This is because the certficate is allowed to be created long
+            # timestamp. This is because the certificate is allowed to be created long
             # before being inserted (see `generate_service_certificate` CLI command)
 
             row = await conn.fetchrow(
@@ -390,7 +390,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     f"Service type {service.service_type} is not compatible with export"
                 )
 
-            # Exctract sequester blobs
+            # Extract sequester blobs
             raw_sequester_data = await conn.fetch(
                 *_get_sequester_blob(
                     organization_id=organization_id.str,
@@ -418,8 +418,8 @@ class PGPSequesterComponent(BaseSequesterComponent):
             # for one vlob id.
 
             # Get all vlobs
-            # Could be better to use "WHERE ... IN ..."" querry to get only vlobs that contains at least one sequester data.
-            # It appears that triopg does not handle "WHERE vlob_id IN ($vlob_ids)" querries if items are UUIDs
+            # Could be better to use "WHERE ... IN ..."" query to get only vlobs that contains at least one sequester data.
+            # It appears that triopg does not handle "WHERE vlob_id IN ($vlob_ids)" queries if items are UUIDs
             # No other choice to dump all vlobs.
             all_vlob_ids = await conn.fetch(
                 *_get_vlob_atom_ids(

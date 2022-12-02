@@ -14,7 +14,7 @@ __all__ = ("run_gui",)
 
 def patch_pyqtboundsignal_connect() -> None:
     """Allow qt signals to connect to async slot as long as the slot
-    is bounded to an instance with a `jobs_ctx` atrribute to schedule
+    is bounded to an instance with a `jobs_ctx` attribute to schedule
     trio jobs
     """
     if getattr(pyqtBoundSignal, "_connect_patched", False):

@@ -217,12 +217,12 @@ class MemoryRealmComponent(BaseRealmComponent):
         if existing_user_role == new_role.role:
             raise RealmRoleAlreadyGranted()
 
-        # Timestamps for the role certificates of a given user should be striclty increasing
+        # Timestamps for the role certificates of a given user should be strictly increasing
         last_role = realm.get_last_role(new_role.user_id)
         if last_role is not None and last_role.granted_on >= new_role.granted_on:
             raise RealmRoleRequireGreaterTimestampError(last_role.granted_on)
 
-        # Perfrom extra checks when removing write rights
+        # Perform extra checks when removing write rights
         if new_role.role in (RealmRole.READER, None):
 
             # The change of role needs to occur strictly after the last upload for this user

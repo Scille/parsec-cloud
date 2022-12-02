@@ -16,7 +16,7 @@ class ParsecLogger(Logger):
         self, request: "WWWScope", response: "ResponseSummary", request_time: float
     ) -> Mapping[str, str]:
         """Create and return an access log atoms dictionary.
-        This can be overidden and customised if desired. It should
+        This can be overridden and customised if desired. It should
         return a mapping between an access log format key and a value.
         """
         access_log = AccessLogAtoms(request, response, request_time)

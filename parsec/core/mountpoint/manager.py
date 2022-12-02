@@ -451,5 +451,5 @@ async def mountpoint_manager_factory(
         finally:
             await mountpoint_manager.safe_unmount_all()
 
-        # Cancel the mountpoint tasks (although they should all be finised by now)
+        # Cancel the mountpoint tasks (although they should all be finished by now)
         nursery.cancel_scope.cancel()

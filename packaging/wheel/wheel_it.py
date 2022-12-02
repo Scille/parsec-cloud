@@ -32,7 +32,7 @@ def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
     all_requirements = output_dir / "all-requirements.txt"
     constraints = output_dir / "constraints.txt"
 
-    # poetry export has a --output option, but it alway consider the file relative to
+    # poetry export has a --output option, but it always consider the file relative to
     # the project directory !
     # On top of that we cannot use stdout because poetry may print random `Creating virtualenv`
     # if we are not already within a virtualenv (please poetry, add a --no-venv option !!!)

@@ -108,7 +108,7 @@ def main(
         )
         program_constraints = wheel_it_dir / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
-            raise SystemExit(f"Cannot retreive wheel file and/or constraints.txt in {wheel_it_dir}")
+            raise SystemExit(f"Cannot retrieve wheel file and/or constraints.txt in {wheel_it_dir}")
 
     else:
         program_wheel = next(

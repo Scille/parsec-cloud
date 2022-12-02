@@ -20,7 +20,7 @@ def _escape_sql_like_arg(arg: str) -> str:
     # 2) For each word, escapes special `%`, `_` and `\` characters that are
     #    interpreted by ILIKE operator
     # 3) Combine all words together with `%` (i.e. mach zero or multiple characters)
-    # So `foo  bar\tspam` becomes `%foo%bar%spam%` wich is interpreted by SQL LIKE
+    # So `foo  bar\tspam` becomes `%foo%bar%spam%` which is interpreted by SQL LIKE
     # as regex `^.*foo.*bar.*spam.*$`
     return "%" + "%".join(x.translate(LIKE_TRANSLATION) for x in arg.split()) + "%"
 

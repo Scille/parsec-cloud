@@ -68,7 +68,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     ) -> None:
         created_on = created_on or DateTime.now()
         org = self._organizations.get(id)
-        # Allow overwritting of not-yet-bootstrapped organization
+        # Allow overwriting of not-yet-bootstrapped organization
         if org and org.root_verify_key:
             raise OrganizationAlreadyExistsError()
         if active_users_limit is Unset:

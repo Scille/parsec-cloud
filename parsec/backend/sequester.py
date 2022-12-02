@@ -113,7 +113,7 @@ class BaseSequesterComponent:
             SequesterServiceAlreadyExists
 
         Note that unlike for other signed data, we don't check the certificate's
-        timestamp. This is because the certficate is allowed to be created long
+        timestamp. This is because the certificate is allowed to be created long
         before being inserted (see `generate_service_certificate` CLI command)
         """
         raise NotImplementedError()

@@ -361,8 +361,8 @@ class VersionsListCache:
     """
     Caches results of the remote_loader.list_versions calls (working on EntryIDs).
 
-    Caches thoses in the instance of this class. No garbage collection is done for now, as this
-    class is only instanciated during the list_versions execution.
+    Caches those in the instance of this class. No garbage collection is done for now, as this
+    class is only instantiated during the list_versions execution.
     """
 
     def __init__(self, remote_loader: RemoteLoader):
@@ -462,7 +462,7 @@ class VersionLister:
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
-            A tuple containing a list of TimestampBoundedData and a bool indicating wether the
+            A tuple containing a list of TimestampBoundedData and a bool indicating whether the
             download limit has been reached
         Raises:
             FSError
@@ -508,7 +508,7 @@ class VersionListerOneShot:
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
-            A tuple containing a list of TimestampBoundedData and a bool indicating wether the
+            A tuple containing a list of TimestampBoundedData and a bool indicating whether the
             download limit has been reached
         Raises:
             FSError

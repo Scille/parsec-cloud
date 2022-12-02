@@ -372,8 +372,8 @@ def save_device_with_password_in_config(
     # Why do we use `force=True` here ?
     # Key file name is per-device unique (given it contains the device slughash),
     # hence there is no risk to overwrite another device.
-    # So if we are overwritting a key file it could be by:
-    # - the same device object, hence overwritting has no effect
+    # So if we are overwriting a key file it could be by:
+    # - the same device object, hence overwriting has no effect
     # - a device object with same slughash but different device/user keys
     #   This would mean the device enrollment has been replayed (which is
     #   not possible in theory, but could occur in case of a rollback in the
@@ -593,8 +593,8 @@ async def save_device_with_smartcard_in_config(
     # Why do we use `force=True` here ?
     # Key file name is per-device unique (given it contains the device slughash),
     # hence there is no risk to overwrite another device.
-    # So if we are overwritting a key file it could be by:
-    # - the same device object, hence overwritting has no effect
+    # So if we are overwriting a key file it could be by:
+    # - the same device object, hence overwriting has no effect
     # - a device object with same slughash but different device/user keys
     #   This would mean the device enrollment has been replayed (which is
     #   not possible in theory, but could occur in case of a rollback in the

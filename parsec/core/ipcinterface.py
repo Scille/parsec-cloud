@@ -216,7 +216,7 @@ async def send_to_ipc_server(socket_file: Path, cmd: IPCCommand, **kwargs: Any) 
         while True:
             raw = await stream.receive_some(1000)
             if not raw:
-                raise IPCServerError(f"IPC server has closed the connection unexpectly")
+                raise IPCServerError(f"IPC server has closed the connection unexpectedly")
             unpacker.feed(raw)
             raw_rep = next(unpacker, None)
             assert raw_rep is not None

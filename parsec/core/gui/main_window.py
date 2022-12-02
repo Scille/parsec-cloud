@@ -712,7 +712,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if idx != -1:
             self.switch_to_tab(idx)
         else:
-            # No loging tab, create one
+            # No login tab, create one
             tab = self.add_new_tab()
             tab.show_login_widget()
             self.on_tab_state_changed(tab, "login")

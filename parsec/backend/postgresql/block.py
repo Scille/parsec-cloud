@@ -189,7 +189,7 @@ class PGBlockComponent(BaseBlockComponent):
 
             # 2) Upload block data in blockstore under an arbitrary id
             # Given block metadata and block data are stored on different storages,
-            # beeing atomic is not easy here :(
+            # being atomic is not easy here :(
             # For instance step 2) can be successful (or can be successful on *some*
             # blockstores in case of a RAID blockstores configuration) but step 4) fails.
             # This is solved by the fact blockstores are considered idempotent and two

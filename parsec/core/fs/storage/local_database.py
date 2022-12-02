@@ -60,7 +60,7 @@ class LocalDatabase:
     async def run(
         cls, path: Union[str, Path], vacuum_threshold: int | None = None
     ) -> AsyncIterator["LocalDatabase"]:
-        # Instanciate the local database
+        # Instantiate the local database
         self = cls(path, vacuum_threshold)
 
         # Create the connection to the sqlite database
@@ -96,7 +96,7 @@ class LocalDatabase:
         If an operational error is detected we simply close the connection and invalidate
         the local database object while raising an FSLocalStorageOperationalError exception.
         This way, we force the core to create new workspace storage objects and therefore
-        discarding any uncommited data.
+        discarding any uncommitted data.
         """
         in_transaction_before = self._conn.in_transaction
         # Safe context for operational errors

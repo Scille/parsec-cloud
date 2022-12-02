@@ -435,7 +435,7 @@ async def monitor_sync(
         except Exception:
             logger.exception("Sync monitor has crashed", workspace_id=ctx.id)
             delay = TICK_CRASH_COOLDOWN
-        # Exception occured
+        # Exception occurred
         # Reset sync context which is now in an undefined state
         ctxs.discard(ctx.id)
         undefined_ctx = ctxs.get(ctx.id)

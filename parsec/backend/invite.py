@@ -230,7 +230,7 @@ def generate_invite_email(
     from_addr: str,
     to_addr: str,
     reply_to: str | None,
-    greeter_name: str | None,  # Noe for device invitation
+    greeter_name: str | None,  # None for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
     backend_url: str,
@@ -288,7 +288,7 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
             with server:
                 if email_config.use_tls and not email_config.use_ssl:
                     if server.starttls(context=context)[0] != 220:
-                        logger.warning("Email TLS connexion isn't encrypted")
+                        logger.warning("Email TLS connection isn't encrypted")
                 if email_config.host_user and email_config.host_password:
                     server.login(email_config.host_user, email_config.host_password)
                 server.sendmail(email_config.sender, to_addr, message.as_string())
@@ -334,7 +334,7 @@ class BaseInviteComponent:
         self._event_bus = event_bus
         self._config = config
         # We use the `invite.status_changed` event to keep a list of all the
-        # invitation claimers connected accross all backends.
+        # invitation claimers connected across all backends.
         #
         # This is useful to display the invitations ready to be greeted.
         # Note we rely on a per-backend list in memory instead of storing this
@@ -343,7 +343,7 @@ class BaseInviteComponent:
         #
         # However there are multiple ways this list can go out of sync:
         # - a claimer can be connected to a backend, then another backend starts
-        # - the backend the claimer is connected to crashes witout being able
+        # - the backend the claimer is connected to crashes without being able
         #   to notify the other backends
         # - a claimer open multiple connections at the same time, then is
         #   considered disconnected as soon as he closes one of his connections
@@ -948,7 +948,7 @@ class BaseInviteComponent:
             listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
 
             # Unlike what it name may imply, `_conduit_listen` doesn't wait for the peer
-            # to answer (it returns `None` instead), so we wait for some events to occure
+            # to answer (it returns `None` instead), so we wait for some events to occur
             # before calling:
             # - INVITE_CONDUIT_UPDATED: Triggered when the peer has completed it own talk
             #   step, `_conduit_listen` will most likely return the peer payload now

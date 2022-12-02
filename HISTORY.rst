@@ -93,7 +93,7 @@ Features
 Bugfixes
 ~~~~~~~~
 
-* Remove cut status if cut is overriden by a copy  (`#3022
+* Remove cut status if cut is overridden by a copy  (`#3022
   <https://github.com/Scille/parsec-cloud/issues/3022>`__)
 * Fixed links in About window not opening  (`#3023
   <https://github.com/Scille/parsec-cloud/issues/3023>`__)
@@ -272,7 +272,7 @@ Bugfixes
   <https://github.com/Scille/parsec-cloud/issues/2161>`__)
 * Fixed small error when pressing Enter on the log in screen (`#2178
   <https://github.com/Scille/parsec-cloud/issues/2178>`__)
-* Fixed a bug preventing file saving with Apple softwares such as TextEdit or
+* Fixed a bug preventing file saving with Apple software such as TextEdit or
   Preview.  (`#2211 <https://github.com/Scille/parsec-cloud/issues/2211>`__)
 * Fixed clicking on a file link in some instances  (`#2223
   <https://github.com/Scille/parsec-cloud/issues/2223>`__)

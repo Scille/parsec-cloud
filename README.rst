@@ -46,7 +46,7 @@ privacy thanks to end-to-end cryptographic security.
 Key features:
 
 - Works as a virtual drive on you computer. You can access and modify all the data
-  stored in Parsec with your regular softwares just like you would on your local
+  stored in Parsec with your regular software just like you would on your local
   hard-drive.
 - Never lose any data. Synchronization with the remote server never destroy any
   data, hence you can browse data history and recover from any point in time.

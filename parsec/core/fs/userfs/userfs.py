@@ -1273,7 +1273,7 @@ class UserFS:
             ) from exc
 
         if isinstance(rep, RealmStartReencryptionMaintenanceRepParticipantMismatch):
-            # Catched by caller
+            # Caught by caller
             return False
         elif isinstance(rep, RealmStartReencryptionMaintenanceRepInMaintenance):
             raise FSWorkspaceInMaintenance(

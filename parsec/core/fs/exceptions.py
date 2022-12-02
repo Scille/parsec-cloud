@@ -108,7 +108,7 @@ class FSLocalOperationError(FSOperationError):
 
 class FSRemoteOperationError(FSOperationError):
     """
-    Used to represent error in the underlaying layers (e.g. data inconsistency,
+    Used to represent error in the underlying layers (e.g. data inconsistency,
     data access refused by the backend etc.)
     """
 

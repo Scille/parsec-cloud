@@ -60,7 +60,7 @@ CREATE TABLE block (
 );
 
 -- Compared to Parsec's datamodel, we don't store `vlob_encryption_revision` given
--- the vlob is provided with third party encrytion key only once at creation time
+-- the vlob is provided with third party encryption key only once at creation time
 CREATE TABLE vlob_atom (
     -- We use vlob_update's index as primary key, this is convenient given it makes trivial
     -- keeping track of how far we got when restarting an export
@@ -116,7 +116,7 @@ async def _init_output_db(
     output_db_path: Path,
     input_conn: triopg._triopg.TrioConnectionProxy,
 ) -> None:
-    # 0) Retreive organization/realm/sequester service from input database
+    # 0) Retrieve organization/realm/sequester service from input database
 
     row = await input_conn.fetchrow(
         "SELECT _id, root_verify_key, sequester_authority_certificate FROM organization WHERE organization_id = $1",
@@ -127,7 +127,7 @@ async def _init_output_db(
     organization_internal_id = row["_id"]
     root_verify_key = row["root_verify_key"]
     if root_verify_key is None:
-        raise RealmExporterInputError(f"Organization `{organization_id.str}` is not boostrapped")
+        raise RealmExporterInputError(f"Organization `{organization_id.str}` is not bootstrapped")
     if not row["sequester_authority_certificate"]:
         raise RealmExporterInputError(
             f"Organization `{organization_id.str}` is not a sequestered organization"

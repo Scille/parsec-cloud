@@ -197,7 +197,7 @@ class BlockStorage(ChunkStorage):
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # It doesn't matter for blocks to be committed as soon as they're added
         # since they exists in the remote storage anyway. But it's simply more
-        # convenient to perform the commit right away as it does't cost much (at
+        # convenient to perform the commit right away as it doesn't cost much (at
         # least compare to the downloading of the block).
         return self.localdb.open_cursor(commit=True)
 

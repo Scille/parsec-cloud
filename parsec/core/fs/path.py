@@ -24,7 +24,7 @@ class FsPath:
     Represent an absolute path to access a resource in the FS.
 
     FsPath must be initialized with a str representing an absolute path (i.e.
-    with a leading slash). If it countains `.` and/or `..` parts the path will
+    with a leading slash). If it contains `.` and/or `..` parts the path will
     be resolved.
     """
 

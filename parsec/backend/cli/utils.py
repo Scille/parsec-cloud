@@ -106,7 +106,7 @@ def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
                 raise click.BadParameter(
                     "Invalid S3 config, must be `s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`"
                 )
-            # Provide https by default to avoid anoying escaping for most cases
+            # Provide https by default to avoid annoying escaping for most cases
             if (
                 endpoint_url
                 and not endpoint_url.startswith("http://")
@@ -128,7 +128,7 @@ def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
                 raise click.BadParameter(
                     "Invalid SWIFT config, must be `swift:<auth_url>:<tenant>:<container>:<user>:<password>`"
                 )
-            # Provide https by default to avoid anoying escaping for most cases
+            # Provide https by default to avoid annoying escaping for most cases
             if (
                 auth_url
                 and not auth_url.startswith("http://")
