@@ -85,7 +85,57 @@ updates:
     open-pull-requests-limit: 5
 
   - package-ecosystem: npm
+    directory: /oxidation/client/electron
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: gradle
     directory: /oxidation/client/android
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /oxidation/bindings/electron
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: gradle
+    directory: /oxidation/bindings/android
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /oxidation/bindings/web
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: cargo
+    directory: /oxidation/bindings/common
     pull-request-branch-name:
       separator: "-"
     schedule:
