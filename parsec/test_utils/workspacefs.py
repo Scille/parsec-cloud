@@ -11,7 +11,7 @@ from parsec.core.types import EntryID, LocalFolderManifest
 
 async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath) -> None:
     """
-    Create directory and make it inconsistent by adding an entry refering
+    Create directory and make it inconsistent by adding an entry referring
     to an unknown EntryID.
     """
 

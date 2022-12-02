@@ -60,7 +60,7 @@ T = TypeVar("T")
 # in this scenario, a 10 seconds time difference is hardly
 # imaginable on a properly functionnning system.
 #
-# This is an argument for making this comparison asymetrical: with no
+# This is an argument for making this comparison asymmetrical: with no
 # clock drift between client and server, communication latency makes data
 # arriving to the backend always in the past. Hence we should be more
 # forgiving of data in the past than in the future !
@@ -236,12 +236,12 @@ def collapse_exception_group(exception_group: BaseExceptionGroup[E]) -> Exceptio
         result.__cause__ = exception_group.__cause__
         result.__context__ = exception_group.__context__
         result.__traceback__ = exception_group.__traceback__
-        # Supress context, we do not want the collapsing to appear in the stacktrace
+        # Suppress context, we do not want the collapsing to appear in the stacktrace
         result.__suppress_context__ = True
         return result
     except Exception:
         # Something went wrong while collapsing
-        logger.exception("Cound not create a collapsed exception")
+        logger.exception("Could not create a collapsed exception")
         return pick
 
 

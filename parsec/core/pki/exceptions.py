@@ -18,8 +18,8 @@ PkiEnrollmentError: all PKI enrollment related errors
     +- PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
 +- PkiEnrollmentRemoteError: all the errors coming from a enrollment command on the backend
     +- PkiEnrollmentSubmitError: all the errors coming from the pki_enrollment_submit command
-        +- PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError: when the enrollment ID is alread used
-        +- PkiEnrollmentSubmitCertificateAlreadySubmittedError: when the certificate has already been submited
+        +- PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError: when the enrollment ID is already used
+        +- PkiEnrollmentSubmitCertificateAlreadySubmittedError: when the certificate has already been submitted
         +- PkiEnrollmentSubmitCertificateAlreadyEnrolledError: when the certificate is already enrolled
         +- PkiEnrollementEmailAlreadyUsedError: when the certificate email address is already attributes to an active user
     +- PkiEnrollmentListError: all the errors coming from the pki_enrollment_list command

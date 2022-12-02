@@ -71,7 +71,7 @@ async def initialize_test_organization(
 
     alice_device = await bootstrap_organization(
         # Casting is fine here because `bootstrap_organization` needs the stored backend addr and
-        # `organization_id`. Theses attributes are presents in `BackendOrganizationFileLinkAddr` too
+        # `organization_id`. These attributes are present in `BackendOrganizationFileLinkAddr` too.
         cast(BackendOrganizationBootstrapAddr, organization_bootstrap_addr),
         human_handle=HumanHandle(label="Alice", email="alice@example.com"),
         device_label=DeviceLabel("laptop"),

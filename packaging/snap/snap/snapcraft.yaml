@@ -195,7 +195,7 @@ parts:
       # apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.9
       - python3.9
       - python3.9-minimal
-      # Yes, we even package libc (otherwise it may cause issue when runnig on non-ubuntu OS)
+      # Yes, we even package libc (otherwise it may cause issue when running on non-ubuntu OS)
       - libc6
       - libcrypt1
       - libpython3.9-minimal

@@ -30,7 +30,7 @@ Adding a new User
 
 The creation of a new user can only be done by an existing user, already registered in the organization and having the Administrator profile. Let's consider the case where Alice is Administrator and wants to register Bob :
 
-1. Alice signals to the back-end that Bob is invited to the organization and transmits his email adress.
+1. Alice signals to the back-end that Bob is invited to the organization and transmits his email address.
 
 2. The metadata server sends to Bob an email with an invitation URL containing the organization ID and an unique identifier for the invitation canal.
 

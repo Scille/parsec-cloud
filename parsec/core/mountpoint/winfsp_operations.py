@@ -71,7 +71,7 @@ def get_path_and_translate_error(
     workspace_id: EntryID,
     timestamp: DateTime | None,
 ) -> Iterator[FsPath]:
-    path: FsPath = FsPath("/<unkonwn>")
+    path: FsPath = FsPath("/<unknown>")
     try:
         if isinstance(file_context, (OpenedFile, OpenedFolder)):
             path = file_context.path
@@ -108,7 +108,7 @@ def get_path_and_translate_error(
     except TrioDealockTimeoutError as exc:
         # See the similar clause in `fuse_operations` for a detailed explanation
         logger.error(
-            "The trio thread is unreachable, a deadlock might have occured",
+            "The trio thread is unreachable, a deadlock might have occurred",
             operation=operation,
             path=str(path),
             mountpoint=str(mountpoint),

@@ -81,7 +81,7 @@ def _patch_signals() -> None:
         raise RuntimeError("Attempted to patch unix signals on windows")
 
 
-# Mypy reports a missing return statement, hovewer it's not possible to exit this
+# Mypy reports a missing return statement, however it's not possible to exit this
 # function without raising an exception or successfully return
 async def _bootstrap_mountpoint(base_mountpoint_path: Path, workspace_fs: WorkspaceFS) -> Tuple[Path, int]:  # type: ignore[return]
     # Find a suitable path where to mount the workspace. The check we are doing
@@ -193,7 +193,7 @@ async def fuse_mountpoint_runner(
                 # somebody else to eventually allow or deny the operations." See
                 # https://github.com/osxfuse/osxfuse/wiki/Mount-options#default_permissions-and-defer_permissions
                 # This option is necessary on MacOS to give the right permissions to files inside FUSE drives,
-                # otherwise it impedes upon saving and auto-saving from Apple softwares (TextEdit, Preview...)
+                # otherwise it impedes upon saving and auto-saving from Apple software (TextEdit, Preview...)
                 # due to the gid of files seemingly not having writing rights from the software perspective.
                 # One other solution found for this issue was to change the gid of the mountpoint and its files
                 # from staff (default) to wheel (admin gid). Checking defer_permissions allows to ignore the gid
@@ -304,7 +304,7 @@ async def _stop_fuse_thread(
                 break
             # Restart the unmount process if necessary, this is needed in
             # case the stop is ordered before fuse has finished started (hence
-            # the unmount command can run before the OS mount has occured).
+            # the unmount command can run before the OS mount has occurred).
             # Of course this means in theory we could be umounting by mistake
             # an unrelated mountpoint that tooks our path, but it's a really
             # unlikely event.

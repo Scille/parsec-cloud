@@ -108,7 +108,7 @@ async def pki_enrollment_load_local_pending_secret_part(
     """
     extension = _load_smartcard_extension()
     # TODO: document exceptions !
-    # Retreiving the private keys require the certificate private keys, so a pin prompt is likely to block
+    # Retrieving the private keys require the certificate private keys, so a pin prompt is likely to block
     return await trio.to_thread.run_sync(
         lambda: extension.pki_enrollment_load_local_pending_secret_part(
             config_dir=config_dir, enrollment_id=enrollment_id

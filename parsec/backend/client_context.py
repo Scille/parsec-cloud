@@ -146,7 +146,7 @@ class AnonymousClientContext(BaseClientContext):
     TYPE = ClientType.ANONYMOUS
 
     def __init__(self, organization_id: OrganizationID) -> None:
-        # Anonymous is a special snowflake: it is accessed trough HTTP instead of
+        # Anonymous is a special snowflake: it is accessed through HTTP instead of
         # Websocket, hence there is no api version negotiation for the moment
         super().__init__(API_V2_VERSION)
 

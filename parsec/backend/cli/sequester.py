@@ -320,7 +320,7 @@ async def _import_service_certificate(
 ) -> None:
     async with run_pg_db_handler(db_config) as dbh:
 
-        # 1) Retreive the sequester authority verify key and check organization is compatible
+        # 1) Retrieve the sequester authority verify key and check organization is compatible
 
         async with dbh.pool.acquire() as conn:
             organization = await PGOrganizationComponent._get(conn, id=organization_id)
@@ -558,7 +558,7 @@ async def _human_accesses(
 
             human_users.append((user, per_user_per_realm_granted_role))
 
-        # Typicall output to dislay:
+        # Typical output to display:
         #
         # Found 2 results:
         # Human John Doe <john.doe@example.com>
@@ -734,7 +734,7 @@ async def _export_realm(
 @click.option(
     "--service",
     type=SequesterServiceID.from_hex,
-    help="ID of the sequester service to retreive data from",
+    help="ID of the sequester service to retrieve data from",
     required=True,
 )
 @click.option("--output", type=Path, required=True)

@@ -196,7 +196,7 @@ async def _do_folder_stat(
             # The child entry as been concurrently removed, just ignore it
             continue
         except FSRemoteManifestNotFound:
-            # Cannot get informations about this child entry, this can occur if
+            # Cannot get information about this child entry, this can occur if
             # if the manifest is inconsistent (broken data or signature).
             child_stat = {"type": "inconsistency", "id": EntryID.new()}
         stats[child] = child_stat
@@ -317,7 +317,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.line_edit_search.hide()
 
         # Current directory ID can be `None`.
-        # This means that the corresponding EntryID is still unkown since the
+        # This means that the corresponding EntryID is still unknown since the
         # folder stat job has not returned the info yet. It could also be that
         # the job has failed to return properly, maybe because the directory
         # no longer exists

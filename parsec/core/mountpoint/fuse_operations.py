@@ -103,7 +103,7 @@ def get_path_and_translate_error(
         # in general. This is why it is much better to break out of it with
         # and to return an error code indicating that the operation failed.
         logger.error(
-            "The trio thread is unreachable, a deadlock might have occured",
+            "The trio thread is unreachable, a deadlock might have occurred",
             operation=operation,
             path=str(path),
             mountpoint=str(mountpoint),
@@ -286,7 +286,7 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
         destination = FsPath(destination)
         if not path.parent.is_root() and re.match(r".*\.sb-\w*-\w*", str(path.parent.name)):
             # This shouldn't happen with the defer_permission option in the FUSE function,
-            # but if there ever is a permission error while saving with Apple softwares,
+            # but if there ever is a permission error while saving with Apple software,
             # this is a fallback to avoid any unintended behavior related to this format
             # of temporary files. See https://github.com/Scille/parsec-cloud/pull/2211
             self.fs_access.workspace_move(path, destination)

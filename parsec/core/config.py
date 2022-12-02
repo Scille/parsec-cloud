@@ -236,7 +236,7 @@ def load_config(config_dir: Path, **extra_config: Any) -> CoreConfig:
     except (AttributeError, KeyError, UnicodeEncodeError, binascii.Error):
         data_conf["gui_geometry"] = None
 
-    # Work around versionning issue with parsec releases:
+    # Work around versioning issue with parsec releases:
     # - v1.12.0, v1.11.4, v1.11.3, v1.11.2, v1.11.1, v1.11.0 and v1.10.0
     # A `v` has been incorrectly added to `parsec.__version__`, potentially
     # affecting the `gui_last_version` entry in the configuration file.

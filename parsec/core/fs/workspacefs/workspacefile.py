@@ -52,7 +52,7 @@ class WorkspaceFile:
         # Preventing to open in write and read in same time or write and append or open with no mode
         if sum(c in mode for c in "rwax") != 1:
             raise ValueError("must have exactly one of create/read/write/append mode")
-        # Preventing to open with non-existant mode
+        # Preventing to open with non-existent mode
         elif re.search("[^arwxb+]", mode) is not None:
             raise ValueError(f"invalid mode: '{mode}'")
         if "b" not in mode:
@@ -146,7 +146,7 @@ class WorkspaceFile:
         return self._state == FileState.CLOSED
 
     async def stat(self) -> Dict[str, object]:
-        """Getting stat dictionnary"""
+        """Getting stat dictionary"""
         self._check_open_state()
         return await self._transactions.fd_info(self.fileno())
 

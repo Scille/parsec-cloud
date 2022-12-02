@@ -45,7 +45,7 @@ class Q:
         if kwargs.keys() != self._variables.keys():
             missing = self._variables.keys() - kwargs.keys()
             unknown = kwargs.keys() - self._variables.keys()
-            raise ValueError(f"Invalid paramaters, missing: {missing}, unknown: {unknown}")
+            raise ValueError(f"Invalid parameters, missing: {missing}, unknown: {unknown}")
         args = [self._stripped_sql]
         for variable in self._variables:
             args.append(kwargs[variable])

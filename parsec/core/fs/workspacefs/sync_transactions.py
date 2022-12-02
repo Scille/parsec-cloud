@@ -286,8 +286,8 @@ def merge_manifests(
     # - we rely on a base workspace manifest in version N
     # - remote workspace manifest is in version N+1 and already integrate the removal
     #
-    # /!\ Extra attention should be payed here if we want to add new fields
-    # /!\ with they own sync logic, as this optimization may shadow them !
+    # /!\ Extra attention should be paid here if we want to add new fields
+    # /!\ with their own sync logic, as this optimization may shadow them!
 
     if new_children == local_from_remote.children:  # type: ignore[union-attr]
         return local_from_remote

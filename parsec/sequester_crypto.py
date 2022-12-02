@@ -112,7 +112,7 @@ def sequester_authority_sign(signing_key: oscrypto.asymmetric.PrivateKey, data: 
         raise CryptoError(str(exc)) from exc
 
     # It is import `signature` has a constant size given this is how it is
-    # retreived during verification
+    # retrieved during verification
     signature = _enforce_rsa_output_has_key_size(signing_key, signature)
 
     return SequesterVerifyKeyDer.SIGNING_ALGORITHM + b":" + signature + data
@@ -132,7 +132,7 @@ class SequesterEncryptionKeyDer(_SequesterPublicKeyDer):
         """
         secret_key = SecretKey.generate()
         try:
-            # RSAES-OAEP uses 42 bytes for padding, hence even with an unsecure
+            # RSAES-OAEP uses 42 bytes for padding, hence even with an insecure
             # 1024 bits RSA key there is still 86 bytes available for payload
             # which is plenty to store the 32 bytes XSalsa20 key
             secret_key_encrypted = oscrypto.asymmetric.rsa_oaep_encrypt(
@@ -142,7 +142,7 @@ class SequesterEncryptionKeyDer(_SequesterPublicKeyDer):
             raise CryptoError(str(exc)) from exc
 
         # It is import `secret_key_encrypted` has a constant size given this
-        # is how it is retreived during decryption
+        # is how it is retrieved during decryption
         secret_key_encrypted = _enforce_rsa_output_has_key_size(self._key, secret_key_encrypted)
 
         return self.ENCRYPTION_ALGORITHM + b":" + secret_key_encrypted + secret_key.encrypt(data)

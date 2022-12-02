@@ -9,7 +9,7 @@ Install Parsec client
 Windows
 -------
 
-Windows installer is available at the latest stable version on `parsec.cloud <https://parsec.cloud/get-parsec>`_. Otherwise, it is possible to download a specific Parsec version on `GitHub <https://github.com/Scille/parsec/releases/latest>`_, for exemple to make Parsec work on a 32 bits computer (installers named ``parsec-vX.Y.Z-win32-setup.exe``).
+Windows installer is available at the latest stable version on `parsec.cloud <https://parsec.cloud/get-parsec>`_. Otherwise, it is possible to download a specific Parsec version on `GitHub <https://github.com/Scille/parsec/releases/latest>`_, for example to make Parsec work on a 32 bits computer (installers named ``parsec-vX.Y.Z-win32-setup.exe``).
 
 
 Linux
@@ -42,7 +42,7 @@ Given that Parsec is written in Python, an alternative is to install it through 
 
     pip install parsec-cloud
 
-Or intall it with all its dependencies, for the GUI.
+Or install it with all its dependencies, for the GUI.
 
 .. code-block:: shell
 
@@ -69,7 +69,7 @@ The MacOS version requires `macFUSE <https://osxfuse.github.io/>`_ to be install
 MacFUSE installation on MacOS 13
 ********************************
 
-From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find the lastest version to download at the indicated location.
+From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find the latest version to download at the indicated location.
 
 .. image:: screens/macfuse_download.png
     :align: center
@@ -87,7 +87,7 @@ A reboot might be prompted then to finalize the installation.
 MacFUSE installation on MacOS versions 12 and lower
 ***************************************************
 
-From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find the lastest version to download at the indicated location.
+From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find the latest version to download at the indicated location.
 
 .. image:: screens/macfuse_download.png
     :align: center

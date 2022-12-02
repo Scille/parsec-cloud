@@ -226,8 +226,8 @@ LICENSERS_MAP = {
 }
 
 
-def get_files(pathes: Iterable[Path]) -> Iterator[Path]:
-    for path in pathes:
+def get_files(paths: Iterable[Path]) -> Iterator[Path]:
+    for path in paths:
         if path.is_dir():
             for f in chain(
                 path.glob("**/*.py"),

@@ -391,7 +391,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 notif = ("WARN", tooltip)
                 disconnected = True
 
-        # Theses variables should not be None as they're assigned above
+        # These variables should not be None as they're assigned above
         assert text is not None
         assert tooltip is not None
         assert icon is not None

@@ -184,7 +184,7 @@ async def handle_uuid(conn: triopg._triopg.TrioConnectionProxy) -> None:
     )
 
 
-# TODO: replace by a fonction
+# TODO: replace by a function
 class PGHandler:
     def __init__(self, url: str, min_connections: int, max_connections: int, event_bus: EventBus):
         self.url = url

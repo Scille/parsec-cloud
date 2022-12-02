@@ -316,7 +316,7 @@ class UserRemoteLoader:
         except DataError as exc:
             raise FSError(f"Invalid realm role certificates: {exc}") from exc
 
-        # Now unsecure_certifs is no longer unsecure given we have validated its items
+        # Now unsecure_certifs is no longer insecure given we have validated its items
         return [c for c, _ in unsecure_certifs], current_roles
 
     async def load_realm_role_certificates(

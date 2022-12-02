@@ -158,7 +158,7 @@ async def query_update_roles(
     if rep["maintenance_type"]:
         raise RealmInMaintenanceError("Data realm is currently under maintenance")
 
-    # Check access rights and user existance
+    # Check access rights and user existence
     ((author_id, author_role), (user_id, existing_user_role)) = await conn.fetch(
         *_q_get_roles(
             organization_id=organization_id.str,
@@ -195,11 +195,11 @@ async def query_update_roles(
     if existing_user_role == new_role.role:
         raise RealmRoleAlreadyGranted()
 
-    # Timestamps for the role certificates of a given user should be striclty increasing
+    # Timestamps for the role certificates of a given user should be strictly increasing
     if last_role_granted_on is not None and last_role_granted_on >= new_role.granted_on:
         raise RealmRoleRequireGreaterTimestampError(last_role_granted_on)
 
-    # Perfrom extra checks when removing write rights
+    # Perform extra checks when removing write rights
     if new_role.role in (RealmRole.READER, None):
 
         # The change of role needs to occur strictly after the last upload for this user

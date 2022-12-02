@@ -8,7 +8,7 @@ class TimeProvider:
     to simulate in our tests complex behavior where different Parsec client/server have
     shifting clocks.
     So the solution here is to force the current time to be taken from a non-global object
-    (typically each client/server should have it own) that can be independantly mocked.
+    (typically each client/server should have it own) that can be independently mocked.
     """
 
     def now(self) -> DateTime: ...

@@ -92,7 +92,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if conduit.state != state or curr_our_payload is not None:
             # We are out of sync with the conduit:
-            # - the conduit state has changed in our back (maybe reseted by the peer)
+            # - the conduit state has changed in our back (maybe reset by the peer)
             # - we want to reset the conduit
             # - we have already provided a payload for the current conduit state (most
             #   likely because a retry of a command that failed due to connection outage)

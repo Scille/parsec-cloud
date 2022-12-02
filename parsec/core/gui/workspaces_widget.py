@@ -678,7 +678,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         async def _reencrypt(on_progress: tuple[QObject, str], workspace_id: EntryID) -> EntryID:
             on_progress: pyqtBoundSignal = getattr(
                 on_progress[0], on_progress[1]
-            )  # Retreive the signal
+            )  # Retrieve the signal
             with _handle_fs_errors():
                 if reencryption_already_in_progress:
                     job = await self.core.user_fs.workspace_continue_reencryption(workspace_id)

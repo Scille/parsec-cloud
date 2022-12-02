@@ -67,7 +67,7 @@ async def _run_ipc_server(
             new_instance_needed.emit(cmd.get("start_arg"))
         return {"status": "ok"}
 
-    # Loop over attemps at running an IPC server or sending the command to an existing one
+    # Loop over attempts at running an IPC server or sending the command to an existing one
     while True:
 
         # Attempt to run an IPC server if Parsec is not already started
@@ -94,7 +94,7 @@ async def _run_ipc_server(
             except IPCServerNotRunning:
                 continue
 
-            # We have successfuly noticed the other running application
+            # We have successfully noticed the other running application
             # We can now forward the exception to the caller
             raise
 
@@ -122,8 +122,8 @@ def fail_on_first_exception(kill_window: Callable[[], None]) -> Iterator[None]:
 
 @contextmanager
 def log_pyqt_exceptions() -> Iterator[None]:
-    # Override sys.excepthook to be able to properly log exceptions occuring in Qt slots.
-    # Exceptions occuring in the core while in the Qt app should be catched sooner by the
+    # Override sys.excepthook to be able to properly log exceptions occurring in Qt slots.
+    # Exceptions occurring in the core while in the Qt app should be caught sooner by the
     # job.
 
     def log_except(
@@ -148,7 +148,7 @@ def run_gui(config: CoreConfig, start_arg: str | None = None, diagnose: bool = F
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
 
-    # The parsec app needs to be instanciated before qtrio runs in order
+    # The parsec app needs to be instantiated before qtrio runs in order
     # to be the default QApplication instance
     app = ParsecApp()
     assert QApplication.instance() is app

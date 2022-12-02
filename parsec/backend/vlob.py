@@ -182,7 +182,7 @@ async def extract_sequestered_data_and_proceed_webhook(
         service for service in services.values() if isinstance(service, WebhookSequesterService)
     ]
 
-    # Proceed webhook service before storage (garantee data are not stored if they are rejected)
+    # Proceed webhook service before storage (guarantee data are not stored if they are rejected)
     for service in webhook_services:
         sequester_data = sequester_blob[service.service_id]
         try:
