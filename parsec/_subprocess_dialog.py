@@ -16,7 +16,7 @@ import importlib.resources
 import sys
 
 
-@functools.lru_cache()
+@functools.lru_cache
 def get_parsec_icon_data() -> bytes:
     filename = "parsec.icns" if sys.platform == "darwin" else "parsec.ico"
     return importlib.resources.files("parsec.core.resources").joinpath(filename).read_bytes()

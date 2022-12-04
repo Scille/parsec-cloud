@@ -307,7 +307,7 @@ io_statistics:
 
         def _format_task(task):
             task = self._tasks[id(task)]
-            return "%s (id=%s, %s%s)" % (
+            return "{} (id={}, {}{})".format(
                 task.name,
                 task._monitor_short_id,
                 task._monitor_state,
