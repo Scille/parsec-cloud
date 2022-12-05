@@ -2604,7 +2604,7 @@ msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
 msgstr "user@host.com"
 
 msgid "TEXT_CLAIM_USER_WAIT_FOR_USER_INFO"
-msgstr "We are waiting for the person who invited you to confirm this information."
+msgstr "Please wait while the host is reviewing your information."
 
 msgid "ACTION_CODE_NONE"
 msgstr ""

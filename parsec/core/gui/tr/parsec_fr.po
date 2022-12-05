@@ -2676,7 +2676,7 @@ msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
 msgstr "utilisateur@hote.com"
 
 msgid "TEXT_CLAIM_USER_WAIT_FOR_USER_INFO"
-msgstr "Nous attendons que l'hôte confirme ces informations."
+msgstr "Veuillez patienter pendant que l'hôte vérifie ces informations."
 
 msgid "ACTION_CODE_NONE"
 msgstr ""

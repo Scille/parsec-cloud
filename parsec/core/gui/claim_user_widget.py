@@ -488,6 +488,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.claimer = claimer
         self.claim_job: QtToTrioJob[LocalDevice] | None = None
         self.new_device: LocalDevice | None = None
+        self.widget_waiting.setVisible(False)
         self.line_edit_user_full_name.setFocus()
         self.line_edit_user_full_name.set_validator(validators.UserNameValidator())
         self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
@@ -502,7 +503,6 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
 
         self.claim_success.connect(self._on_claim_success)
         self.claim_error.connect(self._on_claim_error)
-        self.label_wait.hide()
         self.button_ok.clicked.connect(self._on_claim_clicked)
         self.check_infos()
 
@@ -525,7 +525,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
 
         self.button_ok.setDisabled(True)
         self.widget_info.setDisabled(True)
-        self.label_wait.show()
+        self.widget_waiting.setVisible(True)
         self.claim_job = self.jobs_ctx.submit_job(
             (self, "claim_success"),
             (self, "claim_error"),
@@ -565,7 +565,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             show_error(self, msg, exception=exc)
         self.check_infos()
         self.widget_info.setDisabled(False)
-        self.label_wait.hide()
+        self.widget_waiting.setVisible(False)
         self.failed.emit(job)
 
     def cancel(self) -> None:
