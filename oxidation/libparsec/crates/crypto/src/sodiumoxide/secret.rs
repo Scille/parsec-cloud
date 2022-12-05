@@ -54,7 +54,10 @@ impl SecretKey {
     /// ...
     pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
         // SAFETY: Sodiumoxide doesn't expose those methods, so we have to access
-        // the libsodium C API directly
+        // the libsodium C API directly.
+        // this remains safe because we provide bounds defined in Rust land when passing vectors.
+        // The only data structure provided by remote code is dropped
+        // at the end of the function.
         unsafe {
             let mut state = libsodium_sys::crypto_generichash_blake2b_state {
                 opaque: [0u8; 384usize],
