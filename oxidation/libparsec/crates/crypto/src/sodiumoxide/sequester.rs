@@ -241,8 +241,14 @@ impl Serialize for SequesterPublicKeyDer {
 
 impl PartialEq for SequesterPublicKeyDer {
     fn eq(&self, other: &Self) -> bool {
-        let public_key = PKey::from_rsa(self.0.to_owned()).expect("Unreachable");
-        public_key.public_eq(&PKey::from_rsa(other.0.to_owned()).expect("Unreachable"))
+        // This is the only way I could find to compare two public keys.
+        // There is also public_eq, but it is defined on the PKey type, and to get
+        // a PKey<Public> from a Rsa<Public> we have to give up ownership, which
+        // we can't do because we take a reference to both the keys we want to compare.
+        // We could also clone the keys, but that would mean having an allocation in the
+        // comparison method.
+        self.0.public_key_to_der().expect("OpenSSL error")
+            == other.0.public_key_to_der().expect("OpenSSL error")
     }
 }
 
@@ -500,6 +506,26 @@ fn test_pub_signature_verification() {
     let verification = pub_key_verifier.verify(&signed_data);
 
     assert!(verification.is_ok());
+}
+
+#[test]
+fn test_key_equality() {
+    use hex_literal::hex;
+
+    let pub_key = SequesterPublicKeyDer::try_from(
+        &hex!(
+            "30819f300d06092a864886f70d010101050003818d0030818902818100a0b7653b73670b364cd397"
+            "27a3843502d1ba0402e38f197d4b6ab2ea31da8b23cfef82fdc7bf723d0ae6093767aa92274dde3a"
+            "b0f959f0624d4d5f4c7601a561a646e2f323e60f69e52f53158654f0a592ba0f19cebb3f7b2cbc6b"
+            "7920670c6fe1b23c13a77597dc50d34dc1c454c25ee3348cfae7e089bcf50a266b4033f5f5020301"
+            "0001"
+        )[..],
+    )
+    .unwrap();
+
+    let pub_key_two = pub_key.clone();
+
+    assert!(pub_key == pub_key_two);
 }
 
 #[test]
