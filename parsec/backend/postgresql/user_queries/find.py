@@ -39,7 +39,7 @@ LIMIT 1
 )
 
 
-@lru_cache()
+@lru_cache
 def _q_human_factory(with_query: bool, omit_revoked: bool, omit_non_human: bool) -> Q:
     conditions = []
     if omit_revoked:

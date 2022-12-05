@@ -31,7 +31,7 @@ def packb(data: Mapping[str, Any], exc_cls: Any = SerdePackingError) -> bytes:
         elif isinstance(obj, UUID):
             return ExtType(2, obj.bytes)
 
-        raise TypeError("Unknown type: %r" % (obj,))
+        raise TypeError(f"Unknown type: {obj!r}")
 
     try:
         return msgpack_packb(data, default=_default, use_bin_type=True)

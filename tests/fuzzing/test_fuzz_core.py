@@ -115,7 +115,7 @@ class FSState:
             self.folders.append(new_path)
 
     def get_new_path(self):
-        return ("%s/%s" % (self.get_folder(), generate_name())).replace("//", "/")
+        return "{}/{}".format(self.get_folder(), generate_name()).replace("//", "/")
 
 
 class SkipCommand(Exception):
@@ -266,4 +266,4 @@ async def test_fuzz_core(request, running_backend, alice_core):
         print()
         print("Stats:")
         for k, v in fs_state.get_cooked_stats():
-            print(" - %s: %s%%" % (k, v))
+            print(f" - {k}: {v}%")
