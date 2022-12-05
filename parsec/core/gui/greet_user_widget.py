@@ -199,12 +199,14 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.greeter = greeter
+        self.widget_waiting.setVisible(False)
         self.wait_peer_job: QtToTrioJob[None] | None = None
         self.wait_peer_success.connect(self._on_wait_peer_success)
         self.wait_peer_error.connect(self._on_wait_peer_error)
         self.button_start.clicked.connect(self._on_button_start_clicked)
         self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_GREET_USER_WAITING"))
+        self.widget_waiting.setVisible(True)
         self.wait_peer_job = self.jobs_ctx.submit_job(
             (self, "wait_peer_success"), (self, "wait_peer_error"), self.greeter.wait_peer
         )

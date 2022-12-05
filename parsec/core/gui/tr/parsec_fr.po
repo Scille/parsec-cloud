@@ -239,7 +239,7 @@ msgid "ACTION_NO"
 msgstr "Non"
 
 msgid "TEXT_CLAIM_DEVICE_TITLE"
-msgstr "Enregistrer un appareil"
+msgstr "Ajouter un nouvel appareil"
 
 msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS-name_email_device"
 msgstr ""
@@ -329,7 +329,7 @@ msgid "ACTION_CANCEL_CLAIM_USER"
 msgstr "Annuler l'enrôlement"
 
 msgid "TEXT_CLAIM_USER_TITLE"
-msgstr "Enregistrer un utilisateur"
+msgstr "Rejoindre une organisation"
 
 msgid "ACTION_CREATE_ORG"
 msgstr "Créer l'organisation"
@@ -973,7 +973,7 @@ msgid "ACTION_CANCEL_GREET_DEVICE"
 msgstr "Annuler l'accueil"
 
 msgid "TEXT_GREET_DEVICE_TITLE"
-msgstr "Accueillir un nouvel appareil"
+msgstr "Ajouter un nouvel appareil"
 
 msgid "TEXT_GREET_USER_WAITING"
 msgstr "En attente de l'autre utilisateur..."
@@ -1051,7 +1051,7 @@ msgid "ACTION_CANCEL_GREET_USER"
 msgstr "Annuler l'accueil"
 
 msgid "TEXT_GREET_USER_TITLE"
-msgstr "Accueillir un nouvel utilisateur"
+msgstr "Enrôler un nouvel utilisateur"
 
 msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
 msgstr "Dernière étape : Installer macFUSE"

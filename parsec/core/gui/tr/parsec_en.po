@@ -231,7 +231,7 @@ msgid "ACTION_NO"
 msgstr "No"
 
 msgid "TEXT_CLAIM_DEVICE_TITLE"
-msgstr "Register a device"
+msgstr "Add a new device"
 
 msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS-name_email_device"
 msgstr ""
@@ -313,7 +313,7 @@ msgid "ACTION_CANCEL_CLAIM_USER"
 msgstr "Cancel the onboarding process"
 
 msgid "TEXT_CLAIM_USER_TITLE"
-msgstr "Register a user"
+msgstr "Join an organization"
 
 msgid "ACTION_CREATE_ORG"
 msgstr "Create the organization"
@@ -931,7 +931,7 @@ msgid "ACTION_CANCEL_GREET_DEVICE"
 msgstr "Cancel onboarding process"
 
 msgid "TEXT_GREET_DEVICE_TITLE"
-msgstr "Greet a new device"
+msgstr "Add a new device"
 
 msgid "TEXT_GREET_USER_WAITING"
 msgstr "Waiting for the other user..."
@@ -1003,7 +1003,7 @@ msgid "ACTION_CANCEL_GREET_USER"
 msgstr "Cancel the onboarding process"
 
 msgid "TEXT_GREET_USER_TITLE"
-msgstr "Greet a new user"
+msgstr "Enrol a new user"
 
 msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
 msgstr "One last step: Install macFUSE"
