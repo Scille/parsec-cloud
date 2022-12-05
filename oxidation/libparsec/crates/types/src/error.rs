@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::path::PathBuf;
-
 use thiserror::Error;
 
 use crate::{DateTime, DeviceID, EntryID, RealmID, Regex, UserID};

@@ -10,14 +10,7 @@ from typing import Iterable, Optional, Tuple
 
 import pytest
 
-from parsec._parsec import (
-    DateTime,
-    EnrollmentID,
-    LocalPendingEnrollment,
-    PrivateKey,
-    SigningKey,
-    X509Certificate,
-)
+from parsec._parsec import DateTime, EnrollmentID, PrivateKey, SigningKey
 from parsec.api.data import DataError, PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec.core.local_device import (
     DeviceFileType,
@@ -28,6 +21,7 @@ from parsec.core.local_device import (
     _save_device,
 )
 from parsec.core.types import BackendPkiEnrollmentAddr, LocalDevice
+from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
 
 
 def create_test_certificates(tmp_path):
