@@ -203,13 +203,14 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
         self.wait_peer_success.connect(self._on_wait_peer_success)
         self.wait_peer_error.connect(self._on_wait_peer_error)
         self.button_start.clicked.connect(self._on_button_start_clicked)
-
-    def _on_button_start_clicked(self, checked: bool) -> None:
         self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_GREET_USER_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
             (self, "wait_peer_success"), (self, "wait_peer_error"), self.greeter.wait_peer
         )
+
+    def _on_button_start_clicked(self, checked: bool) -> None:
+        self.succeeded.emit()
 
     def _on_wait_peer_success(self, job: QtToTrioJob[None]) -> None:
         if self.wait_peer_job != job:
@@ -219,7 +220,8 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
         assert job.is_finished()
         assert job.status == "ok"
         self.greeter_sas = job.ret
-        self.succeeded.emit()
+        self.button_start.setEnabled(True)
+        self.button_start.setText(_("TEXT_GREET_USER_READY"))
 
     def _on_wait_peer_error(self, job: QtToTrioJob[None]) -> None:
         if self.wait_peer_job != job:

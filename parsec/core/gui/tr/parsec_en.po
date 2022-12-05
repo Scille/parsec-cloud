@@ -288,6 +288,9 @@ msgstr ""
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "Waiting for the host"
 
+msgid "TEXT_CLAIM_USER_READY"
+msgstr "Continue"
+
 msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
 msgstr "Error while waiting for the host. Please restart the process."
 
@@ -932,6 +935,9 @@ msgstr "Greet a new device"
 
 msgid "TEXT_GREET_USER_WAITING"
 msgstr "Waiting for the other user..."
+
+msgid "TEXT_GREET_USER_READY"
+msgstr "Continue"
 
 msgid "TEXT_GREET_USER_WAIT_PEER_ERROR"
 msgstr ""

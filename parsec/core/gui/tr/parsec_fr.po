@@ -300,6 +300,9 @@ msgstr ""
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "Veuillez patienter..."
 
+msgid "TEXT_CLAIM_USER_READY"
+msgstr "Continuer"
+
 msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
 msgstr ""
 "Erreur pendant l'attente de l'autre utilisateur. Veuillez redémarrer la "
@@ -974,6 +977,9 @@ msgstr "Accueillir un nouvel appareil"
 
 msgid "TEXT_GREET_USER_WAITING"
 msgstr "En attente de l'autre utilisateur..."
+
+msgid "TEXT_GREET_USER_READY"
+msgstr "Continuer"
 
 msgid "TEXT_GREET_USER_WAIT_PEER_ERROR"
 msgstr "Suite à un abandon de l'invité, il faut redémarrer la procédure d'accueil"

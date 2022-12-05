@@ -593,18 +593,19 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
         self.button_start.clicked.connect(self._on_button_start_clicked)
         self.wait_peer_success.connect(self._on_wait_peer_success)
         self.wait_peer_error.connect(self._on_wait_peer_error)
+        self.button_start.setDisabled(True)
 
     def switch_to_info_retrieved(self) -> None:
         self.label.setText(_("TEXT_CLAIM_USER_INSTRUCTIONS"))
-        self.button_start.setEnabled(True)
         self.widget_spinner.setVisible(False)
-
-    def _on_button_start_clicked(self) -> None:
-        self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_CLAIM_USER_WAITING"))
+        self.button_start.setDisabled(True)
         self.wait_peer_job = self.jobs_ctx.submit_job(
             (self, "wait_peer_success"), (self, "wait_peer_error"), self.claimer.wait_peer
         )
+
+    def _on_button_start_clicked(self) -> None:
+        self.succeeded.emit()
 
     def _on_wait_peer_success(self, job: QtToTrioJob[None]) -> None:
         if job != self.wait_peer_job:
@@ -613,7 +614,8 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
         assert job
         assert job.is_finished()
         assert job.status == "ok"
-        self.succeeded.emit()
+        self.button_start.setEnabled(True)
+        self.button_start.setText(_("TEXT_CLAIM_USER_READY"))
 
     def _on_wait_peer_error(self, job: QtToTrioJob[None]) -> None:
         if job != self.wait_peer_job:
@@ -632,8 +634,6 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
                 elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
-            self.button_start.setDisabled(False)
-            self.button_start.setText(_("ACTION_START"))
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
