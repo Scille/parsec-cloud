@@ -614,6 +614,7 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
         assert job
         assert job.is_finished()
         assert job.status == "ok"
+        self.widget_spinner.setVisible(False)
         self.button_start.setEnabled(True)
         self.button_start.setText(_("TEXT_CLAIM_USER_READY"))
 
