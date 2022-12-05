@@ -5,7 +5,7 @@ use zeroize::Zeroizing;
 use openssl::hash::MessageDigest;
 use openssl::pkey::{PKey, Private, Public};
 use openssl::rsa::{Padding, Rsa};
-use openssl::sign::{Signer, Verifier};
+use openssl::sign::{RsaPssSaltlen, Signer, Verifier};
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
@@ -305,6 +305,13 @@ impl SequesterSigningKeyDer {
         let mut signer =
             Signer::new(MessageDigest::sha256(), &self.0).expect("Unable to build a Signer");
 
+        signer
+            .set_rsa_padding(Padding::PKCS1_PSS)
+            .expect("OpenSSL error");
+        signer
+            .set_rsa_pss_saltlen(RsaPssSaltlen::DIGEST_LENGTH)
+            .expect("OpenSSL error");
+
         signer.update(data).expect("Unreachable");
         let signed_data = signer.sign_to_vec().expect("Unable to sign a message");
 
@@ -358,18 +365,25 @@ impl SequesterVerifyKeyDer {
     }
 
     pub fn verify(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
-        let (signature, data) = Self::deserialize(data)?;
+        let (signature, contents) = Self::deserialize(data)?;
 
         let mut verifier = Verifier::new(MessageDigest::sha256(), &self.0)
             .map_err(|_| CryptoError::SignatureVerification)?;
 
         verifier
-            .update(data)
+            .set_rsa_padding(Padding::PKCS1_PSS)
+            .expect("OpenSSL error");
+        verifier
+            .set_rsa_pss_saltlen(RsaPssSaltlen::DIGEST_LENGTH)
+            .expect("OpenSSL error");
+
+        verifier
+            .update(contents)
             .map_err(|_| CryptoError::SignatureVerification)?;
 
         match verifier.verify(signature) {
             Ok(signature_is_valid) => match signature_is_valid {
-                true => Ok(data.to_vec()),
+                true => Ok(contents.to_vec()),
                 false => Err(CryptoError::Signature),
             },
             Err(_) => Err(CryptoError::SignatureVerification),
@@ -458,4 +472,78 @@ fn test_keys() {
     let signed = signing_key.sign(data);
 
     assert_eq!(verify_key.verify(&signed).unwrap(), data);
+}
+
+#[test]
+fn test_pub_signature_verification() {
+    use hex_literal::hex;
+
+    let pub_key_verifier = SequesterVerifyKeyDer::try_from(
+        &hex!(
+            "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+            "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+            "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+            "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+            "f3bcc72ab57207ebfd0203010001"
+        )[..],
+    )
+    .unwrap();
+
+    let signed_data = hex!(
+        "5253415353412d5053532d5348413235363a0afc141b03789ac3f2c69bd1e577e279d4570b"
+        "f3fe387f389fe52c2b4ac08a9cacbd3c5c1b080cb39969cf3ff7a375619b4b5adc4aef2aec"
+        "2800f6ead1d78019f8e37d036880b71e6ba4e89562e14ab2d6b35d0db4db48d818f8d4395f"
+        "8d692be38fcdfa8d526a352bb811393dd987ed5a8257b7583d145099037178456baf3c4865"
+        "6c6c6f20776f726c64"
+    );
+
+    let verification = pub_key_verifier.verify(&signed_data);
+
+    assert!(verification.is_ok());
+}
+
+#[test]
+fn test_priv_decipher_verification() {
+    use hex_literal::hex;
+
+    let priv_key = SequesterPrivateKeyDer::try_from(
+        &hex!(
+            "30820276020100300d06092a864886f70d0101010500048202603082025c
+            02010002818100b2dc00a3c3b5c689b069f3f40c494d2a5be313b1034fbf
+            1dfe0eeee0f36cfbcf624400256cc660d5084782738a3045d75b584c1943
+            bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62cb3
+            8582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66
+            f7ee18303195f3bcc72ab57207ebfd0203010001028180417d044ef20dd0
+            9001a409cac5e4e0f82d84cb64f8cd6e30d1212e9df703647fde7eff7eb4
+            813e5b4218cccef93e0b947ac1adbb626da9622a6f89afd55c8ac8bb0a0f
+            1832b2520fc1d92ac320180b9657a8b1598e6701119d8f77f5285ac5703f
+            4c0a93e1e5ebe6ec179bccff62495e7734d5899d86d2dcbdeb648923d29b
+            11024100eb2b5d5ad5bc28cae1654505c16a2b0d82cfa237f8f10f70e5e7
+            a3333028aade5de4f9e2b3e8a9f924a0538f7119e088f3c11f1258319c59
+            da03d637a324c663024100c2b3c49145dfd7930ac7f5681afa43b7b18f69
+            7163469c7ab9a6ca8e12168eab1a33cc4e73b53f4509c48052a31ff289e7
+            357a54f88e28ee543040009976621f024026b608b3ff22ee04177e38126e
+            782f8615d65ff99ebcefb1c1e69372c5a6ac19d692ee9f66c611d4b536bf
+            0a89af9cca6e7587cbd940b160090740a7ffeef9c902410093566a77ecc2
+            9965e290b2bb173f2fa380b0a0007839e50c52154fcef70d2ee5782c9e7c
+            f7bebea445e1f7a1916409ac25d5283fc8dffb456f5c1bf2d82ee7cd0240
+            18b8c579f32bbd74cc1f10c786e1e0e192526c9e4134c65bfc76799b8290
+            0adf467a5c7fb3164eb775650abaae08500bc6691e60c8575b5a5abf4f21
+            56911c4e"
+        )[..],
+    )
+    .unwrap();
+
+    let data = priv_key
+        .decrypt(&hex!(
+            "52534145532d4f4145502d5853414c534132302d504f4c59313330353a278b9346743cc609"
+            "258a4a82023059411d78c29aed9cf9893dc36b1f1f0055e3db8fa3624b4e3ced4fa1d3683b"
+            "97cff2694ddbebeb9a59d1533e9b4dba005958f70a1b7b4b54fef420fb200146a73ac0f457"
+            "168e71decb50d98af9332da36b5143e3470f7858a1a43f0f7ffff6e98e2487579d96a3791d"
+            "69d48ba307e9984dad42781a567fa27e74e9ee88fd945736968855588eec48f43faa396464"
+            "d9a5e8cfd5326ea0193ff5732b51423146d683b74870ed"
+        ))
+        .unwrap();
+
+    assert_eq!(data, "Hello world".as_bytes());
 }
