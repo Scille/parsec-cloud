@@ -44,21 +44,6 @@ from parsec.core.local_device import (
 logger = get_logger()
 
 
-async def _do_create_org(
-    config: CoreConfig,
-    human_handle: HumanHandle,
-    device_label: DeviceLabel,
-    backend_addr: BackendOrganizationBootstrapAddr,
-) -> LocalDevice:
-    new_device = await bootstrap_organization(
-        backend_addr, human_handle=human_handle, device_label=device_label
-    )
-    # The organization is brand new, of course there is no existing
-    # remote user manifest, hence our placeholder is non-speculative.
-    await user_storage_non_speculative_init(data_base_dir=config.data_base_dir, device=new_device)
-    return new_device
-
-
 class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
     info_filled = pyqtSignal(bool)
 
@@ -169,7 +154,9 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 self.current_widget.radio_use_commercial.setDisabled(True)
                 # Will not be used, it just makes the display prettier
                 backend_addr = BackendAddr(
-                    self.start_addr.hostname, self.start_addr.port, self.start_addr.use_ssl
+                    self.start_addr.hostname,
+                    self.start_addr.port,
+                    self.start_addr.use_ssl,
                 )
                 self.current_widget.line_edit_backend_addr.setText(backend_addr.to_url())
                 self.current_widget.line_edit_backend_addr.setDisabled(True)
@@ -223,11 +210,13 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             err_msg = None
             exception_value: Exception | None = None
             try:
-                self.new_device = await _do_create_org(
-                    config=self.config,
-                    human_handle=human_handle,
-                    device_label=device_label,
-                    backend_addr=backend_addr,
+                self.new_device = await bootstrap_organization(
+                    backend_addr, human_handle=human_handle, device_label=device_label
+                )
+                # The organization is brand new, of course there is no existing
+                # remote user manifest, hence our placeholder is non-speculative.
+                await user_storage_non_speculative_init(
+                    data_base_dir=self.config.data_base_dir, device=self.new_device
                 )
             except InviteNotFoundError as exc:
                 err_msg = _("TEXT_ORG_WIZARD_INVITE_NOT_FOUND")
@@ -290,13 +279,19 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 assert self.new_device is not None
                 if auth_method == DeviceFileType.PASSWORD:
                     save_device_with_password_in_config(
-                        self.config.config_dir, self.new_device, self.current_widget.get_auth()
+                        self.config.config_dir,
+                        self.new_device,
+                        self.current_widget.get_auth(),
                     )
                 elif auth_method == DeviceFileType.SMARTCARD:
                     await save_device_with_smartcard_in_config(
                         self.config.config_dir, self.new_device
                     )
-                self.status = (self.new_device, auth_method, self.current_widget.get_auth())
+                self.status = (
+                    self.new_device,
+                    auth_method,
+                    self.current_widget.get_auth(),
+                )
 
                 if self.dialog:
                     self.dialog.accept()
