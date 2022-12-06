@@ -511,7 +511,7 @@ msgstr ""
 "cannot access the list of users."
 
 msgid "TEXT_ENROLLMENT_ACCEPT_CHECK_INFO_TITLE"
-msgstr "Greet a new user"
+msgstr "Enroll a new user"
 
 msgid "TEXT_ENROLLMENT_ERROR_WITH_CERTIFICATE"
 msgstr "An error occured while trying to load this request."
@@ -1003,7 +1003,7 @@ msgid "ACTION_CANCEL_GREET_USER"
 msgstr "Cancel the onboarding process"
 
 msgid "TEXT_GREET_USER_TITLE"
-msgstr "Enrol a new user"
+msgstr "Greet a new user"
 
 msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
 msgstr "One last step: Install macFUSE"

@@ -523,8 +523,9 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             email=self.line_edit_user_email.text(), label=self.line_edit_user_full_name.clean_text()
         )
 
-        self.button_ok.setDisabled(True)
+        self.button_ok.setVisible(False)
         self.widget_info.setDisabled(True)
+        self.label_4.setVisible(False)
         self.widget_waiting.setVisible(True)
         self.claim_job = self.jobs_ctx.submit_job(
             (self, "claim_success"),
