@@ -5,6 +5,38 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.15.0-rc1 (2022-12-06)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Improved the enrolment/onboarding of new users and devices  (`#3663
+  <https://github.com/Scille/parsec-cloud/issues/3663>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix user search to include legacy users  (`#3538
+  <https://github.com/Scille/parsec-cloud/issues/3538>`__)
+* Improved some texts for device and user invitation  (`#3601
+  <https://github.com/Scille/parsec-cloud/issues/3601>`__)
+* Fix import or drag&drop of an empty folder  (`#3534
+  <https://github.com/Scille/parsec-cloud/issues/3534>`__)
+* Fix an issue that prevented proper reconnection of the client in some specific
+  cases  (`#3595 <https://github.com/Scille/parsec-cloud/issues/3595>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Updated macFUSE installation guide for MacOS 13  (`#3588
+  <https://github.com/Scille/parsec-cloud/issues/3588>`__)
+* Fix various typos throughout our codebase  (`#3700
+  <https://github.com/Scille/parsec-cloud/issues/3700>`__)
+* Recovery devices can now be renamed when created.  (`#3537
+  <https://github.com/Scille/parsec-cloud/issues/3537>`__)
+
+
 Parsec v2.14.1 (2022-11-24)
 ---------------------------
 
