@@ -641,12 +641,12 @@ def test_deadlock_detection(mountpoint_service, caplog, monkeypatch):
         # "trio thread is unreachable" error (and not exactly one !).
         if sys.platform == "win32":
             caplog.assert_occured(
-                "[error    ] The trio thread is unreachable, a deadlock might have occured [parsec.core.mountpoint.winfsp_operations]"
+                "[error    ] The trio thread is unreachable, a deadlock might have occurred [parsec.core.mountpoint.winfsp_operations]"
             )
         else:
             assert ctx.value.errno == errno.EINVAL
             caplog.assert_occured(
-                "[error    ] The trio thread is unreachable, a deadlock might have occured [parsec.core.mountpoint.fuse_operations]"
+                "[error    ] The trio thread is unreachable, a deadlock might have occurred [parsec.core.mountpoint.fuse_operations]"
             )
 
     # Lower the deadlock timeout detection to 100 ms to make the test faster
