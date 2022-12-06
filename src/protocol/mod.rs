@@ -57,7 +57,7 @@ macro_rules! rs_to_py {
     };
     ($v: ident, OptionalDateTime, $py: ident) => {
         match *$v {
-            libparsec::types::Maybe::Present(v) => Some(DateTime(v)),
+            libparsec::types::Maybe::Present(v) => Some(crate::time::DateTime(v)),
             libparsec::types::Maybe::Absent => None,
         }
     };
@@ -330,6 +330,15 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<PkiEnrollmentStatus>()?;
 
     // Organization
+    m.add_class::<OrganizationBootstrapReq>()?;
+    m.add_class::<OrganizationBootstrapRep>()?;
+    m.add_class::<OrganizationBootstrapRepOk>()?;
+    m.add_class::<OrganizationBootstrapRepInvalidCertification>()?;
+    m.add_class::<OrganizationBootstrapRepInvalidData>()?;
+    m.add_class::<OrganizationBootstrapRepBadTimestamp>()?;
+    m.add_class::<OrganizationBootstrapRepAlreadyBootstrapped>()?;
+    m.add_class::<OrganizationBootstrapRepNotFound>()?;
+    m.add_class::<OrganizationBootstrapRepUnknownStatus>()?;
     m.add_class::<OrganizationStatsReq>()?;
     m.add_class::<OrganizationStatsRep>()?;
     m.add_class::<OrganizationStatsRepOk>()?;

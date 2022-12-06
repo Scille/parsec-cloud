@@ -6,13 +6,21 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::v2::{organization_config, organization_stats};
+use libparsec::{
+    protocol::{
+        anonymous_cmds::v2::organization_bootstrap,
+        authenticated_cmds::v2::{organization_config, organization_stats},
+    },
+    types::Maybe,
+};
 
 use crate::{
     data::UsersPerProfileDetailItem,
+    api_crypto::VerifyKey,
+    enumerate::UserProfile,
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
-        gen_rep, Reason,
+        gen_rep, OptionalDateTime, OptionalFloat, Reason,
     },
 };
 
@@ -257,5 +265,116 @@ impl OrganizationConfigRepOk {
             },
             _ => return Err(PyNotImplementedError::new_err("")),
         })
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct OrganizationBootstrapReq(pub organization_bootstrap::Req);
+
+crate::binding_utils::gen_proto!(OrganizationBootstrapReq, __repr__);
+crate::binding_utils::gen_proto!(OrganizationBootstrapReq, __richcmp__, eq);
+
+#[pymethods]
+impl OrganizationBootstrapReq {
+    #[new]
+    fn new(
+        bootstrap_token: String,
+        root_verify_key: VerifyKey,
+        user_certificate: Vec<u8>,
+        device_certificate: Vec<u8>,
+        redacted_user_certificate: Vec<u8>,
+        redacted_device_certificate: Vec<u8>,
+        sequester_authority_certificate: Option<Vec<u8>>,
+    ) -> PyResult<Self> {
+        Ok(Self(organization_bootstrap::Req {
+            bootstrap_token,
+            root_verify_key: root_verify_key.0,
+            user_certificate,
+            device_certificate,
+            redacted_user_certificate,
+            redacted_device_certificate,
+            sequester_authority_certificate: Maybe::Present(sequester_authority_certificate),
+        }))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+        ))
+    }
+
+    #[getter]
+    fn bootstrap_token(&self) -> &str {
+        &self.0.bootstrap_token
+    }
+
+    #[getter]
+    fn root_verify_key(&self) -> VerifyKey {
+        VerifyKey(self.0.root_verify_key.clone())
+    }
+
+    #[getter]
+    fn user_certificate(&self) -> &[u8] {
+        &self.0.user_certificate
+    }
+
+    #[getter]
+    fn device_certificate(&self) -> &[u8] {
+        &self.0.device_certificate
+    }
+
+    #[getter]
+    fn redacted_user_certificate(&self) -> &[u8] {
+        &self.0.redacted_user_certificate
+    }
+
+    #[getter]
+    fn redacted_device_certificate(&self) -> &[u8] {
+        &self.0.redacted_device_certificate
+    }
+
+    #[getter]
+    fn sequester_authority_certificate(&self) -> Option<&[u8]> {
+        match &self.0.sequester_authority_certificate {
+            Maybe::Present(x) => x.as_ref().map(|x| &x[..]),
+            Maybe::Absent => None,
+        }
+    }
+}
+
+gen_rep!(
+    organization_bootstrap,
+    OrganizationBootstrapRep,
+    [InvalidCertification, reason: Reason],
+    [InvalidData, reason: Reason],
+    [
+        BadTimestamp,
+        reason: Reason,
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
+    ],
+    [AlreadyBootstrapped],
+    [NotFound],
+);
+
+#[pyclass(extends=OrganizationBootstrapRep)]
+pub(crate) struct OrganizationBootstrapRepOk;
+
+#[pymethods]
+impl OrganizationBootstrapRepOk {
+    #[new]
+    fn new() -> (Self, OrganizationBootstrapRep) {
+        (
+            Self,
+            OrganizationBootstrapRep(organization_bootstrap::Rep::Ok),
+        )
     }
 }

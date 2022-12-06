@@ -166,6 +166,7 @@ impl AnonymousAnyCmdReq {
             })
         })?;
         Ok(match cmd {
+            AnyCmdReq::OrganizationBootstrap(x) => OrganizationBootstrapReq(x).into_py(py),
             AnyCmdReq::PkiEnrollmentSubmit(x) => PkiEnrollmentSubmitReq(x).into_py(py),
             AnyCmdReq::PkiEnrollmentInfo(x) => PkiEnrollmentInfoReq(x).into_py(py),
         })
