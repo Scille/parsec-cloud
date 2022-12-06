@@ -118,8 +118,11 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
 
 
 class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
-    req_success = pyqtSignal(QtToTrioJob)
-    req_error = pyqtSignal(QtToTrioJob)
+    # These signals are no longer used to propagate
+    # Trio job status. We keep them and emit manually
+    # because our tests still rely on them.
+    req_success = pyqtSignal()
+    req_error = pyqtSignal()
 
     def __init__(
         self,
@@ -249,6 +252,10 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 exception_value = exc
 
             if exception_value and err_msg:
+                # Alert anyone listening (most likely a test)
+                # that an error was encountered
+                self.req_error.emit()
+
                 show_error(self, err_msg, exception=exception_value)
                 self.button_validate.setEnabled(True)
                 self.current_widget.setEnabled(True)
@@ -256,6 +263,11 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                     self.dialog.button_close.setVisible(True)
 
             else:
+                # Alert anyone listening (most likely a test)
+                # that we successfully got through Organization
+                # creation.
+                self.req_success.emit()
+
                 assert isinstance(self.current_widget, CreateOrgUserInfoWidget)
                 excl_strings = [
                     self.current_widget.line_edit_org_name.text(),
