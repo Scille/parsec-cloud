@@ -118,7 +118,7 @@ def ClaimUserTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cu_w.isVisible()
-                assert cu_w.dialog.label_title.text() == "Register a user"
+                assert cu_w.dialog.label_title.text() == translate("TEXT_CLAIM_USER_TITLE")
                 assert cui_w.isVisible()
 
             await aqtbot.wait_until(_register_user_displayed)
@@ -142,7 +142,7 @@ def ClaimUserTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cu_w.isVisible()
-                assert cu_w.dialog.label_title.text() == "Register a user"
+                assert cu_w.dialog.label_title.text() == translate("TEXT_CLAIM_USER_TITLE")
                 assert cui_w.isVisible()
 
             await aqtbot.wait_until(_register_user_displayed)
@@ -166,17 +166,9 @@ def ClaimUserTestBed(
         async def step_1_start_claim(self):
             cui_w = self.claim_user_instructions_widget
 
-            def _info_retrieved():
-                assert cui_w.button_start.isEnabled()
-
-            await aqtbot.wait_until(_info_retrieved)
-
-            assert cui_w.button_start.isEnabled()
-            aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
-
             def _claimer_started():
                 assert not cui_w.button_start.isEnabled()
-                assert cui_w.button_start.text() == "Waiting for the other user"
+                assert cui_w.button_start.text() == translate("TEXT_CLAIM_USER_WAITING")
 
             await aqtbot.wait_until(_claimer_started)
 
@@ -189,6 +181,14 @@ def ClaimUserTestBed(
                 cmds=self.cmds, token=self.invitation_addr.token
             )
             self.greeter_in_progress_ctx = await self.greeter_initial_ctx.do_wait_peer()
+
+            def _claim_ready():
+                assert cui_w.button_start.isEnabled()
+                assert cui_w.button_start.text() == translate("TEXT_CLAIM_USER_READY")
+
+            await aqtbot.wait_until(_claim_ready)
+
+            aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
 
             cuce_w = await catch_claim_user_widget()
             assert isinstance(cuce_w, ClaimUserCodeExchangeWidget)
@@ -259,7 +259,7 @@ def ClaimUserTestBed(
             aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
 
             def _claim_info_submitted():
-                assert not cupi_w.button_ok.isEnabled()
+                assert not cupi_w.button_ok.isVisible()
                 assert cupi_w.label_wait.isVisible()
 
             await aqtbot.wait_until(_claim_info_submitted)

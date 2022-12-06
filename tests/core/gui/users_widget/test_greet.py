@@ -125,7 +125,9 @@ def GreetUserTestBed(
             def _greet_user_displayed():
                 assert greet_user_widget.dialog.isVisible()
                 assert greet_user_widget.isVisible()
-                assert greet_user_widget.dialog.label_title.text() == "Greet a new user"
+                assert greet_user_widget.dialog.label_title.text() == translate(
+                    "TEXT_GREET_USER_TITLE"
+                )
                 assert greet_user_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_user_displayed)
@@ -151,7 +153,9 @@ def GreetUserTestBed(
             def _greet_user_displayed():
                 assert greet_user_widget.dialog.isVisible()
                 assert greet_user_widget.isVisible()
-                assert greet_user_widget.dialog.label_title.text() == "Greet a new user"
+                assert greet_user_widget.dialog.label_title.text() == translate(
+                    "TEXT_GREET_USER_TITLE"
+                )
                 assert greet_user_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_user_displayed)
@@ -175,11 +179,9 @@ def GreetUserTestBed(
         async def step_1_start_greet(self):
             gui_w = self.greet_user_information_widget
 
-            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
-
             def _greet_started():
                 assert not gui_w.button_start.isEnabled()
-                assert gui_w.button_start.text() == "Waiting for the other user..."
+                assert gui_w.button_start.text() == translate("TEXT_GREET_USER_WAITING")
 
             await aqtbot.wait_until(_greet_started)
 
@@ -191,6 +193,14 @@ def GreetUserTestBed(
             self.claimer_initial_ctx = await claimer_retrieve_info(self.cmds)
             self.claimer_in_progress_ctx = await self.claimer_initial_ctx.do_wait_peer()
             greeter_sas = self.claimer_in_progress_ctx.greeter_sas
+
+            def _greet_ready():
+                assert gui_w.button_start.isEnabled()
+                assert gui_w.button_start.text() == translate("TEXT_GREET_USER_READY")
+
+            await aqtbot.wait_until(_greet_ready)
+
+            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
 
             guce_w = await catch_greet_user_widget()
             assert isinstance(guce_w, GreetUserCodeExchangeWidget)

@@ -518,17 +518,14 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         self.layout_users.clear()
 
+        self.spinner.hide()
         status = job.status
         if status in ["error", "offline"]:
             label = QLabel(T("TEXT_USER_LIST_RETRIEVABLE_FAILURE"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_users.addWidget(label)
-            return
         else:
-            errmsg = T("TEXT_USER_LIST_RETRIEVABLE_FAILURE")
-        self.spinner.hide()
-
-        show_error(self, errmsg, exception=job.exc)
+            show_error(self, T("TEXT_USER_LIST_RETRIEVABLE_FAILURE"), exception=job.exc)
 
     def _on_cancel_invitation_success(self, job: QtToTrioJob[None]) -> None:
         assert job.is_finished()

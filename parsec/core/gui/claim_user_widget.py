@@ -22,7 +22,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.gui import validators
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
+from parsec.core.gui.custom_dialogs import GreyedDialog, ask_question, show_error, show_info
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
@@ -64,6 +64,8 @@ class Claimer:
         self.job_oob_recv: trio.MemoryReceiveChannel[Any]
         self.job_oob_send, self.job_oob_recv = trio.open_memory_channel(0)
 
+        self._current_step: Claimer.Step | None = None
+
     async def run(self, addr: BackendInvitationAddr, config: CoreConfig) -> None:
         try:
             async with backend_invited_cmds_factory(
@@ -71,27 +73,27 @@ class Claimer:
             ) as cmds:
                 # Trigger handshake
                 await cmds.ping()
-                r = await self.main_oob_recv.receive()
+                self._current_step = await self.main_oob_recv.receive()
 
-                assert r == self.Step.RetrieveInfo
+                assert self._current_step == self.Step.RetrieveInfo
                 try:
                     initial_ctx = cast(UserClaimInitialCtx, await claimer_retrieve_info(cmds))
                     await self.job_oob_send.send((True, None, initial_ctx.claimer_email))
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc, None))
 
-                r = await self.main_oob_recv.receive()
+                self._current_step = await self.main_oob_recv.receive()
 
-                assert r == self.Step.WaitPeer
+                assert self._current_step == self.Step.WaitPeer
                 try:
                     in_progress_ctx_wait_peer = await initial_ctx.do_wait_peer()
                     await self.job_oob_send.send((True, None))
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc))
 
-                r = await self.main_oob_recv.receive()
+                self._current_step = await self.main_oob_recv.receive()
 
-                assert r == self.Step.GetGreeterSas
+                assert self._current_step == self.Step.GetGreeterSas
                 try:
                     choices = in_progress_ctx_wait_peer.generate_greeter_sas_choices(size=4)
                     await self.job_oob_send.send(
@@ -100,9 +102,9 @@ class Claimer:
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc, None, None))
 
-                r = await self.main_oob_recv.receive()
+                self._current_step = await self.main_oob_recv.receive()
 
-                assert r == self.Step.SignifyTrust
+                assert self._current_step == self.Step.SignifyTrust
                 try:
                     in_progress_ctx_signify_trust = (
                         await in_progress_ctx_wait_peer.do_signify_trust()
@@ -111,14 +113,14 @@ class Claimer:
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc))
 
-                r = await self.main_oob_recv.receive()
+                self._current_step = await self.main_oob_recv.receive()
 
-                assert r == self.Step.GetClaimerSas
+                assert self._current_step == self.Step.GetClaimerSas
                 await self.job_oob_send.send(in_progress_ctx_signify_trust.claimer_sas)
 
-                r = await self.main_oob_recv.receive()
+                self._current_step = await self.main_oob_recv.receive()
 
-                assert r == self.Step.WaitPeerTrust
+                assert self._current_step == self.Step.WaitPeerTrust
                 try:
                     in_progress_ctx_wait_peer_trust = (
                         await in_progress_ctx_signify_trust.do_wait_peer_trust()
@@ -127,8 +129,8 @@ class Claimer:
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc))
 
-                r = await self.main_oob_recv.receive()
-                assert r == self.Step.ClaimUser
+                self._current_step = await self.main_oob_recv.receive()
+                assert self._current_step == self.Step.ClaimUser
 
                 try:
                     device_label, human_handle = await self.main_oob_recv.receive()
@@ -152,6 +154,10 @@ class Claimer:
             raise JobResultError(status="invitation-not-found", origin=exc)
         except BackendOutOfBallparkError as exc:
             raise JobResultError(status="out-of-ballpark", origin=exc)
+
+    @property
+    def enrolment_has_started(self) -> bool:
+        return self._current_step is not None and self._current_step > Claimer.Step.RetrieveInfo
 
     async def retrieve_info(self) -> str:
         await self.main_oob_send.send(self.Step.RetrieveInfo)
@@ -482,6 +488,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.claimer = claimer
         self.claim_job: QtToTrioJob[LocalDevice] | None = None
         self.new_device: LocalDevice | None = None
+        self.widget_waiting.setVisible(False)
         self.line_edit_user_full_name.setFocus()
         self.line_edit_user_full_name.set_validator(validators.UserNameValidator())
         self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
@@ -496,7 +503,6 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
 
         self.claim_success.connect(self._on_claim_success)
         self.claim_error.connect(self._on_claim_error)
-        self.label_wait.hide()
         self.button_ok.clicked.connect(self._on_claim_clicked)
         self.check_infos()
 
@@ -517,9 +523,10 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             email=self.line_edit_user_email.text(), label=self.line_edit_user_full_name.clean_text()
         )
 
-        self.button_ok.setDisabled(True)
+        self.button_ok.setVisible(False)
         self.widget_info.setDisabled(True)
-        self.label_wait.show()
+        self.label_4.setVisible(False)
+        self.widget_waiting.setVisible(True)
         self.claim_job = self.jobs_ctx.submit_job(
             (self, "claim_success"),
             (self, "claim_error"),
@@ -559,7 +566,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             show_error(self, msg, exception=exc)
         self.check_infos()
         self.widget_info.setDisabled(False)
-        self.label_wait.hide()
+        self.widget_waiting.setVisible(False)
         self.failed.emit(job)
 
     def cancel(self) -> None:
@@ -583,22 +590,23 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.claimer = claimer
+        self.widget_spinner.setVisible(True)
         self.wait_peer_job: QtToTrioJob[None] | None = None
         self.button_start.clicked.connect(self._on_button_start_clicked)
         self.wait_peer_success.connect(self._on_wait_peer_success)
         self.wait_peer_error.connect(self._on_wait_peer_error)
+        self.button_start.setDisabled(True)
 
     def switch_to_info_retrieved(self) -> None:
         self.label.setText(_("TEXT_CLAIM_USER_INSTRUCTIONS"))
-        self.button_start.setEnabled(True)
-        self.widget_spinner.setVisible(False)
-
-    def _on_button_start_clicked(self) -> None:
-        self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_CLAIM_USER_WAITING"))
+        self.button_start.setDisabled(True)
         self.wait_peer_job = self.jobs_ctx.submit_job(
             (self, "wait_peer_success"), (self, "wait_peer_error"), self.claimer.wait_peer
         )
+
+    def _on_button_start_clicked(self) -> None:
+        self.succeeded.emit()
 
     def _on_wait_peer_success(self, job: QtToTrioJob[None]) -> None:
         if job != self.wait_peer_job:
@@ -607,7 +615,9 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
         assert job
         assert job.is_finished()
         assert job.status == "ok"
-        self.succeeded.emit()
+        self.widget_spinner.setVisible(False)
+        self.button_start.setEnabled(True)
+        self.button_start.setText(_("TEXT_CLAIM_USER_READY"))
 
     def _on_wait_peer_error(self, job: QtToTrioJob[None]) -> None:
         if job != self.wait_peer_job:
@@ -627,6 +637,7 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
                 elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             self.button_start.setDisabled(False)
+            self.widget_spinner.setVisible(False)
             self.button_start.setText(_("ACTION_START"))
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
@@ -747,6 +758,10 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self._run_claimer()
         self._goto_page1()
 
+    @property
+    def enrolment_has_started(self) -> bool:
+        return self.claimer.enrolment_has_started
+
     def _goto_page1(self) -> None:
         item = self.main_layout.takeAt(0)
         if item:
@@ -858,7 +873,22 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         on_finished: Callable[[], Awaitable[None]],
     ) -> ClaimUserWidget:
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
-        d = GreyedDialog(w, _("TEXT_CLAIM_USER_TITLE"), parent=parent, width=800)
+
+        def confirm_close() -> bool:
+            return not w.enrolment_has_started or ask_question(
+                parent,
+                _("TEXT_CLAIM_USER_CLOSE_REQUESTED_TITLE"),
+                _("TEXT_CLAIM_USER_CLOSE_REQUESTED_TEXT"),
+                [_("ACTION_CANCEL_CLAIM_USER"), _("ACTION_NO")],
+            ) == _("ACTION_CANCEL_CLAIM_USER")
+
+        d = GreyedDialog(
+            w,
+            _("TEXT_CLAIM_USER_TITLE"),
+            parent=parent,
+            width=1000,
+            on_close_requested=confirm_close,
+        )
         w.dialog = d
 
         d.finished.connect(on_finished)

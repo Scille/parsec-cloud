@@ -105,7 +105,7 @@ def ClaimDeviceTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cd_w.isVisible()
-                assert cd_w.dialog.label_title.text() == "Register a device"
+                assert cd_w.dialog.label_title.text() == translate("TEXT_CLAIM_DEVICE_TITLE")
                 assert cdi_w.isVisible()
 
             await aqtbot.wait_until(_register_device_displayed)
@@ -129,7 +129,7 @@ def ClaimDeviceTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cd_w.isVisible()
-                assert cd_w.dialog.label_title.text() == "Register a device"
+                assert cd_w.dialog.label_title.text() == translate("TEXT_CLAIM_DEVICE_TITLE")
                 assert cdi_w.isVisible()
 
             await aqtbot.wait_until(_register_device_displayed)

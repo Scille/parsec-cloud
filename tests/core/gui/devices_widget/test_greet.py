@@ -101,7 +101,9 @@ def GreetDeviceTestBed(
             def _greet_device_displayed():
                 assert greet_device_widget.dialog.isVisible()
                 assert greet_device_widget.isVisible()
-                assert greet_device_widget.dialog.label_title.text() == "Greet a new device"
+                assert greet_device_widget.dialog.label_title.text() == translate(
+                    "TEXT_GREET_DEVICE_TITLE"
+                )
                 assert greet_device_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_device_displayed)
@@ -125,7 +127,9 @@ def GreetDeviceTestBed(
             def _greet_device_displayed():
                 assert greet_device_widget.dialog.isVisible()
                 assert greet_device_widget.isVisible()
-                assert greet_device_widget.dialog.label_title.text() == "Greet a new device"
+                assert greet_device_widget.dialog.label_title.text() == translate(
+                    "TEXT_GREET_DEVICE_TITLE"
+                )
                 assert greet_device_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_device_displayed)

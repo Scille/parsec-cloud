@@ -13,7 +13,7 @@ from parsec._parsec import SASCode
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationToken, UserProfile
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.gui import validators
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
+from parsec.core.gui.custom_dialogs import GreyedDialog, ask_question, show_error, show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.greet_user_check_info_widget import Ui_GreetUserCheckInfoWidget
@@ -49,25 +49,31 @@ class Greeter:
         self.job_mc_recv: trio.MemoryReceiveChannel[Any]
         self.job_mc_send, self.job_mc_recv = trio.open_memory_channel(0)
 
+        self._current_step: Greeter.Step | None = None
+
+    @property
+    def onboarding_has_started(self) -> bool:
+        return self._current_step is not None and self._current_step > Greeter.Step.WaitPeer
+
     async def run(self, core: LoggedCore, token: InvitationToken) -> None:
         try:
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.WaitPeer
+            assert self._current_step == self.Step.WaitPeer
             try:
                 in_progress_ctx = await core.start_greeting_user(token=token)
                 await self.job_mc_send.send((True, None))
             except Exception as exc:
                 await self.job_mc_send.send((False, exc))
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.GetGreeterSas
+            assert self._current_step == self.Step.GetGreeterSas
             await self.job_mc_send.send(in_progress_ctx.greeter_sas)
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.WaitPeerTrust
+            assert self._current_step == self.Step.WaitPeerTrust
             try:
                 in_progress_ctx_greet: UserGreetInProgress2Ctx = (
                     await in_progress_ctx.do_wait_peer_trust()
@@ -76,9 +82,9 @@ class Greeter:
             except Exception as exc:
                 await self.job_mc_send.send((False, exc))
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.GetClaimerSas
+            assert self._current_step == self.Step.GetClaimerSas
             try:
                 choices = in_progress_ctx_greet.generate_claimer_sas_choices(size=4)
                 await self.job_mc_send.send(
@@ -87,18 +93,18 @@ class Greeter:
             except Exception as exc:
                 await self.job_mc_send.send((False, exc, None, None))
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.SignifyTrust
+            assert self._current_step == self.Step.SignifyTrust
             try:
                 in_progress_ctx_trust = await in_progress_ctx_greet.do_signify_trust()
                 await self.job_mc_send.send((True, None))
             except Exception as exc:
                 await self.job_mc_send.send((False, exc))
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.GetClaimRequests
+            assert self._current_step == self.Step.GetClaimRequests
             try:
                 in_progress_ctx_request = await in_progress_ctx_trust.do_get_claim_requests()
                 await self.job_mc_send.send(
@@ -112,9 +118,9 @@ class Greeter:
             except Exception as exc:
                 await self.job_mc_send.send((False, exc, None, None))
 
-            r = await self.main_mc_recv.receive()
+            self._current_step = await self.main_mc_recv.receive()
 
-            assert r == self.Step.CreateNewUser
+            assert self._current_step == self.Step.CreateNewUser
             try:
                 human_handle, device_label, profile = await self.main_mc_recv.receive()
                 await in_progress_ctx_request.do_create_new_user(
@@ -197,13 +203,15 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
         self.wait_peer_success.connect(self._on_wait_peer_success)
         self.wait_peer_error.connect(self._on_wait_peer_error)
         self.button_start.clicked.connect(self._on_button_start_clicked)
-
-    def _on_button_start_clicked(self, checked: bool) -> None:
         self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_GREET_USER_WAITING"))
+        self.widget_waiting.setVisible(True)
         self.wait_peer_job = self.jobs_ctx.submit_job(
             (self, "wait_peer_success"), (self, "wait_peer_error"), self.greeter.wait_peer
         )
+
+    def _on_button_start_clicked(self, checked: bool) -> None:
+        self.succeeded.emit()
 
     def _on_wait_peer_success(self, job: QtToTrioJob[None]) -> None:
         if self.wait_peer_job != job:
@@ -213,7 +221,9 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
         assert job.is_finished()
         assert job.status == "ok"
         self.greeter_sas = job.ret
-        self.succeeded.emit()
+        self.widget_waiting.setVisible(False)
+        self.button_start.setEnabled(True)
+        self.button_start.setText(_("TEXT_GREET_USER_READY"))
 
     def _on_wait_peer_error(self, job: QtToTrioJob[None]) -> None:
         if self.wait_peer_job != job:
@@ -260,7 +270,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.create_user_job: QtToTrioJob[None] | None = None
 
         self.widget_info.hide()
-        self.label_waiting.show()
+        self.widget_waiting.show()
 
         self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
         self.line_edit_user_full_name.set_validator(validators.UserNameValidator())
@@ -373,7 +383,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         assert job.status == "ok"
         assert job.ret is not None
         human_handle, device_label = job.ret
-        self.label_waiting.hide()
+        self.widget_waiting.hide()
         self.widget_info.show()
         self.line_edit_user_full_name.setText(human_handle.label)
         self.line_edit_user_email.setText(human_handle.email)
@@ -631,6 +641,10 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         )
         self._goto_page1()
 
+    @property
+    def onboarding_has_started(self) -> bool:
+        return self.greeter.onboarding_has_started
+
     def restart(self) -> None:
         self.cancel()
         # Replace moving parts
@@ -773,7 +787,22 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         on_finished: Callable[..., None],
     ) -> GreetUserWidget:
         w = cls(core=core, jobs_ctx=jobs_ctx, token=token)
-        d = GreyedDialog(w, _("TEXT_GREET_USER_TITLE"), parent=parent, width=1000)
+
+        def confirm_close() -> bool:
+            return not w.onboarding_has_started or ask_question(
+                parent,
+                _("TEXT_GREET_USER_CLOSE_REQUESTED_TITLE"),
+                _("TEXT_GREET_USER_CLOSE_REQUESTED_TEXT"),
+                [_("ACTION_CANCEL_GREET_USER"), _("ACTION_NO")],
+            ) == _("ACTION_CANCEL_GREET_USER")
+
+        d = GreyedDialog(
+            w,
+            _("TEXT_GREET_USER_TITLE"),
+            parent=parent,
+            width=1000,
+            on_close_requested=confirm_close,
+        )
         w.dialog = d
 
         d.finished.connect(on_finished)
