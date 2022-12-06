@@ -7,6 +7,7 @@ from typing import Awaitable, Callable, NoReturn, TypeVar, Union
 import trio
 from quart import Blueprint, Websocket, g, websocket
 from structlog import get_logger
+from wsproto.utilities import LocalProtocolError
 
 from parsec.api.protocol import (
     InvalidMessageError,
@@ -228,5 +229,10 @@ async def _handle_client_websocket_loop(
             client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
 
         raw_rep = packb(rep)
-        await websocket.send(raw_rep)
+        try:
+            await websocket.send(raw_rep)
+        except LocalProtocolError:
+            # Ignore exception if the websocket is closed
+            # This used to be the behavior with wsproto < 1.2.0
+            pass
         raw_req = None
