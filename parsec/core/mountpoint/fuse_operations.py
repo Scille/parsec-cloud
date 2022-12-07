@@ -122,6 +122,10 @@ def get_path_and_translate_error(
         # Use EINVAL as error code, so it behaves the same as internal errors
         raise FuseOSError(errno.EINVAL) from exc
 
+    except (trio.Cancelled, trio.RunFinishedError) as exc:
+        # Might be raised by `self.fs_access` if the trio loop finishes in our back
+        raise FuseOSError(errno.EACCES) from exc
+
     except Exception as exc:
         logger.exception(
             "Unhandled exception in fuse mountpoint",
@@ -142,10 +146,6 @@ def get_path_and_translate_error(
         )
         # Use EINVAL as fallback error code, since this is what fusepy does.
         raise FuseOSError(errno.EINVAL) from exc
-
-    except trio.Cancelled as exc:  # Cancelled inherits BaseException
-        # Might be raised by `self.fs_access` if the trio loop finishes in our back
-        raise FuseOSError(errno.EACCES) from exc
 
 
 # We can't derive from any (because of unresolved imports)
