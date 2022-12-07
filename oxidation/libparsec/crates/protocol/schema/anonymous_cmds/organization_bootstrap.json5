@@ -178,13 +178,17 @@
         "reps": {
             "ok": {},
             "invalid_certification": {
-                "reason": {
-                    "type": "NonRequiredOption<String>"
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
                 }
             },
             "invalid_data": {
-                "reason": {
-                    "type": "NonRequiredOption<String>"
+                "fields": {
+                    "reason": {
+                        "type": "NonRequiredOption<String>"
+                    }
                 }
             },
             "bad_timestamp": {
