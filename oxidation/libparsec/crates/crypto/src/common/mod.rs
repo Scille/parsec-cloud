@@ -2,6 +2,9 @@
 
 mod error;
 mod secret;
+
+// We provide a different implementation of sequester in src/sodiumoxide
+#[cfg(all(feature = "use-rustcrypto", not(feature = "use-sodiumoxide")))]
 mod sequester;
 
 pub use error::*;
