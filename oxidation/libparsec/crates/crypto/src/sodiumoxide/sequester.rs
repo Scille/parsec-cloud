@@ -247,8 +247,7 @@ impl PartialEq for SequesterPublicKeyDer {
         // we can't do because we take a reference to both the keys we want to compare.
         // We could also clone the keys, but that would mean having an allocation in the
         // comparison method.
-        self.0.public_key_to_der().expect("OpenSSL error")
-            == other.0.public_key_to_der().expect("OpenSSL error")
+        (self.0.n() == other.0.n()) && (self.0.e() == other.0.e())
     }
 }
 
@@ -525,7 +524,7 @@ fn test_key_equality() {
 
     let pub_key_two = pub_key.clone();
 
-    assert!(pub_key == pub_key_two);
+    assert_eq!(pub_key, pub_key_two);
 }
 
 #[test]
@@ -571,5 +570,5 @@ fn test_priv_decipher_verification() {
         ))
         .unwrap();
 
-    assert_eq!(data, "Hello world".as_bytes());
+    assert_eq!(data, b"Hello world");
 }
