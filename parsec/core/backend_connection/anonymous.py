@@ -51,27 +51,29 @@ async def _anonymous_cmd(
         BackendNotAvailable
         BackendProtocolError
     """
-    logger.info("Request", cmd=req["cmd"])
+    # Be careful, `serializer.req_dumps` pops the `cmd` key
+    cmd = req["cmd"]
 
+    logger.info("Request", cmd=cmd)
     try:
         raw_req = serializer.req_dumps(req)
 
     except ProtocolError as exc:
-        logger.exception("Invalid request data", cmd=req["cmd"], error=exc)
+        logger.exception("Invalid request data", cmd=cmd, error=exc)
         raise BackendProtocolError("Invalid request data") from exc
 
     url = addr.to_http_domain_url(f"/anonymous/{organization_id.str}")
     try:
         raw_rep = await http_request(url=url, method="POST", headers=REQUEST_HEADERS, data=raw_req)
     except OSError as exc:
-        logger.debug("Request failed (backend not available)", cmd=req["cmd"], exc_info=exc)
+        logger.debug("Request failed (backend not available)", cmd=cmd, exc_info=exc)
         raise BackendNotAvailable(exc) from exc
 
     try:
         rep = serializer.rep_loads(raw_rep)
 
     except ProtocolError as exc:
-        logger.exception("Invalid response data", cmd=req["cmd"], error=exc)
+        logger.exception("Invalid response data", cmd=cmd, error=exc)
         raise BackendProtocolError("Invalid response data") from exc
 
     if isinstance(
@@ -87,7 +89,7 @@ async def _anonymous_cmd(
         isinstance(rep, OrganizationBootstrapRepUnknownStatus)
         and rep.status == "invalid_msg_format"
     ):
-        logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
+        logger.error("Invalid request data according to backend", cmd=cmd, rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
 
     if isinstance(rep, OrganizationBootstrapRepBadTimestamp):

@@ -122,7 +122,6 @@ from parsec.api.protocol import (
     BlockID,
     InvitationToken,
     InvitationType,
-    OrganizationID,
     RealmID,
     SequesterServiceID,
     UserID,
@@ -1054,7 +1053,6 @@ async def device_create(
 
 async def organization_bootstrap(
     transport: Transport,
-    organization_id: OrganizationID,
     bootstrap_token: str,
     root_verify_key: VerifyKey,
     user_certificate: bytes,

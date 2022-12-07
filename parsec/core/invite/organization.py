@@ -16,21 +16,12 @@ from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.api.protocol.base import ProtocolError
 from parsec.core.backend_connection import organization_bootstrap as cmd_organization_bootstrap
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
-from parsec.core.invite.exceptions import (
-    InviteAlreadyUsedError,
-    InviteError,
-    InviteNotFoundError,
-    InvitePeerResetError,
-)
+from parsec.core.invite.exceptions import InviteAlreadyUsedError, InviteError, InviteNotFoundError
 from parsec.core.local_device import generate_new_device
 from parsec.core.types import BackendOrganizationAddr, BackendOrganizationBootstrapAddr, LocalDevice
 
 
-def _check_rep(rep: dict[str, object] | OrganizationBootstrapRep, step_name: str) -> None:
-    if isinstance(rep, dict):
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError
-
+def _check_rep(rep: OrganizationBootstrapRep, step_name: str) -> None:
     if isinstance(rep, OrganizationBootstrapRepNotFound):
         raise InviteNotFoundError
     elif isinstance(rep, OrganizationBootstrapRepAlreadyBootstrapped):
