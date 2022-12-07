@@ -5,10 +5,9 @@ from enum import Enum
 from secrets import token_bytes
 from typing import Dict, Sequence, TypedDict, Union, cast
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, ProtocolError
 from parsec.api.protocol.base import (
     InvalidMessageError,
-    ProtocolError,
     serializer_factory,
     settle_compatible_versions,
 )

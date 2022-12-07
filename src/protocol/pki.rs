@@ -7,16 +7,21 @@ use libparsec::protocol::{
 };
 use pyo3::{
     exceptions::PyAttributeError,
-    import_exception, pyclass, pymethods,
+    pyclass, pymethods,
     types::{PyBytes, PyType},
     IntoPy, PyClassInitializer, PyObject, PyRef, PyResult, Python,
 };
 
-use crate::{ids::EnrollmentID, protocol::Reason, time::DateTime};
+use crate::{
+    ids::EnrollmentID,
+    protocol::{
+        error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+        Reason,
+    },
+    time::DateTime,
+};
 
 use super::gen_rep;
-
-import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -88,14 +93,14 @@ impl PkiEnrollmentAcceptReq {
         EnrollmentID(self.0.enrollment_id)
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -218,14 +223,14 @@ impl PkiEnrollmentListReq {
         Self(pki_enrollment_list::Req)
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -332,14 +337,14 @@ impl PkiEnrollmentRejectReq {
         EnrollmentID(self.0.enrollment_id)
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }
@@ -391,14 +396,14 @@ impl PkiEnrollmentSubmitReq {
         })
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -489,14 +494,14 @@ impl PkiEnrollmentInfoReq {
         EnrollmentID(self.0.enrollment_id)
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }

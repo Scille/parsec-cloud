@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .block import *  # noqa
 from .cmd import *  # noqa
+from .error import *  # noqa
 from .events import *  # noqa
 from .invite import *  # noqa
 from .message import *  # noqa

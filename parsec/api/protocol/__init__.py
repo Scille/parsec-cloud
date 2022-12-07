@@ -16,7 +16,6 @@ from parsec.api.protocol.base import (
     IncompatibleAPIVersionsError,
     InvalidMessageError,
     MessageSerializationError,
-    ProtocolError,
     packb,
     settle_compatible_versions,
     unpackb,
@@ -135,7 +134,6 @@ from parsec.api.protocol.vlob import (
 )
 
 __all__ = (
-    "ProtocolError",
     "MessageSerializationError",
     "InvalidMessageError",
     "packb",

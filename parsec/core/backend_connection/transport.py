@@ -11,6 +11,7 @@ import certifi
 import trio
 from structlog import get_logger
 
+from parsec._parsec import ProtocolError
 from parsec.api.protocol import (
     APIV1_AnonymousClientHandshake,
     AuthenticatedClientHandshake,
@@ -18,7 +19,6 @@ from parsec.api.protocol import (
     HandshakeError,
     HandshakeOutOfBallparkError,
     InvitedClientHandshake,
-    ProtocolError,
 )
 from parsec.api.transport import Transport, TransportClosedByPeer, TransportError
 from parsec.core.backend_connection.exceptions import (

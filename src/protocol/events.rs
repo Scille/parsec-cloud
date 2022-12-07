@@ -1,17 +1,18 @@
 use crate::{
     enumerate::{InvitationStatus, RealmRole},
     ids::{InvitationToken, RealmID, VlobID},
-    protocol::Reason,
+    protocol::{
+        error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+        Reason,
+    },
 };
 use libparsec::protocol::authenticated_cmds::v2::{
     events_listen::{self, APIEvent},
     events_subscribe,
 };
-use pyo3::{import_exception, prelude::*, types::PyBytes, PyObject, PyResult, Python};
+use pyo3::{prelude::*, types::PyBytes, PyObject, PyResult, Python};
 
 use super::gen_rep;
-
-import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -27,14 +28,14 @@ impl EventsListenReq {
         Ok(Self(events_listen::Req { wait }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -382,14 +383,14 @@ impl EventsSubscribeReq {
         Ok(Self(events_subscribe::Req))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 }

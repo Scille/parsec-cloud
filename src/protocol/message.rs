@@ -2,7 +2,6 @@
 
 use pyo3::{
     exceptions::PyNotImplementedError,
-    import_exception,
     prelude::*,
     types::{PyBytes, PyTuple},
 };
@@ -10,10 +9,11 @@ use pyo3::{
 use libparsec::protocol::authenticated_cmds::v2::message_get;
 
 use crate::ids::DeviceID;
-use crate::protocol::gen_rep;
+use crate::protocol::{
+    error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+    gen_rep,
+};
 use crate::time::DateTime;
-
-import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -71,14 +71,14 @@ impl MessageGetReq {
         Ok(Self(message_get::Req { offset }))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self
-                .0
-                .clone()
-                .dump()
-                .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 

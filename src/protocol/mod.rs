@@ -2,6 +2,7 @@
 
 mod block;
 mod cmds;
+mod error;
 mod events;
 mod invite;
 mod message;
@@ -12,17 +13,17 @@ mod realm;
 mod user;
 mod vlob;
 
-pub use block::*;
-pub use cmds::*;
-pub use events::*;
-pub use invite::*;
-pub use message::*;
-pub use organization::*;
-pub use ping::*;
-pub use pki::*;
-pub use realm::*;
-pub use user::*;
-pub use vlob::*;
+pub(crate) use block::*;
+pub(crate) use cmds::*;
+pub(crate) use events::*;
+pub(crate) use invite::*;
+pub(crate) use message::*;
+pub(crate) use organization::*;
+pub(crate) use ping::*;
+pub(crate) use pki::*;
+pub(crate) use realm::*;
+pub(crate) use user::*;
+pub(crate) use vlob::*;
 
 use pyo3::{types::PyModule, PyResult, Python};
 
@@ -139,17 +140,19 @@ macro_rules! gen_rep {
 
             #[::pyo3::pymethods]
             impl $base_class {
-                fn dump<'py>(&self, py: ::pyo3::Python<'py>) -> ::pyo3::PyResult<&'py ::pyo3::types::PyBytes> {
+                fn dump<'py>(&self, py: ::pyo3::Python<'py>) -> ProtocolResult<&'py ::pyo3::types::PyBytes> {
                     self.0.clone().dump()
                         .map(|bytes| ::pyo3::types::PyBytes::new(py, bytes.as_slice()))
-                        .map_err(|e| ProtocolError::new_err(format!("encoding error: {e}")))
+                        .map_err(|e| ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError { exc: e.to_string() }))
                 }
 
                 #[classmethod]
-                fn load<'py>(_cls: &::pyo3::types::PyType, buf: Vec<u8>, py: Python<'py>) -> ::pyo3::PyResult<PyObject> {
+                fn load<'py>(_cls: &::pyo3::types::PyType, buf: Vec<u8>, py: Python<'py>) -> PyResult<PyObject> {
                     use pyo3::{pyclass_init::PyObjectInit, PyTypeInfo};
 
-                    let rep = $mod::Rep::load(&buf).map_err(|e| ProtocolError::new_err(format!("decoding error: {e}")))?;
+                    let rep = $mod::Rep::load(&buf)
+                        .map_err(|e| ProtocolErrorFields(libparsec::protocol::ProtocolError::DecodingError { exc: e.to_string() }))
+                        .map_err(|e| ProtocolError::new_err(e))?;
 
                     let ret = match rep {
                         $mod::Rep::Ok $({ $($tt)+ })? => {
@@ -235,7 +238,7 @@ use py_to_rs;
 use rs_to_py;
 use rs_to_py_ty;
 
-pub(crate) fn add_mod(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Block
     m.add_class::<BlockCreateReq>()?;
     m.add_class::<BlockCreateRep>()?;
@@ -647,6 +650,10 @@ pub(crate) fn add_mod(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<AuthenticatedAnyCmdReq>()?;
     m.add_class::<InvitedAnyCmdReq>()?;
     m.add_class::<AnonymousAnyCmdReq>()?;
+
+    // Error type
+    m.add_class::<error::ProtocolErrorFields>()?;
+    m.add("ProtocolError", py.get_type::<error::ProtocolError>())?;
 
     Ok(())
 }

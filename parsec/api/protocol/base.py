@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Mapping, Sequence, Tuple, Type, TypeVar, Union, cast
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, ProtocolError
 from parsec.api.version import ApiVersion
 from parsec.serde import (
     BaseSchema,
@@ -20,16 +20,11 @@ from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFS
 
 
 __all__ = (
-    "ProtocolError",
     "BaseReqSchema",
     "BaseRepSchema",
     "CmdSerializer",
     "ApiCommandSerializer",
 )
-
-
-class ProtocolError(Exception):
-    pass
 
 
 class InvalidMessageError(SerdeValidationError, ProtocolError):

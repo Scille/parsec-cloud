@@ -10,11 +10,11 @@ from parsec._parsec import (
     OrganizationID,
     PkiEnrollmentInfoRep,
     PkiEnrollmentSubmitRep,
+    ProtocolError,
     VerifyKey,
 )
 from parsec._version import __version__
 from parsec.api.protocol import (
-    ProtocolError,
     organization_bootstrap_serializer,
     pki_enrollment_info_serializer,
     pki_enrollment_submit_serializer,
