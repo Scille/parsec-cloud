@@ -9,6 +9,7 @@ updates:
       time: "00:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: github-actions
     directory: /.github/actions/setup-python-poetry
@@ -19,6 +20,7 @@ updates:
       time: "00:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: github-actions
     directory: /.github/actions/setup-rust
@@ -29,6 +31,7 @@ updates:
       time: "00:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: github-actions
     directory: /.github/actions/use-pre-commit
@@ -39,6 +42,7 @@ updates:
       time: "00:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: github-actions
     directory: /
@@ -49,6 +53,7 @@ updates:
       time: "00:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: cargo
     directory: /
@@ -59,6 +64,7 @@ updates:
       time: "00:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: pip
     directory: /
@@ -73,6 +79,7 @@ updates:
       time: "23:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: npm
     directory: /oxidation/client
@@ -83,6 +90,7 @@ updates:
       time: "23:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: npm
     directory: /oxidation/client/electron
@@ -93,6 +101,7 @@ updates:
       time: "23:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: gradle
     directory: /oxidation/client/android
@@ -103,6 +112,7 @@ updates:
       time: "23:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: npm
     directory: /oxidation/bindings/electron
@@ -113,6 +123,7 @@ updates:
       time: "23:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: gradle
     directory: /oxidation/bindings/android
@@ -123,6 +134,7 @@ updates:
       time: "23:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: npm
     directory: /oxidation/bindings/web
@@ -133,6 +145,7 @@ updates:
       time: "23:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: cargo
     directory: /oxidation/bindings/common
@@ -143,3 +156,4 @@ updates:
       time: "23:30"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
