@@ -142,7 +142,7 @@ black = "^22.6.0"
 mypy = "^0.982"
 
 setuptools = "^63.1.0"
-maturin = "~=0.13"
+maturin = "~=0.14"
 cibuildwheel = "2.10.0"
 editorconfig-checker = "2.4.0"
 types-requests = "^2.28"
