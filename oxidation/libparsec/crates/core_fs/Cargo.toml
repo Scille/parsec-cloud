@@ -21,4 +21,4 @@ uuid = { version = "1.2.1", features = ["v4", "fast-rng"] }
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 
-rstest = "0.15.0"
+rstest = "0.16.0"

@@ -20,4 +20,4 @@ libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
 smol = "1.2.5"
 
-rstest = "0.15.0"
+rstest = "0.16.0"
