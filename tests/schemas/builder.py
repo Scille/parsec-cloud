@@ -274,6 +274,7 @@ def generate_api_protocol_specs():
                         "invite_list",
                         "invite_new",
                         "message_get",
+                        "organization_bootstrap",
                         "organization_config",
                         "organization_stats",
                         "ping",

@@ -23,7 +23,6 @@ from parsec.api.protocol.base import MessageSerializationError
 from parsec.backend.app import BackendApp
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.client_context import (
-    APIV1_AnonymousClientContext,
     AuthenticatedClientContext,
     BaseClientContext,
     InvitedClientContext,
@@ -158,11 +157,6 @@ async def handle_ws() -> None:
                     greeter=client_ctx.invitation.greeter_user_id,
                     token=client_ctx.invitation.token,
                 )
-
-    # TODO: remove me once APIv1 is deprecated
-    else:
-        assert isinstance(client_ctx, APIV1_AnonymousClientContext)
-        await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
 
 
 async def _handle_client_websocket_loop(

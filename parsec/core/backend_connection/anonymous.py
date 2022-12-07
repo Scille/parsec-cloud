@@ -7,6 +7,9 @@ from structlog import get_logger
 
 from parsec._parsec import (
     EnrollmentID,
+    OrganizationBootstrapRep,
+    OrganizationBootstrapRepBadTimestamp,
+    OrganizationBootstrapRepUnknownStatus,
     OrganizationID,
     PkiEnrollmentInfoRep,
     PkiEnrollmentSubmitRep,
@@ -19,7 +22,7 @@ from parsec.api.protocol import (
     pki_enrollment_info_serializer,
     pki_enrollment_submit_serializer,
 )
-from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
+from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendOutOfBallparkError,
@@ -38,11 +41,11 @@ REQUEST_HEADERS = {
 
 
 async def _anonymous_cmd(
-    serializer: ApiCommandSerializer | CmdSerializer,
+    serializer: ApiCommandSerializer,
     addr: BackendPkiEnrollmentAddr | BackendOrganizationBootstrapAddr,
     organization_id: OrganizationID,
     **req: object,
-) -> PkiEnrollmentSubmitRep | PkiEnrollmentInfoRep | dict[str, object]:
+) -> PkiEnrollmentSubmitRep | PkiEnrollmentInfoRep | OrganizationBootstrapRep:
     """
     Raises:
         BackendNotAvailable
@@ -80,11 +83,14 @@ async def _anonymous_cmd(
     ):
         return rep
 
-    if rep["status"] == "invalid_msg_format":
+    if (
+        isinstance(rep, OrganizationBootstrapRepUnknownStatus)
+        and rep.status == "invalid_msg_format"
+    ):
         logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
 
-    if rep["status"] == "bad_timestamp":
+    if isinstance(rep, OrganizationBootstrapRepBadTimestamp):
         raise BackendOutOfBallparkError(rep)
 
     return rep
@@ -139,9 +145,9 @@ async def organization_bootstrap(
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
     sequester_authority_certificate: bytes | None,
-) -> dict[str, object]:
+) -> OrganizationBootstrapRep:
     return cast(
-        dict[str, object],
+        OrganizationBootstrapRep,
         await _anonymous_cmd(
             organization_bootstrap_serializer,
             cmd="organization_bootstrap",

@@ -65,6 +65,3 @@ ANONYMOUS_CMDS = {
     "pki_enrollment_info",
     "organization_bootstrap",
 }
-
-# TODO: remove me once API v1 is deprecated
-APIV1_ANONYMOUS_CMDS = {"organization_bootstrap"}

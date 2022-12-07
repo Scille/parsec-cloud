@@ -22,7 +22,7 @@ from parsec.api.protocol.base import (
     unpackb,
 )
 from parsec.api.protocol.block import BlockID, block_create_serializer, block_read_serializer
-from parsec.api.protocol.cmds import APIV1_ANONYMOUS_CMDS, AUTHENTICATED_CMDS, INVITED_CMDS
+from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS
 from parsec.api.protocol.events import events_listen_serializer, events_subscribe_serializer
 from parsec.api.protocol.handshake import (
     APIV1_AnonymousClientHandshake,
@@ -69,7 +69,6 @@ from parsec.api.protocol.invite import (
 )
 from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.organization import (
-    apiv1_organization_bootstrap_serializer,
     organization_bootstrap_serializer,
     organization_bootstrap_webhook_serializer,
     organization_config_serializer,
@@ -169,7 +168,6 @@ __all__ = (
     "DeviceLabel",
     # Organization
     "organization_bootstrap_serializer",
-    "apiv1_organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",
     "organization_stats_serializer",
     "organization_config_serializer",
@@ -257,7 +255,6 @@ __all__ = (
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",
-    "APIV1_ANONYMOUS_CMDS",
     "AuthenticatedAnyCmdReq",
     "InvitedAnyCmdReq",
 )
