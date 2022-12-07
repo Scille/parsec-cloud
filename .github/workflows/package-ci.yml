@@ -225,7 +225,7 @@ jobs:
         run: find . -type f ! -name '*.whl' -delete
 
       - name: Publish wheel on PyPI
-        uses: pypa/gh-action-pypi-publish@d7edd4c95736a5bc1260d38b5523f5d24338bc25 # pin v1.5.2
+        uses: pypa/gh-action-pypi-publish@c7f29f7adef1a245bd91520e94867e5c6eedddcc # pin v1.6.4
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
