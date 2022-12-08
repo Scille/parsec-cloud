@@ -72,6 +72,7 @@ jobs:
   ##############################################################################
 
   check-quality-assurance:
+    if: false
     name: 📊 Q&A
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
     runs-on: ubuntu-20.04
@@ -145,6 +146,7 @@ jobs:
   #                            🦀 Rust Pre-build                               #
   ##############################################################################
   rust-prebuild-matrix:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -242,115 +244,138 @@ jobs:
   ##############################################################################
 
   test-python-matrix:
-    needs: rust-prebuild-matrix
+    # needs: rust-prebuild-matrix
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: 🐧 Linux
-            # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-            # 20.04 is required to install PostgreSQL 12
-            os: ubuntu-20.04
+          # - name: 🐧 Linux
+          #   # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
+          #   # 20.04 is required to install PostgreSQL 12
+          #   os: ubuntu-20.04
           - name: 🍎 macOS
             os: macos-12
-          - name: 🏁 Windows
-            os: windows-2022
-            winfsp-version: 1.11.22176
+          # - name: 🏁 Windows
+          #   os: windows-2022
+          #   winfsp-version: 1.11.22176
     name: '${{ matrix.name }}: 🐍 Python tests'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
-      - uses: ./.github/actions/paths-filter
-        id: changes
+      # - uses: ./.github/actions/paths-filter
+      #   id: changes
 
-      - name: Check modified path that require python-ci run
-        id: python-changes
-        if: >-
-          steps.changes.outputs.python == 'true'
-          || steps.changes.outputs.rust-ext == 'true'
-          || github.ref == 'refs/heads/master'
-        run: echo "run=true" >> $GITHUB_OUTPUT
-        shell: bash
+      # - name: Check modified path that require python-ci run
+      #   id: python-changes
+      #   if: >-
+      #     steps.changes.outputs.python == 'true'
+      #     || steps.changes.outputs.rust-ext == 'true'
+      #     || github.ref == 'refs/heads/master'
+      #   run: echo "run=true" >> $GITHUB_OUTPUT
+      #   shell: bash
 
-      - name: (🐧 Linux) Configure PostgreSQL APT repository
-        if: >-
-          steps.python-changes.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        env:
-          POSTGRE_APT_KEY_SHA_512: df557805862cd279f40819834af14e1723b18044df9dc22bea710b6980c98cc8ed39e75ed5c9adaa1932992710f1180f0491dc9437bfd485b4aa2b75776407d4  /usr/share/keyrings/postgre-sql-keyring.gpg
-        run: |
-          set -x -o pipefail
+      # - name: (🐧 Linux) Configure PostgreSQL APT repository
+      #   if: >-
+      #     steps.python-changes.outputs.run == 'true'
+      #     && startsWith(matrix.os, 'ubuntu-')
+      #   env:
+      #     POSTGRE_APT_KEY_SHA_512: df557805862cd279f40819834af14e1723b18044df9dc22bea710b6980c98cc8ed39e75ed5c9adaa1932992710f1180f0491dc9437bfd485b4aa2b75776407d4  /usr/share/keyrings/postgre-sql-keyring.gpg
+      #   run: |
+      #     set -x -o pipefail
 
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-            | sudo gpg --dearmor --output /usr/share/keyrings/postgre-sql-keyring.gpg
+      #     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+      #       | sudo gpg --dearmor --output /usr/share/keyrings/postgre-sql-keyring.gpg
 
-          printenv POSTGRE_APT_KEY_SHA_512 | sha512sum --strict -c -
+      #     printenv POSTGRE_APT_KEY_SHA_512 | sha512sum --strict -c -
 
-          echo "deb [signed-by=/usr/share/keyrings/postgre-sql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
-            | sudo tee /etc/apt/sources.list.d/postgre-sql.list
+      #     echo "deb [signed-by=/usr/share/keyrings/postgre-sql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+      #       | sudo tee /etc/apt/sources.list.d/postgre-sql.list
 
-          sudo apt-get update
+      #     sudo apt-get update
 
-        # Install required packages for ubuntu:
-        # - LibFuse2 since only libfuse3 is available on ubuntu-20.04.
-        # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`.
-        # - A specific version of postgresql is used for PostgreSQL's tests.
-        # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions.
-      - name: (🐧 Linux) Install packages fuse2, PostgreSQL-${{ env.postgresql-version }}
-        if: >-
-          steps.python-changes.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        run: >
-          sudo apt-get -y install
-          libfuse2
-          fuse
-          desktop-file-utils
-          postgresql-${{ env.postgresql-version }}
-          libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0
-          libxcb-keysyms1 libxcb-randr0 libxcb-render-util0
-          libxcb-xinerama0 libxcb-xfixes0 x11-utils
+      #   # Install required packages for ubuntu:
+      #   # - LibFuse2 since only libfuse3 is available on ubuntu-20.04.
+      #   # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`.
+      #   # - A specific version of postgresql is used for PostgreSQL's tests.
+      #   # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions.
+      # - name: (🐧 Linux) Install packages fuse2, PostgreSQL-${{ env.postgresql-version }}
+      #   if: >-
+      #     steps.python-changes.outputs.run == 'true'
+      #     && startsWith(matrix.os, 'ubuntu-')
+      #   run: >
+      #     sudo apt-get -y install
+      #     libfuse2
+      #     fuse
+      #     desktop-file-utils
+      #     postgresql-${{ env.postgresql-version }}
+      #     libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0
+      #     libxcb-keysyms1 libxcb-randr0 libxcb-render-util0
+      #     libxcb-xinerama0 libxcb-xfixes0 x11-utils
 
-      - name: (🍎 macOS) Install macfuse
-        if: >-
-          steps.python-changes.outputs.run == 'true'
-          && startsWith(matrix.os, 'macos-')
-        run: brew install --cask macfuse
+      # - name: (🍎 macOS) Install macfuse
+      #   if: >-
+      #     steps.python-changes.outputs.run == 'true'
+      #     && startsWith(matrix.os, 'macos-')
+      #   run: brew install --cask macfuse
 
-      - name: (🏁 Windows) Install WinFSP
-        if: >-
-          steps.python-changes.outputs.run == 'true'
-          && startsWith(matrix.os, 'windows-')
-        shell: bash
-        run: |
-          choco install -y --limit-output winfsp --version=${{ matrix.winfsp-version }}
-          mkdir winfsp-test
-          curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
-          unzip winfsp-test/winfsp-tests.zip -d winfsp-test
-          pwd
-          echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
+      # - name: (🏁 Windows) Install WinFSP
+      #   if: >-
+      #     steps.python-changes.outputs.run == 'true'
+      #     && startsWith(matrix.os, 'windows-')
+      #   shell: bash
+      #   run: |
+      #     choco install -y --limit-output winfsp --version=${{ matrix.winfsp-version }}
+      #     mkdir winfsp-test
+      #     curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
+      #     unzip winfsp-test/winfsp-tests.zip -d winfsp-test
+      #     pwd
+      #     echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
 
-      - uses: ./.github/actions/setup-rust
-        if: steps.python-changes.outputs.run == 'true'
+      # - uses: ./.github/actions/setup-rust
+      #   if: steps.python-changes.outputs.run == 'true'
+      #   with:
+      #     version: ${{ env.rust-version }}
+      #     cache-key: integration
+      #     os: ${{ matrix.os }}
+      #   timeout-minutes: 10
+
+
+      - uses: actions/setup-python@v4
         with:
-          version: ${{ env.rust-version }}
-          cache-key: integration
-          os: ${{ matrix.os }}
-        timeout-minutes: 10
+          python-version: "3.9"
+
+      - name: check python version
+        run: which python3 && python3 -V
+
+      - name: Try install packaging
+        run: pip3 install packaging poetry
+
+      - name: Debug CI
+        run: python3 -c 'import packaging.tags;print(*packaging.tags.sys_tags(),sep="\n")'
+
+      - name: Try install pyobjc-framework-SystemConfiguration
+        run: pip3 install pyobjc-framework-SystemConfiguration==8.5.1
+
+      - name: Macos version
+        run: python3 -c 'import platform;print(platform.mac_ver())'
 
       - uses: ./.github/actions/setup-python-poetry
-        if: steps.python-changes.outputs.run == 'true'
+        # if: steps.python-changes.outputs.run == 'true'
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
+      - name: dklfjsdlf
+        run: python -c 'import poetry.core._vendor.packaging.tags;print(*poetry.core._vendor.packaging.tags.sys_tags(),sep="\n")'
+
       - name: Install python deps
-        if: steps.python-changes.outputs.run == 'true'
+        # if: steps.python-changes.outputs.run == 'true'
         run: poetry install -E core -E backend
 
       - name: Debug python & pip version
-        if: steps.python-changes.outputs.run == 'true'
+        # if: steps.python-changes.outputs.run == 'true'
         shell: bash
         continue-on-error: true
         run: |
@@ -402,6 +427,7 @@ jobs:
   ##############################################################################
 
   test-rust-matrix:
+    if: false
     needs: rust-prebuild-matrix
     strategy:
       fail-fast: false
@@ -477,6 +503,7 @@ jobs:
   ##############################################################################
 
   test-wasm:
+    if: false
     runs-on: ubuntu-20.04
     # We're using a matrix, because we need to have a list to configure:
     # - The job `Check changed files` (To watch if the specified crate we're changed).
@@ -559,6 +586,7 @@ jobs:
   test-web-app:
     runs-on: ubuntu-22.04
     name: 🌐 Web tests
+    if: false
     steps:
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 

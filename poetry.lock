@@ -2472,7 +2472,6 @@ pyobjc-framework-systemconfiguration = [
     {file = "pyobjc-framework-SystemConfiguration-8.5.1.tar.gz", hash = "sha256:f0c75fda3498d296e10a673700032ae0562e4c24b1f41c6290751edb939f84b5"},
     {file = "pyobjc_framework_SystemConfiguration-8.5.1-cp36-abi3-macosx_10_9_universal2.whl", hash = "sha256:e499ddcdf02b8cb9cdf207ea4c09c4bde2cc891c01f11ffd4fc040d658a1fd4d"},
     {file = "pyobjc_framework_SystemConfiguration-8.5.1-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:bbd56a3a6534ae3de62ecbc3551c8e4d6861406369c2e7d96fb6ff2158491f08"},
-    {file = "pyobjc_framework_SystemConfiguration-8.5.1-cp36-abi3-macosx_11_0_universal2.whl", hash = "sha256:4a373c010df56cdf4b620c7f706fb7807a50d60ae12f2547ee0e8dae0616986b"},
 ]
 pypac = [
     {file = "PyPAC-0.16.0-py2.py3-none-any.whl", hash = "sha256:921630e95e596050844e299d525df030bb39430ced18001f3960409e4e0cb3b1"},

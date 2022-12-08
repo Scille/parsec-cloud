@@ -13,6 +13,12 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Install python-${{ inputs.python-version }}
+      uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984  # pin v4.3.0
+      id: setup-python
+      with:
+        python-version: ${{ env.python-version }}
+
     # We need to install poetry before the correct version of python
     # Because we configured the action `setup-python` to use `poetry` as the cache system
     # And the action will failed if it can't find `poetry` or `poetry.lock`
@@ -24,6 +30,7 @@ runs:
         set -o pipefail
         export POETRY_HOME="$HOME/.poetry"
         mkdir -p "$POETRY_HOME"
+        python3 -c 'import platform;print(platform.mac_ver())'
         if ! curl -sSL https://install.python-poetry.org | python3 - --version=${{ inputs.poetry-version }}; then
           tail -n +0 ${{ github.workspace }}/poetry-installer*.log
           exit 3
@@ -40,12 +47,6 @@ runs:
           | python3 - --version=${{ env.poetry-version }}
         echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
-    - name: Install python-${{ inputs.python-version }}
-      uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984  # pin v4.3.0
-      id: setup-python
-      with:
-        python-version: ${{ env.python-version }}
-        cache: poetry
 
     - name: (*Nix) Configure poetry to use the installed python
       shell: ${{ runner.os != 'Windows' && 'bash' || 'pwsh' }}
