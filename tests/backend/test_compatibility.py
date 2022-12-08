@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from parsec._parsec import DateTime, RealmCreateRepBadTimestamp
+from parsec._parsec import ApiVersion, DateTime, RealmCreateRepBadTimestamp
 from parsec.api.protocol.base import packb, serializer_factory
 from parsec.api.protocol.handshake import (
     ApiVersionField,
@@ -12,7 +12,6 @@ from parsec.api.protocol.handshake import (
     handshake_challenge_serializer,
     handshake_result_serializer,
 )
-from parsec.api.version import ApiVersion
 from parsec.serde import BaseSchema, fields
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
