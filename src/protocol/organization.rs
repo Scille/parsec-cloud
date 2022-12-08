@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyNotImplementedError,
     prelude::*,
-    types::{PyBytes, PyTuple},
+    types::{PyBytes, PyDict, PyTuple},
 };
 
 use libparsec::{
@@ -278,6 +278,7 @@ crate::binding_utils::gen_proto!(OrganizationBootstrapReq, __richcmp__, eq);
 #[pymethods]
 impl OrganizationBootstrapReq {
     #[new]
+    #[args(py_kwargs = "**")]
     fn new(
         bootstrap_token: String,
         root_verify_key: VerifyKey,
@@ -285,8 +286,21 @@ impl OrganizationBootstrapReq {
         device_certificate: Vec<u8>,
         redacted_user_certificate: Vec<u8>,
         redacted_device_certificate: Vec<u8>,
-        sequester_authority_certificate: Option<Vec<u8>>,
+        py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [
+                sequester_authority_certificate: Option<Vec<u8>>,
+                "sequester_authority_certificate"
+            ]
+        );
+
+        let sequester_authority_certificate = match sequester_authority_certificate {
+            None => Maybe::Absent,
+            Some(x) => Maybe::Present(x),
+        };
+
         Ok(Self(organization_bootstrap::Req {
             bootstrap_token,
             root_verify_key: root_verify_key.0,
@@ -294,7 +308,7 @@ impl OrganizationBootstrapReq {
             device_certificate,
             redacted_user_certificate,
             redacted_device_certificate,
-            sequester_authority_certificate: Maybe::Present(sequester_authority_certificate),
+            sequester_authority_certificate,
         }))
     }
 

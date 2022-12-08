@@ -162,6 +162,60 @@ pub fn mallory(coolorg: &Organization) -> Device {
     }
 }
 
+#[fixture]
+#[once]
+pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+    UserCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        user_id: bob.user_id().clone(),
+        human_handle: bob.human_handle.clone(),
+        public_key: bob.public_key(),
+        profile: UserProfile::Standard,
+    }
+    .dump_and_sign(&alice.signing_key)
+}
+
+#[fixture]
+#[once]
+pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+    UserCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        user_id: bob.user_id().clone(),
+        human_handle: None,
+        public_key: bob.public_key(),
+        profile: UserProfile::Standard,
+    }
+    .dump_and_sign(&alice.signing_key)
+}
+
+#[fixture]
+#[once]
+pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+    DeviceCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        device_id: bob.device_id.clone(),
+        device_label: bob.device_label.clone(),
+        verify_key: bob.verify_key(),
+    }
+    .dump_and_sign(&alice.signing_key)
+}
+
+#[fixture]
+#[once]
+pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+    DeviceCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        device_id: bob.device_id.clone(),
+        device_label: None,
+        verify_key: bob.verify_key(),
+    }
+    .dump_and_sign(&alice.signing_key)
+}
+
 pub struct TmpPath(PathBuf);
 
 impl std::ops::Deref for TmpPath {
