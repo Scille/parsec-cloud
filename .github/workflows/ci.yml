@@ -338,16 +338,15 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
         if: steps.rust-changes.outputs.run == 'true'
 
-      # Help openssl-sys find a valid vcpkg installation path
-      # (only useful on Windows when compiling with
-      # the feature "use-sodiumoxide")
+      # Manually install OpenSSL from vcpkg (OpenSSL is provided
+      # by the windows runner image but openssl-sys will use
+      # vcpkg to locate it anyway)
       - name: (🏁 Windows) Specify vcpkg installation path
         if: >-
           startsWith(matrix.os, 'windows-')
         run: |
-          chcp 65001 #ensure windows uses utf-8
-          echo ("OPENSSL_DIR=C:\Program Files\OpenSSL") >> $env:GITHUB_ENV
-          type $env:GITHUB_ENV
+          vcpkg integrate install
+          vcpkg.exe install openssl:x64-windows-static-md
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
