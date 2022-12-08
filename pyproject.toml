@@ -58,7 +58,6 @@ structlog = ">=21.5,<23.0"
 # colorama = "^0.4.4  # structlog colored output"
 async_exit_stack = "^1.0"
 outcome = "^1.1"
-oscrypto = "^1.2.1"
 
 # Backend-only requirements
 
@@ -147,6 +146,10 @@ cibuildwheel = "2.10.0"
 editorconfig-checker = "2.4.0"
 types-requests = "^2.28"
 boto3-stubs = "^1.26"
+
+# This is no longer required for normal parsec operation
+# but tests may use it
+oscrypto = "^1.2.1"
 
 [tool.poetry.build]
 generate-setup-file = false
