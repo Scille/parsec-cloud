@@ -211,7 +211,7 @@ fn serde_organization_config_rep(
 }
 
 #[rstest]
-#[case::req_empty(
+#[case::absent_sequester_authority(
     // Generated from Python implementation (Parsec v2.14.1+dev)
     // Content:
     //   bootstrap_token: "foo"
@@ -242,7 +242,7 @@ fn serde_organization_config_rep(
         })
     })
 )]
-#[case::req_without(
+#[case::none_sequester_authority(
     // Generated from Python implementation (Parsec v2.14.1+dev)
     // Content:
     //   bootstrap_token: "foo"
@@ -275,7 +275,7 @@ fn serde_organization_config_rep(
         })
     })
 )]
-#[case::req_full(
+#[case::with_sequester_authority(
     // Generated from Python implementation (Parsec v2.14.1+dev)
     // Content:
     //   bootstrap_token: "foo"
