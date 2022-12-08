@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.15.0-rc2 (2022-12-08)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Prevent accidental creation of multiple parsec organizations at the same time
+  (`#3698 <https://github.com/Scille/parsec-cloud/issues/3698>`__)
+
+
 Parsec v2.15.0-rc1 (2022-12-06)
 -------------------------------
 
