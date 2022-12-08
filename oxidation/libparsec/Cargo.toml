@@ -9,19 +9,16 @@ rust-version = "1.62.0"
 [dependencies]
 libparsec_crypto = { path = "crates/crypto" }
 libparsec_platform_async = { path = "crates/platform_async" }
+libparsec_protocol = { path = "crates/protocol" }
+libparsec_types = { path = "crates/types" }
+libparsec_client_types = { path = "crates/client_types" }
+libparsec_core = { path = "crates/core" }
+
+# TODO: fix compatibility with web build
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+libparsec_core_fs = { path = "crates/core_fs" }
 
 [features]
 mock-time = ["libparsec_types/mock-time"]
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
 use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-libparsec_platform_native = { path = "crates/platform_native" }
-libparsec_protocol = { path = "crates/protocol" }
-libparsec_types = { path = "crates/types" }
-libparsec_client_types = { path = "crates/client_types" }
-libparsec_core = { path = "crates/core" }
-libparsec_core_fs = { path = "crates/core_fs" }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-libparsec_platform_web = { path = "crates/platform_web" }

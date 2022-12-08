@@ -1,14 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod native;
+mod native;
 #[cfg(not(target_arch = "wasm32"))]
-pub use native as platform;
+use native as platform;
 
 #[cfg(target_arch = "wasm32")]
-pub mod wasm32;
+mod wasm32;
 #[cfg(target_arch = "wasm32")]
-pub use wasm32 as platform;
+use wasm32 as platform;
 
 pub use flume as channel;
 pub use futures::prelude::*;

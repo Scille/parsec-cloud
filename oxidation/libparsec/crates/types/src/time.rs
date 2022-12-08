@@ -267,7 +267,7 @@ mod time_provider {
         }
 
         pub async fn sleep(&self, time: std::time::Duration) {
-            libparsec_platform_async::native::sleep(time).await
+            libparsec_platform_async::sleep(time).await
         }
     }
 }
@@ -454,7 +454,7 @@ mod time_provider {
                     to_sleep = to_sleep.div_f64(speed_factor);
                 }
                 libparsec_platform_async::select!(
-                    _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
+                    _ = libparsec_platform_async::sleep(to_sleep).fuse() => break,
                     _ = config.changed().fuse() => {
                         // Recompute the time we still have to sleep
                         let now = self.now();
