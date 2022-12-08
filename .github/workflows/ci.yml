@@ -23,6 +23,11 @@ env:
   # Override the default rust compilation profile made in `build.py`,
   # We prefer using one that is more fit to the CI.
   CARGO_PROFILE: integration
+  cargo-exclude-unused-crates: >-
+    --exclude=libparsec_bindings_jni
+    --exclude=libparsec_bindings_web
+    --exclude=libparsec_bindings_electron
+    --exclude=libparsec_bindings_common
 
 jobs:
 
@@ -222,11 +227,13 @@ jobs:
           cargo build \
             --locked \
             --workspace \
+            ${{ env.cargo-exclude-unused-crates }} \
             --profile ${{ env.CARGO_PROFILE }} \
             --all-targets
           cargo build \
             --locked \
             --workspace \
+            ${{ env.cargo-exclude-unused-crates }} \
             --profile ${{ env.CARGO_PROFILE }}
         timeout-minutes: 50 # MacOS can be really slow to build our rust lib
 
@@ -286,10 +293,10 @@ jobs:
           sudo apt-get update
 
         # Install required packages for ubuntu:
-        # - LibFuse2 since only libfuse3 is available on ubuntu-20.04,
-        # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
-        # - A specific version of postgresql is used for PostgreSQL's tests
-        # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions
+        # - LibFuse2 since only libfuse3 is available on ubuntu-20.04.
+        # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`.
+        # - A specific version of postgresql is used for PostgreSQL's tests.
+        # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions.
       - name: (🐧 Linux) Install packages fuse2, PostgreSQL-${{ env.postgresql-version }}
         if: >-
           steps.python-changes.outputs.run == 'true'
@@ -454,7 +461,7 @@ jobs:
       - name: Build rust test codebase
         if: steps.rust-changes.outputs.run == 'true'
         shell: bash
-        run: cargo test --workspace --profile ${{ env.CARGO_PROFILE }} --no-run
+        run: cargo test --workspace --profile ${{ env.CARGO_PROFILE }} ${{ env.cargo-exclude-unused-crates }} --no-run
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
@@ -463,7 +470,7 @@ jobs:
           set -ex
           cargo test --profile ${{ env.CARGO_PROFILE }} --package libparsec_crypto --features use-sodiumoxide --no-default-features
           cargo test --profile ${{ env.CARGO_PROFILE }} --package libparsec_crypto --features use-rustcrypto --no-default-features
-          cargo test --profile ${{ env.CARGO_PROFILE }} --workspace --features mock-time --exclude libparsec_crypto
+          cargo test --profile ${{ env.CARGO_PROFILE }} ${{ env.cargo-exclude-unused-crates }} --workspace --features mock-time --exclude libparsec_crypto
 
   ##############################################################################
   #                            🐜 Wasm tests                                   #
