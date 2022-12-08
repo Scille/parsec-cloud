@@ -13,10 +13,7 @@ from parsec.core.types import BackendOrganizationBootstrapAddr
 
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
-@pytest.mark.parametrize("backend_version", ["latest"])
-async def test_good(
-    running_backend, backend, user_fs_factory, with_labels, data_base_dir, backend_version
-):
+async def test_good(running_backend, backend, user_fs_factory, with_labels, data_base_dir):
 
     org_id = OrganizationID("NewOrg")
     org_token = "123456"

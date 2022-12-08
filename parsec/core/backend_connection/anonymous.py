@@ -85,6 +85,8 @@ async def _anonymous_cmd(
     ):
         return rep
 
+    # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
+    # not included among the protocol json schema's regular response statuses
     if (
         isinstance(rep, OrganizationBootstrapRepUnknownStatus)
         and rep.status == "invalid_msg_format"
@@ -92,7 +94,7 @@ async def _anonymous_cmd(
         logger.error("Invalid request data according to backend", cmd=cmd, rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
 
-    if isinstance(rep, OrganizationBootstrapRepBadTimestamp):
+    elif isinstance(rep, OrganizationBootstrapRepBadTimestamp):
         raise BackendOutOfBallparkError(rep)
 
     return rep

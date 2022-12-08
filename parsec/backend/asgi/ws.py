@@ -104,7 +104,9 @@ async def handle_ws() -> None:
                 # 3) Serve commands
                 await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
 
-    elif isinstance(client_ctx, InvitedClientContext):
+    else:
+        assert isinstance(client_ctx, InvitedClientContext)
+
         await backend.invite.claimer_joined(
             organization_id=client_ctx.organization_id,
             greeter=client_ctx.invitation.greeter_user_id,
