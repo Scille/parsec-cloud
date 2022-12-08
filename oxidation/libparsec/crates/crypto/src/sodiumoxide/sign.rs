@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify};
+use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify, verify_detached, Signature};
 
 use crate::CryptoError;
 
@@ -108,6 +108,23 @@ impl VerifyKey {
 
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
         verify(signed, &self.0).or(Err(CryptoError::SignatureVerification))
+    }
+
+    /// Verify a signature using the given [VerifyKey], `signature` and `message`
+    pub fn verify_with_signature(
+        &self,
+        raw_signature: &[u8],
+        message: &[u8],
+    ) -> Result<Vec<u8>, CryptoError> {
+        if raw_signature.len() != Signature::BYTE_SIZE {
+            return Err(CryptoError::Signature);
+        }
+        let signature = Signature::try_from(raw_signature)
+            .expect("Precondition already checked for the signature size");
+        if !verify_detached(&signature, message, &self.0) {
+            return Err(CryptoError::SignatureVerification);
+        }
+        Ok(message.into())
     }
 }
 

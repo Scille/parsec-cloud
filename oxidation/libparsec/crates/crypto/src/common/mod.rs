@@ -2,16 +2,11 @@
 
 mod error;
 mod secret;
-
-// We provide a different implementation of sequester in src/sodiumoxide
-#[cfg(all(feature = "use-rustcrypto", not(feature = "use-sodiumoxide")))]
 mod sequester;
 
 pub use error::*;
 pub(crate) use secret::*;
-
-#[cfg(all(feature = "use-rustcrypto", not(feature = "use-sodiumoxide")))]
-pub use sequester::*;
+pub(crate) use sequester::*;
 
 macro_rules! impl_key_debug {
     ($name: ident) => {
