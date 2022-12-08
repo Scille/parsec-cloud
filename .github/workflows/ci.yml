@@ -346,8 +346,7 @@ jobs:
           startsWith(matrix.os, 'windows-')
         run: |
           chcp 65001 #ensure windows uses utf-8
-          echo ("VCPKG_ROOT=" + $env:VCPKG_INSTALLATION_ROOT) >> $env:GITHUB_ENV
-          echo ("VCPKGRS_DYNAMIC=1") >> $env:GITHUB_ENV
+          echo ("OPENSSL_DIR=C:\Program Files\OpenSSL") >> $env:GITHUB_ENV
           type $env:GITHUB_ENV
 
       - name: Test rust codebase
