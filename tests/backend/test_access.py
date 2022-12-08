@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.api.protocol import AUTHENTICATED_CMDS, INVITED_CMDS, InvitationType, packb, unpackb
+from parsec._parsec import InvitationType
+from parsec.api.protocol import AUTHENTICATED_CMDS, INVITED_CMDS, packb, unpackb
 
 
 async def check_forbidden_cmds(ws, cmds):
