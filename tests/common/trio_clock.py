@@ -9,7 +9,6 @@ import pytest
 import trio
 from trio.testing import MockClock
 
-
 # In the test we often want to wait on something that in theory would be
 # intaneously available but in fact depends on side effects.
 # Exemple of side effects:

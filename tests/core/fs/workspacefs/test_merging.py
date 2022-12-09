@@ -10,7 +10,6 @@ from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.types import EntryID, LocalWorkspaceManifest
 from parsec.types import FrozenDict
 
-
 empty_pattern = Regex.from_regex_str(r"^\b$")
 
 

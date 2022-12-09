@@ -8,7 +8,6 @@ import os
 
 from babel.messages.pofile import read_po
 
-
 TR_DIR = "parsec/core/gui/tr"
 TR_FILES = {"en": "parsec_en.po", "fr": "parsec_fr.po"}
 

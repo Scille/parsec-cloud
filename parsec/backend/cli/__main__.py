@@ -3,5 +3,4 @@ from __future__ import annotations
 
 from parsec.backend.cli import backend_cmd_group
 
-
 backend_cmd_group()

@@ -16,7 +16,6 @@ from parsec.backend.postgresql.vlob_queries.utils import _check_realm, _check_re
 from parsec.backend.realm import RealmRole
 from parsec.backend.utils import OperationKind
 
-
 _q_maintenance_get_reencryption_batch = Q(
     f"""
 WITH cte_to_encrypt AS (

@@ -2,7 +2,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-
 """
 Why this an not just pytest_xdist ?
 
@@ -33,7 +32,6 @@ from collections import defaultdict
 from typing import List
 
 import pytest
-
 
 COLOR_END = "\033[0m"
 COLOR_RED = "\033[91m"

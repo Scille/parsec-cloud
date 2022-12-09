@@ -48,7 +48,6 @@ from parsec.core.gui.ui.info_widget import Ui_InfoWidget
 from parsec.core.gui.ui.input_widget import Ui_InputWidget
 from parsec.core.gui.ui.question_widget import Ui_QuestionWidget
 
-
 logger = get_logger()
 
 # Qt classes used in the subprocesses dedicated to dialogs

@@ -9,7 +9,6 @@ assert sys.platform == "win32"
 from ctypes import FormatError, GetLastError, WinDLL
 from ctypes.wintypes import BOOL, HANDLE, LPCWSTR, LPVOID
 
-
 ERROR_ALREADY_EXISTS = 183
 
 T = TypeVar("T")

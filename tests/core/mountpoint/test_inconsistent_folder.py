@@ -12,7 +12,6 @@ import trio
 from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.test_utils import create_inconsistent_workspace
 
-
 # winerror codes corresponding to ntstatus errors
 WINDOWS_ERROR_PERMISSION_DENIED = 5  # ntstatus.ERROR_ACCESS_DENIED
 WINDOWS_ERROR_HOST_UNREACHABLE = 1232  # ntstatus.STATUS_HOST_UNREACHABLE

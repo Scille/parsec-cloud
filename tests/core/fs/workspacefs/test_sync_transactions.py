@@ -15,7 +15,6 @@ from parsec.core.fs.workspacefs.sync_transactions import (
 )
 from parsec.core.types import Chunk, EntryID, EntryName, LocalFileManifest, LocalFolderManifest
 
-
 empty_pattern = Regex.from_regex_str(r"^\b$")
 
 

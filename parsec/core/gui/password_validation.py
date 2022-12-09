@@ -10,7 +10,6 @@ from zxcvbn import zxcvbn
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.password_strength_widget import Ui_PasswordStrengthWidget
 
-
 PASSWORD_CSS = {
     0: "color: #333333; background-color: none;",
     1: "color: #F44336; background-color: none;",

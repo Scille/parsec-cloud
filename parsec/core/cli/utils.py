@@ -30,7 +30,6 @@ from parsec.core.local_device import (
 )
 from parsec.core.types import LocalDevice
 
-
 R = TypeVar("R")
 
 

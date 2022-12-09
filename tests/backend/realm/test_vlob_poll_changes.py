@@ -16,7 +16,6 @@ from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmID, RealmRole, VlobID
 from tests.backend.common import realm_update_roles, vlob_poll_changes, vlob_update
 
-
 NOW = DateTime(2000, 1, 3)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 OTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")

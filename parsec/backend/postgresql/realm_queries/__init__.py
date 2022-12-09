@@ -16,7 +16,6 @@ from parsec.backend.postgresql.realm_queries.maintenance import (
 )
 from parsec.backend.postgresql.realm_queries.update_roles import query_update_roles
 
-
 __all__ = (
     "query_create",
     "query_get_status",

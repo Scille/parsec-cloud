@@ -29,7 +29,6 @@ from parsec.serde.fields import (
     Tuple,
 )
 
-
 _SERIALIZER_TO_STR = {
     JSONSerializer: "json",
     MsgpackSerializer: "msgpack",

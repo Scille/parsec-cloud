@@ -17,7 +17,6 @@ from parsec.core.types import (
 )
 from parsec.crypto import SigningKey
 
-
 DEFAULT_ARGS = {
     "ORG": "MyOrg",
     "RVK": "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss",

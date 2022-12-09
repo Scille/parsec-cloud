@@ -11,7 +11,6 @@ from hypothesis_trio.stateful import Bundle, initialize, rule
 from parsec.api.data import EntryID, EntryName
 from parsec.core.fs import FSWorkspaceNotFoundError
 
-
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 

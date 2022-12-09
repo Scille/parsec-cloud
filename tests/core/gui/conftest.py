@@ -37,7 +37,6 @@ from parsec.core.local_device import (
 from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
 
-
 DEFAULT_PASSWORD = "P@ssw0rd"
 
 

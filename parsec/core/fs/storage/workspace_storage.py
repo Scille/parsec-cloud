@@ -31,7 +31,6 @@ from parsec.core.types import (
 )
 from parsec.core.types.manifest import AnyLocalManifest
 
-
 logger = get_logger()
 
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024

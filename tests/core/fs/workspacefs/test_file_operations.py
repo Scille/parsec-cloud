@@ -19,7 +19,6 @@ from parsec.core.fs.workspacefs.file_transactions import padded_data
 from parsec.core.types import Chunk, ChunkID, EntryID, LocalFileManifest
 from tests.common import freeze_time
 
-
 MAX_SIZE = 64
 size = strategies.integers(min_value=0, max_value=MAX_SIZE)
 

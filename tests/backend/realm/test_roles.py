@@ -25,7 +25,6 @@ from parsec.backend.realm import RealmGrantedRole
 from tests.backend.common import realm_get_role_certificates, realm_update_roles, vlob_create
 from tests.common import customize_fixtures, freeze_time
 
-
 NOW = DateTime(2000, 1, 1)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")

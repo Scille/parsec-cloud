@@ -32,7 +32,6 @@ from parsec.core.types import (
     local_manifest_from_remote,
 )
 
-
 WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)
 
 

@@ -9,7 +9,6 @@ from parsec._parsec import DateTime, mock_time
 from parsec.api.protocol import DeviceID
 from parsec.core.types import LocalDevice
 
-
 __freeze_time_dict = {}
 
 

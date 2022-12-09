@@ -27,7 +27,6 @@ from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.event_bus import EventBus
 
-
 __all__ = ("fuse_mountpoint_runner",)
 
 

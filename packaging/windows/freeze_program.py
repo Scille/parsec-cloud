@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Optional
 from urllib.request import urlopen
 
-
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
 python = sys.executable

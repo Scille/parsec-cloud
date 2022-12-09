@@ -2,7 +2,6 @@
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
-
 # Pendulum checks for locale modules via os.path.exists before import.
 # If the include_py_files option is turned off, this check fails, pendulum
 # will raise a ValueError.

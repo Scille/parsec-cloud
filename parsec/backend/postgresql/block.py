@@ -31,7 +31,6 @@ from parsec.backend.postgresql.utils import (
 )
 from parsec.backend.utils import OperationKind
 
-
 _q_get_realm_id_from_block_id = Q(
     f"""
 SELECT

@@ -29,7 +29,6 @@ from parsec.cli_utils import (
 )
 from parsec.utils import trio_run
 
-
 logger = get_logger()
 
 DEFAULT_BACKEND_PORT = 6777

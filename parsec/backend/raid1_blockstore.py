@@ -11,7 +11,6 @@ from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.utils import open_service_nursery
 
-
 logger = get_logger()
 
 

@@ -38,7 +38,6 @@ from parsec.core.mountpoint import (
 from parsec.core.types import BackendActionAddr, BackendOrganizationFileLinkAddr, LocalDevice
 from parsec.event_bus import EventBus, EventCallback
 
-
 logger = get_logger()
 
 MIN_MACFUSE_VERSION = Version("4.4.1")

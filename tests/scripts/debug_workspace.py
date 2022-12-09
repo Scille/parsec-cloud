@@ -22,7 +22,6 @@ from parsec.test_utils import (
     make_workspace_dir_simple_versions as make_workspace_dir_simple_versions_helper,
 )
 
-
 DEVICE_ID = "alice@laptop"
 PASSWORD = "test"
 

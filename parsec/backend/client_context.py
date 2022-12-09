@@ -23,7 +23,6 @@ from parsec.backend.invite import Invitation
 from parsec.crypto import PublicKey, VerifyKey
 from parsec.event_bus import EventBusConnectionContext
 
-
 logger = get_logger()
 
 AUTHENTICATED_CLIENT_CHANNEL_SIZE = 100

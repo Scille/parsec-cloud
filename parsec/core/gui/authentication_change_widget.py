@@ -24,7 +24,6 @@ from parsec.core.local_device import (
 )
 from parsec.core.logged_core import LoggedCore
 
-
 logger = get_logger()
 
 

@@ -30,7 +30,6 @@ from parsec.core.types import (
     local_manifest_from_remote_with_local_context,
 )
 
-
 __all__ = "SyncTransactions"
 
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512Ko

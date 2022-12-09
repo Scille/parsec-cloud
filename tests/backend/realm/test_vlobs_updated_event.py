@@ -14,7 +14,6 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmGrantedRole
 from tests.backend.common import events_listen_nowait, events_subscribe
 
-
 NOW = DateTime(2000, 1, 3)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 OTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")

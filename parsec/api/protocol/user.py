@@ -15,7 +15,6 @@ from parsec._parsec import (
 )
 from parsec.api.protocol.base import ApiCommandSerializer
 
-
 __all__ = (
     "user_get_serializer",
     "user_create_serializer",

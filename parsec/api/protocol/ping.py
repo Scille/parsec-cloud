@@ -9,7 +9,6 @@ from parsec._parsec import (
 )
 from parsec.api.protocol.base import ApiCommandSerializer
 
-
 __all__ = (
     "invited_ping_serializer",
     "authenticated_ping_serializer",

@@ -26,7 +26,6 @@ from parsec.backend.user import UserNotFoundError
 from parsec.backend.user_type import Device, User
 from parsec.serde import SerdePackingError, packb, unpackb
 
-
 CONTENT_TYPE_MSGPACK = "application/msgpack"
 AUTHORIZATION_PARSEC_ED25519 = "PARSEC-SIGN-ED25519"
 SUPPORTED_API_VERSIONS = (

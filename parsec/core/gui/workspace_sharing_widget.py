@@ -22,7 +22,6 @@ from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.logged_core import LoggedCore, UserID
 from parsec.core.types import EntryName, UserInfo, WorkspaceRole
 
-
 _ROLES_TO_INDEX: dict[Union[WorkspaceRole, None], int] = {
     None: 0,
     WorkspaceRole.READER: 1,

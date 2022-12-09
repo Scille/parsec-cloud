@@ -9,7 +9,6 @@ from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_sta
 
 from parsec.api.data import EntryName
 
-
 # Just an arbitrary value to limit the size of data hypothesis generates
 # for read/write operations
 BALLPARK = 10000

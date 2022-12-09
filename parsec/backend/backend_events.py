@@ -15,7 +15,6 @@ from parsec.api.protocol import (
 )
 from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
-
 __all__ = ("BackendEvent",)
 
 

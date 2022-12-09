@@ -18,7 +18,6 @@ from parsec.backend.postgresql.utils import (
     q_user_internal_id,
 )
 
-
 _q_insert_message = Q(
     f"""
     INSERT INTO message (organization, recipient, timestamp, index, sender, body)

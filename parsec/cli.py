@@ -10,7 +10,6 @@ import click
 from parsec._version import __version__
 from parsec.cli_utils import generate_not_available_cmd_group
 
-
 try:
     from parsec.core.cli import core_cmd_group
 except ImportError as exc:

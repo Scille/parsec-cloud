@@ -29,7 +29,6 @@ from parsec.backend.realm import (
 )
 from parsec.backend.user import UserAlreadyRevokedError
 
-
 _q_get_user_profile = Q(
     q_user(organization_id="$organization_id", user_id="$user_id", select="profile, revoked_on")
 )

@@ -27,7 +27,6 @@ from parsec.backend.user import (
     UserNotFoundError,
 )
 
-
 _q_check_active_users_limit = Q(
     f"""
     SELECT

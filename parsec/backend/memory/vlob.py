@@ -36,7 +36,6 @@ from parsec.backend.vlob import (
     extract_sequestered_data_and_proceed_webhook,
 )
 
-
 if TYPE_CHECKING:
     from parsec.backend.memory.organization import MemoryOrganizationComponent
     from parsec.backend.memory.realm import MemoryRealmComponent, Realm

@@ -13,7 +13,6 @@ from parsec.backend.postgresql.user_queries.get import (
 )
 from parsec.backend.postgresql.user_queries.revoke import query_revoke_user
 
-
 __all__ = (
     "query_create_user",
     "query_create_device",

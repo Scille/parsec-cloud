@@ -39,7 +39,6 @@ from parsec.core.invite.greeter import (
 )
 from parsec.core.invite.organization import bootstrap_organization
 
-
 __all__ = (
     # Exceptions
     "InviteError",

@@ -17,7 +17,6 @@ from parsec.backend.postgresql.utils import (
 )
 from parsec.backend.user import UserAlreadyRevokedError, UserError, UserNotFoundError
 
-
 _q_revoke_user = Q(
     f"""
 UPDATE user_ SET

@@ -28,7 +28,6 @@ from parsec.core.backend_connection.exceptions import (
 from parsec.core.backend_connection.transport import http_request
 from parsec.core.types import BackendOrganizationBootstrapAddr, BackendPkiEnrollmentAddr
 
-
 logger = get_logger()
 
 

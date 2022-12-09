@@ -44,7 +44,6 @@ from parsec.core.logged_core import EventBus, LoggedCore, MountpointManager
 from parsec.core.types import DEFAULT_BLOCK_SIZE, EntryID, WorkspaceEntry, WorkspaceRole
 from parsec.event_bus import EventCallback
 
-
 logger = get_logger()
 
 # Type alias for files to import

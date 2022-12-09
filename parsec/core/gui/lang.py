@@ -11,7 +11,6 @@ from parsec._parsec import DateTime, LocalDateTime
 from parsec.core.config import CoreConfig
 from parsec.core.gui.desktop import get_locale_language
 
-
 LANGUAGES = {"English": "en", "Français": "fr"}
 
 _current_translator = None

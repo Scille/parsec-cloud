@@ -37,7 +37,6 @@ from parsec.core.types import (
 )
 from parsec.crypto import SigningKey
 
-
 logger = get_logger()
 
 CLIENT_HANDSHAKE_TYPE = Union[

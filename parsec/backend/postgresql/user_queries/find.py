@@ -11,7 +11,6 @@ from parsec.api.protocol import HumanHandle, OrganizationID, UserID
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
 from parsec.backend.user import HumanFindResultItem
 
-
 LIKE_TRANSLATION = {ord("%"): "\\%", ord("_"): "\\_", ord("\\"): "\\\\"}
 
 

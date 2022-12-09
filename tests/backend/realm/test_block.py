@@ -36,7 +36,6 @@ from parsec.backend.realm import RealmGrantedRole
 from tests.backend.common import block_create, block_read
 from tests.common import customize_fixtures
 
-
 BLOCK_ID = BlockID.from_hex("00000000000000000000000000000001")
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")
 BLOCK_DATA = b"Hodi ho !"

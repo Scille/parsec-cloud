@@ -13,7 +13,6 @@ from parsec.core.mountpoint.exceptions import (
 )
 from parsec.core.mountpoint.manager import MountpointManager, mountpoint_manager_factory
 
-
 __all__ = (
     "mountpoint_manager_factory",
     "MountpointManager",

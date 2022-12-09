@@ -40,7 +40,6 @@ from parsec.core.mountpoint.exceptions import (
 from parsec.core.types import BackendOrganizationFileLinkAddr, EntryID, EntryName, UserInfo
 from parsec.event_bus import EventCallback
 
-
 logger = get_logger()
 
 

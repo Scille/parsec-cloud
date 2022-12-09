@@ -56,7 +56,6 @@ from tests.common import (
     sequester_service_factory,
 )
 
-
 CWD = Path(__file__).parent.parent
 # Starting parsec cli as a new subprocess can be very slow (typically a couple
 # of seconds on my beafy machine !), so we use an unusaly large value here to

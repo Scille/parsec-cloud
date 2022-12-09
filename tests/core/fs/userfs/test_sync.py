@@ -16,7 +16,6 @@ from parsec.core.types import (
 from parsec.crypto import SecretKey
 from tests.common import freeze_time
 
-
 KEY = SecretKey.generate()
 
 

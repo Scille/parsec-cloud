@@ -15,7 +15,6 @@ from parsec.api.protocol import UserID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
 
-
 FUZZ_PARALLELISM = 10
 FUZZ_TIME = 10.0
 
