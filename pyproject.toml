@@ -116,7 +116,7 @@ core = [
     "pypac",
 ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
 pytest-cov = "^4.0"
 pytest-xdist = "^3.1"
