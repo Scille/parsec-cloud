@@ -107,6 +107,7 @@ class BackendConfig:
     db_url: str
     db_min_connections: int
     db_max_connections: int
+    sse_keepalive: float  # Set to `math.inf` if disabled
 
     blockstore_config: BaseBlockStoreConfig
 

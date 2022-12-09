@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import math
 import tempfile
 from functools import partial
 from pathlib import Path
@@ -273,6 +274,15 @@ organization_id, device_id, device_label (can be null), human_email (can be null
         " --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
     ),
 )
+@click.option(
+    "--sse-keepalive",
+    default=30,
+    show_default=True,
+    type=float,
+    callback=lambda ctx, param, value: math.inf if value is None or value <= 0 else value,
+    envvar="PARSEC_SSE_KEEPALIVE",
+    help="Keep SSE connection open by sending keepalive messages to client (pass <= 0 to disable)",
+)
 # Add --debug
 @debug_config_options
 def run_cmd(
@@ -281,6 +291,7 @@ def run_cmd(
     db: str,
     db_min_connections: int,
     db_max_connections: int,
+    sse_keepalive: float,
     maximum_database_connection_attempts: int,
     pause_before_retry_database_connection: float,
     blockstore: BaseBlockStoreConfig,
@@ -336,6 +347,7 @@ def run_cmd(
             db_url=db,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
+            sse_keepalive=sse_keepalive,
             blockstore_config=blockstore,
             email_config=email_config,
             forward_proto_enforce_https=forward_proto_enforce_https,
