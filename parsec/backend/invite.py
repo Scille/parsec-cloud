@@ -6,6 +6,7 @@ import ssl
 import sys
 import tempfile
 from collections import defaultdict
+from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -259,8 +260,11 @@ def generate_invite_email(
         message["Subject"] = f"[Parsec] New device invitation to { organization_id.str }"
     message["From"] = from_addr
     message["To"] = to_addr
-    if reply_to:
-        message["Reply-To"] = reply_to
+    if reply_to is not None and greeter_name is not None:
+        # Contrary to the other address fields, the greeter name can include non-ascii characters
+        # Example: "Jean-José" becomes "=?utf-8?q?Jean-Jos=C3=A9?="
+        encoded_greeter_name = Header(greeter_name.encode("utf-8"), "utf-8").encode()
+        message["Reply-To"] = f"{encoded_greeter_name} <{reply_to}>"
 
     # Turn parts into MIMEText objects
     part1 = MIMEText(text, "plain")
@@ -429,7 +433,7 @@ class BaseInviteComponent:
             to_addr = invitation.claimer_email
             if client_ctx.human_handle:
                 greeter_name = client_ctx.human_handle.label
-                reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
+                reply_to = client_ctx.human_handle.email
             else:
                 greeter_name = client_ctx.user_id.str
                 reply_to = None
