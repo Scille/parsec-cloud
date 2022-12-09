@@ -370,6 +370,9 @@ jobs:
       - name: dklfjsdlf
         run: python -c 'import poetry.core._vendor.packaging.tags;print(*poetry.core._vendor.packaging.tags.sys_tags(),sep="\n")'
 
+      - name: Install pyobjc with poetry venv
+        run: poetry run pip install pyobjc-framework-SystemConfiguration==8.5.1 pypac==0.16
+
       - name: Install python deps
         # if: steps.python-changes.outputs.run == 'true'
         run: poetry install -E core -E backend
