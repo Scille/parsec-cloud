@@ -8,7 +8,6 @@ from typing import Any, Protocol
 import click
 
 from parsec._parsec import DeviceLabel, HumanHandle, LocalDevice, SequesterVerifyKeyDer
-from parsec.api.protocol import DeviceLabel, HumanHandle
 from parsec.cli_utils import async_confirm, async_prompt, cli_exception_handler, spinner
 from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
 from parsec.core.config import CoreConfig

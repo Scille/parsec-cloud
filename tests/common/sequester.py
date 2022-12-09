@@ -19,7 +19,6 @@ from parsec.backend.sequester import (
     StorageSequesterService,
     WebhookSequesterService,
 )
-from parsec.crypto import SigningKey
 
 
 @dataclass

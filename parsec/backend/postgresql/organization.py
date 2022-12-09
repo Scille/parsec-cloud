@@ -28,7 +28,6 @@ from parsec.backend.postgresql.user_queries.create import q_create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.user import Device, User, UserError
 from parsec.backend.utils import Unset, UnsetType
-from parsec.crypto import VerifyKey
 
 _q_insert_organization = Q(
     """

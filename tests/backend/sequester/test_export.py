@@ -34,7 +34,6 @@ from parsec.backend.postgresql.sequester_export import (
     RealmExporterOutputDbError,
 )
 from parsec.backend.realm import RealmGrantedRole
-from parsec.crypto import HashDigest, SecretKey
 from parsec.sequester_export_reader import extract_workspace
 from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
