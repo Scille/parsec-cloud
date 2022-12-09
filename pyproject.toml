@@ -182,7 +182,7 @@ select = [
     "E",
     "W",
     # Unused noqa directive
-    "M",
+    "RUF100",
     # isort
     "I",
 ]
