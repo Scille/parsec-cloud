@@ -155,31 +155,3 @@ class AnonymousClientContext(BaseClientContext):
 
     def __repr__(self) -> str:
         return f"InvitedClientContext(org={self.organization_id.str})"
-
-
-class APIV1_AnonymousClientContext(BaseClientContext):
-    __slots__ = ("organization_id", "logger")
-    TYPE = ClientType.APIV1_ANONYMOUS
-
-    def __init__(self, api_version: ApiVersion, organization_id: OrganizationID):
-        super().__init__(api_version)
-
-        self.logger = logger.bind(conn_id=self.conn_id, organization_id=organization_id.str)
-
-        self.organization_id = organization_id
-
-    def __repr__(self) -> str:
-        return f"APIV1_AnonymousClientContext(org={self.organization_id.str})"
-
-
-class APIV1_AdministrationClientContext(BaseClientContext):
-    __slots__ = ("logger",)
-    TYPE = ClientType.APIV1_ADMINISTRATION
-
-    def __init__(self, api_version: ApiVersion) -> None:
-        super().__init__(api_version)
-
-        self.logger = logger.bind(conn_id=self.conn_id)
-
-    def __repr__(self) -> str:
-        return f"APIV1_AdministrationClientContext()"

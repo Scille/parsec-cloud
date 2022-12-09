@@ -3,5 +3,4 @@ from __future__ import annotations
 
 from parsec.api.protocol import AUTHENTICATED_CMDS, INVITED_CMDS
 
-
 ALL_CMDS = AUTHENTICATED_CMDS | INVITED_CMDS

@@ -6,8 +6,6 @@ class ClientType:
     AUTHENTICATED: ClientType
     INVITED: ClientType
     ANONYMOUS: ClientType
-    APIV1_ANONYMOUS: ClientType
-    APIV1_ADMINISTRATION: ClientType
     def __hash__(self) -> int: ...
 
 class InvitationDeletedReason:

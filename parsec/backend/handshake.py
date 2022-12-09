@@ -7,7 +7,6 @@ from quart import Websocket
 
 from parsec._parsec import DateTime, ProtocolError, ProtocolErrorFields
 from parsec.api.protocol import (
-    APIV1_HandshakeType,
     DeviceID,
     HandshakeType,
     InvitationToken,
@@ -17,7 +16,6 @@ from parsec.api.protocol import (
 )
 from parsec.backend.app import BackendApp
 from parsec.backend.client_context import (
-    APIV1_AnonymousClientContext,
     AuthenticatedClientContext,
     BaseClientContext,
     InvitedClientContext,
@@ -29,7 +27,7 @@ from parsec.backend.invite import (
     InvitationNotFoundError,
     UserInvitation,
 )
-from parsec.backend.organization import OrganizationAlreadyExistsError, OrganizationNotFoundError
+from parsec.backend.organization import OrganizationNotFoundError
 from parsec.backend.user import UserNotFoundError
 
 
@@ -53,14 +51,9 @@ async def do_handshake(
                 backend, handshake
             )
 
-        elif handshake.answer_type == HandshakeType.INVITED:
-            context, result_req, error_infos = await _process_invited_answer(backend, handshake)
-
         else:
-            assert handshake.answer_type == APIV1_HandshakeType.ANONYMOUS
-            context, result_req, error_infos = await _apiv1_process_anonymous_answer(
-                backend, handshake
-            )
+            assert handshake.answer_type == HandshakeType.INVITED
+            context, result_req, error_infos = await _process_invited_answer(backend, handshake)
 
     except ProtocolError as exc:
         context = None
@@ -188,54 +181,6 @@ async def _process_invited_answer(
         api_version=handshake.backend_api_version,
         organization_id=organization_id,
         invitation=invitation,
-    )
-    result_req = handshake.build_result_req()
-    return context, result_req, None
-
-
-async def _apiv1_process_anonymous_answer(
-    backend: BackendApp, handshake: ServerHandshake
-) -> Tuple[BaseClientContext | None, bytes, dict[str, object] | None]:
-    organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
-    expected_rvk = handshake.answer_data["rvk"]
-
-    def _make_error_infos(reason: str) -> dict[str, object]:
-        return {
-            "reason": reason,
-            "handshake_type": APIV1_HandshakeType.ANONYMOUS,
-            "organization_id": organization_id,
-        }
-
-    try:
-        organization = await backend.organization.get(organization_id)
-
-    except OrganizationNotFoundError:
-        if backend.config.organization_spontaneous_bootstrap:
-            # Lazy creation of the organization with always the same empty token
-            try:
-                await backend.organization.create(
-                    id=organization_id,
-                    bootstrap_token="",
-                    created_on=DateTime.now(),
-                )
-            except OrganizationAlreadyExistsError:
-                pass
-            organization = await backend.organization.get(organization_id)
-
-        else:
-            result_req = handshake.build_bad_identity_result_req()
-            return None, result_req, _make_error_infos("Bad organization")
-
-    if organization.is_expired:
-        result_req = handshake.build_organization_expired_result_req()
-        return None, result_req, _make_error_infos("Expired organization")
-
-    if expected_rvk and organization.root_verify_key != expected_rvk:
-        result_req = handshake.build_rvk_mismatch_result_req()
-        return None, result_req, _make_error_infos("Bad root verify key")
-
-    context = APIV1_AnonymousClientContext(
-        api_version=handshake.backend_api_version, organization_id=organization_id
     )
     result_req = handshake.build_result_req()
     return context, result_req, None

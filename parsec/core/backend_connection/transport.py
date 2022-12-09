@@ -13,7 +13,6 @@ from structlog import get_logger
 
 from parsec._parsec import ProtocolError
 from parsec.api.protocol import (
-    APIV1_AnonymousClientHandshake,
     AuthenticatedClientHandshake,
     DeviceID,
     HandshakeError,
@@ -30,29 +29,12 @@ from parsec.core.backend_connection.exceptions import (
     BackendProtocolError,
 )
 from parsec.core.backend_connection.proxy import blocking_io_get_proxy, maybe_connect_through_proxy
-from parsec.core.types import (
-    BackendInvitationAddr,
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-)
+from parsec.core.types import BackendInvitationAddr, BackendOrganizationAddr
 from parsec.crypto import SigningKey
 
 logger = get_logger()
 
-CLIENT_HANDSHAKE_TYPE = Union[
-    APIV1_AnonymousClientHandshake, AuthenticatedClientHandshake, InvitedClientHandshake
-]
-
-
-async def apiv1_connect(
-    addr: BackendOrganizationBootstrapAddr, keepalive: int | None = None
-) -> Transport:
-    """
-    Raises:
-        BackendConnectionError
-    """
-    handshake = APIV1_AnonymousClientHandshake(addr.organization_id)
-    return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
+CLIENT_HANDSHAKE_TYPE = Union[AuthenticatedClientHandshake, InvitedClientHandshake]
 
 
 async def connect_as_invited(

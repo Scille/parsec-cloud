@@ -25,8 +25,6 @@ from parsec.api.protocol.block import BlockID, block_create_serializer, block_re
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS
 from parsec.api.protocol.events import events_listen_serializer, events_subscribe_serializer
 from parsec.api.protocol.handshake import (
-    APIV1_AnonymousClientHandshake,
-    APIV1_HandshakeType,
     AuthenticatedClientHandshake,
     BaseClientHandshake,
     HandshakeBadAdministrationToken,
@@ -150,8 +148,6 @@ __all__ = (
     "BaseClientHandshake",
     "AuthenticatedClientHandshake",
     "InvitedClientHandshake",
-    "APIV1_HandshakeType",
-    "APIV1_AnonymousClientHandshake",
     # Types
     "UserID",
     "DeviceID",

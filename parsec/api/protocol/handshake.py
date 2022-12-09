@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from enum import Enum
 from secrets import token_bytes
-from typing import Dict, Sequence, TypedDict, Union, cast
+from typing import Dict, Sequence, TypedDict, cast
 
 from parsec._parsec import DateTime, ProtocolError
 from parsec.api.protocol.base import (
+    IncompatibleAPIVersionsError,
     InvalidMessageError,
     serializer_factory,
     settle_compatible_versions,
@@ -74,13 +75,6 @@ class HandshakeType(Enum):
 
 
 HandshakeTypeField = fields.enum_field_factory(HandshakeType)
-
-
-class APIV1_HandshakeType(Enum):
-    ANONYMOUS = "anonymous"
-
-
-APIV1_HandshakeTypeField = fields.enum_field_factory(APIV1_HandshakeType)
 
 
 class ChallengeData(TypedDict):
@@ -167,26 +161,6 @@ class HandshakeAnswerSchema(OneOfSchema):
 handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 
 
-class APIV1_HandshakeAnonymousAnswerSchema(BaseSchema):
-    handshake = fields.CheckedConstant("answer", required=True)
-    type = fields.EnumCheckedConstant(APIV1_HandshakeType.ANONYMOUS, required=True)
-    client_api_version = ApiVersionField(required=True)
-    organization_id = OrganizationIDField(required=True)
-    # Cannot provide rvk during organization bootstrap
-    rvk = fields.VerifyKey(missing=None)
-
-
-class APIV1_HandshakeAnswerSchema(OneOfSchema):
-    type_field = "type"
-    type_schemas = {APIV1_HandshakeType.ANONYMOUS: APIV1_HandshakeAnonymousAnswerSchema()}
-
-    def get_obj_type(self, obj: Dict[str, object]) -> APIV1_HandshakeType:
-        return cast(APIV1_HandshakeType, obj["type"])
-
-
-apiv1_handshake_answer_serializer = serializer_factory(APIV1_HandshakeAnswerSchema)
-
-
 class HandshakeResultSchema(BaseSchema):
     handshake = fields.CheckedConstant("result", required=True)
     result = fields.String(required=True)
@@ -209,7 +183,7 @@ class ServerHandshake:
         # a dictionary of arbitrary object. Instead, it could be deserialize as a dedicated and
         # properly typed `HandshakeAnswer` object.
         self.answer_data: Dict[str, object]
-        self.answer_type: Union[HandshakeType, APIV1_HandshakeType] = HandshakeType.NOT_INITIALIZED
+        self.answer_type: HandshakeType = HandshakeType.NOT_INITIALIZED
 
         # API version
         self.client_api_version: ApiVersion
@@ -253,7 +227,7 @@ class ServerHandshake:
         # `settle_compatible_versions` is called before,
         # so we already settled on a version from `self.SUPPORTED_API_VERSIONS`
         if client_api_version.version == 1:
-            serializer = apiv1_handshake_answer_serializer
+            raise IncompatibleAPIVersionsError(self.SUPPORTED_API_VERSIONS, [client_api_version])
         else:
             serializer = handshake_answer_serializer
 
@@ -441,7 +415,7 @@ class BaseClientHandshake:
 
 class AuthenticatedClientHandshake(BaseClientHandshake):
     SUPPORTED_API_VERSIONS = (API_V2_VERSION, API_V3_VERSION)
-    HANDSHAKE_TYPE: Union[HandshakeType, APIV1_HandshakeType] = HandshakeType.AUTHENTICATED
+    HANDSHAKE_TYPE: HandshakeType = HandshakeType.AUTHENTICATED
     HANDSHAKE_ANSWER_SERIALIZER = handshake_answer_serializer
 
     def __init__(
@@ -511,30 +485,5 @@ class InvitedClientHandshake(BaseClientHandshake):
                 "organization_id": self.organization_id,
                 "invitation_type": self.invitation_type,
                 "token": self.token,
-            }
-        )
-
-
-class APIV1_AnonymousClientHandshake(BaseClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V1_VERSION,)
-
-    def __init__(
-        self,
-        organization_id: OrganizationID,
-        root_verify_key: VerifyKey | None = None,
-    ):
-        super().__init__()
-        self.organization_id = organization_id
-        self.root_verify_key = root_verify_key
-
-    def process_challenge_req(self, req: bytes) -> bytes:
-        self.load_challenge_req(req)
-        return apiv1_handshake_answer_serializer.dumps(
-            {
-                "handshake": "answer",
-                "type": APIV1_HandshakeType.ANONYMOUS,
-                "client_api_version": self.client_api_version,
-                "organization_id": self.organization_id,
-                "rvk": self.root_verify_key,
             }
         )
