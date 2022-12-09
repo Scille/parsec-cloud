@@ -1,12 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use crate::{RegexError, RegexResult};
-use std::{
-    collections::HashSet,
-    fmt::{Display, Write},
-    fs,
-    path::Path,
-};
+use std::{collections::HashSet, fmt::Display, fs, path::Path};
 
 pub struct Regex(pub Vec<regex::Regex>);
 
@@ -82,15 +77,15 @@ impl PartialEq for Regex {
 
 impl Display for Regex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (i, r) in self.0.iter().enumerate() {
-            r.fmt(f)?;
-
-            if i + 1 < self.0.len() {
-                f.write_char('|')?;
-            }
-        }
-
-        Ok(())
+        writeln!(
+            f,
+            "{}",
+            self.0
+                .iter()
+                .map(regex::Regex::as_str)
+                .collect::<Vec<_>>()
+                .join("|")
+        )
     }
 }
 
