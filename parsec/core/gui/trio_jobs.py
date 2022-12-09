@@ -135,9 +135,7 @@ class QtToTrioJob(Generic[R]):
             except BaseExceptionGroup as exc:
                 cancelled_errors, other_exceptions = cast(
                     tuple[BaseExceptionGroup[trio.Cancelled], BaseExceptionGroup[trio.Cancelled]],
-                    # Mypy: `exc.split` want an exception that is compatible with the generic type `EBase`.
-                    # but it consider `trio.Cancelled` not compatible
-                    exc.split(trio.Cancelled),  # type: ignore[arg-type]
+                    exc.split(trio.Cancelled),
                 )
                 if other_exceptions is not None:
                     self.set_exception(other_exceptions)
