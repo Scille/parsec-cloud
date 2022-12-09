@@ -15,7 +15,6 @@ from structlog import get_logger
 from parsec.api.transport import USER_AGENT
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 
-
 logger = get_logger()
 
 

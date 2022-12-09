@@ -14,7 +14,6 @@ from parsec.core.config import CoreConfig
 from parsec.core.types import LocalDevice, WorkspaceRole
 from parsec.utils import trio_run
 
-
 WORKSPACE_ROLE_CHOICES: dict[str, None | RealmRole] = {
     "NONE": None,
     **{role.str: role for role in WorkspaceRole.values()},

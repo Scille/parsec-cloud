@@ -22,7 +22,6 @@ from parsec.backend.postgresql.vlob_queries.utils import (
 )
 from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 
-
 _q_read_data_without_timestamp = Q(
     f"""
 SELECT

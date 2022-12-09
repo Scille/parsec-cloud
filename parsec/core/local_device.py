@@ -27,7 +27,6 @@ from parsec.core.types import BackendOrganizationAddr, EntryID, LocalDevice
 from parsec.crypto import CryptoError, PrivateKey, SecretKey, SigningKey
 from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
-
 # .keys files are not supposed to leave the parsec configuration folder,
 # so it's ok to have such a common suffix
 DEVICE_FILE_SUFFIX = ".keys"

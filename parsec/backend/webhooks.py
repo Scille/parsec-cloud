@@ -14,7 +14,6 @@ from parsec.api.protocol import (
 )
 from parsec.backend.config import BackendConfig
 
-
 logger = get_logger()
 
 

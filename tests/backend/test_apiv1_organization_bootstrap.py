@@ -13,7 +13,6 @@ from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 from tests.backend.common import authenticated_ping
 from tests.common import customize_fixtures, local_device_to_backend_user
 
-
 _missing = object()
 
 

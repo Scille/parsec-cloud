@@ -99,7 +99,6 @@ from parsec.core.types import ChunkID, EntryID, LocalDevice, WorkspaceEntry
 from parsec.crypto import CryptoError, HashDigest, VerifyKey
 from parsec.utils import open_service_nursery
 
-
 if TYPE_CHECKING:
     from parsec.core.backend_connection import BackendAuthenticatedCmds
 

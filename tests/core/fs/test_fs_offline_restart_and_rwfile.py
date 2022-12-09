@@ -8,7 +8,6 @@ from hypothesis_trio.stateful import initialize, rule
 from parsec.api.data import EntryName
 from tests.common import FileOracle
 
-
 BLOCK_SIZE = 16
 PLAYGROUND_SIZE = BLOCK_SIZE * 10
 

@@ -23,7 +23,6 @@ from parsec.serde import (
 )
 from parsec.utils import open_service_nursery
 
-
 logger = get_logger()
 
 CommandHandlerCallback = Callable[[dict[str, object]], Awaitable[dict[str, Any]]]

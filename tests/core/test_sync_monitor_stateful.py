@@ -17,7 +17,6 @@ from parsec.core.fs import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
 from parsec.core.types import WorkspaceRole
 from tests.common import call_with_control
 
-
 MISSING = object()
 TO_COMPARE_FIELDS = ("id", "created", "updated", "need_sync", "base_version", "is_placeholder")
 

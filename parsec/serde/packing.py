@@ -15,7 +15,6 @@ from msgpack.exceptions import ExtraData, FormatError, StackError
 from parsec._parsec import DateTime
 from parsec.serde.exceptions import SerdePackingError
 
-
 MAX_BIN_LEN = 1024 * 1024  # 1 MB
 
 

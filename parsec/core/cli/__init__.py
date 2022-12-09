@@ -20,7 +20,6 @@ from parsec.core.cli import (
     status_organization,
 )
 
-
 __all__ = ("core_cmd_group",)
 
 

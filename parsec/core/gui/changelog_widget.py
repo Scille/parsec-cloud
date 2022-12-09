@@ -7,7 +7,6 @@ from structlog import get_logger
 
 from parsec.core.gui.ui.changelog_widget import Ui_ChangelogWidget
 
-
 logger = get_logger()
 
 

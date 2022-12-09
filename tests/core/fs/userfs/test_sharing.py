@@ -20,7 +20,6 @@ from parsec.core.types import EntryID, LocalUserManifest, WorkspaceRole
 from parsec.crypto import SecretKey
 from tests.common import create_shared_workspace, freeze_time
 
-
 KEY = SecretKey.generate()
 
 

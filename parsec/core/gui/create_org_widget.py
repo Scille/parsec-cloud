@@ -40,7 +40,6 @@ from parsec.core.local_device import (
     save_device_with_smartcard_in_config,
 )
 
-
 logger = get_logger()
 
 

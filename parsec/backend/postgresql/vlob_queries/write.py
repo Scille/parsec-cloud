@@ -31,7 +31,6 @@ from parsec.backend.vlob import (
     VlobVersionError,
 )
 
-
 _q_vlob_updated = Q(
     f"""
 INSERT INTO realm_vlob_update (

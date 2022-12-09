@@ -15,7 +15,6 @@ from enum import Enum
 import trio
 from structlog import get_logger
 
-
 logger = get_logger()
 
 

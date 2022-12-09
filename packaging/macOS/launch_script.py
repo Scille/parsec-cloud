@@ -12,7 +12,6 @@ multiprocessing.freeze_support()
 
 from parsec.cli import cli
 
-
 os.environ[
     "PARSEC_SENTRY_DSN"
 ] = "https://863e60bbef39406896d2b7a5dbd491bb@o155936.ingest.sentry.io/1212848"

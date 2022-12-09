@@ -7,7 +7,6 @@ import subprocess
 from pathlib import Path
 from shutil import which
 
-
 SIGNATURE_AUTHOR = "Scille"
 SIGNATURE_DESCRIPTION = f"Parsec by {SIGNATURE_AUTHOR}"
 APPLICATION_EXE = "parsec.exe"

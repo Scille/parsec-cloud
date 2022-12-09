@@ -16,7 +16,6 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.timestamped_workspace_widget import Ui_TimestampedWorkspaceWidget
 
-
 logger = get_logger()
 
 R = TypeVar("R")

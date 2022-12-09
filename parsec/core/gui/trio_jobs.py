@@ -27,7 +27,6 @@ from parsec.core.fs import FSError
 from parsec.core.mountpoint import MountpointError
 from parsec.utils import open_service_nursery
 
-
 P = ParamSpec("P")
 R = TypeVar("R")
 

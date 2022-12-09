@@ -18,7 +18,6 @@ from parsec.serde import unpackb as _unpackb
 from parsec.serde.schema import OneOfSchemaLegacy
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
-
 __all__ = (
     "BaseReqSchema",
     "BaseRepSchema",

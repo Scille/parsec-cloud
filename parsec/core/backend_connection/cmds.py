@@ -181,7 +181,6 @@ from parsec.core.backend_connection.exceptions import (
 )
 from parsec.crypto import PublicKey, VerifyKey
 
-
 COMMAND_RETURN_TYPE = Union[
     AuthenticatedPingRep,
     BlockCreateRep,

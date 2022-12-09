@@ -24,7 +24,6 @@ from wsproto.utilities import LocalProtocolError, RemoteProtocolError
 
 from parsec._version import __version__
 
-
 __all__ = ("TransportError", "Transport")
 
 

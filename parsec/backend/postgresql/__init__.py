@@ -18,7 +18,6 @@ from parsec.backend.postgresql.realm import PGRealmComponent
 from parsec.backend.postgresql.user import PGUserComponent
 from parsec.backend.postgresql.vlob import PGVlobComponent
 
-
 __all__ = [
     "retrieve_migrations",
     "apply_migrations",

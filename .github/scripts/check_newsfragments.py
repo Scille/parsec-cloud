@@ -13,7 +13,6 @@ from subprocess import run
 from typing import Optional
 from urllib.request import HTTPError, Request, urlopen
 
-
 # If file never existed in master, consider as a new newsfragment
 # Cannot just git diff against master branch here given newsfragments
 # removed in master will be considered as new items in our branch

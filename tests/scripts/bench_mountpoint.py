@@ -9,7 +9,6 @@ from subprocess import PIPE, Popen, run
 from tempfile import mkdtemp
 from time import sleep
 
-
 PORT = 6778
 ORGNAME = "Org42"
 TOKEN = "CCDCC27B6108438D99EF8AF5E847C3BB"

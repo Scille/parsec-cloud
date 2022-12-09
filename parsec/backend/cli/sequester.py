@@ -43,7 +43,6 @@ from parsec.sequester_crypto import (
 from parsec.sequester_export_reader import RealmExportProgress, extract_workspace
 from parsec.utils import open_service_nursery, trio_run
 
-
 SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER = "-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----"
 SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER = "-----END PARSEC SEQUESTER SERVICE CERTIFICATE-----"
 

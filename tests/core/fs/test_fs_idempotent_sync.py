@@ -18,7 +18,6 @@ from hypothesis_trio.stateful import (
 from parsec.api.data import EntryName
 from tests.common import call_with_control
 
-
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 st_entry_type = st.sampled_from(["file", "folder"])

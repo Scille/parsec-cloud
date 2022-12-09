@@ -9,7 +9,6 @@ from itertools import chain, dropwhile
 from pathlib import Path
 from typing import Iterable, Iterator
 
-
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 

@@ -5,7 +5,6 @@ import sys
 
 import pytest
 
-
 if sys.platform != "win32":
     pytest.skip("Windows only", allow_module_level=True)
 

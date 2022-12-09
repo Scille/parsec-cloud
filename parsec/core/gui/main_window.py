@@ -62,7 +62,6 @@ from parsec.core.types import (
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.event_bus import EventBus, EventCallback
 
-
 logger = get_logger()
 
 

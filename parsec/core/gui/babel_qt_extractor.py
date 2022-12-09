@@ -4,7 +4,6 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Iterable, Literal, Tuple
 
-
 IGNORE_LIST = ["Dialog", "Form"]
 
 

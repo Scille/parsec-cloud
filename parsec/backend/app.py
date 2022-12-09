@@ -27,7 +27,6 @@ from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.event_bus import EventBus
 
-
 logger = get_logger()
 
 

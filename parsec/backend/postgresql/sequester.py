@@ -31,7 +31,6 @@ from parsec.backend.sequester import (
 from parsec.crypto import CryptoError
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 
-
 # Sequester authority never gets modified past organization bootstrap, hence no need
 # to lock the row with a `FOR UPDATE` even if other queries depend of this result
 _q_get_organisation_sequester_authority = Q(

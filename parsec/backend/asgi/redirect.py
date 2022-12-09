@@ -6,7 +6,6 @@ from urllib.parse import parse_qs, quote_plus, urlencode, urlsplit, urlunsplit
 
 from quart import Blueprint, abort, g, redirect, request
 
-
 if TYPE_CHECKING:
     from parsec._parsec import BackendAddr
     from parsec.backend.app import BackendApp

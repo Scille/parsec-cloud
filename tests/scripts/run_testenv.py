@@ -2,7 +2,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-
 """
 Create a temporary environment and initialize a test setup for parsec.
 
@@ -33,7 +32,6 @@ from parsec.core.config import get_default_config_dir
 from parsec.core.types import BackendAddr
 from parsec.test_utils import initialize_test_organization
 from parsec.utils import trio_run
-
 
 DEFAULT_BACKEND_PORT = 6888
 DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"

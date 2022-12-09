@@ -24,7 +24,6 @@ from parsec.core.types import EntryID, LocalDevice
 from parsec.core.win_registry import parsec_drive_icon_context
 from parsec.event_bus import EventBus
 
-
 __all__ = ("winfsp_mountpoint_runner",)
 
 

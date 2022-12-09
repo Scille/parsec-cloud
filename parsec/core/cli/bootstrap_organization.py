@@ -18,7 +18,6 @@ from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.utils import trio_run
 
-
 SEQUESTER_BRIEF = """A sequestered organization is able to ask it users to encrypt
 their data with third party asymmetric keys (called "sequester service").
 

@@ -56,7 +56,6 @@ from tests.common import (
     sequester_service_factory,
 )
 
-
 CWD = Path(__file__).parent.parent
 # Starting parsec cli as a new subprocess can be very slow (typically a couple
 # of seconds on my beafy machine !), so we use an unusaly large value here to
@@ -1089,7 +1088,7 @@ async def _cli_invoke_in_thread(runner: CliRunner, cmd: str, input: str = None):
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_human_accesses(backend, alice, postgresql_url):
-    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+    async with cli_with_running_backend_testbed(backend, alice) as (_backend_addr, alice):
         runner = CliRunner()
 
         cmd = f"backend human_accesses --db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id.str}"
@@ -1109,7 +1108,7 @@ async def test_human_accesses(backend, alice, postgresql_url):
 @pytest.mark.postgresql
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
-    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+    async with cli_with_running_backend_testbed(backend, alice) as (_backend_addr, alice):
         runner = CliRunner()
 
         common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id.str}"

@@ -7,7 +7,6 @@ from parsec._parsec import RealmStatsRepNotAllowed, RealmStatsRepNotFound, Realm
 from parsec.api.protocol import BlockID, RealmID, VlobID
 from tests.backend.common import block_create, realm_stats, vlob_create
 
-
 REALM_ID_FAKE = RealmID.from_hex("00000000-0000-0000-0000-000000000001")
 
 

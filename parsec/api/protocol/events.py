@@ -4,7 +4,6 @@ from __future__ import annotations
 from parsec._parsec import EventsListenRep, EventsListenReq, EventsSubscribeRep, EventsSubscribeReq
 from parsec.api.protocol.base import ApiCommandSerializer
 
-
 __all__ = ("events_listen_serializer", "events_subscribe_serializer")
 
 

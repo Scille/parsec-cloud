@@ -16,7 +16,6 @@ from parsec.backend.cli.sequester import (
     update_service,
 )
 
-
 __all__ = ("backend_cmd_group",)
 
 

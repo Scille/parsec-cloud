@@ -22,7 +22,6 @@ from parsec.core.fs.exceptions import FSReadOnlyError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 from parsec.core.types import FileDescriptor
 
-
 logger = get_logger()
 
 

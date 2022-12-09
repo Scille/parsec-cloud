@@ -39,7 +39,6 @@ from collections import defaultdict
 from copy import copy
 from datetime import date, datetime
 
-
 LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
 PROJECT_DIR = pathlib.Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"

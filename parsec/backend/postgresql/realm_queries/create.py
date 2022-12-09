@@ -15,7 +15,6 @@ from parsec.backend.postgresql.utils import (
 )
 from parsec.backend.realm import RealmAlreadyExistsError, RealmGrantedRole
 
-
 _q_insert_realm = Q(
     f"""
 INSERT INTO realm (

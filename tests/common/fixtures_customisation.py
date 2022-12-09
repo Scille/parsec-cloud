@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import pytest
 
-
 _FIXTURES_CUSTOMIZATIONS = {
     "coolorg_is_sequestered_organization",
     "alice_profile",

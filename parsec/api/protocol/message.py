@@ -4,7 +4,6 @@ from __future__ import annotations
 from parsec._parsec import MessageGetRep, MessageGetReq
 from parsec.api.protocol.base import ApiCommandSerializer
 
-
 __all__ = ("message_get_serializer",)
 
 

@@ -5,7 +5,6 @@ from pathlib import Path
 
 from parsec.core.types import EntryID, LocalDevice
 
-
 STORAGE_REVISION = 1
 USER_STORAGE_NAME = f"user_data-v{STORAGE_REVISION}.sqlite"
 WORKSPACE_DATA_STORAGE_NAME = f"workspace_data-v{STORAGE_REVISION}.sqlite"

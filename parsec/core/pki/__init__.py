@@ -18,7 +18,6 @@ from parsec.core.pki.submitter import (
     PkiEnrollmentSubmitterSubmittedStatusCtx,
 )
 
-
 __all__ = (
     # Plumbing
     "is_pki_enrollment_available",

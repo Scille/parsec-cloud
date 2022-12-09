@@ -38,7 +38,6 @@ from parsec.backend.realm import (
     RealmStatus,
 )
 
-
 _q_get_realm_status = Q(
     q_realm(
         organization_id="$organization_id",

@@ -6,7 +6,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
 python = shutil.which("python")

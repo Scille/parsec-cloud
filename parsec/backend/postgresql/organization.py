@@ -31,7 +31,6 @@ from parsec.backend.utils import Unset, UnsetType
 from parsec.crypto import VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 
-
 _q_insert_organization = Q(
     """
 INSERT INTO organization (

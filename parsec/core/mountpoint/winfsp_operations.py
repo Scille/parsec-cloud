@@ -27,7 +27,6 @@ from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 from parsec.core.mountpoint.winify import unwinify_entry_name, winify_entry_name
 
-
 logger = get_logger()
 
 # Taken from https://docs.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants
