@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from enum import Enum
-
 from parsec._parsec import (
     EnrollmentID,
     PkiEnrollmentAcceptRep,
@@ -18,13 +16,6 @@ from parsec._parsec import (
 )
 from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.serde import fields
-
-
-class PkiEnrollmentStatus(Enum):
-    SUBMITTED = "SUBMITTED"
-    ACCEPTED = "ACCEPTED"
-    REJECTED = "REJECTED"
-    CANCELLED = "CANCELLED"
 
 
 EnrollmentIDField = fields.uuid_based_field_factory(EnrollmentID)

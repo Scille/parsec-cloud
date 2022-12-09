@@ -131,6 +131,33 @@ impl PkiEnrollmentAcceptRepOk {
 
 #[pyclass]
 #[derive(Clone)]
+pub(crate) enum PkiEnrollmentStatus {
+    #[pyo3(name = "SUBMITTED")]
+    Submitted,
+    #[pyo3(name = "ACCEPTED")]
+    Accepted,
+    #[pyo3(name = "REJECTED")]
+    Rejected,
+    #[pyo3(name = "CANCELLED")]
+    Cancelled,
+}
+
+#[pymethods]
+impl PkiEnrollmentStatus {
+    /// Behave like python's `value` attribute
+    #[getter]
+    fn value(&self) -> &'static str {
+        match self {
+            PkiEnrollmentStatus::Submitted => "SUBMITTED",
+            PkiEnrollmentStatus::Accepted => "ACCEPTED",
+            PkiEnrollmentStatus::Rejected => "REJECTED",
+            PkiEnrollmentStatus::Cancelled => "CANCELLED",
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
 pub(crate) struct PkiEnrollmentInfoStatus(pki_enrollment_info::PkiEnrollmentInfoStatus);
 
 #[pymethods]
@@ -180,36 +207,22 @@ impl PkiEnrollmentInfoStatus {
         })
     }
 
-    /// This method checks if the status is `Accepted` or not. It is used only in tests
-    fn is_submitted(&self) -> bool {
-        matches!(
-            self.0,
-            pki_enrollment_info::PkiEnrollmentInfoStatus::Submitted { .. }
-        )
-    }
-
-    /// This method checks if the status is `Cancelled` or not. It is used only in tests
-    fn is_cancelled(&self) -> bool {
-        matches!(
-            self.0,
-            pki_enrollment_info::PkiEnrollmentInfoStatus::Cancelled { .. }
-        )
-    }
-
-    /// This method checks if the status is `Accepted` or not. It is used only in tests
-    fn is_accepted(&self) -> bool {
-        matches!(
-            self.0,
-            pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted { .. }
-        )
-    }
-
-    /// This method checks if the status is `Rejected` or not. It is used only in tests
-    fn is_rejected(&self) -> bool {
-        matches!(
-            self.0,
-            pki_enrollment_info::PkiEnrollmentInfoStatus::Rejected { .. }
-        )
+    #[getter]
+    fn status(&self) -> PkiEnrollmentStatus {
+        match self.0 {
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted { .. } => {
+                PkiEnrollmentStatus::Accepted
+            }
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Cancelled { .. } => {
+                PkiEnrollmentStatus::Cancelled
+            }
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Submitted { .. } => {
+                PkiEnrollmentStatus::Submitted
+            }
+            pki_enrollment_info::PkiEnrollmentInfoStatus::Rejected { .. } => {
+                PkiEnrollmentStatus::Rejected
+            }
+        }
     }
 }
 

@@ -317,6 +317,7 @@ from parsec._parsec_pyi.protocol import (
     PkiEnrollmentRejectRepOk,
     PkiEnrollmentRejectRepUnknownStatus,
     PkiEnrollmentRejectReq,
+    PkiEnrollmentStatus,
     PkiEnrollmentSubmitRep,
     PkiEnrollmentSubmitRepAlreadyEnrolled,
     PkiEnrollmentSubmitRepAlreadySubmitted,
@@ -807,6 +808,7 @@ __all__ = [
     "PkiEnrollmentSubmitReq",
     "ProtocolError",
     "ProtocolErrorFields",
+    "PkiEnrollmentStatus",
     # Protocol Realm
     "RealmCreateReq",
     "RealmCreateRep",

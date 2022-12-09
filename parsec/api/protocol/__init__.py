@@ -9,6 +9,7 @@ from parsec._parsec import (
     BlockReadReq,
     DeviceName,
     InvitedAnyCmdReq,
+    PkiEnrollmentStatus,
     SequesterServiceID,
     UserProfile,
 )
@@ -78,7 +79,6 @@ from parsec.api.protocol.ping import authenticated_ping_serializer, invited_ping
 from parsec.api.protocol.pki import (
     EnrollmentID,
     EnrollmentIDField,
-    PkiEnrollmentStatus,
     pki_enrollment_accept_serializer,
     pki_enrollment_info_serializer,
     pki_enrollment_list_serializer,
@@ -247,12 +247,12 @@ __all__ = (
     "BlockCreateReq",
     "BlockCreateRep",
     # PKI enrollment
-    "PkiEnrollmentStatus",
     "pki_enrollment_submit_serializer",
     "pki_enrollment_info_serializer",
     "pki_enrollment_list_serializer",
     "pki_enrollment_reject_serializer",
     "pki_enrollment_accept_serializer",
+    "PkiEnrollmentStatus",
     "EnrollmentID",
     "EnrollmentIDField",
     # Sequester

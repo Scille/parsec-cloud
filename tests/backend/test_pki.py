@@ -19,6 +19,7 @@ from parsec._parsec import (
     PkiEnrollmentRejectRepNoLongerAvailable,
     PkiEnrollmentRejectRepNotFound,
     PkiEnrollmentRejectRepOk,
+    PkiEnrollmentStatus,
     PkiEnrollmentSubmitRepAlreadyEnrolled,
     PkiEnrollmentSubmitRepAlreadySubmitted,
     PkiEnrollmentSubmitRepEmailAlreadyUsed,
@@ -568,14 +569,14 @@ async def test_pki_info(anonymous_backend_ws, mallory, alice, alice_ws):
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
     assert isinstance(rep, PkiEnrollmentInfoRepOk)
-    assert rep.enrollment_status.is_submitted()
+    assert rep.enrollment_status.status == PkiEnrollmentStatus.SUBMITTED
 
     # Request cancelled
     new_request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=new_request_id, force=True)
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
     assert isinstance(rep, PkiEnrollmentInfoRepOk)
-    assert rep.enrollment_status.is_cancelled()
+    assert rep.enrollment_status.status == PkiEnrollmentStatus.CANCELLED
 
 
 @pytest.mark.trio
@@ -589,7 +590,7 @@ async def test_pki_info_accepted(anonymous_backend_ws, mallory, alice, alice_ws)
 
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
     assert isinstance(rep, PkiEnrollmentInfoRepOk)
-    assert rep.enrollment_status.is_accepted()
+    assert rep.enrollment_status.status == PkiEnrollmentStatus.ACCEPTED
 
 
 @pytest.mark.trio
@@ -602,7 +603,7 @@ async def test_pki_info_rejected(anonymous_backend_ws, mallory, alice_ws):
 
     rep = await pki_enrollment_info(anonymous_backend_ws, request_id)
     assert isinstance(rep, PkiEnrollmentInfoRepOk)
-    assert rep.enrollment_status.is_rejected()
+    assert rep.enrollment_status.status == PkiEnrollmentStatus.REJECTED
 
 
 @pytest.mark.trio
