@@ -332,7 +332,7 @@ impl HumanHandle {
             || label.chars().any(|c| {
                 matches!(
                     c,
-                    '(' | ')' | '<' | '>' | '@' | ',' | ':' | ';' | '\\' | '"' | '[' | ']'
+                    '<' | '>' | '@' | ',' | ':' | ';' | '\\' | '"' | '[' | ']'
                 )
             })
         {
@@ -408,6 +408,7 @@ pub struct FileDescriptor(pub u32);
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     #[test]
     fn test_from_str() {
@@ -422,5 +423,15 @@ mod tests {
         assert!("dummy".parse::<DeviceID>().is_err());
         assert!(format!("alice@{}", too_long).parse::<DeviceID>().is_err());
         assert!("alice@pc1".parse::<DeviceID>().is_ok());
+    }
+
+    #[rstest]
+    #[case::invalid_email("test", "test", false)]
+    #[case::invalid_email("a@b..c", "test", false)]
+    #[case::invalid_email("@b.c", "test", false)]
+    #[case::parenthesis_allowed("a@b.c", "()", true)]
+    #[case::invalid_name_with_backslash("a@b", "hell\\o", false)]
+    fn test_human_handle(#[case] email: &str, #[case] label: &str, #[case] is_ok: bool) {
+        assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok)
     }
 }
