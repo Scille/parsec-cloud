@@ -20,7 +20,7 @@ use crate::{CryptoError, CryptoResult, EnforceDeserialize, EnforceSerialize, Sec
  * PrivateKey
  */
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct SequesterPrivateKeyDer(RsaPrivateKey);
 
 crate::impl_key_debug!(SequesterPrivateKeyDer);
