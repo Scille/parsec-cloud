@@ -175,7 +175,7 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
     assert "Subject: [Parsec] Alicey McAliceFace invited you to CoolOrg" in body
     assert "From: Parsec <no-reply@parsec.com>" in body
     assert "To: zack@example.com" in body
-    assert "Reply-To: Alicey McAliceFace <alice@example.com>" in body
+    assert "Reply-To: =?utf-8?q?Alicey_McAliceFace?= <alice@example.com>" in body
     assert token.hex in body
     assert (
         "You have received an invitation from Alicey McAliceFace to join the CoolOrg organization on Parsec."

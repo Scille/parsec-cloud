@@ -28,6 +28,9 @@ env:
     --exclude=libparsec_bindings_web
     --exclude=libparsec_bindings_electron
     --exclude=libparsec_bindings_common
+  # Temporary fix for macos tests:
+  # See: https://github.com/python-poetry/poetry/issues/7161
+  SYSTEM_VERSION_COMPAT: "0"
 
 jobs:
 
@@ -251,8 +254,8 @@ jobs:
             # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
             # 20.04 is required to install PostgreSQL 12
             os: ubuntu-20.04
-          # - name: 🍎 macOS
-          #   os: macos-12
+          - name: 🍎 macOS
+            os: macos-12
           - name: 🏁 Windows
             os: windows-2022
             winfsp-version: 1.11.22176
