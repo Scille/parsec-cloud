@@ -23,6 +23,9 @@ env:
   # Override the default rust compilation profile made in `build.py`,
   # We prefer using one that is more fit to the CI.
   CARGO_PROFILE: integration
+  # Temporary fix for macos tests:
+  # See: https://github.com/python-poetry/poetry/issues/7161
+  SYSTEM_VERSION_COMPAT: "0"
 
 jobs:
 
