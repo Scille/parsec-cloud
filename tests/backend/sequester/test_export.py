@@ -433,8 +433,9 @@ async def test_sequester_export_full_run(
 async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, alice, bob, adam):
     output_db_path = tmp_path / "export.sqlite"
     realm1 = RealmID.new()
-    service_decryption_key = SequesterPrivateKeyDer.generate()
-    service_encryption_key = service_decryption_key.public_key
+    # Don't use such a small key size in real world, this is only for test !
+    # (RSA key generation gets ~10x slower between 1024 and 4096)
+    service_decryption_key, service_encryption_key = SequesterPrivateKeyDer.generate_pair(1024)
 
     # Generate the export db by hand here
     con = sqlite3.connect(output_db_path)

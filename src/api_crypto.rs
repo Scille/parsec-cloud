@@ -305,8 +305,10 @@ impl SequesterPrivateKeyDer {
     }
 
     #[classmethod]
-    fn generate(_cls: &PyType) -> Self {
-        Self(libparsec::crypto::SequesterPrivateKeyDer::default())
+    fn generate_pair(_cls: &PyType, size_in_bits: usize) -> (Self, SequesterPublicKeyDer) {
+        let (priv_key, pub_key) =
+            libparsec::crypto::SequesterPrivateKeyDer::generate_pair(size_in_bits);
+        (Self(priv_key), SequesterPublicKeyDer(pub_key))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
@@ -329,20 +331,6 @@ impl SequesterPrivateKeyDer {
             .decrypt(data)
             .map(|x| PyBytes::new(py, &x))
             .map_err(|err| CryptoError::new_err(err.to_string()))
-    }
-
-    #[getter]
-    fn public_key(&self) -> SequesterPublicKeyDer {
-        SequesterPublicKeyDer(libparsec::crypto::SequesterPublicKeyDer::from(
-            self.0.clone(),
-        ))
-    }
-
-    #[getter]
-    fn signing_key(&self) -> SequesterSigningKeyDer {
-        SequesterSigningKeyDer(libparsec::crypto::SequesterSigningKeyDer::from(
-            self.0.clone(),
-        ))
     }
 }
 
@@ -380,13 +368,6 @@ impl SequesterPublicKeyDer {
     fn encrypt<'py>(&self, py: Python<'py>, data: &[u8]) -> &'py PyBytes {
         PyBytes::new(py, &self.0.encrypt(data))
     }
-
-    #[getter]
-    fn verify_key(&self) -> SequesterVerifyKeyDer {
-        SequesterVerifyKeyDer(libparsec::crypto::SequesterVerifyKeyDer::from(
-            self.0.clone(),
-        ))
-    }
 }
 
 #[pyclass]
@@ -397,6 +378,13 @@ crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __repr__);
 
 #[pymethods]
 impl SequesterSigningKeyDer {
+    #[classmethod]
+    fn generate_pair(_cls: &PyType, size_in_bits: usize) -> (Self, SequesterVerifyKeyDer) {
+        let (priv_key, pub_key) =
+            libparsec::crypto::SequesterSigningKeyDer::generate_pair(size_in_bits);
+        (Self(priv_key), SequesterVerifyKeyDer(pub_key))
+    }
+
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
         PyBytes::new(py, &self.0.dump())
     }

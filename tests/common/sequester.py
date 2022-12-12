@@ -33,9 +33,9 @@ def sequester_authority_factory(
     organization_root_signing_key: SigningKey, timestamp: DateTime | None = None
 ) -> SequesterAuthorityFullData:
     timestamp = timestamp or DateTime.now()
-    priv_key = SequesterPrivateKeyDer.generate()
-    verify_key = priv_key.public_key.verify_key
-    signing_key = priv_key.signing_key
+    # Don't use such a small key size in real world, this is only for test !
+    # (RSA key generation gets ~10x slower between 1024 and 4096)
+    signing_key, verify_key = SequesterSigningKeyDer.generate_pair(1024)
     certif = SequesterAuthorityCertificate(
         author=None,
         timestamp=timestamp,
@@ -70,8 +70,9 @@ def sequester_service_factory(
     webhook_url: str | None = None,
 ) -> SequesterServiceFullData:
     timestamp = timestamp or DateTime.now()
-    decryption_key = SequesterPrivateKeyDer.generate()
-    encryption_key = decryption_key.public_key
+    # Don't use such a small key size in real world, this is only for test !
+    # (RSA key generation gets ~10x slower between 1024 and 4096)
+    decryption_key, encryption_key = SequesterPrivateKeyDer.generate_pair(1024)
     certif_data = SequesterServiceCertificate(
         service_id=SequesterServiceID.new(),
         timestamp=timestamp,

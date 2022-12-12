@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 from quart import Response
 
-from parsec._parsec import SequesterPrivateKeyDer
+from parsec._parsec import SequesterSigningKeyDer
 from parsec.api.data import EntryName
 from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID, UserProfile
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
@@ -114,9 +114,9 @@ async def test_bootstrap_sequester_verify_key(running_backend, backend):
     human_handle = HumanHandle(email="zack@example.com", label="Zack")
     device_label = DeviceLabel("PC1")
 
-    priv_key = SequesterPrivateKeyDer.generate()
-    verify_key = priv_key.public_key.verify_key
-    signing_key = priv_key.signing_key
+    # Don't use such a small key size in real world, this is only for test !
+    # (RSA key generation gets ~10x slower between 1024 and 4096)
+    signing_key, verify_key = SequesterSigningKeyDer.generate_pair(1024)
 
     ref_data = b"SomeData"
     ref_data_sign = signing_key.sign(ref_data)

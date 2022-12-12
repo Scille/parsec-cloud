@@ -214,9 +214,7 @@ def generate_service_certificate(
     with cli_exception_handler(debug):
         # Load key files
         service_key = SequesterPublicKeyDer.load_pem(service_public_key.read_text())
-        authority_key = SequesterPrivateKeyDer.load_pem(
-            authority_private_key.read_text()
-        ).signing_key
+        authority_key = SequesterSigningKeyDer.load_pem(authority_private_key.read_text())
 
         # Generate data schema
         service_id = SequesterServiceID.new()
@@ -426,7 +424,7 @@ def create_service(
             )
         # Load key files
         service_key = SequesterPublicKeyDer.load_pem(service_public_key.read_text())
-        authority_key = SequesterPrivateKeyDer.load_pem(authority_private_key.read_text())
+        authority_key = SequesterSigningKeyDer.load_pem(authority_private_key.read_text())
         # Generate data schema
         service_id = SequesterServiceID.new()
         now = DateTime.now()
@@ -436,7 +434,7 @@ def create_service(
             service_label=service_label,
             encryption_key_der=service_key,
         )
-        certificate = authority_key.signing_key.sign(certif_data.dump())
+        certificate = authority_key.sign(certif_data.dump())
 
         sequester_service: BaseSequesterService
         if cooked_service_type == SequesterServiceType.STORAGE:
