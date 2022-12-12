@@ -211,6 +211,9 @@ async def anonymous_api(raw_organization_id: str) -> Response:
 
     # Retrieve command
     client_ctx = AnonymousClientContext(organization_id)
+    client_ctx.logger.info(
+        f"Anonymous client successfully connected (client version: {api_version})"
+    )
     if not isinstance(cmd, str):
         return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
 
@@ -262,6 +265,9 @@ async def authenticated_api(raw_organization_id: str) -> Response:
         profile=user.profile,
         public_key=user.public_key,
         verify_key=device.verify_key,
+    )
+    client_ctx.logger.info(
+        f"Authenticated client successfully connected (client version: {api_version})"
     )
 
     cmd_rep = await cmd_func(client_ctx, msg)
