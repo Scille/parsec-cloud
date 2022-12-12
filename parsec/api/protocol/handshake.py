@@ -77,13 +77,14 @@ class APIV1_HandshakeType(Enum):
 APIV1_HandshakeTypeField = fields.enum_field_factory(APIV1_HandshakeType)
 
 
+# Still present because of tests for old backend compatibility
 class ApiVersionField(fields.Tuple):
     def __init__(self, **kwargs: object):
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         revision = fields.Integer(required=True, validate=validate.Range(min=0))
         super().__init__(version, revision, **kwargs)
 
-    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> ApiVersion:
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> ApiVersion:  # type: ignore[override]
         result = super()._deserialize(value, attr, obj)
         return ApiVersion(*result)
 
@@ -100,7 +101,7 @@ class ChallengeData(TypedDict):
 class HandshakeChallengeSchema(BaseSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
-    supported_api_versions = fields.List(ApiVersionField(), required=True)
+    supported_api_versions = fields.List(fields.ApiVersion(), required=True)
     # Those fields have been added to API version 2.4 (Parsec 2.7.0)
     # They are provided to the client in order to allow them to detect whether
     # their system clock is out of sync and let them close the connection.
@@ -125,7 +126,7 @@ handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 
 class HandshakeAnswerVersionOnlySchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
-    client_api_version = ApiVersionField(required=True)
+    client_api_version = fields.ApiVersion(required=True)
 
 
 handshake_answer_version_only_serializer = serializer_factory(HandshakeAnswerVersionOnlySchema)
@@ -142,7 +143,7 @@ answer_serializer = serializer_factory(AnswerSchema)
 class HandshakeAuthenticatedAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(HandshakeType.AUTHENTICATED, required=True)
-    client_api_version = ApiVersionField(required=True)
+    client_api_version = fields.ApiVersion(required=True)
     organization_id = OrganizationIDField(required=True)
     device_id = DeviceIDField(required=True)
     rvk = fields.VerifyKey(required=True)
@@ -152,7 +153,7 @@ class HandshakeAuthenticatedAnswerSchema(BaseSchema):
 class HandshakeInvitedAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(HandshakeType.INVITED, required=True)
-    client_api_version = ApiVersionField(required=True)
+    client_api_version = fields.ApiVersion(required=True)
     organization_id = OrganizationIDField(required=True)
     invitation_type = InvitationTypeField(required=True)
     token = InvitationTokenField(required=True)
@@ -175,7 +176,7 @@ handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 class APIV1_HandshakeAnonymousAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(APIV1_HandshakeType.ANONYMOUS, required=True)
-    client_api_version = ApiVersionField(required=True)
+    client_api_version = fields.ApiVersion(required=True)
     organization_id = OrganizationIDField(required=True)
     # Cannot provide rvk during organization bootstrap
     rvk = fields.VerifyKey(missing=None)
@@ -350,7 +351,7 @@ class ServerHandshake:
 
                 # Provides compatibility with API version 2.4 and below
                 # TODO: Remove once API v2.x is deprecated
-                if (2, 0) <= self.client_api_version < (2, 5):
+                if ApiVersion(2, 0) <= self.client_api_version < ApiVersion(2, 5):
                     returned_challenge = verify_key.verify(answer)
 
                 # Used in API v2.5+ and API v3.x
@@ -470,7 +471,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
         # Provides compatibility with API version 2.4 and below
         # TODO: Remove once API v2.x is deprecated
-        if (2, 0) <= self.backend_api_version < (2, 5):
+        if ApiVersion(2, 0) <= self.backend_api_version < ApiVersion(2, 5):
             answer = self.user_signkey.sign(challenge)
 
         # Used in API v2.5+ and API v3.x

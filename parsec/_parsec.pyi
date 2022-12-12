@@ -98,6 +98,7 @@ from parsec._parsec_pyi.message import (
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
 )
+from parsec._parsec_pyi.misc import ApiVersion
 from parsec._parsec_pyi.pki import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec._parsec_pyi.protocol import (
     # Cmd
@@ -499,6 +500,7 @@ from parsec._parsec_pyi.trustchain import (
 )
 
 __all__ = [
+    "ApiVersion",
     # Data Error
     "DataError",
     "EntryNameError",

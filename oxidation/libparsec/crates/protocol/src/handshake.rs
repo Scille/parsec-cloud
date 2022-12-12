@@ -45,6 +45,16 @@ pub struct ApiVersion {
     pub revision: u32,
 }
 
+impl ApiVersion {
+    pub fn dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
+        rmp_serde::to_vec_named(self)
+    }
+
+    pub fn load(buf: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
+        rmp_serde::from_slice(buf)
+    }
+}
+
 impl PartialOrd for ApiVersion {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
@@ -63,6 +73,32 @@ impl Ord for ApiVersion {
 impl Display for ApiVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}.{}", self.version, self.revision)
+    }
+}
+
+impl TryFrom<&str> for ApiVersion {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        if value.split('.').count() != 2 {
+            return Err(
+                "Wrong number of `.` version string must be follow this pattern `<version>.<revision>`"
+            );
+        }
+
+        let (version_str, revision_str) = value
+            .split_once('.')
+            .ok_or("Api version string must be follow this pattern `<version>.<revision>`")?;
+
+        let version = version_str.parse::<u32>();
+        let revision = revision_str.parse::<u32>();
+        match (version, revision) {
+            (Ok(a), Ok(b)) => Ok(ApiVersion {
+                version: a,
+                revision: b,
+            }),
+            _ => Err("Failed to parse version number (<version>.<revision>)"),
+        }
     }
 }
 
@@ -697,4 +733,33 @@ pub struct InvitedClientHandshakeChallenge {
     pub backend_api_version: ApiVersion,
     pub client_api_version: ApiVersion,
     pub raw: Vec<u8>,
+}
+
+#[cfg(test)]
+mod test {
+    use rstest::rstest;
+
+    use crate::ApiVersion;
+
+    #[rstest]
+    #[case::valid_version_one("1.0", ApiVersion { version: 1, revision: 0 })]
+    #[case::valid_version_two("2.5", ApiVersion { version: 2, revision: 5 })]
+    fn test_valid_version_string_parse(
+        #[case] version_str: &str,
+        #[case] expected_version: ApiVersion,
+    ) {
+        let parsed_version =
+            ApiVersion::try_from(version_str).expect("Should not fail to parse version string");
+        assert_eq!(parsed_version, expected_version);
+    }
+
+    #[rstest]
+    #[case::invalid_missing_version(".0")]
+    #[case::invalid_missing_minor("2.")]
+    #[case::no_separator("25")]
+    #[case::non_digit_chars("2.5dksjdskdjs")]
+    fn test_invalid_version_string_parse(#[case] version_str: &str) {
+        let parsed_version = ApiVersion::try_from(version_str);
+        assert!(parsed_version.is_err());
+    }
 }

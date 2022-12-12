@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Pattern, Tuple, TypeVar, Union
+from typing import Pattern, Tuple, Type, TypeVar, Union
 from unicodedata import normalize
 
 from marshmallow import ValidationError
+from marshmallow.fields import Field
 
 from parsec._parsec import DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserID, UserProfile
 from parsec.serde import fields
@@ -56,10 +57,10 @@ class StrBased:
         return self._str
 
 
-OrganizationIDField = fields.str_based_field_factory(OrganizationID)
-UserIDField = fields.str_based_field_factory(UserID)
-DeviceIDField = fields.str_based_field_factory(DeviceID)
-DeviceLabelField = fields.str_based_field_factory(DeviceLabel)
+OrganizationIDField: Type[Field[OrganizationID]] = fields.str_based_field_factory(OrganizationID)
+UserIDField: Type[Field[UserID]] = fields.str_based_field_factory(UserID)
+DeviceIDField: Type[Field[DeviceID]] = fields.str_based_field_factory(DeviceID)
+DeviceLabelField: Type[Field[DeviceLabel]] = fields.str_based_field_factory(DeviceLabel)
 
 
 class HumanHandleField(fields.Field[HumanHandle]):

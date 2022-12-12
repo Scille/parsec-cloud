@@ -8,6 +8,7 @@ mod enumerate;
 mod file_operations;
 mod ids;
 mod local_device;
+mod misc;
 mod protocol;
 mod regex;
 mod runtime;
@@ -92,6 +93,9 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     py.import("typing")?
         .getattr("Coroutine")?
         .call_method1("register", (future_into_coroutine_cls,))?;
+
+    // Misc
+    m.add_class::<misc::ApiVersion>()?;
 
     Ok(())
 }

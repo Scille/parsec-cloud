@@ -15,6 +15,7 @@ mod vlob;
 
 pub(crate) use block::*;
 pub(crate) use cmds::*;
+pub(crate) use error::*;
 pub(crate) use events::*;
 pub(crate) use invite::*;
 pub(crate) use message::*;
