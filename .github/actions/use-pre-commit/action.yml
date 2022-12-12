@@ -45,6 +45,12 @@ runs:
         python ~/.cache/pre-commit/pre-commit.pyz --version
       shell: bash
 
+    - name: Patch pre-commit for line-ending
+      run: |
+        sed -i '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml
+        cat .pre-commit-config.yaml
+      shell: bash
+
     - name: Run pre-commit
       run: python ~/.cache/pre-commit/pre-commit.pyz run --show-diff-on-failure --color=always ${{ inputs.extra-args }}
       shell: bash

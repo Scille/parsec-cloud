@@ -133,11 +133,6 @@ jobs:
           git fetch origin master
           python .github/scripts/check_newsfragments.py ${{ github.head_ref }}
 
-      - name: Patch pre-commit for line-ending
-        run: |
-          sed -i '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml
-          cat .pre-commit-config.yaml
-
       - name: Install project (needed for mypy check)
         run: poetry install -E core -E backend
 
