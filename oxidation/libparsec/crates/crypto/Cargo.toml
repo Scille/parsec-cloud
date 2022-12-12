@@ -57,7 +57,6 @@ rmp-serde = "1.1.1"
 rstest = "0.16.0"
 
 [features]
-default = ["use-sodiumoxide"]
 use-sodiumoxide = [
     "sodiumoxide",
     "libsodium-sys",
