@@ -1,0 +1,1 @@
+Correct some typo found in PO files used by QT for english/french translation
