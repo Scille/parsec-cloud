@@ -29,10 +29,10 @@ repos:
         # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
         types_or: [ python, sql, rust, vue, ts, tsx, javascript, jsx ]
 
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.28.0
-    hooks:
-      - id: yamllint
+  # - repo: https://github.com/adrienverge/yamllint
+  #   rev: v1.28.0
+  #   hooks:
+  #     - id: yamllint
 
   ########
   # Python
