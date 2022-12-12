@@ -95,7 +95,7 @@ mod test {
                 continue;
             }
 
-            let sub_regex_str = libparsec::types::Regex::from_glob_pattern(line)
+            let sub_regex_str = libparsec::types::Regex::from_glob_pattern(line.trim())
                 .unwrap()
                 .to_string();
 
@@ -112,12 +112,12 @@ mod test {
     fn test_compatible_with_legacy_py_to_rs() {
         pyo3::prepare_freethreaded_python();
         Python::with_gil(|py| {
-            let reg: Py<PyAny> =
-                PyModule::from_code(py, &format!("new_regex = '{}'", load_regex()), "", "")
-                    .unwrap()
-                    .getattr("new_regex")
-                    .unwrap()
-                    .into();
+            let regex_str = format!("new_regex = '{}'", load_regex());
+            let reg: Py<PyAny> = PyModule::from_code(py, &regex_str, "", "")
+                .unwrap()
+                .getattr("new_regex")
+                .unwrap()
+                .into();
 
             let re = PyModule::import(py, "re").unwrap();
             let compile_fn = re.getattr("compile").unwrap();

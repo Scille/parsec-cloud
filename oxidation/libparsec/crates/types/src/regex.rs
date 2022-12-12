@@ -77,7 +77,7 @@ impl PartialEq for Regex {
 
 impl Display for Regex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(
+        write!(
             f,
             "{}",
             self.0
@@ -96,19 +96,28 @@ mod tests {
     use crate::regex::Regex;
     use rstest::rstest;
 
+    fn create_test_dir_if_not_exist() {
+        const TEST_DIR_PATH: &str = "/tmp/parsec-regex-tests/";
+
+        if !Path::new(TEST_DIR_PATH).exists() {
+            fs::create_dir(TEST_DIR_PATH).unwrap();
+        }
+    }
+
     #[rstest]
-    #[case::base("*.rs\n*.py", "base.tmp")]
-    #[case::trim_whitespace("  *.rs\n   *.py   ", "trim_whitespace.tmp")]
-    #[case::empty_lines("*.rs\n\n\n*.py", "empty_lines.tmp")]
+    #[case::base("*.rs\n*.py", "/tmp/parsec-regex-tests/base.tmp")]
+    #[case::trim_whitespace("  *.rs\n   *.py   ", "/tmp/parsec-regex-tests/trim_whitespace.tmp")]
+    #[case::empty_lines("*.rs\n\n\n*.py", "/tmp/parsec-regex-tests/empty_lines.tmp")]
     #[case::trim_whitespace_and_empty_lines(
         "   *.rs\n\n  \n\n*.py  ",
-        "trim_whitespace_and_empty_lines.tmp"
+        "/tmp/parsec-regex-tests/trim_whitespace_and_empty_lines.tmp"
     )]
     #[case::ignore_comment(
         "# This contains patterns\n## yes\n   *.rs\n\n  \n\n*.py  ",
         "ignore_comment.tmp"
     )]
     fn from_pattern_file_content(#[case] file_content: &str, #[case] filename: &str) {
+        create_test_dir_if_not_exist();
         fs::write(filename, file_content).unwrap();
         let regex = Regex::from_file(Path::new(filename)).expect("Regex should be valid");
         fs::remove_file(filename).unwrap();
