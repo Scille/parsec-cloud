@@ -25,7 +25,7 @@ msgid "TEXT_AUTH_CHANGE_SUCCESS"
 msgstr "Authentication has been successfully changed!"
 
 msgid "TEXT_INVALID_SMARTCARD"
-msgstr "This smartcard cannot be use as authentication."
+msgstr "This smartcard cannot be used as authentication."
 
 msgid "TEXT_CANNOT_SAVE_DEVICE"
 msgstr "Cannot save the device. Please retry."
@@ -50,7 +50,7 @@ msgstr "Smartcard"
 
 msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
-"Only one method authentication method is available in this version of "
+"Only one authentication method is available in this version of "
 "Parsec."
 
 msgid "ACTION_UPDATE_SUBSCRIPTION"
@@ -253,7 +253,7 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
-msgstr "Error while negociating SAS code. Please restart the process."
+msgstr "Error while negotiating SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_PEER_RESET"
 msgstr "The host has reset the process. We will restart from the beginning."
@@ -419,7 +419,7 @@ msgid "TEXT_IMPORT_KEY_WRONG_PASSPHRASE"
 msgstr "The passphrase is incorrect."
 
 msgid "IMPORT_KEY_LOCAL_DEVICE_ERROR"
-msgstr "Cannot import device key, an error occured with the recovery device"
+msgstr "Cannot import device key, an error occurred with the recovery device"
 
 msgid "IMPORT_KEY_BACKEND_OFFLINE"
 msgstr "Cannot import device key, cannot reach the server."
@@ -498,7 +498,7 @@ msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
 msgstr ""
 "The profile <b>Administrator</b> manages the organization. "
 "Administrations can add or remove users from the organization. An "
-"administrator also has access to the same functionnalities as a standard "
+"administrator also has access to the same functionalities as a standard "
 "user."
 
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
@@ -514,7 +514,7 @@ msgid "TEXT_ENROLLMENT_ACCEPT_CHECK_INFO_TITLE"
 msgstr "Enroll a new user"
 
 msgid "TEXT_ENROLLMENT_ERROR_WITH_CERTIFICATE"
-msgstr "An error occured while trying to load this request."
+msgstr "An error occurred while trying to load this request."
 
 msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"
 msgstr "Invalid certificate"
@@ -900,10 +900,10 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_GREET_DEVICE_GET_GREETER_SAS_ERROR"
-msgstr "Error while negociating SAS code. Please restart the process."
+msgstr "Error while negotiating SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_GET_CLAIMER_SAS_ERROR"
-msgstr "Error while negociating claimer SAS code. Please restart the process."
+msgstr "Error while negotiating claimer SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR"
 msgstr "Error while acknowledging SAS code. Please restart the process."
@@ -972,10 +972,10 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_GREET_USER_GET_GREETER_SAS_ERROR"
-msgstr "Error while negociating SAS code. Please restart the process."
+msgstr "Error while negotiating SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR"
-msgstr "Error while negociating claimer SAS code. Please restart the process."
+msgstr "Error while negotiating claimer SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_SIGNIFY_TRUST_ERROR"
 msgstr "Error while acknowledging SAS code. Please restart the process."
@@ -1052,7 +1052,7 @@ msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Cannot log in."
 
 msgid "TEXT_RUNNING_UNKNOWN_ERROR"
-msgstr "An unexpected error has occured. You will be disconnected."
+msgstr "An unexpected error has occurred. You will be disconnected."
 
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "This device is already logged in, probably in another tab."
@@ -2533,7 +2533,7 @@ msgstr "Create"
 
 msgid "TEXT_PARSEC_DEVELOPMENT_INFO"
 msgstr ""
-"Developped by <a href=\"https://scille.eu\" title=\"Scille\" "
+"Developed by <a href=\"https://scille.eu\" title=\"Scille\" "
 "style=\"color: #0092FF; font-weight: bold;\">Scille</a>"
 
 msgid "TEXT_ATTRIBUTE_ICONS"
