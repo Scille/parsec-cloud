@@ -34,6 +34,29 @@ repos:
     hooks:
       - id: yamllint
 
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v6.16.0
+    hooks:
+      - id: cspell
+        types_or:
+          - pyi
+          - toml
+          - json
+          - rust
+          - python3
+          - ts
+          - javascript
+          - yaml
+          - pofile
+        args:
+          - --config=./.github/cspell.config.yml
+          - --no-progress
+          - --no-must-find-files
+          - --no-summary
+          - --gitignore
+        additional_dependencies:
+          - "@cspell/dict-fr-fr"
+          - "@cspell/dict-fr-reforme"
   ########
   # Python
 
