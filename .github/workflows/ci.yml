@@ -338,15 +338,12 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
         if: steps.rust-changes.outputs.run == 'true'
 
-      # Manually install OpenSSL from vcpkg (OpenSSL is provided
-      # by the windows runner image but openssl-sys will use
-      # vcpkg to locate it anyway)
-      - name: (🏁 Windows) Specify vcpkg installation path
-        if: >-
-          startsWith(matrix.os, 'windows-')
-        run: |
-          vcpkg integrate install
-          vcpkg.exe install openssl:x64-windows-static-md
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: startsWith(matrix.os, 'windows')
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
