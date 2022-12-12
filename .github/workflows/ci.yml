@@ -343,6 +343,7 @@ jobs:
       # paths so we have to switch to Strawberry.
       - name: Use strawberry perl
         if: startsWith(matrix.os, 'windows')
+        shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
 
       - name: Test rust codebase
