@@ -34,6 +34,25 @@ def build():
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
 
+    if sys.platform == "win32":
+        libparsec_path = "parsec/_parsec.cp39-win_amd64.pyd"
+    elif sys.platform == "darwin":
+        libparsec_path = "parsec/_parsec.cpython-39-darwin.so"
+    else:
+        libparsec_path = "parsec/_parsec.cpython-39-x86_64-linux-gnu.so"
+
+    build_strategy = (
+        os.environ.get("POETRY_LIBPARSEC_BUILD_STRATEGY", "always_build").strip().lower()
+    )
+    if build_strategy == "no_build":
+        display(f"Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `no_build`")
+        return
+    elif build_strategy == "build_if_missing" and (BASEDIR / libparsec_path).exists():
+        display(
+            f"Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `build_if_missing` and {libparsec_path} already exists"
+        )
+        return
+
     # Maturin provides two commands to compile the Rust code as a Python native module:
     # - `maturin develop` that only compile the native module
     # - `maturin build` that generates an entire wheel of the project
@@ -55,16 +74,9 @@ def build():
             raise RuntimeError(f"Target dir unexpectedly contains multiple files: {outputs}")
 
         wheel_path = outputs[0]
-        if sys.platform == "win32":
-            in_wheel_so_path = "parsec/_parsec.cp39-win_amd64.pyd"
-        elif sys.platform == "darwin":
-            in_wheel_so_path = "parsec/_parsec.cpython-39-darwin.so"
-        else:
-            in_wheel_so_path = "parsec/_parsec.cpython-39-x86_64-linux-gnu.so"
-
-        display(f"extracting {wheel_path}:{in_wheel_so_path} -> {BASEDIR / in_wheel_so_path}")
+        display(f"extracting {wheel_path}:{libparsec_path} -> {BASEDIR / libparsec_path}")
         with zipfile.ZipFile(wheel_path) as wheel:
-            wheel.extract(in_wheel_so_path, path=BASEDIR)
+            wheel.extract(libparsec_path, path=BASEDIR)
 
 
 if __name__ == "__main__":
