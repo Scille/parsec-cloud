@@ -12,6 +12,7 @@ use rsa::{
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
+use sha1::Sha1;
 use sha2::Sha256;
 
 use crate::{CryptoError, CryptoResult, EnforceDeserialize, EnforceSerialize, SecretKey};
@@ -71,7 +72,7 @@ impl SequesterPrivateKeyDer {
 
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
         let (cipherkey, ciphertext) = Self::deserialize(data)?;
-        let padding = PaddingScheme::new_oaep::<Sha256>();
+        let padding = PaddingScheme::new_oaep::<Sha1>();
 
         let clearkey = SecretKey::try_from(
             &self
@@ -131,7 +132,7 @@ impl SequesterPublicKeyDer {
     //   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         let mut rng = rand_08::thread_rng();
-        let padding = PaddingScheme::new_oaep::<Sha256>();
+        let padding = PaddingScheme::new_oaep::<Sha1>();
         let secret_key = SecretKey::generate();
         let secret_key_encrypted = self
             .0
