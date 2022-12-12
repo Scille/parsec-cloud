@@ -1606,7 +1606,6 @@ dependencies = [
  "rstest_reuse",
  "serde",
  "serde_bytes",
- "serde_json",
  "serde_test",
  "serde_with",
  "serialization_format",
