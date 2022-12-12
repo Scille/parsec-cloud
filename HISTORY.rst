@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.15.0-rc4 (2022-12-12)
+-------------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Correct some typo found in PO files used by QT for english/french translation
+  (`#3757 <https://github.com/Scille/parsec-cloud/issues/3757>`__)
+
+
 Parsec v2.15.0-rc3 (2022-12-12)
 -------------------------------
 
