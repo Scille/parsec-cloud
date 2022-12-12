@@ -364,7 +364,6 @@ jobs:
 
       - name: Build Electron App
         run: |
-          npm run web:copy:release
           npm run electron:release
         working-directory: oxidation/client
 
@@ -404,7 +403,6 @@ jobs:
 
       - name: Build ionic for Android
         run: |
-          npm run web:copy:release
           npm run android:copy:release
         working-directory: oxidation/client
 
