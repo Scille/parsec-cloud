@@ -5,6 +5,19 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.15.0-rc3 (2022-12-12)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix user invitation email sending error when the greeter's name contains
+  special characters  (`#3752 <https://github.com/Scille/parsec-
+  cloud/issues/3752>`__)
+* Accept parenthesis in HumanHandle's label  (`#3749
+  <https://github.com/Scille/parsec-cloud/issues/3749>`__)
+
+
 Parsec v2.15.0-rc2 (2022-12-08)
 -------------------------------
 
