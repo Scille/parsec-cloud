@@ -65,18 +65,18 @@ pub fn prepare_read(manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec
     // Loop over blocks
     (start_block..stop_block)
         .flat_map(move |block| {
-            // Get substart, substop and subsize
-            let blockstart = block * blocksize;
-            let substart = max(offset, blockstart);
-            let substop = min(offset + size, blockstart + blocksize);
-            let subsize = substop
-                .checked_sub(substart)
-                .expect("Substop is always greater than substart");
+            // Get sub_start, sub_stop and sub_size
+            let block_start = block * blocksize;
+            let sub_start = max(offset, block_start);
+            let sub_stop = min(offset + size, block_start + blocksize);
+            let sub_size = sub_stop
+                .checked_sub(sub_start)
+                .expect("Sub-stop is always greater than sub-start");
             // Get the corresponding chunks
             let block_chunks = manifest
                 .get_chunks(block as usize)
                 .expect("A valid manifest must have enough blocks to cover its full range.");
-            block_read(block_chunks, subsize, substart)
+            block_read(block_chunks, sub_size, sub_start)
         })
         // Collect as a flatten vec of Chunks
         .collect()
@@ -207,20 +207,20 @@ pub fn prepare_write(
 
     // Loop over blocks
     for block in start_block..stop_block {
-        // Get substart, substop and subsize
-        let blockstart = block * blocksize;
-        let substart = max(offset, blockstart);
-        let substop = min(offset + size, blockstart + blocksize);
-        let subsize = substop
-            .checked_sub(substart)
-            .expect("Substop is always greater than substart");
-        let content_offset = substart - offset;
+        // Get sub_start, sub_stop and sub_size
+        let block_start = block * blocksize;
+        let sub_start = max(offset, block_start);
+        let sub_stop = min(offset + size, block_start + blocksize);
+        let sub_size = sub_stop
+            .checked_sub(sub_start)
+            .expect("Sub-stop is always greater than sub-start");
+        let content_offset = sub_start - offset;
 
         // Prepare new chunk
         let new_chunk = Chunk::new(
-            substart,
-            NonZeroU64::new(substart + subsize)
-                .expect("subsize is always strictly greater than zero"),
+            sub_start,
+            NonZeroU64::new(sub_start + sub_size)
+                .expect("sub-size is always strictly greater than zero"),
         );
         write_operations.push((new_chunk.clone(), content_offset as i64 - padding as i64));
 
@@ -228,7 +228,7 @@ pub fn prepare_write(
         let new_chunks = match manifest.get_chunks(block as usize) {
             Some(block_chunks) => {
                 let (new_chunks, more_removed_ids) =
-                    block_write(block_chunks, subsize, substart, new_chunk);
+                    block_write(block_chunks, sub_size, sub_start, new_chunk);
                 removed_ids.extend(more_removed_ids);
                 new_chunks
             }
@@ -577,10 +577,10 @@ mod tests {
 
         // Append even more data to reach the second block and read everything back
         let t4 = DateTime::from_str("2000-01-01 04:00:00 UTC").unwrap();
-        storage.write(&mut manifest, b"\n More kontent", 13, t4);
+        storage.write(&mut manifest, b"\n More content", 13, t4);
         assert_eq!(
             storage.read(&manifest, 27, 0),
-            b"Hello world !\n More kontent"
+            b"Hello world !\n More content"
         );
 
         // Check manifest
@@ -611,7 +611,7 @@ mod tests {
         assert_eq!(chunk3.raw_offset, 16);
         assert_eq!(chunk3.raw_size.get(), 11);
         assert_eq!(chunk3.access, None);
-        assert_eq!(storage.read_chunk_data(chunk3.id), b"ore kontent");
+        assert_eq!(storage.read_chunk_data(chunk3.id), b"ore content");
 
         // Fix the typo and read everything back
         let t5 = DateTime::from_str("2000-01-01 05:00:00 UTC").unwrap();

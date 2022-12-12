@@ -589,7 +589,7 @@ fn test_process_challenge_req_good_multiple_api_version(
             _ => panic!("unexpected value err `{err}`"),
         }
     } else {
-        // Valid versionning
+        // Valid versioning
         let ch = ch.process_challenge_req(&req).unwrap();
         assert_eq!(ch.supported_api_versions, _backend_versions);
         assert_eq!(Some(ch.backend_api_version), expected_backend_version);

@@ -55,7 +55,7 @@ impl TryFrom<&[u8]> for SigningKey {
 
 impl From<[u8; Self::SIZE]> for SigningKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zerocopy
+        // TODO: zero copy
         let (_, sk) = ed25519::keypair_from_seed(&ed25519::Seed(key));
         Self(sk)
     }

@@ -49,7 +49,7 @@ repos:
           - yaml
           - pofile
         args:
-          - --config=./.github/cspell.config.yml
+          - --config=./.cspell/cspell.config.yml
           - --no-progress
           - --no-must-find-files
           - --no-summary
@@ -57,6 +57,8 @@ repos:
         additional_dependencies:
           - "@cspell/dict-fr-fr"
           - "@cspell/dict-fr-reforme"
+          - "@cspell/dict-bash"
+          - "@cspell/dict-shell"
   ########
   # Python
 
@@ -64,7 +66,7 @@ repos:
   # given mypy requires to have access to the project dependencies.
   # We used to specify the list of dependencies actually needed by mypy as
   # additional dependencies to install before running the pre-commit but it
-  # was increadibly error-prone and create random breakages.
+  # was incredibly error-prone and create random breakages.
   # Instead we go the pragmatic way by calling mypy trough poetry:
   # - `poetry run` will stick to the shell current virtual env
   # - if the shell is not into a virtual env, poetry will create one and install Parsec&deps

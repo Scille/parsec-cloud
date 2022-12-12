@@ -111,7 +111,7 @@ pub enum Answer {
         client_api_version: ApiVersion,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        // RustCrypto cache aditional points on the Edward curve so total size is around ~200bytes
+        // RustCrypto cache additional points on the Edward curve so total size is around ~200bytes
         // That's why VerifyKey is boxed to keep approximately the same size as InvitedAnswer
         rvk: Box<VerifyKey>,
         #[serde_as(as = "Bytes")]
@@ -559,7 +559,7 @@ fn load_challenge_req(
                 ballpark_client_late_offset * BALLPARK_CLIENT_TOLERANCE,
             ) {
                 // Add `client_timestamp` to challenge data
-                // so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+                // so the dictionary exposes the same fields as `TimestampOutOfBallparkRepSchema`
                 return Err(HandshakeError::OutOfBallpark(ChallengeDataReport {
                     challenge,
                     supported_api_versions,
