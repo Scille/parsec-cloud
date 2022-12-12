@@ -5,41 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v2.15.0-rc4 (2022-12-12)
--------------------------------
-
-Miscellaneous internal changes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Correct some typo found in PO files used by QT for english/french translation
-  (`#3757 <https://github.com/Scille/parsec-cloud/issues/3757>`__)
-
-
-Parsec v2.15.0-rc3 (2022-12-12)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix user invitation email sending error when the greeter's name contains
-  special characters  (`#3752 <https://github.com/Scille/parsec-
-  cloud/issues/3752>`__)
-* Accept parenthesis in HumanHandle's label  (`#3749
-  <https://github.com/Scille/parsec-cloud/issues/3749>`__)
-
-
-Parsec v2.15.0-rc2 (2022-12-08)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Prevent accidental creation of multiple parsec organizations at the same time
-  (`#3698 <https://github.com/Scille/parsec-cloud/issues/3698>`__)
-
-
-Parsec v2.15.0-rc1 (2022-12-06)
--------------------------------
+Parsec v2.15.0 (2022-12-12)
+---------------------------
 
 Features
 ~~~~~~~~
@@ -58,6 +25,13 @@ Bugfixes
   <https://github.com/Scille/parsec-cloud/issues/3534>`__)
 * Fix an issue that prevented proper reconnection of the client in some specific
   cases  (`#3595 <https://github.com/Scille/parsec-cloud/issues/3595>`__)
+* Prevent accidental creation of multiple parsec organizations at the same time
+  (`#3698 <https://github.com/Scille/parsec-cloud/issues/3698>`__)
+* Fix user invitation email sending error when the greeter's name contains
+  special characters  (`#3752 <https://github.com/Scille/parsec-
+  cloud/issues/3752>`__)
+* Accept parenthesis in HumanHandle's label  (`#3749
+  <https://github.com/Scille/parsec-cloud/issues/3749>`__)
 
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,6 +42,8 @@ Miscellaneous internal changes
   <https://github.com/Scille/parsec-cloud/issues/3700>`__)
 * Recovery devices can now be renamed when created.  (`#3537
   <https://github.com/Scille/parsec-cloud/issues/3537>`__)
+* Correct some typo found in PO files used by QT for english/french translation
+  (`#3757 <https://github.com/Scille/parsec-cloud/issues/3757>`__)
 
 
 Parsec v2.14.1 (2022-11-24)
