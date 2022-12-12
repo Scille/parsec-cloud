@@ -108,10 +108,15 @@ repos:
             --tests,
             --bins,
             --lib,
+            --exclude=libparsec_bindings_jni,
+            --exclude=libparsec_bindings_web,
+            --exclude=libparsec_bindings_electron,
+            --exclude=libparsec_bindings_common,
             --,
             --deny=warnings,
             --deny=clippy::self_named_module_files,
             --deny=clippy::undocumented_unsafe_blocks,
+
           ]
 
   ####

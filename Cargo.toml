@@ -43,3 +43,16 @@ default-members = ["oxidation/libparsec"]
 # optimizations, otherwise Python tests take forever.
 [profile.dev]
 opt-level = 1
+
+# Custom profile for the CI. The idea here is to try to save compilation time
+# and artifacts size (to keep cache efficient).
+[profile.ci]
+inherits = "dev"
+# Using `opt-level = 0` divides by 2 compilation time, however it makes code run much
+# slower which is a no-go for Python tests :'(
+opt-level = 1
+# Remove debug symbols saves roughly ~30% compilation time and ~50% artifacts size
+debug = false
+# Given we don't keep our crate in the cache, we always build them from the
+# ground. Removing that saves ~20% in artifacts size.
+incremental = false
