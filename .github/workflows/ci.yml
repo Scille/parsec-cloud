@@ -20,9 +20,6 @@ env:
     --side-effects-timeout=10
     -vv
     -x
-  # Override the default rust compilation profile made in `build.py`,
-  # We prefer using one that is more fit to the CI.
-  CARGO_PROFILE: integration
   cargo-exclude-unused-crates: >-
     --exclude=libparsec_bindings_jni
     --exclude=libparsec_bindings_web
@@ -39,16 +36,14 @@ jobs:
     name: ⭐ CI is happy ⭐
     needs:
       - check-quality-assurance
-      - rust-prebuild-matrix
       - test-python-matrix
       - test-rust-matrix
       - test-web-app
-      - test-wasm
     runs-on: ubuntu-latest
     if: always()
     steps:
       # The Needs context value contains only:
-      # - the final state a jobs (if it fail or not)
+      # - the final state a jobs (if it fails or not)
       # - it's output (actually none of our jobs are configuring outputs variable)
       #
       # https://docs.github.com/en/actions/learn-github-actions/contexts#needs-context
@@ -84,6 +79,12 @@ jobs:
       - uses: ./.github/actions/paths-filter
         id: changes
 
+      - name: Install Cargo fmt
+        run: |
+          set -ex
+          rustup component add rustfmt
+          cargo fmt --version
+
       - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
@@ -92,29 +93,6 @@ jobs:
       - uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516  # pin v3.5.1
         with:
           node-version: ${{ env.node-version }}
-
-      - uses: ./.github/actions/setup-rust
-        with:
-          version: ${{ env.rust-version }}
-          components: rustfmt, clippy
-          cache-key: ${{ github.job }}
-          os: ubuntu-20.04
-        timeout-minutes: 10
-
-      - name: Debug installed tools
-        run: |
-          python --version
-          node --version
-          # Rust tools
-          whereis rustup
-          rustup --version
-          whereis rustc
-          rustc --version
-          whereis cargo
-          cargo --version
-
-      - name: Debug rust cache
-        run: ls -la ~/.cargo/{.,bin,git,registry} target || true
 
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
@@ -139,113 +117,25 @@ jobs:
           cat .pre-commit-config.yaml
 
       - name: Install project (needed for mypy check)
-        run: poetry install -E core -E backend
-
-      - uses: ./.github/actions/use-pre-commit
-        timeout-minutes: 30
-
-  ##############################################################################
-  #                            🦀 Rust Pre-build                               #
-  ##############################################################################
-  rust-prebuild-matrix:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: 🐧 Linux
-            # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-            os: ubuntu-20.04
-          - name: 🍎 macOS
-            os: macos-12
-          - name: 🏁 Windows
-            os: windows-2022
-    name: '${{ matrix.name }}: 🦀 Rust Prebuild 🏗️'
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
-
-      - uses: ./.github/actions/paths-filter
-        id: changes
-
-      - name: Check modified path that require rust-ci run
-        id: rust-changes
-        if: >-
-          steps.changes.outputs.rust == 'true'
-          || steps.changes.outputs.python == 'true'
-          || steps.changes.outputs.rust-ext == 'true'
-          || github.ref == 'refs/heads/master'
-        run: echo "run=true" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - uses: ./.github/actions/setup-rust
-        id: rust-cache
-        if: steps.rust-changes.outputs.run == 'true'
-        with:
-          version: ${{ env.rust-version }}
-          cache-key: integration
-          os: ${{ matrix.os }}
-        timeout-minutes: 10
-
-      # Pyo3 need additional configuration on MacOS to be manually build
-      # see https://pyo3.rs/v0.17.3/building_and_distribution.html#macos
-      - name: (🍎 macOS) Configure cargo for PyO3
-        if: >-
-          steps.rust-changes.outputs.run == 'true'
-          && steps.rust-cache.outputs.cache-hit != 'true'
-          && startsWith(matrix.os, 'macos-')
-        shell: bash
-        run: |
-          set -eux
-          set -o pipefail
-          mkdir -p .cargo
-          cat << EOF | tee .cargo/config.toml
-          [target.x86_64-apple-darwin]
-          rustflags = [
-            "-C", "link-arg=-undefined",
-            "-C", "link-arg=dynamic_lookup",
-          ]
-          EOF
-
-      - name: Fetch rust dependencies
-        if: >-
-          steps.rust-changes.outputs.run == 'true'
-          && steps.rust-cache.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          find . -name Cargo.toml -not -path './oxidation/libparsec_python/*' -exec cargo fetch --verbose --locked --manifest-path \{\} \;
-        timeout-minutes: 20
-
-      # In this step it may look like we're executing `cargo build` 2 time but
-      # the first one is call with `--all-targets` and not the other one.
-      # Why ?
-      # When I was testing, even tho we specify `--all-targets` (meaning to build everything (tests and libs)),
-      # after that step if I do `cargo build` It still as building/linking to be done.
-      - name: Build rust workspace
-        if: >-
-          steps.rust-changes.outputs.run == 'true'
-          && steps.rust-cache.outputs.cache-hit != 'true'
-        shell: bash
         run: |
           set -ex
-          cargo build \
-            --locked \
-            --workspace \
-            ${{ env.cargo-exclude-unused-crates }} \
-            --profile ${{ env.CARGO_PROFILE }} \
-            --all-targets
-          cargo build \
-            --locked \
-            --workspace \
-            ${{ env.cargo-exclude-unused-crates }} \
-            --profile ${{ env.CARGO_PROFILE }}
-        timeout-minutes: 50 # MacOS can be really slow to build our rust lib
+          poetry install -E core -E backend
+        # We skip _parsec.so compilation given Mypy only cares about _parsec.pyi
+        env:
+          POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
+
+      # Clippy basically compile the project, hence it's faster to run it in
+      # the test-rust-matrix job where compilation cache is reused !
+      - uses: ./.github/actions/use-pre-commit
+        env:
+          SKIP: clippy
+        timeout-minutes: 30
 
   ##############################################################################
   #                            🐍 Python tests                                 #
   ##############################################################################
 
   test-python-matrix:
-    needs: rust-prebuild-matrix
     strategy:
       fail-fast: false
       matrix:
@@ -333,14 +223,6 @@ jobs:
           pwd
           echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
 
-      - uses: ./.github/actions/setup-rust
-        if: steps.python-changes.outputs.run == 'true'
-        with:
-          version: ${{ env.rust-version }}
-          cache-key: integration
-          os: ${{ matrix.os }}
-        timeout-minutes: 10
-
       - uses: ./.github/actions/setup-python-poetry
         if: steps.python-changes.outputs.run == 'true'
         id: setup-python
@@ -348,18 +230,37 @@ jobs:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
+      # libparsec is slow to compile, so we save it in cache and skip the
+      # compilation entirely if the Rust code hasn't changed !
+
+      - name: Use cached libparsec if Rust hasn't been modified
+        id: cache-libparsec
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && steps.rust-changes.outputs.run != 'true'
+        uses: actions/cache@v3
+        with:
+          # Key cache contains a hash of all the files that are used to produce _parsec.so
+          # Hence if we have a cache hit we know that there is no need for a rebuild !
+          key: ${{ matrix.os }}-${{ hashFiles('src/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python
+          path: |
+            parsec/_parsec.*.pyd
+            parsec/_parsec.*.so
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+
       - name: Install python deps
         if: steps.python-changes.outputs.run == 'true'
-        run: poetry install -E core -E backend
-
-      - name: Debug python & pip version
-        if: steps.python-changes.outputs.run == 'true'
-        shell: bash
-        continue-on-error: true
         run: |
-          set -x
-          poetry run python --version
-          poetry run pip --version
+          if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
+          poetry install -E core -E backend
+        shell: bash
+        env:
+          CARGO_PROFILE: ci-python
 
       - name: Basic tests
         if: steps.python-changes.outputs.run == 'true'
@@ -405,7 +306,6 @@ jobs:
   ##############################################################################
 
   test-rust-matrix:
-    needs: rust-prebuild-matrix
     strategy:
       fail-fast: false
       matrix:
@@ -434,126 +334,26 @@ jobs:
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
-      - uses: ./.github/actions/setup-rust
+      - uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
         if: steps.rust-changes.outputs.run == 'true'
-        with:
-          version: ${{ env.rust-version }}
-          cache-key: integration
-          os: ${{ matrix.os }}
-        timeout-minutes: 10
-
-      # Pyo3 need additional configuration on MacOS to be manually build
-      # see https://pyo3.rs/v0.17.3/building_and_distribution.html#macos
-      - name: (🍎 macOS) Configure cargo for PyO3
-        if: >-
-          steps.rust-changes.outputs.run == 'true'
-          && startsWith(matrix.os, 'macos-')
-        shell: bash
-        run: |
-          set -eux
-          set -o pipefail
-          mkdir -p .cargo
-          cat << EOF | tee .cargo/config.toml
-          [target.x86_64-apple-darwin]
-          rustflags = [
-            "-C", "link-arg=-undefined",
-            "-C", "link-arg=dynamic_lookup",
-          ]
-          EOF
-
-      - name: Build rust test codebase
-        if: steps.rust-changes.outputs.run == 'true'
-        shell: bash
-        run: cargo test --workspace --profile ${{ env.CARGO_PROFILE }} ${{ env.cargo-exclude-unused-crates }} --no-run
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
-          cargo test --profile ${{ env.CARGO_PROFILE }} --package libparsec_crypto --features use-sodiumoxide --no-default-features
-          cargo test --profile ${{ env.CARGO_PROFILE }} --package libparsec_crypto --features use-rustcrypto --no-default-features
-          cargo test --profile ${{ env.CARGO_PROFILE }} ${{ env.cargo-exclude-unused-crates }} --workspace --features mock-time --exclude libparsec_crypto
+          cargo test --profile ci-rust  --workspace --features mock-time ${{ env.cargo-exclude-unused-crates }} --exclude libparsec_crypto
+          cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide --no-default-features
+          cargo test --profile ci-rust --package libparsec_crypto --features use-rustcrypto --no-default-features
 
-  ##############################################################################
-  #                            🐜 Wasm tests                                   #
-  ##############################################################################
-
-  test-wasm:
-    runs-on: ubuntu-20.04
-    # We're using a matrix, because we need to have a list to configure:
-    # - The job `Check changed files` (To watch if the specified crate we're changed).
-    # - The job `Run WasmPack test` (where we run the test on each specified crate).
-    # So it's simpler to have only 1 list to maintain (DRY).
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - crate_to_test:
-              - oxidation/libparsec/crates/platform_async
-              - oxidation/libparsec/crates/platform_web
-    name: 🐜 Wasm tests
-    env:
-      WASM_PACK_VERSION: 0.10.3
-      NAVIGATORS: >-
-        firefox
-        chrome
-    steps:
-      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
-
-      - name: Check changed files
-        uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
-        id: changes
-        with:
-          filters: |
-            wasm: ${{ toJSON(matrix.crate_to_test) }}
-            github:
-              - .github/**
-
-      - name: Check modified path that require wasm-pack-ci run
-        id: wasm-pack-changes
+      # Clippy basically compile the project, hence it's faster to run it in
+      # the test-rust-matrix job where compilation cache is reused !
+      - uses: ./.github/actions/use-pre-commit
         if: >-
-          steps.changes.outputs.wasm == 'true'
-          || steps.changes.outputs.github == 'true'
-          || github.ref == 'refs/head/master'
-        run: echo "run=true" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - uses: ./.github/actions/setup-rust
-        if: steps.wasm-pack-changes.outputs.run == 'true'
+          steps.rust-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
         with:
-          version: ${{ env.rust-version }}
-          target: wasm32-unknown-unknown
-          os: wasm32-ubuntu-20.04
-
-      - name: Install Wasm-Pack
-        if: steps.wasm-pack-changes.outputs.run == 'true'
-        run: |
-          set -eux
-          mkdir -p ~/.local/bin
-          cd ~/.local/bin
-          wget https://github.com/rustwasm/wasm-pack/releases/download/v${{ env.WASM_PACK_VERSION }}/wasm-pack-v${{ env.WASM_PACK_VERSION }}-x86_64-unknown-linux-musl.tar.gz -O ~/wasm-pack.tar.gz
-          tar xzf ~/wasm-pack.tar.gz --directory ~/.local/bin --strip-components=1
-          chmod +x ~/.local/bin/wasm-pack
-          echo ~/.local/bin >> "$GITHUB_PATH"
-          ~/.local/bin/wasm-pack --version
-
-      - name: Run WasmPack test
-        if: steps.wasm-pack-changes.outputs.run == 'true'
-        run: |
-          set -eu
-          for crate_to_test in ${{ join(matrix.crate_to_test.*, ' ') }}; do
-            for navigator in ${{ env.NAVIGATORS }}; do
-              echo "###################################"
-              echo "# Running WASM test"
-              echo "#   navigator: $navigator"
-              echo "#   crate: $crate_to_test"
-              echo "###################################"
-
-              (set -x; wasm-pack test --headless --$navigator $crate_to_test)
-            done
-          done
-
+          extra-args: clippy --all-files --verbose
 
   ##############################################################################
   #                            🌐 Web tests                                    #
@@ -576,6 +376,8 @@ jobs:
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
+
+      # TODO: cache libparsec and reuse it if Rust code hasn't changed !
 
       - name: Install dependencies
         if: steps.web-change.outputs.run == 'true'
