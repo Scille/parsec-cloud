@@ -13,7 +13,7 @@ env:
   # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
   # That would break our unit test if we don't update them.
   node-version: 18.12.0
-  poetry-version: 1.2.2
+  poetry-version: 1.3.2
   # TODO: We stick to PostgreSQL 12 for the moment given later versions are
   # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
   postgresql-version: 12
@@ -28,9 +28,6 @@ env:
     --exclude=libparsec_bindings_android
     --exclude=libparsec_bindings_web
     --exclude=libparsec_bindings_electron
-  # Temporary fix for macos tests:
-  # See: https://github.com/python-poetry/poetry/issues/7161
-  SYSTEM_VERSION_COMPAT: "0"
 
 jobs:
 
