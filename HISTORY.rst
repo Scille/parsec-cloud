@@ -17,14 +17,8 @@ Features
 Bugfixes
 ~~~~~~~~
 
-* Fix user search to include legacy users  (`#3538
-  <https://github.com/Scille/parsec-cloud/issues/3538>`__)
-* Improved some texts for device and user invitation  (`#3601
-  <https://github.com/Scille/parsec-cloud/issues/3601>`__)
 * Fix import or drag&drop of an empty folder  (`#3534
   <https://github.com/Scille/parsec-cloud/issues/3534>`__)
-* Fix an issue that prevented proper reconnection of the client in some specific
-  cases  (`#3595 <https://github.com/Scille/parsec-cloud/issues/3595>`__)
 * Prevent accidental creation of multiple parsec organizations at the same time
   (`#3698 <https://github.com/Scille/parsec-cloud/issues/3698>`__)
 * Fix user invitation email sending error when the greeter's name contains
