@@ -1,1 +1,0 @@
-Fix an issue that prevented proper reconnection of the client in some specific cases

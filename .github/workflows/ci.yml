@@ -126,6 +126,7 @@ jobs:
             startsWith(github.head_ref, 'yolo')
             || startsWith(github.head_ref, 'release')
             || startsWith(github.head_ref, 'revert')
+            || startsWith(github.head_ref, 'acknowledge')
             )
           && steps.changes.outputs.newsfragments == 'true'
         run: |

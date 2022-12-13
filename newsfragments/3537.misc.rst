@@ -1,1 +1,0 @@
-Recovery devices can now be renamed when created.

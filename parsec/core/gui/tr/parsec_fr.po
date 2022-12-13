@@ -190,7 +190,7 @@ msgstr ""
 "redémarrer la procédure d'enrôlement."
 
 msgid "TEXT_CLAIM_DEVICE_WAITING"
-msgstr "Veuillez partienter..."
+msgstr "Veuillez patienter..."
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR"
 msgstr ""
@@ -413,11 +413,11 @@ msgid "EXPORT_KEY_ERROR"
 msgstr "Impossible de créer un appareil de récupération"
 
 msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
-msgstr "Veuillez entrer votre mot de passe pour déverouiller cet appareil."
+msgstr "Veuillez entrer votre mot de passe pour déverrouiller cet appareil."
 
 msgid "TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"
 msgstr ""
-"Cet appareil est protogé par une authentification via carte à puce, "
+"Cet appareil est protégé par une authentification via carte à puce, "
 "toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
@@ -487,7 +487,7 @@ msgid "ACTION_ENROLLMENT_FORCE"
 msgstr "Écraser la requête"
 
 msgid "TEXT_ENROLLMENT_SUBMIT_FAILED_EMAIL_USED"
-msgstr "L'adresse email du certificat est déja attributée à un utilisateur actif"
+msgstr "L'adresse email du certificat est déjà attribuée à un utilisateur actif"
 
 msgid "TEXT_ENROLLMENT_SUBMIT_FAILED"
 msgstr "Impossible de faire une demande d'enrôlement"
@@ -562,10 +562,10 @@ msgid "TEXT_ENROLLMENT_ACCEPT_SUCCESS"
 msgstr "La requête d'enrôlement a été acceptée."
 
 msgid "TEXT_ENROLLMENT_REJECT_FAILURE"
-msgstr "Impossible de rejetter cette requête."
+msgstr "Impossible de rejeter cette requête."
 
 msgid "TEXT_ENROLLMENT_REJECT_SUCCESS"
-msgstr "La requête d'enrôlement a été rejettée."
+msgstr "La requête d'enrôlement a été rejetée."
 
 msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
 msgstr ""
@@ -967,7 +967,7 @@ msgstr "Annulation de l'accueil"
 msgid "TEXT_GREET_DEVICE_CLOSE_REQUESTED_TEXT"
 msgstr ""
 "Vous devrez reprendre la procédure d'accueil de votre nouvel appareil "
-"depuis le début. Êtes-vour sûr(e) de vouloir annuler ?"
+"depuis le début. Êtes-vous sûr(e) de vouloir annuler ?"
 
 msgid "ACTION_CANCEL_GREET_DEVICE"
 msgstr "Annuler l'accueil"
@@ -1112,7 +1112,7 @@ msgstr ""
 
 msgid "TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE"
 msgstr ""
-"Cet appareil est protogé par une authentification via carte à puce, "
+"Cet appareil est protégé par une authentification via carte à puce, "
 "toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_PARSEC_LICENSE"
@@ -1912,10 +1912,10 @@ msgid "ACTION_ENROLLMENT_CLEAR"
 msgstr "Supprimer"
 
 msgid "TEXT_ENROLLMENT_STATUS_REJECTED"
-msgstr "Rejettée"
+msgstr "Rejetée"
 
 msgid "TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"
-msgstr "L'administrateur a rejetté cette requête."
+msgstr "L'administrateur a rejeté cette requête."
 
 msgid "TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"
 msgstr "Échec de validation"
@@ -2192,7 +2192,7 @@ msgid "TEXT_ORG_INFO_SEQUESTRATION_TOOLTIP"
 msgstr ""
 "Dans une organisation où le séquestre est activé, les données sont "
 "toujours <br />chiffrées de bout en bout, mais le créateur de "
-"l'organisation peut y avoir accès.<br />Celà peut servir à recouvrer des "
+"l'organisation peut y avoir accès.<br />Cela peut servir à recouvrer des "
 "données ou pour des raisons légales."
 
 msgid "TEXT_ORG_INFO_SEQUESTRATION_ACTIVATED"
@@ -2751,7 +2751,7 @@ msgstr "Imprimer la phrase secrète"
 msgid "TEXT_RECOVERY_IMPORT_INSTRUCTIONS"
 msgstr ""
 "Nous allons restaurer votre appareil en utilisant un appareil de "
-"récupération créé précédement."
+"récupération créé précédemment."
 
 msgid "TEXT_RECOVERY_IMPORT_SELECT_KEY_FILE_LABEL"
 msgstr "Le fichier de récupération"
@@ -2781,7 +2781,7 @@ msgid "ACTION_ACCEPT_RECRUIT"
 msgstr "Accepter"
 
 msgid "ACTION_REJECT_RECRUIT"
-msgstr "Rejetter"
+msgstr "Rejeter"
 
 msgid "ACTION_SELECT_CERTIFICATE"
 msgstr "Sélectionner un certificat"
@@ -3000,7 +3000,7 @@ msgid "TEXT_NEW_VERSION_CHECKING_IN_PROGRESS"
 msgstr "En cours de vérification d'une nouvelle version"
 
 msgid "TEXT_NEW_VERSION_CHECK_FAILED"
-msgstr "Impossible de vérifier si une nouvelle version est disponble."
+msgstr "Impossible de vérifier si une nouvelle version est disponible."
 
 msgid "TEXT_NEW_VERSION_UP_TO_DATE"
 msgstr "Votre application est à jour."

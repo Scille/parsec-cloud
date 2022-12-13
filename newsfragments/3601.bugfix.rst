@@ -1,1 +1,0 @@
-Improved some texts for device and user invitation

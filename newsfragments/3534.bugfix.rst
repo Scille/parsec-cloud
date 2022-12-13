@@ -1,1 +1,0 @@
-Fix import or drag&drop of an empty folder
