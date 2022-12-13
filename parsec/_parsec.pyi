@@ -537,6 +537,7 @@ from parsec._parsec_pyi.protocol import (
     VlobUpdateReq,
 )
 from parsec._parsec_pyi.regex import Regex
+from parsec._parsec_pyi.storage.user_storage import UserStorage, user_storage_non_speculative_init
 from parsec._parsec_pyi.storage.workspace_storage import (
     PseudoFileDescriptor,
     WorkspaceStorage,
@@ -681,11 +682,14 @@ __all__ = [
     "load_recovery_device",
     "save_device_with_password",
     "save_device_with_password_in_config",
-    # Storage
+    # Workspace Storage
     "WorkspaceStorage",
     "WorkspaceStorageSnapshot",
     "PseudoFileDescriptor",
     "workspace_storage_non_speculative_init",
+    # User Storage
+    "UserStorage",
+    "user_storage_non_speculative_init",
     "save_recovery_device",
     # File Operations
     "prepare_read",
