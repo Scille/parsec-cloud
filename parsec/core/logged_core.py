@@ -79,30 +79,10 @@ logger = get_logger()
 
 def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Regex | None:
     try:
-        data = prevent_sync_pattern_path.read_text()
+        return Regex.from_file(str(prevent_sync_pattern_path))
     except OSError as exc:
         logger.warning(
-            "Path to the file containing the filename patterns to ignore is not properly defined",
-            exc_info=exc,
-        )
-        return None
-    try:
-        regex_list = []
-        for line in data.splitlines():
-            line = line.strip()
-            if line and not line.startswith("#"):
-                regex_list.append(str(Regex.from_pattern(line)))
-        regex = "|".join(regex_list)
-    except ValueError as exc:
-        logger.warning(
-            "Could not parse the file containing the filename patterns to ignore", exc_info=exc
-        )
-        return None
-    try:
-        return Regex.from_regex_str(regex)
-    except ValueError as exc:
-        logger.warning(
-            "Could not compile the file containing the filename patterns to ignore into a regex pattern",
+            "Failed to load the file containing the filename patterns to ignore",
             exc_info=exc,
         )
         return None
