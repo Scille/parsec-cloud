@@ -539,7 +539,7 @@ from parsec._parsec_pyi.protocol import (
     VlobUpdateReq,
 )
 from parsec._parsec_pyi.regex import Regex
-from parsec._parsec_pyi.storage import (
+from parsec._parsec_pyi.storage.workspace_storage import (
     PseudoFileDescriptor,
     WorkspaceStorage,
     WorkspaceStorageSnapshot,
