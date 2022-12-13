@@ -874,5 +874,26 @@ fn test_process_result_req_bad_outcome(
     assert_eq!(err, expected)
 }
 
+// Generated from Python implementation (Parsec v2.15.0+dev)
+// Content:
+//   version: 2
+//   revision: 15
+#[rstest]
+fn serde_api_version() {
+    let expected = ApiVersion {
+        version: 2,
+        revision: 15,
+    };
+    let bytes = hex!("92020f");
+
+    let loaded_version = ApiVersion::load(&bytes).unwrap();
+    assert_eq!(loaded_version, expected);
+
+    // Roundtrip test ...
+    let bytes2 = loaded_version.dump().unwrap();
+    let loaded_version2 = ApiVersion::load(&bytes2).unwrap();
+    assert_eq!(loaded_version2, expected);
+}
+
 // TODO: test with revoked device
 // TODO: test with user with all devices revoked
