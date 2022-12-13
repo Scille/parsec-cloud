@@ -12,7 +12,6 @@ import pytest
 
 from parsec.api.data import EntryName
 from parsec.core.fs.utils import ntstatus
-from parsec.core.mountpoint.winfsp_operations import ENTRY_INFO_EXTENSION
 
 
 @pytest.mark.win32
@@ -257,10 +256,11 @@ def test_replace_if_exists(mountpoint_service):
 @pytest.mark.mountpoint
 def test_get_file_entry_info(mountpoint_service):
 
-    from parsec.core.fs.workspacefs import WorkspaceFS
+    # Import here to avoid importing it on Linux/MacOS
+    from parsec.core.mountpoint.winfsp_operations import ENTRY_INFO_EXTENSION
 
     async def _bootstrap(user_fs, mountpoint_manager):
-        workspace: WorkspaceFS = user_fs.get_workspace(mountpoint_service.wid)
+        workspace = user_fs.get_workspace(mountpoint_service.wid)
         await workspace.mkdir("/Dark Souls")
         await workspace.touch("/Dark Souls/Solaire.txt")
         await workspace.write_bytes("/Dark Souls/Solaire.txt", b"Praise the sun!")
