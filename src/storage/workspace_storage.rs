@@ -4,7 +4,6 @@ use pyo3::{
     import_exception,
     prelude::{pyclass, pyfunction, pymethods, IntoPy, PyObject, PyResult, Python},
     types::PyBytes,
-    PyErr,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -19,13 +18,12 @@ use crate::{
     time::DateTime,
 };
 
+use super::{fs_to_python_error, FSInternalError};
+
 use libparsec::core_fs::FSError;
 
 import_exception!(parsec.core.fs.exceptions, FSLocalMissError);
 import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
-import_exception!(parsec.core.fs.exceptions, FSLocalStorageOperationalError);
-import_exception!(parsec.core.fs.exceptions, FSLocalStorageClosedError);
-import_exception!(parsec.core.fs.exceptions, FSInternalError);
 
 /// WorkspaceStorage's binding is implemented with allow_threads because its
 /// methods are called in trio.to_thread to connect the sync and async world
@@ -528,14 +526,4 @@ pub(crate) fn workspace_storage_non_speculative_init(
         )
         .map_err(fs_to_python_error)
     })
-}
-
-fn fs_to_python_error(e: FSError) -> PyErr {
-    match e {
-        FSError::DatabaseQueryError(_) | FSError::DatabaseOperationalError(_) => {
-            FSLocalStorageOperationalError::new_err(e.to_string())
-        }
-        FSError::DatabaseClosed(_) => FSLocalStorageClosedError::new_err(e.to_string()),
-        _ => FSInternalError::new_err(e.to_string()),
-    }
 }
