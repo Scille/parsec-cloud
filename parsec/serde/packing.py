@@ -30,7 +30,7 @@ def packb(data: Mapping[str, Any], exc_cls: Any = SerdePackingError) -> bytes:
         elif isinstance(obj, UUID):
             return ExtType(2, obj.bytes)
         elif isinstance(obj, ApiVersion):
-            return ExtType(3, struct_pack("!II", obj.version, obj.revision))
+            return ExtType(3, obj.dump())
 
         raise TypeError(f"Unknown type: {obj!r}")
 
@@ -48,8 +48,7 @@ def _unpackb_ext_hook(code: int, data: bytes) -> Any:
     elif code == 2:
         return UUID(bytes=data)
     elif code == 3:
-        version, revision = struct_unpack("!II", data)
-        return ApiVersion(version, revision)
+        return ApiVersion.from_bytes(data)
 
     return ExtType(code, data)
 

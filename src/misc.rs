@@ -32,6 +32,17 @@ impl ApiVersion {
     }
 
     #[classmethod]
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> ProtocolResult<Self> {
+        Ok(Self(libparsec::protocol::ApiVersion::load(bytes).map_err(
+            |err| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: err.to_string(),
+                })
+            },
+        )?))
+    }
+
+    #[classmethod]
     fn from_str(_cls: &PyType, version_str: &str) -> PyResult<Self> {
         libparsec::protocol::ApiVersion::try_from(version_str)
             .map(Self)
