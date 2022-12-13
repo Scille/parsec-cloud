@@ -12,9 +12,9 @@ mod misc;
 mod protocol;
 mod regex;
 mod runtime;
+mod storage;
 mod time;
 mod trustchain;
-mod workspace_storage;
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -22,6 +22,7 @@ mod workspace_storage;
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     crate::data::add_mod(py, m)?;
     crate::protocol::add_mod(py, m)?;
+    crate::storage::add_mod(py, m)?;
 
     m.add_class::<addrs::BackendAddr>()?;
     m.add_class::<addrs::BackendOrganizationAddr>()?;
@@ -76,13 +77,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<local_device::LocalDevice>()?;
     m.add_class::<local_device::UserInfo>()?;
     m.add_class::<local_device::DeviceInfo>()?;
-
-    m.add_class::<workspace_storage::WorkspaceStorage>()?;
-    m.add_class::<workspace_storage::WorkspaceStorageSnapshot>()?;
-    m.add_function(wrap_pyfunction!(
-        workspace_storage::workspace_storage_non_speculative_init,
-        m
-    )?)?;
 
     // Time
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
