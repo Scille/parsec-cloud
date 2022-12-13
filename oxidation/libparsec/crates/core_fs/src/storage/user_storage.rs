@@ -1,11 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::collections::HashSet;
+use std::{collections::HashSet, path::Path};
 
 use libparsec_client_types::{LocalDevice, LocalManifest, LocalUserManifest};
 use libparsec_types::EntryID;
 
-use super::manifest_storage::ManifestStorage;
+use super::{
+    local_database::SqliteConn, manifest_storage::ManifestStorage,
+    version::get_user_data_storage_db_path,
+};
 use crate::error::{FSError, FSResult};
 
 pub struct UserStorage {
@@ -25,6 +28,22 @@ impl UserStorage {
             user_manifest_id,
             manifest_storage,
         }
+    }
+
+    pub fn from_db_dir(
+        device: LocalDevice,
+        user_manifest_id: EntryID,
+        data_base_dir: &Path,
+    ) -> FSResult<Self> {
+        let data_path = get_user_data_storage_db_path(data_base_dir, &device);
+        let conn = SqliteConn::new(
+            data_path
+                .to_str()
+                .expect("Non-Utf-8 character found in data_path"),
+        )?;
+        let manifest_storage =
+            ManifestStorage::new(device.local_symkey.clone(), user_manifest_id, conn)?;
+        Ok(Self::new(device, user_manifest_id, manifest_storage))
     }
 
     // Checkpoint Interface
