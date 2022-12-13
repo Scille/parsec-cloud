@@ -2,6 +2,15 @@
 
 use crate::{CryptoError, CryptoResult};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(usize)]
+pub enum SequesterKeySize {
+    _1024Bits = 1024,
+    _2048Bits = 2048,
+    _3072Bits = 3072,
+    _4096Bits = 4096,
+}
+
 pub(crate) trait EnforceSerialize {
     const ALGORITHM: &'static [u8];
     fn size_in_bytes(&self) -> usize;

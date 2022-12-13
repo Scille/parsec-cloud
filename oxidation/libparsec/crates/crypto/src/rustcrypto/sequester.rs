@@ -15,7 +15,9 @@ use serde_bytes::Bytes;
 use sha1::Sha1;
 use sha2::Sha256;
 
-use crate::{CryptoError, CryptoResult, EnforceDeserialize, EnforceSerialize, SecretKey};
+use crate::{
+    CryptoError, CryptoResult, EnforceDeserialize, EnforceSerialize, SecretKey, SequesterKeySize,
+};
 
 /*
  * PrivateKey
@@ -40,14 +42,14 @@ impl EnforceDeserialize for SequesterPrivateKeyDer {
     const ALGORITHM: &'static [u8] = b"RSAES-OAEP-XSALSA20-POLY1305";
 
     fn size_in_bytes(&self) -> usize {
-        self.size_in_bytes()
+        SequesterPrivateKeyDer::size_in_bytes(self)
     }
 }
 
 impl SequesterPrivateKeyDer {
-    pub fn generate_pair(size_in_bits: usize) -> (Self, SequesterPublicKeyDer) {
-        let priv_key = RsaPrivateKey::new(&mut rand_08::thread_rng(), size_in_bits)
-            .expect("Invalid key size, should be used only for test");
+    pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
+        let priv_key = RsaPrivateKey::new(&mut rand_08::thread_rng(), size_in_bits as usize)
+            .expect("Cannot generate the RSA key");
         let pub_key = RsaPublicKey::from(&priv_key);
 
         (Self(priv_key), SequesterPublicKeyDer(pub_key))
@@ -129,7 +131,7 @@ impl EnforceSerialize for SequesterPublicKeyDer {
     const ALGORITHM: &'static [u8] = b"RSAES-OAEP-XSALSA20-POLY1305";
 
     fn size_in_bytes(&self) -> usize {
-        self.size_in_bytes()
+        SequesterPublicKeyDer::size_in_bytes(self)
     }
 }
 
@@ -178,6 +180,14 @@ pub struct SequesterSigningKeyDer(SigningKey<Sha256>);
 
 crate::impl_key_debug!(SequesterSigningKeyDer);
 
+impl PartialEq for SequesterSigningKeyDer {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.as_ref() == other.0.as_ref()
+    }
+}
+
+impl Eq for SequesterSigningKeyDer {}
+
 impl TryFrom<&[u8]> for SequesterSigningKeyDer {
     type Error = CryptoError;
 
@@ -193,12 +203,12 @@ impl EnforceSerialize for SequesterSigningKeyDer {
     const ALGORITHM: &'static [u8] = b"RSASSA-PSS-SHA256";
 
     fn size_in_bytes(&self) -> usize {
-        self.size_in_bytes()
+        SequesterSigningKeyDer::size_in_bytes(self)
     }
 }
 
 impl SequesterSigningKeyDer {
-    pub fn generate_pair(size_in_bits: usize) -> (Self, SequesterVerifyKeyDer) {
+    pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterVerifyKeyDer) {
         let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
         let signing_key = SigningKey::from(priv_key.0);
         let verify_key = VerifyingKey::from(pub_key.0);
@@ -286,7 +296,7 @@ impl EnforceDeserialize for SequesterVerifyKeyDer {
     const ALGORITHM: &'static [u8] = b"RSASSA-PSS-SHA256";
 
     fn size_in_bytes(&self) -> usize {
-        self.size_in_bytes()
+        SequesterVerifyKeyDer::size_in_bytes(self)
     }
 }
 

@@ -4,7 +4,8 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_crypto::{
-    SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterSigningKeyDer, SequesterVerifyKeyDer,
+    SequesterKeySize, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterSigningKeyDer,
+    SequesterVerifyKeyDer,
 };
 
 const PRIVATE_KEY_PEM_1024: &str = r#"-----BEGIN PRIVATE KEY-----
@@ -179,21 +180,21 @@ fn test_key_equality(#[case] pub_key: &[u8]) {
 }
 
 #[rstest]
-#[case(1024)]
-#[case(2048)]
-fn test_size(#[case] size_in_bits: usize) {
+#[case(SequesterKeySize::_1024Bits)]
+#[case(SequesterKeySize::_2048Bits)]
+fn test_size(#[case] size_in_bits: SequesterKeySize) {
     let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
     let (signing_key, verify_key) = SequesterSigningKeyDer::generate_pair(size_in_bits);
-    assert_eq!(priv_key.size_in_bytes(), size_in_bits / 8);
-    assert_eq!(pub_key.size_in_bytes(), size_in_bits / 8);
-    assert_eq!(signing_key.size_in_bytes(), size_in_bits / 8);
-    assert_eq!(verify_key.size_in_bytes(), size_in_bits / 8);
+    assert_eq!(priv_key.size_in_bytes(), size_in_bits as usize / 8);
+    assert_eq!(pub_key.size_in_bytes(), size_in_bits as usize / 8);
+    assert_eq!(signing_key.size_in_bytes(), size_in_bits as usize / 8);
+    assert_eq!(verify_key.size_in_bytes(), size_in_bits as usize / 8);
 }
 
 #[rstest]
-#[case(1024)]
-#[case(2048)]
-fn test_encrypt_decrypt(#[case] size_in_bits: usize) {
+#[case(SequesterKeySize::_1024Bits)]
+#[case(SequesterKeySize::_2048Bits)]
+fn test_encrypt_decrypt(#[case] size_in_bits: SequesterKeySize) {
     let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
 
     let encrypted = pub_key.encrypt(b"foo");
@@ -202,9 +203,9 @@ fn test_encrypt_decrypt(#[case] size_in_bits: usize) {
 }
 
 #[rstest]
-#[case(1024)]
-#[case(2048)]
-fn test_sign_verify(#[case] size_in_bits: usize) {
+#[case(SequesterKeySize::_1024Bits)]
+#[case(SequesterKeySize::_2048Bits)]
+fn test_sign_verify(#[case] size_in_bits: SequesterKeySize) {
     let (signing_key, verify_key) = SequesterSigningKeyDer::generate_pair(size_in_bits);
 
     let signed = signing_key.sign(b"foo");
@@ -221,14 +222,17 @@ fn test_import_export(
     #[case] public_key_pem: &str,
     #[case] public_key_der: &[u8],
 ) {
-    println!("{private_key_der:02x?}");
-    println!("\n---\n");
-    println!("{public_key_der:02x?}");
     let priv_key_pem = SequesterPrivateKeyDer::load_pem(private_key_pem).unwrap();
     let priv_key_der = SequesterPrivateKeyDer::try_from(private_key_der).unwrap();
 
     let pub_key_pem = SequesterPublicKeyDer::load_pem(public_key_pem).unwrap();
     let pub_key_der = SequesterPublicKeyDer::try_from(public_key_der).unwrap();
+
+    let signing_key_pem = SequesterSigningKeyDer::load_pem(private_key_pem).unwrap();
+    let signing_key_der = SequesterSigningKeyDer::try_from(private_key_der).unwrap();
+
+    let verify_key_pem = SequesterVerifyKeyDer::load_pem(public_key_pem).unwrap();
+    let verify_key_der = SequesterVerifyKeyDer::try_from(public_key_der).unwrap();
 
     assert_eq!(priv_key_pem, priv_key_der);
     assert_eq!(pub_key_pem, pub_key_der);
@@ -250,6 +254,24 @@ fn test_import_export(
     assert_eq!(
         SequesterPublicKeyDer::try_from(&pub_key_der.dump()[..]).unwrap(),
         pub_key_der
+    );
+
+    assert_eq!(
+        SequesterSigningKeyDer::load_pem(&signing_key_pem.dump_pem()).unwrap(),
+        signing_key_pem
+    );
+    assert_eq!(
+        SequesterSigningKeyDer::try_from(&signing_key_der.dump()[..]).unwrap(),
+        signing_key_der
+    );
+
+    assert_eq!(
+        SequesterVerifyKeyDer::load_pem(&verify_key_pem.dump_pem()).unwrap(),
+        verify_key_pem
+    );
+    assert_eq!(
+        SequesterVerifyKeyDer::try_from(&verify_key_der.dump()[..]).unwrap(),
+        verify_key_der
     );
 }
 

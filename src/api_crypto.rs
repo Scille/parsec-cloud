@@ -304,11 +304,25 @@ impl SequesterPrivateKeyDer {
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
+    // TODO: Remove once it's no longer used in python test
     #[classmethod]
-    fn generate_pair(_cls: &PyType, size_in_bits: usize) -> (Self, SequesterPublicKeyDer) {
+    fn generate_pair(
+        _cls: &PyType,
+        size_in_bits: usize,
+    ) -> PyResult<(Self, SequesterPublicKeyDer)> {
         let (priv_key, pub_key) =
-            libparsec::crypto::SequesterPrivateKeyDer::generate_pair(size_in_bits);
-        (Self(priv_key), SequesterPublicKeyDer(pub_key))
+            libparsec::crypto::SequesterPrivateKeyDer::generate_pair(match size_in_bits {
+                1024 => libparsec::crypto::SequesterKeySize::_1024Bits,
+                2048 => libparsec::crypto::SequesterKeySize::_2048Bits,
+                3072 => libparsec::crypto::SequesterKeySize::_3072Bits,
+                4096 => libparsec::crypto::SequesterKeySize::_4096Bits,
+                _ => {
+                    return Err(PyValueError::new_err(
+                        "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
+                    ))
+                }
+            });
+        Ok((Self(priv_key), SequesterPublicKeyDer(pub_key)))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
@@ -378,11 +392,32 @@ crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __repr__);
 
 #[pymethods]
 impl SequesterSigningKeyDer {
+    #[new]
+    pub fn new(data: &[u8]) -> PyResult<Self> {
+        libparsec::crypto::SequesterSigningKeyDer::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    // TODO: Remove once it's no longer used in python test
     #[classmethod]
-    fn generate_pair(_cls: &PyType, size_in_bits: usize) -> (Self, SequesterVerifyKeyDer) {
+    fn generate_pair(
+        _cls: &PyType,
+        size_in_bits: usize,
+    ) -> PyResult<(Self, SequesterVerifyKeyDer)> {
         let (priv_key, pub_key) =
-            libparsec::crypto::SequesterSigningKeyDer::generate_pair(size_in_bits);
-        (Self(priv_key), SequesterVerifyKeyDer(pub_key))
+            libparsec::crypto::SequesterSigningKeyDer::generate_pair(match size_in_bits {
+                1024 => libparsec::crypto::SequesterKeySize::_1024Bits,
+                2048 => libparsec::crypto::SequesterKeySize::_2048Bits,
+                3072 => libparsec::crypto::SequesterKeySize::_3072Bits,
+                4096 => libparsec::crypto::SequesterKeySize::_4096Bits,
+                _ => {
+                    return Err(PyValueError::new_err(
+                        "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
+                    ))
+                }
+            });
+        Ok((Self(priv_key), SequesterVerifyKeyDer(pub_key)))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {

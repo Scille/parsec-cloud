@@ -6,7 +6,7 @@ mod sequester;
 
 pub use error::*;
 pub(crate) use secret::*;
-pub(crate) use sequester::*;
+pub use sequester::*;
 
 macro_rules! impl_key_debug {
     ($name: ident) => {
