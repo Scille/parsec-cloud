@@ -4,6 +4,7 @@ use pyo3::{import_exception, prelude::PyModule, wrap_pyfunction, PyErr, PyResult
 
 use libparsec::core_fs::FSError;
 
+pub(crate) mod user_storage;
 pub(crate) mod workspace_storage;
 
 pub(crate) fn add_mod(_py: Python, m: &PyModule) -> PyResult<()> {
@@ -11,6 +12,12 @@ pub(crate) fn add_mod(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<workspace_storage::WorkspaceStorageSnapshot>()?;
     m.add_function(wrap_pyfunction!(
         workspace_storage::workspace_storage_non_speculative_init,
+        m
+    )?)?;
+
+    m.add_class::<user_storage::UserStorage>()?;
+    m.add_function(wrap_pyfunction!(
+        user_storage::user_storage_non_speculative_init,
         m
     )?)?;
 
