@@ -15,21 +15,10 @@ pub struct UserStorage {
     device: LocalDevice,
     user_manifest_id: EntryID,
     manifest_storage: ManifestStorage,
+    data_conn: SqliteConn,
 }
 
 impl UserStorage {
-    pub fn new(
-        device: LocalDevice,
-        user_manifest_id: EntryID,
-        manifest_storage: ManifestStorage,
-    ) -> Self {
-        Self {
-            device,
-            user_manifest_id,
-            manifest_storage,
-        }
-    }
-
     pub fn from_db_dir(
         device: LocalDevice,
         user_manifest_id: EntryID,
@@ -42,8 +31,20 @@ impl UserStorage {
                 .expect("Non-Utf-8 character found in data_path"),
         )?;
         let manifest_storage =
-            ManifestStorage::new(device.local_symkey.clone(), user_manifest_id, conn)?;
-        Ok(Self::new(device, user_manifest_id, manifest_storage))
+            ManifestStorage::new(device.local_symkey.clone(), user_manifest_id, conn.clone())?;
+        Ok(Self {
+            device,
+            user_manifest_id,
+            manifest_storage,
+            data_conn: conn,
+        })
+    }
+
+    /// Close the connections to the databases.
+    /// Provide a way to manually close those connections.
+    /// Event tho they will be closes when [UserStorage] is dropped.
+    pub fn close_connections(&self) {
+        self.data_conn.close_connection()
     }
 
     // Checkpoint Interface
@@ -80,7 +81,7 @@ impl UserStorage {
             .ok_or(FSError::UserManifestMissing)
     }
 
-    fn load_user_manifest(&self) -> FSResult<()> {
+    pub fn load_user_manifest(&self) -> FSResult<()> {
         if self
             .manifest_storage
             .get_manifest(self.user_manifest_id)
@@ -104,6 +105,10 @@ impl UserStorage {
     }
 
     pub fn set_user_manifest(&self, user_manifest: LocalUserManifest) -> FSResult<()> {
+        assert_eq!(
+            self.user_manifest_id, user_manifest.base.id,
+            "UserManifest should have the same EntryID as registered in UserStorage"
+        );
         self.manifest_storage.set_manifest(
             self.user_manifest_id,
             LocalManifest::User(user_manifest),
@@ -113,28 +118,51 @@ impl UserStorage {
     }
 }
 
+pub fn user_storage_non_speculative_init(
+    data_base_dir: &Path,
+    device: LocalDevice,
+) -> FSResult<()> {
+    let data_path = get_user_data_storage_db_path(data_base_dir, &device);
+    let conn = SqliteConn::new(
+        data_path
+            .to_str()
+            .expect("Non Utf-8 character found in data_path"),
+    )?;
+    let manifest_storage =
+        ManifestStorage::new(device.local_symkey.clone(), device.user_manifest_id, conn)?;
+
+    let timestamp = device.now();
+    let manifest = LocalUserManifest::new(
+        device.device_id,
+        timestamp,
+        Some(device.user_manifest_id),
+        false,
+    );
+
+    manifest_storage.set_manifest(
+        device.user_manifest_id,
+        LocalManifest::User(manifest),
+        false,
+        None,
+    )
+}
+
 #[cfg(test)]
 mod tests {
-    use libparsec_crypto::SecretKey;
     use libparsec_types::{DateTime, UserManifest};
 
     use rstest::rstest;
     use tests_fixtures::{alice, timestamp, tmp_path, Device, TmpPath};
 
-    use super::super::local_database::SqliteConn;
     use super::*;
 
     #[rstest]
     fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
         let db_path = tmp_path.join("user_storage.sqlite");
-        let conn = SqliteConn::new(db_path.to_str().unwrap()).unwrap();
-        let local_symkey = SecretKey::generate();
-        let realm_id = EntryID::default();
         let user_manifest_id = alice.user_manifest_id;
 
-        let manifest_storage = ManifestStorage::new(local_symkey, realm_id, conn).unwrap();
         let user_storage =
-            UserStorage::new(alice.local_device(), user_manifest_id, manifest_storage);
+            UserStorage::from_db_dir(alice.local_device(), user_manifest_id, &db_path).unwrap();
 
         user_storage.get_realm_checkpoint();
         user_storage.update_realm_checkpoint(64, &[]).unwrap();

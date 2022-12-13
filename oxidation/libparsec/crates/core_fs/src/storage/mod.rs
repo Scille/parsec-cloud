@@ -4,11 +4,10 @@ mod chunk_storage;
 mod local_database;
 mod manifest_storage;
 mod sql_types;
-// Not used for the moment
-#[allow(dead_code)]
 mod user_storage;
 mod version;
 mod workspace_storage;
 
 pub use manifest_storage::ChunkOrBlockID;
+pub use user_storage::{user_storage_non_speculative_init, UserStorage};
 pub use workspace_storage::*;
