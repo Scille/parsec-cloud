@@ -12,8 +12,8 @@ use super::{
 use crate::error::{FSError, FSResult};
 
 pub struct UserStorage {
-    device: LocalDevice,
-    user_manifest_id: EntryID,
+    pub device: LocalDevice,
+    pub user_manifest_id: EntryID,
     manifest_storage: ManifestStorage,
     data_conn: SqliteConn,
 }

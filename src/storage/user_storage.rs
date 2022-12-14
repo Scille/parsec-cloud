@@ -15,11 +15,15 @@ pub(crate) struct UserStorage(pub libparsec::core_fs::UserStorage);
 #[pymethods]
 impl UserStorage {
     #[new]
-    fn new(device: LocalDevice, user_manifest_id: EntryID, data_base_dir: &str) -> PyResult<Self> {
+    fn new(
+        device: LocalDevice,
+        user_manifest_id: EntryID,
+        data_base_dir: PathBuf,
+    ) -> PyResult<Self> {
         let storage = libparsec::core_fs::UserStorage::from_db_dir(
             device.0,
             user_manifest_id.0,
-            data_base_dir.as_ref(),
+            &data_base_dir,
         )
         .map_err(fs_to_python_error)?;
         Ok(Self(storage))
@@ -75,13 +79,18 @@ impl UserStorage {
             .set_user_manifest(user_manifest.0)
             .map_err(fs_to_python_error)
     }
+
+    #[getter]
+    fn device(&self) -> LocalDevice {
+        LocalDevice(self.0.device.clone())
+    }
 }
 
 #[pyfunction]
 pub(crate) fn user_storage_non_speculative_init(
-    data_base_dir: &str,
+    data_base_dir: PathBuf,
     device: LocalDevice,
 ) -> PyResult<()> {
-    libparsec::core_fs::user_storage_non_speculative_init(&PathBuf::from(data_base_dir), device.0)
+    libparsec::core_fs::user_storage_non_speculative_init(&data_base_dir, device.0)
         .map_err(fs_to_python_error)
 }
