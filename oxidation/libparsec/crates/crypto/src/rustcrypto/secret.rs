@@ -78,7 +78,7 @@ impl SecretKey {
     pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
         // TODO only work for 5 bytes -> need to improve
         if digest_size != 5 {
-            panic!("Not implemeted for this digest size");
+            panic!("Not implemented for this digest size");
         }
         // TODO investigate why new() is not working
         // let mut hasher = Blake2bMac40::new(&self.0);

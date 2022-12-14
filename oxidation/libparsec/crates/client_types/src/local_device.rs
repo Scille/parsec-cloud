@@ -228,9 +228,9 @@ impl UserInfo {
     }
 
     /// Note that we might consider a user revoked even though our current time is still
-    /// below the revokation timestamp. This is because there is no clear causality between
-    /// our time and the production of the revokation timestamp (as it might have been produced
-    /// by another device). So we simply consider a user revoked if a revokation timestamp has
+    /// below the revocation timestamp. This is because there is no clear causality between
+    /// our time and the production of the revocation timestamp (as it might have been produced
+    /// by another device). So we simply consider a user revoked if a revocation timestamp has
     /// been issued.
     pub fn is_revoked(&self) -> bool {
         self.revoked_on.is_some()

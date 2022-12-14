@@ -30,12 +30,12 @@ xsalsa20poly1305 = { version = "0.8.0", optional = true }
 # Cryptographic randomness is required for generating SecretKey, SigningKey and PrivateKey
 # For SecretKey, we have `crypto_box` -> [...] -> `rand_core~=0.6` -> `getrandom~=0.2`
 # For SingingKey&PrivateKey we have `<dalek stuff>` -> `rand~=0.5` -> `getrandom~=0.1`
-# So we endup with two version of `getrandom` which have each they own way of
+# So we end up with two version of `getrandom` which have each they own way of
 # configuring wasm-unknown-unknown web support (see [features] part).
 getrandom_01 = { package = "getrandom", version = "0.1.16", optional = true }
 getrandom_02 = { package = "getrandom", version = "0.2.3", optional = true }
 # On top of that we need to have access to the two version of rand (0.7 and 0.8)
-# to provide the randmoness configuration to the crypto functions.
+# to provide the randomness configuration to the crypto functions.
 # rand 0.7 relies on rand_core~=0.5/getrandom~=0.1
 rand_07 = { package = "rand", version = "0.7", optional = true }
 # rand 0.8 relies on rand_core~=0.6/getrandom~=0.2

@@ -69,8 +69,8 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
             .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
 
         if tag != DATETIME_EXT_ID {
-            let unexp = serde::de::Unexpected::Signed(tag as i64);
-            return Err(serde::de::Error::invalid_value(unexp, &self));
+            let unexpected = serde::de::Unexpected::Signed(tag as i64);
+            return Err(serde::de::Error::invalid_value(unexpected, &self));
         }
 
         const F64_SIZE: usize = std::mem::size_of::<f64>();
@@ -121,8 +121,8 @@ impl<'de> serde::de::Visitor<'de> for UuidExtVisitor {
             uuid::Uuid::from_slice(&data)
                 .map_err(|_| serde::de::Error::custom("invalid size of data extension"))
         } else {
-            let unexp = serde::de::Unexpected::Signed(tag as i64);
-            Err(serde::de::Error::invalid_value(unexp, &self))
+            let unexpected = serde::de::Unexpected::Signed(tag as i64);
+            Err(serde::de::Error::invalid_value(unexpected, &self))
         }
     }
 }

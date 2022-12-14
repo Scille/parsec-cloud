@@ -252,7 +252,7 @@ mod mock_time {
 // to simulate in our tests complex behavior where different Parsec client/server have
 // shifting clocks.
 // So the solution here is to force the current time to be taken from a non-global object
-// (typically each client/server should have it own) that can be independantly mocked.
+// (typically each client/server should have it own) that can be independently mocked.
 
 #[cfg(not(feature = "mock-time"))]
 mod time_provider {
@@ -427,7 +427,7 @@ mod time_provider {
         /// Hence it is possible this time is taken after we have call the mock_time (this
         /// is typically the case when calling sleep from Python where the actual sleep is
         /// scheduled on a tokio thread while directly returning a fake coroutine).
-        /// So the solution is to use a busyloop in the testing code that watch over the
+        /// So the solution is to use a busy loop in the testing code that watch over the
         /// number of tasks currently sleeping on our time provider.
         pub fn sleeping_stats(&self) -> u64 {
             self.0.lock().expect("Mutex is poisoned").sleeping_stats

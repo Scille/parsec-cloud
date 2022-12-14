@@ -119,7 +119,7 @@ jobs:
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
 
-      - name: Check Newsfragment
+      - name: Check News fragments
         if: |
           startsWith(github.ref, 'refs/pull/')
           && !(

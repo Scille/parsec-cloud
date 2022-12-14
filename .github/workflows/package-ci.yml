@@ -345,7 +345,7 @@ jobs:
       - name: Test open app
         run: |
           set -eux
-          tar -xzvf dist/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
+          tar -xzvf dist/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2 # cspell:disable-line
           /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f parsec.app
           open parsec.app --args --diagnose
 

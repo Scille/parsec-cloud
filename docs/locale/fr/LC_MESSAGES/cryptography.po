@@ -127,7 +127,7 @@ msgstr ""
 #: ../../cryptography.rst:31
 msgid ""
 "Alice signals to the back-end that Bob is invited to the organization and"
-" transmits his email adress."
+" transmits his email address."
 msgstr ""
 "Alice signale au back-end que Bob est invité au sein de l'organisation en"
 " transmettant son adresse e-mail."

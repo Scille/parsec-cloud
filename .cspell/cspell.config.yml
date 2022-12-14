@@ -1,0 +1,77 @@
+---
+$schema: https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
+version: "0.2"
+dictionaryDefinitions:
+  - name: custom-words
+    path: ./.cspell/custom-words.txt
+    scope: workspace
+    addWords: true
+  - name: names
+    path: ./.cspell/names.txt
+    scope: workspace
+    addWords: true
+  # Not all french word are present in the `fr-fr` dictionary.
+  - name: french-words
+    path: ./.cspell/french-words.txt
+    addWords: true
+dictionaries:
+  - en_us
+  - en-gb
+  - fr-fr
+  - french-words
+  - lorem-ipsum
+  - misc
+  - softwareTerms
+  - networking-terms
+  - python
+  - python-common
+  - rust
+  - cpp
+  - cpp-refined
+  - filetypes
+  - bash
+  - shell
+  - custom-words
+  - names
+  - typescript
+  - sql
+words:
+  - libparsec
+  - schemafile
+  - intlify
+ignoreWords:
+  - ApiV
+  - ABCDEFGHJKLMNPQRSTUVWXYZ
+  - ZGIQ
+  - WPFF
+  - QPIM
+  - DWXJ
+  - VFKA
+  - QPGW
+  - NNWQ
+  - KBWM
+  - HRSW
+  - SPFYHIZLEL
+  - QWIPQs
+  - QYJW
+  - YVPZ
+  - XBAO
+  - Aaaaaand
+  - VQLP
+  - XPCMTSEN
+  - ZOXKGGIMTY
+  - Assss
+  - dksjdskdjs
+  - SPIHB
+cache:
+  cacheFormat: universal
+  cacheStrategy: metadata
+  useCache: true
+useGitignore: true
+ignorePaths:
+  - ./oxidation/libparsec_python
+import:
+  - "@cspell/dict-fr-fr/cspell-ext.json"
+  - "@cspell/dict-fr-reforme/cspell-ext.json"
+  - "@cspell/dict-bash/cspell-ext.json"
+  - "@cspell/dict-shell/cspell-ext.json"

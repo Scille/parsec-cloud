@@ -163,7 +163,7 @@ impl SASCode {
         combined_nonce.extend_from_slice(claimer_nonce);
         combined_nonce.extend_from_slice(greeter_nonce);
 
-        // Digest size of 5 bytes so we can split it beween two 20bits SAS
+        // Digest size of 5 bytes so we can split it between two 20bits SAS
         // Note we have to store is as a 8bytes array to be able to convert it into u64
         let mut combined_hmac = [0; 8];
         combined_hmac[3..8].clone_from_slice(&shared_secret_key.hmac(&combined_nonce, 5)[..]);
