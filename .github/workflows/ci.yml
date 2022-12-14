@@ -227,9 +227,6 @@ jobs:
           pwd
           echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1.3.4
-        if: steps.python-changes.outputs.run == 'true'
-
       - uses: ./.github/actions/setup-python-poetry
         if: steps.python-changes.outputs.run == 'true'
         id: setup-python
@@ -237,20 +234,36 @@ jobs:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
-      - name: Debug python & pip version
-        if: steps.python-changes.outputs.run == 'true'
-        shell: bash
-        continue-on-error: true
-        run: |
-          set -x
-          poetry run python --version
-          poetry run pip --version
+      # libparsec is slow to compile, so we save it in cache and skip the
+      # compilation entirely if the Rust code hasn't changed !
+
+      - name: Use cached libparsec if Rust hasn't been modified
+        id: cache-libparsec
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && steps.rust-changes.outputs.run == 'false'
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-libparsec
+          path: |
+            parsec/_parsec.*.pyd
+            parsec/_parsec.*.so
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1.3.4
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && (
+            steps.rust-changes.outputs.run == 'false'
+            || steps.cache-libparsec.outputs.cache-hit != 'true'
+          )
 
       - name: Install python deps
         if: steps.python-changes.outputs.run == 'true'
         run: poetry install -E core -E backend
         env:
           CARGO_PROFILE: ${{ env.CARGO_PROFILE }}
+          POETRY_LIBPARSEC_NO_REBUILD: true
 
       - name: Basic tests
         if: steps.python-changes.outputs.run == 'true'
