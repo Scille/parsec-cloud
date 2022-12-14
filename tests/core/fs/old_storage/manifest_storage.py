@@ -3,16 +3,15 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncContextManager, AsyncIterator, Dict, Set, Tuple, Union
+from typing import AsyncContextManager, AsyncIterator
 
 import trio
 from structlog import get_logger
 
-from parsec._parsec import Regex
+from parsec._parsec import BlockID, ChunkID, EntryID, LocalDevice, Regex
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
-from parsec.core.fs.storage.local_database import Cursor, LocalDatabase
-from parsec.core.types import BlockID, ChunkID, EntryID, LocalDevice
 from parsec.core.types.manifest import AnyLocalManifest, local_manifest_decrypt_and_load
+from tests.core.fs.old_storage.local_database import Cursor, LocalDatabase
 
 logger = get_logger()
 
@@ -32,7 +31,7 @@ class ManifestStorage:
 
         # This cache contains all the manifests that have been set or accessed
         # since the last call to `clear_memory_cache`
-        self._cache: Dict[EntryID, AnyLocalManifest] = {}
+        self._cache: dict[EntryID, AnyLocalManifest] = {}
 
         # This dictionary keeps track of all the entry ids of the manifests
         # that have been added to the cache but still needs to be written to
@@ -40,7 +39,7 @@ class ManifestStorage:
         # the chunks that needs to be removed from the localdb after the
         # manifest is written. Note: this set might be empty but the manifest
         # still requires to be flushed.
-        self._cache_ahead_of_localdb: Dict[EntryID, Set[Union[ChunkID, BlockID]]] = {}
+        self._cache_ahead_of_localdb: dict[EntryID, set[ChunkID | BlockID]] = {}
 
     @property
     def path(self) -> Path:
@@ -168,7 +167,7 @@ class ManifestStorage:
             return rep[0] if rep else 0
 
     async def update_realm_checkpoint(
-        self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
+        self, new_checkpoint: int, changed_vlobs: dict[EntryID, int]
     ) -> None:
         """
         Raises: Nothing !
@@ -184,7 +183,7 @@ class ManifestStorage:
                 (new_checkpoint,),
             )
 
-    async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
+    async def get_need_sync_entries(self) -> tuple[set[EntryID], set[EntryID]]:
         """
         Raises: Nothing !
         """
@@ -242,7 +241,7 @@ class ManifestStorage:
         entry_id: EntryID,
         manifest: AnyLocalManifest,
         cache_only: bool = False,
-        removed_ids: Set[ChunkID] | None = None,
+        removed_ids: set[ChunkID] | None = None,
     ) -> None:
         """
         Raises: Nothing !

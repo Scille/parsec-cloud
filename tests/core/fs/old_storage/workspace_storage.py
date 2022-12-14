@@ -29,14 +29,14 @@ from parsec.core.fs.exceptions import (
     FSLocalMissError,
     FSLocalStorageClosedError,
 )
-from parsec.core.fs.storage.local_database import Cursor, LocalDatabase
-from parsec.core.fs.storage.manifest_storage import ManifestStorage
-from parsec.core.fs.storage.version import (
+from parsec.core.types import DEFAULT_BLOCK_SIZE, FileDescriptor
+from parsec.core.types.manifest import AnyLocalManifest
+from tests.core.fs.old_storage.local_database import Cursor, LocalDatabase
+from tests.core.fs.old_storage.manifest_storage import ManifestStorage
+from tests.core.fs.old_storage.version import (
     get_workspace_cache_storage_db_path,
     get_workspace_data_storage_db_path,
 )
-from parsec.core.types import DEFAULT_BLOCK_SIZE, FileDescriptor
-from parsec.core.types.manifest import AnyLocalManifest
 
 logger = get_logger()
 
