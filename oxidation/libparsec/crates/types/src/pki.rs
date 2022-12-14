@@ -20,7 +20,7 @@ fn load<T: DeserializeOwned>(raw: &[u8]) -> DataResult<T> {
         .read_to_end(&mut decompressed)
         .map_err(|_| DataError::Compression)?;
 
-    rmp_serde::from_slice(&decompressed).map_err(|_| DataError::Serialization)
+    rmp_serde::from_slice(&decompressed).map_err(|_| Box::new(DataError::Serialization))
 }
 
 fn dump<T: Serialize>(data: &T) -> Vec<u8> {

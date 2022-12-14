@@ -12,7 +12,7 @@ use std::{
 use libparsec_crypto::SecretKey;
 use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
 
-use crate::{LocalDevice, LocalDeviceError, LocalDeviceResult};
+use crate::{LocalDevice, LocalDeviceError, LocalDeviceResult, StrPath};
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -111,7 +111,7 @@ pub enum DeviceFileType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct AvailableDevice {
-    pub key_file_path: PathBuf,
+    pub key_file_path: StrPath,
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
     pub human_handle: Option<HumanHandle>,
@@ -122,25 +122,25 @@ pub struct AvailableDevice {
 }
 
 impl AvailableDevice {
-    pub fn user_display(&self) -> String {
+    pub fn user_display(&self) -> &str {
         self.human_handle
             .as_ref()
-            .map(HumanHandle::to_string)
-            .unwrap_or_else(|| self.device_id.user_id.to_string())
+            .map(|x| x.as_ref())
+            .unwrap_or_else(|| self.device_id.user_id().as_ref())
     }
 
-    pub fn short_user_display(&self) -> String {
+    pub fn short_user_display(&self) -> &str {
         self.human_handle
             .as_ref()
-            .map(|hh| hh.label.clone())
-            .unwrap_or_else(|| self.device_id.user_id.to_string())
+            .map(|hh| hh.label())
+            .unwrap_or_else(|| self.device_id.user_id().as_ref())
     }
 
-    pub fn device_display(&self) -> String {
+    pub fn device_display(&self) -> &str {
         self.device_label
             .as_ref()
-            .map(DeviceLabel::to_string)
-            .unwrap_or_else(|| self.device_id.device_name.to_string())
+            .map(|x| x.as_ref())
+            .unwrap_or_else(|| self.device_id.device_name().as_ref())
     }
 
     /// For the legacy device files, the slug is contained in the device filename
@@ -191,7 +191,7 @@ impl AvailableDevice {
             };
 
         Ok(Self {
-            key_file_path,
+            key_file_path: key_file_path.into(),
             organization_id,
             device_id,
             human_handle,
@@ -235,7 +235,7 @@ pub fn list_available_devices(config_dir: &Path) -> LocalDeviceResult<Vec<Availa
     // Set of seen slugs
     let mut seen = HashSet::new();
 
-    let key_file_paths = PathBuf::from(config_dir).join("devices");
+    let key_file_paths = config_dir.join("devices");
 
     // Consider `.keys` files in devices directory
     let mut key_file_paths = read_key_file_paths(key_file_paths)?;

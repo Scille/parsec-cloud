@@ -480,7 +480,7 @@ impl RealmRoleCertificate {
         realm_id: RealmID,
     ) -> Self {
         Self(libparsec::types::RealmRoleCertificate {
-            user_id: author.0.user_id.clone(),
+            user_id: author.0.user_id().clone(),
             author: CertificateSignerOwned::User(author.0),
             timestamp: timestamp.0,
             realm_id: realm_id.0,

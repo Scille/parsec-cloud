@@ -55,7 +55,7 @@ macro_rules! impl_manifest_dump_load {
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
                 expected_version: Option<u32>,
-            ) -> Result<Self, DataError> {
+            ) -> DataResult<Self> {
                 let signed = key.decrypt(encrypted)?;
 
                 Self::verify_and_load(
@@ -77,7 +77,7 @@ macro_rules! impl_manifest_dump_load {
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
                 expected_version: Option<u32>,
-            ) -> Result<Self, DataError> {
+            ) -> DataResult<Self> {
                 let compressed = author_verify_key.verify(&signed)?;
                 let mut serialized = vec![];
 
@@ -104,27 +104,27 @@ macro_rules! impl_manifest_dump_load {
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
                 expected_version: Option<u32>,
-            ) -> Result<(), DataError> {
+            ) -> DataResult<()> {
                 if self.author != *expected_author {
-                    Err(DataError::UnexpectedAuthor {
+                    Err(Box::new(DataError::UnexpectedAuthor {
                         expected: expected_author.clone(),
                         got: Some(self.author.clone()),
-                    })
+                    }))
                 } else if self.timestamp != expected_timestamp {
-                    Err(DataError::UnexpectedTimestamp {
+                    Err(Box::new(DataError::UnexpectedTimestamp {
                         expected: expected_timestamp,
                         got: self.timestamp,
-                    })
+                    }))
                 } else if expected_id.is_some() && expected_id != Some(self.id) {
-                    Err(DataError::UnexpectedId {
+                    Err(Box::new(DataError::UnexpectedId {
                         expected: expected_id.unwrap(),
                         got: self.id,
-                    })
+                    }))
                 } else if expected_version.is_some() && expected_version != Some(self.version) {
-                    Err(DataError::UnexpectedVersion {
+                    Err(Box::new(DataError::UnexpectedVersion {
                         expected: expected_version.unwrap(),
                         got: self.version,
-                    })
+                    }))
                 } else {
                     Ok(())
                 }
@@ -517,7 +517,7 @@ impl Manifest {
         let blob = key
             .decrypt(encrypted)
             .map_err(|exc| DataError::Crypto { exc })?;
-        rmp_serde::from_slice(&blob).map_err(|_| DataError::Serialization)
+        rmp_serde::from_slice(&blob).map_err(|_| Box::new(DataError::Serialization))
     }
 
     pub fn decrypt_verify_and_load(

@@ -267,7 +267,7 @@ mod time_provider {
         }
 
         pub async fn sleep(&self, time: std::time::Duration) {
-            libparsec_platform_async::native::sleep(time).await
+            libparsec_platform_async::platform::sleep(time).await;
         }
     }
 }

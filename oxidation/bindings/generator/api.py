@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from typing import Generic, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
 
 # Meta-types, not part of the API but to be used to describe the API
@@ -32,28 +32,42 @@ class OrganizationID(StrBasedType):
     pass
 
 
-class DeviceID(StrBasedType):
-    pass
-
-
 class DeviceLabel(StrBasedType):
     pass
 
 
-class PathBuf(StrBasedType):
+class HumanHandle(StrBasedType):
     pass
 
 
-Path = Ref[PathBuf]
+class StrPath(StrBasedType):
+    pass
 
 
-class HelloError(Variant):
-    class EmptySubject:
+class DeviceID(StrBasedType):
+    pass
+
+
+class DeviceFileType(Variant):
+    class Password:
         pass
 
-    class YouAreADog:
-        hello: str
+    class Recovery:
+        pass
+
+    class Smartcard:
+        pass
 
 
-def hello_world(subject: Ref[str]) -> Result[str, HelloError]:
+class AvailableDevice(Structure):
+    key_file_path: StrPath
+    organization_id: OrganizationID
+    device_id: DeviceID
+    human_handle: Optional[HumanHandle]
+    device_label: Optional[DeviceLabel]
+    slug: str
+    ty: DeviceFileType
+
+
+def list_available_devices(path: StrPath) -> List[AvailableDevice]:
     ...

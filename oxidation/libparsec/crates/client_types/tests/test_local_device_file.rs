@@ -203,11 +203,11 @@ fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &
     )
     .unwrap();
 
-    let devices = list_available_devices(tmp_path.as_path()).unwrap();
+    let devices = list_available_devices(&tmp_path).unwrap();
 
     let expected_devices = HashSet::from([
         AvailableDevice {
-            key_file_path: alice_file_path,
+            key_file_path: alice_file_path.into(),
 
             organization_id: alice.organization_id().clone(),
             device_id: alice.device_id.clone(),
@@ -217,7 +217,7 @@ fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &
             ty: DeviceFileType::Password,
         },
         AvailableDevice {
-            key_file_path: bob_file_path,
+            key_file_path: bob_file_path.into(),
 
             organization_id: bob.organization_id().clone(),
             device_id: bob.device_id.clone(),
@@ -227,7 +227,7 @@ fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &
             ty: DeviceFileType::Password,
         },
         AvailableDevice {
-            key_file_path: mallory_file_path,
+            key_file_path: mallory_file_path.into(),
 
             organization_id: mallory.organization_id().clone(),
             device_id: mallory.device_id.clone(),
@@ -262,7 +262,7 @@ fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath, alice
 
     let devices = list_available_devices(&tmp_path).unwrap();
     let expected_device = AvailableDevice {
-        key_file_path,
+        key_file_path: key_file_path.into(),
         organization_id: alice.organization_id().clone(),
         device_id: alice.device_id.clone(),
         human_handle: None,
@@ -279,7 +279,7 @@ fn test_available_device_display(tmp_path: TmpPath, alice: &Device) {
     let alice = alice.local_device();
 
     let without_labels = AvailableDevice {
-        key_file_path: get_default_key_file(&tmp_path, &alice),
+        key_file_path: get_default_key_file(&tmp_path, &alice).into(),
         organization_id: alice.organization_id().clone(),
         device_id: alice.device_id.clone(),
         human_handle: None,
@@ -289,7 +289,7 @@ fn test_available_device_display(tmp_path: TmpPath, alice: &Device) {
     };
 
     let with_labels = AvailableDevice {
-        key_file_path: get_default_key_file(&tmp_path, &alice),
+        key_file_path: get_default_key_file(&tmp_path, &alice).into(),
         organization_id: alice.organization_id().clone(),
         device_id: alice.device_id.clone(),
         human_handle: alice.human_handle.clone(),
@@ -300,16 +300,16 @@ fn test_available_device_display(tmp_path: TmpPath, alice: &Device) {
 
     assert_eq!(
         without_labels.device_display(),
-        alice.device_name().to_string()
+        alice.device_name().as_ref()
     );
-    assert_eq!(without_labels.user_display(), alice.user_id().to_string());
+    assert_eq!(without_labels.user_display(), alice.user_id().as_ref());
 
     assert_eq!(
         with_labels.device_display(),
-        alice.device_label.unwrap().to_string()
+        alice.device_label.unwrap().as_ref()
     );
     assert_eq!(
         with_labels.user_display(),
-        alice.human_handle.unwrap().to_string()
+        alice.human_handle.unwrap().as_ref()
     );
 }

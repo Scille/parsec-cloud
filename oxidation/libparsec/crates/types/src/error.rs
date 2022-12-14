@@ -70,10 +70,10 @@ pub enum DataError {
     UnexpectedVersion { expected: u32, got: u32 },
 }
 
-pub type DataResult<T> = Result<T, DataError>;
+pub type DataResult<T> = Result<T, Box<DataError>>;
 
-impl From<CryptoError> for DataError {
+impl From<CryptoError> for Box<DataError> {
     fn from(exc: CryptoError) -> Self {
-        Self::Crypto { exc }
+        Box::new(DataError::Crypto { exc })
     }
 }

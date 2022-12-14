@@ -1,10 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use base64::DecodeError;
-use std::path::PathBuf;
 
 use libparsec::crypto::SecretKey;
-pub use libparsec::{create_context, RuntimeContext};
+pub use libparsec::{create_context, RuntimeContext, StrPath};
 
 #[cfg(not(target_arch = "wasm32"))]
 use libparsec::client_types::list_available_devices;
@@ -19,7 +18,7 @@ pub enum Cmd {
     Version,
     Encrypt(SecretKey, Vec<u8>),
     Decrypt(SecretKey, Vec<u8>),
-    ListAvailableDevices(PathBuf),
+    ListAvailableDevices(StrPath),
 }
 
 impl Cmd {
@@ -42,7 +41,7 @@ impl Cmd {
             },
             ("list_available_devices", [config_dir]) => {
                 let config_dir = std::str::from_utf8(config_dir).unwrap();
-                Self::ListAvailableDevices(PathBuf::from(config_dir))
+                Self::ListAvailableDevices(StrPath::from(config_dir))
             }
             (unknown_cmd, payload) => {
                 return Err(format!(

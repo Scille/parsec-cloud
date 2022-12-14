@@ -219,11 +219,8 @@ new_string_based_id_type!(pub OrganizationID, 32, r"^[\w\-]{1,32}$");
 new_string_based_id_type!(pub UserID, 32, r"^[\w\-]{1,32}$");
 
 impl UserID {
-    pub fn to_device_id(&self, device_name: &DeviceName) -> DeviceID {
-        DeviceID {
-            user_id: self.to_owned(),
-            device_name: device_name.to_owned(),
-        }
+    pub fn to_device_id(&self, device_name: DeviceName) -> DeviceID {
+        DeviceID::new(self.clone(), device_name)
     }
 }
 
@@ -244,12 +241,20 @@ impl_from_maybe!(Option<DeviceLabel>);
  * DeviceID
  */
 
-#[derive(
-    Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord, Hash,
-)]
+#[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceID {
-    pub user_id: UserID,
-    pub device_name: DeviceName,
+    user_id: UserID,
+    device_name: DeviceName,
+    // Cache the display str
+    display: String,
+}
+
+impl Default for DeviceID {
+    fn default() -> Self {
+        let user_id = Default::default();
+        let device_name = Default::default();
+        Self::new(user_id, device_name)
+    }
 }
 
 impl_debug_from_display!(DeviceID);
@@ -257,9 +262,13 @@ impl_debug_from_display!(DeviceID);
 // Note: Display is used for Serialization !
 impl std::fmt::Display for DeviceID {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_str(self.user_id.as_ref())?;
-        f.write_str("@")?;
-        f.write_str(self.device_name.as_ref())
+        self.display.fmt(f)
+    }
+}
+
+impl AsRef<str> for DeviceID {
+    fn as_ref(&self) -> &str {
+        &self.display
     }
 }
 
@@ -270,16 +279,26 @@ impl FromStr for DeviceID {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         const ERR: &str = "Invalid DeviceID";
         let (raw_user_id, raw_device_name) = s.split_once('@').ok_or(ERR)?;
-        Ok(Self {
-            user_id: raw_user_id.parse().map_err(|_| ERR)?,
-            device_name: raw_device_name.parse().map_err(|_| ERR)?,
-        })
+        let user_id = raw_user_id.parse().map_err(|_| ERR)?;
+        let device_name = raw_device_name.parse().map_err(|_| ERR)?;
+        Ok(Self::new(user_id, device_name))
     }
 }
 
-impl From<DeviceID> for String {
-    fn from(item: DeviceID) -> String {
-        format!("{}@{}", item.user_id, item.device_name)
+impl DeviceID {
+    pub fn new(user_id: UserID, device_name: DeviceName) -> Self {
+        let display = format!("{}@{}", user_id, device_name);
+        Self {
+            user_id,
+            device_name,
+            display,
+        }
+    }
+    pub fn user_id(&self) -> &UserID {
+        &self.user_id
+    }
+    pub fn device_name(&self) -> &DeviceName {
+        &self.device_name
     }
 }
 
@@ -291,9 +310,11 @@ impl From<DeviceID> for String {
 #[serde(try_from = "(&str, &str)", into = "(String, String)")]
 #[non_exhaustive] // Prevent initialization without going through the factory
 pub struct HumanHandle {
-    pub email: String,
+    email: String,
     // Label is purely informative
-    pub label: String,
+    label: String,
+    // Cache the display str
+    display: String,
 }
 
 impl PartialEq for HumanHandle {
@@ -314,7 +335,23 @@ impl_debug_from_display!(HumanHandle);
 
 impl std::fmt::Display for HumanHandle {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{} <{}>", self.label, self.email)
+        self.display.fmt(f)
+    }
+}
+
+impl AsRef<str> for HumanHandle {
+    fn as_ref(&self) -> &str {
+        &self.display
+    }
+}
+
+impl FromStr for HumanHandle {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let start = s.chars().position(|c| c == '<').ok_or("Email is missing")?;
+        let stop = s.chars().position(|c| c == '>').ok_or("Email is missing")?;
+        Self::new(&s[..start - 1], &s[start + 1..stop])
     }
 }
 
@@ -322,6 +359,7 @@ impl HumanHandle {
     pub fn new(email: &str, label: &str) -> Result<Self, &'static str> {
         let email = email.nfc().collect::<String>();
         let label = label.nfc().collect::<String>();
+        let display = format!("{label} <{email}>");
 
         if !EmailAddress::is_valid(&email, None) || email.len() >= 255 {
             return Err("Invalid email address");
@@ -339,7 +377,17 @@ impl HumanHandle {
             return Err("Invalid label");
         }
 
-        Ok(Self { email, label })
+        Ok(Self {
+            email,
+            label,
+            display,
+        })
+    }
+    pub fn email(&self) -> &str {
+        &self.email
+    }
+    pub fn label(&self) -> &str {
+        &self.label
     }
 }
 

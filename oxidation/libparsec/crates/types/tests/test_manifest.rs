@@ -542,10 +542,10 @@ fn file_manifest_unverified_load() {
 
     assert_eq!(
         file_manifest.author,
-        DeviceID {
-            user_id: UserID::from_str("b3e0eb414b0c44f1b96337722c156ec6").unwrap(),
-            device_name: DeviceName::from_str("0a297315ac6f4c7fa5839b001c950b23").unwrap()
-        }
+        DeviceID::new(
+            UserID::from_str("b3e0eb414b0c44f1b96337722c156ec6").unwrap(),
+            DeviceName::from_str("0a297315ac6f4c7fa5839b001c950b23").unwrap(),
+        )
     );
     assert_eq!(
         file_manifest.id,

@@ -219,8 +219,8 @@ impl UserID {
         Ok(self.0.to_string())
     }
 
-    fn to_device_id(&self, device_name: &DeviceName) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.to_device_id(&device_name.0)))
+    fn to_device_id(&self, device_name: DeviceName) -> PyResult<DeviceID> {
+        Ok(DeviceID(self.0.to_device_id(device_name.0)))
     }
 }
 
@@ -321,12 +321,12 @@ impl DeviceID {
 
     #[getter]
     fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID(self.0.user_id.clone()))
+        Ok(UserID(self.0.user_id().clone()))
     }
 
     #[getter]
     fn device_name(&self) -> PyResult<DeviceName> {
-        Ok(DeviceName(self.0.device_name.clone()))
+        Ok(DeviceName(self.0.device_name().clone()))
     }
 
     #[classmethod]
@@ -355,17 +355,17 @@ impl HumanHandle {
     }
 
     #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
+    fn str(&self) -> PyResult<&str> {
+        Ok(self.0.as_ref())
     }
 
     #[getter]
     fn email(&self) -> PyResult<&str> {
-        Ok(&self.0.email)
+        Ok(self.0.email())
     }
 
     #[getter]
     fn label(&self) -> PyResult<&str> {
-        Ok(&self.0.label)
+        Ok(self.0.label())
     }
 }

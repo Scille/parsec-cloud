@@ -171,33 +171,33 @@ impl LocalDevice {
     }
 
     #[getter]
-    fn user_display(&self) -> PyResult<String> {
+    fn user_display(&self) -> PyResult<&str> {
         Ok(self
             .0
             .human_handle
             .as_ref()
-            .map(|hh| hh.to_string())
-            .unwrap_or_else(|| self.0.device_id.user_id.to_string()))
+            .map(|hh| hh.as_ref())
+            .unwrap_or_else(|| self.0.device_id.user_id().as_ref()))
     }
 
     #[getter]
-    fn short_user_display(&self) -> PyResult<String> {
+    fn short_user_display(&self) -> PyResult<&str> {
         Ok(self
             .0
             .human_handle
             .as_ref()
-            .map(|hh| hh.label.clone())
-            .unwrap_or_else(|| self.0.device_id.user_id.to_string()))
+            .map(|hh| hh.label())
+            .unwrap_or_else(|| self.0.device_id.user_id().as_ref()))
     }
 
     #[getter]
-    fn device_display(&self) -> PyResult<String> {
+    fn device_display(&self) -> PyResult<&str> {
         Ok(self
             .0
             .device_label
             .as_ref()
-            .map(|dl| dl.to_string())
-            .unwrap_or_else(|| self.0.device_id.device_name.to_string()))
+            .map(|dl| dl.as_ref())
+            .unwrap_or_else(|| self.0.device_id.device_name().as_ref()))
     }
 
     #[getter]
@@ -336,12 +336,12 @@ impl UserInfo {
     }
 
     #[getter]
-    fn user_display(&self) -> PyResult<String> {
+    fn user_display(&self) -> PyResult<&str> {
         Ok(self.0.user_display())
     }
 
     #[getter]
-    fn short_user_display(&self) -> PyResult<String> {
+    fn short_user_display(&self) -> PyResult<&str> {
         Ok(self.0.short_user_display())
     }
 
@@ -399,7 +399,7 @@ impl DeviceInfo {
     }
 
     #[getter]
-    fn device_display(&self) -> PyResult<String> {
+    fn device_display(&self) -> PyResult<&str> {
         Ok(self.0.device_display())
     }
 }
