@@ -7,8 +7,16 @@ from unicodedata import normalize
 from marshmallow import ValidationError
 from marshmallow.fields import Field
 
-from parsec._parsec import DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserID, UserProfile
-from parsec.serde import fields
+from parsec._parsec import (
+    ApiVersion,
+    DeviceID,
+    DeviceLabel,
+    HumanHandle,
+    OrganizationID,
+    UserID,
+    UserProfile,
+)
+from parsec.serde import fields, validate
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
@@ -88,6 +96,37 @@ class HumanHandleField(fields.Field[HumanHandle]):
             return HumanHandle(email, label)
         except ValueError as exc:
             raise ValidationError(str(exc))
+
+
+class ApiVersionField(Field[ApiVersion]):
+    version = fields.Integer(required=True, validate=validate.Range(min=0))
+    revision = fields.Integer(required=True, validate=validate.Range(min=0))
+
+    """ApiVersion already handled by pack/unpack"""
+
+    def _serialize(
+        self, value: ApiVersion | None, attr: str, obj: object
+    ) -> tuple[int, int] | None:
+        if value is None:
+            return None
+        return (value.version, value.revision)
+
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> ApiVersion:
+        if isinstance(value, (ApiVersion)):
+            return value
+
+        if not isinstance(value, (tuple, list)):
+            raise ValidationError("Expecting tuple or list")
+
+        try:
+            version_value, revision_value = value
+        except ValueError as exc:
+            raise ValidationError(str(exc))
+
+        version = self.version.deserialize(version_value)
+        revision = self.revision.deserialize(revision_value)
+
+        return ApiVersion(version, revision)
 
 
 UserProfileField = fields.rust_enum_field_factory(UserProfile)

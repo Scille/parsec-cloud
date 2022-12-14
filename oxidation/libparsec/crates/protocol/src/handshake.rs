@@ -40,6 +40,7 @@ pub fn timestamps_in_the_ballpark(
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(from = "(u32, u32)", into = "(u32, u32)")]
 pub struct ApiVersion {
     pub version: u32,
     pub revision: u32,
@@ -47,7 +48,7 @@ pub struct ApiVersion {
 
 impl ApiVersion {
     pub fn dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
-        rmp_serde::to_vec_named(self)
+        rmp_serde::to_vec(self)
     }
 
     pub fn load(buf: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
@@ -67,6 +68,21 @@ impl Ord for ApiVersion {
             Ordering::Equal => self.revision.cmp(&other.revision),
             order => order,
         }
+    }
+}
+
+impl From<(u32, u32)> for ApiVersion {
+    fn from(tuple: (u32, u32)) -> Self {
+        Self {
+            version: tuple.0,
+            revision: tuple.1,
+        }
+    }
+}
+
+impl From<ApiVersion> for (u32, u32) {
+    fn from(api_version: ApiVersion) -> Self {
+        (api_version.version, api_version.revision)
     }
 }
 

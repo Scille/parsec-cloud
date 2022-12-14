@@ -20,7 +20,6 @@ from marshmallow.fields import (
     String,
 )
 
-from parsec._parsec import ApiVersion as RsApiVersion
 from parsec._parsec import DateTime as RsDateTime
 from parsec._parsec import HashDigest as _HashDigest
 from parsec._parsec import PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload
@@ -261,16 +260,6 @@ class DateTime(Field[RsDateTime]):
     def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> RsDateTime:
         if not isinstance(value, RsDateTime):
             raise ValidationError("Not a datetime")
-
-        return value
-
-
-class ApiVersion(Field[RsApiVersion]):
-    """ApiVersion already handled by pack/unpack"""
-
-    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> RsApiVersion:
-        if not isinstance(value, RsApiVersion):
-            raise ValidationError("Not a ApiVersion")
 
         return value
 
