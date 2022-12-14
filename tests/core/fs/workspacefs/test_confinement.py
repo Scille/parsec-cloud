@@ -10,9 +10,9 @@ import pytest
 
 from parsec._parsec import EntryName, LocalDevice, Regex
 from parsec.core.fs import FsPath, UserFS, WorkspaceFS
-from parsec.core.fs.storage.version import get_workspace_data_storage_db_path
 from parsec.core.logged_core import LoggedCore, get_prevent_sync_pattern
 from tests.common import create_shared_workspace
+from tests.core.fs.old_storage.version import get_workspace_data_storage_db_path
 
 
 async def assert_path_info(workspace, path, **kwargs):

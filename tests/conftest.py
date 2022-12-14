@@ -5,14 +5,12 @@ import logging
 import os
 import re
 import shutil
-import sqlite3
 import sys
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable
 from unittest.mock import patch
 
-import attr
 import hypothesis
 import psutil
 import pytest
@@ -27,7 +25,6 @@ from parsec.backend.config import (
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
 )
-from parsec.core.fs.storage import LocalDatabase
 from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.monitoring import TaskMonitoringInstrument
 
@@ -438,60 +435,6 @@ def blockstore(backend_store, fixtures_customization):
     return config
 
 
-@pytest.fixture(autouse=True)
-def persistent_mockup(monkeypatch, fixtures_customization):
-    if fixtures_customization.get("real_data_storage", False):
-        yield
-        return
-
-    @attr.s
-    class MockupContext:
-
-        connections = attr.ib(factory=dict)
-
-        def get(self, path):
-            if path not in self.connections:
-                self.connections[path] = sqlite3.connect(":memory:", check_same_thread=False)
-            return self.connections[path]
-
-        def clear(self):
-            for connection in self.connections.values():
-                try:
-                    connection.close()
-                except sqlite3.ProgrammingError:
-                    # Connections will raise error if they were opened from another
-                    # thread. This only occurs for a couple of tests so no big deal.
-                    pass
-            self.connections.clear()
-
-    mockup_context = MockupContext()
-    storage_set = set()
-
-    async def _create_connection(storage):
-        storage_set.add(storage)
-        storage._conn = mockup_context.get(storage.path)
-
-    async def _close(storage):
-        # Idempotent operation
-        storage_set.discard(storage)
-        storage._conn = None
-
-    async def get_disk_usage(storage):
-        return 0
-
-    async def run_in_thread(storage, fn, *args):
-        return fn(*args)
-
-    monkeypatch.setattr(LocalDatabase, "run_in_thread", run_in_thread)
-    monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
-    monkeypatch.setattr(LocalDatabase, "_close", _close)
-    monkeypatch.setattr(LocalDatabase, "get_disk_usage", get_disk_usage)
-
-    yield mockup_context
-    mockup_context.clear()
-    assert not storage_set
-
-
 @pytest.fixture
 def data_base_dir(tmp_path: Path) -> Path:
     return tmp_path / "data"
@@ -525,12 +468,10 @@ def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
 
 
 @pytest.fixture
-def reset_testbed(request, caplog, persistent_mockup, clear_database_dir: Callable[[bool], None]):
+def reset_testbed(request, caplog, clear_database_dir: Callable[[bool], None]):
     async def _reset_testbed(keep_logs=False):
         if request.config.getoption("--postgresql"):
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
-        if persistent_mockup is not None:
-            persistent_mockup.clear()
         clear_database_dir(True)
         if not keep_logs:
             caplog.clear()
