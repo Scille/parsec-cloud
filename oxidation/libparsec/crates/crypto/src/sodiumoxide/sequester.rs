@@ -11,7 +11,8 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 
 use crate::{
-    CryptoError, CryptoResult, EnforceDeserialize, EnforceSerialize, SecretKey, SequesterKeySize,
+    deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, SecretKey,
+    SequesterKeySize,
 };
 
 /*
@@ -50,15 +51,9 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
     }
 }
 
-impl EnforceDeserialize for SequesterPrivateKeyDer {
-    const ALGORITHM: &'static [u8] = b"RSAES-OAEP-XSALSA20-POLY1305";
-
-    fn size_in_bytes(&self) -> usize {
-        SequesterPrivateKeyDer::size_in_bytes(self)
-    }
-}
-
 impl SequesterPrivateKeyDer {
+    const ALGORITHM: &str = "RSAES-OAEP-XSALSA20-POLY1305";
+
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
         let priv_key = Rsa::generate(size_in_bits as u32).expect("Cannot generate the RSA key");
         let pub_key = Rsa::from_public_components(
@@ -96,7 +91,8 @@ impl SequesterPrivateKeyDer {
     }
 
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
-        let (cipherkey, ciphertext) = self.deserialize(data)?;
+        let (cipherkey, ciphertext) =
+            deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
 
         let mut decrypted_key_der = vec![0; cipherkey.len()];
         let decrypted_key_bytecount = self
@@ -161,15 +157,9 @@ impl Serialize for SequesterPublicKeyDer {
     }
 }
 
-impl EnforceSerialize for SequesterPublicKeyDer {
-    const ALGORITHM: &'static [u8] = b"RSAES-OAEP-XSALSA20-POLY1305";
-
-    fn size_in_bytes(&self) -> usize {
-        SequesterPublicKeyDer::size_in_bytes(self)
-    }
-}
-
 impl SequesterPublicKeyDer {
+    const ALGORITHM: &str = "RSAES-OAEP-XSALSA20-POLY1305";
+
     pub fn size_in_bytes(&self) -> usize {
         self.0.size() as usize
     }
@@ -206,10 +196,14 @@ impl SequesterPublicKeyDer {
             )
             .expect("Unable to decrypt a secret key");
 
-        EnforceSerialize::serialize(
-            self,
+        // RSAES-OAEP uses 42 bytes for padding, hence even with an insecure
+        // 1024 bits RSA key there is still 86 bytes available for payload
+        // which is plenty to store the 32 bytes XSalsa20 key
+        serialize_with_armor(
             &encrypted_secret_key[0..encrypted_key_bytes],
             &secret_key.encrypt(data),
+            self.size_in_bytes(),
+            Self::ALGORITHM,
         )
     }
 }
@@ -248,15 +242,9 @@ impl TryFrom<&[u8]> for SequesterSigningKeyDer {
     }
 }
 
-impl EnforceSerialize for SequesterSigningKeyDer {
-    const ALGORITHM: &'static [u8] = b"RSASSA-PSS-SHA256";
-
-    fn size_in_bytes(&self) -> usize {
-        SequesterSigningKeyDer::size_in_bytes(self)
-    }
-}
-
 impl SequesterSigningKeyDer {
+    const ALGORITHM: &str = "RSASSA-PSS-SHA256";
+
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterVerifyKeyDer) {
         let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
         let signing_key = PKey::from_rsa(priv_key.0).expect("Unreachable");
@@ -308,7 +296,7 @@ impl SequesterSigningKeyDer {
         signer.update(data).expect("Unreachable");
         let signed_data = signer.sign_to_vec().expect("Unable to sign a message");
 
-        self.serialize(&signed_data, data)
+        serialize_with_armor(&signed_data, data, self.size_in_bytes(), Self::ALGORITHM)
     }
 }
 
@@ -359,15 +347,9 @@ impl Serialize for SequesterVerifyKeyDer {
     }
 }
 
-impl EnforceDeserialize for SequesterVerifyKeyDer {
-    const ALGORITHM: &'static [u8] = b"RSASSA-PSS-SHA256";
-
-    fn size_in_bytes(&self) -> usize {
-        SequesterVerifyKeyDer::size_in_bytes(self)
-    }
-}
-
 impl SequesterVerifyKeyDer {
+    const ALGORITHM: &str = "RSASSA-PSS-SHA256";
+
     pub fn size_in_bytes(&self) -> usize {
         self.0.bits() as usize / 8
     }
@@ -391,7 +373,8 @@ impl SequesterVerifyKeyDer {
     }
 
     pub fn verify(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
-        let (signature, contents) = self.deserialize(data)?;
+        let (signature, contents) =
+            deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
 
         let mut verifier = Verifier::new(MessageDigest::sha256(), &self.0)
             .map_err(|_| CryptoError::SignatureVerification)?;

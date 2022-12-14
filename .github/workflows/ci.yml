@@ -351,9 +351,9 @@ jobs:
         shell: bash
         run: |
           set -ex
-          cargo test --profile ${{ env.CARGO_PROFILE }} --package libparsec_crypto --features use-sodiumoxide
-          cargo test --profile ${{ env.CARGO_PROFILE }} --package libparsec_crypto --features use-rustcrypto
-          cargo test --profile ${{ env.CARGO_PROFILE }} ${{ env.cargo-exclude-unused-crates }} --workspace --features mock-time --exclude libparsec_crypto
+          cargo test --profile ci-rust --workspace --features mock-time ${{ env.cargo-exclude-unused-crates }} --exclude libparsec_crypto
+          cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide
+          cargo test --profile ci-rust --package libparsec_crypto --features use-rustcrypto
 
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !

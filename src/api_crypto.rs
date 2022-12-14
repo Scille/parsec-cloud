@@ -120,10 +120,14 @@ impl VerifyKey {
         signature: &[u8],
         message: &[u8],
     ) -> PyResult<&'py PyBytes> {
-        match self.0.verify_with_signature(signature, message) {
-            Ok(v) => Ok(PyBytes::new(py, &v)),
-            Err(_) => Err(CryptoError::new_err("Signature was forged or corrupt")),
-        }
+        self.0
+            .verify_with_signature(
+                <[u8; libparsec::crypto::SigningKey::SIGNATURE_SIZE]>::try_from(signature)
+                    .map_err(|_| CryptoError::new_err("Invalid signature size"))?,
+                message,
+            )
+            .map(|v| PyBytes::new(py, &v))
+            .map_err(|_| CryptoError::new_err("Signature was forged or corrupt"))
     }
 
     #[classmethod]

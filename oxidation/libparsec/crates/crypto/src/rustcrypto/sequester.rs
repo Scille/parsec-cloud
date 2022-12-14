@@ -16,7 +16,8 @@ use sha1::Sha1;
 use sha2::Sha256;
 
 use crate::{
-    CryptoError, CryptoResult, EnforceDeserialize, EnforceSerialize, SecretKey, SequesterKeySize,
+    deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, SecretKey,
+    SequesterKeySize,
 };
 
 /*
@@ -38,15 +39,9 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
     }
 }
 
-impl EnforceDeserialize for SequesterPrivateKeyDer {
-    const ALGORITHM: &'static [u8] = b"RSAES-OAEP-XSALSA20-POLY1305";
-
-    fn size_in_bytes(&self) -> usize {
-        SequesterPrivateKeyDer::size_in_bytes(self)
-    }
-}
-
 impl SequesterPrivateKeyDer {
+    const ALGORITHM: &str = "RSAES-OAEP-XSALSA20-POLY1305";
+
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
         let priv_key = RsaPrivateKey::new(&mut rand_08::thread_rng(), size_in_bits as usize)
             .expect("Cannot generate the RSA key");
@@ -76,7 +71,8 @@ impl SequesterPrivateKeyDer {
     }
 
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
-        let (cipherkey, ciphertext) = self.deserialize(data)?;
+        let (cipherkey, ciphertext) =
+            deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
         let padding = PaddingScheme::new_oaep::<Sha1>();
 
         let clearkey = SecretKey::try_from(
@@ -127,15 +123,9 @@ impl Serialize for SequesterPublicKeyDer {
     }
 }
 
-impl EnforceSerialize for SequesterPublicKeyDer {
-    const ALGORITHM: &'static [u8] = b"RSAES-OAEP-XSALSA20-POLY1305";
-
-    fn size_in_bytes(&self) -> usize {
-        SequesterPublicKeyDer::size_in_bytes(self)
-    }
-}
-
 impl SequesterPublicKeyDer {
+    const ALGORITHM: &str = "RSAES-OAEP-XSALSA20-POLY1305";
+
     pub fn size_in_bytes(&self) -> usize {
         self.0.n().bits() / 8
     }
@@ -160,6 +150,7 @@ impl SequesterPublicKeyDer {
     //   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         let mut rng = rand_08::thread_rng();
+        // No choice but to use SHA1 here: this is the default in PKCS#1 OAEP standard
         let padding = PaddingScheme::new_oaep::<Sha1>();
         let secret_key = SecretKey::generate();
         let secret_key_encrypted = self
@@ -167,7 +158,15 @@ impl SequesterPublicKeyDer {
             .encrypt(&mut rng, padding, secret_key.as_ref())
             .expect("Unreachable");
 
-        EnforceSerialize::serialize(self, &secret_key_encrypted, &secret_key.encrypt(data))
+        // RSAES-OAEP uses 42 bytes for padding, hence even with an insecure
+        // 1024 bits RSA key there is still 86 bytes available for payload
+        // which is plenty to store the 32 bytes XSalsa20 key
+        serialize_with_armor(
+            &secret_key_encrypted,
+            &secret_key.encrypt(data),
+            self.size_in_bytes(),
+            Self::ALGORITHM,
+        )
     }
 }
 
@@ -199,15 +198,9 @@ impl TryFrom<&[u8]> for SequesterSigningKeyDer {
     }
 }
 
-impl EnforceSerialize for SequesterSigningKeyDer {
-    const ALGORITHM: &'static [u8] = b"RSASSA-PSS-SHA256";
-
-    fn size_in_bytes(&self) -> usize {
-        SequesterSigningKeyDer::size_in_bytes(self)
-    }
-}
-
 impl SequesterSigningKeyDer {
+    const ALGORITHM: &str = "RSASSA-PSS-SHA256";
+
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterVerifyKeyDer) {
         let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
         let signing_key = SigningKey::from(priv_key.0);
@@ -242,7 +235,12 @@ impl SequesterSigningKeyDer {
         let mut rng = rand_08::thread_rng();
         let signature = self.0.sign_with_rng(&mut rng, data);
 
-        self.serialize(signature.as_ref(), data)
+        serialize_with_armor(
+            signature.as_ref(),
+            data,
+            self.size_in_bytes(),
+            Self::ALGORITHM,
+        )
     }
 }
 
@@ -292,15 +290,9 @@ impl Serialize for SequesterVerifyKeyDer {
     }
 }
 
-impl EnforceDeserialize for SequesterVerifyKeyDer {
-    const ALGORITHM: &'static [u8] = b"RSASSA-PSS-SHA256";
-
-    fn size_in_bytes(&self) -> usize {
-        SequesterVerifyKeyDer::size_in_bytes(self)
-    }
-}
-
 impl SequesterVerifyKeyDer {
+    const ALGORITHM: &str = "RSASSA-PSS-SHA256";
+
     pub fn size_in_bytes(&self) -> usize {
         self.0.as_ref().n().bits() / 8
     }
@@ -322,7 +314,8 @@ impl SequesterVerifyKeyDer {
     }
 
     pub fn verify(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
-        let (signature, data) = EnforceDeserialize::deserialize(self, data)?;
+        let (signature, data) =
+            deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
 
         // TODO: It Seems to be a mistake from RustCrypto/RSA
         // Why should we allocate there ?

@@ -40,8 +40,10 @@ cfoo
 chacha
 choco
 cibuildwheel
+cipherkey
 classattr
 classpath
+clearkey
 CLSID
 Cmds
 conftest
@@ -117,6 +119,7 @@ ifempty
 ifeq
 ifnewer
 ionicons
+iqmp
 itemsoverlay
 jcenter
 jsonify
@@ -299,6 +302,8 @@ retrier
 Richcmp
 Rlib
 rngs
+RSAES
+RSASSA
 RsTest
 rungui
 runmountpoint
@@ -311,6 +316,8 @@ rustup
 rwfile
 salsabox
 SaltBytes
+saltlen
+Saltlen
 scalarmult
 sceneparsers
 sdkmanager
