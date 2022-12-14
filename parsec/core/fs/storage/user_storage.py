@@ -29,6 +29,10 @@ class UserStorage:
     def __init__(self, device: LocalDevice, user_manifest_id: EntryID, data_base_dir: Path):
         self.sync_instance = _SyncUserStorage(device, user_manifest_id, data_base_dir)
 
+    @property
+    def device(self) -> LocalDevice:
+        return self.sync_instance.device
+
     @classmethod
     @asynccontextmanager
     async def run(cls, data_base_dir: Path, device: LocalDevice) -> AsyncIterator["UserStorage"]:
