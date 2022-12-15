@@ -285,8 +285,6 @@ jobs:
           Copy-Item -Path build\uninstall_files.nsh -Destination dist
           Copy-Item -Recurse -Path build\parsec-* -Destination dist
           Copy-Item -Path build\winfsp-* -Destination dist
-          Copy-Item -Path windows-icon-handler\refresh-icon-handler\Release\refresh-icon-handler.dll -Destination dist
-          Copy-Item -Path windows-icon-handler\check-icon-handler\Release\check-icon-handler.dll -Destination dist
         working-directory: ${{ runner.temp }}
 
       - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
