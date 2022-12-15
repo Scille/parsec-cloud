@@ -82,6 +82,15 @@ fn quote_versioned_cmds(version: u32, cmds: &[Cmd]) -> syn::ItemMod {
                 #(#cmds_req),*
             }
 
+            // Define `UnknownStatus` here instead of where is it actually used (i.e.
+            // near each command's `Rep::load` definition) to have a single common
+            // definition that will have it deserialization code compiled once \o/
+            #[derive(::serde::Deserialize)]
+            struct UnknownStatus {
+                status: String,
+                reason: Option<String>
+            }
+
             impl AnyCmdReq {
                 pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                     ::rmp_serde::to_vec_named(self)

@@ -157,6 +157,7 @@ impl Cmd {
             #(#module_attrs)*
             pub mod #module {
                 use super::AnyCmdReq;
+                use super::UnknownStatus;
 
                 #(#nested_types)*
 
@@ -175,12 +176,6 @@ impl Cmd {
                 #[serde(tag = "status")]
                 pub enum Rep {
                     #(#variants_rep),*
-                }
-
-                #[derive(::serde::Deserialize)]
-                struct UnknownStatus {
-                    status: String,
-                    reason: Option<String>
                 }
 
                 impl Rep {
