@@ -16,6 +16,10 @@
 !define APPGUID "6C37F945-7EFC-480A-A444-A6D44A3D107F"
 !define OBSOLETE_MOUNTPOINT "$PROFILE\Parsec"
 
+# Icon overlays GUIDS
+!define CHECK_ICON_GUID "{5449BC90-310B-40A8-9ABF-C5CFCEC7F430}"
+!define REFRESH_ICON_GUID "{FF552D5D-8272-41CD-B0A8-E01188EBA329}"
+
 # Detect version from file
 !define BUILD_DIR "build"
 !searchparse /file ${BUILD_DIR}/manifest.ini `target = "` PROGRAM_FREEZE_BUILD_DIR `"`
@@ -163,6 +167,7 @@ FunctionEnd
 
 # Check for running program instance.
 Function .onInit
+    SetRegView 64
     Call checkProgramAlreadyRunning
 
     ReadRegStr $R0 HKLM \
@@ -211,6 +216,7 @@ Function un.onUninstSuccess
 FunctionEnd
 
 Function un.onInit
+    SetRegView 64
     MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Do you want to completely remove $(^Name)?" /SD IDYES IDYES +2
     Abort
 FunctionEnd
@@ -289,6 +295,18 @@ Section "Parsec Cloud Sharing" Section1
         CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall Parsec.lnk" ${PROGRAM_UNINST_FILENAME}
         SetShellVarContext current
     !insertmacro MUI_STARTMENU_WRITE_END
+
+    # Regsiter CheckIconHandler and RefreshIconHandler COM objects
+    WriteRegStr HKCR "SOFTWARE\Classes\CLSID\${CHECK_ICON_GUID}" "" "Parsec Check Icon handler class"
+    WriteRegStr HKCR "SOFTWARE\Classes\CLSID\${REFRESH_ICON_GUID}" "" "Parsec Refresh Icon handler class"
+
+    # Call regsvr32
+    ExecWait '$SYSDIR\regsvr32.exe /s /n /i:user "$INSTDIR\check-icon-handler.dll"'
+    ExecWait '$SYSDIR\regsvr32.exe /s /n /i:user "$INSTDIR\refresh-icon-handler.dll"'
+
+    # Write Icons overlays to register
+    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ICheckIconHandler" "" "${CHECK_ICON_GUID}"
+    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\IRefreshIconHandler" "" "${REFRESH_ICON_GUID}"
 SectionEnd
 
 !macro InstallWinFSP
@@ -390,6 +408,11 @@ Section Uninstall
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${APPGUID}"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{${APPGUID}"
 
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ICheckIconHandler"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\IRefreshIconHandler"
+
+  ExecWait '$SYSDIR\regsvr32.exe /s /u /i:user "$INSTDIR\check-icon-handler.dll"'
+  ExecWait '$SYSDIR\regsvr32.exe /s /u /i:user "$INSTDIR\refresh-icon-handler.dll"'
 SectionEnd
 
 # Add version info to installer properties.

@@ -4,6 +4,16 @@ Inspired by [Deluge NSIS installer](https://github.com/deluge-torrent/deluge/blo
 
 ## 1 - Build the application
 
+Build shell extensions that are needed to display icon overlays in windows explorer.
+Make sure you have the windows SDK installed on your local machine (if not install it using the
+Visual Studio installer). You can use `Visual Studio` to build these two dlls __in `Release` mode__
+or invoke `msbuild` from the command line (you have to manually add `msbuild` to your `PATH`).
+
+```shell
+$ msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\check-icon-handler\check-icon-handler.vcxproj
+$ msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\refresh-icon-handler\refresh-icon-handler.vcxproj
+```
+
 Run the `freeze_program.py` Python script with the path to the Parsec sources to use:
 
 ```shell
