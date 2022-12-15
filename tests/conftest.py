@@ -74,11 +74,11 @@ def pytest_addoption(parser):
 
     def _parse_slice_tests(value):
         try:
-            currs, total = value.split("/")
+            nums, total = value.split("/")
             total = int(total)
-            currs = [int(x) for x in currs.split(",")]
-            if total >= 1 and all(1 <= x <= total for x in currs):
-                return (currs, total)
+            nums = [int(x) for x in nums.split(",")]
+            if total >= 1 and all(1 <= x <= total for x in nums):
+                return (nums, total)
         except ValueError:
             pass
         raise ValueError("--slice-tests option must be of the type `1/3`, `2/3`, `1,2/3` etc.")
@@ -109,11 +109,11 @@ def pytest_configure(config):
     # Add helper to caplog
     _patch_caplog()
     if config.getoption("--run-postgresql-cluster"):
-        pgurl = bootstrap_postgresql_testbed()
+        pg_url = bootstrap_postgresql_testbed()
         capturemanager = config.pluginmanager.getplugin("capturemanager")
         if capturemanager:
             capturemanager.suspend(in_=True)
-        print(f"usage: PG_URL={pgurl} py.test --postgresql tests")
+        print(f"usage: PG_URL={pg_url} py.test --postgresql tests")
         input("Press enter when you're done with...")
         pytest.exit("bye")
     elif config.getoption("--postgresql") and not _is_xdist_master(config):
@@ -156,28 +156,28 @@ def _patch_caplog():
             setattr(self, "asserted_records", asserted_records)
         asserted_records.update(records)
 
-    def _assert_occured(self, log):
+    def _assert_occurred(self, log):
         __tracebackhide__ = True
         matches_msgs, matches_records = _find(self, log)
         assert matches_msgs
         _register_asserted_records(self, *matches_records)
         return matches_msgs
 
-    def _assert_occured_once(self, log):
+    def _assert_occurred_once(self, log):
         __tracebackhide__ = True
         matches_msgs, matches_records = _find(self, log)
         assert len(matches_msgs) == 1
         _register_asserted_records(self, matches_records[0])
         return matches_msgs[0]
 
-    def _assert_not_occured(self, log):
+    def _assert_not_occurred(self, log):
         __tracebackhide__ = True
         matches_msgs, matches_records = _find(self, log)
         assert not matches_msgs
 
-    LogCaptureFixture.assert_occured = _assert_occured
-    LogCaptureFixture.assert_occured_once = _assert_occured_once
-    LogCaptureFixture.assert_not_occured = _assert_not_occured
+    LogCaptureFixture.assert_occurred = _assert_occurred
+    LogCaptureFixture.assert_occurred_once = _assert_occurred_once
+    LogCaptureFixture.assert_not_occurred = _assert_not_occurred
 
 
 def pytest_runtest_setup(item):
@@ -219,8 +219,8 @@ def pytest_collection_modifyitems(config, items):
     if total_slices > 1:
         # Reorder tests to be deterministic given they will be ran across multiples instances
         # Note this must be done as an in-place update to have it taken into account
-        # Aaand finally note we order by hash instead of by name, this is to improve
-        # dispatching across jobs, the idea being a slow test is likely to be sorounded
+        # And finally note we order by hash instead of by name, this is to improve
+        # dispatching across jobs, the idea being a slow test is likely to be surrounded
         # by other slow tests.
         from zlib import adler32
 
@@ -275,7 +275,7 @@ def no_logs_gte_error(caplog):
 
         return True
 
-    # The test should use `caplog.assert_occured_once` to indicate a log was expected,
+    # The test should use `caplog.assert_occurred_once` to indicate a log was expected,
     # otherwise we consider error logs as *actual* errors.
     asserted_records = getattr(caplog, "asserted_records", set())
     errors = [

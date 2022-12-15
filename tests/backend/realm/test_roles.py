@@ -383,7 +383,7 @@ async def test_role_access_during_maintenance(
     rep = await realm_get_role_certificates(alice_ws, realm)
     assert isinstance(rep, RealmGetRoleCertificatesRepOk)
 
-    # ...buit not update role
+    # ...but not update role
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.MANAGER
     )

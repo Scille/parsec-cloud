@@ -129,7 +129,7 @@ class BaseEnumField(Field[E]):
             raise ValidationError(str(exc)) from exc
 
 
-# Using inheritance to define enum fields allows for easy instrospection detection
+# Using inheritance to define enum fields allows for easy introspection detection
 # which is useful when checking api changes in tests (see tests/schemas/builder.py)
 def enum_field_factory(enum: Type[E]) -> Type[BaseEnumField[E]]:
     return type(f"{enum.__name__}Field", (BaseEnumField,), {"ENUM": enum})

@@ -80,7 +80,7 @@ async def test_process_while_offline(
             await alice_core.wait_idle_monitors()
         alice.time_provider.mock_time(speed=1.0)
         assert alice_core.backend_status == BackendConnStatus.READY
-        spy.assert_event_occured(CoreEvent.MESSAGE_PINGED, {"ping": "hello from Bob !"})
+        spy.assert_event_occurred(CoreEvent.MESSAGE_PINGED, {"ping": "hello from Bob !"})
 
 
 @pytest.mark.trio
@@ -191,12 +191,12 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
     with freeze_time("2000-01-02"):
         wid = await create_shared_workspace(EntryName("w"), alice_core, bob_core)
 
-    with alice_core.event_bus.listen() as aspy, bob_core.event_bus.listen() as bspy:
+    with alice_core.event_bus.listen() as a_spy, bob_core.event_bus.listen() as b_spy:
         with freeze_time("2000-01-03"):
             await alice_core.user_fs.workspace_start_reencryption(wid)
 
         # Each workspace participant should get the message
-        await aspy.wait_with_timeout(
+        await a_spy.wait_with_timeout(
             CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
@@ -220,7 +220,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
             },
             update_event_func=_update_event,
         )
-        await bspy.wait_with_timeout(
+        await b_spy.wait_with_timeout(
             CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(

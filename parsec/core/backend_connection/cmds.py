@@ -288,7 +288,7 @@ async def _send_cmd(
         if rep["status"] == "invalid_certification" and "timestamp" in rep["reason"]:
             raise BackendOutOfBallparkError(rep)
 
-    # New shinnny stuff
+    # New shinny stuff
     elif isinstance(
         rep,
         (

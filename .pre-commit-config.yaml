@@ -38,19 +38,10 @@ repos:
     rev: v6.16.0
     hooks:
       - id: cspell
-        types_or:
-          - pyi
-          - toml
-          - json
-          - rust
-          - python3
-          - ts
-          - javascript
-          - yaml
-          - pofile
         args:
           - --config=./.cspell/cspell.config.yml
           - --no-progress
+          - --dot
           - --no-must-find-files
           - --no-summary
           - --gitignore
@@ -59,6 +50,7 @@ repos:
           - "@cspell/dict-fr-reforme"
           - "@cspell/dict-bash"
           - "@cspell/dict-shell"
+          - "@cspell/dict-win32"
   ########
   # Python
 

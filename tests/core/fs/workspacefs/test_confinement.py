@@ -205,7 +205,7 @@ async def test_change_pattern(alice_workspace, running_backend):
     await assert_path_info(alice_workspace, "/test2.y", confinement_point=None, need_sync=True)
     await assert_path_info(alice_workspace, "/test2.y", confinement_point=None, need_sync=True)
 
-    # Appy Y pattern
+    # Apply Y pattern
     pattern = Regex.from_regex_str(r".*\.y$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
@@ -285,7 +285,7 @@ async def test_common_temporary_files(alice_workspace):
         "test.lnk",
         ".~test",
         "~$test",
-        "mydoc.docx.sb-324kJJ4-AGBJ32A",
+        "mydoc.docx.sb-324kJJ4-AGBJ32A",  # cspell: disable-line
     ]
     for path in confined_file_list:
         path = "/" + path

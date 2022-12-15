@@ -103,7 +103,7 @@ async def generate_gui_config(backend_address):
         "gui_tray_enabled": False,
         "gui_last_version": PARSEC_VERSION,
         "gui_show_confined": True,
-        "ipc_win32_mutex_name": f"parsec-clould-{uuid.uuid4()}",
+        "ipc_win32_mutex_name": f"parsec-cloud-{uuid.uuid4()}",
     }
     if backend_address is not None:
         config["preferred_org_creation_backend_addr"] = backend_address.to_url()

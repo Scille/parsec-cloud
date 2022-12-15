@@ -253,7 +253,7 @@ async def test_concurrency_pki_enrollment_accept(
             submitted_on=DateTime.now(),
         )
 
-        # Concurrent PKI enrollement accept
+        # Concurrent PKI enrollment accept
         with ensure_pg_transaction_concurrency_barrier(concurrency=10):
             async with trio.open_nursery() as nursery:
                 for _ in range(10):

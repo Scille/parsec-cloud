@@ -44,7 +44,7 @@ def test_max_bytes_size(cls, data):
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
 def test_normalization(cls):
-    nfc_str = normalize("NFC", "àæßšūÿź")
+    nfc_str = normalize("NFC", "àæßšūÿź")  # cspell: disable-line
     nfd_str = normalize("NFD", nfc_str)
 
     assert nfc_str != nfd_str
@@ -140,9 +140,9 @@ def test_invalid_human_handle(email, label):
 
 
 def test_human_handle_normalization():
-    nfc_label = normalize("NFC", "àæßšūÿź")
+    nfc_label = normalize("NFC", "àæßšūÿź")  # cspell: disable-line
     nfd_label = normalize("NFD", nfc_label)
-    nfc_email = normalize("NFC", "àæßš@ūÿ.ź")
+    nfc_email = normalize("NFC", "àæßš@ūÿ.ź")  # cspell: disable-line
     nfd_email = normalize("NFD", nfc_email)
     assert nfc_label != nfd_label
     assert nfc_email != nfd_email
@@ -158,7 +158,7 @@ def test_human_handle_normalization():
 
 def test_sas_code():
     assert SASCode.from_int(0x0) == SASCode("AAAA")
-    assert SASCode.from_int(0x1) == SASCode("BAAA")
+    assert SASCode.from_int(0x1) == SASCode("BAAA")  # cspell: disable-line
     # [...]
     assert SASCode.from_int(0x84001) == SASCode("BASS")
     # [...]
@@ -172,7 +172,16 @@ def test_sas_code():
     with pytest.raises((ValueError, OverflowError)):
         SASCode.from_int(-1)
 
-    for invalid in ["", "AAA", "AAAAA", "aaaa", "AAAI", "AAAO", "AAA0", "AAA1"]:
+    for invalid in [
+        "",
+        "AAA",
+        "AAAAA",
+        "aaaa",
+        "AAAI",  # cspell: disable-line
+        "AAAO",  # cspell: disable-line
+        "AAA0",
+        "AAA1",
+    ]:
         with pytest.raises(ValueError):
             SASCode(invalid)
 
@@ -223,7 +232,9 @@ def test_invalid_entry_name(data):
 
 
 def test_entry_name_normalization():
-    nfc_str = normalize("NFC", "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż")
+    nfc_str = normalize(
+        "NFC", "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż"  # cspell: disable-line
+    )
     nfd_str = normalize("NFD", nfc_str)
 
     assert nfc_str != nfd_str

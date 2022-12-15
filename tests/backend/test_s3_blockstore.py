@@ -19,7 +19,7 @@ async def test_s3_read(caplog):
     block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
-        log = caplog.assert_occured_once("[warning  ] Block read error")
+        log = caplog.assert_occurred_once("[warning  ] Block read error")
         assert f"organization_id={org_id.str}" in log
         assert f"block_id={block_id.hex}" in log
         assert len(caplog.messages) == 1
@@ -73,7 +73,7 @@ async def test_s3_create(caplog):
     block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
-        log = caplog.assert_occured_once("[warning  ] Block create error")
+        log = caplog.assert_occurred_once("[warning  ] Block create error")
         assert f"organization_id={org_id.str}" in log
         assert f"block_id={block_id.hex}" in log
         assert len(caplog.messages) == 1

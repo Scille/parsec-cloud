@@ -181,7 +181,7 @@ async def _init_output_db(
                     (OUTPUT_DB_MAGIC_NUMBER,),
                 ).fetchone()
             except sqlite3.Error as exc:
-                # If we endup here this is most likely because `info` table doesn't exists (or miss some columns)
+                # If we end up here this is most likely because `info` table doesn't exists (or miss some columns)
                 raise RealmExporterOutputDbError(
                     f"Existing output target is not a valid export database: {exc}"
                 ) from exc

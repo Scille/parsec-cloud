@@ -173,10 +173,10 @@ async def test_create_disable_services(
     ]
 
     # Retreive single service
-    retreived_backend_service1 = await backend.sequester.get_service(
+    retrieved_backend_service1 = await backend.sequester.get_service(
         organization_id=coolorg.organization_id, service_id=service.service_id
     )
-    assert retreived_backend_service1 == expected_backend_service1
+    assert retrieved_backend_service1 == expected_backend_service1
 
     # Retreive single service unknown organization ID
     with pytest.raises(SequesterOrganizationNotFoundError):

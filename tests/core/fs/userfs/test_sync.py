@@ -188,10 +188,10 @@ async def test_sync_under_concurrency(
     running_backend, alice_user_fs, alice2_user_fs, alice, alice2
 ):
     with freeze_time("2000-01-02"):
-        waid = await alice_user_fs.workspace_create(EntryName("wa"))
+        wksp_alice_id = await alice_user_fs.workspace_create(EntryName("wa"))
 
     with freeze_time("2000-01-03"):
-        wa2id = await alice2_user_fs.workspace_create(EntryName("wa2"))
+        wksp_alice2_id = await alice2_user_fs.workspace_create(EntryName("wa2"))
 
     with freeze_time("2000-01-04"):
         await alice_user_fs.sync()
@@ -215,7 +215,7 @@ async def test_sync_under_concurrency(
         workspaces=(
             WorkspaceEntry(
                 name=EntryName("wa"),
-                id=waid,
+                id=wksp_alice_id,
                 key=KEY,
                 encryption_revision=1,
                 encrypted_on=DateTime(2000, 1, 2),
@@ -224,7 +224,7 @@ async def test_sync_under_concurrency(
             ),
             WorkspaceEntry(
                 name=EntryName("wa2"),
-                id=wa2id,
+                id=wksp_alice2_id,
                 key=KEY,
                 encryption_revision=1,
                 encrypted_on=DateTime(2000, 1, 3),

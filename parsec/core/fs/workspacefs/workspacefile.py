@@ -33,13 +33,13 @@ class WorkspaceFile:
     Keyword arguments:
     transactions -- object to use for file transactions.
     path -- relative path of the file.
-    mode -- the mode where the file have been opened. It needs to have exactly one of "awrx".
+    mode -- the mode where the file have been opened. It needs to have exactly one of "arwx".
     mode("a") -> append file.
-    mode("b") -> have to be used with one of "awrx" mode, file will be write/read as bytes instead of string.
+    mode("b") -> have to be used with one of "arwx" mode, file will be write/read as bytes instead of string.
     mode("w") -> write file. If the file doesn't exist, create one.
     mode("r") -> read file.
     mode("x") -> If the file doesn't exist, create one, else, raise an Error. File will be opened in write mode.
-    mode("+") -> have to be used with one of "awrx" mode, file will be in read/write mode.
+    mode("+") -> have to be used with one of "arwx" mode, file will be in read/write mode.
     """
 
     def __init__(self, transactions: EntryTransactions, path: AnyPath, mode: str = "rb"):
@@ -50,10 +50,10 @@ class WorkspaceFile:
         self._transactions = transactions
         mode = mode.lower()
         # Preventing to open in write and read in same time or write and append or open with no mode
-        if sum(c in mode for c in "rwax") != 1:
+        if sum(c in mode for c in "arwx") != 1:
             raise ValueError("must have exactly one of create/read/write/append mode")
         # Preventing to open with non-existent mode
-        elif re.search("[^arwxb+]", mode) is not None:
+        elif re.search("[^arwxb+]", mode) is not None:  # cspell: ignore arwxb
             raise ValueError(f"invalid mode: '{mode}'")
         if "b" not in mode:
             raise NotImplementedError("Text mode is not supported at the moment")

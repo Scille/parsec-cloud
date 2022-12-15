@@ -15,12 +15,12 @@ from tests.common import customize_fixtures
 
 
 async def _do_test_redirect(client):
-    # No redirection header. shouln't redirect.
+    # No redirection header. shouldn't redirect.
     rep = await client.get("/test")
     assert rep.status == "404 NOT FOUND"
 
-    # Incorrect redirection header with good redirection protocol. shouln't redirect.
-    rep = await client.get("/test", headers={"X-Forwa-P": "https"})
+    # Incorrect redirection header with good redirection protocol. shouldn't redirect.
+    rep = await client.get("/test", headers={"X-Forwa-P": "https"})  # cspell: ignore Forwa
     assert rep.status == "404 NOT FOUND"
 
     # Correct header redirection but not same redirection protocol. should redirect.
@@ -118,7 +118,7 @@ async def test_unexpected_exception_get_500(backend_asgi_app, monkeypatch, caplo
     assert rep.status == "500 INTERNAL SERVER ERROR"
 
     # ASGI app also report the crash in the log
-    caplog.assert_occured_once("Exception on request GET /dummy")
+    caplog.assert_occurred_once("Exception on request GET /dummy")
     caplog.clear()
 
 

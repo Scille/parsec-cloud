@@ -159,19 +159,19 @@ async def _list_services(config: BackendDbConfig, organization_id: OrganizationI
 
 
 async def _disable_service(
-    config: BackendDbConfig, organizaton_id: OrganizationID, service_id: SequesterServiceID
+    config: BackendDbConfig, organization_id: OrganizationID, service_id: SequesterServiceID
 ) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
-        await sequester_component.disable_service(organizaton_id, service_id)
+        await sequester_component.disable_service(organization_id, service_id)
 
 
 async def _enable_service(
-    config: BackendDbConfig, organizaton_id: OrganizationID, service_id: SequesterServiceID
+    config: BackendDbConfig, organization_id: OrganizationID, service_id: SequesterServiceID
 ) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
-        await sequester_component.enable_service(organizaton_id, service_id)
+        await sequester_component.enable_service(organization_id, service_id)
 
 
 def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> BackendDbConfig:

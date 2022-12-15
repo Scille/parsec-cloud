@@ -186,7 +186,7 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
                 {"status": BackendConnStatus.CRASHED, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.CRASHED
-            caplog.assert_occured_once(
+            caplog.assert_occurred_once(
                 "[error    ] Unhandled exception            [parsec.core.backend_connection.authenticated]"
             )
 
@@ -370,6 +370,6 @@ async def test_connection_refused(running_backend, event_bus, mallory):
                 {"status": BackendConnStatus.REFUSED, "status_exc": spy.ANY},
             )
 
-            # Trying to use the connection should endup with an exception
+            # Trying to use the connection should end up with an exception
             with pytest.raises(BackendConnectionRefused):
                 await conn.cmds.ping()

@@ -62,7 +62,7 @@ async def test_realm_checkpoint(alice, alice_user_storage, initial_user_manifest
     assert await aws.get_realm_checkpoint() == 1
     assert await aws.get_need_sync_entries() == ({user_manifest_id}, set())
 
-    # Another device updated the user manifest remotly
+    # Another device updated the user manifest remotely
     await aws.update_realm_checkpoint(2, {user_manifest_id: 1})
     assert await aws.get_realm_checkpoint() == 2
     assert await aws.get_need_sync_entries() == ({user_manifest_id}, {user_manifest_id})

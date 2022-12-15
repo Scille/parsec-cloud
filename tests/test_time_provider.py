@@ -27,7 +27,7 @@ async def test_frozen_mock():
     t1 = DateTime(2001, 1, 1, 0, 0, 0)
     t2 = DateTime(2002, 1, 1, 0, 0, 0)
 
-    # Mock a time provider doesn't impact it coursins or separated time providers
+    # Mock a time provider doesn't impact it cousins or separated time providers
     child1_tp.mock_time(freeze=t1)
     assert TimeProvider().now() >= real_now
     assert child2_tp.now() >= real_now
@@ -125,7 +125,7 @@ async def test_sleep_with_mock():
 @pytest.fixture(params=("raw", "wrapped"))
 def maybe_wrap_tp_sleep(request):
     # In raw mode we pass to trio a coroutine that directly yield `TokioTaskAborterFromTrio`
-    # (i.e. the low-level control object undestood by trio).
+    # (i.e. the low-level control object understood by trio).
     # In wrapped mode, we pass to trio a coroutine that itself await on the raw coroutine.
     if request.param == "raw":
 

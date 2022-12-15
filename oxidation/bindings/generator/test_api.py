@@ -65,7 +65,7 @@ mod libparsec {
     pub fn f_p1() {}
     pub fn f_p2(_a: bool) {}
     pub fn f_p3(_a: i64) {}
-//    pub fn f_p4(_a: u32) {}  // TODO: support integere other than i64 ?
+//    pub fn f_p4(_a: u32) {}  // TODO: support integer other than i64 ?
     pub fn f_p5(_a: f64) {}
     pub fn f_p6(_a: &str) {}
     pub fn f_p7(_a: &[u8]) {}

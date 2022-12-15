@@ -180,7 +180,7 @@ async def test_autosync_on_modification(
         await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
-        spy.assert_events_occured(
+        spy.assert_events_occurred(
             [
                 (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}),
                 (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}),
@@ -195,7 +195,7 @@ async def test_autosync_on_modification(
         await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
-        spy.assert_events_occured(
+        spy.assert_events_occurred(
             [
                 (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": foo_id}),
                 (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}),
@@ -600,7 +600,7 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
             await alice_core.wait_idle_monitors()
         assert alice_core.are_monitors_idle()
 
-    # Create a workspace & make sure evrything is sync so far
+    # Create a workspace & make sure everything is sync so far
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     await _wait_sync_is_done()
     alice_workspace = alice_core.user_fs.get_workspace(wid)
@@ -649,7 +649,7 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     # - third time for the parent folder manifest sync
     # - fourth time for the actual file manifest sync
     assert webhook_calls == 4
-    caplog.assert_occured_once(
+    caplog.assert_occurred_once(
         f"[warning  ] Sync failure due to server upload temporarily unavailable [parsec.core.sync_monitor] workspace_id={wid.str}"
     )
     bad_file_info = await alice_workspace.path_info("/test.txt")
@@ -715,7 +715,7 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     await _wait_sync_is_done()
 
     assert webhook_calls == 2
-    caplog.assert_occured_once(
+    caplog.assert_occurred_once(
         f"[warning  ] Sync failure due to server upload temporarily unavailable [parsec.core.sync_monitor] workspace_id={alice_core.user_fs.user_manifest_id.str}"
     )
 

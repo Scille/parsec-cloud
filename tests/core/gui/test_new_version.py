@@ -281,6 +281,6 @@ async def test_check_new_version_bad_api_payload(monkeypatch, caplog, payload):
 
     result = await do_check_new_version(api_url="https://api.com/releases")
     assert result is None
-    caplog.assert_occured_once(
+    caplog.assert_occurred_once(
         "[error    ] Cannot load releases info from API [parsec.core.gui.new_version]"
     )
