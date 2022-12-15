@@ -8,6 +8,7 @@ import tempfile
 import zipfile
 
 # The default rust build profile to use when compiling the rust extension.
+DEFAULT_SKIP_BUILD_RUST_LIB = "false"
 DEFAULT_CARGO_PROFILE = "release"
 
 
@@ -33,6 +34,12 @@ def run(cmd, **kwargs):
 def build():
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
+
+    if os.environ.get("SKIP_BUILD_RUST_LIB", DEFAULT_SKIP_BUILD_RUST_LIB).lower() in [
+        "true",
+        "1",
+    ]:
+        return
 
     # Maturin provides two commands to compile the Rust code as a Python native module:
     # - `maturin develop` that only compile the native module
