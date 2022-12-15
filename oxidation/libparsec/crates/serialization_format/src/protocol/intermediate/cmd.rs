@@ -157,6 +157,7 @@ impl Cmd {
             #(#module_attrs)*
             pub mod #module {
                 use super::AnyCmdReq;
+                use super::UnknownStatus;
 
                 #(#nested_types)*
 
@@ -175,12 +176,6 @@ impl Cmd {
                 #[serde(tag = "status")]
                 pub enum Rep {
                     #(#variants_rep),*
-                }
-
-                #[derive(::serde::Deserialize)]
-                struct UnknownStatus {
-                    status: String,
-                    reason: Option<String>
                 }
 
                 impl Rep {
@@ -630,6 +625,7 @@ mod test {
         quote! {
             pub mod foo_cmd {
                 use super::AnyCmdReq;
+                use super::UnknownStatus;
 
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req;
@@ -653,12 +649,6 @@ mod test {
                         unknown_status: String,
                         reason: Option<String>
                     }
-                }
-
-                #[derive(::serde::Deserialize)]
-                struct UnknownStatus {
-                    status: String,
-                    reason: Option<String>
                 }
 
                 impl Rep {
@@ -694,6 +684,7 @@ mod test {
         quote! {
             pub mod foo_cmd {
                 use super::AnyCmdReq;
+                use super::UnknownStatus;
 
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req;
@@ -721,12 +712,6 @@ mod test {
                         unknown_status: String,
                         reason: Option<String>
                     }
-                }
-
-                #[derive(::serde::Deserialize)]
-                struct UnknownStatus {
-                    status: String,
-                    reason: Option<String>
                 }
 
                 impl Rep {
@@ -762,6 +747,7 @@ mod test {
             #[doc = "The command `FooCmd` was introduced in `API-2.4`."]
             pub mod foo_cmd {
                 use super::AnyCmdReq;
+                use super::UnknownStatus;
 
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req;
@@ -785,12 +771,6 @@ mod test {
                         unknown_status: String,
                         reason: Option<String>
                     }
-                }
-
-                #[derive(::serde::Deserialize)]
-                struct UnknownStatus {
-                    status: String,
-                    reason: Option<String>
                 }
 
                 impl Rep {
@@ -824,6 +804,7 @@ mod test {
             #[doc = "The command `FooCmd` was introduced in `API-2.4`."]
             pub mod foo_cmd {
                 use super::AnyCmdReq;
+                use super::UnknownStatus;
 
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req;
@@ -847,12 +828,6 @@ mod test {
                         unknown_status: String,
                         reason: Option<String>
                     }
-                }
-
-                #[derive(::serde::Deserialize)]
-                struct UnknownStatus {
-                    status: String,
-                    reason: Option<String>
                 }
 
                 impl Rep {

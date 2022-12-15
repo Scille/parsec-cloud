@@ -76,6 +76,15 @@ fn quote_versioned_cmds(version: u32, cmds: &[Cmd]) -> syn::ItemMod {
 
     syn::parse_quote! {
         pub mod #versioned_cmds_mod {
+            // Define `UnknownStatus` here instead of where is it actually used (i.e.
+            // near each command's `Rep::load` definition) to have a single common
+            // definition that will have it deserialization code compiled once \o/
+            #[derive(::serde::Deserialize)]
+            struct UnknownStatus {
+                status: String,
+                reason: Option<String>
+            }
+
             #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
             #[serde(tag = "cmd")]
             pub enum AnyCmdReq {
@@ -196,6 +205,11 @@ mod test {
         quote! {
             pub mod foo_collection {
                 pub mod v2 {
+                    #[derive(::serde::Deserialize)]
+                    struct UnknownStatus {
+                        status : String , reason : Option < String >
+                    }
+
                     #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                     #[serde(tag = "cmd")]
                     pub enum AnyCmdReq {}
@@ -212,6 +226,11 @@ mod test {
                 }
 
                 pub mod v42 {
+                    #[derive(::serde::Deserialize)]
+                    struct UnknownStatus {
+                        status : String , reason : Option < String >
+                    }
+
                     #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                     #[serde(tag = "cmd")]
                     pub enum AnyCmdReq {}
@@ -242,6 +261,11 @@ mod test {
         quote! {
             pub mod foo_collection {
                 pub mod v2 {
+                    #[derive(::serde::Deserialize)]
+                    struct UnknownStatus {
+                        status : String , reason : Option < String >
+                    }
+
                     #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                     #[serde(tag = "cmd")]
                     pub enum AnyCmdReq {
@@ -263,6 +287,7 @@ mod test {
 
                     pub mod foo_cmd {
                         use super::AnyCmdReq;
+                        use super::UnknownStatus;
 
                         #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize ,PartialEq ,Eq)]
                         pub struct Req;
@@ -286,12 +311,6 @@ mod test {
                                 unknown_status: String,
                                 reason: Option<String>
                             }
-                        }
-
-                        #[derive(::serde::Deserialize)]
-                        struct UnknownStatus {
-                            status: String,
-                            reason: Option<String>
                         }
 
                         impl Rep {
@@ -317,6 +336,7 @@ mod test {
 
                     pub mod foo_cmd {
                         use super::AnyCmdReq;
+                        use super::UnknownStatus;
 
                         #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize ,PartialEq ,Eq)]
                         pub struct Req;
@@ -340,12 +360,6 @@ mod test {
                                 unknown_status: String,
                                 reason: Option<String>
                             }
-                        }
-
-                        #[derive(::serde::Deserialize)]
-                        struct UnknownStatus {
-                            status: String,
-                            reason: Option<String>
                         }
 
                         impl Rep {
