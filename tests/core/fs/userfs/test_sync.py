@@ -43,7 +43,7 @@ async def test_get_manifest(alice_user_fs):
 async def test_create_workspace(
     initial_user_manifest_state: InitialUserManifestState, alice_user_fs: UserFS, alice: LocalDevice
 ):
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-02", devices=[alice]):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
     um = alice_user_fs.get_user_manifest()
     expected_base_um = initial_user_manifest_state.get_user_manifest_v1_for_backend(alice)

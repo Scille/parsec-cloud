@@ -106,7 +106,8 @@ async def test_vacuum(alice_user_storage):
 async def test_storage_file_tree(tmp_path: Path, alice: LocalDevice):
     manifest_sqlite_db = tmp_path / alice.slug / "user_data-v1.sqlite"
 
-    async with UserStorage.run(tmp_path, alice) as aus:
-        assert aus.manifest_storage.path == manifest_sqlite_db
-
-    assert manifest_sqlite_db.is_file()
+    # Pristine start: DB is not created on FS...
+    assert not manifest_sqlite_db.exists()
+    async with UserStorage.run(tmp_path, alice):
+        # ...and now it is !
+        assert manifest_sqlite_db.is_file()

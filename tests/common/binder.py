@@ -114,7 +114,7 @@ def initialize_local_user_manifest(initial_user_manifest_state):
         assert initial_user_manifest in ("non_speculative_v0", "speculative_v0", "v1")
         # Create a storage just for this operation (the underlying database
         # will be reused by the core's storage thanks to `persistent_mockup`)
-        with freeze_time("2000-01-01", device=device) as timestamp:
+        with freeze_time("2000-01-01", devices=[device]) as timestamp:
             async with UserStorage.run(data_base_dir, device) as storage:
                 assert storage.get_user_manifest().base_version == 0
 

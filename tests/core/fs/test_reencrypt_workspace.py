@@ -21,7 +21,7 @@ from tests.common.backend import RunningBackend
 
 @pytest.fixture
 async def workspace(running_backend, alice_user_fs: UserFS) -> EntryID:
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-02", devices=[alice_user_fs.device], freeze_datetime=True):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
         # Sync workspace manifest v1
         await alice_user_fs.sync()

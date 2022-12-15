@@ -48,7 +48,7 @@ async def assert_same_workspace(workspace, workspace2):
 
 @pytest.mark.trio
 async def test_new_workspace(running_backend, alice_user_fs: UserFS):
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-02", devices=[alice_user_fs.device]):
         wid = await alice_user_fs.workspace_create(EntryName("w"))
         workspace = alice_user_fs.get_workspace(wid)
 
@@ -544,7 +544,9 @@ async def test_create_already_existing_folder_vlob(
 ):
 
     # First create data locally
-    with freeze_time("2000-01-02"):
+    with freeze_time(
+        "2000-01-02", devices=[alice_user_fs.device, alice2_user_fs.device], freeze_datetime=True
+    ):
         wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/x")
@@ -693,12 +695,12 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
 
 @pytest.mark.trio
 async def test_sync_data_before_workspace(running_backend, alice_user_fs: UserFS):
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-02", devices=[alice_user_fs.device]):
         wid = await alice_user_fs.workspace_create(EntryName("w"))
     w = alice_user_fs.get_workspace(wid)
     with freeze_time("2000-01-03"):
         await w.mkdir("/bar")
-    with freeze_time("2000-01-04"):
+    with freeze_time("2000-01-04", devices=[alice_user_fs.device]):
         await w.touch("/bar/foo.txt")
         foo_id = await w.path_id("/bar/foo.txt")
     with freeze_time("2000-01-05"):
@@ -744,13 +746,17 @@ async def test_merge_resulting_in_no_need_for_sync(
     async with user_fs_factory(alice) as alice_user_fs:
         async with user_fs_factory(alice2) as alice2_user_fs:
             # Create a workspace with an entry
-            with freeze_time("2000-01-02"):
+            with freeze_time("2000-01-02", devices=[alice_user_fs.device]):
                 wksp_id = await alice_user_fs.workspace_create(EntryName("wksp"))
                 alice_wksp = alice_user_fs.get_workspace(wksp_id)
                 await alice_wksp.mkdir("/foo")
 
             # Sync for Alice and Alice2
-            with freeze_time("2000-01-03"):
+            with freeze_time(
+                "2000-01-03",
+                devices=[alice_user_fs.device, alice2_user_fs.device],
+                freeze_datetime=True,
+            ):
                 await alice_user_fs.sync()
                 await alice_wksp.sync()
                 await alice2_user_fs.sync()
@@ -758,12 +764,12 @@ async def test_merge_resulting_in_no_need_for_sync(
                 await alice2_wksp.sync()
 
             # Alice remove the entry and sync this
-            with freeze_time("2000-01-04"):
+            with freeze_time("2000-01-04", devices=[alice_user_fs.device], freeze_datetime=True):
                 await alice_wksp.rmdir("/foo")
                 await alice_wksp.sync()
 
             # Now Alice2 does the same, this should not create any remote changes
-            with freeze_time("2000-01-05"):
+            with freeze_time("2000-01-05", devices=[alice2_user_fs.device], freeze_datetime=True):
                 await alice2_wksp.rmdir("/foo")
                 await alice2_wksp.sync()
 
