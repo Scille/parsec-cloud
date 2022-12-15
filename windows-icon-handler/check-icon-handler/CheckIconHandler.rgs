@@ -1,0 +1,16 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {5449bc90-310b-40a8-9abf-c5cfcec7f430} = s 'CheckIconHandler class'
+		{
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{78c79238-9970-4445-8ac8-2b9a8b5de7d4}'
+			Version = s '1.0'
+		}
+	}
+}
