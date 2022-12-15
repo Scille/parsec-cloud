@@ -27,60 +27,60 @@ day14 = DateTime(2000, 1, 14)
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace(alice_user_fs: UserFS, running_backend):
-    with freeze_time(day0):
+    with freeze_time(day0, devices=[alice_user_fs.device], freeze_datetime=True):
         wid = await alice_user_fs.workspace_create(EntryName("w"))
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/foo")
         # No sync, we want alice_workspace.to_timestamped to fail at day0
         # Still let's create the realm now to avoid restamping
         await alice_user_fs.remote_loader.create_realm(wid)
-    with freeze_time(day1):
+    with freeze_time(day1, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.sync()
-    with freeze_time(day2):
+    with freeze_time(day2, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.touch("/foo/bar")
         await workspace.sync()
-    with freeze_time(day3):
+    with freeze_time(day3, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.touch("/foo/baz")
         await workspace.sync()
 
-    with freeze_time(day4):
+    with freeze_time(day4, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.mkdir("/files")
         await workspace.touch("/files/content")
         await workspace.write_bytes("/files/content", b"abcde")
         await workspace.sync()
-    with freeze_time(day5):
+    with freeze_time(day5, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.write_bytes("/files/content", b"fghij")
         await workspace.sync()
 
-    with freeze_time(day6):
+    with freeze_time(day6, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.rename("/files/content", "/files/renamed")
         await workspace.sync()
-    with freeze_time(day7):
+    with freeze_time(day7, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.rename("/files/renamed", "/files/renamed_again")
         await workspace.sync()
-    with freeze_time(day8):
+    with freeze_time(day8, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.touch("/files/renamed")
         await workspace.write_bytes("/files/renamed", b"aaaaaa")
         await workspace.sync()
 
-    with freeze_time(day9):
+    with freeze_time(day9, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.rename("/files", "/moved")
         await workspace.sync()
-    with freeze_time(day10):
+    with freeze_time(day10, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.touch("/moved/content2")
         await workspace.write_bytes("/moved/content2", b"bbbbb")
         await workspace.sync()
-    with freeze_time(day11):
+    with freeze_time(day11, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.rename("/moved", "/files")
         await workspace.sync()
 
-    with freeze_time(day12):
+    with freeze_time(day12, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.unlink("/files/renamed")
         await workspace.sync()
-    with freeze_time(day13):
+    with freeze_time(day13, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.touch("/files/renamed")
         await workspace.sync()
-    with freeze_time(day14):
+    with freeze_time(day14, devices=[alice_user_fs.device], freeze_datetime=True):
         await workspace.touch("/files/renamed")
         await workspace.write_bytes("/files/renamed", b"ccccc")
         await workspace.sync()

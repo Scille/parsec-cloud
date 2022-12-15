@@ -92,15 +92,15 @@ async def test_new_sharing_trigger_event(
 ):
     KEY = SecretKey.generate()
     # First, create a folder and sync it on backend
-    with freeze_time("2000-01-01"):
+    with freeze_time("2000-01-01", devices=[alice_core.device], freeze_datetime=True):
         wid = await alice_core.user_fs.workspace_create(EntryName("foo"))
     workspace = alice_core.user_fs.get_workspace(wid)
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-02", devices=[alice_core.device], freeze_datetime=True):
         await workspace.sync()
 
     # Now we can share this workspace with Bob
     with bob_core.event_bus.listen() as spy:
-        with freeze_time("2000-01-03"):
+        with freeze_time("2000-01-03", devices=[alice_core.device], freeze_datetime=True):
             await alice_core.user_fs.workspace_share(
                 wid, recipient=UserID("bob"), role=WorkspaceRole.MANAGER
             )
