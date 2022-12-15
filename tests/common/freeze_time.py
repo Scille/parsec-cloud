@@ -32,6 +32,8 @@ def freeze_device_time(device: LocalDevice | DeviceID, current_time: DateTime | 
     else:
         assert False, device
 
+    device.time_provider.mock_time(freeze=current_time)
+
     # Apply mockup (idempotent)
     type(device).timestamp = _timestamp_mockup
 
