@@ -177,10 +177,16 @@ def main(
     # Copy windows icon overlays dll needed by `explorer.exe` to display overlays
     # These dll are supposed to be built before running this script
     for dll_file in [
-        src_dir.joinpath("windows-icon-handler\\check-icon-handler\\Release\\check-icon-handler.dll"),
-        src_dir.joinpath("windows-icon-handler\\refresh-icon-handler\\Release\\refresh-icon-handler.dll"),
+        src_dir.joinpath(
+            "windows-icon-handler\\check-icon-handler\\Release\\check-icon-handler.dll"
+        ),
+        src_dir.joinpath(
+            "windows-icon-handler\\refresh-icon-handler\\Release\\refresh-icon-handler.dll"
+        ),
     ]:
-        assert os.path.isfile(dll_file), f"{dll_file} not found or isn't a file! Did you forget to build it using Release profile?"
+        assert os.path.isfile(
+            dll_file
+        ), f"{dll_file} not found or isn't a file! Did you forget to build it using Release profile?"
         display(f"Copying {dll_file} to {target_dir} ...")
         shutil.copy(dll_file, target_dir)
 
