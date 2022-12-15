@@ -188,7 +188,7 @@ async def winfsp_mountpoint_runner(
 
         # Manage drive icon
         drive_letter = mountpoint_path.drive[0]
-        with parsec_drive_icon_context(drive_letter):
+        with parsec_drive_icon_context(drive_letter, device=user_fs.device):
 
             # Run fs start in a thread
             await trio.to_thread.run_sync(fs.start)
