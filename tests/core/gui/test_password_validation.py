@@ -10,7 +10,7 @@ from parsec.core.gui.password_validation import get_password_strength, get_passw
 
 @pytest.mark.gui
 def test_password_validation():
-    assert get_password_strength("passwor") == 0
+    assert get_password_strength("passwor") == 0  # cspell: disable-line
     assert get_password_strength("password") == 1
     assert get_password_strength("password-1") == 2
     assert get_password_strength("password-123") == 3
@@ -61,7 +61,7 @@ def test_password_choice_widget_mismatch(qtbot, core_config):
     qtbot.add_widget(p)
 
     p.line_edit_password.setText("William J Blazkowicz")
-    p.line_edit_password_check.setText("William J Blazkowiz")
+    p.line_edit_password_check.setText("William J Blazkowiz")  # cspell: disable-line
 
     assert p.pwd_str_widget.label.text() == "Password strength: EXCELLENT"
     assert p.password == "William J Blazkowicz"

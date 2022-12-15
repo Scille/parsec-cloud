@@ -32,7 +32,7 @@ def test_recovery_passphrase():
     [
         # Empty
         "",
-        # Only invalid characters (so endup empty)
+        # Only invalid characters (so end up empty)
         "-@//白",
         # Too short
         "D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO",

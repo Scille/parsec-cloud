@@ -472,11 +472,11 @@ async def monitor_sync(
                 task_status.idle()
             async with trio.open_nursery() as nursery:
 
-                async def wait_for_early_wakup() -> None:
+                async def wait_for_early_wakeup() -> None:
                     await early_wakeup.wait()
                     nursery.cancel_scope.cancel()
 
-                nursery.start_soon(wait_for_early_wakup)
+                nursery.start_soon(wait_for_early_wakeup)
                 to_sleep = next_due_time - user_fs.device.time_provider.now().timestamp()
                 await user_fs.device.time_provider.sleep(to_sleep)
                 nursery.cancel_scope.cancel()

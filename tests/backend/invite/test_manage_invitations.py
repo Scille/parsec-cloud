@@ -452,7 +452,7 @@ async def test_new_user_invitation_after_invitation_deleted(alice, backend, alic
         reason=InvitationDeletedReason.FINISHED,
     )
 
-    # Deleted invitation shoudn't prevent from creating a new one
+    # Deleted invitation shouldn't prevent from creating a new one
 
     with freeze_time("2000-01-04"):
         rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=claimer_email)
@@ -481,7 +481,7 @@ async def test_new_device_invitation_after_invitation_deleted(alice, backend, al
         reason=InvitationDeletedReason.FINISHED,
     )
 
-    # Deleted invitation shoudn't prevent from creating a new one
+    # Deleted invitation shouldn't prevent from creating a new one
 
     with freeze_time("2000-01-04"):
         rep = await invite_new(alice_ws, type=InvitationType.DEVICE)

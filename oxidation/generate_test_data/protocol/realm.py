@@ -323,7 +323,7 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("realm_start_reencryption_maintenance_rep_bad_timestamp", serialized, [])
 
-################### RealmFinishReecryptionMaintenance ##################
+################### RealmFinishReencryptionMaintenance ##################
 
 serializer = realm_finish_reencryption_maintenance_serializer
 

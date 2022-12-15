@@ -16,11 +16,11 @@ from parsec.backend.memory.user import (
 )
 from parsec.backend.pki import (
     BasePkiEnrollmentComponent,
-    PkiEnrollementEmailAlreadyUsedError,
     PkiEnrollmentActiveUsersLimitReached,
     PkiEnrollmentAlreadyEnrolledError,
     PkiEnrollmentAlreadyExistError,
     PkiEnrollmentCertificateAlreadySubmittedError,
+    PkiEnrollmentEmailAlreadyUsedError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
     PkiEnrollmentInfoAccepted,
@@ -120,7 +120,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 omit_revoked=True,
             )
             if total:
-                raise PkiEnrollementEmailAlreadyUsedError()
+                raise PkiEnrollmentEmailAlreadyUsedError()
         self._enrollments[organization_id].append(
             PkiEnrollment(
                 enrollment_id=enrollment_id,

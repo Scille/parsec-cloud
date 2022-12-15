@@ -272,6 +272,7 @@ async def test_write_bytes(alice_workspace):
 
 @pytest.mark.trio
 async def test_move(alice_workspace):
+    # cspell: ignore containfoz
     await alice_workspace.move("/foo", "/foz")
     await alice_workspace.move("/foz/bar", "/foz/bal")
     assert await alice_workspace.is_file("/foz/bal")

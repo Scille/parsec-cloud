@@ -285,7 +285,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             )
             continue
         else:
-            # No reset occured at all... `reset_step` must be wrong !
+            # No reset occurred at all... `reset_step` must be wrong !
             assert False, reset_step
 
 

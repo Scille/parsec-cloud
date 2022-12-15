@@ -14,6 +14,10 @@ dictionaryDefinitions:
   - name: french-words
     path: ./.cspell/french-words.txt
     addWords: true
+  # `filetypes` is missing some file types
+  - name: custom-ext
+    path: ./.cspell/custom-ext.txt
+    addWords: true
 dictionaries:
   - en_us
   - en-gb
@@ -32,13 +36,17 @@ dictionaries:
   - bash
   - shell
   - custom-words
+  - filetypes
+  - custom-ext
   - names
   - typescript
   - sql
+  - win32
 words:
   - libparsec
   - schemafile
   - intlify
+  - htmlcov
 ignoreWords:
   - ApiV
   - ABCDEFGHJKLMNPQRSTUVWXYZ
@@ -63,15 +71,26 @@ ignoreWords:
   - Assss
   - dksjdskdjs
   - SPIHB
+  - EFGH
+  - JKLM
+  - NPQR
+  - tqdm
+  - PQRSTUVWXYZHIJKLMNO
+  - abcefg
+  - mnpcod
 cache:
   cacheFormat: universal
   cacheStrategy: metadata
   useCache: true
 useGitignore: true
+allowCompoundWords: true
 ignorePaths:
   - ./oxidation/libparsec_python
+  - '**/parsec/core/resources/default_*.ignore'
+  - '**/docs/figures/*.svg'
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"
   - "@cspell/dict-bash/cspell-ext.json"
   - "@cspell/dict-shell/cspell-ext.json"
+  - "@cspell/dict-win32/cspell-ext.json"

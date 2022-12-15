@@ -667,7 +667,7 @@ async def test_claim_device_unknown_invitation(
 async def test_claim_device_with_bad_start_arg(
     event_bus, core_config, gui_factory, autoclose_dialog
 ):
-    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&device_id=John%40pc&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD"
+    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&device_id=John%40pc&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD"  # cspell: disable-line
 
     _ = await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=bad_start_arg)
 

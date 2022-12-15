@@ -166,8 +166,8 @@ async def fuse_mountpoint_runner(
             # Note that this does not prevent the user from using a certain encoding
             # in the context of the parsec app and another encoding in the context of
             # an application accessing the mountpoint. In this case, an encoding error
-            # might be raised while fuspy tries to decode the path. If that happens,
-            # fuspy will log the error and simply return EINVAL, which is acceptable.
+            # might be raised while fusepy tries to decode the path. If that happens,
+            # fusepy will log the error and simply return EINVAL, which is acceptable.
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread() -> None:
@@ -305,7 +305,7 @@ async def _stop_fuse_thread(
             # case the stop is ordered before fuse has finished started (hence
             # the unmount command can run before the OS mount has occurred).
             # Of course this means in theory we could be umounting by mistake
-            # an unrelated mountpoint that tooks our path, but it's a really
+            # an unrelated mountpoint that took our path, but it's a really
             # unlikely event.
             if process.poll() is not None:
                 process = await trio.lowlevel.open_process(process_args)

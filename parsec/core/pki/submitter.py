@@ -431,7 +431,7 @@ class PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSu
     - PkiEnrollmentCertificateSignatureError: when the provided signature does not correspond to the certificate public key
     - PkiEnrollmentCertificateValidationError: when the provided certificate cannot be validated using the configured trust roots
     - PkiEnrollmentCertificateError: an generic certificate-related errors
-    - PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
+    - PkiEnrollmentPayloadValidationError: when some enrollment information cannot be properly loaded
 
     The `accepter_x509_certificate` is optional depending on whether the certificate information could be successfully extracted
     before the error or not.

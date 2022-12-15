@@ -202,7 +202,7 @@ class MountpointManager:
                     # It is the reponsability of the runner context teardown to wait
                     # for cancellation. This is done to avoid adding an extra nursery
                     # into the winfsp runner, for simplicity. This could change in the
-                    # future in which case we'll simmply add a `sleep_forever` below.
+                    # future in which case we'll simply add a `sleep_forever` below.
 
             finally:
                 # Pop the mountpoint task if its ours
@@ -346,7 +346,7 @@ async def cleanup_macos_mountpoint_folder(base_mountpoint_path: Path) -> None:
     try:
         mountpoint_names = await base_mountpoint_path.iterdir()
     except FileNotFoundError:
-        # Unlike with `pathlib.Path.iterdir` which returns a lazy itertor,
+        # Unlike with `pathlib.Path.iterdir` which returns a lazy iterator,
         # `trio.Path.iterdir` does FS access and may raise FileNotFoundError
         return
     for mountpoint_name in mountpoint_names:

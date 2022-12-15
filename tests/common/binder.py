@@ -100,7 +100,7 @@ def initial_user_manifest_state():
     # manifest.
     # In most tests we want to be in a state were backend and devices all
     # store the same user manifest (named the "v1" here).
-    # But sometime we want a completly fresh start ("v1" doesn't exist,
+    # But sometime we want a completely fresh start ("v1" doesn't exist,
     # hence devices and backend are empty) or only a single device to begin
     # with no knowledge of the "v1".
     return InitialUserManifestState()
@@ -123,7 +123,7 @@ def initialize_local_user_manifest(initial_user_manifest_state):
                         storage.device
                     )
                     await storage.set_user_manifest(user_manifest)
-                    # Chcekpoint 1 *is* the upload of user manifest v1
+                    # Checkpoint 1 *is* the upload of user manifest v1
                     await storage.update_realm_checkpoint(1, {})
 
                 elif initial_user_manifest == "non_speculative_v0":
@@ -288,7 +288,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
 
             with self.backend.event_bus.listen() as spy:
 
-                # The realm needs to be created srictly before the manifest timestamp
+                # The realm needs to be created strictly before the manifest timestamp
                 realm_create_timestamp = manifest.timestamp.subtract(microseconds=1)
 
                 await self.backend.realm.create(

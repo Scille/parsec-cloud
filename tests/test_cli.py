@@ -58,7 +58,7 @@ from tests.common import (
 
 CWD = Path(__file__).parent.parent
 # Starting parsec cli as a new subprocess can be very slow (typically a couple
-# of seconds on my beafy machine !), so we use an unusaly large value here to
+# of seconds on my beafy machine !), so we use an unusually large value here to
 # avoid issues in the CI.
 SUBPROCESS_TIMEOUT = 30
 
@@ -1272,7 +1272,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         assert services[-1].service_type == SequesterServiceType.WEBHOOK
         assert services[-1].webhook_url
 
-        # Create webhook service but forget webook URL
+        # Create webhook service but forget webhook URL
         result = await create_service(
             service_key_path,
             authority_key_path,
@@ -1282,7 +1282,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         )
         assert result.exit_code == 1
 
-        # Create non-webhook service but provide a webook URL
+        # Create non-webhook service but provide a webhook URL
         result = await create_service(
             service_key_path,
             authority_key_path,

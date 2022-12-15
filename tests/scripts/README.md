@@ -116,7 +116,7 @@ In particular:
 Example: testing the invitation procedure
 -----------------------------------------
 
-The following scenario shows how the parsec invatation procedure can easily be tested
+The following scenario shows how the parsec invitation procedure can easily be tested
 using the `run_testenv` script and two terminals.
 
 In a first terminal, run the following commands:

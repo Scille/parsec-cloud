@@ -281,7 +281,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
 
         new_vlob_id = VlobID.from_hex("00000000000000000000000000000002")
 
-        # Test htttURLError
+        # Test httpURLError
         def raise_urlerror(*args, **kwargs):
             raise urllib.error.URLError(reason="CONNECTION REFUSED")
 
@@ -295,7 +295,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             check_rep=False,
         )
         assert isinstance(rep, VlobCreateRepTimeout)
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             f"[warning  ] Cannot reach webhook server    [parsec.backend.vlob] service_id={service.service_id.hex} service_label=TestWebhookService"
         )
         caplog.clear()
@@ -309,7 +309,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             check_rep=False,
         )
         assert isinstance(rep, VlobUpdateRepTimeout)
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             f"[warning  ] Cannot reach webhook server    [parsec.backend.vlob] service_id={service.service_id.hex} service_label=TestWebhookService"
         )
         caplog.clear()
@@ -329,7 +329,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             check_rep=False,
         )
         assert isinstance(rep, VlobCreateRepTimeout)
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             f"[warning  ] Invalid HTTP status returned by webhook [parsec.backend.vlob] service_id={service.service_id.hex} service_label=TestWebhookService status=405"
         )
         caplog.clear()
@@ -343,7 +343,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             check_rep=False,
         )
         assert isinstance(rep, VlobUpdateRepTimeout)
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             f"[warning  ] Invalid HTTP status returned by webhook [parsec.backend.vlob] service_id={service.service_id.hex} service_label=TestWebhookService status=405"
         )
         caplog.clear()
@@ -364,7 +364,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        caplog.assert_not_occured("warning")
+        caplog.assert_not_occurred("warning")
         assert isinstance(rep, VlobCreateRepRejectedBySequesterService)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
@@ -378,7 +378,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        caplog.assert_not_occured("warning")
+        caplog.assert_not_occurred("warning")
         assert isinstance(rep, VlobUpdateRepRejectedBySequesterService)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
@@ -400,7 +400,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             f"[warning  ] Invalid rejection reason body returned by webhook [parsec.backend.vlob] body=b'not a json' service_id={service.service_id.hex} service_label=TestWebhookService"
         )
         caplog.clear()
@@ -417,7 +417,7 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             f"[warning  ] Invalid rejection reason body returned by webhook [parsec.backend.vlob] body=b'not a json' service_id={service.service_id.hex} service_label=TestWebhookService"
         )
         caplog.clear()
