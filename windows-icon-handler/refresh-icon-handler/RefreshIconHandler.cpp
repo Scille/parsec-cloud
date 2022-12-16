@@ -45,14 +45,10 @@ HRESULT __stdcall CRefreshIconHandler::IsMemberOf(LPCWSTR pwszPath, DWORD dwAttr
 
 HRESULT __stdcall CRefreshIconHandler::GetOverlayInfo(LPWSTR pwszIconFile, int cchMax, int* pIndex, DWORD* pdwFlags)
 {
-    // TODO: set standard icon path or load it once in memory?
-    const LPWSTR path = L"C:\\Users\\Corentin\\Documents\\icon_handler\\vs\\refresh.ico";
-    //const LPWSTR path = L"E:\\projects\\icon_handler\\refesh.ico";
-
-    // TODO: check if this file has its `__parsecinfo__`, parse its json content, set the appropriate icon if needed
-    wcscpy_s(pwszIconFile, wcslen(path) + 1, path);
+    // We use the icon present in dll resources
+    GetModuleFileNameW(_AtlBaseModule.GetModuleInstance(), pwszIconFile, cchMax);
+    *pdwFlags = ISIOI_ICONFILE | ISIOI_ICONINDEX; // We return an icon index
     *pIndex = 0;
-    *pdwFlags = ISIOI_ICONFILE;
 
     return S_OK;
 }

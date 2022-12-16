@@ -278,6 +278,7 @@
     <Midl Include="refreshiconhandler.idl" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="refresh.ico" />
     <Image Include="RefreshIconHandler.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
