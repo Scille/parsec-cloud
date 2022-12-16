@@ -25,10 +25,9 @@ from tests.core.conftest import UserFsFactory
 
 
 @pytest.mark.trio
-async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
-    with freeze_time("2000-01-01", device=alice):
+    with freeze_time("2000-01-01", devices=[alice]):
         async with user_fs_factory(alice) as user_fs:
-            with freeze_time("2000-01-02", device=alice):
+            with freeze_time("2000-01-02", devices=[alice]):
                 user_manifest = user_fs.get_user_manifest()
 
     assert user_manifest.to_stats() == {
@@ -49,7 +48,7 @@ async def test_workspace_manifest_access_while_speculative(
     # when a device gets it local data removed. We use the latter here (even if
     # it is the less likely of the two) given it is simpler to do in the test.
 
-    with freeze_time("2000-01-01", device=alice):
+    with freeze_time("2000-01-01", devices=[alice]):
         async with user_fs_factory(alice) as user_fs:
             user_fs: UserFS = user_fs
             wksp_id = await user_fs.workspace_create(EntryName("wksp"))
@@ -76,7 +75,7 @@ async def test_workspace_manifest_access_while_speculative(
         assert after_delete is None
 
     # Now re-start the userfs (the same local storage will be used)
-    with freeze_time("2000-01-02", device=alice):
+    with freeze_time("2000-01-02", devices=[alice]):
         async with user_fs_factory(alice) as user_fs:
             with freeze_time("2000-01-03"):
                 wksp = user_fs.get_workspace(wksp_id)
@@ -127,13 +126,13 @@ async def test_concurrent_devices_agree_on_user_manifest(
     async with trio.open_nursery() as nursery:
         switch_back_online = await nursery.start(_switch_running_backend_offline)
 
-        with freeze_time("2000-01-01"):
+        with freeze_time("2000-01-01", devices=[alice]):
             if with_speculative != "both":
                 await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=alice)
             async with user_fs_factory(alice, data_base_dir=data_base_dir) as user_fs1:
                 wksp1_id = await user_fs1.workspace_create(EntryName("wksp1"))
 
-                with freeze_time("2000-01-02"):
+                with freeze_time("2000-01-02", devices=[alice, alice2]):
                     if with_speculative not in ("both", "alice2"):
                         await user_storage_non_speculative_init(
                             data_base_dir=data_base_dir, device=alice2
@@ -141,7 +140,7 @@ async def test_concurrent_devices_agree_on_user_manifest(
                     async with user_fs_factory(alice2, data_base_dir=data_base_dir) as user_fs2:
                         wksp2_id = await user_fs2.workspace_create(EntryName("wksp2"))
 
-                        with freeze_time("2000-01-03"):
+                        with freeze_time("2000-01-03", devices=[alice, alice2]):
                             # Only now the backend appear offline, this is to ensure each
                             # UserFS has created a user manifest in isolation
                             await backend_data_binder.bind_organization(
@@ -153,11 +152,11 @@ async def test_concurrent_devices_agree_on_user_manifest(
 
                             # Sync user_fs2 first to ensure created_on field is
                             # kept even if further syncs have an earlier value
-                            with freeze_time("2000-01-04"):
+                            with freeze_time("2000-01-04", devices=[alice2], freeze_datetime=True):
                                 await user_fs2.sync()
-                            with freeze_time("2000-01-05"):
+                            with freeze_time("2000-01-05", devices=[alice], freeze_datetime=True):
                                 await user_fs1.sync()
-                            with freeze_time("2000-01-06"):
+                            with freeze_time("2000-01-06", devices=[alice2], freeze_datetime=True):
                                 await user_fs2.sync()
 
                             # Now, both user fs should have the same view on data
@@ -242,32 +241,32 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
         alice_user_fs: UserFS = alice_user_fs
         async with user_fs_factory(alice2) as alice2_user_fs:
             alice2_user_fs: UserFS = alice2_user_fs
-            with freeze_time("2000-01-01", device=alice):
+            with freeze_time("2000-01-01", devices=[alice]):
                 wksp_id = await alice_user_fs.workspace_create(EntryName("wksp"))
             # Sync user manifest (containing the workspace entry), but
             # not the corresponding workspace manifest !
-            with freeze_time("2000-01-02", device=alice):
+            with freeze_time("2000-01-02", devices=[alice], freeze_datetime=True):
                 await alice_user_fs.sync()
 
             # Retrieve the user manifest but not the workspace manifest, Alice2 hence has a speculative workspace manifest
-            with freeze_time("2000-01-03", device=alice2):
+            with freeze_time("2000-01-03", devices=[alice2], freeze_datetime=True):
                 await alice2_user_fs.sync()
 
             # Now workspace diverge between devices
             alice_wksp = alice_user_fs.get_workspace(wksp_id)
             alice2_wksp = alice2_user_fs.get_workspace(wksp_id)
-            with freeze_time("2000-01-04", device=alice):
+            with freeze_time("2000-01-04", devices=[alice]):
                 await alice_wksp.mkdir("/from_alice")
-            with freeze_time("2000-01-05", device=alice2):
+            with freeze_time("2000-01-05", devices=[alice2]):
                 await alice2_wksp.mkdir("/from_alice2")
 
             # Sync user_fs2 first to ensure created_on field is
             # kept even if further syncs have an earlier value
-            with freeze_time("2000-01-06", device=alice2):
+            with freeze_time("2000-01-06", devices=[alice2], freeze_datetime=True):
                 await alice2_wksp.sync()
-            with freeze_time("2000-01-07", device=alice):
+            with freeze_time("2000-01-07", devices=[alice], freeze_datetime=True):
                 await alice_wksp.sync()
-            with freeze_time("2000-01-08", device=alice2):
+            with freeze_time("2000-01-08", devices=[alice2], freeze_datetime=True):
                 await alice2_wksp.sync()
 
             # Now, both user fs should have the same view on workspace
@@ -294,9 +293,9 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
 ):
     # Alice creates a workspace and sync it
     async with user_fs_factory(alice) as alice_user_fs:
-        with freeze_time("2000-01-02", device=alice):
+        with freeze_time("2000-01-02", devices=[alice]):
             await alice_user_fs.workspace_create(EntryName("wksp1"))
-        with freeze_time("2000-01-03", device=alice):
+        with freeze_time("2000-01-03", devices=[alice], freeze_datetime=True):
             await alice_user_fs.sync()
         alice_user_manifest_v1 = alice_user_fs.get_user_manifest()
         assert alice_user_manifest_v1.to_stats() == {
@@ -309,10 +308,10 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
             "need_sync": False,
         }
 
-        with freeze_time("2000-01-04", device=alice):
+        with freeze_time("2000-01-04", devices=[alice2]):
             # Now Alice2 comes into play with it speculative user manifest
             async with user_fs_factory(alice2) as alice2_user_fs:
-                with freeze_time("2000-01-05", device=alice2):
+                with freeze_time("2000-01-05", devices=[alice2]):
                     # Access the user manifest to ensure it is created, but do not modify it !
                     alice2_user_manifest_v0 = alice2_user_fs.get_user_manifest()
                     assert alice2_user_manifest_v0.to_stats() == {
@@ -325,7 +324,7 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
                     }
 
                     # Finally Alice2 sync, this should not create any remote change
-                    with freeze_time("2000-01-06", device=alice2):
+                    with freeze_time("2000-01-06", devices=[alice2], freeze_datetime=True):
                         await alice2_user_fs.sync()
 
                     alice2_user_manifest_v1 = alice2_user_fs.get_user_manifest()
@@ -344,23 +343,23 @@ async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
         async with user_fs_factory(alice2) as alice2_user_fs:
             alice2_user_fs: UserFS = alice2_user_fs
             # First Alice creates a workspace, then populates and syncs it
-            with freeze_time("2000-01-01", device=alice):
+            with freeze_time("2000-01-01", devices=[alice]):
                 wksp_id = await alice_user_fs.workspace_create(EntryName("wksp"))
             alice_wksp = alice_user_fs.get_workspace(wksp_id)
-            with freeze_time("2000-01-02", device=alice):
+            with freeze_time("2000-01-02", devices=[alice]):
                 await alice_wksp.mkdir("/from_alice")
-            with freeze_time("2000-01-03", device=alice):
+            with freeze_time("2000-01-03", devices=[alice], freeze_datetime=True):
                 await alice_wksp.sync()
                 await alice_user_fs.sync()
 
             # Alice2 retrieves the user manifest but NOT the workspace manifest
             # hence Alice2 end up with a speculative workspace manifest
-            with freeze_time("2000-01-04", device=alice2):
+            with freeze_time("2000-01-04", devices=[alice2], freeze_datetime=True):
                 await alice2_user_fs.sync()
             alice2_wksp = alice2_user_fs.get_workspace(wksp_id)
 
             # Access the workspace manifest to ensure it is created, but do not modify it !
-            with freeze_time("2000-01-05", device=alice2):
+            with freeze_time("2000-01-05", devices=[alice2]):
                 alice2_wksp_stat_v0 = await alice2_wksp.path_info("/")
             assert alice2_wksp_stat_v0 == {
                 "id": wksp_id,
@@ -375,7 +374,7 @@ async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
             }
 
             # Now proceed to sync, this should end up with no remote changes
-            with freeze_time("2000-01-06", device=alice2):
+            with freeze_time("2000-01-06", devices=[alice2], freeze_datetime=True):
                 await alice2_wksp.sync()
             alice_wksp_stat_v1 = await alice_wksp.path_info("/")
             alice2_wksp_stat_v1 = await alice2_wksp.path_info("/")
