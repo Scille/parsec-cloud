@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import Literal
 
 import pytest
 import trio
@@ -25,6 +26,9 @@ from tests.core.conftest import UserFsFactory
 
 
 @pytest.mark.trio
+async def test_user_manifest_access_while_speculative(
+    user_fs_factory: UserFsFactory, alice: LocalDevice
+):
     with freeze_time("2000-01-01", devices=[alice]):
         async with user_fs_factory(alice) as user_fs:
             with freeze_time("2000-01-02", devices=[alice]):
@@ -105,7 +109,7 @@ async def test_concurrent_devices_agree_on_user_manifest(
     coolorg,
     alice: LocalDevice,
     alice2: LocalDevice,
-    with_speculative,
+    with_speculative: Literal["none", "both", "alice2"],
 ):
     KEY = SecretKey.generate()
 
