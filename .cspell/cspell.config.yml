@@ -48,36 +48,72 @@ words:
   - intlify
   - htmlcov
 ignoreWords:
-  - ApiV
   - ABCDEFGHJKLMNPQRSTUVWXYZ
-  - ZGIQ
-  - WPFF
-  - QPIM
+  - ABCEFG
+  - Aaaaaand
+  - ApiV
+  - Assss
+  - Crefreshiconhandler
+  - Cwindowsiconhandler
   - DWXJ
-  - VFKA
-  - QPGW
-  - NNWQ
-  - KBWM
+  - EFGH
+  - Fody
+  - Fody
   - HRSW
-  - SPFYHIZLEL
+  - JKLM
+  - KBWM
+  - MNPCOD
+  - NNWQ
+  - NPQR
+  - Nsight
+  - PQRSTUVWXYZHIJKLMNO
+  - PTVS
+  - Paket
+  - QPGW
+  - QPIM
   - QWIPQs
   - QYJW
-  - YVPZ
-  - XBAO
-  - Aaaaaand
-  - VQLP
-  - XPCMTSEN
-  - ZOXKGGIMTY
-  - Assss
-  - dksjdskdjs
+  - SPFYHIZLEL
   - SPIHB
-  - EFGH
-  - JKLM
-  - NPQR
+  - SYMED
+  - VFKA
+  - VQLP
+  - WPFF
+  - XBAO
+  - XPCMTSEN
+  - YVPZ
+  - ZGIQ
+  - ZOXKGGIMTY
+  - ackup
+  - csdef
+  - dbmdl
+  - dbproj
+  - dksjdskdjs
+  - ebug
+  - elease
+  - eleases
+  - esult
+  - iobj
+  - ipch
+  - ipdb
+  - jmconfig
+  - ntvs
+  - nunit
+  - nupkg
+  - nvuser
+  - paket
+  - pidb
+  - psess
+  - rsuser
+  - snupkg
   - tqdm
-  - PQRSTUVWXYZHIJKLMNO
-  - abcefg
-  - mnpcod
+  - ublish
+  - uild
+  - vshistory
+  - vspscc
+  - vspx
+  - vssscc
+  - wpftmp
 cache:
   cacheFormat: universal
   cacheStrategy: metadata
@@ -88,6 +124,8 @@ ignorePaths:
   - ./oxidation/libparsec_python
   - '**/parsec/core/resources/default_*.ignore'
   - '**/docs/figures/*.svg'
+  - '**/windows-icon-handler/**/*.vcxproj'
+  - '**/windows-icon-handler/**/*.vcxproj.filters'
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"
