@@ -48,72 +48,39 @@ words:
   - intlify
   - htmlcov
 ignoreWords:
-  - ABCDEFGHJKLMNPQRSTUVWXYZ
-  - ABCEFG
-  - Aaaaaand
   - ApiV
-  - Assss
-  - Crefreshiconhandler
-  - Cwindowsiconhandler
-  - DWXJ
-  - EFGH
-  - Fody
-  - Fody
-  - HRSW
-  - JKLM
-  - KBWM
-  - MNPCOD
-  - NNWQ
-  - NPQR
-  - Nsight
-  - PQRSTUVWXYZHIJKLMNO
-  - PTVS
-  - Paket
-  - QPGW
+  - ABCDEFGHJKLMNPQRSTUVWXYZ
+  - ZGIQ
+  - WPFF
   - QPIM
+  - DWXJ
+  - VFKA
+  - QPGW
+  - NNWQ
+  - KBWM
+  - HRSW
+  - SPFYHIZLEL
   - QWIPQs
   - QYJW
-  - SPFYHIZLEL
-  - SPIHB
-  - SYMED
-  - VFKA
-  - VQLP
-  - WPFF
-  - XBAO
-  - XPCMTSEN
   - YVPZ
-  - ZGIQ
+  - XBAO
+  - Aaaaaand
+  - VQLP
+  - XPCMTSEN
   - ZOXKGGIMTY
-  - ackup
-  - csdef
-  - dbmdl
-  - dbproj
+  - Assss
   - dksjdskdjs
-  - ebug
-  - elease
-  - eleases
-  - esult
-  - iobj
-  - ipch
-  - ipdb
-  - jmconfig
-  - ntvs
-  - nunit
-  - nupkg
-  - nvuser
-  - paket
-  - pidb
-  - psess
-  - rsuser
-  - snupkg
+  - SPIHB
+  - EFGH
+  - JKLM
+  - NPQR
   - tqdm
-  - ublish
-  - uild
-  - vshistory
-  - vspscc
-  - vspx
-  - vssscc
-  - wpftmp
+  - PQRSTUVWXYZHIJKLMNO
+  - abcefg
+  - mnpcod
+  - SYMED
+  - Crefreshiconhandler
+  - Cwindowsiconhandler
 cache:
   cacheFormat: universal
   cacheStrategy: metadata
