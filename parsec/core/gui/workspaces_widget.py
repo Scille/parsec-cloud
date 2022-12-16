@@ -81,8 +81,8 @@ async def _do_workspace_list(core: LoggedCore) -> list[WorkspaceFS]:
         workspace_id = workspace.id
         workspace_fs = core.user_fs.get_workspace(workspace_id)
         workspaces.append(workspace_fs)
-    worspaces_timestamped_dict = await core.mountpoint_manager.get_timestamped_mounted()
-    for (workspace_id, timestamp), workspace_fs in worspaces_timestamped_dict.items():
+    workspaces_timestamped_dict = await core.mountpoint_manager.get_timestamped_mounted()
+    for (workspace_id, timestamp), workspace_fs in workspaces_timestamped_dict.items():
         workspaces.append(workspace_fs)
 
     return workspaces

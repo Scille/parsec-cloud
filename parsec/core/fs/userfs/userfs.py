@@ -184,39 +184,39 @@ class ReencryptionJob:
                 new_ciphered = self.new_workspace_entry.key.encrypt(clear_text)
                 done_batch.append((item.vlob_id, item.version, new_ciphered))
 
-            rep_maitenance_save_reencryption = (
+            rep_maintenance_save_reencryption = (
                 await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
                     workspace_id, new_encryption_revision, done_batch
                 )
             )
             if isinstance(
-                rep_maitenance_save_reencryption,
+                rep_maintenance_save_reencryption,
                 (
                     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
                     VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
                 ),
             ):
                 raise FSWorkspaceNotInMaintenance(
-                    f"Reencryption job already finished: {rep_maitenance_save_reencryption}"
+                    f"Reencryption job already finished: {rep_maintenance_save_reencryption}"
                 )
             elif isinstance(
-                rep_maitenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepNotAllowed
+                rep_maintenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepNotAllowed
             ):
                 raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep_maitenance_save_reencryption}"
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep_maintenance_save_reencryption}"
                 )
             elif not isinstance(
-                rep_maitenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepOk
+                rep_maintenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepOk
             ):
                 raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id.hex}: {rep_maitenance_save_reencryption}"
+                    f"Cannot do reencryption maintenance on workspace {workspace_id.hex}: {rep_maintenance_save_reencryption}"
                 )
 
             total = cast(
-                VlobMaintenanceSaveReencryptionBatchRepOk, rep_maitenance_save_reencryption
+                VlobMaintenanceSaveReencryptionBatchRepOk, rep_maintenance_save_reencryption
             ).total
             done = cast(
-                VlobMaintenanceSaveReencryptionBatchRepOk, rep_maitenance_save_reencryption
+                VlobMaintenanceSaveReencryptionBatchRepOk, rep_maintenance_save_reencryption
             ).done
 
             if total == done:

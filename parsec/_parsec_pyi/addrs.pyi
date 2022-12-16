@@ -113,7 +113,7 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
         cls,
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
-        token: str | None,
+        token: str | None = None,
     ) -> BackendOrganizationBootstrapAddr: ...
 
 class BackendOrganizationFileLinkAddr(BackendAddr):

@@ -222,6 +222,9 @@ async def anonymous_api(raw_organization_id: str) -> Response:
 
     # Retrieve command
     client_ctx = AnonymousClientContext(organization_id)
+    client_ctx.logger.info(
+        f"Anonymous client successfully connected (client version: {api_version})"
+    )
     if not isinstance(cmd, str):
         return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
 
@@ -276,6 +279,9 @@ async def authenticated_api(raw_organization_id: str) -> Response:
         public_key=user.public_key,
         verify_key=device.verify_key,
     )
+    client_ctx.logger.info(
+        f"Authenticated client successfully connected (client version: {api_version})"
+    )
 
     cmd_rep = await cmd_func(client_ctx, msg)
     return _rpc_msgpack_rep(cmd_rep, api_version)
@@ -290,7 +296,7 @@ async def authenticated_api(raw_organization_id: str) -> Response:
 # The proper way to combine scope management and async iterator is to first have
 # an async context manager that itself provides an async iterator, the latter being
 # just a dummy channel (so that no scope logic is done in the async iterator).
-# Fortunatly Quart-Trio knows about this shortcoming, and wraps the user-provided
+# Fortunately Quart-Trio knows about this shortcoming, and wraps the user-provided
 # async iterator into an `IterableBody` that is used as async context manager
 # returning the async iterator.
 # So long story short, given we need to have access on the async context manager
@@ -381,7 +387,7 @@ class SSEResponseIterableBody(ResponseBody):
                     #
                     # Case 3) is similar to case 1) in that an exception gets propagated
                     # (the only difference is it won't stop once `client_ctx.cancel_scope`
-                    # is reached), so we still have a clean tearndown.
+                    # is reached), so we still have a clean teardown.
                     client_ctx.cancel_scope.cancel()
 
     async def __aenter__(self) -> AsyncIterable[bytes]:

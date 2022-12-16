@@ -27,7 +27,7 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_startRuntime(
 
 /// Interface between Web, Rust and Android
 /// Cordova bridge API for Android requests the inputs and output to be passed as a JS Object
-/// hence we have to comply with this ourself to provide the same API accross plateforms
+/// hence we have to comply with this ourself to provide the same API across platforms
 ///
 /// Input:
 ///   - cmd: String

@@ -80,7 +80,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:30
 msgid ""
-"Fix rare error when offline while accessing a workspace mounpoint for the"
+"Fix rare error when offline while accessing a workspace mountpoint for the"
 " first time.  (`#1812 <https://github.com/Scille/parsec-"
 "cloud/issues/1812>`__)"
 msgstr ""
@@ -244,7 +244,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:134
 msgid ""
-"Remove most parts of APIv1 (only `organization_bootsrap` command is kept "
+"Remove most parts of APIv1 (only `organization_bootstrap` command is kept "
 "from APIv1 for backward compatibility). Remove `expiration_date` from "
 "`organization_config` command. Introduce the administration REST api to "
 "create & get informations on organizations.  (`#1810 "
@@ -462,7 +462,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:268
 msgid ""
-"Fix an issue with fuse mounpoints on linux where the shutdown procedure "
+"Fix an issue with fuse mountpoints on linux where the shutdown procedure "
 "might block forever  (`#1716 <https://github.com/Scille/parsec- "
 "cloud/issues/1716>`__)"
 msgstr ""
@@ -514,7 +514,7 @@ msgstr ""
 #: ../../../HISTORY.rst:302
 msgid ""
 "Fix unhandled exception in GUI when offline and workspace author UserInfo"
-" is not in cache. Fix view on inconstent files in GUI. (`#1641 "
+" is not in cache. Fix view on inconsistent files in GUI. (`#1641 "
 "<https://github.com/Scille/parsec-cloud/issues/1641>`__)"
 msgstr ""
 
@@ -599,7 +599,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:369
 msgid ""
-"Fix unhandled error on linux/macOS when logout occures during mountpoint "
+"Fix unhandled error on linux/macOS when logout occurs during mountpoint "
 "processing. (`#1607 <https://github.com/Scille/parsec-"
 "cloud/issues/1607>`__)"
 msgstr ""
@@ -778,7 +778,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:449
 msgid ""
-"Log exceptions occuring in Qt slots  (`#1520 <https://github.com/Scille"
+"Log exceptions occurring in Qt slots  (`#1520 <https://github.com/Scille"
 "/parsec-cloud/issues/1520>`__)"
 msgstr ""
 
@@ -860,7 +860,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:483
 msgid ""
-"Better indictation of the role of a user on a workspace  (`#1478 "
+"Better indication of the role of a user on a workspace  (`#1478 "
 "<https://github.com/Scille/parsec-cloud/issues/1478>`__)"
 msgstr ""
 
@@ -903,7 +903,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:502
 msgid ""
-"Avoid uncessary scrolling when displaying users and devices  (`#1449 "
+"Avoid unnecessary scrolling when displaying users and devices  (`#1449 "
 "<https://github.com/Scille/parsec-cloud/issues/1449>`__)"
 msgstr ""
 
@@ -915,7 +915,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:506
 msgid ""
-"Fixed error message when the choosen org name already exists  (`#1345 "
+"Fixed error message when the chosen org name already exists  (`#1345 "
 "<https://github.com/Scille/parsec-cloud/issues/1345>`__)"
 msgstr ""
 
@@ -933,7 +933,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:512
 msgid ""
-"Validate button is disabled by default when chosing a password  (`#1459 "
+"Validate button is disabled by default when choosing a password  (`#1459 "
 "<https://github.com/Scille/parsec-cloud/issues/1459>`__)"
 msgstr ""
 
@@ -1043,7 +1043,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:574
 msgid ""
-"Add a warning when chosing user role during the greet process  (`#1352 "
+"Add a warning when choosing user role during the greet process  (`#1352 "
 "<https://github.com/Scille/parsec-cloud/issues/1352>`__)"
 msgstr ""
 
@@ -1160,7 +1160,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:618
 msgid ""
-"Fix inconsistence backend replies from an cancelled invite command  "
+"Fix inconsistency backend replies from an cancelled invite command  "
 "(`#1365 <https://github.com/Scille/parsec-cloud/issues/1365>`__)"
 msgstr ""
 
@@ -1402,7 +1402,7 @@ msgstr ""
 #: ../../../HISTORY.rst:720
 msgid ""
 "Fix GUI main windows not showing when use close button from the systray. "
-"Notif explaining Parsec is still running on GUI windows close only "
+"Notification explaining Parsec is still running on GUI windows close only "
 "triggered once. (`#1295 <https://github.com/Scille/parsec-"
 "cloud/issues/1295>`__)"
 msgstr ""
@@ -1430,7 +1430,7 @@ msgstr ""
 msgid ""
 "Add --spontaneous-organization-bootstrap option to backend to allow "
 "bootstrapping an organization that haven't been created by administration"
-" beforehand. Add --oganization-bootstrap-webhook option to backend to "
+" beforehand. Add --organization-bootstrap-webhook option to backend to "
 "notify a webhook URL on organization bootstrap.  (`#1281 "
 "<https://github.com/Scille/parsec-cloud/issues/1281>`__)"
 msgstr ""
@@ -1453,14 +1453,14 @@ msgstr ""
 msgid ""
 "Introduce outsider profil for user. Outsider users can read/write on "
 "workspaces they are invited to, but are not allowed to create workspaces."
-" On top of that outsider users cannot see personnal informations (email &"
+" On top of that outsider users cannot see personal informations (email &"
 " user/device name) of other users.  (`#1163 "
 "<https://github.com/Scille/parsec- cloud/issues/1163>`__)"
 msgstr ""
 
 #: ../../../HISTORY.rst:749
 msgid ""
-"Adding some http request managment.  (`#1171 <https://github.com/Scille"
+"Adding some http request management.  (`#1171 <https://github.com/Scille"
 "/parsec-cloud/issues/1171>`__)"
 msgstr ""
 
@@ -1505,7 +1505,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:769
 msgid ""
-"Use 4 symbols from a 32-symbol alphabet as SAS code. The alphatbet is: "
+"Use 4 symbols from a 32-symbol alphabet as SAS code. The alphabet is: "
 "``ABCDEFGHJKLMNPQRSTUVWXYZ23456789``.  (`#1165 <https://github.com/Scille"
 "/parsec-cloud/issues/1165>`__)"
 msgstr ""
@@ -1559,7 +1559,7 @@ msgstr ""
 
 #: ../../../HISTORY.rst:789
 msgid ""
-"Run Parsec with regular user priviledges when the \"Run Parsec\" checkbox"
+"Run Parsec with regular user privilege when the \"Run Parsec\" checkbox"
 " is ticked at the end of the windows installation.  (`#1303 "
 "<https://github.com/Scille/parsec-cloud/issues/1303>`__)"
 msgstr ""

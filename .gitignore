@@ -108,3 +108,6 @@ target/
 
 # EditorConfig Checker
 .ecrc
+
+# Cspell cache
+.cspellcache

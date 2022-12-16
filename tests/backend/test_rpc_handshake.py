@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import logging
 from base64 import b64encode
 from typing import Union
 from unittest.mock import patch
@@ -218,3 +219,17 @@ async def test_handshake(
     await _test_handshake_body_not_msgpack(anonymous_rpc, alice)
 
     await _test_authenticated_handshake_author_not_found(alice_rpc)
+
+
+@pytest.mark.trio
+async def test_client_version_in_logs(
+    alice_rpc: AuthenticatedRpcApiClient, anonymous_rpc: AuthenticatedRpcApiClient, caplog
+):
+    with caplog.at_level(logging.INFO):
+        # Authenticated
+        await _test_good_handshake(alice_rpc)
+        assert f"Authenticated client successfully connected (client version: {API_VERSION})"
+
+        # Anonymous
+        await _test_good_handshake(anonymous_rpc)
+        assert f"Anonymous client successfully connected (client version: {API_VERSION})"

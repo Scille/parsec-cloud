@@ -63,7 +63,7 @@ async def handle_ws() -> None:
         return
 
     selected_logger = client_ctx.logger
-    selected_logger.info("Connection established")
+    selected_logger.info(f"Connection established (client version: {client_ctx.api_version})")
 
     # 2) Setup events listener according to client type
 
@@ -178,7 +178,7 @@ async def _handle_client_websocket_loop(
         raw_req = raw_req or await websocket.receive()
         rep: R
         try:
-            # Wesocket can return both bytes or utf8-string messages, we only accept the former
+            # `WebSocket` can return both bytes or utf8-string messages, we only accept the former
             if not isinstance(raw_req, bytes):
                 raise MessageSerializationError
             req = unpackb(raw_req)

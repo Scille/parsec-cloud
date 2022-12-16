@@ -189,7 +189,7 @@ def snackbar_catcher(monkeypatch):
 
     spy = SnackbarSpy()
 
-    def _show_snackbar(message, *args, **kargs):
+    def _show_snackbar(message, *args, **kwargs):
         spy.snackbars.append(message)
 
     monkeypatch.setattr(

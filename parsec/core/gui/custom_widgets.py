@@ -329,7 +329,7 @@ class OverlayLabel(ClickableLabel):
             super().setPixmap(self._pix)
             return
 
-        icon = None
+        icon_scaled: QPixmap | None = None
 
         if self.click_mode == OverlayLabel.ClickMode.OpenFullScreen and self.show_icon:
             assert OverlayLabel.OPEN_FULLSCREEN_ICON is not None

@@ -233,6 +233,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui: MainWindow):
 async def test_file_browsing_and_edit(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
+    # cspell: ignore zdir
     tb = files_widget_testbed
     f_w: FilesWidget = files_widget_testbed.files_widget
 
@@ -254,7 +255,7 @@ async def test_file_browsing_and_edit(
     await tb.check_files_view(path="/", expected_entries=["dir1/"])
 
     # Make sure files list is ordered
-    await tb.create_folder("zdir2")  # Keep in mind files and folders should be ordered separatly
+    await tb.create_folder("zdir2")  # Keep in mind files and folders should be ordered separately
     await tb.create_folder("dir0")
     await tb.check_files_view(path="/", expected_entries=["dir0/", "dir1/", "zdir2/"])
 
@@ -522,7 +523,7 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
     await tb.check_files_view(path="/", expected_entries=["foo/"])
 
     # This helps a lot with the consistency of this test but I have no idea why
-    # This shoud be investigated in the future.
+    # This should be investigated in the future.
     relax = 0.1  # s
     await trio.sleep(relax)
 
@@ -535,7 +536,7 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
     )
 
     # This helps a lot with the consistency of this test but I have no idea why
-    # This shoud be investigated in the future.
+    # This should be investigated in the future.
     await trio.sleep(relax)
 
     await tb.cd("foo")
@@ -544,7 +545,7 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
     )
 
     # This helps a lot with the consistency of this test but I have no idea why
-    # This shoud be investigated in the future.
+    # This should be investigated in the future.
     await trio.sleep(relax)
 
     # 2) Test the cut
@@ -578,7 +579,7 @@ async def test_cut_dir_in_itself(aqtbot, autoclose_dialog, files_widget_testbed)
         assert autoclose_dialog.dialogs == [
             ("Error", _("TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"))
         ]
-        # sub folder shoudn't have changed
+        # sub folder shouldn't have changed
         assert tb.ls() == ["bar.txt"]
         assert tb.pwd() == "/foo"
 

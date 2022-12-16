@@ -150,7 +150,7 @@ pub fn mallory(coolorg: &Organization) -> Device {
         device_id: "mallory@dev1".parse().unwrap(),
         device_label: None,
         human_handle: Some(
-            HumanHandle::new("mallory@example.com", "Malloryy McMalloryFace").unwrap(),
+            HumanHandle::new("mallory@example.com", "Mallory McMalloryFace").unwrap(),
         ),
         signing_key: SigningKey::generate(),
         private_key: PrivateKey::generate(),
@@ -188,7 +188,7 @@ pub fn tmp_path() -> TmpPath {
     TmpPath(path)
 }
 
-// Most unittests uses the current time as a shorthand to get a datetime object.
+// Most unit tests uses the current time as a shorthand to get a datetime object.
 // This is something that is cumbersome (by design !) in our code given it is
 // achieved by doing `TimeProvider::default().now()`.
 // So instead this fixture should be used when a default `DateTime` object is needed.

@@ -34,6 +34,23 @@ repos:
     hooks:
       - id: yamllint
 
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v6.16.0
+    hooks:
+      - id: cspell
+        args:
+          - --config=./.cspell/cspell.config.yml
+          - --no-progress
+          - --dot
+          - --no-must-find-files
+          - --no-summary
+          - --gitignore
+        additional_dependencies:
+          - "@cspell/dict-fr-fr"
+          - "@cspell/dict-fr-reforme"
+          - "@cspell/dict-bash"
+          - "@cspell/dict-shell"
+          - "@cspell/dict-win32"
   ########
   # Python
 
@@ -41,7 +58,7 @@ repos:
   # given mypy requires to have access to the project dependencies.
   # We used to specify the list of dependencies actually needed by mypy as
   # additional dependencies to install before running the pre-commit but it
-  # was increadibly error-prone and create random breakages.
+  # was incredibly error-prone and create random breakages.
   # Instead we go the pragmatic way by calling mypy trough poetry:
   # - `poetry run` will stick to the shell current virtual env
   # - if the shell is not into a virtual env, poetry will create one and install Parsec&deps

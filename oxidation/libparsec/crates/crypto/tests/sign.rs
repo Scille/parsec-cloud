@@ -42,7 +42,7 @@ fn signature_verification_spec() {
     let vk = VerifyKey::from(hex!(
         "78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537"
     ));
-    // Signedtext generated with base python implementation
+    // Signed text generated with base python implementation
     let signed_text = hex!("32d26711dc973e8df13bbafddc23fc26efe4aca1b86a4e0e7dad7c03df7ffc25d24b865478d164f8868ad0e087587e2c45e45d5598c7929b4605699bbab4b109616c6c20796f75722062617365206172652062656c6f6e6720746f207573");
 
     let text = vk.verify(&signed_text).unwrap();

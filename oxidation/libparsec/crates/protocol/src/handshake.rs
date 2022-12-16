@@ -40,6 +40,7 @@ pub fn timestamps_in_the_ballpark(
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(from = "(u32, u32)", into = "(u32, u32)")]
 pub struct ApiVersion {
     pub version: u32,
     pub revision: u32,
@@ -47,7 +48,7 @@ pub struct ApiVersion {
 
 impl ApiVersion {
     pub fn dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
-        rmp_serde::to_vec_named(self)
+        rmp_serde::to_vec(self)
     }
 
     pub fn load(buf: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
@@ -67,6 +68,21 @@ impl Ord for ApiVersion {
             Ordering::Equal => self.revision.cmp(&other.revision),
             order => order,
         }
+    }
+}
+
+impl From<(u32, u32)> for ApiVersion {
+    fn from(tuple: (u32, u32)) -> Self {
+        Self {
+            version: tuple.0,
+            revision: tuple.1,
+        }
+    }
+}
+
+impl From<ApiVersion> for (u32, u32) {
+    fn from(api_version: ApiVersion) -> Self {
+        (api_version.version, api_version.revision)
     }
 }
 
@@ -111,7 +127,7 @@ pub enum Answer {
         client_api_version: ApiVersion,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        // RustCrypto cache aditional points on the Edward curve so total size is around ~200bytes
+        // RustCrypto cache additional points on the Edward curve so total size is around ~200bytes
         // That's why VerifyKey is boxed to keep approximately the same size as InvitedAnswer
         rvk: Box<VerifyKey>,
         #[serde_as(as = "Bytes")]
@@ -559,7 +575,7 @@ fn load_challenge_req(
                 ballpark_client_late_offset * BALLPARK_CLIENT_TOLERANCE,
             ) {
                 // Add `client_timestamp` to challenge data
-                // so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+                // so the dictionary exposes the same fields as `TimestampOutOfBallparkRepSchema`
                 return Err(HandshakeError::OutOfBallpark(ChallengeDataReport {
                     challenge,
                     supported_api_versions,

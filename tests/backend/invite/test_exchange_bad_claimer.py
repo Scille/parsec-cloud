@@ -33,7 +33,7 @@ async def test_delete_invitation_while_claimer_connected(exchange_testbed, backe
                 if retrieve_previous_result:
                     await tb.get_result("claimer")
                 # Even if we had to retrieve an existing result, it could have
-                # been returned by backend before the invitation delete occured,
+                # been returned by backend before the invitation delete occurred,
                 # hence we must poll with additional requests not matter what.
                 # On top of that claimer connection can take some time to be
                 # closed, so we need a polling loop here.

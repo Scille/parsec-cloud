@@ -173,13 +173,13 @@ class MemorySequesterComponent(BaseSequesterComponent):
                 f"Service type {service.service_type} is not compatible with export"
             )
         # Do the actual dump
-        for (vorg, vid), vlob in self._vlob_component._vlobs.items():
-            if vorg != organization_id or vlob.realm_id != realm_id:
+        for (vlob_org, vlob_id), vlob in self._vlob_component._vlobs.items():
+            if vlob_org != organization_id or vlob.realm_id != realm_id:
                 continue
             assert vlob.sequestered_data is not None
             for version, sequestered_version in enumerate(vlob.sequestered_data, start=1):
                 try:
-                    dump.append((vid, version, sequestered_version[service_id]))
+                    dump.append((vlob_id, version, sequestered_version[service_id]))
                 except KeyError:
                     pass
         return dump

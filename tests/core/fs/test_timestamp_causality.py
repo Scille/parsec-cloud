@@ -198,7 +198,7 @@ def test_timestamp_causality(
 
         @rule()
         async def alice_reads_the_file(self):
-            """This is the rule that is the most likely to fail in the scenarions we want to test.
+            """This is the rule that is the most likely to fail in the scenarios we want to test.
             This is because the timestamps produced by other devices in the other rules will affect
             the checking performed here when alice checks the validity of the manifest they've just
             downloaded.

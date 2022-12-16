@@ -65,7 +65,7 @@ parts:
 
       # Bundled libssl doesn't know where host OS stores it CA certificates,
       # hence we bundle them instead.
-      # For this, Certifi provides the Mozilla-curated certifs bundled as a
+      # For this, Certifi provides the Mozilla-curated certificates bundled as a
       # single file and we just have to copy it into our Snap.
       # Note we don't use ubuntu package's  `ca-certificate` here given it
       # comes as multiple pem files that must be cooked with `update-ca-certificate`

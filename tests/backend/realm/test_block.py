@@ -177,7 +177,7 @@ async def test_raid1_block_create_partial_failure(caplog, alice_ws, backend, rea
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert isinstance(rep, BlockCreateRepTimeout)
 
-    log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
+    log = caplog.assert_occurred_once("[warning  ] Block create error: A node have failed")
     assert f"organization_id=CoolOrg" in log
     assert f"block_id={BLOCK_ID.hex}" in log
 
@@ -246,7 +246,7 @@ async def test_raid5_block_create_single_failure(
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert isinstance(rep, BlockCreateRepTimeout)
 
-    log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
+    log = caplog.assert_occurred_once("[warning  ] Block create error: A node have failed")
     assert f"organization_id=CoolOrg" in log
     assert f"block_id={BLOCK_ID.hex}" in log
 
@@ -287,7 +287,7 @@ async def test_raid5_partial_create_ok_block_create_too_many_failures(
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert isinstance(rep, BlockCreateRepTimeout)
 
-    log = caplog.assert_occured_once(
+    log = caplog.assert_occurred_once(
         "[warning  ] Block create error: More than 1 nodes have failed"
     )
     assert f"organization_id=CoolOrg" in log
@@ -349,7 +349,7 @@ async def test_raid5_block_read_multiple_failure(
     rep = await block_read(alice_ws, block)
     assert isinstance(rep, BlockReadRepTimeout)
 
-    log = caplog.assert_occured_once("[warning  ] Block read error: More than 1 nodes have failed")
+    log = caplog.assert_occurred_once("[warning  ] Block read error: More than 1 nodes have failed")
     assert f"organization_id=CoolOrg" in log
     assert f"block_id={block.hex}" in log
 

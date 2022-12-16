@@ -12,11 +12,11 @@ from parsec.api.protocol.types import UserID, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.pki import (
     BasePkiEnrollmentComponent,
-    PkiEnrollementEmailAlreadyUsedError,
     PkiEnrollmentActiveUsersLimitReached,
     PkiEnrollmentAlreadyEnrolledError,
     PkiEnrollmentAlreadyExistError,
     PkiEnrollmentCertificateAlreadySubmittedError,
+    PkiEnrollmentEmailAlreadyUsedError,
     PkiEnrollmentError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
@@ -357,7 +357,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     )
                 )
                 if row:
-                    raise PkiEnrollementEmailAlreadyUsedError()
+                    raise PkiEnrollmentEmailAlreadyUsedError()
 
             try:
                 result = await conn.execute(

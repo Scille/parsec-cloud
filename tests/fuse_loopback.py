@@ -105,7 +105,7 @@ class Loopback(LoggingMixIn, Operations):
             f.truncate(length)
 
     unlink = os.unlink
-    utimens = os.utime
+    utime_ns = os.utime
 
     def write(self, path, data, offset, fh):
         return os.pwrite(fh, data, offset)

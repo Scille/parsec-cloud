@@ -2,8 +2,23 @@
 
 use thiserror::Error;
 
-use crate::{DateTime, DeviceID, EntryID, RealmID, UserID};
+use crate::{DateTime, DeviceID, EntryID, RealmID, Regex, UserID};
 use libparsec_crypto::CryptoError;
+
+#[derive(Error, Debug)]
+pub enum RegexError {
+    #[error("Regex parsing err: {err}")]
+    ParseError { err: regex::Error },
+    #[error("Failed to convert glob pattern into regex: {err}")]
+    GlobPatternError { err: fnmatch_regex::error::Error },
+    #[error("IO error on pattern file `{file_path}`: {err}")]
+    PatternFileIOError {
+        file_path: std::path::PathBuf,
+        err: std::io::Error,
+    },
+}
+
+pub type RegexResult = Result<Regex, RegexError>;
 
 #[derive(Error, Debug)]
 pub enum EntryNameError {

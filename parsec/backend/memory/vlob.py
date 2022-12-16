@@ -151,8 +151,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         assert not changes.reencryption
         realm_vlobs = {
             vlob_id: vlob
-            for (orgid, vlob_id), vlob in self._vlobs.items()
-            if orgid == organization_id and vlob.realm_id == realm_id
+            for (org_id, vlob_id), vlob in self._vlobs.items()
+            if org_id == organization_id and vlob.realm_id == realm_id
         }
         changes.reencryption = Reencryption(realm_id, realm_vlobs)
 

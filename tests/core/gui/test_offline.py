@@ -61,7 +61,7 @@ async def test_backend_desync_notification(
         assert snackbar_catcher.snackbars == [("WARN", translate("TEXT_BACKEND_STATE_DESYNC"))]
 
     def _assert_desync_log():
-        caplog.assert_occured(
+        caplog.assert_occurred(
             "[info     ] Backend connection is desync   [parsec.core.backend_connection.authenticated]"
         )
 

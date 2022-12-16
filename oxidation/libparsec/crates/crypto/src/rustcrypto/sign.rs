@@ -80,7 +80,7 @@ impl TryFrom<&[u8]> for SigningKey {
 
 impl From<[u8; Self::SIZE]> for SigningKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zerocopy
+        // TODO: zero copy
         Self::try_from(key.as_ref()).unwrap()
     }
 }
@@ -170,7 +170,7 @@ impl TryFrom<&[u8]> for VerifyKey {
 
 impl From<[u8; Self::SIZE]> for VerifyKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zerocopy
+        // TODO: zero copy
         Self::try_from(key.as_ref()).unwrap()
     }
 }

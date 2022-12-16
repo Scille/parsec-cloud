@@ -50,7 +50,7 @@ def bootstrap_postgresql_testbed():
         _pg_db_url = _patch_url_if_xdist(provided_db)
 
     print("PostgreSQL url: ", _pg_db_url)
-    # Finally initialiaze the database
+    # Finally initialize the database
     # In theory we should use TrioPG here to do db init, but:
     # - Duck typing and similar api makes `_init_db` compatible with both
     # - AsyncPG should be slightly faster than TrioPG

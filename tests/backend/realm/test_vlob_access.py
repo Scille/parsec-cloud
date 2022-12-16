@@ -646,7 +646,7 @@ async def test_vlob_updates_causality_checks(
     # Advance ref
     ref = ref.add(seconds=10)
 
-    # Bob successfuly write version 1
+    # Bob successfully write version 1
     rep = await vlob_create(
         bob_ws, realm, VLOB_ID, blob=b"ciphered", timestamp=ref, check_rep=False
     )

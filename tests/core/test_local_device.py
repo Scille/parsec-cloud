@@ -243,7 +243,7 @@ def test_password_load_not_found(config_dir, alice):
         load_device_with_password(key_file, "S3Cr37")
 
 
-def test_same_device_id_different_orginazations(config_dir, alice, otheralice):
+def test_same_device_id_different_organizations(config_dir, alice, otheralice):
     devices = (alice, otheralice)
 
     for device in devices:

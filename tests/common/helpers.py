@@ -125,7 +125,7 @@ async def create_shared_workspace(name, creator, *shared_with):
     workspace version and (only for the Cores) be ready to listen to the
     workspace's vlob group events.
     This is *even* more tricky considering we want the cores involved in the
-    sharing to endup in a stable state (no event wildly fired or coroutine in
+    sharing to end up in a stable state (no event wildly fired or coroutine in
     the middle of a processing when leaving this function) to avoid polluting
     the actual test.
     """

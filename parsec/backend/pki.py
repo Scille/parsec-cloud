@@ -89,7 +89,7 @@ class PkiEnrollmentIdAlreadyUsedError(PkiEnrollmentError):
     pass
 
 
-class PkiEnrollementEmailAlreadyUsedError(PkiEnrollmentError):
+class PkiEnrollmentEmailAlreadyUsedError(PkiEnrollmentError):
     pass
 
 
@@ -181,7 +181,7 @@ class BasePkiEnrollmentComponent:
         except PkiEnrollmentIdAlreadyUsedError:
             return PkiEnrollmentSubmitRepIdAlreadyUsed()
 
-        except PkiEnrollementEmailAlreadyUsedError:
+        except PkiEnrollmentEmailAlreadyUsedError:
             return PkiEnrollmentSubmitRepEmailAlreadyUsed()
 
         except PkiEnrollmentAlreadyEnrolledError:
@@ -340,7 +340,7 @@ class BasePkiEnrollmentComponent:
             PkiEnrollmentCertificateAlreadySubmittedError
             PkiEnrollmentAlreadyEnrolledError
             PkiEnrollmentIdAlreadyUsedError
-            PkiEnrollementEmailAlreadyUsedError
+            PkiEnrollmentEmailAlreadyUsedError
         """
         raise NotImplementedError()
 

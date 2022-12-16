@@ -37,7 +37,7 @@ async def test_open_service_nursery_exception_group_collapse(caplog):
             nursery.start_soon(_raise, RuntimeError())
             await _raise(ZeroDivisionError(1, 2, 3))
 
-    caplog.assert_occured_once("[warning  ] A BaseExceptionGroup has been detected [parsec.utils]")
+    caplog.assert_occurred_once("[warning  ] A BaseExceptionGroup has been detected [parsec.utils]")
 
     exception = ctx.value
     assert isinstance(exception, ZeroDivisionError)

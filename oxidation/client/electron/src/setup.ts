@@ -117,7 +117,7 @@ export class ElectronCapacitorApp {
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,
-        // Use preload to inject the electron varriant overrides for capacitor plugins.
+        // Use preload to inject the electron variant overrides for capacitor plugins.
         // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
         preload: preloadPath
       }
@@ -128,7 +128,7 @@ export class ElectronCapacitorApp {
       this.MainWindow.setBackgroundColor(this.CapacitorFileConfig.electron.backgroundColor);
     }
 
-    // If we close the main window with the splashscreen enabled we need to destory the ref.
+    // If we close the main window with the splashscreen enabled we need to destroy the ref.
     this.MainWindow.on('closed', () => {
       if (this.SplashScreen?.getSplashWindow() && !this.SplashScreen.getSplashWindow().isDestroyed()) {
         this.SplashScreen.getSplashWindow().close();
@@ -165,8 +165,10 @@ export class ElectronCapacitorApp {
     // Setup the main manu bar at the top of our window.
     Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
-    /* If the splashscreen is enabled, show it first while the main window loads then dwitch it out for the main window,
-    or just load the main window from the start. */
+    /*
+    ** If the splash screen is enabled, show it first while the main window loads, then dismiss it to display the main window.
+    ** Alternatively, you can just load the main window from the start without showing the splash screen.
+    */
     if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
       this.SplashScreen = new CapacitorSplashScreen({
         imageFilePath: join(
@@ -199,7 +201,7 @@ export class ElectronCapacitorApp {
     // Link electron plugins into the system.
     setupCapacitorElectronPlugins();
 
-    // When the web app is loaded we hide the splashscreen if needed and show the mainwindow.
+    // When the web app is loaded we hide the splashscreen if needed and show the main window.
     this.MainWindow.webContents.on('dom-ready', () => {
       if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
         this.SplashScreen.getSplashWindow().hide();

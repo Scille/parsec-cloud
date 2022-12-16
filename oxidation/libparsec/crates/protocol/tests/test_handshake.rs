@@ -589,7 +589,7 @@ fn test_process_challenge_req_good_multiple_api_version(
             _ => panic!("unexpected value err `{err}`"),
         }
     } else {
-        // Valid versionning
+        // Valid versioning
         let ch = ch.process_challenge_req(&req).unwrap();
         assert_eq!(ch.supported_api_versions, _backend_versions);
         assert_eq!(Some(ch.backend_api_version), expected_backend_version);
@@ -872,6 +872,27 @@ fn test_process_result_req_bad_outcome(
     .unwrap_err();
 
     assert_eq!(err, expected)
+}
+
+// Generated from Python implementation (Parsec v2.15.0+dev)
+// Content:
+//   version: 2
+//   revision: 15
+#[rstest]
+fn serde_api_version() {
+    let expected = ApiVersion {
+        version: 2,
+        revision: 15,
+    };
+    let bytes = hex!("92020f");
+
+    let loaded_version = ApiVersion::load(&bytes).unwrap();
+    assert_eq!(loaded_version, expected);
+
+    // Roundtrip test ...
+    let bytes2 = loaded_version.dump().unwrap();
+    let loaded_version2 = ApiVersion::load(&bytes2).unwrap();
+    assert_eq!(loaded_version2, expected);
 }
 
 // TODO: test with revoked device

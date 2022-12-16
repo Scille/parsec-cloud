@@ -63,7 +63,7 @@ display(
     [KEY],
 )
 
-ld_legagacy_admin = {
+ld_legacy_admin = {
     "organization_addr": ALICE.organization_addr.to_url(),
     "device_id": ALICE.device_id.str,
     "signing_key": ALICE.signing_key.encode(),
@@ -73,10 +73,10 @@ ld_legagacy_admin = {
     "user_manifest_key": bytes(ALICE.user_manifest_key.secret),
     "local_symkey": bytes(ALICE.local_symkey.secret),
 }
-ld_legagacy_admin = KEY.encrypt(packb(ld_legagacy_admin))
-display("local device legacy is_admin_field (ADMIN)", ld_legagacy_admin, [KEY])
+ld_legacy_admin = KEY.encrypt(packb(ld_legacy_admin))
+display("local device legacy is_admin_field (ADMIN)", ld_legacy_admin, [KEY])
 
-ld_legagacy_not_admin = {
+ld_legacy_not_admin = {
     "organization_addr": ALICE.organization_addr.to_url(),
     "device_id": ALICE.device_id.str,
     "signing_key": ALICE.signing_key.encode(),
@@ -86,5 +86,5 @@ ld_legagacy_not_admin = {
     "user_manifest_key": bytes(ALICE.user_manifest_key.secret),
     "local_symkey": bytes(ALICE.local_symkey.secret),
 }
-ld_legagacy_not_admin = KEY.encrypt(packb(ld_legagacy_not_admin))
-display("local device legacy is_admin_field (STANARD)", ld_legagacy_not_admin, [KEY])
+ld_legacy_not_admin = KEY.encrypt(packb(ld_legacy_not_admin))
+display("local device legacy is_admin_field (STANARD)", ld_legacy_not_admin, [KEY])

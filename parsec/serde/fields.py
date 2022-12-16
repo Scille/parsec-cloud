@@ -20,7 +20,6 @@ from marshmallow.fields import (
     String,
 )
 
-from parsec._parsec import ApiVersion as RsApiVersion
 from parsec._parsec import DateTime as RsDateTime
 from parsec._parsec import HashDigest as _HashDigest
 from parsec._parsec import PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload
@@ -130,7 +129,7 @@ class BaseEnumField(Field[E]):
             raise ValidationError(str(exc)) from exc
 
 
-# Using inheritance to define enum fields allows for easy instrospection detection
+# Using inheritance to define enum fields allows for easy introspection detection
 # which is useful when checking api changes in tests (see tests/schemas/builder.py)
 def enum_field_factory(enum: Type[E]) -> Type[BaseEnumField[E]]:
     return type(f"{enum.__name__}Field", (BaseEnumField,), {"ENUM": enum})
@@ -261,16 +260,6 @@ class DateTime(Field[RsDateTime]):
     def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> RsDateTime:
         if not isinstance(value, RsDateTime):
             raise ValidationError("Not a datetime")
-
-        return value
-
-
-class ApiVersion(Field[RsApiVersion]):
-    """ApiVersion already handled by pack/unpack"""
-
-    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> RsApiVersion:
-        if not isinstance(value, RsApiVersion):
-            raise ValidationError("Not a ApiVersion")
 
         return value
 

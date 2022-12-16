@@ -201,7 +201,7 @@ impl DateTime {
             Some(us) => us,
             None => {
                 return Err(PyValueError::new_err(format!(
-                    "Could not substract `{}` and `{}`",
+                    "Could not subtract `{}` and `{}`",
                     self.0, other.0
                 )))
             }

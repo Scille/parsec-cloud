@@ -119,13 +119,14 @@ jobs:
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
 
-      - name: Check Newsfragment
+      - name: Check News fragments
         if: |
           startsWith(github.ref, 'refs/pull/')
           && !(
             startsWith(github.head_ref, 'yolo')
             || startsWith(github.head_ref, 'release')
             || startsWith(github.head_ref, 'revert')
+            || startsWith(github.head_ref, 'acknowledge')
             )
           && steps.changes.outputs.newsfragments == 'true'
         run: |

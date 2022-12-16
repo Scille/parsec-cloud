@@ -476,7 +476,7 @@ msgstr "Défaut: ``5``"
 
 #: ../../hosting_server.rst:221
 msgid "Port to use for the SMTP server defined in EMAIL_HOST."
-msgstr "Le port à utiliser pour le serveur STMP défini dans EMAIL_HOST."
+msgstr "Le port à utiliser pour le serveur SMTP défini dans EMAIL_HOST."
 
 #: ../../hosting_server.rst:223
 msgid "``--email-host-user``"
@@ -596,9 +596,9 @@ msgstr ""
 #: ../../hosting_server.rst:265
 #, fuzzy
 msgid ""
-"With this flag, the server allows anybody to bootstrap an organanization "
+"With this flag, the server allows anybody to bootstrap an organization "
 "by providing an empty bootstrap token given 1) the organization is not "
-"boostrapped yet and 2) the organization hasn't been created by "
+"bootstrapped yet and 2) the organization hasn't been created by "
 "administration (which would act as a reservation and change the bootstrap"
 " token)"
 msgstr ""
@@ -631,7 +631,7 @@ msgid ""
 "``organization_id``, ``device_id``, ``device_label`` (can be null), "
 "``human_email`` (can be null), ``human_label`` (can be null)."
 msgstr ""
-"Chaque fois qu'une organisation est démarée, un POST HTTP est envoyé à "
+"Chaque fois qu'une organisation est démarrée, un POST HTTP est envoyé à "
 "l'URL avec un corps ``application/json`` qui contient les champs "
 "suivants: ``organization_id``, ``device_id``, ``device_label`` "
 "(possiblement NULL), ``human_email`` (possiblement NULL), ``human_label``"
@@ -672,7 +672,7 @@ msgstr "Défaut: ``7``"
 
 #: ../../hosting_server.rst:303
 msgid "Customize environment name for Sentry's telemetry reports."
-msgstr "Paramètre de nom d'environnement de Sentry pour la télémetrie."
+msgstr "Paramètre de nom d'environnement de Sentry pour la télémétrie."
 
 #: ../../hosting_server.rst:306
 msgid "Debug"

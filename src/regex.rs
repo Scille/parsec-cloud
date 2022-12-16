@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::path::Path;
+
 use pyo3::{exceptions::PyValueError, pyclass, pymethods, types::PyType, PyResult};
 
 #[pyclass]
@@ -11,13 +13,27 @@ crate::binding_utils::gen_proto!(Regex, __str__);
 #[pymethods]
 impl Regex {
     #[classmethod]
-    fn from_pattern(_cls: &PyType, pattern: &str) -> PyResult<Self> {
-        libparsec::types::Regex::from_pattern(pattern)
+    fn from_file(_cls: &PyType, path: &str) -> PyResult<Self> {
+        libparsec::types::Regex::from_file(Path::new(path))
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    #[classmethod]
+    fn from_raw_regexes(_cls: &PyType, raw_regexes: Vec<&str>) -> PyResult<Self> {
+        libparsec::types::Regex::from_raw_regexes(&raw_regexes)
+            .map(Regex)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    #[classmethod]
+    fn from_glob_pattern(_cls: &PyType, glob_pattern: &str) -> PyResult<Self> {
+        libparsec::types::Regex::from_glob_pattern(glob_pattern)
             .map(Regex)
             .map_err(|err| {
                 PyValueError::new_err(format!(
                     "Failed to convert pattern to regex: `{}` with the following error `{}`",
-                    pattern, err
+                    glob_pattern, err
                 ))
             })
     }
@@ -35,8 +51,8 @@ impl Regex {
     }
 
     #[getter]
-    fn pattern(&self) -> PyResult<&str> {
-        Ok(self.0.as_ref())
+    fn pattern(&self) -> String {
+        self.0.to_string()
     }
 }
 
@@ -79,7 +95,7 @@ mod test {
                 continue;
             }
 
-            let sub_regex_str = libparsec::types::Regex::from_pattern(line)
+            let sub_regex_str = libparsec::types::Regex::from_glob_pattern(line.trim())
                 .unwrap()
                 .to_string();
 
@@ -96,12 +112,12 @@ mod test {
     fn test_compatible_with_legacy_py_to_rs() {
         pyo3::prepare_freethreaded_python();
         Python::with_gil(|py| {
-            let reg: Py<PyAny> =
-                PyModule::from_code(py, &format!("new_regex = '{}'", load_regex()), "", "")
-                    .unwrap()
-                    .getattr("new_regex")
-                    .unwrap()
-                    .into();
+            let regex_str = format!("new_regex = '{}'", load_regex());
+            let reg: Py<PyAny> = PyModule::from_code(py, &regex_str, "", "")
+                .unwrap()
+                .getattr("new_regex")
+                .unwrap()
+                .into();
 
             let re = PyModule::import(py, "re").unwrap();
             let compile_fn = re.getattr("compile").unwrap();
