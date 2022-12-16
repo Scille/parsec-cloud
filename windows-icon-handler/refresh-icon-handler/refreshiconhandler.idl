@@ -11,31 +11,31 @@ import "oaidl.idl";
 import "ocidl.idl";
 
 [
-	object,
-	uuid(e9e5a1a6-fde0-4394-8118-a7f98b4dad0b),
-	dual,
-	nonextensible,
-	pointer_default(unique)
+    object,
+    uuid(e9e5a1a6-fde0-4394-8118-a7f98b4dad0b),
+    dual,
+    nonextensible,
+    pointer_default(unique)
 ]
 interface IRefreshIconHandler : IDispatch
 {
 };
 
 [
-	uuid(b168b5a2-1328-4d06-a4e4-b2865b610d72),
-	version(1.0),
+    uuid(b168b5a2-1328-4d06-a4e4-b2865b610d72),
+    version(1.0),
 ]
 library refreshiconhandlerLib
 {
-	importlib("stdole2.tlb");
-	[
-		uuid(ff552d5d-8272-41cd-b0a8-e01188eba329),
-		control
-	]
-	coclass RefreshIconHandler
-	{
-		[default] interface IRefreshIconHandler;
-	};
+    importlib("stdole2.tlb");
+    [
+        uuid(ff552d5d-8272-41cd-b0a8-e01188eba329),
+        control
+    ]
+    coclass RefreshIconHandler
+    {
+        [default] interface IRefreshIconHandler;
+    };
 };
 
 import "shobjidl.idl";
