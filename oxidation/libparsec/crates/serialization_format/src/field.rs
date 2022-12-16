@@ -25,7 +25,7 @@ impl Field {
         let rename = rename
             .map(|rename| quote::quote!(#[serde(rename = #rename)]))
             .unwrap_or_default();
-        let serde_as = quote_serde_as(&ty);
+        let serde_as = quote_serde_as(&ty, false);
         let serde_default = if let Some(default) = &self.default {
             quote! { #[serde(default = #default)] }
         } else {

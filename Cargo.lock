@@ -1441,6 +1441,7 @@ dependencies = [
  "glob",
  "hex-literal",
  "libparsec_crypto",
+ "libparsec_serialization_format",
  "libparsec_types",
  "paste",
  "pretty_assertions",
@@ -1452,7 +1453,6 @@ dependencies = [
  "serde_bytes",
  "serde_test",
  "serde_with",
- "serialization_format",
  "sha2 0.10.6",
  "tests_fixtures",
  "thiserror",
@@ -1569,6 +1569,7 @@ dependencies = [
  "glob",
  "hex-literal",
  "libparsec_crypto",
+ "libparsec_serialization_format",
  "libparsec_types",
  "paste",
  "rand 0.8.5",
@@ -1577,9 +1578,26 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "serialization_format",
  "tests_fixtures",
  "thiserror",
+]
+
+[[package]]
+name = "libparsec_serialization_format"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "itertools",
+ "libparsec_types",
+ "miniserde",
+ "pretty_assertions",
+ "proc-macro2",
+ "quote",
+ "rmp-serde",
+ "rstest",
+ "serde",
+ "serde_with",
+ "syn",
 ]
 
 [[package]]
@@ -1596,6 +1614,7 @@ dependencies = [
  "lazy_static",
  "libparsec_crypto",
  "libparsec_platform_async",
+ "libparsec_serialization_format",
  "paste",
  "percent-encoding",
  "pretty_assertions",
@@ -1608,7 +1627,6 @@ dependencies = [
  "serde_bytes",
  "serde_test",
  "serde_with",
- "serialization_format",
  "tests_fixtures",
  "thiserror",
  "unicode-normalization",
@@ -2667,22 +2685,6 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote",
- "syn",
-]
-
-[[package]]
-name = "serialization_format"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "itertools",
- "miniserde",
- "pretty_assertions",
- "proc-macro2",
- "quote",
- "rstest",
- "serde",
- "serde_json",
  "syn",
 ]
 

@@ -7,7 +7,7 @@ use serde_with::*;
 use std::io::{Read, Write};
 
 use libparsec_crypto::{PublicKey, SigningKey, VerifyKey};
-use serialization_format::parsec_data;
+use libparsec_serialization_format::parsec_data;
 
 use crate as libparsec_types;
 use crate::data_macros::impl_transparent_data_format_conversion;

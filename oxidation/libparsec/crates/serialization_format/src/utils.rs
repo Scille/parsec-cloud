@@ -1,9 +1,25 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use proc_macro2::TokenStream;
-use quote::quote;
 use std::collections::HashMap;
 use syn::{GenericArgument, PathArguments, Type};
+
+pub(crate) fn snake_to_camel_case(s: &str) -> String {
+    let mut out = s[..1].to_uppercase();
+    let mut chars = s.chars().skip(1);
+    while let Some(c) = chars.next() {
+        if c == '_' {
+            match chars.next().unwrap_or_else(|| unreachable!()) {
+                c @ 'a'..='z' => out.push((c as u8 - b'a' + b'A') as char),
+                c => out.push(c),
+            }
+        } else {
+            out.push(c);
+        }
+    }
+
+    out
+}
 
 pub(crate) fn inspect_type(ty: &str, types: &HashMap<String, String>) -> String {
     let raw_ty: Type =
@@ -21,6 +37,10 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "Float" => "f64",
                 "String" => "String",
                 "Bytes" => "Vec<u8>",
+                // Both value convert to the same type but have a different meaning.
+                // - `RequiredOption` => The field must be present but its value can be null.
+                // - `NonRequiredOption` => the field can be missing or its value to be null.
+                "RequiredOption" | "NonRequiredOption" => "Option",
                 "Option" => "Option",
                 "List" => "Vec",
                 "Map" => "::std::collections::HashMap",
@@ -60,6 +80,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "UserManifest" => "libparsec_types::UserManifest",
                 "Chunk" => "libparsec_client_types::Chunk",
                 "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
+                "EnrollmentID" => "libparsec_types::EnrollmentID",
                 // Used only in protocol
                 "IntegerBetween1And100" => "crate::IntegerBetween1And100",
                 ident if types.get(ident).is_some() => {
@@ -151,9 +172,13 @@ pub(crate) fn extract_serde_as(ty: &Type) -> String {
     }
 }
 
-pub(crate) fn quote_serde_as(ty: &Type) -> TokenStream {
+pub(crate) fn quote_serde_as(ty: &Type, no_default: bool) -> TokenStream {
     let serde_as = extract_serde_as(ty)
         .replace("Vec<u8>", "::serde_with::Bytes")
         .replace("u8", "_");
-    quote! { #[serde_as(as = #serde_as)] }
+    if no_default {
+        syn::parse_quote!(#[serde_as(as = #serde_as, no_default)])
+    } else {
+        syn::parse_quote!(#[serde_as(as = #serde_as)])
+    }
 }

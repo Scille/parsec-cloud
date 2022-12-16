@@ -9,8 +9,8 @@ use std::{
 };
 
 use libparsec_crypto::{HashDigest, SecretKey};
+use libparsec_serialization_format::parsec_data;
 use libparsec_types::*;
-use serialization_format::parsec_data;
 
 use crate as libparsec_client_types;
 

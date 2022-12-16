@@ -78,6 +78,7 @@ ignoreWords:
   - PQRSTUVWXYZHIJKLMNO
   - abcefg
   - mnpcod
+  - splitn
 cache:
   cacheFormat: universal
   cacheStrategy: metadata
