@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from typing import Dict, Iterator, Optional, Tuple
 
 import trio
 
@@ -9,81 +10,75 @@ from parsec._parsec import DateTime, mock_time
 from parsec.api.protocol import DeviceID
 from parsec.core.types import LocalDevice
 
-__freeze_time_dict: dict[DeviceID, DateTime] = {}
+FreezeContext = Dict[DeviceID, Tuple[Optional[trio.lowlevel.Task], Optional[DateTime]]]
+__freeze_time_dict: FreezeContext = {}
 
 
-def _timestamp_mockup(device: LocalDevice) -> DateTime:
-    _, time = __freeze_time_dict.get(device.device_id, (None, None))
-    return time or device.time_provider.now()
+def _timestamp_mockup(self: LocalDevice) -> DateTime:
+    _, time = __freeze_time_dict.get(self.device_id, (None, None))
+    return time or self.time_provider.now()
 
 
-@contextmanager
-def freeze_device_time(device: LocalDevice | DeviceID, current_time: DateTime | str):
-    # Parse time
-    if isinstance(current_time, str):
-        [y, m, d] = current_time.split("-")
-        current_time = DateTime(int(y), int(m), int(d))
+def _freeze_devices(
+    devices: list[LocalDevice], current_task: trio.lowlevel.Task | None, time: DateTime
+) -> FreezeContext:
+    restore_context: FreezeContext = dict()
 
-    # Get device id
-    if isinstance(device, LocalDevice):
-        device_id = device.device_id
-    elif isinstance(device, DeviceID):
-        device_id = device
-    else:
-        assert False, device
+    for device in devices:
+        # Get device id
+        dev_id = device.device_id
 
-    device.time_provider.mock_time(freeze=current_time)
+        # Freeze time with mockup (idempotent) & timeprovider
+        print(f"[_freeze_devices] device_id={dev_id}, update time provider config")
+        # Mypy doesn't like that we assign a function to a method type
+        device.time_provider.mock_time(freeze=time)
 
-    # Apply mockup (idempotent)
-    type(device).timestamp = _timestamp_mockup
+        # Save previous context
+        previous_task, previous_time = __freeze_time_dict.get(dev_id, (None, None))
 
-    # Save previous context
-    previous_task, previous_time = __freeze_time_dict.get(device_id, (None, None))
+        # Ensure time has not been frozen from another coroutine
+        assert previous_task in (None, current_task)
 
-    # Get current trio task
-    try:
-        current_task = trio.lowlevel.current_task()
-    except RuntimeError:
-        current_task = None
-
-    # Ensure time has not been frozen from another coroutine
-    assert previous_task in (None, current_task)
-
-    try:
         # Set new context
-        __freeze_time_dict[device_id] = (current_task, current_time)
-        yield current_time
-    finally:
-        # Restore previous context
-        __freeze_time_dict[device_id] = (previous_task, previous_time)
+        __freeze_time_dict[dev_id] = (current_task, time)
+
+        restore_context[dev_id] = (previous_task, previous_time)
+
+    return restore_context
 
 
-__freeze_time_task = None
+def _unfreeze_devices(devices: list[LocalDevice], previous_context: FreezeContext) -> None:
+    for device in devices:
+        dev_id = device.device_id
+        previous_task, previous_time = previous_context[dev_id]
+        __freeze_time_dict[dev_id] = (previous_task, previous_time)
+
+        if previous_time is not None:
+            device.time_provider.mock_time(freeze=previous_time)
+        else:
+            device.time_provider.mock_time(realtime=True)
+
+
+# Global ID that is used to save previous task & time when freezing datetime.
+__global_freeze_time_id = DeviceID.new()
 
 
 @contextmanager
-def freeze_time(time: DateTime | str = None, device: LocalDevice | DeviceID | None = None):
-    mocks_stack = []
+def freeze_time(
+    time: DateTime | str | None = None,
+    devices: list[LocalDevice] | None = None,
+    freeze_datetime: bool = False,
+) -> Iterator[DateTime]:
+    devices = devices or list()
+    # Will freeze `Datetime` if the caller said so or if no devices where provided
+    freeze_datetime = freeze_datetime or not devices
 
     # Get current time if not provided
     if time is None:
         time = DateTime.now()
-
-    # Freeze a single device
-    if device is not None:
-        with freeze_device_time(device, time) as time:
-            yield time
-        return
-
-    # Parse time
-    global __freeze_time_task
-    if isinstance(time, str):
-        [y, m, d] = time.split("-")
-        time = DateTime(int(y), int(m), int(d))
-
-    # Save previous context
-    previous_task = __freeze_time_task
-    previous_time = mocks_stack.pop() if mocks_stack else None
+    elif isinstance(time, str):
+        y, m, d = map(int, time.split("-"))
+        time = DateTime(y, m, d)
 
     # Get current trio task
     try:
@@ -91,18 +86,28 @@ def freeze_time(time: DateTime | str = None, device: LocalDevice | DeviceID | No
     except RuntimeError:
         current_task = None
 
+    # Freeze a multiple devices
+    restore_context = _freeze_devices(devices, current_task, time)
+
+    # Save previous context
+    global __global_freeze_time_id
+    global __freeze_time_dict
+    previous_task, previous_time = __freeze_time_dict.get(__global_freeze_time_id, (None, None))
+
     # Ensure time has not been frozen from another coroutine
     assert previous_task in (None, current_task)
 
     try:
-        # Set new context
-        __freeze_time_task = current_task
-        mocks_stack.append(time)
-        mock_time(time)
+        # Set freeze datetime
+        if freeze_datetime:
+            __freeze_time_dict[__global_freeze_time_id] = (current_task, time)
+            mock_time(time)
 
         yield time
     finally:
         # Restore previous context
-        __freeze_time_task = previous_task
-        mocks_stack.append(previous_time)
-        mock_time(previous_time)
+        if freeze_datetime:
+            __freeze_time_dict[__global_freeze_time_id] = (previous_task, previous_time)
+            mock_time(previous_time)
+
+        _unfreeze_devices(devices, restore_context)
