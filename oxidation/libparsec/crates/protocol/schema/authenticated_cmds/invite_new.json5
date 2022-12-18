@@ -1,6 +1,5 @@
 [
     {
-        "label": "InviteNew",
         "major_versions": [
             2,
             3
@@ -9,64 +8,81 @@
             "cmd": "invite_new",
             "unit": "UserOrDevice"
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "token": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "token",
                         "type": "InvitationToken"
                     },
                     // Added in API 2.3 (Parsec v2.6.0)
                     // Field used when the invitation is correctly created but the invitation email cannot be sent
-                    "email_sent": {
+                    {
+                        "name": "email_sent",
                         "type": "InvitationEmailSentStatus",
                         "introduced_in": "2.3"
                     }
-                }
+                ]
             },
-            "not_allowed": {},
-            "already_member": {},
-            "not_available": {}
-        },
-        "nested_types": {
-            "UserOrDevice": {
-                "type": "enum",
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "already_member"
+            },
+            {
+                "status": "not_available"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "UserOrDevice",
                 "discriminant_field": "type",
-                "variants": {
-                    "User": {
+                "variants": [
+                    {
+                        "name": "User",
                         "discriminant_value": "USER",
-                        "fields": {
-                            "claimer_email": {
+                        "fields": [
+                            {
+                                "name": "claimer_email",
                                 "type": "String"
                             },
-                            "send_email": {
+                            {
+                                "name": "send_email",
                                 "type": "Boolean"
                             }
-                        }
+                        ]
                     },
-                    "Device": {
+                    {
+                        "name": "Device",
                         "discriminant_value": "DEVICE",
-                        "fields": {
-                            "send_email": {
+                        "fields": [
+                            {
+                                "name": "send_email",
                                 "type": "Boolean"
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             },
-            "InvitationEmailSentStatus": {
-                "type": "enum",
-                "variants": {
-                    "Success": {
+            {
+                "name": "InvitationEmailSentStatus",
+                "variants": [
+                    {
+                        "name": "Success",
                         "discriminant_value": "SUCCESS"
                     },
-                    "NotAvailable": {
+                    {
+                        "name": "NotAvailable",
                         "discriminant_value": "NOT_AVAILABLE"
                     },
-                    "BadRecipient": {
+                    {
+                        "name": "BadRecipient",
                         "discriminant_value": "BAD_RECIPIENT"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

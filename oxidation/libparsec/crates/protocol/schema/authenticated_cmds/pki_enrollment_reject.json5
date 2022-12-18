@@ -1,80 +1,96 @@
 [
     {
-        "label": "PkiEnrollmentReject",
         "major_versions": [
             3
         ],
         "introduced_in": "3.2",
         "req": {
             "cmd": "pki_enrollment_reject",
-            "fields": {
-                "enrollment_id": {
+            "fields": [
+                {
+                    "name": "enrollment_id",
                     "type": "EnrollmentID"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "not_allowed": {
-                "fields": {
-                    "reason": {
-                        "type": "NonRequiredOption<String>"
-                    }
-                }
+        "reps": [
+            {
+                "status": "ok"
             },
-            "not_found": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "no_longer_available": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
+            },
+            {
+                "status": "no_longer_available",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
             }
-        }
+        ]
     },
     {
-        "label": "PkiEnrollmentReject",
         "major_versions": [
             2
         ],
         "introduced_in": "2.8",
         "req": {
             "cmd": "pki_enrollment_reject",
-            "fields": {
-                "enrollment_id": {
+            "fields": [
+                {
+                    "name": "enrollment_id",
                     "type": "EnrollmentID"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "not_allowed": {
-                "fields": {
-                    "reason": {
-                        "type": "NonRequiredOption<String>"
-                    }
-                }
+        "reps": [
+            {
+                "status": "ok"
             },
-            "not_found": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "no_longer_available": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
+            },
+            {
+                "status": "no_longer_available",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
             }
-        }
+        ]
     }
 ]

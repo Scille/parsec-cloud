@@ -1,6 +1,5 @@
 [
     {
-        "label": "Invite3aGreeterWaitPeerTrust",
         "major_versions": [
             1,
             2,
@@ -8,17 +7,26 @@
         ],
         "req": {
             "cmd": "invite_3a_greeter_wait_peer_trust",
-            "fields": {
-                "token": {
+            "fields": [
+                {
+                    "name": "token",
                     "type": "InvitationToken"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "not_found": {},
-            "already_deleted": {},
-            "invalid_state": {}
-        }
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
     }
 ]

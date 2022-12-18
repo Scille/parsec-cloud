@@ -1,6 +1,5 @@
 [
     {
-        "label": "DeviceCreate",
         "major_versions": [
             1,
             2,
@@ -8,46 +7,58 @@
         ],
         "req": {
             "cmd": "device_create",
-            "fields": {
-                "device_certificate": {
+            "fields": [
+                {
+                    "name": "device_certificate",
                     "type": "Bytes"
                 },
                 // Same certificate than above, but expunged of device_label
-                "redacted_device_certificate": {
+                {
+                    "name": "redacted_device_certificate",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "invalid_certification": {
-                "fields": {
-                    "reason": {
-                        "type": "NonRequiredOption<String>"
-                    }
-                }
+        "reps": [
+            {
+                "status": "ok"
             },
-            "bad_user_id": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "bad_user_id",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "already_exists": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
+            },
+            {
+                "status": "already_exists",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
             }
-        }
+        ]
     }
 ]

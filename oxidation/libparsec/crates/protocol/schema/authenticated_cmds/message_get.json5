@@ -1,6 +1,5 @@
 [
     {
-        "label": "MessageGet",
         "major_versions": [
             1,
             2,
@@ -8,39 +7,46 @@
         ],
         "req": {
             "cmd": "message_get",
-            "fields": {
-                "offset": {
+            "fields": [
+                {
+                    "name": "offset",
                     "type": "Index"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "messages": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "messages",
                         "type": "List<Message>"
                     }
-                }
+                ]
             }
-        },
-        "nested_types": {
-            "Message": {
-                "type": "struct",
-                "fields": {
-                    "count": {
+        ],
+        "nested_types": [
+            {
+                "name": "Message",
+                "fields": [
+                    {
+                        "name": "count",
                         "type": "Size"
                     },
-                    "sender": {
+                    {
+                        "name": "sender",
                         "type": "DeviceID"
                     },
-                    "timestamp": {
+                    {
+                        "name": "timestamp",
                         "type": "DateTime"
                     },
-                    "body": {
+                    {
+                        "name": "body",
                         "type": "Bytes"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

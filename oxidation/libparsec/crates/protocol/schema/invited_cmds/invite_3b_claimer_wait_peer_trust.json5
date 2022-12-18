@@ -1,6 +1,5 @@
 [
     {
-        "label": "Invite3bClaimerWaitPeerTrust",
         "major_versions": [
             1,
             2,
@@ -9,11 +8,19 @@
         "req": {
             "cmd": "invite_3b_claimer_wait_peer_trust"
         },
-        "reps": {
-            "ok": {},
-            "already_deleted": {},
-            "not_found": {},
-            "invalid_state": {}
-        }
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
     }
 ]

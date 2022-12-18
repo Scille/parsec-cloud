@@ -1,6 +1,5 @@
 [
     {
-        "label": "UserGet",
         "major_versions": [
             1,
             2,
@@ -8,46 +7,57 @@
         ],
         "req": {
             "cmd": "user_get",
-            "fields": {
-                "user_id": {
+            "fields": [
+                {
+                    "name": "user_id",
                     "type": "UserID"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "user_certificate": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "user_certificate",
                         "type": "Bytes"
                     },
-                    "revoked_user_certificate": {
+                    {
+                        "name": "revoked_user_certificate",
                         "type": "RequiredOption<Bytes>"
                     },
-                    "device_certificates": {
+                    {
+                        "name": "device_certificates",
                         "type": "List<Bytes>"
                     },
-                    "trustchain": {
+                    {
+                        "name": "trustchain",
                         "type": "Trustchain"
                     }
-                }
+                ]
             },
-            "not_found": {}
-        },
-        "nested_types": {
-            "Trustchain": {
-                "type": "struct",
-                "fields": {
-                    "devices": {
+            {
+                "status": "not_found"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "Trustchain",
+                "fields": [
+                    {
+                        "name": "devices",
                         "type": "List<Bytes>"
                     },
-                    "users": {
+                    {
+                        "name": "users",
                         "type": "List<Bytes>"
                     },
-                    "revoked_users": {
+                    {
+                        "name": "revoked_users",
                         "type": "List<Bytes>"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

@@ -1,6 +1,5 @@
 [
     {
-        "label": "InviteList",
         "major_versions": [
             1,
             2,
@@ -9,53 +8,64 @@
         "req": {
             "cmd": "invite_list"
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "invitations": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "invitations",
                         "type": "List<InviteListItem>"
                     }
-                }
+                ]
             }
-        },
-        "nested_types": {
-            "InviteListItem": {
-                "type": "enum",
+        ],
+        "nested_types": [
+            {
+                "name": "InviteListItem",
                 "discriminant_field": "type",
-                "variants": {
-                    "User": {
+                "variants": [
+                    {
+                        "name": "User",
                         "discriminant_value": "USER",
-                        "fields": {
-                            "token": {
+                        "fields": [
+                            {
+                                "name": "token",
                                 "type": "InvitationToken"
                             },
-                            "created_on": {
+                            {
+                                "name": "created_on",
                                 "type": "DateTime"
                             },
-                            "claimer_email": {
+                            {
+                                "name": "claimer_email",
                                 "type": "String"
                             },
-                            "status": {
+                            {
+                                "name": "status",
                                 "type": "InvitationStatus"
                             }
-                        }
+                        ]
                     },
-                    "Device": {
+                    {
+                        "name": "Device",
                         "discriminant_value": "DEVICE",
-                        "fields": {
-                            "token": {
+                        "fields": [
+                            {
+                                "name": "token",
                                 "type": "InvitationToken"
                             },
-                            "created_on": {
+                            {
+                                "name": "created_on",
                                 "type": "DateTime"
                             },
-                            "status": {
+                            {
+                                "name": "status",
                                 "type": "InvitationStatus"
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

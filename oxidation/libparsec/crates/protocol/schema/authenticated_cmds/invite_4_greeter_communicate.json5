@@ -1,6 +1,5 @@
 [
     {
-        "label": "Invite4GreeterCommunicate",
         "major_versions": [
             1,
             2,
@@ -8,26 +7,36 @@
         ],
         "req": {
             "cmd": "invite_4_greeter_communicate",
-            "fields": {
-                "token": {
+            "fields": [
+                {
+                    "name": "token",
                     "type": "InvitationToken"
                 },
-                "payload": {
+                {
+                    "name": "payload",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "payload": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "payload",
                         "type": "Bytes"
                     }
-                }
+                ]
             },
-            "not_found": {},
-            "already_deleted": {},
-            "invalid_state": {}
-        }
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
     }
 ]

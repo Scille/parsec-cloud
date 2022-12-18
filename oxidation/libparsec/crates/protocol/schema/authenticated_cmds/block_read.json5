@@ -1,6 +1,5 @@
 [
     {
-        "label": "BlockRead",
         "major_versions": [
             1,
             2,
@@ -8,24 +7,35 @@
         ],
         "req": {
             "cmd": "block_read",
-            "fields": {
-                "block_id": {
+            "fields": [
+                {
+                    "name": "block_id",
                     "type": "BlockID"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "block": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "block",
                         "type": "Bytes"
                     }
-                }
+                ]
             },
-            "not_found": {},
-            "timeout": {},
-            "not_allowed": {},
-            "in_maintenance": {}
-        }
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "timeout"
+            },
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "in_maintenance"
+            }
+        ]
     }
 ]

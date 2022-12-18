@@ -1,6 +1,5 @@
 [
     {
-        "label": "OrganizationConfig",
         "major_versions": [
             1,
             2,
@@ -9,27 +8,34 @@
         "req": {
             "cmd": "organization_config"
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "user_profile_outsider_allowed": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "user_profile_outsider_allowed",
                         "type": "Boolean"
                     },
                     // `None` stands for "no limit" here
-                    "active_users_limit": {
+                    {
+                        "name": "active_users_limit",
                         "type": "RequiredOption<Size>"
                     },
-                    "sequester_authority_certificate": {
+                    {
+                        "name": "sequester_authority_certificate",
                         "type": "RequiredOption<Bytes>",
                         "introduced_in": "2.8"
                     },
-                    "sequester_services_certificates": {
+                    {
+                        "name": "sequester_services_certificates",
                         "type": "RequiredOption<List<Bytes>>",
                         "introduced_in": "2.8"
                     }
-                }
+                ]
             },
-            "not_found": {}
-        }
+            {
+                "status": "not_found"
+            }
+        ]
     }
 ]

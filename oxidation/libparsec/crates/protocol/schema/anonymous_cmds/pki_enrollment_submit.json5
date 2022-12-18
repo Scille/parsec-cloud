@@ -1,126 +1,154 @@
 [
     {
-        "label": "PkiEnrollmentSubmit",
         "major_versions": [
             3
         ],
         "introduced_in": "3.2",
         "req": {
             "cmd": "pki_enrollment_submit",
-            "fields": {
-                "enrollment_id": {
+            "fields": [
+                {
+                    "name": "enrollment_id",
                     "type": "EnrollmentID"
                 },
-                "force": {
+                {
+                    "name": "force",
                     "type": "Boolean"
                 },
-                "submitter_der_x509_certificate": {
+                {
+                    "name": "submitter_der_x509_certificate",
                     "type": "Bytes"
                 },
-                "submitter_der_x509_certificate_email": {
+                {
+                    "name": "submitter_der_x509_certificate_email",
                     "type": "NonRequiredOption<String>"
                 },
-                "submit_payload_signature": {
+                {
+                    "name": "submit_payload_signature",
                     "type": "Bytes"
                 },
-                "submit_payload": {
+                {
+                    "name": "submit_payload",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "submitted_on": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "submitted_on",
                         "type": "DateTime"
                     }
-                }
+                ]
             },
-            "already_submitted": {
-                "fields": {
-                    "submitted_on": {
+            {
+                "status": "already_submitted",
+                "fields": [
+                    {
+                        "name": "submitted_on",
                         "type": "DateTime"
                     }
-                }
+                ]
             },
-            "id_already_used": {
-                "fields": {}
+            {
+                "status": "id_already_used",
+                "fields": []
             },
-            "email_already_used": {
-                "fields": {}
+            {
+                "status": "email_already_used",
+                "fields": []
             },
-            "already_enrolled": {
-                "fields": {}
+            {
+                "status": "already_enrolled",
+                "fields": []
             },
-            "invalid_payload_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_payload_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             }
-        }
+        ]
     },
     {
-        "label": "PkiEnrollmentSubmit",
         "major_versions": [
             2
         ],
         "introduced_in": "2.8",
         "req": {
             "cmd": "pki_enrollment_submit",
-            "fields": {
-                "enrollment_id": {
+            "fields": [
+                {
+                    "name": "enrollment_id",
                     "type": "EnrollmentID"
                 },
-                "force": {
+                {
+                    "name": "force",
                     "type": "Boolean"
                 },
-                "submitter_der_x509_certificate": {
+                {
+                    "name": "submitter_der_x509_certificate",
                     "type": "Bytes"
                 },
-                "submitter_der_x509_certificate_email": {
+                {
+                    "name": "submitter_der_x509_certificate_email",
                     "type": "NonRequiredOption<String>"
                 },
-                "submit_payload_signature": {
+                {
+                    "name": "submit_payload_signature",
                     "type": "Bytes"
                 },
-                "submit_payload": {
+                {
+                    "name": "submit_payload",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "submitted_on": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "submitted_on",
                         "type": "DateTime"
                     }
-                }
+                ]
             },
-            "already_submitted": {
-                "fields": {
-                    "submitted_on": {
+            {
+                "status": "already_submitted",
+                "fields": [
+                    {
+                        "name": "submitted_on",
                         "type": "DateTime"
                     }
-                }
+                ]
             },
-            "id_already_used": {
-                "fields": {}
+            {
+                "status": "id_already_used",
+                "fields": []
             },
-            "email_already_used": {
-                "fields": {}
+            {
+                "status": "email_already_used",
+                "fields": []
             },
-            "already_enrolled": {
-                "fields": {}
+            {
+                "status": "already_enrolled",
+                "fields": []
             },
-            "invalid_payload_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_payload_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

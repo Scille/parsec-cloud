@@ -1,6 +1,5 @@
 [
     {
-        "label": "OrganizationStats",
         "major_versions": [
             1,
             2,
@@ -9,53 +8,67 @@
         "req": {
             "cmd": "organization_stats"
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "data_size": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "data_size",
                         "type": "Size"
                     },
-                    "metadata_size": {
+                    {
+                        "name": "metadata_size",
                         "type": "Size"
                     },
-                    "realms": {
+                    {
+                        "name": "realms",
                         "type": "Size"
                     },
-                    "users": {
+                    {
+                        "name": "users",
                         "type": "Size"
                     },
-                    "active_users": {
+                    {
+                        "name": "active_users",
                         "type": "Size"
                     },
-                    "users_per_profile_detail": {
+                    {
+                        "name": "users_per_profile_detail",
                         "type": "List<UsersPerProfileDetailItem>"
                     }
-                }
+                ]
             },
-            "not_allowed": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "not_found": {}
-        },
-        "nested_types": {
-            "UsersPerProfileDetailItem": {
-                "type": "struct",
-                "fields": {
-                    "profile": {
+            {
+                "status": "not_found"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "UsersPerProfileDetailItem",
+                "fields": [
+                    {
+                        "name": "profile",
                         "type": "UserProfile"
                     },
-                    "active": {
+                    {
+                        "name": "active",
                         "type": "Index"
                     },
-                    "revoked": {
+                    {
+                        "name": "revoked",
                         "type": "Index"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]
