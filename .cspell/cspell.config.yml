@@ -47,6 +47,7 @@ words:
   - schemafile
   - intlify
   - htmlcov
+  - Swatinem
 ignoreWords:
   - ApiV
   - ABCDEFGHJKLMNPQRSTUVWXYZ
