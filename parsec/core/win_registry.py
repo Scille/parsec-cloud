@@ -13,6 +13,7 @@ from typing import Any, Iterator
 from structlog import get_logger
 
 from parsec.core import resources
+from parsec.core.types import LocalDevice
 
 logger = get_logger()
 
@@ -175,15 +176,23 @@ def del_parsec_drive_icon(letter: str) -> None:
         pass
 
 
+def _get_drive_icon_path(device: LocalDevice) -> Traversable:
+    # This function is just here so that other applications can
+    # change the icon by monkeypatching it. `device` argument
+    # can be used to add conditions, e.g. return different icons
+    # for different devices.
+    return importlib.resources.files(resources).joinpath(DRIVE_ICON_NAME)
+
+
 @contextmanager
-def parsec_drive_icon_context(letter: str) -> Iterator[None]:
+def parsec_drive_icon_context(letter: str, device: LocalDevice) -> Iterator[None]:
     # Winreg is not available for some reasons
     if sys.platform != "win32" or not try_winreg():
         yield
         return
 
     # Safe context for removing the key after usage
-    drive_icon_path = importlib.resources.files(resources).joinpath(DRIVE_ICON_NAME)
+    drive_icon_path = _get_drive_icon_path(device)
     set_parsec_drive_icon(letter, drive_icon_path)
     try:
         yield
