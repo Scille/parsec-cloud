@@ -7,12 +7,36 @@
 
 #include <array>
 #include <memory>
+#include <cassert>
 
+#include <json/json.hpp>
+
+// Json namespace shorthand
+using json = nlohmann::json;
+
+// Just a quick json test
+static void test_json()
+{
+    auto ex1 = json::parse(R"(
+      {
+        "pi": 3.141,
+        "happy": true
+      }
+    )");
+
+    auto pi = ex1["pi"].get<double>();
+    auto happy = ex1["happy"].get<bool>();
+
+    assert(pi == 3.141);
+    assert(happy);
+}
 
 // CCheckIconHandler
 
 HRESULT __stdcall CCheckIconHandler::IsMemberOf(LPCWSTR pwszPath, DWORD dwAttrib)
 {
+    test_json();
+
     constexpr std::array<wchar_t, 26> DRIVES = {
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
