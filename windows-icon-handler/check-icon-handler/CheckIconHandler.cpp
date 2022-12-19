@@ -9,62 +9,16 @@
 #include <memory>
 #include <cassert>
 
-#include <json/json.hpp>
-
-// Json namespace shorthand
-using json = nlohmann::json;
-
-// Just a quick json test
-static void test_json()
-{
-    auto ex1 = json::parse(R"(
-      {
-        "pi": 3.141,
-        "happy": true
-      }
-    )");
-
-    auto pi = ex1["pi"].get<double>();
-    auto happy = ex1["happy"].get<bool>();
-
-    assert(pi == 3.141);
-    assert(happy);
-}
+#include "parsec.h"
 
 // CCheckIconHandler
 
 HRESULT __stdcall CCheckIconHandler::IsMemberOf(LPCWSTR pwszPath, DWORD dwAttrib)
 {
-    test_json();
+    if (parsec::is_member_file(pwszPath) == parsec::SyncState::Synced)
+        return S_OK;
 
-    constexpr std::array<wchar_t, 26> DRIVES = {
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
-    };
-    int drive_number = PathGetDriveNumberW(pwszPath);
-
-    //// Parsec supports drive from H to Z (included). If the drive letter is not
-    //// one of those, we can return FALSE immediately
-    //// A is 0, Z is 25, our drive should be between 7 and 25 included
-
-    if (drive_number == -1 || drive_number < 7 || PathIsRootW(pwszPath))
-        return S_FALSE;
-
-    // Parsec write a registry key to set the icon for its workspaces.
-    // We check if the key is present for the current drive.
-    auto reg_key = std::make_unique<wchar_t[]>(MAX_PATH * 32);
-    swprintf(
-        reg_key.get(),
-        MAX_PATH * 32,
-        L"Software\\Classes\\Applications\\Explorer.exe\\Drives\\%c\\DefaultIcon",
-        DRIVES[drive_number]
-    );
-    HKEY key = nullptr;
-
-    if (RegOpenKeyEx(HKEY_CURRENT_USER, reg_key.get(), 0, KEY_READ, &key) != ERROR_SUCCESS)
-        return S_FALSE;
-
-    return S_OK;
+    return S_FALSE;
 }
 
 HRESULT __stdcall CCheckIconHandler::GetOverlayInfo(LPWSTR pwszIconFile, int cchMax, int* pIndex, DWORD* pdwFlags)
