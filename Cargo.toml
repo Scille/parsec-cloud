@@ -39,13 +39,25 @@ members = [
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
 default-members = ["oxidation/libparsec"]
 
-# A custom profile that is the fusion of `release` & `debug` profile.
-# We want the speed of the `release` profile but with the debug assertions of the `debug` profile.
-[profile.integration]
-inherits = "release"
-overflow-checks = true
-debug-assertions = true
-debug = true
-incremental = true
+# Rust unoptimized code is so slow that we customize dev profile to enable some
+# optimizations, otherwise Python tests take forever.
+[profile.python-dev]
+inherits = "dev"
 opt-level = 1
-codegen-units = 256
+
+# Custom profiles for the CI. The idea here is to try to save compilation time
+# and artifacts size (to keep cache efficient).
+
+[profile.ci-rust]
+inherits = "dev"
+# Remove debug symbols saves roughly ~30% compilation time and ~50% artifacts size
+debug = false
+# Given we don't keep our crate in the cache, we always build them from the
+# ground. Removing that saves ~20% in artifacts size.
+incremental = false
+
+[profile.ci-python]
+inherits = "ci-rust"
+# Using `opt-level = 0` divides by 2 compilation time, however it makes code run much
+# slower which is a no-go for Python tests :'(
+opt-level = 1
