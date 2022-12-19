@@ -38,19 +38,10 @@ repos:
     rev: v6.16.0
     hooks:
       - id: cspell
-        types_or:
-          - pyi
-          - toml
-          - json
-          - rust
-          - python3
-          - ts
-          - javascript
-          - yaml
-          - pofile
         args:
           - --config=./.cspell/cspell.config.yml
           - --no-progress
+          - --dot
           - --no-must-find-files
           - --no-summary
           - --gitignore
@@ -59,6 +50,7 @@ repos:
           - "@cspell/dict-fr-reforme"
           - "@cspell/dict-bash"
           - "@cspell/dict-shell"
+          - "@cspell/dict-win32"
   ########
   # Python
 
@@ -122,21 +114,36 @@ repos:
   ######
   # Rust
 
-  - repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
+  - repo: local
     hooks:
       - id: fmt
+        name: fmt
+        entry: cargo fmt
+        language: system
+        types: [ rust ]
+        args: [ -- ]
+
       - id: clippy
+        name: clippy
+        entry: cargo clippy
+        language: system
+        types: [ rust ]
+        pass_filenames: false
         args:
           [
             --workspace,
             --tests,
             --bins,
             --lib,
+            --exclude=libparsec_bindings_jni,
+            --exclude=libparsec_bindings_web,
+            --exclude=libparsec_bindings_electron,
+            --exclude=libparsec_bindings_common,
             --,
             --deny=warnings,
             --deny=clippy::self_named_module_files,
             --deny=clippy::undocumented_unsafe_blocks,
+
           ]
 
   ####
@@ -146,7 +153,6 @@ repos:
     hooks:
       - id: eslint
         name: eslint
-        description: ""
         entry: eslint
         language: node
         files: ^oxidation/client/

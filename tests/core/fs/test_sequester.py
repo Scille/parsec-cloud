@@ -192,7 +192,7 @@ async def test_webhook_timeout_and_rejected(
 
         monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
 
-    # Create a workspace & make sure evrything is sync so far
+    # Create a workspace & make sure everything is sync so far
     wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.sync()
     alice_workspace = alice_user_fs.get_workspace(wid)
@@ -263,7 +263,7 @@ async def test_webhook_timeout_and_rejected(
             }
         ]
 
-    # The sync operation went fine, but in fact no sync occured...
+    # The sync operation went fine, but in fact no sync occurred...
     file_info = await alice_workspace.path_info("/test.txt")
     assert file_info["need_sync"] is True
     assert file_info["base_version"] == 2
@@ -296,7 +296,7 @@ async def test_webhook_timeout_and_rejected(
 
     # So we called the webhook 4 times:
     # - first time failed
-    # - second successufly synced the user manifest
+    # - second successfully synced the user manifest
     assert webhook_calls == 2
 
     # 2.b) Test sequester service rejection
@@ -322,7 +322,7 @@ async def test_webhook_timeout_and_rejected(
             }
         ]
 
-    # The sync operation went fine, but in fact no sync occured...
+    # The sync operation went fine, but in fact no sync occurred...
     um = alice_user_fs.get_user_manifest()
     assert um.need_sync is True
 

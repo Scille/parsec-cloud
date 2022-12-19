@@ -44,7 +44,7 @@ async def test_add_workspace(
     )
     aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
-    def _outcome_occured():
+    def _outcome_occurred():
         assert w_w.layout_workspaces.count() == 1
         if invalid_name:
             assert (
@@ -63,7 +63,7 @@ async def test_add_workspace(
             assert wk_button.name == EntryName("Workspace1")
             assert not autoclose_dialog.dialogs
 
-    await aqtbot.wait_until(_outcome_occured)
+    await aqtbot.wait_until(_outcome_occurred)
 
 
 @pytest.mark.gui
@@ -94,7 +94,7 @@ async def test_rename_workspace(
     )
     aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
 
-    def _outcome_occured():
+    def _outcome_occurred():
         assert w_w.layout_workspaces.count() == 1
         new_wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(new_wk_button, WorkspaceButton)
@@ -111,7 +111,7 @@ async def test_rename_workspace(
             assert wk_button.name == EntryName("Workspace1_Renamed")
             assert not autoclose_dialog.dialogs
 
-    await aqtbot.wait_until(_outcome_occured)
+    await aqtbot.wait_until(_outcome_occurred)
 
 
 @pytest.mark.gui
@@ -185,7 +185,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
     await aqtbot.wait_until(_initially_mounted)
 
-    # Now switch to umounted
+    # Now switch to unmounted
     aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
 
     def _unmounted():

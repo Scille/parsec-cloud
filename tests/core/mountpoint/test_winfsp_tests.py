@@ -47,7 +47,7 @@ XFAIL_LIST = [
     "getsecurity_test",
     "setsecurity_test",
     # TODO: investigate misc tests
-    "create_notraverse_test",
+    "create_notraverse_test",  # cspell: disable-line
     "delete_mmap_test",
     "delete_access_test",
     # TODO: investigate why this test only fails in appveyor

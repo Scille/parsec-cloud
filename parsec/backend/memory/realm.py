@@ -285,7 +285,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if realm.status.in_maintenance:
-            raise RealmInMaintenanceError(f"Realm `{realm_id.hex}` alrealy in maintenance")
+            raise RealmInMaintenanceError(f"Realm `{realm_id.hex}` already in maintenance")
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         now = DateTime.now()

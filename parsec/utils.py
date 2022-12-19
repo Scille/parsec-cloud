@@ -58,7 +58,7 @@ T = TypeVar("T")
 # The worse case scenario would be a slow client machine, a large
 # request, a slow network connection and a busy server. Even
 # in this scenario, a 10 seconds time difference is hardly
-# imaginable on a properly functionnning system.
+# imaginable on a properly functioning system.
 #
 # This is an argument for making this comparison asymmetrical: with no
 # clock drift between client and server, communication latency makes data

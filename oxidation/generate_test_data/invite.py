@@ -14,7 +14,7 @@ iud = InviteUserData(
     public_key=BOB.public_key,
     verify_key=BOB.verify_key,
 ).dump_and_encrypt(key=KEY)
-display("inite user data", iud, [KEY, "zip"])
+display("invite user data", iud, [KEY, "zip"])
 
 iud = InviteUserData(
     requested_device_label=None,

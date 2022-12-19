@@ -181,7 +181,7 @@ async def query_start_reencryption_maintenance(
     # Retrieve realm and make sure it is not under maintenance
     status = await get_realm_status(conn, organization_id, realm_id)
     if status.in_maintenance:
-        raise RealmInMaintenanceError(f"Realm `{realm_id.hex}` alrealy in maintenance")
+        raise RealmInMaintenanceError(f"Realm `{realm_id.hex}` already in maintenance")
     if encryption_revision != status.encryption_revision + 1:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 

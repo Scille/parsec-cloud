@@ -286,7 +286,7 @@ async def test_sse_events_close_connection_on_backpressure(
             )
 
             # The connection simply gets closed without error status given nothing wrong
-            # occured in practice
+            # occurred in practice
             response = await sse_con.connection.as_response()
             # Status code is 200 given it was provided with the very first event (and at
             # that time the server didn't know the client will become non-responsive !)

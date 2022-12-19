@@ -125,7 +125,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
             event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
         new_events.append(event)
     spy.events = new_events
-    spy.assert_event_occured(
+    spy.assert_event_occurred(
         CoreEvent.SHARING_UPDATED,
         {"new_entry": expected_bob_w1_workspace_entry, "previous_entry": None},
     )
@@ -149,7 +149,7 @@ async def test_share_workspace_then_rename_it(
     with freeze_time("2000-01-03"):
         await bob_user_fs.process_last_messages()
 
-    # Now Bob and alice both rename the workpsace for there own taste
+    # Now Bob and alice both rename the workspace for there own taste
     await bob_user_fs.workspace_rename(wid, EntryName("from_alice"))
     await alice_user_fs.workspace_rename(wid, EntryName("to_bob"))
 
@@ -194,7 +194,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
         new_events.append(event)
     spy.events = new_events
 
-    spy.assert_event_occured(
+    spy.assert_event_occurred(
         CoreEvent.SHARING_UPDATED,
         {
             "new_entry": WorkspaceEntry(
@@ -296,7 +296,7 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
         new_events.append(event)
     spy.events = new_events
 
-    spy.assert_event_occured(
+    spy.assert_event_occurred(
         CoreEvent.SHARING_UPDATED,
         {
             "new_entry": WorkspaceEntry(
@@ -348,12 +348,12 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
             await bob_user_fs.process_last_messages()
         new_entry = spy.partial_obj(WorkspaceEntry, name=EntryName("w1"), id=wid, role=role)
         if not previous_entry:
-            spy.assert_event_occured(
+            spy.assert_event_occurred(
                 CoreEvent.SHARING_UPDATED, {"new_entry": new_entry, "previous_entry": None}
             )
 
         else:
-            spy.assert_event_occured(
+            spy.assert_event_occurred(
                 CoreEvent.SHARING_UPDATED,
                 {"new_entry": new_entry, "previous_entry": previous_entry},
             )
@@ -413,13 +413,13 @@ async def test_share_with_sharing_name_already_taken(
 ):
     # Bob and Alice both has a workspace with similar name
     with freeze_time("2000-01-01"):
-        awid = await alice_user_fs.workspace_create(EntryName("w"))
-        bwid = await bob_user_fs.workspace_create(EntryName("w"))
-        bw2id = await bob_user_fs.workspace_create(EntryName("w"))
+        alice_wid = await alice_user_fs.workspace_create(EntryName("w"))
+        bob_wid = await bob_user_fs.workspace_create(EntryName("w"))
+        bob_wid_2 = await bob_user_fs.workspace_create(EntryName("w"))
 
     # Sharing them shouldn't be a trouble
     await bob_user_fs.sync()
-    await alice_user_fs.workspace_share(awid, bob.user_id, WorkspaceRole.MANAGER)
+    await alice_user_fs.workspace_share(alice_wid, bob.user_id, WorkspaceRole.MANAGER)
 
     # Bob should get a notification
     with bob_user_fs.event_bus.listen() as spy:
@@ -431,12 +431,12 @@ async def test_share_with_sharing_name_already_taken(
             event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
         new_events.append(event)
     spy.events = new_events
-    spy.assert_event_occured(
+    spy.assert_event_occurred(
         CoreEvent.SHARING_UPDATED,
         {
             "new_entry": WorkspaceEntry(
                 name=EntryName("w"),
-                id=awid,
+                id=alice_wid,
                 key=KEY,
                 encryption_revision=1,
                 encrypted_on=DateTime(2000, 1, 1),
@@ -453,7 +453,7 @@ async def test_share_with_sharing_name_already_taken(
     assert (
         WorkspaceEntry(
             name=EntryName("w"),
-            id=bwid,
+            id=bob_wid,
             key=KEY,
             encryption_revision=1,
             encrypted_on=DateTime(2000, 1, 1),
@@ -465,7 +465,7 @@ async def test_share_with_sharing_name_already_taken(
     assert (
         WorkspaceEntry(
             name=EntryName("w"),
-            id=bw2id,
+            id=bob_wid_2,
             key=KEY,
             encryption_revision=1,
             encrypted_on=DateTime(2000, 1, 1),
@@ -477,7 +477,7 @@ async def test_share_with_sharing_name_already_taken(
     assert (
         WorkspaceEntry(
             name=EntryName("w"),
-            id=awid,
+            id=alice_wid,
             key=KEY,
             encryption_revision=1,
             encrypted_on=DateTime(2000, 1, 1),
@@ -638,7 +638,7 @@ async def test_sharing_events_triggered_on_sync(
             event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
         new_events.append(event)
     spy.events = new_events
-    spy.assert_event_occured(
+    spy.assert_event_occurred(
         CoreEvent.SHARING_UPDATED, {"new_entry": expected_entry_v1, "previous_entry": None}
     )
 
@@ -666,7 +666,7 @@ async def test_sharing_events_triggered_on_sync(
             event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(key=KEY)
         new_events.append(event)
     spy.events = new_events
-    spy.assert_event_occured(
+    spy.assert_event_occurred(
         CoreEvent.SHARING_UPDATED,
         {"new_entry": expected_entry_v2, "previous_entry": expected_entry_v1},
     )
@@ -695,7 +695,7 @@ async def test_sharing_events_triggered_on_sync(
             event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(key=KEY)
         new_events.append(event)
     spy.events = new_events
-    spy.assert_event_occured(
+    spy.assert_event_occurred(
         CoreEvent.SHARING_UPDATED,
         {"new_entry": expected_entry_v3, "previous_entry": expected_entry_v2},
     )
@@ -716,7 +716,7 @@ async def test_no_sharing_event_on_sync_on_unknown_workspace(
     # No sharing event should be triggered !
     with alice2_user_fs.event_bus.listen() as spy:
         await alice2_user_fs.sync()
-    spy.assert_events_exactly_occured([CoreEvent.FS_ENTRY_REMOTE_CHANGED])
+    spy.assert_events_exactly_occurred([CoreEvent.FS_ENTRY_REMOTE_CHANGED])
 
 
 @pytest.mark.trio
@@ -762,7 +762,7 @@ async def test_sharing_event_on_sync_if_same_role(
             event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(key=KEY)
         new_events.append(event)
     spy.events = new_events
-    spy.assert_event_occured(
+    spy.assert_event_occurred(
         CoreEvent.SHARING_UPDATED,
         {"new_entry": expected_entry_v3, "previous_entry": expected_entry_v1},
     )

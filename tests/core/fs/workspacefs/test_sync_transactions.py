@@ -479,7 +479,7 @@ async def test_file_conflict(alice_sync_transactions, preferred_language, suffix
         FsPath(f"/a (Parsec - {suffix} (2))"), write_mode=False
     )
     assert await sync_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
-    spy.assert_events_exactly_occured(
+    spy.assert_events_exactly_occurred(
         [
             (
                 CoreEvent.FS_ENTRY_UPDATED,
@@ -517,7 +517,7 @@ async def test_file_conflict(alice_sync_transactions, preferred_language, suffix
     local, remote = ctx.value.args
     with sync_transactions.event_bus.listen() as spy:
         await sync_transactions.file_conflict(a_id, local, remote)
-    spy.assert_events_exactly_occured([])
+    spy.assert_events_exactly_occurred([])
 
     # Close fds
     await sync_transactions.fd_close(fd)

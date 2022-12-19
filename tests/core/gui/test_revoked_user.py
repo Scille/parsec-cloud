@@ -23,8 +23,8 @@ async def test_revoked_notification(
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
 
-    # Revokation might come when the core is busy, or idle
-    # We're testing this because the internal detection of the revokation might differ,
+    # Revocation might come when the core is busy, or idle
+    # We're testing this because the internal detection of the revocation might differ,
     # but we still want to make sure the dialog pops up properly
     # TODO: this parametrization could go directly to the logged_gui fixture
     if wait_idle_core:

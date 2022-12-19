@@ -152,7 +152,7 @@ class Monitor(Instrument):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # set the timeout to prevent the server loop from
-        # blocking indefinitaly on sock.accept()
+        # blocking indefinitely on sock.accept()
         sock.settimeout(0.5)
         sock.bind(self.address)
         sock.listen(1)

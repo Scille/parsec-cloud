@@ -162,7 +162,7 @@ async def test_invite_user_greeter_does_not_have_human_handle(
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
-async def test_invite_and_greet_user_whith_active_users_limit_reached(
+async def test_invite_and_greet_user_with_active_users_limit_reached(
     aqtbot, gui, alice, running_backend, monkeypatch, snackbar_catcher
 ):
     # Set the active user limit before login to ensure no cache information has been kept

@@ -345,7 +345,7 @@ async def test_workspace_reencryption_do_one_batch_error(
     await aqtbot.wait_until(_assert_error)
     # Unexpected error is logged
     if error_type is Exception:
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             "[error    ] Uncatched error in Qt/trio job [parsec.core.gui.trio_jobs]"
         )
 

@@ -36,7 +36,7 @@ rustup target add x86_64-linux-android
 ```
 
 *Note: The `bindings/android` directory is a valid Android project to generate a libparsec AAR.
-However the AAR doesn't have to be built when using `../client/android` project (given it depends explictly on the `bindings/android/libparsec`).*
+However the AAR doesn't have to be built when using `../client/android` project (given it depends explicitly on the `bindings/android/libparsec`).*
 
 ## 3. iOS (ffi)
 

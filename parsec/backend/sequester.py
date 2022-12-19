@@ -143,7 +143,7 @@ class BaseSequesterComponent:
             SequesterDisabledError
             SequesterOrganizationNotFoundError
             SequesterServiceNotFoundError
-            SequesterServiceAlreadyEnableddError
+            SequesterServiceAlreadyEnabledError
         """
         raise NotImplementedError()
 

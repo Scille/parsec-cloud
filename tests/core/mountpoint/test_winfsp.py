@@ -21,8 +21,8 @@ def test_rename_to_another_drive(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
         nonlocal x_path, y_path
         xid = await user_fs.workspace_create(EntryName("x"))
-        xworkspace = user_fs.get_workspace(xid)
-        await xworkspace.touch("/foo.txt")
+        x_workspace = user_fs.get_workspace(xid)
+        await x_workspace.touch("/foo.txt")
         yid = await user_fs.workspace_create(EntryName("y"))
         x_path = await mountpoint_manager.mount_workspace(xid)
         y_path = await mountpoint_manager.mount_workspace(yid)

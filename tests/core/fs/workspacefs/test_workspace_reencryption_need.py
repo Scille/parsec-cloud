@@ -31,7 +31,7 @@ def test_workspace_reencryption_need(
     local_device_factory,
     alice,
 ):
-    class WorkspaceFSReencrytionNeed(TrioAsyncioRuleBasedStateMachine):
+    class WorkspaceFSReencryptionNeed(TrioAsyncioRuleBasedStateMachine):
         Users = Bundle("user")
 
         async def start_user_fs(self):
@@ -170,4 +170,4 @@ def test_workspace_reencryption_need(
                 == self.since_reencryption_user_revoked - self.since_reencryption_role_revoked
             )
 
-    run_state_machine_as_test(WorkspaceFSReencrytionNeed, settings=hypothesis_settings)
+    run_state_machine_as_test(WorkspaceFSReencryptionNeed, settings=hypothesis_settings)

@@ -134,12 +134,12 @@ def test_complete_scenario():
     assert storage[chunk1.id] == b"world !"
 
     with freeze_time("2000-01-04") as t4:
-        manifest = storage.write(manifest, b"\n More kontent", 13, t4)
-        assert storage.read(manifest, 27, 0) == b"Hello world !\n More kontent"
+        manifest = storage.write(manifest, b"\n More content", 13, t4)
+        assert storage.read(manifest, 27, 0) == b"Hello world !\n More content"
 
     (_, _, chunk2), (chunk3,) = manifest.blocks
     assert storage[chunk2.id] == b"\n M"
-    assert storage[chunk3.id] == b"ore kontent"
+    assert storage[chunk3.id] == b"ore content"
     assert manifest == base.evolve(
         size=27, blocks=((chunk0, chunk1, chunk2), (chunk3,)), updated=t4
     )

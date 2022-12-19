@@ -137,8 +137,8 @@ def test_sync_monitor_stateful(
             role=st.one_of(st.just(WorkspaceRole.CONTRIBUTOR), st.just(WorkspaceRole.READER)),
         )
         async def create_sharing(self, role):
-            wname = self.get_next_workspace_name()
-            wid = await self.bob_user_fs.workspace_create(wname)
+            w_name = self.get_next_workspace_name()
+            wid = await self.bob_user_fs.workspace_create(w_name)
             await self.bob_user_fs.workspace_share(wid, alice.user_id, role)
             self.alice_workspaces_role[wid] = role
             return wid

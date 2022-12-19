@@ -41,8 +41,8 @@ class expect_raises:
         if not exc_type:
             raise AssertionError(f"DID NOT RAISED {self.expected_exc!r}")
 
-        # WinFSP error handling is not stricly similar to the real
-        # Windows file system; so we often endup with the wrong exception
+        # WinFSP error handling is not strictly similar to the real
+        # Windows file system; so we often end up with the wrong exception
         # (e.g. `NotADirectoryError` when we expect `FileNotFoundError`)
         if sys.platform == "win32":
             allowed = OSError

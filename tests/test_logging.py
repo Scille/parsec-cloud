@@ -442,7 +442,7 @@ def test_sentry_structlog_integration(capsentry):
         }
     )
 
-    # Finaly Sentry trigger, this time with implicit exception info
+    # Finally Sentry trigger, this time with implicit exception info
 
     capsentry.clear()
     try:
@@ -573,7 +573,7 @@ def test_sentry_stdlib_integration(capsentry):
         }
     )
 
-    # Finaly Sentry trigger, this time with implicit exception info
+    # Finally Sentry trigger, this time with implicit exception info
 
     capsentry.clear()
     try:

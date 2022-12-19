@@ -136,4 +136,4 @@ async def test_remote_error_event(
         else:
             expected_log = "[error    ] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
 
-        caplog.assert_occured_once(expected_log)
+        caplog.assert_occurred_once(expected_log)

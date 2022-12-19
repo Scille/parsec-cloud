@@ -638,7 +638,7 @@ async def test_create_organization_wrong_timestamp(
 async def test_create_organization_with_bootstrap_token(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
-    # Firt create the organization
+    # First create the organization
     bootstrap_token = "T0k3n"
     organization_id = OrganizationID("AnomalousMaterials")
     await running_backend.backend.organization.create(

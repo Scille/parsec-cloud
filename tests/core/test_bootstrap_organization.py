@@ -69,15 +69,15 @@ async def test_good(
     await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=new_device)
 
     # Test the behavior of this new device
-    async with user_fs_factory(new_device, data_base_dir=data_base_dir) as newfs:
+    async with user_fs_factory(new_device, data_base_dir=data_base_dir) as new_fs:
         # New user should start with a non-speculative user manifest
-        um = newfs.get_user_manifest()
+        um = new_fs.get_user_manifest()
         assert um.is_placeholder
         assert not um.speculative
 
-        await newfs.workspace_create(EntryName("wa"))
-        await newfs.sync()
-        um = newfs.get_user_manifest()
+        await new_fs.workspace_create(EntryName("wa"))
+        await new_fs.sync()
+        um = new_fs.get_user_manifest()
         assert not um.is_placeholder
         assert not um.speculative
 

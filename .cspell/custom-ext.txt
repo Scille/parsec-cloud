@@ -1,0 +1,8 @@
+fseventsd
+icns
+indd
+jfif
+mobi
+sitx
+xcuserstate
+hprof

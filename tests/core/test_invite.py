@@ -143,31 +143,31 @@ async def test_good_device_claim(
         assert device.device_certificate == device.redacted_device_certificate
 
     # Test the behavior of this new device
-    async with user_fs_factory(bob) as bobfs:
-        async with user_fs_factory(alice) as alicefs:
-            async with user_fs_factory(new_device) as newfs:
+    async with user_fs_factory(bob) as bob_fs:
+        async with user_fs_factory(alice) as alice_fs:
+            async with user_fs_factory(new_device) as new_fs:
                 # New device should start with a speculative user manifest
-                um = newfs.get_user_manifest()
+                um = new_fs.get_user_manifest()
                 assert um.is_placeholder
                 assert um.speculative
 
                 # Old device modify user manifest
-                await alicefs.workspace_create(EntryName("wa"))
-                await alicefs.sync()
+                await alice_fs.workspace_create(EntryName("wa"))
+                await alice_fs.sync()
 
                 # New sharing from other user
-                wb_id = await bobfs.workspace_create(EntryName("wb"))
-                await bobfs.workspace_share(wb_id, alice.user_id, WorkspaceRole.CONTRIBUTOR)
+                wb_id = await bob_fs.workspace_create(EntryName("wb"))
+                await bob_fs.workspace_share(wb_id, alice.user_id, WorkspaceRole.CONTRIBUTOR)
 
                 # Test new device get access to both new workspaces
-                await newfs.process_last_messages()
-                await newfs.sync()
-                newfs_um = newfs.get_user_manifest()
+                await new_fs.process_last_messages()
+                await new_fs.sync()
+                new_fs_um = new_fs.get_user_manifest()
 
                 # Make sure new and old device have the same view on data
-                await alicefs.sync()
-                alicefs_um = alicefs.get_user_manifest()
-                assert newfs_um == alicefs_um
+                await alice_fs.sync()
+                alice_fs_um = alice_fs.get_user_manifest()
+                assert new_fs_um == alice_fs_um
 
 
 @pytest.mark.trio
@@ -307,28 +307,28 @@ async def test_good_user_claim(
         assert device.device_certificate == device.redacted_device_certificate
 
     # Test the behavior of this new user device
-    async with user_fs_factory(alice) as alicefs:
-        async with user_fs_factory(new_device) as newfs:
+    async with user_fs_factory(alice) as alice_fs:
+        async with user_fs_factory(new_device) as new_fs:
             # New user should start with a non-speculative user manifest
-            um = newfs.get_user_manifest()
+            um = new_fs.get_user_manifest()
             assert um.is_placeholder
             assert not um.speculative
 
             # Share a workspace with new user
-            aw_id = await alicefs.workspace_create(EntryName("alice_workspace"))
-            await alicefs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)
+            aw_id = await alice_fs.workspace_create(EntryName("alice_workspace"))
+            await alice_fs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)
 
             # New user cannot create a new workspace
-            zw_id = await newfs.workspace_create(EntryName("zack_workspace"))
-            await newfs.workspace_share(zw_id, alice.user_id, WorkspaceRole.READER)
+            zw_id = await new_fs.workspace_create(EntryName("zack_workspace"))
+            await new_fs.workspace_share(zw_id, alice.user_id, WorkspaceRole.READER)
 
             # Now both users should have the same workspaces
-            await alicefs.process_last_messages()
-            await newfs.process_last_messages()
-            await newfs.sync()  # Not required, but just to make sure it works
+            await alice_fs.process_last_messages()
+            await new_fs.process_last_messages()
+            await new_fs.sync()  # Not required, but just to make sure it works
 
-            alice_um = alicefs.get_user_manifest()
-            zack_um = newfs.get_user_manifest()
+            alice_um = alice_fs.get_user_manifest()
+            zack_um = new_fs.get_user_manifest()
 
             assert {(w.id, w.key.secret) for w in alice_um.workspaces} == {
                 (w.id, w.key.secret) for w in zack_um.workspaces

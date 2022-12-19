@@ -406,14 +406,14 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
         assert org.user_profile_outsider_allowed is False
         assert org.active_users_limit is None
 
-    # No BackendEvent.ORGANIZATION_EXPIRED should have occured
+    # No BackendEvent.ORGANIZATION_EXPIRED should have occurred
     await trio.testing.wait_all_tasks_blocked()
     assert spy.events == []
 
 
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
-async def test_bootstsrap_expired_organization(backend_asgi_app, backend, alice, coolorg):
+async def test_bootstrap_expired_organization(backend_asgi_app, backend, alice, coolorg):
     bootstrap_token = "123"
     await backend_asgi_app.backend.organization.create(
         id=coolorg.organization_id, bootstrap_token=bootstrap_token

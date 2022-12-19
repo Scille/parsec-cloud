@@ -48,7 +48,7 @@ async def test_new_workspace(running_backend, alice_user_fs):
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await workspace.sync()
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [(CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}, DateTime(2000, 1, 3))]
     )
 
@@ -114,7 +114,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
             (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": fid}, DateTime(2000, 1, 3)),
             (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}, DateTime(2000, 1, 3)),
         ]
-    spy.assert_events_occured(expected_events)
+    spy.assert_events_occurred(expected_events)
 
     workspace2 = alice2_user_fs.get_workspace(wid)
     await workspace2.sync()
@@ -170,7 +170,7 @@ async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
     with workspace.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
             await workspace.sync()
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [(CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}, DateTime(2000, 1, 4))]
     )
 
@@ -180,7 +180,7 @@ async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
         with freeze_time("2000-01-05"):
             # TODO: `sync` on not loaded entry should load it
             await workspace2.sync()
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [(CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": wid}, DateTime(2000, 1, 5))]
     )
 
@@ -213,7 +213,7 @@ async def test_fs_recursive_sync(running_backend, alice_user_fs):
         with freeze_time("2000-01-03"):
             await workspace.sync()
     sync_date = DateTime(2000, 1, 3)
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [
             (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": spy.ANY}, sync_date),
             (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": spy.ANY}, sync_date),
@@ -260,7 +260,7 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
         with freeze_time("2000-01-04"):
             await workspace.sync()
 
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [(CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}, DateTime(2000, 1, 4))]
     )
 
@@ -268,7 +268,7 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
         with freeze_time("2000-01-05"):
             await workspace2.sync()
 
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [
             (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": wid}, DateTime(2000, 1, 5)),
             (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}, DateTime(2000, 1, 5)),
@@ -281,19 +281,19 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
         with freeze_time("2000-01-06"):
             await workspace.sync()
 
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [(CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": wid}, DateTime(2000, 1, 6))]
     )
 
     # 3) Finally make sure both fs have the same data
 
-    final_wkps = await assert_same_workspace(workspace, workspace2)
-    assert final_wkps["children"].keys() == {EntryName("foo.txt"), EntryName("bar")}
-    assert final_wkps["children"][EntryName("bar")]["children"].keys() == {EntryName("spam")}
+    final_wksp = await assert_same_workspace(workspace, workspace2)
+    assert final_wksp["children"].keys() == {EntryName("foo.txt"), EntryName("bar")}
+    assert final_wksp["children"][EntryName("bar")]["children"].keys() == {EntryName("spam")}
 
-    assert final_wkps["base_version"] == 3
-    assert final_wkps["children"][EntryName("bar")]["base_version"] == 2
-    assert final_wkps["children"][EntryName("foo.txt")]["base_version"] == 1
+    assert final_wksp["base_version"] == 3
+    assert final_wksp["children"][EntryName("bar")]["base_version"] == 2
+    assert final_wksp["children"][EntryName("foo.txt")]["base_version"] == 1
 
     data = await workspace.read_bytes("/foo.txt")
     data2 = await workspace2.read_bytes("/foo.txt")
@@ -338,7 +338,7 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         await workspace.touch("/foo.txt")
         await workspace.write_bytes("/foo.txt", b"v1")
         await workspace.mkdir("/bar")
-        barid = await workspace.path_id("/bar")
+        bar_id = await workspace.path_id("/bar")
 
         await workspace.sync()
         await workspace2.sync()
@@ -363,9 +363,9 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         with freeze_time("2000-01-05"):
             await workspace.sync()
     date_sync = DateTime(2000, 1, 5)
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [
-            (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": barid}, date_sync),
+            (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": bar_id}, date_sync),
             # TODO: add more events
         ]
     )
@@ -376,9 +376,9 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         with freeze_time("2000-01-06"):
             await workspace2.sync()
     date_sync = DateTime(2000, 1, 6)
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [
-            (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": barid}, date_sync),
+            (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": bar_id}, date_sync),
             # TODO: add more events
         ]
     )
@@ -402,9 +402,9 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         with freeze_time("2000-01-08"):
             await workspace.sync()
     date_sync = DateTime(2000, 1, 8)
-    spy.assert_events_occured(
+    spy.assert_events_occurred(
         [
-            (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": barid}, date_sync),
+            (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": bar_id}, date_sync),
             # TODO: add more events
         ]
     )

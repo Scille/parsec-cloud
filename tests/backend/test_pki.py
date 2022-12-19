@@ -206,7 +206,7 @@ async def test_pki_submit_same_id(anonymous_backend_ws, bob):
     )
     assert isinstance(rep, PkiEnrollmentSubmitRepIdAlreadyUsed)
 
-    # Same enrollment ID with Froce
+    # Same enrollment ID with Force
     rep = await pki_enrollment_submit(
         anonymous_backend_ws,
         enrollment_id=enrollment_id,
@@ -287,17 +287,17 @@ async def test_pki_list(anonymous_backend_ws, bob, adam, alice_ws):
     assert isinstance(rep, PkiEnrollmentListRepOk)
     assert len(rep.enrollments) == 1
 
-    submited_request = rep.enrollments[0]
-    assert submited_request.enrollment_id == bob_request_id
-    assert submited_request.submitter_der_x509_certificate == bob_certif
-    assert submited_request.submit_payload_signature == bob_certif_signature
-    # In theory we should have sumitted_on > ref_time, but clock resolution on Windows is poor
-    assert submited_request.submitted_on >= ref_time
+    submitted_request = rep.enrollments[0]
+    assert submitted_request.enrollment_id == bob_request_id
+    assert submitted_request.submitter_der_x509_certificate == bob_certif
+    assert submitted_request.submit_payload_signature == bob_certif_signature
+    # In theory we should have submitted_on > ref_time, but clock resolution on Windows is poor
+    assert submitted_request.submitted_on >= ref_time
 
-    submited_payload = PkiEnrollmentSubmitPayload.load(submited_request.submit_payload)
-    assert submited_payload.verify_key == bob.verify_key
-    assert submited_payload.public_key == bob.public_key
-    assert submited_payload.requested_device_label == bob.device_label
+    submitted_payload = PkiEnrollmentSubmitPayload.load(submitted_request.submit_payload)
+    assert submitted_payload.verify_key == bob.verify_key
+    assert submitted_payload.public_key == bob.public_key
+    assert submitted_payload.requested_device_label == bob.device_label
 
     # Add another user
 
@@ -459,7 +459,7 @@ async def test_pki_accept_already_rejected(backend, anonymous_backend_ws, mallor
 
 # TODO: test_pki_accept_limit_expired ??
 
-# Test pki_entollment_reject
+# Test pki_enrollment_reject
 
 
 @pytest.mark.trio
