@@ -2,7 +2,7 @@
 
 #include <array>
 #include <memory>
-#include <string>
+#include <string_view>
 #include <sstream>
 #include <fstream>
 
@@ -21,7 +21,7 @@ namespace parsec
         NotSet
     };
 
-    inline SyncState is_member_file(const std::wstring& pwsz_path)
+    inline SyncState is_member_file(const std::wstring_view& pwsz_path)
     {
         constexpr std::array<wchar_t, 26> DRIVES = {
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
@@ -51,9 +51,9 @@ namespace parsec
         if (RegOpenKeyEx(HKEY_CURRENT_USER, reg_key.get(), 0, KEY_READ, &key) != ERROR_SUCCESS)
             return SyncState::NotSet;
 
-        auto entry_infos = std::ifstream(pwsz_path + L".__parsec_entry_info__");
+        auto entry_infos = std::ifstream(std::format(L"{}.__parsec_entry_info__", pwsz_path));
 
-        // Can't open file, stop there
+        // Can't open file for some reason, stop there
         if (!entry_infos.good())
             return SyncState::NotSet;
 

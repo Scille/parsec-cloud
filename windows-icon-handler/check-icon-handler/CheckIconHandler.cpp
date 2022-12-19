@@ -12,10 +12,37 @@
 #include "parsec.h"
 
 // CCheckIconHandler
+static void log_result(parsec::SyncState state, std::wstring path)
+{
+    using parsec::SyncState;
+    std::wofstream ofs("C:\\Users\\Corentin\\parsec.log", std::ios_base::app);
+    ofs << path;
+
+    switch (state)
+    {
+    case SyncState::Synced:
+        ofs << L"  Synced\n";
+        break;
+    case SyncState::NotSet:
+        ofs << L"  NotSet\n";
+        break;
+    case SyncState::Refresh:
+        ofs << L"  Refresh\n";
+        break;
+
+    default:
+        ofs << L"  ???\n";
+        break;
+    }
+
+    ofs.flush();
+}
 
 HRESULT __stdcall CCheckIconHandler::IsMemberOf(LPCWSTR pwszPath, DWORD dwAttrib)
 {
-    if (parsec::is_member_file(pwszPath) == parsec::SyncState::Synced)
+    auto state = parsec::is_member_file(pwszPath);
+    log_result(state, pwszPath);
+    if (state == parsec::SyncState::Synced)
         return S_OK;
 
     return S_FALSE;
