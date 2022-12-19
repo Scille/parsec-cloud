@@ -20,13 +20,19 @@ set +x
 echo "Looking for issues that are assigned to the wrong project."
 echo -n '' > issues_wrong_project.json
 
-for type in issue; do
-    gh $type list \
-        --json id,title,number \
-        --search "-project:\"$PROJECT_ORGA/$PROJECT_NUMBER\"" \
-        --jq ".[] += {\"type\": \"$type\"} | .[]" \
-        | tee -a issues_wrong_project.json
-done
+# Search for Issue that aren't linked to the board already
+gh issue list \
+    --json id,title,number \
+    --search "-project:\"$PROJECT_ORGA/$PROJECT_NUMBER\"" \
+    --jq '.[] += {"type": "issue"} | .[]' \
+    | tee -a issues_wrong_project.json
+
+# Search for PRs that aren't linked to the board and linked to an issue
+gh pr list \
+    --json id,title,number \
+    --search "-project:\"$PROJECT_ORGA/$PROJECT_NUMBER\" -linked:issue" \
+    --jq '.[] += {"type": "pr"} | .[]' \
+    | tee -a issues_wrong_project.json
 
 jq -r '. | @base64' issues_wrong_project.json > issues_wrong_project.json.b64
 
