@@ -248,12 +248,8 @@ jobs:
 
       - uses: microsoft/setup-msbuild@d3ea839497466fb4c6b91ce85831f3a251a2fe3f # pin v1.3
 
-      - name: Build Check icon overlay COM object
-        run: msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\check-icon-handler\check-icon-handler.vcxproj
-        shell: cmd
-
-      - name: Build Refresh icon overlay COM object
-        run: msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\refresh-icon-handler\refresh-icon-handler.vcxproj
+      - name: Build Icon overlays COM objects
+        run: msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\windows-icon-handler.sln
         shell: cmd
 
       - name: Prepare build directory
