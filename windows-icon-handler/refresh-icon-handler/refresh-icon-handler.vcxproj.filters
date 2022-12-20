@@ -14,7 +14,7 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="Generated Files">
-      <UniqueIdentifier>{a002cd0c-9b4f-4abc-90e5-115639685010}</UniqueIdentifier>
+      <UniqueIdentifier>{0a60c8d2-913f-4111-bb98-04a44c4f4f91}</UniqueIdentifier>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
   </ItemGroup>
@@ -73,10 +73,6 @@
     <None Include="RefreshIconHandler.rgs">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="RefreshIconHandler.htm" />
-    <None Include="RefreshIconHandler1.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="refreshiconhandler.idl">
@@ -84,9 +80,6 @@
     </Midl>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="RefreshIconHandler.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="refresh.ico">
       <Filter>Resource Files</Filter>
     </Image>

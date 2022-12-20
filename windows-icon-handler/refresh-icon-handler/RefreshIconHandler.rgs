@@ -2,20 +2,14 @@ HKCR
 {
 	NoRemove CLSID
 	{
-		ForceRemove {ff552d5d-8272-41cd-b0a8-e01188eba329} = s 'RefreshIconHandler class'
+		ForceRemove {41e71dd9-368d-46b2-bb9d-4359599bbbc3} = s 'RefreshIconHandler class'
 		{
 			ForceRemove Programmable
 			InprocServer32 = s '%MODULE%'
 			{
 				val ThreadingModel = s 'Apartment'
 			}
-			ForceRemove Control
-			ForceRemove 'ToolboxBitmap32' = s '%MODULE%, 106'
-			MiscStatus = s '0'
-			{
-			    '1' = s '%OLEMISC%'
-			}
-			TypeLib = s '{b168b5a2-1328-4d06-a4e4-b2865b610d72}'
+			TypeLib = s '{fcc8a7b6-3b5b-4f5d-8dea-a95e3a9fce3d}'
 			Version = s '1.0'
 		}
 	}

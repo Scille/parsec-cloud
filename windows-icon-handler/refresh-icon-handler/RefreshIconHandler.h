@@ -1,5 +1,3 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
-
 // RefreshIconHandler.h : Declaration of the CRefreshIconHandler
 
 #pragma once
@@ -31,33 +29,35 @@ public:
 	{
 	}
 
-DECLARE_REGISTRY_RESOURCEID(110)
+DECLARE_REGISTRY_RESOURCEID(107)
 
 
 BEGIN_COM_MAP(CRefreshIconHandler)
 	COM_INTERFACE_ENTRY(IRefreshIconHandler)
 	COM_INTERFACE_ENTRY(IDispatch)
-    //COM_INTERFACE_ENTRY(IShellIconOverlayIdentifier)
+    COM_INTERFACE_ENTRY(IShellIconOverlayIdentifier)
 END_COM_MAP()
 
 
 
 	DECLARE_PROTECT_FINAL_CONSTRUCT()
 
-	inline HRESULT FinalConstruct()
+	HRESULT FinalConstruct()
 	{
 		return S_OK;
 	}
 
-	inline void FinalRelease()
+	void FinalRelease()
 	{
 	}
 
 public:
+
     // Inherited via IShellIconOverlayIdentifier
     HRESULT __stdcall IsMemberOf(LPCWSTR pwszPath, DWORD dwAttrib) override;
     HRESULT __stdcall GetOverlayInfo(LPWSTR pwszIconFile, int cchMax, int* pIndex, DWORD* pdwFlags) override;
     HRESULT __stdcall GetPriority(int* pPriority) override;
+
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(RefreshIconHandler), CRefreshIconHandler)

@@ -1,21 +1,43 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
-
 // RefreshIconHandler.cpp : Implementation of CRefreshIconHandler
 
 #include "pch.h"
 #include "RefreshIconHandler.h"
 
-#include <array>
-#include <cassert>
-#include <memory>
-
 #include "parsec.h"
 
+
 // CRefreshIconHandler
+static void log_result(parsec::SyncState state, std::wstring path)
+{
+    using parsec::SyncState;
+    std::wofstream ofs("C:\\Users\\Corentin\\parsec-refresh.log", std::ios_base::app);
+    ofs << path;
+
+    switch (state)
+    {
+    case SyncState::Synced:
+        ofs << L"  Synced\n";
+        break;
+    case SyncState::NotSet:
+        ofs << L"  NotSet\n";
+        break;
+    case SyncState::Refresh:
+        ofs << L"  Refresh\n";
+        break;
+
+    default:
+        ofs << L"  ???\n";
+        break;
+    }
+
+    ofs.flush();
+}
 
 HRESULT __stdcall CRefreshIconHandler::IsMemberOf(LPCWSTR pwszPath, DWORD dwAttrib)
 {
-    if (parsec::is_member_file(pwszPath) == parsec::SyncState::Refresh)
+    auto state = parsec::is_member_file(pwszPath);
+    log_result(state, pwszPath);
+    if (state == parsec::SyncState::Refresh)
         return S_OK;
 
     return S_FALSE;
