@@ -18,7 +18,7 @@
 
 # Icon overlays GUIDS
 !define CHECK_ICON_GUID "{5449BC90-310B-40A8-9ABF-C5CFCEC7F430}"
-!define REFRESH_ICON_GUID "{FF552D5D-8272-41CD-B0A8-E01188EBA329}"
+!define REFRESH_ICON_GUID "{41e71dd9-368d-46b2-bb9d-4359599bbbc3}"
 
 # Detect version from file
 !define BUILD_DIR "build"
@@ -296,17 +296,13 @@ Section "Parsec Cloud Sharing" Section1
         SetShellVarContext current
     !insertmacro MUI_STARTMENU_WRITE_END
 
-    # Regsiter CheckIconHandler and RefreshIconHandler COM objects
-    WriteRegStr HKCR "SOFTWARE\Classes\CLSID\${CHECK_ICON_GUID}" "" "Parsec Check Icon handler class"
-    WriteRegStr HKCR "SOFTWARE\Classes\CLSID\${REFRESH_ICON_GUID}" "" "Parsec Refresh Icon handler class"
-
     # Call regsvr32
     ExecWait '$SYSDIR\regsvr32.exe /s /n /i:user "$INSTDIR\check-icon-handler.dll"'
     ExecWait '$SYSDIR\regsvr32.exe /s /n /i:user "$INSTDIR\refresh-icon-handler.dll"'
 
     # Write Icons overlays to register
-    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ICheckIconHandler" "" "${CHECK_ICON_GUID}"
-    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\IRefreshIconHandler" "" "${REFRESH_ICON_GUID}"
+    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\CheckIconHandler" "" "${CHECK_ICON_GUID}"
+    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\RefreshIconHandler" "" "${REFRESH_ICON_GUID}"
 SectionEnd
 
 !macro InstallWinFSP
