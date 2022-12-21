@@ -2,7 +2,9 @@
 
 mod data;
 mod field;
+mod protocol;
 pub(crate) mod utils;
 
 pub(crate) use data::*;
 pub(crate) use field::*;
+pub(crate) use protocol::*;

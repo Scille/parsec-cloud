@@ -6,7 +6,7 @@ use quote::quote;
 use std::collections::HashMap;
 use syn::Ident;
 
-use super::{quote_fields, Field};
+use crate::field::{quote_fields, Field};
 
 #[derive(Deserialize)]
 pub(crate) struct Data {

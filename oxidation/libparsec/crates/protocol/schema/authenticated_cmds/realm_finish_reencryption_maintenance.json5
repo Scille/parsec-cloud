@@ -1,6 +1,5 @@
 [
     {
-        "label": "RealmFinishReencryptionMaintenance",
         "major_versions": [
             1,
             2,
@@ -8,40 +7,54 @@
         ],
         "req": {
             "cmd": "realm_finish_reencryption_maintenance",
-            "fields": {
-                "realm_id": {
+            "fields": [
+                {
+                    "name": "realm_id",
                     "type": "RealmID"
                 },
-                "encryption_revision": {
+                {
+                    "name": "encryption_revision",
                     "type": "Index"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "not_allowed": {},
-            "not_found": {
-                "fields": {
-                    "reason": {
-                        "type": "NonRequiredOption<String>"
-                    }
-                }
+        "reps": [
+            {
+                "status": "ok"
             },
-            "bad_encryption_revision": {},
-            "not_in_maintenance": {
-                "fields": {
-                    "reason": {
-                        "type": "NonRequiredOption<String>"
-                    }
-                }
+            {
+                "status": "not_allowed"
             },
-            "maintenance_error": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
+            },
+            {
+                "status": "bad_encryption_revision"
+            },
+            {
+                "status": "not_in_maintenance",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "maintenance_error",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
             }
-        }
+        ]
     }
 ]

@@ -4,17 +4,12 @@
     "items": {
         "type": "object",
         "required": [
-            "label",
             "major_versions",
             "req",
             "reps"
         ],
         "additionalProperties": false,
         "properties": {
-            "label": {
-                "type": "string",
-                "description": "The label of the command"
-            },
             "major_versions": {
                 "type": "array",
                 "description": "The list of MAJOR version where the command is present",

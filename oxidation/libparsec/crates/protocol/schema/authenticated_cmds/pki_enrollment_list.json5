@@ -1,6 +1,5 @@
 [
     {
-        "label": "PkiEnrollmentList",
         "major_versions": [
             3
         ],
@@ -8,48 +7,56 @@
         "req": {
             "cmd": "pki_enrollment_list"
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "enrollments": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "enrollments",
                         "type": "List<PkiEnrollmentListItem>"
                     }
-                }
+                ]
             },
-            "not_allowed": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             }
-        },
-        "nested_types": {
-            "PkiEnrollmentListItem": {
-                "type": "struct",
-                "fields": {
-                    "enrollment_id": {
+        ],
+        "nested_types": [
+            {
+                "name": "PkiEnrollmentListItem",
+                "fields": [
+                    {
+                        "name": "enrollment_id",
                         "type": "EnrollmentID"
                     },
                     // Signature should be checked before loading.
-                    "submit_payload": {
+                    {
+                        "name": "submit_payload",
                         "type": "Bytes"
                     },
-                    "submit_payload_signature": {
+                    {
+                        "name": "submit_payload_signature",
                         "type": "Bytes"
                     },
-                    "submitted_on": {
+                    {
+                        "name": "submitted_on",
                         "type": "DateTime"
                     },
-                    "submitter_der_x509_certificate": {
+                    {
+                        "name": "submitter_der_x509_certificate",
                         "type": "Bytes"
                     }
-                }
+                ]
             }
-        }
+        ]
     },
     {
-        "label": "PkiEnrollmentList",
         "major_versions": [
             2
         ],
@@ -57,44 +64,53 @@
         "req": {
             "cmd": "pki_enrollment_list"
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "enrollments": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "enrollments",
                         "type": "List<PkiEnrollmentListItem>"
                     }
-                }
+                ]
             },
-            "not_allowed": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             }
-        },
-        "nested_types": {
-            "PkiEnrollmentListItem": {
-                "type": "struct",
-                "fields": {
-                    "enrollment_id": {
+        ],
+        "nested_types": [
+            {
+                "name": "PkiEnrollmentListItem",
+                "fields": [
+                    {
+                        "name": "enrollment_id",
                         "type": "EnrollmentID"
                     },
                     // Signature should be checked before loading.
-                    "submit_payload": {
+                    {
+                        "name": "submit_payload",
                         "type": "Bytes"
                     },
-                    "submit_payload_signature": {
+                    {
+                        "name": "submit_payload_signature",
                         "type": "Bytes"
                     },
-                    "submitted_on": {
+                    {
+                        "name": "submitted_on",
                         "type": "DateTime"
                     },
-                    "submitter_der_x509_certificate": {
+                    {
+                        "name": "submitter_der_x509_certificate",
                         "type": "Bytes"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

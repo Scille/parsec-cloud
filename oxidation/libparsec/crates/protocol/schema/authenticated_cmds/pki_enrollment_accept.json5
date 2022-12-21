@@ -1,186 +1,236 @@
 [
     {
-        "label": "PkiEnrollmentAccept",
         "major_versions": [
             3
         ],
         "introduced_in": "3.2",
         "req": {
             "cmd": "pki_enrollment_accept",
-            "fields": {
+            "fields": [
                 // Signature should be checked before loading.
-                "accept_payload": {
+                {
+                    "name": "accept_payload",
                     "type": "Bytes"
                 },
-                "accept_payload_signature": {
+                {
+                    "name": "accept_payload_signature",
                     "type": "Bytes"
                 },
-                "accepter_der_x509_certificate": {
+                {
+                    "name": "accepter_der_x509_certificate",
                     "type": "Bytes"
                 },
-                "enrollment_id": {
+                {
+                    "name": "enrollment_id",
                     "type": "EnrollmentID"
                 },
-                "device_certificate": {
+                {
+                    "name": "device_certificate",
                     "type": "Bytes"
                 },
-                "user_certificate": {
+                {
+                    "name": "user_certificate",
                     "type": "Bytes"
                 },
                 // Same certificate than `device_certificate` but expunged of `device_label`.
-                "redacted_device_certificate": {
+                {
+                    "name": "redacted_device_certificate",
                     "type": "Bytes"
                 },
                 // Same certificate than `user_certificate` but expunged of `human_handle`.
-                "redacted_user_certificate": {
+                {
+                    "name": "redacted_user_certificate",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "not_allowed": {
-                "fields": {
-                    "reason": {
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_payload_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_payload_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_certification": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "not_found": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "no_longer_available": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "no_longer_available",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "already_exists": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "already_exists",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "active_users_limit_reached": {}
-        }
+            {
+                "status": "active_users_limit_reached"
+            }
+        ]
     },
     {
-        "label": "PkiEnrollmentAccept",
         "major_versions": [
             2
         ],
         "introduced_in": "2.8",
         "req": {
             "cmd": "pki_enrollment_accept",
-            "fields": {
+            "fields": [
                 // Signature should be checked before loading.
-                "accept_payload": {
+                {
+                    "name": "accept_payload",
                     "type": "Bytes"
                 },
-                "accept_payload_signature": {
+                {
+                    "name": "accept_payload_signature",
                     "type": "Bytes"
                 },
-                "accepter_der_x509_certificate": {
+                {
+                    "name": "accepter_der_x509_certificate",
                     "type": "Bytes"
                 },
-                "enrollment_id": {
+                {
+                    "name": "enrollment_id",
                     "type": "EnrollmentID"
                 },
-                "device_certificate": {
+                {
+                    "name": "device_certificate",
                     "type": "Bytes"
                 },
-                "user_certificate": {
+                {
+                    "name": "user_certificate",
                     "type": "Bytes"
                 },
                 // Same certificate than `device_certificate` but expunged of `device_label`.
-                "redacted_device_certificate": {
+                {
+                    "name": "redacted_device_certificate",
                     "type": "Bytes"
                 },
                 // Same certificate than `user_certificate` but expunged of `human_handle`.
-                "redacted_user_certificate": {
+                {
+                    "name": "redacted_user_certificate",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "not_allowed": {
-                "fields": {
-                    "reason": {
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_payload_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_payload_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_certification": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "not_found": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "no_longer_available": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "no_longer_available",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "already_exists": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "already_exists",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "active_users_limit_reached": {}
-        }
+            {
+                "status": "active_users_limit_reached"
+            }
+        ]
     }
 ]

@@ -51,6 +51,7 @@ repos:
           - "@cspell/dict-bash"
           - "@cspell/dict-shell"
           - "@cspell/dict-win32"
+
   ########
   # Python
 

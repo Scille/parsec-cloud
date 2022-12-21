@@ -1,13 +1,17 @@
 {
     "title": "Variants scheme",
-    "type": "object",
+    "type": "array",
     "description": "The list of possible variants of this type",
-    "additionalProperties": {
+    "items": {
         "type": "object",
         "required": [
+            "name",
             "discriminant_value"
         ],
         "properties": {
+            "name": {
+                "type": "string"
+            },
             "discriminant_value": {
                 "type": "string"
             },

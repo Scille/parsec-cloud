@@ -1,6 +1,5 @@
 [
     {
-        "label": "Invite4ClaimerCommunicate",
         "major_versions": [
             1,
             2,
@@ -8,23 +7,32 @@
         ],
         "req": {
             "cmd": "invite_4_claimer_communicate",
-            "fields": {
-                "payload": {
+            "fields": [
+                {
+                    "name": "payload",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "payload": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "payload",
                         "type": "Bytes"
                     }
-                }
+                ]
             },
-            "already_deleted": {},
-            "not_found": {},
-            "invalid_state": {}
-        }
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
     }
 ]

@@ -1,6 +1,5 @@
 [
     {
-        "label": "BlockCreate",
         "major_versions": [
             1,
             2,
@@ -8,25 +7,40 @@
         ],
         "req": {
             "cmd": "block_create",
-            "fields": {
-                "block_id": {
+            "fields": [
+                {
+                    "name": "block_id",
                     "type": "BlockID"
                 },
-                "realm_id": {
+                {
+                    "name": "realm_id",
                     "type": "RealmID"
                 },
-                "block": {
+                {
+                    "name": "block",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "already_exists": {},
-            "not_found": {},
-            "timeout": {},
-            "not_allowed": {},
-            "in_maintenance": {}
-        }
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "already_exists"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "timeout"
+            },
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "in_maintenance"
+            }
+        ]
     }
 ]

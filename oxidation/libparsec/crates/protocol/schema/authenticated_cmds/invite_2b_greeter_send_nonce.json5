@@ -1,6 +1,5 @@
 [
     {
-        "label": "Invite2bGreeterSendNonce",
         "major_versions": [
             1,
             2,
@@ -8,26 +7,36 @@
         ],
         "req": {
             "cmd": "invite_2b_greeter_send_nonce",
-            "fields": {
-                "token": {
+            "fields": [
+                {
+                    "name": "token",
                     "type": "InvitationToken"
                 },
-                "greeter_nonce": {
+                {
+                    "name": "greeter_nonce",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "claimer_nonce": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "claimer_nonce",
                         "type": "Bytes"
                     }
-                }
+                ]
             },
-            "not_found": {},
-            "already_deleted": {},
-            "invalid_state": {}
-        }
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
     }
 ]

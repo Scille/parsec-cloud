@@ -1,6 +1,5 @@
 [
     {
-        "label": "InviteInfo",
         "major_versions": [
             1,
             2,
@@ -9,43 +8,51 @@
         "req": {
             "cmd": "invite_info"
         },
-        "reps": {
-            "ok": {
+        "reps": [
+            {
+                "status": "ok",
                 "unit": "UserOrDevice"
             }
-        },
-        "nested_types": {
-            "UserOrDevice": {
-                "type": "enum",
+        ],
+        "nested_types": [
+            {
+                "name": "UserOrDevice",
                 "discriminant_field": "type",
-                "variants": {
-                    "User": {
+                "variants": [
+                    {
+                        "name": "User",
                         "discriminant_value": "USER",
-                        "fields": {
-                            "claimer_email": {
+                        "fields": [
+                            {
+                                "name": "claimer_email",
                                 "type": "String"
                             },
-                            "greeter_user_id": {
+                            {
+                                "name": "greeter_user_id",
                                 "type": "UserID"
                             },
-                            "greeter_human_handle": {
+                            {
+                                "name": "greeter_human_handle",
                                 "type": "RequiredOption<HumanHandle>"
                             }
-                        }
+                        ]
                     },
-                    "Device": {
+                    {
+                        "name": "Device",
                         "discriminant_value": "DEVICE",
-                        "fields": {
-                            "greeter_user_id": {
+                        "fields": [
+                            {
+                                "name": "greeter_user_id",
                                 "type": "UserID"
                             },
-                            "greeter_human_handle": {
+                            {
+                                "name": "greeter_human_handle",
                                 "type": "RequiredOption<HumanHandle>"
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

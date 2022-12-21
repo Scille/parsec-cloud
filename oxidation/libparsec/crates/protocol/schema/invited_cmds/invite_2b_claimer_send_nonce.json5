@@ -1,6 +1,5 @@
 [
     {
-        "label": "Invite2bClaimerSendNonce",
         "major_versions": [
             1,
             2,
@@ -8,17 +7,26 @@
         ],
         "req": {
             "cmd": "invite_2b_claimer_send_nonce",
-            "fields": {
-                "claimer_nonce": {
+            "fields": [
+                {
+                    "name": "claimer_nonce",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "already_deleted": {},
-            "not_found": {},
-            "invalid_state": {}
-        }
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
     }
 ]

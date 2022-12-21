@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
-use serialization_format::parsec_data;
 use sha2::Digest;
 
 use libparsec_crypto::prelude::*;

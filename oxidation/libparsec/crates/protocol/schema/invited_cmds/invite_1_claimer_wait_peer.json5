@@ -1,6 +1,5 @@
 [
     {
-        "label": "Invite1ClaimerWaitPeer",
         "major_versions": [
             1,
             2,
@@ -8,23 +7,32 @@
         ],
         "req": {
             "cmd": "invite_1_claimer_wait_peer",
-            "fields": {
-                "claimer_public_key": {
+            "fields": [
+                {
+                    "name": "claimer_public_key",
                     "type": "PublicKey"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "greeter_public_key": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "greeter_public_key",
                         "type": "PublicKey"
                     }
-                }
+                ]
             },
-            "already_deleted": {},
-            "not_found": {},
-            "invalid_state": {}
-        }
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
     }
 ]

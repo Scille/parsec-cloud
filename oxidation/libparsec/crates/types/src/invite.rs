@@ -7,7 +7,7 @@ use serde_with::*;
 use std::str::FromStr;
 
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
-use serialization_format::parsec_data;
+use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DeviceID,

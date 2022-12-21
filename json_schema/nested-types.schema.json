@@ -1,27 +1,16 @@
 {
     "title": "Nested types",
-    "type": "object",
-    "additionalProperties": {
+    "type": "array",
+    "items": {
         "type": "object",
         "definition": "A custom type",
-        "properties": {
-            "type": {
-                "enum": [
-                    "enum",
-                    "struct"
-                ]
-            }
-        },
-        "required": [
-            "type"
-        ],
         "oneOf": [
             {
                 "type": "object",
                 "definition": "A Custom enum",
                 "properties": {
-                    "type": {
-                        "const": "enum"
+                    "name": {
+                        "type": "string"
                     },
                     "discriminant_field": {
                         "type": "string",
@@ -32,6 +21,7 @@
                     }
                 },
                 "required": [
+                    "name",
                     "variants"
                 ],
                 "additionalProperties": false
@@ -40,14 +30,15 @@
                 "type": "object",
                 "description": "A Custom struct",
                 "properties": {
-                    "type": {
-                        "const": "struct"
+                    "name": {
+                        "type": "string"
                     },
                     "fields": {
                         "$ref": "./fields.schema.json"
                     }
                 },
                 "required": [
+                    "name",
                     "fields"
                 ],
                 "additionalProperties": false

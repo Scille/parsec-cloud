@@ -1,6 +1,5 @@
 [
     {
-        "label": "RealmStats",
         "major_versions": [
             1,
             2,
@@ -8,31 +7,39 @@
         ],
         "req": {
             "cmd": "realm_stats",
-            "fields": {
-                "realm_id": {
+            "fields": [
+                {
+                    "name": "realm_id",
                     "type": "RealmID"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "blocks_size": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "blocks_size",
                         "type": "Size"
                     },
-                    "vlobs_size": {
+                    {
+                        "name": "vlobs_size",
                         "type": "Size"
                     }
-                }
+                ]
             },
-            "not_allowed": {},
-            "not_found": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

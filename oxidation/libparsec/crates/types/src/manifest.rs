@@ -12,7 +12,7 @@ use std::{
 use unicode_normalization::UnicodeNormalization;
 
 use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
-use serialization_format::parsec_data;
+use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,

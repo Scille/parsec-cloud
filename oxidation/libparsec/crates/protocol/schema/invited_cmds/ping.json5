@@ -1,6 +1,5 @@
 [
     {
-        "label": "Ping",
         "major_versions": [
             1,
             2,
@@ -8,20 +7,23 @@
         ],
         "req": {
             "cmd": "ping",
-            "fields": {
-                "ping": {
+            "fields": [
+                {
+                    "name": "ping",
                     "type": "String"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "pong": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "pong",
                         "type": "String"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

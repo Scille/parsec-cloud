@@ -1,13 +1,17 @@
 {
     "title": "Fields schema",
-    "type": "object",
-    "additionalProperties": {
+    "type": "array",
+    "items": {
         "type": "object",
         "additionalProperties": false,
         "required": [
+            "name",
             "type"
         ],
         "properties": {
+            "name": {
+                "type": "string"
+            },
             "type": {
                 "type": "string",
                 "description": "Can be a specific type or a custom one defined in `nested-types`"

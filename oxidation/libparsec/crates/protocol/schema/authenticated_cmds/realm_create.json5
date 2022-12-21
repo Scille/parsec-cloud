@@ -1,6 +1,5 @@
 [
     {
-        "label": "RealmCreate",
         "major_versions": [
             1,
             2,
@@ -8,59 +7,76 @@
         ],
         "req": {
             "cmd": "realm_create",
-            "fields": {
-                "role_certificate": {
+            "fields": [
+                {
+                    "name": "role_certificate",
                     "type": "Bytes"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "invalid_certification": {
-                "fields": {
-                    "reason": {
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "not_found": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "already_exists": {},
-            "bad_timestamp": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "already_exists"
+            },
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     },
-                    "ballpark_client_early_offset": {
+                    {
+                        "name": "ballpark_client_early_offset",
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    "ballpark_client_late_offset": {
+                    {
+                        "name": "ballpark_client_late_offset",
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    "backend_timestamp": {
+                    {
+                        "name": "backend_timestamp",
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     },
-                    "client_timestamp": {
+                    {
+                        "name": "client_timestamp",
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     }
-                }
+                ]
             }
-        }
+        ]
     }
 ]

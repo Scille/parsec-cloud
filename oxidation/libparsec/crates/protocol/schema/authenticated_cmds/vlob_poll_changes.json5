@@ -1,6 +1,5 @@
 [
     {
-        "label": "VlobPollChanges",
         "major_versions": [
             1,
             2,
@@ -8,35 +7,46 @@
         ],
         "req": {
             "cmd": "vlob_poll_changes",
-            "fields": {
-                "realm_id": {
+            "fields": [
+                {
+                    "name": "realm_id",
                     "type": "RealmID"
                 },
-                "last_checkpoint": {
+                {
+                    "name": "last_checkpoint",
                     "type": "Index"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {
-                "fields": {
-                    "changes": {
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "changes",
                         "type": "Map<VlobID, Index>"
                     },
-                    "current_checkpoint": {
+                    {
+                        "name": "current_checkpoint",
                         "type": "Index"
                     }
-                }
+                ]
             },
-            "not_allowed": {},
-            "not_found": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "in_maintenance": {}
-        }
+            {
+                "status": "in_maintenance"
+            }
+        ]
     }
 ]
