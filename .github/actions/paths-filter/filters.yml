@@ -19,7 +19,6 @@ python:
 
 rust-ext:
   - *shared
-  - .github/**
   - src/**/*.rs
   - Cargo.toml
   - Cargo.lock

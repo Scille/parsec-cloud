@@ -7,8 +7,8 @@ on:
       - master
 
 env:
+  # Note Rust version is specified in `rust-toolchain.toml`
   python-version: "3.9"
-  rust-version: 1.65.0
   node-version: "16"
   poetry-version: 1.2.2
   # TODO: We stick to PostgreSQL 12 for the moment given later versions are
@@ -71,7 +71,7 @@ jobs:
 
   check-quality-assurance:
     name: 📊 Q&A
-    # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
+    # All linux jobs must run the same ubuntu version to avoid caching issues !
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
@@ -142,7 +142,7 @@ jobs:
       matrix:
         include:
           - name: 🐧 Linux
-            # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
+            # All linux jobs must run the same ubuntu version to avoid caching issues !
             # 20.04 is required to install PostgreSQL 12
             os: ubuntu-20.04
           - name: 🍎 macOS
@@ -236,10 +236,8 @@ jobs:
 
       - name: Use cached libparsec if Rust hasn't been modified
         id: cache-libparsec
-        if: >-
-          steps.python-changes.outputs.run == 'true'
-          && steps.rust-changes.outputs.run != 'true'
-        uses: actions/cache@v3
+        if: steps.python-changes.outputs.run == 'true'
+        uses: actions/cache@c17f4bf4666a8001b1a45c09eb7a485c41aa64c3 # ping v3.2.0
         with:
           # Key cache contains a hash of all the files that are used to produce _parsec.so
           # Hence if we have a cache hit we know that there is no need for a rebuild !
@@ -253,6 +251,14 @@ jobs:
         if: >-
           steps.python-changes.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
+        with:
+          # Rust cache is pretty big (~700mo per platform !) and we are limited to 10Go
+          # of cache in Github Action.
+          # Hence it's more efficient to disable the cache entirely (relying on the fact
+          # our project is fast enough to build from scratch) and keep the cache for other
+          # needs (typically caching libparsec final .so to entirely avoid compilation when
+          # Rust code hasn't been modified)
+          cache: false
 
       - name: Install python deps
         if: steps.python-changes.outputs.run == 'true'
@@ -312,7 +318,7 @@ jobs:
       matrix:
         include:
           - name: 🐧 Linux
-            # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
+            # All linux jobs must run the same ubuntu version to avoid caching issues !
             os: ubuntu-20.04
           - name: 🍎 macOS
             os: macos-12
@@ -337,6 +343,14 @@ jobs:
 
       - uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
         if: steps.rust-changes.outputs.run == 'true'
+        with:
+          # Rust cache is pretty big (~700mo per platform !) and we are limited to 10Go
+          # of cache in Github Action.
+          # Hence it's more efficient to disable the cache entirely (relying on the fact
+          # our project is fast enough to build from scratch) and keep the cache for other
+          # needs (typically caching libparsec final .so to entirely avoid compilation when
+          # Rust code hasn't been modified)
+          cache: false
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
@@ -380,6 +394,38 @@ jobs:
 
       # TODO: cache libparsec and reuse it if Rust code hasn't changed !
 
+      - uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516  # pin v3.5.1
+        if: steps.web-change.outputs.run == 'true'
+        with:
+          node-version: ${{ env.node-version }}
+
+      # libparsec is slow to compile, so we save it in cache and skip the
+      # compilation entirely if the Rust code hasn't changed !
+
+      - name: Use cached libparsec if Rust hasn't been modified
+        id: cache-libparsec
+        if: steps.web-changes.outputs.run == 'true'
+        uses: actions/cache@c17f4bf4666a8001b1a45c09eb7a485c41aa64c3 # ping v3.2.0
+        with:
+          # Key cache contains a hash of all the files that are used to produce `pkg/libparsec_bindings_web*`
+          # Hence if we have a cache hit we know that there is no need for a rebuild !
+          key: ${{ hashFiles('oxidation/bindings/web/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-web
+          path: |
+            oxidation/bindings/web/pkg/
+
+      - uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
+        if: >-
+          steps.web-change.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+        with:
+          # Rust cache is pretty big (~700mo per platform !) and we are limited to 10Go
+          # of cache in Github Action.
+          # Hence it's more efficient to disable the cache entirely (relying on the fact
+          # our project is fast enough to build from scratch) and keep the cache for other
+          # needs (typically caching libparsec final .so to entirely avoid compilation when
+          # Rust code hasn't been modified)
+          cache: false
+
       - name: Install dependencies
         if: steps.web-change.outputs.run == 'true'
         run: npm clean-install
@@ -389,5 +435,12 @@ jobs:
       # Then move this step to package-ci.yml
       - name: Build WebApp
         if: steps.web-change.outputs.run == 'true'
-        run: npm run web:release
+        run: |
+          if ${{ steps.cache-libparsec.outputs.cache-hit != 'true' }}
+          then
+            npm run web:release
+          else
+            # Skip the libparsec build phase
+            npm run web:libparsec:copy && vue-cli-service build
+          fi
         working-directory: oxidation/client
