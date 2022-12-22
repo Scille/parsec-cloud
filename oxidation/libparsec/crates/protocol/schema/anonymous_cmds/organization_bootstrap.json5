@@ -1,205 +1,266 @@
 [
     {
-        "label": "OrganizationBootstrap",
         "major_versions": [
             3
         ],
         "req": {
             "cmd": "organization_bootstrap",
-            "fields": {
-                "bootstrap_token": {
+            "fields": [
+                {
+                    "name": "bootstrap_token",
                     "type": "String"
                 },
-                "root_verify_key": {
+                {
+                    "name": "root_verify_key",
                     "type": "VerifyKey"
                 },
-                "user_certificate": {
+                {
+                    "name": "user_certificate",
                     "type": "Bytes"
                 },
-                "device_certificate": {
+                {
+                    "name": "device_certificate",
                     "type": "Bytes"
                 },
-                "redacted_user_certificate": {
+                {
+                    "name": "redacted_user_certificate",
                     "type": "Bytes"
                 },
-                "redacted_device_certificate": {
+                {
+                    "name": "redacted_device_certificate",
                     "type": "Bytes"
                 },
-                "sequester_authority_certificate": {
+                {
+                    "name": "sequester_authority_certificate",
                     "type": "NonRequiredOption<Bytes>",
                     "introduced_in": "3.2"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "invalid_certification": {
-                "fields": {
-                    "reason": {
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "bad_timestamp": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     },
-                    "ballpark_client_early_offset": {
+                    {
+                        "name": "ballpark_client_early_offset",
                         "type": "Float"
                     },
-                    "ballpark_client_late_offset": {
+                    {
+                        "name": "ballpark_client_late_offset",
                         "type": "Float"
                     },
-                    "backend_timestamp": {
+                    {
+                        "name": "backend_timestamp",
                         "type": "DateTime"
                     },
-                    "client_timestamp": {
+                    {
+                        "name": "client_timestamp",
                         "type": "DateTime"
                     }
-                }
+                ]
             },
-            "already_bootstrapped": {},
-            "not_found": {}
-        }
+            {
+                "status": "already_bootstrapped"
+            },
+            {
+                "status": "not_found"
+            }
+        ]
     },
     {
-        "label": "OrganizationBootstrap",
         "major_versions": [
             2
         ],
         "req": {
             "cmd": "organization_bootstrap",
-            "fields": {
-                "bootstrap_token": {
+            "fields": [
+                {
+                    "name": "bootstrap_token",
                     "type": "String"
                 },
-                "root_verify_key": {
+                {
+                    "name": "root_verify_key",
                     "type": "VerifyKey"
                 },
-                "user_certificate": {
+                {
+                    "name": "user_certificate",
                     "type": "Bytes"
                 },
-                "device_certificate": {
+                {
+                    "name": "device_certificate",
                     "type": "Bytes"
                 },
-                "redacted_user_certificate": {
+                {
+                    "name": "redacted_user_certificate",
                     "type": "Bytes"
                 },
-                "redacted_device_certificate": {
+                {
+                    "name": "redacted_device_certificate",
                     "type": "Bytes"
                 },
-                "sequester_authority_certificate": {
+                {
+                    "name": "sequester_authority_certificate",
                     "type": "NonRequiredOption<Bytes>",
                     "introduced_in": "2.8"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "invalid_certification": {
-                "fields": {
-                    "reason": {
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "bad_timestamp": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     },
-                    "ballpark_client_early_offset": {
+                    {
+                        "name": "ballpark_client_early_offset",
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    "ballpark_client_late_offset": {
+                    {
+                        "name": "ballpark_client_late_offset",
                         "type": "Float",
                         "introduced_in": "2.4"
                     },
-                    "backend_timestamp": {
+                    {
+                        "name": "backend_timestamp",
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     },
-                    "client_timestamp": {
+                    {
+                        "name": "client_timestamp",
                         "type": "DateTime",
                         "introduced_in": "2.4"
                     }
-                }
+                ]
             },
-            "already_bootstrapped": {},
-            "not_found": {}
-        }
+            {
+                "status": "already_bootstrapped"
+            },
+            {
+                "status": "not_found"
+            }
+        ]
     },
     {
-        "label": "OrganizationBootstrap",
         "major_versions": [
             1
         ],
         "req": {
             "cmd": "organization_bootstrap",
-            "fields": {
-                "bootstrap_token": {
+            "fields": [
+                {
+                    "name": "bootstrap_token",
                     "type": "String"
                 },
-                "root_verify_key": {
+                {
+                    "name": "root_verify_key",
                     "type": "VerifyKey"
                 },
-                "user_certificate": {
+                {
+                    "name": "user_certificate",
                     "type": "Bytes"
                 },
-                "device_certificate": {
+                {
+                    "name": "device_certificate",
                     "type": "Bytes"
                 },
-                "redacted_user_certificate": {
+                {
+                    "name": "redacted_user_certificate",
                     "type": "Bytes",
                     "introduced_in": "1.14"
                 },
-                "redacted_device_certificate": {
+                {
+                    "name": "redacted_device_certificate",
                     "type": "Bytes",
                     "introduced_in": "1.14"
                 }
-            }
+            ]
         },
-        "reps": {
-            "ok": {},
-            "invalid_certification": {
-                "fields": {
-                    "reason": {
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "invalid_data": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "bad_timestamp": {
-                "fields": {
-                    "reason": {
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
                         "type": "NonRequiredOption<String>"
                     }
-                }
+                ]
             },
-            "already_bootstrapped": {},
-            "not_found": {}
-        }
+            {
+                "status": "already_bootstrapped"
+            },
+            {
+                "status": "not_found"
+            }
+        ]
     }
 ]
