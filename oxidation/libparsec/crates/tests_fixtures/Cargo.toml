@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-libparsec_crypto = { path = "../crypto" }
+libparsec_crypto = { path = "../crypto", features = ["use-sodiumoxide"] }
 libparsec_types = { path = "../types" }
 libparsec_client_types = { path = "../client_types" }
 

@@ -9,6 +9,11 @@ name = "auth_cmds"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+libparsec_crypto = { path = "../crypto", features = ["use-sodiumoxide"] }
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+libparsec_crypto = { path = "../crypto", features = ["use-rustcrypto"] }
+
 [dependencies]
 # Used to send HTTP request to the server.
 reqwest = "0.11.12"
@@ -19,7 +24,6 @@ libparsec_types = { path = "../types" }
 # Provide possible command to send to the server
 libparsec_protocol = { path = "../protocol" }
 # Use abstract crypto primitive, to allow to sign request.
-libparsec_crypto = { path = "../crypto" }
 # Used to encoded binary data.
 base64 = "0.13.1"
 chrono = "0.4.22"
