@@ -94,7 +94,7 @@ class OrganizationBootstrapReq:
         user_certificate: bytes,
         device_certificate: bytes,
         redacted_user_certificate: bytes,
-        redacted_device_certificcate: bytes,
+        redacted_device_certificate: bytes,
         sequester_authority_certificate: bytes | None,
     ) -> None: ...
     def dump(self) -> bytes: ...
