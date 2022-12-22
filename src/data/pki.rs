@@ -148,8 +148,8 @@ impl X509Certificate {
         })
     }
 
-    fn is_avaiblable_locally(&self) -> bool {
-        self.0.is_avaiblable_locally()
+    fn is_available_locally(&self) -> bool {
+        self.0.is_available_locally()
     }
 
     #[getter]

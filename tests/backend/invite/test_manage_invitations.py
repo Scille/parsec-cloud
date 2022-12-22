@@ -295,7 +295,7 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
     assert "Reply-To: " not in body
     assert token.hex in body
 
-    # Device invitation (not avaible given no human_handle means no email !)
+    # Device invitation (not available given no human_handle means no email !)
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
     assert isinstance(rep, InviteNewRepNotAvailable)
 
