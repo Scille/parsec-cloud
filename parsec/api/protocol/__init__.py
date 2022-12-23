@@ -109,7 +109,6 @@ from parsec.api.protocol.types import (
     HumanHandleField,
     OrganizationID,
     OrganizationIDField,
-    StrBased,
     UserID,
     UserIDField,
     UserProfileField,
@@ -169,7 +168,6 @@ __all__ = (
     "UserProfile",
     "DeviceLabelField",
     "DeviceLabel",
-    "StrBased",
     # Organization
     "organization_bootstrap_serializer",
     "apiv1_organization_bootstrap_serializer",
