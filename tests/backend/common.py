@@ -131,8 +131,8 @@ def craft_http_request(
 def parse_http_response(raw: bytes):
     head, _ = raw.split(b"\r\n\r\n", 1)  # Ignore the body part
     status, *headers = head.split(b"\r\n")
-    protocole, status_code, status_label = status.split(b" ", 2)
-    assert protocole == b"HTTP/1.1"
+    protocol, status_code, status_label = status.split(b" ", 2)
+    assert protocol == b"HTTP/1.1"
     cooked_status = (int(status_code.decode("ascii")), status_label.decode("ascii"))
     cooked_headers = {}
     for header in headers:
