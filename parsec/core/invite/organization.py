@@ -4,30 +4,16 @@ from __future__ import annotations
 from parsec._parsec import (
     SequesterVerifyKeyDer,
     SigningKey,
-    VerifyKey,
-    OrganizationBootstrapRep,
     OrganizationBootstrapRepAlreadyBootstrapped,
     OrganizationBootstrapRepNotFound,
     OrganizationBootstrapRepOk,
-    OrganizationBootstrapRepUnknownStatus,
-    ProtocolError,
 )
 from parsec.api.data import DeviceCertificate, SequesterAuthorityCertificate, UserCertificate
 from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection import organization_bootstrap as cmd_organization_bootstrap
-from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.invite.exceptions import InviteAlreadyUsedError, InviteError, InviteNotFoundError
 from parsec.core.local_device import generate_new_device
 from parsec.core.types import BackendOrganizationAddr, BackendOrganizationBootstrapAddr, LocalDevice
-
-
-def _check_rep(rep: OrganizationBootstrapRep, step_name: str) -> None:
-    if isinstance(rep, OrganizationBootstrapRepNotFound):
-        raise InviteNotFoundError
-    elif isinstance(rep, OrganizationBootstrapRepAlreadyBootstrapped):
-        raise InviteAlreadyUsedError
-    elif not isinstance(rep, OrganizationBootstrapRepOk):
-        raise InviteError(f"Backend error during {step_name}: {rep}")
 
 
 async def bootstrap_organization(
@@ -87,7 +73,19 @@ async def bootstrap_organization(
     else:
         sequester_authority_certificate_signed = None
 
-    rep = await failsafe_organization_bootstrap(
+    # TODO: remove me when APIv2 is deprecated
+    #
+    # New HTTP-based bootstrap API has been introduced in APIv2.7 (Parsec v2.9.0)
+    # Prior to that we used the APIv1's bootstrap command, which now have been deprecated.
+    # Before Parsec v2.16.0 we used to first try to use the new HTTP-based bootstrap, then
+    # fallback to APIv1.
+    # Now if the server is too old to support the new HTTP-based bootstrap (come on, keep
+    # up to date your server !) we just fail with the default error:
+    # - server API version < 2.6: it doesn't know the HTTP anonymous route, we get a `BackendNotAvailable(404)`
+    # - server API version == 2.6: it doesn't know the HTTP anonymous command `organization_bootstrap`,
+    #   we get a `OrganizationBootstrapRepUnknownStatus(status="unknown_command")`
+
+    rep = await cmd_organization_bootstrap(
         addr=addr,
         root_verify_key=root_verify_key,
         user_certificate=user_certificate,
@@ -96,41 +94,12 @@ async def bootstrap_organization(
         redacted_device_certificate=redacted_device_certificate,
         sequester_authority_certificate=sequester_authority_certificate_signed,
     )
-    _check_rep(rep, step_name="organization bootstrap")
+
+    if isinstance(rep, OrganizationBootstrapRepNotFound):
+        raise InviteNotFoundError
+    elif isinstance(rep, OrganizationBootstrapRepAlreadyBootstrapped):
+        raise InviteAlreadyUsedError
+    elif not isinstance(rep, OrganizationBootstrapRepOk):
+        raise InviteError(f"Backend error during organization bootstrap: {rep}")
 
     return device
-
-
-async def failsafe_organization_bootstrap(
-    addr: BackendOrganizationBootstrapAddr,
-    root_verify_key: VerifyKey,
-    user_certificate: bytes,
-    device_certificate: bytes,
-    redacted_user_certificate: bytes,
-    redacted_device_certificate: bytes,
-    sequester_authority_certificate: bytes | None = None,
-) -> OrganizationBootstrapRep:
-    # Try the new anonymous API
-    try:
-        rep = await cmd_organization_bootstrap(
-            addr=addr,
-            root_verify_key=root_verify_key,
-            user_certificate=user_certificate,
-            device_certificate=device_certificate,
-            redacted_user_certificate=redacted_user_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-            sequester_authority_certificate=sequester_authority_certificate,
-        )
-    # If we get a 404 error, maybe the backend is too old to know about the anonymous route (API version < 2.6)
-    except BackendNotAvailable as exc:
-        inner_exc = exc.args[0]
-        if getattr(inner_exc, "status", None) != 404:
-            raise
-    # If we get an "unknown_command" status, the backend might be too old to know about the "organization_bootstrap" command (API version < 2.7)
-    else:
-        if (
-            isinstance(rep, OrganizationBootstrapRepUnknownStatus)
-            and rep.status == "unknown_command"
-        ):
-            raise ProtocolError("Unknown command")
-    return rep

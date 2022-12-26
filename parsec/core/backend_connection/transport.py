@@ -215,7 +215,12 @@ async def http_request(
     headers: Dict[str, str] = {},
     method: str | None = None,
 ) -> bytes:
-    """Raises: urllib.error.URLError or OSError"""
+    """
+    Raises:
+    - `urllib.error.URLError` (on http code != 2xx)
+    - `OSError` (on network issue)
+    (note `urllib.error.URLError` is itself a subclass of `OSError`)
+    """
 
     def _target() -> urllib.request._UrlopenRet:
         request = urllib.request.Request(url, data=data, headers=headers, method=method)

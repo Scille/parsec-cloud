@@ -22,14 +22,19 @@
                     "name": "device_certificate",
                     "type": "Bytes"
                 },
+                // Same certificates than above, but expurged of human_handle
                 {
                     "name": "redacted_user_certificate",
                     "type": "Bytes"
                 },
+                // Same certificates than above, but expurged of device_label
                 {
                     "name": "redacted_device_certificate",
                     "type": "Bytes"
                 },
+                // Set to `None` for sequester disabled
+                // Note there is absolutely no way to change this later as this certif must
+                // be signed by the root key which has been destroyed after bootstrap
                 {
                     "name": "sequester_authority_certificate",
                     "type": "NonRequiredOption<Bytes>",

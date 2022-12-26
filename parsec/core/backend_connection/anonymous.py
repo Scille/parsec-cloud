@@ -12,7 +12,9 @@ from parsec._parsec import (
     OrganizationBootstrapRepUnknownStatus,
     OrganizationID,
     PkiEnrollmentInfoRep,
+    PkiEnrollmentInfoRepUnknownStatus,
     PkiEnrollmentSubmitRep,
+    PkiEnrollmentSubmitRepUnknownStatus,
     ProtocolError,
     VerifyKey,
 )
@@ -76,27 +78,6 @@ async def _anonymous_cmd(
         logger.exception("Invalid response data", cmd=cmd, error=exc)
         raise BackendProtocolError("Invalid response data") from exc
 
-    if isinstance(
-        rep,
-        (
-            PkiEnrollmentSubmitRep,
-            PkiEnrollmentInfoRep,
-        ),
-    ):
-        return rep
-
-    # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
-    # not included among the protocol json schema's regular response statuses
-    if (
-        isinstance(rep, OrganizationBootstrapRepUnknownStatus)
-        and rep.status == "invalid_msg_format"
-    ):
-        logger.error("Invalid request data according to backend", cmd=cmd, rep=rep)
-        raise BackendProtocolError("Invalid request data according to backend")
-
-    elif isinstance(rep, OrganizationBootstrapRepBadTimestamp):
-        raise BackendOutOfBallparkError(rep)
-
     return rep
 
 
@@ -109,7 +90,7 @@ async def pki_enrollment_submit(
     submit_payload_signature: bytes,
     submit_payload: bytes,
 ) -> PkiEnrollmentSubmitRep:
-    return cast(
+    rep = cast(
         PkiEnrollmentSubmitRep,
         await _anonymous_cmd(
             serializer=pki_enrollment_submit_serializer,
@@ -125,11 +106,21 @@ async def pki_enrollment_submit(
         ),
     )
 
+    # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
+    # not included among the protocol json schema's regular response statuses
+    if isinstance(rep, PkiEnrollmentSubmitRepUnknownStatus) and rep.status == "invalid_msg_format":
+        logger.error(
+            "Invalid request data according to backend", cmd="pki_enrollment_submit", rep=rep
+        )
+        raise BackendProtocolError("Invalid request data according to backend")
+
+    return rep
+
 
 async def pki_enrollment_info(
     addr: BackendPkiEnrollmentAddr, enrollment_id: EnrollmentID
 ) -> PkiEnrollmentInfoRep:
-    return cast(
+    rep = cast(
         PkiEnrollmentInfoRep,
         await _anonymous_cmd(
             serializer=pki_enrollment_info_serializer,
@@ -139,6 +130,16 @@ async def pki_enrollment_info(
             enrollment_id=enrollment_id,
         ),
     )
+
+    # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
+    # not included among the protocol json schema's regular response statuses
+    if isinstance(rep, PkiEnrollmentInfoRepUnknownStatus) and rep.status == "invalid_msg_format":
+        logger.error(
+            "Invalid request data according to backend", cmd="pki_enrollment_info", rep=rep
+        )
+        raise BackendProtocolError("Invalid request data according to backend")
+
+    return rep
 
 
 async def organization_bootstrap(
@@ -150,7 +151,7 @@ async def organization_bootstrap(
     redacted_device_certificate: bytes,
     sequester_authority_certificate: bytes | None,
 ) -> OrganizationBootstrapRep:
-    return cast(
+    rep = cast(
         OrganizationBootstrapRep,
         await _anonymous_cmd(
             organization_bootstrap_serializer,
@@ -166,3 +167,19 @@ async def organization_bootstrap(
             sequester_authority_certificate=sequester_authority_certificate,
         ),
     )
+
+    # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
+    # not included among the protocol json schema's regular response statuses
+    if (
+        isinstance(rep, OrganizationBootstrapRepUnknownStatus)
+        and rep.status == "invalid_msg_format"
+    ):
+        logger.error(
+            "Invalid request data according to backend", cmd="organization_bootstrap", rep=rep
+        )
+        raise BackendProtocolError("Invalid request data according to backend")
+
+    elif isinstance(rep, OrganizationBootstrapRepBadTimestamp):
+        raise BackendOutOfBallparkError(rep)
+
+    return rep
