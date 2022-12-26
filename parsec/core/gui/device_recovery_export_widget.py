@@ -125,7 +125,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
     ) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[DeviceRecoveryExportWidget] | None = None
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.button_validate.clicked.connect(self._on_validate_clicked)

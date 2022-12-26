@@ -33,7 +33,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
     def __init__(self, workspace_fs: WorkspaceFS, jobs_ctx: QtToTrioJobScheduler) -> None:
         super().__init__()
         self.setupUi(self)
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[TimestampedWorkspaceWidget] | None = None
         self.workspace_fs = workspace_fs
         self.jobs_ctx = jobs_ctx
         self.creation_date: Tuple[int, int, int] | None = None

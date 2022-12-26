@@ -660,7 +660,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[ClaimUserWidget] | None = None
         self.addr = addr
         self.status: Tuple[LocalDevice, DeviceFileType, str] | None = None
         self.user_email: str | None = None

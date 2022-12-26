@@ -87,7 +87,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             tuple[list[tuple[UserInfo, TimestampBoundedData]], bool]
         ] | None = None
         self.jobs_ctx = jobs_ctx
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[FileHistoryWidget] | None = None
         self.core = core
         update_version_list.connect(self.reset_dialog)
         self.get_versions_success.connect(self.on_get_version_success)

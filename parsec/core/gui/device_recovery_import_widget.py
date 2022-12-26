@@ -103,7 +103,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
     ) -> None:
         super().__init__(parent)
         self.setupUi(self)
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[DeviceRecoveryImportWidget] | None = None
         self.config = config
         self.jobs_ctx = jobs_ctx
         self.recovery_device = None

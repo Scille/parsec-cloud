@@ -7,7 +7,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from typing import Callable, Collection, Iterator, TypeVar, cast
+from typing import Callable, Collection, Generic, Iterator, TypeVar, cast
 
 from PyQt5.QtCore import QEventLoop, Qt, pyqtSignal
 from PyQt5.QtGui import (
@@ -129,12 +129,15 @@ def bring_process_window_to_top(
                 logger.exception("The call to `bring_to_top` failed unexpectedly")
 
 
-class GreyedDialog(QDialog, Ui_GreyedDialog):
+_CurrentWidget = TypeVar("_CurrentWidget", bound=QWidget)
+
+
+class GreyedDialog(Generic[_CurrentWidget], QDialog, Ui_GreyedDialog):
     closing = pyqtSignal()
 
     def __init__(
         self,
-        center_widget: QWidget,
+        center_widget: _CurrentWidget,
         title: str | None,
         parent: QWidget | None,
         hide_close: bool = False,
@@ -248,7 +251,7 @@ def generate_dialog_method(
     return wrapper
 
 
-class QDialogInProcess(GreyedDialog):
+class QDialogInProcess(GreyedDialog[QWidget]):
 
     pools: dict[object, multiprocessing.pool.Pool] = {}
     process_finished = pyqtSignal()
@@ -355,7 +358,7 @@ class TextInputWidget(QWidget, Ui_InputWidget):
     ):
         super().__init__()
         self.setupUi(self)
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[TextInputWidget] | None = None
         button_text = button_text or _("ACTION_OK")
         self.button_ok.setText(button_text)
         self.label_message.setText(message)
@@ -444,7 +447,7 @@ class QuestionWidget(QWidget, Ui_QuestionWidget):
         super().__init__()
         self.setupUi(self)
         self.status: None | str = None
-        self.dialog: None | GreyedDialog = None
+        self.dialog: GreyedDialog[QuestionWidget] | None = None
         self.label_message.setText(message)
 
         if oriented_question:
@@ -569,7 +572,10 @@ def show_error(parent: QWidget, message: str, exception: BaseException | None = 
 
 class InfoWidget(QWidget, Ui_InfoWidget):
     def __init__(
-        self, message: str, dialog: GreyedDialog | None = None, button_text: str | None = None
+        self,
+        message: str,
+        dialog: GreyedDialog[InfoWidget] | None = None,
+        button_text: str | None = None,
     ):
         super().__init__()
         self.setupUi(self)
@@ -601,11 +607,15 @@ def show_info(parent: QWidget, message: str, button_text: str | None = None) -> 
 
 class InfoLinkWidget(QWidget, Ui_InfoWidget):
     def __init__(
-        self, message: str, url: str, button_text: str, dialog: GreyedDialog | None = None
+        self,
+        message: str,
+        url: str,
+        button_text: str,
+        dialog: GreyedDialog[InfoLinkWidget] | None = None,
     ) -> None:
         super().__init__()
         self.setupUi(self)
-        self.dialog = dialog
+        self.dialog: GreyedDialog[InfoLinkWidget] | None = dialog
         self.url = url
         self.label_message.setText(message)
         self.label_icon.apply_style()
@@ -636,7 +646,11 @@ def show_info_copy_link(
     parent: QWidget, title: str, message: str, button_text: str, url: str
 ) -> None:
     widget = InfoCopyLinkWidget(message, url, button_text)
-    dialog = GreyedDialog(widget, title=title, parent=parent)
+    dialog = GreyedDialog(
+        cast(InfoLinkWidget, widget),  # Upcast to avoid type error with mypy
+        title=title,
+        parent=parent,
+    )
     widget.dialog = dialog
     widget.button_ok.setFocus()
     return dialog.open()

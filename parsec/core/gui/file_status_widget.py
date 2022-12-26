@@ -37,7 +37,7 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.workspace_fs = workspace_fs
         self.path = path
         self.core = core
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[FileStatusWidget] | None = None
 
         _ = self.jobs_ctx.submit_job(
             (self, "get_status_success"), (self, "get_status_error"), self.get_status

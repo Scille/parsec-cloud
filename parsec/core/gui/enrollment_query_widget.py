@@ -27,7 +27,7 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         self, jobs_ctx: QtToTrioJobScheduler, config: CoreConfig, addr: BackendPkiEnrollmentAddr
     ):
         super().__init__()
-        self.dialog: None | GreyedDialog = None
+        self.dialog: GreyedDialog[EnrollmentQueryWidget] | None = None
         self.setupUi(self)
         self.status = False
         self.jobs_ctx = jobs_ctx

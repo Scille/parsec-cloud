@@ -119,7 +119,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.create_job: QtToTrioJob[LocalDevice] | None = None
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[CreateOrgWidget] | None = None
         self.status: tuple[LocalDevice, DeviceFileType, str] | None = None
         self.new_device: LocalDevice | None = None
 
