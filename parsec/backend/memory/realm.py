@@ -300,7 +300,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             )
 
         realm.status = RealmStatus(
-            maintenance_type=MaintenanceType.REENCRYPTION(),
+            maintenance_type=MaintenanceType.REENCRYPTION,
             maintenance_started_on=timestamp,
             maintenance_started_by=author,
             encryption_revision=encryption_revision,

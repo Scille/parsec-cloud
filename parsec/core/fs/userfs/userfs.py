@@ -1364,7 +1364,7 @@ class UserFS:
         elif not isinstance(rep, RealmStatusRepOk):
             raise FSError(f"Error while getting status for workspace {workspace_id.hex}: {rep}")
 
-        if not rep.in_maintenance or rep.maintenance_type != MaintenanceType.REENCRYPTION():
+        if not rep.in_maintenance or rep.maintenance_type != MaintenanceType.REENCRYPTION:
             raise FSWorkspaceNotInMaintenance("Not in reencryption maintenance")
         if rep.encryption_revision != workspace_entry.encryption_revision:
             raise FSError("Bad encryption revision")
