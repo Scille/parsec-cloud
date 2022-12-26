@@ -58,8 +58,8 @@ class RealmRole:
     MANAGER: RealmRole
     CONTRIBUTOR: RealmRole
     READER: RealmRole
-    @classmethod
-    def values(cls) -> list[RealmRole]: ...
+    VALUES: tuple[RealmRole, ...]
+
     @classmethod
     def from_str(cls, value: str) -> RealmRole: ...
     @property

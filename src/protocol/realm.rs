@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyNotImplementedError,
     prelude::*,
-    types::{PyBytes, PyTuple, PyType},
+    types::{PyBytes, PyTuple},
 };
 use std::collections::HashMap;
 
@@ -39,16 +39,32 @@ impl MaintenanceType {
         }))
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "GARBAGE_COLLECTION")]
-    fn garbage_collection(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(realm_status::MaintenanceType::GarbageCollection))
+    fn garbage_collection() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    MaintenanceType(realm_status::MaintenanceType::GarbageCollection).into_py(py)
+                })
+            };
+        }
+
+        &VALUE
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "REENCRYPTION")]
-    fn reencryption(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(realm_status::MaintenanceType::Reencryption))
+    fn reencryption() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    MaintenanceType(realm_status::MaintenanceType::Reencryption).into_py(py)
+                })
+            };
+        }
+
+        &VALUE
     }
 }
 

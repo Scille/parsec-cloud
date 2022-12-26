@@ -218,7 +218,7 @@ async def test_remove_role_idempotent(
 async def test_update_roles_as_owner(
     backend, alice, bob, alice_ws, bob_ws, realm, realm_generate_certif_and_update_roles_or_fail
 ):
-    for role in RealmRole.values():
+    for role in RealmRole.VALUES:
         rep = await realm_generate_certif_and_update_roles_or_fail(
             alice_ws, alice, realm, bob.user_id, role
         )
@@ -326,7 +326,7 @@ async def test_role_update_not_allowed(
     )
 
     # Cannot give role
-    for role in RealmRole.values():
+    for role in RealmRole.VALUES:
         rep = await realm_generate_certif_and_update_roles_or_fail(
             alice_ws, alice, realm, bob.user_id, role
         )

@@ -43,7 +43,7 @@ def test_shuffle_roles(
     next_timestamp,
 ):
     class ShuffleRoles(TrioAsyncioRuleBasedStateMachine):
-        realm_role_strategy = st.one_of(st.just(x) for x in RealmRole.values())
+        realm_role_strategy = st.one_of(st.just(x) for x in RealmRole.VALUES)
         User = Bundle("user")
 
         async def start_backend(self):
