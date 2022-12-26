@@ -1,7 +1,7 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{PyList, PyType},
+    types::{PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
 
@@ -140,9 +140,22 @@ impl InvitationDeletedReason {
         &VALUE
     }
 
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyList {
-        PyList::new(py, [Self::finished(), Self::cancelled(), Self::rotten()])
+    #[classattr]
+    #[pyo3(name = "VALUES")]
+    fn values() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUES: PyObject = {
+                Python::with_gil(|py| {
+                    PyTuple::new(py, [
+                        InvitationDeletedReason::finished(),
+                        InvitationDeletedReason::cancelled(),
+                        InvitationDeletedReason::rotten()
+                    ]).into_py(py)
+                })
+            };
+        };
+
+        &VALUES
     }
 
     #[classmethod]

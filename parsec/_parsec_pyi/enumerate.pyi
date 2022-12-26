@@ -14,8 +14,7 @@ class InvitationDeletedReason:
     FINISHED: InvitationDeletedReason
     CANCELLED: InvitationDeletedReason
     ROTTEN: InvitationDeletedReason
-    @classmethod
-    def values(cls) -> list[InvitationDeletedReason]: ...
+    VALUES: tuple[InvitationDeletedReason, ...]
     @classmethod
     def from_str(cls, value: str) -> InvitationDeletedReason: ...
     @property
