@@ -229,16 +229,24 @@ impl InvitationEmailSentStatus {
         &VALUE
     }
 
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyList {
-        PyList::new(
-            py,
-            [
-                Self::success(),
-                Self::not_available(),
-                Self::bad_recipient(),
-            ],
-        )
+    #[classattr]
+    fn values() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUES: PyObject = {
+                Python::with_gil(|py| {
+                    PyList::new(
+                        py,
+                        [
+                            InvitationEmailSentStatus::success(),
+                            InvitationEmailSentStatus::not_available(),
+                            InvitationEmailSentStatus::bad_recipient(),
+                        ],
+                    ).into_py(py)
+                })
+            };
+        };
+
+        &VALUES
     }
 
     #[classmethod]
