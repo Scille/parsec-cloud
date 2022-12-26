@@ -13,7 +13,7 @@ itertools = "0.10.5"
 miniserde = "0.1.27"
 proc-macro2 = "1.0.47"
 quote = "1.0.21"
-syn = { version = "1.0.105", features = ["full", "extra-traits", "test"] }
+syn = "1.0.105"
 
 [dev-dependencies]
 libparsec_types = { path = "../types" }
