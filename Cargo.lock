@@ -1546,7 +1546,6 @@ dependencies = [
  "lazy_static",
  "libsodium-sys",
  "openssl",
- "openssl-sys",
  "pretty_assertions",
  "rand 0.7.3",
  "rand 0.8.5",

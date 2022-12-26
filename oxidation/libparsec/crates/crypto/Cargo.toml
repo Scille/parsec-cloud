@@ -16,7 +16,6 @@ base32 = "0.4.0"
 sodiumoxide = { version = "0.2.7", optional = true }
 libsodium-sys = { version = "0.2.7", optional = true }
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
-openssl-sys = { version = "0.9", optional = true }
 zeroize = { version = "1", optional = true, features = ["alloc"]}
 
 argon2 = { version = "0.4.1", optional = true }
@@ -61,7 +60,6 @@ use-sodiumoxide = [
     "sodiumoxide",
     "libsodium-sys",
     "openssl",
-    "openssl-sys",
     "zeroize"
 ]
 use-rustcrypto = [
