@@ -246,10 +246,6 @@ def load_config(config_dir: Path, **extra_config: Any) -> CoreConfig:
     return config_factory(config_dir=config_dir, **data_conf, **extra_config, environ=os.environ)
 
 
-def reload_config(config: CoreConfig) -> CoreConfig:
-    return load_config(config.config_dir, debug=config.debug)
-
-
 def save_config(config: CoreConfig) -> None:
     config_path = config.config_dir
     config_path.mkdir(mode=0o700, parents=True, exist_ok=True)

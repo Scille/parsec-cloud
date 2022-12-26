@@ -41,10 +41,6 @@ def _winpath_to_parsec(path: str) -> FsPath:
     )
 
 
-def _parsec_to_winpath(path: FsPath) -> str:
-    return "\\" + "\\".join(winify_entry_name(entry) for entry in path.parts)
-
-
 class OpenedFolder:
     def __init__(self, path: FsPath) -> None:
         self.path = path

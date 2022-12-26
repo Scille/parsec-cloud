@@ -18,10 +18,6 @@ from parsec.backend.postgresql.handler import handle_datetime, handle_uuid
 from tests.common import real_clock_timeout
 
 
-def records_filter_debug(records):
-    return [record for record in records if record.levelname != "DEBUG"]
-
-
 async def wait_for_listeners(conn, to_terminate=False):
     async with real_clock_timeout():
         while True:

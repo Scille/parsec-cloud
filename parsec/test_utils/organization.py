@@ -14,28 +14,18 @@ from parsec.api.protocol import (
     DeviceLabel,
     DeviceName,
     HumanHandle,
-    InvitationToken,
     OrganizationID,
     UserProfile,
 )
 from parsec.core import logged_core_factory
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
-    BackendInvitedCmds,
     backend_authenticated_cmds_factory,
 )
 from parsec.core.cli.create_organization import create_organization_req
 from parsec.core.config import load_config
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.invite import (
-    DeviceClaimInProgress3Ctx,
-    DeviceGreetInitialCtx,
-    UserClaimInProgress3Ctx,
-    UserGreetInitialCtx,
-    UserGreetInProgress4Ctx,
-    bootstrap_organization,
-    claimer_retrieve_info,
-)
+from parsec.core.invite import bootstrap_organization
 from parsec.core.local_device import generate_new_device, save_device_with_password_in_config
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import (
@@ -210,83 +200,6 @@ async def _add_random_users(
         # One chance out of 5 to be revoked from organization
         if not random.randint(0, 4):
             await alice_core.revoke_user(user_device.user_id)
-
-
-async def _init_ctx_create(
-    cmds: BackendAuthenticatedCmds, token: InvitationToken
-) -> UserGreetInProgress4Ctx:
-    initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
-    in_progress_ctx = await initial_ctx.do_wait_peer()
-    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
-    return in_progress_ctx
-
-
-async def _init_ctx_claim(
-    cmds: BackendInvitedCmds,
-) -> DeviceClaimInProgress3Ctx | UserClaimInProgress3Ctx:
-    initial_ctx = await claimer_retrieve_info(cmds=cmds)
-    initial_in_progress_ctx = await initial_ctx.do_wait_peer()
-    signify_trust_in_progress_ctx = await initial_in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await signify_trust_in_progress_ctx.do_wait_peer_trust()
-    return in_progress_ctx
-
-
-async def _invite_user_task(
-    cmds: BackendAuthenticatedCmds,
-    token: InvitationToken,
-    host_device: LocalDevice,
-    profile: UserProfile = UserProfile.STANDARD,
-) -> None:
-    in_progress_ctx = await _init_ctx_create(cmds=cmds, token=token)
-    await in_progress_ctx.do_create_new_user(
-        author=host_device,
-        human_handle=in_progress_ctx.requested_human_handle,
-        device_label=in_progress_ctx.requested_device_label,
-        profile=profile,
-    )
-
-
-async def _invite_device_task(
-    cmds: BackendAuthenticatedCmds, device: LocalDevice, device_label: str, token: InvitationToken
-) -> None:
-    initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
-    in_progress_ctx = await initial_ctx.do_wait_peer()
-    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
-    await in_progress_ctx.do_create_new_device(
-        author=device, device_label=in_progress_ctx.requested_device_label
-    )
-
-
-async def _claim_user(
-    cmds: BackendInvitedCmds,
-    claimer_email: str,
-    requested_device_label: DeviceLabel | None,
-    requested_user_label: str,
-) -> LocalDevice:
-    in_progress_ctx = await _init_ctx_claim(cmds)
-    assert isinstance(in_progress_ctx, UserClaimInProgress3Ctx)
-    new_device = await in_progress_ctx.do_claim_user(
-        requested_human_handle=HumanHandle(label=requested_user_label, email=claimer_email),
-        requested_device_label=requested_device_label,
-    )
-    return new_device
-
-
-async def _claim_device(
-    cmds: BackendInvitedCmds, requested_device_label: DeviceLabel | None
-) -> LocalDevice:
-    initial_ctx = await claimer_retrieve_info(cmds=cmds)
-    in_progress_ctx = await initial_ctx.do_wait_peer()
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-    new_device = await in_progress_ctx.do_claim_device(
-        requested_device_label=requested_device_label
-    )
-    return new_device
 
 
 async def _register_new_user(

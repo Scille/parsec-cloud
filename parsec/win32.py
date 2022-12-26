@@ -14,10 +14,6 @@ ERROR_ALREADY_EXISTS = 183
 T = TypeVar("T")
 
 
-def SUCCEEDED(status: int) -> bool:
-    return status >= 0
-
-
 def make_error(function: Any, function_name: str | None = None) -> WindowsError:
     code = GetLastError()
     description = FormatError(code).strip()
