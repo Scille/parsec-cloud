@@ -24,8 +24,8 @@ class InvitationEmailSentStatus:
     SUCCESS: InvitationEmailSentStatus
     NOT_AVAILABLE: InvitationEmailSentStatus
     BAD_RECIPIENT: InvitationEmailSentStatus
-    @classmethod
-    def values(cls) -> list[InvitationEmailSentStatus]: ...
+    VALUES: tuple[InvitationEmailSentStatus, ...]
+
     @classmethod
     def from_str(cls, value: str) -> InvitationEmailSentStatus: ...
     @property

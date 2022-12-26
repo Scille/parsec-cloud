@@ -230,11 +230,12 @@ impl InvitationEmailSentStatus {
     }
 
     #[classattr]
+    #[pyo3(name = "VALUES")]
     fn values() -> &'static PyObject {
         lazy_static::lazy_static! {
             static ref VALUES: PyObject = {
                 Python::with_gil(|py| {
-                    PyList::new(
+                    PyTuple::new(
                         py,
                         [
                             InvitationEmailSentStatus::success(),
