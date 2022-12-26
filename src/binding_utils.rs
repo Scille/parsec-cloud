@@ -151,7 +151,7 @@ macro_rules! create_exception {
         ::paste::paste! {
             ::pyo3::create_exception!(_parsec, [<$name Error>], $py_exc);
 
-            pub(crate) struct [<$name Exc>]($rs_err);
+            pub(crate) struct [<$name Exc>](Box<$rs_err>);
 
             impl From<[<$name Exc>]> for ::pyo3::PyErr {
                 fn from(err: [<$name Exc>]) -> Self {
@@ -161,6 +161,12 @@ macro_rules! create_exception {
 
             impl From<$rs_err> for [<$name Exc>] {
                 fn from(err: $rs_err) -> Self {
+                    Self(Box::new(err))
+                }
+            }
+
+            impl From<Box<$rs_err>> for [<$name Exc>] {
+                fn from(err: Box<$rs_err>) -> Self {
                     Self(err)
                 }
             }

@@ -3,7 +3,7 @@
 import { registerPlugin } from '@capacitor/core';
 
 import type { LibParsecPlugin } from './definitions';
-export type { LibParsecPlugin, Result, HelloError } from './definitions';
+export type { LibParsecPlugin, Result } from './definitions';
 
 export const libparsec = registerPlugin<LibParsecPlugin>(
   'LibParsec',

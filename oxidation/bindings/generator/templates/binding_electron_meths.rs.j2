@@ -89,9 +89,7 @@ JsObject
 {%- elif type.kind == "str_based" -%}
 match {{ js_val }}.value({{ mut_cx_ref }}).parse() {
     Ok(val) => val,
-    Err(err) => {
-        return ({{ mut_cx_ref }}).throw_type_error(err).expect_err("Should have thrown an error");
-    },
+    Err(err) => return cx.throw_type_error(err),
 }
 {%- elif type.kind == "bytes" -%}
 {{ js_val }}.as_slice({{ mut_cx_ref }}).to_vec()
@@ -111,7 +109,7 @@ match {{ js_val }}.value({{ mut_cx_ref }}).parse() {
 {%- elif type.kind == "list" -%}
 {
     let js_array = JsArray::new({{ mut_cx_ref }}, {{ rs_value }}.len() as u32);
-    for (i, elem) in {{ rs_value }}.drain(..).enumerate() {
+    for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
         let js_elem = {{ render_rs_to_js("elem", type.elem, mut_cx_ref) | indent(8) }};
         js_array.set({{ mut_cx_ref }}, i as u32, js_elem)?;
     }
@@ -121,7 +119,7 @@ match {{ js_val }}.value({{ mut_cx_ref }}).parse() {
 match {{ rs_value }} {
     Some(elem) => {
         {{ render_rs_to_js("elem", type.elem, mut_cx_ref) | indent(8) }}.as_value({{ mut_cx_ref }})
-    },
+    }
     None => JsNull::new({{ mut_cx_ref }}).as_value({{ mut_cx_ref }}),
 }
 {%- elif type.kind == "result" -%}
@@ -133,7 +131,7 @@ match {{ rs_value }} {
         let js_value = {{ render_rs_to_js("ok", type.ok, mut_cx_ref) | indent(8) }};
         js_obj.set({{ mut_cx_ref }}, "value", js_value)?;
         js_obj
-    },
+    }
     Err(err) => {
         let js_obj = cx.empty_object();
         let js_tag = JsBoolean::new({{ mut_cx_ref }}, false);
@@ -141,7 +139,7 @@ match {{ rs_value }} {
         let js_err = {{ render_rs_to_js("err", type.err, mut_cx_ref) | indent(8) }};
         js_obj.set({{ mut_cx_ref }}, "error", js_err)?;
         js_obj
-    },
+    }
 }
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
@@ -152,7 +150,7 @@ JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
 {%- elif type.kind == "str" -%}
 JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}).or_throw({{ mut_cx_ref }})?
 {%- elif type.kind == "str_based" -%}
-JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}.as_ref()).or_throw({{ mut_cx_ref }})?
+JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}).or_throw({{ mut_cx_ref }})?
 {%- elif type.kind == "bytes" -%}
 {
     let mut js_buff = JsArrayBuffer::new({{ mut_cx_ref }}, {{ rs_value }}.len())?;
@@ -184,7 +182,8 @@ JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}.as_ref()).or_throw({{ mut_cx_
 {%- macro render_struct_js_to_rs(struct) %}
 #[allow(dead_code)]
 fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
-    cx: &mut impl Context<'a>, obj: Handle<'a, JsObject>
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::{{ struct.name }}> {
 {% for attr_name, attr_type in struct.attributes.items() %}
     let {{ attr_name }} = {
@@ -204,7 +203,8 @@ fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
 {%- macro render_struct_rs_to_js(struct) %}
 #[allow(dead_code)]
 fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
-    cx: &mut impl Context<'a>, rs_obj: libparsec::{{ struct.name }}
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::{{ struct.name }},
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
 {% for attr_name, attr_type in struct.attributes.items() %}
@@ -228,7 +228,8 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
 {%- macro render_variant_js_to_rs(variant) %}
 #[allow(dead_code)]
 fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
-    cx: &mut impl Context<'a>, obj: Handle<'a, JsObject>
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::{{ variant.name }}> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
@@ -247,7 +248,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
             })
         },
 {% endfor %}
-        _ => { cx.throw_type_error("Object is not a {{ variant.name }}") }
+        _ => cx.throw_type_error("Object is not a {{ variant.name }}"),
     }
 }
 {% endmacro -%}
@@ -256,7 +257,8 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
 {%- macro render_variant_rs_to_js(variant) %}
 #[allow(dead_code)]
 fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
-    cx: &mut impl Context<'a>, rs_obj: libparsec::{{ variant.name }}
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::{{ variant.name }},
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
@@ -291,7 +293,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
             match v.downcast::<{{ ts_type(param_type.elem) }}, _>(&mut cx) {
                 Ok(js_val) => {
                     Some({{ render_downcasted_js_to_rs("js_val", param_type.elem) | indent(20) }})
-                },
+                }
                 Err(_) => None,
             }
         },
@@ -349,7 +351,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
             match v.downcast::<{{ ts_type(param_type.elem) }}, _>(&mut cx) {
                 Ok(js_val) => {
                     Some({{ render_downcasted_js_to_rs("js_val", param_type.elem) | indent(20) }})
-                },
+                }
                 Err(_) => None,
             }
         },
@@ -366,7 +368,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {% if meth.return_type is none %}
     libparsec::{{ meth.name }}(
 {% elif meth.return_type.kind == "list" %}
-    let mut ret = libparsec::{{ meth.name }}(
+    let ret = libparsec::{{ meth.name }}(
 {% else %}
     let ret = libparsec::{{ meth.name }}(
 {% endif %}

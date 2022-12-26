@@ -45,7 +45,7 @@ export type Result<T, E = Error> =
 export interface {{ struct.name }} {
 {% for attr_name, attr_type in struct.attributes.items() %}
 {% if attr_type.kind == "optional" %}
-    {{ attr_name }}?: {{ render_type(attr_type) }};
+    {{ attr_name }}: {{ render_type(attr_type) }};
 {% else %}
     {{ attr_name }}: {{ render_type(attr_type) }};
 {% endif %}
@@ -62,7 +62,7 @@ export interface {{ variant.name }}{{ variant_value.name }} {
     tag: "{{ variant_value.name }}"
 {% for attr_name, attr_type in variant_value.attributes.items() %}
 {% if attr_type.kind == "optional" %}
-    {{ attr_name }}?: {{ render_type(attr_type) }};
+    {{ attr_name }}: {{ render_type(attr_type) }};
 {% else %}
     {{ attr_name }}: {{ render_type(attr_type) }};
 {% endif %}

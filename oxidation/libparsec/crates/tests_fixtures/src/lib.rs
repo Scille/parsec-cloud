@@ -29,7 +29,7 @@ pub struct Device {
 
 impl Device {
     pub fn user_id(&self) -> &UserID {
-        &self.device_id.user_id
+        self.device_id.user_id()
     }
 
     pub fn organization_id(&self) -> &OrganizationID {

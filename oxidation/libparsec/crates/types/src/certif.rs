@@ -25,7 +25,7 @@ where
     ZlibDecoder::new(&compressed[..])
         .read_to_end(&mut serialized)
         .map_err(|_| DataError::Compression)?;
-    rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
+    rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
 }
 
 fn check_author_allow_root(
@@ -37,16 +37,16 @@ fn check_author_allow_root(
             CertificateSignerOwned::User(author_id),
             CertificateSignerRef::User(expected_author_id),
         ) if author_id != expected_author_id => {
-            return Err(DataError::UnexpectedAuthor {
+            return Err(Box::new(DataError::UnexpectedAuthor {
                 expected: expected_author_id.clone(),
                 got: Some(author_id.clone()),
-            })
+            }))
         }
         (CertificateSignerOwned::Root, CertificateSignerRef::User(expected_author_id)) => {
-            return Err(DataError::UnexpectedAuthor {
+            return Err(Box::new(DataError::UnexpectedAuthor {
                 expected: expected_author_id.clone(),
                 got: None,
-            })
+            }))
         }
         _ => (),
     }
@@ -57,13 +57,13 @@ fn check_author_allow_root(
 macro_rules! impl_unsecure_load {
     ($name:ident) => {
         impl $name {
-            pub fn unsecure_load(signed: &[u8]) -> Result<$name, DataError> {
+            pub fn unsecure_load(signed: &[u8]) -> DataResult<$name> {
                 let compressed = VerifyKey::unsecure_unwrap(signed).ok_or(DataError::Signature)?;
                 let mut serialized = vec![];
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| DataError::Compression)?;
-                ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
+                ::rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
             }
         }
     };
@@ -173,16 +173,16 @@ impl UserCertificate {
 
         if let Some(expected_user_id) = expected_user_id {
             if &r.user_id != expected_user_id {
-                return Err(DataError::UnexpectedUserID {
+                return Err(Box::new(DataError::UnexpectedUserID {
                     expected: expected_user_id.clone(),
                     got: r.user_id,
-                });
+                }));
             }
         }
 
         if let Some(expected_human_handle) = expected_human_handle {
             if r.human_handle.as_ref() != Some(expected_human_handle) {
-                return Err(DataError::InvalidHumanHandle);
+                return Err(Box::new(DataError::InvalidHumanHandle));
             }
         }
 
@@ -253,18 +253,18 @@ impl RevokedUserCertificate {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
         if &r.author != expected_author {
-            return Err(DataError::UnexpectedAuthor {
+            return Err(Box::new(DataError::UnexpectedAuthor {
                 expected: expected_author.clone(),
                 got: Some(r.author),
-            });
+            }));
         }
 
         if let Some(expected_user_id) = expected_user_id {
             if &r.user_id != expected_user_id {
-                return Err(DataError::UnexpectedUserID {
+                return Err(Box::new(DataError::UnexpectedUserID {
                     expected: expected_user_id.clone(),
                     got: r.user_id,
-                });
+                }));
             }
         }
 
@@ -315,10 +315,10 @@ impl DeviceCertificate {
 
         if let Some(expected_device_id) = expected_device_id {
             if &r.device_id != expected_device_id {
-                return Err(DataError::UnexpectedDeviceID {
+                return Err(Box::new(DataError::UnexpectedDeviceID {
                     expected: expected_device_id.clone(),
                     got: r.device_id,
-                });
+                }));
             }
         }
 
@@ -368,19 +368,19 @@ impl RealmRoleCertificate {
 
         if let Some(expected_realm_id) = expected_realm_id {
             if r.realm_id != expected_realm_id {
-                return Err(DataError::UnexpectedRealmID {
+                return Err(Box::new(DataError::UnexpectedRealmID {
                     expected: expected_realm_id,
                     got: r.realm_id,
-                });
+                }));
             }
         }
 
         if let Some(expected_user_id) = expected_user_id {
             if &r.user_id != expected_user_id {
-                return Err(DataError::UnexpectedUserID {
+                return Err(Box::new(DataError::UnexpectedUserID {
                     expected: expected_user_id.clone(),
                     got: r.user_id,
-                });
+                }));
             }
         }
 
