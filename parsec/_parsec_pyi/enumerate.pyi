@@ -14,8 +14,7 @@ class InvitationDeletedReason:
     FINISHED: InvitationDeletedReason
     CANCELLED: InvitationDeletedReason
     ROTTEN: InvitationDeletedReason
-    @classmethod
-    def values(cls) -> list[InvitationDeletedReason]: ...
+    VALUES: tuple[InvitationDeletedReason, ...]
     @classmethod
     def from_str(cls, value: str) -> InvitationDeletedReason: ...
     @property
@@ -25,8 +24,8 @@ class InvitationEmailSentStatus:
     SUCCESS: InvitationEmailSentStatus
     NOT_AVAILABLE: InvitationEmailSentStatus
     BAD_RECIPIENT: InvitationEmailSentStatus
-    @classmethod
-    def values(cls) -> list[InvitationEmailSentStatus]: ...
+    VALUES: tuple[InvitationEmailSentStatus, ...]
+
     @classmethod
     def from_str(cls, value: str) -> InvitationEmailSentStatus: ...
     @property
@@ -36,8 +35,8 @@ class InvitationStatus:
     IDLE: InvitationStatus
     READY: InvitationStatus
     DELETED: InvitationStatus
-    @classmethod
-    def values(cls) -> list[InvitationStatus]: ...
+    VALUES: tuple[InvitationStatus, ...]
+
     @classmethod
     def from_str(cls, value: str) -> InvitationStatus: ...
     @property
@@ -46,8 +45,8 @@ class InvitationStatus:
 class InvitationType:
     DEVICE: InvitationType
     USER: InvitationType
-    @classmethod
-    def values(cls) -> list[InvitationType]: ...
+    VALUES: tuple[InvitationType, ...]
+
     @classmethod
     def from_str(cls, value: str) -> InvitationType: ...
     @property
@@ -58,8 +57,8 @@ class RealmRole:
     MANAGER: RealmRole
     CONTRIBUTOR: RealmRole
     READER: RealmRole
-    @classmethod
-    def values(cls) -> list[RealmRole]: ...
+    VALUES: tuple[RealmRole, ...]
+
     @classmethod
     def from_str(cls, value: str) -> RealmRole: ...
     @property
@@ -69,8 +68,8 @@ class UserProfile:
     ADMIN: UserProfile
     STANDARD: UserProfile
     OUTSIDER: UserProfile
-    @classmethod
-    def values(cls) -> list[UserProfile]: ...
+    VALUES: tuple[UserProfile, ...]
+
     @classmethod
     def from_str(cls, value: str) -> UserProfile: ...
     @property

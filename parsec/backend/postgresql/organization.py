@@ -223,7 +223,7 @@ async def _organization_stats(
 
     users = 0
     active_users = 0
-    users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.values()}
+    users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
     for u in result["users"]:
         is_revoked, profile = u
         users += 1

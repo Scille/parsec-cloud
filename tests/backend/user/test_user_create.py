@@ -23,7 +23,7 @@ from tests.common import customize_fixtures, freeze_time
 @pytest.mark.trio
 @pytest.mark.parametrize(
     "profile,with_labels",
-    [(profile, profile != UserProfile.STANDARD) for profile in UserProfile.values()],
+    [(profile, profile != UserProfile.STANDARD) for profile in UserProfile.VALUES],
 )
 async def test_user_create_ok(
     backend_asgi_app,

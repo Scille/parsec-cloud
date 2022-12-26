@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::{PyAttributeError, PyException},
     pyclass, pymethods,
     types::PyType,
-    PyErr, PyResult,
+    IntoPy, PyErr, PyObject, PyResult, Python,
 };
 
 use crate::binding_utils::gen_proto;
@@ -22,10 +22,18 @@ impl ProtocolErrorFields {
         Self(protocol::ProtocolError::EncodingError { exc })
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "NotHandled")]
-    fn not_handled(_cls: &PyType) -> Self {
-        Self(protocol::ProtocolError::NotHandled)
+    fn not_handled() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    ProtocolErrorFields(protocol::ProtocolError::NotHandled).into_py(py)
+                })
+            };
+        }
+
+        &VALUE
     }
 
     #[classmethod]

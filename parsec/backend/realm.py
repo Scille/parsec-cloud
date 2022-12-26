@@ -145,11 +145,11 @@ class RealmStatus:
 
     @property
     def in_reencryption(self) -> bool:
-        return self.maintenance_type == MaintenanceType.REENCRYPTION()
+        return self.maintenance_type == MaintenanceType.REENCRYPTION
 
     @property
     def in_garbage_collection(self) -> bool:
-        return self.maintenance_type == MaintenanceType.GARBAGE_COLLECTION()
+        return self.maintenance_type == MaintenanceType.GARBAGE_COLLECTION
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

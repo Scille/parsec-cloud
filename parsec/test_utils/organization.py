@@ -177,11 +177,11 @@ async def _add_random_users(
     """
     for _ in range(additional_users_number):
         name = "test_" + str(uuid4())[:9]
-        user_profile = random.choice(UserProfile.values())
+        user_profile = random.choice(UserProfile.VALUES)
         if user_profile == UserProfile.OUTSIDER:
             realm_role = random.choice([WorkspaceRole.READER, WorkspaceRole.CONTRIBUTOR])
         else:
-            realm_role = random.choice(WorkspaceRole.values())
+            realm_role = random.choice(WorkspaceRole.VALUES)
         # Workspace_choice : 0 = add user to first_ws, 1 = add to second_ws, 2 = add in both workspace, other = nothing
         workspace_choice = random.randint(0, 3)
         # invite user to organization

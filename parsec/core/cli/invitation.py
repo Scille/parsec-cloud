@@ -165,7 +165,7 @@ async def ask_info_new_user(
             click.echo("Invalid value")
             continue
 
-    choices = UserProfile.values()
+    choices = UserProfile.VALUES
     for i, choice in enumerate(choices):
         display_choice = click.style(choice.str, fg="yellow")
         click.echo(f" {i} - {display_choice}")

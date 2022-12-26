@@ -165,7 +165,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         users = 0
         active_users = 0
-        users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.values()}
+        users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
         for user in self._user_component._organizations[id].users.values():
             if user.created_on <= at:
                 users += 1

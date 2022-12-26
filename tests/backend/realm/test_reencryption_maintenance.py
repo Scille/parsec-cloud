@@ -203,7 +203,7 @@ async def test_start_reencryption_update_status(alice_ws, alice, realm):
         in_maintenance=True,
         maintenance_started_by=alice.device_id,
         maintenance_started_on=DateTime(2000, 1, 2),
-        maintenance_type=MaintenanceType.REENCRYPTION(),
+        maintenance_type=MaintenanceType.REENCRYPTION,
     )
 
 

@@ -1,7 +1,7 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{PyList, PyType},
+    types::{PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
 
@@ -140,9 +140,22 @@ impl InvitationDeletedReason {
         &VALUE
     }
 
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyList {
-        PyList::new(py, [Self::finished(), Self::cancelled(), Self::rotten()])
+    #[classattr]
+    #[pyo3(name = "VALUES")]
+    fn values() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUES: PyObject = {
+                Python::with_gil(|py| {
+                    PyTuple::new(py, [
+                        InvitationDeletedReason::finished(),
+                        InvitationDeletedReason::cancelled(),
+                        InvitationDeletedReason::rotten()
+                    ]).into_py(py)
+                })
+            };
+        };
+
+        &VALUES
     }
 
     #[classmethod]
@@ -216,16 +229,25 @@ impl InvitationEmailSentStatus {
         &VALUE
     }
 
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyList {
-        PyList::new(
-            py,
-            [
-                Self::success(),
-                Self::not_available(),
-                Self::bad_recipient(),
-            ],
-        )
+    #[classattr]
+    #[pyo3(name = "VALUES")]
+    fn values() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUES: PyObject = {
+                Python::with_gil(|py| {
+                    PyTuple::new(
+                        py,
+                        [
+                            InvitationEmailSentStatus::success(),
+                            InvitationEmailSentStatus::not_available(),
+                            InvitationEmailSentStatus::bad_recipient(),
+                        ],
+                    ).into_py(py)
+                })
+            };
+        };
+
+        &VALUES
     }
 
     #[classmethod]
@@ -300,9 +322,25 @@ impl InvitationStatus {
         &VALUE
     }
 
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyList {
-        PyList::new(py, [Self::idle(), Self::ready(), Self::deleted()])
+    #[classattr]
+    #[pyo3(name = "VALUES")]
+    fn values() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUES: PyObject = {
+                Python::with_gil(|py| {
+                    PyTuple::new(
+                        py,
+                        [
+                            InvitationStatus::idle(),
+                            InvitationStatus::ready(),
+                            InvitationStatus::deleted()
+                        ]
+                    ).into_py(py)
+                })
+            };
+        };
+
+        &VALUES
     }
 
     #[classmethod]
@@ -361,9 +399,19 @@ impl InvitationType {
         &VALUE
     }
 
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyList {
-        PyList::new(py, [Self::device(), Self::user()])
+    #[classattr]
+    #[pyo3(name = "VALUES")]
+    fn values() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUES: PyObject = {
+                Python::with_gil(|py| {
+                    PyTuple::new(py, [InvitationType::device(), InvitationType::user()])
+                        .into_py(py)
+                })
+            };
+        };
+
+        &VALUES
     }
 
     #[classmethod]
@@ -450,17 +498,26 @@ impl RealmRole {
         &VALUE
     }
 
-    #[classmethod]
-    fn values<'py>(_cls: &'py PyType, py: Python<'py>) -> &'py PyList {
-        PyList::new(
-            py,
-            [
-                Self::owner(),
-                Self::manager(),
-                Self::contributor(),
-                Self::reader(),
-            ],
-        )
+    #[classattr]
+    #[pyo3(name = "VALUES")]
+    fn values() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUES: PyObject = {
+                Python::with_gil(|py| {
+                    PyTuple::new(
+                        py,
+                        [
+                            RealmRole::owner(),
+                            RealmRole::manager(),
+                            RealmRole::contributor(),
+                            RealmRole::reader(),
+                        ],
+                    ).into_py(py)
+                })
+            };
+        };
+
+        &VALUES
     }
 
     #[classmethod]
@@ -534,9 +591,26 @@ impl UserProfile {
         &VALUE
     }
 
-    #[classmethod]
-    fn values<'py>(_cls: &PyType, py: Python<'py>) -> &'py PyList {
-        PyList::new(py, [Self::admin(), Self::standard(), Self::outsider()])
+    #[classattr]
+    #[pyo3(name = "VALUES")]
+    fn values() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUES: PyObject = {
+                Python::with_gil(|py| {
+                    PyTuple::new(
+                        py,
+                        [
+                            UserProfile::admin(),
+                            UserProfile::standard(),
+                            UserProfile::outsider()
+                        ]
+                    )
+                    .into_py(py)
+                })
+            };
+        };
+
+        &VALUES
     }
 
     #[classmethod]

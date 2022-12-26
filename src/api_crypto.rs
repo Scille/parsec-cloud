@@ -71,8 +71,8 @@ impl SigningKey {
     }
 
     #[classmethod]
-    fn generate(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::crypto::SigningKey::generate()))
+    fn generate(_cls: &PyType) -> Self {
+        Self(libparsec::crypto::SigningKey::generate())
     }
 
     /// Return the signature + the signed data
