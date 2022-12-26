@@ -35,8 +35,8 @@ class InvitationStatus:
     IDLE: InvitationStatus
     READY: InvitationStatus
     DELETED: InvitationStatus
-    @classmethod
-    def values(cls) -> list[InvitationStatus]: ...
+    VALUES: tuple[InvitationStatus, ...]
+
     @classmethod
     def from_str(cls, value: str) -> InvitationStatus: ...
     @property
