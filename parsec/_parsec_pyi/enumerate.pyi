@@ -45,8 +45,8 @@ class InvitationStatus:
 class InvitationType:
     DEVICE: InvitationType
     USER: InvitationType
-    @classmethod
-    def values(cls) -> list[InvitationType]: ...
+    VALUES: tuple[InvitationType, ...]
+
     @classmethod
     def from_str(cls, value: str) -> InvitationType: ...
     @property
