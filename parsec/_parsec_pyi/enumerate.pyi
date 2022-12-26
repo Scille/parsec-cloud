@@ -69,8 +69,8 @@ class UserProfile:
     ADMIN: UserProfile
     STANDARD: UserProfile
     OUTSIDER: UserProfile
-    @classmethod
-    def values(cls) -> list[UserProfile]: ...
+    VALUES: tuple[UserProfile, ...]
+
     @classmethod
     def from_str(cls, value: str) -> UserProfile: ...
     @property
