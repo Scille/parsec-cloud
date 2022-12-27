@@ -15,9 +15,8 @@ use libparsec::{
 };
 
 use crate::{
-    data::UsersPerProfileDetailItem,
     api_crypto::VerifyKey,
-    enumerate::UserProfile,
+    data::UsersPerProfileDetailItem,
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
         gen_rep, OptionalDateTime, OptionalFloat, Reason,

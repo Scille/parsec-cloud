@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from parsec._parsec import (
-    SequesterVerifyKeyDer,
-    SigningKey,
     OrganizationBootstrapRepAlreadyBootstrapped,
     OrganizationBootstrapRepNotFound,
     OrganizationBootstrapRepOk,
+    SequesterVerifyKeyDer,
+    SigningKey,
 )
 from parsec.api.data import DeviceCertificate, SequesterAuthorityCertificate, UserCertificate
 from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile

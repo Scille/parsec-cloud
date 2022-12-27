@@ -247,7 +247,6 @@ class BaseOrganizationComponent:
                 sequester_authority_certif_data = SequesterAuthorityCertificate.verify_and_load(
                     sequester_authority_certificate,
                     author_verify_key=root_verify_key,
-                    expected_author=None,
                 )
 
             except DataError:

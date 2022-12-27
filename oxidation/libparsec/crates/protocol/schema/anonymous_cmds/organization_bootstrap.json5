@@ -37,7 +37,7 @@
                 // be signed by the root key which has been destroyed after bootstrap
                 {
                     "name": "sequester_authority_certificate",
-                    "type": "NonRequiredOption<Bytes>",
+                    "type": "RequiredOption<Bytes>",
                     "introduced_in": "3.2"
                 }
             ]
@@ -130,7 +130,7 @@
                 },
                 {
                     "name": "sequester_authority_certificate",
-                    "type": "NonRequiredOption<Bytes>",
+                    "type": "RequiredOption<Bytes>",
                     "introduced_in": "2.8"
                 }
             ]
