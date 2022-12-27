@@ -7,7 +7,6 @@ from typing import Dict, Sequence, TypedDict, cast
 
 from parsec._parsec import DateTime, ProtocolError
 from parsec.api.protocol.base import (
-    IncompatibleAPIVersionsError,
     InvalidMessageError,
     serializer_factory,
     settle_compatible_versions,
@@ -223,13 +222,7 @@ class ServerHandshake:
             self.SUPPORTED_API_VERSIONS, [client_api_version]
         )
 
-        # Use the correct serializer
-        # `settle_compatible_versions` is called before,
-        # so we already settled on a version from `self.SUPPORTED_API_VERSIONS`
-        if client_api_version.version == 1:
-            raise IncompatibleAPIVersionsError(self.SUPPORTED_API_VERSIONS, [client_api_version])
-        else:
-            serializer = handshake_answer_serializer
+        serializer = handshake_answer_serializer
 
         # Now we know how to deserialize the rest of the data
         data = serializer.loads(req)
