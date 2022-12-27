@@ -6,6 +6,36 @@ license = " BUSL-1.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["use-rustcrypto"]
+use-sodiumoxide = [
+    "sodiumoxide",
+    "libsodium-sys",
+    "openssl",
+    "zeroize",
+]
+use-rustcrypto = [
+    "argon2",
+    "blake2",
+    "crypto_box",
+    "digest",
+    "ed25519-dalek",
+    "generic-array",
+    "getrandom_01",
+    "getrandom_02",
+    "lazy_static",
+    "rand_07",
+    "rand_08",
+    "rsa",
+    "sha1",
+    "sha2",
+    "x25519-dalek",
+    "xsalsa20poly1305",
+]
+# The asm feature will enable asm feature for sha2 if something else enables the sha2 dependency.
+# This feature is needed due to platform which doesn't support asm
+asm = ["sha2?/asm"]
+
 [dependencies]
 serde = { version = "1.0.147", features = ["derive"] }
 serde_bytes = { version = "0.11.7" }
@@ -54,35 +84,6 @@ serde_test = "1.0.145"
 hex-literal = "0.3.3"
 rmp-serde = "1.1.1"
 rstest = "0.16.0"
-
-[features]
-use-sodiumoxide = [
-    "sodiumoxide",
-    "libsodium-sys",
-    "openssl",
-    "zeroize"
-]
-use-rustcrypto = [
-    "argon2",
-    "blake2",
-    "crypto_box",
-    "digest",
-    "ed25519-dalek",
-    "generic-array",
-    "getrandom_01",
-    "getrandom_02",
-    "lazy_static",
-    "rand_07",
-    "rand_08",
-    "rsa",
-    "sha1",
-    "sha2",
-    "x25519-dalek",
-    "xsalsa20poly1305",
-]
-# The asm feature will enable asm feature for sha2 if something else enables the sha2 dependency.
-# This feature is needed due to platform which doesn't support asm
-asm = ["sha2?/asm"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom_01 = { package = "getrandom", version = "0.1.16", features = ["wasm-bindgen"], optional = true }

@@ -205,14 +205,6 @@ jobs:
           libxcb-keysyms1 libxcb-randr0 libxcb-render-util0
           libxcb-xinerama0 libxcb-xfixes0 x11-utils
 
-      # Building OpenSSL requires a perl interpreter.
-      # The default one does not provide windows-style filesystem
-      # paths so we have to switch to Strawberry.
-      - name: Use strawberry perl
-        if: startsWith(matrix.os, 'windows')
-        shell: bash
-        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
-
       - name: (🍎 macOS) Install macfuse
         if: >-
           steps.python-changes.outputs.run == 'true'
@@ -294,7 +286,7 @@ jobs:
           steps.python-changes.outputs.run == 'true'
           && startsWith(matrix.os, 'macos-') != true
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow --rungui -m gui
-        timeout-minutes: 20
+        timeout-minutes: 10
 
       - name: (🐧 Linux) PostgreSQL tests
         if: >-
@@ -360,8 +352,8 @@ jobs:
         run: |
           set -ex
           cargo test --profile ci-rust --workspace --features mock-time ${{ env.cargo-exclude-unused-crates }} --exclude libparsec_crypto
-          cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide
-          cargo test --profile ci-rust --package libparsec_crypto --features use-rustcrypto
+          cargo test --profile ci-rust --package libparsec_crypto --no-default-features --features use-sodiumoxide
+          cargo test --profile ci-rust --package libparsec_crypto
 
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
