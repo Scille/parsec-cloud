@@ -64,9 +64,14 @@ def build():
     # native module and discard the rest !
 
     maturin_build_profile = "--profile=" + os.environ.get("CARGO_PROFILE", DEFAULT_CARGO_PROFILE)
+    features = (
+        "--no-default-features --features use-sodiumoxide"
+        if maturin_build_profile == "--profile=release"
+        else ""
+    )
     with tempfile.TemporaryDirectory() as distdir:
         run(
-            f"maturin build {maturin_build_profile} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
+            f"maturin build {maturin_build_profile} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir} {features}"
         )
 
         outputs = list(pathlib.Path(distdir).iterdir())
