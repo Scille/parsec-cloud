@@ -11,9 +11,14 @@ path = "tests/mod.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["use-rustcrypto"]
+use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
+use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+
 [dependencies]
-libparsec_crypto = { path = "../crypto" }
-libparsec_types = { path = "../types" }
+libparsec_crypto = { path = "../crypto", default-features = false }
+libparsec_types = { path = "../types", default-features = false  }
 libparsec_serialization_format = { path = "../serialization_format" }
 
 flate2 = "1.0.25"

@@ -37,6 +37,10 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::SecretKey>()?;
     m.add_class::<api_crypto::PrivateKey>()?;
     m.add_class::<api_crypto::PublicKey>()?;
+    m.add_class::<api_crypto::SequesterPrivateKeyDer>()?;
+    m.add_class::<api_crypto::SequesterPublicKeyDer>()?;
+    m.add_class::<api_crypto::SequesterSigningKeyDer>()?;
+    m.add_class::<api_crypto::SequesterVerifyKeyDer>()?;
     m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
 
     m.add_class::<enumerate::ClientType>()?;

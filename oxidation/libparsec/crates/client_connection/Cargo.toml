@@ -9,17 +9,23 @@ name = "auth_cmds"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["use-rustcrypto"]
+use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
+use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+
 [dependencies]
+libparsec_crypto = { path = "../crypto", default-features = false }
+# Add primitive type to be used with the protocol
+libparsec_types = { path = "../types", default-features = false }
+# Provide possible command to send to the server
+libparsec_protocol = { path = "../protocol", default-features = false }
+
 # Used to send HTTP request to the server.
 reqwest = "0.11.12"
 # Used to perform operation on URL.
 url = "2.3.1"
-# Add primitive type to be used with the protocol
-libparsec_types = { path = "../types" }
-# Provide possible command to send to the server
-libparsec_protocol = { path = "../protocol" }
 # Use abstract crypto primitive, to allow to sign request.
-libparsec_crypto = { path = "../crypto" }
 # Used to encoded binary data.
 base64 = "0.13.1"
 chrono = "0.4.22"

@@ -11,9 +11,16 @@ path = "tests/mod.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["use-rustcrypto"]
+use-rustcrypto = ["uuid/fast-rng", "libparsec_crypto/use-rustcrypto"]
+use-sodiumoxide = ["uuid/fast-rng", "libparsec_crypto/use-sodiumoxide"]
+js = ["uuid/js"]
+mock-time = []
+
 [dependencies]
+libparsec_crypto = { path = "../crypto", default-features = false }
 libparsec_serialization_format = { path = "../serialization_format" }
-libparsec_crypto = { path = "../crypto" }
 libparsec_platform_async = { path = "../platform_async" }
 
 lazy_static = "1.4.0"
@@ -46,11 +53,6 @@ serde_test = "1.0.145"
 hex-literal = "0.3.3"
 rstest = "0.16.0"
 rstest_reuse = "0.4.0"
-
-[features]
-js = ["uuid/js"]
-default = ["uuid/fast-rng"]
-mock-time = []
 
 [build-dependencies]
 glob = "0.3.0"

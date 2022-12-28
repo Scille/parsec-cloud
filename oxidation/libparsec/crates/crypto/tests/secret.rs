@@ -73,7 +73,7 @@ fn secret_key_should_verify_length_when_deserialize() {
         rmp_serde::from_slice::<SecretKey>(&data)
             .unwrap_err()
             .to_string(),
-        "Invalid data size"
+        "Invalid key size: expected 32 bytes, got 5 bytes"
     );
 }
 
@@ -91,14 +91,20 @@ fn test_recovery_passphrase() {
 }
 
 #[rstest]
-#[case::empty("")]
-#[case::only_invalid_characters("-@//白")]
-#[case::too_short("D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO")]
-#[case::too_long("D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO-NU4Q-NU4Q")]
-fn test_invalid_passphrase(#[case] bad_passphrase: &str) {
+#[case::empty("", 0)]
+#[case::only_invalid_characters("-@//白", 0)]
+#[case::too_short("D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO", 30)]
+#[case::too_long(
+    "D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO-NU4Q-NU4Q",
+    35
+)]
+fn test_invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
     assert_eq!(
         SecretKey::from_recovery_passphrase(bad_passphrase).unwrap_err(),
-        CryptoError::DataSize
+        CryptoError::KeySize {
+            expected: SecretKey::SIZE,
+            got: key_length,
+        }
     );
 }
 

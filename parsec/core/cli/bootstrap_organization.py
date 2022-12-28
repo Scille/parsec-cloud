@@ -7,15 +7,13 @@ from typing import Any, Protocol
 
 import click
 
-from parsec._parsec import LocalDevice
-from parsec.api.protocol import DeviceLabel, HumanHandle
+from parsec._parsec import DeviceLabel, HumanHandle, LocalDevice, SequesterVerifyKeyDer
 from parsec.cli_utils import async_confirm, async_prompt, cli_exception_handler, spinner
 from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
 from parsec.core.config import CoreConfig
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
 from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.utils import trio_run
 
 SEQUESTER_BRIEF = """A sequestered organization is able to ask it users to encrypt
@@ -62,7 +60,7 @@ Do you want to continue ?""",
         )
         if not answer:
             raise SystemExit("Bootstrap aborted")
-        sequester_vrf_key = SequesterVerifyKeyDer(sequester_verify_key.read_bytes())
+        sequester_vrf_key = SequesterVerifyKeyDer.load_pem(sequester_verify_key.read_text())
 
     human_label: str = human_label or await async_prompt("User fullname")
     human_email: str = human_email or await async_prompt("User email")

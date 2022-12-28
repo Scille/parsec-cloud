@@ -47,13 +47,23 @@ impl SecretKey {
         Ok(plaintext)
     }
 
+    /// # Safety
+    ///
+    /// This function requires access to libsodium methods that are not
+    /// exposed directly, so it uses the unsafe C API
+    /// ...
     pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
-        // Sodiumoxide doesn't expose those methods, so we have to access
-        // the libsodium C API directly
+        let mut state = libsodium_sys::crypto_generichash_blake2b_state {
+            opaque: [0u8; 384usize],
+        };
+        let mut out = Vec::with_capacity(digest_size);
+
+        // SAFETY: Sodiumoxide doesn't expose those methods, so we have to access
+        // the libsodium C API directly.
+        // this remains safe because we provide bounds defined in Rust land when passing vectors.
+        // The only data structure provided by remote code is dropped
+        // at the end of the function.
         unsafe {
-            let mut state = libsodium_sys::crypto_generichash_blake2b_state {
-                opaque: [0u8; 384usize],
-            };
             libsodium_sys::crypto_generichash_blake2b_init(
                 &mut state,
                 self.as_ref().as_ptr(),
@@ -65,7 +75,6 @@ impl SecretKey {
                 data.as_ptr(),
                 data.len() as u64,
             );
-            let mut out = Vec::with_capacity(digest_size);
             libsodium_sys::crypto_generichash_blake2b_final(
                 &mut state,
                 out.as_mut_ptr(),
@@ -82,7 +91,7 @@ impl SecretKey {
 
     pub fn from_password(password: &str, salt: &[u8]) -> Self {
         let mut key = [0; KEYBYTES];
-        let salt = Salt::from_slice(&salt).expect("Invalid salt");
+        let salt = Salt::from_slice(salt).expect("Invalid salt");
 
         derive_key(
             &mut key,

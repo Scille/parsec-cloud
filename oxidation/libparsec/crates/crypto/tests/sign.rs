@@ -65,9 +65,15 @@ fn signature_only() {
 
     let vk = sk.verify_key();
     let signed_message = Vec::from_iter(signed.iter().chain(data).copied());
-    let res = vk.verify(&signed_message);
+    let res = vk.verify(&signed_message).unwrap();
 
-    assert_eq!(res, Ok(data.to_vec()));
+    assert_eq!(res, data);
+
+    // Also test verify_with_signature
+
+    let res = vk.verify_with_signature(signed, data).unwrap();
+
+    assert_eq!(res, data);
 }
 
 test_msgpack_serialization!(
