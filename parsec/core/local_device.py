@@ -38,6 +38,12 @@ RECOVERY_DEVICE_FILE_SUFFIX = ".psrk"
 _KEY_FILE_DATA: Dict[DeviceID, Dict[str, object]] = {}
 
 
+# Function used in parsec-extensions and use a private global variable
+def get_key_file_data(device_id: DeviceID) -> Dict[str, object]:
+    """Retrieve key file data for a given device"""
+    return _KEY_FILE_DATA.get(device_id, {})
+
+
 class LocalDeviceError(Exception):
     pass
 
