@@ -3,10 +3,6 @@ from __future__ import annotations
 
 from parsec._parsec import (
     DeviceCertificate,
-    RevokedUserCertificate,
-    RealmRoleCertificate,
-    SequesterAuthorityCertificate,
-    SequesterServiceCertificate,
     # Message
     MessageContent,
     PingMessageContent,
@@ -15,6 +11,8 @@ from parsec._parsec import (
     PkiEnrollmentSubmitPayload,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    SequesterAuthorityCertificate,
+    SequesterServiceCertificate,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -30,12 +28,7 @@ from parsec.api.data.base import (
     BaseSignedDataSchema,
     DataError,
 )
-from parsec.api.data.entry import (
-    EntryID,
-    EntryIDField,
-    EntryName,
-    EntryNameField,
-)
+from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from parsec.api.data.invite import (
     InviteDeviceConfirmation,
     InviteDeviceData,

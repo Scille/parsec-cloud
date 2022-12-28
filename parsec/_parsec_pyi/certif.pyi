@@ -6,10 +6,10 @@ from typing import Any
 
 from parsec._parsec_pyi.crypto import (
     PublicKey,
+    SequesterPublicKeyDer,
+    SequesterVerifyKeyDer,
     SigningKey,
     VerifyKey,
-    SequesterVerifyKeyDer,
-    SequesterPublicKeyDer,
 )
 from parsec._parsec_pyi.enumerate import RealmRole, UserProfile
 from parsec._parsec_pyi.ids import (
@@ -17,8 +17,8 @@ from parsec._parsec_pyi.ids import (
     DeviceLabel,
     HumanHandle,
     RealmID,
-    UserID,
     SequesterServiceID,
+    UserID,
 )
 from parsec._parsec_pyi.time import DateTime
 

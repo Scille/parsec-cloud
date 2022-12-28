@@ -5,10 +5,7 @@ import importlib.resources
 import json
 
 import tests.schemas
-from tests.schemas.builder import (
-    generate_api_protocol_specs,
-    generate_core_data_specs,
-)
+from tests.schemas.builder import generate_api_protocol_specs, generate_core_data_specs
 
 
 # /!\ Those tests only deal with pure Python schemas (even if running with --runrust, /!\
