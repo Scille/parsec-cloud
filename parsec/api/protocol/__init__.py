@@ -99,7 +99,6 @@ from parsec.api.protocol.realm import (
     realm_status_serializer,
     realm_update_roles_serializer,
 )
-from parsec.api.protocol.sequester import SequesterServiceIDField
 from parsec.api.protocol.types import (
     DeviceID,
     DeviceIDField,
@@ -255,7 +254,6 @@ __all__ = (
     "EnrollmentIDField",
     # Sequester
     "SequesterServiceID",
-    "SequesterServiceIDField",
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",

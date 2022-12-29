@@ -5,9 +5,8 @@ from typing import Dict, List, Tuple
 
 import triopg
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, SequesterServiceID
 from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
-from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
 from parsec.backend.postgresql.sequester import get_sequester_authority, get_sequester_services
