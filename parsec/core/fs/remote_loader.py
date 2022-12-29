@@ -148,7 +148,7 @@ def _validate_sequester_config(
         # 1) Validate authority certificate
         # Sequestery authority is always signed by the root key, hence `expected_author` is always None
         authority = SequesterAuthorityCertificate.verify_and_load(
-            sequester_authority_certificate, author_verify_key=root_verify_key, expected_author=None
+            sequester_authority_certificate, author_verify_key=root_verify_key
         )
 
         # 2) Validate services certificates

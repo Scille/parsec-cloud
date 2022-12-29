@@ -11,6 +11,8 @@ from parsec._parsec import (
     PkiEnrollmentSubmitPayload,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    SequesterAuthorityCertificate,
+    SequesterServiceCertificate,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -26,7 +28,6 @@ from parsec.api.data.base import (
     BaseSignedDataSchema,
     DataError,
 )
-from parsec.api.data.certif import SequesterAuthorityCertificate, SequesterServiceCertificate
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from parsec.api.data.invite import (
     InviteDeviceConfirmation,

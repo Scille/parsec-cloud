@@ -6,6 +6,7 @@ import zlib
 import msgpack
 from binascii import unhexlify
 
+from parsec._parsec import DateTime
 from parsec._version import __version__
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, VerifyKey
 from parsec.api.data import EntryID
@@ -63,6 +64,7 @@ def generate_BOB_local_device():
     )
 
 
+NOW = DateTime(2020, 1, 1)
 ALICE = generate_ALICE_local_device()
 BOB = generate_BOB_local_device()
 KEY = SecretKey(unhexlify("b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"))

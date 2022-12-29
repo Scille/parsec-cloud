@@ -5,11 +5,7 @@ import importlib.resources
 import json
 
 import tests.schemas
-from tests.schemas.builder import (
-    generate_api_data_specs,
-    generate_api_protocol_specs,
-    generate_core_data_specs,
-)
+from tests.schemas.builder import generate_api_protocol_specs, generate_core_data_specs
 
 
 # /!\ Those tests only deal with pure Python schemas (even if running with --runrust, /!\
@@ -21,13 +17,6 @@ def test_api_protocol_compat():
         importlib.resources.files(tests.schemas).joinpath("api_protocol.json").read_text()
     )
     assert generate_api_protocol_specs() == specs
-
-
-def test_api_data_compat():
-    specs = json.loads(
-        importlib.resources.files(tests.schemas).joinpath("api_data.json").read_text()
-    )
-    assert generate_api_data_specs() == specs
 
 
 def test_core_data_compat():
