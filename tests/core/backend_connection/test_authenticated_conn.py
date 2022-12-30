@@ -9,6 +9,7 @@ import trio
 from parsec._parsec import (
     AuthenticatedPingRepOk,
     ClientType,
+    CoreEvent,
     EventsListenRepOkRealmRolesUpdated,
     EventsListenRepOkRealmVlobsUpdated,
     OrganizationConfig,
@@ -23,7 +24,6 @@ from parsec.core.backend_connection import (
     BackendConnStatus,
     BackendNotAvailable,
 )
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.userfs.userfs import UserFS
 from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout

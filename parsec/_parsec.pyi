@@ -43,6 +43,7 @@ from parsec._parsec_pyi.enumerate import (
     RealmRole,
     UserProfile,
 )
+from parsec._parsec_pyi.events import CoreEvent
 from parsec._parsec_pyi.file_operation import (
     prepare_read,
     prepare_reshape,
@@ -757,6 +758,7 @@ __all__ = [
     "InviteNewRepUnknownStatus",
     "InviteNewReq",
     # Events
+    "CoreEvent",
     "EventsListenRep",
     "EventsListenRepCancelled",
     "EventsListenRepNoEvents",

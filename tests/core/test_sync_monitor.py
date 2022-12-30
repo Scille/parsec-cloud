@@ -7,13 +7,12 @@ from urllib.error import HTTPError, URLError
 import pytest
 import trio
 
-from parsec._parsec import Regex
+from parsec._parsec import CoreEvent, Regex
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.sequester import SequesterServiceType
 from parsec.core.backend_connection import BackendConnStatus
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.exceptions import FSReadOnlyError
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.types import WorkspaceRole

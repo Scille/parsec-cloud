@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import Regex
+from parsec._parsec import CoreEvent, Regex
 from parsec.api.protocol import DeviceID
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath
 from parsec.core.fs.workspacefs.sync_transactions import (
     FSFileConflictError,

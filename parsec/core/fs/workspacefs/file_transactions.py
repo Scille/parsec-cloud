@@ -5,9 +5,9 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable, Dict, List, Tuple, cast
 
+from parsec._parsec import CoreEvent
 from parsec.api.data import BlockAccess
 from parsec.api.protocol import DeviceID
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.exceptions import FSEndOfFileError, FSInvalidFileDescriptor, FSLocalMissError
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage

@@ -17,9 +17,8 @@ import trio
 from fuse import FUSE
 from structlog import get_logger
 
-from parsec._parsec import DateTime, EntryID
+from parsec._parsec import CoreEvent, DateTime, EntryID
 from parsec.core import resources as resources_module
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash

@@ -4,11 +4,10 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import DateTime
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryName, PingMessageContent
 from parsec.api.protocol import UserID
 from parsec.core.backend_connection import BackendConnStatus
-from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
 from parsec.crypto import SecretKey
 from tests.common import create_shared_workspace, freeze_time

@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 import trio
 
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryName
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
 from tests.common import create_shared_workspace

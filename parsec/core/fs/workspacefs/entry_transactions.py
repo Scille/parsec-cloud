@@ -4,8 +4,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Dict, List, NamedTuple, Tuple, cast
 
+from parsec._parsec import CoreEvent
 from parsec.api.data import BlockAccess
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.exceptions import (
     FSCrossDeviceError,
     FSDirectoryNotEmptyError,

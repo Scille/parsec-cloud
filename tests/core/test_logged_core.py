@@ -6,7 +6,7 @@ from unittest.mock import ANY
 import pytest
 import trio
 
-from parsec._parsec import DateTime, OrganizationStats, UsersPerProfileDetailItem
+from parsec._parsec import CoreEvent, DateTime, OrganizationStats, UsersPerProfileDetailItem
 from parsec.api.protocol import UserID, UserProfile
 from parsec.core import logged_core_factory
 from parsec.core.backend_connection import (
@@ -15,7 +15,6 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendNotFoundError,
 )
-from parsec.core.core_events import CoreEvent
 from parsec.core.types import DeviceInfo, UserInfo
 from tests.common import correct_addr, customize_fixtures, real_clock_timeout, server_factory
 

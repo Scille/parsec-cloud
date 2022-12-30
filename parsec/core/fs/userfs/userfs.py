@@ -21,6 +21,7 @@ from structlog import get_logger
 from trio_typing import TaskStatus
 
 from parsec._parsec import (
+    CoreEvent,
     DateTime,
     MessageGetRepOk,
     RealmCreateRepAlreadyExists,
@@ -86,7 +87,6 @@ from parsec.api.protocol import DeviceID, MaintenanceType, RealmID, UserID, Vlob
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.exceptions import (
     FSBackendOfflineError,
     FSError,

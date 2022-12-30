@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, cast
 
 import trio
 
+from parsec._parsec import CoreEvent
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSBackendOfflineError
 from parsec.core.fs.userfs import UserFS
 from parsec.event_bus import EventBus, EventCallback

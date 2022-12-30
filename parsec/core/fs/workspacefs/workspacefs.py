@@ -8,12 +8,11 @@ import attr
 import structlog
 import trio
 
-from parsec._parsec import DateTime, FileManifest, RealmStatusRepOk, Regex
+from parsec._parsec import CoreEvent, DateTime, FileManifest, RealmStatusRepOk, Regex
 from parsec.api.data import AnyRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import MaintenanceType, RealmID, UserID
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSBackendOfflineError,

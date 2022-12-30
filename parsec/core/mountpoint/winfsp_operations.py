@@ -19,9 +19,8 @@ from winfspy import (
 )
 from winfspy.plumbing import NTSTATUS, SecurityDescriptor, dt_to_filetime
 
-from parsec._parsec import DateTime
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSEndOfFileError, FSLocalOperationError, FsPath, FSRemoteOperationError
 from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE

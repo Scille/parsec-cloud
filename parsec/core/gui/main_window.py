@@ -11,10 +11,9 @@ from PyQt5.QtWidgets import QMainWindow, QMenu, QMenuBar, QShortcut, QWidget
 from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
-from parsec._parsec import InvitationType
+from parsec._parsec import CoreEvent, InvitationType
 from parsec.core import win_registry
 from parsec.core.config import CoreConfig, save_config
-from parsec.core.core_events import CoreEvent
 from parsec.core.gui import desktop, telemetry, validators
 from parsec.core.gui.about_widget import AboutWidget
 from parsec.core.gui.central_widget import (

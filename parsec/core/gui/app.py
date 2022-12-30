@@ -14,8 +14,8 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication
 from structlog import get_logger
 
+from parsec._parsec import CoreEvent
 from parsec.core.config import CoreConfig
-from parsec.core.core_events import CoreEvent
 from parsec.core.ipcinterface import (
     IPCCommand,
     IPCServerAlreadyRunning,

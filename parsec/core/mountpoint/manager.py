@@ -12,8 +12,7 @@ from typing import Any, AsyncGenerator, Callable, Sequence, Union, cast
 import trio
 from structlog import get_logger
 
-from parsec._parsec import DateTime
-from parsec.core.core_events import CoreEvent
+from parsec._parsec import CoreEvent, DateTime
 from parsec.core.fs import FsPath, UserFS, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.logged_core import WorkspaceEntry

@@ -5,11 +5,10 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec._parsec import DateTime, UserRevokeRepOk
+from parsec._parsec import CoreEvent, DateTime, UserRevokeRepOk
 from parsec.api.data import EntryName, RevokedUserCertificate, UserManifest, WorkspaceEntry
 from parsec.api.protocol import RealmID
 from parsec.backend.realm import RealmGrantedRole, RealmRole
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSError,
