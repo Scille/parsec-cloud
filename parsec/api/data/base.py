@@ -5,17 +5,9 @@ from typing import Dict, Iterable, Tuple, Type, TypeVar
 
 import attr
 
-from parsec._parsec import DataError, DateTime
-from parsec.api.protocol import DeviceID, DeviceIDField
-from parsec.crypto import CryptoError, PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
-from parsec.serde import (
-    BaseSchema,
-    BaseSerializer,
-    SerdePackingError,
-    SerdeValidationError,
-    ZipMsgpackSerializer,
-    fields,
-)
+from parsec._parsec import DataError
+from parsec.crypto import CryptoError, PrivateKey, PublicKey, SecretKey
+from parsec.serde import BaseSchema, BaseSerializer, SerdePackingError, SerdeValidationError
 
 
 class DataValidationError(SerdeValidationError, DataError):
@@ -24,11 +16,6 @@ class DataValidationError(SerdeValidationError, DataError):
 
 class DataSerializationError(SerdePackingError, DataError):
     pass
-
-
-class BaseSignedDataSchema(BaseSchema):
-    author = DeviceIDField(required=True, allow_none=False)
-    timestamp = fields.DateTime(required=True)
 
 
 class DataMeta(type):
@@ -74,189 +61,6 @@ class DataMeta(type):
         )
 
         return raw_cls
-
-
-class SignedDataMeta(DataMeta):
-    BASE_SCHEMA_CLS = BaseSignedDataSchema
-
-
-BaseSignedDataTypeVar = TypeVar("BaseSignedDataTypeVar", bound="BaseSignedData")
-
-
-@attr.s(slots=True, frozen=True, kw_only=True, eq=False)
-class BaseSignedData(metaclass=SignedDataMeta):
-    """
-    Most data within the api should inherit this class. The goal is to have
-    immutable data (thanks to attr frozen) that can be easily (de)serialize
-    with encryption/signature support.
-    """
-
-    # Must be overloaded by child classes
-    SCHEMA_CLS = BaseSignedDataSchema
-    SERIALIZER_CLS = BaseSerializer
-    SERIALIZER: BaseSerializer  # Configured by the metaclass
-
-    author: DeviceID = attr.ib()
-    timestamp: DateTime = attr.ib()
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))
-        return NotImplemented
-
-    def evolve(self: BaseSignedDataTypeVar, **kwargs: object) -> BaseSignedDataTypeVar:
-        return attr.evolve(self, **kwargs)
-
-    def _serialize(self) -> bytes:
-        """
-        Raises:
-            DataError
-        """
-        return self.SERIALIZER.dumps(self)
-
-    @classmethod
-    def _deserialize(cls: Type[BaseSignedDataTypeVar], raw: bytes) -> BaseSignedDataTypeVar:
-        """
-        Raises:
-            DataError
-        """
-        try:
-            return cls.SERIALIZER.loads(raw)
-        except DataError:
-            raise
-
-    def dump_and_sign(self, author_signkey: SigningKey) -> bytes:
-        """
-        Raises:
-            DataError
-        """
-        try:
-            return author_signkey.sign(self._serialize())
-
-        except CryptoError as exc:
-            raise DataError(str(exc)) from exc
-
-    def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes:
-        """
-        Raises:
-            DataError
-        """
-        try:
-            signed = author_signkey.sign(self._serialize())
-            return key.encrypt(signed)
-
-        except CryptoError as exc:
-            raise DataError(str(exc)) from exc
-
-    def dump_sign_and_encrypt_for(
-        self, author_signkey: SigningKey, recipient_pubkey: PublicKey
-    ) -> bytes:
-        """
-        Raises:
-            DataError
-        """
-        try:
-            signed = author_signkey.sign(self._serialize())
-            return recipient_pubkey.encrypt_for_self(signed)
-
-        except CryptoError as exc:
-            raise DataError(str(exc)) from exc
-
-    @classmethod
-    def unsecure_load(cls: Type[BaseSignedDataTypeVar], signed: bytes) -> BaseSignedDataTypeVar:
-        """
-        Raises:
-            DataError
-        """
-        raw = VerifyKey.unsecure_unwrap(signed)
-        return cls._deserialize(raw)
-
-    @classmethod
-    def verify_and_load(
-        cls: Type[BaseSignedDataTypeVar],
-        signed: bytes,
-        author_verify_key: VerifyKey,
-        expected_author: DeviceID | None,
-        expected_timestamp: DateTime | None = None,
-        **kwargs: object,
-    ) -> BaseSignedDataTypeVar:
-        """
-        Raises:
-            DataError
-        """
-        try:
-            raw = author_verify_key.verify(signed)
-
-        except CryptoError as exc:
-            raise DataError(str(exc)) from exc
-
-        data = cls._deserialize(raw)
-        if data.author != expected_author:
-            repr_expected_author = expected_author or "<root key>"
-            raise DataError(
-                f"Invalid author: expected `{repr_expected_author}`, got `{data.author}`"
-            )
-        if expected_timestamp is not None and data.timestamp != expected_timestamp:
-            raise DataError(
-                f"Invalid timestamp: expected `{expected_timestamp}`, got `{data.timestamp}`"
-            )
-        return data
-
-    @classmethod
-    def decrypt_verify_and_load(
-        cls: Type[BaseSignedDataTypeVar],
-        encrypted: bytes,
-        key: SecretKey,
-        author_verify_key: VerifyKey,
-        expected_author: DeviceID,
-        expected_timestamp: DateTime,
-        **kwargs: object,
-    ) -> BaseSignedDataTypeVar:
-        """
-        Raises:
-            DataError
-        """
-        try:
-            signed = key.decrypt(encrypted)
-
-        except CryptoError as exc:
-            raise DataError(str(exc)) from exc
-
-        return cls.verify_and_load(
-            signed,
-            author_verify_key=author_verify_key,
-            expected_author=expected_author,
-            expected_timestamp=expected_timestamp,
-            **kwargs,
-        )
-
-    @classmethod
-    def decrypt_verify_and_load_for(
-        cls: Type[BaseSignedDataTypeVar],
-        encrypted: bytes,
-        recipient_privkey: PrivateKey,
-        author_verify_key: VerifyKey,
-        expected_author: DeviceID,
-        expected_timestamp: DateTime,
-        **kwargs: object,
-    ) -> BaseSignedDataTypeVar:
-        """
-        Raises:
-            DataError
-        """
-        try:
-            signed = recipient_privkey.decrypt_from_self(encrypted)
-
-        except CryptoError as exc:
-            raise DataError(str(exc)) from exc
-
-        return cls.verify_and_load(
-            signed,
-            author_verify_key=author_verify_key,
-            expected_author=expected_author,
-            expected_timestamp=expected_timestamp,
-            **kwargs,
-        )
 
 
 BaseDataTypeVar = TypeVar("BaseDataTypeVar", bound="BaseData")
@@ -357,22 +161,3 @@ class BaseData(metaclass=DataMeta):
             raise DataError(str(exc)) from exc
 
         return cls.load(raw, **kwargs)
-
-
-# Data class with serializers
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class BaseAPISignedData(BaseSignedData):
-    """Signed and compressed base class for API data"""
-
-    SCHEMA_CLS = BaseSignedDataSchema
-    SERIALIZER_CLS = ZipMsgpackSerializer
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class BaseAPIData(BaseData):
-    """Unsigned and compressed base class for API data"""
-
-    SCHEMA_CLS = BaseSchema
-    SERIALIZER_CLS = ZipMsgpackSerializer
