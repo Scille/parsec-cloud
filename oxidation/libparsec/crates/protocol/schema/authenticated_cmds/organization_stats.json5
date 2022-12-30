@@ -50,25 +50,6 @@
             {
                 "status": "not_found"
             }
-        ],
-        "nested_types": [
-            {
-                "name": "UsersPerProfileDetailItem",
-                "fields": [
-                    {
-                        "name": "profile",
-                        "type": "UserProfile"
-                    },
-                    {
-                        "name": "active",
-                        "type": "Index"
-                    },
-                    {
-                        "name": "revoked",
-                        "type": "Index"
-                    }
-                ]
-            }
         ]
     }
 ]
