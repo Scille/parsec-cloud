@@ -6,9 +6,8 @@ from typing import Dict
 import triopg
 from triopg import UniqueViolationError
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, SequesterServiceID
 from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
-from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
