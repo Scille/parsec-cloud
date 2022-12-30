@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from secrets import token_hex
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Union
 
 import attr
 
@@ -13,13 +13,13 @@ from parsec._parsec import (
     OrganizationConfigRepNotFound,
     OrganizationConfigRepOk,
     OrganizationConfigReq,
+    OrganizationStats,
     OrganizationStatsRep,
     OrganizationStatsRepNotAllowed,
     OrganizationStatsRepNotFound,
     OrganizationStatsRepOk,
     OrganizationStatsReq,
     SequesterVerifyKeyDer,
-    UsersPerProfileDetailItem,
     VerifyKey,
 )
 from parsec.api.data import (
@@ -91,23 +91,13 @@ class Organization:
     user_profile_outsider_allowed: bool
     active_users_limit: int | None
     sequester_authority: SequesterAuthority | None
-    sequester_services_certificates: Tuple[bytes, ...] | None
+    sequester_services_certificates: tuple[bytes, ...] | None
 
     def is_bootstrapped(self) -> bool:
         return self.root_verify_key is not None
 
     def evolve(self, **kwargs: Any) -> Organization:
         return attr.evolve(self, **kwargs)
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class OrganizationStats:
-    data_size: int
-    metadata_size: int
-    users: int
-    active_users: int
-    realms: int
-    users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
 
 
 def generate_bootstrap_token() -> str:
@@ -136,7 +126,7 @@ class BaseOrganizationComponent:
             sequester_authority_certificate: bytes | None = (
                 organization.sequester_authority.certificate
             )
-            sequester_services_certificates: List[bytes] | None = (
+            sequester_services_certificates: list[bytes] | None = (
                 list(organization.sequester_services_certificates)
                 if organization.sequester_services_certificates
                 else []
@@ -436,7 +426,7 @@ class BaseOrganizationComponent:
 
     async def server_stats(
         self, at: DateTime | None = None
-    ) -> Dict[OrganizationID, OrganizationStats]:
+    ) -> dict[OrganizationID, OrganizationStats]:
         """
         Raises: Nothing !
         """

@@ -6,7 +6,7 @@ from unittest.mock import ANY
 import pytest
 import trio
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, OrganizationStats, UsersPerProfileDetailItem
 from parsec.api.protocol import UserID, UserProfile
 from parsec.core import logged_core_factory
 from parsec.core.backend_connection import (
@@ -16,7 +16,7 @@ from parsec.core.backend_connection import (
     BackendNotFoundError,
 )
 from parsec.core.core_events import CoreEvent
-from parsec.core.types import DeviceInfo, OrganizationStats, UserInfo, UsersPerProfileDetailItem
+from parsec.core.types import DeviceInfo, UserInfo
 from tests.common import correct_addr, customize_fixtures, real_clock_timeout, server_factory
 
 
@@ -189,17 +189,14 @@ async def test_revoke_user(running_backend, alice_core, bob, user_cached):
 async def test_get_organization_stats(running_backend, alice_core, bob_core):
     # Administrators have access to stats...
     stats = await alice_core.get_organization_stats()
-    assert stats == OrganizationStats(
-        data_size=ANY,
-        metadata_size=ANY,
-        realms=3,
-        users=3,
-        active_users=3,
-        users_per_profile_detail=(
-            UsersPerProfileDetailItem(active=2, profile=UserProfile.ADMIN, revoked=0),
-            UsersPerProfileDetailItem(active=1, profile=UserProfile.STANDARD, revoked=0),
-            UsersPerProfileDetailItem(active=0, profile=UserProfile.OUTSIDER, revoked=0),
-        ),
+    assert isinstance(stats, OrganizationStats)
+    assert stats.realms == 3
+    assert stats.users == 3
+    assert stats.active_users == 3
+    assert stats.users_per_profile_detail == (
+        UsersPerProfileDetailItem(active=2, profile=UserProfile.ADMIN, revoked=0),
+        UsersPerProfileDetailItem(active=1, profile=UserProfile.STANDARD, revoked=0),
+        UsersPerProfileDetailItem(active=0, profile=UserProfile.OUTSIDER, revoked=0),
     )
 
     # ...but not mere mortals !

@@ -29,6 +29,7 @@ from parsec._parsec import (
     EventsListenRepOkRealmRolesUpdated,
     EventsListenRepOkRealmVlobsUpdated,
     EventsSubscribeRepOk,
+    OrganizationConfig,
     OrganizationConfigRepOk,
     OrganizationConfigRepUnknownStatus,
 )
@@ -46,7 +47,7 @@ from parsec.core.core_events import CoreEvent
 
 if TYPE_CHECKING:
     from parsec.core.fs.userfs.userfs import UserFS
-from parsec.core.types import BackendOrganizationAddr, LocalDevice, OrganizationConfig
+from parsec.core.types import BackendOrganizationAddr, LocalDevice
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery

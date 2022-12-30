@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, Union
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Union
 
 import trio
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, OrganizationStats, UsersPerProfileDetailItem
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.backend.events import BackendEvent
 from parsec.backend.organization import (
@@ -17,9 +17,7 @@ from parsec.backend.organization import (
     OrganizationFirstUserCreationError,
     OrganizationInvalidBootstrapTokenError,
     OrganizationNotFoundError,
-    OrganizationStats,
     SequesterAuthority,
-    UsersPerProfileDetailItem,
 )
 from parsec.backend.user import Device, User, UserError
 from parsec.backend.utils import Unset, UnsetType
@@ -41,7 +39,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._vlob_component: MemoryVlobComponent | None = None
         self._block_component: MemoryBlockComponent | None = None
         self._realm_component: MemoryRealmComponent | None = None
-        self._organizations: Dict[OrganizationID, Organization] = {}
+        self._organizations: dict[OrganizationID, Organization] = {}
         self._send_event = send_event
         self._organization_bootstrap_lock: dict[OrganizationID, trio.Lock] = defaultdict(trio.Lock)
 
@@ -196,7 +194,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
     async def server_stats(
         self, at: DateTime | None = None
-    ) -> Dict[OrganizationID, OrganizationStats]:
+    ) -> dict[OrganizationID, OrganizationStats]:
         at = at or DateTime.now()
         result = {}
         for org_id in self._organizations.keys():
