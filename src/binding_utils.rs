@@ -176,8 +176,32 @@ macro_rules! create_exception {
     };
 }
 
+macro_rules! impl_enum_field {
+    ($enum_class: ident, $([$pyo3_name: literal, $fn_name: ident, $field_value: expr]),+) => {
+        #[pymethods]
+        impl $enum_class {
+            $(
+                #[classattr]
+                #[pyo3(name = $pyo3_name)]
+                fn $fn_name() -> &'static PyObject {
+                    lazy_static::lazy_static! {
+                        static ref VALUE: PyObject = {
+                            Python::with_gil(|py| {
+                                $enum_class($field_value).into_py(py)
+                            })
+                        };
+                    };
+
+                    &VALUE
+                }
+            )*
+        }
+    };
+}
+
 pub(crate) use create_exception;
 pub(crate) use gen_proto;
+pub(crate) use impl_enum_field;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
 pub(crate) use py_object;
