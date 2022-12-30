@@ -26,8 +26,6 @@ from parsec._parsec import PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPay
 from parsec._parsec import PrivateKey as _PrivateKey
 from parsec._parsec import PublicKey as _PublicKey
 from parsec._parsec import SecretKey as _SecretKey
-from parsec._parsec import SequesterPublicKeyDer as _SequesterPublicKeyDer
-from parsec._parsec import SequesterVerifyKeyDer as _SequesterVerifyKeyDer
 from parsec._parsec import SigningKey as _SigningKey
 from parsec._parsec import VerifyKey as _VerifyKey
 from parsec.types import FrozenDict as _FrozenDict
@@ -470,50 +468,6 @@ class SecretKeyField(Field[_SecretKey]):
 
 
 SecretKey = SecretKeyField
-
-
-class SequesterVerifyKeyDerField(Field[_SequesterVerifyKeyDer]):
-    def _serialize(
-        self, value: _SequesterVerifyKeyDer | None, attr: str, obj: object
-    ) -> bytes | None:
-        if value is None:
-            return None
-        assert isinstance(value, _SequesterVerifyKeyDer)
-        return value.dump()
-
-    def _deserialize(
-        self, value: object, attr: str, data: dict[str, object]
-    ) -> _SequesterVerifyKeyDer:
-        if not isinstance(value, bytes):
-            raise ValidationError("Expecting bytes")
-        try:
-            return _SequesterVerifyKeyDer(value)
-        except Exception as exc:
-            raise ValidationError(str(exc)) from exc
-
-
-SequesterVerifyKeyDer = SequesterVerifyKeyDerField
-
-
-class SequesterPublicKeyDerField(Field[_SequesterPublicKeyDer]):
-    def _serialize(self, value: _SequesterPublicKeyDer | None, attr: str, obj: Any) -> bytes | None:
-        if value is None:
-            return None
-        assert isinstance(value, _SequesterPublicKeyDer)
-        return value.dump()
-
-    def _deserialize(
-        self, value: object, attr: str, data: dict[str, object]
-    ) -> _SequesterPublicKeyDer:
-        if not isinstance(value, bytes):
-            raise ValidationError("Expecting bytes")
-        try:
-            return _SequesterPublicKeyDer(value)
-        except Exception as exc:
-            raise ValidationError(str(exc)) from exc
-
-
-SequesterPublicKeyDer = SequesterPublicKeyDerField
 
 
 class PkiEnrollmentSubmitPayloadField(Field[_PkiEnrollmentSubmitPayload]):
