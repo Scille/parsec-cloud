@@ -22,7 +22,7 @@ libparsec_types = { path = "../types", default-features = false }
 libparsec_protocol = { path = "../protocol", default-features = false }
 
 # Used to send HTTP request to the server.
-reqwest = "0.11.12"
+reqwest = "0.11.13"
 # Used to perform operation on URL.
 url = "2.3.1"
 # Use abstract crypto primitive, to allow to sign request.
