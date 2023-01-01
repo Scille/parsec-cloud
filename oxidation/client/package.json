@@ -49,7 +49,7 @@
     "devDependencies": {
         "@capacitor/cli": "4.6.1",
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
-        "@ionic/cli": "^6.20.4",
+        "@ionic/cli": "^6.20.6",
         "@types/jest": "^27.0.2",
         "@types/node": "^18.0.1",
         "@typescript-eslint/eslint-plugin": "^5.6.0",
