@@ -15,14 +15,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "asn1crypto"
-version = "1.5.1"
-description = "Fast ASN.1 parser and serializer with definitions for private keys, public keys, certificates, CRL, OCSP, CMS, PKCS#3, PKCS#7, PKCS#8, PKCS#12, PKCS#5, X.509 and TSP"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "async-exit-stack"
 version = "1.0.1"
 description = "AsyncExitStack backport for Python 3.5+"
@@ -936,9 +928,6 @@ category = "main"
 optional = false
 python-versions = "*"
 
-[package.dependencies]
-asn1crypto = ">=1.5.1"
-
 [[package]]
 name = "outcome"
 version = "1.2.0"
@@ -1126,7 +1115,7 @@ pyobjc-framework-Cocoa = ">=8.5.1"
 
 [[package]]
 name = "pypac"
-version = "0.16.0"
+version = "0.16.1"
 description = "Proxy auto-config and auto-discovery for Python."
 category = "main"
 optional = true
@@ -1825,7 +1814,7 @@ core = ["packaging", "PyQt5", "pyqt5-sip", "qtrio", "qrcode", "fusepy", "winfspy
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9.0"
-content-hash = "3ee9cace550815705b57330150e1cdadfe759dd6c37151f0ac3be52b01322953"
+content-hash = "2e420b765f80d02ce71a5e3f372f4ed97f05a8cc509e12c4039368ac09dc2391"
 
 [metadata.files]
 aiofiles = [
@@ -1835,10 +1824,6 @@ aiofiles = [
 altgraph = [
     {file = "altgraph-0.17.3-py2.py3-none-any.whl", hash = "sha256:c8ac1ca6772207179ed8003ce7687757c04b0b71536f81e2ac5755c6226458fe"},
     {file = "altgraph-0.17.3.tar.gz", hash = "sha256:ad33358114df7c9416cdb8fa1eaa5852166c505118717021c6a8c7c7abbd03dd"},
-]
-asn1crypto = [
-    {file = "asn1crypto-1.5.1-py2.py3-none-any.whl", hash = "sha256:db4e40728b728508912cbb3d44f19ce188f218e9eba635821bb4b68564f8fd67"},
-    {file = "asn1crypto-1.5.1.tar.gz", hash = "sha256:13ae38502be632115abf8a24cbe5f4da52e3b5231990aff31123c805306ccb9c"},
 ]
 async-exit-stack = [
     {file = "async_exit_stack-1.0.1-py3-none-any.whl", hash = "sha256:9b43b17683b3438f428ef3bbec20689f5abbb052aa4b564c643397330adfaa99"},
@@ -2463,7 +2448,7 @@ pyobjc-framework-systemconfiguration = [
     {file = "pyobjc_framework_SystemConfiguration-8.5.1-cp36-abi3-macosx_11_0_universal2.whl", hash = "sha256:4a373c010df56cdf4b620c7f706fb7807a50d60ae12f2547ee0e8dae0616986b"},
 ]
 pypac = [
-    {file = "PyPAC-0.16.0-py2.py3-none-any.whl", hash = "sha256:921630e95e596050844e299d525df030bb39430ced18001f3960409e4e0cb3b1"},
+    {file = "PyPAC-0.16.1-py2.py3-none-any.whl", hash = "sha256:77aee379abb96c59063320c99e8641ce97d4f98f29a1d150242c4a332d9d9f67"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
