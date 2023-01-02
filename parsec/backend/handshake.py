@@ -109,6 +109,7 @@ async def _do_process_authenticated_answer(
 
     context = AuthenticatedClientContext(
         api_version=handshake.backend_api_version,
+        client_api_version=handshake.client_api_version,
         organization_id=organization_id,
         device_id=device_id,
         human_handle=user.human_handle,
@@ -179,6 +180,7 @@ async def _process_invited_answer(
 
     context = InvitedClientContext(
         api_version=handshake.backend_api_version,
+        client_api_version=handshake.client_api_version,
         organization_id=organization_id,
         invitation=invitation,
     )

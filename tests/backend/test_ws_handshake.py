@@ -174,7 +174,7 @@ async def test_api_version_in_logs_on_handshake(backend_asgi_app, backend, alice
             assert ch.client_api_version == API_VERSION
             assert ch.backend_api_version == API_VERSION
 
-        assert f"(client version: {API_VERSION})" in caplog.text
+        assert f"(client/server API version: {API_VERSION}/{API_VERSION})" in caplog.text
 
 
 @pytest.mark.trio
