@@ -367,31 +367,21 @@ async def test_reencrypt_and_finish_check_access_rights(
         await realm_finish_reencryption_maintenance(alice_ws, realm, encryption_revision)
 
     async def _assert_bob_maintenance_access(allowed):
-        if allowed:
-            expected_status = "ok"
-        else:
-            expected_status = "not_allowed"
         rep = await vlob_maintenance_save_reencryption_batch(
             bob_ws, realm, encryption_revision, [], check_rep=False
         )
-        if isinstance(rep, dict):
-            assert rep["status"] == expected_status
+        if allowed:
+            assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepOk)
         else:
-            if allowed:
-                assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepOk)
-            else:
-                assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotAllowed)
+            assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotAllowed)
 
         rep = await realm_finish_reencryption_maintenance(
             bob_ws, realm, encryption_revision, check_rep=False
         )
-        if isinstance(rep, dict):
-            assert rep["status"] == expected_status
+        if allowed:
+            assert isinstance(rep, RealmFinishReencryptionMaintenanceRepOk)
         else:
-            if allowed:
-                assert isinstance(rep, RealmFinishReencryptionMaintenanceRepOk)
-            else:
-                assert isinstance(rep, RealmFinishReencryptionMaintenanceRepNotAllowed)
+            assert isinstance(rep, RealmFinishReencryptionMaintenanceRepNotAllowed)
 
     # User not part of the realm
     await _ready_to_finish(bob_in_workspace=False)

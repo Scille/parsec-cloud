@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from functools import partial
-from typing import Callable, Optional
+from typing import Callable
 
 import trio
 
@@ -112,7 +112,7 @@ from tests.common import BaseRpcApiClient, real_clock_timeout
 
 
 def craft_http_request(
-    target: str, method: str, headers: dict, body: Optional[bytes], protocol: str = "1.0"
+    target: str, method: str, headers: dict, body: bytes | None, protocol: str = "1.0"
 ) -> bytes:
     if body is None:
         body = b""
@@ -144,11 +144,11 @@ def parse_http_response(raw: bytes):
 
 async def do_http_request(
     stream: trio.abc.Stream,
-    target: Optional[str] = None,
+    target: str | None = None,
     method: str = "GET",
-    req: Optional[bytes] = None,
-    headers: Optional[dict] = None,
-    body: Optional[bytes] = None,
+    req: bytes | None = None,
+    headers: dict | None = None,
+    body: bytes | None = None,
 ):
     if req is None:
         assert target is not None
@@ -215,59 +215,56 @@ class CmdSock:
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
-            if isinstance(rep, dict):
-                assert rep["status"] == "ok"  # Legacy rep schemas
-            else:
-                assert isinstance(
-                    rep,
-                    (
-                        AuthenticatedPingRepOk,
-                        BlockCreateRepOk,
-                        BlockReadRepOk,
-                        DeviceCreateRepOk,
-                        HumanFindRepOk,
-                        Invite1ClaimerWaitPeerRepOk,
-                        Invite1GreeterWaitPeerRepOk,
-                        Invite2aClaimerSendHashedNonceRepOk,
-                        Invite2aGreeterGetHashedNonceRepOk,
-                        Invite2bClaimerSendNonceRepOk,
-                        Invite2bGreeterSendNonceRepOk,
-                        Invite3aClaimerSignifyTrustRepOk,
-                        Invite3aGreeterWaitPeerTrustRepOk,
-                        Invite3bClaimerWaitPeerTrustRepOk,
-                        Invite3bGreeterSignifyTrustRepOk,
-                        Invite4ClaimerCommunicateRepOk,
-                        Invite4GreeterCommunicateRepOk,
-                        InviteDeleteRepOk,
-                        InviteInfoRepOk,
-                        InviteNewRepOk,
-                        MessageGetRepOk,
-                        OrganizationBootstrapRepOk,
-                        OrganizationConfigRepOk,
-                        OrganizationStatsRepOk,
-                        PkiEnrollmentAcceptRepOk,
-                        PkiEnrollmentInfoRepOk,
-                        PkiEnrollmentListRep,
-                        PkiEnrollmentRejectRep,
-                        RealmCreateRepOk,
-                        RealmFinishReencryptionMaintenanceRepOk,
-                        RealmGetRoleCertificatesRepOk,
-                        RealmStartReencryptionMaintenanceRepOk,
-                        RealmStatsRepOk,
-                        RealmStatusRepOk,
-                        RealmUpdateRolesRepOk,
-                        UserCreateRepOk,
-                        UserGetRepOk,
-                        UserRevokeRepOk,
-                        VlobCreateRepOk,
-                        VlobListVersionsRepOk,
-                        VlobMaintenanceGetReencryptionBatchRepOk,
-                        VlobMaintenanceSaveReencryptionBatchRepOk,
-                        VlobPollChangesRepOk,
-                        VlobReadRepOk,
-                        VlobUpdateRepOk,
-                    ),
-                )  # Rust-based rep schemas
+            assert isinstance(
+                rep,
+                (
+                    AuthenticatedPingRepOk,
+                    BlockCreateRepOk,
+                    BlockReadRepOk,
+                    DeviceCreateRepOk,
+                    HumanFindRepOk,
+                    Invite1ClaimerWaitPeerRepOk,
+                    Invite1GreeterWaitPeerRepOk,
+                    Invite2aClaimerSendHashedNonceRepOk,
+                    Invite2aGreeterGetHashedNonceRepOk,
+                    Invite2bClaimerSendNonceRepOk,
+                    Invite2bGreeterSendNonceRepOk,
+                    Invite3aClaimerSignifyTrustRepOk,
+                    Invite3aGreeterWaitPeerTrustRepOk,
+                    Invite3bClaimerWaitPeerTrustRepOk,
+                    Invite3bGreeterSignifyTrustRepOk,
+                    Invite4ClaimerCommunicateRepOk,
+                    Invite4GreeterCommunicateRepOk,
+                    InviteDeleteRepOk,
+                    InviteInfoRepOk,
+                    InviteNewRepOk,
+                    MessageGetRepOk,
+                    OrganizationBootstrapRepOk,
+                    OrganizationConfigRepOk,
+                    OrganizationStatsRepOk,
+                    PkiEnrollmentAcceptRepOk,
+                    PkiEnrollmentInfoRepOk,
+                    PkiEnrollmentListRep,
+                    PkiEnrollmentRejectRep,
+                    RealmCreateRepOk,
+                    RealmFinishReencryptionMaintenanceRepOk,
+                    RealmGetRoleCertificatesRepOk,
+                    RealmStartReencryptionMaintenanceRepOk,
+                    RealmStatsRepOk,
+                    RealmStatusRepOk,
+                    RealmUpdateRolesRepOk,
+                    UserCreateRepOk,
+                    UserGetRepOk,
+                    UserRevokeRepOk,
+                    VlobCreateRepOk,
+                    VlobListVersionsRepOk,
+                    VlobMaintenanceGetReencryptionBatchRepOk,
+                    VlobMaintenanceSaveReencryptionBatchRepOk,
+                    VlobPollChangesRepOk,
+                    VlobReadRepOk,
+                    VlobUpdateRepOk,
+                ),
+            )  # Rust-based rep schemas
 
         return rep
 

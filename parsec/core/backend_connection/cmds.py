@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Awaitable, List, Tuple, Union, cast
+from typing import Any, Awaitable, Union, cast
 
 from parsec._parsec import (
     AuthenticatedPingRep,
@@ -76,7 +76,6 @@ from parsec._parsec import (
     PkiEnrollmentSubmitRep,
     PkiEnrollmentSubmitRepUnknownStatus,
     ProtocolError,
-    ProtocolErrorFields,
     RealmCreateRep,
     RealmCreateRepBadTimestamp,
     RealmCreateRepUnknownStatus,
@@ -174,7 +173,7 @@ from parsec.api.protocol import (
     vlob_read_serializer,
     vlob_update_serializer,
 )
-from parsec.api.protocol.base import ApiCommandSerializer, CmdSerializer
+from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.api.transport import Transport, TransportError
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
@@ -240,7 +239,7 @@ COMMAND_RETURN_TYPE = Union[
 
 
 async def _send_cmd(
-    transport: Transport, serializer: ApiCommandSerializer | CmdSerializer, **req: object
+    transport: Transport, serializer: ApiCommandSerializer, **req: object
 ) -> COMMAND_RETURN_TYPE:
     """
     Raises:
@@ -277,161 +276,84 @@ async def _send_cmd(
         transport.logger.exception("Invalid response data", cmd=cmd, error=exc)
         raise BackendProtocolError("Invalid response data") from exc
 
-    # Legacy
-    if isinstance(rep, dict):
-        if rep["status"] == "invalid_msg_format":
+    if isinstance(
+        rep,
+        (
+            AuthenticatedPingRepUnknownStatus,
+            BlockCreateRepUnknownStatus,
+            BlockReadRepUnknownStatus,
+            DeviceCreateRepUnknownStatus,
+            EventsListenRepUnknownStatus,
+            EventsSubscribeRepUnknownStatus,
+            HumanFindRepUnknownStatus,
+            Invite1ClaimerWaitPeerRepUnknownStatus,
+            Invite1GreeterWaitPeerRepUnknownStatus,
+            Invite2aClaimerSendHashedNonceRepUnknownStatus,
+            Invite2aGreeterGetHashedNonceRepUnknownStatus,
+            Invite2bClaimerSendNonceRepUnknownStatus,
+            Invite2bGreeterSendNonceRepUnknownStatus,
+            Invite3aClaimerSignifyTrustRepUnknownStatus,
+            Invite3aGreeterWaitPeerTrustRepUnknownStatus,
+            Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+            Invite3bGreeterSignifyTrustRepUnknownStatus,
+            Invite4ClaimerCommunicateRepUnknownStatus,
+            Invite4GreeterCommunicateRepUnknownStatus,
+            InviteDeleteRepUnknownStatus,
+            InvitedPingRepUnknownStatus,
+            InviteInfoRepUnknownStatus,
+            InviteListRepUnknownStatus,
+            InviteNewRepUnknownStatus,
+            MessageGetRepUnknownStatus,
+            OrganizationBootstrapRepUnknownStatus,
+            OrganizationConfigRepUnknownStatus,
+            OrganizationStatsRepUnknownStatus,
+            PkiEnrollmentAcceptRepUnknownStatus,
+            PkiEnrollmentInfoRepUnknownStatus,
+            PkiEnrollmentListRepUnknownStatus,
+            PkiEnrollmentRejectRepUnknownStatus,
+            PkiEnrollmentSubmitRepUnknownStatus,
+            RealmCreateRepUnknownStatus,
+            RealmFinishReencryptionMaintenanceRepUnknownStatus,
+            RealmGetRoleCertificatesRepUnknownStatus,
+            RealmStartReencryptionMaintenanceRepUnknownStatus,
+            RealmStatsRepUnknownStatus,
+            RealmStatusRepUnknownStatus,
+            RealmUpdateRolesRepUnknownStatus,
+            UserCreateRepUnknownStatus,
+            UserGetRepUnknownStatus,
+            UserRevokeRepUnknownStatus,
+            VlobCreateRepUnknownStatus,
+            VlobListVersionsRepUnknownStatus,
+            VlobMaintenanceGetReencryptionBatchRepUnknownStatus,
+            VlobMaintenanceSaveReencryptionBatchRepUnknownStatus,
+            VlobPollChangesRepUnknownStatus,
+            VlobReadRepUnknownStatus,
+            VlobUpdateRepUnknownStatus,
+        ),
+    ):
+        if rep.status == "invalid_msg_format":
             transport.logger.error("Invalid request data according to backend", cmd=cmd, rep=rep)
             raise BackendProtocolError("Invalid request data according to backend")
 
-        if rep["status"] == "bad_timestamp":
-            raise BackendOutOfBallparkError(rep)
-
         # Backward compatibility with older backends (<= v2.3)
-        if rep["status"] == "invalid_certification" and "timestamp" in rep["reason"]:
+        if (
+            rep.status == "invalid_certification"
+            and rep.reason is not None
+            and "timestamp" in rep.reason
+        ):
             raise BackendOutOfBallparkError(rep)
-
-    # New shinny stuff
     elif isinstance(
         rep,
         (
-            AuthenticatedPingRep,
-            BlockCreateRep,
-            BlockReadRep,
-            DeviceCreateRep,
-            EventsListenRep,
-            EventsSubscribeRep,
-            HumanFindRep,
-            Invite1ClaimerWaitPeerRep,
-            Invite1GreeterWaitPeerRep,
-            Invite2aClaimerSendHashedNonceRep,
-            Invite2aGreeterGetHashedNonceRep,
-            Invite2aGreeterGetHashedNonceRep,
-            Invite2bClaimerSendNonceRep,
-            Invite2bGreeterSendNonceRep,
-            Invite3aClaimerSignifyTrustRep,
-            Invite3aGreeterWaitPeerTrustRep,
-            Invite3bClaimerWaitPeerTrustRep,
-            Invite3bGreeterSignifyTrustRep,
-            Invite4ClaimerCommunicateRep,
-            Invite4GreeterCommunicateRep,
-            InviteDeleteRep,
-            InvitedPingRep,
-            InviteInfoRep,
-            InviteListRep,
-            InviteNewRep,
-            MessageGetRep,
-            OrganizationBootstrapRep,
-            OrganizationConfigRep,
-            OrganizationStatsRep,
-            PkiEnrollmentAcceptRep,
-            PkiEnrollmentInfoRep,
-            PkiEnrollmentInfoRep,
-            PkiEnrollmentListRep,
-            PkiEnrollmentRejectRep,
-            PkiEnrollmentSubmitRep,
-            RealmCreateRep,
-            RealmFinishReencryptionMaintenanceRep,
-            RealmFinishReencryptionMaintenanceRep,
-            RealmGetRoleCertificatesRep,
-            RealmStartReencryptionMaintenanceRep,
-            RealmStatsRep,
-            RealmStatusRep,
-            RealmUpdateRolesRep,
-            UserCreateRep,
-            UserGetRep,
-            UserRevokeRep,
-            VlobCreateRep,
-            VlobListVersionsRep,
-            VlobMaintenanceGetReencryptionBatchRep,
-            VlobMaintenanceSaveReencryptionBatchRep,
-            VlobPollChangesRep,
-            VlobReadRep,
-            VlobUpdateRep,
+            OrganizationBootstrapRepBadTimestamp,
+            RealmCreateRepBadTimestamp,
+            RealmUpdateRolesRepBadTimestamp,
+            RealmStartReencryptionMaintenanceRepBadTimestamp,
+            VlobCreateRepBadTimestamp,
+            VlobUpdateRepBadTimestamp,
         ),
     ):
-        if isinstance(
-            rep,
-            (
-                AuthenticatedPingRepUnknownStatus,
-                BlockCreateRepUnknownStatus,
-                BlockReadRepUnknownStatus,
-                DeviceCreateRepUnknownStatus,
-                EventsListenRepUnknownStatus,
-                EventsSubscribeRepUnknownStatus,
-                HumanFindRepUnknownStatus,
-                Invite1ClaimerWaitPeerRepUnknownStatus,
-                Invite1GreeterWaitPeerRepUnknownStatus,
-                Invite2aClaimerSendHashedNonceRepUnknownStatus,
-                Invite2aGreeterGetHashedNonceRepUnknownStatus,
-                Invite2bClaimerSendNonceRepUnknownStatus,
-                Invite2bGreeterSendNonceRepUnknownStatus,
-                Invite3aClaimerSignifyTrustRepUnknownStatus,
-                Invite3aGreeterWaitPeerTrustRepUnknownStatus,
-                Invite3bClaimerWaitPeerTrustRepUnknownStatus,
-                Invite3bGreeterSignifyTrustRepUnknownStatus,
-                Invite4ClaimerCommunicateRepUnknownStatus,
-                Invite4GreeterCommunicateRepUnknownStatus,
-                InviteDeleteRepUnknownStatus,
-                InvitedPingRepUnknownStatus,
-                InviteInfoRepUnknownStatus,
-                InviteListRepUnknownStatus,
-                InviteNewRepUnknownStatus,
-                MessageGetRepUnknownStatus,
-                OrganizationBootstrapRepUnknownStatus,
-                OrganizationConfigRepUnknownStatus,
-                OrganizationStatsRepUnknownStatus,
-                PkiEnrollmentAcceptRepUnknownStatus,
-                PkiEnrollmentInfoRepUnknownStatus,
-                PkiEnrollmentListRepUnknownStatus,
-                PkiEnrollmentRejectRepUnknownStatus,
-                PkiEnrollmentSubmitRepUnknownStatus,
-                RealmCreateRepUnknownStatus,
-                RealmFinishReencryptionMaintenanceRepUnknownStatus,
-                RealmGetRoleCertificatesRepUnknownStatus,
-                RealmStartReencryptionMaintenanceRepUnknownStatus,
-                RealmStatsRepUnknownStatus,
-                RealmStatusRepUnknownStatus,
-                RealmUpdateRolesRepUnknownStatus,
-                UserCreateRepUnknownStatus,
-                UserGetRepUnknownStatus,
-                UserRevokeRepUnknownStatus,
-                VlobCreateRepUnknownStatus,
-                VlobListVersionsRepUnknownStatus,
-                VlobMaintenanceGetReencryptionBatchRepUnknownStatus,
-                VlobMaintenanceSaveReencryptionBatchRepUnknownStatus,
-                VlobPollChangesRepUnknownStatus,
-                VlobReadRepUnknownStatus,
-                VlobUpdateRepUnknownStatus,
-            ),
-        ):
-            if rep.status == "invalid_msg_format":
-                transport.logger.error(
-                    "Invalid request data according to backend", cmd=cmd, rep=rep
-                )
-                raise BackendProtocolError("Invalid request data according to backend")
-
-            # Backward compatibility with older backends (<= v2.3)
-            if (
-                rep.status == "invalid_certification"
-                and rep.reason is not None
-                and "timestamp" in rep.reason
-            ):
-                raise BackendOutOfBallparkError(rep)
-        elif isinstance(
-            rep,
-            (
-                OrganizationBootstrapRepBadTimestamp,
-                RealmCreateRepBadTimestamp,
-                RealmUpdateRolesRepBadTimestamp,
-                RealmStartReencryptionMaintenanceRepBadTimestamp,
-                VlobCreateRepBadTimestamp,
-                VlobUpdateRepBadTimestamp,
-            ),
-        ):
-            raise BackendOutOfBallparkError(rep)
-
-    else:
-        raise ProtocolError(ProtocolErrorFields.NotHandled())
+        raise BackendOutOfBallparkError(rep)
 
     return rep
 
@@ -619,7 +541,7 @@ async def vlob_maintenance_save_reencryption_batch(
     transport: Transport,
     realm_id: RealmID,
     encryption_revision: int,
-    batch: List[Tuple[VlobID, int, bytes]],
+    batch: list[tuple[VlobID, int, bytes]],
 ) -> VlobMaintenanceSaveReencryptionBatchRep:
     return cast(
         VlobMaintenanceSaveReencryptionBatchRep,

@@ -18,7 +18,7 @@ from parsec._parsec import (
     VlobUpdateRep,
     VlobUpdateReq,
 )
-from parsec.api.protocol.base import ApiCommandSerializer, BaseRepSchema
+from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.serde import fields
 
 __all__ = (
@@ -35,17 +35,6 @@ __all__ = (
 
 
 VlobIDField = fields.uuid_based_field_factory(VlobID)
-
-
-class SequesterInconsistencyRepSchema(BaseRepSchema):
-    """
-    This schema has been added to API version 2.8/3.2 (Parsec v2.11.0).
-    """
-
-    status = fields.CheckedConstant("sequester_inconsistency", required=True)
-    sequester_authority_certificate = fields.Bytes(required=True, allow_none=False)
-    sequester_services_certificates = fields.List(fields.Bytes(), required=True, allow_none=False)
-
 
 vlob_create_serializer = ApiCommandSerializer(VlobCreateReq, VlobCreateRep)
 vlob_read_serializer = ApiCommandSerializer(VlobReadReq, VlobReadRep)
