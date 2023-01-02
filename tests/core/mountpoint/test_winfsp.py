@@ -271,6 +271,10 @@ def test_get_file_entry_info(mountpoint_service):
     assert path.read_bytes() == b"Praise the sun!"
 
     file_entry_info_path = path.parent / f"{path.name}{ENTRY_INFO_EXTENSION}"
+
+    entry_stats = os.stat(file_entry_info_path)
+    assert entry_stats.st_size == 1024
+
     file_entry_info = json.loads(file_entry_info_path.read_bytes())
 
     assert file_entry_info["id"] == ANY
@@ -284,8 +288,11 @@ def test_get_file_entry_info(mountpoint_service):
     assert file_entry_info["confinement_point"] is None
 
     dir_entry_info_path = path.parent.parent / f"{path.parent.name}{ENTRY_INFO_EXTENSION}"
-    dir_entry_info = json.loads(dir_entry_info_path.read_bytes())
 
+    entry_stats = os.stat(file_entry_info_path)
+    assert entry_stats.st_size == 1024
+
+    dir_entry_info = json.loads(dir_entry_info_path.read_bytes())
     assert dir_entry_info["id"] == ANY
     assert dir_entry_info["base_version"] == 0
     assert dir_entry_info["created"] == ANY

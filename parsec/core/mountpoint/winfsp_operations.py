@@ -52,11 +52,15 @@ def get_entry_info_initial_path(path: FsPath) -> FsPath:
     return path.parent / entry_name
 
 
-def update_stats_for_entry_info(stats: dict[str, Any]) -> dict[str, Any]:
-    if stats["type"] == "folder":
-        stats["type"] = "file"
-        stats["size"] = 0
-        del stats["children"]
+def get_stats_for_entry_info() -> dict[str, Any]:
+    stats: dict[str, Any] = {
+        "type": "file",
+        # Arbitrary non-zero size
+        "size": 1024,
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
+        "id": EntryID.new(),
+    }
     return stats
 
 
@@ -306,9 +310,11 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
         is_entry_info = is_entry_info_path(parsec_file_name)
         if is_entry_info:
             parsec_file_name = get_entry_info_initial_path(parsec_file_name)
-        stat = self.fs_access.entry_info(parsec_file_name)
-        if is_entry_info:
-            stat = update_stats_for_entry_info(stat)
+        stat = (
+            self.fs_access.entry_info(parsec_file_name)
+            if not is_entry_info
+            else get_stats_for_entry_info()
+        )
         return (
             stat_to_file_attributes(stat),
             self._security_descriptor.handle,
@@ -388,9 +394,11 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
     @handle_error
     def get_file_info(self, file_context: FileContext) -> dict[str, Any]:
         assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
-        stat = self.fs_access.entry_info(file_context.path)
-        if isinstance(file_context, EntryInfo):
-            stat = update_stats_for_entry_info(stat)
+        stat = (
+            self.fs_access.entry_info(file_context.path)
+            if not isinstance(file_context, EntryInfo)
+            else get_stats_for_entry_info()
+        )
         return stat_to_winfsp_attributes(stat)
 
     @handle_error
