@@ -24,9 +24,9 @@ BASE_CMD = "git log origin/master --exit-code --".split()
 IGNORED_BRANCHES_PATTERN = r"(master|[0-9]+\.[0-9]+)"
 
 
-def check_newsfragment(fragment) -> Optional[bool]:
+def check_newsfragment(fragment: Path) -> Optional[bool]:
     fragment_name = fragment.name
-    cmd_args = [*BASE_CMD, fragment]
+    cmd_args = [*BASE_CMD, str(fragment)]
     ret = run(cmd_args, capture_output=True)
     if ret.returncode == 0:
         print(f"[{fragment_name}] Found new newsfragment")
@@ -34,17 +34,20 @@ def check_newsfragment(fragment) -> Optional[bool]:
         id, *_ = fragment_name.split(".")
         # For more information on github api for issues:
         # see https://docs.github.com/en/rest/issues/issues#get-an-issue
+        url = f"https://api.github.com/repos/Scille/parsec-cloud/issues/{id}"
         req = Request(
             method="GET",
-            url=f"https://api.github.com/repos/Scille/parsec-cloud/issues/{id}",
+            url=url,
             headers={"Accept": "application/vnd.github.v3+json"},
         )
         try:
-            ret = urlopen(req)
-        except HTTPError:
-            print(f"[{fragment_name}] fragment ID doesn't correspond to an issue !")
+            response = urlopen(req)
+        except HTTPError as exc:
+            print(
+                f"[{fragment_name}] fragment ID doesn't correspond to an issue ! (On <{url}> HTTP error {exc.code} {exc.reason})"
+            )
         else:
-            data = json.loads(ret.read())
+            data = json.loads(response.read())
             print(f"[{fragment_name}] issue#{id} => {data}")
             if "pull_request" in data:
                 print(
