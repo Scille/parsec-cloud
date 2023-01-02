@@ -35,11 +35,6 @@ from parsec.core.types.manifest import manifest_from_remote as local_manifest_fr
 from parsec.core.types.manifest import (
     manifest_from_remote_with_local_context as local_manifest_from_remote_with_local_context,
 )
-from parsec.core.types.organizations import (
-    OrganizationConfig,
-    OrganizationStats,
-    UsersPerProfileDetailItem,
-)
 
 FileDescriptor = NewType("FileDescriptor", int)
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
@@ -84,8 +79,4 @@ __all__ = (
     "local_manifest_from_remote",
     "local_manifest_from_remote_with_local_context",
     "AnyLocalManifest",
-    # organizations
-    "OrganizationStats",
-    "UsersPerProfileDetailItem",
-    "OrganizationConfig",
 )

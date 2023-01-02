@@ -4,18 +4,9 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from parsec._parsec import HumanHandle, UserID, UserProfile
+from parsec._parsec import HumanHandle, UserID
 
 # Users
-class UsersPerProfileDetailItem:
-    def __init__(self, profile: UserProfile, active: int, revoked: int) -> None: ...
-    @property
-    def profile(self) -> UserProfile: ...
-    @property
-    def active(self) -> int: ...
-    @property
-    def revoked(self) -> int: ...
-
 class UserGetReq:
     def __init__(self, user_id: UserID) -> None: ...
     def dump(self) -> bytes: ...

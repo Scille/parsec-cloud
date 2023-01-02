@@ -4,7 +4,9 @@ mod invite;
 mod local_manifest;
 mod manifest;
 mod message;
+mod organization;
 mod pki;
+mod user;
 
 pub(crate) use certif::*;
 pub(crate) use error::*;
@@ -12,7 +14,9 @@ pub(crate) use invite::*;
 pub(crate) use local_manifest::*;
 pub(crate) use manifest::*;
 pub(crate) use message::*;
+pub(crate) use organization::*;
 pub(crate) use pki::*;
+pub(crate) use user::*;
 
 use pyo3::{types::PyModule, wrap_pyfunction, PyResult, Python};
 
@@ -66,9 +70,16 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<SharingRevokedMessageContent>()?;
     m.add_class::<PingMessageContent>()?;
 
+    // Organization
+    m.add_class::<OrganizationConfig>()?;
+    m.add_class::<OrganizationStats>()?;
+
     // Pki
     m.add_class::<PkiEnrollmentAnswerPayload>()?;
     m.add_class::<PkiEnrollmentSubmitPayload>()?;
+
+    // User
+    m.add_class::<UsersPerProfileDetailItem>()?;
 
     Ok(())
 }

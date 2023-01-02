@@ -11,6 +11,7 @@ from parsec._parsec import (
     ClientType,
     EventsListenRepOkRealmRolesUpdated,
     EventsListenRepOkRealmVlobsUpdated,
+    OrganizationConfig,
     RealmID,
 )
 from parsec.api.data import EntryName
@@ -24,7 +25,6 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.userfs.userfs import UserFS
-from parsec.core.types import OrganizationConfig
 from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
 

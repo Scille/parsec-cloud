@@ -5,6 +5,7 @@ use libparsec_types::{Maybe, UserProfile};
 use rstest::rstest;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_types::UsersPerProfileDetailItem;
 
 #[rstest]
 fn serde_organization_stats_req() {
@@ -52,7 +53,7 @@ fn serde_organization_stats_req() {
         realms: 1,
         users: 1,
         active_users: 1,
-        users_per_profile_detail: vec![authenticated_cmds::organization_stats::UsersPerProfileDetailItem {
+        users_per_profile_detail: vec![UsersPerProfileDetailItem {
             profile: UserProfile::Admin,
             active: 1,
             revoked: 0,

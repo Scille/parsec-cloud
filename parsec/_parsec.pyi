@@ -105,6 +105,7 @@ from parsec._parsec_pyi.message import (
     SharingRevokedMessageContent,
 )
 from parsec._parsec_pyi.misc import ApiVersion
+from parsec._parsec_pyi.organization import OrganizationConfig, OrganizationStats
 from parsec._parsec_pyi.pki import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec._parsec_pyi.protocol import (
     # Cmd
@@ -424,7 +425,6 @@ from parsec._parsec_pyi.protocol import (
     UserRevokeRepOk,
     UserRevokeRepUnknownStatus,
     UserRevokeReq,
-    UsersPerProfileDetailItem,
     VlobCreateRep,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
@@ -504,6 +504,7 @@ from parsec._parsec_pyi.trustchain import (
     TrustchainError,
     TrustchainErrorException,
 )
+from parsec._parsec_pyi.user import UsersPerProfileDetailItem
 
 __all__ = [
     "ApiVersion",
@@ -596,9 +597,14 @@ __all__ = [
     "SharingReencryptedMessageContent",
     "SharingRevokedMessageContent",
     "PingMessageContent",
+    # Organization
+    "OrganizationConfig",
+    "OrganizationStats",
     # Pki
     "PkiEnrollmentAnswerPayload",
     "PkiEnrollmentSubmitPayload",
+    # User
+    "UsersPerProfileDetailItem",
     # Time
     "DateTime",
     "LocalDateTime",
@@ -778,7 +784,6 @@ __all__ = [
     "OrganizationConfigRepOk",
     "OrganizationConfigRepNotFound",
     "OrganizationConfigRepUnknownStatus",
-    "UsersPerProfileDetailItem",
     # Pki commands
     "PkiEnrollmentAcceptRep",
     "PkiEnrollmentAcceptRepActiveUsersLimitReached",

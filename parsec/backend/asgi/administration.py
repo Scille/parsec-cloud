@@ -4,12 +4,12 @@ from __future__ import annotations
 import csv
 from functools import wraps
 from io import StringIO
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, NoReturn, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, NoReturn, TypeVar
 
 from quart import Blueprint, Response, current_app, g, jsonify, make_response, request
 from typing_extensions import ParamSpec
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, OrganizationStats
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.api.rest import (
     organization_config_rep_serializer,
@@ -22,7 +22,6 @@ from parsec.api.rest import (
 from parsec.backend.organization import (
     OrganizationAlreadyExistsError,
     OrganizationNotFoundError,
-    OrganizationStats,
     generate_bootstrap_token,
 )
 from parsec.serde import SerdePackingError, SerdeValidationError
@@ -40,7 +39,7 @@ CONTENT_TYPE_JSON = "application/json"
 administration_bp = Blueprint("administration_api", __name__)
 
 
-def _convert_server_stats_results_as_csv(stats: Dict[OrganizationID, OrganizationStats]) -> str:
+def _convert_server_stats_results_as_csv(stats: dict[OrganizationID, OrganizationStats]) -> str:
     # Use `newline=""` to let the CSV writer handles the newlines
     with StringIO(newline="") as memory_file:
         writer = csv.writer(memory_file)
@@ -61,7 +60,7 @@ def _convert_server_stats_results_as_csv(stats: Dict[OrganizationID, Organizatio
             ]
         )
 
-        def _find_profile_counts(profile: UserProfile) -> Tuple[int, int]:
+        def _find_profile_counts(profile: UserProfile) -> tuple[int, int]:
             detail = next(x for x in org_stats.users_per_profile_detail if x.profile == profile)
             return (detail.active, detail.revoked)
 

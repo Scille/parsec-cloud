@@ -2,12 +2,18 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import triopg
 from triopg import UniqueViolationError
 
-from parsec._parsec import DateTime, SequesterVerifyKeyDer, VerifyKey
+from parsec._parsec import (
+    DateTime,
+    OrganizationStats,
+    SequesterVerifyKeyDer,
+    UsersPerProfileDetailItem,
+    VerifyKey,
+)
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.backend.events import BackendEvent
 from parsec.backend.organization import (
@@ -19,9 +25,7 @@ from parsec.backend.organization import (
     OrganizationFirstUserCreationError,
     OrganizationInvalidBootstrapTokenError,
     OrganizationNotFoundError,
-    OrganizationStats,
     SequesterAuthority,
-    UsersPerProfileDetailItem,
 )
 from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import q_create_user
@@ -390,7 +394,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def server_stats(
         self, at: DateTime | None = None
-    ) -> Dict[OrganizationID, OrganizationStats]:
+    ) -> dict[OrganizationID, OrganizationStats]:
         at = at or DateTime.now()
         results = {}
 

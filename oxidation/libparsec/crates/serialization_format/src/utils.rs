@@ -64,6 +64,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "UserID" => "libparsec_types::UserID",
                 "RealmID" => "libparsec_types::RealmID",
                 "VlobID" => "libparsec_types::VlobID",
+                "EnrollmentID" => "libparsec_types::EnrollmentID",
                 "SequesterServiceID" => "libparsec_types::SequesterServiceID",
                 "DeviceLabel" => "libparsec_types::DeviceLabel",
                 "HumanHandle" => "libparsec_types::HumanHandle",
@@ -82,7 +83,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "UserManifest" => "libparsec_types::UserManifest",
                 "Chunk" => "libparsec_client_types::Chunk",
                 "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
-                "EnrollmentID" => "libparsec_types::EnrollmentID",
+                "UsersPerProfileDetailItem" => "libparsec_types::UsersPerProfileDetailItem",
                 // Used only in protocol
                 "IntegerBetween1And100" => "crate::IntegerBetween1And100",
                 ident if types.get(ident).is_some() => {

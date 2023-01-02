@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from PyQt5.QtWidgets import QWidget
 
+from parsec._parsec import OrganizationConfig, OrganizationStats
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.core.gui import desktop, file_size
 from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui.lang import translate
 from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.organization_info_widget import Ui_OrganizationInfoWidget
-from parsec.core.types import OrganizationConfig, OrganizationStats
 
 
 class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):

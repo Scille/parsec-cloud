@@ -22,6 +22,8 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepOk,
+    OrganizationConfig,
+    OrganizationStats,
     OrganizationStatsRepOk,
     Regex,
     UserRevokeRepOk,
@@ -64,14 +66,7 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerNotFoundError,
 )
 from parsec.core.sync_monitor import monitor_sync
-from parsec.core.types import (
-    BackendInvitationAddr,
-    DeviceInfo,
-    LocalDevice,
-    OrganizationConfig,
-    OrganizationStats,
-    UserInfo,
-)
+from parsec.core.types import BackendInvitationAddr, DeviceInfo, LocalDevice, UserInfo
 from parsec.event_bus import EventBus
 
 logger = get_logger()
