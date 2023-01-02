@@ -159,6 +159,8 @@ async def test_api_version_in_logs_on_handshake(backend_asgi_app, backend, alice
         invitation_type=InvitationType.USER,
         token=invitation.token,
     )
+    client_api_version = ApiVersion(3, 99)
+    ch.SUPPORTED_API_VERSIONS = [client_api_version]
     client = backend_asgi_app.test_client()
     with caplog.at_level(logging.INFO):
         async with client.websocket("/ws") as ws:
@@ -171,10 +173,10 @@ async def test_api_version_in_logs_on_handshake(backend_asgi_app, backend, alice
             ch.process_result_req(result_req)
 
             # Sanity checks
-            assert ch.client_api_version == API_VERSION
+            assert ch.client_api_version == client_api_version
             assert ch.backend_api_version == API_VERSION
 
-        assert f"(client/server API version: {API_VERSION}/{API_VERSION})" in caplog.text
+        assert f"(client/server API version: {client_api_version}/{API_VERSION})" in caplog.text
 
 
 @pytest.mark.trio

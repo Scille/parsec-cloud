@@ -61,15 +61,20 @@ class SSEEventSink:
 
 
 class AuthenticatedRpcApiClient(BaseRpcApiClient):
+    API_VERSION = API_VERSION
+
     def __init__(self, client: TestClientProtocol, device: LocalDevice):
         self.client = client
         self.device = device
-        self.base_headers = Headers(
+
+    @property
+    def base_headers(self):
+        return Headers(
             {
                 "Content-Type": "application/msgpack",
-                "Api-Version": str(API_VERSION),
+                "Api-Version": str(self.API_VERSION),
                 "Authorization": "PARSEC-SIGN-ED25519",
-                "Author": b64encode(device.device_id.str.encode("utf8")),
+                "Author": b64encode(self.device.device_id.str.encode("utf8")),
             }
         )
 
@@ -158,13 +163,18 @@ class AuthenticatedRpcApiClient(BaseRpcApiClient):
 
 
 class AnonymousRpcApiClient(BaseRpcApiClient):
+    API_VERSION = API_VERSION
+
     def __init__(self, organization_id: OrganizationID, client: TestClientProtocol):
         self.organization_id = organization_id
         self.client = client
-        self.base_headers = Headers(
+
+    @property
+    def base_headers(self):
+        return Headers(
             {
                 "Content-Type": "application/msgpack",
-                "Api-Version": str(API_VERSION),
+                "Api-Version": str(self.API_VERSION),
             }
         )
 

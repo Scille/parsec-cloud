@@ -223,13 +223,22 @@ async def test_handshake(
 
 @pytest.mark.trio
 async def test_client_version_in_logs(
-    alice_rpc: AuthenticatedRpcApiClient, anonymous_rpc: AuthenticatedRpcApiClient, caplog
+    alice_rpc: AuthenticatedRpcApiClient, anonymous_rpc: AnonymousRpcApiClient, caplog
 ):
+    client_api_version = ApiVersion(3, 99)
+    alice_rpc.API_VERSION = client_api_version
+    anonymous_rpc.API_VERSION = client_api_version
     with caplog.at_level(logging.INFO):
         # Authenticated
         await _test_good_handshake(alice_rpc)
-        assert f"Authenticated client successfully connected (client version: {API_VERSION})"
+        assert (
+            f"Authenticated client successfully connected (client/server API version: {client_api_version}/{API_VERSION})"
+            in caplog.text
+        )
 
         # Anonymous
         await _test_good_handshake(anonymous_rpc)
-        assert f"Anonymous client successfully connected (client version: {API_VERSION})"
+        assert (
+            f"Anonymous client successfully connected (client/server API version: {client_api_version}/{API_VERSION})"
+            in caplog.text
+        )
