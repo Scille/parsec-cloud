@@ -17,6 +17,4 @@ pub enum ClientType {
     Authenticated,
     Invited,
     Anonymous,
-    Apiv1Anonymous,
-    Apiv1Administration,
 }

@@ -59,34 +59,6 @@ impl ClientType {
 
         &VALUE
     }
-
-    #[classattr]
-    #[pyo3(name = "APIV1_ANONYMOUS")]
-    fn apiv1_anonymous() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     ClientType(client_types::ClientType::Apiv1Anonymous).into_py(py)
-                })
-            };
-        };
-
-        &VALUE
-    }
-
-    #[classattr]
-    #[pyo3(name = "APIV1_ADMINISTRATION")]
-    fn apiv1_administration() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                     ClientType(client_types::ClientType::Apiv1Administration).into_py(py)
-                })
-            };
-        };
-
-        &VALUE
-    }
 }
 
 #[pyclass]

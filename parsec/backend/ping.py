@@ -23,7 +23,6 @@ class BasePingComponent:
         client_types=[
             ClientType.AUTHENTICATED,
             ClientType.INVITED,
-            ClientType.APIV1_ANONYMOUS,
         ],
     )
     @catch_protocol_errors

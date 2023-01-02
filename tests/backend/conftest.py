@@ -8,7 +8,6 @@ import pytest
 from parsec._parsec import DateTime
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
-    APIV1_AnonymousClientHandshake,
     AuthenticatedClientHandshake,
     InvitationToken,
     InvitationType,
@@ -96,41 +95,6 @@ async def bob_ws(backend_asgi_app, bob, backend_authenticated_ws_factory):
 @pytest.fixture
 async def adam_ws(backend_asgi_app, adam, backend_authenticated_ws_factory):
     async with backend_authenticated_ws_factory(backend_asgi_app, adam) as ws:
-        yield ws
-
-
-# TODO: legacy fixture, remove this when APIv1 is deprecated
-@pytest.fixture
-def apiv1_backend_ws_factory(coolorg):
-    @asynccontextmanager
-    async def _apiv1_backend_ws_factory(backend_asgi_app, auth_as):
-        client = backend_asgi_app.test_client()
-        async with client.websocket("/ws") as ws:
-            if auth_as:
-                # Handshake
-                if isinstance(auth_as, OrganizationID):
-                    ch = APIV1_AnonymousClientHandshake(auth_as)
-                elif auth_as == "anonymous":
-                    # TODO: for legacy test, refactorise this ?
-                    ch = APIV1_AnonymousClientHandshake(coolorg.organization_id)
-                elif auth_as == "administration":
-                    assert False, "APIv1 Administration sock no longer supported"
-                else:
-                    assert False, "APIv1 Authenticated sock no longer supported"
-                challenge_req = await ws.receive()
-                answer_req = ch.process_challenge_req(challenge_req)
-                await ws.send(answer_req)
-                result_req = await ws.receive()
-                ch.process_result_req(result_req)
-
-            yield ws
-
-    return _apiv1_backend_ws_factory
-
-
-@pytest.fixture
-async def apiv1_anonymous_ws(apiv1_backend_ws_factory, backend_asgi_app):
-    async with apiv1_backend_ws_factory(backend_asgi_app, "anonymous") as ws:
         yield ws
 
 

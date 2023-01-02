@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pytest
-from quart import Response
 
 from parsec._parsec import SequesterSigningKeyDer
 from parsec.api.data import EntryName
@@ -10,15 +9,11 @@ from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID, UserPr
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import InviteAlreadyUsedError, InviteNotFoundError, bootstrap_organization
 from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.serde import packb
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
-@pytest.mark.parametrize("backend_version", ["2.5", "2.6", "latest"])
-async def test_good(
-    running_backend, backend, user_fs_factory, with_labels, data_base_dir, backend_version
-):
+async def test_good(running_backend, backend, user_fs_factory, with_labels, data_base_dir):
 
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
@@ -34,24 +29,6 @@ async def test_good(
     else:
         human_handle = None
         device_label = None
-
-    if backend_version == "2.5":
-
-        def _mock_anonymous_api(*args, **kwargs):
-            return Response(response=packb({}), status=404, content_type="application/msgpack")
-
-        running_backend.asgi_app.view_functions["anonymous_api.anonymous_api"] = _mock_anonymous_api
-
-    if backend_version == "2.6":
-
-        def _mock_anonymous_api(*args, **kwargs):
-            return Response(
-                response=packb({"status": "unknown_command"}),
-                status=200,
-                content_type="application/msgpack",
-            )
-
-        running_backend.asgi_app.view_functions["anonymous_api.anonymous_api"] = _mock_anonymous_api
 
     new_device = await bootstrap_organization(
         organization_addr, human_handle=human_handle, device_label=device_label

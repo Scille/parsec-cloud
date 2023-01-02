@@ -142,7 +142,6 @@
     },
     {
         "major_versions": [
-            1,
             2
         ],
         "req": {

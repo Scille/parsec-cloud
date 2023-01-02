@@ -21,7 +21,7 @@
                 },
                 {
                     "name": "submitter_der_x509_certificate_email",
-                    "type": "NonRequiredOption<String>"
+                    "type": "RequiredOption<String>"
                 },
                 {
                     "name": "submit_payload_signature",
@@ -97,7 +97,7 @@
                 },
                 {
                     "name": "submitter_der_x509_certificate_email",
-                    "type": "NonRequiredOption<String>"
+                    "type": "RequiredOption<String>"
                 },
                 {
                     "name": "submit_payload_signature",

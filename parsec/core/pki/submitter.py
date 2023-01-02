@@ -88,6 +88,7 @@ class PkiEnrollmentSubmitterInitialCtx:
     ) -> PkiEnrollmentSubmitterSubmittedStatusCtx:
         """
         Raises:
+            BackendProtocolError
             BackendNotAvailable
 
             PkiEnrollmentSubmitError
@@ -241,6 +242,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
     ) -> T_PkiEnrollmentSubmitterStatusCtx:
         """
         Raises:
+            BackendProtocolError
             BackendNotAvailable
 
             PkiEnrollmentInfoError

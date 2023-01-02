@@ -7,6 +7,12 @@ from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
 from parsec._parsec import (
+    OrganizationBootstrapRepOk,
+    OrganizationBootstrapRepAlreadyBootstrapped,
+    OrganizationBootstrapRepBadTimestamp,
+    OrganizationBootstrapRepInvalidCertification,
+    OrganizationBootstrapRepInvalidData,
+    OrganizationBootstrapRepNotFound,
     OrganizationStatsRepOk,
     OrganizationStatsRepNotFound,
     OrganizationStatsRepNotAllowed,
@@ -80,3 +86,83 @@ display("organization_config_rep_full", serialized, [])
 serialized = serializer.rep_dumps(OrganizationConfigRepNotFound())
 serializer.rep_loads(serialized)
 display("organization_config_rep_not_found", serialized, [])
+
+################### OrganizationBootstrap ##################
+
+serializer = organization_bootstrap_serializer
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "organization_bootstrap",
+        "bootstrap_token": "0db537dee3ff9a3c2f76e337a4461f41fb3d738f35eb48f3759046dfbedb2e79",
+        "root_verify_key": ALICE.root_verify_key,
+        "user_certificate": USER_CERTIFICATE,
+        "device_certificate": DEVICE_CERTIFICATE,
+        "redacted_user_certificate": REDACTED_USER_CERTIFICATE,
+        "redacted_device_certificate": REDACTED_DEVICE_CERTIFICATE,
+    }
+)
+serializer.req_loads(serialized)
+display("organization_bootstrap_req_absent", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "organization_bootstrap",
+        "bootstrap_token": "0db537dee3ff9a3c2f76e337a4461f41fb3d738f35eb48f3759046dfbedb2e79",
+        "root_verify_key": ALICE.root_verify_key,
+        "user_certificate": USER_CERTIFICATE,
+        "device_certificate": DEVICE_CERTIFICATE,
+        "redacted_user_certificate": REDACTED_USER_CERTIFICATE,
+        "redacted_device_certificate": REDACTED_DEVICE_CERTIFICATE,
+        "sequester_authority_certificate": None,
+    }
+)
+serializer.req_loads(serialized)
+display("organization_bootstrap_req_none", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "organization_bootstrap",
+        "bootstrap_token": "0db537dee3ff9a3c2f76e337a4461f41fb3d738f35eb48f3759046dfbedb2e79",
+        "root_verify_key": ALICE.root_verify_key,
+        "user_certificate": USER_CERTIFICATE,
+        "device_certificate": DEVICE_CERTIFICATE,
+        "redacted_user_certificate": REDACTED_USER_CERTIFICATE,
+        "redacted_device_certificate": REDACTED_DEVICE_CERTIFICATE,
+        "sequester_authority_certificate": b"foo",
+    }
+)
+serializer.req_loads(serialized)
+display("organization_bootstrap_req_full", serialized, [])
+
+serialized = serializer.rep_dumps(OrganizationBootstrapRepOk())
+serializer.rep_loads(serialized)
+display("organization_bootstrap_rep_ok", serialized, [])
+
+serialized = serializer.rep_dumps(OrganizationBootstrapRepInvalidCertification("foobar"))
+serializer.rep_loads(serialized)
+display("organization_bootstrap_rep_invalid_certification", serialized, [])
+
+serialized = serializer.rep_dumps(OrganizationBootstrapRepInvalidData("foobar"))
+serializer.rep_loads(serialized)
+display("organization_bootstrap_rep_invalid_data", serialized, [])
+
+serialized = serializer.rep_dumps(
+    OrganizationBootstrapRepBadTimestamp(
+        reason=None,
+        ballpark_client_early_offset=300.0,
+        ballpark_client_late_offset=320.0,
+        backend_timestamp=NOW,
+        client_timestamp=NOW,
+    )
+)
+serializer.rep_loads(serialized)
+display("organization_bootstrap_rep_bad_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps(OrganizationBootstrapRepAlreadyBootstrapped())
+serializer.rep_loads(serialized)
+display("organization_bootstrap_rep_already_bootstrapped", serialized, [])
+
+serialized = serializer.rep_dumps(OrganizationBootstrapRepNotFound())
+serializer.rep_loads(serialized)
+display("organization_bootstrap_rep_not_found", serialized, [])

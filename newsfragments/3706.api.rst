@@ -1,0 +1,1 @@
+APIv1 has been removed, which cut off compatibility with Parsec client < 2.15 and Parsec server < 2.10

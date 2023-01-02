@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Mapping, Sequence, Tuple, Type, TypeVar, Union, cast
 
-from parsec._parsec import DateTime, ProtocolError
+from parsec._parsec import ProtocolError
 from parsec.api.version import ApiVersion
 from parsec.serde import (
     BaseSchema,
@@ -16,7 +16,6 @@ from parsec.serde import (
 from parsec.serde import packb as _packb
 from parsec.serde import unpackb as _unpackb
 from parsec.serde.schema import OneOfSchemaLegacy
-from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 __all__ = (
     "BaseReqSchema",
@@ -199,20 +198,6 @@ class CmdSerializer:
         self.req_dumps = self._req_serializer.dumps
         self.rep_loads = self._rep_serializer.loads
         self.rep_dumps = self._rep_serializer.dumps
-
-    def timestamp_out_of_ballpark_rep_dump(
-        self, backend_timestamp: DateTime, client_timestamp: DateTime
-    ) -> Dict[str, object]:
-        return self.rep_dump(
-            {
-                "status": "bad_timestamp",
-                "reason": "Timestamp is out of date.",
-                "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
-                "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
-                "backend_timestamp": backend_timestamp,
-                "client_timestamp": client_timestamp,
-            }
-        )
 
 
 class ApiCommandSerializer:

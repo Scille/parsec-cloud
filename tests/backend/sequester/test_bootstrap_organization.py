@@ -1,11 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from unittest.mock import ANY
-
 import pytest
 
-from parsec._parsec import DateTime
+from parsec._parsec import (
+    DateTime,
+    OrganizationBootstrapRepBadTimestamp,
+    OrganizationBootstrapRepInvalidData,
+    OrganizationBootstrapRepOk,
+)
 from parsec.core.types import LocalDevice
 from tests.backend.common import organization_bootstrap
 from tests.common import (
@@ -51,10 +54,7 @@ async def test_sequestered_organization_bootstrap(
         check_rep=False,
         **{**organization_bootstrap_args, "sequester_authority_certificate": b"dummy"},
     )
-    assert rep == {
-        "status": "invalid_data",
-        "reason": "Invalid signature for sequester authority certificate",
-    }
+    assert isinstance(rep, OrganizationBootstrapRepInvalidData)
 
     # Authority certificate not signed by the root key
     bad_sequester_authority_certificate = coolorg.sequester_authority.certif_data.dump_and_sign(
@@ -68,10 +68,7 @@ async def test_sequestered_organization_bootstrap(
             "sequester_authority_certificate": bad_sequester_authority_certificate,
         },
     )
-    assert rep == {
-        "status": "invalid_data",
-        "reason": "Invalid signature for sequester authority certificate",
-    }
+    assert isinstance(rep, OrganizationBootstrapRepInvalidData)
 
     # Timestamp out of ballpark in authority certificate
     timestamp_out_of_ballpark = DateTime(2000, 1, 1)
@@ -86,13 +83,9 @@ async def test_sequestered_organization_bootstrap(
             "sequester_authority_certificate": authority_certif_bad_timestamp,
         },
     )
-    assert rep == {
-        "status": "bad_timestamp",
-        "client_timestamp": ANY,
-        "backend_timestamp": ANY,
-        "ballpark_client_early_offset": 300.0,
-        "ballpark_client_late_offset": 320.0,
-    }
+    assert isinstance(rep, OrganizationBootstrapRepBadTimestamp)
+    assert rep.ballpark_client_early_offset == 300.0
+    assert rep.ballpark_client_late_offset == 320.0
 
     # Timestamp in authority certificate different than user/device certificates
     different_timestamp = DateTime.now()
@@ -107,13 +100,10 @@ async def test_sequestered_organization_bootstrap(
             "sequester_authority_certificate": authority_certif_different_timestamp,
         },
     )
-    assert rep == {
-        "status": "invalid_data",
-        "reason": "Device, user and sequester authority certificates must have the same timestamp.",
-    }
+    assert isinstance(rep, OrganizationBootstrapRepInvalidData)
 
     # Finally valid bootstrap
     rep = await organization_bootstrap(
         anonymous_backend_ws, check_rep=False, **organization_bootstrap_args
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, OrganizationBootstrapRepOk)

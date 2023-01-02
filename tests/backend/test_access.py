@@ -3,14 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.api.protocol import (
-    APIV1_ANONYMOUS_CMDS,
-    AUTHENTICATED_CMDS,
-    INVITED_CMDS,
-    InvitationType,
-    packb,
-    unpackb,
-)
+from parsec._parsec import InvitationType
+from parsec.api.protocol import AUTHENTICATED_CMDS, INVITED_CMDS, packb, unpackb
 
 
 async def check_forbidden_cmds(ws, cmds):
@@ -57,8 +51,3 @@ async def test_invited_has_limited_access(
 async def test_authenticated_has_limited_access(alice_ws):
     await check_forbidden_cmds(alice_ws, INVITED_CMDS - AUTHENTICATED_CMDS)
     await check_allowed_cmds(alice_ws, AUTHENTICATED_CMDS)
-
-
-@pytest.mark.trio
-async def test_apiv1_anonymous_has_limited_access(apiv1_anonymous_ws):
-    await check_allowed_cmds(apiv1_anonymous_ws, APIV1_ANONYMOUS_CMDS)
