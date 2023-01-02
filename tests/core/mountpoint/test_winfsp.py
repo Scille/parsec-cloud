@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import json
 import os
 import threading
 import time
 from pathlib import Path
+from unittest.mock import ANY
 
 import pytest
 
@@ -248,3 +250,55 @@ def test_replace_if_exists(mountpoint_service):
     foo.replace(bar)
     assert bar.read_bytes() == b"foo"
     assert not foo.exists()
+
+
+@pytest.mark.win32
+@pytest.mark.mountpoint
+def test_get_file_entry_info(mountpoint_service):
+
+    # Import here to avoid importing it on Linux/MacOS
+    from parsec.core.mountpoint.winfsp_operations import ENTRY_INFO_EXTENSION
+
+    async def _bootstrap(user_fs, mountpoint_manager):
+        workspace = user_fs.get_workspace(mountpoint_service.wid)
+        await workspace.mkdir("/Dark Souls")
+        await workspace.touch("/Dark Souls/Solaire.txt")
+        await workspace.write_bytes("/Dark Souls/Solaire.txt", b"Praise the sun!")
+
+    mountpoint_service.execute(_bootstrap)
+
+    path = Path(mountpoint_service.wpath / "Dark Souls/Solaire.txt")
+    assert path.read_bytes() == b"Praise the sun!"
+
+    file_entry_info_path = path.parent / f"{path.name}{ENTRY_INFO_EXTENSION}"
+
+    entry_stats = os.stat(file_entry_info_path)
+    assert entry_stats.st_size == 1024
+
+    file_entry_info = json.loads(file_entry_info_path.read_bytes())
+
+    assert file_entry_info["id"] == ANY
+    assert file_entry_info["base_version"] == 0
+    assert file_entry_info["created"] == ANY
+    assert file_entry_info["updated"] == ANY
+    assert file_entry_info["is_placeholder"] is True
+    assert file_entry_info["need_sync"] is True
+    assert file_entry_info["type"] == "file"
+    assert file_entry_info["size"] == 15
+    assert file_entry_info["confinement_point"] is None
+
+    dir_entry_info_path = path.parent.parent / f"{path.parent.name}{ENTRY_INFO_EXTENSION}"
+
+    entry_stats = os.stat(file_entry_info_path)
+    assert entry_stats.st_size == 1024
+
+    dir_entry_info = json.loads(dir_entry_info_path.read_bytes())
+    assert dir_entry_info["id"] == ANY
+    assert dir_entry_info["base_version"] == 0
+    assert dir_entry_info["created"] == ANY
+    assert dir_entry_info["updated"] == ANY
+    assert dir_entry_info["is_placeholder"] is True
+    assert dir_entry_info["need_sync"] is True
+    assert dir_entry_info["type"] == "folder"
+    assert dir_entry_info["children"] == ["Solaire.txt"]
+    assert dir_entry_info["confinement_point"] is None

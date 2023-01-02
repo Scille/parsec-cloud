@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import json
 from contextlib import contextmanager
 from datetime import datetime
 from functools import partial, wraps
@@ -19,9 +20,9 @@ from winfspy import (
 from winfspy.plumbing import NTSTATUS, SecurityDescriptor, dt_to_filetime
 
 from parsec._parsec import DateTime
-from parsec.api.data import EntryID
+from parsec.api.data import EntryID, EntryName
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs import FSLocalOperationError, FsPath, FSRemoteOperationError
+from parsec.core.fs import FSEndOfFileError, FSLocalOperationError, FsPath, FSRemoteOperationError
 from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
@@ -32,6 +33,35 @@ logger = get_logger()
 # Taken from https://docs.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants
 FILE_READ_DATA = 1 << 0
 FILE_WRITE_DATA = 1 << 1
+
+# Used for the virtual file to retrieve entry info
+# This is used as a way for external applications to get information
+# on a file in a Parsec mountpoint by opening and reading the
+# virtual file f"{file_path}{ENTRY_INFO_EXTENSION}".
+ENTRY_INFO_EXTENSION = ".__parsec_entry_info__"
+
+
+def is_entry_info_path(path: FsPath) -> bool:
+    return path != FsPath("/") and path.name.str.endswith(ENTRY_INFO_EXTENSION)
+
+
+def get_entry_info_initial_path(path: FsPath) -> FsPath:
+    assert is_entry_info_path(path)
+
+    entry_name = path.name.str.removesuffix(ENTRY_INFO_EXTENSION)
+    return path.parent / entry_name
+
+
+def get_stats_for_entry_info() -> dict[str, Any]:
+    stats: dict[str, Any] = {
+        "type": "file",
+        # Arbitrary non-zero size
+        "size": 1024,
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
+        "id": EntryID.new(),
+    }
+    return stats
 
 
 def _winpath_to_parsec(path: str) -> FsPath:
@@ -57,18 +87,39 @@ class OpenedFile:
         self.deleted = False
 
 
+class EntryInfo:
+    class JSONEncoder(json.JSONEncoder):
+        def default(self, obj: Any) -> Any:
+            if isinstance(obj, EntryID):
+                return obj.hex
+            elif isinstance(obj, DateTime):
+                return obj.to_rfc3339()
+            elif isinstance(obj, EntryName):
+                return obj.str
+            return super().default(obj)
+
+    def __init__(self, path: FsPath, entry_info: dict[str, Any]) -> None:
+        self.path = path
+        self._encoded = json.dumps(entry_info, cls=EntryInfo.JSONEncoder).encode()
+
+    def read(self, offset: int, length: int) -> bytes:
+        if offset >= len(self._encoded):
+            raise FSEndOfFileError()
+        return self._encoded[offset : offset + length]
+
+
 @contextmanager
 def get_path_and_translate_error(
     fs_access: ThreadFSAccess,
     operation: str,
-    file_context: Union[OpenedFile, OpenedFolder, str],
+    file_context: Union[OpenedFile, OpenedFolder, EntryInfo, str],
     mountpoint: PurePath,
     workspace_id: EntryID,
     timestamp: DateTime | None,
 ) -> Iterator[FsPath]:
     path: FsPath = FsPath("/<unknown>")
     try:
-        if isinstance(file_context, (OpenedFile, OpenedFolder)):
+        if isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo)):
             path = file_context.path
         else:
             # FsPath conversion might raise an FSNameTooLongError so make
@@ -188,7 +239,7 @@ def stat_to_winfsp_attributes(stat: dict[str, Any]) -> dict[str, Any]:
     return attributes
 
 
-FileContext = Union[OpenedFile, OpenedFolder, str]
+FileContext = Union[OpenedFile, OpenedFolder, EntryInfo, str]
 R = TypeVar("R")
 P = ParamSpec("P")
 T = TypeVar("T", bound=BaseFileSystemOperations)
@@ -252,7 +303,14 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
     @handle_error
     def get_security_by_name(self, file_name: str) -> Tuple[dict[str, str], Any, int]:
         parsec_file_name = _winpath_to_parsec(file_name)
-        stat = self.fs_access.entry_info(parsec_file_name)
+        is_entry_info = is_entry_info_path(parsec_file_name)
+        if is_entry_info:
+            parsec_file_name = get_entry_info_initial_path(parsec_file_name)
+        stat = (
+            self.fs_access.entry_info(parsec_file_name)
+            if not is_entry_info
+            else get_stats_for_entry_info()
+        )
         return (
             stat_to_file_attributes(stat),
             self._security_descriptor.handle,
@@ -306,10 +364,16 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
     @handle_error
     def open(
         self, file_name: str, create_options: Any, granted_access: Any
-    ) -> Union[OpenedFile, OpenedFolder]:
+    ) -> Union[OpenedFile, OpenedFolder, EntryInfo]:
         # `granted_access` is already handle by winfsp
         parsec_file_name = _winpath_to_parsec(file_name)
         write_mode = bool(granted_access & FILE_WRITE_DATA)
+
+        if not write_mode and is_entry_info_path(parsec_file_name):
+            parsec_file_name = get_entry_info_initial_path(parsec_file_name)
+            entry_info = self.fs_access.entry_info(parsec_file_name)
+            return EntryInfo(parsec_file_name, entry_info)
+
         try:
             _, fd = self.fs_access.file_open(parsec_file_name, write_mode=write_mode)
             return OpenedFile(parsec_file_name, fd)
@@ -325,8 +389,12 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
 
     @handle_error
     def get_file_info(self, file_context: FileContext) -> dict[str, Any]:
-        assert isinstance(file_context, (OpenedFile, OpenedFolder))
-        stat = self.fs_access.entry_info(file_context.path)
+        assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
+        stat = (
+            self.fs_access.entry_info(file_context.path)
+            if not isinstance(file_context, EntryInfo)
+            else get_stats_for_entry_info()
+        )
         return stat_to_winfsp_attributes(stat)
 
     @handle_error
@@ -432,6 +500,8 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
 
     @handle_error
     def read(self, file_context: FileContext, offset: int, length: int) -> bytes:
+        if isinstance(file_context, EntryInfo):
+            return file_context.read(offset, length)
         assert isinstance(file_context, OpenedFile)
         assert file_context.fd is not None
         buffer = self.fs_access.fd_read(file_context.fd, length, offset, raise_eof=True)
