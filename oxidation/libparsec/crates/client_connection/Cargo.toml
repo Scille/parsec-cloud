@@ -27,7 +27,7 @@ reqwest = "0.11.13"
 url = "2.3.1"
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.
-base64 = "0.13.1"
+base64 = "0.20.0"
 chrono = "0.4.22"
 
 [dev-dependencies]
