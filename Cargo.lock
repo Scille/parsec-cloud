@@ -1410,7 +1410,7 @@ dependencies = [
 name = "libparsec_bindings_common"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.20.0",
  "libparsec",
  "serde_json",
 ]
