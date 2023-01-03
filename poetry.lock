@@ -1115,7 +1115,7 @@ pyobjc-framework-Cocoa = ">=8.5.1"
 
 [[package]]
 name = "pypac"
-version = "0.16.0"
+version = "0.16.1"
 description = "Proxy auto-config and auto-discovery for Python."
 category = "main"
 optional = true
@@ -2449,7 +2449,7 @@ pyobjc-framework-systemconfiguration = [
     {file = "pyobjc_framework_SystemConfiguration-8.5.1-cp36-abi3-macosx_11_0_universal2.whl", hash = "sha256:4a373c010df56cdf4b620c7f706fb7807a50d60ae12f2547ee0e8dae0616986b"},
 ]
 pypac = [
-    {file = "PyPAC-0.16.0-py2.py3-none-any.whl", hash = "sha256:921630e95e596050844e299d525df030bb39430ced18001f3960409e4e0cb3b1"},
+    {file = "PyPAC-0.16.1-py2.py3-none-any.whl", hash = "sha256:77aee379abb96c59063320c99e8641ce97d4f98f29a1d150242c4a332d9d9f67"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
