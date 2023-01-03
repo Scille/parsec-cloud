@@ -62,7 +62,9 @@ async def handle_ws() -> None:
         return
 
     selected_logger = client_ctx.logger
-    selected_logger.info(f"Connection established (client version: {client_ctx.api_version})")
+    selected_logger.info(
+        f"Connection established (client/server API version: {client_ctx.client_api_version}/{client_ctx.api_version})"
+    )
 
     # 2) Setup events listener according to client type
 

@@ -83,7 +83,7 @@ async def _do_handshake(
     check_authentication: bool,
     expected_content_type: str | None,
     expected_accept_type: str | None,
-) -> Tuple[ApiVersion, OrganizationID, Organization | None, User | None, Device | None]:
+) -> Tuple[ApiVersion, ApiVersion, OrganizationID, Organization | None, User | None, Device | None]:
     # The anonymous RPC API existed before the `Api-Version`/`Content-Type` fields
     # check where introduced, hence we have this workaround to provide backward compatibility
     # TODO: remove me once Parsec 2.11.1 is deprecated
@@ -179,7 +179,7 @@ async def _do_handshake(
         except CryptoError:
             _handshake_abort(401, api_version=api_version)
 
-    return api_version, organization_id, organization, user, device
+    return api_version, client_api_version, organization_id, organization, user, device
 
 
 @rpc_bp.route("/anonymous/<raw_organization_id>", methods=["GET", "POST"])
@@ -190,7 +190,7 @@ async def anonymous_api(raw_organization_id: str) -> Response:
         request.method == "POST" and backend.config.organization_spontaneous_bootstrap
     )
 
-    api_version, organization_id, organization, _, _ = await _do_handshake(
+    api_version, client_api_version, organization_id, organization, _, _ = await _do_handshake(
         raw_organization_id=raw_organization_id,
         backend=backend,
         allow_missing_organization=allow_missing_organization,
@@ -221,9 +221,9 @@ async def anonymous_api(raw_organization_id: str) -> Response:
             pass
 
     # Retrieve command
-    client_ctx = AnonymousClientContext(organization_id)
+    client_ctx = AnonymousClientContext(api_version, client_api_version, organization_id)
     client_ctx.logger.info(
-        f"Anonymous client successfully connected (client version: {api_version})"
+        f"Anonymous client successfully connected (client/server API version: {client_api_version}/{api_version})"
     )
     if not isinstance(cmd, str):
         return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
@@ -242,7 +242,7 @@ async def anonymous_api(raw_organization_id: str) -> Response:
 async def authenticated_api(raw_organization_id: str) -> Response:
     backend: BackendApp = g.backend
 
-    api_version, organization_id, _, user, device = await _do_handshake(
+    api_version, client_api_version, organization_id, _, user, device = await _do_handshake(
         raw_organization_id=raw_organization_id,
         backend=backend,
         allow_missing_organization=False,
@@ -271,6 +271,7 @@ async def authenticated_api(raw_organization_id: str) -> Response:
 
     client_ctx = AuthenticatedClientContext(
         api_version=api_version,
+        client_api_version=client_api_version,
         organization_id=organization_id,
         device_id=device.device_id,
         human_handle=user.human_handle,
@@ -280,7 +281,7 @@ async def authenticated_api(raw_organization_id: str) -> Response:
         verify_key=device.verify_key,
     )
     client_ctx.logger.info(
-        f"Authenticated client successfully connected (client version: {api_version})"
+        f"Authenticated client successfully connected (client/server API version: {client_api_version}/{api_version})"
     )
 
     cmd_rep = await cmd_func(client_ctx, msg)
@@ -405,7 +406,7 @@ class SSEResponseIterableBody(ResponseBody):
 async def authenticated_events_api(raw_organization_id: str) -> Response:
     backend: BackendApp = g.backend
 
-    api_version, organization_id, _, user, device = await _do_handshake(
+    api_version, client_api_version, organization_id, _, user, device = await _do_handshake(
         raw_organization_id=raw_organization_id,
         backend=backend,
         allow_missing_organization=False,
@@ -419,6 +420,7 @@ async def authenticated_events_api(raw_organization_id: str) -> Response:
 
     client_ctx = AuthenticatedClientContext(
         api_version=api_version,
+        client_api_version=client_api_version,
         organization_id=organization_id,
         device_id=device.device_id,
         human_handle=user.human_handle,

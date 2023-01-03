@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     UserID,
     UserProfile,
 )
-from parsec.api.version import API_V2_VERSION, ApiVersion
+from parsec.api.version import ApiVersion
 from parsec.backend.invite import Invitation
 from parsec.crypto import PublicKey, VerifyKey
 from parsec.event_bus import EventBusConnectionContext
@@ -29,12 +29,13 @@ AUTHENTICATED_CLIENT_CHANNEL_SIZE = 100
 
 
 class BaseClientContext:
-    __slots__ = ("conn_id", "api_version", "cancel_scope")
+    __slots__ = ("conn_id", "api_version", "client_api_version", "cancel_scope")
     TYPE: ClientType
     logger: BoundLogger
 
-    def __init__(self, api_version: ApiVersion):
+    def __init__(self, api_version: ApiVersion, client_api_version: ApiVersion):
         self.api_version = api_version
+        self.client_api_version = client_api_version
         self.conn_id = uuid4().hex
         self.cancel_scope: trio.CancelScope | None = None
 
@@ -64,6 +65,7 @@ class AuthenticatedClientContext(BaseClientContext):
     def __init__(
         self,
         api_version: ApiVersion,
+        client_api_version: ApiVersion,
         organization_id: OrganizationID,
         device_id: DeviceID,
         human_handle: HumanHandle | None,
@@ -72,7 +74,7 @@ class AuthenticatedClientContext(BaseClientContext):
         public_key: PublicKey,
         verify_key: VerifyKey,
     ):
-        super().__init__(api_version)
+        super().__init__(api_version, client_api_version)
 
         self.logger = logger.bind(
             conn_id=self.conn_id,
@@ -122,10 +124,11 @@ class InvitedClientContext(BaseClientContext):
     def __init__(
         self,
         api_version: ApiVersion,
+        client_api_version: ApiVersion,
         organization_id: OrganizationID,
         invitation: Invitation,
     ):
-        super().__init__(api_version)
+        super().__init__(api_version, client_api_version)
 
         self.logger = logger.bind(
             conn_id=self.conn_id,
@@ -144,10 +147,13 @@ class AnonymousClientContext(BaseClientContext):
     __slots__ = ("organization_id", "logger")
     TYPE = ClientType.ANONYMOUS
 
-    def __init__(self, organization_id: OrganizationID) -> None:
-        # Anonymous is a special snowflake: it is accessed through HTTP instead of
-        # Websocket, hence there is no api version negotiation for the moment
-        super().__init__(API_V2_VERSION)
+    def __init__(
+        self,
+        api_version: ApiVersion,
+        client_api_version: ApiVersion,
+        organization_id: OrganizationID,
+    ) -> None:
+        super().__init__(api_version, client_api_version)
 
         self.logger = logger.bind(conn_id=self.conn_id, organization_id=organization_id.str)
 

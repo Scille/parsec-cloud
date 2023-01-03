@@ -171,7 +171,7 @@ handshake_result_serializer = serializer_factory(HandshakeResultSchema)
 
 class ServerHandshake:
     # Class attribute
-    SUPPORTED_API_VERSIONS: tuple[ApiVersion, ApiVersion, ApiVersion] = (
+    SUPPORTED_API_VERSIONS: tuple[ApiVersion, ...] = (
         API_V1_VERSION,
         API_V2_VERSION,
         API_V3_VERSION,
