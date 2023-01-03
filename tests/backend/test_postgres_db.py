@@ -11,10 +11,10 @@ import pytest
 import trio
 import triopg
 
-from parsec._parsec import DateTime, EntryID
+from parsec._parsec import ActiveUsersLimit, DateTime, EntryID
 from parsec.backend.cli.run import RetryPolicy, _run_backend
 from parsec.backend.config import BackendConfig, PostgreSQLBlockStoreConfig
-from parsec.backend.postgresql.handler import handle_datetime, handle_uuid
+from parsec.backend.postgresql.handler import handle_datetime, handle_integer, handle_uuid
 from tests.common import real_clock_timeout
 
 
@@ -196,6 +196,56 @@ async def test_retry_policy_allow_retry(postgresql_url, asyncio_loop, caplog):
                 caplog.asserted_records.add(record)
             except AttributeError:
                 caplog.asserted_records = {record}
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_active_users_limit_correctly_serialized(postgresql_url, backend_factory):
+    user_limit_py = 2
+    user_limit_rs = ActiveUsersLimit.LimitedTo(2)
+
+    async with triopg.connect(postgresql_url) as vanilla_conn:
+        async with triopg.connect(postgresql_url) as patched_conn:
+            await handle_integer(patched_conn)
+
+            await vanilla_conn.execute(
+                f"""
+                DROP TABLE IF EXISTS active_users_limit;
+                CREATE TABLE IF NOT EXISTS active_users_limit (
+                    _id SERIAL PRIMARY KEY,
+                    user_limit integer
+                )"""
+            )
+
+            # Insert ActiveUsersLimit
+            await vanilla_conn.execute(
+                "INSERT INTO active_users_limit (_id, user_limit) VALUES (0, $1)",
+                user_limit_py,
+            )
+            await patched_conn.execute(
+                "INSERT INTO active_users_limit (_id, user_limit) VALUES (1, $1)",
+                user_limit_rs,
+            )
+
+            # Retrieve ActiveUsersLimit inserted by vanilla
+            from_vanilla_to_py = await vanilla_conn.fetchval(
+                "SELECT user_limit FROM active_users_limit WHERE _id = 0"
+            )
+            # Retrieve ActiveUsersLimit inserted by patched
+            from_patched_to_py = await vanilla_conn.fetchval(
+                "SELECT user_limit FROM active_users_limit WHERE _id = 1"
+            )
+            # Retrieve ActiveUsersLimit inserted by vanilla
+            from_vanilla_to_rs = await patched_conn.fetchval(
+                "SELECT user_limit FROM active_users_limit WHERE _id = 0"
+            )
+            # Retrieve ActiveUsersLimit inserted by patched
+            from_patched_to_rs = await patched_conn.fetchval(
+                "SELECT user_limit FROM active_users_limit WHERE _id = 1"
+            )
+
+            assert from_vanilla_to_py == from_patched_to_py
+            assert from_vanilla_to_rs == from_patched_to_rs
 
 
 @pytest.mark.trio
