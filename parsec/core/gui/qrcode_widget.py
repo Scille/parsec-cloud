@@ -72,7 +72,7 @@ class SmallQRCodeWidget(QWidget):
 class LargeQRCodeWidget(QWidget):
     def __init__(self, image: Pixmap, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[LargeQRCodeWidget] | None = None
         self.setLayout(QVBoxLayout())
         self.qrcode = _QRCodeWidget()
         self.qrcode.label_text.setText(_("TEXT_CLICK_TO_CLOSE"))

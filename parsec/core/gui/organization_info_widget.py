@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import Type
+
 from PyQt5.QtWidgets import QWidget
 
 from parsec._parsec import OrganizationConfig, OrganizationStats
@@ -23,7 +25,7 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
         super().__init__()
         self.setupUi(self)
 
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[OrganizationInfoWidget] | None = None
         self.label_backend_addr.setText(org_addr)
         self.label_backend_addr.setCursorPosition(0)
         self.button_copy_to_clipboard.clicked.connect(lambda: self._on_copy_addr_clicked(org_addr))
@@ -100,14 +102,14 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
 
     @classmethod
     async def show_modal(
-        cls,
+        cls: Type[OrganizationInfoWidget],
         profile: UserProfile,
         org_id: OrganizationID,
         org_addr: str,
         stats: OrganizationStats | None = None,
         config: OrganizationConfig | None = None,
         parent: QWidget | None = None,
-    ) -> GreyedDialog:
+    ) -> GreyedDialog[OrganizationInfoWidget]:
         w = cls(profile, org_addr=org_addr, stats=stats, config=config)
         d = GreyedDialog(w, title=org_id.str, parent=parent, width=800)
         w.dialog = d

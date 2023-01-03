@@ -232,7 +232,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.workspace_fs = workspace_fs
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[WorkspaceSharingWidget] | None = None
 
         self.has_changes = False
 

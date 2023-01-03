@@ -566,7 +566,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[ClaimDeviceWidget] | None = None
         self.addr = addr
         self.status: tuple[LocalDevice, DeviceFileType, str] | None = None
         self.claimer_job: QtToTrioJob[None] | None = None

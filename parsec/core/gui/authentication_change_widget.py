@@ -35,7 +35,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
         self.setupUi(self)
         self.core = core
         self.jobs_ctx = jobs_ctx
-        self.dialog: GreyedDialog | None = None
+        self.dialog: GreyedDialog[AuthenticationChangeWidget] | None = None
         self.button_validate.clicked.connect(self._on_validate_clicked)
         self.widget_auth.authentication_state_changed.connect(self._on_info_filled)
         self.button_validate.setEnabled(False)

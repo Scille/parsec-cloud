@@ -963,7 +963,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         return files, total_size, errors
 
     async def _import_all(
-        self, files: ImportFiles, loading_dialog: GreyedDialog
+        self, files: ImportFiles, loading_dialog: GreyedDialog[LoadingWidget]
     ) -> list[PermissionError]:
         # Initialize current size
         errors = []
@@ -1002,7 +1002,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         return errors
 
     async def _import_one(
-        self, source: trio.Path, dest: FsPath, loading_dialog: GreyedDialog, current_size: int
+        self,
+        source: trio.Path,
+        dest: FsPath,
+        loading_dialog: GreyedDialog[LoadingWidget],
+        current_size: int,
     ) -> int:
         assert self.workspace_fs is not None
         # Update loading widget
