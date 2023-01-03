@@ -368,4 +368,10 @@ class MaintenanceType:
     GARBAGE_COLLECTION: MaintenanceType
     REENCRYPTION: MaintenanceType
 
+    VALUES: tuple[MaintenanceType, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> MaintenanceType: ...
     def __init__(self, maintenance_type: str) -> None: ...
+    @property
+    def str(self) -> str: ...
