@@ -19,6 +19,7 @@ from structlog import get_logger
 from trio_typing import TaskStatus
 
 from parsec._parsec import (
+    CoreEvent,
     EventsListenRep,
     EventsListenRepOk,
     EventsListenRepOkMessageReceived,
@@ -43,7 +44,6 @@ from parsec.core.backend_connection.exceptions import (
 )
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 from parsec.core.backend_connection.transport import TransportPool, connect_as_authenticated
-from parsec.core.core_events import CoreEvent
 
 if TYPE_CHECKING:
     from parsec.core.fs.userfs.userfs import UserFS

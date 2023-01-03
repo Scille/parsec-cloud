@@ -5,10 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from parsec._parsec import DateTime
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryName, WorkspaceEntry
 from parsec.api.protocol import RealmRole
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import (
     FsPath,
     FSWorkspaceInMaintenance,

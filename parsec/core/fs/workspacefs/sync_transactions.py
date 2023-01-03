@@ -4,10 +4,9 @@ from __future__ import annotations
 from itertools import count
 from typing import AsyncIterator, Dict, Iterable, Union
 
-from parsec._parsec import DateTime, EntryNameError, Regex
+from parsec._parsec import CoreEvent, DateTime, EntryNameError, Regex
 from parsec.api.data import AnyRemoteManifest
 from parsec.api.protocol import DeviceID
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.exceptions import (
     FSFileConflictError,
     FSIsADirectoryError,

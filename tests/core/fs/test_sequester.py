@@ -6,10 +6,10 @@ from urllib.error import HTTPError, URLError
 
 import pytest
 
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
 from parsec.backend.sequester import SequesterServiceType
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
 from parsec.core.fs.path import FsPath
 from tests.common import customize_fixtures, sequester_service_factory

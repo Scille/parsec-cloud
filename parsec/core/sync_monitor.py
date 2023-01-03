@@ -9,6 +9,7 @@ import trio
 from structlog import get_logger
 
 from parsec._parsec import (
+    CoreEvent,
     VlobPollChangesRepInMaintenance,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
@@ -21,7 +22,6 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
 )
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSBadEncryptionRevision,

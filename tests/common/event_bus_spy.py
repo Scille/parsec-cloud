@@ -9,7 +9,7 @@ import attr
 import pytest
 import trio
 
-from parsec._parsec import DateTime, EventsListenRep
+from parsec._parsec import CoreEvent, DateTime, EventsListenRep
 from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
 
@@ -163,7 +163,7 @@ class EventBusSpy:
         send_channel, receive_channel = trio.open_memory_channel(1)
 
         def _waiter(cooked_event):
-            from parsec.core.core_events import CoreEvent
+            from parsec._parsec import CoreEvent
 
             if update_event_func:
                 cooked_event = update_event_func(cooked_event)
@@ -207,13 +207,11 @@ class EventBusSpy:
         return cooked_events
 
     def _cook_event_params(self, event):
-        if isinstance(event, SpiedEvent):
-            return event
-        elif isinstance(event, EventsListenRep):
+        if isinstance(event, (SpiedEvent, EventsListenRep)):
             return event
         elif event is ANY:
             return event
-        elif isinstance(event, Enum):
+        elif isinstance(event, (CoreEvent, Enum)):
             return SpiedEvent(event, ANY, ANY)
         elif isinstance(event, tuple):
             event = event + (ANY,) * (3 - len(event))

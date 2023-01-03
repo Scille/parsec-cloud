@@ -14,9 +14,8 @@ import trio
 from fuse import FuseOSError, LoggingMixIn, Operations, fuse_exit, fuse_get_context
 from structlog import get_logger
 
-from parsec._parsec import DateTime
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSLocalOperationError, FsPath, FSRemoteOperationError
 from parsec.core.fs.exceptions import FSReadOnlyError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError

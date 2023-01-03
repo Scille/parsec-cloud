@@ -5,8 +5,8 @@ from unittest.mock import ANY
 
 import pytest
 
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryName
-from parsec.core.core_events import CoreEvent
 
 
 @pytest.mark.trio

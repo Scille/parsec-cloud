@@ -7,9 +7,8 @@ from unittest.mock import Mock
 import pytest
 from PyQt5 import QtCore
 
-from parsec._parsec import DateTime
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSWorkspaceNoReadAccess
 from parsec.core.gui.lang import format_datetime, translate
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget

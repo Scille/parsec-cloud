@@ -12,6 +12,7 @@ import trio
 from trio.lowlevel import TrioToken
 from typing_extensions import ParamSpec
 
+from parsec._parsec import CoreEvent
 from parsec.core.fs import AnyPath, WorkspaceFS
 from parsec.core.fs.path import FsPath
 from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
@@ -119,7 +120,7 @@ class ThreadFSAccess:
 
     # Events
 
-    def send_event(self, event: Enum, **kwargs: Any) -> None:
+    def send_event(self, event: Enum | CoreEvent, **kwargs: Any) -> None:
         # Keyboard interrupt is enabled when using `trio_token.run_sync_soon`,
         # So let's disable it as we're heading back to user code.
         @trio.lowlevel.disable_ki_protection

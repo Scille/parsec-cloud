@@ -9,9 +9,9 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QColor, QIcon
 from PyQt5.QtWidgets import QWidget
 
+from parsec._parsec import CoreEvent
 from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection.exceptions import BackendConnectionError
-from parsec.core.core_events import CoreEvent
 from parsec.core.gui import desktop, validators
 from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui.custom_widgets import Pixmap
@@ -239,7 +239,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         except ValueError:
             pass
 
-    def _on_updated(self, event: Enum, **kwargs: object) -> None:
+    def _on_updated(self, event: Enum | CoreEvent, **kwargs: object) -> None:
         self.reset()
 
     def reset(self) -> None:

@@ -9,6 +9,7 @@ from PyQt5.QtCore import pyqtBoundSignal, pyqtSignal
 from PyQt5.QtGui import QColor, QIcon, QPixmap
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QMenu, QWidget
 
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
 from parsec.api.protocol import (
@@ -21,7 +22,6 @@ from parsec.core.backend_connection import (
     BackendConnStatus,
     BackendNotAvailable,
 )
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import (
     FsPath,
     FSWorkspaceInMaintenance,

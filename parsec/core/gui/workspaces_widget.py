@@ -10,8 +10,7 @@ from PyQt5.QtCore import QDate, QEvent, QObject, Qt, QTime, QTimer, pyqtBoundSig
 from PyQt5.QtWidgets import QAbstractButton, QLabel, QWidget
 from structlog import get_logger
 
-from parsec._parsec import DateTime, LocalDateTime
-from parsec.core.core_events import CoreEvent
+from parsec._parsec import CoreEvent, DateTime, LocalDateTime
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSError,

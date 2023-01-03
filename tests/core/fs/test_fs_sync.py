@@ -5,11 +5,10 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec._parsec import DateTime, VlobUpdateRepBadTimestamp
+from parsec._parsec import CoreEvent, DateTime, VlobUpdateRepBadTimestamp
 from parsec.api.data import EntryName
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.backend_connection.exceptions import BackendOutOfBallparkError
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs.exceptions import FSBackendOfflineError, FSRemoteOperationError
 from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 from parsec.core.types import WorkspaceEntry, WorkspaceRole

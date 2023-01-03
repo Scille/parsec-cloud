@@ -8,8 +8,8 @@ from unittest.mock import patch
 import pytest
 import trio
 
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryName
-from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint import MountpointDriverCrash, mountpoint_manager_factory
 from tests.common import real_clock_timeout
 

@@ -10,9 +10,9 @@ from pathlib import Path, PurePath
 import pytest
 import trio
 
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryID, EntryName
 from parsec.core import logged_core_factory
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath
 from parsec.core.mountpoint import (
     MountpointAlreadyMounted,

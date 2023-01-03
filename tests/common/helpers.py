@@ -9,9 +9,8 @@ import attr
 import pytest
 import trio
 
-from parsec._parsec import DateTime
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.transport import Transport, TransportError
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import UserFS
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import WorkspaceRole

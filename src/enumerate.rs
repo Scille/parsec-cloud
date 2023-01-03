@@ -614,3 +614,173 @@ impl UserProfile {
         }
     }
 }
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct CoreEvent(libparsec::core::CoreEvent);
+
+crate::binding_utils::impl_enum_field!(
+    CoreEvent,
+    [
+        "BACKEND_CONNECTION_CHANGED",
+        backend_connection_changed,
+        libparsec::core::CoreEvent::BackendConnectionChanged
+    ],
+    [
+        "MESSAGE_PINGED",
+        message_pinged,
+        libparsec::core::CoreEvent::MessagePinged
+    ],
+    [
+        "BACKEND_MESSAGE_RECEIVED",
+        backend_message_received,
+        libparsec::core::CoreEvent::BackendMessageReceived
+    ],
+    [
+        "BACKEND_PINGED",
+        backend_pinged,
+        libparsec::core::CoreEvent::BackendPinged
+    ],
+    [
+        "BACKEND_REALM_MAINTENANCE_FINISHED",
+        backend_realm_maintenance_finished,
+        libparsec::core::CoreEvent::BackendRealmMaintenanceFinished
+    ],
+    [
+        "BACKEND_REALM_MAINTENANCE_STARTED",
+        backend_realm_maintenance_started,
+        libparsec::core::CoreEvent::BackendRealmMaintenanceStarted
+    ],
+    [
+        "BACKEND_REALM_ROLES_UPDATED",
+        backend_realm_roles_updated,
+        libparsec::core::CoreEvent::BackendRealmRolesUpdated
+    ],
+    [
+        "BACKEND_REALM_VLOBS_UPDATED",
+        backend_realm_vlobs_updated,
+        libparsec::core::CoreEvent::BackendRealmVlobsUpdated
+    ],
+    [
+        "FS_ENTRY_REMOTE_CHANGED",
+        fs_entry_remote_changed,
+        libparsec::core::CoreEvent::FsEntryRemoteChanged
+    ],
+    [
+        "FS_ENTRY_SYNCED",
+        fs_entry_synced,
+        libparsec::core::CoreEvent::FsEntrySynced
+    ],
+    [
+        "FS_ENTRY_DOWNSYNCED",
+        fs_entry_downsynced,
+        libparsec::core::CoreEvent::FsEntryDownsynced
+    ],
+    [
+        "FS_ENTRY_MINIMAL_SYNCED",
+        fs_entry_minimal_synced,
+        libparsec::core::CoreEvent::FsEntryMinimalSynced
+    ],
+    [
+        "FS_ENTRY_CONFINED",
+        fs_entry_confined,
+        libparsec::core::CoreEvent::FsEntryConfined
+    ],
+    [
+        "FS_ENTRY_UPDATED",
+        fs_entry_updated,
+        libparsec::core::CoreEvent::FsEntryUpdated
+    ],
+    [
+        "FS_ENTRY_FILE_CONFLICT_RESOLVED",
+        fs_entry_file_conflict_resolved,
+        libparsec::core::CoreEvent::FsEntryFileConflictResolved
+    ],
+    [
+        "FS_ENTRY_SYNC_REJECTED_BY_SEQUESTER_SERVICE",
+        fs_entry_sync_rejected_by_sequester_service,
+        libparsec::core::CoreEvent::FsEntrySyncRejectedBySequesterService
+    ],
+    [
+        "FS_WORKSPACE_CREATED",
+        fs_workspace_created,
+        libparsec::core::CoreEvent::FsWorkspaceCreated
+    ],
+    [
+        "USERFS_SYNC_REJECTED_BY_SEQUESTER_SERVICE",
+        userfs_sync_rejected_by_sequester_service,
+        libparsec::core::CoreEvent::UserfsSyncRejectedBySequesterService
+    ],
+    [
+        "GUI_CONFIG_CHANGED",
+        gui_config_changed,
+        libparsec::core::CoreEvent::GuiConfigChanged
+    ],
+    [
+        "MOUNTPOINT_REMOTE_ERROR",
+        mountpoint_remote_error,
+        libparsec::core::CoreEvent::MountpointRemoteError
+    ],
+    [
+        "MOUNTPOINT_STARTING",
+        mountpoint_starting,
+        libparsec::core::CoreEvent::MountpointStarting
+    ],
+    [
+        "MOUNTPOINT_STARTED",
+        mountpoint_started,
+        libparsec::core::CoreEvent::MountpointStarted
+    ],
+    [
+        "MOUNTPOINT_STOPPING",
+        mountpoint_stopping,
+        libparsec::core::CoreEvent::MountpointStopping
+    ],
+    [
+        "MOUNTPOINT_STOPPED",
+        mountpoint_stopped,
+        libparsec::core::CoreEvent::MountpointStopped
+    ],
+    [
+        "MOUNTPOINT_READONLY",
+        mountpoint_readonly,
+        libparsec::core::CoreEvent::MountpointReadonly
+    ],
+    [
+        "MOUNTPOINT_UNHANDLED_ERROR",
+        mountpoint_unhandled_error,
+        libparsec::core::CoreEvent::MountpointUnhandledError
+    ],
+    [
+        "MOUNTPOINT_TRIO_DEADLOCK_ERROR",
+        mountpoint_trio_deadlock_error,
+        libparsec::core::CoreEvent::MountpointTrioDeadlockError
+    ],
+    [
+        "SHARING_UPDATED",
+        sharing_updated,
+        libparsec::core::CoreEvent::SharingUpdated
+    ],
+    [
+        "USERFS_UPDATED",
+        userfs_updated,
+        libparsec::core::CoreEvent::UserfsUpdated
+    ],
+    [
+        "PKI_ENROLLMENTS_UPDATED",
+        pki_enrollments_updated,
+        libparsec::core::CoreEvent::PkiEnrollmentsUpdated
+    ]
+);
+
+#[pymethods]
+impl CoreEvent {
+    #[getter]
+    fn value(&self) -> &'static str {
+        self.0.as_str()
+    }
+}
+
+crate::binding_utils::gen_proto!(CoreEvent, __hash__);
+crate::binding_utils::gen_proto!(CoreEvent, __repr__);
+crate::binding_utils::gen_proto!(CoreEvent, __richcmp__, eq);

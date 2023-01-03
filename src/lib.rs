@@ -50,6 +50,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<enumerate::InvitationType>()?;
     m.add_class::<enumerate::RealmRole>()?;
     m.add_class::<enumerate::UserProfile>()?;
+    m.add_class::<enumerate::CoreEvent>()?;
 
     m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
     m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;

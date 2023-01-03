@@ -6,8 +6,8 @@ from typing import Any
 
 from PyQt5.QtWidgets import QWidget
 
+from parsec._parsec import CoreEvent
 from parsec.core.config import CoreConfig
-from parsec.core.core_events import CoreEvent
 from parsec.core.gui import lang
 from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.lang import translate as _

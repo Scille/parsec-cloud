@@ -14,7 +14,7 @@ from structlog import get_logger
 from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing import FileSystemNotStarted, filetime_now
 
-from parsec.core.core_events import CoreEvent
+from parsec._parsec import CoreEvent
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash, MountpointNoDriveAvailable

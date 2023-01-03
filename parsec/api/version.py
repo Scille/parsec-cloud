@@ -11,7 +11,7 @@ from parsec._parsec import ApiVersion
 # v3 (Parsec 2.9+): Incompatible handshake challenge answer format
 # - v3.1 (Parsec 2.10+): Add `user_revoked` return status to `realm_update_role` command
 # - v3.2 (Parsec 2.11+): Sequester API
-API_V1_VERSION = ApiVersion(version=1, revision=3)
-API_V2_VERSION = ApiVersion(version=2, revision=8)
-API_V3_VERSION = ApiVersion(version=3, revision=2)
+API_V1_VERSION: ApiVersion = ApiVersion(version=1, revision=3)
+API_V2_VERSION: ApiVersion = ApiVersion(version=2, revision=8)
+API_V3_VERSION: ApiVersion = ApiVersion(version=3, revision=2)
 API_VERSION = API_V3_VERSION

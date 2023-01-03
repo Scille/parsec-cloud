@@ -12,9 +12,8 @@ from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtWidgets import QWidget
 from structlog import get_logger
 
-from parsec._parsec import DateTime
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryName
-from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSFileNotFoundError,
