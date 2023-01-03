@@ -4,7 +4,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Dict, Iterable, Type, TypeVar, Union
 
-from marshmallow import MarshalResult, UnmarshalResult, ValidationError, post_load
+from marshmallow import MarshalResult, UnmarshalResult, ValidationError
 from marshmallow import Schema as MarshmallowSchema
 
 try:
@@ -17,24 +17,8 @@ try:
 except ImportError:
     BaseSchema = MarshmallowSchema  # type: ignore[misc, assignment]
 
-from parsec.serde.fields import String
 
 T = TypeVar("T", bound=Iterable[Any])
-
-
-class BaseCmdSchema(BaseSchema):
-
-    cmd = String(required=True)
-
-    @post_load
-    def _drop_cmd_field(self, item: dict[str, Any]) -> dict[str, Any]:  # type: ignore[misc]
-        if self.drop_cmd_field:
-            item.pop("cmd")
-        return item
-
-    def __init__(self, drop_cmd_field: bool = True, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-        self.drop_cmd_field = drop_cmd_field
 
 
 # Shamelessly taken from marshmallow-oneofschema (
