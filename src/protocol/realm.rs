@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyNotImplementedError,
+    exceptions::{PyNotImplementedError, PyValueError},
     prelude::*,
-    types::{PyBytes, PyTuple},
+    types::{PyBytes, PyTuple, PyType},
 };
 use std::collections::HashMap;
 
@@ -28,45 +28,19 @@ pub(crate) struct MaintenanceType(realm_status::MaintenanceType);
 crate::binding_utils::gen_proto!(MaintenanceType, __repr__);
 crate::binding_utils::gen_proto!(MaintenanceType, __richcmp__, eq);
 
-#[pymethods]
-impl MaintenanceType {
-    #[new]
-    fn new(maintenance_type: &str) -> PyResult<Self> {
-        Ok(Self(match maintenance_type {
-            "GARBAGE_COLLECTION" => realm_status::MaintenanceType::GarbageCollection,
-            "REENCRYPTION" => realm_status::MaintenanceType::Reencryption,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        }))
-    }
-
-    #[classattr]
-    #[pyo3(name = "GARBAGE_COLLECTION")]
-    fn garbage_collection() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                    MaintenanceType(realm_status::MaintenanceType::GarbageCollection).into_py(py)
-                })
-            };
-        }
-
-        &VALUE
-    }
-
-    #[classattr]
-    #[pyo3(name = "REENCRYPTION")]
-    fn reencryption() -> &'static PyObject {
-        lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
-                    MaintenanceType(realm_status::MaintenanceType::Reencryption).into_py(py)
-                })
-            };
-        }
-
-        &VALUE
-    }
-}
+crate::binding_utils::impl_enum_field!(
+    MaintenanceType,
+    [
+        "GARBAGE_COLLECTION",
+        garbage_collection,
+        realm_status::MaintenanceType::GarbageCollection
+    ],
+    [
+        "REENCRYPTION",
+        reencryption,
+        realm_status::MaintenanceType::Reencryption
+    ]
+);
 
 #[pyclass]
 #[derive(Clone)]
