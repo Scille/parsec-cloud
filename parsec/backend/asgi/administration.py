@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, NoReturn, TypeVar
 from quart import Blueprint, Response, current_app, g, jsonify, make_response, request
 from typing_extensions import ParamSpec
 
-from parsec._parsec import DateTime, OrganizationStats
+from parsec._parsec import ActiveUsersLimit, DateTime, OrganizationStats
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.api.rest import (
     organization_config_rep_serializer,
@@ -135,6 +135,16 @@ async def administration_create_organizations() -> Response:
     backend: "BackendApp" = current_app.backend  # type: ignore[attr-defined]
     data = await load_req_data(organization_create_req_serializer)
 
+    # `active_users_limit` is received as a nullable field however we're using
+    # an enum to represent this value internally. `None` means `NoLimit` and any
+    # other integer value is the org's user limit
+    if "active_users_limit" in data:
+        data["active_users_limit"] = (
+            ActiveUsersLimit.LimitedTo(data["active_users_limit"])
+            if data["active_users_limit"] is not None
+            else ActiveUsersLimit.NO_LIMIT
+        )
+
     organization_id = data.pop("organization_id")
     bootstrap_token = generate_bootstrap_token()
     try:
@@ -173,7 +183,7 @@ async def administration_organization_item(raw_organization_id: str) -> Response
                 "is_bootstrapped": organization.is_bootstrapped(),
                 "is_expired": organization.is_expired,
                 "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
-                "active_users_limit": organization.active_users_limit,
+                "active_users_limit": organization.active_users_limit.to_int(),
             },
             status=200,
         )
@@ -182,6 +192,15 @@ async def administration_organization_item(raw_organization_id: str) -> Response
         assert request.method == "PATCH"
 
         data = await load_req_data(organization_update_req_serializer)
+        # `active_users_limit` is received as a nullable field however we're using
+        # an enum to represent this value internally. `None` means `NoLimit` and any
+        # other integer value is the org's user limit
+        if "active_users_limit" in data:
+            data["active_users_limit"] = (
+                ActiveUsersLimit.LimitedTo(data["active_users_limit"])
+                if data["active_users_limit"] is not None
+                else ActiveUsersLimit.NO_LIMIT
+            )
 
         try:
             await backend.organization.update(id=organization_id, **data)

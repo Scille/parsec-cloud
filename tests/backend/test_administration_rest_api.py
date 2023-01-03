@@ -6,7 +6,7 @@ from unittest.mock import ANY
 import pytest
 import trio
 
-from parsec._parsec import DateTime
+from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.api.protocol import (
     BlockID,
     HandshakeOrganizationExpired,
@@ -76,7 +76,7 @@ async def test_organization_create(backend_asgi_app):
         bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -145,7 +145,7 @@ async def test_organization_create_already_exists_not_bootstrapped(backend_asgi_
         bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -195,7 +195,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=False,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -223,7 +223,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
-        active_users_limit=10,
+        active_users_limit=ActiveUsersLimit.LimitedTo(10),
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -247,7 +247,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -296,7 +296,7 @@ async def test_organization_config_ok(backend_asgi_app, coolorg, bootstrapped):
 
     # Ensure config change is taken into account
     await backend_asgi_app.backend.organization.update(
-        id=organization_id, active_users_limit=42, is_expired=True
+        id=organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(42), is_expired=True
     )
     response = await client.get(
         f"/administration/organizations/{organization_id.str}",
@@ -363,7 +363,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
-        assert org.active_users_limit == 10
+        assert org.active_users_limit == ActiveUsersLimit.LimitedTo(10)
 
         # Partial update
         response = await client.patch(
@@ -378,7 +378,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
-        assert org.active_users_limit is None
+        assert org.active_users_limit is ActiveUsersLimit.NO_LIMIT
 
         # Partial update with unknown field
         response = await client.patch(
@@ -404,7 +404,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
-        assert org.active_users_limit is None
+        assert org.active_users_limit is ActiveUsersLimit.NO_LIMIT
 
     # No BackendEvent.ORGANIZATION_EXPIRED should have occurred
     await trio.testing.wait_all_tasks_blocked()

@@ -5,7 +5,7 @@ from typing import List, Tuple, Union
 
 import attr
 
-from parsec._parsec import BackendAddr
+from parsec._parsec import ActiveUsersLimit, BackendAddr
 
 
 class BaseBlockStoreConfig:
@@ -119,7 +119,7 @@ class BackendConfig:
 
     organization_bootstrap_webhook_url: str | None = None
     organization_spontaneous_bootstrap: bool = False
-    organization_initial_active_users_limit: int | None = None
+    organization_initial_active_users_limit: ActiveUsersLimit = ActiveUsersLimit.NO_LIMIT
     organization_initial_user_profile_outsider_allowed: bool = True
 
     @property

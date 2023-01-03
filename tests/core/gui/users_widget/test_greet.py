@@ -8,7 +8,7 @@ import pytest
 import trio
 from PyQt5 import QtCore
 
-from parsec._parsec import DateTime
+from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationDeletedReason, UserProfile
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.gui.greet_user_widget import (
@@ -669,7 +669,9 @@ async def test_greet_user_invitation_cancelled(
 async def test_greet_user_but_active_user_limit_reached(
     aqtbot, autoclose_dialog, backend, alice, GreetUserTestBed
 ):
-    await backend.organization.update(alice.organization_id, active_users_limit=1)
+    await backend.organization.update(
+        alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(1)
+    )
 
     class GreetUserButActiveUserLimitReachedTestBed(GreetUserTestBed):
         async def step_6_validate_claim_info(self):

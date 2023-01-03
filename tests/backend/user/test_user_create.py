@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     DateTime,
     UserCreateRepActiveUsersLimitReached,
     UserCreateRepAlreadyExists,
@@ -113,7 +114,9 @@ async def test_user_create_nok_active_users_limit_reached(
     binder = backend_data_binder_factory(backend_asgi_app.backend)
     await binder.bind_organization(coolorg, alice)
     # ...so our active user limit has just been reached
-    await backend_asgi_app.backend.organization.update(alice.organization_id, active_users_limit=1)
+    await backend_asgi_app.backend.organization.update(
+        alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(1)
+    )
 
     now = DateTime.now()
     user_certificate = UserCertificate(
@@ -152,7 +155,7 @@ async def test_user_create_nok_active_users_limit_reached(
         # Now correct the limit, and ensure the user can be created
 
         await backend_asgi_app.backend.organization.update(
-            alice.organization_id, active_users_limit=2
+            alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(2)
         )
 
         rep = await user_create(

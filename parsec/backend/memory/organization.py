@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Union
 
 import trio
 
-from parsec._parsec import DateTime, OrganizationStats, UsersPerProfileDetailItem
+from parsec._parsec import ActiveUsersLimit, DateTime, OrganizationStats, UsersPerProfileDetailItem
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.backend.events import BackendEvent
 from parsec.backend.organization import (
@@ -60,7 +60,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        active_users_limit: Union[UnsetType, int | None] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
         created_on: DateTime | None = None,
     ) -> None:
@@ -75,6 +75,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
+
+        assert isinstance(active_users_limit, ActiveUsersLimit)
 
         self._organizations[id] = Organization(
             organization_id=id,
@@ -210,7 +212,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         is_expired: Union[UnsetType, bool] = Unset,
-        active_users_limit: Union[UnsetType, int | None] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
@@ -231,6 +233,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 user_profile_outsider_allowed=user_profile_outsider_allowed
             )
 
+        assert isinstance(organization.active_users_limit, ActiveUsersLimit)
         self._organizations[id] = organization
 
         if self._organizations[id].is_expired:

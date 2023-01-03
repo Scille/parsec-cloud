@@ -8,6 +8,7 @@ import triopg
 from triopg import UniqueViolationError
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     DateTime,
     OrganizationStats,
     SequesterVerifyKeyDer,
@@ -259,7 +260,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        active_users_limit: Union[UnsetType, int | None] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
         created_on: DateTime | None = None,
     ) -> None:
@@ -276,7 +277,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     *_q_insert_organization(
                         organization_id=id.str,
                         bootstrap_token=bootstrap_token,
-                        active_users_limit=active_users_limit,
+                        active_users_limit=active_users_limit
+                        if active_users_limit is not ActiveUsersLimit.NO_LIMIT
+                        else None,
                         user_profile_outsider_allowed=user_profile_outsider_allowed,
                         created_on=created_on,
                     )
@@ -328,7 +331,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             is_expired=row["is_expired"],
             created_on=row["created_on"],
             bootstrapped_on=row["bootstrapped_on"],
-            active_users_limit=row["active_users_limit"],
+            active_users_limit=ActiveUsersLimit.FromOptionalInt(row["active_users_limit"]),
             user_profile_outsider_allowed=row["user_profile_outsider_allowed"],
             sequester_authority=sequester_authority,
             sequester_services_certificates=sequester_services_certificates,
@@ -411,7 +414,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         is_expired: Union[UnsetType, bool] = Unset,
-        active_users_limit: Union[UnsetType, int | None] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
@@ -438,7 +441,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         if with_is_expired:
             fields["is_expired"] = is_expired
         if with_active_users_limit:
-            fields["active_users_limit"] = active_users_limit
+            assert isinstance(active_users_limit, ActiveUsersLimit)
+            fields["active_users_limit"] = active_users_limit.to_int()
         if with_user_profile_outsider_allowed:
             fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
 

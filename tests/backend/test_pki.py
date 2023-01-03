@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     DateTime,
     EnrollmentID,
     EventsListenRepOkPkiEnrollmentUpdated,
@@ -433,7 +434,9 @@ async def test_pki_accept_user_already_exist(anonymous_backend_ws, bob, alice, a
 @pytest.mark.trio
 async def test_pki_accept_limit_reached(backend, anonymous_backend_ws, mallory, alice, alice_ws):
     # Change organization settings
-    await backend.organization.update(alice.organization_id, is_expired=False, active_users_limit=1)
+    await backend.organization.update(
+        alice.organization_id, is_expired=False, active_users_limit=ActiveUsersLimit.LimitedTo(1)
+    )
     request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 

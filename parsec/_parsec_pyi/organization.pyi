@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Iterable
 
 from parsec._parsec import UsersPerProfileDetailItem
+from parsec._parsec_pyi.protocol.organization import ActiveUsersLimit
 
 class OrganizationStats:
     def __init__(
@@ -31,14 +32,14 @@ class OrganizationConfig:
     def __init__(
         self,
         user_profile_outsider_allowed: bool,
-        active_users_limit: int | None,
+        active_users_limit: ActiveUsersLimit,
         sequester_authority: bytes | None,
         sequester_services: tuple[bytes, ...] | None,
     ) -> None: ...
     @property
     def user_profile_outsider_allowed(self) -> bool: ...
     @property
-    def active_users_limit(self) -> int | None: ...
+    def active_users_limit(self) -> ActiveUsersLimit: ...
     @property
     def sequester_authority(self) -> bytes | None: ...
     @property
