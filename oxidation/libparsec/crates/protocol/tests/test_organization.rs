@@ -7,7 +7,7 @@ use rstest::rstest;
 use libparsec_protocol::{
     anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
 };
-use libparsec_types::UsersPerProfileDetailItem;
+use libparsec_types::{ActiveUsersLimit, UsersPerProfileDetailItem};
 use tests_fixtures::{
     alice, device_certificate, redacted_device_certificate, redacted_user_certificate,
     user_certificate, Device,
@@ -142,7 +142,7 @@ fn serde_organization_config_req() {
     )[..],
     authenticated_cmds::organization_config::Rep::Ok {
         user_profile_outsider_allowed: false,
-        active_users_limit: Some(1),
+        active_users_limit: ActiveUsersLimit::LimitedTo(1),
         sequester_authority_certificate: Maybe::Absent,
         sequester_services_certificates: Maybe::Absent,
     }
@@ -164,7 +164,7 @@ fn serde_organization_config_req() {
     )[..],
     authenticated_cmds::organization_config::Rep::Ok {
         user_profile_outsider_allowed: false,
-        active_users_limit: None,
+        active_users_limit: ActiveUsersLimit::NoLimit,
         sequester_authority_certificate: Maybe::Present(None),
         sequester_services_certificates: Maybe::Present(None),
     }
@@ -186,7 +186,7 @@ fn serde_organization_config_req() {
     )[..],
     authenticated_cmds::organization_config::Rep::Ok {
         user_profile_outsider_allowed: false,
-        active_users_limit: Some(1),
+        active_users_limit: ActiveUsersLimit::LimitedTo(1),
         sequester_authority_certificate: Maybe::Present(Some(b"foobar".to_vec())),
         sequester_services_certificates: Maybe::Present(Some(vec![b"foo".to_vec(), b"bar".to_vec()])),
     }

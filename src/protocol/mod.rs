@@ -350,6 +350,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<OrganizationConfigRepOk>()?;
     m.add_class::<OrganizationConfigRepNotFound>()?;
     m.add_class::<OrganizationConfigRepUnknownStatus>()?;
+    m.add_class::<ActiveUsersLimit>()?;
 
     // Realm
     m.add_class::<RealmCreateReq>()?;

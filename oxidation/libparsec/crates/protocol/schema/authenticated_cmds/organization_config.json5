@@ -18,7 +18,7 @@
                     // `None` stands for "no limit" here
                     {
                         "name": "active_users_limit",
-                        "type": "RequiredOption<Size>"
+                        "type": "ActiveUsersLimit"
                     },
                     {
                         "name": "sequester_authority_certificate",
