@@ -247,6 +247,12 @@ jobs:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
 
+      - uses: microsoft/setup-msbuild@d3ea839497466fb4c6b91ce85831f3a251a2fe3f # pin v1.3
+
+      - name: Build Icon overlays COM objects
+        run: msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\windows-icon-handler.sln
+        shell: cmd
+
       - name: Prepare build directory
         run: Copy-Item -Recurse -Path ${{ github.workspace }}\packaging\windows\* -Destination ${{ runner.temp }}
         working-directory: ${{ runner.temp }}
