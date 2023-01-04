@@ -24,9 +24,26 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Error
     m.add("DataError", py.get_type::<DataError>())?;
     m.add("EntryNameError", py.get_type::<EntryNameError>())?;
+    m.add("PkiEnrollmentError", py.get_type::<PkiEnrollmentError>())?;
     m.add(
         "PkiEnrollmentLocalPendingError",
         py.get_type::<PkiEnrollmentLocalPendingError>(),
+    )?;
+    m.add(
+        "PkiEnrollmentLocalPendingCannotReadError",
+        py.get_type::<PkiEnrollmentLocalPendingCannotReadError>(),
+    )?;
+    m.add(
+        "PkiEnrollmentLocalPendingCannotRemoveError",
+        py.get_type::<PkiEnrollmentLocalPendingCannotRemoveError>(),
+    )?;
+    m.add(
+        "PkiEnrollmentLocalPendingCannotSaveError",
+        py.get_type::<PkiEnrollmentLocalPendingCannotSaveError>(),
+    )?;
+    m.add(
+        "PkiEnrollmentLocalPendingValidationError",
+        py.get_type::<PkiEnrollmentLocalPendingValidationError>(),
     )?;
 
     // Certif

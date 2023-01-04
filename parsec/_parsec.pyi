@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
-from parsec._parsec_pyi import DataError, EntryNameError, PkiEnrollmentLocalPendingError
+from parsec._parsec_pyi import (
+    DataError,
+    EntryNameError,
+    PkiEnrollmentError,
+    PkiEnrollmentLocalPendingCannotReadError,
+    PkiEnrollmentLocalPendingCannotRemoveError,
+    PkiEnrollmentLocalPendingCannotSaveError,
+    PkiEnrollmentLocalPendingError,
+    PkiEnrollmentLocalPendingValidationError,
+)
 from parsec._parsec_pyi.addrs import (
     BackendActionAddr,
     BackendAddr,
@@ -527,7 +536,12 @@ __all__ = [
     # Data Error
     "DataError",
     "EntryNameError",
+    "PkiEnrollmentError",
     "PkiEnrollmentLocalPendingError",
+    "PkiEnrollmentLocalPendingCannotReadError",
+    "PkiEnrollmentLocalPendingCannotRemoveError",
+    "PkiEnrollmentLocalPendingCannotSaveError",
+    "PkiEnrollmentLocalPendingValidationError",
     # Certif
     "UserCertificate",
     "DeviceCertificate",

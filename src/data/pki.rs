@@ -1,7 +1,7 @@
 use pyo3::{
     pyclass, pymethods,
     types::{IntoPyDict, PyBytes, PyDict, PyType},
-    PyAny, Python,
+    PyAny, PyResult, Python,
 };
 use std::{collections::HashMap, path::Path};
 
@@ -146,6 +146,38 @@ impl X509Certificate {
             certificate_sha1,
             certificate_id,
         })
+    }
+
+    #[args(py_kwargs = "**")]
+    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [issuer: HashMap<String, String>, "issuer"],
+            [subject: HashMap<String, String>, "subject"],
+            [der_x509_certificate: Vec<u8>, "der_x509_certificate"],
+            [certificate_sha1: Vec<u8>, "certificate_sha1"],
+            [certificate_id: Option<String>, "certificate_id"],
+        );
+
+        let mut r = self.0.clone();
+
+        if let Some(v) = issuer {
+            r.issuer = v;
+        }
+        if let Some(v) = subject {
+            r.subject = v;
+        }
+        if let Some(v) = der_x509_certificate {
+            r.der_x509_certificate = v;
+        }
+        if let Some(v) = certificate_sha1 {
+            r.certificate_sha1 = v;
+        }
+        if let Some(v) = certificate_id {
+            r.certificate_id = v
+        }
+
+        Ok(Self(r))
     }
 
     fn is_available_locally(&self) -> bool {
