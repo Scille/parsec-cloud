@@ -39,5 +39,9 @@ class CoreEvent:
     # Pki enrollment
     PKI_ENROLLMENTS_UPDATED: CoreEvent
 
+    VALUES: tuple[CoreEvent, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> CoreEvent: ...
     @property
-    def value(self) -> str: ...
+    def str(self) -> str: ...

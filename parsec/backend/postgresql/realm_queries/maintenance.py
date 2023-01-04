@@ -57,7 +57,7 @@ async def get_realm_status(
         raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     return RealmStatus(
-        maintenance_type=MaintenanceType(rep["maintenance_type"])
+        maintenance_type=MaintenanceType.from_str(rep["maintenance_type"])
         if rep["maintenance_type"]
         else None,
         maintenance_started_on=rep["maintenance_started_on"],

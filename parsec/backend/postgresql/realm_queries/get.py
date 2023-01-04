@@ -146,7 +146,7 @@ async def query_get_status(
         raise RealmAccessError()
 
     return RealmStatus(
-        maintenance_type=MaintenanceType(ret["maintenance_type"])
+        maintenance_type=MaintenanceType.from_str(ret["maintenance_type"])
         if ret["maintenance_type"]
         else None,
         maintenance_started_on=ret["maintenance_started_on"],
