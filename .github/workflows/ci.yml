@@ -253,6 +253,21 @@ jobs:
         if: >-
           steps.python-changes.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
+        with:
+          # We setup the cache by hand, see below
+          cache: false
+
+      - name: Retreive Rust cache
+        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # pin v2.2.0
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+        with:
+          # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
+          # cache is only shared between master and the PRs (and not accross PRs).
+          # So we only save the cache on master build given it's the ones that are the
+          # most likely to be reused.
+          save-if: github.ref == 'refs/heads/master'
 
       - name: Install python deps
         if: steps.python-changes.outputs.run == 'true'
@@ -337,6 +352,19 @@ jobs:
 
       - uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
         if: steps.rust-changes.outputs.run == 'true'
+        with:
+          # We setup the cache by hand, see below
+          cache: false
+
+      - name: Retreive Rust cache
+        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # pin v2.2.0
+        if: steps.rust-changes.outputs.run == 'true'
+        with:
+          # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
+          # cache is only shared between master and the PRs (and not accross PRs).
+          # So we only save the cache on master build given it's the ones that are the
+          # most likely to be reused.
+          save-if: github.ref == 'refs/heads/master'
 
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
