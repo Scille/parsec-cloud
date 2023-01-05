@@ -119,6 +119,7 @@ pub struct X509Certificate {
 }
 
 impl X509Certificate {
+    /// Certificates that are received from another peer are not available locally.
     pub fn is_available_locally(&self) -> bool {
         self.certificate_id.is_some()
     }
