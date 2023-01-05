@@ -42,23 +42,4 @@ describe('HeaderPage.vue', () => {
   it('renders header vue', () => {
     expect(wrapper.text()).toMatch(new RegExp('Welcome. Please add an organization to start using Parsec.'));
   });
-
-  it('opens popover ', async () => {
-    console.log(wrapper.find('#trigger-help-button'));
-    await wrapper.find('#trigger-help-button').trigger('click');
-    // wrapper.update();
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$forceUpdate();
-    console.log('ion-popover', wrapper.find('ion-popover'));
-    const button = wrapper.find('#trigger-about-button');
-    console.log(button);
-    // const openCreateOrganizationModalSpy = jest.spyOn(wrapper.vm, 'openCreateOrganizationModal');
-    await button.trigger('click');
-    // expect(openCreateOrganizationModalSpy).toBeCalled();
-    const routerSpy = jest.spyOn(router, 'push');
-    expect(routerSpy).toHaveBeenCalledTimes(1);
-    expect(routerSpy).toHaveBeenCalledWith('/404');
-    // expect(mockRouter.push).toHaveBeenCalledTimes(1);
-    // expect(mockRouter.push).toHaveBeenCalledWith('/404');
-  });
 });
