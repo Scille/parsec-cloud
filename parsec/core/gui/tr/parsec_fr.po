@@ -541,7 +541,7 @@ msgid "TEXT_ENROLLMENT_ERROR_WITH_CERTIFICATE"
 msgstr "Une erreur est survenue en essayant de charger cette requête."
 
 msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"
-msgstr "Certificate invalide"
+msgstr "Certificat invalide"
 
 msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"
 msgstr "Certificat valide"

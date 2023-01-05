@@ -1,0 +1,26 @@
+{
+    "label": "X509Certificate",
+    "type": "x509_certificate",
+    "other_fields": [
+        {
+            "name": "issuer",
+            "type": "Map<String, String>"
+        },
+        {
+            "name": "subject",
+            "type": "Map<String, String>"
+        },
+        {
+            "name": "der_x509_certificate",
+            "type": "Bytes"
+        },
+        {
+            "name": "certificate_sha1",
+            "type": "Bytes"
+        },
+        {
+            "name": "certificate_id",
+            "type": "Option<String>"
+        }
+    ]
+}
