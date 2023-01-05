@@ -20,7 +20,7 @@ from parsec._parsec import (
     # Certificate
     UserCertificate,
 )
-from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data.entry import EntryID, EntryName, EntryNameField
 from parsec.api.data.invite import (
     InviteDeviceConfirmation,
     InviteDeviceData,
@@ -46,7 +46,6 @@ __all__ = (
     "BaseSchema",
     # Entry
     "EntryID",
-    "EntryIDField",
     "EntryName",
     "EntryNameField",
     # Certifs

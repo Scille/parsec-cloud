@@ -4,8 +4,7 @@ from __future__ import annotations
 from parsec._parsec import EntryID, EntryName
 from parsec.serde import fields
 
-__all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
+__all__ = ("EntryID", "EntryName", "EntryNameField")
 
 
-EntryIDField = fields.uuid_based_field_factory(EntryID)
 EntryNameField = fields.str_based_field_factory(EntryName)
