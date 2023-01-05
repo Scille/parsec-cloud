@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    DataError,
     DeviceCertificate,
     # Message
     MessageContent,
@@ -19,7 +20,6 @@ from parsec._parsec import (
     # Certificate
     UserCertificate,
 )
-from parsec.api.data.base import BaseData, BaseSchema, DataError
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from parsec.api.data.invite import (
     InviteDeviceConfirmation,
@@ -43,7 +43,6 @@ from parsec.api.data.manifest import (
 __all__ = (
     # Base
     "DataError",
-    "BaseData",
     "BaseSchema",
     # Entry
     "EntryID",
