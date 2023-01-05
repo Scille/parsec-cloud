@@ -1,33 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Dict, NoReturn, Callable, Union
-import trio
-from structlog import get_logger
 from functools import partial
-from quart import g, websocket, Websocket, Blueprint
+from typing import Awaitable, Callable, NoReturn, TypeVar, Union
 
-from parsec.api.protocol.base import MessageSerializationError
+import trio
+from quart import Blueprint, Websocket, g, websocket
+from structlog import get_logger
+from wsproto.utilities import LocalProtocolError
+
+from parsec._parsec import ProtocolError
 from parsec.api.protocol import (
-    packb,
-    unpackb,
-    ProtocolError,
     InvalidMessageError,
     InvitationStatus,
+    InvitationToken,
     OrganizationID,
     UserID,
-    InvitationToken,
+    packb,
+    unpackb,
 )
+from parsec.api.protocol.base import MessageSerializationError
 from parsec.backend.app import BackendApp
-from parsec.backend.utils import run_with_cancel_on_client_sending_new_cmd, CancelledByNewCmd
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.client_context import (
     AuthenticatedClientContext,
+    BaseClientContext,
     InvitedClientContext,
-    APIV1_AnonymousClientContext,
 )
 from parsec.backend.handshake import do_handshake
 from parsec.backend.invite import CloseInviteConnection
+from parsec.backend.utils import CancelledByNewCmd, run_with_cancel_on_client_sending_new_cmd
 
+Ctx = TypeVar("Ctx", bound=BaseClientContext)
+R = dict[str, object]
 
 logger = get_logger()
 
@@ -36,7 +41,7 @@ ws_bp = Blueprint("ws_api", __name__)
 
 
 @ws_bp.websocket("/ws")
-async def handle_ws():
+async def handle_ws() -> None:
     backend: BackendApp = g.backend
     selected_logger = logger
 
@@ -57,7 +62,9 @@ async def handle_ws():
         return
 
     selected_logger = client_ctx.logger
-    selected_logger.info("Connection established")
+    selected_logger.info(
+        f"Connection established (client/server API version: {client_ctx.client_api_version}/{client_ctx.api_version})"
+    )
 
     # 2) Setup events listener according to client type
 
@@ -66,6 +73,7 @@ async def handle_ws():
 
     if isinstance(client_ctx, AuthenticatedClientContext):
         with trio.CancelScope() as cancel_scope:
+            client_ctx.cancel_scope = cancel_scope
             with backend.event_bus.connection_context() as client_ctx.event_bus_ctx:
 
                 def _on_revoked(
@@ -78,7 +86,7 @@ async def handle_ws():
                         organization_id == client_ctx.organization_id
                         and user_id == client_ctx.user_id
                     ):
-                        cancel_scope.cancel()
+                        client_ctx.close_connection_asap()
 
                 def _on_expired(
                     client_ctx: AuthenticatedClientContext,
@@ -86,7 +94,7 @@ async def handle_ws():
                     organization_id: OrganizationID,
                 ) -> None:
                     if organization_id == client_ctx.organization_id:
-                        cancel_scope.cancel()
+                        client_ctx.close_connection_asap()
 
                 client_ctx.event_bus_ctx.connect(
                     BackendEvent.USER_REVOKED, partial(_on_revoked, client_ctx)
@@ -98,7 +106,9 @@ async def handle_ws():
                 # 3) Serve commands
                 await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
 
-    elif isinstance(client_ctx, InvitedClientContext):
+    else:
+        assert isinstance(client_ctx, InvitedClientContext)
+
         await backend.invite.claimer_joined(
             organization_id=client_ctx.organization_id,
             greeter=client_ctx.invitation.greeter_user_id,
@@ -106,6 +116,7 @@ async def handle_ws():
         )
         try:
             with trio.CancelScope() as cancel_scope:
+                client_ctx.cancel_scope = cancel_scope
                 with backend.event_bus.connection_context() as event_bus_ctx:
 
                     def _on_invite_status_changed(
@@ -121,7 +132,7 @@ async def handle_ws():
                             and organization_id == client_ctx.organization_id
                             and token == client_ctx.invitation.token
                         ):
-                            cancel_scope.cancel()
+                            client_ctx.close_connection_asap()
 
                     event_bus_ctx.connect(
                         BackendEvent.INVITE_STATUS_CHANGED,
@@ -151,14 +162,11 @@ async def handle_ws():
                     token=client_ctx.invitation.token,
                 )
 
-    # TODO: remove me once APIv1 is deprecated
-    else:
-        assert isinstance(client_ctx, APIV1_AnonymousClientContext)
-        await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
-
 
 async def _handle_client_websocket_loop(
-    api_cmds: Dict[str, Callable], websocket: Websocket, client_ctx
+    api_cmds: dict[str, Callable[[Ctx, R], Awaitable[R]]],
+    websocket: Websocket,
+    client_ctx: Ctx,
 ) -> NoReturn:
 
     raw_req: Union[None, bytes, str] = None
@@ -166,9 +174,9 @@ async def _handle_client_websocket_loop(
         # raw_req can be already defined if we received a new request
         # while processing a command
         raw_req = raw_req or await websocket.receive()
-        rep: dict
+        rep: R
         try:
-            # Wesocket can return both bytes or utf8-string messages, we only accept the former
+            # `WebSocket` can return both bytes or utf8-string messages, we only accept the former
             if not isinstance(raw_req, bytes):
                 raise MessageSerializationError
             req = unpackb(raw_req)
@@ -219,5 +227,10 @@ async def _handle_client_websocket_loop(
             client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
 
         raw_rep = packb(rep)
-        await websocket.send(raw_rep)
+        try:
+            await websocket.send(raw_rep)
+        except LocalProtocolError:
+            # Ignore exception if the websocket is closed
+            # This used to be the behavior with wsproto < 1.2.0
+            pass
         raw_req = None

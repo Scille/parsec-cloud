@@ -249,37 +249,12 @@
             "enrollment_id": {
                 "allow_none": false,
                 "required": true,
-                "type": "UUID"
+                "type": "EnrollmentIDField"
             },
             "submit_payload": {
                 "allow_none": false,
                 "required": true,
-                "schema": {
-                    "fields": {
-                        "public_key": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "PublicKey"
-                        },
-                        "requested_device_label": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "DeviceLabelField"
-                        },
-                        "type": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "CheckedConstant",
-                            "value": "pki_enrollment_submit_payload"
-                        },
-                        "verify_key": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "VerifyKey"
-                        }
-                    }
-                },
-                "type": "Nested"
+                "type": "PkiEnrollmentSubmitPayloadField"
             },
             "submitted_on": {
                 "allow_none": false,

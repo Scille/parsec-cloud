@@ -1,30 +1,37 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from urllib.request import Request, urlopen
 
 import trio
-from typing import Optional
 from structlog import get_logger
-from urllib.request import urlopen, Request
 
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
     DeviceLabel,
+    OrganizationID,
     organization_bootstrap_webhook_serializer,
 )
-
+from parsec.backend.config import BackendConfig
 
 logger = get_logger()
 
 
 def _do_urllib_request(url: str, data: bytes) -> None:
     req = Request(
-        url, method="POST", headers={"content-type": "application/json; charset=utf-8"}, data=data
+        url,
+        method="POST",
+        headers={"content-type": "application/json; charset=utf-8"},
+        data=data,
     )
     try:
         with urlopen(req, timeout=30) as rep:
             if not 200 <= rep.status < 300:
                 logger.warning(
-                    "webhook bad return status", url=url, data=data, return_status=rep.status
+                    "webhook bad return status",
+                    url=url,
+                    data=data,
+                    return_status=rep.status,
                 )
 
     except OSError as exc:
@@ -32,17 +39,17 @@ def _do_urllib_request(url: str, data: bytes) -> None:
 
 
 class WebhooksComponent:
-    def __init__(self, config):
+    def __init__(self, config: BackendConfig) -> None:
         self._config = config
 
     async def on_organization_bootstrap(
         self,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        device_label: Optional[DeviceLabel],
-        human_email: Optional[str],
-        human_label: Optional[str],
-    ):
+        device_label: DeviceLabel | None,
+        human_email: str | None,
+        human_label: str | None,
+    ) -> None:
         if not self._config.organization_bootstrap_webhook_url:
             return
         data = organization_bootstrap_webhook_serializer.dumps(

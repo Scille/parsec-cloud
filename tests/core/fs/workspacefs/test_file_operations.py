@@ -1,24 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Tuple
 
 import pytest
-from typing import Tuple
-from parsec._parsec import DateTime
-
 from hypothesis import strategies
-from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test
+from hypothesis.stateful import RuleBasedStateMachine, invariant, rule, run_state_machine_as_test
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import DeviceID
-from parsec.core.types import EntryID, ChunkID, Chunk, LocalFileManifest
-from parsec.core.fs.workspacefs.file_transactions import padded_data
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
-    prepare_write,
-    prepare_resize,
     prepare_reshape,
+    prepare_resize,
+    prepare_write,
 )
-
+from parsec.core.fs.workspacefs.file_transactions import padded_data
+from parsec.core.types import Chunk, ChunkID, EntryID, LocalFileManifest
 from tests.common import freeze_time
-
 
 MAX_SIZE = 64
 size = strategies.integers(min_value=0, max_value=MAX_SIZE)
@@ -135,12 +134,12 @@ def test_complete_scenario():
     assert storage[chunk1.id] == b"world !"
 
     with freeze_time("2000-01-04") as t4:
-        manifest = storage.write(manifest, b"\n More kontent", 13, t4)
-        assert storage.read(manifest, 27, 0) == b"Hello world !\n More kontent"
+        manifest = storage.write(manifest, b"\n More content", 13, t4)
+        assert storage.read(manifest, 27, 0) == b"Hello world !\n More content"
 
     (_, _, chunk2), (chunk3,) = manifest.blocks
     assert storage[chunk2.id] == b"\n M"
-    assert storage[chunk3.id] == b"ore kontent"
+    assert storage[chunk3.id] == b"ore content"
     assert manifest == base.evolve(
         size=27, blocks=((chunk0, chunk1, chunk2), (chunk3,)), updated=t4
     )

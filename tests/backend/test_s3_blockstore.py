@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from unittest.mock import Mock
 from unittest import mock
+from unittest.mock import Mock
 
-from botocore.exceptions import (
-    ClientError as S3ClientError,
-    EndpointConnectionError as S3EndpointConnectionError,
-)
 import pytest
+from botocore.exceptions import ClientError as S3ClientError
+from botocore.exceptions import EndpointConnectionError as S3EndpointConnectionError
 
-from parsec.api.protocol import OrganizationID, BlockID
-from parsec.backend.s3_blockstore import S3BlockStoreComponent
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
+from parsec.backend.s3_blockstore import S3BlockStoreComponent
 
 
 @pytest.mark.trio
@@ -20,9 +19,9 @@ async def test_s3_read(caplog):
     block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
-        log = caplog.assert_occured_once("[warning  ] Block read error")
-        assert f"organization_id={org_id}" in log
-        assert f"block_id={block_id}" in log
+        log = caplog.assert_occurred_once("[warning  ] Block read error")
+        assert f"organization_id={org_id.str}" in log
+        assert f"block_id={block_id.hex}" in log
         assert len(caplog.messages) == 1
         caplog.clear()
 
@@ -74,9 +73,9 @@ async def test_s3_create(caplog):
     block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
-        log = caplog.assert_occured_once("[warning  ] Block create error")
-        assert f"organization_id={org_id}" in log
-        assert f"block_id={block_id}" in log
+        log = caplog.assert_occurred_once("[warning  ] Block create error")
+        assert f"organization_id={org_id.str}" in log
+        assert f"block_id={block_id.hex}" in log
         assert len(caplog.messages) == 1
         caplog.clear()
 

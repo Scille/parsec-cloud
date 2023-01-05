@@ -1,25 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import math
-import trio
 import unicodedata
-from zlib import adler32
-from pathlib import PurePath
-from functools import partial
-from structlog import get_logger
 from contextlib import asynccontextmanager
-from winfspy import FileSystem, enable_debug_log
-from winfspy.plumbing import filetime_now, FileSystemNotStarted
+from functools import partial
+from pathlib import PurePath
+from typing import Any, AsyncIterator
+from zlib import adler32
 
-from parsec.event_bus import EventBus
+import trio
+from structlog import get_logger
+from winfspy import FileSystem, enable_debug_log
+from winfspy.plumbing import FileSystemNotStarted, filetime_now
+
+from parsec._parsec import CoreEvent
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.core_events import CoreEvent
-from parsec.core.win_registry import parsec_drive_icon_context
+from parsec.core.mountpoint.exceptions import MountpointDriverCrash, MountpointNoDriveAvailable
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
-from parsec.core.mountpoint.exceptions import MountpointDriverCrash, MountpointNoDriveAvailable
-
+from parsec.core.types import EntryID, LocalDevice
+from parsec.core.win_registry import parsec_drive_icon_context
+from parsec.event_bus import EventBus
 
 __all__ = ("winfsp_mountpoint_runner",)
 
@@ -70,7 +73,7 @@ def sorted_drive_letters(index: int, length: int, grouping: int = 5) -> str:
     return result
 
 
-async def _get_available_drive(index, length) -> PurePath:
+async def _get_available_drive(index: int, length: int) -> PurePath:
     drives = (trio.Path(f"{letter}:\\") for letter in sorted_drive_letters(index, length))
     for drive in drives:
         try:
@@ -85,11 +88,13 @@ async def _get_available_drive(index, length) -> PurePath:
     )
 
 
-def _generate_volume_serial_number(device, workspace_id):
-    return adler32(f"{device.organization_id}-{device.device_id}-{workspace_id}".encode())
+def _generate_volume_serial_number(device: LocalDevice, workspace_id: EntryID) -> int:
+    return adler32(
+        f"{device.organization_id.str}-{device.device_id.str}-{workspace_id.hex}".encode()
+    )
 
 
-async def _wait_for_winfsp_ready(mountpoint_path, timeout=1.0):
+async def _wait_for_winfsp_ready(mountpoint_path: PurePath, timeout: float = 1.0) -> None:
     trio_mountpoint_path = trio.Path(mountpoint_path)
 
     # Polling for `timeout` seconds until winfsp is ready
@@ -112,9 +117,9 @@ async def winfsp_mountpoint_runner(
     user_fs: UserFS,
     workspace_fs: WorkspaceFS,
     base_mountpoint_path: PurePath,
-    config: dict,
+    config: dict[str, Any],
     event_bus: EventBus,
-):
+) -> AsyncIterator[PurePath]:
     """
     Raises:
         MountpointDriverCrash
@@ -148,8 +153,9 @@ async def winfsp_mountpoint_runner(
         .decode("ascii")
     )
     volume_serial_number = _generate_volume_serial_number(device, workspace_fs.workspace_id)
-    operations = WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs)
-    # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
+    # Types can't be checked when unpacking `event_kwargs`
+    operations = WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs)  # type: ignore[arg-type]
+    # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa
     fs = FileSystem(
         mountpoint_path.drive,
         operations,
@@ -181,8 +187,8 @@ async def winfsp_mountpoint_runner(
         event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
 
         # Manage drive icon
-        drive_letter, *_ = mountpoint_path.drive
-        with parsec_drive_icon_context(drive_letter):
+        drive_letter = mountpoint_path.drive[0]
+        with parsec_drive_icon_context(drive_letter, device=user_fs.device):
 
             # Run fs start in a thread
             await trio.to_thread.run_sync(fs.start)

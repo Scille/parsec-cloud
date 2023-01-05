@@ -1,13 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import pytest
-import trio
+# cspell:ignore triof
+from __future__ import annotations
+
+import io
 from enum import IntEnum
 from typing import Union
-import io
-from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError, FSInvalidFileDescriptor
-from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
+
+import pytest
+import trio
+
 from parsec.core.fs import FsPath
+from parsec.core.fs.exceptions import FSInvalidFileDescriptor, FSOffsetError, FSUnsupportedOperation
+from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 
 AnyPath = Union[FsPath, str]
 
@@ -31,6 +36,7 @@ async def trio_file(tmp_path):
 @pytest.fixture
 @pytest.mark.trio
 def random_text():
+    # cspell: disable
     text = """Mem dem ima nequeam vos gratiam junctas aliunde maximam. Tot denuo terea tur
     ritas justa talem vel. At possumus ac privatio superare in excitari tractant.
     Advertisse incrementi quaerendum conservant denegassem ei in facillimum.
@@ -38,11 +44,12 @@ def random_text():
     Adipisci co de rationis ut originem competit sessione sequatur ad. Artificium frequenter agi
     excoluisse mortalibus sum describere cau accidentia.
     """
+    # cspell: enable
     return text
 
 
 async def compare_read(triof=None, f=None, size: int = -1, alice_workspace=None, trio_file=None):
-    """Comparing the full read of boths files with both methods"""
+    """Comparing the full read of both files with both methods"""
     if (f is None and alice_workspace is None) or (triof is None and trio_file is None):
         raise ValueError
     if f is None:
@@ -61,7 +68,7 @@ async def write_in_both_files(triof, f, text):
     output = await f.write(text)
     trio_output = await triof.write(text)
 
-    # Assert the number of bytes writed
+    # Assert the number of bytes writted
     assert trio_output == output
 
 
@@ -220,7 +227,7 @@ async def test_read_write(alice_workspace, trio_file, random_text, tmp_path):
     await f.close()
     await triof.aclose()
 
-    # Assert the number of bytes writed
+    # Assert the number of bytes writted
     assert trio_output == output == 491
 
     # Assert workspacefile read and trio read are same
@@ -379,7 +386,7 @@ async def test_seek(alice_workspace, trio_file):
 
     f = await alice_workspace.open_file("/foo/bar", "wb")
     triof = await trio.open_file(trio_file, "wb")
-    await write_in_both_files(triof, f, "thisis10ch".encode("utf-8"))
+    await write_in_both_files(triof, f, "thisis10ch".encode("utf-8"))  # cspell: disable-line
     assert f.tell() == await triof.tell()
     # Test seek end
     await f.seek(0, io.SEEK_END)
@@ -402,17 +409,17 @@ async def test_seek(alice_workspace, trio_file):
     await triof.seek(-100, io.SEEK_CUR)
     await f.seek(-100, io.SEEK_CUR)
     assert f.tell() == await triof.tell() == 900
-    # Test seek cur with negative value going in negativ offset
+    # Test seek cur with negative value going in negative offset
     with pytest.raises(OSError):
         await triof.seek(-1000, io.SEEK_CUR)
     with pytest.raises(FSOffsetError):
         await f.seek(-1000, io.SEEK_CUR)
     assert f.tell() == await triof.tell() == 900
-    # Test seek cur with null value going in negativ offset
+    # Test seek cur with null value going in negative offset
     await triof.seek(0, io.SEEK_CUR)
     await f.seek(0, io.SEEK_CUR)
     assert f.tell() == await triof.tell() == 900
-    # Test seek cur with positive value going in negativ offset
+    # Test seek cur with positive value going in negative offset
     await triof.seek(1100, io.SEEK_CUR)
     await f.seek(1100, io.SEEK_CUR)
     assert f.tell() == await triof.tell() == 2000
@@ -424,7 +431,7 @@ async def test_seek(alice_workspace, trio_file):
     await triof.seek(-5, io.SEEK_END)
     await f.seek(-5, io.SEEK_END)
     assert f.tell() == await triof.tell() == 5
-    # Test seek end with negative value going in negativ offset
+    # Test seek end with negative value going in negative offset
     with pytest.raises(OSError):
         await triof.seek(-100, io.SEEK_END)
     with pytest.raises(FSOffsetError):
@@ -556,7 +563,7 @@ async def test_close(alice_workspace, trio_file, random_text):
 async def test_truncate(alice_workspace, trio_file, random_text):
     f = await alice_workspace.open_file("/foo/bar", "wb")
     triof = await trio.open_file(trio_file, "wb")
-    await write_in_both_files(triof, f, "thisis10ch".encode("utf-8"))
+    await write_in_both_files(triof, f, "thisis10ch".encode("utf-8"))  # cspell: disable-line
     # Test truncate with no value
     trio_output = await triof.truncate()
     output = await f.truncate()

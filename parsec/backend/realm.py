@@ -1,29 +1,85 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Dict, List, Optional
-from parsec._parsec import DateTime
+from typing import Any, Dict, List
+
 import attr
-from parsec.backend.user import UserAlreadyRevokedError
 
-from parsec.utils import timestamps_in_the_ballpark
+from parsec._parsec import (
+    DateTime,
+    RealmCreateRep,
+    RealmCreateRepAlreadyExists,
+    RealmCreateRepBadTimestamp,
+    RealmCreateRepInvalidCertification,
+    RealmCreateRepInvalidData,
+    RealmCreateRepNotFound,
+    RealmCreateRepOk,
+    RealmCreateReq,
+    RealmFinishReencryptionMaintenanceRep,
+    RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmFinishReencryptionMaintenanceRepMaintenanceError,
+    RealmFinishReencryptionMaintenanceRepNotAllowed,
+    RealmFinishReencryptionMaintenanceRepNotFound,
+    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
+    RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceReq,
+    RealmGetRoleCertificatesRep,
+    RealmGetRoleCertificatesRepNotAllowed,
+    RealmGetRoleCertificatesRepNotFound,
+    RealmGetRoleCertificatesRepOk,
+    RealmGetRoleCertificatesReq,
+    RealmStartReencryptionMaintenanceRep,
+    RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmStartReencryptionMaintenanceRepBadTimestamp,
+    RealmStartReencryptionMaintenanceRepInMaintenance,
+    RealmStartReencryptionMaintenanceRepMaintenanceError,
+    RealmStartReencryptionMaintenanceRepNotAllowed,
+    RealmStartReencryptionMaintenanceRepNotFound,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStartReencryptionMaintenanceReq,
+    RealmStatsRep,
+    RealmStatsRepNotAllowed,
+    RealmStatsRepNotFound,
+    RealmStatsRepOk,
+    RealmStatsReq,
+    RealmStatusRep,
+    RealmStatusRepNotAllowed,
+    RealmStatusRepNotFound,
+    RealmStatusRepOk,
+    RealmStatusReq,
+    RealmUpdateRolesRep,
+    RealmUpdateRolesRepAlreadyGranted,
+    RealmUpdateRolesRepBadTimestamp,
+    RealmUpdateRolesRepIncompatibleProfile,
+    RealmUpdateRolesRepInMaintenance,
+    RealmUpdateRolesRepInvalidCertification,
+    RealmUpdateRolesRepInvalidData,
+    RealmUpdateRolesRepNotAllowed,
+    RealmUpdateRolesRepNotFound,
+    RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepRequireGreaterTimestamp,
+    RealmUpdateRolesRepUserRevoked,
+    RealmUpdateRolesReq,
+)
 from parsec.api.data import DataError, RealmRoleCertificate
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
     DeviceID,
+    MaintenanceType,
+    OrganizationID,
     RealmID,
     RealmRole,
-    MaintenanceType,
+    UserID,
     UserProfile,
-    realm_status_serializer,
-    realm_stats_serializer,
-    realm_create_serializer,
-    realm_get_role_certificates_serializer,
-    realm_update_roles_serializer,
-    realm_start_reencryption_maintenance_serializer,
-    realm_finish_reencryption_maintenance_serializer,
 )
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.client_context import AuthenticatedClientContext
+from parsec.backend.user import UserAlreadyRevokedError
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.utils import (
+    BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+    timestamps_in_the_ballpark,
+)
 
 
 class RealmError(Exception):
@@ -72,15 +128,15 @@ class RealmMaintenanceError(RealmError):
 
 class RealmRoleRequireGreaterTimestampError(RealmError):
     @property
-    def strictly_greater_than(self):
+    def strictly_greater_than(self) -> DateTime:
         return self.args[0]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
-    maintenance_type: Optional[MaintenanceType]
-    maintenance_started_on: Optional[DateTime]
-    maintenance_started_by: Optional[DeviceID]
+    maintenance_type: MaintenanceType | None
+    maintenance_started_on: DateTime | None
+    maintenance_started_by: DeviceID | None
     encryption_revision: int
 
     @property
@@ -104,142 +160,139 @@ class RealmStats:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmGrantedRole:
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.user_id} {self.role})"
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.user_id.str} {self.role})"
 
-    def evolve(self, **kwargs) -> "RealmGrantedRole":
+    def evolve(self, **kwargs: Any) -> RealmGrantedRole:
         return attr.evolve(self, **kwargs)
 
     certificate: bytes
     realm_id: RealmID
     user_id: UserID
-    role: Optional[RealmRole]
-    granted_by: Optional[DeviceID]
+    role: RealmRole | None
+    granted_by: DeviceID | None
     granted_on: DateTime
 
 
 class BaseRealmComponent:
     @api("realm_create")
     @catch_protocol_errors
-    async def api_realm_create(self, client_ctx, msg):
-        msg = realm_create_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(RealmCreateReq, RealmCreateRep)
+    async def api_realm_create(
+        self, client_ctx: AuthenticatedClientContext, req: RealmCreateReq
+    ) -> RealmCreateRep:
         try:
             data = RealmRoleCertificate.verify_and_load(
-                msg["role_certificate"],
+                req.role_certificate,
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
             )
 
-        except DataError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
+        except DataError:
+            return RealmCreateRepInvalidCertification(None)
 
         now = DateTime.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
-            return realm_create_serializer.timestamp_out_of_ballpark_rep_dump(
-                backend_timestamp=now, client_timestamp=data.timestamp
+            return RealmCreateRepBadTimestamp(
+                reason=None,
+                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                backend_timestamp=now,
+                client_timestamp=data.timestamp,
             )
 
         granted_role = RealmGrantedRole(
-            certificate=msg["role_certificate"],
+            certificate=req.role_certificate,
             realm_id=data.realm_id,
             user_id=data.user_id,
             role=data.role,
             granted_by=data.author,
             granted_on=data.timestamp,
         )
-        if granted_role.granted_by.user_id != granted_role.user_id:
-            return {
-                "status": "invalid_data",
-                "reason": f"Initial realm role certificate must be self-signed.",
-            }
-        if granted_role.role != RealmRole.OWNER:
-            return {
-                "status": "invalid_data",
-                "reason": f"Initial realm role certificate must set OWNER role.",
-            }
+        if (
+            granted_role.granted_by
+            and granted_role.granted_by.user_id != granted_role.user_id
+            or granted_role.role != RealmRole.OWNER
+        ):
+            return RealmCreateRepInvalidData(None)
 
         try:
             await self.create(client_ctx.organization_id, granted_role)
 
-        except RealmNotFoundError as exc:
-            return realm_create_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+        except RealmNotFoundError:
+            return RealmCreateRepNotFound(None)
 
         except RealmAlreadyExistsError:
-            return realm_create_serializer.rep_dump({"status": "already_exists"})
+            return RealmCreateRepAlreadyExists()
 
-        return realm_create_serializer.rep_dump({"status": "ok"})
+        return RealmCreateRepOk()
 
     @api("realm_status")
     @catch_protocol_errors
-    async def api_realm_status(self, client_ctx, msg):
-        msg = realm_status_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(RealmStatusReq, RealmStatusRep)
+    async def api_realm_status(
+        self, client_ctx: AuthenticatedClientContext, req: RealmStatusReq
+    ) -> RealmStatusRep:
         try:
             status = await self.get_status(
-                client_ctx.organization_id, client_ctx.device_id, msg["realm_id"]
+                client_ctx.organization_id, client_ctx.device_id, req.realm_id
             )
 
         except RealmAccessError:
-            return realm_status_serializer.rep_dump({"status": "not_allowed"})
+            return RealmStatusRepNotAllowed()
 
-        except RealmNotFoundError as exc:
-            return realm_status_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+        except RealmNotFoundError:
+            return RealmStatusRepNotFound(None)
 
-        return realm_status_serializer.rep_dump(
-            {
-                "status": "ok",
-                "in_maintenance": status.in_maintenance,
-                "maintenance_type": status.maintenance_type,
-                "maintenance_started_on": status.maintenance_started_on,
-                "maintenance_started_by": status.maintenance_started_by,
-                "encryption_revision": status.encryption_revision,
-            }
+        return RealmStatusRepOk(
+            in_maintenance=status.in_maintenance,
+            maintenance_type=status.maintenance_type,
+            maintenance_started_on=status.maintenance_started_on,
+            maintenance_started_by=status.maintenance_started_by,
+            encryption_revision=status.encryption_revision,
         )
 
     @api("realm_stats")
     @catch_protocol_errors
-    async def api_realm_stats(self, client_ctx, msg):
-        msg = realm_stats_serializer.req_load(msg)
+    @api_typed_msg_adapter(RealmStatsReq, RealmStatsRep)
+    async def api_realm_stats(
+        self, client_ctx: AuthenticatedClientContext, req: RealmStatsReq
+    ) -> RealmStatsRep:
         try:
             stats = await self.get_stats(
-                client_ctx.organization_id, client_ctx.device_id, msg["realm_id"]
+                client_ctx.organization_id, client_ctx.device_id, req.realm_id
             )
         except RealmAccessError:
-            return realm_status_serializer.rep_dump({"status": "not_allowed"})
-        except RealmNotFoundError as exc:
-            return realm_status_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
-        return realm_stats_serializer.rep_dump(
-            {"status": "ok", "blocks_size": stats.blocks_size, "vlobs_size": stats.vlobs_size}
-        )
+            return RealmStatsRepNotAllowed()
+        except RealmNotFoundError:
+            return RealmStatsRepNotFound(None)
+        return RealmStatsRepOk(blocks_size=stats.blocks_size, vlobs_size=stats.vlobs_size)
 
     @api("realm_get_role_certificates")
     @catch_protocol_errors
-    async def api_realm_get_role_certificates(self, client_ctx, msg):
-        msg = realm_get_role_certificates_serializer.req_load(msg)
+    @api_typed_msg_adapter(RealmGetRoleCertificatesReq, RealmGetRoleCertificatesRep)
+    async def api_realm_get_role_certificates(
+        self, client_ctx: AuthenticatedClientContext, req: RealmGetRoleCertificatesReq
+    ) -> RealmGetRoleCertificatesRep:
         try:
             certificates = await self.get_role_certificates(
-                client_ctx.organization_id, client_ctx.device_id, **msg
+                client_ctx.organization_id, client_ctx.device_id, req.realm_id
             )
 
         except RealmAccessError:
-            return realm_get_role_certificates_serializer.rep_dump({"status": "not_allowed"})
+            return RealmGetRoleCertificatesRepNotAllowed()
 
-        except RealmNotFoundError as exc:
-            return realm_get_role_certificates_serializer.rep_dump(
-                {"status": "not_found", "reason": str(exc)}
-            )
+        except RealmNotFoundError:
+            return RealmGetRoleCertificatesRepNotFound(None)
 
-        return realm_get_role_certificates_serializer.rep_dump(
-            {"status": "ok", "certificates": certificates}
-        )
+        return RealmGetRoleCertificatesRepOk(certificates)
 
     @api("realm_update_roles")
     @catch_protocol_errors
-    async def api_realm_update_roles(self, client_ctx, msg):
+    @api_typed_msg_adapter(RealmUpdateRolesReq, RealmUpdateRolesRep)
+    async def api_realm_update_roles(
+        self, client_ctx: AuthenticatedClientContext, req: RealmUpdateRolesReq
+    ) -> RealmUpdateRolesRep:
         """
         This API call, when successful, performs the writing of a new role certificate to the database.
         Before adding new entries, extra care should be taken in order to guarantee the consistency in
@@ -269,163 +322,145 @@ class BaseRealmComponent:
         # On top of that, we don't have to fetch the user profile from the
         # database before checking it given it cannot be updated.
         if client_ctx.profile == UserProfile.OUTSIDER:
-            return {"status": "not_allowed", "reason": "Outsider user cannot share realm"}
-
-        msg = realm_update_roles_serializer.req_load(msg)
+            return RealmUpdateRolesRepNotAllowed(None)
 
         try:
             data = RealmRoleCertificate.verify_and_load(
-                msg["role_certificate"],
+                req.role_certificate,
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
             )
 
-        except DataError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
+        except DataError:
+            return RealmUpdateRolesRepInvalidCertification(None)
 
         now = DateTime.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
-            return realm_update_roles_serializer.timestamp_out_of_ballpark_rep_dump(
-                backend_timestamp=now, client_timestamp=data.timestamp
+            return RealmUpdateRolesRepBadTimestamp(
+                reason=None,
+                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                backend_timestamp=now,
+                client_timestamp=data.timestamp,
             )
 
         granted_role = RealmGrantedRole(
-            certificate=msg["role_certificate"],
+            certificate=req.role_certificate,
             realm_id=data.realm_id,
             user_id=data.user_id,
             role=data.role,
             granted_by=data.author,
             granted_on=data.timestamp,
         )
-        if granted_role.granted_by.user_id == granted_role.user_id:
-            return {
-                "status": "invalid_data",
-                "reason": f"Realm role certificate cannot be self-signed.",
-            }
+        if granted_role.granted_by and granted_role.granted_by.user_id == granted_role.user_id:
+            return RealmUpdateRolesRepInvalidData(None)
 
         try:
-            await self.update_roles(
-                client_ctx.organization_id, granted_role, msg["recipient_message"]
-            )
+            await self.update_roles(client_ctx.organization_id, granted_role, req.recipient_message)
 
         except UserAlreadyRevokedError:
-            return realm_update_roles_serializer.rep_dump({"status": "user_revoked"})
+            return RealmUpdateRolesRepUserRevoked()
 
         except RealmRoleAlreadyGranted:
-            return realm_update_roles_serializer.rep_dump({"status": "already_granted"})
+            return RealmUpdateRolesRepAlreadyGranted()
 
         except RealmAccessError:
-            return realm_update_roles_serializer.rep_dump({"status": "not_allowed"})
+            return RealmUpdateRolesRepNotAllowed(None)
 
         except RealmRoleRequireGreaterTimestampError as exc:
-            return realm_update_roles_serializer.require_greater_timestamp_rep_dump(
-                exc.strictly_greater_than
-            )
+            return RealmUpdateRolesRepRequireGreaterTimestamp(exc.strictly_greater_than)
 
-        except RealmIncompatibleProfileError as exc:
-            return realm_update_roles_serializer.rep_dump(
-                {"status": "incompatible_profile", "reason": str(exc)}
-            )
+        except RealmIncompatibleProfileError:
+            return RealmUpdateRolesRepIncompatibleProfile(None)
 
-        except RealmNotFoundError as exc:
-            return realm_update_roles_serializer.rep_dump(
-                {"status": "not_found", "reason": str(exc)}
-            )
+        except RealmNotFoundError:
+            return RealmUpdateRolesRepNotFound(None)
 
         except RealmInMaintenanceError:
-            return realm_update_roles_serializer.rep_dump({"status": "in_maintenance"})
+            return RealmUpdateRolesRepInMaintenance()
 
-        return realm_update_roles_serializer.rep_dump({"status": "ok"})
+        return RealmUpdateRolesRepOk()
 
     @api("realm_start_reencryption_maintenance")
     @catch_protocol_errors
-    async def api_realm_start_reencryption_maintenance(self, client_ctx, msg):
-        msg = realm_start_reencryption_maintenance_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(
+        RealmStartReencryptionMaintenanceReq, RealmStartReencryptionMaintenanceRep
+    )
+    async def api_realm_start_reencryption_maintenance(
+        self, client_ctx: AuthenticatedClientContext, req: RealmStartReencryptionMaintenanceReq
+    ) -> RealmStartReencryptionMaintenanceRep:
         now = DateTime.now()
-        if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return (
-                realm_start_reencryption_maintenance_serializer.timestamp_out_of_ballpark_rep_dump(
-                    backend_timestamp=now, client_timestamp=msg["timestamp"]
-                )
+        if not timestamps_in_the_ballpark(req.timestamp, now):
+            return RealmStartReencryptionMaintenanceRepBadTimestamp(
+                reason=None,
+                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                backend_timestamp=now,
+                client_timestamp=req.timestamp,
             )
 
         try:
             await self.start_reencryption_maintenance(
-                client_ctx.organization_id, client_ctx.device_id, **msg
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                realm_id=req.realm_id,
+                timestamp=req.timestamp,
+                encryption_revision=req.encryption_revision,
+                per_participant_message=req.per_participant_message,
             )
 
         except RealmAccessError:
-            return realm_start_reencryption_maintenance_serializer.rep_dump(
-                {"status": "not_allowed"}
-            )
+            return RealmStartReencryptionMaintenanceRepNotAllowed()
 
-        except RealmNotFoundError as exc:
-            return realm_start_reencryption_maintenance_serializer.rep_dump(
-                {"status": "not_found", "reason": str(exc)}
-            )
+        except RealmNotFoundError:
+            return RealmStartReencryptionMaintenanceRepNotFound(None)
 
         except RealmEncryptionRevisionError:
-            return realm_start_reencryption_maintenance_serializer.rep_dump(
-                {"status": "bad_encryption_revision"}
-            )
+            return RealmStartReencryptionMaintenanceRepBadEncryptionRevision()
 
-        except RealmParticipantsMismatchError as exc:
-            return realm_start_reencryption_maintenance_serializer.rep_dump(
-                {"status": "participants_mismatch", "reason": str(exc)}
-            )
+        except RealmParticipantsMismatchError:
+            return RealmStartReencryptionMaintenanceRepParticipantMismatch(None)
 
-        except RealmMaintenanceError as exc:
-            return realm_start_reencryption_maintenance_serializer.rep_dump(
-                {"status": "maintenance_error", "reason": str(exc)}
-            )
+        except RealmMaintenanceError:
+            return RealmStartReencryptionMaintenanceRepMaintenanceError(None)
 
         except RealmInMaintenanceError:
-            return realm_start_reencryption_maintenance_serializer.rep_dump(
-                {"status": "in_maintenance"}
-            )
+            return RealmStartReencryptionMaintenanceRepInMaintenance()
 
-        return realm_start_reencryption_maintenance_serializer.rep_dump({"status": "ok"})
+        return RealmStartReencryptionMaintenanceRepOk()
 
     @api("realm_finish_reencryption_maintenance")
     @catch_protocol_errors
-    async def api_realm_finish_reencryption_maintenance(self, client_ctx, msg):
-        msg = realm_finish_reencryption_maintenance_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(
+        RealmFinishReencryptionMaintenanceReq, RealmFinishReencryptionMaintenanceRep
+    )
+    async def api_realm_finish_reencryption_maintenance(
+        self, client_ctx: AuthenticatedClientContext, req: RealmFinishReencryptionMaintenanceReq
+    ) -> RealmFinishReencryptionMaintenanceRep:
         try:
             await self.finish_reencryption_maintenance(
-                client_ctx.organization_id, client_ctx.device_id, **msg
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                realm_id=req.realm_id,
+                encryption_revision=req.encryption_revision,
             )
 
         except RealmAccessError:
-            return realm_finish_reencryption_maintenance_serializer.rep_dump(
-                {"status": "not_allowed"}
-            )
+            return RealmFinishReencryptionMaintenanceRepNotAllowed()
 
-        except RealmNotFoundError as exc:
-            return realm_finish_reencryption_maintenance_serializer.rep_dump(
-                {"status": "not_found", "reason": str(exc)}
-            )
+        except RealmNotFoundError:
+            return RealmFinishReencryptionMaintenanceRepNotFound(None)
 
         except RealmEncryptionRevisionError:
-            return realm_finish_reencryption_maintenance_serializer.rep_dump(
-                {"status": "bad_encryption_revision"}
-            )
+            return RealmFinishReencryptionMaintenanceRepBadEncryptionRevision()
 
-        except RealmNotInMaintenanceError as exc:
-            return realm_finish_reencryption_maintenance_serializer.rep_dump(
-                {"status": "not_in_maintenance", "reason": str(exc)}
-            )
+        except RealmNotInMaintenanceError:
+            return RealmFinishReencryptionMaintenanceRepNotInMaintenance(None)
 
-        except RealmMaintenanceError as exc:
-            return realm_finish_reencryption_maintenance_serializer.rep_dump(
-                {"status": "maintenance_error", "reason": str(exc)}
-            )
+        except RealmMaintenanceError:
+            return RealmFinishReencryptionMaintenanceRepMaintenanceError(None)
 
-        return realm_finish_reencryption_maintenance_serializer.rep_dump({"status": "ok"})
+        return RealmFinishReencryptionMaintenanceRepOk()
 
     async def create(
         self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
@@ -481,7 +516,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: Optional[bytes] = None,
+        recipient_message: bytes | None = None,
     ) -> None:
         """
         Raises:

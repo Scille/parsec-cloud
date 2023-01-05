@@ -31,6 +31,7 @@ CREATE TABLE organization (
 -------------------------------------------------------
 -- Sequester
 -------------------------------------------------------
+CREATE TYPE sequester_service_type AS ENUM ('STORAGE', 'WEBHOOK');
 
 CREATE TABLE sequester_service(
     _id SERIAL PRIMARY KEY,
@@ -40,6 +41,8 @@ CREATE TABLE sequester_service(
     service_label VARCHAR(254) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     disabled_on TIMESTAMPTZ, -- NULL if currently enabled
+    webhook_url TEXT, -- NULL if service_type != WEBHOOK;
+    service_type sequester_service_type NOT NULL,
 
     UNIQUE(organization, service_id)
 );

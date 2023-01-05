@@ -1,0 +1,84 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+{# Macros -#}
+
+{%- macro render_type(t) %}
+{%- if t.kind == "ref" -%}
+{{ render_type(t.elem) }}
+{%- elif t.kind == "optional" -%}
+{{ render_type(t.elem) }} | null
+{%- elif t.kind == "result" -%}
+Result<{{ render_type(t.ok) }}, {{ render_type(t.err) }}>
+{%- elif t.kind == "struct" or t.kind == "variant" -%}
+{{ t.name }}
+{%- elif t.kind == "list" -%}
+Array<{{ render_type(t.elem) }}>
+{%- elif t.kind == "bool" -%}
+boolean
+{%- elif t.kind == "int" -%}
+number
+{%- elif t.kind == "float" -%}
+number
+{%- elif t.kind in ("str", "str_based") -%}
+string
+{%- elif t.kind == "bytes" -%}
+Uint8Array
+{%- else -%}
+{{ raise("Unsupported type %r" % t) }}
+{%- endif -%}
+{% endmacro -%}
+
+{#- End of macros #}
+
+/*
+ * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
+ */
+
+{# Result meta-type #}
+export type Result<T, E = Error> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+{# Structures #}
+{% for struct in api.structs %}
+
+export interface {{ struct.name }} {
+{% for attr_name, attr_type in struct.attributes.items() %}
+{% if attr_type.kind == "optional" %}
+    {{ attr_name }}: {{ render_type(attr_type) }};
+{% else %}
+    {{ attr_name }}: {{ render_type(attr_type) }};
+{% endif %}
+{% endfor %}
+}
+{% endfor %}
+{# Variants #}
+{% for variant in api.variants %}
+
+// {{ variant.name }}
+{% for variant_value in variant.values %}
+export interface {{ variant.name }}{{ variant_value.name }} {
+    tag: '{{ variant_value.name }}'
+{% for attr_name, attr_type in variant_value.attributes.items() %}
+{% if attr_type.kind == "optional" %}
+    {{ attr_name }}: {{ render_type(attr_type) }};
+{% else %}
+    {{ attr_name }}: {{ render_type(attr_type) }};
+{% endif %}
+{% endfor %}
+}
+{% endfor %}
+export type {{ variant.name }} =
+{% for variant_value in variant.values %}
+  | {{ variant.name }}{{ variant_value.name }}
+{% endfor %}
+{% endfor %}
+
+{# Methods #}
+export interface LibParsecPlugin {
+{% for meth in api.meths %}
+    {{ meth.pascalName }}(
+{%- for arg_name, arg_type in meth.params.items() -%}
+        {{ arg_name }}: {{ render_type(arg_type) }}{{ ", " if not loop.last else "" }}
+{%- endfor -%}
+    ): Promise<{{ render_type(meth.return_type) if meth.return_type else "null" }}>;
+{% endfor %}
+}

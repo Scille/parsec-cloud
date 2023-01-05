@@ -761,7 +761,7 @@ with test files uniformly numbered in the specified range.""",
     parser.add_option('-w', '--write-only',
         action="store_true", dest="writeonly",
         help="""This test will only perform write tests.
-This option can be used to create data on storage for peforming
+This option can be used to create data on storage for performing
 remote read tests.""", default=False)
 
     parser.add_option('-k', '--keep',

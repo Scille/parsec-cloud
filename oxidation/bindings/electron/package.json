@@ -1,0 +1,20 @@
+{
+    "name": "libparsec_bindings_electron",
+    "version": "0.1.0",
+    "description": "",
+    "main": "index.node",
+    "scripts": {
+        "copy-typing": "mkdir -p dist/libparsec || md dist\\libparsec && cp src/index.d.ts dist/libparsec/ || copy src\\index.d.ts dist\\libparsec",
+        "build-rust": "cargo-cp-artifact --npm cdylib dist/libparsec/index.node -- cargo build --message-format=json-render-diagnostics",
+        "build": "npm run copy-typing && npm run build-rust",
+        "build-debug": "npm run build --",
+        "build-release": "npm run build -- --release",
+        "install": "npm run build-release",
+        "test": "cargo test"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "cargo-cp-artifact": "^0.1.7"
+    }
+}

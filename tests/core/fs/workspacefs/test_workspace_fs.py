@@ -1,26 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import errno
 from typing import Union
-import pytest
 from unittest.mock import ANY
 
+import pytest
 from trio import open_nursery
+
 from parsec._parsec import (
-    LocalDevice,
     FileManifest,
     FolderManifest,
+    LocalDevice,
     UserManifest,
+    VlobReadRepOk,
     WorkspaceManifest,
 )
-
-from parsec.api.protocol import DeviceID, RealmID, RealmRole
 from parsec.api.data import EntryName
-from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
-from parsec.core.fs import FsPath
-from parsec.core.fs.exceptions import FSError, FSBackendOfflineError, FSLocalMissError
-from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed, WorkspaceFS
+from parsec.api.protocol import DeviceID, RealmID, RealmRole
 from parsec.backend.block import BlockNotFoundError
+from parsec.core.fs import FsPath
+from parsec.core.fs.exceptions import FSBackendOfflineError, FSError, FSLocalMissError
+from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed, WorkspaceFS
+from parsec.core.types import DEFAULT_BLOCK_SIZE, EntryID
 
 
 @pytest.mark.trio
@@ -270,6 +272,7 @@ async def test_write_bytes(alice_workspace):
 
 @pytest.mark.trio
 async def test_move(alice_workspace):
+    # cspell: ignore containfoz
     await alice_workspace.move("/foo", "/foz")
     await alice_workspace.move("/foz/bar", "/foz/bal")
     assert await alice_workspace.is_file("/foz/bal")
@@ -417,7 +420,13 @@ async def test_path_info_remote_loader_exceptions(
             raw_modified_remote_manifest = modified_remote_manifest.dump_sign_and_encrypt(
                 author_signkey=alice.signing_key, key=workspace_entry.key
             )
-            ret["blob"] = raw_modified_remote_manifest
+            ret = VlobReadRepOk(
+                ret.version,
+                raw_modified_remote_manifest,
+                ret.author,
+                ret.timestamp,
+                ret.author_last_role_granted_on,
+            )
         return ret
 
     monkeypatch.setattr(
@@ -455,7 +464,7 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
     # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
     reply = await alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates(
-        RealmID(alice_workspace.workspace_id.uuid)
+        RealmID.from_entry_id(alice_workspace.workspace_id)
     )
     original = alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates
 

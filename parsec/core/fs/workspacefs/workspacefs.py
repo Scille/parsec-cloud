@@ -1,60 +1,66 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from collections import defaultdict
+from typing import TYPE_CHECKING, AsyncIterator, Awaitable, Callable, Dict, List, Tuple, cast
 
 import attr
+import structlog
 import trio
-from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
-from parsec._parsec import DateTime
 
-from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
-from parsec.crypto import CryptoError
-from parsec.event_bus import EventBus
+from parsec._parsec import CoreEvent, DateTime, FileManifest, RealmStatusRepOk, Regex
 from parsec.api.data import AnyRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
-from parsec.api.protocol import UserID, MaintenanceType, RealmID
-from parsec.core.types import (
-    EntryID,
-    EntryName,
-    LocalDevice,
-    WorkspaceRole,
-    WorkspaceEntry,
-    LocalFileManifest,
-    LocalFolderManifest,
-    LocalWorkspaceManifest,
-    RemoteFolderManifest,
-    RemoteWorkspaceManifest,
-    RemoteFolderishManifests,
-    DEFAULT_BLOCK_SIZE,
-    BackendOrganizationFileLinkAddr,
-)
-from parsec.core.fs.path import AnyPath, FsPath
-from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.backend_connection import (
-    BackendAuthenticatedCmds,
-    BackendNotAvailable,
-    BackendConnectionError,
-)
-from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.api.protocol import MaintenanceType, RealmID, UserID
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
-from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.fs.exceptions import (
+    FSBackendOfflineError,
+    FSError,
+    FSFileConflictError,
+    FSInvalidArgumentError,
+    FSLocalMissError,
+    FSNoSynchronizationRequired,
+    FSNotADirectoryError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
     FSRemoteSyncError,
-    FSNoSynchronizationRequired,
-    FSFileConflictError,
     FSReshapingRequiredError,
+    FSSequesterServiceRejectedError,
     FSWorkspaceNoAccess,
     FSWorkspaceTimestampedTooEarly,
-    FSLocalMissError,
-    FSInvalidArgumentError,
-    FSNotADirectoryError,
-    FSBackendOfflineError,
-    FSError,
 )
-from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
+from parsec.core.fs.path import AnyPath, FsPath
+from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
+from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
+from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
+from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.types import (
+    DEFAULT_BLOCK_SIZE,
+    BackendOrganizationFileLinkAddr,
+    EntryID,
+    EntryName,
+    LocalDevice,
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
+    RemoteFolderishManifests,
+    RemoteFolderManifest,
+    RemoteWorkspaceManifest,
+    WorkspaceEntry,
+    WorkspaceRole,
+)
+from parsec.crypto import CryptoError
+from parsec.event_bus import EventBus
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection import BackendAuthenticatedCmds
+
+
+logger = structlog.get_logger()
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -73,7 +79,7 @@ class WorkspaceFS:
         self,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
@@ -91,7 +97,6 @@ class WorkspaceFS:
         self.remote_devices_manager = remote_devices_manager
         self.preferred_language = preferred_language
         self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
-
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
@@ -217,18 +222,19 @@ class WorkspaceFS:
             pass
 
         try:
-            rep = await self.backend_cmds.realm_status(RealmID(self.workspace_id.uuid))
+            rep = await self.backend_cmds.realm_status(RealmID.from_entry_id(self.workspace_id))
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot retrieve remote status for workspace {self.workspace_id}: {exc}"
+                f"Cannot retrieve remote status for workspace {self.workspace_id.hex}: {exc}"
             ) from exc
 
+        assert isinstance(rep, RealmStatusRepOk)
         reencryption_already_in_progress = (
-            rep["in_maintenance"] and rep["maintenance_type"] == MaintenanceType.REENCRYPTION
+            rep.in_maintenance and rep.maintenance_type == MaintenanceType.REENCRYPTION
         )
 
         certificates = await self.remote_loader.load_realm_role_certificates()
@@ -425,7 +431,7 @@ class WorkspaceFS:
         self,
         source: AnyPath,
         destination: AnyPath,
-        source_workspace: Optional["WorkspaceFS"] = None,
+        source_workspace: WorkspaceFS | None = None,
     ) -> None:
         """
         Raises:
@@ -478,7 +484,7 @@ class WorkspaceFS:
         self,
         source_path: AnyPath,
         target_path: AnyPath,
-        source_workspace: Optional["WorkspaceFS"] = None,
+        source_workspace: WorkspaceFS | None = None,
     ) -> None:
         source_path = FsPath(source_path)
         target_path = FsPath(target_path)
@@ -504,7 +510,7 @@ class WorkspaceFS:
         self,
         source_path: AnyPath,
         target_path: AnyPath,
-        source_workspace: Optional["WorkspaceFS"] = None,
+        source_workspace: WorkspaceFS | None = None,
         buffer_size: int = DEFAULT_BLOCK_SIZE,
         exist_ok: bool = False,
     ) -> None:
@@ -583,6 +589,25 @@ class WorkspaceFS:
         # Not available locally so nothing to synchronize
         except FSLocalMissError:
             pass
+
+    async def entry_id_to_path(
+        self, needle_entry_id: EntryID
+    ) -> Tuple[FsPath, Dict[str, object]] | None:
+        async def _recursive_search(
+            path: FsPath,
+        ) -> Tuple[FsPath, Dict[str, object]] | None:
+            entry_info = await self.path_info(path=path)
+            if entry_info["id"] == needle_entry_id:
+                return path, entry_info
+            if entry_info["type"] == "folder":
+                children = cast(List[str], entry_info["children"])
+                for child_name in children:
+                    result = await _recursive_search(path=path / child_name)
+                    if result:
+                        return result
+            return None
+
+        return await _recursive_search(path=FsPath("/"))
 
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
@@ -675,8 +700,44 @@ class WorkspaceFS:
         # Sync parent first
         try:
             async with self.sync_locks[entry_id]:
-                manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
+                try:
+                    manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
 
+                except FSSequesterServiceRejectedError as exc:
+                    # When we try to sync an entry, the server can return a `rejected_by_sequester_service`
+                    # status (this is typically in a sequestered organization with a sequester service
+                    # that security analysis / antivirus check on the to-be-encrypted data).
+                    # In this case we just pretend the sync went fine, this way the sync monitor won't end up in a
+                    # busy loop trying to sync the this entry again and again.
+                    # On top of that, if the entry is further modified (or if the workspacefs is restarted) the sync
+                    # monitor will try again to do the sync.
+                    if isinstance(exc.manifest, (FileManifest, LocalFileManifest)):
+                        path_info = await self.entry_id_to_path(exc.id)
+                        if path_info is None:
+                            path = FsPath("/")
+                        else:
+                            path, _ = path_info
+                        self.event_bus.send(
+                            CoreEvent.FS_ENTRY_SYNC_REJECTED_BY_SEQUESTER_SERVICE,
+                            service_id=exc.service_id,
+                            service_label=exc.service_label,
+                            reason=exc.reason,
+                            workspace_id=self.workspace_id,
+                            entry_id=entry_id,
+                            file_path=path,
+                        )
+                        logger.warning(
+                            "Sync rejected by sequester service",
+                            workspace_id=self.workspace_id.hex,
+                            entry_id=entry_id.hex,
+                            file_path=path,
+                            service_id=exc.service_id.hex,
+                            service_label=exc.service_label,
+                            exc_info=exc,
+                        )
+                        return
+                    else:
+                        return  # Should never append
         # Nothing to synchronize if the manifest does not exist locally
         except FSNoSynchronizationRequired:
             return
@@ -709,7 +770,7 @@ class WorkspaceFS:
     # Apply "prevent sync" pattern
 
     async def _recursive_apply_prevent_sync_pattern(
-        self, entry_id: EntryID, prevent_sync_pattern: Pattern[str]
+        self, entry_id: EntryID, prevent_sync_pattern: Regex
     ) -> None:
         # Load manifest
         try:
@@ -729,19 +790,23 @@ class WorkspaceFS:
         for name, child_entry_id in manifest.children.items():
             await self._recursive_apply_prevent_sync_pattern(child_entry_id, prevent_sync_pattern)
 
-    async def apply_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+    async def apply_prevent_sync_pattern(self) -> None:
+        if self.local_storage.get_prevent_sync_pattern_fully_applied():
+            return
+        pattern = self.local_storage.get_prevent_sync_pattern()
         # Fully apply "prevent sync" pattern
         await self._recursive_apply_prevent_sync_pattern(self.workspace_id, pattern)
         # Acknowledge "prevent sync" pattern
         await self.local_storage.mark_prevent_sync_pattern_fully_applied(pattern)
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+    async def set_and_apply_prevent_sync_pattern(self, pattern: Regex) -> None:
         await self.local_storage.set_prevent_sync_pattern(pattern)
-
-    async def set_and_apply_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
-        await self.set_prevent_sync_pattern(pattern)
-        if not self.local_storage.get_prevent_sync_pattern_fully_applied():
-            await self.apply_prevent_sync_pattern(self.local_storage.get_prevent_sync_pattern())
+        if self.local_storage.get_prevent_sync_pattern_fully_applied():
+            return
+        # Fully apply "prevent sync" pattern
+        await self._recursive_apply_prevent_sync_pattern(self.workspace_id, pattern)
+        # Acknowledge "prevent sync" pattern
+        await self.local_storage.mark_prevent_sync_pattern_fully_applied(pattern)
 
     # Debugging helper
 
@@ -767,16 +832,24 @@ class WorkspaceFS:
 
         return await rec(self.workspace_id)
 
-    def generate_file_link(self, path: AnyPath) -> BackendOrganizationFileLinkAddr:
+    def generate_file_link(
+        self, path: AnyPath, timestamp: DateTime | None = None
+    ) -> BackendOrganizationFileLinkAddr:
         """
         Raises: Nothing
         """
         workspace_entry = self.get_workspace_entry()
         encrypted_path = workspace_entry.key.encrypt(str(FsPath(path)).encode("utf-8"))
+        if isinstance(self, workspacefs.WorkspaceFSTimestamped):
+            timestamp = self.timestamp
+
         return BackendOrganizationFileLinkAddr.build(
             organization_addr=self.device.organization_addr,
             workspace_id=workspace_entry.id,
             encrypted_path=encrypted_path,
+            encrypted_timestamp=workspace_entry.key.encrypt(timestamp.to_rfc3339().encode("utf-8"))
+            if timestamp is not None
+            else None,
         )
 
     def decrypt_file_link_path(self, addr: BackendOrganizationFileLinkAddr) -> FsPath:
@@ -790,3 +863,19 @@ class WorkspaceFS:
             raise ValueError("Cannot decrypt path")
         # FsPath raises ValueError, decode() raises UnicodeDecodeError which is a subclass of ValueError
         return FsPath(raw_path.decode("utf-8"))
+
+    def decrypt_timestamp(self, addr: BackendOrganizationFileLinkAddr) -> DateTime | None:
+        """
+        Raises: ValueError
+        """
+        workspace_entry = self.get_workspace_entry()
+        try:
+            raw_ts = (
+                workspace_entry.key.decrypt(addr.encrypted_timestamp)
+                if addr.encrypted_timestamp is not None
+                else None
+            )
+        except CryptoError:
+            raise ValueError("Cannot decrypt timestamp")
+        # DateTime.from_rfc3339 raise a `ValueError` if the timestamp is invalid
+        return DateTime.from_rfc3339(raw_ts.decode("utf-8")) if raw_ts is not None else None

@@ -1,72 +1,118 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from functools import partial
+from typing import Callable
 
 import trio
-from typing import Optional, Callable
-from functools import partial
-from parsec._parsec import DateTime
-from contextlib import asynccontextmanager
 
 from parsec._parsec import (
+    AuthenticatedPingRepOk,
     BlockCreateRepOk,
     BlockReadRepOk,
+    DateTime,
+    DeviceCreateRepOk,
+    HumanFindRepOk,
+    Invite1ClaimerWaitPeerRepOk,
+    Invite1GreeterWaitPeerRepOk,
+    Invite2aClaimerSendHashedNonceRepOk,
+    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2bClaimerSendNonceRepOk,
+    Invite2bGreeterSendNonceRepOk,
+    Invite3aClaimerSignifyTrustRepOk,
+    Invite3aGreeterWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepOk,
+    Invite3bGreeterSignifyTrustRepOk,
+    Invite4ClaimerCommunicateRepOk,
+    Invite4GreeterCommunicateRepOk,
+    InviteDeleteRepOk,
+    InviteInfoRepOk,
+    InviteNewRepOk,
+    MessageGetRepOk,
+    OrganizationBootstrapRepOk,
+    OrganizationConfigRepOk,
+    OrganizationStatsRepOk,
+    PkiEnrollmentAcceptRepOk,
+    PkiEnrollmentInfoRepOk,
+    PkiEnrollmentListRep,
+    PkiEnrollmentRejectRep,
+    RealmCreateRepOk,
+    RealmFinishReencryptionMaintenanceRepOk,
+    RealmGetRoleCertificatesRepOk,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmStatsRepOk,
+    RealmStatusRepOk,
+    RealmUpdateRolesRepOk,
+    UserCreateRepOk,
+    UserGetRepOk,
+    UserRevokeRepOk,
+    VlobCreateRepOk,
+    VlobListVersionsRepOk,
+    VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobPollChangesRepOk,
+    VlobReadRepOk,
+    VlobUpdateRepOk,
 )
-from parsec.serde import packb
 from parsec.api.protocol import (
-    ping_serializer,
-    organization_stats_serializer,
-    organization_config_serializer,
-    organization_bootstrap_serializer,
+    authenticated_ping_serializer,
     block_create_serializer,
     block_read_serializer,
-    realm_create_serializer,
-    realm_status_serializer,
-    realm_stats_serializer,
-    realm_get_role_certificates_serializer,
-    realm_update_roles_serializer,
-    realm_start_reencryption_maintenance_serializer,
-    realm_finish_reencryption_maintenance_serializer,
-    vlob_create_serializer,
-    vlob_read_serializer,
-    vlob_update_serializer,
-    vlob_list_versions_serializer,
-    vlob_poll_changes_serializer,
-    vlob_maintenance_get_reencryption_batch_serializer,
-    vlob_maintenance_save_reencryption_batch_serializer,
-    events_subscribe_serializer,
-    events_listen_serializer,
-    user_get_serializer,
-    human_find_serializer,
-    user_create_serializer,
-    user_revoke_serializer,
     device_create_serializer,
-    invite_new_serializer,
-    invite_list_serializer,
-    invite_delete_serializer,
-    invite_info_serializer,
+    events_listen_serializer,
+    events_subscribe_serializer,
+    human_find_serializer,
     invite_1_claimer_wait_peer_serializer,
     invite_1_greeter_wait_peer_serializer,
     invite_2a_claimer_send_hashed_nonce_serializer,
     invite_2a_greeter_get_hashed_nonce_serializer,
-    invite_2b_greeter_send_nonce_serializer,
     invite_2b_claimer_send_nonce_serializer,
-    invite_3a_greeter_wait_peer_trust_serializer,
+    invite_2b_greeter_send_nonce_serializer,
     invite_3a_claimer_signify_trust_serializer,
+    invite_3a_greeter_wait_peer_trust_serializer,
     invite_3b_claimer_wait_peer_trust_serializer,
     invite_3b_greeter_signify_trust_serializer,
-    invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
-    pki_enrollment_submit_serializer,
+    invite_4_greeter_communicate_serializer,
+    invite_delete_serializer,
+    invite_info_serializer,
+    invite_list_serializer,
+    invite_new_serializer,
+    invited_ping_serializer,
+    organization_bootstrap_serializer,
+    organization_config_serializer,
+    organization_stats_serializer,
+    pki_enrollment_accept_serializer,
     pki_enrollment_info_serializer,
     pki_enrollment_list_serializer,
     pki_enrollment_reject_serializer,
-    pki_enrollment_accept_serializer,
+    pki_enrollment_submit_serializer,
+    realm_create_serializer,
+    realm_finish_reencryption_maintenance_serializer,
+    realm_get_role_certificates_serializer,
+    realm_start_reencryption_maintenance_serializer,
+    realm_stats_serializer,
+    realm_status_serializer,
+    realm_update_roles_serializer,
+    user_create_serializer,
+    user_get_serializer,
+    user_revoke_serializer,
+    vlob_create_serializer,
+    vlob_list_versions_serializer,
+    vlob_maintenance_get_reencryption_batch_serializer,
+    vlob_maintenance_save_reencryption_batch_serializer,
+    vlob_poll_changes_serializer,
+    vlob_read_serializer,
+    vlob_update_serializer,
 )
-
-from tests.common import real_clock_timeout
+from parsec.api.protocol.base import ApiCommandSerializer
+from parsec.serde import packb
+from tests.common import BaseRpcApiClient, real_clock_timeout
 
 
 def craft_http_request(
-    target: str, method: str, headers: dict, body: Optional[bytes], protocol: str = "1.0"
+    target: str, method: str, headers: dict, body: bytes | None, protocol: str = "1.0"
 ) -> bytes:
     if body is None:
         body = b""
@@ -86,8 +132,8 @@ def craft_http_request(
 def parse_http_response(raw: bytes):
     head, _ = raw.split(b"\r\n\r\n", 1)  # Ignore the body part
     status, *headers = head.split(b"\r\n")
-    protocole, status_code, status_label = status.split(b" ", 2)
-    assert protocole == b"HTTP/1.1"
+    protocol, status_code, status_label = status.split(b" ", 2)
+    assert protocol == b"HTTP/1.1"
     cooked_status = (int(status_code.decode("ascii")), status_label.decode("ascii"))
     cooked_headers = {}
     for header in headers:
@@ -98,11 +144,11 @@ def parse_http_response(raw: bytes):
 
 async def do_http_request(
     stream: trio.abc.Stream,
-    target: Optional[str] = None,
+    target: str | None = None,
     method: str = "GET",
-    req: Optional[bytes] = None,
-    headers: Optional[dict] = None,
-    body: Optional[bytes] = None,
+    req: bytes | None = None,
+    headers: dict | None = None,
+    body: bytes | None = None,
 ):
     if req is None:
         assert target is not None
@@ -155,7 +201,11 @@ class CmdSock:
     async def _do_send(self, ws, req_post_processing, args, kwargs):
         req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
         if req_post_processing:
-            raw_req = packb(req_post_processing(self.serializer.req_dump(req)))
+            if not isinstance(self.serializer, ApiCommandSerializer):
+                pre_processed_req = req_post_processing(self.serializer.req_dump(req))
+                raw_req = packb(pre_processed_req)
+            else:
+                raw_req = self.serializer.req_dumps(req_post_processing(req))
         else:
             raw_req = self.serializer.req_dumps(req)
         await ws.send(raw_req)
@@ -165,17 +215,71 @@ class CmdSock:
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
-            if isinstance(rep, dict):
-                assert rep["status"] == "ok"  # Legacy rep schemas
-            else:
-                assert isinstance(rep, (BlockCreateRepOk, BlockReadRepOk))  # Rust-based rep schemas
+            assert isinstance(
+                rep,
+                (
+                    AuthenticatedPingRepOk,
+                    BlockCreateRepOk,
+                    BlockReadRepOk,
+                    DeviceCreateRepOk,
+                    HumanFindRepOk,
+                    Invite1ClaimerWaitPeerRepOk,
+                    Invite1GreeterWaitPeerRepOk,
+                    Invite2aClaimerSendHashedNonceRepOk,
+                    Invite2aGreeterGetHashedNonceRepOk,
+                    Invite2bClaimerSendNonceRepOk,
+                    Invite2bGreeterSendNonceRepOk,
+                    Invite3aClaimerSignifyTrustRepOk,
+                    Invite3aGreeterWaitPeerTrustRepOk,
+                    Invite3bClaimerWaitPeerTrustRepOk,
+                    Invite3bGreeterSignifyTrustRepOk,
+                    Invite4ClaimerCommunicateRepOk,
+                    Invite4GreeterCommunicateRepOk,
+                    InviteDeleteRepOk,
+                    InviteInfoRepOk,
+                    InviteNewRepOk,
+                    MessageGetRepOk,
+                    OrganizationBootstrapRepOk,
+                    OrganizationConfigRepOk,
+                    OrganizationStatsRepOk,
+                    PkiEnrollmentAcceptRepOk,
+                    PkiEnrollmentInfoRepOk,
+                    PkiEnrollmentListRep,
+                    PkiEnrollmentRejectRep,
+                    RealmCreateRepOk,
+                    RealmFinishReencryptionMaintenanceRepOk,
+                    RealmGetRoleCertificatesRepOk,
+                    RealmStartReencryptionMaintenanceRepOk,
+                    RealmStatsRepOk,
+                    RealmStatusRepOk,
+                    RealmUpdateRolesRepOk,
+                    UserCreateRepOk,
+                    UserGetRepOk,
+                    UserRevokeRepOk,
+                    VlobCreateRepOk,
+                    VlobListVersionsRepOk,
+                    VlobMaintenanceGetReencryptionBatchRepOk,
+                    VlobMaintenanceSaveReencryptionBatchRepOk,
+                    VlobPollChangesRepOk,
+                    VlobReadRepOk,
+                    VlobUpdateRepOk,
+                ),
+            )  # Rust-based rep schemas
 
         return rep
 
-    async def __call__(self, ws, *args, req_post_processing: Callable = None, **kwargs):
-        check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-        await self._do_send(ws, req_post_processing, args, kwargs)
-        return await self._do_recv(ws, check_rep)
+    async def __call__(self, ws_or_rpc, *args, req_post_processing: Callable = None, **kwargs):
+        if isinstance(ws_or_rpc, BaseRpcApiClient):
+            req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
+            assert req_post_processing is None
+            return await ws_or_rpc.send(
+                req=req,
+                serializer=self.serializer,
+            )
+        else:
+            check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
+            await self._do_send(ws_or_rpc, req_post_processing, args, kwargs)
+            return await self._do_recv(ws_or_rpc, check_rep)
 
     class AsyncCallRepBox:
         def __init__(self, do_recv):
@@ -209,9 +313,16 @@ class CmdSock:
 ### Ping ###
 
 
-ping = CmdSock(
+authenticated_ping = CmdSock(
     "ping",
-    ping_serializer,
+    authenticated_ping_serializer,
+    parse_args=lambda self, ping="foo": {"ping": ping},
+    check_rep_by_default=True,
+)
+
+invited_ping = CmdSock(
+    "ping",
+    invited_ping_serializer,
     parse_args=lambda self, ping="foo": {"ping": ping},
     check_rep_by_default=True,
 )
@@ -358,9 +469,8 @@ vlob_update = CmdSock(
 vlob_list_versions = CmdSock(
     "vlob_list_versions",
     vlob_list_versions_serializer,
-    parse_args=lambda self, vlob_id, encryption_revision=1: {
+    parse_args=lambda self, vlob_id: {
         "vlob_id": vlob_id,
-        "encryption_revision": encryption_revision,
     },
 )
 vlob_poll_changes = CmdSock(

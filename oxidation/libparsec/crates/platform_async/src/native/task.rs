@@ -10,13 +10,13 @@ use std::{
 /// Spawns a new asynchronous task, returning a [Task] for it.
 ///
 /// ```
-/// use libparsec_platform_async::{spawn, Timer};
+/// use libparsec_platform_async::{spawn, sleep};
 /// use std::time::Duration;
 ///
 /// # #[tokio::main]
 /// # async fn main() {
 /// let task = spawn(async {
-///     Timer::after(Duration::from_millis(10)).await;
+///     libparsec_platform_async::sleep(Duration::from_millis(10)).await;
 ///     42
 /// });
 /// let result = task.await;

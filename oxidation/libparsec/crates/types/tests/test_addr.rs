@@ -50,7 +50,7 @@ macro_rules! impl_testbed_common {
 
             // Test serde
             // `Token::Str` requires `&'static str` but we have a regular `&str` here...
-            // the solution is to explictly leak the memory *shoked*
+            // the solution is to explicitly leak the memory *shocked*
             let static_expected_url = Box::leak(expected_url.to_string().into_boxed_str());
             assert_tokens(&addr, &[Token::Str(static_expected_url)]);
         }
@@ -242,18 +242,18 @@ fn test_good_addr_with_unknown_field(testbed: &dyn Testbed) {
 
 #[apply(addr_with_org)]
 fn test_addr_with_unicode_organization_id(testbed: &dyn Testbed) {
-    let orgname: OrganizationID = "康熙帝".parse().unwrap();
-    let orgname_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D";
-    let url = testbed.url().replace(ORG, orgname_percent_quoted);
+    let org_name: OrganizationID = "康熙帝".parse().unwrap();
+    let org_name_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D";
+    let url = testbed.url().replace(ORG, org_name_percent_quoted);
     testbed.assert_addr_ok(&url);
-    assert_eq!(testbed.get_organization_id(&url), orgname);
+    assert_eq!(testbed.get_organization_id(&url), org_name);
 }
 
 #[apply(addr_with_org)]
 fn test_addr_with_bad_unicode_organization_id(testbed: &dyn Testbed) {
     // Not a valid percent-encoded utf8 string
-    let orgname_percent_quoted = "%E5%BA%B7%E7";
-    let url = testbed.url().replace(ORG, orgname_percent_quoted);
+    let org_name_percent_quoted = "%E5%BA%B7%E7";
+    let url = testbed.url().replace(ORG, org_name_percent_quoted);
     testbed.assert_addr_err(&url, "Path doesn't form a valid organization id");
 }
 

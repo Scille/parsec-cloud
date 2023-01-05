@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 import trio
-from parsec._parsec import DateTime
 from PyQt5 import QtCore
 
-from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
-from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.core.invite import bootstrap_organization
-from parsec.core.gui.create_org_widget import CreateOrgUserInfoWidget
+from parsec._parsec import DateTime
+from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
+from parsec.core.gui.create_org_widget import CreateOrgUserInfoWidget
 from parsec.core.gui.lang import translate
-
+from parsec.core.invite import bootstrap_organization
+from parsec.core.types import BackendOrganizationBootstrapAddr
 from tests.common import customize_fixtures, freeze_time, local_device_to_backend_user
 
 
@@ -24,7 +24,7 @@ def catch_create_org_widget(widget_catcher_factory):
 async def organization_bootstrap_addr(running_backend):
     org_id = OrganizationID("AnomalousMaterials")
     org_token = "123456"
-    await running_backend.backend.organization.create(org_id, org_token)
+    await running_backend.backend.organization.create(id=org_id, bootstrap_token=org_token)
     return BackendOrganizationBootstrapAddr.build(running_backend.addr, org_id, org_token)
 
 
@@ -429,7 +429,6 @@ async def test_create_organization_bootstrap_only_custom_server(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 async def test_create_organization_already_bootstrapped(
     aqtbot,
     running_backend,
@@ -444,13 +443,16 @@ async def test_create_organization_already_bootstrapped(
     org = organization_factory()
     backend_user, backend_first_device = local_device_to_backend_user(alice, org)
     bootstrap_token = "123456"
-    await running_backend.backend.organization.create(org.organization_id, bootstrap_token, None)
+    await running_backend.backend.organization.create(
+        id=org.organization_id,
+        bootstrap_token=bootstrap_token,
+    )
     await running_backend.backend.organization.bootstrap(
-        org.organization_id,
-        backend_user,
-        backend_first_device,
-        bootstrap_token,
-        org.root_verify_key,
+        id=org.organization_id,
+        user=backend_user,
+        first_device=backend_first_device,
+        bootstrap_token=bootstrap_token,
+        root_verify_key=org.root_verify_key,
     )
 
     org_bs_addr = BackendOrganizationBootstrapAddr.build(
@@ -458,7 +460,7 @@ async def test_create_organization_already_bootstrapped(
     )
 
     monkeypatch.setattr(
-        "parsec.core.gui.main_window.get_text_input", lambda *args, **kwargs: (str(org_bs_addr))
+        "parsec.core.gui.main_window.get_text_input", lambda *args, **kwargs: (org_bs_addr.to_url())
     )
 
     # The org bootstrap window is usually opened using a sub-menu.
@@ -476,7 +478,7 @@ async def test_create_organization_already_bootstrapped(
     await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
 
     def _user_widget_ready():
-        assert co_w.current_widget.line_edit_org_name.text() == str(org.organization_id)
+        assert co_w.current_widget.line_edit_org_name.text() == org.organization_id.str
         assert co_w.current_widget.line_edit_org_name.isReadOnly() is True
 
     await aqtbot.wait_until(_user_widget_ready)
@@ -636,7 +638,7 @@ async def test_create_organization_wrong_timestamp(
 async def test_create_organization_with_bootstrap_token(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
-    # Firt create the organization
+    # First create the organization
     bootstrap_token = "T0k3n"
     organization_id = OrganizationID("AnomalousMaterials")
     await running_backend.backend.organization.create(
@@ -715,7 +717,7 @@ async def test_create_organization_with_bootstrap_token(
                     (
                         translate("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
                         translate("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
-                            organization=str(organization_id)
+                            organization=organization_id.str
                         ),
                     )
                 ]

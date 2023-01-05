@@ -1,7 +1,9 @@
-from typing import Any, Dict, FrozenSet, Optional, Set, Tuple, Pattern, Union
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from ..core.fs.workspacefs.file_operations import Chunks
-from .crypto import SecretKey
+from __future__ import annotations
+
+from typing import Any, Dict, FrozenSet, Set, Tuple, Union
+
 from parsec._parsec_pyi.ids import ChunkID, DeviceID, EntryID
 from parsec._parsec_pyi.manifest import (
     BlockAccess,
@@ -12,7 +14,9 @@ from parsec._parsec_pyi.manifest import (
     WorkspaceEntry,
     WorkspaceManifest,
 )
+from parsec._parsec_pyi.regex import Regex
 from parsec._parsec_pyi.time import DateTime
+from parsec.crypto import SecretKey
 
 AnyLocalManifest = Union[
     LocalFileManifest,
@@ -29,11 +33,8 @@ class Chunk:
         stop: int,
         raw_offset: int,
         raw_size: int,
-        access: Optional[BlockAccess],
+        access: BlockAccess | None,
     ) -> None: ...
-    def __repr__(self) -> str: ...
-    def __eq__(self, other: Union[Chunk, int]) -> bool: ...
-    def __ne__(self, other: Union[Chunk, int]) -> bool: ...
     def __lt__(self, other: int) -> bool: ...
     def __gt__(self, other: int) -> bool: ...
     def __le__(self, other: int) -> bool: ...
@@ -49,15 +50,15 @@ class Chunk:
     @property
     def raw_size(self) -> int: ...
     @property
-    def access(self) -> Optional[BlockAccess]: ...
+    def access(self) -> BlockAccess | None: ...
     def evolve(
         self,
-        id: Optional[ChunkID] = None,
-        start: Optional[int] = None,
-        stop: Optional[int] = None,
-        raw_offset: Optional[int] = None,
-        raw_size: Optional[int] = None,
-        access: Optional[BlockAccess] = None,
+        id: ChunkID | None = None,
+        start: int | None = None,
+        stop: int | None = None,
+        raw_offset: int | None = None,
+        raw_size: int | None = None,
+        access: BlockAccess | None = None,
     ) -> Chunk: ...
     def evolve_as_block(self, data: bytes) -> Chunk: ...
     def is_block(self) -> bool: ...
@@ -67,6 +68,8 @@ class Chunk:
     def from_block_access(cls, block_access: BlockAccess) -> Chunk: ...
     @classmethod
     def new(cls, start: int, stop: int) -> Chunk: ...
+
+Chunks = Tuple[Chunk, ...]
 
 class LocalFileManifest:
     def __init__(
@@ -78,9 +81,6 @@ class LocalFileManifest:
         blocksize: int,
         blocks: Tuple[Chunks, ...],
     ) -> None: ...
-    def __repr__(self) -> str: ...
-    def __eq__(self, other: LocalFileManifest) -> bool: ...
-    def __ne__(self, other: LocalFileManifest) -> bool: ...
     @property
     def base_version(self) -> int: ...
     @property
@@ -105,27 +105,27 @@ class LocalFileManifest:
     def blocks(self) -> Tuple[Chunks, ...]: ...
     def evolve(
         self,
-        base: Optional[FileManifest] = None,
-        need_sync: Optional[bool] = None,
-        updated: Optional[DateTime] = None,
-        size: Optional[int] = None,
-        blocksize: Optional[int] = None,
-        blocks: Optional[Tuple[Chunks, ...]] = None,
+        base: FileManifest | None = None,
+        need_sync: bool | None = None,
+        updated: DateTime | None = None,
+        size: int | None = None,
+        blocksize: int | None = None,
+        blocks: Tuple[Chunks, ...] | None = None,
     ) -> LocalFileManifest: ...
     def evolve_single_block(self, block: int, new_chunk: Chunk) -> LocalFileManifest: ...
     def evolve_and_mark_updated(
         self,
         timestamp: DateTime,
-        base: Optional[FileManifest] = None,
-        updated: Optional[DateTime] = None,
-        size: Optional[int] = None,
-        blocksize: Optional[int] = None,
-        blocks: Optional[Tuple[Chunks, ...]] = None,
-        **kwargs
+        base: FileManifest | None = None,
+        updated: DateTime | None = None,
+        size: int | None = None,
+        blocksize: int | None = None,
+        blocks: Tuple[Chunks, ...] | None = None,
+        **kwargs: Any,
     ) -> LocalFileManifest: ...
     def get_chunks(self, block: int) -> Tuple[Chunk, ...]: ...
     def is_reshaped(self) -> bool: ...
-    def assert_integrity(self): ...
+    def assert_integrity(self) -> None: ...
     def to_remote(self, author: DeviceID, timestamp: DateTime) -> FileManifest: ...
     def match_remote(self, remote_manifest: FileManifest) -> bool: ...
     def to_stats(self) -> Dict[str, Any]: ...
@@ -139,13 +139,17 @@ class LocalFileManifest:
     def from_remote_with_local_context(
         cls,
         remote: FileManifest,
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Regex,
         local_manifest: LocalFileManifest,
         timestamp: DateTime,
     ) -> LocalFileManifest: ...
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, parent: EntryID, timestamp: DateTime, blocksize: int = 512 * 1024
+        cls,
+        author: DeviceID,
+        parent: EntryID,
+        timestamp: DateTime,
+        blocksize: int = 512 * 1024,
     ) -> LocalFileManifest: ...
 
 class LocalFolderManifest:
@@ -158,9 +162,6 @@ class LocalFolderManifest:
         local: FrozenSet[EntryID],
         remote: FrozenSet[EntryID],
     ) -> None: ...
-    def __repr__(self) -> str: ...
-    def __eq__(self, other: LocalFolderManifest) -> bool: ...
-    def __ne__(self, other: LocalFolderManifest) -> bool: ...
     @property
     def base_version(self) -> int: ...
     @property
@@ -186,30 +187,30 @@ class LocalFolderManifest:
     def match_remote(self, remote_manifest: FolderManifest) -> bool: ...
     def evolve(
         self,
-        base: Optional[FolderManifest] = None,
-        need_sync: Optional[bool] = None,
-        updated: Optional[DateTime] = None,
-        children: Optional[Dict[EntryName, EntryID]] = None,
-        local: Optional[FrozenSet[EntryID]] = None,
-        remote: Optional[FrozenSet[EntryID]] = None,
+        base: FolderManifest | None = None,
+        need_sync: bool | None = None,
+        updated: DateTime | None = None,
+        children: Dict[EntryName, EntryID] | None = None,
+        local: FrozenSet[EntryID] | None = None,
+        remote: FrozenSet[EntryID] | None = None,
     ) -> LocalFolderManifest: ...
     def evolve_and_mark_updated(
         self,
         timestamp: DateTime,
-        base: Optional[FolderManifest] = None,
-        updated: Optional[DateTime] = None,
-        children: Optional[Dict[EntryName, EntryID]] = None,
-        local: Optional[FrozenSet[EntryID]] = None,
-        remote: Optional[FrozenSet[EntryID]] = None,
+        base: FolderManifest | None = None,
+        updated: DateTime | None = None,
+        children: Dict[EntryName, EntryID] | None = None,
+        local: FrozenSet[EntryID] | None = None,
+        remote: FrozenSet[EntryID] | None = None,
     ) -> LocalFolderManifest: ...
     def evolve_children_and_mark_updated(
         self,
-        data: Dict[EntryName, Optional[EntryID]],
-        prevent_sync_pattern: Pattern,
+        data: Dict[EntryName, EntryID | None],
+        prevent_sync_pattern: Regex,
         timestamp: DateTime,
     ) -> LocalFolderManifest: ...
     def apply_prevent_sync_pattern(
-        self, prevent_sync_pattern: Pattern, timestamp: DateTime
+        self, prevent_sync_pattern: Regex, timestamp: DateTime
     ) -> LocalFolderManifest: ...
     def to_remote(self, author: DeviceID, timestamp: DateTime) -> FolderManifest: ...
     def to_stats(self) -> Dict[str, Any]: ...
@@ -223,14 +224,14 @@ class LocalFolderManifest:
     ) -> LocalFolderManifest: ...
     @classmethod
     def from_remote(
-        cls, remote: FolderManifest, prevent_sync_pattern: Pattern
+        cls, remote: FolderManifest, prevent_sync_pattern: Regex
     ) -> LocalFolderManifest: ...
     @classmethod
     def from_remote_with_local_context(
         cls,
         remote: FolderManifest,
-        prevent_sync_pattern: Pattern,
-        local_manifest: LocalFolderManifest,
+        prevent_sync_pattern: Regex,
+        local_manifest: AnyLocalManifest,
         timestamp: DateTime,
     ) -> LocalFolderManifest: ...
 
@@ -245,9 +246,6 @@ class LocalWorkspaceManifest:
         remote: FrozenSet[EntryID],
         speculative: bool,
     ) -> None: ...
-    def __repr__(self) -> str: ...
-    def __eq__(self, other: LocalWorkspaceManifest) -> bool: ...
-    def __ne__(self, other: LocalWorkspaceManifest) -> bool: ...
     @property
     def base_version(self) -> int: ...
     @property
@@ -273,57 +271,57 @@ class LocalWorkspaceManifest:
     def match_remote(self, remote_manifest: WorkspaceManifest) -> bool: ...
     def evolve(
         self,
-        base: Optional[WorkspaceManifest] = None,
-        need_sync: Optional[bool] = None,
-        updated: Optional[DateTime] = None,
-        children: Optional[Dict[EntryName, EntryID]] = None,
-        local: Optional[FrozenSet[EntryID]] = None,
-        remote: Optional[FrozenSet[EntryID]] = None,
-        speculative: Optional[bool] = None,
+        base: WorkspaceManifest | None = None,
+        need_sync: bool | None = None,
+        updated: DateTime | None = None,
+        children: Dict[EntryName, EntryID] | None = None,
+        local: FrozenSet[EntryID] | None = None,
+        remote: FrozenSet[EntryID] | None = None,
+        speculative: bool | None = None,
     ) -> LocalWorkspaceManifest: ...
     def evolve_and_mark_updated(
         self,
         timestamp: DateTime,
-        base: Optional[WorkspaceManifest] = None,
-        updated: Optional[DateTime] = None,
-        children: Optional[Dict[EntryName, EntryID]] = None,
-        local: Optional[FrozenSet[EntryID]] = None,
-        remote: Optional[FrozenSet[EntryID]] = None,
-        speculative: Optional[bool] = None,
+        base: WorkspaceManifest | None = None,
+        updated: DateTime | None = None,
+        children: Dict[EntryName, EntryID] | None = None,
+        local: FrozenSet[EntryID] | None = None,
+        remote: FrozenSet[EntryID] | None = None,
+        speculative: bool | None = None,
     ) -> LocalWorkspaceManifest: ...
     def evolve_children_and_mark_updated(
         self,
-        data: Dict[EntryName, Optional[EntryID]],
-        prevent_sync_pattern: Pattern,
+        data: Dict[EntryName, EntryID | None],
+        prevent_sync_pattern: Regex,
         timestamp: DateTime,
     ) -> LocalWorkspaceManifest: ...
     def apply_prevent_sync_pattern(
-        self, prevent_sync_pattern: Pattern, timestamp: DateTime
+        self, prevent_sync_pattern: Regex, timestamp: DateTime
     ) -> LocalWorkspaceManifest: ...
     def to_remote(self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest: ...
     def to_stats(self) -> Dict[str, Any]: ...
     def asdict(self) -> Dict[str, Any]: ...
     def dump_and_encrypt(self, key: SecretKey) -> bytes: ...
     @classmethod
-    def decrypt_and_load(self, encrypted: bytes, key: SecretKey) -> LocalWorkspaceManifest: ...
+    def decrypt_and_load(cls, encrypted: bytes, key: SecretKey) -> LocalWorkspaceManifest: ...
     @classmethod
     def new_placeholder(
         cls,
         author: DeviceID,
         timestamp: DateTime,
-        id: Optional[EntryID],
+        id: EntryID | None,
         speculative: bool,
     ) -> LocalWorkspaceManifest: ...
     @classmethod
     def from_remote(
-        cls, remote: WorkspaceManifest, prevent_sync_pattern: Pattern
+        cls, remote: WorkspaceManifest, prevent_sync_pattern: Regex
     ) -> LocalWorkspaceManifest: ...
     @classmethod
     def from_remote_with_local_context(
         cls,
         remote: WorkspaceManifest,
-        prevent_sync_pattern: Pattern,
-        local_manifest: LocalWorkspaceManifest,
+        prevent_sync_pattern: Regex,
+        local_manifest: AnyLocalManifest,
         timestamp: DateTime,
     ) -> LocalWorkspaceManifest: ...
 
@@ -337,9 +335,6 @@ class LocalUserManifest:
         workspaces: Tuple[WorkspaceEntry, ...],
         speculative: bool,
     ) -> None: ...
-    def __repr__(self) -> str: ...
-    def __eq__(self, other: LocalUserManifest) -> bool: ...
-    def __ne__(self, other: LocalUserManifest) -> bool: ...
     @property
     def base_version(self) -> int: ...
     @property
@@ -362,27 +357,27 @@ class LocalUserManifest:
     def speculative(self) -> bool: ...
     def evolve(
         self,
-        base: Optional[UserManifest] = None,
-        need_sync: Optional[bool] = None,
-        updated: Optional[DateTime] = None,
-        last_processed_message: Optional[int] = None,
-        workspaces: Optional[Tuple[WorkspaceEntry, ...]] = None,
-        speculative: Optional[bool] = None,
+        base: UserManifest | None = None,
+        need_sync: bool | None = None,
+        updated: DateTime | None = None,
+        last_processed_message: int | None = None,
+        workspaces: Tuple[WorkspaceEntry, ...] | None = None,
+        speculative: bool | None = None,
     ) -> LocalUserManifest: ...
     def evolve_and_mark_updated(
         self,
         timestamp: DateTime,
-        base: Optional[UserManifest] = None,
-        last_processed_message: Optional[int] = None,
-        workspaces: Optional[Tuple[WorkspaceEntry, ...]] = None,
-        speculative: Optional[bool] = None,
-        **kwargs
+        base: UserManifest | None = None,
+        last_processed_message: int | None = None,
+        workspaces: Tuple[WorkspaceEntry, ...] | None = None,
+        speculative: bool | None = None,
+        **kwargs: Any,
     ) -> LocalUserManifest: ...
     def evolve_workspaces_and_mark_updated(
         self, timestamp: DateTime, workspace: WorkspaceEntry
     ) -> LocalUserManifest: ...
     def evolve_workspaces(self, workspace: WorkspaceEntry) -> LocalUserManifest: ...
-    def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]: ...
+    def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry | None: ...
     def to_remote(self, author: DeviceID, timestamp: DateTime) -> UserManifest: ...
     def match_remote(self, remote_manifest: UserManifest) -> bool: ...
     def to_stats(self) -> Dict[str, Any]: ...
@@ -392,7 +387,11 @@ class LocalUserManifest:
     def decrypt_and_load(cls, encrypted: bytes, key: SecretKey) -> LocalUserManifest: ...
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, timestamp: DateTime, id: Optional[EntryID], speculative: bool
+        cls,
+        author: DeviceID,
+        timestamp: DateTime,
+        id: EntryID | None,
+        speculative: bool,
     ) -> LocalUserManifest: ...
     @classmethod
     def from_remote(cls, remote: UserManifest) -> LocalUserManifest: ...
@@ -400,7 +399,7 @@ class LocalUserManifest:
     def from_remote_with_local_context(
         cls,
         remote: UserManifest,
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Regex,
         local_manifest: LocalUserManifest,
         timestamp: DateTime,
     ) -> LocalUserManifest: ...

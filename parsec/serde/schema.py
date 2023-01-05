@@ -1,14 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Union, Dict, Type
 from enum import Enum
-from marshmallow import (
-    Schema as MarshmallowSchema,
-    MarshalResult,
-    UnmarshalResult,
-    ValidationError,
-    post_load,
-)
+from typing import Any, Dict, Iterable, Type, TypeVar, Union
+
+from marshmallow import MarshalResult, UnmarshalResult, ValidationError
+from marshmallow import Schema as MarshmallowSchema
 
 try:
     import toastedmarshmallow
@@ -18,24 +15,10 @@ try:
             jit = toastedmarshmallow.Jit
 
 except ImportError:
-    BaseSchema = MarshmallowSchema
-
-from parsec.serde.fields import String
+    BaseSchema = MarshmallowSchema  # type: ignore[misc, assignment]
 
 
-class BaseCmdSchema(BaseSchema):
-
-    cmd = String(required=True)
-
-    @post_load
-    def _drop_cmd_field(self, item):
-        if self.drop_cmd_field:
-            item.pop("cmd")
-        return item
-
-    def __init__(self, drop_cmd_field=True, **kwargs):
-        super().__init__(**kwargs)
-        self.drop_cmd_field = drop_cmd_field
+T = TypeVar("T", bound=Iterable[Any])
 
 
 # Shamelessly taken from marshmallow-oneofschema (
@@ -98,35 +81,39 @@ class OneOfSchema(BaseSchema):
 
     type_field: str = "type"
     type_schemas: Dict[Union[Enum, str], Union[BaseSchema, Type[BaseSchema]]] = {}
-    fallback_type_schema: Type[BaseSchema] = None
-    _instantiated_schemas: Dict[Union[Enum, str], BaseSchema] = None
-    _instantiated_fallback_schema: BaseSchema = None
+    fallback_type_schema: Type[BaseSchema] | None = None
+    _instantiated_schemas: Dict[Union[Enum, str], BaseSchema] | None = None
+    _instantiated_fallback_schema: BaseSchema | None = None
 
-    def _build_schemas(self):
+    def _build_schemas(self) -> None:
         enum_types = {type(k) for k in self.type_schemas.keys()}
         if len(enum_types) != 1 or not issubclass(enum_types.pop(), Enum):
             raise ValueError("type_schemas key can only be one Enum")
         self._instantiated_schemas = {}
         for k, v in self.type_schemas.items():
             schema_instance = v if isinstance(v, BaseSchema) else v()
-            if self.type_field not in schema_instance.fields:
+            if self.type_field not in schema_instance.fields:  # type: ignore[attr-defined]
                 raise ValueError(f"{schema_instance} needs to define '{self.type_field}' field")
             self._instantiated_schemas[k] = schema_instance
-            self._instantiated_schemas[k.value] = schema_instance
+            if isinstance(k, Enum):
+                self._instantiated_schemas[k.value] = schema_instance
 
         if self.fallback_type_schema:
             self._instantiated_fallback_schema = self.fallback_type_schema()
 
-    def _get_schema(self, type: Union[Enum, str]):
+    def _get_schema(self, type: Union[Enum, str]) -> BaseSchema | None:
         if self._instantiated_schemas is None:
             self._build_schemas()
+        assert self._instantiated_schemas is not None
         return self._instantiated_schemas.get(type, self._instantiated_fallback_schema)
 
-    def get_obj_type(self, obj):
+    def get_obj_type(self, obj: dict[str, object]) -> Any:
         """Returns name of object schema"""
         raise NotImplementedError()
 
-    def dump(self, obj, many=None, update_fields=True, **kwargs):
+    def dump(
+        self, obj: T, many: Any = None, update_fields: bool = True, **kwargs: Any
+    ) -> MarshalResult[T]:
         many = self.many if many is None else bool(many)
         if not many:
             result = self._dump(obj, update_fields, **kwargs)
@@ -147,7 +134,7 @@ class OneOfSchema(BaseSchema):
 
         return result
 
-    def _dump(self, obj, update_fields=True, **kwargs):
+    def _dump(self, obj: Any, update_fields: bool = True, **kwargs: Any) -> MarshalResult[Any]:
         obj_type = self.get_obj_type(obj)
         if not obj_type:
             return MarshalResult(
@@ -161,7 +148,9 @@ class OneOfSchema(BaseSchema):
         result = schema.dump(obj, many=False, update_fields=update_fields, **kwargs)
         return result
 
-    def load(self, data, many=None, partial=None):
+    def load(  # type: ignore[override]
+        self, data: Dict[Any, Any], many: Any | None = None, partial: Any | None = None
+    ) -> MarshalResult[Any]:
         many = self.many if many is None else bool(many)
         if partial is None:
             partial = self.partial
@@ -184,7 +173,7 @@ class OneOfSchema(BaseSchema):
 
         return result
 
-    def _load(self, data, partial=None):
+    def _load(self, data: dict[Any, Any], partial: Any = None) -> Any:
         if not isinstance(data, dict):
             return UnmarshalResult({}, {"_schema": "Invalid data type: %s" % data})
 
@@ -206,7 +195,7 @@ class OneOfSchema(BaseSchema):
 
         return schema.load(data, many=False, partial=partial)
 
-    def validate(self, data, many=None, partial=None):
+    def validate(self, data: dict[Any, Any], many: bool | None = None, partial: Any = None) -> Any:
         try:
             return self.load(data, many=many, partial=partial).errors
         except ValidationError as ve:
@@ -214,10 +203,10 @@ class OneOfSchema(BaseSchema):
 
 
 class OneOfSchemaLegacy(OneOfSchema):
-    _instantiated_schemas: Dict[str, BaseSchema] = None
-    _instantiated_fallback_schema: BaseSchema = None
+    _instantiated_schemas: Dict[Enum | str, BaseSchema] | None = None
+    _instantiated_fallback_schema: BaseSchema | None = None
 
-    def _get_schema(self, type):
+    def _get_schema(self, type: Enum | str) -> BaseSchema | None:
         if self._instantiated_schemas is None:
             self._instantiated_schemas = {
                 k: v if isinstance(v, BaseSchema) else v() for k, v in self.type_schemas.items()

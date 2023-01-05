@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+import argparse
+import logging
 
 # Monitor POC, shamelessly taken from curio
-
 import os
 import signal
 import socket
-import traceback
-import threading
 import telnetlib
-import argparse
-import logging
+import threading
+import traceback
 
 import trio
 from trio.abc import Instrument
@@ -151,7 +152,7 @@ class Monitor(Instrument):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # set the timeout to prevent the server loop from
-        # blocking indefinitaly on sock.accept()
+        # blocking indefinitely on sock.accept()
         sock.settimeout(0.5)
         sock.bind(self.address)
         sock.listen(1)
@@ -306,7 +307,7 @@ io_statistics:
 
         def _format_task(task):
             task = self._tasks[id(task)]
-            return "%s (id=%s, %s%s)" % (
+            return "{} (id={}, {}{})".format(
                 task.name,
                 task._monitor_short_id,
                 task._monitor_state,

@@ -1,0 +1,81 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "vlob_read",
+            "fields": [
+                {
+                    "name": "encryption_revision",
+                    "type": "Index"
+                },
+                {
+                    "name": "vlob_id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "version",
+                    "type": "RequiredOption<Version>"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "RequiredOption<DateTime>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "version",
+                        "type": "Version"
+                    },
+                    {
+                        "name": "blob",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "author",
+                        "type": "DeviceID"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    // This field is used by the client to figure out if its role certificate cache is up-to-date enough
+                    // to be able to perform the proper integrity checks on the manifest timestamp.
+                    // New in API version 2.3 (Parsec 2.6.0)
+                    {
+                        "name": "author_last_role_granted_on",
+                        "type": "DateTime",
+                        "introduced_in": "2.3"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "bad_version"
+            },
+            {
+                "status": "bad_encryption_revision"
+            },
+            {
+                "status": "in_maintenance"
+            }
+        ]
+    }
+]

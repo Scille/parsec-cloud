@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
@@ -39,7 +40,7 @@ def testbed(running_backend, alice_user_fs, alice):
                 organization_id=alice.organization_id,
                 author=options["backend_author"],
                 encryption_revision=1,
-                vlob_id=VlobID(alice.user_manifest_id.uuid),
+                vlob_id=VlobID.from_entry_id(alice.user_manifest_id),
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],
@@ -97,7 +98,7 @@ async def test_invalid_timestamp(testbed, alice, alice2):
         await testbed.run(signed_timestamp=bad_timestamp)
     assert (
         str(exc.value)
-        == "Invalid user manifest: Invalid timestamp: expected `2000-01-02T00:00:00+00:00`, got `2000-01-03T00:00:00+00:00`"
+        == "Invalid user manifest: Invalid timestamp: expected `2000-01-02T00:00:00Z`, got `2000-01-03T00:00:00Z`"
     )
 
     # Invalid expected timestamp stored in backend
@@ -105,7 +106,7 @@ async def test_invalid_timestamp(testbed, alice, alice2):
         await testbed.run(backend_timestamp=bad_timestamp)
     assert (
         str(exc.value)
-        == "Invalid user manifest: Invalid timestamp: expected `2000-01-03T00:00:00+00:00`, got `2000-01-02T00:00:00+00:00`"
+        == "Invalid user manifest: Invalid timestamp: expected `2000-01-03T00:00:00Z`, got `2000-01-02T00:00:00Z`"
     )
 
 

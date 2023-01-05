@@ -1,40 +1,44 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from dataclasses import dataclass, field as dataclass_field
-from parsec._parsec import DateTime
-from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
 from collections import defaultdict
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
+from typing import TYPE_CHECKING, AbstractSet, Any, Callable, Coroutine, Dict, List, Tuple
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
     DeviceID,
     OrganizationID,
-    UserID,
     RealmID,
     RealmRole,
-    VlobID,
     SequesterServiceID,
+    UserID,
+    VlobID,
 )
-from parsec.backend.utils import OperationKind
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmNotFoundError
+from parsec.backend.sequester import BaseSequesterService
+from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
-    VlobVersionError,
-    VlobNotFoundError,
-    VlobRealmNotFoundError,
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
+    VlobNotFoundError,
     VlobNotInMaintenanceError,
+    VlobRealmNotFoundError,
     VlobRequireGreaterTimestampError,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
+    VlobVersionError,
+    extract_sequestered_data_and_proceed_webhook,
 )
 
 if TYPE_CHECKING:
-    from parsec.backend.memory.realm import Realm, MemoryRealmComponent
     from parsec.backend.memory.organization import MemoryOrganizationComponent
+    from parsec.backend.memory.realm import MemoryRealmComponent, Realm
     from parsec.backend.memory.sequester import MemorySequesterComponent
 
 
@@ -46,10 +50,10 @@ SequesteredVlobData = List[Dict[SequesterServiceID, bytes]]
 class Vlob:
     realm_id: RealmID
     data: VlobData
-    sequestered_data: Optional[SequesteredVlobData]
+    sequestered_data: SequesteredVlobData | None
 
     @property
-    def current_version(self):
+    def current_version(self) -> int:
         return len(self.data)
 
 
@@ -114,16 +118,16 @@ class Reencryption:
 class Changes:
     checkpoint: int = dataclass_field(default=0)
     changes: Dict[VlobID, Tuple[DeviceID, int, int]] = dataclass_field(default_factory=dict)
-    reencryption: Optional[Reencryption] = dataclass_field(default=None)
+    reencryption: Reencryption | None = dataclass_field(default=None)
     last_vlob_update_per_user: Dict[UserID, DateTime] = dataclass_field(default_factory=dict)
 
 
 class MemoryVlobComponent(BaseVlobComponent):
-    def __init__(self, send_event):
+    def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._organization_component: "MemoryOrganizationComponent" = None
-        self._realm_component: "MemoryRealmComponent" = None
-        self._sequester_component: "MemorySequesterComponent" = None
+        self._organization_component: MemoryOrganizationComponent | None = None
+        self._realm_component: MemoryRealmComponent | None = None
+        self._sequester_component: MemorySequesterComponent | None = None
         self._vlobs: Dict[Tuple[OrganizationID, VlobID], Vlob] = {}
         self._per_realm_changes: Dict[Tuple[OrganizationID, RealmID], Changes] = defaultdict(
             Changes
@@ -131,10 +135,10 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     def register_components(
         self,
-        organization: "MemoryOrganizationComponent",
-        realm: "MemoryRealmComponent",
-        sequester: "MemorySequesterComponent",
-        **other_components,
+        organization: MemoryOrganizationComponent,
+        realm: MemoryRealmComponent,
+        sequester: MemorySequesterComponent,
+        **other_components: Any,
     ) -> None:
         self._organization_component = organization
         self._realm_component = realm
@@ -147,8 +151,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         assert not changes.reencryption
         realm_vlobs = {
             vlob_id: vlob
-            for (orgid, vlob_id), vlob in self._vlobs.items()
-            if orgid == organization_id and vlob.realm_id == realm_id
+            for (org_id, vlob_id), vlob in self._vlobs.items()
+            if org_id == organization_id and vlob.realm_id == realm_id
         }
         changes.reencryption = Reencryption(realm_id, realm_vlobs)
 
@@ -171,14 +175,17 @@ class MemoryVlobComponent(BaseVlobComponent):
             return self._vlobs[(organization_id, vlob_id)]
 
         except KeyError:
-            raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
+            raise VlobNotFoundError(f"Vlob `{vlob_id.hex}` doesn't exist")
 
     def _check_sequestered_organization(
         self,
         organization_id: OrganizationID,
         expect_sequestered_organization: bool,
         expect_active_sequester_services: AbstractSet[SequesterServiceID] = set(),
-    ):
+    ) -> Dict[SequesterServiceID, BaseSequesterService]:
+        assert self._organization_component is not None
+        assert self._sequester_component is not None
+
         try:
             org = self._organization_component._organizations[organization_id]
         except KeyError:
@@ -188,6 +195,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             # Regular organization
             if expect_sequestered_organization:
                 raise VlobSequesterDisabledError()
+            return {}
 
         else:
             # Sequestered organization
@@ -200,14 +208,46 @@ class MemoryVlobComponent(BaseVlobComponent):
                     sequester_authority_certificate=org.sequester_authority.certificate,
                     sequester_services_certificates=[s.service_certificate for s in services],
                 )
+            return {s.service_id: s for s in services}
+
+    async def _extract_sequestered_data_and_proceed_webhook(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        timestamp: DateTime,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+    ) -> Dict[SequesterServiceID, bytes] | None:
+        if sequester_blob is None:
+            self._check_sequestered_organization(
+                organization_id=organization_id, expect_sequestered_organization=False
+            )
+            sequestered_data = None
+        else:
+            services = self._check_sequestered_organization(
+                organization_id=organization_id,
+                expect_sequestered_organization=True,
+                expect_active_sequester_services=sequester_blob.keys(),
+            )
+            sequestered_data = await extract_sequestered_data_and_proceed_webhook(
+                services,
+                organization_id,
+                author,
+                encryption_revision,
+                vlob_id,
+                timestamp,
+                sequester_blob,
+            )
+        return sequestered_data
 
     def _check_realm_read_access(
         self,
         organization_id: OrganizationID,
         realm_id: RealmID,
         user_id: UserID,
-        encryption_revision: Optional[int],
-        timestamp: Optional[DateTime],
+        encryption_revision: int | None,
+        timestamp: DateTime | None,
     ) -> "Realm":
         return self._check_realm_access(
             organization_id,
@@ -223,8 +263,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         realm_id: RealmID,
         user_id: UserID,
-        encryption_revision: Optional[int],
-        timestamp: Optional[DateTime],
+        encryption_revision: int | None,
+        timestamp: DateTime | None,
     ) -> "Realm":
         return self._check_realm_access(
             organization_id,
@@ -240,14 +280,16 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         realm_id: RealmID,
         user_id: UserID,
-        encryption_revision: Optional[int],
-        timestamp: Optional[DateTime],
+        encryption_revision: int | None,
+        timestamp: DateTime | None,
         operation_kind: OperationKind,
     ) -> "Realm":
+        assert self._realm_component is not None
+
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
-            raise VlobRealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+            raise VlobRealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
         allowed_roles: Tuple[RealmRole, ...]
         # Only an owner can perform maintenance operation
@@ -296,7 +338,9 @@ class MemoryVlobComponent(BaseVlobComponent):
                 encryption_revision is not None
                 and encryption_revision == realm.status.encryption_revision
             ):
-                raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+                raise VlobInMaintenanceError(
+                    f"Realm `{realm_id.hex}` is currently under maintenance"
+                )
 
             # The vlob is only available at the previous revision
             if (
@@ -309,11 +353,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         else:
             # Writing during maintenance is forbidden
             if operation_kind != OperationKind.MAINTENANCE and realm.status.in_maintenance:
-                raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+                raise VlobInMaintenanceError(
+                    f"Realm `{realm_id.hex}` is currently under maintenance"
+                )
 
             # A maintenance state was expected
             if operation_kind == OperationKind.MAINTENANCE and not realm.status.in_maintenance:
-                raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+                raise VlobNotInMaintenanceError(f"Realm `{realm_id.hex}` not under maintenance")
 
             # Otherwise, simply check that the revisions match
             if (
@@ -338,14 +384,14 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     def _get_last_vlob_update(
         self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
-    ) -> Optional[DateTime]:
+    ) -> DateTime | None:
         changes = self._per_realm_changes[(organization_id, realm_id)]
         return changes.last_vlob_update_per_user.get(user_id)
 
     async def _update_changes(
         self,
         organization_id: OrganizationID,
-        author,
+        author: DeviceID,
         realm_id: RealmID,
         src_id: VlobID,
         timestamp: DateTime,
@@ -378,23 +424,23 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         self._check_realm_write_access(
             organization_id, realm_id, author.user_id, encryption_revision, timestamp
         )
-        if sequester_blob is None:
-            self._check_sequestered_organization(
-                organization_id=organization_id, expect_sequestered_organization=False
-            )
-            sequestered_data = None
-        else:
-            self._check_sequestered_organization(
-                organization_id=organization_id,
-                expect_sequestered_organization=True,
-                expect_active_sequester_services=sequester_blob.keys(),
-            )
-            sequestered_data = [sequester_blob]
+
+        extracted_sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
+            organization_id=organization_id,
+            author=author,
+            encryption_revision=encryption_revision,
+            vlob_id=vlob_id,
+            timestamp=timestamp,
+            sequester_blob=sequester_blob,
+        )
+        sequestered_data = None
+        if extracted_sequestered_data is not None:
+            sequestered_data = [extracted_sequestered_data]
 
         key = (organization_id, vlob_id)
         if key in self._vlobs:
@@ -410,8 +456,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
     ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
@@ -448,32 +494,32 @@ class MemoryVlobComponent(BaseVlobComponent):
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         vlob = self._get_vlob(organization_id, vlob_id)
 
         self._check_realm_write_access(
             organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp
         )
-        if sequester_blob is None:
-            self._check_sequestered_organization(
-                organization_id=organization_id, expect_sequestered_organization=False
-            )
-        else:
-            self._check_sequestered_organization(
-                organization_id=organization_id,
-                expect_sequestered_organization=True,
-                expect_active_sequester_services=sequester_blob.keys(),
-            )
+
+        sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
+            organization_id=organization_id,
+            author=author,
+            encryption_revision=encryption_revision,
+            vlob_id=vlob_id,
+            timestamp=timestamp,
+            sequester_blob=sequester_blob,
+        )
 
         if version - 1 != vlob.current_version:
             raise VlobVersionError()
         if timestamp < vlob.data[vlob.current_version - 1][2]:
             raise VlobRequireGreaterTimestampError(vlob.data[vlob.current_version - 1][2])
+
         vlob.data.append((blob, author, timestamp))
-        if sequester_blob is not None:  # /!\ We want to accept empty dicts !
+        if sequestered_data is not None:  # /!\ We want to accept empty dicts !
             assert vlob.sequestered_data is not None
-            vlob.sequestered_data.append(sequester_blob)
+            vlob.sequestered_data.append(sequestered_data)
 
         await self._update_changes(
             organization_id, author, vlob.realm_id, vlob_id, timestamp, version

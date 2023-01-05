@@ -1,16 +1,54 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from hashlib import sha1
+from pathlib import Path
+from typing import Iterable, cast
 
 import attr
-from uuid import UUID
-from pathlib import Path
-from hashlib import sha1
-from parsec._parsec import DateTime
-from typing import Iterable, List, Union, Optional
 
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
-from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
+from parsec._parsec import (
+    DateTime,
+    EnrollmentID,
+    PkiEnrollmentAcceptRepActiveUsersLimitReached,
+    PkiEnrollmentAcceptRepAlreadyExists,
+    PkiEnrollmentAcceptRepInvalidCertification,
+    PkiEnrollmentAcceptRepInvalidData,
+    PkiEnrollmentAcceptRepInvalidPayloadData,
+    PkiEnrollmentAcceptRepNoLongerAvailable,
+    PkiEnrollmentAcceptRepNotAllowed,
+    PkiEnrollmentAcceptRepNotFound,
+    PkiEnrollmentAcceptRepOk,
+    PkiEnrollmentAcceptRepUnknownStatus,
+    PkiEnrollmentListRepNotAllowed,
+    PkiEnrollmentListRepOk,
+    PkiEnrollmentRejectRepNoLongerAvailable,
+    PkiEnrollmentRejectRepNotAllowed,
+    PkiEnrollmentRejectRepNotFound,
+    PkiEnrollmentRejectRepOk,
+)
+from parsec.api.data import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
+from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
 from parsec.core.invite.greeter import _create_new_user_certificates
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentAcceptActiveUsersLimitReachedError,
+    PkiEnrollmentAcceptAlreadyExistsError,
+    PkiEnrollmentAcceptError,
+    PkiEnrollmentAcceptInvalidCertificationError,
+    PkiEnrollmentAcceptInvalidDataError,
+    PkiEnrollmentAcceptInvalidPayloadDataError,
+    PkiEnrollmentAcceptNoLongerAvailableError,
+    PkiEnrollmentAcceptNotAllowedError,
+    PkiEnrollmentAcceptNotFoundError,
+    PkiEnrollmentError,
+    PkiEnrollmentListError,
+    PkiEnrollmentListNotAllowedError,
+    PkiEnrollmentRejectError,
+    PkiEnrollmentRejectNoLongerAvailableError,
+    PkiEnrollmentRejectNotAllowedError,
+    PkiEnrollmentRejectNotFoundError,
+)
 from parsec.core.pki.plumbing import (
     X509Certificate,
     pki_enrollment_load_peer_certificate,
@@ -19,31 +57,11 @@ from parsec.core.pki.plumbing import (
     pki_enrollment_sign_payload,
 )
 from parsec.core.types import LocalDevice
-from parsec.core.pki.exceptions import (
-    PkiEnrollmentError,
-    PkiEnrollmentListError,
-    PkiEnrollmentListNotAllowedError,
-    PkiEnrollmentRejectError,
-    PkiEnrollmentRejectNotFoundError,
-    PkiEnrollmentRejectNotAllowedError,
-    PkiEnrollmentRejectNoLongerAvailableError,
-    PkiEnrollmentAcceptError,
-    PkiEnrollmentAcceptNotAllowedError,
-    PkiEnrollmentAcceptInvalidPayloadDataError,
-    PkiEnrollmentAcceptInvalidDataError,
-    PkiEnrollmentAcceptInvalidCertificationError,
-    PkiEnrollmentAcceptNotFoundError,
-    PkiEnrollmentAcceptNoLongerAvailableError,
-    PkiEnrollmentAcceptAlreadyExistsError,
-    PkiEnrollmentAcceptActiveUsersLimitReachedError,
-)
 
 
 async def accepter_list_submitted_from_backend(
     cmds: BackendAuthenticatedCmds, extra_trust_roots: Iterable[Path] = ()
-) -> List[
-    Union["PkiEnrollementAccepterValidSubmittedCtx", "PkiEnrollementAccepterInvalidSubmittedCtx"]
-]:
+) -> list[PkiEnrollmentAccepterValidSubmittedCtx | PkiEnrollmentAccepterInvalidSubmittedCtx]:
     """
     Raises:
         BackendNotAvailable
@@ -54,22 +72,24 @@ async def accepter_list_submitted_from_backend(
     """
     rep = await cmds.pki_enrollment_list()
 
-    if rep["status"] == "not_allowed":
+    if isinstance(rep, PkiEnrollmentListRepNotAllowed):
         raise PkiEnrollmentListNotAllowedError(
             f"Listing enrollments is not allowed: {rep['reason']}", rep
         )
-    if rep["status"] != "ok":
+    if not isinstance(rep, PkiEnrollmentListRepOk):
         raise PkiEnrollmentListError(f"Backend refused to list enrollments: {rep['status']}", rep)
 
-    pendings = []
+    pendings: list[
+        PkiEnrollmentAccepterInvalidSubmittedCtx | PkiEnrollmentAccepterValidSubmittedCtx
+    ] = []
 
-    for enrollment in rep["enrollments"]:
+    for enrollment in rep.enrollments:
 
-        enrollment_id: UUID = enrollment["enrollment_id"]
-        submitted_on: DateTime = enrollment["submitted_on"]
-        submitter_der_x509_certificate: bytes = enrollment["submitter_der_x509_certificate"]
-        submit_payload_signature: bytes = enrollment["submit_payload_signature"]
-        raw_submit_payload: bytes = enrollment["submit_payload"]
+        enrollment_id = enrollment.enrollment_id
+        submitted_on = cast(DateTime, enrollment.submitted_on)
+        submitter_der_x509_certificate = enrollment.submitter_der_x509_certificate
+        submit_payload_signature = enrollment.submit_payload_signature
+        raw_submit_payload = enrollment.submit_payload
 
         # Load the submitter certificate
         try:
@@ -79,7 +99,7 @@ async def accepter_list_submitted_from_backend(
 
         # Could not load the submitter certificate
         except PkiEnrollmentError as exc:
-            pending = PkiEnrollementAccepterInvalidSubmittedCtx(
+            invalid_submitted_pending = PkiEnrollmentAccepterInvalidSubmittedCtx(
                 cmds=cmds,
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
@@ -89,7 +109,7 @@ async def accepter_list_submitted_from_backend(
                 raw_submit_payload=raw_submit_payload,
                 error=exc,
             )
-            pendings.append(pending)
+            pendings.append(invalid_submitted_pending)
             continue
 
         # Verify the enrollment request
@@ -103,7 +123,7 @@ async def accepter_list_submitted_from_backend(
 
         # Verification failed
         except PkiEnrollmentError as exc:
-            pending = PkiEnrollementAccepterInvalidSubmittedCtx(
+            invalid_submitted_pending = PkiEnrollmentAccepterInvalidSubmittedCtx(
                 cmds=cmds,
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
@@ -113,11 +133,11 @@ async def accepter_list_submitted_from_backend(
                 raw_submit_payload=raw_submit_payload,
                 error=exc,
             )
-            pendings.append(pending)
+            pendings.append(invalid_submitted_pending)
             continue
 
         # Verification succeed
-        pending = PkiEnrollementAccepterValidSubmittedCtx(
+        valid_submitted_pending = PkiEnrollmentAccepterValidSubmittedCtx(
             cmds=cmds,
             enrollment_id=enrollment_id,
             submitted_on=submitted_on,
@@ -127,15 +147,15 @@ async def accepter_list_submitted_from_backend(
             submitter_x509_certificate=submitter_x509_certificate,
             submit_payload=submit_payload,
         )
-        pendings.append(pending)
+        pendings.append(valid_submitted_pending)
 
     return pendings
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollementAccepterValidSubmittedCtx:
+class PkiEnrollmentAccepterValidSubmittedCtx:
     _cmds: BackendAuthenticatedCmds
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
     submit_payload_signature: bytes
@@ -167,7 +187,7 @@ class PkiEnrollementAccepterValidSubmittedCtx:
         device_label: DeviceLabel,
         human_handle: HumanHandle,
         profile: UserProfile,
-    ):
+    ) -> None:
         """
         Raises:
             BackendNotAvailable
@@ -206,7 +226,7 @@ class PkiEnrollementAccepterValidSubmittedCtx:
         )
 
         # Build accept payload
-        accept_payload = PkiEnrollmentAcceptPayload(
+        accept_payload = PkiEnrollmentAnswerPayload(
             device_id=user_confirmation.device_id,
             device_label=user_confirmation.device_label,
             human_handle=user_confirmation.human_handle,
@@ -231,63 +251,64 @@ class PkiEnrollementAccepterValidSubmittedCtx:
             redacted_device_certificate=redacted_device_certificate,
         )
 
-        if rep["status"] == "not_allowed":
+        if isinstance(rep, PkiEnrollmentAcceptRepNotAllowed):
             raise PkiEnrollmentAcceptNotAllowedError(
-                f"Accepting the enrollment is not allowed: {rep['reason']}", rep
+                f"Accepting the enrollment is not allowed: {rep.reason}", rep
             )
-        if rep["status"] == "invalid_payload_data":
+        if isinstance(rep, PkiEnrollmentAcceptRepInvalidPayloadData):
             raise PkiEnrollmentAcceptInvalidPayloadDataError(
-                f"The provided payload is invalid: {rep['reason']}", rep
+                f"The provided payload is invalid: {rep.reason}", rep
             )
-        if rep["status"] == "invalid_data":
+        if isinstance(rep, PkiEnrollmentAcceptRepInvalidData):
             raise PkiEnrollmentAcceptInvalidDataError(
-                f"The provided user data is invalid: {rep['reason']}", rep
+                f"The provided user data is invalid: {rep.reason}", rep
             )
-        if rep["status"] == "invalid_certification":
+        if isinstance(rep, PkiEnrollmentAcceptRepInvalidCertification):
             raise PkiEnrollmentAcceptInvalidCertificationError(
-                f"The provided user certification is invalid: {rep['reason']}", rep
+                f"The provided user certification is invalid: {rep.reason}", rep
             )
-        if rep["status"] == "not_found":
+        if isinstance(rep, PkiEnrollmentAcceptRepNotFound):
             raise PkiEnrollmentAcceptNotFoundError(
-                f"The enrollment cannot be found: {rep['reason']}", rep
+                f"The enrollment cannot be found: {rep.reason}", rep
             )
-        if rep["status"] == "no_longer_available":
+        if isinstance(rep, PkiEnrollmentAcceptRepNoLongerAvailable):
             raise PkiEnrollmentAcceptNoLongerAvailableError(
-                f"The enrollment is not longer available: {rep['reason']}", rep
+                f"The enrollment is not longer available: {rep.reason}", rep
             )
-        if rep["status"] == "already_exists":
+        if isinstance(rep, PkiEnrollmentAcceptRepAlreadyExists):
             raise PkiEnrollmentAcceptAlreadyExistsError(
-                f"This user already exists: {rep['reason']}", rep
+                f"This user already exists: {rep.reason}", rep
             )
-        if rep["status"] == "active_users_limit_reached":
+        if isinstance(rep, PkiEnrollmentAcceptRepActiveUsersLimitReached):
             raise PkiEnrollmentAcceptActiveUsersLimitReachedError(
                 f"The active users limit has been reached.", rep
             )
-        if rep["status"] != "ok":
+        if not isinstance(rep, PkiEnrollmentAcceptRepOk):
             raise PkiEnrollmentAcceptError(
-                f"Backend refused to accept the enrollment: {rep['status']}", rep
+                f"Backend refused to accept the enrollment: {cast(PkiEnrollmentAcceptRepUnknownStatus, rep).status}",
+                rep,
             )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollementAccepterInvalidSubmittedCtx:
+class PkiEnrollmentAccepterInvalidSubmittedCtx:
     """
     The `error` attribute can be one of the following:
     - PkiEnrollmentCertificateCryptoError: when any of the required certificate-replated crypto operation fails
     - PkiEnrollmentCertificateSignatureError: when the provided signature does not correspond to the certificate public key
     - PkiEnrollmentCertificateValidationError: when the provided certificate cannot be validated using the configured trust roots
     - PkiEnrollmentCertificateError: an generic certificate-related errors
-    - PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
+    - PkiEnrollmentPayloadValidationError: when some enrollment information cannot be properly loaded
 
     The `submitter_x509_certificate` is optional depending on whether the certificate information could be successfully extracted
     before the error or not.
     """
 
     _cmds: BackendAuthenticatedCmds
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
-    submitter_x509_certificate: Optional[X509Certificate]
+    submitter_x509_certificate: X509Certificate | None
     submit_payload_signature: bytes
     raw_submit_payload: bytes
     error: PkiEnrollmentError
@@ -310,7 +331,7 @@ class PkiEnrollementAccepterInvalidSubmittedCtx:
         await _reject(self._cmds, self.enrollment_id)
 
 
-async def _reject(cmds: BackendAuthenticatedCmds, enrollment_id: UUID) -> None:
+async def _reject(cmds: BackendAuthenticatedCmds, enrollment_id: EnrollmentID) -> None:
     """
     Raises:
         BackendNotAvailable
@@ -323,19 +344,15 @@ async def _reject(cmds: BackendAuthenticatedCmds, enrollment_id: UUID) -> None:
     """
     rep = await cmds.pki_enrollment_reject(enrollment_id)
 
-    if rep["status"] == "not_allowed":
+    if isinstance(rep, PkiEnrollmentRejectRepNotAllowed):
         raise PkiEnrollmentRejectNotAllowedError(
-            f"Rejecting the enrollment is not allowed: {rep['reason']}", rep
+            f"Rejecting the enrollment is not allowed: {rep.reason}", rep
         )
-    if rep["status"] == "not_found":
-        raise PkiEnrollmentRejectNotFoundError(
-            f"The enrollment cannot be found: {rep['reason']}", rep
-        )
-    if rep["status"] == "no_longer_available":
+    if isinstance(rep, PkiEnrollmentRejectRepNotFound):
+        raise PkiEnrollmentRejectNotFoundError(f"The enrollment cannot be found: {rep.reason}", rep)
+    if isinstance(rep, PkiEnrollmentRejectRepNoLongerAvailable):
         raise PkiEnrollmentRejectNoLongerAvailableError(
-            f"The enrollment is not longer available: {rep['reason']}", rep
+            f"The enrollment is not longer available: {rep.reason}", rep
         )
-    if rep["status"] != "ok":
-        raise PkiEnrollmentRejectError(
-            f"Backend refused to reject the enrollment: {rep['status']}", rep
-        )
+    if not isinstance(rep, PkiEnrollmentRejectRepOk):
+        raise PkiEnrollmentRejectError(f"Backend refused to reject the enrollment: {rep}", rep)

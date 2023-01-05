@@ -1,14 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
+import importlib.resources
 import os
 import string
 import sys
-import importlib.resources
-from pathlib import Path
-from structlog import get_logger
 from contextlib import contextmanager
+from importlib.abc import Traversable
+from types import ModuleType
+from typing import Any, Iterator
+
+from structlog import get_logger
 
 from parsec.core import resources
+from parsec.core.types import LocalDevice
 
 logger = get_logger()
 
@@ -34,19 +39,19 @@ EXPLORER_DRIVES_DEFAULT_ICON_TEMPLATE = EXPLORER_DRIVES + "\\{}\\DefaultIcon"
 # tree-shaking (see issue #1690).
 
 
-def get_psutil():
+def get_psutil() -> ModuleType:
     import psutil
 
     return psutil
 
 
-def get_winreg():
+def get_winreg() -> ModuleType:
     import winreg
 
     return winreg
 
 
-def try_winreg():
+def try_winreg() -> ModuleType | None:
     try:
         return get_winreg()
     except ImportError:
@@ -54,7 +59,7 @@ def try_winreg():
         return None
 
 
-def winreg_read_user_dword(key, name):
+def winreg_read_user_dword(key: str, name: str) -> object:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     with winreg.OpenKey(hkcu, key, access=winreg.KEY_READ) as key_obj:
@@ -64,21 +69,21 @@ def winreg_read_user_dword(key, name):
     return value
 
 
-def winreg_write_user_dword(key, name, value):
+def winreg_write_user_dword(key: str, name: str, value: Any) -> None:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
         winreg.SetValueEx(key_obj, name, None, winreg.REG_DWORD, value)
 
 
-def winreg_delete_user_dword(key, name):
+def winreg_delete_user_dword(key: str, name: str) -> None:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
         winreg.DeleteValue(key_obj, name)
 
 
-def winreg_has_user_key(key):
+def winreg_has_user_key(key: str) -> bool:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     try:
@@ -91,14 +96,14 @@ def winreg_has_user_key(key):
 # Acrobat container app workaround
 
 
-def is_acrobat_reader_dc_present():
+def is_acrobat_reader_dc_present() -> bool:
     if sys.platform != "win32" or not try_winreg():
         return False
 
     return winreg_has_user_key(ACROBAT_READER_DC_PRIVILEGED)
 
 
-def get_acrobat_app_container_enabled():
+def get_acrobat_app_container_enabled() -> bool:
     if not is_acrobat_reader_dc_present():
         return False
     try:
@@ -110,13 +115,13 @@ def get_acrobat_app_container_enabled():
     return bool(value)
 
 
-def set_acrobat_app_container_enabled(value):
+def set_acrobat_app_container_enabled(value: object) -> None:
     if not is_acrobat_reader_dc_present():
         return
     winreg_write_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER, value)
 
 
-def del_acrobat_app_container_enabled():
+def del_acrobat_app_container_enabled() -> None:
     if not is_acrobat_reader_dc_present():
         return
     winreg_delete_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER)
@@ -125,7 +130,7 @@ def del_acrobat_app_container_enabled():
 # Drive icon management
 
 
-def get_parsec_drive_icon(letter):
+def get_parsec_drive_icon(letter: str) -> tuple[str | None, object | None]:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     assert len(letter) == 1 and letter.upper() in string.ascii_uppercase
@@ -147,7 +152,7 @@ def get_parsec_drive_icon(letter):
     return icon_path, pid
 
 
-def set_parsec_drive_icon(letter: str, drive_icon_path: Path):
+def set_parsec_drive_icon(letter: str, drive_icon_path: Traversable) -> None:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     assert len(letter) == 1 and letter.upper() in string.ascii_uppercase
@@ -158,7 +163,7 @@ def set_parsec_drive_icon(letter: str, drive_icon_path: Path):
     winreg_write_user_dword(key, PROCESS_ID, os.getpid())
 
 
-def del_parsec_drive_icon(letter: str):
+def del_parsec_drive_icon(letter: str) -> None:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     assert len(letter) == 1 and letter.upper() in string.ascii_uppercase
@@ -171,23 +176,31 @@ def del_parsec_drive_icon(letter: str):
         pass
 
 
+def _get_drive_icon_path(device: LocalDevice) -> Traversable:
+    # This function is just here so that other applications can
+    # change the icon by monkeypatching it. `device` argument
+    # can be used to add conditions, e.g. return different icons
+    # for different devices.
+    return importlib.resources.files(resources).joinpath(DRIVE_ICON_NAME)
+
+
 @contextmanager
-def parsec_drive_icon_context(letter):
+def parsec_drive_icon_context(letter: str, device: LocalDevice) -> Iterator[None]:
     # Winreg is not available for some reasons
     if sys.platform != "win32" or not try_winreg():
         yield
         return
 
     # Safe context for removing the key after usage
-    with importlib.resources.files(resources).joinpath(DRIVE_ICON_NAME) as drive_icon_path:
-        set_parsec_drive_icon(letter, drive_icon_path)
-        try:
-            yield
-        finally:
-            del_parsec_drive_icon(letter)
+    drive_icon_path = _get_drive_icon_path(device)
+    set_parsec_drive_icon(letter, drive_icon_path)
+    try:
+        yield
+    finally:
+        del_parsec_drive_icon(letter)
 
 
-def cleanup_parsec_drive_icons():
+def cleanup_parsec_drive_icons() -> None:
     # Winreg is not available for some reasons
     if sys.platform != "win32" or not try_winreg():
         return

@@ -1,0 +1,37 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_1_claimer_wait_peer",
+            "fields": [
+                {
+                    "name": "claimer_public_key",
+                    "type": "PublicKey"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "greeter_public_key",
+                        "type": "PublicKey"
+                    }
+                ]
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
+    }
+]

@@ -21,9 +21,13 @@ runs:
       if: runner.os != 'Windows'
       run: |
         set -eux
+        set -o pipefail
         export POETRY_HOME="$HOME/.poetry"
         mkdir -p "$POETRY_HOME"
-        curl -sSL https://install.python-poetry.org | python3 - --version=${{ inputs.poetry-version }}
+        if ! curl -sSL https://install.python-poetry.org | python3 - --version=${{ inputs.poetry-version }}; then
+          tail -n +0 ${{ github.workspace }}/poetry-installer*.log
+          exit 3
+        fi
         echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
 
     - name: (Windows) Install poetry-${{ inputs.poetry-version }}
@@ -37,7 +41,7 @@ runs:
         echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
     - name: Install python-${{ inputs.python-version }}
-      uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+      uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
       id: setup-python
       with:
         python-version: ${{ env.python-version }}

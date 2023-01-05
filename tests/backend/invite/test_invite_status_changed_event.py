@@ -1,17 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
-from parsec.api.protocol import InvitationType, InvitationStatus, APIEvent
-
-from tests.common import real_clock_timeout
+from parsec._parsec import (
+    DateTime,
+    EventsListenRepNoEvents,
+    EventsListenRepOkInviteStatusChanged,
+    InviteListItem,
+    InviteListRepOk,
+)
+from parsec.api.protocol import InvitationStatus, InvitationType
 from tests.backend.common import (
-    events_subscribe,
-    events_listen_wait,
     events_listen_nowait,
+    events_listen_wait,
+    events_subscribe,
     invite_list,
 )
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
@@ -40,51 +46,26 @@ async def test_greeter_event_on_claimer_join_and_leave(
             rep = await events_listen_wait(alice_ws)
             # PostgreSQL event dispatching might be lagging behind and return
             # the IDLE event first
-            if rep.get("invitation_status") == InvitationStatus.IDLE:
+            if rep.invitation_status == InvitationStatus.IDLE:
                 rep = await events_listen_wait(alice_ws)
-        assert rep == {
-            "status": "ok",
-            "event": APIEvent.INVITE_STATUS_CHANGED,
-            "token": invitation.token,
-            "invitation_status": InvitationStatus.READY,
-        }
+        assert rep == EventsListenRepOkInviteStatusChanged(invitation.token, InvitationStatus.READY)
 
         # No other authenticated users should be notified
         rep = await events_listen_nowait(bob_ws)
-        assert rep == {"status": "no_events"}
+        assert isinstance(rep, EventsListenRepNoEvents)
 
         rep = await invite_list(alice_ws)
-        assert rep == {
-            "status": "ok",
-            "invitations": [
-                {
-                    "type": InvitationType.DEVICE,
-                    "token": invitation.token,
-                    "created_on": DateTime(2000, 1, 2),
-                    "status": InvitationStatus.READY,
-                }
-            ],
-        }
+        assert rep == InviteListRepOk(
+            [InviteListItem.Device(invitation.token, DateTime(2000, 1, 2), InvitationStatus.READY)]
+        )
 
     # Now claimer has left, greeter should be again notified
     async with real_clock_timeout():
         rep = await events_listen_wait(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "event": APIEvent.INVITE_STATUS_CHANGED,
-        "token": invitation.token,
-        "invitation_status": InvitationStatus.IDLE,
-    }
+
+    assert rep == EventsListenRepOkInviteStatusChanged(invitation.token, InvitationStatus.IDLE)
 
     rep = await invite_list(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.DEVICE,
-                "token": invitation.token,
-                "created_on": DateTime(2000, 1, 2),
-                "status": InvitationStatus.IDLE,
-            }
-        ],
-    }
+    assert rep == InviteListRepOk(
+        [InviteListItem.Device(invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE)]
+    )

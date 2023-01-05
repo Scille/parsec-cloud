@@ -1,20 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import re
-import trio
+from unittest.mock import ANY, Mock
+from urllib.error import HTTPError, URLError
+
 import pytest
-from unittest.mock import ANY
+import trio
 
+from parsec._parsec import CoreEvent, Regex
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
 from parsec.backend.backend_events import BackendEvent
+from parsec.backend.sequester import SequesterServiceType
 from parsec.core.backend_connection import BackendConnStatus
-from parsec.core.core_events import CoreEvent
-from parsec.core.types import WorkspaceRole
-from parsec.core.logged_core import logged_core_factory
 from parsec.core.fs.exceptions import FSReadOnlyError
-
-from tests.common import create_shared_workspace, customize_fixtures
+from parsec.core.logged_core import logged_core_factory
+from parsec.core.types import WorkspaceRole
+from tests.common import create_shared_workspace, customize_fixtures, sequester_service_factory
 
 
 @pytest.mark.trio
@@ -177,7 +179,7 @@ async def test_autosync_on_modification(
         await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
-        spy.assert_events_occured(
+        spy.assert_events_occurred(
             [
                 (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}),
                 (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}),
@@ -192,7 +194,7 @@ async def test_autosync_on_modification(
         await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
-        spy.assert_events_occured(
+        spy.assert_events_occurred(
             [
                 (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": foo_id}),
                 (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}),
@@ -321,9 +323,9 @@ async def test_reconnect_with_remote_changes(
                                 {
                                     "organization_id": alice2.organization_id,
                                     "author": alice2.device_id,
-                                    "realm_id": RealmID(wid.uuid),
+                                    "realm_id": RealmID.from_entry_id(wid),
                                     "checkpoint": ANY,
-                                    "src_id": VlobID(spam_id.uuid),
+                                    "src_id": VlobID.from_entry_id(spam_id),
                                     "src_version": 1,
                                 },
                             ),
@@ -332,9 +334,9 @@ async def test_reconnect_with_remote_changes(
                                 {
                                     "organization_id": alice2.organization_id,
                                     "author": alice2.device_id,
-                                    "realm_id": RealmID(wid.uuid),
+                                    "realm_id": RealmID.from_entry_id(wid),
                                     "checkpoint": ANY,
-                                    "src_id": VlobID(foo_id.uuid),
+                                    "src_id": VlobID.from_entry_id(foo_id),
                                     "src_version": 2,
                                 },
                             ),
@@ -343,9 +345,9 @@ async def test_reconnect_with_remote_changes(
                                 {
                                     "organization_id": alice2.organization_id,
                                     "author": alice2.device_id,
-                                    "realm_id": RealmID(wid.uuid),
+                                    "realm_id": RealmID.from_entry_id(wid),
                                     "checkpoint": ANY,
-                                    "src_id": VlobID(bar_id.uuid),
+                                    "src_id": VlobID.from_entry_id(bar_id),
                                     "src_version": 2,
                                 },
                             ),
@@ -378,7 +380,7 @@ async def test_sync_confined_children_after_rename(
     alice_w = alice_core.user_fs.get_workspace(wid)
 
     # Set a filter
-    pattern = re.compile(r".*\.tmp$")
+    pattern = Regex.from_regex_str(r".*\.tmp$")
     await alice_w.set_and_apply_prevent_sync_pattern(pattern)
 
     # Create a confined path
@@ -582,3 +584,163 @@ async def test_sync_with_concurrent_reencryption(
         info = await workspace.path_info("/test.txt")
         assert not info["need_sync"]
         assert info["base_version"] == 3
+
+
+@pytest.mark.trio
+@pytest.mark.xfail(reason="TODO: should work once TimeProvider is ready")
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+async def test_sync_timeout_and_rejected_by_sequester_service(
+    monkeypatch, caplog, frozen_clock, coolorg, alice, running_backend, alice_core, unused_tcp_port
+):
+    async def _wait_sync_is_done():
+        assert not alice_core.are_monitors_idle()
+        await frozen_clock.sleep_with_autojump(40)
+        async with frozen_clock.real_clock_timeout():
+            await alice_core.wait_idle_monitors()
+        assert alice_core.are_monitors_idle()
+
+    # Create a workspace & make sure everything is sync so far
+    wid = await alice_core.user_fs.workspace_create(EntryName("w"))
+    await _wait_sync_is_done()
+    alice_workspace = alice_core.user_fs.get_workspace(wid)
+
+    # Now add a sequester service that will work... unhelpfully ;-)
+    webhook_url = f"https://localhost:{unused_tcp_port}/webhook"
+    s1 = sequester_service_factory(
+        authority=coolorg.sequester_authority,
+        label="Sequester service 1",
+        service_type=SequesterServiceType.WEBHOOK,
+        webhook_url=webhook_url,
+    )
+    await running_backend.backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=s1.backend_service
+    )
+
+    ################################
+    # 1) First test workspacefs
+    ################################
+
+    # 1.a) Test sequester timeout
+
+    # Very first call to sequester service is not available, this should
+    # make the sync monitor wait for some time before retrying
+    webhook_calls = 0
+
+    async def _mocked_http_request(**kwargs):
+        nonlocal webhook_calls
+        webhook_calls += 1
+        # if webhook_calls == 4:
+        #     breakpoint()
+        if webhook_calls == 1:
+            raise URLError("[Errno -2] Name or service not known")
+        else:
+            return b""
+
+    monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
+
+    # Do a change and way for the sync to be finished
+    await alice_workspace.write_bytes("/test.txt", b"v1")
+    await _wait_sync_is_done()
+
+    # We called the webhook 4 times:
+    # - first time failed
+    # - second time for the file manifest minimal sync
+    # - third time for the parent folder manifest sync
+    # - fourth time for the actual file manifest sync
+    assert webhook_calls == 4
+    caplog.assert_occurred_once(
+        f"[warning  ] Sync failure due to server upload temporarily unavailable [parsec.core.sync_monitor] workspace_id={wid.str}"
+    )
+    bad_file_info = await alice_workspace.path_info("/test.txt")
+    assert bad_file_info["need_sync"] is False
+    assert bad_file_info["base_version"] == 1
+
+    # 1.b) Test sequester rejection
+
+    async def _mocked_http_request(**kwargs):
+        nonlocal webhook_calls
+        webhook_calls += 1
+        fp = Mock()
+        fp.read.return_value = b'{"reason": "some_error_from_service"}'
+        raise HTTPError(webhook_url, 400, "", None, fp)
+
+    monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
+
+    await alice_workspace.write_bytes("/test.txt", b"v2 with virus !")
+    await _wait_sync_is_done()
+
+    # The trick is the invalid entry has not been synchronized, but sync monitor
+    # just forget about it to avoid busy sync loops with the server...
+    bad_file_info = await alice_workspace.path_info("/test.txt")
+    assert bad_file_info["need_sync"] is True
+    assert bad_file_info["base_version"] == 2
+
+    # ...so if we modify again the file everything should be synced fine
+
+    async def _mocked_http_request(**kwargs):
+        return b""
+
+    monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
+
+    await alice_workspace.write_bytes("/test.txt", b"v2")
+    await _wait_sync_is_done()
+    bad_file_info = await alice_workspace.path_info("/test.txt")
+    assert bad_file_info["need_sync"] is False
+    assert bad_file_info["base_version"] == 3
+
+    ################################
+    # 2) Now test userfs
+    ################################
+
+    # 2.a) Test sequester service timeout
+
+    webhook_calls = 0
+
+    async def _mocked_http_request(**kwargs):
+        nonlocal webhook_calls
+        webhook_calls += 1
+        if webhook_calls == 4:
+            breakpoint()
+        # print(webhook_calls, kwargs)
+        if webhook_calls == 1:
+            raise URLError("[Errno -2] Name or service not known")
+        else:
+            return b""
+
+    monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
+
+    # Do a change and way for the sync to be finished
+    await alice_core.user_fs.workspace_rename(wid, EntryName("new_name"))
+    await _wait_sync_is_done()
+
+    assert webhook_calls == 2
+    caplog.assert_occurred_once(
+        f"[warning  ] Sync failure due to server upload temporarily unavailable [parsec.core.sync_monitor] workspace_id={alice_core.user_fs.user_manifest_id.str}"
+    )
+
+    # 2.b) Test sequester service rejection
+
+    async def _mocked_http_request(**kwargs):
+        fp = Mock()
+        fp.read.return_value = b'{"reason": "some_error_from_service"}'
+        raise HTTPError(webhook_url, 400, "", None, fp)
+
+    monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
+
+    await alice_core.user_fs.workspace_rename(wid, EntryName("new_new_name"))
+    await _wait_sync_is_done()
+
+    um = alice_core.user_fs.get_user_manifest()
+    assert um.need_sync is True
+
+    # Modifying user manifest should trigger a new sync
+
+    async def _mocked_http_request(**kwargs):
+        return b""
+
+    monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
+
+    await alice_core.user_fs.workspace_rename(wid, EntryName("new_new_name"))
+    await _wait_sync_is_done()
+    um = alice_core.user_fs.get_user_manifest()
+    assert um.need_sync is False

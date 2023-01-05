@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec.serde import fields, BaseSchema, JSONSerializer
 from parsec.api.protocol.types import (
-    OrganizationIDField,
     DeviceIDField,
-    UserProfileField,
     DeviceLabelField,
+    OrganizationIDField,
+    UserProfileField,
 )
+from parsec.serde import BaseSchema, JSONSerializer, fields
 
 
 ### Webhooks ###
@@ -93,6 +94,25 @@ class OrganizationStatsRepSchema(BaseSchema):
 organization_stats_req_serializer = JSONSerializer(OrganizationStatsReqSchema)
 organization_stats_rep_serializer = JSONSerializer(OrganizationStatsRepSchema)
 
+# GET /administration/stats?format=<format>&at=<at>
+
+
+class ServerStatsItem(BaseSchema):
+    organization_id = fields.String(required=True)
+    data_size = fields.Integer(required=True)
+    metadata_size = fields.Integer(required=True)
+    realms = fields.Integer(required=True)
+    active_users = fields.Integer(required=True)
+    users_per_profile_detail = fields.List(
+        fields.Nested(UsersPerProfileDetailItemSchema), required=True
+    )
+
+
+class ServerStatsRepSchema(BaseSchema):
+    stats = fields.List(fields.Nested(ServerStatsItem), required=True)
+
+
+server_stats_rep_serializer = JSONSerializer(ServerStatsRepSchema)
 
 # PATCH /administration/organizations/<organization_id>
 

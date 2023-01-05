@@ -1,10 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional, List, Tuple
+from enum import Enum
+from typing import Any, List, Tuple
+
 import attr
-from parsec._parsec import DateTime
 
-from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, VlobID
+from parsec._parsec import DateTime
+from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 
 
 class SequesterError(Exception):
@@ -35,10 +38,6 @@ class SequesterCertificateValidationError(SequesterError):
     pass
 
 
-class SequesterCertificateOutOfBallparkError(SequesterError):
-    pass
-
-
 class SequesterServiceNotFoundError(SequesterError):
     pass
 
@@ -51,18 +50,32 @@ class SequesterServiceAlreadyEnabledError(SequesterError):
     pass
 
 
-@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
-class SequesterService:
+class SequesterWrongServiceTypeError(SequesterError):
+    pass
+
+
+class SequesterServiceType(Enum):
+    STORAGE = "storage"
+    WEBHOOK = "webhook"
+
+
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True, kw_only=True)
+class BaseSequesterService:
+    # Overwritten by child classes
+    @property
+    def service_type(self) -> SequesterServiceType:
+        raise NotImplementedError()
+
     service_id: SequesterServiceID
     service_label: str
     service_certificate: bytes
     created_on: DateTime = attr.ib(factory=DateTime.now)
-    disabled_on: Optional[DateTime] = None
+    disabled_on: DateTime | None = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.service_id})"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> BaseSequesterService:
         return attr.evolve(self, **kwargs)
 
     @property
@@ -70,12 +83,27 @@ class SequesterService:
         return self.disabled_on is None
 
 
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True, kw_only=True)
+class StorageSequesterService(BaseSequesterService):
+    @property
+    def service_type(self) -> SequesterServiceType:
+        return SequesterServiceType.STORAGE
+
+
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True, kw_only=True)
+class WebhookSequesterService(BaseSequesterService):
+    @property
+    def service_type(self) -> SequesterServiceType:
+        return SequesterServiceType.WEBHOOK
+
+    webhook_url: str
+
+
 class BaseSequesterComponent:
     async def create_service(
         self,
         organization_id: OrganizationID,
-        service: SequesterService,
-        now: Optional[DateTime] = None,
+        service: BaseSequesterService,
     ) -> None:
         """
         Raises:
@@ -83,6 +111,10 @@ class BaseSequesterComponent:
             SequesterOrganizationNotFoundError
             SequesterSignatureError
             SequesterServiceAlreadyExists
+
+        Note that unlike for other signed data, we don't check the certificate's
+        timestamp. This is because the certificate is allowed to be created long
+        before being inserted (see `generate_service_certificate` CLI command)
         """
         raise NotImplementedError()
 
@@ -90,7 +122,7 @@ class BaseSequesterComponent:
         self,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-        disabled_on: Optional[DateTime] = None,
+        disabled_on: DateTime | None = None,
     ) -> None:
         """
         Raises:
@@ -111,13 +143,13 @@ class BaseSequesterComponent:
             SequesterDisabledError
             SequesterOrganizationNotFoundError
             SequesterServiceNotFoundError
-            SequesterServiceAlreadyEnableddError
+            SequesterServiceAlreadyEnabledError
         """
         raise NotImplementedError()
 
     async def get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
-    ) -> SequesterService:
+    ) -> BaseSequesterService:
         """
         Raises:
             SequesterDisabledError
@@ -128,7 +160,7 @@ class BaseSequesterComponent:
 
     async def get_organization_services(
         self, organization_id: OrganizationID
-    ) -> List[SequesterService]:
+    ) -> List[BaseSequesterService]:
         """
         Raises:
             SequesterDisabledError
@@ -137,7 +169,10 @@ class BaseSequesterComponent:
         raise NotImplementedError()
 
     async def dump_realm(
-        self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
+        self,
+        organization_id: OrganizationID,
+        service_id: SequesterServiceID,
+        realm_id: RealmID,
     ) -> List[Tuple[VlobID, int, bytes]]:
         """
         Dump all vlobs in a given realm.
@@ -147,5 +182,6 @@ class BaseSequesterComponent:
             SequesterDisabledError
             SequesterOrganizationNotFoundError
             SequesterServiceNotFoundError
+            SequesterWrongServiceTypeError
         """
         raise NotImplementedError

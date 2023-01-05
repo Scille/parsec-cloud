@@ -1,19 +1,22 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{
-    exceptions::PyNotImplementedError, import_exception, prelude::*, pyclass::CompareOp,
-    types::PyBytes,
+use pyo3::{exceptions::PyNotImplementedError, prelude::*, types::PyBytes};
+
+use crate::{
+    ids::{BlockID, RealmID},
+    protocol::{
+        error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+        gen_rep,
+    },
 };
-
-use crate::ids::{BlockID, RealmID};
-use crate::protocol::gen_rep;
-use libparsec::protocol::authenticated_cmds::{block_create, block_read};
-
-import_exception!(parsec.api.protocol, ProtocolError);
+use libparsec::protocol::authenticated_cmds::v2::{block_create, block_read};
 
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct BlockCreateReq(pub block_create::Req);
+
+crate::binding_utils::gen_proto!(BlockCreateReq, __repr__);
+crate::binding_utils::gen_proto!(BlockCreateReq, __richcmp__, eq);
 
 #[pymethods]
 impl BlockCreateReq {
@@ -26,22 +29,14 @@ impl BlockCreateReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -86,6 +81,9 @@ impl BlockCreateRepOk {
 #[derive(Clone)]
 pub(crate) struct BlockReadReq(pub block_read::Req);
 
+crate::binding_utils::gen_proto!(BlockReadReq, __repr__);
+crate::binding_utils::gen_proto!(BlockReadReq, __richcmp__, eq);
+
 #[pymethods]
 impl BlockReadReq {
     #[new]
@@ -95,22 +93,14 @@ impl BlockReadReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 

@@ -3,19 +3,21 @@
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{Deserialize, Serialize};
 use serde_with::*;
-use std::collections::HashMap;
-use std::io::{Read, Write};
-use std::num::NonZeroU64;
-use std::ops::Deref;
+use std::{
+    collections::HashMap,
+    io::{Read, Write},
+    num::NonZeroU64,
+    ops::Deref,
+};
 use unicode_normalization::UnicodeNormalization;
 
 use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
-use serialization_format::parsec_data;
+use libparsec_serialization_format::parsec_data;
 
-use crate::data_macros::impl_transparent_data_format_conversion;
-use crate::ext_types::new_uuid_type;
-use crate::{self as libparsec_types, impl_from_maybe};
-use crate::{DataError, DateTime, DeviceID, EntryNameError};
+use crate::{
+    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
+    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError,
+};
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
 
@@ -53,7 +55,7 @@ macro_rules! impl_manifest_dump_load {
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
                 expected_version: Option<u32>,
-            ) -> Result<Self, DataError> {
+            ) -> DataResult<Self> {
                 let signed = key.decrypt(encrypted)?;
 
                 Self::verify_and_load(
@@ -75,7 +77,7 @@ macro_rules! impl_manifest_dump_load {
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
                 expected_version: Option<u32>,
-            ) -> Result<Self, DataError> {
+            ) -> DataResult<Self> {
                 let compressed = author_verify_key.verify(&signed)?;
                 let mut serialized = vec![];
 
@@ -102,27 +104,27 @@ macro_rules! impl_manifest_dump_load {
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
                 expected_version: Option<u32>,
-            ) -> Result<(), DataError> {
+            ) -> DataResult<()> {
                 if self.author != *expected_author {
-                    Err(DataError::UnexpectedAuthor {
+                    Err(Box::new(DataError::UnexpectedAuthor {
                         expected: expected_author.clone(),
                         got: Some(self.author.clone()),
-                    })
+                    }))
                 } else if self.timestamp != expected_timestamp {
-                    Err(DataError::UnexpectedTimestamp {
+                    Err(Box::new(DataError::UnexpectedTimestamp {
                         expected: expected_timestamp,
                         got: self.timestamp,
-                    })
+                    }))
                 } else if expected_id.is_some() && expected_id != Some(self.id) {
-                    Err(DataError::UnexpectedId {
+                    Err(Box::new(DataError::UnexpectedId {
                         expected: expected_id.unwrap(),
                         got: self.id,
-                    })
+                    }))
                 } else if expected_version.is_some() && expected_version != Some(self.version) {
-                    Err(DataError::UnexpectedVersion {
+                    Err(Box::new(DataError::UnexpectedVersion {
                         expected: expected_version.unwrap(),
                         got: self.version,
-                    })
+                    }))
                 } else {
                     Ok(())
                 }
@@ -130,17 +132,6 @@ macro_rules! impl_manifest_dump_load {
         }
     };
 }
-
-/*
- * EntryID, BlockID, RealmID, VlobID
- */
-
-new_uuid_type!(pub EntryID);
-new_uuid_type!(pub BlockID);
-new_uuid_type!(pub RealmID);
-new_uuid_type!(pub VlobID);
-new_uuid_type!(pub ChunkID);
-impl_from_maybe!(std::collections::HashSet<EntryID>);
 
 /*
  * BlockAccess
@@ -159,7 +150,7 @@ pub struct BlockAccess {
  * RealmRole
  */
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum RealmRole {
     Owner,
@@ -172,7 +163,7 @@ pub enum RealmRole {
  * EntryName
  */
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Hash)]
 #[serde(try_from = "&str", into = "String")]
 pub struct EntryName(String);
 
@@ -522,9 +513,11 @@ pub enum Manifest {
 }
 
 impl Manifest {
-    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
-        let blob = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        rmp_serde::from_slice(&blob).map_err(|_| "Invalid deserialization")
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
+        let blob = key
+            .decrypt(encrypted)
+            .map_err(|exc| DataError::Crypto { exc })?;
+        rmp_serde::from_slice(&blob).map_err(|_| Box::new(DataError::Serialization))
     }
 
     pub fn decrypt_verify_and_load(
@@ -535,7 +528,7 @@ impl Manifest {
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
-    ) -> Result<Self, DataError> {
+    ) -> DataResult<Self> {
         let signed = key.decrypt(encrypted)?;
 
         Self::verify_and_load(
@@ -555,16 +548,10 @@ impl Manifest {
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
-    ) -> Result<Self, DataError> {
+    ) -> DataResult<Self> {
         let compressed = author_verify_key.verify(signed)?;
-        let mut deserialized = Vec::new();
 
-        ZlibDecoder::new(&compressed[..])
-            .read_to_end(&mut deserialized)
-            .map_err(|_| DataError::Compression)?;
-
-        let obj: Self =
-            rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)?;
+        let obj = Manifest::deserialize_data(&compressed)?;
 
         macro_rules! internal_verify {
             ($obj:ident) => {{
@@ -588,5 +575,24 @@ impl Manifest {
             Manifest::User(user) => internal_verify!(user),
         }
         Ok(obj)
+    }
+
+    /// Load the manifest without checking the signature header.
+    pub fn unverified_load(data: &[u8]) -> DataResult<Self> {
+        let compressed = VerifyKey::unsecure_unwrap(data).unwrap();
+
+        Manifest::deserialize_data(compressed)
+    }
+
+    fn deserialize_data(data: &[u8]) -> DataResult<Self> {
+        let mut deserialized = Vec::new();
+
+        ZlibDecoder::new(data)
+            .read_to_end(&mut deserialized)
+            .map_err(|_| DataError::Compression)?;
+
+        Ok(rmp_serde::from_slice(&deserialized)
+            .map_err(|_| DataError::Serialization)
+            .unwrap())
     }
 }

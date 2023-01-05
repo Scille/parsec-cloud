@@ -14,7 +14,7 @@ use crate::CryptoError;
 #[serde(try_from = "&Bytes")]
 pub struct SigningKey(Keypair);
 
-crate::macros::impl_key_debug!(SigningKey);
+crate::impl_key_debug!(SigningKey);
 
 impl Clone for SigningKey {
     fn clone(&self) -> Self {
@@ -80,7 +80,7 @@ impl TryFrom<&[u8]> for SigningKey {
 
 impl From<[u8; Self::SIZE]> for SigningKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zerocopy
+        // TODO: zero copy
         Self::try_from(key.as_ref()).unwrap()
     }
 }
@@ -109,7 +109,7 @@ impl Serialize for SigningKey {
 #[serde(try_from = "&Bytes")]
 pub struct VerifyKey(ed25519_dalek::PublicKey);
 
-crate::macros::impl_key_debug!(VerifyKey);
+crate::impl_key_debug!(VerifyKey);
 
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
@@ -120,14 +120,30 @@ impl VerifyKey {
         signed.get(SigningKey::SIGNATURE_SIZE..)
     }
 
+    /// Verify a message using the given [VerifyKey].
+    /// `signed` value is the concatenation of the `signature` + the signed `data`
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
         // Signature::try_from expects a [u8;64] and I have no idea how to get
         // one except by slicing, so we make sure the array is large enough before slicing.
         if signed.len() < SigningKey::SIGNATURE_SIZE {
             return Err(CryptoError::Signature);
         }
-        let signature = Signature::try_from(&signed[..SigningKey::SIGNATURE_SIZE]).unwrap();
-        let message = &signed[SigningKey::SIGNATURE_SIZE..];
+        self.verify_with_signature(
+            signed[..SigningKey::SIGNATURE_SIZE]
+                .try_into()
+                .expect("Unreachable, because it's the correct size"),
+            &signed[SigningKey::SIGNATURE_SIZE..],
+        )
+    }
+
+    /// Verify a signature using the given [VerifyKey], `signature` and `message`
+    pub fn verify_with_signature(
+        &self,
+        raw_signature: [u8; SigningKey::SIGNATURE_SIZE],
+        message: &[u8],
+    ) -> Result<Vec<u8>, CryptoError> {
+        let signature =
+            Signature::from_bytes(&raw_signature).map_err(|_| CryptoError::Signature)?;
         self.0
             .verify(message, &signature)
             .map_err(|_| CryptoError::SignatureVerification)?;
@@ -153,7 +169,7 @@ impl TryFrom<&[u8]> for VerifyKey {
 
 impl From<[u8; Self::SIZE]> for VerifyKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zerocopy
+        // TODO: zero copy
         Self::try_from(key.as_ref()).unwrap()
     }
 }

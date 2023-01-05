@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import os
-import atexit
 import asyncio
+import atexit
+import os
+
 import asyncpg
 from asyncpg.cluster import TempCluster
 
@@ -48,7 +50,7 @@ def bootstrap_postgresql_testbed():
         _pg_db_url = _patch_url_if_xdist(provided_db)
 
     print("PostgreSQL url: ", _pg_db_url)
-    # Finally initialiaze the database
+    # Finally initialize the database
     # In theory we should use TrioPG here to do db init, but:
     # - Duck typing and similar api makes `_init_db` compatible with both
     # - AsyncPG should be slightly faster than TrioPG
@@ -56,13 +58,7 @@ def bootstrap_postgresql_testbed():
     #   thread (i.e. if the test is mark as trio). Hence we would have to spawn
     #   another thread just to run the new trio loop.
 
-    # TODO: use `asyncio.run` when moving to python 3.7 and onward
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        loop.run_until_complete(_execute_pg_query(_pg_db_url, run_migrations))
-    finally:
-        loop.close()
+    asyncio.run(_execute_pg_query(_pg_db_url, run_migrations))
 
     return _pg_db_url
 
@@ -95,13 +91,7 @@ RESTART IDENTITY CASCADE
 
 
 def reset_postgresql_testbed():
-    # TODO: use `asyncio.run` when moving to python 3.7 and onward
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        loop.run_until_complete(asyncio_reset_postgresql_testbed())
-    finally:
-        loop.close()
+    asyncio.run(asyncio_reset_postgresql_testbed())
 
 
 def get_postgresql_url():

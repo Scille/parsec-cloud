@@ -1,18 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import secrets
 import time
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import AsyncContextManager, AsyncIterator, List, TypeVar
 
 import trio
-from pathlib import Path
-from typing import AsyncIterator, AsyncContextManager, TypeVar, List, Optional
-from contextlib import asynccontextmanager
 
-
-from parsec.core.types import ChunkID
-from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
-from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
+from parsec.core.fs.storage.local_database import Cursor, LocalDatabase
+from parsec.core.types import DEFAULT_BLOCK_SIZE, ChunkID, LocalDevice
 
 T = TypeVar("T", bound="ChunkStorage")
 
@@ -51,8 +50,8 @@ class ChunkStorage:
                     pass
 
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
-        # There is no point in commiting dirty chunks:
-        # they are referenced by a manifest that will get commited
+        # There is no point in committing dirty chunks:
+        # they are referenced by a manifest that will get committed
         # soon after them. This greatly improves the performance of
         # writing file using the mountpoint as the OS will typically
         # writes data as blocks of 4K. The manifest being kept in
@@ -196,14 +195,14 @@ class BlockStorage(ChunkStorage):
             yield self
 
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
-        # It doesn't matter for blocks to be commited as soon as they're added
+        # It doesn't matter for blocks to be committed as soon as they're added
         # since they exists in the remote storage anyway. But it's simply more
-        # convenient to perform the commit right away as it does't cost much (at
+        # convenient to perform the commit right away as it doesn't cost much (at
         # least compare to the downloading of the block).
         return self.localdb.open_cursor(commit=True)
 
     @asynccontextmanager
-    async def _reenter_cursor(self, cursor: Optional[Cursor]) -> AsyncIterator[Cursor]:
+    async def _reenter_cursor(self, cursor: Cursor | None) -> AsyncIterator[Cursor]:
         if cursor is not None:
             yield cursor
             return
@@ -242,7 +241,7 @@ class BlockStorage(ChunkStorage):
             # Perform cleanup if necessary
             await self.cleanup(cursor)
 
-    async def cleanup(self, cursor: Optional[Cursor] = None) -> None:
+    async def cleanup(self, cursor: Cursor | None = None) -> None:
 
         # Update database
         async with self._reenter_cursor(cursor) as cursor:

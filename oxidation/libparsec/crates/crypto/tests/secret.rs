@@ -2,6 +2,7 @@
 
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
+use rstest::rstest;
 use serde_test::{assert_tokens, Token};
 
 use libparsec_crypto::{CryptoError, SecretKey};
@@ -72,6 +73,49 @@ fn secret_key_should_verify_length_when_deserialize() {
         rmp_serde::from_slice::<SecretKey>(&data)
             .unwrap_err()
             .to_string(),
-        "Invalid data size"
+        "Invalid key size: expected 32 bytes, got 5 bytes"
     );
+}
+
+#[test]
+fn test_recovery_passphrase() {
+    let (passphrase, key) = SecretKey::generate_recovery_passphrase();
+
+    let key2 = SecretKey::from_recovery_passphrase(&passphrase).unwrap();
+    assert_eq!(key2, key);
+
+    // Add dummy stuff to the passphrase should not cause issues
+    let altered_passphrase = passphrase.to_lowercase().replace('-', "@  白");
+    let key3 = SecretKey::from_recovery_passphrase(&altered_passphrase).unwrap();
+    assert_eq!(key3, key);
+}
+
+#[rstest]
+#[case::empty("", 0)]
+#[case::only_invalid_characters("-@//白", 0)]
+#[case::too_short("D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO", 30)]
+#[case::too_long(
+    "D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO-NU4Q-NU4Q",
+    35
+)]
+fn test_invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
+    assert_eq!(
+        SecretKey::from_recovery_passphrase(bad_passphrase).unwrap_err(),
+        CryptoError::KeySize {
+            expected: SecretKey::SIZE,
+            got: key_length,
+        }
+    );
+}
+
+#[test]
+fn test_from_password() {
+    let password = "P@ssw0rd.";
+    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
+
+    let expected = SecretKey::from(hex!(
+        "8f46e610b307443ec4ac81a4d799cbe1b97987901d4f681b82dacf3b59cad0a1"
+    ));
+
+    assert_eq!(SecretKey::from_password(password, &salt), expected);
 }

@@ -1,0 +1,34 @@
+{
+    "title": "Protocol command",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": [
+            "major_versions",
+            "req",
+            "reps"
+        ],
+        "additionalProperties": false,
+        "properties": {
+            "major_versions": {
+                "type": "array",
+                "description": "The list of MAJOR version where the command is present",
+                "items": {
+                    "type": "number"
+                }
+            },
+            "introduced_in": {
+                "$ref": "./major-minor-string.schema.json"
+            },
+            "req": {
+                "$ref": "./protocol-request.schema.json"
+            },
+            "reps": {
+                "$ref": "./protocol-response.schema.json"
+            },
+            "nested_types": {
+                "$ref": "./nested-types.schema.json"
+            }
+        }
+    }
+}

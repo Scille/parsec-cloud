@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from unittest.mock import ANY
 
+from parsec._parsec import HumanFindRepNotAllowed, HumanFindRepOk, HumanFindResultItem
 from parsec.api.protocol import UserProfile
 from parsec.backend.asgi import app_factory
-
-from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import human_find
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ async def test_isolation_from_other_organization(
 ):
     async with ws_from_other_organization_factory(backend_asgi_app) as ws:
         rep = await human_find(ws, query=alice.human_handle.label)
-        assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
+        assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
         rep = await human_find(ws)
         rep_alice_ws = await human_find(alice_ws)
         assert rep != rep_alice_ws
@@ -53,7 +53,7 @@ async def test_isolation_from_other_organization(
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_not_allowed_for_outsider(alice_ws):
     rep = await human_find(alice_ws, query="whatever")
-    assert rep == {"status": "not_allowed", "reason": "Not allowed for user with OUTSIDER profile."}
+    assert isinstance(rep, HumanFindRepNotAllowed)
 
 
 @pytest.mark.xfail(reason="not implemented yet")
@@ -67,15 +67,16 @@ async def test_ascii_search_on_unicode_data(
     await binder.bind_device(cunyet, certifier=godfrey1)
 
     rep = await human_find(sock, query="cuneyt")
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": cunyet.user_id, "human_handle": cunyet.human_handle, "revoked": False}
+    assert rep == HumanFindRepOk(
+        results=[
+            HumanFindResultItem(
+                user_id=cunyet.user_id, human_handle=cunyet.human_handle, revoked=False
+            )
         ],
-        "per_page": 100,
-        "page": 1,
-        "total": 1,
-    }
+        per_page=100,
+        page=1,
+        total=1,
+    )
 
 
 @pytest.mark.trio
@@ -86,15 +87,16 @@ async def test_unicode_search(access_testbed, local_device_factory):
     await binder.bind_device(hwang, certifier=godfrey1)
 
     rep = await human_find(sock, query="황")
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": hwang.user_id, "human_handle": hwang.human_handle, "revoked": False}
+    assert rep == HumanFindRepOk(
+        results=[
+            HumanFindResultItem(
+                user_id=hwang.user_id, human_handle=hwang.human_handle, revoked=False
+            )
         ],
-        "per_page": 100,
-        "page": 1,
-        "total": 1,
-    }
+        per_page=100,
+        page=1,
+        total=1,
+    )
 
 
 @pytest.mark.trio
@@ -122,17 +124,16 @@ async def test_search_multiple_matches(access_testbed, local_device_factory):
     )
     await binder.bind_device(lai, certifier=godfrey1)
 
-    expected_rep = {
-        "status": "ok",
-        "results": [
-            {"user_id": lai.user_id, "human_handle": lai.human_handle, "revoked": False},
-            {"user_id": le.user_id, "human_handle": le.human_handle, "revoked": False},
-            {"user_id": li.user_id, "human_handle": li.human_handle, "revoked": False},
+    expected_rep = HumanFindRepOk(
+        results=[
+            HumanFindResultItem(user_id=lai.user_id, human_handle=lai.human_handle, revoked=False),
+            HumanFindResultItem(user_id=le.user_id, human_handle=le.human_handle, revoked=False),
+            HumanFindResultItem(user_id=li.user_id, human_handle=li.human_handle, revoked=False),
         ],
-        "per_page": 100,
-        "page": 1,
-        "total": 3,
-    }
+        per_page=100,
+        page=1,
+        total=3,
+    )
 
     # Simple search
     rep = await human_find(sock, query="Bruce")
@@ -172,25 +173,29 @@ async def test_search_multiple_user_same_human_handle(access_testbed, local_devi
     await binder.bind_device(nick3, certifier=godfrey1)
 
     rep = await human_find(sock, query="Guzman Huerta")
-    # Users have same label, the sort will have an nondeterminated ordered result.
-    assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
 
-    assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
-        {"user_id": nick2.user_id, "human_handle": nick2.human_handle, "revoked": True},
-        {"user_id": nick1.user_id, "human_handle": nick1.human_handle, "revoked": True},
-        {"user_id": nick3.user_id, "human_handle": nick3.human_handle, "revoked": False},
+    # Users have same label, the sort will have an nondeterminated ordered result.
+    assert isinstance(rep, HumanFindRepOk)
+    assert rep.per_page == 100
+    assert rep.page == 1
+    assert rep.total == 3
+    assert sorted(rep.results, key=lambda x: x.user_id) == [
+        HumanFindResultItem(user_id=nick2.user_id, human_handle=nick2.human_handle, revoked=True),
+        HumanFindResultItem(user_id=nick1.user_id, human_handle=nick1.human_handle, revoked=True),
+        HumanFindResultItem(user_id=nick3.user_id, human_handle=nick3.human_handle, revoked=False),
     ]
 
     rep = await human_find(sock, query="Guzman Huerta", omit_revoked=True)
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": nick3.user_id, "human_handle": nick3.human_handle, "revoked": False}
+    assert rep == HumanFindRepOk(
+        results=[
+            HumanFindResultItem(
+                user_id=nick3.user_id, human_handle=nick3.human_handle, revoked=False
+            )
         ],
-        "per_page": 100,
-        "page": 1,
-        "total": 1,
-    }
+        per_page=100,
+        page=1,
+        total=1,
+    )
 
 
 @pytest.mark.trio
@@ -220,77 +225,167 @@ async def test_pagination(access_testbed, local_device_factory):
 
     # Find all, they should be sorted by human label
     rep = await human_find(sock)
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
-            {"user_id": blacky2.user_id, "human_handle": blacky2.human_handle, "revoked": False},
-            {"user_id": blacky3.user_id, "human_handle": blacky3.human_handle, "revoked": False},
-            {"user_id": blacky4.user_id, "human_handle": blacky4.human_handle, "revoked": False},
-            {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
-            {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
-            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
-            {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
+    assert rep == HumanFindRepOk(
+        results=[
+            HumanFindResultItem(
+                user_id=blacky.user_id, human_handle=blacky.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=blacky2.user_id, human_handle=blacky2.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=blacky3.user_id, human_handle=blacky3.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=blacky4.user_id, human_handle=blacky4.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=godfrey1.user_id, human_handle=godfrey1.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=mike.user_id, human_handle=mike.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=richard.user_id, human_handle=richard.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=roger.user_id, human_handle=roger.human_handle, revoked=False
+            ),
         ],
-        "page": 1,
-        "per_page": 100,
-        "total": 8,
-    }
+        page=1,
+        per_page=100,
+        total=8,
+    )
 
     # Find with pagination
     rep = await human_find(sock, per_page=4)
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
-            {"user_id": blacky2.user_id, "human_handle": blacky2.human_handle, "revoked": False},
-            {"user_id": blacky3.user_id, "human_handle": blacky3.human_handle, "revoked": False},
-            {"user_id": blacky4.user_id, "human_handle": blacky4.human_handle, "revoked": False},
+    assert rep == HumanFindRepOk(
+        results=[
+            HumanFindResultItem(
+                user_id=blacky.user_id, human_handle=blacky.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=blacky2.user_id, human_handle=blacky2.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=blacky3.user_id, human_handle=blacky3.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=blacky4.user_id, human_handle=blacky4.human_handle, revoked=False
+            ),
         ],
-        "per_page": 4,
-        "page": 1,
-        "total": 8,
-    }
+        per_page=4,
+        page=1,
+        total=8,
+    )
 
     # Continue pagination
     rep = await human_find(sock, page=2, per_page=4)
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
-            {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
-            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
-            {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
+    assert rep == HumanFindRepOk(
+        results=[
+            HumanFindResultItem(
+                user_id=godfrey1.user_id, human_handle=godfrey1.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=mike.user_id, human_handle=mike.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=richard.user_id, human_handle=richard.human_handle, revoked=False
+            ),
+            HumanFindResultItem(
+                user_id=roger.user_id, human_handle=roger.human_handle, revoked=False
+            ),
         ],
-        "per_page": 4,
-        "page": 2,
-        "total": 8,
-    }
+        per_page=4,
+        page=2,
+        total=8,
+    )
 
     # Test out of pagination
     rep = await human_find(sock, page=3, per_page=4)
-    assert rep == {"status": "ok", "results": [], "per_page": 4, "page": 3, "total": 8}
+    assert rep == HumanFindRepOk(results=[], per_page=4, page=3, total=8)
 
     # Test sort is before pagination when pagination and test non-sensitive sort
     rep = await human_find(sock, page=1, per_page=1, query="BlaCkY")
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False}
+    assert rep == HumanFindRepOk(
+        results=[
+            HumanFindResultItem(
+                user_id=blacky.user_id, human_handle=blacky.human_handle, revoked=False
+            )
         ],
-        "per_page": 1,
-        "page": 1,
-        "total": 4,
-    }
+        per_page=1,
+        page=1,
+        total=4,
+    )
 
 
 @pytest.mark.trio
 async def test_bad_args(access_testbed, local_device_factory):
     binder, org, godfrey1, sock = access_testbed
+    cmd = human_find
     # Test bad params
-    for bad in [{"page": 0}, {"per_page": 0}, {"per_page": 101}]:
-        rep = await human_find(sock, **bad)
-        assert rep["status"] == "bad_message"
+    # We should not be able to build an invalid request
+    for raw_req in [
+        # Generated from Python implementation (Parsec v2.11.1+dev)
+        # Content:
+        #   cmd: "human_find"
+        #   omit_non_human: false
+        #   omit_revoked: false
+        #   page: 0
+        #   per_page: 8
+        #   query: "foobar"
+        #
+        bytes.fromhex(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a47061676500a87065725f7061676508a57175657279a6666f6f6261"
+            "72"
+        ),
+        # Generated from Python implementation (Parsec v2.12.1+dev)
+        # Content:
+        #   cmd: "human_find"
+        #   omit_non_human: false
+        #   omit_revoked: false
+        #   page: -1
+        #   per_page: 8
+        #   query: "foobar"
+        #
+        bytes.fromhex(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a470616765ffa87065725f7061676508a57175657279a6666f6f6261"
+            "72"
+        ),
+        # Generated from Python implementation (Parsec v2.11.1+dev)
+        # Content:
+        #   cmd: "human_find"
+        #   omit_non_human: false
+        #   omit_revoked: false
+        #   page: 8
+        #   per_page: 0
+        #   query: "foobar"
+        #
+        bytes.fromhex(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a47061676508a87065725f7061676500a57175657279a6666f6f6261"
+            "72"
+        ),
+        # Generated from Python implementation (Parsec v2.11.1+dev)
+        # Content:
+        #   cmd: "human_find"
+        #   omit_non_human: false
+        #   omit_revoked: false
+        #   page: 0
+        #   per_page: 101
+        #   query: "foobar"
+        #
+        bytes.fromhex(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a47061676500a87065725f7061676565a57175657279a6666f6f6261"
+            "72"
+        ),
+    ]:
+        await sock.send(raw_req)
+        rep = await cmd._do_recv(sock, False)
+        assert rep.status == "bad_message"
 
 
 @pytest.mark.trio
@@ -306,32 +401,41 @@ async def test_bad_query(access_testbed):
         "god\\",
     ]:
         rep = await human_find(sock, query=bad_query)
-        assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
+        assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
 
     # Cheap test to make sure we can match anyway
     rep = await human_find(sock, query="god")
-    assert rep["total"] == 1
+    assert rep.total == 1
 
 
 @pytest.mark.trio
 @customize_fixtures(
     alice_has_human_handle=False, bob_has_human_handle=False, adam_has_human_handle=False
 )
-async def test_find_with_query_ignore_non_human(alice_ws, alice, bob, adam):
+async def test_find_with_query_does_not_ignore_non_human(alice_ws, alice, bob, adam):
     # Find all first
     rep = await human_find(alice_ws)
-    assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
 
-    assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
-        {"user_id": adam.user_id, "revoked": False, "human_handle": None},
-        {"user_id": alice.user_id, "revoked": False, "human_handle": None},
-        {"user_id": bob.user_id, "revoked": False, "human_handle": None},
+    assert isinstance(rep, HumanFindRepOk)
+    assert rep.per_page == 100
+    assert rep.page == 1
+    assert rep.total == 3
+    assert sorted(rep.results, key=lambda x: x.user_id) == [
+        HumanFindResultItem(user_id=adam.user_id, revoked=False, human_handle=None),
+        HumanFindResultItem(user_id=alice.user_id, revoked=False, human_handle=None),
+        HumanFindResultItem(user_id=bob.user_id, revoked=False, human_handle=None),
     ]
 
-    rep = await human_find(alice_ws, query=alice.user_id)
-    assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
+    rep = await human_find(alice_ws, query=str(alice.user_id))
+    assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
     rep = await human_find(alice_ws, query="alice")
-    assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
+    assert isinstance(rep, HumanFindRepOk)
+    assert rep.per_page == 100
+    assert rep.page == 1
+    assert rep.total == 1
+    assert sorted(rep.results, key=lambda x: x.user_id) == [
+        HumanFindResultItem(user_id=alice.user_id, revoked=False, human_handle=None),
+    ]
 
 
 @pytest.mark.trio
@@ -372,23 +476,34 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
 
     # Users with human label should be sorted but for now non_human users create a NonDeterministicOrder
     rep = await human_find(sock, per_page=11, page=1)
-    assert rep == {"status": "ok", "results": ANY, "per_page": 11, "page": 1, "total": 11}
+    assert isinstance(rep, HumanFindRepOk)
+    assert rep.per_page == 11
+    assert rep.page == 1
+    assert rep.total == 11
 
     # Items with human handle come first in a deterministic order
-    assert rep["results"][:8] == [
-        {"user_id": blacky.user_id, "revoked": False, "human_handle": blacky.human_handle},
-        {"user_id": blacky3.user_id, "revoked": False, "human_handle": blacky3.human_handle},
-        {"user_id": godfrey1.user_id, "revoked": False, "human_handle": godfrey1.human_handle},
-        {"user_id": ice.user_id, "revoked": False, "human_handle": ice.human_handle},
-        {"user_id": ninja.user_id, "revoked": False, "human_handle": ninja.human_handle},
-        {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
-        {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
-        {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
-    ]
+    assert rep.results[:8] == (
+        HumanFindResultItem(
+            user_id=blacky.user_id, revoked=False, human_handle=blacky.human_handle
+        ),
+        HumanFindResultItem(
+            user_id=blacky3.user_id, revoked=False, human_handle=blacky3.human_handle
+        ),
+        HumanFindResultItem(
+            user_id=godfrey1.user_id, revoked=False, human_handle=godfrey1.human_handle
+        ),
+        HumanFindResultItem(user_id=ice.user_id, revoked=False, human_handle=ice.human_handle),
+        HumanFindResultItem(user_id=ninja.user_id, revoked=False, human_handle=ninja.human_handle),
+        HumanFindResultItem(
+            user_id=richard.user_id, revoked=False, human_handle=richard.human_handle
+        ),
+        HumanFindResultItem(user_id=roger.user_id, revoked=False, human_handle=roger.human_handle),
+        HumanFindResultItem(user_id=zoe.user_id, revoked=False, human_handle=zoe.human_handle),
+    )
 
     # Items with no human handle come last with no order guarantee
-    assert sorted(rep["results"][8:], key=lambda x: x["user_id"]) == [
-        {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
-        {"user_id": mike.user_id, "revoked": False, "human_handle": None},
-        {"user_id": easy.user_id, "revoked": False, "human_handle": None},
+    assert sorted(rep.results[8:], key=lambda x: x.user_id) == [
+        HumanFindResultItem(user_id=titeuf.user_id, revoked=False, human_handle=None),
+        HumanFindResultItem(user_id=mike.user_id, revoked=False, human_handle=None),
+        HumanFindResultItem(user_id=easy.user_id, revoked=False, human_handle=None),
     ]

@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import secrets
 
+from parsec._parsec import DateTime, DeviceCreateRepOk
 from parsec.api.data import DeviceCertificate
-from parsec.api.protocol import DeviceID, DeviceName, DeviceLabel
+from parsec.api.protocol import DeviceID, DeviceLabel, DeviceName
 from parsec.core.backend_connection import (
-    backend_authenticated_cmds_factory,
     BackendConnectionError,
+    backend_authenticated_cmds_factory,
 )
 from parsec.core.types import LocalDevice
-from parsec.crypto import SigningKey, SecretKey
-from parsec._parsec import DateTime
+from parsec.crypto import SecretKey, SigningKey
 
 
 async def _create_new_device_for_self(
@@ -22,7 +23,7 @@ async def _create_new_device_for_self(
     """
     new_device = LocalDevice(
         organization_addr=original_device.organization_addr,
-        device_id=DeviceID(f"{original_device.user_id}@{DeviceName.new()}"),
+        device_id=DeviceID(f"{original_device.user_id.str}@{DeviceName.new().str}"),
         device_label=new_device_label,
         human_handle=original_device.human_handle,
         profile=original_device.profile,
@@ -58,7 +59,7 @@ async def _create_new_device_for_self(
             redacted_device_certificate=redacted_device_certificate,
         )
 
-    if rep["status"] != "ok":
+    if not isinstance(rep, DeviceCreateRepOk):
         raise BackendConnectionError(f"Cannot create recovery device: {rep}")
 
     return new_device

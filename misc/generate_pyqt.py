@@ -3,8 +3,8 @@
 
 
 import argparse
-from pathlib import Path
 from collections import namedtuple
+from pathlib import Path
 from unittest.mock import patch
 
 try:
@@ -94,7 +94,7 @@ def extract_translations():
         "_",
         "extract",
         "-k",
-        "translate",
+        "translate T",
         "-s",
         "--no-location",
         "-F",

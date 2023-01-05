@@ -1,0 +1,51 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "message_get",
+            "fields": [
+                {
+                    "name": "offset",
+                    "type": "Index"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "messages",
+                        "type": "List<Message>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "Message",
+                "fields": [
+                    {
+                        "name": "count",
+                        "type": "Size"
+                    },
+                    {
+                        "name": "sender",
+                        "type": "DeviceID"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "body",
+                        "type": "Bytes"
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,30 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import List, Dict, Iterator, Mapping, Optional, Tuple
-from pathlib import Path, PurePath
-from parsec._parsec import DateTime
-from contextlib import contextmanager
-import sqlite3
 import enum
-from oscrypto.asymmetric import PrivateKey
+import sqlite3
+from contextlib import contextmanager
 from dataclasses import dataclass
+from pathlib import Path, PurePath
+from typing import Dict, Iterator, List, Mapping, Tuple
 
-from parsec.crypto import VerifyKey, CryptoError
-from parsec.sequester_crypto import sequester_service_decrypt
-from parsec.api.protocol import RealmID, DeviceID
-from parsec.api.data import (
-    EntryName,
+from parsec._parsec import (
+    DataError,
+    DateTime,
+    DeviceCertificate,
+    DeviceID,
     EntryID,
+    EntryName,
     FileManifest,
     FolderManifest,
-    WorkspaceManifest,
-    UserCertificate,
-    RevokedUserCertificate,
-    DeviceCertificate,
+    RealmID,
     RealmRoleCertificate,
-    DataError,
+    RevokedUserCertificate,
+    SequesterPrivateKeyDer,
+    UserCertificate,
+    VerifyKey,
+    WorkspaceManifest,
+    manifest_verify_and_load,
 )
-from parsec.api.data.manifest import manifest_verify_and_load, AnyRemoteManifest
+from parsec.api.data.manifest import AnyRemoteManifest
+from parsec.crypto import CryptoError
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
 REALM_EXPORT_DB_VERSION = 1  # Only supported version so far
@@ -58,7 +61,7 @@ class RealmExportDb:
 
     @classmethod
     @contextmanager
-    def open(cls, path: Path) -> Iterator[Tuple[sqlite3.Connection, RealmID, VerifyKey]]:
+    def open(cls, path: Path) -> Iterator[RealmExportDb]:
         try:
             con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         except sqlite3.Error as exc:
@@ -107,8 +110,8 @@ class RealmExportDb:
 
     def load_user_certificates(
         self,
-        out_certificates: List[Tuple[UserCertificate, Optional[RevokedUserCertificate]]],
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+        out_certificates: List[Tuple[UserCertificate, RevokedUserCertificate | None]],
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute(
             "SELECT _id, user_certificate, revoked_user_certificate FROM user_"
         ).fetchall()
@@ -139,7 +142,7 @@ class RealmExportDb:
 
     def load_device_certificates(
         self, out_certificates: List[Tuple[int, DeviceCertificate]]
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, device_certificate FROM device").fetchall()
         for row in rows:
             try:
@@ -155,7 +158,7 @@ class RealmExportDb:
 
     def load_role_certificates(
         self, out_certificates: List[RealmRoleCertificate]
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, role_certificate FROM realm_role").fetchall()
         for row in rows:
             try:
@@ -173,13 +176,16 @@ class RealmExportDb:
 @dataclass
 class WorkspaceExport:
     db: RealmExportDb
-    decryption_key: PrivateKey
+    decryption_key: SequesterPrivateKeyDer
     devices_form_internal_id: Dict[int, Tuple[DeviceID, VerifyKey]]
+    filter_on_date: DateTime
 
     def load_manifest(self, manifest_id: EntryID) -> AnyRemoteManifest:
+        # Convert datetime to integer timestamp with us precision (format used in sqlite dump).
+        filter_timestamp = int(self.filter_on_date.timestamp() * 1000000)
         row = self.db.con.execute(
-            "SELECT version, blob, author, timestamp FROM vlob_atom WHERE vlob_id = ? ORDER BY version DESC LIMIT 1",
-            (manifest_id.bytes,),
+            "SELECT version, blob, author, timestamp FROM vlob_atom WHERE vlob_id = ? and timestamp <= ? ORDER BY version DESC LIMIT 1",
+            (manifest_id.bytes, filter_timestamp),
         ).fetchone()
         if not row:
             raise InconsistentWorkspaceError(
@@ -187,20 +193,19 @@ class WorkspaceExport:
             )
 
         try:
-            version: bytes = row[0]
+            version: int | None = row[0]
             blob: bytes = row[1]
-            author_internal_id: str = row[2]
+            author_internal_id: int = row[2]
             raw_timestamp: int = row[3]
 
             try:
                 author, author_verify_key = self.devices_form_internal_id[author_internal_id]
             except KeyError:
                 raise InconsistentWorkspaceError(f"Missing device certificate for `{author}`")
-            timestamp = DateTime.from_timestamp(raw_timestamp / 1000)
+            timestamp = DateTime.from_timestamp(raw_timestamp / 1000000)
 
-            decrypted_blob = sequester_service_decrypt(
-                decryption_key=self.decryption_key, data=blob
-            )
+            decrypted_blob = self.decryption_key.decrypt(blob)
+
             manifest = manifest_verify_and_load(
                 signed=decrypted_blob,
                 author_verify_key=author_verify_key,
@@ -218,7 +223,7 @@ class WorkspaceExport:
             ) from exc
 
     def load_workspace_manifest(self) -> WorkspaceManifest:
-        manifest = self.load_manifest(EntryID(self.db.realm_id.uuid))
+        manifest = self.load_manifest(self.db.realm_id.to_entry_id())
         if not isinstance(manifest, WorkspaceManifest):
             raise InconsistentWorkspaceError(
                 f"Vlob with realm id is expected to contain a Workspace manifest, but actually contained {manifest}"
@@ -227,7 +232,7 @@ class WorkspaceExport:
 
     def extract_children(
         self, output: Path, fs_path: PurePath, children: Mapping[EntryName, EntryID]
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -272,7 +277,7 @@ class WorkspaceExport:
 
     def extract_file(
         self, output: Path, fs_path: PurePath, manifest: FileManifest
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -320,8 +325,9 @@ class WorkspaceExport:
             try:
                 if fd.tell() != block.offset:
                     fd.seek(block.offset)
-                if block.size != len(clear_data):
-                    fd.write(clear_data[block.size])
+                if block.size < len(clear_data):
+                    # Shouldn't happen, block.size should be equal to len(clear_data)
+                    fd.write(clear_data[: block.size])
                 else:
                     fd.write(clear_data)
             except OSError as exc:
@@ -343,7 +349,7 @@ class WorkspaceExport:
 
     def extract_workspace(
         self, output: Path
-    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -368,15 +374,18 @@ class WorkspaceExport:
 
 
 def extract_workspace(
-    output: Path, export_db: Path, decryption_key: PrivateKey
-) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
+    output: Path, export_db: Path, decryption_key: SequesterPrivateKeyDer, filter_on_date: DateTime
+) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
     with RealmExportDb.open(export_db) as db:
-        out_certificates = []
+        out_certificates: list[Tuple[int, DeviceCertificate]] = []
         yield from db.load_device_certificates(out_certificates=out_certificates)
         devices_form_internal_id = {
             id: (certif.device_id, certif.verify_key) for id, certif in out_certificates
         }
         wksp = WorkspaceExport(
-            db=db, decryption_key=decryption_key, devices_form_internal_id=devices_form_internal_id
+            db=db,
+            decryption_key=decryption_key,
+            devices_form_internal_id=devices_form_internal_id,
+            filter_on_date=filter_on_date,
         )
         yield from wksp.extract_workspace(output=output)

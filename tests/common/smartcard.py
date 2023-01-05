@@ -1,27 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import sys
 import subprocess
-import pytest
-from parsec._parsec import DateTime
+import sys
 from collections import defaultdict
-from typing import Optional, Tuple, Iterable
 from hashlib import sha1
-from uuid import UUID
 from pathlib import Path
+from typing import Iterable, Optional, Tuple
 
-from parsec.crypto import SigningKey, PrivateKey
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload, DataError
-from parsec.core.types import LocalDevice, BackendPkiEnrollmentAddr
+import pytest
+
+from parsec._parsec import DateTime, EnrollmentID
+from parsec.api.data import DataError, PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec.core.local_device import (
-    LocalDeviceNotFoundError,
-    LocalDeviceCryptoError,
-    LocalDevicePackingError,
     DeviceFileType,
-    _save_device,
+    LocalDeviceCryptoError,
+    LocalDeviceNotFoundError,
+    LocalDevicePackingError,
     _load_device,
+    _save_device,
 )
-from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
+from parsec.core.types import BackendPkiEnrollmentAddr, LocalDevice
+from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
+from parsec.crypto import PrivateKey, SigningKey
 
 
 def create_test_certificates(tmp_path):
@@ -139,7 +140,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             config_dir: Path,
             x509_certificate: X509Certificate,
             addr: BackendPkiEnrollmentAddr,
-            enrollment_id: UUID,
+            enrollment_id: EnrollmentID,
             submitted_on: DateTime,
             submit_payload: PkiEnrollmentSubmitPayload,
             signing_key: SigningKey,
@@ -159,7 +160,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             return pending
 
         def pki_enrollment_load_local_pending_secret_part(
-            self, config_dir: Path, enrollment_id: UUID
+            self, config_dir: Path, enrollment_id: EnrollmentID
         ) -> Tuple[SigningKey, PrivateKey]:
             for (pending, secret_part) in self._pending_enrollments[config_dir]:
                 if pending.enrollment_id == enrollment_id:
@@ -190,12 +191,12 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             payload_signature: bytes,
             payload: bytes,
             extra_trust_roots: Iterable[Path] = (),
-        ) -> PkiEnrollmentAcceptPayload:
+        ) -> PkiEnrollmentAnswerPayload:
             computed_signature = self._compute_signature(der_x509_certificate, payload)
             if computed_signature != payload_signature:
                 raise LocalDeviceCryptoError()
             try:
-                accept_payload = PkiEnrollmentAcceptPayload.load(payload)
+                accept_payload = PkiEnrollmentAnswerPayload.load(payload)
             except DataError as exc:
                 raise LocalDevicePackingError(str(exc)) from exc
 

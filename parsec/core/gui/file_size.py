@@ -1,9 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Tuple
 
 from parsec.core.gui.lang import translate as _
 
 
-def size(bytes, system):
+def size(bytes: int, system: list[Tuple[int, str]]) -> str:
     """
     Format the specified number of bytes with the corresponding system.
 
@@ -44,7 +47,7 @@ def size(bytes, system):
     return f"{formatted_amount} {suffix}"
 
 
-def get_filesize(bytesize):
+def get_filesize(bytesize: int) -> str:
     # Our system of unit in increasing order
     # We're using the 1K=1024 conversion in order to match the Windows file explorer.
     # TODO: adapt the conversion depending on the system:

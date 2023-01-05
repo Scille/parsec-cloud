@@ -1,29 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import sys
-import pytest
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from parsec.crypto import SigningKey
-from parsec.serde import packb, unpackb
-from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle
-from parsec.core.types import LocalDevice
+import pytest
+
+from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID
 from parsec.core.local_device import (
     AvailableDevice,
     DeviceFileType,
-    get_key_file,
-    get_default_key_file,
-    get_devices_dir,
-    list_available_devices,
-    load_device_with_password,
-    save_device_with_password_in_config,
-    change_device_password,
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
     LocalDevicePackingError,
+    change_device_password,
+    get_default_key_file,
+    get_devices_dir,
+    get_key_file,
+    list_available_devices,
+    load_device_with_password,
+    save_device_with_password_in_config,
 )
-
+from parsec.core.types import LocalDevice
+from parsec.crypto import SigningKey
+from parsec.serde import packb, unpackb
 from tests.common import customize_fixtures
 
 
@@ -130,11 +131,11 @@ def test_available_device_display(config_dir, alice):
         type=DeviceFileType.PASSWORD,
     )
 
-    assert without_labels.device_display == str(alice.device_name)
-    assert without_labels.user_display == str(alice.user_id)
+    assert without_labels.device_display == alice.device_name.str
+    assert without_labels.user_display == alice.user_id.str
 
-    assert with_labels.device_display == str(alice.device_label)
-    assert with_labels.user_display == str(alice.human_handle)
+    assert with_labels.device_display == alice.device_label.str
+    assert with_labels.user_display == alice.human_handle.str
 
 
 def test_available_devices_slughash_uniqueness(
@@ -242,15 +243,19 @@ def test_password_load_not_found(config_dir, alice):
         load_device_with_password(key_file, "S3Cr37")
 
 
-def test_same_device_id_different_orginazations(config_dir, alice, otheralice):
+def test_same_device_id_different_organizations(config_dir, alice, otheralice):
     devices = (alice, otheralice)
 
     for device in devices:
-        save_device_with_password_in_config(config_dir, device, f"S3Cr37-{device.organization_id}")
+        save_device_with_password_in_config(
+            config_dir, device, f"S3Cr37-{device.organization_id.str}"
+        )
 
     for device in devices:
         key_file = get_key_file(config_dir, device)
-        device_reloaded = load_device_with_password(key_file, f"S3Cr37-{device.organization_id}")
+        device_reloaded = load_device_with_password(
+            key_file, f"S3Cr37-{device.organization_id.str}"
+        )
         assert device == device_reloaded
 
 
@@ -275,7 +280,7 @@ def test_supports_legacy_is_admin_field(alice):
     # Manually craft a local user in legacy format
     raw_legacy_local_user = {
         "organization_addr": alice.organization_addr.to_url(),
-        "device_id": str(alice.device_id),
+        "device_id": alice.device_id.str,
         "signing_key": alice.signing_key.encode(),
         "private_key": alice.private_key.encode(),
         "is_admin": True,
@@ -294,7 +299,7 @@ def test_supports_legacy_is_admin_field(alice):
     raw_local_user = unpackb(dumped_local_user)
     assert raw_local_user == {
         **raw_legacy_local_user,
-        "profile": alice.profile.value,
+        "profile": alice.profile.str,
         "human_handle": None,
         "device_label": None,
     }

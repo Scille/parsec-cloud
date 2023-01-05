@@ -20,23 +20,23 @@
 !define BUILD_DIR "build"
 !searchparse /file ${BUILD_DIR}/manifest.ini `target = "` PROGRAM_FREEZE_BUILD_DIR `"`
 !ifndef PROGRAM_FREEZE_BUILD_DIR
-   !error "Cannot find freeze build directory"
+  !error "Cannot find freeze build directory"
 !endif
 !searchparse /file ${BUILD_DIR}/manifest.ini `program_version = "` PROGRAM_VERSION `"`
 !ifndef PROGRAM_VERSION
-   !error "Program Version Undefined"
+  !error "Program Version Undefined"
 !endif
 !searchparse /file ${BUILD_DIR}/manifest.ini `platform = "` PROGRAM_PLATFORM `"`
 !ifndef PROGRAM_PLATFORM
-   !error "Program Platform Undefined"
+  !error "Program Platform Undefined"
 !endif
 !searchparse /file ${BUILD_DIR}/manifest.ini `winfsp_installer_path = "` WINFSP_INSTALLER_PATH `"`
 !ifndef WINFSP_INSTALLER_PATH
-   !error "WinFSP installer path Undefined"
+  !error "WinFSP installer path Undefined"
 !endif
 !searchparse /file ${BUILD_DIR}/manifest.ini `winfsp_installer_name = "` WINFSP_INSTALLER_NAME `"`
 !ifndef WINFSP_INSTALLER_NAME
-   !error "WinFSP installer name Undefined"
+  !error "WinFSP installer name Undefined"
 !endif
 
 # Python files generated
@@ -73,7 +73,7 @@ SetCompressorDictSize 64
 # !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Create Desktop Shortcut"
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateDesktopShortcut
-# Run program after install, using explorer.exe to un-elevate priviledges
+# Run program after install, using explorer.exe to un-elevate privileges
 # More information: https://stackoverflow.com/a/15041823/2846140
 !define MUI_FINISHPAGE_RUN "$WINDIR\explorer.exe"
 !define MUI_FINISHPAGE_RUN_PARAMETERS "$INSTDIR\parsec.exe"
@@ -189,15 +189,15 @@ Function .onInit
       ; If run without `_?=R1`, the uninstaller executable (i.e. `$R0`) will
       ; copy itself in a temporary directory, run this copy and exit right away.
       ; This is needed otherwise the installer won't be able to remove itself,
-      ; however it also means `ExecWait` doesn't work here (the actuall uninstall
+      ; however it also means `ExecWait` doesn't work here (the actual uninstall
       ; process is still running when ExecWait returns).
-      ; So we provide the ugly `_?=$R1` which, on top of being absolutly
+      ; So we provide the ugly `_?=$R1` which, on top of being absolutely
       ; unreadable, does two things:
       ; - it force the directory to work on for the uninstaller (but we pass the
       ;   same previous version install directory as argument, so we change nothing here)
       ; - it tells the uninstaller not to do the "temp copy, exec and return"
       ;   trick and instead leave the uninstaller untouched.
-      ; At this point, I'm very much puzzled as why writting NSIS installer
+      ; At this point, I'm very much puzzled as why writing NSIS installer
       ; feels like reverse engineering a taiwanese NES clone...
       ExecWait '"$R0" /S _?=$R1'
 

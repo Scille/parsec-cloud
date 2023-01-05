@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use libparsec_types::UserCertificate;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
 
+use libparsec_crypto::{SequesterPublicKeyDer, SequesterVerifyKeyDer};
 use libparsec_types::*;
 
 use tests_fixtures::{alice, bob, Device};
@@ -46,6 +46,8 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -60,6 +62,8 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -98,6 +102,8 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -112,6 +118,8 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -171,6 +179,8 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
             data,
             &alice.verify_key(),
             CertificateSignerRef::User(&alice.device_id),
+            None,
+            None,
         )
         .unwrap();
         assert_eq!(&certif, expected);
@@ -214,6 +224,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -228,6 +239,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -264,6 +276,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -278,6 +291,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -312,6 +326,7 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
     )
     .unwrap();
     assert_eq!(certif, expected);
@@ -345,16 +360,20 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     assert_eq!(unsecure_certif, expected);
 
     let certif =
-        RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id)
+        RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
             .unwrap();
     assert_eq!(certif, expected);
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
     // Note we cannot just compare with `data` due to signature and keys order
-    let certif2 =
-        RevokedUserCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id)
-            .unwrap();
+    let certif2 = RevokedUserCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
     assert_eq!(certif2, expected);
 }
 
@@ -379,13 +398,15 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
 
     let expected = RealmRoleCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        realm_id: "4486e7cf02d747bd9126679ba58e0474".parse().unwrap(),
+        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         user_id: bob.user_id().to_owned(),
         role: Some(RealmRole::Owner),
     };
@@ -398,6 +419,8 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(certif2, expected);
@@ -424,13 +447,15 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
         &data,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
 
     let expected = RealmRoleCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        realm_id: "4486e7cf02d747bd9126679ba58e0474".parse().unwrap(),
+        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         user_id: bob.user_id().to_owned(),
         role: None,
         // role: Some(RealmRole::Owner),
@@ -444,7 +469,112 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
         &data2,
         &alice.verify_key(),
         CertificateSignerRef::User(&alice.device_id),
+        None,
+        None,
     )
     .unwrap();
+    assert_eq!(certif2, expected);
+}
+
+#[rstest]
+fn serde_sequester_authority_certificate(alice: &Device) {
+    // Generated from Python implementation (Parsec v2.14.1+dev)
+    // Content:
+    //   type: "sequester_authority_certificate"
+    //   author: None
+    //   timestamp: ext(1, 946774800.0)
+    //   verify_key_der: hex!(
+    //     "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689b069f3"
+    //     "f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a3045d75b584c"
+    //     "1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62cb38582f8a30219047b"
+    //     "087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195f3bcc72ab57207ebfd020301"
+    //     "0001"
+    //   )
+    //
+    let data = hex!(
+        "5955d05b6175d010dcb653dd0b56ea4096d8f26f3991a3a4cb22489a8b80c12631ae1d041d"
+        "94cc7f4ae4440cf476ee9c3e5b0539953bba7b46015b4b02765304789c01f5000aff84a474"
+        "797065bf7365717565737465725f617574686f726974795f6365727469666963617465a974"
+        "696d657374616d70d70141cc375188000000ae7665726966795f6b65795f646572c4a23081"
+        "9f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689b069"
+        "f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a3045"
+        "d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62cb385"
+        "82f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195f3bc"
+        "c72ab57207ebfd0203010001a6617574686f72c0b8006a3d"
+    );
+    let certif =
+        SequesterAuthorityCertificate::verify_and_load(&data, &alice.verify_key()).unwrap();
+
+    let expected = SequesterAuthorityCertificate {
+        timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
+        verify_key_der: SequesterVerifyKeyDer::try_from(
+            &hex!(
+        "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+        "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+        "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+        "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+        "f3bcc72ab57207ebfd0203010001")[..],
+        )
+        .unwrap(),
+    };
+    assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 =
+        SequesterAuthorityCertificate::verify_and_load(&data2, &alice.verify_key()).unwrap();
+    assert_eq!(certif2, expected);
+}
+
+#[rstest]
+fn serde_sequester_service_certificate() {
+    // Generated from Python implementation (Parsec v2.14.1+dev)
+    // Content:
+    //   type: "sequester_service_certificate"
+    //   timestamp: ext(1, 946774800.0)
+    //   encryption_key_der: hex!(
+    //     "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689b069f3"
+    //     "f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a3045d75b584c"
+    //     "1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62cb38582f8a30219047b"
+    //     "087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195f3bcc72ab57207ebfd020301"
+    //     "0001"
+    //   )
+    //   service_id: ext(2, hex!("b5eb565343c442b3a26be44573813ff0"))
+    //   service_label: "foo"
+    //
+    let data = hex!(
+        "789c6b5d559c5a5496999c1a9f99728369ebebb060e7234e9b17653f712d6eb4ffb0b22433"
+        "37b5b82431b7e03aa3e319f3c00e060686b5300d398949a9398bd3f2f397945416a4ee2d4e"
+        "2d2c05aa4d2d8a8729484e2d2ac94ccb4c4e2c49dd949a975c54595092999f179f9d5a199f"
+        "925a74649141e37c035e364ead368fb6efbc8c8c8cac0ccc8dbd0c068d9d4c8d8d0c9bee30"
+        "2c3ebcf558e786cccf5f783c7db5a21f0b6f64f6df2ffb8fefdd83cf39bfcf27b930a8e61c"
+        "4bb8cae1de54dc65e07a3d3ac247d2790fcb7121db8c353cef55adfd5e5c9f7d61eec28949"
+        "770e34a729656edfa6b3b9b5e9c7622649966a8e1ac16d8c2d1b3ced7864ba65057e5e7fb6"
+        "e875d4ffb4efef240c0ca77ede735c6b6b11fbebbf4ccc8c0c8c00ac417d28"
+    );
+
+    let certif = SequesterServiceCertificate::load(&data).unwrap();
+
+    let expected = SequesterServiceCertificate {
+        timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
+        service_id: SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(),
+        service_label: "foo".into(),
+        encryption_key_der: SequesterPublicKeyDer::try_from(
+            &hex!(
+        "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+        "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+        "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+        "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+        "f3bcc72ab57207ebfd0203010001")[..],
+        )
+        .unwrap(),
+    };
+    assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump();
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = SequesterServiceCertificate::load(&data2).unwrap();
     assert_eq!(certif2, expected);
 }

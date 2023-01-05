@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import trio
-import pytest
-from parsec._parsec import DateTime
 from functools import partial
 
-from parsec.backend.utils import ClientType
-from parsec.api.transport import Transport, Ping, Pong
+import pytest
+import trio
+
+from parsec._parsec import AuthenticatedPingRepOk, ClientType, DateTime, EventsListenRepOkPinged
 from parsec.api.data import RevokedUserCertificate
-from parsec.api.protocol import ServerHandshake, AUTHENTICATED_CMDS, APIEvent, OrganizationID
-from parsec.core.types import BackendOrganizationAddr
+from parsec.api.protocol import AUTHENTICATED_CMDS, OrganizationID, ServerHandshake
+from parsec.api.transport import Ping, Pong, Transport
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
-    BackendNotAvailable,
     BackendConnectionRefused,
+    BackendNotAvailable,
     backend_authenticated_cmds_factory,
 )
-from parsec.backend.backend_events import BackendEvent
-
+from parsec.core.types import BackendOrganizationAddr
 from tests.common import correct_addr
 from tests.core.backend_connection.common import ALL_CMDS
 
@@ -57,7 +57,7 @@ async def test_ping(running_backend, alice):
         alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         rep = await cmds.ping("Hello World !")
-        assert rep == {"status": "ok", "pong": "Hello World !"}
+        assert rep == AuthenticatedPingRepOk("Hello World !")
 
 
 @pytest.mark.trio
@@ -239,11 +239,9 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, runnin
                 assert isinstance(event, Pong)
                 assert client_transport is client_transport2
 
-            await backend_client_ctx.send_events_channel.send(
-                {"event": APIEvent.PINGED, "ping": "foo"}
-            )
+            await backend_client_ctx.send_events_channel.send(EventsListenRepOkPinged("foo"))
 
-    assert events_listen_rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
+    assert events_listen_rep == EventsListenRepOkPinged("foo")
 
 
 @pytest.mark.trio

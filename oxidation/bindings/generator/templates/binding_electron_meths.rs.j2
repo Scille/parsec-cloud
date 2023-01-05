@@ -1,0 +1,438 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+{# Macros -#}
+
+{#-
+ # Types conversions macros
+ #}
+
+
+{%- macro ts_type(type) -%}
+{%- if type.kind == "ref" -%}
+{{ ts_type(type.elem) }}
+{%- elif type.kind == "list" -%}
+JsArray
+{%- elif type.kind == "optional" -%}
+JsValue
+{%- elif type.kind == "bool" -%}
+JsBoolean
+{%- elif type.kind == "int" -%}
+JsNumber
+{%- elif type.kind == "float" -%}
+JsNumber
+{%- elif type.kind in ("str", "str_based") -%}
+JsString
+{%- elif type.kind == "bytes" -%}
+JsTypedArray<u8>
+{%- elif type.kind == "struct" -%}
+JsObject
+{%- elif type.kind == "variant" -%}
+JsObject
+{%- elif type.kind == "result" -%}
+JsObject
+{%- else -%}
+{{ raise("Unsupported type %r" % type) }}
+{%- endif -%}
+{%- endmacro -%}
+
+
+{%- macro maybe_ref(js_val, type) -%}
+{%- if type.kind == "ref" and type.elem.kind == "list" -%}
+{{ js_val }}.as_slice()
+{%- elif type.kind == "optional" and type.elem.kind == "ref" -%}
+{{ js_val }}.as_ref()
+{%- elif type.kind == "ref" -%}
+&{{ js_val }}
+{%- else -%}
+{{ js_val }}
+{%- endif -%}
+{%- endmacro -%}
+
+
+{%- macro render_downcasted_js_to_rs(js_val, type, mut_cx_ref="&mut cx") -%}
+{%- if type.kind == "ref" -%}
+{{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }}
+{%- elif type.kind == "list" -%}
+{
+    let size = {{ js_val }}.len({{ mut_cx_ref }});
+    let mut v = Vec::with_capacity(size as usize);
+    for i in 0..size {
+        let js_item = {{ js_val }}.get({{ mut_cx_ref }}, i)?;
+        v.push({{ render_downcasted_js_to_rs("js_item", type.elem, mut_cx_ref) | indent(8) }});
+    }
+    v
+}
+{%- elif type.kind == "optional" -%}
+{
+    if {{ js_val }}.is_a::<JsNull, _>({{ mut_cx_ref }}) {
+        None
+    } else {
+        let {{ js_val }} = {{ js_val }}.downcast_or_throw::<{{ ts_type(type.elem) }}, _>({{ mut_cx_ref }})?;
+        Some(
+            {{ render_downcasted_js_to_rs("js_val", type.elem, mut_cx_ref) | indent(12) }}
+        )
+    }
+}
+{%- elif type.kind == "result" -%}
+{
+    if {{ js_val }}.get::<JsBoolean, _, _>({{ mut_cx_ref }}, "ok")?.value() {
+        let js_val = {{ js_val }}.get::<{{ ts_type(type.ok) }}, _, _>({{ mut_cx_ref }}, "value")?;
+        {{ render_downcasted_js_to_rs("js_val", type.ok, mut_cx_ref) | indent(8) }}
+    } else {
+        let js_val = {{ js_val }}.get::<{{ ts_type(type.err) }}, _, _>({{ mut_cx_ref }}, "error")?;
+        {{ render_downcasted_js_to_rs("js_val", type.err, mut_cx_ref) | indent(8) }}
+    }
+}
+{%- elif type.kind == "int" -%}
+{{ js_val }}.value({{ mut_cx_ref }}) as i64
+{%- elif type.kind == "str" -%}
+{{ js_val }}.value({{ mut_cx_ref }})
+{%- elif type.kind == "str_based" -%}
+match {{ js_val }}.value({{ mut_cx_ref }}).parse() {
+    Ok(val) => val,
+    Err(err) => return cx.throw_type_error(err),
+}
+{%- elif type.kind == "bytes" -%}
+{{ js_val }}.as_slice({{ mut_cx_ref }}).to_vec()
+{%- elif type.kind == "struct" -%}
+{{ struct_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, {{ js_val }})?
+{%- elif type.kind == "variant" -%}
+{{ variant_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, {{ js_val }})?
+{%- else -%}
+{{ js_val }}.value({{ mut_cx_ref }})
+{%- endif %}
+{%- endmacro -%}
+
+
+{%- macro render_rs_to_js(rs_value, type, mut_cx_ref="&mut cx") -%}
+{%- if type.kind == "ref" -%}
+{{ render_rs_to_js(rs_value, type.elem, mut_cx_ref) }}
+{%- elif type.kind == "list" -%}
+{
+    let js_array = JsArray::new({{ mut_cx_ref }}, {{ rs_value }}.len() as u32);
+    for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
+        let js_elem = {{ render_rs_to_js("elem", type.elem, mut_cx_ref) | indent(8) }};
+        js_array.set({{ mut_cx_ref }}, i as u32, js_elem)?;
+    }
+    js_array
+}
+{%- elif type.kind == "optional" -%}
+match {{ rs_value }} {
+    Some(elem) => {
+        {{ render_rs_to_js("elem", type.elem, mut_cx_ref) | indent(8) }}.as_value({{ mut_cx_ref }})
+    }
+    None => JsNull::new({{ mut_cx_ref }}).as_value({{ mut_cx_ref }}),
+}
+{%- elif type.kind == "result" -%}
+match {{ rs_value }} {
+    Ok(ok) => {
+        let js_obj = JsObject::new({{ mut_cx_ref }});
+        let js_tag = JsBoolean::new({{ mut_cx_ref }}, true);
+        js_obj.set({{ mut_cx_ref }}, "ok", js_tag)?;
+        let js_value = {{ render_rs_to_js("ok", type.ok, mut_cx_ref) | indent(8) }};
+        js_obj.set({{ mut_cx_ref }}, "value", js_value)?;
+        js_obj
+    }
+    Err(err) => {
+        let js_obj = cx.empty_object();
+        let js_tag = JsBoolean::new({{ mut_cx_ref }}, false);
+        js_obj.set({{ mut_cx_ref }}, "ok", js_tag)?;
+        let js_err = {{ render_rs_to_js("err", type.err, mut_cx_ref) | indent(8) }};
+        js_obj.set({{ mut_cx_ref }}, "error", js_err)?;
+        js_obj
+    }
+}
+{%- elif type.kind == "bool" -%}
+JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
+{%- elif type.kind == "int" -%}
+JsNumber::new({{ mut_cx_ref }}, {{ rs_value }} as f64)
+{%- elif type.kind == "float" -%}
+JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
+{%- elif type.kind == "str" -%}
+JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}).or_throw({{ mut_cx_ref }})?
+{%- elif type.kind == "str_based" -%}
+JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}).or_throw({{ mut_cx_ref }})?
+{%- elif type.kind == "bytes" -%}
+{
+    let mut js_buff = JsArrayBuffer::new({{ mut_cx_ref }}, {{ rs_value }}.len())?;
+    let js_buff_slice = js_buff.as_mut_slice({{ mut_cx_ref }});
+    for (i, c) in {{ rs_value }}.iter().enumerate() {
+        js_buff_slice[i] = *c;
+    }
+    js_buff
+}
+{%- elif type.kind == "struct" -%}
+{{ struct_rs_to_js_function_name(type) }}({{ mut_cx_ref }}, {{ rs_value }})?
+{%- elif type.kind == "variant" -%}
+{{ variant_rs_to_js_function_name(type) }}({{ mut_cx_ref }}, {{ rs_value }})?
+{%- else -%}
+{{ raise("Unsupported type %r" % type) }}
+{%- endif -%}
+{%- endmacro -%}
+
+
+{#-
+ # Structure-related macros
+ #}
+
+
+{%- macro struct_js_to_rs_function_name(struct) %}struct_{{ struct.name | lower }}_js_to_rs{% endmacro -%}
+{%- macro struct_rs_to_js_function_name(struct) %}struct_{{ struct.name | lower }}_rs_to_js{% endmacro -%}
+
+
+{%- macro render_struct_js_to_rs(struct) %}
+#[allow(dead_code)]
+fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::{{ struct.name }}> {
+{% for attr_name, attr_type in struct.attributes.items() %}
+    let {{ attr_name }} = {
+        let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "{{ attr_name }}")?;
+        {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(8) }}
+    };
+{% endfor %}
+    Ok(libparsec::{{ struct.name }} {
+{% for attr_name in struct.attributes.keys() %}
+        {{ attr_name }},
+{% endfor %}
+    })
+}
+{% endmacro -%}
+
+
+{%- macro render_struct_rs_to_js(struct) %}
+#[allow(dead_code)]
+fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::{{ struct.name }},
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+{% for attr_name, attr_type in struct.attributes.items() %}
+    let js_{{ attr_name }} = {{ render_rs_to_js("rs_obj.%s" % attr_name, attr_type, mut_cx_ref="cx") | indent }};
+    js_obj.set(cx, "{{ attr_name }}", js_{{ attr_name }})?;
+{% endfor %}
+    Ok(js_obj)
+}
+{% endmacro -%}
+
+
+{#-
+ # Variant-related macros
+ #}
+
+
+{%- macro variant_js_to_rs_function_name(variant) %}variant_{{ variant.name | lower }}_js_to_rs{% endmacro -%}
+{%- macro variant_rs_to_js_function_name(variant) %}variant_{{ variant.name | lower }}_rs_to_js{% endmacro -%}
+
+
+{%- macro render_variant_js_to_rs(variant) %}
+#[allow(dead_code)]
+fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::{{ variant.name }}> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+{% for value in variant.values %}
+        "{{ value.name }}" => {
+{% for attr_name, attr_type in value.attributes.items() %}
+            let {{ attr_name }} = {
+                let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "{{ attr_name }}")?;
+                {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(16) }}
+            };
+{% endfor %}
+            Ok(libparsec::{{ variant.name }}::{{ value.name }} {
+{% for attr_name in value.attributes.keys() %}
+                {{ attr_name }},
+{% endfor %}
+            })
+        },
+{% endfor %}
+        _ => cx.throw_type_error("Object is not a {{ variant.name }}"),
+    }
+}
+{% endmacro -%}
+
+
+{%- macro render_variant_rs_to_js(variant) %}
+#[allow(dead_code)]
+fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::{{ variant.name }},
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+{% for value in variant.values %}
+        libparsec::{{ variant.name }}::{{ value.name }}{ {% for attr_name in value.attributes.keys() %}{{ attr_name }},{% endfor %} } => {
+            let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+{% for attr_name, attr_type in value.attributes.items() %}
+            let js_{{ attr_name }} = {{ render_rs_to_js(attr_name, attr_type, mut_cx_ref="cx") | indent(12) }};
+            js_obj.set(cx, "{{ attr_name }}", js_{{ attr_name }})?;
+{% endfor %}
+        },
+{% endfor %}
+    }
+    Ok(js_obj)
+}
+{% endmacro -%}
+
+
+{#-
+ # Function-related macros
+ #}
+
+
+{%- macro render_async_function(meth) %}
+fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
+{# Convert params #}
+{% for param_name, param_type in meth.params.items() %}
+{% if param_type.kind == "optional" %}
+    let {{ param_name }} = match cx.argument_opt({{ loop.index0 }}) {
+        Some(v) => {
+            match v.downcast::<{{ ts_type(param_type.elem) }}, _>(&mut cx) {
+                Ok(js_val) => {
+                    Some({{ render_downcasted_js_to_rs("js_val", param_type.elem) | indent(20) }})
+                }
+                Err(_) => None,
+            }
+        },
+        None => None,
+    };
+{% else %}
+    let {{ param_name }} = {
+        let js_val = cx.argument::<{{ ts_type(param_type) }}>({{ loop.index0 }})?;
+        {{ render_downcasted_js_to_rs("js_val", param_type) | indent(8) }}
+    };
+{% endif %}
+{% endfor %}
+{# Call actual function #}
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
+
+{% if meth.return_type is none %}
+        libparsec::{{ meth.name }}(
+{% elif meth.return_type.kind == "list" %}
+        let mut ret = libparsec::{{ meth.name }}(
+{% else %}
+        let ret = libparsec::{{ meth.name }}(
+{% endif %}
+{% for param_name, param_type in meth.params.items() %}
+            {{ maybe_ref(param_name, param_type) }}
+{% endfor %}
+        ).await;
+
+        channel.send(move |mut cx| {
+{% if meth.return_type is none %}
+            let js_ret = cx.null();
+{% else %}
+            let js_ret = {{ render_rs_to_js("ret", meth.return_type) | indent(8) }};
+{% endif %}
+            deferred.resolve(&mut cx, js_ret);
+            Ok(())
+        });
+    });
+
+    Ok(promise)
+}
+{% endmacro -%}
+
+
+{%- macro render_sync_function(meth) %}
+fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
+{# Convert params #}
+{% for param_name, param_type in meth.params.items() %}
+{% if param_type.kind == "optional" %}
+    let {{ param_name }} = match cx.argument_opt({{ loop.index0 }}) {
+        Some(v) => {
+            match v.downcast::<{{ ts_type(param_type.elem) }}, _>(&mut cx) {
+                Ok(js_val) => {
+                    Some({{ render_downcasted_js_to_rs("js_val", param_type.elem) | indent(20) }})
+                }
+                Err(_) => None,
+            }
+        },
+        None => None,
+    };
+{% else %}
+    let {{ param_name }} = {
+        let js_val = cx.argument::<{{ ts_type(param_type) }}>({{ loop.index0 }})?;
+        {{ render_downcasted_js_to_rs("js_val", param_type) | indent(8) }}
+    };
+{% endif %}
+{% endfor %}
+{# Call actual function #}
+{% if meth.return_type is none %}
+    libparsec::{{ meth.name }}(
+{% elif meth.return_type.kind == "list" %}
+    let ret = libparsec::{{ meth.name }}(
+{% else %}
+    let ret = libparsec::{{ meth.name }}(
+{% endif %}
+{% for param_name, param_type in meth.params.items() %}
+        {{ maybe_ref(param_name, param_type) }}
+{% endfor %}
+    );
+{# Convert return value #}
+{% if meth.return_type is none %}
+    let js_ret = cx.null();
+{% else %}
+    let js_ret = {{ render_rs_to_js("ret", meth.return_type) | indent }};
+{% endif %}
+{# Resolve promise #}
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+{% endmacro -%}
+
+
+{#- End of macros #}
+
+/*
+ * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
+ */
+{% if api.rust_code_to_inject is not none %}
+{{ api.rust_code_to_inject }}
+{% endif %}
+
+#[allow(unused_imports)]
+use neon::{prelude::*, types::buffer::TypedArray};
+{# Structures #}
+{% for struct in api.structs %}
+
+// {{ struct.name }}
+
+{{ render_struct_js_to_rs(struct) }}
+
+{{ render_struct_rs_to_js(struct) }}
+{% endfor %}
+{# Variants #}
+{% for variant in api.variants %}
+
+// {{ variant.name }}
+
+{{ render_variant_js_to_rs(variant) }}
+
+{{ render_variant_rs_to_js(variant) }}
+{% endfor %}
+
+{% for meth in api.meths %}
+
+// {{ meth.name }}
+{% if meth.is_async %}
+{{ render_async_function(meth) }}
+{% else %}
+{{ render_sync_function(meth) }}
+{% endif %}
+{% endfor %}
+
+pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
+{% for meth in api.meths %}
+    cx.export_function("{{ meth.pascalName }}", {{ meth.name }})?;
+{% endfor %}
+    Ok(())
+}

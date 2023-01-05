@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import sys
+from string import ascii_lowercase
+
 import pytest
 from hypothesis import strategies as st
-from hypothesis_trio.stateful import initialize, rule, Bundle
-from string import ascii_lowercase
+from hypothesis_trio.stateful import Bundle, initialize, rule
 
 from parsec.api.data import EntryName
 

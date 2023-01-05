@@ -1,0 +1,19 @@
+{
+    "label": "SequesterAuthorityCertificate",
+    "type": "sequester_authority_certificate",
+    "other_fields": [
+        // Override author field to always uses None given this certificate can only be signed by the root key
+        {
+            "name": "author",
+            "type": "Option<DeviceID>"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "verify_key_der",
+            "type": "SequesterVerifyKeyDer"
+        }
+    ]
+}

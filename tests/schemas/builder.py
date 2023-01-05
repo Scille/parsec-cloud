@@ -1,33 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import re
+import importlib
 import json
 import pkgutil
-import importlib
 from types import ModuleType
+
+from parsec.api.data import MessageContent
+from parsec.api.data.base import BaseData
+from parsec.api.protocol.types import HumanHandleField
+from parsec.core.types.base import BaseLocalData
 from parsec.serde import (
     BaseSerializer,
     JSONSerializer,
     MsgpackSerializer,
-    ZipMsgpackSerializer,
     OneOfSchema,
+    ZipMsgpackSerializer,
 )
 from parsec.serde.fields import (
-    List,
-    Map,
-    Tuple,
-    Nested,
+    BaseEnumField,
     CheckedConstant,
     EnumCheckedConstant,
-    BaseEnumField,
+    List,
+    Map,
+    Nested,
+    Tuple,
 )
-
-from parsec.api.protocol.base import CmdSerializer
-from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
-from parsec.api.data.message import BaseMessageContent
-
-from parsec.core.types.base import BaseLocalData
-
 
 _SERIALIZER_TO_STR = {
     JSONSerializer: "json",
@@ -37,11 +35,8 @@ _SERIALIZER_TO_STR = {
 }
 _BASE_DATA_CLASSES = (
     BaseData,
-    BaseAPIData,
-    BaseSignedData,
-    BaseAPISignedData,
     BaseLocalData,
-    BaseMessageContent,
+    MessageContent,
 )
 
 
@@ -77,7 +72,7 @@ def field_to_spec(field):
     elif isinstance(field, Map):
         spec["key_type"] = field_to_spec(field.key_field)
         spec["nested_type"] = field_to_spec(field.nested_field)
-    elif isinstance(field, Tuple):
+    elif isinstance(field, (Tuple, HumanHandleField)):
         spec["args_types"] = [field_to_spec(x) for x in field.args]
     # Note Dict type correspond to a schemaless field, so nothing more to document
 
@@ -130,19 +125,6 @@ def collect_data_classes_from_module(mod: ModuleType):
     return data_classes
 
 
-def generate_api_data_specs():
-    import parsec.api.data
-
-    package = parsec.api.data
-
-    data_classes = set()
-    for sub_module_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        sub_module = importlib.import_module(sub_module_info.name)
-        data_classes.update(collect_data_classes_from_module(sub_module))
-
-    return {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
-
-
 def generate_core_data_specs():
     import parsec.core.types
     from parsec.core.local_device import key_file_serializer, legacy_key_file_serializer
@@ -168,122 +150,6 @@ def generate_core_data_specs():
 
     for serializer in (key_file_serializer, legacy_key_file_serializer):
         specs.update(_file_serialization_specs(serializer))
-    return specs
-
-
-def collect_cmd_serializers_from_module(mod):
-    data_classes = []
-    for item_name in dir(mod):
-        item = getattr(mod, item_name)
-        # Ignore non-data classes
-        if not isinstance(item, type) or not issubclass(item, _BASE_DATA_CLASSES):
-            continue
-        if item in _BASE_DATA_CLASSES:
-            continue
-        # Data classes with default serializer cannot be serialized, hence no need
-        # to check them (note they will be checked if they are used in Nested field)
-        if item.SERIALIZER_CLS is BaseSerializer:
-            continue
-        # Ignore imported classes (avoid to populate current module collection
-        # with external imported schema.
-        # Example: Avoid to add imported api schemas while generating parsec.core.types)
-        if not item.__module__.startswith(mod.__name__):
-            continue
-        data_classes.append(item)
-    return data_classes
-
-
-def cmd_serializer_to_spec(cmd_serializer: CmdSerializer):
-    assert isinstance(cmd_serializer, CmdSerializer)
-    # Serialization should always be msgpack, but add it just to be sure...
-    return {
-        "req": {
-            "serializing": _SERIALIZER_TO_STR[type(cmd_serializer._req_serializer)],
-            **schema_to_spec(cmd_serializer._req_serializer.schema),
-        },
-        "rep": {
-            "serializing": _SERIALIZER_TO_STR[type(cmd_serializer._rep_serializer)],
-            **schema_to_spec(cmd_serializer.rep_noerror_schema),
-        },
-    }
-
-
-def collect_cmd_serializer_from_module(mod, cmd_serializers):
-    for item_name in dir(mod):
-        item = getattr(mod, item_name)
-        if not isinstance(item, CmdSerializer):
-            continue
-        # This is where things start to be hacky: given we don't use enum
-        # for command name, and given we sometime use the same schema for
-        # APIv1 and v2 definitions, we rely on a weak naming convention
-        # to do the identification...
-        match = re.match(r"^(?P<name>(apiv1_)?[a-z][a-z0-9_]+)_serializer$", item_name)
-        assert match, f"Invalid name `{item_name}` for CmdSerializer !"
-        cmd_serializers[match.group("name")] = item
-    return cmd_serializers
-
-
-def generate_api_protocol_specs():
-    # First collect all command serializers
-    import parsec.api.protocol
-
-    package = parsec.api.protocol
-
-    cmd_serializers = {}
-    for sub_mod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        sub_mod = importlib.import_module(sub_mod_info.name)
-        collect_cmd_serializer_from_module(sub_mod, cmd_serializers)
-
-    # Now retrieve the per-family commands sets and generate specs
-    from parsec.api.protocol import cmds as cmds_mod
-
-    specs = {"APIv1": {}, "APIv2": {}}
-    used_cmds_serializers = set()
-    for item_name in dir(cmds_mod):
-        item = getattr(cmds_mod, item_name)
-        # Only keep command sets
-        if item_name.startswith("_") or not isinstance(item, set):
-            continue
-
-        # Just like for command serializers, commands sets have a naming convention
-        match = re.match(r"^(?P<apiv1>APIV1_)?(?P<name>[A-Z][A-Z0-9_]+)_CMDS", item_name)
-        assert match, f"Invalid name `{item_name}` for command set !"
-        cmds_set_name = match.group("name")
-        cmds_set_is_apiv1 = bool(match.group("apiv1"))
-        cmds_set_specs = {}
-
-        # Build command specs for the current commands sets
-        for cmd_name in item:
-            # Retrieve the corresponding command serializer
-            if cmds_set_is_apiv1:
-                # apiv1 commands serializer have the "apiv1_" prefix when the
-                # command name is clashing with a apiv2
-                try:
-                    cmd_serializer = cmd_serializers[f"apiv1_{cmd_name}"]
-                except KeyError:
-                    cmd_serializer = cmd_serializers[cmd_name]
-            else:
-                try:
-                    cmd_serializer = cmd_serializers[cmd_name]
-                except KeyError:
-                    # Due to oxidation, there is no more schema
-                    assert cmd_name in ["block_create", "block_read"]
-                    continue
-            used_cmds_serializers.add(cmd_serializer)  # Keep track for sanity check
-            cmds_set_specs[cmd_name] = cmd_serializer_to_spec(cmd_serializer)
-
-        specs["APIv1" if cmds_set_is_apiv1 else "APIv2"][cmds_set_name] = cmds_set_specs
-
-    # Finally ensure no command serializer has been omitted
-    unused_cmds_serializers = set(cmd_serializers.values()) - used_cmds_serializers
-    # TODO: realm_stats command is not part of commands group, what should we do with it ?
-    from parsec.api.protocol import realm_stats_serializer
-
-    unused_cmds_serializers.remove(realm_stats_serializer)
-    assert (
-        not unused_cmds_serializers
-    ), f"Command serializer declared but not part of a commands family group: {unused_cmds_serializers}"
-
     return specs
 
 

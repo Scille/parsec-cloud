@@ -69,8 +69,8 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
             .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
 
         if tag != DATETIME_EXT_ID {
-            let unexp = serde::de::Unexpected::Signed(tag as i64);
-            return Err(serde::de::Error::invalid_value(unexp, &self));
+            let unexpected = serde::de::Unexpected::Signed(tag as i64);
+            return Err(serde::de::Error::invalid_value(unexpected, &self));
         }
 
         const F64_SIZE: usize = std::mem::size_of::<f64>();
@@ -90,117 +90,6 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
         Ok(Self::Value::from_f64_with_us_precision(ts))
     }
 }
-
-/*
- * UUID
- */
-
-macro_rules! new_uuid_type {
-    (pub $name:ident) => {
-        #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Hash)]
-        pub struct $name(uuid::Uuid);
-
-        impl $name {
-            pub fn as_bytes(&self) -> &uuid::Bytes {
-                self.0.as_bytes()
-            }
-
-            pub fn as_hyphenated(&self) -> String {
-                self.0.as_hyphenated().to_string()
-            }
-        }
-
-        impl std::fmt::Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "{}", self.0.as_simple())
-            }
-        }
-
-        impl Default for $name {
-            #[inline]
-            fn default() -> Self {
-                Self(uuid::Uuid::new_v4())
-            }
-        }
-
-        impl std::ops::Deref for $name {
-            type Target = uuid::Uuid;
-
-            #[inline]
-            fn deref(&self) -> &Self::Target {
-                &self.0
-            }
-        }
-
-        impl std::convert::AsRef<uuid::Uuid> for $name {
-            #[inline]
-            fn as_ref(&self) -> &uuid::Uuid {
-                &self.0
-            }
-        }
-
-        impl std::convert::From<uuid::Uuid> for $name {
-            #[inline]
-            fn from(id: uuid::Uuid) -> Self {
-                Self(id)
-            }
-        }
-
-        impl std::convert::From<uuid::Bytes> for $name {
-            #[inline]
-            fn from(bytes: uuid::Bytes) -> Self {
-                Self(uuid::Uuid::from_bytes(bytes))
-            }
-        }
-
-        impl std::str::FromStr for $name {
-            type Err = &'static str;
-
-            #[inline]
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                uuid::Uuid::parse_str(s)
-                    .map(Self)
-                    .or(Err(concat!("Invalid ", stringify!($name))))
-            }
-        }
-
-        impl serde::Serialize for $name {
-            #[inline]
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: serde::Serializer,
-            {
-                // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
-                // rmp_serde this should be treated as an extension type
-                serializer.serialize_newtype_struct(
-                    rmp_serde::MSGPACK_EXT_STRUCT_NAME,
-                    &(
-                        $crate::ext_types::UUID_EXT_ID,
-                        serde_bytes::Bytes::new(self.as_bytes()),
-                    ),
-                )
-            }
-        }
-
-        impl<'de> serde::Deserialize<'de> for $name {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
-                // rmp_serde this should be treated as an extension type
-                deserializer
-                    .deserialize_newtype_struct(
-                        rmp_serde::MSGPACK_EXT_STRUCT_NAME,
-                        $crate::ext_types::UuidExtVisitor,
-                    )
-                    .map($name)
-            }
-        }
-    };
-}
-
-pub(crate) use new_uuid_type;
 
 pub(crate) struct UuidExtVisitor;
 
@@ -232,8 +121,8 @@ impl<'de> serde::de::Visitor<'de> for UuidExtVisitor {
             uuid::Uuid::from_slice(&data)
                 .map_err(|_| serde::de::Error::custom("invalid size of data extension"))
         } else {
-            let unexp = serde::de::Unexpected::Signed(tag as i64);
-            Err(serde::de::Error::invalid_value(unexp, &self))
+            let unexpected = serde::de::Unexpected::Signed(tag as i64);
+            Err(serde::de::Error::invalid_value(unexpected, &self))
         }
     }
 }
@@ -307,48 +196,14 @@ where
 impl<'de, T, U> serde_with::DeserializeAs<'de, Maybe<T>> for Maybe<U>
 where
     U: serde_with::DeserializeAs<'de, T>,
-    T: Default,
 {
     fn deserialize_as<D>(deserializer: D) -> Result<Maybe<T>, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        struct MaybeVisitor<T, U>(std::marker::PhantomData<(T, U)>);
-
-        impl<'de, T, U> serde::de::Visitor<'de> for MaybeVisitor<T, U>
-        where
-            U: serde_with::DeserializeAs<'de, T>,
-            T: Default,
-        {
-            type Value = Maybe<T>;
-
-            fn expecting(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                unreachable!()
-            }
-
-            fn visit_unit<E>(self) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(Maybe::Present(T::default()))
-            }
-
-            fn visit_none<E>(self) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(Maybe::Present(T::default()))
-            }
-
-            fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                U::deserialize_as(deserializer).map(Maybe::Present)
-            }
-        }
-
-        deserializer.deserialize_option(MaybeVisitor::<T, U>(std::marker::PhantomData))
+        Ok(Maybe::Present(
+            serde_with::de::DeserializeAsWrap::<T, U>::deserialize(deserializer)?.into_inner(),
+        ))
     }
 }
 

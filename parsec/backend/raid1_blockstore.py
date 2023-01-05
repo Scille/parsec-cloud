@@ -1,19 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import List
-from structlog import get_logger
 
-from parsec.utils import open_service_nursery
-from parsec.api.protocol import OrganizationID, BlockID
+from structlog import get_logger
+from trio import CancelScope, Nursery
+
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
-
+from parsec.utils import open_service_nursery
 
 logger = get_logger()
 
 
 class RAID1BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, blockstores: List[BaseBlockStoreComponent], partial_create_ok: bool = False):
+    def __init__(
+        self,
+        blockstores: List[BaseBlockStoreComponent],
+        partial_create_ok: bool = False,
+    ):
         self.blockstores = blockstores
         self._partial_create_ok = partial_create_ok
         self._logger = logger.bind(blockstore_type="RAID1", partial_create_ok=partial_create_ok)
@@ -21,7 +27,9 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
     async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         value = None
 
-        async def _single_blockstore_read(nursery, blockstore: BaseBlockStoreComponent) -> None:
+        async def _single_blockstore_read(
+            nursery: Nursery, blockstore: BaseBlockStoreComponent
+        ) -> None:
             nonlocal value
             try:
                 value = await blockstore.read(organization_id, block_id)
@@ -50,7 +58,7 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
         at_least_one_error = False
 
         async def _single_blockstore_create(
-            cancel_scope, blockstore: BaseBlockStoreComponent
+            cancel_scope: CancelScope, blockstore: BaseBlockStoreComponent
         ) -> None:
             nonlocal at_least_one_success
             nonlocal at_least_one_error
@@ -72,15 +80,15 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
             if not at_least_one_success:
                 self._logger.warning(
                     "Block create error: All nodes have failed",
-                    organization_id=str(organization_id),
-                    block_id=str(block_id),
+                    organization_id=organization_id.str,
+                    block_id=block_id.hex,
                 )
                 raise BlockStoreError("All RAID1 nodes have failed")
         else:
             if at_least_one_error:
                 self._logger.warning(
                     "Block create error: A node have failed",
-                    organization_id=str(organization_id),
-                    block_id=str(block_id),
+                    organization_id=organization_id.str,
+                    block_id=block_id.hex,
                 )
                 raise BlockStoreError("A RAID1 node have failed")

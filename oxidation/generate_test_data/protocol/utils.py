@@ -6,6 +6,7 @@ import zlib
 import msgpack
 from binascii import unhexlify
 
+from parsec._parsec import DateTime, DeviceCertificate, UserCertificate
 from parsec._version import __version__
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, VerifyKey
 from parsec.api.data import EntryID
@@ -63,12 +64,56 @@ def generate_BOB_local_device():
     )
 
 
+NOW = DateTime(2020, 1, 1)
 ALICE = generate_ALICE_local_device()
 BOB = generate_BOB_local_device()
+
+USER_CERTIFICATE = UserCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    user_id=BOB.user_id,
+    human_handle=BOB.human_handle,
+    public_key=BOB.public_key,
+    profile=UserProfile.STANDARD,
+).dump_and_sign(ALICE.signing_key)
+
+REDACTED_USER_CERTIFICATE = UserCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    user_id=BOB.user_id,
+    human_handle=None,
+    public_key=BOB.public_key,
+    profile=UserProfile.STANDARD,
+).dump_and_sign(ALICE.signing_key)
+
+DEVICE_CERTIFICATE = DeviceCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    device_id=BOB.device_id,
+    device_label=BOB.device_label,
+    verify_key=BOB.verify_key,
+).dump_and_sign(ALICE.signing_key)
+
+REDACTED_DEVICE_CERTIFICATE = DeviceCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    device_id=BOB.device_id,
+    device_label=None,
+    verify_key=BOB.verify_key,
+).dump_and_sign(ALICE.signing_key)
+
 KEY = SecretKey(unhexlify("b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"))
 
-
-KEYS_PRIORITY = ("type", "author", "timestamp", "name", "id", "version", "created", "updated")
+KEYS_PRIORITY = (
+    "type",
+    "author",
+    "timestamp",
+    "name",
+    "id",
+    "version",
+    "created",
+    "updated",
+)
 
 
 def custom_order_iter(d):
@@ -123,7 +168,8 @@ def _format_item(value, max_width):
             item_repr = " " * INDENT_SIZE
             item_repr += f"{item_key}: "
             item_repr += _indent(
-                _format_item(item_value, max_width=max_width - INDENT_SIZE), indent_first_line=False
+                _format_item(item_value, max_width=max_width - INDENT_SIZE),
+                indent_first_line=False,
             )
             output += item_repr
             output += "\n"
@@ -213,7 +259,7 @@ def display(name, raw, get_content_pipeline, max_width=89):
         f"================================ {name} ==============================================\n"
     )
     output += "\n"
-    output += f"// Generated from Python implementation (Parsec {__version__})\n"
+    output += f"// Generated from Rust implementation (Parsec {__version__})\n"
     output += "// Content:\n"
     for line in _indent(_format_msgpack(content, max_width=max_width - 3 - INDENT_SIZE)).split(
         "\n"

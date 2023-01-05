@@ -3,7 +3,8 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_protocol::*;
+use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_types::{BlockID, RealmID};
 
 #[rstest]
 fn serde_block_create_req() {
@@ -20,8 +21,8 @@ fn serde_block_create_req() {
     );
 
     let req = authenticated_cmds::block_create::Req {
-        block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        block_id: BlockID::from_hex("57c629b69d6c4abbaf651cafa46dbc93").unwrap(),
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         block: b"foobar".to_vec(),
     };
 
@@ -41,74 +42,63 @@ fn serde_block_create_req() {
 
 #[rstest]
 #[case::ok(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "ok"
-        &hex!(
-            "81a6737461747573a26f6b"
-        )[..],
-        authenticated_cmds::block_create::Rep::Ok
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "ok"
+    &hex!(
+        "81a6737461747573a26f6b"
+    )[..],
+    authenticated_cmds::block_create::Rep::Ok
 )]
 #[case::already_exists(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "already_exists"
-        &hex!(
-            "81a6737461747573ae616c72656164795f657869737473"
-        )[..],
-        authenticated_cmds::block_create::Rep::AlreadyExists
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "already_exists"
+    &hex!(
+        "81a6737461747573ae616c72656164795f657869737473"
+    )[..],
+    authenticated_cmds::block_create::Rep::AlreadyExists
 )]
 #[case::not_found(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "not_found"
-        &hex!(
-            "81a6737461747573a96e6f745f666f756e64"
-        )[..],
-        authenticated_cmds::block_create::Rep::NotFound
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "not_found"
+    &hex!(
+        "81a6737461747573a96e6f745f666f756e64"
+    )[..],
+    authenticated_cmds::block_create::Rep::NotFound
 )]
 #[case::timeout(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "timeout"
-        &hex!(
-            "81a6737461747573a774696d656f7574"
-        )[..],
-        authenticated_cmds::block_create::Rep::Timeout
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "timeout"
+    &hex!(
+        "81a6737461747573a774696d656f7574"
+    )[..],
+    authenticated_cmds::block_create::Rep::Timeout
 )]
 #[case::not_allowed(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "not_allowed"
-        &hex!(
-            "81a6737461747573ab6e6f745f616c6c6f776564"
-        )[..],
-        authenticated_cmds::block_create::Rep::NotAllowed
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "not_allowed"
+    &hex!(
+        "81a6737461747573ab6e6f745f616c6c6f776564"
+    )[..],
+    authenticated_cmds::block_create::Rep::NotAllowed
 )]
 #[case::in_maintenance(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "in_maintenance"
-        &hex!(
-            "81a6737461747573ae696e5f6d61696e74656e616e6365"
-        )[..],
-        authenticated_cmds::block_create::Rep::InMaintenance
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "in_maintenance"
+    &hex!(
+        "81a6737461747573ae696e5f6d61696e74656e616e6365"
+    )[..],
+    authenticated_cmds::block_create::Rep::InMaintenance
 )]
-fn serde_block_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_create::Rep)) {
-    let (raw, expected) = raw_expected;
-
+fn serde_block_create_rep(
+    #[case] raw: &[u8],
+    #[case] expected: authenticated_cmds::block_create::Rep,
+) {
     let data = authenticated_cmds::block_create::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
@@ -133,7 +123,7 @@ fn serde_block_read_req() {
     );
 
     let req = authenticated_cmds::block_read::Req {
-        block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
+        block_id: BlockID::from_hex("57c629b69d6c4abbaf651cafa46dbc93").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::BlockRead(req.clone());
@@ -152,66 +142,54 @@ fn serde_block_read_req() {
 
 #[rstest]
 #[case::ok(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   block: hex!("666f6f626172")
-        //   status: "ok"
-        &hex!(
-            "82a5626c6f636bc406666f6f626172a6737461747573a26f6b"
-        )[..],
-        authenticated_cmds::block_read::Rep::Ok {
-            block: b"foobar".to_vec(),
-        }
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   block: hex!("666f6f626172")
+    //   status: "ok"
+    &hex!(
+        "82a5626c6f636bc406666f6f626172a6737461747573a26f6b"
+    )[..],
+    authenticated_cmds::block_read::Rep::Ok {
+        block: b"foobar".to_vec(),
+    }
 )]
 #[case::not_found(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "not_found"
-        &hex!(
-            "81a6737461747573a96e6f745f666f756e64"
-        )[..],
-        authenticated_cmds::block_read::Rep::NotFound
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "not_found"
+    &hex!(
+        "81a6737461747573a96e6f745f666f756e64"
+    )[..],
+    authenticated_cmds::block_read::Rep::NotFound
 )]
 #[case::timeout(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "timeout"
-        &hex!(
-            "81a6737461747573a774696d656f7574"
-        )[..],
-        authenticated_cmds::block_read::Rep::Timeout
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "timeout"
+    &hex!(
+        "81a6737461747573a774696d656f7574"
+    )[..],
+    authenticated_cmds::block_read::Rep::Timeout
 )]
 #[case::not_allowed(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "not_allowed"
-        &hex!(
-            "81a6737461747573ab6e6f745f616c6c6f776564"
-        )[..],
-        authenticated_cmds::block_read::Rep::NotAllowed
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "not_allowed"
+    &hex!(
+        "81a6737461747573ab6e6f745f616c6c6f776564"
+    )[..],
+    authenticated_cmds::block_read::Rep::NotAllowed
 )]
 #[case::in_maintenance(
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   status: "in_maintenance"
-        &hex!(
-            "81a6737461747573ae696e5f6d61696e74656e616e6365"
-        )[..],
-        authenticated_cmds::block_read::Rep::InMaintenance
-    )
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "in_maintenance"
+    &hex!(
+        "81a6737461747573ae696e5f6d61696e74656e616e6365"
+    )[..],
+    authenticated_cmds::block_read::Rep::InMaintenance
 )]
-fn serde_block_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_read::Rep)) {
-    let (raw, expected) = raw_expected;
-
+fn serde_block_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds::block_read::Rep) {
     let data = authenticated_cmds::block_read::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);

@@ -33,12 +33,16 @@
 use std::{collections::HashMap, num::NonZeroU64};
 
 use libparsec_crypto::{PublicKey, SigningKey};
-use libparsec_protocol::authenticated_cmds::{
-    self, invite_delete::InvitationDeletedReason, invite_new::UserOrDevice,
+use libparsec_protocol::{
+    authenticated_cmds::v3::{
+        self as authenticated_cmds, invite_delete::InvitationDeletedReason,
+        invite_new::UserOrDevice,
+    },
+    IntegerBetween1And100,
 };
 use libparsec_types::{
-    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, RealmID,
-    ReencryptionBatchEntry, UserID, VlobID,
+    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, Maybe, RealmID,
+    ReencryptionBatchEntry, SequesterServiceID, UserID, VlobID,
 };
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
@@ -84,11 +88,23 @@ impl AuthenticatedCmds {
     }
 }
 
+macro_rules! build_req {
+    (unit $name:ident, $key:ident) => {
+        authenticated_cmds::$name::Req($key)
+    };
+
+    ($name:ident, $($key:ident),*) => {
+        authenticated_cmds::$name::Req {
+            $($key),*
+        }
+    }
+}
+
 macro_rules! impl_auth_cmds {
     (
         $(
             $(#[$outer:meta])*
-            $name:ident($($key:ident: $type:ty),*)
+            $(@$decorator:ident)? $name:ident($($key:ident: $type:ty),*)
         )+
     ) => {
         $(
@@ -96,7 +112,8 @@ macro_rules! impl_auth_cmds {
             pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
                 let request_builder = self.client.post(self.url.clone());
 
-                let data = authenticated_cmds::$name::Req::new($($key),*).dump()
+                let data = build_req!($($decorator)? $name, $($key),*)
+                    .dump()
                     .expect(concat!("failed to serialize the command ", stringify!($name)));
 
                 let req = prepare_request(request_builder, &self.signing_key, &self.device_id, data).send();
@@ -209,7 +226,7 @@ impl AuthenticatedCmds {
             omit_revoked: bool,
             omit_non_human: bool,
             page: NonZeroU64,
-            per_page: NonZeroU64
+            per_page: IntegerBetween1And100
         )
     );
 
@@ -230,8 +247,11 @@ impl AuthenticatedCmds {
         invite_delete(token: InvitationToken, reason: InvitationDeletedReason)
         /// Retrieve a list of invited users.
         invite_list()
+    );
+
+    impl_auth_cmds!(
         /// Invite a new `User` or `Device`
-        invite_new(user_or_device: UserOrDevice)
+        @unit invite_new(user_or_device: UserOrDevice)
     );
 
     impl_auth_cmds!(
@@ -297,7 +317,8 @@ impl AuthenticatedCmds {
             encryption_revision: u64,
             vlob_id: VlobID,
             timestamp: DateTime,
-            blob: Vec<u8>
+            blob: Vec<u8>,
+            sequester_blob: Maybe<Option<HashMap<SequesterServiceID, Vec<u8>>>>
         )
         /// List version of a vlob
         vlob_list_versions(vlob_id: VlobID)
@@ -328,7 +349,8 @@ impl AuthenticatedCmds {
             vlob_id: VlobID,
             timestamp: DateTime,
             version: u32,
-            blob: Vec<u8>
+            blob: Vec<u8>,
+            sequester_blob: Maybe<Option<HashMap<SequesterServiceID, Vec<u8>>>>
         )
     );
 }

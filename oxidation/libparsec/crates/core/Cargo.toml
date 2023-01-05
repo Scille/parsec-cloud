@@ -11,19 +11,23 @@ path = "tests/mod.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-libparsec_client_types = { path = "../client_types" }
-libparsec_crypto = { path = "../crypto" }
-libparsec_protocol = { path = "../protocol" }
-libparsec_types = { path = "../types" }
+[features]
+default = ["use-rustcrypto"]
+use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
+use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
 
-rmp-serde = "1.0.0"
-serde = { version = "1.0.142", features = ["derive"] }
-serde_with = "2.0.0"
-thiserror = "1.0.32"
+[dependencies]
+libparsec_crypto = { path = "../crypto", default-features = false }
+libparsec_protocol = { path = "../protocol", default-features = false }
+libparsec_types = { path = "../types", default-features = false }
+
+rmp-serde = "1.1.1"
+serde = { version = "1.0.147", features = ["derive"] }
+serde_with = "2.1.0"
+thiserror = "1.0.37"
 
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 
-rstest = "0.15.0"
-chrono = "0.4.20"
+rstest = "0.16.0"
+chrono = "0.4.22"

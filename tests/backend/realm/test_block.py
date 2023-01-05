@@ -1,40 +1,40 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import trio
 import pytest
-from hypothesis import given, strategies as st
+import trio
+from hypothesis import given
+from hypothesis import strategies as st
 
 from parsec._parsec import (
-    DateTime,
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
     BlockCreateRepOk,
     BlockCreateRepTimeout,
     BlockReadRepNotAllowed,
-    BlockReadRepOk,
     BlockReadRepNotFound,
+    BlockReadRepOk,
     BlockReadRepTimeout,
-)
-from parsec.backend.realm import RealmGrantedRole
-from parsec.backend.block import BlockStoreError
-from parsec.backend.raid5_blockstore import (
-    split_block_in_chunks,
-    generate_checksum_chunk,
-    rebuild_block_from_chunks,
+    DateTime,
 )
 from parsec.api.protocol import (
     BlockID,
+    RealmRole,
     VlobID,
     block_create_serializer,
     block_read_serializer,
     packb,
-    RealmRole,
 )
-
-from tests.common import customize_fixtures
+from parsec.backend.block import BlockStoreError
+from parsec.backend.raid5_blockstore import (
+    generate_checksum_chunk,
+    rebuild_block_from_chunks,
+    split_block_in_chunks,
+)
+from parsec.backend.realm import RealmGrantedRole
 from tests.backend.common import block_create, block_read
-
+from tests.common import customize_fixtures
 
 BLOCK_ID = BlockID.from_hex("00000000000000000000000000000001")
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")
@@ -45,7 +45,13 @@ BLOCK_DATA = b"Hodi ho !"
 async def block(backend, alice, realm):
     block_id = BlockID.from_hex("0000000000000000000000000000000C")
 
-    await backend.block.create(alice.organization_id, alice.device_id, block_id, realm, BLOCK_DATA)
+    await backend.block.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        block_id=block_id,
+        realm_id=realm,
+        block=BLOCK_DATA,
+    )
     return block_id
 
 
@@ -58,7 +64,7 @@ async def test_block_read_check_access_rights(
     assert isinstance(rep, BlockReadRepNotAllowed)
 
     # User part of the realm with various role
-    for role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER, RealmRole.OWNER):
+    for role in RealmRole.VALUES:
         await backend.realm.update_roles(
             alice.organization_id,
             RealmGrantedRole(
@@ -171,9 +177,9 @@ async def test_raid1_block_create_partial_failure(caplog, alice_ws, backend, rea
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert isinstance(rep, BlockCreateRepTimeout)
 
-    log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
+    log = caplog.assert_occurred_once("[warning  ] Block create error: A node have failed")
     assert f"organization_id=CoolOrg" in log
-    assert f"block_id={BLOCK_ID}" in log
+    assert f"block_id={BLOCK_ID.hex}" in log
 
 
 @pytest.mark.trio
@@ -240,9 +246,9 @@ async def test_raid5_block_create_single_failure(
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert isinstance(rep, BlockCreateRepTimeout)
 
-    log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
+    log = caplog.assert_occurred_once("[warning  ] Block create error: A node have failed")
     assert f"organization_id=CoolOrg" in log
-    assert f"block_id={BLOCK_ID}" in log
+    assert f"block_id={BLOCK_ID.hex}" in log
 
 
 @pytest.mark.trio
@@ -281,11 +287,11 @@ async def test_raid5_partial_create_ok_block_create_too_many_failures(
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert isinstance(rep, BlockCreateRepTimeout)
 
-    log = caplog.assert_occured_once(
+    log = caplog.assert_occurred_once(
         "[warning  ] Block create error: More than 1 nodes have failed"
     )
     assert f"organization_id=CoolOrg" in log
-    assert f"block_id={BLOCK_ID}" in log
+    assert f"block_id={BLOCK_ID.hex}" in log
 
 
 @pytest.mark.trio
@@ -343,21 +349,21 @@ async def test_raid5_block_read_multiple_failure(
     rep = await block_read(alice_ws, block)
     assert isinstance(rep, BlockReadRepTimeout)
 
-    log = caplog.assert_occured_once("[warning  ] Block read error: More than 1 nodes have failed")
+    log = caplog.assert_occurred_once("[warning  ] Block read error: More than 1 nodes have failed")
     assert f"organization_id=CoolOrg" in log
-    assert f"block_id={block}" in log
+    assert f"block_id={block.hex}" in log
 
 
 @pytest.mark.parametrize(
     "bad_msg",
     [
         {},
-        {"id": str(BLOCK_ID), "block": BLOCK_DATA, "bad_field": "foo"},
+        {"id": BLOCK_ID.hex, "block": BLOCK_DATA, "bad_field": "foo"},
         {"id": "not an uuid", "block": BLOCK_DATA},
         {"id": 42, "block": BLOCK_DATA},
         {"id": None, "block": BLOCK_DATA},
-        {"id": str(BLOCK_ID), "block": 42},
-        {"id": str(BLOCK_ID), "block": None},
+        {"id": BLOCK_ID.hex, "block": 42},
+        {"id": BLOCK_ID.hex, "block": None},
         {"block": BLOCK_DATA},
     ],
 )
@@ -378,7 +384,7 @@ async def test_block_read_not_found(alice_ws):
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": str(BLOCK_ID), "bad_field": "foo"},
+        {"id": BLOCK_ID.hex, "bad_field": "foo"},
         {"id": "not_an_uuid"},
         {"id": 42},
         {"id": None},

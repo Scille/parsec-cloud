@@ -4,7 +4,7 @@ repos:
   # Common stuff
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.2.3 # Use the ref you want to point at
+    rev: v4.3.0 # Use the ref you want to point at
     hooks:
       - id: mixed-line-ending
         alias: eol
@@ -30,69 +30,121 @@ repos:
         types_or: [ python, sql, rust, vue, ts, tsx, javascript, jsx ]
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.26.3
+    rev: v1.28.0
     hooks:
       - id: yamllint
+
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v6.16.0
+    hooks:
+      - id: cspell
+        args:
+          - --config=./.cspell/cspell.config.yml
+          - --no-progress
+          - --dot
+          - --no-must-find-files
+          - --no-summary
+          - --gitignore
+        additional_dependencies:
+          - "@cspell/dict-fr-fr"
+          - "@cspell/dict-fr-reforme"
+          - "@cspell/dict-bash"
+          - "@cspell/dict-shell"
+          - "@cspell/dict-win32"
 
   ########
   # Python
 
-  - repo: https://github.com/ambv/black
-    rev: 22.6.0
+  # Long story short we cannot use pre-commit isolated venv system for mypy
+  # given mypy requires to have access to the project dependencies.
+  # We used to specify the list of dependencies actually needed by mypy as
+  # additional dependencies to install before running the pre-commit but it
+  # was incredibly error-prone and create random breakages.
+  # Instead we go the pragmatic way by calling mypy trough poetry:
+  # - `poetry run` will stick to the shell current virtual env
+  # - if the shell is not into a virtual env, poetry will create one and install Parsec&deps
+  # - lastly, mypy is started
+  # So this is similar to what the developer does when running mypy from it dev shell \o/
+  #
+  # Now that we use poetry to run mypy, why not also use it for ruff & black !
+  # This have the following benefits:
+  # - It prevents going out of sync in tools version between pre-commit-config
+  #   and poetry.lock
+  # - It saves time on initial run because we don't have to create isolated
+  #   virtualenv for those tools
+  # - Pre-commit hook are really simple, so it's no big deal to inline them.
+  # - Pre-commit hook need sometime tweaks (e.g. ruff hook not correctly
+  #   handling .pyi), it's more readable then to have all the config here then.
+  - repo: local
     hooks:
+      - id: ruff
+        name: ruff (using `poetry run ruff`)
+        entry: poetry run ruff
+        require_serial: true
+        language: system
+        types_or: [ python, pyi ]
+        args:
+          [
+            --extend-exclude=parsec/core/gui/_resources_rc.py,
+            --extend-exclude=parsec/core/gui/ui/*,
+            --extend-exclude=oxidation/*,
+            --fix,
+          ]
+
       - id: black
+        name: black (using `poetry run black`)
+        entry: poetry run black
+        require_serial: true
+        language: system
+        types_or: [ python, pyi ]
         args:
           [
             --line-length=100,
             --exclude=parsec/core/gui/_resources_rc.py,
             --exclude=parsec/core/gui/ui/,
           ]
-        language_version: python3
 
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.3
-    hooks:
-      - id: flake8
-
-  # Long story short we cannot use pre-commit isolated venv system for mypy
-  # given mypy requires to have access to the project dependencies.
-  # We used to specify the list of dependencies actually needed by mypy as
-  # additional dependencies to install before running the pre-commit but it
-  # was increadibly error-prone and create random breakages.
-  # Instead we go the pragmatic way by calling mypy trough poetry:
-  # - `poetry run` will stick to the shell current virtual env
-  # - if the shell is not into a virtual env, poetry will create one and install Parsec&deps
-  # - lastly, mypy is started
-  # So this is similar to what the developer does when running mypy from it dev shell \o/
-  - repo: local
-    hooks:
       - id: mypy
         name: Mypy (using `poetry run mypy`)
         entry: poetry run mypy
         require_serial: true
         language: system
         types_or: [ python, pyi ]
-        # Mypy will complain if it find two files with the same name which
-        # are not part of a package (typically occurs for packaging script helpers)
         files: ^(parsec|tests)/
 
   ######
   # Rust
 
-  - repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
+  - repo: local
     hooks:
       - id: fmt
+        name: fmt
+        entry: cargo fmt
+        language: system
+        types: [ rust ]
+        args: [ -- ]
+
       - id: clippy
+        name: clippy
+        entry: cargo clippy
+        language: system
+        types: [ rust ]
+        pass_filenames: false
         args:
           [
             --workspace,
             --tests,
             --bins,
             --lib,
+            --exclude=libparsec_bindings_jni,
+            --exclude=libparsec_bindings_web,
+            --exclude=libparsec_bindings_electron,
+            --exclude=libparsec_bindings_common,
             --,
             --deny=warnings,
             --deny=clippy::self_named_module_files,
+            --deny=clippy::undocumented_unsafe_blocks,
+
           ]
 
   ####
@@ -102,7 +154,6 @@ repos:
     hooks:
       - id: eslint
         name: eslint
-        description: ""
         entry: eslint
         language: node
         files: ^oxidation/client/
@@ -119,3 +170,16 @@ repos:
           - "@vue/cli-plugin-eslint@5.0.1"
           - "@vue/eslint-config-typescript@9.1.0"
           - "@intlify/eslint-plugin-vue-i18n@1.4.0"
+
+  ######
+  # JSON
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.18.4
+    hooks:
+      - id: check-jsonschema
+        name: Validate protocol files with jsonschema
+        files: ^oxidation/libparsec/crates/protocol/schema/
+        types_or: [ json5 ]
+        args: [ --schemafile, json_schema/protocol.schema.json ]
+        additional_dependencies: [ json5 ]

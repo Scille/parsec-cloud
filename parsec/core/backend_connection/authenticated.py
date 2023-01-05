@@ -1,25 +1,57 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from enum import Enum
+from typing import (
+    TYPE_CHECKING,
+    AsyncGenerator,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    List,
+    Protocol,
+    TypeVar,
+)
 
 import trio
-from enum import Enum
-from contextlib import asynccontextmanager
-from typing import Optional, List, AsyncGenerator, Callable, TypeVar
 from structlog import get_logger
-from functools import partial
+from trio_typing import TaskStatus
 
-from parsec.crypto import SigningKey
-from parsec.event_bus import EventBus
-from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
-from parsec.core.types import EntryID, BackendOrganizationAddr, OrganizationConfig
+from parsec._parsec import (
+    ActiveUsersLimit,
+    CoreEvent,
+    EventsListenRep,
+    EventsListenRepOk,
+    EventsListenRepOkMessageReceived,
+    EventsListenRepOkPinged,
+    EventsListenRepOkPkiEnrollmentUpdated,
+    EventsListenRepOkRealmMaintenanceFinished,
+    EventsListenRepOkRealmMaintenanceStarted,
+    EventsListenRepOkRealmRolesUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
+    EventsSubscribeRepOk,
+    OrganizationConfig,
+    OrganizationConfigRepOk,
+    OrganizationConfigRepUnknownStatus,
+)
+from parsec.api.protocol import AUTHENTICATED_CMDS, DeviceID
+from parsec.api.transport import Transport
 from parsec.core.backend_connection import cmds
-from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
 from parsec.core.backend_connection.exceptions import (
-    BackendNotAvailable,
     BackendConnectionRefused,
+    BackendNotAvailable,
     BackendOutOfBallparkError,
 )
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
-from parsec.core.core_events import CoreEvent
+from parsec.core.backend_connection.transport import TransportPool, connect_as_authenticated
+
+if TYPE_CHECKING:
+    from parsec.core.fs.userfs.userfs import UserFS
+from parsec.core.types import BackendOrganizationAddr, LocalDevice
+from parsec.crypto import SigningKey
+from parsec.event_bus import EventBus
+from parsec.utils import open_service_nursery
 
 logger = get_logger()
 
@@ -34,6 +66,28 @@ BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED C
 
 BaseExceptionTypeVar = TypeVar("BaseExceptionTypeVar", bound=BaseException)
 
+T = TypeVar("T")
+
+
+class AcquireTransport(Protocol):
+    def __call__(
+        self,
+        force_fresh: bool = False,
+        ignore_status: bool = False,
+        allow_not_available: bool = False,
+    ) -> AbstractAsyncContextManager[Transport]:
+        ...
+
+
+class MonitorCallback(Protocol):
+    def __call__(
+        self,
+        task_status: MonitorTaskStatus,
+        user_fs: UserFS | None = None,
+        event_bus: EventBus | None = None,
+    ) -> Awaitable[None]:
+        ...
+
 
 def copy_exception(exception: BaseExceptionTypeVar) -> BaseExceptionTypeVar:
     result = type(exception)(*exception.args)
@@ -42,13 +96,17 @@ def copy_exception(exception: BaseExceptionTypeVar) -> BaseExceptionTypeVar:
 
 
 class BackendAuthenticatedCmds:
-    def __init__(self, addr: BackendOrganizationAddr, acquire_transport):
+    def __init__(
+        self,
+        addr: BackendOrganizationAddr,
+        acquire_transport: AcquireTransport,
+    ):
         self.addr = addr
         self.acquire_transport = acquire_transport
 
     events_subscribe = expose_cmds_with_retrier(cmds.events_subscribe)
     events_listen = expose_cmds_with_retrier(cmds.events_listen)
-    ping = expose_cmds_with_retrier(cmds.ping)
+    ping = expose_cmds_with_retrier(cmds.authenticated_ping)
     message_get = expose_cmds_with_retrier(cmds.message_get)
     user_get = expose_cmds_with_retrier(cmds.user_get)
     user_create = expose_cmds_with_retrier(cmds.user_create)
@@ -102,53 +160,60 @@ for cmd in AUTHENTICATED_CMDS:
     assert hasattr(BackendAuthenticatedCmds, cmd)
 
 
-def _handle_event(event_bus: EventBus, rep: dict) -> None:
-    if rep["status"] != "ok":
+# TODO: can we avoid the conversions RealmID/VlobID -> EntryID
+def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
+    if not isinstance(rep, EventsListenRepOk):
         logger.warning("Bad response to `events_listen` command", rep=rep)
         return
 
-    if rep["event"] == APIEvent.MESSAGE_RECEIVED:
-        event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=rep["index"])
+    if isinstance(rep, EventsListenRepOkMessageReceived):
+        event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=rep.index)
 
-    elif rep["event"] == APIEvent.PINGED:
-        event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep["ping"])
+    elif isinstance(rep, EventsListenRepOkPinged):
+        event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep.ping)
 
-    elif rep["event"] == APIEvent.REALM_ROLES_UPDATED:
+    elif isinstance(rep, EventsListenRepOkRealmRolesUpdated):
         event_bus.send(
             CoreEvent.BACKEND_REALM_ROLES_UPDATED,
-            realm_id=EntryID(rep["realm_id"].uuid),
-            role=rep["role"],
+            realm_id=rep.realm_id.to_entry_id(),
+            role=rep.role,
         )
 
-    elif rep["event"] == APIEvent.REALM_VLOBS_UPDATED:
+    elif isinstance(rep, EventsListenRepOkRealmVlobsUpdated):
         event_bus.send(
             CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-            realm_id=EntryID(rep["realm_id"].uuid),
-            checkpoint=rep["checkpoint"],
-            src_id=EntryID(rep["src_id"].uuid),
-            src_version=rep["src_version"],
+            realm_id=rep.realm_id.to_entry_id(),
+            checkpoint=rep.checkpoint,
+            src_id=rep.src_id.to_entry_id(),
+            src_version=rep.src_version,
         )
 
-    elif rep["event"] == APIEvent.REALM_MAINTENANCE_STARTED:
+    elif isinstance(rep, EventsListenRepOkRealmMaintenanceStarted):
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
-            realm_id=EntryID(rep["realm_id"].uuid),
-            encryption_revision=rep["encryption_revision"],
+            realm_id=rep.realm_id.to_entry_id(),
+            encryption_revision=rep.encryption_revision,
         )
 
-    elif rep["event"] == APIEvent.REALM_MAINTENANCE_FINISHED:
+    elif isinstance(rep, EventsListenRepOkRealmMaintenanceFinished):
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
-            realm_id=EntryID(rep["realm_id"].uuid),
-            encryption_revision=rep["encryption_revision"],
+            realm_id=rep.realm_id.to_entry_id(),
+            encryption_revision=rep.encryption_revision,
         )
 
-    elif rep["event"] == APIEvent.PKI_ENROLLMENTS_UPDATED:
+    elif isinstance(rep, EventsListenRepOkPkiEnrollmentUpdated):
         event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
 
 
-def _transport_pool_factory(addr, device_id, signing_key, max_pool, keepalive):
-    async def _connect():
+def _transport_pool_factory(
+    addr: BackendOrganizationAddr,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+    max_pool: int,
+    keepalive: int | None,
+) -> TransportPool:
+    async def _connect() -> Transport:
         transport = await connect_as_authenticated(
             addr, device_id=device_id, signing_key=signing_key, keepalive=keepalive
         )
@@ -158,30 +223,71 @@ def _transport_pool_factory(addr, device_id, signing_key, max_pool, keepalive):
     return TransportPool(_connect, max_pool=max_pool)
 
 
+class MonitorTaskState(Enum):
+    STALLED = "STALLED"
+    IDLE = "IDLE"
+    AWAKE = "AWAKE"
+
+
+class MonitorTaskStatus(TaskStatus[None]):
+    state: MonitorTaskState
+    monitor_callback: MonitorCallback
+    task_status: TaskStatus[None] | None
+
+    def __init__(
+        self, monitor_callback: MonitorCallback, state_changed: Callable[[MonitorTaskState], None]
+    ):
+        self.state = MonitorTaskState.STALLED
+        self.monitor_callback = monitor_callback
+        self.task_status = None
+        self._state_changed: Callable[[MonitorTaskState], None] = state_changed
+
+    def reset(self) -> None:
+        self.state = MonitorTaskState.STALLED
+        self.task_status = None
+
+    async def run_monitor(self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED) -> None:
+        self.task_status = task_status
+        self.state = MonitorTaskState.STALLED
+        await self.monitor_callback(task_status=self)
+
+    def started(self, value: None = None) -> None:
+        assert self.task_status is not None
+        self.task_status.started(value)
+
+    def idle(self) -> None:
+        self.state = MonitorTaskState.IDLE
+        self._state_changed(self.state)
+
+    def awake(self) -> None:
+        self.state = MonitorTaskState.AWAKE
+        self._state_changed(self.state)
+
+
 class BackendAuthenticatedConn:
     def __init__(
         self,
-        addr: BackendOrganizationAddr,
-        device_id: DeviceID,
-        signing_key: SigningKey,
+        device: LocalDevice,
         event_bus: EventBus,
         max_cooldown: int = 30,
         max_pool: int = 4,
-        keepalive: Optional[int] = None,
+        keepalive: int | None = None,
     ):
         if max_pool < 2:
             raise ValueError("max_pool must be at least 2 (for event listener + query sender)")
 
+        addr = device.organization_addr
+        self._device = device
         self._started = False
         self._transport_pool = _transport_pool_factory(
-            addr, device_id, signing_key, max_pool, keepalive
+            addr, device.device_id, device.signing_key, max_pool, keepalive
         )
         self._status = BackendConnStatus.LOST
-        self._status_exc = None
+        self._status_exc: Exception | None = None
         self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
-        self._manager_connect_cancel_scope = None
-        self._monitors_cbs: List[Callable[..., None]] = []
+        self._manager_connect_cancel_scope: trio.CancelScope | None = None
+        self._monitors_task_statuses: List[MonitorTaskStatus] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
@@ -191,7 +297,7 @@ class BackendAuthenticatedConn:
         # value so organization config is guaranteed to be always available \o/
         self._organization_config = OrganizationConfig(
             user_profile_outsider_allowed=False,
-            active_users_limit=None,
+            active_users_limit=ActiveUsersLimit.NO_LIMIT,
             sequester_authority=None,
             sequester_services=None,
         )
@@ -203,7 +309,7 @@ class BackendAuthenticatedConn:
         return self._status
 
     @property
-    def status_exc(self) -> Optional[Exception]:
+    def status_exc(self) -> Exception | None:
         # This exception still contains contextual information (e.g. cause, traceback)
         # For this reason, it shouldn't be re-raised as it mutates its internal state
         # Instead, the exception should be copied using `copy_exception`
@@ -214,7 +320,7 @@ class BackendAuthenticatedConn:
         return self._cmds
 
     async def set_status(
-        self, status: BackendConnStatus, status_exc: Optional[Exception] = None
+        self, status: BackendConnStatus, status_exc: Exception | None = None
     ) -> None:
         # Do not set the status if we're being cancelled
         # Not performing this check can lead to complicated race conditions.
@@ -239,27 +345,45 @@ class BackendAuthenticatedConn:
     def get_organization_config(self) -> OrganizationConfig:
         return self._organization_config
 
-    def register_monitor(self, monitor_cb) -> None:
+    def register_monitor(self, monitor_cb: MonitorCallback) -> None:
         if self._started:
             raise RuntimeError("Cannot register monitor once started !")
-        self._monitors_cbs.append(monitor_cb)
+        self._monitors_task_statuses.append(
+            MonitorTaskStatus(monitor_cb, self.on_monitor_state_changed)
+        )
 
-    def are_monitors_idle(self):
+    def on_monitor_state_changed(self, state: MonitorTaskState) -> None:
+        if state == MonitorTaskState.IDLE:
+            if all(
+                status.state == MonitorTaskState.IDLE for status in self._monitors_task_statuses
+            ):
+                self._monitors_idle_event.set()
+        elif state == MonitorTaskState.AWAKE:
+            if self._monitors_idle_event.is_set():
+                self._monitors_idle_event = trio.Event()
+
+    def are_monitors_idle(self) -> bool:
         return self._monitors_idle_event.is_set()
 
-    async def wait_idle_monitors(self):
+    async def wait_idle_monitors(self) -> None:
         await self._monitors_idle_event.wait()
 
+    def reset_monitors_status(self) -> None:
+        for monitor_task_status in self._monitors_task_statuses:
+            monitor_task_status.reset()
+        if self._monitors_idle_event.is_set():
+            self._monitors_idle_event = trio.Event()
+
     @asynccontextmanager
-    async def run(self):
+    async def run(self) -> AsyncIterator[None]:
         if self._started:
             raise RuntimeError("Already started")
-        async with trio.open_service_nursery() as nursery:
+        async with open_service_nursery() as nursery:
             nursery.start_soon(self._run_manager)
             yield
             nursery.cancel_scope.cancel()
 
-    async def _run_manager(self):
+    async def _run_manager(self) -> None:
         while True:
             try:
                 with trio.CancelScope() as self._manager_connect_cancel_scope:
@@ -276,7 +400,10 @@ class BackendAuthenticatedConn:
             finally:
                 self._manager_connect_cancel_scope = None
 
-            assert self.status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
+            assert self.status not in (
+                BackendConnStatus.READY,
+                BackendConnStatus.INITIALIZING,
+            )
             if self.status == BackendConnStatus.LOST:
                 # Start with a 0s cooldown and increase by power of 2 until
                 # max cooldown every time the connection trial fails
@@ -293,7 +420,7 @@ class BackendAuthenticatedConn:
                     cooldown_time = self.max_cooldown
                 self._backend_connection_failures += 1
                 logger.info("Backend offline", cooldown_time=cooldown_time)
-                await trio.sleep(cooldown_time)
+                await self._device.time_provider.sleep(cooldown_time)
             if self.status == BackendConnStatus.REFUSED:
                 # It's most likely useless to retry connection anyway
                 logger.info("Backend connection refused", status=self.status)
@@ -305,24 +432,27 @@ class BackendAuthenticatedConn:
             if self.status == BackendConnStatus.DESYNC:
                 # Try again in 10 seconds
                 logger.info("Backend connection is desync", status=self.status)
-                await trio.sleep(DESYNC_RETRY_TIME)
+                await self._device.time_provider.sleep(DESYNC_RETRY_TIME)
 
-    def _cancel_manager_connect(self):
+    def _cancel_manager_connect(self) -> None:
         if self._manager_connect_cancel_scope:
             self._manager_connect_cancel_scope.cancel()
 
-    async def _manager_connect(self):
+    async def _manager_connect(self) -> None:
         async with self._acquire_transport(ignore_status=True, force_fresh=True) as transport:
             await self.set_status(BackendConnStatus.INITIALIZING)
             self._backend_connection_failures = 0
             logger.info("Backend online")
 
             rep = await cmds.organization_config(transport)
-            if rep["status"] != "ok":
+            if not isinstance(rep, OrganizationConfigRepOk):
                 # Authenticated's organization_config command has been introduced in API v2.2
                 # So a cheap trick to keep backward compatibility here is to
                 # stick with the pre-populated organization config cached value.
-                if rep["status"] != "unknown_command":
+                if (
+                    isinstance(rep, OrganizationConfigRepUnknownStatus)
+                    and rep.status != "unknown_command"
+                ):
                     raise BackendConnectionRefused(
                         f"Error while fetching organization config: {rep}"
                     )
@@ -332,49 +462,35 @@ class BackendAuthenticatedConn:
                 # we just ignore it (the remote_loader will lazily load the config
                 # the first time it tries a manifest upload with the wrong config)
                 self._organization_config = OrganizationConfig(
-                    user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
-                    active_users_limit=rep["active_users_limit"],
+                    user_profile_outsider_allowed=rep.user_profile_outsider_allowed,
+                    active_users_limit=rep.active_users_limit,
                     # Sequester introduced in APIv2.8/3.2
-                    sequester_authority=rep.get("sequester_authority_certificate"),
-                    sequester_services=rep.get("sequester_services_certificates"),
+                    sequester_authority=rep.sequester_authority_certificate,
+                    sequester_services=rep.sequester_services_certificates,
                 )
 
             rep = await cmds.events_subscribe(transport)
-            if rep["status"] != "ok":
+            if not isinstance(rep, EventsSubscribeRepOk):
                 raise BackendConnectionRefused(f"Error while events subscribing : {rep}")
 
-            # Quis custodiet ipsos custodes?
-            monitors_states = ["STALLED" for _ in range(len(self._monitors_cbs))]
-
-            async def _wrap_monitor_cb(monitor_cb, idx, *, task_status=trio.TASK_STATUS_IGNORED):
-                def _idle():
-                    monitors_states[idx] = "IDLE"
-                    if all(state == "IDLE" for state in monitors_states):
-                        self._monitors_idle_event.set()
-
-                def _awake():
-                    monitors_states[idx] = "AWAKE"
-                    if self._monitors_idle_event.is_set():
-                        self._monitors_idle_event = trio.Event()
-
-                task_status.idle = _idle
-                task_status.awake = _awake
-                await monitor_cb(task_status=task_status)
-
             try:
-                async with trio.open_service_nursery() as monitors_nursery:
+                async with open_service_nursery() as monitors_nursery:
 
-                    async with trio.open_service_nursery() as monitors_bootstrap_nursery:
-                        for idx, monitor_cb in enumerate(self._monitors_cbs):
+                    async with open_service_nursery() as monitors_bootstrap_nursery:
+
+                        # Make sure we start from a clean state
+                        self.reset_monitors_status()
+                        for task_status in self._monitors_task_statuses:
                             monitors_bootstrap_nursery.start_soon(
-                                monitors_nursery.start, partial(_wrap_monitor_cb, monitor_cb, idx)
+                                monitors_nursery.start,
+                                task_status.run_monitor,
                             )
 
                     await self.set_status(BackendConnStatus.READY)
 
                     while True:
-                        rep = await cmds.events_listen(transport, wait=True)
-                        _handle_event(self.event_bus, rep)
+                        listen_rep = await cmds.events_listen(transport, wait=True)
+                        _handle_event(self.event_bus, listen_rep)
 
             finally:
                 # No more monitors are running
@@ -382,8 +498,11 @@ class BackendAuthenticatedConn:
 
     @asynccontextmanager
     async def _acquire_transport(
-        self, force_fresh=False, ignore_status=False, allow_not_available=False
-    ):
+        self,
+        force_fresh: bool = False,
+        ignore_status: bool = False,
+        allow_not_available: bool = False,
+    ) -> AsyncIterator[Transport]:
         if not ignore_status:
             if self.status_exc:
                 # Re-raising an already raised exception is bad practice
@@ -421,19 +540,19 @@ async def backend_authenticated_cmds_factory(
     addr: BackendOrganizationAddr,
     device_id: DeviceID,
     signing_key: SigningKey,
-    keepalive: Optional[int] = None,
+    keepalive: int | None = None,
 ) -> AsyncGenerator[BackendAuthenticatedCmds, None]:
     """
     Raises:
         BackendConnectionError
     """
     transport_lock = trio.Lock()
-    transport = None
+    transport: Transport | None = None
     closed = False
 
-    async def _init_transport():
+    async def _init_transport() -> Transport:
         nonlocal transport
-        if not transport:
+        if transport is None:
             if closed:
                 raise trio.ClosedResourceError
             transport = await connect_as_authenticated(
@@ -441,18 +560,20 @@ async def backend_authenticated_cmds_factory(
             )
             transport.logger = transport.logger.bind(device_id=device_id)
 
-    async def _destroy_transport():
+        return transport
+
+    async def _destroy_transport() -> None:
         nonlocal transport
-        if transport:
+        if transport is not None:
             await transport.aclose()
             transport = None
 
     @asynccontextmanager
-    async def _acquire_transport(**kwargs):
-        nonlocal transport
-
+    async def _acquire_transport(
+        force_fresh: bool = False, ignore_status: bool = False, allow_not_available: bool = False
+    ) -> AsyncIterator[Transport]:
         async with transport_lock:
-            await _init_transport()
+            transport = await _init_transport()
             try:
                 yield transport
             except BackendNotAvailable:

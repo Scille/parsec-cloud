@@ -1,18 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 from enum import Enum
+
 from parsec.api.protocol import (
-    OrganizationIDField,
     DeviceIDField,
-    UserIDField,
-    InvitationTokenField,
     InvitationStatusField,
-    VlobIDField,
+    InvitationTokenField,
+    OrganizationIDField,
     RealmIDField,
     RealmRoleField,
+    UserIDField,
+    VlobIDField,
 )
-from parsec.serde import fields, OneOfSchema, BaseSchema, MsgpackSerializer
-
+from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
 __all__ = ("BackendEvent",)
 
@@ -169,7 +170,7 @@ class BackendEventSchema(OneOfSchema):
         BackendEvent.PKI_ENROLLMENTS_UPDATED: PkiEnrollmentUpdatedSchema,
     }
 
-    def get_obj_type(self, obj):
+    def get_obj_type(self, obj: dict[str, object]) -> object:
         return obj["__signal__"]
 
 

@@ -1,15 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import io
 import gettext
+import io
 
+from PyQt5.QtCore import QCoreApplication, QDataStream, QFile, QIODevice, QLocale
 from structlog import get_logger
 
-from PyQt5.QtCore import QCoreApplication, QIODevice, QFile, QDataStream, QLocale
-
+from parsec._parsec import DateTime, LocalDateTime
+from parsec.core.config import CoreConfig
 from parsec.core.gui.desktop import get_locale_language
-from parsec._parsec import DateTime
-
 
 LANGUAGES = {"English": "en", "Français": "fr"}
 
@@ -19,7 +19,7 @@ _current_locale_language = None
 logger = get_logger()
 
 
-def format_datetime(dt, full=False, seconds=False):
+def format_datetime(dt: DateTime | LocalDateTime, full: bool = False, seconds: bool = False) -> str:
     # Handle if it is already a LocalDateTime
     if isinstance(dt, DateTime):
         dt = dt.to_local()
@@ -33,26 +33,27 @@ def format_datetime(dt, full=False, seconds=False):
         return dt.format("%m/%d/%Y %I:%M%p")
 
 
-def qt_translate(_, string):
+def qt_translate(_: object, string: str) -> str:
     return translate(string)
 
 
-def translate(string):
+def translate(string: str) -> str:
     if _current_translator:
         return _current_translator.gettext(string)
     return gettext.gettext(string)
 
 
-def get_qlocale():
-    q = QLocale(_current_locale_language)
-    return q
+def get_qlocale() -> QLocale:
+    assert _current_locale_language is not None
+    return QLocale(_current_locale_language)
 
 
-def switch_language(core_config, lang_key=None):
+def switch_language(core_config: CoreConfig, lang_key: str | None = None) -> str | None:
     global _current_translator
     global _current_locale_language
 
-    QCoreApplication.translate = qt_translate
+    # Assign our own translation function is valid
+    QCoreApplication.translate = qt_translate  # type: ignore[assignment]
 
     if not lang_key:
         lang_key = core_config.gui_language

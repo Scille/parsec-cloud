@@ -1,23 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from collections import defaultdict
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterable, List, Tuple
 
 import attr
-from parsec._parsec import DateTime
-from typing import TYPE_CHECKING, Iterable, Tuple, List, Dict, Optional
-from collections import defaultdict
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
+from parsec._parsec import ActiveUsersLimit, DateTime
+from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, OrganizationID, UserID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import (
     BaseUserComponent,
-    User,
     Device,
-    Trustchain,
     GetUserAndDevicesResult,
     HumanFindResultItem,
+    Trustchain,
+    User,
+    UserActiveUsersLimitReached,
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
     UserNotFoundError,
-    UserActiveUsersLimitReached,
 )
 
 if TYPE_CHECKING:
@@ -33,7 +35,9 @@ class OrganizationStore:
 
 
 class MemoryUserComponent(BaseUserComponent):
-    def __init__(self, send_event, *args, **kwargs):
+    def __init__(
+        self, send_event: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._send_event = send_event
         self._organizations: Dict[OrganizationID, OrganizationStore] = defaultdict(
@@ -42,9 +46,9 @@ class MemoryUserComponent(BaseUserComponent):
 
     def register_components(
         self,
-        organization: "MemoryOrganizationComponent",
-        realm: "MemoryRealmComponent",
-        **other_components,
+        organization: MemoryOrganizationComponent,
+        realm: MemoryRealmComponent,
+        **other_components: Any,
     ) -> None:
         self._organization_component = organization
         self._realm_component = realm
@@ -57,15 +61,17 @@ class MemoryUserComponent(BaseUserComponent):
             organization_id
         ].active_users_limit
         active_users = (u for u in org.users.values() if u.revoked_on is None)
-        if active_users_limit is not None and active_users_limit <= len(list(active_users)):
+        if active_users_limit is not None and active_users_limit <= ActiveUsersLimit.LimitedTo(
+            len(list(active_users))
+        ):
             raise UserActiveUsersLimitReached()
 
         if user.user_id in org.users:
-            raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+            raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
         if user.human_handle and user.human_handle in org.human_handle_to_user_id:
             raise UserAlreadyExistsError(
-                f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
+                f"Human handle `{user.human_handle.str}` already corresponds to a non-revoked user"
             )
 
         org.users[user.user_id] = user
@@ -88,11 +94,11 @@ class MemoryUserComponent(BaseUserComponent):
         org = self._organizations[organization_id]
 
         if device.user_id not in org.users:
-            raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
+            raise UserNotFoundError(f"User `{device.user_id.str}` doesn't exists")
 
         user_devices = org.devices[device.user_id]
         if device.device_name in user_devices:
-            raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+            raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
         user_devices[device.device_name] = device
         await self._send_event(
@@ -104,7 +110,10 @@ class MemoryUserComponent(BaseUserComponent):
         )
 
     async def _get_trustchain(
-        self, organization_id: OrganizationID, *devices_ids, redacted: bool = False
+        self,
+        organization_id: OrganizationID,
+        *devices_ids: DeviceID | None,
+        redacted: bool = False,
     ) -> Trustchain:
         trustchain_devices = set()
         trustchain_users = set()
@@ -114,7 +123,7 @@ class MemoryUserComponent(BaseUserComponent):
         user_certif_field = "redacted_user_certificate" if redacted else "user_certificate"
         device_certif_field = "redacted_device_certificate" if redacted else "device_certificate"
 
-        async def _recursive_extract_creators(device_id):
+        async def _recursive_extract_creators(device_id: DeviceID | None) -> None:
             if not device_id or device_id in in_trustchain:
                 return
             in_trustchain.add(device_id)
@@ -223,7 +232,7 @@ class MemoryUserComponent(BaseUserComponent):
     def _find_humans(
         self,
         organization_id: OrganizationID,
-        query: Optional[str] = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -241,10 +250,13 @@ class MemoryUserComponent(BaseUserComponent):
             users = []
             query_parts = query.lower().split()
             for user in org.users.values():
+                llabel: str = ""
+                lemail: str = ""
                 if not user.human_handle:
-                    continue
-                lemail = str(user.human_handle.email).lower()
-                llabel = str(user.human_handle.label).lower()
+                    llabel = user.user_id.str.lower()
+                else:
+                    lemail = user.human_handle.email.lower()
+                    llabel = user.human_handle.label.lower()
                 if all([part in lemail for part in query_parts]) or all(
                     [part in llabel for part in query_parts]
                 ):
@@ -284,7 +296,7 @@ class MemoryUserComponent(BaseUserComponent):
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: Optional[str] = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -305,7 +317,7 @@ class MemoryUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[DateTime] = None,
+        revoked_on: DateTime | None = None,
     ) -> None:
         org = self._organizations[organization_id]
 

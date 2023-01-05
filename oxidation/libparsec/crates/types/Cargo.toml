@@ -11,43 +11,48 @@ path = "tests/mod.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["use-rustcrypto"]
+use-rustcrypto = ["uuid/fast-rng", "libparsec_crypto/use-rustcrypto"]
+use-sodiumoxide = ["uuid/fast-rng", "libparsec_crypto/use-sodiumoxide"]
+js = ["uuid/js"]
+mock-time = []
+
 [dependencies]
-serialization_format = { path = "../serialization_format" }
-libparsec_crypto = { path = "../crypto" }
+libparsec_crypto = { path = "../crypto", default-features = false }
+libparsec_serialization_format = { path = "../serialization_format" }
+libparsec_platform_async = { path = "../platform_async" }
 
 lazy_static = "1.4.0"
-serde = { version = "1.0.142", features = ["derive"] }
-serde_with = "2.0.0"
-serde_repr = "0.1.9"
-rmp-serde = "1.0.0"
-serde_bytes = { version = "0.11.7"}
-chrono = { version = "0.4.20", features = ["serde"] }
+serde = { version = "1.0.147", features = ["derive"] }
+serde_with = "2.1.0"
+rmp-serde = "1.1.1"
+serde_bytes = "0.11.7"
+chrono = "0.4.22"
 # By default uuid crate uses `getrandom` directly instead of `rand`, however
 # the latter is much faster (see. https://github.com/uuid-rs/uuid/pull/545,
 # tl;dr: `rand` uses `getrandom` as seed then applies a fast chacha algo on it)
 # Hence `fast-rng` feature which enables the use of `rand`.
-uuid = { version = "1.1.2", features = ["serde", "v4", "fast-rng"] }
-data-encoding = "2.3.2"
-url = "2.2.2"
-percent-encoding = "2.1.0"
-fancy-regex = "0.10.0"
-unicode-normalization = "0.1.21"
-paste = "1.0.8"
-flate2 = "1.0.24"
+uuid = { version = "1.2.1", features = ["serde", "v4", "fast-rng"] }
+data-encoding = "2.3.3"
+url = "2.3.1"
+percent-encoding = "2.2.0"
+regex = "1.6.0"
+unicode-normalization = "0.1.22"
+paste = "1.0.9"
+flate2 = "1.0.25"
 rand = "0.8.4"
-thiserror = "1.0.32"
-email-address-parser = "2.0.0-rc1"
+thiserror = "1.0.37"
+email-address-parser = "2.0.0-rc2"
+fnmatch-regex = "0.2.0"
 
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
-pretty_assertions = "1.0.0"
-serde_test = "1.0.142"
+pretty_assertions = "1.3.0"
+serde_test = "1.0.145"
 hex-literal = "0.3.3"
-rstest = "0.15.0"
+rstest = "0.16.0"
 rstest_reuse = "0.4.0"
-serde_json = "1.0.85"
 
-[features]
-js = ["uuid/js"]
-default = ["uuid/fast-rng"]
-mock-time = []
+[build-dependencies]
+glob = "0.3.0"

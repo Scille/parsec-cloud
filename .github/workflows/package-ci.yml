@@ -1,10 +1,13 @@
 name: package-ci
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - .github/workflows/package-ci.yml
       - packaging
+      - build.py
+      - pyproject.toml
   push:
     branches:
       - master
@@ -13,9 +16,9 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+*
 
 env:
-  rust-version: 1.63.0
+  rust-version: 1.65.0
   python-version: 3.9
-  poetry-version: 1.2.0b3
+  poetry-version: 1.2.2
 
 jobs:
   package-wheel:
@@ -26,7 +29,7 @@ jobs:
           - name: 🐧 Linux
             os: ubuntu-22.04
           - name: 🍎 macOS
-            os: macos-10.15
+            os: macos-12
           - name: 🏁 Windows
             os: windows-2022
     name: '${{ matrix.name }}: 📦 Packaging (build Wheel)'
@@ -34,7 +37,7 @@ jobs:
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
 
       - uses: ./.github/actions/setup-python-poetry
         with:
@@ -60,15 +63,15 @@ jobs:
             VERSION="$VERSION.$COMMIT"
             # Customize version with tag
             sed -i.back -e "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
-            test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
+            test $(grep -E '^version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
             sed -i.back -e "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
           fi
 
           echo "::warning title=Wheel version::$VERSION"
-          echo "::set-output name=version::$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@afb4329fe32181c15d34ef94bf64dad7715b44ba  # ping v2.8.1
+        uses: pypa/cibuildwheel@27fc88e6385a995e61a87ee4b903bed263e6a6e2  # pin v2.11.4
         with:
           output-dir: dist
         timeout-minutes: 30
@@ -76,10 +79,34 @@ jobs:
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
 
+      - name: Hack the wheel macos version
+        if: startsWith(matrix.os, 'macos-')
+        shell: bash
+        run: |
+          set -eux
+          # Old wheel name
+          OLD_WHEEL_NAME=$(basename dist/parsec_cloud-*.whl)
+          # Unzip the wheel
+          mkdir temp
+          cd temp
+          unzip ../dist/$OLD_WHEEL_NAME
+          # Get platform new wheel name
+          python -m pip install wheel
+          PLATFORM=$(python -c "from wheel.bdist_wheel import get_platform; print(get_platform('.'))")
+          NEW_WHEEL_NAME=$(basename ../dist/parsec_cloud-*.whl | sed "s/macosx_.*_x86_64/$PLATFORM/")
+          # Update archive and zip back
+          sed -i "" "s/macosx_.*_x86_64/$PLATFORM/" parsec_cloud-*.dist-info/WHEEL
+          zip -r $NEW_WHEEL_NAME *
+          cd ..
+          # Replace old wheel with the new one
+          mv temp/$NEW_WHEEL_NAME dist/
+          rm dist/$OLD_WHEEL_NAME
+          rm -rf temp
+
       - name: Generate requirements & constraints infos
         run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
-      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist/
@@ -100,9 +127,9 @@ jobs:
           set -e
           echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
 
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
 
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -130,23 +157,27 @@ jobs:
         working-directory: ${{ runner.temp }}
         run: snapcraft --destructive-mode
 
-      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: ${{ runner.temp }}/parsec*.snap
 
   package-linux-test-snap:
-    name: '🐧 Linux: 📦 Packaging (test Snap)'
+    name: '🐧 Linux: 📦 Packaging (test Snap on ${{ matrix.os }})'
     needs: package-linux-build-snap
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-20.04, ubuntu-22.04 ]
     steps:
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@10d7d0a84d9d86098b19f872257df314b0bd8e2d # pin v1.2.0
+        uses: samuelmeuli/action-snapcraft@75db9a03f97072c02648bf8339bd4ac678fe2607
 
       - name: Never trust a Snap
         run: |
@@ -166,18 +197,18 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@10d7d0a84d9d86098b19f872257df314b0bd8e2d # pin v1.2.0
-        with:
-          snapcraft_token: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
+        uses: samuelmeuli/action-snapcraft@75db9a03f97072c02648bf8339bd4ac678fe2607
 
       - name: Upload Snap
         run: snapcraft upload --release=edge dist/parsec*.snap
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
 
   package-linux-release-pypi:
     name: '🐧 Linux: 📦 Packaging (release Pypi)'
@@ -185,13 +216,16 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
 
+      - name: Remove all non-wheel files from the `dist` directory
+        run: find . -type f ! -name '*.whl' -delete
+
       - name: Publish wheel on PyPI
-        uses: pypa/gh-action-pypi-publish@37f50c210e3d2f9450da2cd423303d6a14a6e29f # pin v1.5.1
+        uses: pypa/gh-action-pypi-publish@c7f29f7adef1a245bd91520e94867e5c6eedddcc # pin v1.6.4
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
@@ -201,13 +235,13 @@ jobs:
     needs: package-wheel
     runs-on: windows-2022
     steps:
-      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+      - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
 
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -226,7 +260,7 @@ jobs:
       - name: Debug build directory
         run: Get-ChildItem -Path ${{ runner.temp }}\build
 
-      - name: Test start generated app
+      - name: Test start generated exe
         shell: bash
         run: ./build/parsec-*/parsec.exe --diagnose
         working-directory: ${{ runner.temp }}
@@ -243,26 +277,26 @@ jobs:
           Copy-Item -Path build\winfsp-* -Destination dist
         working-directory: ${{ runner.temp }}
 
-      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer-content
           path: ${{ runner.temp }}/dist/
 
   package-macos-build-app:
-    runs-on: macos-10.15
+    runs-on: macos-12
     name: '🍎 macOS: 📦 Packaging (build installer content)'
     needs: package-wheel
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
 
-      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+      - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -277,10 +311,6 @@ jobs:
       - name: Debug ${{ runner.temp }} dir
         run: ls -lR ${{ runner.temp }}
 
-      - name: Test open generated app
-        run: open build/pyinstaller_dist/parsec.app --args --diagnose
-        working-directory: ${{ runner.temp }}
-
       - name: Generate Parsec.app
         run: >
           tar --verbose --create --bzip2
@@ -288,7 +318,101 @@ jobs:
           --directory build/pyinstaller_dist parsec.app
         working-directory: ${{ runner.temp }}
 
-      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: ${{ runner.temp }}/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
+
+  package-macos-test-app:
+    runs-on: macos-${{ matrix.macos-version }}
+    name: '🍎 macOS: 📦 Packaging (test app on macOS-${{ matrix.macos-version }})'
+    needs: [ package-wheel, package-macos-build-app ]
+    env:
+      WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        macos-version: [ 11, 12 ]
+
+    steps:
+      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-installer
+          path: dist
+
+      # The lsregister call forces the app's entry in the Launch Services database. Otherwise the error
+      # 'kLSNoExecutableErr: The executable is missing' might be raised.
+      - name: Test open app
+        run: |
+          set -eux
+          tar -xzvf dist/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2 # cspell:disable-line
+          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f parsec.app
+          open parsec.app --args --diagnose
+
+  package-electron-app:
+    runs-on: ubuntu-22.04
+    name: ⚡ Package electron
+    steps:
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+
+      - name: Install dependencies
+        run: |
+          npm clean-install
+          (cd electron && npm clean-install)
+          (cd ../bindings/electron && npm clean-install)
+        working-directory: oxidation/client
+
+      - name: Build Electron App
+        run: |
+          npm run electron:release
+        working-directory: oxidation/client
+
+      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-electron-app
+          path: |
+            oxidation/client/electron/dist/client_*_*.snap
+            oxidation/client/electron/dist/client-*.AppImage
+
+  package-android-app:
+    runs-on: ubuntu-22.04
+    name: 🤖 Package Android app
+    env:
+      NDK_VERSION: 22.1.7171670
+      SDK_VERSION: 30.0.3
+    steps:
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+
+      - name: Install rust toolchain
+        id: rust-toolchain
+        uses: dtolnay/rust-toolchain@e645b0cf01249a964ec099494d38d2da0f0b349f
+        with:
+          toolchain: ${{ env.rust-version }}
+          targets: armv7-linux-androideabi, i686-linux-android, aarch64-linux-android, x86_64-linux-android
+
+      - name: Configure Runner environment
+        run: |
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" > $GITHUB_PATH
+
+      - name: Install dependencies for Android
+        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "build-tools;${{ env.SDK_VERSION }}"
+
+      - name: Install dependencies for ionic project
+        run: npm clean-install
+        working-directory: oxidation/client
+
+      - name: Build ionic for Android
+        run: |
+          npm run android:copy:release
+        working-directory: oxidation/client
+
+      - name: Build apk
+        run: bash ./gradlew assembleRelease
+        working-directory: oxidation/client/android
+
+      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
+        with:
+          name: unsigned-android-app
+          path: |
+            oxidation/client/android/app/build/outputs/apk/release/app-release-unsigned.apk
+            oxidation/client/android/app/build/outputs/apk/release/output-metadata.json

@@ -4,7 +4,7 @@ import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import TestPage from '../views/TestPage.vue';
 
-let routes: Array<RouteRecordRaw> = [
+const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     redirect: '/dragtouploadtestPage'
@@ -75,13 +75,13 @@ let routes: Array<RouteRecordRaw> = [
 ];
 
 if (process.env.VUE_APP_TEST_MODE === 'True') {
-  routes = [
+  routes.push(
     {
-      path: '/',
+      path: '/test',
       name: 'Test',
       component: TestPage
     }
-  ];
+  );
 }
 
 const router = createRouter({

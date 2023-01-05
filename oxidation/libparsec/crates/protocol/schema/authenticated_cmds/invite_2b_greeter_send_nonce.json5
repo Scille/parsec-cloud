@@ -1,0 +1,41 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_2b_greeter_send_nonce",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "greeter_nonce",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "claimer_nonce",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
+    }
+]

@@ -22,11 +22,30 @@ serialized = serializer.rep_dumps(
         "user_certificate": b"foobar",
         "revoked_user_certificate": b"foobar",
         "device_certificates": [b"foobar"],
-        "trustchain": {"devices": [b"foobar"], "users": [b"foobar"], "revoked_users": [b"foobar"]},
+        "trustchain": {
+            "devices": [b"foobar"],
+            "users": [b"foobar"],
+            "revoked_users": [b"foobar"],
+        },
     }
 )
 serializer.rep_loads(serialized)
 display("user_get_rep", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "user_certificate": b"foobar",
+        "revoked_user_certificate": None,
+        "device_certificates": [b"foobar"],
+        "trustchain": {
+            "devices": [b"foobar"],
+            "users": [b"foobar"],
+            "revoked_users": [b"foobar"],
+        },
+    }
+)
+serializer.rep_loads(serialized)
+display("user_get_rep_null_revoked_user_cert", serialized, [])
 
 serialized = serializer.rep_dumps({"status": "not_found"})
 serializer.rep_loads(serialized)
@@ -47,6 +66,28 @@ serialized = serializer.req_dumps(
 )
 serializer.req_loads(serialized)
 display("user_create_req", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "user_create",
+        "user_certificate": b"foobar",
+        "device_certificate": b"foobar",
+        "redacted_user_certificate": b"foobar",
+        "redacted_device_certificate": None,
+    }
+)
+display("user_create_req_redacted_device_certificate_none", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "user_create",
+        "user_certificate": b"foobar",
+        "device_certificate": b"foobar",
+        "redacted_user_certificate": None,
+        "redacted_device_certificate": b"foobar",
+    }
+)
+display("user_create_req_redacted_user_certificate_none", serialized, [])
 
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
@@ -149,6 +190,67 @@ serialized = serializer.req_dumps(
 )
 serializer.req_loads(serialized)
 display("human_find_req", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": "foobar",
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": 0,
+        "per_page": 8,
+    }
+)
+display("human_find_req_page_0", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": "foobar",
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": -1,
+        "per_page": 8,
+    }
+)
+display("human_find_req_page_-1", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": "foobar",
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": 8,
+        "per_page": 0,
+    }
+)
+display("human_find_req_per_page_0", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": "foobar",
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": 0,
+        "per_page": 101,
+    }
+)
+display("human_find_req_per_page_101", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": None,
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": 8,
+        "per_page": 8,
+    }
+)
+serializer.req_loads(serialized)
+display("human_find_req_without_query", serialized, [])
 
 serialized = serializer.rep_dumps(
     {

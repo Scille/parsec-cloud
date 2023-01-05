@@ -1,23 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from collections import defaultdict
+from itertools import count
+from typing import Callable, List, TypeVar
 
 import click
-from typing import Optional, List
-from itertools import count
-from collections import defaultdict
+from typing_extensions import ParamSpec
 
 from parsec.backend.config import (
     BaseBlockStoreConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
-    S3BlockStoreConfig,
-    SWIFTBlockStoreConfig,
     RAID0BlockStoreConfig,
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
+    S3BlockStoreConfig,
+    SWIFTBlockStoreConfig,
 )
 
+T = TypeVar("T")
+P = ParamSpec("P")
 
-def db_backend_options(fn):
+
+def db_backend_options(fn: Callable[P, T]) -> Callable[P, T]:
     decorators = [
         click.option(
             "--db",
@@ -100,7 +106,7 @@ def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
                 raise click.BadParameter(
                     "Invalid S3 config, must be `s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`"
                 )
-            # Provide https by default to avoid anoying escaping for most cases
+            # Provide https by default to avoid annoying escaping for most cases
             if (
                 endpoint_url
                 and not endpoint_url.startswith("http://")
@@ -122,7 +128,7 @@ def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
                 raise click.BadParameter(
                     "Invalid SWIFT config, must be `swift:<auth_url>:<tenant>:<container>:<user>:<password>`"
                 )
-            # Provide https by default to avoid anoying escaping for most cases
+            # Provide https by default to avoid annoying escaping for most cases
             if (
                 auth_url
                 and not auth_url.startswith("http://")
@@ -143,8 +149,8 @@ def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
 def _parse_blockstore_params(raw_params: str) -> BaseBlockStoreConfig:
     raid_configs = defaultdict(list)
     for raw_param in raw_params:
-        raid_mode: Optional[str]
-        raid_node: Optional[int]
+        raid_mode: str | None
+        raid_node: int | None
         raw_param_parts = raw_param.split(":", 2)
         if raw_param_parts[0].upper() in ("RAID0", "RAID1", "RAID5") and len(raw_param_parts) == 3:
             raid_mode, raw_raid_node, node_param = raw_param_parts
@@ -192,7 +198,7 @@ def _parse_blockstore_params(raw_params: str) -> BaseBlockStoreConfig:
         raise click.BadParameter(f"Invalid multi blockstore mode `{raid_mode}`")
 
 
-def blockstore_backend_options(fn):
+def blockstore_backend_options(fn: Callable[P, T]) -> Callable[P, T]:
     decorators = [
         click.option(
             "--blockstore",

@@ -1,42 +1,44 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional
 from dataclasses import dataclass
-from parsec._parsec import DateTime
-import oscrypto.asymmetric
 
-from parsec.crypto import SigningKey
-from parsec.sequester_crypto import (
-    sequester_authority_sign,
+from parsec._parsec import (
+    DateTime,
+    SequesterPrivateKeyDer,
+    SequesterPublicKeyDer,
+    SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
-    SequesterEncryptionKeyDer,
+    SigningKey,
 )
 from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
 from parsec.api.protocol import SequesterServiceID
-from parsec.backend.sequester import SequesterService
+from parsec.backend.sequester import (
+    BaseSequesterService,
+    SequesterServiceType,
+    StorageSequesterService,
+    WebhookSequesterService,
+)
 
 
 @dataclass
 class SequesterAuthorityFullData:
     certif: bytes
     certif_data: SequesterAuthorityCertificate
-    signing_key: oscrypto.asymmetric.PrivateKey
-    verify_key: oscrypto.asymmetric.PublicKey
+    signing_key: SequesterSigningKeyDer
+    verify_key: SequesterVerifyKeyDer
 
 
 def sequester_authority_factory(
-    organization_root_signing_key: SigningKey, timestamp: Optional[DateTime] = None
+    organization_root_signing_key: SigningKey, timestamp: DateTime | None = None
 ) -> SequesterAuthorityFullData:
     timestamp = timestamp or DateTime.now()
     # Don't use such a small key size in real world, this is only for test !
     # (RSA key generation gets ~10x slower between 1024 and 4096)
-    verify_key, signing_key = oscrypto.asymmetric.generate_pair("rsa", bit_size=1024)
+    signing_key, verify_key = SequesterSigningKeyDer.generate_pair(1024)
     certif = SequesterAuthorityCertificate(
-        author=None,
         timestamp=timestamp,
-        verify_key_der=SequesterVerifyKeyDer(
-            oscrypto.asymmetric.dump_public_key(verify_key, encoding="der")
-        ),
+        verify_key_der=verify_key,
     )
     return SequesterAuthorityFullData(
         certif=certif.dump_and_sign(organization_root_signing_key),
@@ -50,9 +52,9 @@ def sequester_authority_factory(
 class SequesterServiceFullData:
     certif: bytes
     certif_data: SequesterServiceCertificate
-    decryption_key: oscrypto.asymmetric.PrivateKey
-    encryption_key: oscrypto.asymmetric.PublicKey
-    backend_service: SequesterService
+    decryption_key: SequesterPrivateKeyDer
+    encryption_key: SequesterPublicKeyDer
+    backend_service: BaseSequesterService
 
     @property
     def service_id(self) -> SequesterServiceID:
@@ -60,29 +62,43 @@ class SequesterServiceFullData:
 
 
 def sequester_service_factory(
-    label: str, authority: SequesterAuthorityFullData, timestamp: Optional[DateTime] = None
+    label: str,
+    authority: SequesterAuthorityFullData,
+    timestamp: DateTime | None = None,
+    service_type: SequesterServiceType = SequesterServiceType.STORAGE,
+    webhook_url: str | None = None,
 ) -> SequesterServiceFullData:
     timestamp = timestamp or DateTime.now()
     # Don't use such a small key size in real world, this is only for test !
     # (RSA key generation gets ~10x slower between 1024 and 4096)
-    encryption_key, decryption_key = oscrypto.asymmetric.generate_pair("rsa", bit_size=1024)
+    decryption_key, encryption_key = SequesterPrivateKeyDer.generate_pair(1024)
     certif_data = SequesterServiceCertificate(
         service_id=SequesterServiceID.new(),
         timestamp=timestamp,
         service_label=label,
-        encryption_key_der=SequesterEncryptionKeyDer(
-            oscrypto.asymmetric.dump_public_key(encryption_key, encoding="der")
-        ),
+        encryption_key_der=encryption_key,
     )
-    certif = sequester_authority_sign(signing_key=authority.signing_key, data=certif_data.dump())
+    certif = authority.signing_key.sign(certif_data.dump())
+    if service_type == SequesterServiceType.STORAGE:
+        assert webhook_url is None
+        backend_service = StorageSequesterService(
+            service_id=certif_data.service_id,
+            service_label=certif_data.service_label,
+            service_certificate=certif,
+        )
+    else:
+        assert service_type == SequesterServiceType.WEBHOOK
+        assert webhook_url is not None
+        backend_service = WebhookSequesterService(
+            service_id=certif_data.service_id,
+            service_label=certif_data.service_label,
+            service_certificate=certif,
+            webhook_url=webhook_url,
+        )
     return SequesterServiceFullData(
         certif=certif,
         certif_data=certif_data,
         decryption_key=decryption_key,
         encryption_key=encryption_key,
-        backend_service=SequesterService(
-            service_id=certif_data.service_id,
-            service_label=certif_data.service_label,
-            service_certificate=certif,
-        ),
+        backend_service=backend_service,
     )

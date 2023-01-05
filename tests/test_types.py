@@ -1,25 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
-from parsec.api.protocol import DeviceID, UserID, DeviceName, OrganizationID
+from parsec._parsec import DateTime, export_root_verify_key
+from parsec.api.protocol import DeviceID, DeviceName, OrganizationID, UserID
 from parsec.api.protocol.types import DeviceLabel, HumanHandle
-from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
 from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
+from parsec.crypto import PrivateKey, SecretKey, SigningKey
 
 
 @pytest.mark.parametrize("raw", ["foo42", "FOO", "f", "f-o-o", "f_o_o", "x" * 32, "三国"])
 def test_organization_id_user_id_and_device_name(raw):
     organization_id = OrganizationID(raw)
-    assert str(organization_id) == raw
+    assert organization_id.str == raw
     assert organization_id == OrganizationID(raw)
 
     user_id = UserID(raw)
-    assert str(user_id) == raw
+    assert user_id.str == raw
     assert user_id == UserID(raw)
 
     device_name = DeviceName(raw)
-    assert str(device_name) == raw
+    assert device_name.str == raw
     assert device_name == DeviceName(raw)
 
 
@@ -245,7 +247,7 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
     assert addr.organization_id == org
     assert addr.token == "token-123"
 
-    addr2 = BackendOrganizationBootstrapAddr.from_url(str(addr))
+    addr2 = BackendOrganizationBootstrapAddr.from_url(addr.to_url())
     assert addr == addr2
 
     org_addr = addr.generate_organization_addr(verify_key)
@@ -324,7 +326,7 @@ def organization_addr(exported_verify_key):
 @pytest.mark.parametrize("key_type", (SigningKey, PrivateKey, SecretKey))
 def test_keys_dont_leak_on_repr(key_type):
     key = key_type.generate()
-    assert repr(key).startswith(f"{key_type.__qualname__}(<redacted>)")
+    assert repr(key).startswith(f"{key_type.__qualname__}(****)")
 
 
 def test_device_label_bad_size():
@@ -341,3 +343,48 @@ def test_human_handle_bade_field_size():
     for bad in ("", "x" * (256 - len(email_suffix)) + email_suffix):
         with pytest.raises(ValueError):
             HumanHandle(email="foo@example.com", label="")
+
+
+def test_datetime():
+    dt = DateTime(
+        year=2000,
+        month=1,
+        day=2,
+        hour=12,
+        minute=30,
+        second=45,
+        microsecond=123456,
+    )
+    assert dt.year == 2000
+    assert dt.month == 1
+    assert dt.day == 2
+    assert dt.hour == 12
+    assert dt.minute == 30
+    assert dt.second == 45
+    assert dt.microsecond == 123456
+
+    for part in ("day", "hour", "minute", "second", "microsecond"):
+        dt_add = dt.add(**{f"{part}s": 1})
+        assert getattr(dt_add, part) == getattr(dt, part) + 1
+
+        dt_sub = dt.subtract(**{f"{part}s": 1})
+        assert getattr(dt_sub, part) == getattr(dt, part) - 1
+
+    assert dt == dt
+    assert dt.add(microseconds=1) != dt
+    assert dt.add(microseconds=1).subtract(microseconds=1) == dt
+
+    assert dt < dt.add(microseconds=1)
+    assert dt > dt.subtract(microseconds=1)
+    assert dt <= dt
+    assert dt >= dt
+
+    assert dt - dt.subtract(microseconds=1) == 0.000001
+
+    assert dt.to_rfc3339() == "2000-01-02T12:30:45.123456Z"
+    dt2 = DateTime.from_rfc3339(dt.to_rfc3339())
+    assert dt2 == dt
+
+    assert dt.timestamp() == 946816245.123456
+    dt3 = DateTime.from_timestamp(dt.timestamp())
+    assert dt3 == dt

@@ -1,33 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Dict, Optional
-from parsec._parsec import DateTime
+from typing import Dict
+
+import triopg
 from triopg import UniqueViolationError
 
-from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
-from parsec.api.protocol.sequester import SequesterServiceID
+from parsec._parsec import DateTime, SequesterServiceID
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
+from parsec.backend.backend_events import BackendEvent
+from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
     q_device_internal_id,
+    q_organization_internal_id,
     q_realm_internal_id,
-    q_vlob_encryption_revision_internal_id,
     q_user_internal_id,
+    q_vlob_encryption_revision_internal_id,
+    query,
+)
+from parsec.backend.postgresql.vlob_queries.utils import (
+    _check_realm_and_write_access,
+    _get_realm_id_from_vlob_id,
 )
 from parsec.backend.vlob import (
+    VlobAlreadyExistsError,
+    VlobNotFoundError,
     VlobRequireGreaterTimestampError,
     VlobVersionError,
-    VlobNotFoundError,
-    VlobAlreadyExistsError,
 )
-from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.vlob_queries.utils import (
-    _get_realm_id_from_vlob_id,
-    _check_realm_and_write_access,
-)
-from parsec.backend.backend_events import BackendEvent
-
 
 _q_vlob_updated = Q(
     f"""
@@ -69,7 +70,7 @@ DO UPDATE SET last_vlob_update = (
 
 
 async def _set_vlob_updated(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     vlob_atom_internal_id: int,
     organization_id: OrganizationID,
     author: DeviceID,
@@ -77,11 +78,11 @@ async def _set_vlob_updated(
     src_id: VlobID,
     timestamp: DateTime,
     src_version: int = 1,
-):
+) -> None:
     index = await conn.fetchval(
         *_q_vlob_updated(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             vlob_atom_internal_id=vlob_atom_internal_id,
         )
     )
@@ -89,7 +90,7 @@ async def _set_vlob_updated(
     await conn.execute(
         *_q_set_last_vlob_update(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             user_id=author.user_id.str,
             timestamp=timestamp,
         )
@@ -155,7 +156,7 @@ RETURNING _id
 
 @query(in_transaction=True)
 async def query_update(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     encryption_revision: int,
@@ -163,7 +164,7 @@ async def query_update(
     version: int,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+    sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
 ) -> None:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_write_access(
@@ -171,10 +172,10 @@ async def query_update(
     )
 
     previous = await conn.fetchrow(
-        *_q_get_vlob_version(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
+        *_q_get_vlob_version(organization_id=organization_id.str, vlob_id=vlob_id)
     )
     if not previous:
-        raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
+        raise VlobNotFoundError(f"Vlob `{vlob_id.hex}` doesn't exist")
 
     elif previous["version"] != version - 1:
         raise VlobVersionError()
@@ -187,9 +188,9 @@ async def query_update(
             *_q_insert_vlob_atom(
                 organization_id=organization_id.str,
                 author=author.str,
-                realm_id=realm_id.uuid,
+                realm_id=realm_id,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id.uuid,
+                vlob_id=vlob_id,
                 blob=blob,
                 blob_len=len(blob),
                 timestamp=timestamp,
@@ -266,7 +267,7 @@ _q_create_sequester_blob = Q(
 
 @query(in_transaction=True)
 async def query_create(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -274,7 +275,7 @@ async def query_create(
     vlob_id: VlobID,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+    sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
 ) -> None:
     await _check_realm_and_write_access(
         conn, organization_id, author, realm_id, encryption_revision, timestamp
@@ -286,9 +287,9 @@ async def query_create(
             *_q_create(
                 organization_id=organization_id.str,
                 author=author.str,
-                realm_id=realm_id.uuid,
+                realm_id=realm_id,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id.uuid,
+                vlob_id=vlob_id,
                 blob=blob,
                 blob_len=len(blob),
                 timestamp=timestamp,

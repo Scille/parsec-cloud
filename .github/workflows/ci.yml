@@ -8,10 +8,9 @@ on:
 
 env:
   python-version: "3.9"
-  rust-version: 1.63.0
+  rust-version: 1.65.0
   node-version: "16"
-  # Need feature from poetry 1.2.x that aren't present in 1.1.x
-  poetry-version: 1.2.0b3
+  poetry-version: 1.2.2
   # TODO: We stick to PostgreSQL 12 for the moment given later versions are
   # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
   postgresql-version: 12
@@ -21,8 +20,14 @@ env:
     --side-effects-timeout=10
     -vv
     -x
-  # Compile Rust extensions in release speeds up Python tests a lot
-  FORCE_MATURIN_RELEASE: 1
+  cargo-exclude-unused-crates: >-
+    --exclude=libparsec_bindings_jni
+    --exclude=libparsec_bindings_web
+    --exclude=libparsec_bindings_electron
+    --exclude=libparsec_bindings_common
+  # Temporary fix for macos tests:
+  # See: https://github.com/python-poetry/poetry/issues/7161
+  SYSTEM_VERSION_COMPAT: "0"
 
 jobs:
 
@@ -35,8 +40,30 @@ jobs:
       - test-rust-matrix
       - test-web-app
     runs-on: ubuntu-latest
+    if: always()
     steps:
-      - run: echo "My job here is done !"
+      # The Needs context value contains only:
+      # - the final state a jobs (if it fails or not)
+      # - it's output (actually none of our jobs are configuring outputs variable)
+      #
+      # https://docs.github.com/en/actions/learn-github-actions/contexts#needs-context
+      - name: Debug the needs context values
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: printenv NEEDS
+
+      - name: We're very sorry
+        run: |
+          echo "Oh No, we have jobs that have failed/cancelled/skipped :("
+          exit 42
+        if: >-
+          contains(needs.*.result, 'failure')
+          || contains(needs.*.result, 'skipped')
+          || contains(needs.*.result, 'cancelled')
+          || ! contains(needs.*.result, 'success')
+
+      - name: It's showtime
+        run: echo "My job here is done !"
 
   ##############################################################################
   #                                   📊 Q&A                                   #
@@ -47,50 +74,39 @@ jobs:
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+
+      - uses: ./.github/actions/paths-filter
+        id: changes
+
+      - name: Install Cargo fmt
+        run: |
+          set -ex
+          rustup component add rustfmt
+          cargo fmt --version
 
       - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
-      - uses: actions/setup-node@2fddd8803e2f5c9604345a0b591c3020ee971a93  # pin v3.4.1
+      - uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516  # pin v3.5.1
         with:
           node-version: ${{ env.node-version }}
-
-      - uses: ./.github/actions/setup-rust
-        with:
-          version: ${{ env.rust-version }}
-          components: rustfmt, clippy
-          cache-key: ubuntu-20.04
-        timeout-minutes: 10
-
-      - name: Debug installed tools
-        run: |
-          python --version
-          node --version
-          # Rust tools
-          whereis rustup
-          rustup --version
-          whereis rustc
-          rustc --version
-          whereis cargo
-          cargo --version
-
-      - name: Debug rust cache
-        run: ls -la ~/.cargo/{.,bin,git,registry} target || true
 
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
 
-      - name: Check Newsfragment
+      - name: Check News fragments
         if: |
           startsWith(github.ref, 'refs/pull/')
           && !(
-            startsWith(github.head_ref, 'dependabot')
-            || startsWith(github.head_ref, 'yolo')
+            startsWith(github.head_ref, 'yolo')
             || startsWith(github.head_ref, 'release')
+            || startsWith(github.head_ref, 'revert')
+            || startsWith(github.head_ref, 'acknowledge')
             )
+          && steps.changes.outputs.newsfragments == 'true'
         run: |
           whereis git
           git fetch origin master
@@ -102,9 +118,19 @@ jobs:
           cat .pre-commit-config.yaml
 
       - name: Install project (needed for mypy check)
-        run: poetry install -E core -E backend
+        run: |
+          set -ex
+          poetry install -E core -E backend
+        # We skip _parsec.so compilation given Mypy only cares about _parsec.pyi
+        env:
+          POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
 
+      # Clippy basically compile the project, hence it's faster to run it in
+      # the test-rust-matrix job where compilation cache is reused !
       - uses: ./.github/actions/use-pre-commit
+        env:
+          SKIP: clippy
+        timeout-minutes: 30
 
   ##############################################################################
   #                            🐍 Python tests                                 #
@@ -112,7 +138,7 @@ jobs:
 
   test-python-matrix:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: 🐧 Linux
@@ -123,10 +149,11 @@ jobs:
             os: macos-12
           - name: 🏁 Windows
             os: windows-2022
+            winfsp-version: 1.11.22176
     name: '${{ matrix.name }}: 🐍 Python tests'
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -137,7 +164,8 @@ jobs:
           steps.changes.outputs.python == 'true'
           || steps.changes.outputs.rust-ext == 'true'
           || github.ref == 'refs/heads/master'
-        run: echo "::set-output name=run::true"
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: (🐧 Linux) Configure PostgreSQL APT repository
         if: >-
@@ -159,10 +187,10 @@ jobs:
           sudo apt-get update
 
         # Install required packages for ubuntu:
-        # - LibFuse2 since only libfuse3 is available on ubuntu-20.04,
-        # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
-        # - A specific version of postgresql is used for PostgreSQL's tests
-        # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions
+        # - LibFuse2 since only libfuse3 is available on ubuntu-20.04.
+        # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`.
+        # - A specific version of postgresql is used for PostgreSQL's tests.
+        # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions.
       - name: (🐧 Linux) Install packages fuse2, PostgreSQL-${{ env.postgresql-version }}
         if: >-
           steps.python-changes.outputs.run == 'true'
@@ -189,19 +217,12 @@ jobs:
           && startsWith(matrix.os, 'windows-')
         shell: bash
         run: |
-          choco install -y --limit-output winfsp --version=${{ env.winfsp-version }}
+          choco install -y --limit-output winfsp --version=${{ matrix.winfsp-version }}
           mkdir winfsp-test
           curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
           unzip winfsp-test/winfsp-tests.zip -d winfsp-test
           pwd
           echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
-
-      - uses: ./.github/actions/setup-rust
-        if: steps.python-changes.outputs.run == 'true'
-        with:
-          version: ${{ env.rust-version }}
-          cache-key: ${{ matrix.os }}
-        timeout-minutes: 10
 
       - uses: ./.github/actions/setup-python-poetry
         if: steps.python-changes.outputs.run == 'true'
@@ -210,18 +231,52 @@ jobs:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
+      # libparsec is slow to compile, so we save it in cache and skip the
+      # compilation entirely if the Rust code hasn't changed !
+
+      - name: Use cached libparsec if Rust hasn't been modified
+        id: cache-libparsec
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && steps.rust-changes.outputs.run != 'true'
+        uses: actions/cache@v3
+        with:
+          # Key cache contains a hash of all the files that are used to produce _parsec.so
+          # Hence if we have a cache hit we know that there is no need for a rebuild !
+          key: ${{ matrix.os }}-${{ hashFiles('src/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python
+          path: |
+            parsec/_parsec.*.pyd
+            parsec/_parsec.*.so
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+        with:
+          # We setup the cache by hand, see below
+          cache: false
+
+      - name: Retreive Rust cache
+        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # pin v2.2.0
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+        with:
+          # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
+          # cache is only shared between master and the PRs (and not accross PRs).
+          # So we only save the cache on master build given it's the ones that are the
+          # most likely to be reused.
+          save-if: github.ref == 'refs/heads/master'
+
       - name: Install python deps
         if: steps.python-changes.outputs.run == 'true'
-        run: poetry install -E core -E backend
-
-      - name: Debug python & pip version
-        if: steps.python-changes.outputs.run == 'true'
-        shell: bash
-        continue-on-error: true
         run: |
-          set -x
-          poetry run python --version
-          poetry run pip --version
+          if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
+          poetry install -E core -E backend
+        shell: bash
+        env:
+          CARGO_PROFILE: ci-python
 
       - name: Basic tests
         if: steps.python-changes.outputs.run == 'true'
@@ -255,7 +310,7 @@ jobs:
         env:
           PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
         run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
-        timeout-minutes: 10
+        timeout-minutes: 20
 
       - name: Hypothesis tests
         if: steps.python-changes.outputs.run == 'true'
@@ -268,7 +323,7 @@ jobs:
 
   test-rust-matrix:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: 🐧 Linux
@@ -281,7 +336,7 @@ jobs:
     name: '${{ matrix.name }}: 🦀 Rust tests'
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -292,59 +347,60 @@ jobs:
           steps.changes.outputs.rust == 'true'
           || steps.changes.outputs.rust-ext == 'true'
           || github.ref == 'refs/heads/master'
-        run: echo "::set-output name=run::true"
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
 
-      - uses: ./.github/actions/setup-rust
+      - uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
         if: steps.rust-changes.outputs.run == 'true'
         with:
-          version: ${{ env.rust-version }}
-          cache-key: ${{ matrix.os }}
-        timeout-minutes: 10
+          # We setup the cache by hand, see below
+          cache: false
 
-      # Pyo3 need additional configuration on MacOS to be manually build
-      # see https://pyo3.rs/master/building_and_distribution.html#macos
-      - name: (🍎 macOS) Configure cargo for PyO3
-        if: >-
-          steps.rust-changes.outputs.run == 'true'
-          && startsWith(matrix.os, 'macos-')
-        shell: bash
-        run: |
-          set -eux
-          set -o pipefail
-          mkdir -p .cargo
-          cat << EOF | tee .cargo/config.toml
-          [target.x86_64-apple-darwin]
-          rustflags = [
-            "-C", "link-arg=-undefined",
-            "-C", "link-arg=dynamic_lookup",
-          ]
-          EOF
-
-      - name: Build rust codebase
+      - name: Retreive Rust cache
+        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # pin v2.2.0
         if: steps.rust-changes.outputs.run == 'true'
+        with:
+          # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
+          # cache is only shared between master and the PRs (and not accross PRs).
+          # So we only save the cache on master build given it's the ones that are the
+          # most likely to be reused.
+          save-if: github.ref == 'refs/heads/master'
+
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: startsWith(matrix.os, 'windows')
         shell: bash
-        run: |
-          set -ex
-          cargo build --workspace
-          cargo test --workspace --no-run
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
-          cargo test --package libparsec_crypto --features use-sodiumoxide
-          cargo test --package libparsec_crypto --features use-rustcrypto
-          cargo test --workspace --features mock-time --exclude libparsec_crypto
+          cargo test --profile ci-rust --workspace --features mock-time ${{ env.cargo-exclude-unused-crates }} --exclude libparsec_crypto
+          cargo test --profile ci-rust --package libparsec_crypto --no-default-features --features use-sodiumoxide
+          cargo test --profile ci-rust --package libparsec_crypto
+
+      # Clippy basically compile the project, hence it's faster to run it in
+      # the test-rust-matrix job where compilation cache is reused !
+      - uses: ./.github/actions/use-pre-commit
+        if: >-
+          steps.rust-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        with:
+          extra-args: clippy --all-files --verbose
 
   ##############################################################################
   #                            🌐 Web tests                                    #
   ##############################################################################
+
   test-web-app:
     runs-on: ubuntu-22.04
     name: 🌐 Web tests
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -355,7 +411,10 @@ jobs:
           steps.changes.outputs.client-web == 'true'
           || steps.changes.outputs.client-common == 'true'
           || github.ref == 'refs/heads/master'
-        run: echo "::set-output name=run::true"
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # TODO: cache libparsec and reuse it if Rust code hasn't changed !
 
       - name: Install dependencies
         if: steps.web-change.outputs.run == 'true'
@@ -366,5 +425,5 @@ jobs:
       # Then move this step to package-ci.yml
       - name: Build WebApp
         if: steps.web-change.outputs.run == 'true'
-        run: npm run build
+        run: npm run web:release
         working-directory: oxidation/client

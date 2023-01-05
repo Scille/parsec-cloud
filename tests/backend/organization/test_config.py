@@ -1,33 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
-from tests.common import customize_fixtures, OrganizationFullData, sequester_service_factory
+from parsec._parsec import ActiveUsersLimit, OrganizationConfigRepOk
 from tests.backend.common import organization_config
+from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
 
 @pytest.mark.trio
 async def test_organization_config_ok(coolorg: OrganizationFullData, alice_ws, backend):
     rep = await organization_config(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "user_profile_outsider_allowed": True,
-        "active_users_limit": backend.config.organization_initial_active_users_limit,
-        "sequester_authority_certificate": None,
-        "sequester_services_certificates": None,
-    }
+    assert rep == OrganizationConfigRepOk(
+        user_profile_outsider_allowed=True,
+        active_users_limit=backend.config.organization_initial_active_users_limit,
+        sequester_authority_certificate=None,
+        sequester_services_certificates=None,
+    )
 
     await backend.organization.update(
-        id=coolorg.organization_id, user_profile_outsider_allowed=False, active_users_limit=42
+        id=coolorg.organization_id,
+        user_profile_outsider_allowed=False,
+        active_users_limit=ActiveUsersLimit.LimitedTo(42),
     )
     rep = await organization_config(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "user_profile_outsider_allowed": False,
-        "active_users_limit": 42,
-        "sequester_authority_certificate": None,
-        "sequester_services_certificates": None,
-    }
+    assert rep == OrganizationConfigRepOk(
+        user_profile_outsider_allowed=False,
+        active_users_limit=ActiveUsersLimit.LimitedTo(42),
+        sequester_authority_certificate=None,
+        sequester_services_certificates=None,
+    )
 
 
 @pytest.mark.trio
@@ -36,13 +38,12 @@ async def test_organization_config_ok_sequestered_organization(
     coolorg: OrganizationFullData, alice_ws, backend
 ):
     rep = await organization_config(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "user_profile_outsider_allowed": True,
-        "active_users_limit": backend.config.organization_initial_active_users_limit,
-        "sequester_authority_certificate": coolorg.sequester_authority.certif,
-        "sequester_services_certificates": [],
-    }
+    assert rep == OrganizationConfigRepOk(
+        user_profile_outsider_allowed=True,
+        active_users_limit=backend.config.organization_initial_active_users_limit,
+        sequester_authority_certificate=coolorg.sequester_authority.certif,
+        sequester_services_certificates=[],
+    )
 
     # Add new services
     s1 = sequester_service_factory(
@@ -59,13 +60,12 @@ async def test_organization_config_ok_sequestered_organization(
     )
 
     rep = await organization_config(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "user_profile_outsider_allowed": True,
-        "active_users_limit": backend.config.organization_initial_active_users_limit,
-        "sequester_authority_certificate": coolorg.sequester_authority.certif,
-        "sequester_services_certificates": [s1.certif, s2.certif],
-    }
+    assert rep == OrganizationConfigRepOk(
+        user_profile_outsider_allowed=True,
+        active_users_limit=backend.config.organization_initial_active_users_limit,
+        sequester_authority_certificate=coolorg.sequester_authority.certif,
+        sequester_services_certificates=[s1.certif, s2.certif],
+    )
 
     # Delete a service, should no longer appear in config
     await backend.sequester.disable_service(
@@ -73,10 +73,9 @@ async def test_organization_config_ok_sequestered_organization(
     )
 
     rep = await organization_config(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "user_profile_outsider_allowed": True,
-        "active_users_limit": backend.config.organization_initial_active_users_limit,
-        "sequester_authority_certificate": coolorg.sequester_authority.certif,
-        "sequester_services_certificates": [s2.certif],
-    }
+    assert rep == OrganizationConfigRepOk(
+        user_profile_outsider_allowed=True,
+        active_users_limit=backend.config.organization_initial_active_users_limit,
+        sequester_authority_certificate=coolorg.sequester_authority.certif,
+        sequester_services_certificates=[s2.certif],
+    )

@@ -5,6 +5,189 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.15.0 (2022-12-12)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Improved the enrolment/onboarding of new users and devices  (`#3663
+  <https://github.com/Scille/parsec-cloud/issues/3663>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix import or drag&drop of an empty folder  (`#3534
+  <https://github.com/Scille/parsec-cloud/issues/3534>`__)
+* Prevent accidental creation of multiple parsec organizations at the same time
+  (`#3698 <https://github.com/Scille/parsec-cloud/issues/3698>`__)
+* Fix user invitation email sending error when the greeter's name contains
+  special characters  (`#3752 <https://github.com/Scille/parsec-
+  cloud/issues/3752>`__)
+* Accept parenthesis in HumanHandle's label  (`#3749
+  <https://github.com/Scille/parsec-cloud/issues/3749>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Updated macFUSE installation guide for MacOS 13  (`#3588
+  <https://github.com/Scille/parsec-cloud/issues/3588>`__)
+* Fix various typos throughout our codebase  (`#3700
+  <https://github.com/Scille/parsec-cloud/issues/3700>`__)
+* Recovery devices can now be renamed when created.  (`#3537
+  <https://github.com/Scille/parsec-cloud/issues/3537>`__)
+* Correct some typo found in PO files used by QT for english/french translation
+  (`#3757 <https://github.com/Scille/parsec-cloud/issues/3757>`__)
+
+
+Parsec v2.14.1 (2022-11-24)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix an issue that prevented proper reconnection of the client in some specific
+  cases  (`#3595 <https://github.com/Scille/parsec-cloud/issues/3595>`__)
+* Improved some texts for device and user invitation  (`#3601
+  <https://github.com/Scille/parsec-cloud/issues/3601>`__)
+
+
+Parsec v2.14.0 (2022-11-10)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Make CLI case insensitive on option `--log-level` & `--log-format`. Thus
+  allowing to provide the argument in upper or lower case.  (`#3268
+  <https://github.com/Scille/parsec-cloud/issues/3268>`__)
+* Introduce ``generate_service_certificate`` & ``import_service_certificate``
+  CLI commands  (corresponding to the ends of ``create_service_certificate``
+  command).  This allows to keep the sequester private keys on an offline
+  machine at all time.  (`#3198 <https://github.com/Scille/parsec-
+  cloud/issues/3198>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Managers can no longer try to promote other users to manager  (`#3269
+  <https://github.com/Scille/parsec-cloud/issues/3269>`__)
+* Scrollbar should stay in place when enabling/disabling workspaces  (`#3301
+  <https://github.com/Scille/parsec-cloud/issues/3301>`__)
+* Fixed how workspaces are displayed when offline  (`#3302
+  <https://github.com/Scille/parsec-cloud/issues/3302>`__)
+* Fixes greeting a new user into an organization with a legacy user (user that
+  does not have an email set)  (`#3507 <https://github.com/Scille/parsec-
+  cloud/issues/3507>`__)
+* Disabled workspaces not longer appear enabled when logging in  (`#3300
+  <https://github.com/Scille/parsec-cloud/issues/3300>`__)
+* The device instance now gets logged off when an error occurs due to the disk
+  being full  (`#3335 <https://github.com/Scille/parsec-cloud/issues/3335>`__)
+* Fix user search to include legacy users  (`#3538
+  <https://github.com/Scille/parsec-cloud/issues/3538>`__)
+* Fix email validation in the application for some special cases  (`#3555
+  <https://github.com/Scille/parsec-cloud/issues/3555>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Add `parsec core stats_server` CLI command to provide per-organization usage
+  statistics for the whole server.  (`#3109 <https://github.com/Scille/parsec-
+  cloud/issues/3109>`__)
+* Remove noop `--timestamp` param from `parsec core run` CLI command  (`#3345
+  <https://github.com/Scille/parsec-cloud/issues/3345>`__)
+
+
+Parsec v2.13.0 (2022-10-19)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Introduce ``generate_service_certificate`` & ``import_service_certificate``
+  CLI commands  (corresponding to the ends of ``create_service_certificate``
+  command).  This allows to keep the sequester private keys on an offline
+  machine at all time.  (`#3198 <https://github.com/Scille/parsec-
+  cloud/issues/3198>`__)
+* Add the webhook sequester service type that pushes encrypted workspace data to
+  3rd party throughout HTTP. A webhook services is a sequester service with an
+  encryption key. Metadata are also encrypted with the service key and send to
+  the parsec metadata server. A webhook service does not store the sequester
+  metadata to a storage, but it posted the metadata to an http service.  (`#2799
+  <https://github.com/Scille/parsec-cloud/issues/2799>`__)
+* Add a way to filter out unmounted workspaces  (`#3056
+  <https://github.com/Scille/parsec-cloud/issues/3056>`__)
+* Updated the file link not found error message with the name of the file
+  (`#3122 <https://github.com/Scille/parsec-cloud/issues/3122>`__)
+* Added new context menu option to generate file links that point to a specific
+  version of a file.  (`#3123 <https://github.com/Scille/parsec-
+  cloud/issues/3123>`__)
+* Made workspace listing faster  (`#3125 <https://github.com/Scille/parsec-
+  cloud/issues/3125>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Remove cut status if cut is overridden by a copy  (`#3022
+  <https://github.com/Scille/parsec-cloud/issues/3022>`__)
+* Fixed links in About window not opening  (`#3023
+  <https://github.com/Scille/parsec-cloud/issues/3023>`__)
+* Fix an error that de-sync postgresql timestamp type  (`#3071
+  <https://github.com/Scille/parsec-cloud/issues/3071>`__)
+* Fix a bug that caused the login time to be larger than expected for large
+  organizations.  (`#3145 <https://github.com/Scille/parsec-
+  cloud/issues/3145>`__)
+* Scrollbar should stay in place when enabling/disabling workspaces  (`#3301
+  <https://github.com/Scille/parsec-cloud/issues/3301>`__)
+* Fixed how workspaces are displayed when offline  (`#3302
+  <https://github.com/Scille/parsec-cloud/issues/3302>`__)
+* Disabled workspaces not longer appear enabled when logging in  (`#3300
+  <https://github.com/Scille/parsec-cloud/issues/3300>`__)
+
+
+Parsec v2.12.1 (2022-09-13)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix an error that de-sync postgresql timestamp type  (`#3071
+  <https://github.com/Scille/parsec-cloud/issues/3071>`__)
+
+
+Parsec v2.12.0 (2022-09-08)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Added a new folder menu in the file explorer  (`#2672
+  <https://github.com/Scille/parsec-cloud/issues/2672>`__)
+* Use clipboard content as default URL when joining an org in the GUI  (`#1598
+  <https://github.com/Scille/parsec-cloud/issues/1598>`__)
+* Add authenticated api entrypoint to execute authenticated commands.  (`#2624
+  <https://github.com/Scille/parsec-cloud/issues/2624>`__)
+* Added a sort menu in the file explorer  (`#2673
+  <https://github.com/Scille/parsec-cloud/issues/2673>`__)
+* Added a show status/show history to the current directory in the explorer
+  (`#2674 <https://github.com/Scille/parsec-cloud/issues/2674>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Correct Content-Type and add User-Agent headers for client to server HTTP
+  request  (`#2979 <https://github.com/Scille/parsec-cloud/issues/2979>`__)
+* Fix an error that could occur when selecting a file  (`#2960
+  <https://github.com/Scille/parsec-cloud/issues/2960>`__)
+* Fix rare segfault in the GUI when an event occurs at the wrong time  (`#2839
+  <https://github.com/Scille/parsec-cloud/issues/2839>`__)
+* Update re-encryption status when role is changed  (`#2699
+  <https://github.com/Scille/parsec-cloud/issues/2699>`__)
+* Fix an error that could happen when looking at a file status  (`#2779
+  <https://github.com/Scille/parsec-cloud/issues/2779>`__)
+* Fixed links in About window not opening  (`#3023
+  <https://github.com/Scille/parsec-cloud/issues/3023>`__)
+
 Parsec v2.11.1 (2022-08-16)
 ---------------------------
 
@@ -124,7 +307,7 @@ Bugfixes
   <https://github.com/Scille/parsec-cloud/issues/2161>`__)
 * Fixed small error when pressing Enter on the log in screen (`#2178
   <https://github.com/Scille/parsec-cloud/issues/2178>`__)
-* Fixed a bug preventing file saving with Apple softwares such as TextEdit or
+* Fixed a bug preventing file saving with Apple software such as TextEdit or
   Preview.  (`#2211 <https://github.com/Scille/parsec-cloud/issues/2211>`__)
 * Fixed clicking on a file link in some instances  (`#2223
   <https://github.com/Scille/parsec-cloud/issues/2223>`__)

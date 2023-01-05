@@ -1,69 +1,71 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Dict, List, Optional
-from uuid import UUID
 from collections import defaultdict
-import attr
-from parsec._parsec import DateTime
+from typing import Any, Callable, Coroutine, Dict, List
 
-from parsec.api.protocol import OrganizationID, DeviceID
+import attr
+
+from parsec._parsec import DateTime, EnrollmentID
+from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.memory.user import (
     MemoryUserComponent,
-    UserAlreadyExistsError,
     UserActiveUsersLimitReached,
+    UserAlreadyExistsError,
 )
-from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
-    PkiEnrollementEmailAlreadyUsedError,
+    BasePkiEnrollmentComponent,
+    PkiEnrollmentActiveUsersLimitReached,
+    PkiEnrollmentAlreadyEnrolledError,
+    PkiEnrollmentAlreadyExistError,
+    PkiEnrollmentCertificateAlreadySubmittedError,
+    PkiEnrollmentEmailAlreadyUsedError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
-    PkiEnrollmentInfoSubmitted,
     PkiEnrollmentInfoAccepted,
-    PkiEnrollmentInfoRejected,
     PkiEnrollmentInfoCancelled,
+    PkiEnrollmentInfoRejected,
+    PkiEnrollmentInfoSubmitted,
     PkiEnrollmentListItem,
-    BasePkiEnrollmentComponent,
-    PkiEnrollmentAlreadyEnrolledError,
-    PkiEnrollmentCertificateAlreadySubmittedError,
     PkiEnrollmentNoLongerAvailableError,
-    PkiEnrollmentAlreadyExistError,
-    PkiEnrollmentActiveUsersLimitReached,
     PkiEnrollmentNotFoundError,
 )
+from parsec.backend.user_type import Device, User
 
 
 @attr.s(slots=True, auto_attribs=True)
 class PkiEnrollment:
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     info: PkiEnrollmentInfo
     submitter_der_x509_certificate: bytes
     submit_payload_signature: bytes
     submit_payload: bytes
-    accepter: Optional[DeviceID] = None
-    accepted: Optional[DeviceID] = None
+    accepter: DeviceID | None = None
+    accepted: DeviceID | None = None
 
 
 class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
-    def __init__(self, send_event):
+    def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._user_component: MemoryUserComponent = None
+        self._user_component: MemoryUserComponent | None = None
         self._enrollments: Dict[OrganizationID, List[PkiEnrollment]] = defaultdict(list)
 
-    def register_components(self, user: MemoryUserComponent, **other_components):
+    def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
         self._user_component = user
 
     async def submit(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
+        submitter_der_x509_certificate_email: str | None,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,
     ) -> None:
+        assert self._user_component is not None
 
         # Assert enrollment id not used already
         for enrollment in reversed(self._enrollments[organization_id]):
@@ -118,7 +120,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 omit_revoked=True,
             )
             if total:
-                raise PkiEnrollementEmailAlreadyUsedError()
+                raise PkiEnrollmentEmailAlreadyUsedError()
         self._enrollments[organization_id].append(
             PkiEnrollment(
                 enrollment_id=enrollment_id,
@@ -134,7 +136,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
         )
 
-    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+    async def info(
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID
+    ) -> PkiEnrollmentInfo:
         for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
                 return enrollment.info
@@ -157,7 +161,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         return items
 
     async def reject(
-        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID, rejected_on: DateTime
     ) -> None:
         for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
@@ -182,7 +186,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def accept(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         accepter_der_x509_certificate: bytes,
         accept_payload_signature: bytes,
         accept_payload: bytes,
@@ -190,6 +194,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         user: User,
         first_device: Device,
     ) -> None:
+        assert self._user_component is not None
+
         for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
                 if not isinstance(enrollment.info, PkiEnrollmentInfoSubmitted):

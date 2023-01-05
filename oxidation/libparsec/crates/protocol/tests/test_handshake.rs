@@ -109,7 +109,7 @@ fn test_good_authenticated_handshake_client(alice: &Device) {
 #[rstest]
 fn test_good_authenticated_handshake(alice: &Device, timestamp: DateTime) {
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
     let sh = ServerHandshakeStalled::default()
         .build_challenge_req(t1)
         .unwrap();
@@ -254,7 +254,7 @@ fn test_good_invited_handshake_server(
         "737570706f727465645f6170695f76657273696f6e7392920205920103"
     )[..],
     InvitationType::User,
-    "9931e631856a44709c825d7f7d339197".parse().unwrap(),
+    InvitationToken::from_hex("9931e631856a44709c825d7f7d339197").unwrap(),
 ))]
 #[case::device((
     // Generated from Python implementation (Parsec v2.6.0+dev)
@@ -277,7 +277,7 @@ fn test_good_invited_handshake_server(
         "737570706f727465645f6170695f76657273696f6e7392920205920103"
     )[..],
     InvitationType::Device,
-    "4e12636f08c840c4bb09404e1e696b09".parse().unwrap(),
+    InvitationToken::from_hex("4e12636f08c840c4bb09404e1e696b09").unwrap(),
 ))]
 fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, InvitationToken)) {
     let organization_id = OrganizationID::from_str("Org").unwrap();
@@ -298,7 +298,7 @@ fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, Inv
 #[case::device(InvitationType::Device)]
 fn test_good_invited_handshake(timestamp: DateTime, #[case] _invitation_type: InvitationType) {
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
     let _organization_id = OrganizationID::default();
     let _token = InvitationToken::default();
 
@@ -411,7 +411,7 @@ fn test_process_challenge_req_good_api_version(
 ) {
     let (client_version, backend_version, valid) = input;
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
 
     let req = Handshake::Challenge {
         challenge: hex!("58f7ec2bb24b81a57feee1bad250726a2f7588a3cdd0617a206687adf8fb1274f34b0aebf9fd27a5d29f56dce902ddcd"),
@@ -553,7 +553,7 @@ fn test_process_challenge_req_good_multiple_api_version(
     let (_client_versions, _backend_versions, expected_client_version, expected_backend_version) =
         input;
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
 
     let req = Handshake::Challenge {
         challenge: hex!("58f7ec2bb24b81a57feee1bad250726a2f7588a3cdd0617a206687adf8fb1274f34b0aebf9fd27a5d29f56dce902ddcd"),
@@ -589,7 +589,7 @@ fn test_process_challenge_req_good_multiple_api_version(
             _ => panic!("unexpected value err `{err}`"),
         }
     } else {
-        // Valid versionning
+        // Valid versioning
         let ch = ch.process_challenge_req(&req).unwrap();
         assert_eq!(ch.supported_api_versions, _backend_versions);
         assert_eq!(Some(ch.backend_api_version), expected_backend_version);
@@ -872,6 +872,27 @@ fn test_process_result_req_bad_outcome(
     .unwrap_err();
 
     assert_eq!(err, expected)
+}
+
+// Generated from Python implementation (Parsec v2.15.0+dev)
+// Content:
+//   version: 2
+//   revision: 15
+#[rstest]
+fn serde_api_version() {
+    let expected = ApiVersion {
+        version: 2,
+        revision: 15,
+    };
+    let bytes = hex!("92020f");
+
+    let loaded_version = ApiVersion::load(&bytes).unwrap();
+    assert_eq!(loaded_version, expected);
+
+    // Roundtrip test ...
+    let bytes2 = loaded_version.dump().unwrap();
+    let loaded_version2 = ApiVersion::load(&bytes2).unwrap();
+    assert_eq!(loaded_version2, expected);
 }
 
 // TODO: test with revoked device

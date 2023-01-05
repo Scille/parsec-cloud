@@ -1,29 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec.backend.backend_events import BackendEvent
 import itertools
-from triopg import UniqueViolationError
-from parsec._parsec import DateTime
 
+import triopg
+from triopg import UniqueViolationError
+
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID
-from parsec.backend.user import (
-    User,
-    Device,
-    UserError,
-    UserNotFoundError,
-    UserAlreadyExistsError,
-    UserActiveUsersLimitReached,
-)
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
     q_device_internal_id,
-    q_user_internal_id,
     q_human_internal_id,
+    q_organization_internal_id,
+    q_user_internal_id,
+    query,
 )
-
+from parsec.backend.user import (
+    Device,
+    User,
+    UserActiveUsersLimitReached,
+    UserAlreadyExistsError,
+    UserError,
+    UserNotFoundError,
+)
 
 _q_check_active_users_limit = Q(
     f"""
@@ -162,16 +164,18 @@ VALUES (
 
 _q_lock = Q(
     # Use 55 as magic number to represent user/device creation lock
-    # (note this is not stricly needed right now given there is no other
+    # (note this is not strictly needed right now given there is no other
     # advisory lock in the application, but may avoid weird error if we
-    # introduce a new avisory lock while forgetting about this one)
+    # introduce a new advisory lock while forgetting about this one)
     "SELECT pg_advisory_xact_lock(55, _id) FROM organization WHERE organization_id = $organization_id"
 )
 
 
-async def q_take_user_device_write_lock(conn, organization_id: OrganizationID):
+async def q_take_user_device_write_lock(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
+) -> None:
     """
-    User/device creation is a complexe procedure given it contains checks that
+    User/device creation is a complex procedure given it contains checks that
     cannot be enforced by PostgreSQL, e.g.:
     - `user_` table can contain multiple row with the same `human` value, but
       only one of them can be non-revoked
@@ -186,7 +190,10 @@ async def q_take_user_device_write_lock(conn, organization_id: OrganizationID):
 
 
 async def _do_create_user_with_human_handle(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user: User,
+    first_device: Device,
 ) -> None:
     assert user.human_handle is not None
     # Create human handle if needed
@@ -204,7 +211,7 @@ async def _do_create_user_with_human_handle(
             *_q_insert_user_with_human_handle(
                 organization_id=organization_id.str,
                 user_id=user.user_id.str,
-                profile=user.profile.value,
+                profile=user.profile.str,
                 user_certificate=user.user_certificate,
                 redacted_user_certificate=user.redacted_user_certificate,
                 user_certifier=user.user_certifier.str if user.user_certifier else None,
@@ -214,7 +221,7 @@ async def _do_create_user_with_human_handle(
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
@@ -231,19 +238,22 @@ async def _do_create_user_with_human_handle(
     if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id.str:
         # Exception cancels the transaction so the user insertion is automatically cancelled
         raise UserAlreadyExistsError(
-            f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
+            f"Human handle `{user.human_handle.str}` already corresponds to a non-revoked user"
         )
 
 
 async def _do_create_user_without_human_handle(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user: User,
+    first_device: Device,
 ) -> None:
     try:
         result = await conn.execute(
             *_q_insert_user(
                 organization_id=organization_id.str,
                 user_id=user.user_id.str,
-                profile=user.profile.value,
+                profile=user.profile.str,
                 user_certificate=user.user_certificate,
                 redacted_user_certificate=user.redacted_user_certificate,
                 user_certifier=user.user_certifier.str if user.user_certifier else None,
@@ -252,19 +262,19 @@ async def _do_create_user_without_human_handle(
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
 
 
 async def q_create_user(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     user: User,
     first_device: Device,
     lock_already_held: bool = False,
-):
+) -> None:
     if not lock_already_held:
         await q_take_user_device_write_lock(conn, organization_id)
 
@@ -295,23 +305,29 @@ async def q_create_user(
 
 @query(in_transaction=True)
 async def query_create_user(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user: User,
+    first_device: Device,
 ) -> None:
     await q_create_user(conn, organization_id, user, first_device)
 
 
 async def _create_device(
-    conn, organization_id: OrganizationID, device: Device, first_device: bool = False
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    device: Device,
+    first_device: bool = False,
 ) -> None:
     if not first_device:
         existing_devices = await conn.fetch(
             *_q_get_user_devices(organization_id=organization_id.str, user_id=device.user_id.str)
         )
         if not existing_devices:
-            raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
+            raise UserNotFoundError(f"User `{device.user_id.str}` doesn't exists")
 
         if device.device_id in itertools.chain(*existing_devices):
-            raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+            raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
     try:
         result = await conn.execute(
@@ -327,7 +343,7 @@ async def _create_device(
             )
         )
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+        raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
@@ -335,7 +351,10 @@ async def _create_device(
 
 @query(in_transaction=True)
 async def query_create_device(
-    conn, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    device: Device,
+    encrypted_answer: bytes = b"",
 ) -> None:
     await q_take_user_device_write_lock(conn, organization_id)
     await _create_device(conn, organization_id, device, bool(encrypted_answer))

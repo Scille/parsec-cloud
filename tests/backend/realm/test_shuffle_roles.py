@@ -1,25 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from unittest.mock import ANY
 
 import pytest
 import trio
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     Bundle,
-    initialize,
-    rule,
-    invariant,
-    run_state_machine_as_test,
     TrioAsyncioRuleBasedStateMachine,
+    initialize,
+    invariant,
     multiple,
+    rule,
+    run_state_machine_as_test,
 )
-from unittest.mock import ANY
 
-from parsec.backend.asgi import app_factory
+from parsec._parsec import (
+    RealmGetRoleCertificatesRepOk,
+    RealmUpdateRolesRepAlreadyGranted,
+    RealmUpdateRolesRepInvalidData,
+    RealmUpdateRolesRepNotAllowed,
+    RealmUpdateRolesRepOk,
+)
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmRole
-
-from tests.common import call_with_control
+from parsec.backend.asgi import app_factory
 from tests.backend.common import realm_get_role_certificates, realm_update_roles
+from tests.common import call_with_control
 
 
 @pytest.mark.slow
@@ -35,7 +43,7 @@ def test_shuffle_roles(
     next_timestamp,
 ):
     class ShuffleRoles(TrioAsyncioRuleBasedStateMachine):
-        realm_role_strategy = st.one_of(st.just(x) for x in RealmRole)
+        realm_role_strategy = st.one_of(st.just(x) for x in RealmRole.VALUES)
         User = Bundle("user")
 
         async def start_backend(self):
@@ -114,10 +122,8 @@ def test_shuffle_roles(
             ).dump_and_sign(author.signing_key)
             rep = await realm_update_roles(author_ws, certif, check_rep=False)
             if author.user_id == recipient.user_id:
-                assert rep == {
-                    "status": "invalid_data",
-                    "reason": "Realm role certificate cannot be self-signed.",
-                }
+                # The reason is no longer generated
+                assert isinstance(rep, RealmUpdateRolesRepInvalidData)
 
             else:
                 owner_only = (RealmRole.OWNER,)
@@ -131,24 +137,28 @@ def test_shuffle_roles(
                 if self.current_roles[author.user_id] in allowed_roles:
                     # print(f"+ {author.user_id} -{role.value}-> {recipient.user_id}")
                     if existing_recipient_role != role:
-                        assert rep == {"status": "ok"}
+                        assert isinstance(rep, RealmUpdateRolesRepOk)
                         self.current_roles[recipient.user_id] = role
                         self.certifs.append(certif)
                     else:
-                        assert rep == {"status": "already_granted"}
+                        assert isinstance(rep, RealmUpdateRolesRepAlreadyGranted)
                 else:
                     # print(f"- {author.user_id} -{role.value}-> {recipient.user_id}")
-                    assert rep == {"status": "not_allowed"}
+                    assert isinstance(rep, RealmUpdateRolesRepNotAllowed)
 
-            return rep["status"] == "ok"
+            return isinstance(rep, RealmUpdateRolesRepOk)
 
         @rule(author=User)
         async def get_role_certificates(self, author):
             ws = await self.get_ws(author)
             rep = await realm_get_role_certificates(ws, self.realm_id)
             if self.current_roles.get(author.user_id) is not None:
-                assert rep["status"] == "ok"
-                assert rep["certificates"] == self.certifs
+                try:
+                    assert rep == RealmGetRoleCertificatesRepOk(certificates=self.certifs)
+                except TypeError:
+                    assert isinstance(rep, RealmGetRoleCertificatesRepOk)
+                except Exception:
+                    assert False
             else:
                 assert rep == {}
 

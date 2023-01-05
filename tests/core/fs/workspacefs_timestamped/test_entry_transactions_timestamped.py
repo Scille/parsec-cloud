@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSLocalMissError

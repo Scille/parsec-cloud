@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from pathlib import Path
 from contextlib import asynccontextmanager
-from typing import Dict, Set, Tuple, AsyncIterator, cast
+from pathlib import Path
+from typing import AsyncIterator, Dict, Set, Tuple, cast
 
-from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.fs.storage.version import get_user_data_storage_db_path
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
+from parsec.core.fs.storage.version import get_user_data_storage_db_path
+from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
 
 
 async def user_storage_non_speculative_init(data_base_dir: Path, device: LocalDevice) -> None:

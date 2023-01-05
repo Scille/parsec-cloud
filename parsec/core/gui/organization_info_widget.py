@@ -1,18 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Type
 
 from PyQt5.QtWidgets import QWidget
 
-from typing import Optional
-
-from parsec.core.types import OrganizationConfig, OrganizationStats
+from parsec._parsec import ActiveUsersLimit, OrganizationConfig, OrganizationStats
 from parsec.api.protocol import OrganizationID, UserProfile
-
-from parsec.core.gui import desktop
-from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui import desktop, file_size
 from parsec.core.gui.custom_dialogs import GreyedDialog
-from parsec.core.gui import file_size
 from parsec.core.gui.lang import translate
-
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.organization_info_widget import Ui_OrganizationInfoWidget
 
 
@@ -21,12 +19,13 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
         self,
         profile: UserProfile,
         org_addr: str,
-        stats: Optional[OrganizationStats] = None,
-        config: Optional[OrganizationConfig] = None,
+        stats: OrganizationStats | None = None,
+        config: OrganizationConfig | None = None,
     ):
         super().__init__()
         self.setupUi(self)
 
+        self.dialog: GreyedDialog[OrganizationInfoWidget] | None = None
         self.label_backend_addr.setText(org_addr)
         self.label_backend_addr.setCursorPosition(0)
         self.button_copy_to_clipboard.clicked.connect(lambda: self._on_copy_addr_clicked(org_addr))
@@ -79,12 +78,12 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
                 self.label_outsider_allowed.setText(translate("TEXT_ORG_INFO_OUTSIDER_ALLOWED"))
             else:
                 self.label_outsider_allowed.setText(translate("TEXT_ORG_INFO_OUTSIDER_NOT_ALLOWED"))
-            if not config.active_users_limit:
+            if config.active_users_limit == ActiveUsersLimit.NO_LIMIT:
                 self.label_user_limit.setText(translate("TEXT_ORG_INFO_USER_LIMIT_UNLIMITED"))
             else:
                 self.label_user_limit.setText(
                     translate("TEXT_ORG_INFO_USER_LIMIT-limit").format(
-                        limit=config.active_users_limit
+                        limit=config.active_users_limit.to_int()
                     )
                 )
             self.label_sequestration_state.setToolTip(
@@ -97,20 +96,20 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
             else:
                 self.label_sequestration_state.setVisible(False)
 
-    def _on_copy_addr_clicked(self, org_addr: str):
+    def _on_copy_addr_clicked(self, org_addr: str) -> None:
         desktop.copy_to_clipboard(org_addr)
         SnackbarManager.inform(translate("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
 
     @classmethod
     async def show_modal(
-        cls,
+        cls: Type[OrganizationInfoWidget],
         profile: UserProfile,
         org_id: OrganizationID,
         org_addr: str,
-        stats: Optional[OrganizationStats] = None,
-        config: Optional[OrganizationConfig] = None,
-        parent=None,
-    ):
+        stats: OrganizationStats | None = None,
+        config: OrganizationConfig | None = None,
+        parent: QWidget | None = None,
+    ) -> GreyedDialog[OrganizationInfoWidget]:
         w = cls(profile, org_addr=org_addr, stats=stats, config=config)
         d = GreyedDialog(w, title=org_id.str, parent=parent, width=800)
         w.dialog = d

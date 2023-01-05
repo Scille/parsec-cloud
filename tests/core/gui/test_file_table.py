@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
-
 from PyQt5 import QtCore
 
+from parsec._parsec import DateTime
 from parsec.api.data import EntryID, EntryName
 from parsec.core.gui.file_table import FileTable
 from parsec.core.gui.lang import switch_language

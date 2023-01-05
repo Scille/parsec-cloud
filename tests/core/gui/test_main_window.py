@@ -1,30 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-from parsec.api.protocol import InvitationType, OrganizationID, UserProfile
+from parsec._parsec import DateTime, InvitationType
 from parsec.api.data import EntryName
+from parsec.api.protocol import OrganizationID, UserProfile
+from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
+from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
+from parsec.core.gui.workspace_roles import get_role_translation as _
 from parsec.core.local_device import (
     AvailableDevice,
     DeviceFileType,
     save_device_with_password,
     save_device_with_password_in_config,
 )
-from parsec.core.types import EntryID
 from parsec.core.types import (
     BackendInvitationAddr,
+    BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
-    BackendOrganizationAddr,
+    EntryID,
     WorkspaceRole,
 )
-from parsec.core.gui import desktop
-
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture
@@ -56,7 +60,7 @@ def catch_text_input_widget(widget_catcher_factory):
 async def organization_bootstrap_addr(running_backend):
     org_id = OrganizationID("ShinraElectricPowerCompany")
     org_token = "123"
-    await running_backend.backend.organization.create(org_id, org_token)
+    await running_backend.backend.organization.create(id=org_id, bootstrap_token=org_token)
     return BackendOrganizationBootstrapAddr.build(running_backend.addr, org_id, org_token)
 
 
@@ -168,7 +172,7 @@ async def test_link_file(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
-    logged_gui.add_instance(str(url))
+    logged_gui.add_instance(url.to_url())
 
     def _folder_ready():
         assert f_w.isVisible()
@@ -184,68 +188,123 @@ async def test_link_file(aqtbot, logged_gui_with_files):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
+async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
+    url = f_w.workspace_fs.generate_file_link(f_w.current_directory, DateTime.now())
 
-    core = logged_gui.test_get_core()
-    url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
-
-    logged_gui.add_instance(str(url))
+    logged_gui.add_instance(url.to_url())
 
     def _folder_ready():
         assert f_w.isVisible()
-        assert f_w.table_files.rowCount() == 2
-        folder = f_w.table_files.item(1, 1)
-        assert folder
-        assert folder.text() == "dir1"
+        # A timestamped workspace is readonly
+        assert f_w.label_role.text() == _(WorkspaceRole.READER)
+        assert isinstance(f_w.workspace_fs, WorkspaceFSTimestamped)
 
     await aqtbot.wait_until(_folder_ready)
 
     assert logged_gui.tab_center.count() == 1
 
-    def _mounted():
-        assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id)
-
-    await aqtbot.wait_until(_mounted)
-    await core.mountpoint_manager.unmount_workspace(f_w.workspace_fs.workspace_id)
-
-    def _unmounted():
-        assert not core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id)
-
-    await aqtbot.wait_until(_unmounted)
-
-    logged_gui.add_instance(str(url))
-
-    await aqtbot.wait_until(_mounted)
-
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files):
+@pytest.mark.parametrize("timestamp", [True, False])
+async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, autoclose_dialog):
     logged_gui, w_w, f_w = logged_gui_with_files
-    url = f_w.workspace_fs.generate_file_link("/unknown")
+    await f_w.workspace_fs.sync()
 
-    logged_gui.add_instance(str(url))
+    with freeze_time(DateTime.now().add(seconds=1)):
+        if timestamp:
+            timestamp = DateTime.now()
+        else:
+            timestamp = None
+        core = logged_gui.test_get_core()
 
-    def _assert_dialogs():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_FILE_GOTO_LINK_NOT_FOUND"))]
+        def _mounted(ts):
+            assert autoclose_dialog.dialogs == []
+            assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
 
-    await aqtbot.wait_until(_assert_dialogs)
+        # Workspace should be mounted
+        await aqtbot.wait_until(lambda: _mounted(None))
 
-    assert logged_gui.tab_center.count() == 1
+        # Checking that it has files
+        def _folder_ready(is_timestamped):
+            if not is_timestamped:
+                assert f_w.table_files.rowCount() == 2
+                folder = f_w.table_files.item(1, 1)
+                assert folder
+                assert folder.text() == "dir1"
+            else:
+                assert f_w.label_role.text() == _(WorkspaceRole.READER)
+                assert isinstance(f_w.workspace_fs, WorkspaceFSTimestamped)
+
+        await aqtbot.wait_until(lambda: _folder_ready(False))
+
+        assert logged_gui.tab_center.count() == 1
+
+        # Generate a file link
+        url = f_w.workspace_fs.generate_file_link(f_w.current_directory, timestamp)
+
+        # Unmount the original workspace
+        await core.mountpoint_manager.unmount_workspace(f_w.workspace_fs.workspace_id, None)
+
+        def _unmounted(ts):
+            assert not core.mountpoint_manager.is_workspace_mounted(
+                f_w.workspace_fs.workspace_id, ts
+            )
+
+        # Making sure that it is unmounted
+        await aqtbot.wait_until(lambda: _unmounted(None))
+
+        # Add an instance with the file link
+        logged_gui.add_instance(url.to_url())
+
+        # Workspace should be mounted
+        await aqtbot.wait_until(lambda: _mounted(timestamp))
+
+        # If the link was created with a timestamp, the workspace should be a
+        # TimestampedWorkspace, otherwise it's just a normal workspace
+        await aqtbot.wait_until(lambda: _folder_ready(timestamp is not None))
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format"])
+@pytest.mark.parametrize("timestamp", [True, False])
+async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files, timestamp):
+    logged_gui, w_w, f_w = logged_gui_with_files
+    await f_w.workspace_fs.sync()
+
+    with freeze_time(DateTime.now().add(seconds=1)):
+        if timestamp:
+            timestamp = DateTime.now()
+        else:
+            timestamp = None
+        url = f_w.workspace_fs.generate_file_link("/unknown", timestamp)
+
+        logged_gui.add_instance(url.to_url())
+
+        def _assert_dialogs():
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [
+                ("Error", translate("TEXT_FILE_GOTO_LINK_NOT_FOUND_file").format(file="unknown"))
+            ]
+
+        await aqtbot.wait_until(_assert_dialogs)
+
+        assert logged_gui.tab_center.count() == 1
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format", "bad_timestamp"])
 async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_files, kind):
     logged_gui, w_w, f_w = logged_gui_with_files
     org_addr = f_w.core.device.organization_addr
     if kind == "bad_workspace_id":
-        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=not_a_uuid&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id.str}?action=file_link&workspace_id=not_a_uuid&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"  # cspell: disable-line
     elif kind == "legacy_url_format":
-        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=449977b2-889a-4a62-bc54-f89c26175e90&path=%2Fbar.txt&no_ssl=true&rvk=ZY3JDUOCOKTLCXWS6CJTAELDZSMZYFK5QLNJAVY6LFJV5IRJWAIAssss"
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id.str}?action=file_link&workspace_id=449977b2-889a-4a62-bc54-f89c26175e90&path=%2Fbar.txt&no_ssl=true&rvk=ZY3JDUOCOKTLCXWS6CJTAELDZSMZYFK5QLNJAVY6LFJV5IRJWAIAssss"  # cspell: disable-line
+    elif kind == "bad_timestamp":
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id.str}?action=file_link&workspace_id=449977b2-889a-4a62-bc54-f89c26175e90&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs&timestamp=not_a_ts"  # cspell: disable-line
     else:
         assert False
 
@@ -260,6 +319,7 @@ async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_f
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("timestamp", [None, DateTime.now()])
 async def test_link_file_disconnected(
     aqtbot,
     autoclose_dialog,
@@ -268,9 +328,10 @@ async def test_link_file_disconnected(
     monkeypatch,
     bob_available_device,
     snackbar_catcher,
+    timestamp,
 ):
     gui, w_w, f_w = logged_gui_with_files
-    addr = f_w.workspace_fs.generate_file_link("/dir1")
+    addr = f_w.workspace_fs.generate_file_link("/dir1", timestamp)
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
@@ -289,7 +350,7 @@ async def test_link_file_disconnected(
             (
                 "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
-                    organization=bob.organization_id
+                    organization=bob.organization_id.str
                 ),
             )
         ]
@@ -324,16 +385,21 @@ async def test_link_file_disconnected(
 
     def _folder_ready():
         assert f_w.isVisible()
-        assert f_w.table_files.rowCount() == 2
-        folder = f_w.table_files.item(1, 1)
-        assert folder
-        assert folder.text() == "dir1"
+        if timestamp is None:
+            assert f_w.table_files.rowCount() == 2
+            folder = f_w.table_files.item(1, 1)
+            assert folder
+            assert folder.text() == "dir1"
+        else:
+            assert f_w.label_role.text() == _(WorkspaceRole.READER)
+            assert isinstance(f_w.workspace_fs, WorkspaceFSTimestamped)
 
     await aqtbot.wait_until(_folder_ready)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("timestamp", [None, DateTime.now()])
 async def test_link_file_disconnected_cancel_login(
     aqtbot,
     autoclose_dialog,
@@ -342,9 +408,10 @@ async def test_link_file_disconnected_cancel_login(
     monkeypatch,
     bob_available_device,
     snackbar_catcher,
+    timestamp,
 ):
     gui, w_w, f_w = logged_gui_with_files
-    url = f_w.workspace_fs.generate_file_link("/dir1")
+    url = f_w.workspace_fs.generate_file_link("/dir1", timestamp)
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
@@ -355,7 +422,7 @@ async def test_link_file_disconnected_cancel_login(
 
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
-    gui.add_instance(str(url))
+    gui.add_instance(url.to_url())
 
     def _assert_snackbars():
         assert len(snackbar_catcher.snackbars) == 1
@@ -363,7 +430,7 @@ async def test_link_file_disconnected_cancel_login(
             (
                 "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
-                    organization=bob.organization_id
+                    organization=bob.organization_id.str
                 ),
             )
         ]
@@ -399,8 +466,9 @@ async def test_link_file_disconnected_cancel_login(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("timestamp", [None, DateTime.now()])
 async def test_link_file_unknown_workspace(
-    aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice
+    aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice, timestamp
 ):
     password = "P@ssw0rd"
     save_device_with_password_in_config(core_config.config_dir, alice, password)
@@ -409,6 +477,7 @@ async def test_link_file_unknown_workspace(
         organization_addr=alice.organization_addr,
         workspace_id=EntryID.new(),
         encrypted_path=b"<whatever>",
+        encrypted_timestamp=b"snip",
     )
 
     gui = await gui_factory(core_config=core_config, start_arg=file_link.to_url())
@@ -431,7 +500,6 @@ async def test_link_file_unknown_workspace(
 
     def _error_shown():
         assert len(autoclose_dialog.dialogs) == 1
-        print(autoclose_dialog.dialogs)
         assert autoclose_dialog.dialogs[0] == (
             "Error",
             "You do not have access to the workspace containing the file. It may not have been shared with you.",

@@ -1,66 +1,71 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import gc
-import time
 import inspect
+import time
 import traceback
+from typing import Any, Iterable, Tuple
 
-import trio
 import structlog
+import trio
+from trio.lowlevel import Task
 
 logger = structlog.get_logger()
 
 
-def format_stack(coro):
+def format_stack(coroutine: Any) -> Iterable[str]:
     # Stop when reaching trio modules
-    if hasattr(coro, "cr_code"):
-        module = inspect.getmodule(coro.cr_code)
+    if hasattr(coroutine, "cr_code"):
+        module = inspect.getmodule(coroutine.cr_code)
         if module and module.__name__.startswith("trio."):
             return
 
     # Work around https://bugs.python.org/issue32810
-    if hasattr(coro, "__class__") and coro.__class__.__name__ in (
+    if hasattr(coroutine, "__class__") and coroutine.__class__.__name__ in (
         "async_generator_asend",
         "async_generator_athrow",
     ):
-        coro, *_ = gc.get_referents(coro)
-        if not inspect.isasyncgen(coro):
+        coroutine, *_ = gc.get_referents(coroutine)
+        if not inspect.isasyncgen(coroutine):
             return
 
     # Follow a generator
-    if getattr(coro, "ag_frame", None):
-        yield from traceback.format_stack(coro.ag_frame)
-        yield from format_stack(coro.ag_await)
+    if getattr(coroutine, "ag_frame", None):
+        yield from traceback.format_stack(coroutine.ag_frame)
+        yield from format_stack(coroutine.ag_await)
         return
 
     # Follow a coroutine
-    if getattr(coro, "cr_frame", None):
-        yield from traceback.format_stack(coro.cr_frame)
-        yield from format_stack(coro.cr_await)
+    if getattr(coroutine, "cr_frame", None):
+        yield from traceback.format_stack(coroutine.cr_frame)
+        yield from format_stack(coroutine.cr_await)
         return
 
     # Follow a decorated coroutine
-    if getattr(coro, "gi_frame", None):
-        yield from traceback.format_stack(coro.gi_frame)
-        yield from format_stack(coro.gi_yieldfrom)
+    if getattr(coroutine, "gi_frame", None):
+        yield from traceback.format_stack(coroutine.gi_frame)
+        yield from format_stack(coroutine.gi_yieldfrom)
         return
 
 
 class TaskMonitoringInstrument(trio.abc.Instrument):
-    def __init__(self, cpu_threshold=0.2, io_threshold=0.1, trace_all=False):
-        self.start_dict = {}
+    def __init__(
+        self, cpu_threshold: float = 0.2, io_threshold: float = 0.1, trace_all: bool = False
+    ) -> None:
+        self.start_dict: dict[Task, Tuple[float, float, str]] = {}
         self.cpu_threshold = cpu_threshold
         self.io_threshold = io_threshold
         self.trace_all = trace_all
 
-    def get_stacktrace(self, task):
+    def get_stacktrace(self, task: Task) -> str:
         return "".join(format_stack(task.coro))
 
-    def before_task_step(self, task):
+    def before_task_step(self, task: Task) -> None:
         stack = self.get_stacktrace(task) if self.trace_all else ""
         self.start_dict[task] = (time.monotonic(), time.process_time(), stack)
 
-    def after_task_step(self, task):
+    def after_task_step(self, task: Task) -> None:
         if task not in self.start_dict:
             return
 

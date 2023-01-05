@@ -1,11 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
-import sys
+import pathlib
 import subprocess
+import sys
 import tempfile
 import zipfile
-import pathlib
+
+# The default rust build profile to use when compiling the rust extension.
+DEFAULT_CARGO_PROFILE = "release"
 
 
 def display(line: str):
@@ -27,17 +30,28 @@ def run(cmd, **kwargs):
     return ret
 
 
-def in_cibuildwheel():
-    return bool(int(os.environ.get("CIBUILDWHEEL", "0")))
-
-
-def force_maturin_release() -> bool:
-    return os.environ.get("FORCE_MATURIN_RELEASE", "0") == "1"
-
-
 def build():
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
+
+    if sys.platform == "win32":
+        libparsec_path = "parsec/_parsec.cp39-win_amd64.pyd"
+    elif sys.platform == "darwin":
+        libparsec_path = "parsec/_parsec.cpython-39-darwin.so"
+    else:
+        libparsec_path = "parsec/_parsec.cpython-39-x86_64-linux-gnu.so"
+
+    build_strategy = (
+        os.environ.get("POETRY_LIBPARSEC_BUILD_STRATEGY", "always_build").strip().lower()
+    )
+    if build_strategy == "no_build":
+        display(f"Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `no_build`")
+        return
+    elif build_strategy == "build_if_missing" and (BASEDIR / libparsec_path).exists():
+        display(
+            f"Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `build_if_missing` and {libparsec_path} already exists"
+        )
+        return
 
     # Maturin provides two commands to compile the Rust code as a Python native module:
     # - `maturin develop` that only compile the native module
@@ -49,23 +63,25 @@ def build():
     # So we must ask maturin to build a wheel of the project, only to extract the
     # native module and discard the rest !
 
-    release = "--release" if in_cibuildwheel() or force_maturin_release() else ""
+    maturin_build_profile = "--profile=" + os.environ.get("CARGO_PROFILE", DEFAULT_CARGO_PROFILE)
+    features = (
+        "--no-default-features --features use-sodiumoxide"
+        if maturin_build_profile == "--profile=release"
+        else ""
+    )
     with tempfile.TemporaryDirectory() as distdir:
-        run(f"maturin build {release} --out {distdir}")
+        run(
+            f"maturin build {maturin_build_profile} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir} {features}"
+        )
 
         outputs = list(pathlib.Path(distdir).iterdir())
         if len(outputs) != 1:
             raise RuntimeError(f"Target dir unexpectedly contains multiple files: {outputs}")
 
         wheel_path = outputs[0]
-        if sys.platform == "win32":
-            in_wheel_so_path = "parsec/_parsec.pyd"
-        else:
-            in_wheel_so_path = "parsec/_parsec.abi3.so"
-
-        display(f"extracting {wheel_path}:{in_wheel_so_path} -> {BASEDIR / in_wheel_so_path}")
+        display(f"extracting {wheel_path}:{libparsec_path} -> {BASEDIR / libparsec_path}")
         with zipfile.ZipFile(wheel_path) as wheel:
-            wheel.extract(in_wheel_so_path, path=BASEDIR)
+            wheel.extract(libparsec_path, path=BASEDIR)
 
 
 if __name__ == "__main__":

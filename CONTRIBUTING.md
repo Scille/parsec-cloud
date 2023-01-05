@@ -39,7 +39,7 @@ When proposing a new **feature**, please provide the following:
 2. *why* this important for you
 3. optionally, a proposed solution
 
-> Describing your use case and goals, rather than only / directly jumping into a specific, concrete proposal for a solution is very important. As this allows us to take into account the bigger picture. If you "only" propose concrete solution, and that doesn't fit in, we might need to reverse engineer your actualy use case / goals first to then come up with a solution that fits.
+> Describing your use case and goals, rather than only / directly jumping into a specific, concrete proposal for a solution is very important. As this allows us to take into account the bigger picture. If you "only" propose concrete solution, and that doesn't fit in, we might need to reverse engineer your actual use case / goals first to then come up with a solution that fits.
 
 ## Contributing Code
 
@@ -73,12 +73,12 @@ The CAA gives us the rights to your code, which we need e.g. to react to license
 
 Contributions to the documentation are highly welcome! Parsec is a complex software, users have varying degrees of background and experience and we have limited resources. Also, developers of Parsec usually don't have a **user perspective** (anymore) - but docs should be for users.
 
-All Parsec documention is contained in this repository [here](https://github.com/Scille/parsec-cloud/tree/master/docs).
+All Parsec documentation is contained in this repository [here](https://github.com/Scille/parsec-cloud/tree/master/docs).
 
-The documentation is the built (by us) and deployed [here](http://docs.parsec.cloud).
+The documentation is built (by us) and deployed [here](http://docs.parsec.cloud).
 
 ## Acknowledgement
 
 This document is based on the [contributing one](https://github.com/crossbario/crossbar/blob/master/CONTRIBUTING.md)
 of the [Crossbar.io](https://crossbar.io/) project.
-This a cool open source project made by nice people, though not related to Parsec in any way, you should go check a look ;-)
+This a cool open source project made by nice people, though not related to Parsec in any way, you should go have a look ;-)

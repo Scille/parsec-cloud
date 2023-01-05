@@ -1,21 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import re
-import pytest
 import os
-import trio
+import re
 from functools import partial
 
+import pytest
+import trio
+
 from parsec.api.protocol import DeviceID
-from parsec.crypto import SigningKey
-from parsec.core.types import BackendOrganizationAddr, BackendInvitationAddr
 from parsec.core.backend_connection.transport import (
-    connect_as_invited,
-    connect_as_authenticated,
     BackendNotAvailable,
+    connect_as_authenticated,
+    connect_as_invited,
     http_request,
 )
-
+from parsec.core.types import BackendInvitationAddr, BackendOrganizationAddr
+from parsec.crypto import SigningKey
 from tests.common import real_clock_timeout
 
 
@@ -86,7 +87,7 @@ async def start_proxy_for_websocket(nursery, target_port, event_hook):
 async def start_pac_server(nursery, pac_rule, event_hook):
     async def _pac_client_handler(stream):
         pac = f"""function FindProxyForURL(url, host) {{ return "{pac_rule}"; }}""".encode()
-        event_hook("PAC file retreived from server")
+        event_hook("PAC file retrieved from server")
 
         await stream.send_all(
             (
@@ -173,7 +174,7 @@ async def test_proxy_with_websocket(monkeypatch, connection_type, proxy_type):
                     )
 
         assert proxy_events == [
-            *(["PAC file retreived from server"] if proxy_type == "http_proxy_pac" else []),
+            *(["PAC file retrieved from server"] if proxy_type == "http_proxy_pac" else []),
             "Connected to proxy",
             "Reaching target through proxy",
         ]
@@ -239,7 +240,7 @@ async def test_proxy_with_http(monkeypatch, proxy_type):
             assert rep == b"hello"
 
         assert proxy_events == [
-            *(["PAC file retreived from server"] if proxy_type == "http_proxy_pac" else []),
+            *(["PAC file retrieved from server"] if proxy_type == "http_proxy_pac" else []),
             "Connected to proxy",
         ]
 
@@ -313,7 +314,7 @@ async def test_no_proxy_with_http(monkeypatch, type):
             assert rep == b"hello"
 
         assert proxy_events == [
-            *(["PAC file retreived from server"] if type == "no_proxy_from_pac" else []),
+            *(["PAC file retrieved from server"] if type == "no_proxy_from_pac" else []),
             "Connected to target",
         ]
 

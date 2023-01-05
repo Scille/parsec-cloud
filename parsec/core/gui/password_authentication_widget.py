@@ -1,21 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import List
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QValidator
+from PyQt5.QtWidgets import QWidget
 
-from parsec.core.gui.password_validation import PasswordStrengthWidget
 from parsec.core.gui.lang import translate as _
-
+from parsec.core.gui.password_validation import PasswordStrengthWidget
 from parsec.core.gui.ui.password_authentication_widget import Ui_PasswordAuthenticationWidget
 
 
 class PasswordAuthenticationWidget(QWidget, Ui_PasswordAuthenticationWidget):
     authentication_state_changed = pyqtSignal(bool)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setupUi(self)
         self.pwd_str_widget = PasswordStrengthWidget()
@@ -25,10 +25,10 @@ class PasswordAuthenticationWidget(QWidget, Ui_PasswordAuthenticationWidget):
         self.line_edit_password_check.textChanged.connect(self._check_match)
         self.label_mismatch.hide()
 
-    def set_excluded_strings(self, excluded_strings: List[str]):
+    def set_excluded_strings(self, excluded_strings: List[str]) -> None:
         self.pwd_str_widget.set_excluded_strings(excluded_strings)
 
-    def _check_match(self, text=""):
+    def _check_match(self, text: str = "") -> None:
         password = self.line_edit_password.text()
         password_check = self.line_edit_password_check.text()
         if (
@@ -55,7 +55,7 @@ class PasswordAuthenticationWidget(QWidget, Ui_PasswordAuthenticationWidget):
                 self.label_mismatch.hide()
             self.authentication_state_changed.emit(False)
 
-    def is_auth_valid(self):
+    def is_auth_valid(self) -> bool:
         password = self.line_edit_password.text()
         password_check = self.line_edit_password_check.text()
         return bool(
@@ -66,5 +66,5 @@ class PasswordAuthenticationWidget(QWidget, Ui_PasswordAuthenticationWidget):
         )
 
     @property
-    def password(self):
+    def password(self) -> str:
         return self.line_edit_password.text()

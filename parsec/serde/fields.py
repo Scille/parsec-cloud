@@ -1,43 +1,37 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Type
-from parsec._parsec import DateTime as RsDateTime
-from uuid import UUID as _UUID
+from collections.abc import Mapping
 from enum import Enum
-from collections import Mapping
+from typing import TYPE_CHECKING, Any, Iterable, Protocol, Type, TypeVar, Union
+from uuid import UUID as _UUID
+
 from marshmallow import ValidationError
 from marshmallow.fields import (
-    # Republishing
-    Int,
-    Float,
-    String,
-    List,
-    Dict,
-    Nested,
-    Integer,
     Boolean,
+    Dict,
     Email,
-    Field,
+    Field,  # Republishing
+    Float,
+    Int,
+    Integer,
+    List,
+    Nested,
+    String,
 )
 
+from parsec._parsec import DateTime as RsDateTime
+from parsec._parsec import HashDigest as _HashDigest
+from parsec._parsec import PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload
+from parsec._parsec import PrivateKey as _PrivateKey
+from parsec._parsec import PublicKey as _PublicKey
+from parsec._parsec import SecretKey as _SecretKey
+from parsec._parsec import SigningKey as _SigningKey
+from parsec._parsec import VerifyKey as _VerifyKey
 from parsec.types import FrozenDict as _FrozenDict
-from parsec.crypto import (
-    SecretKey as _SecretKey,
-    HashDigest as _HashDigest,
-    SigningKey as _SigningKey,
-    VerifyKey as _VerifyKey,
-    PrivateKey as _PrivateKey,
-    PublicKey as _PublicKey,
-)
-from parsec.sequester_crypto import (
-    SequesterVerifyKeyDer as _SequesterVerifyKeyDer,
-    SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer,
-)
-
 
 __all__ = (
     "enum_field_factory",
-    "bytes_based_field_factory",
     "str_based_field_factory",
     "uuid_based_field_factory",
     "Int",
@@ -68,83 +62,111 @@ __all__ = (
 )
 
 
-class BaseEnumField(Field):
-    ENUM: Enum
+class WithStrAttribute(Protocol):
+    def __init__(self, value: str) -> None:
+        ...
 
-    def _serialize(self, value, attr, obj):
+    @property
+    def str(self) -> str:
+        ...
+
+
+RustEnumSelf = TypeVar("RustEnumSelf", bound="RustEnum")
+
+
+class RustEnum(Protocol):
+    @classmethod
+    def from_str(cls: Type[RustEnumSelf], value: str) -> RustEnumSelf:
+        ...
+
+    @property
+    def str(self) -> str:
+        ...
+
+
+UUIDSelf = TypeVar("UUIDSelf", bound="UUIDProtocol")
+
+
+class UUIDProtocol(Protocol):
+    @classmethod
+    def from_hex(cls: Type[UUIDSelf], hex: str) -> UUIDSelf:
+        ...
+
+    @property
+    def hex(self) -> str:
+        ...
+
+
+T = TypeVar("T")
+E = TypeVar("E", bound=Enum)
+S = TypeVar("S", bound=WithStrAttribute)
+R = TypeVar("R", bound=RustEnum)
+U = TypeVar("U", bound=UUIDProtocol)
+
+if not TYPE_CHECKING:
+    # Runtime hack to allow us to use a Generic in a stub file
+    # See: https://github.com/python/typing/issues/60
+    Field.__class_getitem__ = lambda _: Field
+
+
+class BaseEnumField(Field[E]):
+    ENUM: Type[E]
+
+    def _serialize(self, value: E | None, attr: str, obj: object) -> str | None:
         if value is None:
             return None
-
-        if not isinstance(value, self.ENUM):
-            raise ValidationError(f"Not a {self.ENUM.__name__}")
-
+        assert isinstance(value, self.ENUM)
         return value.value
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> E:
         if not isinstance(value, str):
             raise ValidationError("Not string")
-
-        for choice in self.ENUM:
-            if choice.value == value:
-                return choice
-        else:
-            raise ValidationError(f"Invalid role `{value}`")
-
-
-# Field factories are correctly typed, however mypy consider the
-# `MyField == make_field_class()` pattern as too similar to variale assignment and
-# disregard factory typing (see: https://github.com/python/typing/discussions/1020)
-# Anyway the solution is to add explicit typing when using the type generator:
-# `MyField: Type[Field] == make_field_class()`, transitivity ? never heard of it !
-
-
-# Using inheritance to define enum fields allows for easy instrospection detection
-# which is useful when checking api changes in tests (see tests/schemas/builder.py)
-def enum_field_factory(enum: Type[Enum]) -> Type[BaseEnumField]:
-    return type(f"{enum.__name__}Field", (BaseEnumField,), {"ENUM": enum})
-
-
-def bytes_based_field_factory(value_type: Type) -> Type[Field]:
-    assert isinstance(value_type, type)
-
-    def _serialize(self, value, attr, obj):
-        if value is None:
-            return None
-
-        return value
-
-    def _deserialize(self, value, attr, data):
-        if not isinstance(value, bytes):
-            raise ValidationError("Not bytes")
-
         try:
-            return value_type(value)
-
+            return self.ENUM(value)
         except Exception as exc:
             raise ValidationError(str(exc)) from exc
 
-    return type(
-        f"{value_type.__name__}Field",
-        (Field,),
-        {"_serialize": _serialize, "_deserialize": _deserialize},
-    )
+
+# Using inheritance to define enum fields allows for easy introspection detection
+# which is useful when checking api changes in tests (see tests/schemas/builder.py)
+def enum_field_factory(enum: Type[E]) -> Type[BaseEnumField[E]]:
+    return type(f"{enum.__name__}Field", (BaseEnumField,), {"ENUM": enum})
 
 
-def str_based_field_factory(value_type: Type) -> Type[Field]:
-    assert isinstance(value_type, type)
-
-    def _serialize(self, value, attr, data):
+# The name looks weird for legacy reasons
+class bytesField(Field[bytes]):
+    def _serialize(self: Field[bytes], value: bytes | None, attr: str, obj: object) -> bytes | None:
         if value is None:
             return None
+        assert isinstance(value, bytes)
+        return value
 
+    def _deserialize(
+        self: Field[bytes], value: object, attr: str, data: dict[str, object]
+    ) -> bytes:
+        if not isinstance(value, bytes):
+            raise ValidationError(f"expected 'bytes' for got '{type(value)}'")
+        try:
+            return bytes(value)
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+Bytes = bytesField
+
+
+def str_based_field_factory(value_type: Type[S]) -> Type[Field[S]]:
+    assert isinstance(value_type, type)
+
+    def _serialize(self: Field[S], value: S | None, attr: str, data: object) -> str | None:
+        if value is None:
+            return None
         assert isinstance(value, value_type)
-        return str(value)
+        return value.str
 
-    def _deserialize(self, value, attr, data):
-
+    def _deserialize(self: Field[S], value: object, attr: str, data: dict[str, object]) -> S:
         if not isinstance(value, str):
-            raise ValidationError("Not string")
-
+            raise ValidationError("Not a string")
         try:
             return value_type(value)
         except ValueError as exc:
@@ -157,22 +179,42 @@ def str_based_field_factory(value_type: Type) -> Type[Field]:
     )
 
 
-def uuid_based_field_factory(value_type: Type) -> Type[Field]:
-    assert isinstance(value_type, type)
-
-    def _serialize(self, value, attr, data):
+def rust_enum_field_factory(value_type: Type[R]) -> Type[Field[R]]:
+    def _serialize(self: Field[R], value: R | None, attr: str, obj: Any) -> str | None:
         if value is None:
             return None
-
         assert isinstance(value, value_type)
-        return value.uuid
+        return value.str
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self: Field[R], value: object, attr: str, data: dict[str, object]) -> R:
+        if not isinstance(value, str):
+            raise ValidationError(f"expected 'str' for got '{type(value)}'")
+        try:
+            return value_type.from_str(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    return type(
+        f"{value_type.__name__}Field",
+        (Field,),
+        {"_serialize": _serialize, "_deserialize": _deserialize},
+    )
+
+
+def uuid_based_field_factory(value_type: Type[U]) -> Type[Field[U]]:
+    assert isinstance(value_type, type)
+
+    def _serialize(self: Field[U], value: U | None, attr: str, data: object) -> _UUID | None:
+        if value is None:
+            return None
+        assert isinstance(value, value_type)
+        return _UUID(value.hex)
+
+    def _deserialize(self: Field[U], value: object, attr: str, data: dict[str, object]) -> U:
         if not isinstance(value, _UUID):
             raise ValidationError("Not an UUID")
-
         try:
-            return value_type(value)
+            return value_type.from_hex(value.hex)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
@@ -186,10 +228,12 @@ def uuid_based_field_factory(value_type: Type) -> Type[Field]:
 # TODO: test this field and use it everywhere in the api !
 
 
-class Path(Field):
+class Path(Field[str]):
     """Absolute path"""
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> str:
+        if not isinstance(value, str):
+            raise ValidationError(f"expected 'str' but got {type(value)}")
         if not value.startswith("/"):
             raise ValidationError("Path must be absolute")
         if value != "/":
@@ -199,73 +243,73 @@ class Path(Field):
         return value
 
 
-class UUID(Field):
+class UUID(Field[_UUID]):
     """UUID already handled by pack/unpack"""
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> _UUID:
         if not isinstance(value, _UUID):
             raise ValidationError("Not an UUID")
         return value
 
 
-class DateTime(Field):
+class DateTime(Field[RsDateTime]):
     """DateTime already handled by pack/unpack"""
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> RsDateTime:
         if not isinstance(value, RsDateTime):
             raise ValidationError("Not a datetime")
 
         return value
 
 
-class EnumCheckedConstant(Field):
+class EnumCheckedConstant(Field[E]):
     """Make sure the value is present during deserialization"""
 
-    def __init__(self, constant: Enum, **kwargs):
+    def __init__(self, constant: E, **kwargs: Any) -> None:
         kwargs.setdefault("default", constant.value)
         super().__init__(**kwargs)
         self.constant = constant
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value: E | None, attr: str, obj: object) -> str:
         return self.constant.value
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> E:
         if value != self.constant.value:
             raise ValidationError(f"Invalid value, should be `{self.constant.value}`")
-
         return self.constant
 
 
-class CheckedConstant(Field):
+class CheckedConstant(Field[Union[str, None]]):
     """Make sure the value is present during deserialization"""
 
-    def __init__(self, constant, **kwargs):
+    def __init__(self, constant: str | None, **kwargs: Any) -> None:
         kwargs.setdefault("default", constant)
         super().__init__(**kwargs)
         self.constant = constant
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value: str | None, attr: str, obj: object) -> str | None:
         return self.constant
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> str | None:
         if value != self.constant:
             raise ValidationError(f"Invalid value, should be `{self.constant}`")
+        return self.constant
 
-        return value
 
-
-class Map(Field):
+class Map(Field[Mapping[str, T]]):
     default_error_messages = {"invalid": "Not a valid mapping type."}
 
-    def __init__(self, key_field, nested_field, **kwargs):
+    def __init__(self, key_field: Field[str], nested_field: Field[T], **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.key_field = key_field
         self.nested_field = nested_field
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(
+        self, value: Mapping[str, T] | None, attr: str, obj: object
+    ) -> dict[str, T] | None:
         if value is None:
             return None
-
+        assert isinstance(value, Mapping)
         ret = {}
         for key, val in value.items():
             k = self.key_field._serialize(key, attr, obj)
@@ -273,10 +317,11 @@ class Map(Field):
             ret[k] = v
         return ret
 
-    def _deserialize(self, value, attr, obj):
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> dict[str, T]:
 
         if not isinstance(value, Mapping):
             self.fail("invalid")
+            assert False
 
         ret = {}
         for key, val in value.items():
@@ -286,117 +331,119 @@ class Map(Field):
         return ret
 
 
-class FrozenMap(Map):
-    def _deserialize(self, value, attr, obj):
+class FrozenMap(Map[T]):
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> _FrozenDict[str, T]:
         return _FrozenDict(super()._deserialize(value, attr, obj))
 
 
 class FrozenList(List):
-    def _deserialize(self, value, attr, obj):
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> tuple[Any, ...]:
         return tuple(super()._deserialize(value, attr, obj))
 
 
 class FrozenSet(List):
-    def _deserialize(self, value, attr, obj):
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> frozenset[Any]:
         return frozenset(super()._deserialize(value, attr, obj))
 
 
-class Tuple(Field):
+class Tuple(Field[Iterable[Any]]):
     default_error_messages = {"invalid": "Not a valid tuple type."}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Field[Any], **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.args = args
+        self.args: tuple[Field[Any], ...] = args
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(
+        self, value: Iterable[Any] | None, attr: str, obj: object
+    ) -> tuple[Any, ...] | None:
         if value is None:
             return None
-
+        assert isinstance(value, Iterable)
         return tuple(self.args[i]._serialize(v, attr, obj) for i, v in enumerate(value))
 
-    def _deserialize(self, value, attr, obj):
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> tuple[Any, ...]:
         if not isinstance(value, (list, tuple)) or len(self.args) != len(value):
             self.fail("invalid")
-        return tuple(self.args[i].deserialize(v, attr, obj) for i, v in enumerate(value))
+            assert False
+        return tuple(self.args[i].deserialize(v) for i, v in enumerate(value))
 
 
-class SigningKey(Field):
-    def _serialize(self, value, attr, obj):
+class SigningKey(Field[_SigningKey]):
+    def _serialize(self, value: _SigningKey | None, attr: str, obj: object) -> bytes | None:
         if value is None:
             return None
-
+        assert isinstance(value, _SigningKey)
         return value.encode()
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> _SigningKey:
+        if not isinstance(value, bytes):
+            raise ValidationError("Expecting bytes")
         try:
             return _SigningKey(value)
-
         except Exception:
             raise ValidationError("Invalid signing key.")
 
 
-class VerifyKey(Field):
-    def _serialize(self, value, attr, obj):
+class VerifyKey(Field[_VerifyKey]):
+    def _serialize(self, value: _VerifyKey | None, attr: str, obj: object) -> bytes | None:
         if value is None:
             return None
-
+        assert isinstance(value, _VerifyKey)
         return value.encode()
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> _VerifyKey:
+        if not isinstance(value, bytes):
+            raise ValidationError("Expecting bytes")
         try:
             return _VerifyKey(value)
-
         except Exception:
             raise ValidationError("Invalid verify key.")
 
 
-class PrivateKey(Field):
-    def _serialize(self, value, attr, obj):
+class PrivateKey(Field[_PrivateKey]):
+    def _serialize(self, value: _PrivateKey | None, attr: str, obj: object) -> bytes | None:
         if value is None:
             return None
-
+        assert isinstance(value, _PrivateKey)
         return value.encode()
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> _PrivateKey:
+        if not isinstance(value, bytes):
+            raise ValidationError("Expecting bytes")
         try:
             return _PrivateKey(value)
-
         except Exception:
-            raise ValidationError("Invalid secret key.")
+            raise ValidationError("Invalid private key.")
 
 
-class PublicKey(Field):
-    def _serialize(self, value, attr, obj):
+class PublicKey(Field[_PublicKey]):
+    def _serialize(self, value: _PublicKey | None, attr: str, obj: object) -> bytes | None:
         if value is None:
             return None
-
+        assert isinstance(value, _PublicKey)
         return value.encode()
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> _PublicKey:
+        if not isinstance(value, bytes):
+            raise ValidationError("Expecting bytes")
         try:
             return _PublicKey(value)
-
         except Exception:
-            raise ValidationError("Invalid verify key.")
+            raise ValidationError("Invalid public key.")
 
 
-Bytes: Type[Field] = bytes_based_field_factory(bytes)
-
-
-class HashDigestField(Field):
-    def _serialize(self, value, attr, obj):
+class HashDigestField(Field[_HashDigest]):
+    def _serialize(self, value: _HashDigest | None, attr: str, obj: object) -> bytes | None:
         if value is None:
             return None
-
+        assert isinstance(value, _HashDigest)
         return value.digest
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> _HashDigest:
         if not isinstance(value, bytes):
-            raise ValidationError("Not bytes")
-
+            raise ValidationError("Expecting bytes")
         try:
             return _HashDigest(value)
-
         except Exception as exc:
             raise ValidationError(str(exc)) from exc
 
@@ -404,20 +451,18 @@ class HashDigestField(Field):
 HashDigest = HashDigestField
 
 
-class SecretKeyField(Field):
-    def _serialize(self, value, attr, obj):
+class SecretKeyField(Field[_SecretKey]):
+    def _serialize(self, value: _SecretKey | None, attr: str, obj: object) -> bytes | None:
         if value is None:
             return None
-
+        assert isinstance(value, _SecretKey)
         return value.secret
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> _SecretKey:
         if not isinstance(value, bytes):
-            raise ValidationError("Not bytes")
-
+            raise ValidationError("Expecting bytes")
         try:
             return _SecretKey(value)
-
         except Exception as exc:
             raise ValidationError(str(exc)) from exc
 
@@ -425,43 +470,21 @@ class SecretKeyField(Field):
 SecretKey = SecretKeyField
 
 
-class SequesterVerifyKeyDerField(Field):
-    def _serialize(self, value, attr, obj):
+class PkiEnrollmentSubmitPayloadField(Field[_PkiEnrollmentSubmitPayload]):
+    def _serialize(
+        self, value: _PkiEnrollmentSubmitPayload | None, attr: str, obj: Any
+    ) -> bytes | None:
         if value is None:
             return None
-
+        assert isinstance(value, _PkiEnrollmentSubmitPayload)
         return value.dump()
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(
+        self, value: object, attr: str, data: dict[str, object]
+    ) -> _PkiEnrollmentSubmitPayload:
         if not isinstance(value, bytes):
-            raise ValidationError("Not bytes")
-
+            raise ValidationError("Expecting bytes")
         try:
-            return _SequesterVerifyKeyDer(value)
-
+            return _PkiEnrollmentSubmitPayload.load(value)
         except Exception as exc:
             raise ValidationError(str(exc)) from exc
-
-
-SequesterVerifyKeyDer = SequesterVerifyKeyDerField
-
-
-class SequesterEncryptionKeyDerField(Field):
-    def _serialize(self, value, attr, obj):
-        if value is None:
-            return None
-
-        return value.dump()
-
-    def _deserialize(self, value, attr, data):
-        if not isinstance(value, bytes):
-            raise ValidationError("Not bytes")
-
-        try:
-            return _SequesterEncryptionKeyDer(value)
-
-        except Exception as exc:
-            raise ValidationError(str(exc)) from exc
-
-
-SequesterEncryptionKeyDer = SequesterEncryptionKeyDerField

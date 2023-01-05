@@ -1,19 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from unittest.mock import ANY
 
 import pytest
 import trio
 from PyQt5 import QtCore
-from unittest.mock import ANY
 
 from parsec.api.protocol import DeviceLabel
 from parsec.core.backend_connection import backend_invited_cmds_factory
-from parsec.core.invite import claimer_retrieve_info
 from parsec.core.gui.greet_device_widget import (
-    GreetDeviceInstructionsWidget,
     GreetDeviceCodeExchangeWidget,
+    GreetDeviceInstructionsWidget,
     GreetDeviceWidget,
 )
-
+from parsec.core.gui.lang import translate
+from parsec.core.invite import claimer_retrieve_info
 from tests.common import customize_fixtures, real_clock_timeout
 
 
@@ -72,7 +74,7 @@ async def test_invite_device_send_email(
     def _greet_device_displayed():
         assert gd_w.dialog.isVisible()
         assert gd_w.isVisible()
-        assert gd_w.dialog.label_title.text() == "Greet a new device"
+        assert gd_w.dialog.label_title.text() == translate("TEXT_GREET_DEVICE_TITLE")
         assert gdi_w.isVisible()
         assert gdi_w.button_send_email.isVisible()
         assert gdi_w.button_copy_addr.isVisible()
@@ -125,7 +127,7 @@ async def test_invite_device_without_human_handle_cannot_send_email(
     def _greet_device_displayed():
         assert gd_w.dialog.isVisible()
         assert gd_w.isVisible()
-        assert gd_w.dialog.label_title.text() == "Greet a new device"
+        assert gd_w.dialog.label_title.text() == translate("TEXT_GREET_DEVICE_TITLE")
         assert gdi_w.isVisible()
         assert not gdi_w.button_send_email.isVisible()
         assert gdi_w.button_copy_addr.isVisible()
@@ -161,7 +163,7 @@ async def test_invite_and_greet_device(
     def _greet_device_displayed():
         assert gd_w.dialog.isVisible()
         assert gd_w.isVisible()
-        assert gd_w.dialog.label_title.text() == "Greet a new device"
+        assert gd_w.dialog.label_title.text() == translate("TEXT_GREET_DEVICE_TITLE")
         assert gdi_w.isVisible()
 
     await aqtbot.wait_until(_greet_device_displayed)

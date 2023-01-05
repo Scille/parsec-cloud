@@ -1,22 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QLabel
+from typing import Any
+
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel, QWidget
 
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
+from parsec.api.protocol import InvitationEmailSentStatus
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.custom_widgets import ensure_string_size
+from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui.greet_device_widget import GreetDeviceWidget
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import ensure_string_size
-from parsec.core.gui.custom_dialogs import show_error
-from parsec.core.gui.flow_layout import FlowLayout
-from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
+from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import BackendInvitationAddr, DeviceInfo
+from parsec.event_bus import EventBus
 
 
 class DeviceButton(QWidget, Ui_DeviceButton):
-    def __init__(self, device_info, is_current_device):
+    def __init__(self, device_info: DeviceInfo, is_current_device: bool) -> None:
         super().__init__()
         self.setupUi(self)
         self.is_current_device = is_current_device
@@ -37,7 +44,9 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.setGraphicsEffect(effect)
 
 
-async def _do_invite_device(core):
+async def _do_invite_device(
+    core: LoggedCore,
+) -> tuple[BackendInvitationAddr, InvitationEmailSentStatus]:
     try:
         addr, email_sent_status = await core.new_device_invitation(send_email=False)
         return addr, email_sent_status
@@ -47,7 +56,7 @@ async def _do_invite_device(core):
         raise JobResultError("error") from exc
 
 
-async def _do_list_devices(core):
+async def _do_list_devices(core: LoggedCore) -> list[DeviceInfo]:
     try:
         return await core.get_user_devices_info()
     except BackendNotAvailable as exc:
@@ -63,7 +72,14 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
     invite_success = pyqtSignal(QtToTrioJob)
     invite_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
+    def __init__(
+        self,
+        core: LoggedCore,
+        jobs_ctx: QtToTrioJobScheduler,
+        event_bus: EventBus,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
 
         self.setupUi(self)
@@ -79,18 +95,21 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.invite_success.connect(self._on_invite_success)
         self.invite_error.connect(self._on_invite_error)
 
-    def show(self):
+    def show(self) -> None:
         self.reset()
         super().show()
 
-    def invite_device(self):
-        self.jobs_ctx.submit_job(
-            self.invite_success, self.invite_error, _do_invite_device, core=self.core
+    def invite_device(self) -> None:
+        _ = self.jobs_ctx.submit_job(
+            (self, "invite_success"), (self, "invite_error"), _do_invite_device, core=self.core
         )
 
-    def _on_invite_success(self, job):
+    def _on_invite_success(
+        self, job: QtToTrioJob[tuple[BackendInvitationAddr, InvitationEmailSentStatus]]
+    ) -> None:
         assert job.is_finished()
         assert job.status == "ok"
+        assert job.ret is not None
 
         invite_addr, email_sent_status = job.ret
         GreetDeviceWidget.show_modal(
@@ -101,7 +120,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             on_finished=self.reset,
         )
 
-    def _on_invite_error(self, job):
+    def _on_invite_error(
+        self, job: QtToTrioJob[tuple[BackendInvitationAddr, InvitationEmailSentStatus]]
+    ) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
@@ -113,23 +134,24 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
         show_error(self, errmsg, exception=job.exc)
 
-    def add_device(self, device_info, is_current_device):
+    def add_device(self, device_info: DeviceInfo, is_current_device: bool) -> None:
         button = DeviceButton(device_info, is_current_device)
         self.layout_devices.addWidget(button)
         button.show()
 
-    def _on_list_success(self, job):
+    def _on_list_success(self, job: QtToTrioJob[list[DeviceInfo]]) -> None:
         assert job.is_finished()
         assert job.status == "ok"
 
-        devices = job.ret
+        assert job.ret is not None
+        devices: list[DeviceInfo] = job.ret
         current_device = self.core.device
         self.layout_devices.clear()
         for device in devices:
             self.add_device(device, is_current_device=current_device.device_id == device.device_id)
         self.spinner.hide()
 
-    def _on_list_error(self, job):
+    def _on_list_error(self, job: QtToTrioJob[list[DeviceInfo]]) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
@@ -141,9 +163,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             self.layout_devices.addWidget(label)
         self.spinner.hide()
 
-    def reset(self):
+    def reset(self) -> None:
         self.layout_devices.clear()
         self.spinner.show()
-        self.jobs_ctx.submit_job(
-            self.list_success, self.list_error, _do_list_devices, core=self.core
+        _ = self.jobs_ctx.submit_job(
+            (self, "list_success"), (self, "list_error"), _do_list_devices, core=self.core
         )

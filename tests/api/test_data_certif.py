@@ -1,17 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
-from parsec._parsec import DateTime
 import zlib
 
-from parsec.serde import packb, unpackb
-from parsec.api.data import (
-    DataError,
-    UserCertificate,
-    DeviceCertificate,
-    RevokedUserCertificate,
-)
+import pytest
+
+from parsec._parsec import DateTime
+from parsec.api.data import DataError, DeviceCertificate, RevokedUserCertificate, UserCertificate
 from parsec.api.protocol import UserProfile
+from parsec.serde import packb, unpackb
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -96,9 +93,9 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
     # Manually craft a certificate in legacy format
     raw_legacy_certif = {
         "type": "user_certificate",
-        "author": str(bob.device_id),
+        "author": bob.device_id.str,
         "timestamp": now,
-        "user_id": str(alice.user_id),
+        "user_id": alice.user_id.str,
         "public_key": alice.public_key.encode(),
         "is_admin": True,
     }
@@ -117,7 +114,7 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
     # Manually decode new format to check it is compatible with legacy
     dumped_certif = certif.dump_and_sign(bob.signing_key)
     raw_certif = unpackb(zlib.decompress(bob.verify_key.verify(dumped_certif)))
-    assert raw_certif == {**raw_legacy_certif, "profile": alice.profile.value, "human_handle": None}
+    assert raw_certif == {**raw_legacy_certif, "profile": alice.profile.str, "human_handle": None}
 
 
 def test_build_device_certificate(alice, bob, mallory):

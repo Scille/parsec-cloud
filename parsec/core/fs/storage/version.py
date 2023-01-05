@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from pathlib import Path
 
-from parsec.core.types import LocalDevice, EntryID
-
+from parsec.core.types import EntryID, LocalDevice
 
 STORAGE_REVISION = 1
 USER_STORAGE_NAME = f"user_data-v{STORAGE_REVISION}.sqlite"
@@ -18,10 +18,10 @@ def get_user_data_storage_db_path(data_base_dir: Path, device: LocalDevice) -> P
 def get_workspace_data_storage_db_path(
     data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
 ) -> Path:
-    return data_base_dir / device.slug / str(workspace_id) / WORKSPACE_DATA_STORAGE_NAME
+    return data_base_dir / device.slug / workspace_id.hex / WORKSPACE_DATA_STORAGE_NAME
 
 
 def get_workspace_cache_storage_db_path(
     data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
 ) -> Path:
-    return data_base_dir / device.slug / str(workspace_id) / WORKSPACE_CACHE_STORAGE_NAME
+    return data_base_dir / device.slug / workspace_id.hex / WORKSPACE_CACHE_STORAGE_NAME

@@ -62,8 +62,8 @@ fn serde_file_manifest(alice: &Device) {
     let expected = FileManifest {
         author: alice.device_id.to_owned(),
         timestamp: now,
-        id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
-        parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
+        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
         version: 42,
         created: now,
         updated: now,
@@ -71,7 +71,7 @@ fn serde_file_manifest(alice: &Device) {
         blocksize: Blocksize::try_from(512).unwrap(),
         blocks: vec![
             BlockAccess {
-                id: "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
+                id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                 key: SecretKey::from(hex!(
                     "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                 )),
@@ -82,7 +82,7 @@ fn serde_file_manifest(alice: &Device) {
                 )),
             },
             BlockAccess {
-                id: "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
+                id: BlockID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
                 key: SecretKey::from(hex!(
                     "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                 )),
@@ -202,19 +202,19 @@ fn serde_folder_manifest(alice: &Device) {
     let expected = FolderManifest {
         author: alice.device_id.to_owned(),
         timestamp: now,
-        id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
-        parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
+        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
         version: 42,
         created: now,
         updated: now,
         children: HashMap::from([
             (
                 "wksp1".parse().unwrap(),
-                "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
+                EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
             ),
             (
                 "wksp2".parse().unwrap(),
-                "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
+                EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
             ),
         ]),
     };
@@ -281,18 +281,18 @@ fn serde_workspace_manifest(alice: &Device) {
     let expected = WorkspaceManifest {
         author: alice.device_id.to_owned(),
         timestamp: now,
-        id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         version: 42,
         created: now,
         updated: now,
         children: HashMap::from([
             (
                 "wksp1".parse().unwrap(),
-                "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
+                EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
             ),
             (
                 "wksp2".parse().unwrap(),
-                "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
+                EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
             ),
         ]),
     };
@@ -380,7 +380,7 @@ fn serde_user_manifest(alice: &Device) {
     let expected = UserManifest {
         author: alice.device_id.to_owned(),
         timestamp: now,
-        id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         version: 42,
         created: now,
         updated: now,
@@ -388,7 +388,7 @@ fn serde_user_manifest(alice: &Device) {
         workspaces: vec![
             WorkspaceEntry {
                 name: "wksp1".parse().unwrap(),
-                id: "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
+                id: EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                 key: SecretKey::from(hex!(
                     "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                 )),
@@ -399,7 +399,7 @@ fn serde_user_manifest(alice: &Device) {
             },
             WorkspaceEntry {
                 name: "wksp2".parse().unwrap(),
-                id: "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
+                id: EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
                 key: SecretKey::from(hex!(
                     "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                 )),
@@ -442,7 +442,7 @@ fn serde_user_manifest(alice: &Device) {
 
 #[rstest]
 #[case::valid(None, None, None, None, None)]
-#[case::valid_id(None, None, Some("87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap()), None, None)]
+#[case::valid_id(None, None, Some(EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap()), None, None)]
 #[case::valid_version(None, None, None, Some(42), None)]
 #[case::invalid_dev_id(
     Some("maurice@pc1"),
@@ -456,14 +456,14 @@ fn serde_user_manifest(alice: &Device) {
     Some("2021-10-24T11:50:43.208821Z".parse().unwrap()),
     None,
     None,
-    Some("Invalid timestamp: expected `2021-10-24T11:50:43+00:00`, got `2021-12-04T11:50:43+00:00`".to_string())
+    Some("Invalid timestamp: expected `2021-10-24T11:50:43.208821Z`, got `2021-12-04T11:50:43.208821Z`".to_string())
 )]
 #[case::invalid_id(
     None,
     None,
-    Some("6b398b3dc6804bb784bb07b0d7038c63".parse().unwrap()),
+    Some(EntryID::from_hex("6b398b3dc6804bb784bb07b0d7038c63").unwrap()),
     None,
-    Some("Invalid entry ID: expected `6b398b3dc6804bb784bb07b0d7038c63`, got `87c6b5fd3b454c94bab51d6af1c6930b`".to_string())
+    Some("Invalid entry ID: expected `6b398b3d-c680-4bb7-84bb-07b0d7038c63`, got `87c6b5fd-3b45-4c94-bab5-1d6af1c6930b`".to_string())
 )]
 #[case::invalid_version(None, None, None, Some(0x1337), Some("Invalid version: expected `4919`, got `42`".to_string()))]
 fn test_file_manifest_verify(
@@ -475,9 +475,7 @@ fn test_file_manifest_verify(
     #[case] expected_result: Option<String>,
 ) {
     let now = "2021-12-04T11:50:43.208821Z".parse::<DateTime>().unwrap();
-    let id = "87c6b5fd3b454c94bab51d6af1c6930b"
-        .parse::<EntryID>()
-        .unwrap();
+    let id = EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
     let version = 42;
 
     let expected_author = expected_author
@@ -491,7 +489,7 @@ fn test_file_manifest_verify(
         author: alice.device_id.to_owned(),
         timestamp: now,
         id,
-        parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
+        parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
         version,
         created: now,
         updated: now,
@@ -512,4 +510,52 @@ fn test_file_manifest_verify(
             .err(),
         expected_result
     );
+}
+
+#[rstest]
+fn file_manifest_unverified_load() {
+    // Test the unverified_load() function on a file manifest.
+    // File manifest has been generated with Parsec 1.12, it is provided raw as it is a bit hard
+    // to generate (would need to create keys and all that). We're only interested in the
+    // deserialization of raw unciphered data to a FileManifest.
+
+    let serialized_manifest = hex!(
+        "af080459a4924e3934f2cfcbe90ce658ef42954f2abe9dab2524a417bfd833959a9c4de3c9abe34
+        c1447152be9398944b6a1c4dca7609ce47e0782f881a1c209789c015d01a2fe8ba474797065ad666
+        96c655f6d616e6966657374a6617574686f72d941623365306562343134623063343466316239363
+        33337373232633135366563364030613239373331356163366634633766613538333962303031633
+        93530623233a974696d657374616d70d70141d8c7d36e7af26fa26964d80269f15a0d48c040bf884
+        a5d41eb8b528fa6706172656e74d80224a5fac2b57a4be2b88550e077ee524ca776657273696f6e0
+        1a763726561746564d70141d8c7bcaada06eaa775706461746564d70141d8c7bcaadb9e3da473697
+        a6505a9626c6f636b73697a65ce00080000a6626c6f636b739185a26964d802e53a7750ed014b67b
+        c7683abb0801d95a36b6579c4205c0ab829952db2b6f9d2a8dfcbaafa356290e6b0555a0ca8804b4
+        a665f86cb00a66f666673657400a473697a6505a6646967657374c420f2ca1bb6c7e907d06dafe46
+        87e579fce76b37e4e93b7605022da52e6ccc26fd2e5299be8"
+    );
+
+    let manifest = Manifest::unverified_load(&serialized_manifest).unwrap();
+
+    let file_manifest = match manifest {
+        Manifest::File(fm) => fm,
+        _ => panic!("Should be a file manifest"),
+    };
+
+    assert_eq!(
+        file_manifest.author,
+        DeviceID::new(
+            UserID::from_str("b3e0eb414b0c44f1b96337722c156ec6").unwrap(),
+            DeviceName::from_str("0a297315ac6f4c7fa5839b001c950b23").unwrap(),
+        )
+    );
+    assert_eq!(
+        file_manifest.id,
+        EntryID::from_hex("69f15a0d48c040bf884a5d41eb8b528f").unwrap()
+    );
+    assert_eq!(
+        file_manifest.parent,
+        EntryID::from_hex("24a5fac2b57a4be2b88550e077ee524c").unwrap()
+    );
+    assert_eq!(file_manifest.version, 1);
+    assert_eq!(file_manifest.size, 5);
+    assert_eq!(file_manifest.blocks.len(), 1);
 }

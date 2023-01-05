@@ -1,24 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 import hashlib
-from typing import List
-from uuid import UUID
-from asyncpg import UniqueViolationError
-from parsec._parsec import DateTime
+from typing import Any, List
 
+from triopg import UniqueViolationError
+
+from parsec._parsec import DateTime, EnrollmentID, PkiEnrollmentStatus
 from parsec.api.protocol import OrganizationID
-from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserID, UserProfile
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
-from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
-    PkiEnrollementEmailAlreadyUsedError,
+    BasePkiEnrollmentComponent,
     PkiEnrollmentActiveUsersLimitReached,
     PkiEnrollmentAlreadyEnrolledError,
     PkiEnrollmentAlreadyExistError,
     PkiEnrollmentCertificateAlreadySubmittedError,
+    PkiEnrollmentEmailAlreadyUsedError,
     PkiEnrollmentError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
@@ -27,16 +25,17 @@ from parsec.backend.pki import (
     PkiEnrollmentInfoRejected,
     PkiEnrollmentInfoSubmitted,
     PkiEnrollmentListItem,
-    BasePkiEnrollmentComponent,
     PkiEnrollmentNoLongerAvailableError,
     PkiEnrollmentNotFoundError,
 )
-from parsec.backend.postgresql import PGHandler
-from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_device_internal_id
+from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import (
     q_create_user,
     q_take_user_device_write_lock,
 )
+from parsec.backend.postgresql.utils import Q, q_device_internal_id, q_organization_internal_id
+from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
+from parsec.backend.user_type import Device, User
 
 _q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
     f"""
@@ -216,26 +215,27 @@ _q_retrieve_active_human_by_email_for_update = Q(
 )
 
 
-def _build_enrollment_info(entry) -> PkiEnrollmentInfo:
+def _build_enrollment_info(entry: dict[str, Any]) -> PkiEnrollmentInfo:
     if entry["enrollment_state"] == PkiEnrollmentStatus.SUBMITTED.value:
         return PkiEnrollmentInfoSubmitted(
-            enrollment_id=entry["enrollment_id"], submitted_on=entry["submitted_on"]
+            enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
+            submitted_on=entry["submitted_on"],
         )
     elif entry["enrollment_state"] == PkiEnrollmentStatus.CANCELLED.value:
         return PkiEnrollmentInfoCancelled(
-            enrollment_id=entry["enrollment_id"],
+            enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
             submitted_on=entry["submitted_on"],
             cancelled_on=entry["info_cancelled"]["cancelled_on"],
         )
     elif entry["enrollment_state"] == PkiEnrollmentStatus.REJECTED.value:
         return PkiEnrollmentInfoRejected(
-            enrollment_id=entry["enrollment_id"],
+            enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
             submitted_on=entry["submitted_on"],
             rejected_on=entry["info_rejected"]["rejected_on"],
         )
     elif entry["enrollment_state"] == PkiEnrollmentStatus.ACCEPTED.value:
         return PkiEnrollmentInfoAccepted(
-            enrollment_id=entry["enrollment_id"],
+            enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
             submitted_on=entry["submitted_on"],
             accepted_on=entry["info_accepted"]["accepted_on"],
             accepter_der_x509_certificate=entry["info_accepted"]["accepter_der_x509_certificate"],
@@ -253,10 +253,10 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def submit(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
+        submitter_der_x509_certificate_email: str | None,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,
@@ -296,7 +296,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         await conn.execute(
                             *_q_cancel_pki_enrollment(
                                 organization_id=organization_id.str,
-                                enrollment_id=row["enrollment_id"],
+                                enrollment_id=EnrollmentID.from_hex(row["enrollment_id"]),
                                 enrollment_state=PkiEnrollmentStatus.CANCELLED.value,
                                 cancelled_on=submitted_on,
                             )
@@ -333,7 +333,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     user = User(
                         user_id=UserID(row["user_id"]),
                         human_handle=None,
-                        profile=UserProfile(row["profile"]),
+                        profile=UserProfile.from_str(row["profile"]),
                         user_certificate=row["user_certificate"],
                         redacted_user_certificate=row["redacted_user_certificate"],
                         user_certifier=None,
@@ -357,7 +357,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     )
                 )
                 if row:
-                    raise PkiEnrollementEmailAlreadyUsedError()
+                    raise PkiEnrollmentEmailAlreadyUsedError()
 
             try:
                 result = await conn.execute(
@@ -382,7 +382,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
             )
 
-    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+    async def info(
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID
+    ) -> PkiEnrollmentInfo:
         """
         Raises:
             PkiEnrollmentNotFoundError
@@ -412,7 +414,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             )
             return [
                 PkiEnrollmentListItem(
-                    enrollment_id=entry["enrollment_id"],
+                    enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
                     submitted_on=entry["submitted_on"],
                     submitter_der_x509_certificate=entry["submitter_der_x509_certificate"],
                     submit_payload_signature=entry["submit_payload_signature"],
@@ -422,7 +424,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             ]
 
     async def reject(
-        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID, rejected_on: DateTime
     ) -> None:
         """
         Raises:
@@ -460,7 +462,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def accept(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         accepter_der_x509_certificate: bytes,
         accept_payload_signature: bytes,
         accept_payload: bytes,

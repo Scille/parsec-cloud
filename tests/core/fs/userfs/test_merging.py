@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
+from parsec.api.data import EntryName, UserManifest, WorkspaceEntry
 from parsec.api.protocol import RealmRole
-from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
-from parsec.core.types import LocalUserManifest
 from parsec.core.fs.userfs.merging import merge_local_user_manifests
+from parsec.core.types import LocalUserManifest
 
 
 @pytest.fixture

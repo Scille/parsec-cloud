@@ -18,3 +18,11 @@ pub use libparsec_protocol as protocol;
 pub use libparsec_types as types;
 
 pub use libparsec_crypto as crypto;
+
+// TODO: replace me by the high-level API here ;-)
+pub use libparsec_client_types::{AvailableDevice, DeviceFileType, StrPath};
+
+pub fn list_available_devices(config_dir: StrPath) -> Vec<AvailableDevice> {
+    libparsec_client_types::list_available_devices(&std::path::PathBuf::from(config_dir))
+        .unwrap_or_default()
+}

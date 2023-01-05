@@ -4,18 +4,21 @@ use diesel::{
     sql_query, table, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl,
     RunQueryDsl,
 };
-use fancy_regex::Regex;
-use libparsec_crypto::{CryptoError, SecretKey};
-use std::collections::hash_map::RandomState;
-use std::collections::{HashMap, HashSet};
-use std::sync::Mutex;
+use regex::Regex;
+use std::{
+    collections::{hash_map::RandomState, HashMap, HashSet},
+    sync::Mutex,
+};
 
 use libparsec_client_types::LocalManifest;
+use libparsec_crypto::{CryptoError, SecretKey};
 use libparsec_types::{BlockID, ChunkID, EntryID};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
-use crate::error::{FSError, FSResult};
-use crate::storage::chunk_storage::chunks;
+use crate::{
+    error::{FSError, FSResult},
+    storage::chunk_storage::chunks,
+};
 
 table! {
     prevent_sync_pattern (_id) {
@@ -568,7 +571,7 @@ impl ManifestStorage {
 #[cfg(test)]
 mod tests {
     use libparsec_client_types::{Chunk, LocalFileManifest};
-    use libparsec_crypto::HashDigest;
+    use libparsec_crypto::{prelude::*, HashDigest};
     use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
 
     use rstest::rstest;
@@ -580,7 +583,7 @@ mod tests {
     #[rstest]
     fn manifest_storage(tmp_path: TmpPath, timestamp: DateTime) {
         let t1 = timestamp;
-        let t2 = t1 + 1;
+        let t2 = t1.add_us(1);
         let db_path = tmp_path.join("manifest_storage.sqlite");
         let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());

@@ -1,100 +1,88 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from unicodedata import normalize
-from typing import Union, TypeVar, Optional, Tuple, Pattern, Type
-from enum import Enum
+from typing import Tuple, Type, TypeVar
 
-from parsec.serde import fields
-from parsec._parsec import OrganizationID, UserID, DeviceName, DeviceID, DeviceLabel, HumanHandle
+from marshmallow import ValidationError
+from marshmallow.fields import Field
+
+from parsec._parsec import (
+    ApiVersion,
+    DeviceID,
+    DeviceLabel,
+    HumanHandle,
+    OrganizationID,
+    UserID,
+    UserProfile,
+)
+from parsec.serde import fields, validate
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
-DeviceNameTypeVar = TypeVar("DeviceNameTypeVar", bound="DeviceName")
 
 
-def _bytes_size(txt: str) -> int:
-    return len(txt.encode("utf8"))
+OrganizationIDField: Type[Field[OrganizationID]] = fields.str_based_field_factory(OrganizationID)
+UserIDField: Type[Field[UserID]] = fields.str_based_field_factory(UserID)
+DeviceIDField: Type[Field[DeviceID]] = fields.str_based_field_factory(DeviceID)
+DeviceLabelField: Type[Field[DeviceLabel]] = fields.str_based_field_factory(DeviceLabel)
 
 
-class StrBased:
-    __slots__ = ("_str",)
-    REGEX: Optional[Pattern[str]]
-    MAX_BYTE_SIZE: int
-
-    def __init__(self, raw: Union[str, "StrBased"]):
-        if isinstance(raw, StrBased):
-            raw = raw._str
-        raw = normalize("NFC", raw)
-        if (self.REGEX and not self.REGEX.match(raw)) or _bytes_size(raw) > self.MAX_BYTE_SIZE:
-            raise ValueError("Invalid data")
-        self._str: str = raw
-
-    def __str__(self) -> str:
-        return self._str
-
-    def __repr__(self) -> str:
-        return f"<{type(self).__name__} {self._str}>"
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, type(self)):
-            return NotImplemented
-        else:
-            return self._str == other._str
-
-    def __lt__(self, other: object) -> bool:
-        if not isinstance(other, type(self)):
-            return NotImplemented
-        else:
-            return self._str < other._str
-
-    def __hash__(self) -> int:
-        return self._str.__hash__()
-
-    @property
-    def str(self) -> str:
-        return self._str
-
-
-OrganizationIDField: Type[fields.Field] = fields.str_based_field_factory(OrganizationID)
-UserIDField: Type[fields.Field] = fields.str_based_field_factory(UserID)
-DeviceNameField: Type[fields.Field] = fields.str_based_field_factory(DeviceName)
-DeviceIDField: Type[fields.Field] = fields.str_based_field_factory(DeviceID)
-DeviceLabelField: Type[fields.Field] = fields.str_based_field_factory(DeviceLabel)
-
-
-class HumanHandleField(fields.Tuple):
-    def __init__(self, **kwargs: object):
-        email = fields.String(required=True)
-        label = fields.String(required=True)
-        super().__init__(email, label, **kwargs)
+class HumanHandleField(fields.Field[HumanHandle]):
+    email_field = fields.String(required=True)
+    label_field = fields.String(required=True)
+    args = (email_field, label_field)
 
     def _serialize(
-        self, value: HumanHandle, attr: object, data: object
-    ) -> Optional[Tuple[str, str]]:
+        self, value: HumanHandle | None, attr: str, data: object
+    ) -> Tuple[str, str] | None:
         if value is None:
             return None
         return (value.email, value.label)
 
-    def _deserialize(self, *args: object, **kwargs: object) -> HumanHandle:
-        result = super()._deserialize(*args, **kwargs)
-        return HumanHandle(*result)
+    def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> HumanHandle:
+        if not isinstance(value, (list, tuple)):
+            raise ValidationError("Expecting list or tuple")
+        try:
+            email_value, label_value = value
+        except ValueError:
+            raise ValidationError("Expecting two elements")
+        email = self.email_field.deserialize(email_value)
+        label = self.label_field.deserialize(label_value)
+        try:
+            return HumanHandle(email, label)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
 
 
-class UserProfile(Enum):
-    """
-    Standard user can create new realms and invite new devices for himself.
+class ApiVersionField(Field[ApiVersion]):
+    version = fields.Integer(required=True, validate=validate.Range(min=0))
+    revision = fields.Integer(required=True, validate=validate.Range(min=0))
 
-    Admin can invite and revoke users and on top of what standard user can do.
+    """ApiVersion already handled by pack/unpack"""
 
-    Outsider is only able to collaborate on existing realm and can only
-    access redacted certificates (i.e. the realms created by an outsider
-    cannot be shared and the outsider cannot be OWNER/MANAGER
-    on a realm shared with him)
-    """
+    def _serialize(
+        self, value: ApiVersion | None, attr: str, obj: object
+    ) -> tuple[int, int] | None:
+        if value is None:
+            return None
+        return (value.version, value.revision)
 
-    ADMIN = "ADMIN"
-    STANDARD = "STANDARD"
-    OUTSIDER = "OUTSIDER"
+    def _deserialize(self, value: object, attr: str, data: dict[str, object]) -> ApiVersion:
+        if isinstance(value, (ApiVersion)):
+            return value
+
+        if not isinstance(value, (tuple, list)):
+            raise ValidationError("Expecting tuple or list")
+
+        try:
+            version_value, revision_value = value
+        except ValueError as exc:
+            raise ValidationError(str(exc))
+
+        version = self.version.deserialize(version_value)
+        revision = self.revision.deserialize(revision_value)
+
+        return ApiVersion(version, revision)
 
 
-UserProfileField: Type[fields.Field] = fields.enum_field_factory(UserProfile)
+UserProfileField = fields.rust_enum_field_factory(UserProfile)

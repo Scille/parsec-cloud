@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-#[allow(unused_macros)]
 macro_rules! test_serde {
     ($name:ident, $cls:ident) => {
         #[test]
@@ -12,7 +11,6 @@ macro_rules! test_serde {
     };
 }
 
-#[allow(unused_macros)]
 macro_rules! test_msgpack_serialization {
     ($name:ident, $cls:ident, $data:expr, $serialized:expr) => {
         #[test]
@@ -20,7 +18,7 @@ macro_rules! test_msgpack_serialization {
             let data = &$data;
             let serialized = &$serialized;
 
-            // bytes should be serialized in msgpck using the bin format familly
+            // bytes should be serialized in msgpack using the bin format family
             // (see. https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family)
 
             let sk: $cls = rmp_serde::from_slice(serialized).unwrap();
@@ -30,7 +28,7 @@ macro_rules! test_msgpack_serialization {
             let re_serialized = rmp_serde::to_vec(&sk).unwrap();
             assert_eq!(re_serialized, serialized);
 
-            // str format familly shouldn't be used for bytes, but Python's msgpack
+            // str format family shouldn't be used for bytes, but Python's msgpack
             // deserializes it fine, so we should also handle this just in case
             // (see. https://github.com/msgpack/msgpack/blob/master/spec.md#str-format-family)
 

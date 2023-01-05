@@ -3,85 +3,27 @@
 import { registerPlugin } from '@capacitor/core';
 
 import type { LibParsecPlugin } from './definitions';
-import { Buffer } from 'buffer';
+export type { LibParsecPlugin, Result } from './definitions';
 
-// TODO: Initialize only for web
-import init from '../../../pkg';
-init();
-
-// Low-level API
-
-const libparsecPlugin = registerPlugin<LibParsecPlugin>(
+export const libparsec = registerPlugin<LibParsecPlugin>(
   'LibParsec',
   {
-    web: () => import('../../../pkg'),
-    // electron: () => (window as any).CapacitorCustomPlatform.plugins.LibParsec,
+    web: async () => {
+      // Don't put the module name as a literal in the import function,
+      // otherwise the compilation will eagerly try to access this module
+      // which doesn't exists when building from scratch for non-web.
+      const moduleName = '../../../pkg';
+      const libparsecWasm: any = await import(moduleName);
+      await libparsecWasm.default();  // Call wasm module's init
+      return libparsecWasm;
+    },
     electron: () => (window as any).libparsec_plugin
+    // In Android, capacitor already knows about the plugin given it has been registered from Java
   }
 );
 
-// High-level API
-
-/* eslint @typescript-eslint/no-empty-function: ["error", { "allow": ["private-constructors"] }] */
-class LibParsec {
-  // Singleton stuff
-
-  private static instance: LibParsec;
-  private constructor() {}
-
-  public static getInstance(): LibParsec {
-    if (!LibParsec.instance) {
-      LibParsec.instance = new LibParsec();
-    }
-
-    return LibParsec.instance;
-  }
-
-  // Actual api
-
-  public async version(): Promise<string> {
-    const ret = await libparsecPlugin.submitJob({cmd: 'version', payload: ''});
-    return ret.value;
-  }
-
-  public async encrypt(key: Uint8Array, cleartext: string): Promise<Uint8Array> {
-    const b64key = Buffer.from(key).toString('base64');
-    const b64clearText = Buffer.from(cleartext).toString('base64');
-    const ret = await libparsecPlugin.submitJob({cmd: 'encrypt', payload: `${b64key}:${b64clearText}`});
-    return Buffer.from(ret.value, 'base64');
-  }
-
-  public async decrypt(key: Uint8Array, cyphertext: Uint8Array): Promise<string> {
-    const b64key = Buffer.from(key).toString('base64');
-    const b64cyphertext = Buffer.from(cyphertext).toString('base64');
-    const ret = await libparsecPlugin.submitJob({cmd: 'decrypt', payload: `${b64key}:${b64cyphertext}`});
-    return Buffer.from(ret.value, 'base64').toString();
-  }
-
-  public async listAvailableDevices(configDir: string): Promise<Array<AvailableDevice>> {
-    const payload = Buffer.from(configDir).toString('base64');
-    const ret = await libparsecPlugin.submitJob({cmd: 'list_available_devices', payload });
-    return JSON.parse(ret.value);
-  }
-}
-
-type AvailableDevice = {
-  key_file_path: string,
-  organization_id: string,
-  device_id: string,
-  // Email and Label
-  human_handle?: Array<string>,
-  device_label?: string,
-  slug: string,
-  type: string,
-}
-
-const libparsec = LibParsec.getInstance();
-
 // Global exposition of libparsec for easier debugging with console
 declare global {
-    interface Window { libparsec: LibParsec; }
+  interface Window { libparsec: LibParsecPlugin; }
 }
 window.libparsec = libparsec;
-
-export { LibParsec, libparsec };

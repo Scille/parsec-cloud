@@ -1,33 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from dataclasses import dataclass
+from functools import partial
+from typing import Optional, Tuple, Union
 
 import pytest
-from typing import Union, Optional, Tuple
-from parsec._parsec import DateTime
-from functools import partial
-from dataclasses import dataclass
 
-from parsec.crypto import SigningKey
+from parsec._parsec import DateTime
 from parsec.api.data import (
-    UserCertificate,
-    UserManifest,
-    RevokedUserCertificate,
     DeviceCertificate,
     RealmRoleCertificate,
+    RevokedUserCertificate,
+    UserCertificate,
+    UserManifest,
 )
-from parsec.api.protocol import UserID, RealmRole, RealmID, VlobID
-from parsec.core.types import (
-    LocalDevice,
-    LocalUserManifest,
-    BackendOrganizationBootstrapAddr,
-    BackendOrganizationAddr,
-)
-from parsec.core.fs.storage import UserStorage
+from parsec.api.protocol import RealmID, RealmRole, UserID, VlobID
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.user import Device as BackendDevice
+from parsec.backend.user import User as BackendUser
 from parsec.backend.vlob import VlobSequesterServiceInconsistencyError
-
+from parsec.core.fs.storage import UserStorage
+from parsec.core.types import (
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+    LocalDevice,
+    LocalUserManifest,
+)
+from parsec.crypto import SigningKey
 from tests.common.freeze_time import freeze_time
 from tests.common.sequester import SequesterAuthorityFullData
 
@@ -98,7 +100,7 @@ def initial_user_manifest_state():
     # manifest.
     # In most tests we want to be in a state were backend and devices all
     # store the same user manifest (named the "v1" here).
-    # But sometime we want a completly fresh start ("v1" doesn't exist,
+    # But sometime we want a completely fresh start ("v1" doesn't exist,
     # hence devices and backend are empty) or only a single device to begin
     # with no knowledge of the "v1".
     return InitialUserManifestState()
@@ -121,7 +123,7 @@ def initialize_local_user_manifest(initial_user_manifest_state):
                         storage.device
                     )
                     await storage.set_user_manifest(user_manifest)
-                    # Chcekpoint 1 *is* the upload of user manifest v1
+                    # Checkpoint 1 *is* the upload of user manifest v1
                     await storage.update_realm_checkpoint(1, {})
 
                 elif initial_user_manifest == "non_speculative_v0":
@@ -234,19 +236,19 @@ class CertificatesStore:
     def translate_certif(self, needle):
         for (_, user_id), (certif, redacted_certif) in self._user_certificates.items():
             if needle == certif:
-                return f"<{user_id} user certif>"
+                return f"<{user_id.str} user certif>"
             if needle == redacted_certif:
-                return f"<{user_id} redacted user certif>"
+                return f"<{user_id.str} redacted user certif>"
 
         for (_, device_id), (certif, redacted_certif) in self._device_certificates.items():
             if needle == certif:
-                return f"<{device_id} device certif>"
+                return f"<{device_id.str} device certif>"
             if needle == redacted_certif:
-                return f"<{device_id} redacted device certif>"
+                return f"<{device_id.str} redacted device certif>"
 
         for (_, user_id), certif in self._revoked_user_certificates.items():
             if needle == certif:
-                return f"<{user_id} revoked user certif>"
+                return f"<{user_id.str} revoked user certif>"
 
         raise RuntimeError("Unknown certificate !")
 
@@ -281,12 +283,12 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 author = device
             else:
                 author = self.get_device(device.organization_id, manifest.author)
-            realm_id = RealmID(author.user_manifest_id.uuid)
-            vlob_id = VlobID(author.user_manifest_id.uuid)
+            realm_id = RealmID.from_entry_id(author.user_manifest_id)
+            vlob_id = VlobID.from_entry_id(author.user_manifest_id)
 
             with self.backend.event_bus.listen() as spy:
 
-                # The realm needs to be created srictly before the manifest timestamp
+                # The realm needs to be created strictly before the manifest timestamp
                 realm_create_timestamp = manifest.timestamp.subtract(microseconds=1)
 
                 await self.backend.realm.create(
@@ -357,12 +359,21 @@ def backend_data_binder_factory(initial_user_manifest_state):
             org: OrganizationFullData,
             first_device: LocalDevice,
             initial_user_manifest: str = "v1",
+            timestamp: Optional[DateTime] = None,
+            create_needed: bool = True,
         ):
             assert initial_user_manifest in ("v1", "not_synced")
 
-            await self.backend.organization.create(org.organization_id, org.bootstrap_token)
+            if create_needed:
+                await self.backend.organization.create(
+                    id=org.organization_id,
+                    bootstrap_token=org.bootstrap_token,
+                    created_on=timestamp or first_device.timestamp(),
+                )
             assert org.organization_id == first_device.organization_id
-            backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
+            backend_user, backend_first_device = local_device_to_backend_user(
+                first_device, org, timestamp
+            )
             if org.sequester_authority:
                 sequester_authority = SequesterAuthority(
                     certificate=org.sequester_authority.certif,
@@ -400,6 +411,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
             device: LocalDevice,
             certifier: Optional[LocalDevice] = None,
             initial_user_manifest: Optional[str] = None,
+            timestamp: Optional[DateTime] = None,
         ):
             assert initial_user_manifest in (None, "v1", "not_synced")
 
@@ -411,9 +423,13 @@ def backend_data_binder_factory(initial_user_manifest_state):
                         if d.organization_id == device.organization_id
                     )
                 except StopIteration:
-                    raise RuntimeError(f"Organization `{device.organization_id}` not bootstrapped")
+                    raise RuntimeError(
+                        f"Organization `{device.organization_id.str}` not bootstrapped"
+                    )
 
-            backend_user, backend_device = local_device_to_backend_user(device, certifier)
+            backend_user, backend_device = local_device_to_backend_user(
+                device, certifier, timestamp
+            )
 
             if any(d for d in self.binded_local_devices if d.user_id == device.user_id):
                 # User already created, only add device

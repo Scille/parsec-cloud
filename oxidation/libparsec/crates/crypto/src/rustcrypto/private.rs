@@ -16,7 +16,7 @@ mod sealed_box {
     //re-export keys
     pub use crypto_box::{PublicKey, SecretKey};
 
-    const BOX_NONCELENGTH: usize = 24;
+    const BOX_NONCE_LENGTH: usize = 24;
     const BOX_OVERHEAD: usize = 16;
 
     //32 = PublicKey length
@@ -26,15 +26,15 @@ mod sealed_box {
     ///
     /// nonce = Blake2b(ephemeral_pk||target_pk)
     /// nonce_length = 24
-    fn get_nonce(ephemeral_pk: &PublicKey, target_pk: &PublicKey) -> [u8; BOX_NONCELENGTH] {
-        let mut hasher = Blake2bVar::new(BOX_NONCELENGTH).unwrap();
+    fn get_nonce(ephemeral_pk: &PublicKey, target_pk: &PublicKey) -> [u8; BOX_NONCE_LENGTH] {
+        let mut hasher = Blake2bVar::new(BOX_NONCE_LENGTH).unwrap();
 
         hasher.update(ephemeral_pk.as_bytes());
         hasher.update(target_pk.as_bytes());
 
         let out = hasher.finalize_boxed();
 
-        let mut array = [0u8; BOX_NONCELENGTH];
+        let mut array = [0u8; BOX_NONCE_LENGTH];
         array.copy_from_slice(&out);
 
         array
@@ -103,7 +103,7 @@ use crate::{CryptoError, SecretKey};
 #[serde(try_from = "&Bytes")]
 pub struct PrivateKey(crypto_box::SecretKey);
 
-crate::macros::impl_key_debug!(PrivateKey);
+crate::impl_key_debug!(PrivateKey);
 
 impl PartialEq for PrivateKey {
     fn eq(&self, other: &Self) -> bool {
@@ -179,7 +179,7 @@ impl Serialize for PrivateKey {
 #[serde(try_from = "&Bytes")]
 pub struct PublicKey(crypto_box::PublicKey);
 
-crate::macros::impl_key_debug!(PublicKey);
+crate::impl_key_debug!(PublicKey);
 
 impl PartialEq for PublicKey {
     fn eq(&self, other: &Self) -> bool {

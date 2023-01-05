@@ -1,0 +1,99 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_start_reencryption_maintenance",
+            "fields": [
+                {
+                    "name": "realm_id",
+                    "type": "RealmID"
+                },
+                {
+                    "name": "encryption_revision",
+                    "type": "Index"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    "name": "per_participant_message",
+                    "type": "Map<UserID, Bytes>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "bad_encryption_revision"
+            },
+            {
+                "status": "participant_mismatch",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "maintenance_error",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "in_maintenance"
+            },
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    },
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                ]
+            }
+        ]
+    }
+]

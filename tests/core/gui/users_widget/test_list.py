@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec.core.gui.users_widget import UserButton
-
-from tests.common import customize_fixtures
-from PyQt5.QtWidgets import QLabel
 from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import QLabel
 
 from parsec.core.gui.lang import translate
+from parsec.core.gui.users_widget import UserButton
+from tests.common import customize_fixtures
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def _assert_all_users_visible(u_w, index=0):
 
     alice_w = u_w.layout_users.itemAt(index + 1).widget()
     assert alice_w.label_username.text() == "Alicey McAli..."
-    assert alice_w.label_email.text() == "alice@exampl..."
+    assert alice_w.label_email.text() == "alice@exampl..."  # cspell: disable-line
 
     bob_w = u_w.layout_users.itemAt(index + 2).widget()
     assert bob_w.label_username.text() == "Boby McBobFa..."
@@ -145,7 +145,7 @@ async def test_filter_users(aqtbot, running_backend, logged_gui, str_len_limiter
     alice_w = u_w.layout_users.itemAt(1).widget()
     assert alice_w.isVisible() is True
     assert alice_w.label_username.text() == "Alicey McAli..."
-    assert alice_w.label_email.text() == "alice@exampl..."
+    assert alice_w.label_email.text() == "alice@exampl..."  # cspell: disable-line
     assert u_w.layout_users.count() == 2
 
 
@@ -161,7 +161,7 @@ async def test_filter_revoked_user(
 
         item = u_w.layout_users.itemAt(0)
         assert item.widget().label_username.text() == "Alicey McAli..."
-        assert item.widget().label_email.text() == "alice@exampl..."
+        assert item.widget().label_email.text() == "alice@exampl..."  # cspell: disable-line
         assert item.widget().label_is_current.text() == ""
         assert item.widget().label_role.text() == "Administrator"
 

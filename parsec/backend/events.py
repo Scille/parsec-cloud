@@ -1,39 +1,61 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from functools import partial
+from typing import Any, Awaitable, Callable, Type, Union
 
 import trio
 
+from parsec._parsec import (
+    EventsListenRep,
+    EventsListenRepNoEvents,
+    EventsListenRepOkInviteStatusChanged,
+    EventsListenRepOkMessageReceived,
+    EventsListenRepOkPinged,
+    EventsListenRepOkPkiEnrollmentUpdated,
+    EventsListenRepOkRealmMaintenanceFinished,
+    EventsListenRepOkRealmMaintenanceStarted,
+    EventsListenRepOkRealmRolesUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
+    EventsListenReq,
+    EventsSubscribeRep,
+    EventsSubscribeRepOk,
+    EventsSubscribeReq,
+)
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
-    UserID,
-    RealmID,
-    RealmRole,
     InvitationStatus,
     InvitationToken,
-    events_subscribe_serializer,
-    events_listen_serializer,
-    APIEvent,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    UserID,
 )
 from parsec.api.protocol.types import UserProfile
-from parsec.backend.utils import catch_protocol_errors, api
-from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent
-from functools import partial
-from typing import Callable
+from parsec.backend.client_context import AuthenticatedClientContext
+from parsec.backend.realm import BaseRealmComponent
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 
 
 class EventsComponent:
-    def __init__(self, realm_component: BaseRealmComponent, send_event: Callable):
+    def __init__(
+        self, realm_component: BaseRealmComponent, send_event: Callable[..., Awaitable[None]]
+    ):
         self._realm_component = realm_component
         self.send = send_event
 
     @api("events_subscribe")
     @catch_protocol_errors
-    async def api_events_subscribe(self, client_ctx, msg):
-        msg = events_subscribe_serializer.req_load(msg)
+    @api_typed_msg_adapter(EventsSubscribeReq, EventsSubscribeRep)
+    async def api_events_subscribe(
+        self, client_ctx: AuthenticatedClientContext, msg: dict[str, object]
+    ) -> EventsSubscribeRep:
+        await self.connect_events(client_ctx)
+        return EventsSubscribeRepOk()
 
+    async def connect_events(self, client_ctx: AuthenticatedClientContext) -> None:
         def _on_roles_updated(
-            event: APIEvent,
             backend_event: BackendEvent,
             organization_id: OrganizationID,
             author: DeviceID,
@@ -56,13 +78,12 @@ class EventsComponent:
             #    `realm.vlobs_updated` events on this realm (especially useful during tests)
             try:
                 client_ctx.send_events_channel.send_nowait(
-                    {"event": event, "realm_id": realm_id, "role": role}
+                    EventsListenRepOkRealmRolesUpdated(realm_id, role)
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_pinged(
-            event: APIEvent,
             backend_event: BackendEvent,
             organization_id: OrganizationID,
             author: DeviceID,
@@ -72,17 +93,21 @@ class EventsComponent:
                 return
 
             try:
-                client_ctx.send_events_channel.send_nowait({"event": event, "ping": ping})
+                client_ctx.send_events_channel.send_nowait(EventsListenRepOkPinged(ping))
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_realm_events(
-            event: APIEvent,
+            events_listen_rep_cls: Union[
+                Type[EventsListenRepOkRealmVlobsUpdated],
+                Type[EventsListenRepOkRealmMaintenanceStarted],
+                Type[EventsListenRepOkRealmMaintenanceFinished],
+            ],
             backend_event: BackendEvent,
             organization_id: OrganizationID,
             author: DeviceID,
             realm_id: RealmID,
-            **kwargs
+            **kwargs: Any,
         ) -> None:
             if (
                 organization_id != client_ctx.organization_id
@@ -90,16 +115,14 @@ class EventsComponent:
                 or realm_id not in client_ctx.realms
             ):
                 return
-
             try:
                 client_ctx.send_events_channel.send_nowait(
-                    {"event": event, "realm_id": realm_id, **kwargs}
+                    events_listen_rep_cls(realm_id, **kwargs)
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_message_received(
-            event: APIEvent,
             backend_event: BackendEvent,
             organization_id: OrganizationID,
             author: DeviceID,
@@ -110,12 +133,11 @@ class EventsComponent:
                 return
 
             try:
-                client_ctx.send_events_channel.send_nowait({"event": event, "index": index})
+                client_ctx.send_events_channel.send_nowait(EventsListenRepOkMessageReceived(index))
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_invite_status_changed(
-            event: APIEvent,
             backend_event: BackendEvent,
             organization_id: OrganizationID,
             greeter: UserID,
@@ -127,13 +149,14 @@ class EventsComponent:
 
             try:
                 client_ctx.send_events_channel.send_nowait(
-                    {"event": event, "token": token, "invitation_status": status}
+                    EventsListenRepOkInviteStatusChanged(token, status)
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_pki_enrollment_updated(
-            event: APIEvent, backend_event: BackendEvent, organization_id: OrganizationID
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
         ) -> None:
             if (
                 organization_id != client_ctx.organization_id
@@ -141,46 +164,46 @@ class EventsComponent:
             ):
                 return
             try:
-                client_ctx.send_events_channel.send_nowait({"event": event})
+                client_ctx.send_events_channel.send_nowait(EventsListenRepOkPkiEnrollmentUpdated())
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         # Command should be idempotent
         if not client_ctx.events_subscribed:
             # Connect the new callbacks
             client_ctx.event_bus_ctx.connect(
-                BackendEvent.PINGED, partial(_on_pinged, APIEvent.PINGED)
+                BackendEvent.PINGED, _on_pinged  # type: ignore[arg-type]
             )
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.REALM_VLOBS_UPDATED,
-                partial(_on_realm_events, APIEvent.REALM_VLOBS_UPDATED),
+                partial(_on_realm_events, EventsListenRepOkRealmVlobsUpdated),
             )
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.REALM_MAINTENANCE_STARTED,
-                partial(_on_realm_events, APIEvent.REALM_MAINTENANCE_STARTED),
+                partial(_on_realm_events, EventsListenRepOkRealmMaintenanceStarted),
             )
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.REALM_MAINTENANCE_FINISHED,
-                partial(_on_realm_events, APIEvent.REALM_MAINTENANCE_FINISHED),
+                partial(_on_realm_events, EventsListenRepOkRealmMaintenanceFinished),
             )
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.MESSAGE_RECEIVED,
-                partial(_on_message_received, APIEvent.MESSAGE_RECEIVED),
+                _on_message_received,  # type: ignore[arg-type]
             )
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.INVITE_STATUS_CHANGED,
-                partial(_on_invite_status_changed, APIEvent.INVITE_STATUS_CHANGED),
+                _on_invite_status_changed,  # type: ignore[arg-type]
             )
 
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.PKI_ENROLLMENTS_UPDATED,
-                partial(_on_pki_enrollment_updated, APIEvent.PKI_ENROLLMENTS_UPDATED),
+                _on_pki_enrollment_updated,  # type: ignore[arg-type]
             )
 
             # Final event to keep up to date the list of realm we should listen on
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.REALM_ROLES_UPDATED,
-                partial(_on_roles_updated, APIEvent.REALM_ROLES_UPDATED),
+                _on_roles_updated,  # type: ignore[arg-type]
             )
 
             # Finally populate the list of realm we should listen on
@@ -190,20 +213,20 @@ class EventsComponent:
             client_ctx.realms = set(realms_for_user.keys())
             client_ctx.events_subscribed = True
 
-        return events_subscribe_serializer.rep_dump({"status": "ok"})
-
     @api("events_listen", cancel_on_client_sending_new_cmd=True)
     @catch_protocol_errors
-    async def api_events_listen(self, client_ctx, msg):
-        msg = events_listen_serializer.req_load(msg)
-
-        if msg["wait"]:
-            event_data = await client_ctx.receive_events_channel.receive()
+    @api_typed_msg_adapter(EventsListenReq, EventsListenRep)
+    async def api_events_listen(
+        self, client_ctx: AuthenticatedClientContext, msg: EventsListenReq
+    ) -> EventsListenRep:
+        if msg.wait:
+            event_rep = await client_ctx.receive_events_channel.receive()
 
         else:
             try:
-                event_data = client_ctx.receive_events_channel.receive_nowait()
+                event_rep = client_ctx.receive_events_channel.receive_nowait()
             except trio.WouldBlock:
-                return {"status": "no_events"}
+                return EventsListenRepNoEvents()
 
-        return events_listen_serializer.rep_dump({"status": "ok", **event_data})
+        assert isinstance(event_rep, EventsListenRep), event_rep
+        return event_rep

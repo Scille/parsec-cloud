@@ -1,20 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Type
 
-from parsec.api.protocol import DeviceID, BlockIDField
-from enum import Enum
 from parsec._parsec import (
     BlockAccess,
-    WorkspaceEntry,
-    FolderManifest,
     FileManifest,
-    WorkspaceManifest,
+    FolderManifest,
     UserManifest,
+    WorkspaceEntry,
+    WorkspaceManifest,
     manifest_decrypt_and_load,
-    manifest_verify_and_load,
     manifest_decrypt_verify_and_load,
+    manifest_unverified_load,
+    manifest_verify_and_load,
 )
+from parsec.api.protocol import DeviceID
 
 if TYPE_CHECKING:
     from parsec._parsec import AnyRemoteManifest
@@ -32,15 +33,8 @@ __all__ = [
     "UserManifest",
     "WorkspaceManifest",
     "BlockAccess",
-    "BlockIDField",
     "manifest_decrypt_and_load",
     "manifest_decrypt_verify_and_load",
     "manifest_verify_and_load",
+    "manifest_unverified_load",
 ]
-
-
-class ManifestType(Enum):
-    FILE_MANIFEST = "file_manifest"
-    FOLDER_MANIFEST = "folder_manifest"
-    WORKSPACE_MANIFEST = "workspace_manifest"
-    USER_MANIFEST = "user_manifest"

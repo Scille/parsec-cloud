@@ -1,29 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from unittest.mock import ANY
 
 import pytest
-from unittest.mock import ANY
-from parsec._parsec import DateTime
 
-from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import (
-    InvitationStatus,
+from parsec._parsec import (
+    DateTime,
+    EventsListenRepOkInviteStatusChanged,
     InvitationDeletedReason,
-    InvitationType,
     InvitationEmailSentStatus,
-    HandshakeBadIdentity,
-    APIEvent,
-    UserProfile,
+    InvitationType,
+    InviteDeleteRepAlreadyDeleted,
+    InviteDeleteRepNotFound,
+    InviteDeleteRepOk,
+    InviteInfoRepOk,
+    InviteListItem,
+    InviteListRepOk,
+    InviteNewRepAlreadyMember,
+    InviteNewRepNotAllowed,
+    InviteNewRepNotAvailable,
+    InviteNewRepOk,
 )
-
-from tests.common import freeze_time, customize_fixtures, real_clock_timeout
+from parsec.api.protocol import HandshakeBadIdentity, InvitationStatus, UserProfile
+from parsec.backend.backend_events import BackendEvent
 from tests.backend.common import (
-    invite_new,
-    invite_list,
+    events_listen_wait,
+    events_subscribe,
     invite_delete,
     invite_info,
-    events_subscribe,
-    events_listen_wait,
+    invite_list,
+    invite_new,
 )
+from tests.common import customize_fixtures, freeze_time, real_clock_timeout
 
 
 @pytest.mark.trio
@@ -51,44 +60,32 @@ async def test_user_new_invitation_and_info(
 
     with freeze_time("2000-01-04"):
         rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email="zack@example.com")
-    assert rep == {"status": "ok", "token": ANY}
-    token = rep["token"]
+
+    assert isinstance(rep, InviteNewRepOk)
+    token = rep.token
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == {
-        "status": "ok",
-        "event": APIEvent.INVITE_STATUS_CHANGED,
-        "invitation_status": InvitationStatus.IDLE,
-        "token": token,
-    }
+    assert rep == EventsListenRepOkInviteStatusChanged(token, InvitationStatus.IDLE)
 
     rep = await invite_list(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.DEVICE,
-                "token": other_device_invitation.token,
-                "created_on": DateTime(2000, 1, 2),
-                "status": InvitationStatus.IDLE,
-            },
-            {
-                "type": InvitationType.USER,
-                "token": other_user_invitation.token,
-                "created_on": DateTime(2000, 1, 3),
-                "claimer_email": "other@example.com",
-                "status": InvitationStatus.IDLE,
-            },
-            {
-                "type": InvitationType.USER,
-                "token": token,
-                "created_on": DateTime(2000, 1, 4),
-                "claimer_email": "zack@example.com",
-                "status": InvitationStatus.IDLE,
-            },
-        ],
-    }
+
+    assert rep == InviteListRepOk(
+        [
+            InviteListItem.Device(
+                other_device_invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE
+            ),
+            InviteListItem.User(
+                other_user_invitation.token,
+                DateTime(2000, 1, 3),
+                "other@example.com",
+                InvitationStatus.IDLE,
+            ),
+            InviteListItem.User(
+                token, DateTime(2000, 1, 4), "zack@example.com", InvitationStatus.IDLE
+            ),
+        ]
+    )
 
     async with backend_invited_ws_factory(
         backend_asgi_app,
@@ -97,13 +94,9 @@ async def test_user_new_invitation_and_info(
         token=token,
     ) as invited_ws:
         rep = await invite_info(invited_ws)
-        assert rep == {
-            "status": "ok",
-            "type": InvitationType.USER,
-            "claimer_email": "zack@example.com",
-            "greeter_user_id": alice.user_id,
-            "greeter_human_handle": alice.human_handle,
-        }
+        assert rep == InviteInfoRepOk(
+            InvitationType.USER, "zack@example.com", alice.user_id, alice.human_handle
+        )
 
 
 @pytest.mark.trio
@@ -125,37 +118,25 @@ async def test_device_new_invitation_and_info(
 
     with freeze_time("2000-01-03"):
         rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
-    assert rep == {"status": "ok", "token": ANY}
-    token = rep["token"]
+    assert isinstance(rep, InviteNewRepOk)
+    token = rep.token
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == {
-        "status": "ok",
-        "event": APIEvent.INVITE_STATUS_CHANGED,
-        "invitation_status": InvitationStatus.IDLE,
-        "token": token,
-    }
+    assert rep == EventsListenRepOkInviteStatusChanged(token, InvitationStatus.IDLE)
 
     rep = await invite_list(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.USER,
-                "token": other_user_invitation.token,
-                "created_on": DateTime(2000, 1, 2),
-                "claimer_email": "other@example.com",
-                "status": InvitationStatus.IDLE,
-            },
-            {
-                "type": InvitationType.DEVICE,
-                "token": token,
-                "created_on": DateTime(2000, 1, 3),
-                "status": InvitationStatus.IDLE,
-            },
-        ],
-    }
+    assert rep == InviteListRepOk(
+        [
+            InviteListItem.User(
+                other_user_invitation.token,
+                DateTime(2000, 1, 2),
+                "other@example.com",
+                InvitationStatus.IDLE,
+            ),
+            InviteListItem.Device(token, DateTime(2000, 1, 3), InvitationStatus.IDLE),
+        ]
+    )
 
     async with backend_invited_ws_factory(
         backend_asgi_app,
@@ -164,12 +145,9 @@ async def test_device_new_invitation_and_info(
         token=token,
     ) as invited_ws:
         rep = await invite_info(invited_ws)
-        assert rep == {
-            "status": "ok",
-            "type": InvitationType.DEVICE,
-            "greeter_user_id": alice.user_id,
-            "greeter_human_handle": alice.human_handle,
-        }
+        assert rep == InviteInfoRepOk(
+            InvitationType.DEVICE, None, alice.user_id, alice.human_handle
+        )
 
 
 @pytest.mark.trio
@@ -183,8 +161,9 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
         alice_ws, type=InvitationType.USER, claimer_email="zack@example.com", send_email=True
     )
 
-    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCCESS}
-    token = rep["token"]
+    assert isinstance(rep, InviteNewRepOk)
+    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS
+    token = rep.token
     email = await email_letterbox.get_next_with_timeout()
     assert email == ("zack@example.com", ANY)
 
@@ -196,7 +175,7 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
     assert "Subject: [Parsec] Alicey McAliceFace invited you to CoolOrg" in body
     assert "From: Parsec <no-reply@parsec.com>" in body
     assert "To: zack@example.com" in body
-    assert "Reply-To: Alicey McAliceFace <alice@example.com>" in body
+    assert "Reply-To: =?utf-8?q?Alicey_McAliceFace?= <alice@example.com>" in body
     assert token.hex in body
     assert (
         "You have received an invitation from Alicey McAliceFace to join the CoolOrg organization on Parsec."
@@ -214,8 +193,9 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
 
     # Device invitation
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
-    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCCESS}
-    token = rep["token"]
+    assert isinstance(rep, InviteNewRepOk)
+    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS
+    token = rep.token
     email = await email_letterbox.get_next_with_timeout()
     assert email == (alice.human_handle.email, ANY)
 
@@ -257,19 +237,14 @@ async def test_invite_with_mail_error(alice, alice_ws, monkeypatch):
     rep = await invite_new(
         alice_ws, type=InvitationType.USER, claimer_email="zack@example.com", send_email=True
     )
-    assert rep == {
-        "status": "ok",
-        "token": ANY,
-        "email_sent": InvitationEmailSentStatus.NOT_AVAILABLE,
-    }
+
+    assert isinstance(rep, InviteNewRepOk)
+    assert rep.email_sent == InvitationEmailSentStatus.NOT_AVAILABLE
 
     # Device invitation
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
-    assert rep == {
-        "status": "ok",
-        "token": ANY,
-        "email_sent": InvitationEmailSentStatus.NOT_AVAILABLE,
-    }
+    assert isinstance(rep, InviteNewRepOk)
+    assert rep.email_sent == InvitationEmailSentStatus.NOT_AVAILABLE
 
     async def _mocked_send_email(email_config, to_addr, message):
         from parsec.backend.invite import InvitationEmailRecipientError
@@ -282,19 +257,15 @@ async def test_invite_with_mail_error(alice, alice_ws, monkeypatch):
     rep = await invite_new(
         alice_ws, type=InvitationType.USER, claimer_email="zack@example.com", send_email=True
     )
-    assert rep == {
-        "status": "ok",
-        "token": ANY,
-        "email_sent": InvitationEmailSentStatus.BAD_RECIPIENT,
-    }
+
+    assert isinstance(rep, InviteNewRepOk)
+    assert rep.email_sent == InvitationEmailSentStatus.BAD_RECIPIENT
 
     # Device invitation
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
-    assert rep == {
-        "status": "ok",
-        "token": ANY,
-        "email_sent": InvitationEmailSentStatus.BAD_RECIPIENT,
-    }
+
+    assert isinstance(rep, InviteNewRepOk)
+    assert rep.email_sent == InvitationEmailSentStatus.BAD_RECIPIENT
 
 
 @pytest.mark.trio
@@ -306,8 +277,10 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
     rep = await invite_new(
         alice_ws, type=InvitationType.USER, claimer_email="zack@example.com", send_email=True
     )
-    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCCESS}
-    token = rep["token"]
+
+    assert isinstance(rep, InviteNewRepOk)
+    assert rep.email_sent == InvitationEmailSentStatus.SUCCESS
+    token = rep.token
     email = await email_letterbox.get_next_with_timeout()
     assert email == ("zack@example.com", ANY)
 
@@ -324,18 +297,18 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
 
     # Device invitation (not avaible given no human_handle means no email !)
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
-    assert rep == {"status": "not_available"}
+    assert isinstance(rep, InviteNewRepNotAvailable)
 
 
 @pytest.mark.trio
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_invite_new_limited_for_outsider(alice_ws):
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
-    assert rep == {"status": "ok", "token": ANY}
+    assert isinstance(rep, InviteNewRepOk)
 
     # Only ADMIN can invite new users
     rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email="zack@example.com")
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, InviteNewRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -343,11 +316,11 @@ async def test_invite_new_limited_for_outsider(alice_ws):
 async def test_invite_new_limited_for_standard(alice_ws):
     # Outsider can only invite new devices
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
-    assert rep == {"status": "ok", "token": ANY}
+    assert isinstance(rep, InviteNewRepOk)
 
     # Only ADMIN can invite new users
     rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email="zack@example.com")
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, InviteNewRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -369,21 +342,17 @@ async def test_delete_invitation(
             rep = await invite_delete(
                 alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
             )
-        assert rep == {"status": "ok"}
+
+        assert isinstance(rep, InviteDeleteRepOk)
         await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == {
-        "status": "ok",
-        "event": APIEvent.INVITE_STATUS_CHANGED,
-        "invitation_status": InvitationStatus.DELETED,
-        "token": invitation.token,
-    }
+    assert rep == EventsListenRepOkInviteStatusChanged(invitation.token, InvitationStatus.DELETED)
 
     # Deleted invitation are no longer visible
     rep = await invite_list(alice_ws)
-    assert rep == {"status": "ok", "invitations": []}
+    assert isinstance(rep, InviteListRepOk)
 
     # Can no longer use this invitation to connect to the backend
     with pytest.raises(HandshakeBadIdentity):
@@ -406,9 +375,9 @@ async def test_new_user_invitation_on_already_member(
 
     rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=bob.human_handle.email)
     if not is_revoked:
-        assert rep == {"status": "already_member"}
+        assert isinstance(rep, InviteNewRepAlreadyMember)
     else:
-        assert rep == {"status": "ok", "token": ANY}
+        assert isinstance(rep, InviteNewRepOk)
 
 
 @pytest.mark.trio
@@ -425,24 +394,21 @@ async def test_idempotent_new_user_invitation(alice, backend, alice_ws):
     # Calling invite_new should be idempotent
     with freeze_time("2000-01-03"):
         rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=claimer_email)
-        assert rep == {"status": "ok", "token": invitation.token}
+        assert isinstance(rep, InviteNewRepOk)
+        assert rep.token == invitation.token
 
         rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=claimer_email)
-        assert rep == {"status": "ok", "token": invitation.token}
+        assert isinstance(rep, InviteNewRepOk)
+        assert rep.token == invitation.token
 
     rep = await invite_list(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.USER,
-                "token": invitation.token,
-                "created_on": DateTime(2000, 1, 2),
-                "claimer_email": claimer_email,
-                "status": InvitationStatus.IDLE,
-            }
-        ],
-    }
+    assert rep == InviteListRepOk(
+        [
+            InviteListItem.User(
+                invitation.token, DateTime(2000, 1, 2), claimer_email, InvitationStatus.IDLE
+            )
+        ]
+    )
 
 
 @pytest.mark.trio
@@ -456,23 +422,17 @@ async def test_idempotent_new_device_invitation(alice, backend, alice_ws):
     # Calling invite_new should be idempotent
     with freeze_time("2000-01-03"):
         rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
-        assert rep == {"status": "ok", "token": invitation.token}
+        assert isinstance(rep, InviteNewRepOk)
+        assert rep.token == invitation.token
 
         rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
-        assert rep == {"status": "ok", "token": invitation.token}
+        assert isinstance(rep, InviteNewRepOk)
+        assert rep.token == invitation.token
 
     rep = await invite_list(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.DEVICE,
-                "token": invitation.token,
-                "created_on": DateTime(2000, 1, 2),
-                "status": InvitationStatus.IDLE,
-            }
-        ],
-    }
+    assert rep == InviteListRepOk(
+        [InviteListItem.Device(invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE)]
+    )
 
 
 @pytest.mark.trio
@@ -492,27 +452,18 @@ async def test_new_user_invitation_after_invitation_deleted(alice, backend, alic
         reason=InvitationDeletedReason.FINISHED,
     )
 
-    # Deleted invitation shoudn't prevent from creating a new one
+    # Deleted invitation shouldn't prevent from creating a new one
 
     with freeze_time("2000-01-04"):
         rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=claimer_email)
-    assert rep == {"status": "ok", "token": ANY}
-    new_token = rep["token"]
+    assert isinstance(rep, InviteNewRepOk)
+    new_token = rep.token
     assert new_token != invitation.token
 
     rep = await invite_list(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.USER,
-                "token": new_token,
-                "created_on": DateTime(2000, 1, 4),
-                "claimer_email": claimer_email,
-                "status": InvitationStatus.IDLE,
-            }
-        ],
-    }
+    assert rep == InviteListRepOk(
+        [InviteListItem.User(new_token, DateTime(2000, 1, 4), claimer_email, InvitationStatus.IDLE)]
+    )
 
 
 @pytest.mark.trio
@@ -530,26 +481,18 @@ async def test_new_device_invitation_after_invitation_deleted(alice, backend, al
         reason=InvitationDeletedReason.FINISHED,
     )
 
-    # Deleted invitation shoudn't prevent from creating a new one
+    # Deleted invitation shouldn't prevent from creating a new one
 
     with freeze_time("2000-01-04"):
         rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
-    assert rep == {"status": "ok", "token": ANY}
-    new_token = rep["token"]
+    assert isinstance(rep, InviteNewRepOk)
+    new_token = rep.token
     assert new_token != invitation.token
 
     rep = await invite_list(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.DEVICE,
-                "token": new_token,
-                "created_on": DateTime(2000, 1, 4),
-                "status": InvitationStatus.IDLE,
-            }
-        ],
-    }
+    assert rep == InviteListRepOk(
+        [InviteListItem.Device(new_token, DateTime(2000, 1, 4), InvitationStatus.IDLE)]
+    )
 
 
 @pytest.mark.trio
@@ -569,7 +512,8 @@ async def test_delete_already_deleted_invitation(alice, backend, alice_ws):
     rep = await invite_delete(
         alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
     )
-    assert rep == {"status": "already_deleted"}
+
+    assert isinstance(rep, InviteDeleteRepAlreadyDeleted)
 
 
 @pytest.mark.trio
@@ -579,12 +523,13 @@ async def test_invitation_deletion_isolated_between_users(bob, backend, alice_ws
     )
 
     rep = await invite_list(alice_ws)
-    assert rep == {"status": "ok", "invitations": []}
+    assert isinstance(rep, InviteListRepOk)
 
     rep = await invite_delete(
         alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
     )
-    assert rep == {"status": "not_found"}
+
+    assert isinstance(rep, InviteDeleteRepNotFound)
 
 
 @pytest.mark.trio
@@ -596,12 +541,13 @@ async def test_invitation_deletion_isolated_between_organizations(
     )
 
     rep = await invite_list(alice_ws)
-    assert rep == {"status": "ok", "invitations": []}
+    assert isinstance(rep, InviteListRepOk)
 
     rep = await invite_delete(
         alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
     )
-    assert rep == {"status": "not_found"}
+
+    assert isinstance(rep, InviteDeleteRepNotFound)
 
     with pytest.raises(HandshakeBadIdentity):
         async with backend_invited_ws_factory(

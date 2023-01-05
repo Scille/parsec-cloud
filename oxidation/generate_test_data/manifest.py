@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 # flake8: noqa
+# cspell: ignore fdrm
 
 from protocol.utils import *
 from parsec.crypto import *
@@ -121,4 +122,8 @@ film_invalid_blocksize = FileManifest(
     blocksize=2,
     blocks=[],
 ).dump_sign_and_encrypt(author_signkey=ALICE.signing_key, key=KEY)
-display("file manifest invalid blocksize", film_invalid_blocksize, [KEY, ALICE.verify_key, "zip"])
+display(
+    "file manifest invalid blocksize",
+    film_invalid_blocksize,
+    [KEY, ALICE.verify_key, "zip"],
+)

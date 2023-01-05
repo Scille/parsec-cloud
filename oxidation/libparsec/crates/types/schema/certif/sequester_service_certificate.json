@@ -1,0 +1,23 @@
+{
+    "label": "SequesterServiceCertificate",
+    "type": "sequester_service_certificate",
+    "other_fields": [
+        // No author field here given we are signed by the sequester authority
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "service_id",
+            "type": "SequesterServiceID"
+        },
+        {
+            "name": "service_label",
+            "type": "String"
+        },
+        {
+            "name": "encryption_key_der",
+            "type": "SequesterPublicKeyDer"
+        }
+    ]
+}

@@ -105,3 +105,9 @@ target/
 
 # jetbrains file
 .idea
+
+# EditorConfig Checker
+.ecrc
+
+# Cspell cache
+.cspellcache

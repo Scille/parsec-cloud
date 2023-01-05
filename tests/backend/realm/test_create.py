@@ -1,16 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import (
+    DateTime,
+    RealmCreateRepAlreadyExists,
+    RealmCreateRepBadTimestamp,
+    RealmCreateRepInvalidCertification,
+    RealmCreateRepInvalidData,
+    RealmCreateRepOk,
+)
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmID, RealmRole, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
-
-from tests.common import freeze_time, customize_fixtures
-from tests.backend.test_events import events_subscribe
 from tests.backend.common import realm_create
+from tests.backend.test_events import events_subscribe
+from tests.common import customize_fixtures, freeze_time
 
 
 async def _test_create_ok(backend, device, ws):
@@ -22,7 +29,7 @@ async def _test_create_ok(backend, device, ws):
     ).dump_and_sign(device.signing_key)
     with backend.event_bus.listen() as spy:
         rep = await realm_create(ws, certif)
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, RealmCreateRepOk)
         await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
 
 
@@ -44,10 +51,8 @@ async def test_create_invalid_certif(bob, alice_ws):
         author=bob.device_id, timestamp=DateTime.now(), realm_id=realm_id
     ).dump_and_sign(bob.signing_key)
     rep = await realm_create(alice_ws, certif)
-    assert rep == {
-        "status": "invalid_certification",
-        "reason": "Invalid certification data (Signature was forged or corrupt).",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, RealmCreateRepInvalidCertification)
 
 
 @pytest.mark.trio
@@ -61,10 +66,8 @@ async def test_create_certif_not_self_signed(alice, bob, alice_ws):
         role=RealmRole.OWNER,
     ).dump_and_sign(alice.signing_key)
     rep = await realm_create(alice_ws, certif)
-    assert rep == {
-        "status": "invalid_data",
-        "reason": "Initial realm role certificate must be self-signed.",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, RealmCreateRepInvalidData)
 
 
 @pytest.mark.trio
@@ -78,10 +81,8 @@ async def test_create_certif_role_not_owner(alice, alice_ws):
         role=RealmRole.MANAGER,
     ).dump_and_sign(alice.signing_key)
     rep = await realm_create(alice_ws, certif)
-    assert rep == {
-        "status": "invalid_data",
-        "reason": "Initial realm role certificate must set OWNER role.",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, RealmCreateRepInvalidData)
 
 
 @pytest.mark.trio
@@ -100,20 +101,20 @@ async def test_create_certif_too_old(alice, alice_ws):
     later = now.add(seconds=BALLPARK_CLIENT_LATE_OFFSET)
     with freeze_time(later):
         rep = await realm_create(alice_ws, certif)
-    assert rep == {
-        "status": "bad_timestamp",
-        "backend_timestamp": later,
-        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
-        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
-        "client_timestamp": now,
-    }
+    assert rep == RealmCreateRepBadTimestamp(
+        reason=None,
+        backend_timestamp=later,
+        ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+        ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+        client_timestamp=now,
+    )
 
     #  Create a realm late but right before the deadline
 
     later = now.add(seconds=BALLPARK_CLIENT_LATE_OFFSET, microseconds=-1)
     with freeze_time(later):
         rep = await realm_create(alice_ws, certif)
-    assert rep["status"] == "ok"
+    assert isinstance(rep, RealmCreateRepOk)
 
     # Generate a new certificate
 
@@ -127,20 +128,20 @@ async def test_create_certif_too_old(alice, alice_ws):
     sooner = now.subtract(seconds=BALLPARK_CLIENT_EARLY_OFFSET)
     with freeze_time(sooner):
         rep = await realm_create(alice_ws, certif)
-    assert rep == {
-        "status": "bad_timestamp",
-        "backend_timestamp": sooner,
-        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
-        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
-        "client_timestamp": now,
-    }
+    assert rep == RealmCreateRepBadTimestamp(
+        reason=None,
+        backend_timestamp=sooner,
+        ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+        ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+        client_timestamp=now,
+    )
 
     # Create a realm soon but after the limit
 
     sooner = now.subtract(seconds=BALLPARK_CLIENT_EARLY_OFFSET, microseconds=-1)
     with freeze_time(sooner):
         rep = await realm_create(alice_ws, certif)
-    assert rep["status"] == "ok"
+    assert isinstance(rep, RealmCreateRepOk)
 
 
 @pytest.mark.trio
@@ -149,4 +150,4 @@ async def test_create_realm_already_exists(alice, alice_ws, realm):
         author=alice.device_id, timestamp=DateTime.now(), realm_id=realm
     ).dump_and_sign(alice.signing_key)
     rep = await realm_create(alice_ws, certif)
-    assert rep == {"status": "already_exists"}
+    assert isinstance(rep, RealmCreateRepAlreadyExists)

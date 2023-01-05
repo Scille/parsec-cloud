@@ -1,28 +1,36 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List
+
+import triopg
 
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
-    UserID,
+    MaintenanceType,
+    OrganizationID,
     RealmID,
     RealmRole,
-    MaintenanceType,
+    UserID,
 )
-from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError, RealmGrantedRole
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
-    q_user,
-    q_user_internal_id,
-    q_user_can_read_vlob,
     q_device,
+    q_organization_internal_id,
     q_realm,
     q_realm_internal_id,
+    q_user,
+    q_user_can_read_vlob,
+    q_user_internal_id,
+    query,
 )
-from parsec.backend.realm import RealmStats
+from parsec.backend.realm import (
+    RealmAccessError,
+    RealmGrantedRole,
+    RealmNotFoundError,
+    RealmStats,
+    RealmStatus,
+)
 
 _q_get_realm_status = Q(
     f"""
@@ -121,21 +129,24 @@ WHERE
 
 @query()
 async def query_get_status(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
 ) -> RealmStatus:
     ret = await conn.fetchrow(
         *_q_get_realm_status(
-            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
+            organization_id=organization_id.str, realm_id=realm_id, user_id=author.user_id.str
         )
     )
     if not ret:
-        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     if not ret["has_access"]:
         raise RealmAccessError()
 
     return RealmStatus(
-        maintenance_type=MaintenanceType(ret["maintenance_type"])
+        maintenance_type=MaintenanceType.from_str(ret["maintenance_type"])
         if ret["maintenance_type"]
         else None,
         maintenance_started_on=ret["maintenance_started_on"],
@@ -148,23 +159,26 @@ async def query_get_status(
 
 @query(in_transaction=True)
 async def query_get_stats(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
 ) -> RealmStats:
     ret = await conn.fetchrow(
         *_q_has_realm_access(
-            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
+            organization_id=organization_id.str, realm_id=realm_id, user_id=author.user_id.str
         )
     )
     if not ret:
-        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     if not ret["has_access"]:
         raise RealmAccessError()
     blocks_size_rep = await conn.fetchrow(
-        *_q_get_blocks_size_from_realm(organization_id=organization_id.str, realm_id=realm_id.uuid)
+        *_q_get_blocks_size_from_realm(organization_id=organization_id.str, realm_id=realm_id)
     )
     vlobs_size_rep = await conn.fetchrow(
-        *_q_get_vlob_size_from_realm(organization_id=organization_id.str, realm_id=realm_id.uuid)
+        *_q_get_vlob_size_from_realm(organization_id=organization_id.str, realm_id=realm_id)
     )
 
     blocks_size = blocks_size_rep["sum"] or 0
@@ -175,30 +189,33 @@ async def query_get_stats(
 
 @query()
 async def query_get_current_roles(
-    conn, organization_id: OrganizationID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
 ) -> Dict[UserID, RealmRole]:
     ret = await conn.fetch(
-        *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id.uuid)
+        *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id)
     )
 
     if not ret:
         # Existing group must have at least one owner user
-        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
-    return {UserID(user_id): RealmRole(role) for user_id, role in ret if role is not None}
+    return {UserID(user_id): RealmRole.from_str(role) for user_id, role in ret if role is not None}
 
 
 @query()
 async def query_get_role_certificates(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
 ) -> List[bytes]:
     ret = await conn.fetch(
-        *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id.uuid)
+        *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id)
     )
 
     if not ret:
         # Existing group must have at least one owner user
-        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     out = []
     author_current_role = None
@@ -216,19 +233,21 @@ async def query_get_role_certificates(
 
 @query()
 async def query_get_realms_for_user(
-    conn, organization_id: OrganizationID, user: UserID
-) -> Dict[RealmID, Optional[RealmRole]]:
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user: UserID
+) -> dict[RealmID, RealmRole]:
     rep = await conn.fetch(
         *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
     )
     return {
-        RealmID(row["realm_id"]): RealmRole(row["role"]) for row in rep if row["role"] is not None
+        RealmID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
+        for row in rep
+        if row["role"] is not None
     }
 
 
 @query()
 async def query_dump_realms_granted_roles(
-    conn, organization_id: OrganizationID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
 ) -> List[RealmGrantedRole]:
     granted_roles = []
     rows = await conn.fetch(
@@ -239,9 +258,9 @@ async def query_dump_realms_granted_roles(
         granted_roles.append(
             RealmGrantedRole(
                 certificate=row["certificate"],
-                realm_id=RealmID(row["realm_id"]),
+                realm_id=RealmID.from_hex(row["realm_id"]),
                 user_id=UserID(row["user_id"]),
-                role=RealmRole(row["role"]),
+                role=RealmRole.from_str(row["role"]),
                 granted_by=DeviceID(row["granted_by"]),
                 granted_on=row["granted_on"],
             )

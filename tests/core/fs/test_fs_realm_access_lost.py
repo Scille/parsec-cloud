@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
 from parsec.api.data import EntryName
 from parsec.core.fs import FSWorkspaceNoAccess
-
 from tests.common import create_shared_workspace
 
 

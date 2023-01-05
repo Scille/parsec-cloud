@@ -1,41 +1,52 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
+import multiprocessing
+import multiprocessing.pool
 import sys
 import time
-import multiprocessing
-from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
+from typing import Callable, Collection, Generic, Iterator, TypeVar, cast
 
-from PyQt5.QtCore import Qt, pyqtSignal, QEventLoop
-from PyQt5.QtGui import QPainter, QValidator, QIcon, QPixmap, QTextDocument
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-from PyQt5.QtWidgets import (
-    QWidget,
-    QCompleter,
-    QLineEdit,
-    QDialog,
-    QApplication,
-    QStyleOption,
-    QStyle,
-    QSizePolicy,
-    QFileDialog,
+from PyQt5.QtCore import QEventLoop, Qt, pyqtSignal
+from PyQt5.QtGui import (
+    QIcon,
+    QKeyEvent,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPixmap,
+    QTextDocument,
+    QValidator,
 )
-
+from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
+from PyQt5.QtWidgets import (
+    QApplication,
+    QCompleter,
+    QDialog,
+    QFileDialog,
+    QLineEdit,
+    QSizePolicy,
+    QSpacerItem,
+    QStyle,
+    QStyleOption,
+    QWidget,
+)
 from structlog import get_logger
+from typing_extensions import Concatenate, ParamSpec
 
 from parsec import _subprocess_dialog
-from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import Button
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.snackbar_widget import SnackbarManager
-
 from parsec.core.gui.ui.error_widget import Ui_ErrorWidget
-from parsec.core.gui.ui.info_widget import Ui_InfoWidget
-from parsec.core.gui.ui.question_widget import Ui_QuestionWidget
-from parsec.core.gui.ui.input_widget import Ui_InputWidget
 from parsec.core.gui.ui.greyed_dialog import Ui_GreyedDialog
-
+from parsec.core.gui.ui.info_widget import Ui_InfoWidget
+from parsec.core.gui.ui.input_widget import Ui_InputWidget
+from parsec.core.gui.ui.question_widget import Ui_QuestionWidget
 
 logger = get_logger()
 
@@ -52,15 +63,21 @@ qt_classes_in_subprocess = (
     QEventLoop,
 )
 
+P = ParamSpec("P")
+R = TypeVar("R")
+T_CLASS = TypeVar("T_CLASS")
+
 
 @contextmanager
-def bring_process_window_to_top(pool, timeout=3.0):
+def bring_process_window_to_top(
+    pool: multiprocessing.pool.Pool, timeout: float = 3.0
+) -> Iterator[None]:
     # This feature is windows only
     if sys.platform != "win32":
         yield
         return
 
-    def _bring_to_top(pid_target):
+    def _bring_to_top(pid_target: int) -> bool:
         import ctypes
         from ctypes import wintypes as win
 
@@ -70,8 +87,11 @@ def bring_process_window_to_top(pool, timeout=3.0):
         set_foreground_window = ctypes.windll.user32.SetForegroundWindow
         callback_type = ctypes.WINFUNCTYPE(win.BOOL, win.HWND, win.LPARAM)
 
+        # Does the callback finished successfully?
+        success = False
+
         # Callback enumerating the windows
-        def enum_windows_callback(hwnd, param):
+        def enum_windows_callback(hwnd: win.HWND, param: object) -> bool:
             nonlocal success
             # Get pid of the current window
             pid = win.DWORD()
@@ -84,7 +104,6 @@ def bring_process_window_to_top(pool, timeout=3.0):
             return False
 
         # Run the callback in a loop
-        success = False
         deadline = time.monotonic() + timeout
         callback = callback_type(enum_windows_callback)
         while not success:
@@ -110,18 +129,30 @@ def bring_process_window_to_top(pool, timeout=3.0):
                 logger.exception("The call to `bring_to_top` failed unexpectedly")
 
 
-class GreyedDialog(QDialog, Ui_GreyedDialog):
+_CurrentWidget = TypeVar("_CurrentWidget", bound=QWidget)
+
+
+class GreyedDialog(Generic[_CurrentWidget], QDialog, Ui_GreyedDialog):
     closing = pyqtSignal()
 
     def __init__(
-        self, center_widget, title, parent, hide_close=False, width=None, close_on_click=False
-    ):
+        self,
+        center_widget: _CurrentWidget,
+        title: str | None,
+        parent: QWidget | None,
+        hide_close: bool = False,
+        width: int | None = None,
+        close_on_click: bool = False,
+        on_close_requested: Callable[[], bool] | None = None,
+    ) -> None:
         super().__init__(None)
         self.setupUi(self)
         self.setModal(True)
         self.setObjectName("GreyedDialog")
         self.setWindowModality(Qt.ApplicationModal)
         self.button_close.apply_style()
+        self.button_close.clicked.connect(self._on_close_clicked)
+        self.on_close_requested = on_close_requested
         self.close_on_click = close_on_click
         if sys.platform == "win32":
             # SplashScreen on Windows freezes the Window
@@ -139,7 +170,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         if hide_close:
             self.button_close.hide()
         main_win = ParsecApp.get_main_window()
-        if width:
+        if width and main_win:
             if width < main_win.size().width():
                 spacing = int((main_win.size().width() - width) / 2)
                 self._get_spacer_right().changeSize(
@@ -161,32 +192,36 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         self.accepted.connect(self.on_finished)
         self.rejected.connect(self.on_finished)
 
-    def _get_spacer_top(self):
+    def _on_close_clicked(self) -> None:
+        if not self.on_close_requested or self.on_close_requested():
+            self.reject()
+
+    def _get_spacer_top(self) -> QSpacerItem:
         return self.vertical_layout.itemAt(0).spacerItem()
 
-    def _get_spacer_bottom(self):
+    def _get_spacer_bottom(self) -> QSpacerItem:
         return self.vertical_layout.itemAt(2).spacerItem()
 
-    def _get_spacer_left(self):
+    def _get_spacer_left(self) -> QSpacerItem:
         return self.horizontal_layout.itemAt(0).spacerItem()
 
-    def _get_spacer_right(self):
+    def _get_spacer_right(self) -> QSpacerItem:
         return self.horizontal_layout.itemAt(2).spacerItem()
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent) -> None:
         opt = QStyleOption()
         opt.initFrom(self)
         p = QPainter(self)
         self.style().drawPrimitive(QStyle.PE_Widget, opt, p, self)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         super().mousePressEvent(event)
         if not self.close_on_click:
             return
         if event.button() == Qt.LeftButton:
             self.accept()
 
-    def on_finished(self):
+    def on_finished(self) -> None:
         if (
             self.result() == QDialog.Rejected
             and self.center_widget
@@ -198,24 +233,39 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         # is not set to None. Linux seems to clear them automatically over time.
         # Resetting the parent on MacOS causes a crash.
         if sys.platform != "darwin":
-            self.setParent(None)
+            # Mypy This is the correct way to remove a parent from a widget but PyQt miss that overload
+            self.setParent(None)  # type: ignore[call-overload]
 
 
-class QDialogInProcess(GreyedDialog):
+def generate_dialog_method(
+    sub_cls: T_CLASS, sub_method: Callable[Concatenate[QWidget | None, P], R], default_return: R
+) -> Callable[Concatenate[QDialogInProcess, QWidget | None, P], R]:
+    def wrapper(
+        cls: QDialogInProcess, parent: QWidget | None, *args: P.args, **kwargs: P.kwargs
+    ) -> R:
+        try:
+            return cls._exec_method(sub_cls, sub_method, parent, *args, **kwargs)
+        except cls.DialogCancelled:
+            return default_return
 
-    pools = {}
+    return wrapper
+
+
+class QDialogInProcess(GreyedDialog[QWidget]):
+
+    pools: dict[object, multiprocessing.pool.Pool] = {}
     process_finished = pyqtSignal()
 
     class DialogCancelled(Exception):
         pass
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(QWidget(), "", parent, hide_close=True)
         self.MainWidget.hide()
 
     @classmethod
     @contextmanager
-    def manage_pools(cls):
+    def manage_pools(cls) -> Iterator[None]:
         # No pool for you OSX
         if sys.platform == "darwin":
             yield
@@ -231,8 +281,15 @@ class QDialogInProcess(GreyedDialog):
                 yield
 
     @classmethod
-    def _exec_method(cls, target_cls, target_method, parent, *args, **kwargs):
-        assert hasattr(target_cls, target_method)
+    def _exec_method(
+        cls,
+        target_cls: T_CLASS,
+        target_method: Callable[Concatenate[QWidget | None, P], R],
+        parent: QWidget | None,
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        assert hasattr(target_cls, target_method.__name__)
         # Fire up the process pool is necessary
         pool = cls.pools.get(target_cls)
         if pool is None:
@@ -246,7 +303,7 @@ class QDialogInProcess(GreyedDialog):
             # Start the subprocess
             async_result = pool.apply_async(
                 _subprocess_dialog.run_dialog,
-                (target_cls, target_method, *args),
+                (target_cls, target_method.__name__, *args),
                 kwargs,
                 lambda *args: dialog.process_finished.emit(),
                 lambda *args: dialog.process_finished.emit(),
@@ -260,7 +317,7 @@ class QDialogInProcess(GreyedDialog):
                 cls.pools.pop(target_cls, None)
                 raise dialog.DialogCancelled
             # Return result
-            return async_result.get()
+            return cast(R, async_result.get())
         finally:
             # On OSX, using the same process for several dialogs messes up with the OS
             # In particular, the parsec icon corresponding to the dialog window persists between calls
@@ -268,57 +325,40 @@ class QDialogInProcess(GreyedDialog):
                 pool.close()
                 cls.pools.pop(target_cls, None)
 
-    @classmethod
-    def getOpenFileName(cls, *args, **kwargs):
-        try:
-            return cls._exec_method(QFileDialog, "getOpenFileName", *args, **kwargs)
-        except cls.DialogCancelled:
-            return "", ""
-
-    @classmethod
-    def getOpenFileNames(cls, *args, **kwargs):
-        try:
-            return cls._exec_method(QFileDialog, "getOpenFileNames", *args, **kwargs)
-        except cls.DialogCancelled:
-            return [], ""
-
-    @classmethod
-    def getExistingDirectory(cls, *args, **kwargs):
-        try:
-            return cls._exec_method(QFileDialog, "getExistingDirectory", *args, **kwargs)
-        except cls.DialogCancelled:
-            return ""
-
-    @classmethod
-    def getSaveFileName(cls, *args, **kwargs):
-        try:
-            return cls._exec_method(QFileDialog, "getSaveFileName", *args, **kwargs)
-        except cls.DialogCancelled:
-            return "", ""
-
-    @classmethod
-    def print_html(cls, *args, **kwargs):
-        try:
-            return cls._exec_method(_subprocess_dialog.PrintHelper, "print_html", *args, **kwargs)
-        except cls.DialogCancelled:
-            return None
+    getOpenFileName = classmethod(
+        generate_dialog_method(QFileDialog, QFileDialog.getOpenFileName, ("", ""))
+    )
+    getOpenFileNames = classmethod(
+        generate_dialog_method(QFileDialog, QFileDialog.getOpenFileNames, (cast(list[str], []), ""))
+    )
+    getExistingDirectory = classmethod(
+        generate_dialog_method(QFileDialog, QFileDialog.getExistingDirectory, "")
+    )
+    getSaveFileName = classmethod(
+        generate_dialog_method(QFileDialog, QFileDialog.getSaveFileName, ("", ""))
+    )
+    print_html = classmethod(
+        generate_dialog_method(
+            _subprocess_dialog.PrintHelper, _subprocess_dialog.PrintHelper.print_html, None
+        )
+    )
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):
     def __init__(
         self,
-        message,
-        placeholder="",
-        default_text="",
-        completion=None,
-        button_text=None,
-        validator=None,
-        hidden=False,
-        selection=None,
+        message: str,
+        placeholder: str = "",
+        default_text: str = "",
+        completion: None = None,
+        button_text: str | None = None,
+        validator: QValidator | None = None,
+        hidden: bool = False,
+        selection: tuple[int, int] | None = None,
     ):
         super().__init__()
         self.setupUi(self)
-        self.dialog = None
+        self.dialog: GreyedDialog[TextInputWidget] | None = None
         button_text = button_text or _("ACTION_OK")
         self.button_ok.setText(button_text)
         self.label_message.setText(message)
@@ -342,39 +382,41 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         self.line_edit_text.setFocus()
 
     @property
-    def text(self):
+    def text(self) -> str:
         return self.line_edit_text.text()
 
-    def _on_validity_changed(self, validity):
+    def _on_validity_changed(self, validity: QValidator.State) -> None:
         self.button_ok.setEnabled(validity == QValidator.Acceptable)
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
         if self.button_ok.isEnabled() and event.key() in (Qt.Key_Return, Qt.Key_Enter):
             self._on_button_clicked()
         event.accept()
 
-    def _on_button_clicked(self):
+    def _on_button_clicked(self) -> None:
         if self.dialog:
             self.dialog.accept()
         elif QApplication.activeModalWidget():
-            QApplication.activeModalWidget().accept()
+            # Mypy: `activeModalWidget` return only a `QWidget` that don't define an `accept` method
+            # So finger-crossed that the return object has it.
+            QApplication.activeModalWidget().accept()  # type: ignore[attr-defined]
         else:
             logger.warning("Cannot close dialog when requesting user text input")
 
 
 def get_text_input(
-    parent,
-    title,
-    message,
-    placeholder="",
-    default_text="",
-    completion=None,
-    button_text=None,
-    validator=None,
-    hidden=False,
-    selection=None,
-):
-    w = TextInputWidget(
+    parent: QWidget,
+    title: str,
+    message: str,
+    placeholder: str = "",
+    default_text: str = "",
+    completion: None = None,
+    button_text: str | None = None,
+    validator: QValidator | None = None,
+    hidden: bool = False,
+    selection: tuple[int, int] | None = None,
+) -> str | None:
+    widget = TextInputWidget(
         message=message,
         placeholder=placeholder,
         default_text=default_text,
@@ -384,26 +426,32 @@ def get_text_input(
         hidden=hidden,
         selection=selection,
     )
-    d = GreyedDialog(w, title=title, parent=parent)
-    w.dialog = d
-    w.line_edit_text.setFocus()
-    result = d.exec_()
+    dialog = GreyedDialog(widget, title=title, parent=parent)
+    widget.dialog = dialog
+    widget.line_edit_text.setFocus()
+    result = dialog.exec_()
     if result == QDialog.Accepted:
-        return w.text
+        return widget.text
     return None
 
 
 class QuestionWidget(QWidget, Ui_QuestionWidget):
     def __init__(
-        self, message, button_texts, radio_mode=False, oriented_question=False, dangerous_yes=False
+        self,
+        message: str,
+        button_texts: Collection[str],
+        radio_mode: bool = False,
+        oriented_question: bool = False,
+        dangerous_yes: bool = False,
     ):
         super().__init__()
         self.setupUi(self)
-        self.status = None
-        self.dialog = None
+        self.status: None | str = None
+        self.dialog: GreyedDialog[QuestionWidget] | None = None
         self.label_message.setText(message)
 
         if oriented_question:
+            assert len(button_texts) == 2
             yes_text, no_text = button_texts
             assert not radio_mode
 
@@ -437,42 +485,44 @@ class QuestionWidget(QWidget, Ui_QuestionWidget):
                 else:
                     self.layout_buttons.insertWidget(1, b)
 
-    def _on_button_clicked(self, button):
+    def _on_button_clicked(self, button: Button) -> None:
         self.status = button.text()
         if self.dialog:
             self.dialog.accept()
         elif QApplication.activeModalWidget():
-            QApplication.activeModalWidget().accept()
+            # Mypy: `activeModalWidget` return only a `QWidget` that don't define an `accept` method
+            # So finger-crossed that the return object has it.
+            QApplication.activeModalWidget().accept()  # type: ignore[attr-defined]
         else:
             logger.warning("Cannot close dialog when asking question")
 
 
 def ask_question(
-    parent,
-    title,
-    message,
-    button_texts,
-    radio_mode=False,
-    oriented_question=False,
-    dangerous_yes=False,
-):
-    w = QuestionWidget(
+    parent: QWidget | None,
+    title: str,
+    message: str,
+    button_texts: Collection[str],
+    radio_mode: bool = False,
+    oriented_question: bool = False,
+    dangerous_yes: bool = False,
+) -> str | None:
+    widget = QuestionWidget(
         message=message,
         button_texts=button_texts,
         radio_mode=radio_mode,
         oriented_question=oriented_question,
         dangerous_yes=dangerous_yes,
     )
-    d = GreyedDialog(w, title=title, parent=parent)
-    w.dialog = d
-    status = d.exec_()
+    dialog = GreyedDialog(widget, title=title, parent=parent)
+    widget.dialog = dialog
+    status = dialog.exec_()
     if status == QDialog.Accepted:
-        return w.status
+        return widget.status
     return None
 
 
 class ErrorWidget(QWidget, Ui_ErrorWidget):
-    def __init__(self, message, exception=None):
+    def __init__(self, message: str, exception: BaseException | None = None) -> None:
         super().__init__()
         self.setupUi(self)
         self.label_message.setText(message)
@@ -501,11 +551,11 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
         self.button_copy.hide()
         self.button_copy.apply_style()
 
-    def copy_to_clipboard(self):
+    def copy_to_clipboard(self) -> None:
         desktop.copy_to_clipboard(self.text_details.toPlainText())
         SnackbarManager.inform(_("TEXT_STACKTRACE_COPIED_TO_CLIPBOARD"))
 
-    def toggle_details(self, checked):
+    def toggle_details(self, checked: bool) -> None:
         if not checked:
             self.text_details.hide()
             self.button_copy.hide()
@@ -514,14 +564,19 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
             self.button_copy.show()
 
 
-def show_error(parent, message, exception=None):
-    w = ErrorWidget(message, exception)
-    d = GreyedDialog(w, title=_("TEXT_ERR_DIALOG_TITLE"), parent=parent)
-    return d.open()
+def show_error(parent: QWidget, message: str, exception: BaseException | None = None) -> None:
+    widget = ErrorWidget(message, exception)
+    dialog = GreyedDialog(widget, title=_("TEXT_ERR_DIALOG_TITLE"), parent=parent)
+    return dialog.open()
 
 
 class InfoWidget(QWidget, Ui_InfoWidget):
-    def __init__(self, message, dialog=None, button_text=None):
+    def __init__(
+        self,
+        message: str,
+        dialog: GreyedDialog[InfoWidget] | None = None,
+        button_text: str | None = None,
+    ):
         super().__init__()
         self.setupUi(self)
         self.dialog = dialog
@@ -531,28 +586,36 @@ class InfoWidget(QWidget, Ui_InfoWidget):
         self.button_ok.clicked.connect(self._on_button_clicked)
         self.button_ok.setFocus()
 
-    def _on_button_clicked(self, button):
+    def _on_button_clicked(self, button: Button) -> None:
         if self.dialog:
             self.dialog.accept()
         elif QApplication.activeModalWidget():
-            QApplication.activeModalWidget().accept()
+            # Mypy: `activeModalWidget` return only a `QWidget` that don't define an `accept` method
+            # So finger-crossed that the return object has it.
+            QApplication.activeModalWidget().accept()  # type: ignore[attr-defined]
         else:
             logger.warning("Cannot close dialog when displaying info")
 
 
-def show_info(parent, message, button_text=None):
-    w = InfoWidget(message, button_text=button_text)
-    d = GreyedDialog(w, title=None, parent=parent, hide_close=True)
-    w.dialog = d
-    w.button_ok.setFocus()
-    return d.open()
+def show_info(parent: QWidget, message: str, button_text: str | None = None) -> None:
+    widget = InfoWidget(message, button_text=button_text)
+    dialog = GreyedDialog(widget, title=None, parent=parent, hide_close=True)
+    widget.dialog = dialog
+    widget.button_ok.setFocus()
+    return dialog.open()
 
 
 class InfoLinkWidget(QWidget, Ui_InfoWidget):
-    def __init__(self, message, url, button_text, dialog=None):
+    def __init__(
+        self,
+        message: str,
+        url: str,
+        button_text: str,
+        dialog: GreyedDialog[InfoLinkWidget] | None = None,
+    ) -> None:
         super().__init__()
         self.setupUi(self)
-        self.dialog = dialog
+        self.dialog: GreyedDialog[InfoLinkWidget] | None = dialog
         self.url = url
         self.label_message.setText(message)
         self.label_icon.apply_style()
@@ -561,27 +624,33 @@ class InfoLinkWidget(QWidget, Ui_InfoWidget):
         self.button_ok.clicked.connect(self._on_button_clicked)
         self.button_ok.setFocus()
 
-    def _on_button_clicked(self, button):
+    def _on_button_clicked(self, button: Button) -> None:
         desktop.open_url(self.url)
 
 
-def show_info_link(parent, title, message, button_text, url):
-    w = InfoLinkWidget(message, url, button_text)
-    d = GreyedDialog(w, title=title, parent=parent)
-    w.dialog = d
-    w.button_ok.setFocus()
-    return d.open()
+def show_info_link(parent: QWidget, title: str, message: str, button_text: str, url: str) -> None:
+    widget = InfoLinkWidget(message, url, button_text)
+    dialog = GreyedDialog(widget, title=title, parent=parent)
+    widget.dialog = dialog
+    widget.button_ok.setFocus()
+    return dialog.open()
 
 
 class InfoCopyLinkWidget(InfoLinkWidget):
-    def _on_button_clicked(self, button):
+    def _on_button_clicked(self, button: Button) -> None:
         desktop.copy_to_clipboard(self.url)
         SnackbarManager.inform("TEXT_ENROLLMENT_ADDR_COPIED_TO_CLIPBOARD")
 
 
-def show_info_copy_link(parent, title, message, button_text, url):
-    w = InfoCopyLinkWidget(message, url, button_text)
-    d = GreyedDialog(w, title=title, parent=parent)
-    w.dialog = d
-    w.button_ok.setFocus()
-    return d.open()
+def show_info_copy_link(
+    parent: QWidget, title: str, message: str, button_text: str, url: str
+) -> None:
+    widget = InfoCopyLinkWidget(message, url, button_text)
+    dialog = GreyedDialog(
+        cast(InfoLinkWidget, widget),  # Upcast to avoid type error with mypy
+        title=title,
+        parent=parent,
+    )
+    widget.dialog = dialog
+    widget.button_ok.setFocus()
+    return dialog.open()

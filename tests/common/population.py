@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import re
-import pytest
 from collections import defaultdict
-from typing import Union, Optional
 from contextlib import asynccontextmanager
+from typing import Optional, Union
 
-from parsec.crypto import SigningKey
-from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle, UserProfile
-from parsec.core.types import BackendOrganizationBootstrapAddr
+import pytest
+
+from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserProfile
 from parsec.core.local_device import generate_new_device
-
+from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.crypto import SigningKey
 from tests.common.binder import OrganizationFullData
 from tests.common.freeze_time import freeze_time
 from tests.common.sequester import sequester_authority_factory
@@ -86,7 +87,7 @@ def local_device_factory(coolorg):
             assert base_device_label is None
             device_label = None
         elif not base_device_label:
-            device_label = DeviceLabel(f"My {device_id.device_name} machine")
+            device_label = DeviceLabel(f"My {device_id.device_name.str} machine")
         elif isinstance(base_device_label, DeviceLabel):
             device_label = base_device_label
         else:
@@ -96,9 +97,9 @@ def local_device_factory(coolorg):
             assert base_human_handle is None
             human_handle = None
         elif not base_human_handle:
-            name = str(device_id.user_id).capitalize()
+            name = device_id.user_id.str.capitalize()
             human_handle = HumanHandle(
-                email=f"{device_id.user_id}@example.com", label=f"{name}y Mc{name}Face"
+                email=f"{device_id.user_id.str}@example.com", label=f"{name}y Mc{name}Face"
             )
         elif isinstance(base_human_handle, HumanHandle):
             human_handle = base_human_handle
@@ -108,7 +109,7 @@ def local_device_factory(coolorg):
                 label, email = match.groups()
             else:
                 label = base_human_handle
-                email = f"{device_id.user_id}@example.com"
+                email = f"{device_id.user_id.str}@example.com"
             human_handle = HumanHandle(email=email, label=label)
 
         parent_device = None

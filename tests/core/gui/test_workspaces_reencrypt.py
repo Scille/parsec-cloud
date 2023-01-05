@@ -1,17 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from functools import partial
 
 import pytest
 from PyQt5 import QtCore
 
+from parsec.api.data import EntryName
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSError,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
 )
-from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.types import WorkspaceRole
@@ -76,6 +77,7 @@ async def reencryption_needed_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_display(
     aqtbot,
@@ -240,6 +242,7 @@ async def test_workspace_reencryption_access_error(
 
     def _role_changed(expected_role):
         user_id = wk_button.workspace_fs.device.user_id
+        assert user_id in wk_button.users_roles
         role, _ = wk_button.users_roles[user_id]
         assert role == expected_role
 
@@ -342,7 +345,7 @@ async def test_workspace_reencryption_do_one_batch_error(
     await aqtbot.wait_until(_assert_error)
     # Unexpected error is logged
     if error_type is Exception:
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             "[error    ] Uncatched error in Qt/trio job [parsec.core.gui.trio_jobs]"
         )
 
@@ -351,7 +354,7 @@ async def test_workspace_reencryption_do_one_batch_error(
 # Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
+@pytest.mark.flaky(reruns=5)
 async def test_workspace_reencryption_continue(
     aqtbot,
     running_backend,

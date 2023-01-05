@@ -1,16 +1,168 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::basic::CompareOp;
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyType};
-use uuid::Uuid;
+use pyo3::{exceptions::PyValueError, prelude::*, types::PyType};
 
-use crate::binding_utils::{comp_op, hash_generic};
+// UUID based type
+
+macro_rules! gen_uuid {
+    ($class: ident) => {
+        #[pymethods]
+        impl $class {
+            #[classmethod]
+            fn from_bytes(_cls: &::pyo3::types::PyType, bytes: &[u8]) -> PyResult<Self> {
+                libparsec::types::$class::try_from(bytes)
+                    .map(Self)
+                    .map_err(::pyo3::exceptions::PyValueError::new_err)
+            }
+
+            #[classmethod]
+            fn from_hex(_cls: &::pyo3::types::PyType, hex: &str) -> PyResult<Self> {
+                libparsec::types::$class::from_hex(hex)
+                    .map(Self)
+                    .map_err(::pyo3::exceptions::PyValueError::new_err)
+            }
+
+            #[classmethod]
+            #[pyo3(name = "new")]
+            fn default(_cls: &::pyo3::types::PyType) -> Self {
+                Self(libparsec::types::$class::default())
+            }
+
+            #[getter]
+            fn bytes(&self) -> &[u8] {
+                &self.0.as_bytes()[..]
+            }
+
+            #[getter]
+            fn hex(&self) -> String {
+                self.0.hex()
+            }
+
+            #[getter]
+            fn int(&self) -> u128 {
+                self.0.as_u128()
+            }
+
+            #[getter]
+            fn hyphenated(&self) -> String {
+                self.0.as_hyphenated().to_string()
+            }
+        }
+    };
+}
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub(crate) struct EntryID(pub libparsec::types::EntryID);
+
+crate::binding_utils::gen_proto!(EntryID, __repr__);
+crate::binding_utils::gen_proto!(EntryID, __str__);
+crate::binding_utils::gen_proto!(EntryID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(EntryID, __hash__);
+gen_uuid!(EntryID);
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct BlockID(pub libparsec::types::BlockID);
+
+crate::binding_utils::gen_proto!(BlockID, __repr__);
+crate::binding_utils::gen_proto!(BlockID, __str__);
+crate::binding_utils::gen_proto!(BlockID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(BlockID, __hash__);
+gen_uuid!(BlockID);
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct RealmID(pub libparsec::types::RealmID);
+
+crate::binding_utils::gen_proto!(RealmID, __repr__);
+crate::binding_utils::gen_proto!(RealmID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(RealmID, __hash__);
+gen_uuid!(RealmID);
+
+#[pymethods]
+impl RealmID {
+    fn to_entry_id(&self) -> EntryID {
+        EntryID(libparsec::types::EntryID::from(*self.0))
+    }
+    #[classmethod]
+    fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
+        Self(libparsec::types::RealmID::from(*id.0))
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub(crate) struct VlobID(pub libparsec::types::VlobID);
+
+crate::binding_utils::gen_proto!(VlobID, __repr__);
+crate::binding_utils::gen_proto!(VlobID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(VlobID, __hash__);
+gen_uuid!(VlobID);
+
+#[pymethods]
+impl VlobID {
+    fn to_entry_id(&self) -> EntryID {
+        EntryID(libparsec::types::EntryID::from(*self.0))
+    }
+    #[classmethod]
+    fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
+        Self(libparsec::types::VlobID::from(*id.0))
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub(crate) struct ChunkID(pub libparsec::types::ChunkID);
+
+crate::binding_utils::gen_proto!(ChunkID, __repr__);
+crate::binding_utils::gen_proto!(ChunkID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(ChunkID, __hash__);
+gen_uuid!(ChunkID);
+
+#[pymethods]
+impl ChunkID {
+    #[classmethod]
+    fn from_block_id(_cls: &PyType, id: BlockID) -> Self {
+        Self(libparsec::types::ChunkID::from(*id.0))
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub(crate) struct SequesterServiceID(pub libparsec::types::SequesterServiceID);
+
+crate::binding_utils::gen_proto!(SequesterServiceID, __repr__);
+crate::binding_utils::gen_proto!(SequesterServiceID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(SequesterServiceID, __hash__);
+gen_uuid!(SequesterServiceID);
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct InvitationToken(pub libparsec::types::InvitationToken);
+
+crate::binding_utils::gen_proto!(InvitationToken, __repr__);
+crate::binding_utils::gen_proto!(InvitationToken, __richcmp__, eq);
+crate::binding_utils::gen_proto!(InvitationToken, __hash__);
+gen_uuid!(InvitationToken);
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct EnrollmentID(pub libparsec::types::EnrollmentID);
+
+crate::binding_utils::gen_proto!(EnrollmentID, __repr__);
+crate::binding_utils::gen_proto!(EnrollmentID, __richcmp__, eq);
+gen_uuid!(EnrollmentID);
+
+// Other ids
+
+#[pyclass]
+#[derive(Clone)]
 pub(crate) struct OrganizationID(pub libparsec::types::OrganizationID);
+
+crate::binding_utils::gen_proto!(OrganizationID, __repr__);
+crate::binding_utils::gen_proto!(OrganizationID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(OrganizationID, __hash__);
 
 #[pymethods]
 impl OrganizationID {
@@ -28,29 +180,6 @@ impl OrganizationID {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<OrganizationID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -59,343 +188,11 @@ impl OrganizationID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct EntryID(pub libparsec::types::EntryID);
-
-#[pymethods]
-impl EntryID {
-    #[new]
-    pub fn new(uuid: &PyAny) -> PyResult<Self> {
-        // Check if the PyAny as a hex parameter (meaning it's probably a uuid.UUID)
-        match uuid.getattr("hex") {
-            Ok(as_hex) => {
-                // Convert to string
-                let u = as_hex.extract::<&str>()?;
-                // Parse it as a Rust Uuid
-                match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(libparsec::types::EntryID::from(as_uuid))),
-                    Err(_) => Err(PyValueError::new_err("Not a UUID")),
-                }
-            }
-            Err(_) => Err(PyValueError::new_err("Not a UUID")),
-        }
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<EntryID {}>", self.0))
-    }
-
-    #[getter]
-    fn uuid<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let uuid = PyModule::import(py, "uuid")?;
-        let kwargs = vec![("hex", self.hex().unwrap())].into_py_dict(py);
-        match uuid.getattr("UUID")?.call((), Some(kwargs)) {
-            Ok(any) => Ok(any),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
-        match uuid::Uuid::from_slice(bytes) {
-            Ok(uuid) => Ok(Self(libparsec::types::EntryID::from(uuid))),
-            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
-        }
-    }
-
-    #[classmethod]
-    pub fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
-        match hex.parse::<libparsec::types::EntryID>() {
-            Ok(entry_id) => Ok(Self(entry_id)),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::EntryID::default()))
-    }
-
-    #[getter]
-    fn bytes(&self) -> PyResult<&[u8]> {
-        Ok(&self.0.as_bytes()[..])
-    }
-
-    #[getter]
-    fn hex(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __richcmp__(&self, py: Python, other: &EntryID, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
-    }
-}
-
-#[pyclass]
-#[derive(PartialEq, Eq, Clone)]
-pub(crate) struct BlockID(pub libparsec::types::BlockID);
-
-#[pymethods]
-impl BlockID {
-    #[new]
-    pub fn new(uuid: &PyAny) -> PyResult<Self> {
-        // Check if the PyAny as a hex parameter (meaning it's probably a uuid.UUID)
-        match uuid.getattr("hex") {
-            Ok(as_hex) => {
-                // Convert to string
-                let u = as_hex.extract::<&str>()?;
-                // Parse it as a Rust Uuid
-                match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(libparsec::types::BlockID::from(as_uuid))),
-                    Err(_) => Err(PyValueError::new_err("Not a UUID")),
-                }
-            }
-            Err(_) => Err(PyValueError::new_err("Not a UUID")),
-        }
-    }
-
-    #[getter]
-    fn uuid<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let uuid = PyModule::import(py, "uuid")?;
-        let kwargs = vec![("hex", self.hex().unwrap())].into_py_dict(py);
-        match uuid.getattr("UUID")?.call((), Some(kwargs)) {
-            Ok(any) => Ok(any),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
-        match uuid::Uuid::from_slice(bytes) {
-            Ok(uuid) => Ok(Self(libparsec::types::BlockID::from(uuid))),
-            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
-        }
-    }
-
-    #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
-        match hex.parse::<libparsec::types::BlockID>() {
-            Ok(entry_id) => Ok(Self(entry_id)),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::BlockID::default()))
-    }
-
-    #[getter]
-    fn bytes(&self) -> PyResult<&[u8]> {
-        Ok(&self.0.as_bytes()[..])
-    }
-
-    #[getter]
-    fn hex(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __richcmp__(&self, py: Python, other: &BlockID, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<BlockID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
-    }
-}
-
-#[pyclass]
-#[derive(PartialEq, Eq, Clone)]
-pub(crate) struct RealmID(pub libparsec::types::RealmID);
-
-#[pymethods]
-impl RealmID {
-    #[new]
-    pub fn new(uuid: &PyAny) -> PyResult<Self> {
-        // Check if the PyAny as a hex parameter (meaning it's probably a uuid.UUID)
-        match uuid.getattr("hex") {
-            Ok(as_hex) => {
-                // Convert to string
-                let u = as_hex.extract::<&str>()?;
-                // Parse it as a Rust Uuid
-                match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(libparsec::types::RealmID::from(as_uuid))),
-                    Err(_) => Err(PyValueError::new_err("Not a UUID")),
-                }
-            }
-            Err(_) => Err(PyValueError::new_err("Not a UUID")),
-        }
-    }
-
-    #[getter]
-    fn uuid<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let uuid = PyModule::import(py, "uuid")?;
-        let kwargs = vec![("hex", self.hex().unwrap())].into_py_dict(py);
-        match uuid.getattr("UUID")?.call((), Some(kwargs)) {
-            Ok(any) => Ok(any),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
-        match uuid::Uuid::from_slice(bytes) {
-            Ok(uuid) => Ok(Self(libparsec::types::RealmID::from(uuid))),
-            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
-        }
-    }
-
-    #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
-        match hex.parse::<libparsec::types::RealmID>() {
-            Ok(entry_id) => Ok(Self(entry_id)),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::RealmID::default()))
-    }
-
-    #[getter]
-    fn bytes(&self) -> PyResult<&[u8]> {
-        Ok(&self.0.as_bytes()[..])
-    }
-
-    #[getter]
-    fn hex(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __richcmp__(&self, py: Python, other: &RealmID, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<RealmID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
-    }
-}
-
-#[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct VlobID(pub libparsec::types::VlobID);
-
-#[pymethods]
-impl VlobID {
-    #[new]
-    pub fn new(uuid: &PyAny) -> PyResult<Self> {
-        // Check if the PyAny as a hex parameter (meaning it's probably a uuid.UUID)
-        match uuid.getattr("hex") {
-            Ok(as_hex) => {
-                // Convert to string
-                let u = as_hex.extract::<&str>()?;
-                // Parse it as a Rust Uuid
-                match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(libparsec::types::VlobID::from(as_uuid))),
-                    Err(_) => Err(PyValueError::new_err("Not a UUID")),
-                }
-            }
-            Err(_) => Err(PyValueError::new_err("Not a UUID")),
-        }
-    }
-
-    #[getter]
-    fn uuid<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let uuid = PyModule::import(py, "uuid")?;
-        let kwargs = vec![("hex", self.hex().unwrap())].into_py_dict(py);
-        match uuid.getattr("UUID")?.call((), Some(kwargs)) {
-            Ok(any) => Ok(any),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
-        match uuid::Uuid::from_slice(bytes) {
-            Ok(uuid) => Ok(Self(libparsec::types::VlobID::from(uuid))),
-            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
-        }
-    }
-
-    #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
-        match hex.parse::<libparsec::types::VlobID>() {
-            Ok(entry_id) => Ok(Self(entry_id)),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::VlobID::default()))
-    }
-
-    #[getter]
-    fn bytes(&self) -> PyResult<&[u8]> {
-        Ok(&self.0.as_bytes()[..])
-    }
-
-    #[getter]
-    fn hex(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __richcmp__(&self, py: Python, other: &VlobID, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<VlobID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
-    }
-}
-
-#[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct UserID(pub libparsec::types::UserID);
+
+crate::binding_utils::gen_proto!(UserID, __repr__);
+crate::binding_utils::gen_proto!(UserID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(UserID, __hash__);
 
 #[pymethods]
 impl UserID {
@@ -413,29 +210,6 @@ impl UserID {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<UserID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
-    }
-
     fn capitalize(&self) -> PyResult<String> {
         Ok(self.0.to_string().to_uppercase())
     }
@@ -445,14 +219,18 @@ impl UserID {
         Ok(self.0.to_string())
     }
 
-    fn to_device_id(&self, device_name: &DeviceName) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.to_device_id(&device_name.0)))
+    fn to_device_id(&self, device_name: DeviceName) -> PyResult<DeviceID> {
+        Ok(DeviceID(self.0.to_device_id(device_name.0)))
     }
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct DeviceName(pub libparsec::types::DeviceName);
+
+crate::binding_utils::gen_proto!(DeviceName, __repr__);
+crate::binding_utils::gen_proto!(DeviceName, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DeviceName, __hash__);
 
 #[pymethods]
 impl DeviceName {
@@ -470,28 +248,6 @@ impl DeviceName {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<DeviceName {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -499,14 +255,18 @@ impl DeviceName {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::DeviceName::default()))
     }
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct DeviceLabel(pub libparsec::types::DeviceLabel);
+
+crate::binding_utils::gen_proto!(DeviceLabel, __repr__);
+crate::binding_utils::gen_proto!(DeviceLabel, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DeviceLabel, __hash__);
 
 #[pymethods]
 impl DeviceLabel {
@@ -524,29 +284,6 @@ impl DeviceLabel {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<DeviceLabel {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -554,8 +291,12 @@ impl DeviceLabel {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct DeviceID(pub libparsec::types::DeviceID);
+
+crate::binding_utils::gen_proto!(DeviceID, __repr__);
+crate::binding_utils::gen_proto!(DeviceID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DeviceID, __hash__);
 
 #[pymethods]
 impl DeviceID {
@@ -573,29 +314,6 @@ impl DeviceID {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<DeviceID {}>", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -603,118 +321,28 @@ impl DeviceID {
 
     #[getter]
     fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID(self.0.user_id.clone()))
+        Ok(UserID(self.0.user_id().clone()))
     }
 
     #[getter]
     fn device_name(&self) -> PyResult<DeviceName> {
-        Ok(DeviceName(self.0.device_name.clone()))
+        Ok(DeviceName(self.0.device_name().clone()))
     }
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::DeviceID::default()))
     }
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct ChunkID(pub libparsec::types::ChunkID);
-
-#[pymethods]
-impl ChunkID {
-    #[new]
-    pub fn new(uuid: &PyAny) -> PyResult<Self> {
-        // Check if the PyAny as a hex parameter (meaning it's probably a uuid.UUID)
-        match uuid.getattr("hex") {
-            Ok(as_hex) => {
-                // Convert to string
-                let u = as_hex.extract::<&str>()?;
-                // Parse it as a Rust Uuid
-                match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(libparsec::types::ChunkID::from(as_uuid))),
-                    Err(_) => Err(PyValueError::new_err("Not a UUID")),
-                }
-            }
-            Err(_) => Err(PyValueError::new_err("Not a UUID")),
-        }
-    }
-
-    #[getter]
-    fn uuid<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let uuid = PyModule::import(py, "uuid")?;
-        let kwargs = vec![("hex", self.hex().unwrap())].into_py_dict(py);
-        match uuid.getattr("UUID")?.call((), Some(kwargs)) {
-            Ok(any) => Ok(any),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
-        match uuid::Uuid::from_slice(bytes) {
-            Ok(uuid) => Ok(Self(libparsec::types::ChunkID::from(uuid))),
-            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
-        }
-    }
-
-    #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
-        match hex.parse::<libparsec::types::ChunkID>() {
-            Ok(entry_id) => Ok(Self(entry_id)),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<ChunkID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::ChunkID::default()))
-    }
-
-    #[getter]
-    fn bytes(&self) -> PyResult<&[u8]> {
-        Ok(&self.0.as_bytes()[..])
-    }
-
-    #[getter]
-    fn hex(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-}
-
-#[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct HumanHandle(pub libparsec::types::HumanHandle);
+
+crate::binding_utils::gen_proto!(HumanHandle, __repr__);
+crate::binding_utils::gen_proto!(HumanHandle, __richcmp__, ord);
+crate::binding_utils::gen_proto!(HumanHandle, __hash__);
 
 #[pymethods]
 impl HumanHandle {
@@ -726,36 +354,18 @@ impl HumanHandle {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<HumanHandle {} >", self.0))
-    }
-
-    fn __richcmp__(&self, other: &HumanHandle, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0.email == other.0.email,
-            CompareOp::Ne => self.0.email != other.0.email,
-            CompareOp::Lt => self.0.email < other.0.email,
-            CompareOp::Gt => self.0.email > other.0.email,
-            CompareOp::Le => self.0.email <= other.0.email,
-            CompareOp::Ge => self.0.email >= other.0.email,
-        }
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.email, py)
+    #[getter]
+    fn str(&self) -> PyResult<&str> {
+        Ok(self.0.as_ref())
     }
 
     #[getter]
     fn email(&self) -> PyResult<&str> {
-        Ok(&self.0.email)
+        Ok(self.0.email())
     }
 
     #[getter]
     fn label(&self) -> PyResult<&str> {
-        Ok(&self.0.label)
+        Ok(self.0.label())
     }
 }

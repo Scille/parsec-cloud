@@ -6,13 +6,13 @@
 Parsec
 ======
 
-.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/quality-assurance.yml/badge.svg
-   :target: https://github.com/Scille/parsec-cloud/actions/workflows/quality-assurance.yml
-   :alt: Quality Assurance
+.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/ci.yml
+    :alt: Continuous Integration
 
-.. image:: https://img.shields.io/azure-devops/tests/Scille/parsec/1/master.svg
-    :target: https://dev.azure.com/Scille/parsec/_build?definitionId=1&_a=summary
-    :alt: Azure DevOps tests
+.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-ci.yml/badge.svg
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-ci.yml
+    :alt: Latest Packaging CI
 
 .. image:: https://pyup.io/repos/github/Scille/parsec-cloud/shield.svg
     :target: https://pyup.io/repos/github/Scille/parsec-cloud/
@@ -46,7 +46,7 @@ privacy thanks to end-to-end cryptographic security.
 Key features:
 
 - Works as a virtual drive on you computer. You can access and modify all the data
-  stored in Parsec with your regular softwares just like you would on your local
+  stored in Parsec with your regular software just like you would on your local
   hard-drive.
 - Never lose any data. Synchronization with the remote server never destroy any
   data, hence you can browse data history and recover from any point in time.
@@ -54,8 +54,7 @@ Key features:
   and the ones you choose to share with.
 - Cryptographic signature. Each modification is signed by it author making trivial
   to identify modifications.
-- Cloud provider agnostic. Server provides connectors for S3 and swift object
-  storage.
+- Cloud provider agnostic. Server provides connectors for S3 and swift object storage.
 - Simplified enrollment. New user enrollment is simple as sharing a link and a token code.
 
 
@@ -72,6 +71,6 @@ Available for Linux through Snapcraft at https://snapcraft.io/parsec
 
 Python PIP
 ----------
-Parsec is also available directly through PIP for both Linux and Windows with Python > 3.6 with the command:
+Parsec is also available directly through PIP for both Linux and Windows with Python > 3.9 with the command:
 ``pip install parsec-cloud``
 (or, if you need to specify Python 3 pip version, ``pip3 install parsec-cloud``)

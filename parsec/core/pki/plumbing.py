@@ -1,21 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Iterable, Tuple, Optional
-from pathlib import Path
-from uuid import UUID
 from importlib import import_module
+from pathlib import Path
+from types import ModuleType
+from typing import Iterable, Tuple
 
 import trio
-from parsec._parsec import DateTime
 
-from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
-from parsec.crypto import PrivateKey, SigningKey
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
+from parsec._parsec import DateTime, EnrollmentID
+from parsec.api.data import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec.core.types import LocalDevice
-from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
+from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
+from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
+from parsec.crypto import PrivateKey, SigningKey
 
 
-def _load_smartcard_extension():
+def _load_smartcard_extension() -> ModuleType:
     try:
         return import_module("parsec_ext.smartcard")
     except ModuleNotFoundError as exc:
@@ -31,7 +32,7 @@ def is_pki_enrollment_available() -> bool:
 
 
 async def pki_enrollment_select_certificate(
-    owner_hint: Optional[LocalDevice] = None,
+    owner_hint: LocalDevice | None = None,
 ) -> X509Certificate:
     """
     Raises:
@@ -68,7 +69,7 @@ def pki_enrollment_create_local_pending(
     config_dir: Path,
     x509_certificate: X509Certificate,
     addr: BackendPkiEnrollmentAddr,
-    enrollment_id: UUID,
+    enrollment_id: EnrollmentID,
     submitted_on: DateTime,
     submit_payload: PkiEnrollmentSubmitPayload,
     signing_key: SigningKey,
@@ -95,7 +96,7 @@ def pki_enrollment_create_local_pending(
 
 
 async def pki_enrollment_load_local_pending_secret_part(
-    config_dir: Path, enrollment_id: UUID
+    config_dir: Path, enrollment_id: EnrollmentID
 ) -> Tuple[SigningKey, PrivateKey]:
     """
     Raises:
@@ -107,7 +108,7 @@ async def pki_enrollment_load_local_pending_secret_part(
     """
     extension = _load_smartcard_extension()
     # TODO: document exceptions !
-    # Retreiving the private keys require the certificate private keys, so a pin prompt is likely to block
+    # Retrieving the private keys require the certificate private keys, so a pin prompt is likely to block
     return await trio.to_thread.run_sync(
         lambda: extension.pki_enrollment_load_local_pending_secret_part(
             config_dir=config_dir, enrollment_id=enrollment_id
@@ -154,7 +155,7 @@ def pki_enrollment_load_accept_payload(
     payload_signature: bytes,
     payload: bytes,
     extra_trust_roots: Iterable[Path] = (),
-) -> PkiEnrollmentAcceptPayload:
+) -> PkiEnrollmentAnswerPayload:
     """
     Raises:
         PkiEnrollmentCertificateError

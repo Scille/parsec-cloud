@@ -1,33 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional, Union
 from functools import lru_cache
+from typing import Any, Union
+
+import triopg
 from triopg import UniqueViolationError
 
+from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    OrganizationStats,
+    SequesterVerifyKeyDer,
+    UsersPerProfileDetailItem,
+    VerifyKey,
+)
 from parsec.api.protocol import OrganizationID, UserProfile
-from parsec.crypto import VerifyKey
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.backend.events import BackendEvent
-from parsec.backend.user import UserError, User, Device
-from parsec.backend.utils import UnsetType, Unset
 from parsec.backend.organization import (
     BaseOrganizationComponent,
-    SequesterAuthority,
-    OrganizationStats,
     Organization,
-    OrganizationError,
-    OrganizationAlreadyExistsError,
-    OrganizationInvalidBootstrapTokenError,
     OrganizationAlreadyBootstrappedError,
-    OrganizationNotFoundError,
+    OrganizationAlreadyExistsError,
+    OrganizationError,
     OrganizationFirstUserCreationError,
-    UsersPerProfileDetailItem,
+    OrganizationInvalidBootstrapTokenError,
+    OrganizationNotFoundError,
+    SequesterAuthority,
 )
-from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import q_create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
-from parsec.backend.postgresql.handler import send_signal
-
+from parsec.backend.user import Device, User, UserError
+from parsec.backend.utils import Unset, UnsetType
 
 _q_insert_organization = Q(
     """
@@ -46,7 +51,7 @@ VALUES (
     $bootstrap_token,
     $active_users_limit,
     $user_profile_outsider_allowed,
-    NOW(),
+    $created_on,
     NULL,
     FALSE,
     NULL
@@ -70,6 +75,8 @@ SELECT
     bootstrap_token,
     root_verify_key,
     is_expired,
+    _bootstrapped_on as bootstrapped_on,
+    _created_on as created_on,
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
@@ -96,6 +103,8 @@ SELECT
     bootstrap_token,
     root_verify_key,
     is_expired,
+    _bootstrapped_on as bootstrapped_on,
+    _created_on as created_on,
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
@@ -114,7 +123,7 @@ SET
     root_verify_key = $root_verify_key,
     sequester_authority_certificate=$sequester_authority_certificate,
     sequester_authority_verify_key_der=$sequester_authority_verify_key_der,
-    _bootstrapped_on = NOW()
+    _bootstrapped_on = $bootstrapped_on
 WHERE
     organization_id = $organization_id
     AND bootstrap_token = $bootstrap_token
@@ -128,34 +137,57 @@ _q_get_stats = Q(
     f"""
 SELECT
     (
-        EXISTS(
-            SELECT 1 FROM organization WHERE _id = { q_organization_internal_id("$organization_id") }
-        )
+        SELECT COALESCE(_created_on <= $at, false)
+        FROM organization
+        WHERE organization_id = $organization_id
     ) exist,
     (
         SELECT ARRAY(
             SELECT (revoked_on, profile::text)
             FROM user_
             WHERE organization = { q_organization_internal_id("$organization_id") }
+            AND created_on <= $at
         )
     ) users,
     (
-        SELECT COUNT(*)
+        SELECT COUNT(DISTINCT(realm._id))
         FROM realm
+        LEFT JOIN realm_user_role
+        ON realm_user_role.realm = realm._id
         WHERE realm.organization = { q_organization_internal_id("$organization_id") }
+        AND realm_user_role.certified_on <= $at
     ) realms,
     (
         SELECT COALESCE(SUM(size), 0)
         FROM vlob_atom
         WHERE
             organization = { q_organization_internal_id("$organization_id") }
+            AND created_on <= $at
+            AND (deleted_on IS NULL OR deleted_on > $at)
     ) metadata_size,
     (
         SELECT COALESCE(SUM(size), 0)
         FROM block
         WHERE
             organization = { q_organization_internal_id("$organization_id") }
+            AND created_on <= $at
+            AND (deleted_on IS NULL OR deleted_on > $at)
     ) data_size
+"""
+)
+
+_q_get_organizations = Q("SELECT organization_id AS id from organization ORDER BY id")
+
+# There's no `created_on` or similar field for realm. So we get an estimation by
+# taking the oldest certification in the `realm_user_role`
+_q_get_average_realm_creation_date = Q(
+    """
+    SELECT realm, MIN(certified_on) AS creation_date
+    FROM realm AS r
+        JOIN realm_user_role AS rur ON r._id = rur.realm
+        JOIN organization AS o ON o._id = r.organization
+    WHERE o.organization_id = $organization_id
+    GROUP BY realm
 """
 )
 
@@ -163,7 +195,7 @@ SELECT
 @lru_cache()
 def _q_update_factory(
     with_is_expired: bool, with_active_users_limit: bool, with_user_profile_outsider_allowed: bool
-):
+) -> Q:
     fields = []
     if with_is_expired:
         fields.append("is_expired = $is_expired")
@@ -183,8 +215,44 @@ def _q_update_factory(
     )
 
 
+async def _organization_stats(
+    conn: triopg._triopg.TrioConnectionProxy,
+    id: OrganizationID,
+    at: DateTime,
+) -> OrganizationStats | None:
+    result = await conn.fetchrow(*_q_get_stats(organization_id=id.str, at=at))
+    if not result["exist"]:
+        return None
+
+    users = 0
+    active_users = 0
+    users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
+    for u in result["users"]:
+        is_revoked, profile = u
+        users += 1
+        if is_revoked:
+            users_per_profile_detail[UserProfile.from_str(profile)]["revoked"] += 1
+        else:
+            active_users += 1
+            users_per_profile_detail[UserProfile.from_str(profile)]["active"] += 1
+
+    users_per_profile_detail = tuple(
+        UsersPerProfileDetailItem(profile=profile, **data)
+        for profile, data in users_per_profile_detail.items()
+    )
+
+    return OrganizationStats(
+        data_size=result["data_size"],
+        metadata_size=result["metadata_size"],
+        realms=result["realms"],
+        users=users,
+        active_users=active_users,
+        users_per_profile_detail=users_per_profile_detail,
+    )
+
+
 class PGOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, dbh: PGHandler, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.dbh = dbh
 
@@ -192,9 +260,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        created_on: DateTime | None = None,
     ) -> None:
+        created_on = created_on or DateTime.now()
         if active_users_limit is Unset:
             active_users_limit = self._config.organization_initial_active_users_limit
         if user_profile_outsider_allowed is Unset:
@@ -207,8 +277,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     *_q_insert_organization(
                         organization_id=id.str,
                         bootstrap_token=bootstrap_token,
-                        active_users_limit=active_users_limit,
+                        active_users_limit=active_users_limit
+                        if active_users_limit is not ActiveUsersLimit.NO_LIMIT
+                        else None,
                         user_profile_outsider_allowed=user_profile_outsider_allowed,
+                        created_on=created_on,
                     )
                 )
             except UniqueViolationError:
@@ -222,7 +295,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             return await self._get(conn, id)
 
     @staticmethod
-    async def _get(conn, id: OrganizationID, for_update: bool = False) -> Organization:
+    async def _get(
+        conn: triopg._triopg.TrioConnectionProxy, id: OrganizationID, for_update: bool = False
+    ) -> Organization:
         if for_update:
             row = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id.str))
         else:
@@ -254,7 +329,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             bootstrap_token=row["bootstrap_token"],
             root_verify_key=rvk,
             is_expired=row["is_expired"],
-            active_users_limit=row["active_users_limit"],
+            created_on=row["created_on"],
+            bootstrapped_on=row["bootstrapped_on"],
+            active_users_limit=ActiveUsersLimit.FromOptionalInt(row["active_users_limit"]),
             user_profile_outsider_allowed=row["user_profile_outsider_allowed"],
             sequester_authority=sequester_authority,
             sequester_services_certificates=sequester_services_certificates,
@@ -267,8 +344,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_authority: Optional[SequesterAuthority] = None,
+        bootstrapped_on: DateTime | None = None,
+        sequester_authority: SequesterAuthority | None = None,
     ) -> None:
+        bootstrapped_on = bootstrapped_on or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
             # organization table until the end of the transaction. Hence
@@ -295,6 +374,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 *_q_bootstrap_organization(
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
+                    bootstrapped_on=bootstrapped_on,
                     root_verify_key=root_verify_key.encode(),
                     sequester_authority_certificate=sequester_authority_certificate,
                     sequester_authority_verify_key_der=sequester_authority_verify_key_der,
@@ -303,43 +383,38 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
 
-    async def stats(self, id: OrganizationID) -> OrganizationStats:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            result = await conn.fetchrow(*_q_get_stats(organization_id=id.str))
-            if not result["exist"]:
+    async def stats(
+        self,
+        id: OrganizationID,
+        at: DateTime | None = None,
+    ) -> OrganizationStats:
+        at = at or DateTime.now()
+        async with self.dbh.pool.acquire() as conn:
+            stats = await _organization_stats(conn, id, at)
+            if not stats:
                 raise OrganizationNotFoundError()
+            return stats
 
-            users = 0
-            active_users = 0
-            users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
-            for u in result["users"]:
-                is_revoked, profile = u
-                users += 1
-                if is_revoked:
-                    users_per_profile_detail[UserProfile[profile]]["revoked"] += 1
-                else:
-                    active_users += 1
-                    users_per_profile_detail[UserProfile[profile]]["active"] += 1
+    async def server_stats(
+        self, at: DateTime | None = None
+    ) -> dict[OrganizationID, OrganizationStats]:
+        at = at or DateTime.now()
+        results = {}
 
-            users_per_profile_detail = tuple(
-                UsersPerProfileDetailItem(profile=profile, **data)
-                for profile, data in users_per_profile_detail.items()
-            )
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            for org in await conn.fetch(*_q_get_organizations()):
+                org_id = OrganizationID(org["id"])
+                org_stats = await _organization_stats(conn, org_id, at)
+                if org_stats:
+                    results[org_id] = org_stats
 
-        return OrganizationStats(
-            data_size=result["data_size"],
-            metadata_size=result["metadata_size"],
-            realms=result["realms"],
-            users=users,
-            active_users=active_users,
-            users_per_profile_detail=users_per_profile_detail,
-        )
+        return results
 
     async def update(
         self,
         id: OrganizationID,
         is_expired: Union[UnsetType, bool] = Unset,
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
@@ -347,7 +422,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             OrganizationNotFoundError
             OrganizationError
         """
-        fields: dict = {}
+        fields: dict[str, Any] = {}
 
         with_is_expired = is_expired is not Unset
         with_active_users_limit = active_users_limit is not Unset
@@ -366,7 +441,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         if with_is_expired:
             fields["is_expired"] = is_expired
         if with_active_users_limit:
-            fields["active_users_limit"] = active_users_limit
+            assert isinstance(active_users_limit, ActiveUsersLimit)
+            fields["active_users_limit"] = active_users_limit.to_int()
         if with_user_profile_outsider_allowed:
             fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
 

@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from contextlib import contextmanager
+from unittest.mock import patch
 
 import pytest
 import trio
 import triopg
-from uuid import uuid4
-from contextlib import contextmanager
-from parsec._parsec import DateTime
-from unittest.mock import patch
 
+from parsec._parsec import ActiveUsersLimit, DateTime, EnrollmentID
 from parsec.backend.organization import OrganizationAlreadyBootstrappedError
-from parsec.backend.user import UserAlreadyExistsError, UserActiveUsersLimitReached
 from parsec.backend.pki import PkiEnrollmentNoLongerAvailableError
-
+from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
 from tests.common import local_device_to_backend_user
 
 
@@ -66,11 +66,11 @@ async def test_concurrency_bootstrap_organization(postgresql_url, backend_factor
     async def _concurrent_boostrap(backend):
         try:
             await backend.organization.bootstrap(
-                coolorg.organization_id,
-                backend_user,
-                backend_first_device,
-                coolorg.bootstrap_token,
-                coolorg.root_verify_key,
+                id=coolorg.organization_id,
+                user=backend_user,
+                first_device=backend_first_device,
+                bootstrap_token=coolorg.bootstrap_token,
+                root_verify_key=coolorg.root_verify_key,
             )
             results.append(None)
 
@@ -81,7 +81,9 @@ async def test_concurrency_bootstrap_organization(postgresql_url, backend_factor
         config={"db_url": postgresql_url, "db_max_connections": 10}, populated=False
     ) as backend:
         # Create the organization
-        await backend.organization.create(coolorg.organization_id, coolorg.bootstrap_token)
+        await backend.organization.create(
+            id=coolorg.organization_id, bootstrap_token=coolorg.bootstrap_token
+        )
 
         # Concurrent bootstrap
         with ensure_pg_transaction_concurrency_barrier(concurrency=10):
@@ -178,7 +180,9 @@ async def test_concurrency_create_user_with_limit_reached(
         await binder.bind_organization(coolorg, alice)
 
         # Set a limit that will be soon reached
-        await backend.organization.update(alice.organization_id, active_users_limit=3)
+        await backend.organization.update(
+            alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(3)
+        )
 
         # Concurrent user creation
         with ensure_pg_transaction_concurrency_barrier(concurrency=10):
@@ -207,7 +211,7 @@ async def test_concurrency_pki_enrollment_accept(
     postgresql_url, backend_factory, backend_data_binder_factory, coolorg, alice, bob
 ):
     results = []
-    enrollment_id = uuid4()
+    enrollment_id = EnrollmentID.new()
 
     backend_user, backend_first_device = local_device_to_backend_user(bob, alice)
 
@@ -251,7 +255,7 @@ async def test_concurrency_pki_enrollment_accept(
             submitted_on=DateTime.now(),
         )
 
-        # Concurrent PKI enrollement accept
+        # Concurrent PKI enrollment accept
         with ensure_pg_transaction_concurrency_barrier(concurrency=10):
             async with trio.open_nursery() as nursery:
                 for _ in range(10):

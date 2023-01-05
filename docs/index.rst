@@ -24,32 +24,32 @@ in the top left corner.
 The main documentation for the site is organized into the following sections:
 
 .. toctree::
-   :maxdepth: 1
-   :caption: General
-   :name: sec-general
+    :maxdepth: 1
+    :caption: General
+    :name: sec-general
 
-   introduction
-   userguide/index
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Advanced concepts
-   :name: sec-installation
-
-   architecture
-   roles
-   cryptography
-   hosting_server
+    introduction
+    userguide/index
 
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Development
-   :name: sec-devel
+    :maxdepth: 1
+    :caption: Advanced concepts
+    :name: sec-installation
 
-   development
-   history
+    architecture
+    roles
+    cryptography
+    hosting_server
+
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Development
+    :name: sec-devel
+
+    development
+    history
 
 .. Indices and tables
 .. ------------------

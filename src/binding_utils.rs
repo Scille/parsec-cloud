@@ -1,22 +1,23 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-// TODO: Remove these lines when all functions/macros are used
-#![allow(dead_code)]
-#![allow(unused_macros)]
-#![allow(unused_imports)]
-
-use fancy_regex::Regex;
 use pyo3::{
-    basic::CompareOp,
-    conversion::IntoPy,
-    exceptions::PyValueError,
-    prelude::PyModule,
-    types::{PyFrozenSet, PyTuple},
-    FromPyObject, {PyAny, PyObject, PyResult, Python},
+    exceptions::PyNotImplementedError, pyclass::CompareOp, types::PyFrozenSet, FromPyObject, PyAny,
+    PyResult,
 };
-use std::{collections::HashSet, hash::Hash};
+use std::{
+    collections::{hash_map::DefaultHasher, HashSet},
+    hash::{Hash, Hasher},
+};
 
-pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
+pub fn comp_eq<T: std::cmp::PartialEq>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
+    Ok(match op {
+        CompareOp::Eq => h1 == h2,
+        CompareOp::Ne => h1 != h2,
+        _ => return Err(PyNotImplementedError::new_err("")),
+    })
+}
+
+pub fn comp_ord<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
     Ok(match op {
         CompareOp::Eq => h1 == h2,
         CompareOp::Ne => h1 != h2,
@@ -27,75 +28,10 @@ pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult
     })
 }
 
-pub(crate) fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
-    let builtins = PyModule::import(py, "builtins")?;
-    let hash = builtins
-        .getattr("hash")?
-        .call1((value_to_hash,))?
-        .extract::<isize>()?;
-    Ok(hash)
-}
-
-pub fn rs_to_py_realm_role(role: &libparsec::types::RealmRole) -> PyResult<PyObject> {
-    Python::with_gil(|py| -> PyResult<PyObject> {
-        let cls = py.import("parsec.api.protocol")?.getattr("RealmRole")?;
-        let role_name = match role {
-            libparsec::types::RealmRole::Owner => "OWNER",
-            libparsec::types::RealmRole::Manager => "MANAGER",
-            libparsec::types::RealmRole::Contributor => "CONTRIBUTOR",
-            libparsec::types::RealmRole::Reader => "READER",
-        };
-        let obj = cls.getattr(role_name)?;
-        Ok(obj.into_py(py))
-    })
-}
-
-pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<Option<libparsec::types::RealmRole>> {
-    if role.is_none() {
-        return Ok(None);
-    }
-    use libparsec::types::RealmRole::*;
-    Ok(Some(match role.getattr("name")?.extract::<&str>()? {
-        "OWNER" => Owner,
-        "MANAGER" => Manager,
-        "CONTRIBUTOR" => Contributor,
-        "READER" => Reader,
-        _ => unreachable!(),
-    }))
-}
-
-pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<libparsec::types::UserProfile> {
-    use libparsec::types::UserProfile::*;
-    Ok(match profile.getattr("name")?.extract::<&str>()? {
-        "ADMIN" => Admin,
-        "STANDARD" => Standard,
-        "OUTSIDER" => Outsider,
-        _ => unreachable!(),
-    })
-}
-
-pub fn rs_to_py_user_profile(profile: &libparsec::types::UserProfile) -> PyResult<PyObject> {
-    use libparsec::types::UserProfile::*;
-    Python::with_gil(|py| -> PyResult<PyObject> {
-        let cls = py.import("parsec.api.protocol")?.getattr("UserProfile")?;
-        let profile_name = match profile {
-            Admin => "ADMIN",
-            Standard => "STANDARD",
-            Outsider => "OUTSIDER",
-        };
-        let obj = cls.getattr(profile_name)?;
-        Ok(obj.into_py(py))
-    })
-}
-
-pub fn py_to_rs_invitation_status(status: &PyAny) -> PyResult<libparsec::types::InvitationStatus> {
-    use libparsec::types::InvitationStatus::*;
-    Ok(match status.getattr("name")?.extract::<&str>()? {
-        "IDLE" => Idle,
-        "READY" => Ready,
-        "DELETED" => Deleted,
-        _ => unreachable!(),
-    })
+pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
+    let mut s = DefaultHasher::new();
+    value_to_hash.hash(&mut s);
+    Ok(s.finish())
 }
 
 // This implementation is due to
@@ -108,23 +44,18 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
         .collect::<PyResult<std::collections::HashSet<T>>>()
 }
 
-pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
-    let regex = regex
-        .getattr("pattern")
-        .unwrap_or(regex)
-        .extract::<&str>()?
-        .replace("\\Z", "\\z")
-        .replace("\\ ", "\x20");
-    Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
-}
-
-pub fn rs_to_py_regex<'py>(py: Python<'py>, regex: &Regex) -> PyResult<&'py PyAny> {
-    let re = py.import("re")?;
-    let args = PyTuple::new(
-        py,
-        vec![regex.as_str().replace("\\z", "\\Z").replace('\x20', "\\ ")],
-    );
-    re.call_method1("compile", args)
+macro_rules! py_object {
+    ($_self: ident, $subclass: ident, $py: ident) => {{
+        let initializer = PyClassInitializer::from(($subclass, Self($_self)));
+        // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
+        // or a sub-type of `T` (the type of `initializer` here).
+        // Here `initializer` is created using the type `<$subclass>` and the same type of `<$subclass>`
+        // will be used as the type of `subtype` in the call of `into_new_object`.
+        unsafe {
+            let ptr = initializer.into_new_object($py, $subclass::type_object_raw($py))?;
+            PyObject::from_owned_ptr($py, ptr)
+        }
+    }};
 }
 
 macro_rules! parse_kwargs_optional {
@@ -156,5 +87,155 @@ macro_rules! parse_kwargs {
     };
 }
 
+macro_rules! gen_proto {
+    ($class: ident, __repr__) => {
+        #[pymethods]
+        impl $class {
+            fn __repr__(&self) -> ::pyo3::PyResult<String> {
+                Ok(format!("{:?}", self.0))
+            }
+        }
+    };
+    ($class: ident, __repr__, pyref) => {
+        #[pymethods]
+        impl $class {
+            fn __repr__(_self: PyRef<'_, Self>) -> ::pyo3::PyResult<String> {
+                Ok(format!("{:?}", _self.as_ref().0))
+            }
+        }
+    };
+    ($class: ident, __str__) => {
+        #[pymethods]
+        impl $class {
+            fn __str__(&self) -> ::pyo3::PyResult<String> {
+                Ok(self.0.to_string())
+            }
+        }
+    };
+    ($class: ident, __richcmp__, eq) => {
+        #[pymethods]
+        impl $class {
+            fn __richcmp__(
+                &self,
+                other: &Self,
+                op: ::pyo3::pyclass::CompareOp,
+            ) -> ::pyo3::PyResult<bool> {
+                crate::binding_utils::comp_eq(op, &self.0, &other.0)
+            }
+        }
+    };
+    ($class: ident, __richcmp__, ord) => {
+        #[pymethods]
+        impl $class {
+            fn __richcmp__(
+                &self,
+                other: &Self,
+                op: ::pyo3::pyclass::CompareOp,
+            ) -> ::pyo3::PyResult<bool> {
+                crate::binding_utils::comp_ord(op, &self.0, &other.0)
+            }
+        }
+    };
+    ($class: ident, __hash__) => {
+        #[pymethods]
+        impl $class {
+            fn __hash__(&self) -> ::pyo3::PyResult<u64> {
+                crate::binding_utils::hash_generic(&self.0)
+            }
+        }
+    };
+}
+
+macro_rules! create_exception {
+    ($name: ident, $py_exc: ident, $rs_err: path) => {
+        ::paste::paste! {
+            ::pyo3::create_exception!(_parsec, [<$name Error>], $py_exc);
+
+            pub(crate) struct [<$name Exc>](Box<$rs_err>);
+
+            impl From<[<$name Exc>]> for ::pyo3::PyErr {
+                fn from(err: [<$name Exc>]) -> Self {
+                    <[<$name Error>]>::new_err(err.0.to_string())
+                }
+            }
+
+            impl From<$rs_err> for [<$name Exc>] {
+                fn from(err: $rs_err) -> Self {
+                    Self(Box::new(err))
+                }
+            }
+
+            impl From<Box<$rs_err>> for [<$name Exc>] {
+                fn from(err: Box<$rs_err>) -> Self {
+                    Self(err)
+                }
+            }
+
+            pub(crate) type [<$name Result>]<T> = Result<T, [<$name Exc>]>;
+        }
+    };
+}
+
+macro_rules! impl_enum_field {
+    ($enum_class: ident, $([$pyo3_name: literal, $fn_name: ident, $field_value: expr]),+) => {
+        #[pymethods]
+        impl $enum_class {
+            $(
+                #[classattr]
+                #[pyo3(name = $pyo3_name)]
+                fn $fn_name() -> &'static PyObject {
+                    lazy_static::lazy_static! {
+                        static ref VALUE: PyObject = {
+                            Python::with_gil(|py| {
+                                $enum_class($field_value).into_py(py)
+                            })
+                        };
+                    };
+
+                    &VALUE
+                }
+            )*
+
+            #[classattr]
+            #[pyo3(name = "VALUES")]
+            fn values() -> &'static PyObject {
+                lazy_static::lazy_static! {
+                    static ref VALUES: PyObject = {
+                        Python::with_gil(|py| {
+                            PyTuple::new(py, [
+                                $(
+                                    $enum_class :: $fn_name ()
+                                ),*
+                            ]).into_py(py)
+                        })
+                    };
+                };
+
+                &VALUES
+            }
+
+            #[classmethod]
+            fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
+                Ok(match value {
+                    $($pyo3_name => Self:: $fn_name ()),*,
+                    _ => return Err(PyValueError::new_err(format!("Invalid value `{}`", value))),
+                })
+            }
+
+
+            #[getter]
+            fn str(&self) -> &'static str {
+                match self.0 {
+                    $($field_value => $pyo3_name),*
+                }
+            }
+        }
+    };
+}
+
+pub(crate) use create_exception;
+pub(crate) use gen_proto;
+pub(crate) use impl_enum_field;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
+pub(crate) use py_object;

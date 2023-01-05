@@ -1,30 +1,43 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import math
-
 from enum import Enum
+from typing import Any
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor, QPixmap, QFont, QFontMetrics
-from PyQt5.QtWidgets import (
-    QPushButton,
-    QLabel,
-    QGraphicsDropShadowEffect,
-    QWidget,
-    QListView,
-    QComboBox,
-    QLineEdit,
-    QToolButton,
+from PyQt5.QtCore import QEvent, QSize, Qt, pyqtSignal
+from PyQt5.QtGui import (
+    QColor,
+    QCursor,
+    QFont,
+    QFontMetrics,
+    QIcon,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QPixmap,
+    QResizeEvent,
 )
 from PyQt5.QtSvg import QSvgWidget
+from PyQt5.QtWidgets import (
+    QComboBox,
+    QGraphicsDropShadowEffect,
+    QLabel,
+    QLineEdit,
+    QListView,
+    QPushButton,
+    QToolButton,
+    QWidget,
+)
 
-from parsec.api.data import SASCode
+from parsec._parsec import SASCode
 from parsec.core.gui.ui.code_input_widget import Ui_CodeInputWidget
 from parsec.core.gui.ui.spinner_widget import Ui_SpinnerWidget
 
 
 class SpinnerWidget(QWidget, Ui_SpinnerWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent=parent)
         self.setupUi(self)
         self.spinner = QSvgWidget(":/icons/images/icons/spinner.svg")
@@ -32,12 +45,12 @@ class SpinnerWidget(QWidget, Ui_SpinnerWidget):
 
 
 class CenteredSpinnerWidget(SpinnerWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent=parent)
         self.setMaximumSize(QSize(16777215, 16777215))
 
 
-def ensure_string_size(s, size, font):
+def ensure_string_size(s: str, size: int, font: QFont) -> str:
     metrics = QFontMetrics(font)
     if metrics.horizontalAdvance(s) > size:
         while metrics.horizontalAdvance(s + "...") > size:
@@ -54,7 +67,7 @@ class CodeInputWidget(QWidget, Ui_CodeInputWidget):
     class CodeButton(QPushButton):
         clicked_with_code = pyqtSignal(SASCode)
 
-        def __init__(self, code):
+        def __init__(self, code: SASCode) -> None:
             super().__init__(code.str)
             self.code = code
             font = self.font()
@@ -66,16 +79,16 @@ class CodeInputWidget(QWidget, Ui_CodeInputWidget):
             self.setFixedSize(QSize(120, 120))
             self.clicked.connect(self._on_clicked)
 
-        def _on_clicked(self):
+        def _on_clicked(self) -> None:
             self.clicked_with_code.emit(self.code)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setupUi(self)
-        self.right_choice = None
+        self.right_choice: SASCode | None = None
         self.button_none.clicked.connect(self.none_clicked.emit)
 
-    def set_choices(self, choices, right_choice):
+    def set_choices(self, choices: list[SASCode], right_choice: SASCode) -> None:
         while self.code_layout.count() != 0:
             item = self.code_layout.takeAt(0)
             if item:
@@ -96,7 +109,7 @@ class CodeInputWidget(QWidget, Ui_CodeInputWidget):
             )
             b.clicked_with_code.connect(self._on_button_clicked)
 
-    def _on_button_clicked(self, code):
+    def _on_button_clicked(self, code: SASCode) -> None:
         if code != self.right_choice:
             self.wrong_code_clicked.emit()
         else:
@@ -104,7 +117,7 @@ class CodeInputWidget(QWidget, Ui_CodeInputWidget):
 
 
 class Pixmap(QPixmap):
-    def replace_color(self, old_color, new_color):
+    def replace_color(self, old_color: QColor, new_color: QColor) -> None:
         mask = self.createMaskFromColor(old_color, Qt.MaskOutColor)
         self.fill(new_color)
         self.setMask(mask)
@@ -113,12 +126,12 @@ class Pixmap(QPixmap):
 class FileLabel(QLabel):
     clicked = pyqtSignal(str)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.setCursor(QCursor(Qt.PointingHandCursor))
-        self.full_text = ""
+        self.full_text: str = ""
 
-    def setText(self, text):
+    def setText(self, text: str) -> None:
         self.full_text = text
         if len(text) > 30:
             text = text[:30] + "..."
@@ -126,12 +139,12 @@ class FileLabel(QLabel):
 
 
 class PageLabel(QLabel):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.page = 0
-        self.max_page = 0
+        self.page: int = 0
+        self.max_page: int = 0
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent) -> None:
         super().paintEvent(event)
         painter = QPainter(self)
         grey = QColor(215, 215, 215)
@@ -151,11 +164,11 @@ class PageLabel(QLabel):
 
 
 class DeviceLabel(QLabel):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.is_revoked = False
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent) -> None:
         super().paintEvent(event)
         if not self.is_revoked:
             return
@@ -175,15 +188,15 @@ class DeviceLabel(QLabel):
 class Button(QPushButton):
     clicked_self = pyqtSignal(QWidget)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.clicked.connect(self._on_clicked)
         self.current_color = QColor(0, 0, 0)
 
-    def _on_clicked(self):
+    def _on_clicked(self) -> None:
         self.clicked_self.emit(self)
 
-    def enterEvent(self, _):
+    def enterEvent(self, _: QEvent) -> None:
         color = self.property("hover_color")
         if not color:
             return
@@ -193,10 +206,10 @@ class Button(QPushButton):
         self.setIcon(QIcon(pixmap))
         self.current_color = color
 
-    def leaveEvent(self, _):
+    def leaveEvent(self, _: QEvent) -> None:
         self.apply_style()
 
-    def apply_style(self):
+    def apply_style(self) -> None:
         color = self.property("color")
         if not color:
             return
@@ -208,12 +221,12 @@ class Button(QPushButton):
 
 
 class MenuButton(Button):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.current_color = QColor(0, 0, 0)
         self.toggled.connect(self.on_toggle)
 
-    def apply_style(self):
+    def apply_style(self) -> None:
         color = self.property("unchecked_color")
         if not color:
             return
@@ -223,13 +236,13 @@ class MenuButton(Button):
         self.current_color = color
         self.setIcon(QIcon(pixmap))
 
-    def enterEvent(self, _):
+    def enterEvent(self, _: QEvent) -> None:
         pass
 
-    def leaveEvent(self, _):
+    def leaveEvent(self, _: QEvent) -> None:
         pass
 
-    def on_toggle(self, checked):
+    def on_toggle(self, checked: bool) -> None:
         prop = "checked_color" if checked else "unchecked_color"
         new_color = self.property(prop)
         if not new_color:
@@ -242,7 +255,7 @@ class MenuButton(Button):
 
 
 class ShadowedButton(Button):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(164, 164, 164))
@@ -255,52 +268,60 @@ class ShadowedButton(Button):
 class ClickableLabel(QLabel):
     clicked = pyqtSignal(str)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.setCursor(QCursor(Qt.PointingHandCursor))
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() & Qt.LeftButton:
             self.clicked.emit(self.text())
 
 
+class ColoredPixmap(Pixmap):
+    def __init__(self, filename: str, old_color: QColor, new_color: QColor) -> None:
+        super().__init__(filename)
+        self.replace_color(old_color, new_color)
+
+
 class OverlayLabel(ClickableLabel):
-    OPEN_FULLSCREEN_ICON = None
-    CLOSE_FULLSCREEN_ICON = None
+    OPEN_FULLSCREEN_ICON: ColoredPixmap | None = None
+    CLOSE_FULLSCREEN_ICON: ColoredPixmap | None = None
 
     class ClickMode(Enum):
         OpenFullScreen = 1
         CloseFullScreen = 2
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self._pix = None
-        self.click_mode = OverlayLabel.ClickMode.OpenFullScreen
-        self.show_icon = True
+        self._pix: QPixmap | None = None
+        self.click_mode: OverlayLabel.ClickMode = OverlayLabel.ClickMode.OpenFullScreen
+        self.show_icon: bool = True
         if not OverlayLabel.OPEN_FULLSCREEN_ICON:
-            OverlayLabel.OPEN_FULLSCREEN_ICON = Pixmap(":/icons/images/material/fullscreen.svg")
-            OverlayLabel.OPEN_FULLSCREEN_ICON.replace_color(QColor(0, 0, 0), QColor(164, 164, 164))
-        if not OverlayLabel.CLOSE_FULLSCREEN_ICON:
-            OverlayLabel.CLOSE_FULLSCREEN_ICON = Pixmap(
-                ":/icons/images/material/fullscreen_exit.svg"
+            OverlayLabel.OPEN_FULLSCREEN_ICON = ColoredPixmap(
+                ":/icons/images/material/fullscreen.svg", QColor(0, 0, 0), QColor(164, 164, 164)
             )
-            OverlayLabel.CLOSE_FULLSCREEN_ICON.replace_color(QColor(0, 0, 0), QColor(164, 164, 164))
+        if not OverlayLabel.CLOSE_FULLSCREEN_ICON:
+            OverlayLabel.CLOSE_FULLSCREEN_ICON = ColoredPixmap(
+                ":/icons/images/material/fullscreen_exit.svg",
+                QColor(0, 0, 0),
+                QColor(164, 164, 164),
+            )
 
-    def set_mode(self, click_mode, show_icon):
+    def set_mode(self, click_mode: OverlayLabel.ClickMode, show_icon: bool) -> None:
         self.click_mode = click_mode
         self.show_icon = show_icon
 
-    def enterEvent(self, event):
+    def enterEvent(self, event: QEvent) -> None:
         self._draw_overlay()
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event: QEvent) -> None:
         self._draw_overlay()
 
-    def setPixmap(self, pix):
+    def setPixmap(self, pix: QPixmap) -> None:
         self._pix = pix.copy()
         self._draw_overlay()
 
-    def _draw_overlay(self):
+    def _draw_overlay(self) -> None:
         if not self._pix:
             return
 
@@ -308,23 +329,27 @@ class OverlayLabel(ClickableLabel):
             super().setPixmap(self._pix)
             return
 
-        icon = None
+        icon_scaled: QPixmap | None = None
 
         if self.click_mode == OverlayLabel.ClickMode.OpenFullScreen and self.show_icon:
+            assert OverlayLabel.OPEN_FULLSCREEN_ICON is not None
             icon = OverlayLabel.OPEN_FULLSCREEN_ICON
-            icon = icon.scaled(self._pix.width() - 10, self._pix.height() - 10, Qt.KeepAspectRatio)
+            icon_scaled = icon.scaled(
+                self._pix.width() - 10, self._pix.height() - 10, Qt.KeepAspectRatio
+            )
         elif self.click_mode == OverlayLabel.ClickMode.CloseFullScreen and self.show_icon:
+            assert OverlayLabel.CLOSE_FULLSCREEN_ICON is not None
             icon = OverlayLabel.CLOSE_FULLSCREEN_ICON
-            icon = icon.scaled(
+            icon_scaled = icon.scaled(
                 int(self._pix.width() / 5), int(self._pix.height() / 5), Qt.KeepAspectRatio
             )
 
         p = self._pix.copy()
         painter = QPainter(p)
-        if icon:
-            pos_x = int(p.width() / 2) - int(icon.width() / 2)
-            pos_y = int(p.height() / 2) - int(icon.height() / 2)
-            painter.drawPixmap(pos_x, pos_y, icon)
+        if icon_scaled:
+            pos_x = int(p.width() / 2) - int(icon_scaled.width() / 2)
+            pos_y = int(p.height() / 2) - int(icon_scaled.height() / 2)
+            painter.drawPixmap(pos_x, pos_y, icon_scaled)
         painter.end()
         super().setPixmap(p)
 
@@ -332,7 +357,7 @@ class OverlayLabel(ClickableLabel):
 class FilterLineEdit(QLineEdit):
     clear_clicked = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.textChanged.connect(self._on_text_changed)
         self.button_clear = QToolButton()
@@ -345,19 +370,19 @@ class FilterLineEdit(QLineEdit):
         self.button_clear.setIcon(QIcon(icon))
         self.button_clear.setStyleSheet("border: 0;")
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         ret = super().resizeEvent(event)
         self._move_button()
         return ret
 
-    def _on_button_clear_clicked(self):
+    def _on_button_clear_clicked(self) -> None:
         self.setText("")
         self.clear_clicked.emit()
 
-    def _on_text_changed(self, text):
-        self.button_clear.setVisible(len(text))
+    def _on_text_changed(self, text: str) -> None:
+        self.button_clear.setVisible(len(text) > 0)
 
-    def _move_button(self):
+    def _move_button(self) -> None:
         r = self.geometry()
         self.button_clear.setGeometry(
             r.x() + r.width() - self.button_clear.width(), r.y(), r.height(), r.height()
@@ -365,7 +390,7 @@ class FilterLineEdit(QLineEdit):
 
 
 class IconLabel(QLabel):
-    def apply_style(self):
+    def apply_style(self) -> None:
         color = self.property("color")
         if not color:
             return
@@ -375,11 +400,11 @@ class IconLabel(QLabel):
 
 
 class DropDownButton(Button):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.toggled.connect(self.on_toggle)
 
-    def on_toggle(self, checked):
+    def on_toggle(self, checked: bool) -> None:
         color = self.property("color")
         if not color:
             return
@@ -394,50 +419,6 @@ class DropDownButton(Button):
 
 
 class ComboBox(QComboBox):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.setView(QListView())
-
-
-# class NotificationTaskbarButton(TaskbarButton):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(
-#             icon_path=":/icons/images/icons/tray_icons/bell-solid-$STATE.svg", *args, **kwargs
-#         )
-#         self.notif_count = 0
-
-#     def inc_notif_count(self):
-#         self.notif_count += 1
-
-#     def reset_notif_count(self):
-#         self.notif_count = 0
-
-#     def setChecked(self, val):
-#         super().setChecked(val)
-#         if val:
-#             self.setIconPath(":/icons/images/icons/tray_icons/bell-regular-$STATE.svg")
-#             self.setIconSize(QSize(50, 50))
-#         else:
-#             self.setIconPath(":/icons/images/icons/tray_icons/bell-solid-$STATE.svg")
-#             self.setIconSize(QSize(50, 50))
-
-#     def paintEvent(self, event):
-#         super().paintEvent(event)
-#         if self.notif_count == 0:
-#             return
-#         text = str(self.notif_count)
-#         if self.notif_count >= 100:
-#             text = "99+"
-#         rect = event.rect()
-#         painter = QPainter(self)
-#         painter.setPen(QColor(220, 54, 66))
-#         painter.setBrush(QColor(220, 54, 66))
-#         painter.drawEllipse(rect.right() - 35, 0, 35, 35)
-#         painter.setPen(QColor(255, 255, 255))
-#         if len(text) == 1:
-#             painter.drawText(QPoint(rect.right() - 22, 23), text)
-#         elif len(text) == 2:
-#             painter.drawText(QPoint(rect.right() - 27, 23), text)
-#         elif len(text) == 3:
-#             painter.drawText(QPoint(rect.right() - 30, 23), text)
-#         painter.end()

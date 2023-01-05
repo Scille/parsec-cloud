@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from string import ascii_lowercase
 
 import pytest
-from string import ascii_lowercase
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     Bundle,
-    initialize,
-    rule,
-    invariant,
-    run_state_machine_as_test,
     TrioAsyncioRuleBasedStateMachine,
+    initialize,
+    invariant,
     multiple,
+    rule,
+    run_state_machine_as_test,
 )
 
 from parsec.api.data import EntryName
-
 from tests.common import call_with_control
-
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)

@@ -1,14 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import (
+    DateTime,
+    EventsListenRepNoEvents,
+    EventsListenRepOkRealmRolesUpdated,
+    RealmCreateRepOk,
+    RealmUpdateRolesRepOk,
+)
 from parsec.api.data import RealmRoleCertificate
-from parsec.api.protocol import RealmID, RealmRole, APIEvent
+from parsec.api.protocol import RealmID, RealmRole
 from parsec.backend.backend_events import BackendEvent
-
-from tests.backend.test_events import events_subscribe, events_listen_nowait
 from tests.backend.common import realm_create, realm_update_roles
+from tests.backend.test_events import events_listen_nowait, events_subscribe
 
 
 @pytest.mark.trio
@@ -21,7 +27,7 @@ async def test_realm_create(backend, alice, alice_ws):
     ).dump_and_sign(alice.signing_key)
     with backend.event_bus.listen() as spy:
         rep = await realm_create(alice_ws, certif)
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, RealmCreateRepOk)
         await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
 
 
@@ -40,7 +46,7 @@ async def test_roles_updated_for_participant(
                 role=role,
             ).dump_and_sign(alice.signing_key)
             rep = await realm_update_roles(alice_ws, certif, check_rep=False)
-            assert rep == {"status": "ok"}
+            assert isinstance(rep, RealmUpdateRolesRepOk)
 
             await spy.wait_with_timeout(
                 BackendEvent.REALM_ROLES_UPDATED,
@@ -55,14 +61,9 @@ async def test_roles_updated_for_participant(
 
         # Check events propagated to the client
         rep = await events_listen_nowait(bob_ws)
-        assert rep == {
-            "status": "ok",
-            "event": APIEvent.REALM_ROLES_UPDATED,
-            "realm_id": realm,
-            "role": role,
-        }
+        assert rep == EventsListenRepOkRealmRolesUpdated(realm, role)
         rep = await events_listen_nowait(bob_ws)
-        assert rep == {"status": "no_events"}
+        assert isinstance(rep, EventsListenRepNoEvents)
 
     # 0) Init event listening on the socket
     await events_subscribe(bob_ws)

@@ -11,6 +11,7 @@ use tests_fixtures::{alice, Device};
 
 #[rstest]
 fn test_transport(alice: &Device) {
+    std::env::set_var("VERSION", "v2.14.0+dev");
     smol::block_on(async {
         let addr = "127.0.0.1:0";
         let listener = TcpListener::bind(addr).await.unwrap();

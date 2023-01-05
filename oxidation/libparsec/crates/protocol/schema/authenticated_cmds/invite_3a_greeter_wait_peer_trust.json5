@@ -1,0 +1,31 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_3a_greeter_wait_peer_trust",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
+    }
+]

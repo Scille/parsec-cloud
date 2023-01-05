@@ -3,14 +3,17 @@ name = "tests_fixtures"
 version = "0.0.0"
 edition = "2021"
 
-[dependencies]
-libparsec_crypto = { path = "../crypto" }
-libparsec_protocol = { path = "../protocol" }
-libparsec_types = { path = "../types" }
-libparsec_client_types = { path = "../client_types" }
+[features]
+default = ["use-rustcrypto"]
+use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
+use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
 
-rstest = "0.15.0"
+[dependencies]
+libparsec_crypto = { path = "../crypto", default-features = false }
+libparsec_types = { path = "../types", default-features = false }
+libparsec_client_types = { path = "../client_types", default-features = false }
+
+rstest = "0.16.0"
 hex-literal = "0.3.3"
-chrono = "0.4.20"
-uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
-remove_dir_all = "0.7.0"
+chrono = "0.4.22"
+uuid = { version = "1.2.1", features = ["v4", "fast-rng"] }

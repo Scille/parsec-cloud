@@ -1,0 +1,116 @@
+[
+    {
+        "major_versions": [
+            3
+        ],
+        "introduced_in": "3.2",
+        "req": {
+            "cmd": "pki_enrollment_list"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "enrollments",
+                        "type": "List<PkiEnrollmentListItem>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "PkiEnrollmentListItem",
+                "fields": [
+                    {
+                        "name": "enrollment_id",
+                        "type": "EnrollmentID"
+                    },
+                    // Signature should be checked before loading.
+                    {
+                        "name": "submit_payload",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "submit_payload_signature",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "submitted_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "submitter_der_x509_certificate",
+                        "type": "Bytes"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "major_versions": [
+            2
+        ],
+        "introduced_in": "2.8",
+        "req": {
+            "cmd": "pki_enrollment_list"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "enrollments",
+                        "type": "List<PkiEnrollmentListItem>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "PkiEnrollmentListItem",
+                "fields": [
+                    {
+                        "name": "enrollment_id",
+                        "type": "EnrollmentID"
+                    },
+                    // Signature should be checked before loading.
+                    {
+                        "name": "submit_payload",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "submit_payload_signature",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "submitted_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "submitter_der_x509_certificate",
+                        "type": "Bytes"
+                    }
+                ]
+            }
+        ]
+    }
+]

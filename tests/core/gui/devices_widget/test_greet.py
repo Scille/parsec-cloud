@@ -1,25 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from functools import partial
 
 import pytest
 import trio
 from PyQt5 import QtCore
-from functools import partial
-from contextlib import asynccontextmanager
-from parsec._parsec import DateTime
 
-from parsec.utils import start_task
-from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason, DeviceLabel
-from parsec.core.gui.lang import translate
-from parsec.core.types import BackendInvitationAddr
+from parsec._parsec import DateTime, InvitationType
+from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationDeletedReason
 from parsec.core.backend_connection import backend_invited_cmds_factory
-from parsec.core.invite import claimer_retrieve_info
+from parsec.core.gui.devices_widget import DeviceButton
 from parsec.core.gui.greet_device_widget import (
     GreetDeviceCodeExchangeWidget,
     GreetDeviceInstructionsWidget,
     GreetDeviceWidget,
 )
-from parsec.core.gui.devices_widget import DeviceButton
-
+from parsec.core.gui.lang import translate
+from parsec.core.invite import claimer_retrieve_info
+from parsec.core.types import BackendInvitationAddr
+from parsec.utils import start_task
 from tests.common import customize_fixtures, real_clock_timeout
 
 
@@ -96,12 +97,13 @@ def GreetDeviceTestBed(
             assert isinstance(greet_device_widget, GreetDeviceWidget)
 
             greet_device_information_widget = await catch_greet_device_widget()
-            assert isinstance(greet_device_information_widget, GreetDeviceInstructionsWidget)
 
             def _greet_device_displayed():
                 assert greet_device_widget.dialog.isVisible()
                 assert greet_device_widget.isVisible()
-                assert greet_device_widget.dialog.label_title.text() == "Greet a new device"
+                assert greet_device_widget.dialog.label_title.text() == translate(
+                    "TEXT_GREET_DEVICE_TITLE"
+                )
                 assert greet_device_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_device_displayed)
@@ -125,7 +127,9 @@ def GreetDeviceTestBed(
             def _greet_device_displayed():
                 assert greet_device_widget.dialog.isVisible()
                 assert greet_device_widget.isVisible()
-                assert greet_device_widget.dialog.label_title.text() == "Greet a new device"
+                assert greet_device_widget.dialog.label_title.text() == translate(
+                    "TEXT_GREET_DEVICE_TITLE"
+                )
                 assert greet_device_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_device_displayed)

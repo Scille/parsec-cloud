@@ -1,76 +1,55 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec.api.data.base import (
-    DataError,
-    BaseData,
-    BaseAPIData,
-    BaseSchema,
-    BaseSignedData,
-    BaseAPISignedData,
-    BaseSignedDataSchema,
-)
-from parsec.api.data.entry import (
-    EntryID,
-    EntryIDField,
-    EntryName,
-    EntryNameField,
-    EntryNameTooLongError,
-)
-
-from parsec.api.data.certif import (
+from parsec._parsec import (
+    DeviceCertificate,
+    # Message
+    MessageContent,
+    PingMessageContent,
+    PkiEnrollmentAnswerPayload,
+    # Pki
+    PkiEnrollmentSubmitPayload,
+    RealmRoleCertificate,
+    RevokedUserCertificate,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
-)
-from parsec.api.data.invite import (
-    SASCode,
-    generate_sas_codes,
-    generate_sas_code_candidates,
-    InviteUserData,
-    InviteUserConfirmation,
-    InviteDeviceData,
-    InviteDeviceConfirmation,
-)
-from parsec.api.data.message import (
-    BaseMessageContent,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
-    PingMessageContent,
+    # Certificate
+    UserCertificate,
+)
+from parsec.api.data.base import BaseData, BaseSchema, DataError
+from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data.invite import (
+    InviteDeviceConfirmation,
+    InviteDeviceData,
+    InviteUserConfirmation,
+    InviteUserData,
+    SASCode,
+    generate_sas_code_candidates,
+    generate_sas_codes,
 )
 from parsec.api.data.manifest import (
-    BlockIDField,
-    BlockAccess,
-    WorkspaceEntry,
-    UserManifest,
-    WorkspaceManifest,
-    FolderManifest,
-    FileManifest,
     AnyRemoteManifest,
-)
-from parsec.api.data.pki import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
-
-from parsec._parsec import (
-    UserCertificate,
-    DeviceCertificate,
-    RevokedUserCertificate,
-    RealmRoleCertificate,
+    BlockAccess,
+    FileManifest,
+    FolderManifest,
+    UserManifest,
+    WorkspaceEntry,
+    WorkspaceManifest,
 )
 
 __all__ = (
     # Base
     "DataError",
     "BaseData",
-    "BaseAPIData",
     "BaseSchema",
-    "BaseSignedData",
-    "BaseAPISignedData",
-    "BaseSignedDataSchema",
     # Entry
     "EntryID",
     "EntryIDField",
     "EntryName",
     "EntryNameField",
-    "EntryNameTooLongError",
     # Certifs
     "UserCertificate",
     "DeviceCertificate",
@@ -87,16 +66,14 @@ __all__ = (
     "InviteDeviceData",
     "InviteDeviceConfirmation",
     # Messages
-    "BaseMessageContent",
+    "MessageContent",
     "SharingGrantedMessageContent",
     "SharingReencryptedMessageContent",
     "SharingRevokedMessageContent",
     "PingMessageContent",
     # Manifests
-    "BlockIDField",
     "BlockAccess",
     "WorkspaceEntry",
-    "BaseManifest",
     "UserManifest",
     "WorkspaceManifest",
     "FolderManifest",
@@ -104,5 +81,5 @@ __all__ = (
     "AnyRemoteManifest",
     # PKI enrollment
     "PkiEnrollmentSubmitPayload",
-    "PkiEnrollmentAcceptPayload",
+    "PkiEnrollmentAnswerPayload",
 )

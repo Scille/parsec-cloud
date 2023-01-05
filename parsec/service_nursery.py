@@ -1,18 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from trio_typing import TaskStatus
 
 """
 This `open_service_nursery` implementation is taken from @oremanj gist:
 https://gist.github.com/oremanj/8c137d7b1f820d441fbd32fb584e06fd
 """
 
-import weakref
 import collections
+import weakref
+from contextlib import asynccontextmanager
 from functools import partial
-from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet, Optional
+from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet
 
 import attr
 import trio
-from contextlib import asynccontextmanager
 
 
 @attr.s(cmp=False)
@@ -70,7 +73,7 @@ class MultiCancelScope:
                 scope.cancel()
             self._cancel_called = True
 
-    def open_child(self, *, shield: Optional[bool] = None) -> trio.CancelScope:
+    def open_child(self, *, shield: bool | None = None) -> trio.CancelScope:
         """Return a new child cancel scope.
         The child will start out cancelled if the parent
         :meth:`cancel` method has been called. Its initial shield state
@@ -95,13 +98,13 @@ def _get_coroutine_or_flag_problem(
     """
     try:
         # can we call it?
-        coro = async_fn(*args, **kwargs)
+        coroutine = async_fn(*args, **kwargs)
     except TypeError:
         probe_fn = async_fn
     else:
         # did we get a coroutine object back?
-        if isinstance(coro, collections.abc.Coroutine):
-            return coro
+        if isinstance(coroutine, collections.abc.Coroutine):
+            return coroutine
         probe_fn = partial(async_fn, **kwargs)
 
     # TODO: upstream a change that lets us access just the nice
@@ -124,7 +127,7 @@ def _get_coroutine_or_flag_problem(
 
 
 @asynccontextmanager
-async def open_service_nursery_with_multierror() -> AsyncIterator:
+async def open_service_nursery_with_exception_group() -> AsyncIterator[trio.Nursery]:
     """Provides a nursery augmented with a cancellation ordering constraint.
     If an entire service nursery becomes cancelled, either due to an
     exception raised by some task in the nursery or due to the
@@ -151,24 +154,24 @@ async def open_service_nursery_with_multierror() -> AsyncIterator:
         child_task_scopes = MultiCancelScope(shield=True)
 
         def start_soon(
-            async_fn: Callable[..., Awaitable[Any]], *args: Any, name: Optional[str] = None
+            async_fn: Callable[..., Awaitable[Any]], *args: Any, name: str | None = None
         ) -> None:
-            async def wrap_child(coro: Awaitable[Any]) -> None:
+            async def wrap_child(coroutine: Awaitable[Any]) -> None:
                 with child_task_scopes.open_child():
-                    await coro
+                    await coroutine
 
-            coro = _get_coroutine_or_flag_problem(async_fn, *args)
-            type(nursery).start_soon(nursery, wrap_child, coro, name=name or async_fn)
+            coroutine = _get_coroutine_or_flag_problem(async_fn, *args)
+            type(nursery).start_soon(nursery, wrap_child, coroutine, name=name or async_fn)
 
         async def start(
-            async_fn: Callable[..., Awaitable[Any]], *args: Any, name: Optional[str] = None
+            async_fn: Callable[..., Awaitable[Any]], *args: Any, name: str | None = None
         ) -> Any:
-            async def wrap_child(*, task_status) -> None:
+            async def wrap_child(*, task_status: TaskStatus[Any]) -> None:
                 # For start(), the child doesn't get shielded until it
                 # calls task_status.started().
                 shield_scope = child_task_scopes.open_child(shield=False)
 
-                def wrap_started(value: object = None) -> None:
+                def wrap_started(value: Any = None) -> None:
                     type(task_status).started(task_status, value)
                     if trio.lowlevel.current_task().parent_nursery is not nursery:
                         # started() didn't move the task due to a cancellation,
@@ -176,15 +179,15 @@ async def open_service_nursery_with_multierror() -> AsyncIterator:
                         return
                     shield_scope.shield = child_task_scopes.shield
 
-                task_status.started = wrap_started  # type: ignore
+                task_status.started = wrap_started  # type: ignore[assignment]
                 with shield_scope:
                     await async_fn(*args, task_status=task_status)
 
             return await type(nursery).start(nursery, wrap_child, name=name or async_fn)
 
-        nursery.start_soon = start_soon  # type: ignore
-        nursery.start = start  # type: ignore
-        nursery.child_task_scopes = child_task_scopes
+        nursery.start_soon = start_soon  # type: ignore[assignment]
+        nursery.start = start  # type: ignore[assignment]
+        nursery.child_task_scopes = child_task_scopes  # type: ignore[attr-defined]
         try:
             yield nursery
         finally:

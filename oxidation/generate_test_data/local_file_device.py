@@ -18,7 +18,7 @@ with tempfile.NamedTemporaryFile(suffix=".psrk") as fp:
     fp.seek(0)
     raw = fp.read()
 content = display(f"recovery device file (passphrase: {passphrase})", raw, [])
-key = derivate_secret_key_from_recovery_passphrase(passphrase=passphrase)
+key = SecretKey.from_recovery_passphrase(passphrase=passphrase)
 display(f"recovery device file content", content["ciphertext"], [key])
 
 with tempfile.NamedTemporaryFile(suffix=".keys") as fp:
@@ -27,5 +27,5 @@ with tempfile.NamedTemporaryFile(suffix=".keys") as fp:
     fp.seek(0)
     raw = fp.read()
 content = display(f"device file (password: {password})", raw, [])
-key, _ = derivate_secret_key_from_password(password, salt=content["salt"])
+key = SecretKey.from_password(password, salt=content["salt"])
 content = display(f"device file (password: {password})", content["ciphertext"], [key])

@@ -1,25 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use fancy_regex::Regex;
-use rand::seq::SliceRandom;
-use rand::Rng;
+use rand::{seq::SliceRandom, Rng};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
 
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
-use serialization_format::parsec_data;
+use libparsec_serialization_format::parsec_data;
 
-use crate as libparsec_types;
-use crate::data_macros::impl_transparent_data_format_conversion;
-use crate::ext_types::new_uuid_type;
-use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
+use crate::{
+    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DeviceID,
+    DeviceLabel, EntryID, HumanHandle, UserProfile,
+};
 
 /*
  * InvitationType
  */
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum InvitationType {
     User,
@@ -30,7 +29,7 @@ pub enum InvitationType {
  * InvitationStatus
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum InvitationStatus {
     Idle,
@@ -60,12 +59,6 @@ impl ToString for InvitationType {
 }
 
 /*
- * InvitationToken
- */
-
-new_uuid_type!(pub InvitationToken);
-
-/*
  * SASCode
  */
 
@@ -80,7 +73,7 @@ const SAS_CODE_PATTERN: &str = concat!("^[", SAS_CODE_CHARS!(), "]{4}$");
 const SAS_CODE_LEN: usize = 4;
 const SAS_CODE_BITS: u32 = 20;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Hash)]
 pub struct SASCode(String);
 
 impl std::fmt::Display for SASCode {
@@ -97,7 +90,7 @@ impl FromStr for SASCode {
             static ref PATTERN: Regex =
                 Regex::new(SAS_CODE_PATTERN).unwrap_or_else(|_| unreachable!());
         }
-        if PATTERN.is_match(s).unwrap_or(false) {
+        if PATTERN.is_match(s) {
             Ok(Self(s.to_string()))
         } else {
             Err("Invalid SAS code")
@@ -170,7 +163,7 @@ impl SASCode {
         combined_nonce.extend_from_slice(claimer_nonce);
         combined_nonce.extend_from_slice(greeter_nonce);
 
-        // Digest size of 5 bytes so we can split it beween two 20bits SAS
+        // Digest size of 5 bytes so we can split it between two 20bits SAS
         // Note we have to store is as a 8bytes array to be able to convert it into u64
         let mut combined_hmac = [0; 8];
         combined_hmac[3..8].clone_from_slice(&shared_secret_key.hmac(&combined_nonce, 5)[..]);

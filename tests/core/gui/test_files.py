@@ -1,25 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import os
-import trio
 from pathlib import Path
+
 import pytest
-from PyQt5 import QtCore, QtWidgets, QtGui
+import trio
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QGuiApplication
 
 from parsec.api.data import EntryName
-from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
-from parsec.core.gui.file_size import get_filesize
-from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
-
-from parsec.core.gui.lang import translate as _
+from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
+from parsec.core.gui.file_items import TYPE_DATA_INDEX, FileType
+from parsec.core.gui.file_size import get_filesize
 from parsec.core.gui.file_table import Column
-from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
+from parsec.core.gui.files_widget import FilesWidget
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.main_window import MainWindow
+from parsec.core.types import WorkspaceRole
 from parsec.test_utils import create_inconsistent_workspace
 
 
-def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w):
+def create_files_widget_testbed(
+    monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w: FilesWidget, c_w
+):
     # === Testbed class is full of helpers ===
     class FilesWidgetTestbed:
         def __init__(self):
@@ -114,7 +119,9 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
             async with aqtbot.wait_signal(f_w.table_files.paste_clicked):
                 aqtbot.key_click(f_w.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
-        async def check_files_view(self, path, expected_entries, workspace_name=EntryName("wksp1")):
+        async def check_files_view(
+            self, path, expected_entries: list[str], workspace_name=EntryName("wksp1")
+        ):
             expected_table_files = []
             # Parent dir line brings to workspaces list if we looking into workspace's root
             if path == "/":
@@ -137,6 +144,7 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
                 # Now check actual files view
                 assert f_w.workspace_fs.get_workspace_name() == workspace_name
                 assert f_w.table_files.rowCount() == len(expected_table_files)
+
                 for i, (name, type) in enumerate(expected_table_files):
                     assert f_w.table_files.item(i, 1).text() == name
                     for j in range(5):
@@ -196,9 +204,12 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
 
 
 @pytest.fixture
-async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
+async def files_widget_testbed(monkeypatch, aqtbot, logged_gui: MainWindow):
     c_w = logged_gui.test_get_central_widget()
     w_w = logged_gui.test_get_workspaces_widget()
+
+    w_w.check_hide_unmounted.setChecked(False)
+
     workspace_name = EntryName("wksp1")
 
     # Create the workspace
@@ -212,7 +223,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
 
     await aqtbot.wait_until(_workspace_available)
 
-    f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
+    f_w: FilesWidget = await logged_gui.test_switch_to_files_widget(workspace_name)
 
     return create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w)
 
@@ -222,8 +233,9 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
 async def test_file_browsing_and_edit(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
+    # cspell: ignore zdir
     tb = files_widget_testbed
-    f_w = files_widget_testbed.files_widget
+    f_w: FilesWidget = files_widget_testbed.files_widget
 
     # Populate some files for import
     out_of_parsec_data = Path(tmpdir) / "out_of_parsec_data"
@@ -243,7 +255,7 @@ async def test_file_browsing_and_edit(
     await tb.check_files_view(path="/", expected_entries=["dir1/"])
 
     # Make sure files list is ordered
-    await tb.create_folder("zdir2")  # Keep in mind files and folders should be ordered separatly
+    await tb.create_folder("zdir2")  # Keep in mind files and folders should be ordered separately
     await tb.create_folder("dir0")
     await tb.check_files_view(path="/", expected_entries=["dir0/", "dir1/", "zdir2/"])
 
@@ -381,8 +393,7 @@ async def test_file_browsing_and_edit(
 
     # Create folder in the sub folder
     await tb.create_folder("dir33")
-    # await tb.check_files_view(path="/dir3", expected_entries=["dir31", "dir32", "dir33/"]) # TODO
-    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir33/"])
+    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"])
 
     # Retry to create another folder with the same name !
     def _error_displayed():
@@ -410,8 +421,7 @@ async def test_file_browsing_and_edit(
 
     # Go back into the original /dir3/dir31/
     await tb.cd("../..")
-    # await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"]) # TODO
-    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir33/"])
+    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"])
     await tb.cd("dir31")
     await tb.check_files_view(path="/dir3/dir31", expected_entries=["file311.txt"])
 
@@ -423,8 +433,7 @@ async def test_file_browsing_and_edit(
 
     # Go back into /dir3 and cut /dir3/dir31
     await tb.cd("..")
-    # await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"]) # TODO
-    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir33/"])
+    await tb.check_files_view(path="/dir3", expected_entries=["dir31/", "dir32/", "dir33/"])
     await tb.cut("dir31")
 
     # Jump back into root /, and do the paste
@@ -434,7 +443,7 @@ async def test_file_browsing_and_edit(
         path="/", expected_entries=["dir1/", "dir3/", "dir31/", "zdir2/", "file1.txt"]
     )
     await tb.cd("dir3")
-    await tb.check_files_view(path="/dir3", expected_entries=["dir33/"])
+    await tb.check_files_view(path="/dir3", expected_entries=["dir32/", "dir33/"])
     await tb.cd("../dir31")
     await tb.check_files_view(path="/dir31", expected_entries=["file311 (2).txt", "file311.txt"])
 
@@ -514,7 +523,7 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
     await tb.check_files_view(path="/", expected_entries=["foo/"])
 
     # This helps a lot with the consistency of this test but I have no idea why
-    # This shoud be investigated in the future.
+    # This should be investigated in the future.
     relax = 0.1  # s
     await trio.sleep(relax)
 
@@ -527,7 +536,7 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
     )
 
     # This helps a lot with the consistency of this test but I have no idea why
-    # This shoud be investigated in the future.
+    # This should be investigated in the future.
     await trio.sleep(relax)
 
     await tb.cd("foo")
@@ -536,7 +545,7 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
     )
 
     # This helps a lot with the consistency of this test but I have no idea why
-    # This shoud be investigated in the future.
+    # This should be investigated in the future.
     await trio.sleep(relax)
 
     # 2) Test the cut
@@ -570,7 +579,7 @@ async def test_cut_dir_in_itself(aqtbot, autoclose_dialog, files_widget_testbed)
         assert autoclose_dialog.dialogs == [
             ("Error", _("TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"))
         ]
-        # sub folder shoudn't have changed
+        # sub folder shouldn't have changed
         assert tb.ls() == ["bar.txt"]
         assert tb.pwd() == "/foo"
 
@@ -764,7 +773,7 @@ async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, sn
 @pytest.mark.trio
 async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
-    f_w = files_widget_testbed.files_widget
+    f_w: FilesWidget = files_widget_testbed.files_widget
 
     # Populate the workspace
     await tb.workspace_fs.mkdir("/foo")
@@ -773,11 +782,12 @@ async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
 
     # Create and use file link
     url = f_w.workspace_fs.generate_file_link("/foo/bar.txt")
-    tb.logged_gui.add_instance(str(url))
+    tb.logged_gui.add_instance(url.to_url())
 
     def _selection_on_file():
         assert tb.pwd() == "/foo"
         selected_files = f_w.table_files.selected_files()
+        print(f"[{_selection_on_file.__name__}] selected_files={selected_files}")
         assert len(selected_files) == 1
         selected_files[0].name == "bar.txt"
         # No new tab has been created
@@ -930,7 +940,10 @@ async def test_import_file_disk_full(
         aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
 
     def _import_failed():
-        assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"))]
+        assert set(autoclose_dialog.dialogs) == {
+            ("Error", _("TEXT_FILE_IMPORT_ONE_ERROR")),
+            ("Error", _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR")),
+        }
         assert tb.ls() == []
         assert tb.pwd() == "/"
 
@@ -981,12 +994,13 @@ async def test_sort_menu(aqtbot, files_widget_testbed, monkeypatch):
 
 
 @pytest.mark.gui
-@pytest.mark.flaky(reruns=1)
 @pytest.mark.trio
 async def test_current_folder_status_menu(
     running_backend, aqtbot, files_widget_testbed, catch_file_status_widget
 ):
     f_w = files_widget_testbed.files_widget
+
+    await f_w.workspace_fs.sync()
 
     f_w.table_files.show_current_folder_status_clicked.emit()
 

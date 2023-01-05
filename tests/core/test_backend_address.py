@@ -1,19 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
 import re
 
-from parsec.crypto import SigningKey
-from parsec.api.protocol import InvitationType, OrganizationID, InvitationToken
+import pytest
+
+from parsec._parsec import InvitationType
+from parsec.api.protocol import InvitationToken, OrganizationID
 from parsec.core.types import (
-    EntryID,
     BackendAddr,
+    BackendInvitationAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
-    BackendInvitationAddr,
+    EntryID,
 )
-
+from parsec.crypto import SigningKey
 
 DEFAULT_ARGS = {
     "ORG": "MyOrg",
@@ -217,7 +219,7 @@ def test_good_addr_with_unicode_org_name(addr_with_org_testbed):
     url = addr_with_org_testbed.generate_url(ORG=orgname_percent_quoted)
     addr = addr_with_org_testbed.cls.from_url(url)
     assert isinstance(addr.organization_id, OrganizationID)
-    assert str(addr.organization_id) == orgname
+    assert addr.organization_id.str == orgname
     url2 = addr.to_url()
     assert url2 == url
 

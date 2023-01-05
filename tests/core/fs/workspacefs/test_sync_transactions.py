@@ -1,21 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import re
 import pytest
 
+from parsec._parsec import CoreEvent, Regex
 from parsec.api.protocol import DeviceID
-from parsec.core.core_events import CoreEvent
-from parsec.core.types import EntryID, EntryName, Chunk, LocalFolderManifest, LocalFileManifest
 from parsec.core.fs import FsPath
 from parsec.core.fs.workspacefs.sync_transactions import (
-    full_name,
-    merge_manifests,
-    merge_folder_children,
     FSFileConflictError,
+    full_name,
+    merge_folder_children,
+    merge_manifests,
 )
+from parsec.core.types import Chunk, EntryID, EntryName, LocalFileManifest, LocalFolderManifest
 
-
-empty_pattern = re.compile(r"^\b$")
+empty_pattern = Regex.from_regex_str(r"^\b$")
 
 
 @pytest.mark.parametrize(
@@ -192,7 +191,7 @@ def test_merge_folder_manifests_with_concurrent_remote_change(
         .to_remote(author=my_device, timestamp=timestamp)
     )
 
-    prevent_sync_pattern = re.compile(r".*\.tmp\Z")
+    prevent_sync_pattern = Regex.from_regex_str(r".*\.tmp\z")
 
     # Load the manifest in local
     local_manifest = LocalFolderManifest.from_remote(
@@ -479,7 +478,7 @@ async def test_file_conflict(alice_sync_transactions, preferred_language, suffix
         FsPath(f"/a (Parsec - {suffix} (2))"), write_mode=False
     )
     assert await sync_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
-    spy.assert_events_exactly_occured(
+    spy.assert_events_exactly_occurred(
         [
             (
                 CoreEvent.FS_ENTRY_UPDATED,
@@ -517,7 +516,7 @@ async def test_file_conflict(alice_sync_transactions, preferred_language, suffix
     local, remote = ctx.value.args
     with sync_transactions.event_bus.listen() as spy:
         await sync_transactions.file_conflict(a_id, local, remote)
-    spy.assert_events_exactly_occured([])
+    spy.assert_events_exactly_occurred([])
 
     # Close fds
     await sync_transactions.fd_close(fd)

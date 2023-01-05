@@ -3,18 +3,13 @@
 use pyo3::{
     exceptions::PyValueError,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyDict, PyType},
-};
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
 };
 
 use crate::{
     addrs::BackendOrganizationAddr,
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
-    binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile},
+    enumerate::UserProfile,
     ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID},
     time::{DateTime, TimeProvider},
 };
@@ -22,6 +17,9 @@ use crate::{
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct LocalDevice(pub libparsec::client_types::LocalDevice);
+
+crate::binding_utils::gen_proto!(LocalDevice, __repr__);
+crate::binding_utils::gen_proto!(LocalDevice, __richcmp__, eq);
 
 #[pymethods]
 impl LocalDevice {
@@ -39,7 +37,7 @@ impl LocalDevice {
             [human_handle: Option<HumanHandle>, "human_handle"],
             [signing_key: SigningKey, "signing_key"],
             [private_key: PrivateKey, "private_key"],
-            [profile, "profile", py_to_rs_user_profile],
+            [profile: UserProfile, "profile"],
             [user_manifest_id: EntryID, "user_manifest_id"],
             [user_manifest_key: SecretKey, "user_manifest_key"],
             [local_symkey: SecretKey, "local_symkey"],
@@ -52,7 +50,7 @@ impl LocalDevice {
             human_handle: human_handle.map(|x| x.0),
             signing_key: signing_key.0,
             private_key: private_key.0,
-            profile,
+            profile: profile.0,
             user_manifest_id: user_manifest_id.0,
             user_manifest_key: user_manifest_key.0,
             local_symkey: local_symkey.0,
@@ -73,7 +71,7 @@ impl LocalDevice {
             [human_handle: Option<HumanHandle>, "human_handle"],
             [signing_key: SigningKey, "signing_key"],
             [private_key: PrivateKey, "private_key"],
-            [profile, "profile", py_to_rs_user_profile],
+            [profile: UserProfile, "profile"],
             [user_manifest_id: EntryID, "user_manifest_id"],
             [user_manifest_key: SecretKey, "user_manifest_key"],
             [local_symkey: SecretKey, "local_symkey"],
@@ -100,7 +98,7 @@ impl LocalDevice {
             r.private_key = v.0;
         }
         if let Some(v) = profile {
-            r.profile = v;
+            r.profile = v.0;
         }
         if let Some(v) = user_manifest_id {
             r.user_manifest_id = v.0;
@@ -113,18 +111,6 @@ impl LocalDevice {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => unimplemented!(),
-        }
     }
 
     #[getter]
@@ -185,33 +171,33 @@ impl LocalDevice {
     }
 
     #[getter]
-    fn user_display(&self) -> PyResult<String> {
+    fn user_display(&self) -> PyResult<&str> {
         Ok(self
             .0
             .human_handle
             .as_ref()
-            .map(|hh| hh.to_string())
-            .unwrap_or_else(|| self.0.device_id.user_id.to_string()))
+            .map(|hh| hh.as_ref())
+            .unwrap_or_else(|| self.0.device_id.user_id().as_ref()))
     }
 
     #[getter]
-    fn short_user_display(&self) -> PyResult<String> {
+    fn short_user_display(&self) -> PyResult<&str> {
         Ok(self
             .0
             .human_handle
             .as_ref()
-            .map(|hh| hh.label.clone())
-            .unwrap_or_else(|| self.0.device_id.user_id.to_string()))
+            .map(|hh| hh.label())
+            .unwrap_or_else(|| self.0.device_id.user_id().as_ref()))
     }
 
     #[getter]
-    fn device_display(&self) -> PyResult<String> {
+    fn device_display(&self) -> PyResult<&str> {
         Ok(self
             .0
             .device_label
             .as_ref()
-            .map(|dl| dl.to_string())
-            .unwrap_or_else(|| self.0.device_id.device_name.to_string()))
+            .map(|dl| dl.as_ref())
+            .unwrap_or_else(|| self.0.device_id.device_name().as_ref()))
     }
 
     #[getter]
@@ -245,8 +231,8 @@ impl LocalDevice {
     }
 
     #[getter]
-    fn profile(&self) -> PyResult<Py<PyAny>> {
-        rs_to_py_user_profile(&self.0.profile)
+    fn profile(&self) -> PyResult<&'static PyObject> {
+        Ok(UserProfile::from_profile(self.0.profile))
     }
 
     #[getter]
@@ -265,8 +251,14 @@ impl LocalDevice {
     }
 
     #[getter]
-    fn time_provider(&self) -> PyResult<TimeProvider> {
+    fn get_time_provider(&self) -> PyResult<TimeProvider> {
         Ok(TimeProvider(self.0.time_provider.clone()))
+    }
+
+    #[setter]
+    fn set_time_provider(&mut self, value: TimeProvider) -> PyResult<()> {
+        self.0.time_provider = value.0;
+        Ok(())
     }
 
     // TODO: rename this into `now`
@@ -291,6 +283,10 @@ impl LocalDevice {
 #[derive(Clone)]
 pub(crate) struct UserInfo(pub libparsec::client_types::UserInfo);
 
+crate::binding_utils::gen_proto!(UserInfo, __repr__);
+crate::binding_utils::gen_proto!(UserInfo, __richcmp__, ord);
+crate::binding_utils::gen_proto!(UserInfo, __hash__);
+
 #[pymethods]
 impl UserInfo {
     #[new]
@@ -300,7 +296,7 @@ impl UserInfo {
             py_kwargs,
             [user_id: UserID, "user_id"],
             [human_handle: Option<HumanHandle>, "human_handle"],
-            [profile, "profile", py_to_rs_user_profile],
+            [profile: UserProfile, "profile"],
             [created_on: DateTime, "created_on"],
             [revoked_on: Option<DateTime>, "revoked_on"],
         );
@@ -308,31 +304,10 @@ impl UserInfo {
         Ok(Self(libparsec::client_types::UserInfo {
             user_id: user_id.0,
             human_handle: human_handle.map(|x| x.0),
-            profile,
+            profile: profile.0,
             created_on: created_on.0,
             revoked_on: revoked_on.map(|x| x.0),
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __hash__(&self) -> PyResult<u64> {
-        let mut s = DefaultHasher::new();
-        self.0.hash(&mut s);
-        Ok(s.finish())
     }
 
     #[getter]
@@ -346,8 +321,8 @@ impl UserInfo {
     }
 
     #[getter]
-    fn profile(&self) -> PyResult<PyObject> {
-        rs_to_py_user_profile(&self.0.profile)
+    fn profile(&self) -> PyResult<&'static PyObject> {
+        Ok(UserProfile::from_profile(self.0.profile))
     }
 
     #[getter]
@@ -361,12 +336,12 @@ impl UserInfo {
     }
 
     #[getter]
-    fn user_display(&self) -> PyResult<String> {
+    fn user_display(&self) -> PyResult<&str> {
         Ok(self.0.user_display())
     }
 
     #[getter]
-    fn short_user_display(&self) -> PyResult<String> {
+    fn short_user_display(&self) -> PyResult<&str> {
         Ok(self.0.short_user_display())
     }
 
@@ -379,6 +354,10 @@ impl UserInfo {
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct DeviceInfo(pub libparsec::client_types::DeviceInfo);
+
+crate::binding_utils::gen_proto!(DeviceInfo, __repr__);
+crate::binding_utils::gen_proto!(DeviceInfo, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DeviceInfo, __hash__);
 
 #[pymethods]
 impl DeviceInfo {
@@ -397,27 +376,6 @@ impl DeviceInfo {
             device_label: device_label.map(|x| x.0),
             created_on: created_on.0,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __hash__(&self) -> PyResult<u64> {
-        let mut s = DefaultHasher::new();
-        self.0.hash(&mut s);
-        Ok(s.finish())
     }
 
     #[getter]
@@ -441,7 +399,7 @@ impl DeviceInfo {
     }
 
     #[getter]
-    fn device_display(&self) -> PyResult<String> {
+    fn device_display(&self) -> PyResult<&str> {
         Ok(self.0.device_display())
     }
 }

@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
-from parsec.api.protocol import packb, user_get_serializer, UserID, UserProfile
-
+from parsec._parsec import DateTime, Trustchain, UserGetRepNotFound, UserGetRepOk
+from parsec.api.protocol import UserID, UserProfile, packb, user_get_serializer
 from parsec.backend.asgi import app_factory
-
-from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import user_get
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture
@@ -37,13 +36,12 @@ async def test_api_user_get_ok(access_testbed):
     binder, org, device, sock = access_testbed
 
     rep = await user_get(sock, device.user_id)
-    assert rep == {
-        "status": "ok",
-        "user_certificate": binder.certificates_store.get_user(device),
-        "revoked_user_certificate": None,
-        "device_certificates": [binder.certificates_store.get_device(device)],
-        "trustchain": {"devices": [], "revoked_users": [], "users": []},
-    }
+    assert rep == UserGetRepOk(
+        user_certificate=binder.certificates_store.get_user(device),
+        revoked_user_certificate=None,
+        device_certificates=[binder.certificates_store.get_device(device)],
+        trustchain=Trustchain(devices=[], revoked_users=[], users=[]),
+    )
 
 
 @pytest.mark.trio
@@ -55,23 +53,22 @@ async def test_api_user_get_outsider_get_redacted_certifs(
     # <root> --> alice@dev1 --> alice@dev2 --> adam@dev1 --> bob@dev1
     rep = await user_get(bob_ws, bob.user_id)
     cooked_rep = {
-        **rep,
-        "user_certificate": certificates_store.translate_certif(rep["user_certificate"]),
-        "device_certificates": certificates_store.translate_certifs(rep["device_certificates"]),
+        "user_certificate": certificates_store.translate_certif(rep.user_certificate),
+        "revoked_user_certificate": rep.revoked_user_certificate,
+        "device_certificates": certificates_store.translate_certifs(rep.device_certificates),
         "trustchain": {
-            **rep["trustchain"],
-            "devices": certificates_store.translate_certifs(rep["trustchain"]["devices"]),
-            "users": certificates_store.translate_certifs(rep["trustchain"]["users"]),
+            "users": certificates_store.translate_certifs(rep.trustchain.users),
+            "revoked_users": rep.trustchain.revoked_users,
+            "devices": certificates_store.translate_certifs(rep.trustchain.devices),
         },
     }
     assert cooked_rep == {
-        "status": "ok",
         "user_certificate": "<bob redacted user certif>",
         "revoked_user_certificate": None,
         "device_certificates": ["<bob@dev1 redacted device certif>"],
         "trustchain": {
             "users": ["<adam redacted user certif>", "<alice redacted user certif>"],
-            "revoked_users": [],
+            "revoked_users": (),
             "devices": [
                 "<adam@dev1 redacted device certif>",
                 "<alice@dev1 redacted device certif>",
@@ -111,24 +108,19 @@ async def test_api_user_get_ok_deep_trustchain(
 
     rep = await user_get(sock, mike2.device_id.user_id)
     cooked_rep = {
-        **rep,
-        "user_certificate": certificates_store.translate_certif(rep["user_certificate"]),
-        "device_certificates": certificates_store.translate_certifs(rep["device_certificates"]),
+        "user_certificate": certificates_store.translate_certif(rep.user_certificate),
+        "device_certificates": certificates_store.translate_certifs(rep.device_certificates),
         "revoked_user_certificate": certificates_store.translate_certif(
-            rep["revoked_user_certificate"]
+            rep.revoked_user_certificate
         ),
         "trustchain": {
-            **rep["trustchain"],
-            "devices": certificates_store.translate_certifs(rep["trustchain"]["devices"]),
-            "users": certificates_store.translate_certifs(rep["trustchain"]["users"]),
-            "revoked_users": certificates_store.translate_certifs(
-                rep["trustchain"]["revoked_users"]
-            ),
+            "devices": certificates_store.translate_certifs(rep.trustchain.devices),
+            "users": certificates_store.translate_certifs(rep.trustchain.users),
+            "revoked_users": certificates_store.translate_certifs(rep.trustchain.revoked_users),
         },
     }
 
     assert cooked_rep == {
-        "status": "ok",
         "user_certificate": "<mike user certif>",
         "device_certificates": ["<mike@dev1 device certif>", "<mike@dev2 device certif>"],
         "revoked_user_certificate": "<mike revoked user certif>",
@@ -157,13 +149,13 @@ async def test_api_user_get_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "user_get", **bad_msg}))
     raw_rep = await alice_ws.receive()
     rep = user_get_serializer.rep_loads(raw_rep)
-    assert rep["status"] == "bad_message"
+    assert rep.status == "bad_message"
 
 
 @pytest.mark.trio
 async def test_api_user_get_not_found(alice_ws, coolorg):
     rep = await user_get(alice_ws, UserID("dummy"))
-    assert rep == {"status": "not_found"}
+    assert isinstance(rep, UserGetRepNotFound)
 
 
 @pytest.mark.trio
@@ -173,7 +165,7 @@ async def test_api_user_get_other_organization(
     # Organizations should be isolated
     async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await user_get(sock, alice.user_id)
-        assert rep == {"status": "not_found"}
+        assert isinstance(rep, UserGetRepNotFound)
 
 
 @pytest.mark.trio

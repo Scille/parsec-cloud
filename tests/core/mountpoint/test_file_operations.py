@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import os
-import pytest
-from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test
-from hypothesis import strategies as st
-from parsec.api.data import EntryName
 
+import pytest
+from hypothesis import strategies as st
+from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test
+
+from parsec.api.data import EntryName
 
 # Just an arbitrary value to limit the size of data hypothesis generates
 # for read/write operations

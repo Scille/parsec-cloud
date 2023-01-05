@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 AUTHENTICATED_CMDS = {
     "events_subscribe",
@@ -59,7 +60,8 @@ INVITED_CMDS = {
     "invite_3b_claimer_wait_peer_trust",
     "invite_4_claimer_communicate",
 }
-ANONYMOUS_CMDS = {"pki_enrollment_submit", "pki_enrollment_info", "organization_bootstrap"}
-
-# TODO: remove me once API v1 is deprecated
-APIV1_ANONYMOUS_CMDS = {"ping", "organization_bootstrap"}
+ANONYMOUS_CMDS = {
+    "pki_enrollment_submit",
+    "pki_enrollment_info",
+    "organization_bootstrap",
+}

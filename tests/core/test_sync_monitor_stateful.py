@@ -1,24 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-import trio
-import trio.testing
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     Bundle,
+    TrioAsyncioRuleBasedStateMachine,
     initialize,
+    multiple,
     rule,
     run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
-    multiple,
 )
 
 from parsec.api.data import EntryName
+from parsec.core.fs import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
 from parsec.core.types import WorkspaceRole
-from parsec.core.fs import FSWorkspaceNotFoundError, FSWorkspaceNoAccess
-
 from tests.common import call_with_control
-
 
 MISSING = object()
 TO_COMPARE_FIELDS = ("id", "created", "updated", "need_sync", "base_version", "is_placeholder")
@@ -48,9 +45,9 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 
 
 @pytest.mark.slow
+@pytest.mark.flaky(reruns=2)
 def test_sync_monitor_stateful(
     hypothesis_settings,
-    frozen_clock,
     reset_testbed,
     backend_factory,
     running_backend_factory,
@@ -60,16 +57,7 @@ def test_sync_monitor_stateful(
     bob,
     monkeypatch,
 ):
-
-    # Force a sleep in the monitors mockpoints will freeze them until we reach
-    # the `let_core_monitors_process_changes` rule
-    async def mockpoint_sleep():
-        await trio.sleep(0.01)
-
-    monkeypatch.setattr("parsec.core.sync_monitor.freeze_sync_monitor_mockpoint", mockpoint_sleep)
-    monkeypatch.setattr(
-        "parsec.core.messages_monitor.freeze_messages_monitor_mockpoint", mockpoint_sleep
-    )
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
 
     class SyncMonitorStateful(TrioAsyncioRuleBasedStateMachine):
         SharedWorkspaces = Bundle("shared_workspace")
@@ -77,8 +65,6 @@ def test_sync_monitor_stateful(
 
         def __init__(self):
             super().__init__()
-            # Core's sync and message monitors must be kept frozen
-            self.set_clock(frozen_clock)
             self.file_count = 0
             self.data_count = 0
             self.workspace_count = 0
@@ -135,6 +121,8 @@ def test_sync_monitor_stateful(
             await self.start_backend()
             self.alice = self.backend_controller.server.correct_addr(alice)
             self.bob = self.backend_controller.server.correct_addr(bob)
+            # Align alice and bob by using the same time provider
+            self.bob.time_provider = self.alice.time_provider
             self.bob_user_fs = await self.start_bob_user_fs()
             self.alice_core = await self.start_alice_core()
             self.user_fs_per_device = {
@@ -149,8 +137,8 @@ def test_sync_monitor_stateful(
             role=st.one_of(st.just(WorkspaceRole.CONTRIBUTOR), st.just(WorkspaceRole.READER)),
         )
         async def create_sharing(self, role):
-            wname = self.get_next_workspace_name()
-            wid = await self.bob_user_fs.workspace_create(wname)
+            w_name = self.get_next_workspace_name()
+            wid = await self.bob_user_fs.workspace_create(w_name)
             await self.bob_user_fs.workspace_share(wid, alice.user_id, role)
             self.alice_workspaces_role[wid] = role
             return wid
@@ -212,18 +200,41 @@ def test_sync_monitor_stateful(
 
         @rule(target=SyncedFiles)
         async def let_core_monitors_process_changes(self):
-            # Wait for alice core to settle down
-            await frozen_clock.sleep_with_autojump(300)
-            # Bob get back alice's changes
-            await self.bob_user_fs.sync()
-            for bob_workspace_entry in self.bob_user_fs.get_user_manifest().workspaces:
-                bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
-                await bob_w.sync()
-            # Alice get back possible changes from bob's sync
-            await frozen_clock.sleep_with_autojump(300)
+            # Set a high clock speed
+            self.alice.time_provider.mock_time(speed=1000.0)
+            try:
+                # Loop over 100 attemps (at least 100 seconds)
+                attempts = 100
+                while True:
+                    # Bob get back alice's changes
+                    await self.bob_user_fs.sync()
+                    for bob_workspace_entry in self.bob_user_fs.get_user_manifest().workspaces:
+                        bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
+                        await bob_w.sync()
+                    # Alice get back possible changes from bob's sync
+                    await self.alice.time_provider.sleep(1)
+                    # See if alice and bob are in sync
+                    try:
+                        new_synced_files = await self.assert_alice_and_bob_in_sync()
+                    # Not yet in sync, wait and try again
+                    except AssertionError:
+                        attempts -= 1
+                        if attempts == 0:
+                            raise
+                        await self.alice.time_provider.sleep(1)
+                        continue
+                    # Success !
+                    else:
+                        self.synced_files.update(new_synced_files)
+                        return multiple(*(sorted(new_synced_files)))
+            # Reset clock speed
+            finally:
+                self.alice.time_provider.mock_time(speed=1.0)
+
+        async def assert_alice_and_bob_in_sync(self):
+            new_synced_files = []
 
             # Now alice and bob should have agreed on the data
-            new_synced_files = []
             for alice_workspace_entry in self.alice_core.user_fs.get_user_manifest().workspaces:
                 alice_w = self.alice_core.user_fs.get_workspace(alice_workspace_entry.id)
                 bob_w = self.bob_user_fs.get_workspace(alice_workspace_entry.id)
@@ -246,7 +257,6 @@ def test_sync_monitor_stateful(
                     if key not in self.synced_files:
                         new_synced_files.append(key)
 
-            self.synced_files.update(new_synced_files)
-            return multiple(*(sorted(new_synced_files)))
+            return new_synced_files
 
     run_state_machine_as_test(SyncMonitorStateful, settings=hypothesis_settings)

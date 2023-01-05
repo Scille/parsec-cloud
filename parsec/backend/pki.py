@@ -1,29 +1,59 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Any, List, cast
 
 import attr
-from typing import List
-from uuid import UUID
-from parsec._parsec import DateTime
 
-from parsec.api.data import DataError, PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
-from parsec.api.protocol import (
-    OrganizationID,
-    UserProfile,
-    PkiEnrollmentStatus,
-    pki_enrollment_submit_serializer,
-    pki_enrollment_info_serializer,
-    pki_enrollment_list_serializer,
-    pki_enrollment_reject_serializer,
-    pki_enrollment_accept_serializer,
+from parsec._parsec import (
+    ClientType,
+    DateTime,
+    EnrollmentID,
+    PkiEnrollmentAcceptRep,
+    PkiEnrollmentAcceptRepActiveUsersLimitReached,
+    PkiEnrollmentAcceptRepAlreadyExists,
+    PkiEnrollmentAcceptRepInvalidCertification,
+    PkiEnrollmentAcceptRepInvalidPayloadData,
+    PkiEnrollmentAcceptRepNoLongerAvailable,
+    PkiEnrollmentAcceptRepNotAllowed,
+    PkiEnrollmentAcceptRepNotFound,
+    PkiEnrollmentAcceptRepOk,
+    PkiEnrollmentAcceptReq,
+    PkiEnrollmentInfoRep,
+    PkiEnrollmentInfoRepNotFound,
+    PkiEnrollmentInfoRepOk,
+    PkiEnrollmentInfoReq,
+    PkiEnrollmentInfoStatus,
+    PkiEnrollmentListRep,
+    PkiEnrollmentListRepNotAllowed,
+    PkiEnrollmentListRepOk,
+    PkiEnrollmentListReq,
+    PkiEnrollmentRejectRep,
+    PkiEnrollmentRejectRepNoLongerAvailable,
+    PkiEnrollmentRejectRepNotAllowed,
+    PkiEnrollmentRejectRepNotFound,
+    PkiEnrollmentRejectRepOk,
+    PkiEnrollmentRejectReq,
+    PkiEnrollmentSubmitRep,
+    PkiEnrollmentSubmitRepAlreadyEnrolled,
+    PkiEnrollmentSubmitRepAlreadySubmitted,
+    PkiEnrollmentSubmitRepEmailAlreadyUsed,
+    PkiEnrollmentSubmitRepIdAlreadyUsed,
+    PkiEnrollmentSubmitRepInvalidPayloadData,
+    PkiEnrollmentSubmitRepOk,
+    PkiEnrollmentSubmitReq,
 )
+from parsec._parsec import PkiEnrollmentListItem as RustPkiEnrollmentListItem
+from parsec.api.data import DataError, PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
+from parsec.api.protocol import OrganizationID, UserProfile
+from parsec.backend.client_context import AnonymousClientContext, AuthenticatedClientContext
 from parsec.backend.user_type import (
-    User,
-    Device,
-    validate_new_user_certificates,
     CertificateValidationError,
+    Device,
+    User,
+    validate_new_user_certificates,
 )
-from parsec.backend.client_context import AuthenticatedClientContext, AnonymousClientContext
-from parsec.backend.utils import api, catch_protocol_errors, ClientType
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 from parsec.event_bus import EventBus
 
 
@@ -32,7 +62,7 @@ class PkiEnrollmentError(Exception):
 
 
 class PkiEnrollmentAlreadyEnrolledError(PkiEnrollmentError):
-    def __init__(self, accepted_on, *args, **kwargs):
+    def __init__(self, accepted_on: DateTime, *args: Any, **kwargs: Any):
         self.accepted_on = accepted_on
         PkiEnrollmentError.__init__(self, *args, **kwargs)
 
@@ -50,7 +80,7 @@ class PkiEnrollmentActiveUsersLimitReached(PkiEnrollmentError):
 
 
 class PkiEnrollmentCertificateAlreadySubmittedError(PkiEnrollmentError):
-    def __init__(self, submitted_on, *args, **kwargs):
+    def __init__(self, submitted_on: DateTime, *args: Any, **kwargs: Any):
         self.submitted_on = submitted_on
         PkiEnrollmentError.__init__(self, *args, **kwargs)
 
@@ -59,7 +89,7 @@ class PkiEnrollmentIdAlreadyUsedError(PkiEnrollmentError):
     pass
 
 
-class PkiEnrollementEmailAlreadyUsedError(PkiEnrollmentError):
+class PkiEnrollmentEmailAlreadyUsedError(PkiEnrollmentError):
     pass
 
 
@@ -77,7 +107,7 @@ class PkiEnrollmentReplacedError(PkiEnrollmentError):  # TODO
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentInfo:
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -108,7 +138,7 @@ class PkiEnrollmentInfoCancelled(PkiEnrollmentInfo):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentListItem:
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
     submit_payload_signature: bytes
@@ -121,208 +151,186 @@ class BasePkiEnrollmentComponent:
 
     @api("pki_enrollment_submit", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
+    @api_typed_msg_adapter(PkiEnrollmentSubmitReq, PkiEnrollmentSubmitRep)
     async def api_pki_enrollment_submit(
-        self, client_ctx: AnonymousClientContext, msg: dict
-    ) -> dict:
-        msg = pki_enrollment_submit_serializer.req_load(msg)
-
+        self, client_ctx: AnonymousClientContext, msg: PkiEnrollmentSubmitReq
+    ) -> PkiEnrollmentSubmitRep:
         try:
-            PkiEnrollmentSubmitPayload.load(msg["submit_payload"])
+            PkiEnrollmentSubmitPayload.load(msg.submit_payload)
 
         except DataError as exc:
-            return {"status": "invalid_payload_data", "reason": str(exc)}
+            return PkiEnrollmentSubmitRepInvalidPayloadData(str(exc))
 
         submitted_on = DateTime.now()
         try:
             await self.submit(
                 organization_id=client_ctx.organization_id,
-                enrollment_id=msg["enrollment_id"],
-                force=msg["force"],
-                submitter_der_x509_certificate=msg["submitter_der_x509_certificate"],
-                submit_payload_signature=msg["submit_payload_signature"],
-                submit_payload=msg["submit_payload"],
+                enrollment_id=cast(EnrollmentID, msg.enrollment_id),
+                force=msg.force,
+                submitter_der_x509_certificate=msg.submitter_der_x509_certificate,
+                submit_payload_signature=msg.submit_payload_signature,
+                submit_payload=msg.submit_payload,
                 submitted_on=submitted_on,
-                submitter_der_x509_certificate_email=msg["submitter_der_x509_certificate_email"],
+                submitter_der_x509_certificate_email=msg.submitter_der_x509_certificate_email,
             )
-            rep = {"status": "ok", "submitted_on": submitted_on}
+            return PkiEnrollmentSubmitRepOk(submitted_on)
 
         except PkiEnrollmentCertificateAlreadySubmittedError as exc:
-            rep = {"status": "already_submitted", "submitted_on": exc.submitted_on}
+            return PkiEnrollmentSubmitRepAlreadySubmitted(exc.submitted_on)
 
         except PkiEnrollmentIdAlreadyUsedError:
-            rep = {"status": "enrollment_id_already_used"}
+            return PkiEnrollmentSubmitRepIdAlreadyUsed()
 
-        except PkiEnrollementEmailAlreadyUsedError:
-            rep = {"status": "email_already_used"}
+        except PkiEnrollmentEmailAlreadyUsedError:
+            return PkiEnrollmentSubmitRepEmailAlreadyUsed()
 
         except PkiEnrollmentAlreadyEnrolledError:
-            rep = {"status": "already_enrolled"}
-
-        return pki_enrollment_submit_serializer.rep_dump(rep)
+            return PkiEnrollmentSubmitRepAlreadyEnrolled()
 
     @api("pki_enrollment_info", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
-    async def api_pki_enrollment_info(self, client_ctx: AnonymousClientContext, msg: dict) -> dict:
-        msg = pki_enrollment_info_serializer.req_load(msg)
+    @api_typed_msg_adapter(PkiEnrollmentInfoReq, PkiEnrollmentInfoRep)
+    async def api_pki_enrollment_info(
+        self, client_ctx: AnonymousClientContext, msg: PkiEnrollmentInfoReq
+    ) -> PkiEnrollmentInfoRep:
         try:
             info = await self.info(
-                organization_id=client_ctx.organization_id, enrollment_id=msg["enrollment_id"]
+                organization_id=client_ctx.organization_id,
+                enrollment_id=cast(EnrollmentID, msg.enrollment_id),
             )
+            rep: PkiEnrollmentInfoStatus
             if isinstance(info, PkiEnrollmentInfoSubmitted):
-                rep = {
-                    "enrollment_status": PkiEnrollmentStatus.SUBMITTED,
-                    "submitted_on": info.submitted_on,
-                }
+                rep = PkiEnrollmentInfoStatus.Submitted(info.submitted_on)
             elif isinstance(info, PkiEnrollmentInfoAccepted):
-                rep = {
-                    "enrollment_status": PkiEnrollmentStatus.ACCEPTED,
-                    "submitted_on": info.submitted_on,
-                    "accepted_on": info.accepted_on,
-                    "accepter_der_x509_certificate": info.accepter_der_x509_certificate,
-                    "accept_payload_signature": info.accept_payload_signature,
-                    "accept_payload": info.accept_payload,
-                }
+                rep = PkiEnrollmentInfoStatus.Accepted(
+                    info.submitted_on,
+                    info.accepted_on,
+                    info.accepter_der_x509_certificate,
+                    info.accept_payload_signature,
+                    info.accept_payload,
+                )
             elif isinstance(info, PkiEnrollmentInfoRejected):
-                rep = {
-                    "enrollment_status": PkiEnrollmentStatus.REJECTED,
-                    "submitted_on": info.submitted_on,
-                    "rejected_on": info.rejected_on,
-                }
+                rep = PkiEnrollmentInfoStatus.Rejected(info.submitted_on, info.rejected_on)
             elif isinstance(info, PkiEnrollmentInfoCancelled):
-                rep = {
-                    "enrollment_status": PkiEnrollmentStatus.CANCELLED,
-                    "submitted_on": info.submitted_on,
-                    "cancelled_on": info.cancelled_on,
-                }
+                rep = PkiEnrollmentInfoStatus.Cancelled(info.submitted_on, info.cancelled_on)
             else:
                 assert False
 
         except PkiEnrollmentNotFoundError as exc:
-            rep = {"status": "not_found", "reason": str(exc)}
+            return PkiEnrollmentInfoRepNotFound(str(exc))
 
-        return pki_enrollment_info_serializer.rep_dump(rep)
+        return PkiEnrollmentInfoRepOk(rep)
 
     @api("pki_enrollment_list")
     @catch_protocol_errors
+    @api_typed_msg_adapter(PkiEnrollmentListReq, PkiEnrollmentListRep)
     async def api_pki_enrollment_list(
-        self, client_ctx: AuthenticatedClientContext, msg: dict
-    ) -> dict:
+        self, client_ctx: AuthenticatedClientContext, _: PkiEnrollmentListReq
+    ) -> PkiEnrollmentListRep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
-        msg = pki_enrollment_list_serializer.req_load(msg)
+            return PkiEnrollmentListRepNotAllowed(
+                f"User `{client_ctx.device_id.user_id.str}` is not admin"
+            )
         enrollments = await self.list(organization_id=client_ctx.organization_id)
-        return pki_enrollment_list_serializer.rep_dump(
-            {
-                "enrollments": [
-                    {
-                        "enrollment_id": e.enrollment_id,
-                        "submitted_on": e.submitted_on,
-                        "submitter_der_x509_certificate": e.submitter_der_x509_certificate,
-                        "submit_payload_signature": e.submit_payload_signature,
-                        "submit_payload": e.submit_payload,
-                    }
-                    for e in enrollments
-                ]
-            }
+        return PkiEnrollmentListRepOk(
+            [
+                RustPkiEnrollmentListItem(
+                    e.enrollment_id,
+                    e.submit_payload,
+                    e.submit_payload_signature,
+                    e.submitted_on,
+                    e.submitter_der_x509_certificate,
+                )
+                for e in enrollments
+            ]
         )
 
     @api("pki_enrollment_reject")
     @catch_protocol_errors
+    @api_typed_msg_adapter(PkiEnrollmentRejectReq, PkiEnrollmentRejectRep)
     async def api_pki_enrollment_reject(
-        self, client_ctx: AuthenticatedClientContext, msg: dict
-    ) -> dict:
+        self, client_ctx: AuthenticatedClientContext, msg: PkiEnrollmentRejectReq
+    ) -> PkiEnrollmentRejectRep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
-        msg = pki_enrollment_reject_serializer.req_load(msg)
+            return PkiEnrollmentRejectRepNotAllowed(
+                f"User `{client_ctx.device_id.user_id.str}` is not admin"
+            )
         try:
             await self.reject(
                 organization_id=client_ctx.organization_id,
-                enrollment_id=msg["enrollment_id"],
+                enrollment_id=msg.enrollment_id,
                 rejected_on=DateTime.now(),
             )
-            rep = {"status": "ok"}
+            return PkiEnrollmentRejectRepOk()
 
         except PkiEnrollmentNotFoundError as exc:
-            rep = {"status": "not_found", "reason": str(exc)}
+            return PkiEnrollmentRejectRepNotFound(str(exc))
 
         except PkiEnrollmentNoLongerAvailableError as exc:
-            rep = {"status": "no_longer_available", "reason": str(exc)}
-
-        return pki_enrollment_reject_serializer.rep_dump(rep)
+            return PkiEnrollmentRejectRepNoLongerAvailable(str(exc))
 
     @api("pki_enrollment_accept")
     @catch_protocol_errors
+    @api_typed_msg_adapter(PkiEnrollmentAcceptReq, PkiEnrollmentAcceptRep)
     async def api_pki_enrollment_accept(
-        self, client_ctx: AuthenticatedClientContext, msg: dict
-    ) -> dict:
+        self, client_ctx: AuthenticatedClientContext, msg: PkiEnrollmentAcceptReq
+    ) -> PkiEnrollmentAcceptRep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
-        msg = pki_enrollment_accept_serializer.req_load(msg)
+            return PkiEnrollmentAcceptRepNotAllowed(
+                f"User `{client_ctx.device_id.user_id.str}` is not admin",
+            )
 
         try:
-            PkiEnrollmentAcceptPayload.load(msg["accept_payload"])
+            PkiEnrollmentAnswerPayload.load(msg.accept_payload)
 
         except DataError as exc:
-            return {"status": "invalid_payload_data", "reason": str(exc)}
+            return PkiEnrollmentAcceptRepInvalidPayloadData(str(exc))
 
         try:
             user, first_device = validate_new_user_certificates(
                 expected_author=client_ctx.device_id,
                 author_verify_key=client_ctx.verify_key,
-                device_certificate=msg["device_certificate"],
-                user_certificate=msg["user_certificate"],
-                redacted_user_certificate=msg["redacted_user_certificate"],
-                redacted_device_certificate=msg["redacted_device_certificate"],
+                device_certificate=msg.device_certificate,
+                user_certificate=msg.user_certificate,
+                redacted_user_certificate=msg.redacted_user_certificate,
+                redacted_device_certificate=msg.redacted_device_certificate,
             )
 
         except CertificateValidationError as exc:
-            return pki_enrollment_accept_serializer.rep_dump(
-                {"status": exc.status, "reason": exc.reason}
-            )
+            return PkiEnrollmentAcceptRepInvalidCertification(exc.reason)
 
         try:
             await self.accept(
                 organization_id=client_ctx.organization_id,
-                enrollment_id=msg["enrollment_id"],
-                accepter_der_x509_certificate=msg["accepter_der_x509_certificate"],
-                accept_payload_signature=msg["accept_payload_signature"],
-                accept_payload=msg["accept_payload"],
+                enrollment_id=msg.enrollment_id,
+                accepter_der_x509_certificate=msg.accepter_der_x509_certificate,
+                accept_payload_signature=msg.accept_payload_signature,
+                accept_payload=msg.accept_payload,
                 accepted_on=DateTime.now(),
                 user=user,
                 first_device=first_device,
             )
-            rep = {"status": "ok"}
+            return PkiEnrollmentAcceptRepOk()
 
         except PkiEnrollmentNotFoundError as exc:
-            rep = {"status": "not_found", "reason": str(exc)}
+            return PkiEnrollmentAcceptRepNotFound(str(exc))
 
         except PkiEnrollmentNoLongerAvailableError as exc:
-            rep = {"status": "no_longer_available", "reason": str(exc)}
+            return PkiEnrollmentAcceptRepNoLongerAvailable(str(exc))
 
         except PkiEnrollmentAlreadyExistError as exc:
-            rep = {"status": "already_exists", "reason": str(exc)}
+            return PkiEnrollmentAcceptRepAlreadyExists(str(exc))
 
         except PkiEnrollmentActiveUsersLimitReached:
-            rep = {"status": "active_users_limit_reached"}
-
-        return pki_enrollment_accept_serializer.rep_dump(rep)
+            return PkiEnrollmentAcceptRepActiveUsersLimitReached(None)
 
     async def submit(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
+        submitter_der_x509_certificate_email: str | None,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,
@@ -332,11 +340,13 @@ class BasePkiEnrollmentComponent:
             PkiEnrollmentCertificateAlreadySubmittedError
             PkiEnrollmentAlreadyEnrolledError
             PkiEnrollmentIdAlreadyUsedError
-            PkiEnrollementEmailAlreadyUsedError
+            PkiEnrollmentEmailAlreadyUsedError
         """
         raise NotImplementedError()
 
-    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+    async def info(
+        self, organization_id: OrganizationID, enrollment_id: EnrollmentID
+    ) -> PkiEnrollmentInfo:
         """
         Raises:
             PkiEnrollmentNotFoundError
@@ -350,7 +360,10 @@ class BasePkiEnrollmentComponent:
         raise NotImplementedError()
 
     async def reject(
-        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+        self,
+        organization_id: OrganizationID,
+        enrollment_id: EnrollmentID,
+        rejected_on: DateTime,
     ) -> None:
         """
         Raises:
@@ -362,7 +375,7 @@ class BasePkiEnrollmentComponent:
     async def accept(
         self,
         organization_id: OrganizationID,
-        enrollment_id: UUID,
+        enrollment_id: EnrollmentID,
         accepter_der_x509_certificate: bytes,
         accept_payload_signature: bytes,
         accept_payload: bytes,

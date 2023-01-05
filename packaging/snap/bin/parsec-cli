@@ -10,8 +10,8 @@ export PATH=${SNAP}/sbin:${SNAP}/bin:${SNAP}/usr/bin:${PATH}
 PYTHON=${SNAP}/usr/bin/python3.9
 export PYTHONPATH=${SNAP}/site-packages
 
-# We can't rely on `ctypes.util.find_library` in classic snap environement,
-# so we use the `*_LIBRARY_PATH` enviroment variables.
+# We can't rely on `ctypes.util.find_library` in classic snap environment,
+# so we use the `*_LIBRARY_PATH` environment variables.
 export FUSE_LIBRARY_PATH=${SNAP}/lib/x86_64-linux-gnu/libfuse.so.2
 export SSL_LIBRARY_PATH=${SNAP}/usr/lib/x86_64-linux-gnu/libssl.so.1.1
 export CRYPTO_LIBRARY_PATH=${SNAP}/usr/lib/x86_64-linux-gnu/libcrypto.so.1.1

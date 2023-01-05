@@ -3,13 +3,14 @@
 use data_encoding::BASE32;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::str::FromStr;
 use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use super::{EntryID, InvitationToken, InvitationType, OrganizationID};
+use crate::{EntryID, InvitationToken, InvitationType, OrganizationID};
 
 const PARSEC_SCHEME: &str = "parsec";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
@@ -148,7 +149,7 @@ macro_rules! impl_common_stuff {
 
 type AddrError = &'static str;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 struct BaseBackendAddr {
     hostname: String,
     port: Option<u16>,
@@ -293,7 +294,7 @@ fn extract_organization_id(parsed: &Url) -> Result<OrganizationID, AddrError> {
  */
 
 /// Represent the URL to reach a backend (e.g. ``parsec://parsec.example.com/``)
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BackendAddr {
     base: BaseBackendAddr,
 }
@@ -489,7 +490,7 @@ impl std::str::FromStr for BackendActionAddr {
 
 // Represent the URL to bootstrap an organization within a backend
 // (e.g. ``parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD``)
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BackendOrganizationBootstrapAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,
@@ -575,12 +576,13 @@ impl BackendOrganizationBootstrapAddr {
 
 /// Represent the URL to share a file link
 /// (e.g. ``parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BackendOrganizationFileLinkAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,
     workspace_id: EntryID,
     encrypted_path: Vec<u8>,
+    encrypted_timestamp: Option<Vec<u8>>,
 }
 
 impl_common_stuff!(BackendOrganizationFileLinkAddr);
@@ -591,12 +593,14 @@ impl BackendOrganizationFileLinkAddr {
         organization_id: OrganizationID,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
+        encrypted_timestamp: Option<Vec<u8>>,
     ) -> Self {
         Self {
             base: backend_addr.base,
             organization_id,
             workspace_id,
             encrypted_path,
+            encrypted_timestamp,
         }
     }
 
@@ -608,33 +612,33 @@ impl BackendOrganizationFileLinkAddr {
             return Err("Expected `action=file_link` param value");
         }
 
-        let mut workspace_id_queries = pairs.filter(|(k, _)| k == "workspace_id");
-        let workspace_id = match workspace_id_queries.next() {
-            None => return Err("Missing mandatory `workspace_id` param"),
-            Some((_, value)) => value
-                .parse::<EntryID>()
-                .or(Err("Invalid `workspace_id` param value"))?,
-        };
-        if workspace_id_queries.next().is_some() {
-            return Err("Multiple values for param `workspace_id`");
+        let mut query_str_map = HashMap::new();
+        for (key, value) in *pairs {
+            if query_str_map.insert(key, value).is_some() {
+                return Err("Duplicated key in query string");
+            }
         }
 
-        let mut path_queries = pairs.filter(|(k, _)| k == "path");
-        let encrypted_path = match path_queries.next() {
-            None => return Err("Missing mandatory `path` param"),
-            Some((_, value)) => {
-                binary_urlsafe_decode(&value).or(Err("Invalid `path` param value"))?
-            }
+        let encrypted_timestamp = if let Some(ts) = query_str_map.get("timestamp") {
+            Some(binary_urlsafe_decode(ts)?)
+        } else {
+            None
         };
-        if path_queries.next().is_some() {
-            return Err("Multiple values for param `path`");
-        }
 
         Ok(Self {
             base,
             organization_id,
-            workspace_id,
-            encrypted_path,
+            workspace_id: query_str_map
+                .get("workspace_id")
+                .map(|v| EntryID::from_hex(v))
+                .ok_or("Missing mandatory `workspace_id` param")?
+                .map_err(|_| "Invalid `workspace_id` param value")?,
+            encrypted_path: query_str_map
+                .get("path")
+                .ok_or("Missing mandatory `path` param")
+                .map(|v| binary_urlsafe_decode(v))
+                .map(|v| v.map_err(|_| "Invalid `path` param value"))??,
+            encrypted_timestamp,
         })
     }
 
@@ -646,17 +650,26 @@ impl BackendOrganizationFileLinkAddr {
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair("action", "file_link")
-            .append_pair("workspace_id", &self.workspace_id.to_string())
+            .append_pair("workspace_id", &self.workspace_id.hex())
             .append_pair("path", &binary_urlsafe_encode(&self.encrypted_path));
+        if let Some(ts) = &self.encrypted_timestamp {
+            url.query_pairs_mut()
+                .append_pair("timestamp", &binary_urlsafe_encode(ts));
+        }
+
         url
+    }
+
+    pub fn encrypted_timestamp(&self) -> &Option<Vec<u8>> {
+        &self.encrypted_timestamp
     }
 
     pub fn organization_id(&self) -> &OrganizationID {
         &self.organization_id
     }
 
-    pub fn workspace_id(&self) -> &EntryID {
-        &self.workspace_id
+    pub fn workspace_id(&self) -> EntryID {
+        self.workspace_id
     }
 
     pub fn encrypted_path(&self) -> &Vec<u8> {
@@ -670,7 +683,7 @@ impl BackendOrganizationFileLinkAddr {
 
 /// Represent the URL to invite a user or a device
 /// (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BackendInvitationAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,
@@ -707,9 +720,9 @@ impl BackendInvitationAddr {
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
         let token = match token_queries.next() {
             None => return Err("Missing mandatory `token` param"),
-            Some((_, value)) => value
-                .parse::<InvitationToken>()
-                .or(Err("Invalid `token` param value"))?,
+            Some((_, value)) => {
+                InvitationToken::from_hex(&value).or(Err("Invalid `token` param value"))?
+            }
         };
         if token_queries.next().is_some() {
             return Err("Multiple values for param `token`");
@@ -737,7 +750,7 @@ impl BackendInvitationAddr {
                     InvitationType::Device => "claim_device",
                 },
             )
-            .append_pair("token", &self.token.to_string());
+            .append_pair("token", &self.token.hex());
         url
     }
 
@@ -760,7 +773,7 @@ impl BackendInvitationAddr {
 
 /// Represent the URL to invite a user using PKI
 /// (e.g. ``parsec://parsec.example.com/my_org?action=pki_enrollment``)
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BackendPkiEnrollmentAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,

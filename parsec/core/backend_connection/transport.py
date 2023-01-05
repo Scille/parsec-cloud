@@ -1,62 +1,51 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import os
-import trio
 import ssl
-import certifi
 import urllib.request
-from structlog import get_logger
 from contextlib import asynccontextmanager
-from typing import Optional, Dict, Callable, Awaitable, AsyncContextManager
+from typing import AsyncIterator, Awaitable, Callable, Dict, Union
 
-from parsec.crypto import SigningKey
-from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
+import certifi
+import trio
+from structlog import get_logger
+
+from parsec._parsec import ProtocolError
 from parsec.api.protocol import (
-    DeviceID,
-    ProtocolError,
-    HandshakeError,
-    BaseClientHandshake,
     AuthenticatedClientHandshake,
-    InvitedClientHandshake,
-    APIV1_AnonymousClientHandshake,
+    DeviceID,
+    HandshakeError,
     HandshakeOutOfBallparkError,
+    InvitedClientHandshake,
 )
-from parsec.core.types import (
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-    BackendInvitationAddr,
-)
+from parsec.api.transport import Transport, TransportClosedByPeer, TransportError
 from parsec.core.backend_connection.exceptions import (
-    BackendNotAvailable,
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendInvitationNotFound,
+    BackendNotAvailable,
     BackendOutOfBallparkError,
     BackendProtocolError,
 )
-from parsec.core.backend_connection.proxy import maybe_connect_through_proxy, blocking_io_get_proxy
-
+from parsec.core.backend_connection.proxy import blocking_io_get_proxy, maybe_connect_through_proxy
+from parsec.core.types import BackendInvitationAddr, BackendOrganizationAddr
+from parsec.crypto import SigningKey
 
 logger = get_logger()
 
-
-async def apiv1_connect(
-    addr: BackendOrganizationBootstrapAddr, keepalive: Optional[int] = None
-) -> Transport:
-    """
-    Raises:
-        BackendConnectionError
-    """
-    handshake = APIV1_AnonymousClientHandshake(addr.organization_id)
-    return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
+CLIENT_HANDSHAKE_TYPE = Union[AuthenticatedClientHandshake, InvitedClientHandshake]
 
 
 async def connect_as_invited(
-    addr: BackendInvitationAddr, keepalive: Optional[int] = None
+    addr: BackendInvitationAddr, keepalive: int | None = None
 ) -> Transport:
     handshake = InvitedClientHandshake(
-        organization_id=addr.organization_id, invitation_type=addr.invitation_type, token=addr.token
+        organization_id=addr.organization_id,
+        invitation_type=addr.invitation_type,
+        token=addr.token,
     )
+    assert addr.port is not None, "Organization port is None"
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
 
@@ -64,7 +53,7 @@ async def connect_as_authenticated(
     addr: BackendOrganizationAddr,
     device_id: DeviceID,
     signing_key: SigningKey,
-    keepalive: Optional[int] = None,
+    keepalive: int | None = None,
 ) -> Transport:
     handshake = AuthenticatedClientHandshake(
         organization_id=addr.organization_id,
@@ -72,6 +61,7 @@ async def connect_as_authenticated(
         user_signkey=signing_key,
         root_verify_key=addr.root_verify_key,
     )
+    assert addr.port is not None, "Organization port is None"
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
 
@@ -79,8 +69,8 @@ async def _connect(
     hostname: str,
     port: int,
     use_ssl: bool,
-    keepalive: Optional[int],
-    handshake: BaseClientHandshake,
+    keepalive: int | None,
+    handshake: CLIENT_HANDSHAKE_TYPE,
 ) -> Transport:
     stream = await maybe_connect_through_proxy(hostname, port, use_ssl)
 
@@ -91,7 +81,10 @@ async def _connect(
 
         except OSError as exc:
             logger.debug(
-                "Impossible to connect to backend", hostname=hostname, port=port, exc_info=exc
+                "Impossible to connect to backend",
+                hostname=hostname,
+                port=port,
+                exc_info=exc,
             )
             raise BackendNotAvailable(exc) from exc
 
@@ -100,6 +93,8 @@ async def _connect(
         stream = _upgrade_stream_to_ssl(stream, hostname)
 
     try:
+        # TODO: explain why keepalive is not passed as a parameter
+        # It may be a good reason, but I'm not entirely sure
         transport = await Transport.init_for_client(stream, host=hostname)
         transport.keepalive = keepalive
 
@@ -144,7 +139,7 @@ def _upgrade_stream_to_ssl(raw_stream: trio.abc.Stream, hostname: str) -> trio.a
     return trio.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
 
-async def _do_handshake(transport: Transport, handshake: BaseClientHandshake) -> None:
+async def _do_handshake(transport: Transport, handshake: CLIENT_HANDSHAKE_TYPE) -> None:
     try:
         challenge_req = await transport.recv()
         answer_req = handshake.process_challenge_req(challenge_req)
@@ -174,12 +169,12 @@ async def _do_handshake(transport: Transport, handshake: BaseClientHandshake) ->
 class TransportPool:
     def __init__(self, connect_cb: Callable[[], Awaitable[Transport]], max_pool: int):
         self._connect_cb = connect_cb
-        self._transports = []
+        self._transports: list[Transport] = []
         self._closed = False
         self._lock = trio.Semaphore(max_pool)
 
     @asynccontextmanager
-    async def acquire(self, force_fresh: bool = False) -> AsyncContextManager[Transport]:
+    async def acquire(self, force_fresh: bool = False) -> AsyncIterator[Transport]:
         """
         Raises:
             BackendConnectionError
@@ -216,15 +211,20 @@ class TransportPool:
 
 async def http_request(
     url: str,
-    data: Optional[bytes] = None,
+    data: bytes | None = None,
     headers: Dict[str, str] = {},
-    method: Optional[str] = None,
+    method: str | None = None,
 ) -> bytes:
-    """Raises: urllib.error.URLError or OSError"""
+    """
+    Raises:
+    - `urllib.error.URLError` (on http code != 2xx)
+    - `OSError` (on network issue)
+    (note `urllib.error.URLError` is itself a subclass of `OSError`)
+    """
 
-    def _target():
+    def _target() -> urllib.request._UrlopenRet:
         request = urllib.request.Request(url, data=data, headers=headers, method=method)
-        handlers = []
+        handlers: list[urllib.request.BaseHandler] = []
         proxy_url = blocking_io_get_proxy(target_url=url, hostname=request.host)
         if proxy_url:
             logger.debug("Using proxy to connect", proxy_url=proxy_url, target_url=url)

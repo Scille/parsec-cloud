@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 use libparsec_client_types::*;
-use libparsec_crypto::*;
+use libparsec_crypto::prelude::*;
 use libparsec_types::*;
 
 pub struct Device {
@@ -29,7 +29,7 @@ pub struct Device {
 
 impl Device {
     pub fn user_id(&self) -> &UserID {
-        &self.device_id.user_id
+        self.device_id.user_id()
     }
 
     pub fn organization_id(&self) -> &OrganizationID {
@@ -105,7 +105,7 @@ pub fn alice(coolorg: &Organization) -> Device {
             "74e860967fd90d063ebd64fb1ba6824c4c010099dd37508b7f2875a5db2ef8c9"
         )),
         profile: UserProfile::Admin,
-        user_manifest_id: "a4031e8bcdd84df8ae12bd3d05e6e20f".parse().unwrap(),
+        user_manifest_id: EntryID::from_hex("a4031e8bcdd84df8ae12bd3d05e6e20f").unwrap(),
         user_manifest_key: SecretKey::from(hex!(
             "26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a"
         )),
@@ -131,7 +131,7 @@ pub fn bob(coolorg: &Organization) -> Device {
             "16767ec446f2611f971c36f19c2dc11614d853475ac395d6c1d70ba46d07dd49"
         )),
         profile: UserProfile::Standard,
-        user_manifest_id: "71568d41afcb4e2380b3d164ace4fb85".parse().unwrap(),
+        user_manifest_id: EntryID::from_hex("71568d41afcb4e2380b3d164ace4fb85").unwrap(),
         user_manifest_key: SecretKey::from(hex!(
             "65de53d2c6cd965aa53a1ba5cc7e54b331419e6103466121996fa99a97197a48"
         )),
@@ -150,7 +150,7 @@ pub fn mallory(coolorg: &Organization) -> Device {
         device_id: "mallory@dev1".parse().unwrap(),
         device_label: None,
         human_handle: Some(
-            HumanHandle::new("mallory@example.com", "Malloryy McMalloryFace").unwrap(),
+            HumanHandle::new("mallory@example.com", "Mallory McMalloryFace").unwrap(),
         ),
         signing_key: SigningKey::generate(),
         private_key: PrivateKey::generate(),
@@ -160,6 +160,60 @@ pub fn mallory(coolorg: &Organization) -> Device {
         local_symkey: SecretKey::generate(),
         time_provider: TimeProvider::default(),
     }
+}
+
+#[fixture]
+#[once]
+pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+    UserCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        user_id: bob.user_id().clone(),
+        human_handle: bob.human_handle.clone(),
+        public_key: bob.public_key(),
+        profile: UserProfile::Standard,
+    }
+    .dump_and_sign(&alice.signing_key)
+}
+
+#[fixture]
+#[once]
+pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+    UserCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        user_id: bob.user_id().clone(),
+        human_handle: None,
+        public_key: bob.public_key(),
+        profile: UserProfile::Standard,
+    }
+    .dump_and_sign(&alice.signing_key)
+}
+
+#[fixture]
+#[once]
+pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+    DeviceCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        device_id: bob.device_id.clone(),
+        device_label: bob.device_label.clone(),
+        verify_key: bob.verify_key(),
+    }
+    .dump_and_sign(&alice.signing_key)
+}
+
+#[fixture]
+#[once]
+pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+    DeviceCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        device_id: bob.device_id.clone(),
+        device_label: None,
+        verify_key: bob.verify_key(),
+    }
+    .dump_and_sign(&alice.signing_key)
 }
 
 pub struct TmpPath(PathBuf);
@@ -188,7 +242,7 @@ pub fn tmp_path() -> TmpPath {
     TmpPath(path)
 }
 
-// Most unittests uses the current time as a shorthand to get a datetime object.
+// Most unit tests uses the current time as a shorthand to get a datetime object.
 // This is something that is cumbersome (by design !) in our code given it is
 // achieved by doing `TimeProvider::default().now()`.
 // So instead this fixture should be used when a default `DateTime` object is needed.

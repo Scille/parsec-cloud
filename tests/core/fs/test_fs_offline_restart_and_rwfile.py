@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
 from parsec.api.data import EntryName
-
 from tests.common import FileOracle
-
 
 BLOCK_SIZE = 16
 PLAYGROUND_SIZE = BLOCK_SIZE * 10

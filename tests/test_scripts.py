@@ -1,13 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import os
-import re
-import sys
-import pytest
-import psutil
 import pathlib
-import tempfile
+import re
 import subprocess
+import sys
+import tempfile
+
+import psutil
+import pytest
 
 from parsec.core.config import config_factory
 from parsec.core.local_device import list_available_devices
@@ -70,7 +72,7 @@ def run_testenv():
 )
 def test_run_testenv(run_testenv):
     available_devices = list_available_devices(run_testenv.config_dir)
-    devices = [(d.human_handle.label, str(d.device_label)) for d in available_devices]
+    devices = [(d.human_handle.label, d.device_label.str) for d in available_devices]
     assert sorted(devices) == [
         ("Alice", "laptop"),
         ("Alice", "pc"),

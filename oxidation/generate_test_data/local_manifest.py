@@ -135,7 +135,7 @@ raw_legacy_no_speculative_field = {
     "updated": NOW,
     "base": {
         "type": "user_manifest",
-        "author": str(ALICE.device_id),
+        "author": ALICE.device_id.str,
         "timestamp": NOW,
         "id": UUID("87c6b5fd3b454c94bab51d6af1c6930b"),
         "version": 0,
@@ -151,7 +151,11 @@ lum_legacy_no_speculative_field = KEY.encrypt(packb(raw_legacy_no_speculative_fi
 LocalUserManifest.decrypt_and_load(
     lum_legacy_no_speculative_field, key=KEY
 )  # Make sure data is valid
-display("local user manifest legacy no speculative field", lum_legacy_no_speculative_field, [KEY])
+display(
+    "local user manifest legacy no speculative field",
+    lum_legacy_no_speculative_field,
+    [KEY],
+)
 
 
 ################### LocalWorkspaceManifest ##################
@@ -199,7 +203,7 @@ raw_wm_legacy_no_confinment_and_speculative_fields = {
     "type": "local_workspace_manifest",
     "base": {
         "type": "workspace_manifest",
-        "author": str(ALICE.device_id),
+        "author": ALICE.device_id.str,
         "timestamp": NOW,
         "id": UUID("87c6b5fd3b454c94bab51d6af1c6930b"),
         "version": 42,
@@ -248,7 +252,7 @@ raw_fm_legacy_no_confinment_fields = {
     "type": "local_folder_manifest",
     "base": {
         "type": "folder_manifest",
-        "author": str(ALICE.device_id),
+        "author": ALICE.device_id.str,
         "timestamp": NOW,
         "id": UUID("87c6b5fd3b454c94bab51d6af1c6930b"),
         "parent": UUID("07748fbf67a646428427865fd730bf3e"),

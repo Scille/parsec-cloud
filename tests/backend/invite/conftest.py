@@ -1,25 +1,44 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 import trio
-from parsec._parsec import DateTime
 
-from parsec.crypto import PrivateKey, HashDigest
-
+from parsec._parsec import (
+    DateTime,
+    Invite1ClaimerWaitPeerRepOk,
+    Invite1GreeterWaitPeerRepOk,
+    Invite2aClaimerSendHashedNonceRepOk,
+    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2bClaimerSendNonceRepOk,
+    Invite2bGreeterSendNonceRepOk,
+    Invite3aClaimerSignifyTrustRepOk,
+    Invite3aGreeterWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+    Invite3bGreeterSignifyTrustRepOk,
+    Invite4ClaimerCommunicateRepOk,
+    Invite4GreeterCommunicateRepOk,
+    InviteDeleteRepOk,
+    InviteInfoRepOk,
+    InviteListRepOk,
+    InviteNewRepOk,
+)
+from parsec.crypto import HashDigest, PrivateKey
 from tests.backend.common import (
-    invite_info,
     invite_1_claimer_wait_peer,
     invite_1_greeter_wait_peer,
     invite_2a_claimer_send_hashed_nonce,
     invite_2a_greeter_get_hashed_nonce,
-    invite_2b_greeter_send_nonce,
     invite_2b_claimer_send_nonce,
-    invite_3a_greeter_wait_peer_trust,
+    invite_2b_greeter_send_nonce,
     invite_3a_claimer_signify_trust,
+    invite_3a_greeter_wait_peer_trust,
     invite_3b_claimer_wait_peer_trust,
     invite_3b_greeter_signify_trust,
-    invite_4_greeter_communicate,
     invite_4_claimer_communicate,
+    invite_4_greeter_communicate,
+    invite_info,
 )
 
 
@@ -45,7 +64,28 @@ class PeerControler:
 
     async def assert_ok_rep(self):
         rep = await self.get_result()
-        assert rep["status"] == "ok"
+        assert isinstance(
+            rep,
+            (
+                Invite1ClaimerWaitPeerRepOk,
+                Invite1GreeterWaitPeerRepOk,
+                Invite2aClaimerSendHashedNonceRepOk,
+                Invite2aGreeterGetHashedNonceRepOk,
+                Invite2bClaimerSendNonceRepOk,
+                Invite2bGreeterSendNonceRepOk,
+                Invite3aClaimerSignifyTrustRepOk,
+                Invite3aGreeterWaitPeerTrustRepOk,
+                Invite3bClaimerWaitPeerTrustRepOk,
+                Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+                Invite3bGreeterSignifyTrustRepOk,
+                Invite4ClaimerCommunicateRepOk,
+                Invite4GreeterCommunicateRepOk,
+                InviteDeleteRepOk,
+                InviteInfoRepOk,
+                InviteListRepOk,
+                InviteNewRepOk,
+            ),
+        )
 
     # Methods used by the peer
 

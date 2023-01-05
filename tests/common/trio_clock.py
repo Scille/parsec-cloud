@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+import math
+import time
+from contextlib import asynccontextmanager
 
 import pytest
-from contextlib import asynccontextmanager
-import time
-import math
 import trio
 from trio.testing import MockClock
 
-
 # In the test we often want to wait on something that in theory would be
-# intaneously available but in fact depends on side effects.
+# instantaneously available but in fact depends on side effects.
 # Exemple of side effects:
 # - How fast & currently loaded is the CPU (especially when running on the CI)
 # - Network socket
 # - PostgreSQL database
 # We have to decide how long we want to wait on those things, considering:
 # - the shorter we wait, the more convenient it is for when developping
-# - the longer we wait, the more we avoid false positive when side effets are unexpectly long
+# - the longer we wait, the more we avoid false positive when side effets are unexpectedly long
 # - if we wait forever we get rid of the false positive but we also hang forever
 #   in case a mistake in the code lead to a deadlock :(
 # So the solution is to make this configurable: a good middleground by default
@@ -48,19 +49,19 @@ async def real_clock_timeout():
     # Starting a thread can be very slow (looking at you, Windows) so better
     # take the starting time here
     start = time.monotonic()
-    event_occured = False
+    event_occurred = False
     async with trio.open_nursery() as nursery:
 
-        def _run_until_timeout_or_event_occured():
-            while not event_occured and time.monotonic() - start < timeout:
+        def _run_until_timeout_or_event_occurred():
+            while not event_occurred and time.monotonic() - start < timeout:
                 # cancelling `_watchdog` coroutine doesn't stop the thread,
                 # so we sleep only by a short amount of time in order to
                 # detect early enough that we are no longer needed
                 time.sleep(0.01)
 
         async def _watchdog():
-            await trio.to_thread.run_sync(_run_until_timeout_or_event_occured)
-            if not event_occured:
+            await trio.to_thread.run_sync(_run_until_timeout_or_event_occurred)
+            if not event_occurred:
                 raise trio.TooSlowError()
 
         # Note: We could have started the thread directly instead of using
@@ -73,7 +74,7 @@ async def real_clock_timeout():
         try:
             yield
         finally:
-            event_occured = True
+            event_occurred = True
         nursery.cancel_scope.cancel()
 
 
@@ -115,17 +116,17 @@ def frozen_clock():
     # On top of that we must be careful about the configuration of the mock clock !
     # As we said the Parsec codebase (i.e. not the tests) uses the trio clock for
     # timeout handling & sleep (e.g. in the managers), hence:
-    # - Using `MockClock.rate` with a high value still lead to the issue dicussed above.
+    # - Using `MockClock.rate` with a high value still lead to the issue discussed above.
     # - `trio.to_thread.run_sync` doesn't play nice with `MockClock.autojump_threshold = 0`
     #   given trio considers the coroutine waiting for the thread is idle and hence
     #   trigger the clock jump. So a perfectly fine async code may break tests in
     #   an unexpected way if it starts using `trio.to_thread.run_sync`...
     #
-    # So the idea of the `frozen_clock` is to only advance when expecially
+    # So the idea of the `frozen_clock` is to only advance when especially
     # specified in the test (i.e. rate 0 and no autojump_threshold).
     # This way only the test code has control over the application timeout
     # handling, and we have a clean separation with the test timeout (i.e. using
-    # `real_clock_timeout` to detect the test endup in a deadlock)
+    # `real_clock_timeout` to detect the test end up in a deadlock)
     #
     # The drawback of this approach is manually handling time jump can be cumbersome.
     # For instance the backend connection retry logic:

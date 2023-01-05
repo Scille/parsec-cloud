@@ -1,27 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import os
-import sys
-import trio
 import errno
-import signal
-import threading
 import importlib.resources
-from pathlib import PurePath
-from fuse import FUSE
-from structlog import get_logger
+import os
+import signal
+import sys
+import threading
 from contextlib import asynccontextmanager
 from itertools import count
+from pathlib import Path
+from types import FrameType
+from typing import AsyncGenerator, Tuple, cast
 
-from parsec.event_bus import EventBus
+import trio
+from fuse import FUSE
+from structlog import get_logger
+
+from parsec._parsec import CoreEvent, DateTime, EntryID
 from parsec.core import resources as resources_module
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.core_events import CoreEvent
+from parsec.core.mountpoint.exceptions import MountpointDriverCrash
 from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
-from parsec.core.mountpoint.exceptions import MountpointDriverCrash
-
+from parsec.event_bus import EventBus
 
 __all__ = ("fuse_mountpoint_runner",)
 
@@ -29,12 +32,11 @@ __all__ = ("fuse_mountpoint_runner",)
 logger = get_logger()
 
 
-def _sig_ign(sig, stack):
+def _sig_ign(sig: int, stack: FrameType | None) -> None:
     """A signal handler behaving like signal.SIG_IGN"""
-    pass
 
 
-def _sig_dfl(sig, stack):
+def _sig_dfl(sig: int, stack: FrameType | None) -> None:
     """A signal handler behaving like signal.SIG_DFL"""
     # Restore the DLF handler
     signal.signal(sig, signal.SIG_DFL)
@@ -42,7 +44,7 @@ def _sig_dfl(sig, stack):
     signal.raise_signal(sig)
 
 
-def _patch_signals():
+def _patch_signals() -> None:
     """Prevent libfuse2 to mess with the default signal handlers in python.
 
     The fusepy runner (FUSE) relies on the `fuse_main_real` function from libfuse2.
@@ -63,18 +65,23 @@ def _patch_signals():
     using the `mountpoint_service` fixture, which starts by calling `_patch_signals`
     directly before delegating to subthreads.
     """
-    # The default value for SIGPIPE in python is IGN
-    if signal.getsignal(signal.SIGPIPE) == signal.SIG_IGN:
-        signal.signal(signal.SIGPIPE, _sig_ign)
-    # The default value for SIGHUP in python is DFL
-    if signal.getsignal(signal.SIGHUP) == signal.SIG_DFL:
-        signal.signal(signal.SIGHUP, _sig_dfl)
-    # The default value for SIGTERM in python is DFL
-    if signal.getsignal(signal.SIGTERM) == signal.SIG_DFL:
-        signal.signal(signal.SIGTERM, _sig_dfl)
+    if sys.platform != "win32":
+        # The default value for SIGPIPE in python is IGN
+        if signal.getsignal(signal.SIGPIPE) == signal.SIG_IGN:
+            signal.signal(signal.SIGPIPE, _sig_ign)
+        # The default value for SIGHUP in python is DFL
+        if signal.getsignal(signal.SIGHUP) == signal.SIG_DFL:
+            signal.signal(signal.SIGHUP, _sig_dfl)
+        # The default value for SIGTERM in python is DFL
+        if signal.getsignal(signal.SIGTERM) == signal.SIG_DFL:
+            signal.signal(signal.SIGTERM, _sig_dfl)
+    else:
+        raise RuntimeError("Attempted to patch unix signals on windows")
 
 
-async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) -> PurePath:
+# Mypy reports a missing return statement, however it's not possible to exit this
+# function without raising an exception or successfully return
+async def _bootstrap_mountpoint(base_mountpoint_path: Path, workspace_fs: WorkspaceFS) -> Tuple[Path, int]:  # type: ignore[return]
     # Find a suitable path where to mount the workspace. The check we are doing
     # here are not atomic (and the mount operation is not itself atomic anyway),
     # hence there is still edgecases where the mount can crash due to concurrent
@@ -109,7 +116,7 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
             continue
 
 
-async def _teardown_mountpoint(mountpoint_path):
+async def _teardown_mountpoint(mountpoint_path: Path) -> None:
     try:
         await trio.Path(mountpoint_path).rmdir()
     except OSError:
@@ -120,10 +127,10 @@ async def _teardown_mountpoint(mountpoint_path):
 async def fuse_mountpoint_runner(
     user_fs: UserFS,
     workspace_fs: WorkspaceFS,
-    base_mountpoint_path: PurePath,
-    config: dict,
+    base_mountpoint_path: Path,
+    config: dict[object, object],
     event_bus: EventBus,
-):
+) -> AsyncGenerator[Path, None]:
     """
     Raises:
         MountpointDriverCrash
@@ -138,88 +145,90 @@ async def fuse_mountpoint_runner(
     )
 
     # Prepare event information
-    event_kwargs = {
+    event_kwargs: dict[str, Path | EntryID | DateTime | None] = {
         "mountpoint": mountpoint_path,
         "workspace_id": workspace_fs.workspace_id,
-        "timestamp": getattr(workspace_fs, "timestamp", None),
+        "timestamp": cast(DateTime, getattr(workspace_fs, "timestamp", None)),
     }
 
-    fuse_operations = FuseOperations(fs_access, **event_kwargs)
+    # Prevent mypy arg-type check to fail because of dict unpacking (e.g **Dict[...] incompatible with ...)
+    fuse_operations = FuseOperations(fs_access, **event_kwargs)  # type: ignore[arg-type]
 
     try:
         teardown_cancel_scope = None
         event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
 
-        async with trio.open_service_nursery() as nursery:
+        # `open_service_nursery` does not exists in trio according to mypy
+        async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
 
             # Let fusepy decode the paths using the current file system encoding
             # Note that this does not prevent the user from using a certain encoding
             # in the context of the parsec app and another encoding in the context of
             # an application accessing the mountpoint. In this case, an encoding error
-            # might be raised while fuspy tries to decode the path. If that happens,
-            # fuspy will log the error and simply return EINVAL, which is acceptable.
+            # might be raised while fusepy tries to decode the path. If that happens,
+            # fusepy will log the error and simply return EINVAL, which is acceptable.
             encoding = sys.getfilesystemencoding()
 
-            def _run_fuse_thread():
-                with importlib.resources.files(resources_module).joinpath(
+            def _run_fuse_thread() -> None:
+                parsec_icns_path = importlib.resources.files(resources_module).joinpath(
                     "parsec.icns"
-                ) as parsec_icns_path:
+                )
+                fuse_platform_options = {}
+                if sys.platform == "darwin":
+                    fuse_platform_options = {
+                        "local": True,
+                        "defer_permissions": True,
+                        "volname": workspace_fs.get_workspace_name(),
+                        "volicon": str(parsec_icns_path.absolute()),
+                    }
+                    # osxfuse-specific options :
+                    # local: allows mountpoint to show up correctly in finder (+ desktop)
+                    # volname: specify volume name (default is OSXFUSE [...])
+                    # volicon: specify volume icon (default is macOS drive icon)
 
-                    fuse_platform_options = {}
-                    if sys.platform == "darwin":
-                        fuse_platform_options = {
-                            "local": True,
-                            "defer_permissions": True,
-                            "volname": workspace_fs.get_workspace_name(),
-                            "volicon": str(parsec_icns_path.absolute()),
-                        }
-                        # osxfuse-specific options :
-                        # local: allows mountpoint to show up correctly in finder (+ desktop)
-                        # volname: specify volume name (default is OSXFUSE [...])
-                        # volicon: specify volume icon (default is macOS drive icon)
+                # On defer_permissions: "The defer_permissions option [...] causes macFUSE to assume that all
+                # accesses are allowed; it will forward all operations to the file system, and it is up to
+                # somebody else to eventually allow or deny the operations." See
+                # https://github.com/osxfuse/osxfuse/wiki/Mount-options#default_permissions-and-defer_permissions
+                # This option is necessary on MacOS to give the right permissions to files inside FUSE drives,
+                # otherwise it impedes upon saving and auto-saving from Apple software (TextEdit, Preview...)
+                # due to the gid of files seemingly not having writing rights from the software perspective.
+                # One other solution found for this issue was to change the gid of the mountpoint and its files
+                # from staff (default) to wheel (admin gid). Checking defer_permissions allows to ignore the gid
+                # issue entirely and lets Parsec itself handle read/write rights inside workspaces.
 
-                    # On defer_permissions: "The defer_permissions option [...] causes macFUSE to assume that all
-                    # accesses are allowed; it will forward all operations to the file system, and it is up to
-                    # somebody else to eventually allow or deny the operations." See
-                    # https://github.com/osxfuse/osxfuse/wiki/Mount-options#default_permissions-and-defer_permissions
-                    # This option is necessary on MacOS to give the right permissions to files inside FUSE drives,
-                    # otherwise it impedes upon saving and auto-saving from Apple softwares (TextEdit, Preview...)
-                    # due to the gid of files seemingly not having writing rights from the software perspective.
-                    # One other solution found for this issue was to change the gid of the mountpoint and its files
-                    # from staff (default) to wheel (admin gid). Checking defer_permissions allows to ignore the gid
-                    # issue entirely and lets Parsec itself handle read/write rights inside workspaces.
+                else:
+                    fuse_platform_options = {"auto_unmount": True}
 
-                    else:
-                        fuse_platform_options = {"auto_unmount": True}
+                logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
+                try:
+                    # Do not let fuse start if the runner is stopping
+                    # It's important that `fuse_thread_started` is set before the check
+                    # in order to avoid race conditions
+                    fuse_thread_started.set()
+                    if teardown_cancel_scope is not None:
+                        return
+                    FUSE(
+                        fuse_operations,
+                        # this method exists in concrete instance (Posix or Windows path)
+                        str(mountpoint_path.resolve(strict=False)),
+                        foreground=True,
+                        encoding=encoding,
+                        **fuse_platform_options,
+                        **config,
+                    )
 
-                    logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
+                except Exception as exc:
                     try:
-                        # Do not let fuse start if the runner is stopping
-                        # It's important that `fuse_thread_started` is set before the check
-                        # in order to avoid race conditions
-                        fuse_thread_started.set()
-                        if teardown_cancel_scope is not None:
-                            return
-                        FUSE(
-                            fuse_operations,
-                            str(mountpoint_path.absolute()),
-                            foreground=True,
-                            encoding=encoding,
-                            **fuse_platform_options,
-                            **config,
-                        )
+                        errcode = errno.errorcode[exc.args[0]]
+                    except (KeyError, IndexError):
+                        errcode = f"Unknown error code: {exc}"
+                    raise MountpointDriverCrash(
+                        f"Fuse has crashed on {mountpoint_path}: {errcode}"
+                    ) from exc
 
-                    except Exception as exc:
-                        try:
-                            errcode = errno.errorcode[exc.args[0]]
-                        except (KeyError, IndexError):
-                            errcode = f"Unknown error code: {exc}"
-                        raise MountpointDriverCrash(
-                            f"Fuse has crashed on {mountpoint_path}: {errcode}"
-                        ) from exc
-
-                    finally:
-                        fuse_thread_stopped.set()
+                finally:
+                    fuse_thread_stopped.set()
 
             # We're about to call the `fuse_main_real` function from libfuse, so let's make sure
             # the signals are correctly patched before that (`_path_signals` is idempotent)
@@ -240,7 +249,9 @@ async def fuse_mountpoint_runner(
             await _teardown_mountpoint(mountpoint_path)
 
 
-async def _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev):
+async def _wait_for_fuse_ready(
+    mountpoint_path: Path, fuse_thread_started: threading.Event, initial_st_dev: int
+) -> None:
     trio_mountpoint_path = trio.Path(mountpoint_path)
     # Polling until fuse is ready
     while True:
@@ -264,8 +275,11 @@ async def _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_
 
 
 async def _stop_fuse_thread(
-    mountpoint_path, fuse_operations, fuse_thread_started, fuse_thread_stopped
-):
+    mountpoint_path: Path,
+    fuse_operations: FuseOperations,
+    fuse_thread_started: threading.Event,
+    fuse_thread_stopped: threading.Event,
+) -> None:
     # Nothing to do if the fuse thread is not running
     if fuse_thread_stopped.is_set() or not fuse_thread_started.is_set():
         return
@@ -288,9 +302,9 @@ async def _stop_fuse_thread(
                 break
             # Restart the unmount process if necessary, this is needed in
             # case the stop is ordered before fuse has finished started (hence
-            # the unmount command can run before the OS mount has occured).
+            # the unmount command can run before the OS mount has occurred).
             # Of course this means in theory we could be umounting by mistake
-            # an unrelated mountpoint that tooks our path, but it's a really
+            # an unrelated mountpoint that took our path, but it's a really
             # unlikely event.
             if process.poll() is not None:
                 process = await trio.lowlevel.open_process(process_args)
@@ -307,7 +321,7 @@ async def _stop_fuse_thread(
         fuse_operations.schedule_exit()
 
         # Ping fuse by performing an access from a daemon thread
-        def _ping_fuse_thread_target():
+        def _ping_fuse_thread_target() -> None:
             try:
                 os.stat(mountpoint_path / ".__shutdown_fuse__")
             except OSError:

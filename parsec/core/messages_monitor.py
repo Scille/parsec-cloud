@@ -1,24 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec.core.core_events import CoreEvent
+from typing import TYPE_CHECKING, cast
+
 import trio
 
-from parsec.core.fs import FSBackendOfflineError
+from parsec._parsec import CoreEvent
 from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.fs import FSBackendOfflineError
+from parsec.core.fs.userfs import UserFS
+from parsec.event_bus import EventBus, EventCallback
+
+if TYPE_CHECKING:
+    from parsec.core.backend_connection.authenticated import MonitorTaskStatus
 
 
-async def freeze_messages_monitor_mockpoint():
+async def freeze_messages_monitor_mockpoint() -> None:
     """
     Noop function that could be mocked during tests to be able to freeze the
     monitor coroutine running in background
     """
-    pass
 
 
-async def monitor_messages(user_fs, event_bus, task_status):
+async def monitor_messages(
+    user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus
+) -> None:
     wakeup = trio.Event()
 
-    def _on_message_received(event, index):
+    def _on_message_received(event: CoreEvent, index: int) -> None:
         nonlocal wakeup
         wakeup.set()
         # Don't wait for the *actual* awakening to change the status to
@@ -26,7 +35,9 @@ async def monitor_messages(user_fs, event_bus, task_status):
         # not yet notified to task_status
         task_status.awake()
 
-    with event_bus.connect_in_context((CoreEvent.BACKEND_MESSAGE_RECEIVED, _on_message_received)):
+    with event_bus.connect_in_context(
+        (CoreEvent.BACKEND_MESSAGE_RECEIVED, cast(EventCallback, _on_message_received))
+    ):
         try:
             await user_fs.process_last_messages()
             task_status.started()

@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import re
 import argparse
 import itertools
+import re
 import subprocess
-from shutil import which
 from pathlib import Path
-
+from shutil import which
 
 SIGNATURE_AUTHOR = "Scille"
 SIGNATURE_DESCRIPTION = f"Parsec by {SIGNATURE_AUTHOR}"

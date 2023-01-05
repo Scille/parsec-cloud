@@ -1,19 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+import importlib.resources
+import re
+from contextlib import contextmanager
 
 import pytest
-import re
 import trio
 import trio_asyncio
 import triopg
 from asyncpg.cluster import TempCluster
-from contextlib import contextmanager
-import importlib.resources
 
 from parsec.backend.postgresql import migrations as migrations_module
 from parsec.backend.postgresql.handler import (
-    retrieve_migrations,
-    apply_migrations,
     MIGRATION_FILE_PATTERN,
+    apply_migrations,
+    retrieve_migrations,
 )
 
 

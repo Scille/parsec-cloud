@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 """
 Define all the FSError classes, using the following hierarchy:
@@ -11,16 +12,16 @@ Define all the FSError classes, using the following hierarchy:
         +-- FSRemoteOperationError
 
 """
-from __future__ import annotations
 
-import os
 import errno
 import io
+import os
+from typing import TYPE_CHECKING, Union
 
-from parsec.core.types import EntryID, ChunkID
+from parsec._parsec import SequesterServiceID
+from parsec.api.data import AnyRemoteManifest
 from parsec.core.fs.utils import ntstatus
-
-from typing import Optional, Union, TYPE_CHECKING
+from parsec.core.types import ChunkID, EntryID
 
 # Avoid cyclic imports:
 # - `FsPath` methods might raise an `FSNameTooLongError` which inherits from `FsOperationError`
@@ -36,15 +37,11 @@ class FSInternalError(Exception):
     Base class for exceptions that are not meant to propagate out of the fs module
     """
 
-    pass
-
 
 class FSError(Exception):
     """
     Base class for all fs exceptions
     """
-
-    pass
 
 
 class FSMiscError(FSError):
@@ -58,21 +55,24 @@ class FSOperationError(OSError, FSError):
     Base class for the exceptions that may be raised during the execution of an operation
     """
 
-    ERRNO: Optional[int] = None
-    WINERROR: Optional[int] = None
-    NTSTATUS: Optional[ntstatus] = None
+    ERRNO: int | None = None
+    WINERROR: int | None = None
+    NTSTATUS: ntstatus | None = None
 
     def __init__(
         self,
         arg: object = None,
-        filename: Optional[AnyPath] = None,
-        filename2: Optional[AnyPath] = None,
+        filename: AnyPath | None = None,
+        filename2: AnyPath | None = None,
     ):
         # Get the actual message and save it
         if arg is None and self.ERRNO is not None:
             self.message = os.strerror(self.ERRNO)
         else:
-            self.message = str(arg)
+            if hasattr(arg, "str"):
+                self.message = arg.str  # type: ignore[attr-defined]
+            else:
+                self.message = str(arg)
 
         # Error with no standard errno
         if self.ERRNO is None:
@@ -108,7 +108,7 @@ class FSLocalOperationError(FSOperationError):
 
 class FSRemoteOperationError(FSOperationError):
     """
-    Used to represent error in the underlaying layers (e.g. data inconsistency,
+    Used to represent error in the underlying layers (e.g. data inconsistency,
     data access refused by the backend etc.)
     """
 
@@ -152,7 +152,10 @@ class FSLocalStorageClosedError(FSInternalError):
     pass
 
 
-class FSLocalStorageOperationalError(FSInternalError):
+# Local storage errors
+
+
+class FSLocalStorageOperationalError(FSError):
     pass
 
 
@@ -241,6 +244,27 @@ class FSNameTooLongError(FSLocalOperationError):
 class FSBackendOfflineError(FSRemoteOperationError):
     ERRNO = errno.EHOSTUNREACH
     NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
+
+
+class FSSequesterServiceRejectedError(FSRemoteOperationError):
+    def __init__(
+        self,
+        id: EntryID,
+        service_id: SequesterServiceID,
+        service_label: str,
+        reason: str,
+        manifest: AnyRemoteManifest | None = None,
+    ):
+        super().__init__(id)
+        self.id = id
+        self.service_id = service_id
+        self.service_label = service_label
+        self.reason = reason
+        self.manifest = manifest
+
+
+class FSServerUploadTemporarilyUnavailableError(FSRemoteOperationError):
+    pass
 
 
 class FSRemoteManifestNotFound(FSRemoteOperationError):
