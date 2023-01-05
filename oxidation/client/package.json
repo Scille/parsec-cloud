@@ -67,7 +67,7 @@
         "@vue/test-utils": "^2.2.6",
         "@vue/vue3-jest": "^27.0.0-alpha.3",
         "babel-jest": "^27.3.1",
-        "cypress": "^10.9.0",
+        "cypress": "^11.0.0",
         "eslint": "^8.16.0",
         "eslint-plugin-cypress": "^2.12.1",
         "eslint-plugin-vue": "^8.2.0",
