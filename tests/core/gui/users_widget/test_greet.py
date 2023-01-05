@@ -1,31 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from functools import partial
 
 import pytest
 import trio
 from PyQt5 import QtCore
-from contextlib import asynccontextmanager
-from functools import partial
 
-from parsec.utils import start_task
-from parsec.core.gui.lang import translate
-from parsec._parsec import DateTime, InvitationType
-from parsec.api.protocol import (
-    DeviceLabel,
-    InvitationDeletedReason,
-    HumanHandle,
-    UserProfile,
-)
-from parsec.core.types import BackendInvitationAddr
+from parsec._parsec import ActiveUsersLimit, DateTime
+from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationDeletedReason, UserProfile
 from parsec.core.backend_connection import backend_invited_cmds_factory
-from parsec.core.invite import claimer_retrieve_info
-from parsec.core.gui.users_widget import UserInvitationButton, UserButton
 from parsec.core.gui.greet_user_widget import (
-    GreetUserInstructionsWidget,
     GreetUserCheckInfoWidget,
     GreetUserCodeExchangeWidget,
+    GreetUserInstructionsWidget,
     GreetUserWidget,
 )
-
+from parsec.core.gui.lang import translate
+from parsec.core.gui.users_widget import UserButton, UserInvitationButton
+from parsec.core.invite import claimer_retrieve_info
+from parsec.utils import start_task
 from tests.common import customize_fixtures, real_clock_timeout
 
 
@@ -41,7 +36,13 @@ def catch_greet_user_widget(widget_catcher_factory):
 
 @pytest.fixture
 def GreetUserTestBed(
-    aqtbot, catch_greet_user_widget, autoclose_dialog, backend, running_backend, logged_gui
+    aqtbot,
+    catch_greet_user_widget,
+    autoclose_dialog,
+    backend,
+    running_backend,
+    logged_gui,
+    monkeypatch,
 ):
     class _GreetUserTestBed:
         def __init__(self):
@@ -58,7 +59,7 @@ def GreetUserTestBed(
             self.users_widget = None
             self.invitation_widget = None
             self.invitation_addr = None
-            self.greet_user_widget = None
+            self.greet_user_widget: GreetUserWidget | None = None
             self.greet_user_information_widget = None
             self.cmds = None
 
@@ -89,29 +90,27 @@ def GreetUserTestBed(
             author = logged_gui.test_get_central_widget().core.device
             claimer_email = self.requested_email
 
-            # Create new invitation
-
-            invitation = await backend.invite.new_for_user(
-                organization_id=author.organization_id,
-                greeter_user_id=author.user_id,
-                claimer_email=claimer_email,
-            )
-            invitation_addr = BackendInvitationAddr.build(
-                backend_addr=author.organization_addr.get_backend_addr(),
-                organization_id=author.organization_id,
-                invitation_type=InvitationType.USER(),
-                token=invitation.token,
-            )
-
-            # Switch to users page
-
             users_widget = await logged_gui.test_switch_to_users_widget()
 
-            assert users_widget.layout_users.count() == 4
+            monkeypatch.setattr(
+                "parsec.core.gui.users_widget.get_text_input",
+                lambda *args, **kwargs: claimer_email,
+            )
+
+            # Create new invitation
+            aqtbot.mouse_click(users_widget.button_add_user, QtCore.Qt.LeftButton)
+
+            def _invitation_shown():
+                assert users_widget.layout_users.count() == 4
+                invitation_widget = users_widget.layout_users.itemAt(0).widget()
+                assert isinstance(invitation_widget, UserInvitationButton)
+
+            await aqtbot.wait_until(_invitation_shown)
 
             invitation_widget = users_widget.layout_users.itemAt(0).widget()
-            assert isinstance(invitation_widget, UserInvitationButton)
             assert invitation_widget.email == claimer_email
+
+            invitation_addr = invitation_widget.addr
 
             # Click on the invitation button
 
@@ -126,7 +125,9 @@ def GreetUserTestBed(
             def _greet_user_displayed():
                 assert greet_user_widget.dialog.isVisible()
                 assert greet_user_widget.isVisible()
-                assert greet_user_widget.dialog.label_title.text() == "Greet a new user"
+                assert greet_user_widget.dialog.label_title.text() == translate(
+                    "TEXT_GREET_USER_TITLE"
+                )
                 assert greet_user_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_user_displayed)
@@ -152,7 +153,9 @@ def GreetUserTestBed(
             def _greet_user_displayed():
                 assert greet_user_widget.dialog.isVisible()
                 assert greet_user_widget.isVisible()
-                assert greet_user_widget.dialog.label_title.text() == "Greet a new user"
+                assert greet_user_widget.dialog.label_title.text() == translate(
+                    "TEXT_GREET_USER_TITLE"
+                )
                 assert greet_user_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_user_displayed)
@@ -176,11 +179,9 @@ def GreetUserTestBed(
         async def step_1_start_greet(self):
             gui_w = self.greet_user_information_widget
 
-            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
-
             def _greet_started():
                 assert not gui_w.button_start.isEnabled()
-                assert gui_w.button_start.text() == "Waiting for the other user..."
+                assert gui_w.button_start.text() == translate("TEXT_GREET_USER_WAITING")
 
             await aqtbot.wait_until(_greet_started)
 
@@ -192,6 +193,14 @@ def GreetUserTestBed(
             self.claimer_initial_ctx = await claimer_retrieve_info(self.cmds)
             self.claimer_in_progress_ctx = await self.claimer_initial_ctx.do_wait_peer()
             greeter_sas = self.claimer_in_progress_ctx.greeter_sas
+
+            def _greet_ready():
+                assert gui_w.button_start.isEnabled()
+                assert gui_w.button_start.text() == translate("TEXT_GREET_USER_READY")
+
+            await aqtbot.wait_until(_greet_ready)
+
+            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
 
             guce_w = await catch_greet_user_widget()
             assert isinstance(guce_w, GreetUserCodeExchangeWidget)
@@ -314,7 +323,26 @@ def GreetUserTestBed(
                 ]
                 # User list should be updated
                 assert u_w.layout_users.count() == 4
-                user_widget = u_w.layout_users.itemAt(3).widget()
+                # Should all be users, no invitation
+                assert all(
+                    isinstance(u_w.layout_users.itemAt(i).widget(), UserButton)
+                    for i in range(u_w.layout_users.count())
+                )
+
+                user_widget = None
+                # Order can change a little bit depending on whether the user has a human handle or not
+                for i in range(u_w.layout_users.count()):
+                    user_widget = u_w.layout_users.itemAt(i).widget()
+                    if (
+                        isinstance(user_widget, UserButton)
+                        and user_widget.user_info.human_handle is not None
+                    ):
+                        if (
+                            user_widget.user_info.human_handle.email == self.granted_email
+                            and user_widget.user_info.human_handle.label == self.granted_label
+                        ):
+                            break
+
                 assert isinstance(user_widget, UserButton)
                 assert user_widget.user_info.human_handle.email == self.granted_email
                 assert user_widget.user_info.human_handle.label == self.granted_label
@@ -329,7 +357,16 @@ def GreetUserTestBed(
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
-async def test_greet_user(GreetUserTestBed):
+@customize_fixtures(alice_has_human_handle=True)
+async def test_greet_user_greeter_has_human_handle(GreetUserTestBed):
+    await GreetUserTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(alice_has_human_handle=False)
+async def test_greet_user_greeter_does_not_have_human_handle(GreetUserTestBed):
     await GreetUserTestBed().run()
 
 
@@ -632,7 +669,9 @@ async def test_greet_user_invitation_cancelled(
 async def test_greet_user_but_active_user_limit_reached(
     aqtbot, autoclose_dialog, backend, alice, GreetUserTestBed
 ):
-    await backend.organization.update(alice.organization_id, active_users_limit=1)
+    await backend.organization.update(
+        alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(1)
+    )
 
     class GreetUserButActiveUserLimitReachedTestBed(GreetUserTestBed):
         async def step_6_validate_claim_info(self):
@@ -647,7 +686,7 @@ async def test_greet_user_but_active_user_limit_reached(
                 assert autoclose_dialog.dialogs == [
                     (
                         "Error",
-                        "Active users limit reached, increase the limit or revoke some users before retrying.",
+                        "Active users limit reached, increase the limit or revoke some users before trying again.",
                     )
                 ]
                 assert not self.greet_user_widget.isVisible()

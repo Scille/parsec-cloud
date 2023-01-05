@@ -3,10 +3,13 @@
 mod hash;
 mod private;
 mod secret;
+mod sequester;
 mod sign;
 mod utils;
 
 pub use hash::*;
 pub use private::*;
 pub use secret::*;
+pub use sequester::*;
 pub use sign::*;
+pub use utils::*;

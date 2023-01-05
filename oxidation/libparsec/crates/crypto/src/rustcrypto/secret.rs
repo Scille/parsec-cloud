@@ -1,21 +1,47 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::Blake2bMac;
-use digest::{consts::U5, Mac};
-use serde::{Deserialize, Serialize};
+use crypto_box::aead::Aead;
+use digest::{consts::U5, KeyInit, Mac};
+use rand_08::{rngs::OsRng, RngCore};
+use serde::Deserialize;
 use serde_bytes::Bytes;
-use xsalsa20poly1305::aead::{Aead, NewAead};
-use xsalsa20poly1305::{generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
+use xsalsa20poly1305::{Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
 
 use crate::CryptoError;
 
 type Blake2bMac40 = Blake2bMac<U5>;
 
+/// Memory block size in bytes
+const BLOCKSIZE: u32 = 1024;
+/// The maximum amount of RAM that the functions in this module will use, in bytes.
+/// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L128
+const MEMLIMIT_INTERACTIVE: u32 = 33_554_432;
+/// The maximum number of computations to perform when using the functions.
+/// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L127
+const OPSLIMIT_INTERACTIVE: u32 = 4;
+/// Degree of parallelism
+const PARALLELISM: u32 = 1;
+
+lazy_static::lazy_static! {
+    static ref ARGON2: Argon2<'static> =
+        Argon2::new(
+            Algorithm::Argon2i,
+            Version::V0x13,
+            Params::new(
+                MEMLIMIT_INTERACTIVE / BLOCKSIZE,
+                OPSLIMIT_INTERACTIVE,
+                PARALLELISM,
+                Some(KEY_SIZE),
+            )
+            .expect("Can't fail"),
+        );
+}
+
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
 pub struct SecretKey(Key);
-
-crate::macros::impl_key_debug!(SecretKey);
 
 impl SecretKey {
     pub const ALGORITHM: &'static str = "xsalsa20poly1305";
@@ -30,7 +56,7 @@ impl SecretKey {
         // TODO: zero copy with preallocated buffer
         // let mut ciphered = Vec::with_capacity(NONCE_SIZE + TAG_SIZE + data.len());
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce = generate_nonce(&mut rand_08::thread_rng());
+        let nonce = XSalsa20Poly1305::generate_nonce(&mut rand_08::thread_rng());
         // TODO: handle this error ?
         let mut ciphered = cipher.encrypt(&nonce, data).expect("encryption failure !");
         let mut res = vec![];
@@ -50,51 +76,43 @@ impl SecretKey {
     pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
         // TODO only work for 5 bytes -> need to improve
         if digest_size != 5 {
-            panic!("Not implemeted for this digest size");
+            panic!("Not implemented for this digest size");
         }
         // TODO investigate why new() is not working
         // let mut hasher = Blake2bMac40::new(&self.0);
         // &self.0 always provide the correct key size
-        let mut hasher = Blake2bMac40::new_from_slice(&self.0).unwrap_or_else(|_| unreachable!());
+        let mut hasher = <Blake2bMac40 as KeyInit>::new_from_slice(self.0.as_ref())
+            .unwrap_or_else(|_| unreachable!());
         hasher.update(data);
         let res = hasher.finalize();
         res.into_bytes().to_vec()
     }
-}
 
-impl AsRef<[u8]> for SecretKey {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
+    pub fn generate_salt() -> Vec<u8> {
+        // https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L121
+        const SALTBYTES: usize = 16;
+
+        let mut salt = vec![0; SALTBYTES];
+        OsRng.fill_bytes(&mut salt);
+
+        salt
+    }
+
+    pub fn from_password(password: &str, salt: &[u8]) -> Self {
+        let mut key = [0; KEY_SIZE];
+
+        ARGON2
+            .hash_password_into(password.as_bytes(), salt, &mut key)
+            .expect("Invalid salt");
+
+        Self::from(key)
     }
 }
 
-impl TryFrom<&[u8]> for SecretKey {
-    type Error = CryptoError;
-    fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        <[u8; Self::SIZE]>::try_from(data)
-            .map(Self::from)
-            .map_err(|_| CryptoError::DataSize)
-    }
-}
-
-impl From<[u8; Self::SIZE]> for SecretKey {
-    fn from(key: [u8; Self::SIZE]) -> Self {
+impl From<[u8; KEY_SIZE]> for SecretKey {
+    fn from(key: [u8; KEY_SIZE]) -> Self {
         Self(key.into())
     }
 }
 
-impl TryFrom<&Bytes> for SecretKey {
-    type Error = CryptoError;
-    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
-        Self::try_from(data.as_ref())
-    }
-}
-
-impl Serialize for SecretKey {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_bytes(self.as_ref())
-    }
-}
+crate::common::impl_secret_key!(SecretKey);

@@ -1,27 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
-import trio
-from parsec._parsec import DateTime
-from PyQt5 import QtCore
 from contextlib import asynccontextmanager
 from functools import partial
 
-from parsec._parsec import InvitationType
-from parsec.api.protocol import (
-    InvitationToken,
-    InvitationDeletedReason,
-    DeviceLabel,
-)
-from parsec.core.types import BackendInvitationAddr
-from parsec.core.invite import DeviceGreetInitialCtx
-from parsec.core.gui.lang import translate
+import pytest
+import trio
+from PyQt5 import QtCore
+
+from parsec._parsec import DateTime, InvitationType
+from parsec.api.protocol import DeviceLabel, InvitationDeletedReason, InvitationToken
 from parsec.core.gui.claim_device_widget import (
     ClaimDeviceCodeExchangeWidget,
-    ClaimDeviceProvideInfoWidget,
     ClaimDeviceInstructionsWidget,
+    ClaimDeviceProvideInfoWidget,
     ClaimDeviceWidget,
 )
+from parsec.core.gui.lang import translate
+from parsec.core.invite import DeviceGreetInitialCtx
+from parsec.core.types import BackendInvitationAddr
 
 
 @pytest.fixture
@@ -91,7 +88,7 @@ def ClaimDeviceTestBed(
             invitation_addr = BackendInvitationAddr.build(
                 backend_addr=self.author.organization_addr.get_backend_addr(),
                 organization_id=self.author.organization_id,
-                invitation_type=InvitationType.DEVICE(),
+                invitation_type=InvitationType.DEVICE,
                 token=invitation.token,
             )
 
@@ -108,7 +105,7 @@ def ClaimDeviceTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cd_w.isVisible()
-                assert cd_w.dialog.label_title.text() == "Register a device"
+                assert cd_w.dialog.label_title.text() == translate("TEXT_CLAIM_DEVICE_TITLE")
                 assert cdi_w.isVisible()
 
             await aqtbot.wait_until(_register_device_displayed)
@@ -132,7 +129,7 @@ def ClaimDeviceTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cd_w.isVisible()
-                assert cd_w.dialog.label_title.text() == "Register a device"
+                assert cd_w.dialog.label_title.text() == translate("TEXT_CLAIM_DEVICE_TITLE")
                 assert cdi_w.isVisible()
 
             await aqtbot.wait_until(_register_device_displayed)
@@ -594,7 +591,7 @@ async def test_claim_device_already_deleted(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
     await backend.invite.delete(
@@ -626,7 +623,7 @@ async def test_claim_device_offline_backend(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
     with running_backend.offline():
@@ -650,7 +647,7 @@ async def test_claim_device_unknown_invitation(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=InvitationToken.new(),
     )
 
@@ -670,7 +667,7 @@ async def test_claim_device_unknown_invitation(
 async def test_claim_device_with_bad_start_arg(
     event_bus, core_config, gui_factory, autoclose_dialog
 ):
-    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&device_id=John%40pc&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD"
+    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&device_id=John%40pc&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD"  # cspell: disable-line
 
     _ = await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=bad_start_arg)
 
@@ -694,7 +691,7 @@ async def test_claim_device_backend_desync(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=InvitationToken.new(),
     )
 

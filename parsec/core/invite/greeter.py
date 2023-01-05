@@ -1,67 +1,73 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Any, List, Tuple, Type
 
 import attr
-from typing import Optional, List, Tuple
 
-from parsec._parsec import InvitationDeletedReason
-from parsec.crypto import (
-    generate_shared_secret_key,
+from parsec._parsec import (
+    DeviceCreateRepOk,
+    InvitationDeletedReason,
+    Invite1GreeterWaitPeerRepOk,
+    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2bGreeterSendNonceRepOk,
+    Invite3aGreeterWaitPeerTrustRepOk,
+    Invite3bGreeterSignifyTrustRepOk,
+    Invite4GreeterCommunicateRepOk,
+    UserCreateRepOk,
     generate_nonce,
-    SecretKey,
-    PrivateKey,
-    HashDigest,
-    PublicKey,
-    VerifyKey,
 )
 from parsec.api.data import (
     DataError,
-    SASCode,
-    generate_sas_codes,
-    generate_sas_code_candidates,
-    InviteUserData,
-    InviteUserConfirmation,
-    InviteDeviceData,
-    InviteDeviceConfirmation,
     DeviceCertificate,
+    InviteDeviceConfirmation,
+    InviteDeviceData,
+    InviteUserConfirmation,
+    InviteUserData,
+    SASCode,
     UserCertificate,
+    generate_sas_code_candidates,
+    generate_sas_codes,
 )
 from parsec.api.protocol import (
-    DeviceName,
     DeviceID,
+    DeviceLabel,
+    DeviceName,
     HumanHandle,
     InvitationToken,
-    DeviceLabel,
     UserProfile,
 )
 from parsec.core.backend_connection import BackendAuthenticatedCmds
-from parsec.core.types import LocalDevice
-from parsec.core.invite.exceptions import (
-    InviteError,
-    InvitePeerResetError,
-    InviteNotFoundError,
-    InviteAlreadyUsedError,
-    InviteActiveUsersLimitReachedError,
+from parsec.core.invite.claimer import (
+    ACTIVE_USERS_LIMIT_REACHED_TYPES,
+    ALREADY_DELETED_TYPES,
+    INVALID_STATE_TYPES,
+    NOT_FOUND_TYPES,
+    T_OK_TYPES,
 )
+from parsec.core.invite.exceptions import (
+    InviteActiveUsersLimitReachedError,
+    InviteAlreadyUsedError,
+    InviteError,
+    InviteNotFoundError,
+    InvitePeerResetError,
+)
+from parsec.core.types import LocalDevice
+from parsec.crypto import HashDigest, PrivateKey, PublicKey, SecretKey, VerifyKey
 
 
-def _check_rep(rep, step_name):
-    from parsec.core.invite.claimer import (
-        NOT_FOUND_TYPES,
-        ALREADY_DELETED_TYPES,
-        INVALID_STATE_TYPES,
-        OK_TYPES,
-    )
-
+def _check_rep(rep: Any, step_name: str, ok_type: Type[T_OK_TYPES]) -> T_OK_TYPES:
     if isinstance(rep, NOT_FOUND_TYPES):
         raise InviteNotFoundError
     elif isinstance(rep, ALREADY_DELETED_TYPES):
         raise InviteAlreadyUsedError
     elif isinstance(rep, INVALID_STATE_TYPES):
         raise InvitePeerResetError
-    elif isinstance(rep, dict) and rep["status"] == "active_users_limit_reached":
+    elif isinstance(rep, ACTIVE_USERS_LIMIT_REACHED_TYPES):
         raise InviteActiveUsersLimitReachedError
-    elif not isinstance(rep, OK_TYPES) and rep != {"status": "ok"}:
+    elif not isinstance(rep, ok_type):
         raise InviteError(f"Backend error during {step_name}: {rep}")
+    return rep
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -74,42 +80,28 @@ class BaseGreetInitialCtx:
         rep = await self._cmds.invite_1_greeter_wait_peer(
             token=self.token, greeter_public_key=greeter_private_key.public_key
         )
-        from parsec.core.invite.claimer import (
-            NOT_FOUND_TYPES,
-            ALREADY_DELETED_TYPES,
-            INVALID_STATE_TYPES,
-            OK_TYPES,
-        )
+        rep_ok = _check_rep(rep, step_name="step 1", ok_type=Invite1GreeterWaitPeerRepOk)
 
-        if isinstance(rep, NOT_FOUND_TYPES):
-            raise InviteNotFoundError
-        elif isinstance(rep, ALREADY_DELETED_TYPES):
-            raise InviteAlreadyUsedError
-        elif isinstance(rep, INVALID_STATE_TYPES):
-            raise InvitePeerResetError
-        elif not isinstance(rep, OK_TYPES):
-            raise InviteError(f"Backend error during step 1: {rep}")
-
-        shared_secret_key = generate_shared_secret_key(
-            our_private_key=greeter_private_key, peer_public_key=rep.claimer_public_key
+        shared_secret_key = greeter_private_key.generate_shared_secret_key(
+            peer_public_key=rep_ok.claimer_public_key
         )
         greeter_nonce = generate_nonce()
 
         rep = await self._cmds.invite_2a_greeter_get_hashed_nonce(token=self.token)
-        _check_rep(rep, step_name="step 2a")
+        rep_ok = _check_rep(rep, step_name="step 2a", ok_type=Invite2aGreeterGetHashedNonceRepOk)
 
-        claimer_hashed_nonce = rep.claimer_hashed_nonce
+        claimer_hashed_nonce = rep_ok.claimer_hashed_nonce
 
         rep = await self._cmds.invite_2b_greeter_send_nonce(
             token=self.token, greeter_nonce=greeter_nonce
         )
-        _check_rep(rep, step_name="step 2b")
+        rep2_ok = _check_rep(rep, step_name="step 2b", ok_type=Invite2bGreeterSendNonceRepOk)
 
-        if HashDigest.from_data(rep.claimer_nonce) != claimer_hashed_nonce:
+        if HashDigest.from_data(rep2_ok.claimer_nonce) != claimer_hashed_nonce:
             raise InviteError("Invitee nonce and hashed nonce doesn't match")
 
         claimer_sas, greeter_sas = generate_sas_codes(
-            claimer_nonce=rep.claimer_nonce,
+            claimer_nonce=rep2_ok.claimer_nonce,
             greeter_nonce=greeter_nonce,
             shared_secret_key=shared_secret_key,
         )
@@ -156,7 +148,7 @@ class BaseGreetInProgress1Ctx:
 
     async def _do_wait_peer_trust(self) -> None:
         rep = await self._cmds.invite_3a_greeter_wait_peer_trust(token=self.token)
-        _check_rep(rep, step_name="step 3b")
+        _check_rep(rep, step_name="step 3b", ok_type=Invite3aGreeterWaitPeerTrustRepOk)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -198,7 +190,7 @@ class BaseGreetInProgress2Ctx:
 
     async def _do_signify_trust(self) -> None:
         rep = await self._cmds.invite_3b_greeter_signify_trust(token=self.token)
-        _check_rep(rep, step_name="step 3a")
+        _check_rep(rep, step_name="step 3a", ok_type=Invite3bGreeterSignifyTrustRepOk)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -230,13 +222,15 @@ class UserGreetInProgress3Ctx:
 
     async def do_get_claim_requests(self) -> "UserGreetInProgress4Ctx":
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=b"")
-        _check_rep(rep, step_name="step 4 (data exchange)")
+        rep_ok = _check_rep(
+            rep, step_name="step 4 (data exchange)", ok_type=Invite4GreeterCommunicateRepOk
+        )
 
-        if rep.payload is None:
+        if rep_ok.payload is None:
             raise InviteError("Missing InviteUserData payload")
 
         try:
-            data = InviteUserData.decrypt_and_load(rep.payload, key=self._shared_secret_key)
+            data = InviteUserData.decrypt_and_load(rep_ok.payload, key=self._shared_secret_key)
         except DataError as exc:
             raise InviteError("Invalid InviteUserData payload provided by peer") from exc
 
@@ -260,13 +254,15 @@ class DeviceGreetInProgress3Ctx:
 
     async def do_get_claim_requests(self) -> "DeviceGreetInProgress4Ctx":
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=b"")
-        _check_rep(rep, step_name="step 4 (data exchange)")
+        rep_ok = _check_rep(
+            rep, step_name="step 4 (data exchange)", ok_type=Invite4GreeterCommunicateRepOk
+        )
 
-        if rep.payload is None:
+        if rep_ok.payload is None:
             raise InviteError("Missing InviteDeviceData payload")
 
         try:
-            data = InviteDeviceData.decrypt_and_load(rep.payload, key=self._shared_secret_key)
+            data = InviteDeviceData.decrypt_and_load(rep_ok.payload, key=self._shared_secret_key)
         except DataError as exc:
             raise InviteError("Invalid InviteDeviceData payload provided by peer") from exc
 
@@ -281,8 +277,8 @@ class DeviceGreetInProgress3Ctx:
 
 def _create_new_user_certificates(
     author: LocalDevice,
-    device_label: Optional[DeviceLabel],
-    human_handle: Optional[HumanHandle],
+    device_label: DeviceLabel | None,
+    human_handle: HumanHandle | None,
     profile: UserProfile,
     public_key: PublicKey,
     verify_key: VerifyKey,
@@ -311,10 +307,14 @@ def _create_new_user_certificates(
         )
         redacted_device_certificate = device_certificate.evolve(device_label=None)
 
-        user_certificate = user_certificate.dump_and_sign(author.signing_key)
-        redacted_user_certificate = redacted_user_certificate.dump_and_sign(author.signing_key)
-        device_certificate = device_certificate.dump_and_sign(author.signing_key)
-        redacted_device_certificate = redacted_device_certificate.dump_and_sign(author.signing_key)
+        user_certificate_bytes = user_certificate.dump_and_sign(author.signing_key)
+        redacted_user_certificate_bytes = redacted_user_certificate.dump_and_sign(
+            author.signing_key
+        )
+        device_certificate_bytes = device_certificate.dump_and_sign(author.signing_key)
+        redacted_device_certificate_bytes = redacted_device_certificate.dump_and_sign(
+            author.signing_key
+        )
 
     except DataError as exc:
         raise InviteError(f"Cannot generate device certificate: {exc}") from exc
@@ -328,10 +328,10 @@ def _create_new_user_certificates(
     )
 
     return (
-        user_certificate,
-        redacted_user_certificate,
-        device_certificate,
-        redacted_device_certificate,
+        user_certificate_bytes,
+        redacted_user_certificate_bytes,
+        device_certificate_bytes,
+        redacted_device_certificate_bytes,
         invite_user_confirmation,
     )
 
@@ -339,8 +339,8 @@ def _create_new_user_certificates(
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress4Ctx:
     token: InvitationToken
-    requested_device_label: Optional[DeviceLabel]
-    requested_human_handle: Optional[HumanHandle]
+    requested_device_label: DeviceLabel | None
+    requested_human_handle: HumanHandle | None
 
     _public_key: PublicKey
     _verify_key: VerifyKey
@@ -350,8 +350,8 @@ class UserGreetInProgress4Ctx:
     async def do_create_new_user(
         self,
         author: LocalDevice,
-        device_label: Optional[DeviceLabel],
-        human_handle: Optional[HumanHandle],
+        device_label: DeviceLabel | None,
+        human_handle: HumanHandle | None,
         profile: UserProfile,
     ) -> None:
 
@@ -376,7 +376,7 @@ class UserGreetInProgress4Ctx:
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        _check_rep(rep, step_name="step 4 (user certificates upload)")
+        _check_rep(rep, step_name="step 4 (user certificates upload)", ok_type=UserCreateRepOk)
 
         # From now on the user has been created on the server, but greeter
         # is not aware of it yet. If something goes wrong, we can end up with
@@ -391,25 +391,27 @@ class UserGreetInProgress4Ctx:
             raise InviteError("Cannot generate InviteUserConfirmation payload") from exc
 
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=payload)
-        _check_rep(rep, step_name="step 4 (confirmation exchange)")
+        _check_rep(
+            rep, step_name="step 4 (confirmation exchange)", ok_type=Invite4GreeterCommunicateRepOk
+        )
 
         # Invitation deletion is not strictly necessary (enrollment has succeeded
         # anyway) so it's no big deal if something goes wrong before it can be
         # done (and it can be manually deleted from invitation list).
-        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED())
+        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress4Ctx:
     token: InvitationToken
-    requested_device_label: Optional[DeviceLabel]
+    requested_device_label: DeviceLabel | None
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
     _cmds: BackendAuthenticatedCmds
 
     async def do_create_new_device(
-        self, author: LocalDevice, device_label: Optional[DeviceLabel]
+        self, author: LocalDevice, device_label: DeviceLabel | None
     ) -> None:
         device_id = author.user_id.to_device_id(DeviceName.new())
         try:
@@ -424,8 +426,8 @@ class DeviceGreetInProgress4Ctx:
             )
             redacted_device_certificate = device_certificate.evolve(device_label=None)
 
-            device_certificate = device_certificate.dump_and_sign(author.signing_key)
-            redacted_device_certificate = redacted_device_certificate.dump_and_sign(
+            device_certificate_bytes = device_certificate.dump_and_sign(author.signing_key)
+            redacted_device_certificate_bytes = redacted_device_certificate.dump_and_sign(
                 author.signing_key
             )
 
@@ -433,10 +435,10 @@ class DeviceGreetInProgress4Ctx:
             raise InviteError(f"Cannot generate device certificate: {exc}") from exc
 
         rep = await self._cmds.device_create(
-            device_certificate=device_certificate,
-            redacted_device_certificate=redacted_device_certificate,
+            device_certificate=device_certificate_bytes,
+            redacted_device_certificate=redacted_device_certificate_bytes,
         )
-        _check_rep(rep, step_name="step 4 (device certificates upload)")
+        _check_rep(rep, step_name="step 4 (device certificates upload)", ok_type=DeviceCreateRepOk)
 
         # From now on the device has been created on the server, but greeter
         # is not aware of it yet. If something goes wrong, we can end up with
@@ -460,9 +462,11 @@ class DeviceGreetInProgress4Ctx:
             raise InviteError("Cannot generate InviteUserConfirmation payload") from exc
 
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=payload)
-        _check_rep(rep, step_name="step 4 (confirmation exchange)")
+        _check_rep(
+            rep, step_name="step 4 (confirmation exchange)", ok_type=Invite4GreeterCommunicateRepOk
+        )
 
         # Invitation deletion is not strictly necessary (enrollment has succeeded
         # anyway) so it's no big deal if something goes wrong before it can be
         # done (and it can be manually deleted from invitation list).
-        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED())
+        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)

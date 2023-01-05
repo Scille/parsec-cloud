@@ -1,16 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use fancy_regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use std::cmp::Ordering;
-use std::collections::hash_map::RandomState;
-use std::collections::{HashMap, HashSet};
-use std::num::NonZeroU64;
+use std::{
+    cmp::Ordering,
+    collections::{hash_map::RandomState, HashMap, HashSet},
+    num::NonZeroU64,
+};
 
 use libparsec_crypto::{HashDigest, SecretKey};
+use libparsec_serialization_format::parsec_data;
 use libparsec_types::*;
-use serialization_format::parsec_data;
 
 use crate as libparsec_client_types;
 
@@ -26,9 +26,12 @@ macro_rules! impl_local_manifest_dump_load {
             pub fn decrypt_and_load(
                 encrypted: &[u8],
                 key: &SecretKey,
-            ) -> Result<Self, &'static str> {
-                let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-                ::rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")
+            ) -> libparsec_types::DataResult<Self> {
+                let serialized = key
+                    .decrypt(encrypted)
+                    .map_err(|exc| libparsec_types::DataError::Crypto { exc })?;
+                ::rmp_serde::from_slice(&serialized)
+                    .map_err(|_| Box::new(libparsec_types::DataError::Serialization))
             }
         }
     };
@@ -424,10 +427,7 @@ impl LocalFolderManifest {
         // Deal with additions second
         for (name, entry_id) in data.into_iter() {
             if let Some(entry_id) = entry_id {
-                if prevent_sync_pattern
-                    .is_match(name.as_ref())
-                    .unwrap_or(false)
-                {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
                     self.local_confinement_points.insert(entry_id);
                 } else {
                     actually_updated = true;
@@ -499,10 +499,7 @@ impl LocalFolderManifest {
             .children
             .iter()
             .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern
-                    .is_match(name.as_ref())
-                    .unwrap_or(false)
-                {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
                     Some(*entry_id)
                 } else {
                     None
@@ -722,10 +719,7 @@ impl LocalWorkspaceManifest {
         // Deal with additions second
         for (name, entry_id) in data.into_iter() {
             if let Some(entry_id) = entry_id {
-                if prevent_sync_pattern
-                    .is_match(name.as_ref())
-                    .unwrap_or(false)
-                {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
                     self.local_confinement_points.insert(entry_id);
                 } else {
                     actually_updated = true;
@@ -797,10 +791,7 @@ impl LocalWorkspaceManifest {
             .children
             .iter()
             .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern
-                    .is_match(name.as_ref())
-                    .unwrap_or(false)
-                {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
                     Some(*entry_id)
                 } else {
                     None
@@ -1064,8 +1055,10 @@ impl LocalManifest {
         }
     }
 
-    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
-        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
+        let serialized = key
+            .decrypt(encrypted)
+            .map_err(|exc| DataError::Crypto { exc })?;
+        rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
     }
 }

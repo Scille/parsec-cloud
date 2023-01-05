@@ -1,25 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from pathlib import Path
-import click
 import platform
-from typing import Optional, Callable
+from pathlib import Path
+from typing import Any, Protocol
 
-from parsec.sequester_crypto import SequesterVerifyKeyDer
-from parsec.utils import trio_run
-from parsec.cli_utils import spinner, cli_exception_handler, aprompt, aconfirm
-from parsec.api.protocol import HumanHandle, DeviceLabel
+import click
+
+from parsec._parsec import DeviceLabel, HumanHandle, LocalDevice, SequesterVerifyKeyDer
+from parsec.cli_utils import async_confirm, async_prompt, cli_exception_handler, spinner
+from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
 from parsec.core.config import CoreConfig
-from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
-from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
-
+from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.utils import trio_run
 
 SEQUESTER_BRIEF = """A sequestered organization is able to ask it users to encrypt
-their data with third party asymetric keys (called "sequester service").
+their data with third party asymmetric keys (called "sequester service").
 
-Those "sequester services" must themselve be signed by the "sequester authority" key
+Those "sequester services" must themselves be signed by the "sequester authority" key
 that is configured during organization bootstrap.
 This have the following implications:
 - All data remain encrypted (with the Parsec server incapable of reading them)
@@ -28,22 +28,28 @@ This have the following implications:
 - Sequester services can be added and removed to handle key rotation
 - A regular organization cannot be turned in a sequestered one (and vice-versa)
 
-A typicall usecase for sequestered organization is data recovery or legal requirement for
+A typical use case for sequestered organization is data recovery or legal requirement for
 company to have access to all data produced by former employees.
 """
+
+
+class SaveDeviceWithSelectedAuth(Protocol):
+    def __call__(self, config_dir: Path, device: LocalDevice) -> Any:
+        pass
 
 
 async def _bootstrap_organization(
     config: CoreConfig,
     addr: BackendOrganizationBootstrapAddr,
-    device_label: Optional[str],
-    human_label: Optional[str],
-    human_email: Optional[str],
-    save_device_with_selected_auth: Callable,
-    sequester_verify_key: Optional[Path],
+    device_label: str | None,
+    human_label: str | None,
+    human_email: str | None,
+    save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
+    sequester_verify_key: Path | None,
 ) -> None:
+    sequester_vrf_key = None
     if sequester_verify_key is not None:
-        answer = await aconfirm(
+        answer = await async_confirm(
             f"""You are about to bootstrap a sequestered organization.
 
 {SEQUESTER_BRIEF}
@@ -54,27 +60,25 @@ Do you want to continue ?""",
         )
         if not answer:
             raise SystemExit("Bootstrap aborted")
-        sequester_verify_key = SequesterVerifyKeyDer(sequester_verify_key.read_bytes())
+        sequester_vrf_key = SequesterVerifyKeyDer.load_pem(sequester_verify_key.read_text())
 
-    if not human_label:
-        human_label = await aprompt("User fullname")
-    if not human_email:
-        human_email = await aprompt("User email")
+    human_label: str = human_label or await async_prompt("User fullname")
+    human_email: str = human_email or await async_prompt("User email")
     human_handle = HumanHandle(email=human_email, label=human_label)
     if not device_label:
-        device_label_raw = await aprompt("Device label", default=platform.node())
-        device_label = DeviceLabel(device_label_raw)
+        device_label_raw: str = await async_prompt("Device label", default=platform.node())
+        dev_label = DeviceLabel(device_label_raw)
     else:
-        device_label = DeviceLabel(device_label)
+        dev_label = DeviceLabel(device_label)
     async with spinner("Bootstrapping organization in the backend"):
         new_device = await do_bootstrap_organization(
             addr,
             human_handle=human_handle,
-            device_label=device_label,
-            sequester_authority_verify_key=sequester_verify_key,
+            device_label=dev_label,
+            sequester_authority_verify_key=sequester_vrf_key,
         )
 
-    # We don't have to worry about overwritting an existing keyfile
+    # We don't have to worry about overwriting an existing keyfile
     # given their names are base on the device's slughash which is intended
     # to be globally unique.
 
@@ -100,12 +104,12 @@ Do you want to continue ?""",
 def bootstrap_organization(
     config: CoreConfig,
     addr: BackendOrganizationBootstrapAddr,
-    device_label: Optional[str],
-    human_label: Optional[str],
-    human_email: Optional[str],
-    save_device_with_selected_auth: Callable,
-    sequester_verify_key: Optional[Path],
-    **kwargs,
+    device_label: str | None,
+    human_label: str | None,
+    human_email: str | None,
+    save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
+    sequester_verify_key: Path | None,
+    **kwargs: Any,
 ) -> None:
     """
     Configure the organization and register it first user&device.

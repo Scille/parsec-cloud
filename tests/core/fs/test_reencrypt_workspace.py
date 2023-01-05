@@ -1,21 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
-from parsec._parsec import DateTime
 from unittest.mock import ANY
 
+import pytest
+
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID
-from parsec.core.types import EntryID
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.fs import (
+    FSBadEncryptionRevision,
     FSError,
+    FSWorkspaceInMaintenance,
     FSWorkspaceNotFoundError,
     FSWorkspaceNotInMaintenance,
-    FSWorkspaceInMaintenance,
-    FSBadEncryptionRevision,
 )
-from parsec.backend.backend_events import BackendEvent
-
+from parsec.core.types import EntryID
 from tests.common import freeze_time
 
 
@@ -51,7 +52,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
                     {
                         "organization_id": alice.organization_id,
                         "author": alice.device_id,
-                        "realm_id": RealmID(workspace.uuid),
+                        "realm_id": RealmID.from_entry_id(workspace),
                         "encryption_revision": 2,
                     },
                 ),

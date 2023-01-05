@@ -99,7 +99,7 @@ if {{ js_val }}.is_null() {
 {%- elif type.kind == "str" -%}
 js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?
 {%- elif type.kind == "str_based" -%}
-js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?.parse().map_err(|_| TypeError::new("Not a valid {{ type.name }}"))
+js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?.parse().map_err(|_| TypeError::new("Not a valid {{ type.name }}"))?
 {%- elif type.kind == "bytes" -%}
 {{ js_val }}.dyn_into::<Uint8Array>().or(Err(TypeError::new("Not a Uint8Array")))?.to_vec()
 {%- elif type.kind == "struct" -%}
@@ -111,14 +111,14 @@ js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| Typ
         Some(true) => {
             let js_value = Reflect::get(&obj, &"value".into())?;
             Ok({{ render_js_value_to_rs("js_value", type.ok) }})
-        },
+        }
         Some(false) => {
             let js_error = Reflect::get(&obj, &"error".into())?;
             Err({{ render_js_value_to_rs("js_error", type.err) }})
-        },
+        }
         None => {
             return Err(TypeError::new("Invalid `ok` field in Result object: Not a boolean"));
-        },
+        }
     }
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
@@ -138,7 +138,7 @@ JsValue::from(Uint8Array::from({{ rs_value }}.as_ref()))
 {%- elif type.kind == "list" -%}
 {
     let js_array = Array::new_with_length({{ rs_value }}.len() as u32);
-    for elem in {{ rs_value }}.into_iter() {
+    for elem in {{ rs_value }} {
         let js_elem = {{ render_rs_to_js_value("elem", type.elem) | indent(8) }};
         js_array.push(&js_elem);
     }
@@ -149,17 +149,17 @@ match {{ rs_value }} {
     Ok(value) => {
         let js_obj = Object::new().into();
         Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-        let js_value = value.into();
+        let js_value = {{ render_rs_to_js_value("value", type.ok) | indent(8) }};
         Reflect::set(&js_obj, &"value".into(), &js_value)?;
         js_obj
-    },
+    }
     Err(err) => {
         let js_obj = Object::new().into();
         Reflect::set(&js_obj, &"ok".into(), &false.into())?;
         let js_err = {{ render_rs_to_js_value("err", type.err) | indent(8) }};
         Reflect::set(&js_obj, &"error".into(), &js_err)?;
         js_obj
-    },
+    }
 }
 {%- elif type.kind == "struct" -%}
 {{ struct_rs_to_js_function_name(type) }}({{ rs_value }})?
@@ -238,7 +238,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libpars
                 {{ attr_name }},
 {% endfor %}
             })
-        },
+        }
 {% endfor %}
         _ => {
             Err(JsValue::from(TypeError::new("Object is not a {{ variant.name }}")))
@@ -260,7 +260,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
             let js_{{ attr_name }} = {{ render_rs_to_js_value(attr_name, attr_type) | indent(12) }};
             Reflect::set(&js_obj, &"{{ attr_name }}".into(), &js_{{ attr_name }})?;
 {% endfor %}
-        },
+        }
 {% endfor %}
     }
     Ok(js_obj)
@@ -352,11 +352,11 @@ pub fn {{ meth.pascalName }}(
 
 #[allow(unused_imports)]
 use js_sys::*;
+#[allow(unused_imports)]
+use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
-#[allow(unused_imports)]
-use wasm_bindgen::prelude::*;
 {# Structures #}
 {% for struct in api.structs %}
 

@@ -1,14 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from jinja2 import Environment, BaseLoader, TemplateNotFound, StrictUndefined
 import importlib.resources
+from typing import Any, Callable, Tuple
+
+from jinja2 import BaseLoader, Environment, StrictUndefined, Template, TemplateNotFound
 
 
 class PackageLoader(BaseLoader):
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         self.path = path
 
-    def get_source(self, environment, template):
+    def get_source(self, environment: Any, template: str) -> Tuple[str, str, Callable[[], bool]]:
         from parsec.backend import templates  # Self import \o/
 
         try:
@@ -26,5 +29,5 @@ JINJA_ENV_CONFIG = {
 JINJA_ENV = Environment(**JINJA_ENV_CONFIG)  # type: ignore[arg-type]
 
 
-def get_template(name):
+def get_template(name: str | Template) -> Template:
     return JINJA_ENV.get_template(name)

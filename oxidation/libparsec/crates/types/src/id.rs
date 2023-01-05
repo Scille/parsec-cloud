@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use email_address_parser::EmailAddress;
-use fancy_regex::Regex;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 use std::convert::TryFrom;
@@ -17,6 +17,124 @@ macro_rules! impl_debug_from_display {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 let display = self.to_string();
                 f.debug_tuple(stringify!($name)).field(&display).finish()
+            }
+        }
+    };
+}
+
+/*
+ * UUID
+ */
+
+macro_rules! new_uuid_type {
+    (pub $name:ident) => {
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Hash)]
+        pub struct $name(::uuid::Uuid);
+
+        impl $name {
+            pub fn as_hyphenated(&self) -> &::uuid::fmt::Hyphenated {
+                self.0.as_hyphenated()
+            }
+
+            pub fn from_hex(hex: &str) -> Result<Self, &'static str> {
+                ::uuid::Uuid::parse_str(hex)
+                    .map(Self)
+                    .or(Err(concat!("Invalid ", stringify!($name))))
+            }
+
+            pub fn hex(&self) -> String {
+                self.0.as_simple().to_string()
+            }
+
+            pub fn as_u128(&self) -> u128 {
+                self.0.as_u128()
+            }
+        }
+
+        impl ::std::fmt::Display for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                write!(f, "{}", self.0.as_hyphenated())
+            }
+        }
+
+        impl Default for $name {
+            #[inline]
+            fn default() -> Self {
+                Self(::uuid::Uuid::new_v4())
+            }
+        }
+
+        impl ::std::ops::Deref for $name {
+            type Target = ::uuid::Uuid;
+
+            #[inline]
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+
+        impl ::std::convert::AsRef<::uuid::Uuid> for $name {
+            #[inline]
+            fn as_ref(&self) -> &::uuid::Uuid {
+                &self.0
+            }
+        }
+
+        impl ::std::convert::From<::uuid::Uuid> for $name {
+            #[inline]
+            fn from(id: ::uuid::Uuid) -> Self {
+                Self(id)
+            }
+        }
+
+        impl ::std::convert::From<::uuid::Bytes> for $name {
+            #[inline]
+            fn from(bytes: ::uuid::Bytes) -> Self {
+                Self(::uuid::Uuid::from_bytes(bytes))
+            }
+        }
+
+        impl ::std::convert::TryFrom<&[u8]> for $name {
+            type Error = &'static str;
+
+            fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+                ::uuid::Uuid::from_slice(bytes)
+                    .map(Self)
+                    .or(Err(concat!("Invalid ", stringify!($name))))
+            }
+        }
+
+        impl ::serde::Serialize for $name {
+            #[inline]
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: ::serde::Serializer,
+            {
+                // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
+                // rmp_serde this should be treated as an extension type
+                serializer.serialize_newtype_struct(
+                    ::rmp_serde::MSGPACK_EXT_STRUCT_NAME,
+                    &(
+                        $crate::ext_types::UUID_EXT_ID,
+                        ::serde_bytes::Bytes::new(self.as_bytes()),
+                    ),
+                )
+            }
+        }
+
+        impl<'de> ::serde::Deserialize<'de> for $name {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: ::serde::Deserializer<'de>,
+            {
+                // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
+                // rmp_serde this should be treated as an extension type
+                deserializer
+                    .deserialize_newtype_struct(
+                        ::rmp_serde::MSGPACK_EXT_STRUCT_NAME,
+                        $crate::ext_types::UuidExtVisitor,
+                    )
+                    .map($name)
             }
         }
     };
@@ -62,7 +180,7 @@ macro_rules! new_string_based_id_type {
                         Regex::new($pattern).unwrap_or_else(|_| unreachable!());
                 }
                 // ID must respect regex AND be contained within $bytes_size bytes
-                if PATTERN.is_match(&id).unwrap_or(false) && id.len() <= $bytes_size {
+                if PATTERN.is_match(&id) && id.len() <= $bytes_size {
                     Ok(Self(id))
                 } else {
                     Err(concat!("Invalid ", stringify!($name)))
@@ -78,6 +196,16 @@ macro_rules! new_string_based_id_type {
     };
 }
 
+new_uuid_type!(pub EntryID);
+new_uuid_type!(pub BlockID);
+new_uuid_type!(pub RealmID);
+new_uuid_type!(pub VlobID);
+new_uuid_type!(pub ChunkID);
+new_uuid_type!(pub SequesterServiceID);
+new_uuid_type!(pub InvitationToken);
+new_uuid_type!(pub EnrollmentID);
+impl_from_maybe!(std::collections::HashSet<EntryID>);
+
 /*
  * OrganizationID
  */
@@ -91,11 +219,8 @@ new_string_based_id_type!(pub OrganizationID, 32, r"^[\w\-]{1,32}$");
 new_string_based_id_type!(pub UserID, 32, r"^[\w\-]{1,32}$");
 
 impl UserID {
-    pub fn to_device_id(&self, device_name: &DeviceName) -> DeviceID {
-        DeviceID {
-            user_id: self.to_owned(),
-            device_name: device_name.to_owned(),
-        }
+    pub fn to_device_id(&self, device_name: DeviceName) -> DeviceID {
+        DeviceID::new(self.clone(), device_name)
     }
 }
 
@@ -116,12 +241,20 @@ impl_from_maybe!(Option<DeviceLabel>);
  * DeviceID
  */
 
-#[derive(
-    Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord, Hash,
-)]
+#[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceID {
-    pub user_id: UserID,
-    pub device_name: DeviceName,
+    user_id: UserID,
+    device_name: DeviceName,
+    // Cache the display str
+    display: String,
+}
+
+impl Default for DeviceID {
+    fn default() -> Self {
+        let user_id = Default::default();
+        let device_name = Default::default();
+        Self::new(user_id, device_name)
+    }
 }
 
 impl_debug_from_display!(DeviceID);
@@ -129,9 +262,13 @@ impl_debug_from_display!(DeviceID);
 // Note: Display is used for Serialization !
 impl std::fmt::Display for DeviceID {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_str(self.user_id.as_ref())?;
-        f.write_str("@")?;
-        f.write_str(self.device_name.as_ref())
+        self.display.fmt(f)
+    }
+}
+
+impl AsRef<str> for DeviceID {
+    fn as_ref(&self) -> &str {
+        &self.display
     }
 }
 
@@ -142,16 +279,26 @@ impl FromStr for DeviceID {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         const ERR: &str = "Invalid DeviceID";
         let (raw_user_id, raw_device_name) = s.split_once('@').ok_or(ERR)?;
-        Ok(Self {
-            user_id: raw_user_id.parse().map_err(|_| ERR)?,
-            device_name: raw_device_name.parse().map_err(|_| ERR)?,
-        })
+        let user_id = raw_user_id.parse().map_err(|_| ERR)?;
+        let device_name = raw_device_name.parse().map_err(|_| ERR)?;
+        Ok(Self::new(user_id, device_name))
     }
 }
 
-impl From<DeviceID> for String {
-    fn from(item: DeviceID) -> String {
-        format!("{}@{}", item.user_id, item.device_name)
+impl DeviceID {
+    pub fn new(user_id: UserID, device_name: DeviceName) -> Self {
+        let display = format!("{}@{}", user_id, device_name);
+        Self {
+            user_id,
+            device_name,
+            display,
+        }
+    }
+    pub fn user_id(&self) -> &UserID {
+        &self.user_id
+    }
+    pub fn device_name(&self) -> &DeviceName {
+        &self.device_name
     }
 }
 
@@ -163,9 +310,11 @@ impl From<DeviceID> for String {
 #[serde(try_from = "(&str, &str)", into = "(String, String)")]
 #[non_exhaustive] // Prevent initialization without going through the factory
 pub struct HumanHandle {
-    pub email: String,
+    email: String,
     // Label is purely informative
-    pub label: String,
+    label: String,
+    // Cache the display str
+    display: String,
 }
 
 impl PartialEq for HumanHandle {
@@ -186,7 +335,23 @@ impl_debug_from_display!(HumanHandle);
 
 impl std::fmt::Display for HumanHandle {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{} <{}>", self.label, self.email)
+        self.display.fmt(f)
+    }
+}
+
+impl AsRef<str> for HumanHandle {
+    fn as_ref(&self) -> &str {
+        &self.display
+    }
+}
+
+impl FromStr for HumanHandle {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let start = s.chars().position(|c| c == '<').ok_or("Email is missing")?;
+        let stop = s.chars().position(|c| c == '>').ok_or("Email is missing")?;
+        Self::new(&s[..start - 1], &s[start + 1..stop])
     }
 }
 
@@ -194,6 +359,7 @@ impl HumanHandle {
     pub fn new(email: &str, label: &str) -> Result<Self, &'static str> {
         let email = email.nfc().collect::<String>();
         let label = label.nfc().collect::<String>();
+        let display = format!("{label} <{email}>");
 
         if !EmailAddress::is_valid(&email, None) || email.len() >= 255 {
             return Err("Invalid email address");
@@ -204,14 +370,24 @@ impl HumanHandle {
             || label.chars().any(|c| {
                 matches!(
                     c,
-                    '(' | ')' | '<' | '>' | '@' | ',' | ':' | ';' | '\\' | '"' | '[' | ']'
+                    '<' | '>' | '@' | ',' | ':' | ';' | '\\' | '"' | '[' | ']'
                 )
             })
         {
             return Err("Invalid label");
         }
 
-        Ok(Self { email, label })
+        Ok(Self {
+            email,
+            label,
+            display,
+        })
+    }
+    pub fn email(&self) -> &str {
+        &self.email
+    }
+    pub fn label(&self) -> &str {
+        &self.label
     }
 }
 
@@ -251,12 +427,6 @@ pub enum UserProfile {
     Outsider,
 }
 
-impl Default for UserProfile {
-    fn default() -> Self {
-        Self::Standard
-    }
-}
-
 impl FromStr for UserProfile {
     type Err = &'static str;
 
@@ -286,6 +456,7 @@ pub struct FileDescriptor(pub u32);
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     #[test]
     fn test_from_str() {
@@ -300,5 +471,15 @@ mod tests {
         assert!("dummy".parse::<DeviceID>().is_err());
         assert!(format!("alice@{}", too_long).parse::<DeviceID>().is_err());
         assert!("alice@pc1".parse::<DeviceID>().is_ok());
+    }
+
+    #[rstest]
+    #[case::invalid_email("test", "test", false)]
+    #[case::invalid_email("a@b..c", "test", false)]
+    #[case::invalid_email("@b.c", "test", false)]
+    #[case::parenthesis_allowed("a@b.c", "()", true)]
+    #[case::invalid_name_with_backslash("a@b", "hell\\o", false)]
+    fn test_human_handle(#[case] email: &str, #[case] label: &str, #[case] is_ok: bool) {
+        assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok)
     }
 }

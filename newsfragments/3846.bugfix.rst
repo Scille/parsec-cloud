@@ -1,0 +1,1 @@
+Hide spinner during an enrollment using PKI

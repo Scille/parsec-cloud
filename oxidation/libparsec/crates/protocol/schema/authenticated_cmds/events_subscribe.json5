@@ -1,0 +1,16 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "events_subscribe"
+        },
+        "reps": [
+            {
+                "status": "ok"
+            }
+        ]
+    }
+]

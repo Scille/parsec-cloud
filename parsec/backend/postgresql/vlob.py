@@ -1,75 +1,76 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec._parsec import DateTime
-from typing import List, Tuple, Dict, Optional
+from typing import Dict, List, Tuple
 
-from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
-from parsec.api.protocol.sequester import SequesterServiceID
+import triopg
+
+from parsec._parsec import DateTime, SequesterServiceID
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
 from parsec.backend.organization import SequesterAuthority
-from parsec.backend.sequester import SequesterDisabledError
+from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
+from parsec.backend.postgresql.sequester import get_sequester_authority, get_sequester_services
+from parsec.backend.postgresql.vlob_queries import (
+    query_create,
+    query_list_versions,
+    query_maintenance_get_reencryption_batch,
+    query_maintenance_save_reencryption_batch,
+    query_poll_changes,
+    query_read,
+    query_update,
+)
+from parsec.backend.sequester import BaseSequesterService, SequesterDisabledError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
-)
-from parsec.backend.postgresql.utils import Q, q_organization_internal_id
-from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
-from parsec.backend.postgresql.vlob_queries import (
-    query_update,
-    query_maintenance_save_reencryption_batch,
-    query_maintenance_get_reencryption_batch,
-    query_read,
-    query_poll_changes,
-    query_list_versions,
-    query_create,
-)
-from parsec.backend.postgresql.sequester import get_sequester_authority
-
-
-_q_get_sequester_enabled_services = Q(
-    f"""
-    SELECT service_id, service_certificate
-    FROM sequester_service
-    WHERE organization={ q_organization_internal_id("$organization_id") }
-    AND disabled_on IS NULL
-    ORDER BY _id
-"""
+    extract_sequestered_data_and_proceed_webhook,
 )
 
 
 async def _check_sequestered_organization(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    sequester_authority: Optional[SequesterAuthority],
-    sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
-):
+    sequester_authority: SequesterAuthority | None,
+    sequester_blob: Dict[SequesterServiceID, bytes] | None,
+) -> Dict[SequesterServiceID, BaseSequesterService] | None:
     if sequester_blob is None and sequester_authority is None:
         # Sequester is disable, fetching sequester services is pointless
-        return
+        return None
 
     if sequester_authority is None:
         raise VlobSequesterDisabledError()
 
-    rows = await conn.fetch(*_q_get_sequester_enabled_services(organization_id=organization_id.str))
-    configured_services = {SequesterServiceID(row["service_id"]) for row in rows}
+    configured_services = {
+        s.service_id: s
+        for s in await get_sequester_services(
+            conn=conn, organization_id=organization_id, with_disabled=False
+        )
+    }
     requested_sequester_services = sequester_blob.keys() if sequester_blob is not None else set()
 
-    if configured_services != requested_sequester_services:
+    if configured_services.keys() != requested_sequester_services:
         raise VlobSequesterServiceInconsistencyError(
             sequester_authority_certificate=sequester_authority.certificate,
-            sequester_services_certificates=[row["service_certificate"] for row in rows],
+            sequester_services_certificates=[
+                s.service_certificate for s in configured_services.values()
+            ],
         )
+
+    return configured_services
 
 
 class PGVlobComponent(BaseVlobComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
         self._sequester_organization_authority_cache: Dict[
-            OrganizationID, Optional[SequesterAuthority]
+            OrganizationID, SequesterAuthority | None
         ] = {}
 
-    async def _fetch_organization_sequester_authority(self, conn, organization_id: OrganizationID):
-        sequester_authority: Optional[SequesterAuthority]
+    async def _fetch_organization_sequester_authority(
+        self, conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
+    ) -> None:
+        sequester_authority: SequesterAuthority | None
         try:
             sequester_authority = await get_sequester_authority(conn, organization_id)
         except SequesterDisabledError:
@@ -77,11 +78,45 @@ class PGVlobComponent(BaseVlobComponent):
         self._sequester_organization_authority_cache[organization_id] = sequester_authority
 
     async def _get_sequester_organization_authority(
-        self, conn, organization_id: OrganizationID
-    ) -> Optional[SequesterAuthority]:
+        self, conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
+    ) -> SequesterAuthority | None:
         if organization_id not in self._sequester_organization_authority_cache:
             await self._fetch_organization_sequester_authority(conn, organization_id)
         return self._sequester_organization_authority_cache[organization_id]
+
+    async def _extract_sequestered_data_and_proceed_webhook(
+        self,
+        conn: triopg._triopg.TrioConnectionProxy,
+        organization_id: OrganizationID,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        author: DeviceID,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        timestamp: DateTime,
+    ) -> Dict[SequesterServiceID, bytes] | None:
+        sequester_authority = await self._get_sequester_organization_authority(
+            conn, organization_id
+        )
+        services = await _check_sequestered_organization(
+            conn,
+            organization_id=organization_id,
+            sequester_authority=sequester_authority,
+            sequester_blob=sequester_blob,
+        )
+        if not sequester_blob or not services:
+            return None
+
+        sequestered_data = await extract_sequestered_data_and_proceed_webhook(
+            services,
+            organization_id,
+            author,
+            encryption_revision,
+            vlob_id,
+            timestamp,
+            sequester_blob,
+        )
+
+        return sequestered_data
 
     @retry_on_unique_violation
     async def create(
@@ -93,18 +128,19 @@ class PGVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
-            sequester_authority = await self._get_sequester_organization_authority(
-                conn, organization_id
-            )
-            await _check_sequestered_organization(
+            sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
                 conn,
                 organization_id=organization_id,
-                sequester_authority=sequester_authority,
                 sequester_blob=sequester_blob,
+                author=author,
+                encryption_revision=encryption_revision,
+                vlob_id=vlob_id,
+                timestamp=timestamp,
             )
+
             await query_create(
                 conn,
                 organization_id,
@@ -123,8 +159,8 @@ class PGVlobComponent(BaseVlobComponent):
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
     ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         async with self.dbh.pool.acquire() as conn:
             return await query_read(
@@ -141,18 +177,19 @@ class PGVlobComponent(BaseVlobComponent):
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
-            sequester_authority = await self._get_sequester_organization_authority(
-                conn, organization_id
-            )
-            await _check_sequestered_organization(
+            sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
                 conn,
                 organization_id=organization_id,
-                sequester_authority=sequester_authority,
                 sequester_blob=sequester_blob,
+                author=author,
+                encryption_revision=encryption_revision,
+                vlob_id=vlob_id,
+                timestamp=timestamp,
             )
+
             return await query_update(
                 conn,
                 organization_id,

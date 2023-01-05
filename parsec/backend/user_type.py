@@ -1,17 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Any, Tuple
 
 import attr
-from typing import Optional, Tuple
-from parsec._parsec import DateTime
 
-from parsec.crypto import VerifyKey, PublicKey
+from parsec._parsec import DateTime
+from parsec.api.data import DataError, DeviceCertificate, UserCertificate
+from parsec.api.protocol import DeviceID, DeviceLabel, DeviceName, HumanHandle, UserID, UserProfile
+from parsec.crypto import PublicKey, VerifyKey
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.api.data import UserCertificate, DeviceCertificate, DataError
-from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel, UserProfile
 
 
 class CertificateValidationError(Exception):
-    def __init__(self, status, reason):
+    def __init__(self, status: str, reason: str) -> None:
         self.status = status
         self.reason = reason
         super().__init__((status, reason))
@@ -19,18 +21,18 @@ class CertificateValidationError(Exception):
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class Device:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.device_id.str})"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> Device:
         return attr.evolve(self, **kwargs)
 
     @property
-    def device_name(self):
+    def device_name(self) -> DeviceName:
         return self.device_id.device_name
 
     @property
-    def user_id(self):
+    def user_id(self) -> UserID:
         return self.device_id.user_id
 
     @property
@@ -38,38 +40,38 @@ class Device:
         return DeviceCertificate.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
-    device_label: Optional[DeviceLabel]
+    device_label: DeviceLabel | None
     device_certificate: bytes
     redacted_device_certificate: bytes
-    device_certifier: Optional[DeviceID]
+    device_certifier: DeviceID | None
     created_on: DateTime = attr.ib(factory=DateTime.now)
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class User:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.user_id.str})"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> User:
         return attr.evolve(self, **kwargs)
 
-    def is_revoked(self):
-        return self.revoked_on
+    def is_revoked(self) -> bool:
+        return self.revoked_on is not None
 
     @property
     def public_key(self) -> PublicKey:
         return UserCertificate.unsecure_load(self.user_certificate).public_key
 
     user_id: UserID
-    human_handle: Optional[HumanHandle]
+    human_handle: HumanHandle | None
     user_certificate: bytes
     redacted_user_certificate: bytes
-    user_certifier: Optional[DeviceID]
+    user_certifier: DeviceID | None
     profile: UserProfile = UserProfile.STANDARD
     created_on: DateTime = attr.ib(factory=DateTime.now)
-    revoked_on: Optional[DateTime] = None
-    revoked_user_certificate: Optional[bytes] = None
-    revoked_user_certifier: Optional[DeviceID] = None
+    revoked_on: DateTime | None = None
+    revoked_user_certificate: bytes | None = None
+    revoked_user_certifier: DeviceID | None = None
 
 
 def validate_new_user_certificates(

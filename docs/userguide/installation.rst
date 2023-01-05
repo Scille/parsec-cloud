@@ -9,7 +9,7 @@ Install Parsec client
 Windows
 -------
 
-Windows installer is available at the latest stable version on `parsec.cloud <https://parsec.cloud/get-parsec>`_. Otherwise, it is possible to download a specific Parsec version on `GitHub <https://github.com/Scille/parsec/releases/latest>`_, for exemple to make Parsec work on a 32 bits computer (installers named ``parsec-vX.Y.Z-win32-setup.exe``).
+Windows installer is available at the latest stable version on `parsec.cloud <https://parsec.cloud/get-parsec>`_. Otherwise, it is possible to download a specific Parsec version on `GitHub <https://github.com/Scille/parsec/releases/latest>`_, for example to make Parsec work on a 32 bits computer (installers named ``parsec-vX.Y.Z-win32-setup.exe``).
 
 
 Linux
@@ -42,7 +42,7 @@ Given that Parsec is written in Python, an alternative is to install it through 
 
     pip install parsec-cloud
 
-Or intall it with all its dependencies, for the GUI.
+Or install it with all its dependencies, for the GUI.
 
 .. code-block:: shell
 
@@ -50,7 +50,7 @@ Or intall it with all its dependencies, for the GUI.
 
 .. note::
 
-    Parsec requires Python >= 3.6 to work.
+    Parsec requires Python >= 3.9 to work.
 
 
 MacOS
@@ -58,38 +58,61 @@ MacOS
 
 MacOS (10.15, >= 11.0) installer is available as a DMG installer on `GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer named ``parsec-vX.Y.Z-macos-amd64.dmg``).
 
-The MacOS version needs `FUSE for MacOS <https://osxfuse.github.io/>`_ to be installed, which can be troublesome on Big Sur. See `this discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' limitations.
+The MacOS version requires `macFUSE <https://osxfuse.github.io/>`_ to be installed, which can be troublesome on Big Sur and Monterey. See `this discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' limitations.
+
+.. note::
+
+    Parsec uses userspace filesystems for a smooth integration of created repositories and ease of access to stored files.
+    This core feature is enabled by macFUSE, and is required to have the native experience we aim for.
 
 
-FUSE for MacOS installation
-***************************
+MacFUSE installation on MacOS 13
+********************************
 
-From `FUSE for MacOS <https://osxfuse.github.io/>`_ website, you can find the lastest version to download at the indicated location.
+From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find the latest version to download at the indicated location.
 
 .. image:: screens/macfuse_download.png
     :align: center
-    :alt: FUSE for MacOS download screen
+    :alt: macFUSE download screen
+
+Open the ``.dmg`` file and follow its instructions to install.
+If the opening fails, two options are available in `System Settings > Privacy and Security`: either check the `App Store and identified developers` box, or click `Open Anyway` if you don't want to change this setting, which will need to be done once to open the ``.dmg``, and possibly once more to start the installer.
+
+.. image:: screens/macfuse_current_allow.png
+    :align: center
+    :alt: macFUSE current allow screen
+
+A reboot might be prompted then to finalize the installation.
+
+MacFUSE installation on MacOS versions 12 and lower
+***************************************************
+
+From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find the latest version to download at the indicated location.
+
+.. image:: screens/macfuse_download.png
+    :align: center
+    :alt: macFUSE download screen
 
 Open the ``.dmg`` file and follow its instructions to install. If the opening fails, check the `App Store and identified developers` box in System Preferences > Security & Privacy:
 
-.. image:: screens/macfuse_system_preferences.png
+.. image:: screens/macfuse_previous_system_preferences.png
     :align: center
     :alt: MacOS path to Security and Privacy
 
-.. image:: screens/macfuse_allow_developer.png
+.. image:: screens/macfuse_previous_allow_developer.png
     :align: center
-    :alt: MacOS allow identified developer
+    :alt: MacOS previous allow identified developer
 
 To change this setting, click the lock first which will require admin rights.
 
 Once the installation is done, a `System Extension Updated` window will pop up. Click `Open Security Preferences`, and click the lock, then click `Allow`:
 
-.. image:: screens/macfuse_system_extension.png
+.. image:: screens/macfuse_previous_system_extension.png
     :align: center
-    :alt: System Extension Updated window
+    :alt: Previous System Extension Updated window
 
-.. image:: screens/macfuse_allow_extension.png
+.. image:: screens/macfuse_previous_allow_extension.png
     :align: center
-    :alt: MacOS allow extension
+    :alt: MacOS previous allow extension
 
 Finally, reboot your Mac to complete the installation.

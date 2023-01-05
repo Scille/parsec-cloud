@@ -20,11 +20,14 @@ outputs:
   client-common:
     value: ${{ steps.changes.outputs.client-common }}
     description: True if a files in the ionic-client part was edited.
+  newsfragments:
+    value: ${{ steps.changes.outputs.newsfragments }}
+    description: True if a files in the newsfragment part was edited.
 
 runs:
   using: composite
   steps:
-    - uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721  # pin v2.10.2
+    - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
       id: changes
       with:
         filters: .github/actions/paths-filter/filters.yml

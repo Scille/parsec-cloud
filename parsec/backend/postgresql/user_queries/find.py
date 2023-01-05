@@ -1,13 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from functools import lru_cache
+from typing import List, Tuple
+
+import triopg
 
 from parsec._parsec import DateTime
-from functools import lru_cache
-from typing import Tuple, List, Optional
-
-from parsec.api.protocol import UserID, OrganizationID, HumanHandle
-from parsec.backend.user import HumanFindResultItem
+from parsec.api.protocol import HumanHandle, OrganizationID, UserID
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
-
+from parsec.backend.user import HumanFindResultItem
 
 LIKE_TRANSLATION = {ord("%"): "\\%", ord("_"): "\\_", ord("\\"): "\\\\"}
 
@@ -17,7 +19,7 @@ def _escape_sql_like_arg(arg: str) -> str:
     # 2) For each word, escapes special `%`, `_` and `\` characters that are
     #    interpreted by ILIKE operator
     # 3) Combine all words together with `%` (i.e. mach zero or multiple characters)
-    # So `foo  bar\tspam` becomes `%foo%bar%spam%` wich is interpreted by SQL LIKE
+    # So `foo  bar\tspam` becomes `%foo%bar%spam%` which is interpreted by SQL LIKE
     # as regex `^.*foo.*bar.*spam.*$`
     return "%" + "%".join(x.translate(LIKE_TRANSLATION) for x in arg.split()) + "%"
 
@@ -36,16 +38,18 @@ LIMIT 1
 )
 
 
-@lru_cache()
+@lru_cache
 def _q_human_factory(with_query: bool, omit_revoked: bool, omit_non_human: bool) -> Q:
     conditions = []
     if omit_revoked:
         conditions.append("AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)")
     # We only query on human
-    if omit_non_human or with_query:
+    if omit_non_human:
         conditions.append("AND user_.human IS NOT NULL")
     if with_query:
-        conditions.append("AND ((human.label ILIKE $query) OR (human.email ILIKE $query))")
+        conditions.append(
+            "AND (((COALESCE(human.label,'') ILIKE $query) OR (COALESCE(human.email,'') ILIKE $query)) OR (human.label is NULL AND user_.user_id ILIKE $query))"
+        )
 
     # Query with pagination & total result not trivial in SQL:
     # - We do the query with order but without pagination to get all results
@@ -101,8 +105,8 @@ ORDER BY row_order
 
 @query()
 async def query_retrieve_active_human_by_email(
-    conn, organization_id: OrganizationID, email: str
-) -> Optional[UserID]:
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, email: str
+) -> UserID | None:
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
             organization_id=organization_id.str,
@@ -117,13 +121,13 @@ async def query_retrieve_active_human_by_email(
 
 @query()
 async def query_find_humans(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     omit_revoked: bool = False,
     omit_non_human: bool = False,
     page: int = 1,
     per_page: int = 100,
-    query: Optional[str] = None,
+    query: str | None = None,
 ) -> Tuple[List[HumanFindResultItem], int]:
     if page >= 1:
         offset = (page - 1) * per_page

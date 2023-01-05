@@ -7,9 +7,9 @@
 # that is considered invalid, but has been generated 3mn after the valid
 # 2df2c661a4774097615b7f66078207b15a56316b on the same computer with
 # the same key...)
-from urllib.request import urlopen
 import json
 import re
+from urllib.request import urlopen
 
 match = re.match(r"refs/pull/([0-9]+)/merge", "$(Build.SourceBranch)")
 

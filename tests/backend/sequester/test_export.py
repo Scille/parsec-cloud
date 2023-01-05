@@ -1,42 +1,40 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+import sqlite3
 
 import pytest
-import sqlite3
-from parsec._parsec import DateTime
-import oscrypto.asymmetric
 
-from parsec.crypto import SecretKey, HashDigest
-from parsec.sequester_crypto import SequesterEncryptionKeyDer
-from parsec.api.protocol import (
-    OrganizationID,
-    VlobID,
-    RealmID,
-    RealmRole,
-    BlockID,
-    SequesterServiceID,
-    UserProfile,
-)
+from parsec._parsec import DateTime, HashDigest, SecretKey, SequesterPrivateKeyDer
 from parsec.api.data import (
-    UserCertificate,
-    RevokedUserCertificate,
+    BlockAccess,
     DeviceCertificate,
-    RealmRoleCertificate,
     EntryID,
     EntryName,
     FileManifest,
     FolderManifest,
+    RealmRoleCertificate,
+    RevokedUserCertificate,
+    UserCertificate,
     WorkspaceManifest,
-    BlockAccess,
 )
-from parsec.backend.realm import RealmGrantedRole
+from parsec.api.protocol import (
+    BlockID,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    SequesterServiceID,
+    UserProfile,
+    VlobID,
+)
 from parsec.backend.postgresql.sequester_export import (
     OUTPUT_DB_INIT_QUERY,
     RealmExporter,
-    RealmExporterOutputDbError,
     RealmExporterInputError,
+    RealmExporterOutputDbError,
 )
+from parsec.backend.realm import RealmGrantedRole
 from parsec.sequester_export_reader import extract_workspace
-
 from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
 
@@ -56,7 +54,7 @@ async def test_sequester_export_full_run(
         return curr_now
 
     def _sqlite_timestamp(year: int, month: int, day: int) -> int:
-        return int(DateTime(year, month, day).timestamp() * 1000)
+        return int(DateTime(year, month, day).timestamp() * 1000000)
 
     output_db_path = tmp_path / "export.sqlite"
 
@@ -67,7 +65,7 @@ async def test_sequester_export_full_run(
         timestamp=curr_now,  # 2000/1/1
     )
     await backend.sequester.create_service(
-        organization_id=coolorg.organization_id, service=s1.backend_service, now=curr_now
+        organization_id=coolorg.organization_id, service=s1.backend_service
     )
 
     # Populate: Realm
@@ -139,6 +137,7 @@ async def test_sequester_export_full_run(
         author=alice.device_id,
         block_id=block1,
         realm_id=realm1,
+        created_on=_next_day(),  # 2000/1/7
         block=b"block1",
     )
     await backend.block.create(
@@ -146,6 +145,7 @@ async def test_sequester_export_full_run(
         author=alice.device_id,
         block_id=block2,
         realm_id=realm1,
+        created_on=_next_day(),  # 2000/1/8
         block=b"block2",
     )
 
@@ -433,10 +433,9 @@ async def test_sequester_export_full_run(
 async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, alice, bob, adam):
     output_db_path = tmp_path / "export.sqlite"
     realm1 = RealmID.new()
-    service_encryption_key, service_decryption_key = oscrypto.asymmetric.generate_pair(
-        "rsa", bit_size=1024
-    )
-    service_encryption_key = SequesterEncryptionKeyDer(service_encryption_key)
+    # Don't use such a small key size in real world, this is only for test !
+    # (RSA key generation gets ~10x slower between 1024 and 4096)
+    service_decryption_key, service_encryption_key = SequesterPrivateKeyDer.generate_pair(1024)
 
     # Generate the export db by hand here
     con = sqlite3.connect(output_db_path)
@@ -603,7 +602,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     con.executemany("INSERT INTO block(_id, block_id, data, author) VALUES (?, ?, ?, ?)", blocks)
 
     # Populate `vlob` table
-    workspace_id = EntryID(realm1.uuid)
+    workspace_id = realm1.to_entry_id()
     file1 = EntryID.new()
     file2 = EntryID.new()
     folder1 = EntryID.new()
@@ -716,7 +715,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     ).dump_and_sign(author_signkey=adam.signing_key)
 
     def _sqlite_ts(year, month, day):
-        return int(DateTime(year, month, day).timestamp() * 1000)
+        return int(DateTime(year, month, day).timestamp() * 1000000)
 
     vlob_atoms = [
         # / v1
@@ -814,7 +813,10 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     dump_path = tmp_path / "extract_dump"
     list(
         extract_workspace(
-            output=dump_path, export_db=output_db_path, decryption_key=service_decryption_key
+            output=dump_path,
+            export_db=output_db_path,
+            decryption_key=service_decryption_key,
+            filter_on_date=DateTime.now(),
         )
     )
 
@@ -825,3 +827,19 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     assert {x.name for x in (dump_path / "folder2").iterdir()} == {"file2", "folder3"}
     assert (dump_path / "folder2/file2").read_bytes() == b"a" * 10 + b"b" * 10
     assert {x.name for x in (dump_path / "folder2/folder3").iterdir()} == set()
+
+    # Extract dump at 2000-03-14, where folder2 was empty
+    dump_path_ts = tmp_path / "extract_dump_ts"
+    list(
+        extract_workspace(
+            output=dump_path_ts,
+            export_db=output_db_path,
+            decryption_key=service_decryption_key,
+            filter_on_date=DateTime(2000, 3, 14),
+        )
+    )
+    # Check the result
+    assert {x.name for x in dump_path_ts.iterdir()} == {"file1", "folder1", "folder2"}
+    assert (dump_path_ts / "file1").read_bytes() == b""
+    assert {x.name for x in (dump_path_ts / "folder1").iterdir()} == set()
+    assert {x.name for x in (dump_path_ts / "folder2").iterdir()} == set()

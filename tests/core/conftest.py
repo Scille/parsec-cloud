@@ -1,15 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
 from contextlib import asynccontextmanager
 
-from parsec.core.backend_connection import (
-    backend_authenticated_cmds_factory,
-    apiv1_backend_anonymous_cmds_factory,
-)
-from parsec.core.remote_devices_manager import RemoteDevicesManager
+import pytest
+
+from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.fs import UserFS
 from parsec.core.logged_core import get_prevent_sync_pattern
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 
 @pytest.fixture
@@ -68,12 +67,6 @@ async def bob_backend_cmds(running_backend, bob):
     async with backend_authenticated_cmds_factory(
         bob.organization_addr, bob.device_id, bob.signing_key
     ) as cmds:
-        yield cmds
-
-
-@pytest.fixture
-async def apiv1_anonymous_backend_cmds(running_backend, coolorg):
-    async with apiv1_backend_anonymous_cmds_factory(coolorg.addr) as cmds:
         yield cmds
 
 

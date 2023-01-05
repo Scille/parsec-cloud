@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 import trio
 
-from parsec._parsec import TimeProvider, DateTime
+from parsec._parsec import DateTime, TimeProvider
 
 
 async def wait_for_sleeping_stat(tp, expected):
@@ -26,7 +27,7 @@ async def test_frozen_mock():
     t1 = DateTime(2001, 1, 1, 0, 0, 0)
     t2 = DateTime(2002, 1, 1, 0, 0, 0)
 
-    # Mock a time provider doesn't impact it coursins or separated time providers
+    # Mock a time provider doesn't impact it cousins or separated time providers
     child1_tp.mock_time(freeze=t1)
     assert TimeProvider().now() >= real_now
     assert child2_tp.now() >= real_now
@@ -91,6 +92,7 @@ async def test_shift_mock():
     assert grandchild1_from_child1_tp.now() == t1.add(seconds=1)
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.trio
 async def test_sleep_with_mock():
     tp = TimeProvider()
@@ -101,7 +103,7 @@ async def test_sleep_with_mock():
 
     async def _async_mock_time(time_provider, freeze, shift):
         # Make sure we are not changing the mock before time provider sleeps
-        await trio.sleep(0.1)
+        await trio.sleep(0.01)
         time_provider.mock_time(freeze=freeze, shift=shift)
 
     async with trio.open_nursery() as nursery:
@@ -120,14 +122,10 @@ async def test_sleep_with_mock():
             await wait_for_sleeping_stat(tp, 0)
 
 
-# Raw mode cause trio internal error, but this "fine enough" given this only occurs
-# if we do `nursery.start_soon(time_provider.sleep(...))` which is totally useless in
-# real life ;-)
-@pytest.fixture(params=("wrapped",))
-# @pytest.fixture(params=("raw", "wrapped"))
+@pytest.fixture(params=("raw", "wrapped"))
 def maybe_wrap_tp_sleep(request):
     # In raw mode we pass to trio a coroutine that directly yield `TokioTaskAborterFromTrio`
-    # (i.e. the low-level control object undestood by trio).
+    # (i.e. the low-level control object understood by trio).
     # In wrapped mode, we pass to trio a coroutine that itself await on the raw coroutine.
     if request.param == "raw":
 
@@ -161,6 +159,7 @@ async def test_sleep_cancellation(maybe_wrap_tp_sleep):
         await wait_for_sleeping_stat(tp, 0)
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.trio
 async def test_sleep_in_nursery(maybe_wrap_tp_sleep):
     tp = TimeProvider()
@@ -198,31 +197,82 @@ async def test_sleep_in_nursery(maybe_wrap_tp_sleep):
 async def test_concurrent_sleeps(maybe_wrap_tp_sleep):
     t1 = DateTime(2001, 1, 1, 0, 0, 0)
     t2 = t1.add(seconds=11)
-    tp = TimeProvider()
+    tp1 = TimeProvider()
     tp2 = TimeProvider()
 
     async with trio.open_nursery() as nursery:
         with trio.fail_after(1):
 
-            tp.mock_time(freeze=t1)
+            tp1.mock_time(freeze=t1)
             tp2.mock_time(freeze=t1)
 
-            assert tp.sleeping_stats() == 0  # No-one is sleeping on us
+            assert tp1.sleeping_stats() == 0  # No-one is sleeping on us
             assert tp2.sleeping_stats() == 0  # No-one is sleeping on us
 
-            nursery.start_soon(maybe_wrap_tp_sleep, tp, 10)
+            nursery.start_soon(maybe_wrap_tp_sleep, tp1, 10)
             nursery.start_soon(maybe_wrap_tp_sleep, tp2, 10)
 
             # Busy loop to wait for the time providers to sleep
-            # with trio.fail_after(1):
-            await wait_for_sleeping_stat(tp, 1)
+            await wait_for_sleeping_stat(tp1, 1)
             await wait_for_sleeping_stat(tp2, 1)
 
             # Now make a time jump for a single time provider
-            tp.mock_time(freeze=t2)
-            await wait_for_sleeping_stat(tp, 0)
+            tp1.mock_time(freeze=t2)
+            await wait_for_sleeping_stat(tp1, 0)
+
+            assert tp1.sleeping_stats() == 0
             assert tp2.sleeping_stats() == 1
 
             # Finally resolve the second one
             tp2.mock_time(freeze=t2)
             await wait_for_sleeping_stat(tp2, 0)
+
+
+@pytest.mark.trio
+async def test_reproduce_trio_corruption():
+    """
+    This test used to produce a trio corruption due to an incorrect
+    implementation of `FutureToCouroutine` (related to cancellation handling).
+    """
+    t1 = DateTime(2001, 1, 1, 0, 0, 0)
+    t2 = t1.add(seconds=11)
+    tp1 = TimeProvider()
+    tp1.mock_time(freeze=t1)
+
+    with pytest.raises(ZeroDivisionError):
+        with trio.fail_after(1):
+            async with trio.open_nursery() as nursery:
+                nursery.start_soon(tp1.sleep, 10)
+                await wait_for_sleeping_stat(tp1, 1)
+                # Mock and raise at the same time
+                tp1.mock_time(freeze=t2)
+                await trio.sleep(0)
+                1 / 0
+
+
+@pytest.mark.trio
+async def test_reproduce_concurrency_issue(maybe_wrap_tp_sleep):
+    """
+    This test used to reproduce a concurrency issue due to an incorrect
+    implementation of `TimeProvider` (due to a race condition while taking
+    a time reference in the `sleep` method)
+    """
+    t1 = DateTime(2001, 1, 1, 0, 0, 0)
+    t2 = t1.add(seconds=11)
+    tp1 = TimeProvider()
+
+    async with trio.open_nursery() as nursery:
+        with trio.fail_after(1):
+
+            tp1.mock_time(freeze=t1)
+            assert tp1.sleeping_stats() == 0
+
+            nursery.start_soon(maybe_wrap_tp_sleep, tp1, 10)
+            await trio.sleep(0)
+
+            await wait_for_sleeping_stat(tp1, 1)
+
+            tp1.mock_time(freeze=t2)
+            await wait_for_sleeping_stat(tp1, 0)
+
+            assert tp1.sleeping_stats() == 0

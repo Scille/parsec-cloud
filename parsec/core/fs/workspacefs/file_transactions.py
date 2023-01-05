@@ -1,32 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec.core.core_events import CoreEvent
-from typing import Tuple, List, Callable, Dict, Optional, cast, AsyncIterator
 from collections import defaultdict
 from contextlib import asynccontextmanager
+from typing import AsyncIterator, Callable, Dict, List, Tuple, cast
 
-from parsec.event_bus import EventBus
+from parsec._parsec import CoreEvent
 from parsec.api.data import BlockAccess
 from parsec.api.protocol import DeviceID
-from parsec.core.types import FileDescriptor, EntryID, LocalDevice
+from parsec.core.fs.exceptions import FSEndOfFileError, FSInvalidFileDescriptor, FSLocalMissError
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
-from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
+from parsec.core.fs.workspacefs.file_operations import (
+    prepare_read,
+    prepare_reshape,
+    prepare_resize,
+    prepare_write,
+)
 from parsec.core.types import (
     Chunk,
-    WorkspaceEntry,
+    EntryID,
+    FileDescriptor,
+    LocalDevice,
     LocalFileManifest,
     LocalFolderishManifests,
     LocalNonRootManifests,
     LocalWorkspaceManifest,
+    WorkspaceEntry,
 )
-from parsec.core.fs.workspacefs.file_operations import (
-    prepare_read,
-    prepare_write,
-    prepare_resize,
-    prepare_reshape,
-)
-
+from parsec.event_bus import EventBus
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
 
@@ -148,7 +150,7 @@ class FileTransactions:
 
     # Confinement helper
 
-    async def _get_confinement_point(self, entry_id: EntryID) -> Optional[EntryID]:
+    async def _get_confinement_point(self, entry_id: EntryID) -> EntryID | None:
         # Load the corresponding manifest
         try:
             current_manifest = await self.local_storage.get_manifest(entry_id)

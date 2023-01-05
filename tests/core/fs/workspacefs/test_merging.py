@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec.types import FrozenDict
 import pytest
-import re
-from parsec._parsec import DateTime
 
-from parsec.api.protocol import DeviceID
+from parsec._parsec import DateTime, Regex
 from parsec.api.data import EntryName
-from parsec.core.types import EntryID, LocalWorkspaceManifest
+from parsec.api.protocol import DeviceID
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
+from parsec.core.types import EntryID, LocalWorkspaceManifest
+from parsec.types import FrozenDict
 
-
-empty_pattern = re.compile(r"^\b$")
+empty_pattern = Regex.from_regex_str(r"^\b$")
 
 
 def gen_date():

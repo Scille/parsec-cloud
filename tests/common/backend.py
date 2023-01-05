@@ -1,37 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from dataclasses import dataclass
-import sys
-import pytest
 import json
-import trio
-import ssl
-import trustme
 import socket
+import ssl
+import sys
 import tempfile
-from inspect import iscoroutine
-from contextlib import contextmanager, asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
+from dataclasses import dataclass
 from functools import partial
-from typing import Optional, Callable, Union
-from quart_trio import QuartTrio
+from inspect import iscoroutine
+from typing import Callable, Optional, Union
+
+import pytest
+import trio
+import trustme
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio.run import worker_serve
 from hypercorn.trio.tcp_server import TCPServer
 from hypercorn.trio.worker_context import WorkerContext
 from quart.typing import TestClientProtocol
-from parsec.core.types import BackendAddr, LocalDevice
-from parsec.backend.app import BackendApp
-from parsec.backend import backend_app_factory
-from parsec.backend.asgi import app_factory
-from parsec.backend.config import (
-    BackendConfig,
-    MockedEmailConfig,
-    MockedBlockStoreConfig,
-)
+from quart_trio import QuartTrio
 
+from parsec.backend import backend_app_factory
+from parsec.backend.app import BackendApp
+from parsec.backend.asgi import app_factory
+from parsec.backend.config import BackendConfig, MockedBlockStoreConfig, MockedEmailConfig
+from parsec.core.types import BackendAddr, LocalDevice
+from tests.common.binder import OrganizationFullData
 from tests.common.freeze_time import freeze_time
 from tests.common.trio_clock import real_clock_timeout
-from tests.common.binder import OrganizationFullData
 
 
 @pytest.fixture(scope="session")
@@ -140,6 +138,7 @@ def backend_factory(
                 "db_max_connections": 5,
                 "debug": False,
                 "db_url": backend_store,
+                "sse_keepalive": 30,
                 "blockstore_config": blockstore,
                 "email_config": None,
                 "backend_addr": None,

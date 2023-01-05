@@ -1,31 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Tuple
 
-from parsec.backend.backend_events import BackendEvent
+import triopg
+
 from parsec.api.protocol import OrganizationID, RealmRole, UserProfile
-from parsec.backend.realm import (
-    RealmGrantedRole,
-    RealmAccessError,
-    RealmIncompatibleProfileError,
-    RealmRoleAlreadyGranted,
-    RealmNotFoundError,
-    RealmInMaintenanceError,
-    RealmRoleRequireGreaterTimestampError,
-)
-from parsec.backend.user import UserAlreadyRevokedError
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_user,
-    q_user_internal_id,
     q_device_internal_id,
     q_realm,
     q_realm_internal_id,
+    q_user,
+    q_user_internal_id,
+    query,
 )
-
+from parsec.backend.realm import (
+    RealmAccessError,
+    RealmGrantedRole,
+    RealmIncompatibleProfileError,
+    RealmInMaintenanceError,
+    RealmNotFoundError,
+    RealmRoleAlreadyGranted,
+    RealmRoleRequireGreaterTimestampError,
+)
+from parsec.backend.user import UserAlreadyRevokedError
 
 _q_get_user_profile = Q(
     q_user(organization_id="$organization_id", user_id="$user_id", select="profile, revoked_on")
@@ -121,10 +123,10 @@ DO UPDATE SET last_role_change = (
 
 @query(in_transaction=True)
 async def query_update_roles(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     new_role: RealmGrantedRole,
-    recipient_message: Optional[bytes],
+    recipient_message: bytes | None,
 ) -> None:
     assert new_role.granted_by is not None
     if new_role.granted_by.user_id == new_role.user_id:
@@ -136,7 +138,7 @@ async def query_update_roles(
     )
     if not rep:
         raise RealmNotFoundError(f"User `{new_role.user_id.str}` doesn't exist")
-    if rep["profile"] == UserProfile.OUTSIDER.value and new_role.role in (
+    if rep["profile"] == UserProfile.OUTSIDER.str and new_role.role in (
         RealmRole.MANAGER,
         RealmRole.OWNER,
     ):
@@ -148,18 +150,18 @@ async def query_update_roles(
 
     # Retrieve realm and make sure it is not under maintenance
     rep = await conn.fetchrow(
-        *_q_get_realm_status(organization_id=organization_id.str, realm_id=new_role.realm_id.uuid)
+        *_q_get_realm_status(organization_id=organization_id.str, realm_id=new_role.realm_id)
     )
     if not rep:
-        raise RealmNotFoundError(f"Realm `{new_role.realm_id.str}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{new_role.realm_id.hex}` doesn't exist")
     if rep["maintenance_type"]:
         raise RealmInMaintenanceError("Data realm is currently under maintenance")
 
-    # Check access rights and user existance
+    # Check access rights and user existence
     ((author_id, author_role), (user_id, existing_user_role)) = await conn.fetch(
         *_q_get_roles(
             organization_id=organization_id.str,
-            realm_id=new_role.realm_id.uuid,
+            realm_id=new_role.realm_id,
             users_ids=(new_role.granted_by.user_id.str, new_role.user_id.str),
         )
     )
@@ -169,13 +171,13 @@ async def query_update_roles(
     if author_role is not None:
         author_role, _ = author_role
         if author_role is not None:
-            author_role = RealmRole(author_role)
+            author_role = RealmRole.from_str(author_role)
 
     last_role_granted_on = None
     if existing_user_role is not None:
         existing_user_role, last_role_granted_on = existing_user_role
         if existing_user_role is not None:
-            existing_user_role = RealmRole(existing_user_role)
+            existing_user_role = RealmRole.from_str(existing_user_role)
 
     owner_only = (RealmRole.OWNER,)
     owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
@@ -192,18 +194,18 @@ async def query_update_roles(
     if existing_user_role == new_role.role:
         raise RealmRoleAlreadyGranted()
 
-    # Timestamps for the role certificates of a given user should be striclty increasing
+    # Timestamps for the role certificates of a given user should be strictly increasing
     if last_role_granted_on is not None and last_role_granted_on >= new_role.granted_on:
         raise RealmRoleRequireGreaterTimestampError(last_role_granted_on)
 
-    # Perfrom extra checks when removing write rights
+    # Perform extra checks when removing write rights
     if new_role.role in (RealmRole.READER, None):
 
         # The change of role needs to occur strictly after the last upload for this user
         rep = await conn.fetchrow(
             *_q_get_last_vlob_update(
                 organization_id=organization_id.str,
-                realm_id=new_role.realm_id.uuid,
+                realm_id=new_role.realm_id,
                 user_id=new_role.user_id.str,
             )
         )
@@ -218,7 +220,7 @@ async def query_update_roles(
         rep = await conn.fetchrow(
             *_q_get_last_role_change(
                 organization_id=organization_id.str,
-                realm_id=new_role.realm_id.uuid,
+                realm_id=new_role.realm_id,
                 user_id=new_role.user_id.str,
             )
         )
@@ -229,9 +231,9 @@ async def query_update_roles(
     await conn.execute(
         *_q_insert_realm_user_role(
             organization_id=organization_id.str,
-            realm_id=new_role.realm_id.uuid,
+            realm_id=new_role.realm_id,
             user_id=new_role.user_id.str,
-            role=new_role.role.value if new_role.role else None,
+            role=new_role.role.str if new_role.role else None,
             certificate=new_role.certificate,
             granted_by=new_role.granted_by.str,
             granted_on=new_role.granted_on,
@@ -241,7 +243,7 @@ async def query_update_roles(
     await conn.execute(
         *_q_set_last_role_change(
             organization_id=organization_id.str,
-            realm_id=new_role.realm_id.uuid,
+            realm_id=new_role.realm_id,
             user_id=new_role.granted_by.user_id.str,
             granted_on=new_role.granted_on,
         )

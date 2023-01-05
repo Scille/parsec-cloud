@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import trio
-from parsec._parsec import DateTime
-import pytest
 from unittest.mock import ANY
 
+import pytest
+import trio
+
+from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.api.protocol import (
-    VlobID,
     BlockID,
+    HandshakeOrganizationExpired,
     OrganizationID,
     UserProfile,
-    HandshakeOrganizationExpired,
+    VlobID,
 )
 from parsec.api.rest import organization_stats_rep_serializer
-from parsec.backend.organization import Organization
 from parsec.backend.backend_events import BackendEvent
-
-from tests.common import customize_fixtures
+from parsec.backend.organization import Organization
+from tests.common import customize_fixtures, local_device_to_backend_user
 
 
 @pytest.mark.trio
@@ -71,9 +72,11 @@ async def test_organization_create(backend_asgi_app):
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -138,9 +141,11 @@ async def test_organization_create_already_exists_not_bootstrapped(backend_asgi_
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -186,9 +191,11 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=False,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -212,9 +219,11 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
-        active_users_limit=10,
+        active_users_limit=ActiveUsersLimit.LimitedTo(10),
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -234,9 +243,11 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         organization_id=organization_id,
         bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
+        created_on=ANY,
+        bootstrapped_on=None,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
     )
@@ -285,7 +296,7 @@ async def test_organization_config_ok(backend_asgi_app, coolorg, bootstrapped):
 
     # Ensure config change is taken into account
     await backend_asgi_app.backend.organization.update(
-        id=organization_id, active_users_limit=42, is_expired=True
+        id=organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(42), is_expired=True
     )
     response = await client.get(
         f"/administration/organizations/{organization_id.str}",
@@ -352,7 +363,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
-        assert org.active_users_limit == 10
+        assert org.active_users_limit == ActiveUsersLimit.LimitedTo(10)
 
         # Partial update
         response = await client.patch(
@@ -367,7 +378,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
-        assert org.active_users_limit is None
+        assert org.active_users_limit is ActiveUsersLimit.NO_LIMIT
 
         # Partial update with unknown field
         response = await client.patch(
@@ -393,11 +404,35 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
-        assert org.active_users_limit is None
+        assert org.active_users_limit is ActiveUsersLimit.NO_LIMIT
 
-    # No BackendEvent.ORGANIZATION_EXPIRED should have occured
+    # No BackendEvent.ORGANIZATION_EXPIRED should have occurred
     await trio.testing.wait_all_tasks_blocked()
     assert spy.events == []
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
+async def test_bootstrap_expired_organization(backend_asgi_app, backend, alice, coolorg):
+    bootstrap_token = "123"
+    await backend_asgi_app.backend.organization.create(
+        id=coolorg.organization_id, bootstrap_token=bootstrap_token
+    )
+    await backend_asgi_app.backend.organization.update(id=coolorg.organization_id, is_expired=True)
+
+    # Bootstrap should go fine
+    backend_user, backend_first_device = local_device_to_backend_user(alice, coolorg)
+    await backend.organization.bootstrap(
+        id=coolorg.organization_id,
+        user=backend_user,
+        first_device=backend_first_device,
+        bootstrap_token=bootstrap_token,
+        root_verify_key=coolorg.root_verify_key,
+    )
+
+    # Once bootstrapped, the organization is still expired
+    org = await backend.organization.get(id=coolorg.organization_id)
+    assert org.is_expired is True
 
 
 @pytest.mark.trio
@@ -624,7 +659,7 @@ async def test_organization_stats_users(
         "realms": 0,
     }
 
-    for profile in UserProfile:
+    for profile in UserProfile.VALUES:
         i = [
             i
             for i, v in enumerate(expected_stats["users_per_profile_detail"])

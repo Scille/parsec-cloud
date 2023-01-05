@@ -1,0 +1,62 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "user_get",
+            "fields": [
+                {
+                    "name": "user_id",
+                    "type": "UserID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "user_certificate",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "revoked_user_certificate",
+                        "type": "RequiredOption<Bytes>"
+                    },
+                    {
+                        "name": "device_certificates",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "trustchain",
+                        "type": "Trustchain"
+                    }
+                ]
+            },
+            {
+                "status": "not_found"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "Trustchain",
+                "fields": [
+                    {
+                        "name": "devices",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "users",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "revoked_users",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]

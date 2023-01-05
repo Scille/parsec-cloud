@@ -1,14 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from enum import Enum
 from typing import Type
+
+from marshmallow.fields import Field
+
 from parsec._parsec import (
+    InvitationDeletedReason,
+    InvitationEmailSentStatus,
+    InvitationStatus,
+    InvitationToken,
+    InvitationType,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerReq,
     Invite1GreeterWaitPeerRep,
     Invite1GreeterWaitPeerReq,
-    Invite2aClaimerSendHashedNonceHashNonceRep,
-    Invite2aClaimerSendHashedNonceHashNonceReq,
+    Invite2aClaimerSendHashedNonceRep,
+    Invite2aClaimerSendHashedNonceReq,
     Invite2aGreeterGetHashedNonceRep,
     Invite2aGreeterGetHashedNonceReq,
     Invite2bClaimerSendNonceRep,
@@ -36,16 +44,18 @@ from parsec._parsec import (
     InviteNewRep,
     InviteNewReq,
 )
-
-from parsec.serde import fields
 from parsec.api.protocol.base import ApiCommandSerializer
-
-from parsec._parsec import InvitationToken
-
+from parsec.serde import fields
 
 __all__ = (
+    "InvitationDeletedReason",
+    "InvitationStatus",
+    "InvitationStatusField",
+    "InvitationEmailSentStatus",
     "InvitationToken",
     "InvitationTokenField",
+    "InvitationType",
+    "InvitationTypeField",
     "invite_new_serializer",
     "invite_delete_serializer",
     "invite_list_serializer",
@@ -65,50 +75,16 @@ __all__ = (
 )
 
 
-class InvitationType(Enum):
-    USER = "USER"
-    DEVICE = "DEVICE"
-
-
-InvitationTokenField: Type[fields.Field] = fields.uuid_based_field_factory(InvitationToken)
-InvitationTypeField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationType)
-
-
-class InvitationEmailSentStatus(Enum):
-    SUCCESS = "SUCCESS"
-    NOT_AVAILABLE = "NOT_AVAILABLE"
-    BAD_RECIPIENT = "BAD_RECIPIENT"
-
-
-InvitationEmailSentStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(
-    InvitationEmailSentStatus
+InvitationTokenField: Type[Field[InvitationToken]] = fields.uuid_based_field_factory(
+    InvitationToken
 )
+InvitationStatusField = fields.rust_enum_field_factory(InvitationStatus)
+InvitationTypeField: Type[Field[InvitationType]] = fields.rust_enum_field_factory(InvitationType)
 
 
 invite_new_serializer = ApiCommandSerializer(InviteNewReq, InviteNewRep)
 
-
-class InvitationDeletedReason(Enum):
-    FINISHED = "FINISHED"
-    CANCELLED = "CANCELLED"
-    ROTTEN = "ROTTEN"
-
-
-InvitationDeletedReasonField: Type[fields.BaseEnumField] = fields.enum_field_factory(
-    InvitationDeletedReason
-)
-
-
 invite_delete_serializer = ApiCommandSerializer(InviteDeleteReq, InviteDeleteRep)
-
-
-class InvitationStatus(Enum):
-    IDLE = "IDLE"
-    READY = "READY"  # TODO: rename to CLAIMER_ONLINE ?
-    DELETED = "DELETED"
-
-
-InvitationStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationStatus)
 
 
 invite_list_serializer = ApiCommandSerializer(InviteListReq, InviteListRep)
@@ -128,8 +104,8 @@ invite_1_greeter_wait_peer_serializer = ApiCommandSerializer(
 
 
 invite_2a_claimer_send_hashed_nonce_serializer = ApiCommandSerializer(
-    Invite2aClaimerSendHashedNonceHashNonceReq,
-    Invite2aClaimerSendHashedNonceHashNonceRep,
+    Invite2aClaimerSendHashedNonceReq,
+    Invite2aClaimerSendHashedNonceRep,
 )
 
 invite_2a_greeter_get_hashed_nonce_serializer = ApiCommandSerializer(

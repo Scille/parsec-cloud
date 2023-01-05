@@ -1,9 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 import trio
 
-from parsec._parsec import DateTime, InvitationType, InviteListRepOk
+from parsec._parsec import ActiveUsersLimit, DateTime, InvitationType, InviteListRepOk
+from parsec.api.data import EntryName
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
@@ -11,26 +13,23 @@ from parsec.api.protocol import (
     InvitationStatus,
     UserProfile,
 )
-
-from parsec.api.data import EntryName
-from parsec.core.backend_connection import (
-    backend_invited_cmds_factory,
-    backend_authenticated_cmds_factory,
-)
-from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
-from parsec.core.invite import (
-    InvitePeerResetError,
-    InviteActiveUsersLimitReachedError,
-    claimer_retrieve_info,
-    DeviceClaimInitialCtx,
-    UserClaimInitialCtx,
-    DeviceGreetInitialCtx,
-    UserGreetInitialCtx,
-)
 from parsec.backend.backend_events import BackendEvent
+from parsec.core.backend_connection import (
+    backend_authenticated_cmds_factory,
+    backend_invited_cmds_factory,
+)
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-
+from parsec.core.invite import (
+    DeviceClaimInitialCtx,
+    DeviceGreetInitialCtx,
+    InviteActiveUsersLimitReachedError,
+    InvitePeerResetError,
+    UserClaimInitialCtx,
+    UserGreetInitialCtx,
+    claimer_retrieve_info,
+)
+from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
 from tests.common import real_clock_timeout
 
 
@@ -45,7 +44,7 @@ async def test_good_device_claim(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -144,31 +143,31 @@ async def test_good_device_claim(
         assert device.device_certificate == device.redacted_device_certificate
 
     # Test the behavior of this new device
-    async with user_fs_factory(bob) as bobfs:
-        async with user_fs_factory(alice) as alicefs:
-            async with user_fs_factory(new_device) as newfs:
+    async with user_fs_factory(bob) as bob_fs:
+        async with user_fs_factory(alice) as alice_fs:
+            async with user_fs_factory(new_device) as new_fs:
                 # New device should start with a speculative user manifest
-                um = newfs.get_user_manifest()
+                um = new_fs.get_user_manifest()
                 assert um.is_placeholder
                 assert um.speculative
 
                 # Old device modify user manifest
-                await alicefs.workspace_create(EntryName("wa"))
-                await alicefs.sync()
+                await alice_fs.workspace_create(EntryName("wa"))
+                await alice_fs.sync()
 
                 # New sharing from other user
-                wb_id = await bobfs.workspace_create(EntryName("wb"))
-                await bobfs.workspace_share(wb_id, alice.user_id, WorkspaceRole.CONTRIBUTOR)
+                wb_id = await bob_fs.workspace_create(EntryName("wb"))
+                await bob_fs.workspace_share(wb_id, alice.user_id, WorkspaceRole.CONTRIBUTOR)
 
                 # Test new device get access to both new workspaces
-                await newfs.process_last_messages()
-                await newfs.sync()
-                newfs_um = newfs.get_user_manifest()
+                await new_fs.process_last_messages()
+                await new_fs.sync()
+                new_fs_um = new_fs.get_user_manifest()
 
                 # Make sure new and old device have the same view on data
-                await alicefs.sync()
-                alicefs_um = alicefs.get_user_manifest()
-                assert newfs_um == alicefs_um
+                await alice_fs.sync()
+                alice_fs_um = alice_fs.get_user_manifest()
+                assert new_fs_um == alice_fs_um
 
 
 @pytest.mark.trio
@@ -186,7 +185,7 @@ async def test_good_user_claim(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
 
@@ -308,28 +307,28 @@ async def test_good_user_claim(
         assert device.device_certificate == device.redacted_device_certificate
 
     # Test the behavior of this new user device
-    async with user_fs_factory(alice) as alicefs:
-        async with user_fs_factory(new_device) as newfs:
+    async with user_fs_factory(alice) as alice_fs:
+        async with user_fs_factory(new_device) as new_fs:
             # New user should start with a non-speculative user manifest
-            um = newfs.get_user_manifest()
+            um = new_fs.get_user_manifest()
             assert um.is_placeholder
             assert not um.speculative
 
             # Share a workspace with new user
-            aw_id = await alicefs.workspace_create(EntryName("alice_workspace"))
-            await alicefs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)
+            aw_id = await alice_fs.workspace_create(EntryName("alice_workspace"))
+            await alice_fs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)
 
             # New user cannot create a new workspace
-            zw_id = await newfs.workspace_create(EntryName("zack_workspace"))
-            await newfs.workspace_share(zw_id, alice.user_id, WorkspaceRole.READER)
+            zw_id = await new_fs.workspace_create(EntryName("zack_workspace"))
+            await new_fs.workspace_share(zw_id, alice.user_id, WorkspaceRole.READER)
 
             # Now both users should have the same workspaces
-            await alicefs.process_last_messages()
-            await newfs.process_last_messages()
-            await newfs.sync()  # Not required, but just to make sure it works
+            await alice_fs.process_last_messages()
+            await new_fs.process_last_messages()
+            await new_fs.sync()  # Not required, but just to make sure it works
 
-            alice_um = alicefs.get_user_manifest()
-            zack_um = newfs.get_user_manifest()
+            alice_um = alice_fs.get_user_manifest()
+            zack_um = new_fs.get_user_manifest()
 
             assert {(w.id, w.key.secret) for w in alice_um.workspaces} == {
                 (w.id, w.key.secret) for w in zack_um.workspaces
@@ -344,7 +343,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -416,7 +415,7 @@ async def test_claimer_handle_cancel_event(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -523,7 +522,7 @@ async def test_claimer_handle_command_failure(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -609,7 +608,9 @@ async def test_claimer_handle_command_failure(
 @pytest.mark.trio
 async def test_user_claim_but_active_users_limit_reached(backend, running_backend, alice):
     # Organization has reached active user limit
-    await backend.organization.update(alice.organization_id, active_users_limit=1)
+    await backend.organization.update(
+        alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(1)
+    )
 
     # Invitation is still ok...
     invitation = await backend.invite.new_for_user(
@@ -620,7 +621,7 @@ async def test_user_claim_but_active_users_limit_reached(backend, running_backen
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
 

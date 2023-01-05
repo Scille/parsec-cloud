@@ -1,20 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
 from parsec._parsec import (
     DateTime,
     EventsListenRepNoEvents,
-    EventsListenRepOkVlobsUpdated,
     EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOk,
+    EventsListenRepOkRealmVlobsUpdated,
 )
-from parsec.api.protocol import VlobID, RealmID, RealmRole
-from parsec.backend.realm import RealmGrantedRole
+from parsec.api.protocol import RealmID, RealmRole, VlobID
 from parsec.backend.backend_events import BackendEvent
-
-from tests.backend.common import events_subscribe, events_listen_nowait
-
+from parsec.backend.realm import RealmGrantedRole
+from tests.backend.common import events_listen_nowait, events_subscribe
 
 NOW = DateTime(2000, 1, 3)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
@@ -79,9 +77,9 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
         # we are waiting for. To avoid this we have to specify event params.
         await spy.wait_multiple_with_timeout(
             [
-                EventsListenRepOkVlobsUpdated(other_realm, 1, OTHER_VLOB_ID, 1),
-                EventsListenRepOkVlobsUpdated(realm, 2, VLOB_ID, 2),
-                EventsListenRepOkVlobsUpdated(realm, 3, VLOB_ID, 3),
+                EventsListenRepOkRealmVlobsUpdated(other_realm, 1, OTHER_VLOB_ID, 1),
+                EventsListenRepOkRealmVlobsUpdated(realm, 2, VLOB_ID, 2),
+                EventsListenRepOkRealmVlobsUpdated(realm, 3, VLOB_ID, 3),
             ]
         )
 
@@ -93,9 +91,9 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
     ]
 
     assert reps == [
-        EventsListenRepOk(EventsListenRepOkVlobsUpdated(other_realm, 1, OTHER_VLOB_ID, 1)),
-        EventsListenRepOk(EventsListenRepOkVlobsUpdated(realm, 2, VLOB_ID, 2)),
-        EventsListenRepOk(EventsListenRepOkVlobsUpdated(realm, 3, VLOB_ID, 3)),
+        EventsListenRepOkRealmVlobsUpdated(other_realm, 1, OTHER_VLOB_ID, 1),
+        EventsListenRepOkRealmVlobsUpdated(realm, 2, VLOB_ID, 2),
+        EventsListenRepOkRealmVlobsUpdated(realm, 3, VLOB_ID, 3),
         EventsListenRepNoEvents(),
     ]
 
@@ -243,11 +241,11 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
     # Create vlob in realm event
     if not realm_created_by_self:
         rep = await events_listen_nowait(alice_ws)
-        assert rep == EventsListenRepOkVlobsUpdated(realm_id, 1, VLOB_ID, 1)
+        assert rep == EventsListenRepOkRealmVlobsUpdated(realm_id, 1, VLOB_ID, 1)
 
     # Update vlob in realm event
     rep = await events_listen_nowait(alice_ws)
-    assert rep == EventsListenRepOkVlobsUpdated(realm_id, 2, VLOB_ID, 2)
+    assert rep == EventsListenRepOkRealmVlobsUpdated(realm_id, 2, VLOB_ID, 2)
 
     rep = await events_listen_nowait(alice_ws)
     assert isinstance(rep, EventsListenRepNoEvents)

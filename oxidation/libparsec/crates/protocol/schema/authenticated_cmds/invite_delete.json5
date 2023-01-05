@@ -1,0 +1,51 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_delete",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "reason",
+                    "type": "InvitationDeletedReason"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "already_deleted"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "InvitationDeletedReason",
+                "variants": [
+                    {
+                        "name": "Finished",
+                        "discriminant_value": "FINISHED"
+                    },
+                    {
+                        "name": "Cancelled",
+                        "discriminant_value": "CANCELLED"
+                    },
+                    {
+                        "name": "Rotten",
+                        "discriminant_value": "ROTTEN"
+                    }
+                ]
+            }
+        ]
+    }
+]

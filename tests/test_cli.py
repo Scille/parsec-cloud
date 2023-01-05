@@ -1,53 +1,63 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import re
 import os
-from parsec.backend.sequester import (
-    SequesterServiceAlreadyDisabledError,
-    SequesterServiceAlreadyEnabledError,
-)
-import trio
-from uuid import UUID
-from pathlib import Path
+import re
 from functools import partial
+from pathlib import Path
+from uuid import UUID
 
-from tests.common.fixtures_customisation import customize_fixtures
-from tests.common.sequester import sequester_service_factory
+import click
+import trio
 
 try:
     import fcntl
 except ModuleNotFoundError:  # Not available on Windows
     pass
-import sys
 import subprocess
+import sys
+from contextlib import asynccontextmanager, contextmanager
 from time import sleep
-from contextlib import contextmanager, asynccontextmanager
 from unittest.mock import ANY, patch
+
 import attr
 import pytest
 import trustme
 from click.testing import CliRunner
+from click.testing import Result as CliResult
 
 from parsec import __version__ as parsec_version
-from parsec.cli import cli
-from parsec.backend.postgresql import MigrationItem
+from parsec._parsec import DateTime
 from parsec.api.protocol import RealmID
-from parsec.core.types import BackendAddr, EntryID
+from parsec.backend.postgresql import MigrationItem
+from parsec.backend.sequester import (
+    SequesterServiceAlreadyDisabledError,
+    SequesterServiceAlreadyEnabledError,
+    SequesterServiceType,
+)
+from parsec.cli import cli
+from parsec.cli_utils import ParsecDateTimeClickType
+from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types import (
-    LocalDevice,
-    UserInfo,
+    BackendAddr,
     BackendOrganizationAddr,
     BackendPkiEnrollmentAddr,
+    EntryID,
+    LocalDevice,
+    UserInfo,
 )
-from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
-
-from tests.common import AsyncMock, real_clock_timeout, asgi_app_handle_client_factory
-
+from tests.common import (
+    AsyncMock,
+    asgi_app_handle_client_factory,
+    customize_fixtures,
+    real_clock_timeout,
+    sequester_service_factory,
+)
 
 CWD = Path(__file__).parent.parent
 # Starting parsec cli as a new subprocess can be very slow (typically a couple
-# of seconds on my beafy machine !), so we use an unusaly large value here to
+# of seconds on my beafy machine !), so we use an unusually large value here to
 # avoid issues in the CI.
 SUBPROCESS_TIMEOUT = 30
 
@@ -63,6 +73,33 @@ def test_version():
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
     assert f"parsec, version {parsec_version}\n" in result.output
+
+
+def test_datetime_parsing():
+    parser = ParsecDateTimeClickType()
+    dt = DateTime(2000, 1, 1, 12, 30, 59)
+    assert parser.convert(dt, None, None) is dt
+    assert parser.convert("2000-01-01T12:30:59Z", None, None) == dt
+    assert parser.convert("2000-01-01T12:30:59.123Z", None, None) == dt.add(microseconds=123000)
+    assert parser.convert("2000-01-01T12:30:59.123000Z", None, None) == dt.add(microseconds=123000)
+    assert parser.convert("2000-01-01T12:30:59.123456Z", None, None) == dt.add(microseconds=123456)
+    assert parser.convert("2000-01-01", None, None) == DateTime(2000, 1, 1)
+
+    with pytest.raises(click.exceptions.BadParameter) as exc:
+        parser.convert("dummy", None, None)
+    assert (
+        str(exc.value)
+        == "`dummy` must be a RFC3339 date/datetime (e.g. `2000-01-01` or `2000-01-01T00:00:00Z`)"
+    )
+
+    with pytest.raises(click.exceptions.BadParameter):
+        parser.convert("2000-01-01Z", None, None)
+
+    # Timezone naive is not allowed
+    with pytest.raises(click.exceptions.BadParameter) as exc:
+        parser.convert("2000-01-01T12:30:59.123456", None, None)
+    with pytest.raises(click.exceptions.BadParameter):
+        parser.convert("2000-01-01T12:30:59", None, None)
 
 
 def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
@@ -87,7 +124,7 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
         )
     ]
 
-    def _run_cli_share_workspace_test(args, expected_error_code, use_recipiant):
+    def _run_cli_share_workspace_test(args, expected_error_code, use_recipient):
         factory_mock.reset_mock()
 
         workspace_id = EntryID.new()
@@ -108,7 +145,7 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
         factory_mock.return_value.user_fs.workspace_share.assert_called_once_with(
             workspace_id, alice.user_id, expected_workspace_role
         )
-        if use_recipiant:
+        if use_recipient:
             factory_mock.return_value.find_humans.assert_called_once()
         else:
             factory_mock.return_value.find_humans.assert_not_called()
@@ -123,8 +160,8 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
     # Test with user-id
     args = default_args + f"--user-id={alice.user_id.str}"
     _run_cli_share_workspace_test(args, 0, False)
-    # Test with recipiant
-    args = default_args + f"--recipiant=alice@example.com"
+    # Test with recipient
+    args = default_args + f"--recipient=alice@example.com"
     _run_cli_share_workspace_test(args, 0, True)
 
 
@@ -455,6 +492,15 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             alice1_slughash = match.group(1)
             p.wait()
 
+        print("####### Stats server #######")
+        _run(
+            "core stats_server "
+            f"--addr={backend_url} "
+            f"--administration-token={administration_token} "
+            "--at 2000-01-02 ",
+            env=ssl_conf.client_env,
+        )
+
         print("####### Stats organization #######")
         _run(
             "core stats_organization "
@@ -733,7 +779,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 @pytest.mark.parametrize(
     "env",
     [
-        pytest.param({}, id="Standard environement"),
+        pytest.param({}, id="Standard environment"),
         pytest.param(
             {"WINFSP_LIBRARY_PATH": "nope"},
             id="Wrong winfsp library path",
@@ -1015,17 +1061,14 @@ def _setup_sequester_key_paths(tmp_path, coolorg):
     key_path.mkdir()
     service_key_path = key_path / "service.pem"
     authority_key_path = key_path / "authority.pem"
-
-    import oscrypto.asymmetric
-
+    authority_pubkey_path = key_path / "authority_pub.pem"
     service = sequester_service_factory("Test Service", coolorg.sequester_authority)
     service_key = service.encryption_key
     authority_key = coolorg.sequester_authority.signing_key
-    service_key_path.write_bytes(oscrypto.asymmetric.dump_public_key(service_key))
-    authority_key_path.write_bytes(
-        oscrypto.asymmetric.dump_private_key(authority_key, passphrase=None)
-    )
-    return authority_key_path, service_key_path
+    service_key_path.write_text(service_key.dump_pem())
+    authority_key_path.write_text(authority_key.dump_pem())
+    authority_pubkey_path.write_text(coolorg.sequester_authority.verify_key.dump_pem())
+    return authority_key_path, authority_pubkey_path, service_key_path
 
 
 async def _cli_invoke_in_thread(runner: CliRunner, cmd: str, input: str = None):
@@ -1040,7 +1083,7 @@ async def _cli_invoke_in_thread(runner: CliRunner, cmd: str, input: str = None):
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_human_accesses(backend, alice, postgresql_url):
-    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+    async with cli_with_running_backend_testbed(backend, alice) as (_backend_addr, alice):
         runner = CliRunner()
 
         cmd = f"backend human_accesses --db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id.str}"
@@ -1060,42 +1103,77 @@ async def test_human_accesses(backend, alice, postgresql_url):
 @pytest.mark.postgresql
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
-    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+    async with cli_with_running_backend_testbed(backend, alice) as (_backend_addr, alice):
         runner = CliRunner()
 
         common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id.str}"
 
-        async def run_list_services():
+        async def run_list_services() -> CliResult:
             result = await _cli_invoke_in_thread(
                 runner, f"backend sequester list_services {common_args}"
             )
             assert result.exit_code == 0
             return result
 
-        async def create_service(service_key_path, authority_key_path, service_label):
+        async def generate_service_certificate(
+            service_key_path: Path,
+            authority_key_path: Path,
+            service_label: str,
+            output: Path,
+            check_result: bool = True,
+        ) -> CliResult:
             result = await _cli_invoke_in_thread(
                 runner,
-                f"backend sequester create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label}",
+                f"backend sequester generate_service_certificate --service-label {service_label} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --output {output}",
             )
-            assert result.exit_code == 0
+            if check_result:
+                assert result.exit_code == 0
             return result
 
-        async def disable_service(service_id: str):
+        async def import_service_certificate(
+            service_certificate_path: Path,
+            extra_args: str = "",
+            check_result: bool = True,
+        ) -> CliResult:
+            result = await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester import_service_certificate {common_args} --service-certificate {service_certificate_path} {extra_args}",
+            )
+            if check_result:
+                assert result.exit_code == 0
+            return result
+
+        async def create_service(
+            service_key_path: Path,
+            authority_key_path: Path,
+            service_label: str,
+            extra_args: str = "",
+            check_result: bool = True,
+        ) -> CliResult:
+            result = await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label} {extra_args}",
+            )
+            if check_result:
+                assert result.exit_code == 0
+            return result
+
+        async def disable_service(service_id: str) -> CliResult:
             return await _cli_invoke_in_thread(
                 runner,
                 f"backend sequester update_service {common_args} --disable --service {service_id}",
             )
 
-        async def enable_service(service_id: str):
+        async def enable_service(service_id: str) -> CliResult:
             return await _cli_invoke_in_thread(
                 runner,
                 f"backend sequester update_service {common_args} --enable --service {service_id}",
             )
 
-        async def export_service(service_id: str, realm: RealmID, path: str):
+        async def export_service(service_id: str, realm: RealmID, path: str) -> CliResult:
             return await _cli_invoke_in_thread(
                 runner,
-                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm.str} --output {path} -b MOCKED",
+                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm.hex} --output {path} -b MOCKED",
             )
 
         # Assert no service configured
@@ -1103,7 +1181,9 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         assert result.output == "Found 0 sequester service(s)\n"
 
         # Create service
-        authority_key_path, service_key_path = _setup_sequester_key_paths(tmp_path, coolorg)
+        authority_key_path, authority_pubkey_path, service_key_path = _setup_sequester_key_paths(
+            tmp_path, coolorg
+        )
         service_label = "TestService"
         result = await create_service(service_key_path, authority_key_path, service_label)
 
@@ -1150,7 +1230,62 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         result = await export_service(service_id, realm_id, output_dir)
         files = list(output_dir.iterdir())
         assert len(files) == 1
-        assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id.str}.sqlite")
+        assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id.hex}.sqlite")
+
+        # Create service using generate/import commands
+        service_certif_pem = tmp_path / "certif.pem"
+        service2_label = "TestService2"
+        await generate_service_certificate(
+            service_key_path, authority_key_path, service2_label, service_certif_pem
+        )
+        assert (
+            "-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----" in service_certif_pem.read_text()
+        )
+        await import_service_certificate(
+            service_certif_pem,
+        )
+
+        # Import invalid sequester service certificate
+        modify_index = len("-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----\n") + 1
+        pem_content = bytearray(service_certif_pem.read_bytes())
+        pem_content[modify_index] = 0 if pem_content[modify_index] != 0 else 1
+        service_certif_pem.write_bytes(pem_content)
+        result = await import_service_certificate(
+            service_certif_pem,
+            check_result=False,
+        )
+        assert result.exit_code == 1
+
+        # Create webhook service
+        result = await create_service(
+            service_key_path,
+            authority_key_path,
+            "WebhookService",
+            extra_args="--service-type webhook --webhook-url http://nowhere.lost",
+        )
+        services = await backend.sequester.get_organization_services(alice.organization_id)
+        assert services[-1].service_type == SequesterServiceType.WEBHOOK
+        assert services[-1].webhook_url
+
+        # Create webhook service but forget webhook URL
+        result = await create_service(
+            service_key_path,
+            authority_key_path,
+            "BadWebhookService",
+            extra_args="--service-type webhook",
+            check_result=False,
+        )
+        assert result.exit_code == 1
+
+        # Create non-webhook service but provide a webhook URL
+        result = await create_service(
+            service_key_path,
+            authority_key_path,
+            "BadStorageService",
+            extra_args="--service-type storage --webhook-url https://nowhere.lost",
+            check_result=False,
+        )
+        assert result.exit_code == 1
 
 
 @pytest.mark.trio
@@ -1168,7 +1303,7 @@ async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
     password = "P@ssw0rd."
     runner = CliRunner()
 
-    _, public_key = _setup_sequester_key_paths(tmp_path=tmp_path, coolorg=coolorg)
+    _, _, public_key = _setup_sequester_key_paths(tmp_path=tmp_path, coolorg=coolorg)
 
     async def create_organization():
         result = await _cli_invoke_in_thread(

@@ -1,40 +1,42 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Any, Dict, List
+
+import triopg
 
 from parsec._parsec import DateTime
-from typing import Dict, List, Optional
-
-from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
     DeviceID,
-    UserID,
+    MaintenanceType,
     OrganizationID,
     RealmID,
     RealmRole,
-    MaintenanceType,
+    UserID,
 )
-from parsec.backend.realm import (
-    RealmStatus,
-    RealmAccessError,
-    RealmNotFoundError,
-    RealmEncryptionRevisionError,
-    RealmParticipantsMismatchError,
-    RealmMaintenanceError,
-    RealmInMaintenanceError,
-    RealmNotInMaintenanceError,
-)
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
-    q_user,
     q_device,
     q_device_internal_id,
+    q_organization_internal_id,
     q_realm,
     q_realm_internal_id,
+    q_user,
+    query,
 )
-
+from parsec.backend.realm import (
+    RealmAccessError,
+    RealmEncryptionRevisionError,
+    RealmInMaintenanceError,
+    RealmMaintenanceError,
+    RealmNotFoundError,
+    RealmNotInMaintenanceError,
+    RealmParticipantsMismatchError,
+    RealmStatus,
+)
 
 _q_get_realm_status = Q(
     q_realm(
@@ -45,15 +47,17 @@ _q_get_realm_status = Q(
 )
 
 
-async def get_realm_status(conn, organization_id: OrganizationID, realm_id: RealmID) -> RealmStatus:
+async def get_realm_status(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
+) -> RealmStatus:
     rep = await conn.fetchrow(
-        *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id.uuid)
+        *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id)
     )
     if not rep:
-        raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     return RealmStatus(
-        maintenance_type=MaintenanceType(rep["maintenance_type"])
+        maintenance_type=MaintenanceType.from_str(rep["maintenance_type"])
         if rep["maintenance_type"]
         else None,
         maintenance_started_on=rep["maintenance_started_on"],
@@ -97,22 +101,25 @@ ORDER BY user_, certified_on DESC
 
 
 async def _get_realm_role_for_not_revoked(
-    conn, organization_id: OrganizationID, realm_id: RealmID, users: Optional[List[UserID]] = None
-):
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    users: List[UserID] | None = None,
+) -> dict[UserID, RealmRole | None]:
     now = DateTime.now()
 
-    def _cook_role(row):
+    def _cook_role(row: dict[str, Any]) -> RealmRole | None:
         if row["revoked_on"] and row["revoked_on"] <= now:
             return None
         if row["role"] is None:
             return None
-        return RealmRole(row["role"])
+        return RealmRole.from_str(row["role"])
 
     if users:
         rep = await conn.fetch(
             *_q_get_realm_role_for_not_revoked_with_users(
                 organization_id=organization_id.str,
-                realm_id=realm_id.uuid,
+                realm_id=realm_id,
                 users_ids=[u.str for u in users],
             )
         )
@@ -126,7 +133,7 @@ async def _get_realm_role_for_not_revoked(
     else:
         rep = await conn.fetch(
             *_q_get_realm_role_for_not_revoked(
-                organization_id=organization_id.str, realm_id=realm_id.uuid
+                organization_id=organization_id.str, realm_id=realm_id
             )
         )
 
@@ -163,7 +170,7 @@ INSERT INTO vlob_encryption_revision(
 
 @query(in_transaction=True)
 async def query_start_reencryption_maintenance(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -174,7 +181,7 @@ async def query_start_reencryption_maintenance(
     # Retrieve realm and make sure it is not under maintenance
     status = await get_realm_status(conn, organization_id, realm_id)
     if status.in_maintenance:
-        raise RealmInMaintenanceError(f"Realm `{realm_id.str}` alrealy in maintenance")
+        raise RealmInMaintenanceError(f"Realm `{realm_id.hex}` already in maintenance")
     if encryption_revision != status.encryption_revision + 1:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
@@ -189,7 +196,7 @@ async def query_start_reencryption_maintenance(
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_realm(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             maintenance_started_by=author.str,
             maintenance_started_on=timestamp,
             maintenance_type="REENCRYPTION",
@@ -200,7 +207,7 @@ async def query_start_reencryption_maintenance(
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_vlob_encryption_revision(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
     )
@@ -254,7 +261,7 @@ WHERE
 
 @query(in_transaction=True)
 async def query_finish_reencryption_maintenance(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -266,7 +273,7 @@ async def query_finish_reencryption_maintenance(
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
     if not status.in_maintenance:
-        raise RealmNotInMaintenanceError(f"Realm `{realm_id.str}` not under maintenance")
+        raise RealmNotInMaintenanceError(f"Realm `{realm_id.hex}` not under maintenance")
     if encryption_revision != status.encryption_revision:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 

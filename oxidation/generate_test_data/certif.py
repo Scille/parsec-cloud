@@ -4,6 +4,7 @@
 
 from protocol.utils import *
 
+from parsec._parsec import SequesterVerifyKeyDer, SequesterPublicKeyDer
 from parsec.api.protocol import *
 from parsec.api.data import *
 
@@ -97,3 +98,33 @@ rrc = RealmRoleCertificate(
     role=RealmRole.OWNER,
 ).dump_and_sign(ALICE.signing_key)
 display("realm role certificate", rrc, [ALICE.verify_key, "zip"])
+
+sac = SequesterAuthorityCertificate(
+    timestamp=NOW,
+    verify_key_der=SequesterVerifyKeyDer(
+        bytes.fromhex(
+            "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689b069f3"
+            "f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a3045d75b584c"
+            "1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62cb38582f8a30219047b"
+            "087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195f3bcc72ab57207ebfd020301"
+            "0001"
+        )
+    ),
+).dump_and_sign(ALICE.signing_key)
+display("sequester authority certificate", sac, [ALICE.verify_key, "zip"])
+
+ssc = SequesterServiceCertificate(
+    timestamp=NOW,
+    encryption_key_der=SequesterPublicKeyDer(
+        bytes.fromhex(
+            "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689b069f3"
+            "f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a3045d75b584c"
+            "1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62cb38582f8a30219047b"
+            "087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195f3bcc72ab57207ebfd020301"
+            "0001"
+        )
+    ),
+    service_id=SequesterServiceID.from_hex("b5eb565343c442b3a26be44573813ff0"),
+    service_label="foo",
+).dump()
+display("sequester service certificate", ssc, ["zip"])

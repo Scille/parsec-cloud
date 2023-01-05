@@ -1,18 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from functools import partial
+from typing import Callable
 
 import trio
-from typing import Optional, Callable
-from functools import partial
-from parsec._parsec import DateTime
-from contextlib import asynccontextmanager
 
 from parsec._parsec import (
     AuthenticatedPingRepOk,
     BlockCreateRepOk,
     BlockReadRepOk,
+    DateTime,
+    DeviceCreateRepOk,
+    HumanFindRepOk,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
-    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aClaimerSendHashedNonceRepOk,
     Invite2aGreeterGetHashedNonceRepOk,
     Invite2bClaimerSendNonceRepOk,
     Invite2bGreeterSendNonceRepOk,
@@ -26,8 +30,13 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteNewRepOk,
     MessageGetRepOk,
+    OrganizationBootstrapRepOk,
     OrganizationConfigRepOk,
     OrganizationStatsRepOk,
+    PkiEnrollmentAcceptRepOk,
+    PkiEnrollmentInfoRepOk,
+    PkiEnrollmentListRep,
+    PkiEnrollmentRejectRep,
     RealmCreateRepOk,
     RealmFinishReencryptionMaintenanceRepOk,
     RealmGetRoleCertificatesRepOk,
@@ -35,6 +44,9 @@ from parsec._parsec import (
     RealmStatsRepOk,
     RealmStatusRepOk,
     RealmUpdateRolesRepOk,
+    UserCreateRepOk,
+    UserGetRepOk,
+    UserRevokeRepOk,
     VlobCreateRepOk,
     VlobListVersionsRepOk,
     VlobMaintenanceGetReencryptionBatchRepOk,
@@ -43,7 +55,6 @@ from parsec._parsec import (
     VlobReadRepOk,
     VlobUpdateRepOk,
 )
-from parsec.serde import packb
 from parsec.api.protocol import (
     authenticated_ping_serializer,
     block_create_serializer,
@@ -95,12 +106,13 @@ from parsec.api.protocol import (
     vlob_read_serializer,
     vlob_update_serializer,
 )
-
-from tests.common import real_clock_timeout
+from parsec.api.protocol.base import ApiCommandSerializer
+from parsec.serde import packb
+from tests.common import BaseRpcApiClient, real_clock_timeout
 
 
 def craft_http_request(
-    target: str, method: str, headers: dict, body: Optional[bytes], protocol: str = "1.0"
+    target: str, method: str, headers: dict, body: bytes | None, protocol: str = "1.0"
 ) -> bytes:
     if body is None:
         body = b""
@@ -120,8 +132,8 @@ def craft_http_request(
 def parse_http_response(raw: bytes):
     head, _ = raw.split(b"\r\n\r\n", 1)  # Ignore the body part
     status, *headers = head.split(b"\r\n")
-    protocole, status_code, status_label = status.split(b" ", 2)
-    assert protocole == b"HTTP/1.1"
+    protocol, status_code, status_label = status.split(b" ", 2)
+    assert protocol == b"HTTP/1.1"
     cooked_status = (int(status_code.decode("ascii")), status_label.decode("ascii"))
     cooked_headers = {}
     for header in headers:
@@ -132,11 +144,11 @@ def parse_http_response(raw: bytes):
 
 async def do_http_request(
     stream: trio.abc.Stream,
-    target: Optional[str] = None,
+    target: str | None = None,
     method: str = "GET",
-    req: Optional[bytes] = None,
-    headers: Optional[dict] = None,
-    body: Optional[bytes] = None,
+    req: bytes | None = None,
+    headers: dict | None = None,
+    body: bytes | None = None,
 ):
     if req is None:
         assert target is not None
@@ -189,7 +201,11 @@ class CmdSock:
     async def _do_send(self, ws, req_post_processing, args, kwargs):
         req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
         if req_post_processing:
-            raw_req = packb(req_post_processing(self.serializer.req_dump(req)))
+            if not isinstance(self.serializer, ApiCommandSerializer):
+                pre_processed_req = req_post_processing(self.serializer.req_dump(req))
+                raw_req = packb(pre_processed_req)
+            else:
+                raw_req = self.serializer.req_dumps(req_post_processing(req))
         else:
             raw_req = self.serializer.req_dumps(req)
         await ws.send(raw_req)
@@ -199,56 +215,71 @@ class CmdSock:
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
-            if isinstance(rep, dict):
-                assert rep["status"] == "ok"  # Legacy rep schemas
-            else:
-                assert isinstance(
-                    rep,
-                    (
-                        AuthenticatedPingRepOk,
-                        BlockCreateRepOk,
-                        BlockReadRepOk,
-                        Invite1ClaimerWaitPeerRepOk,
-                        Invite1GreeterWaitPeerRepOk,
-                        Invite2aClaimerSendHashedNonceHashNonceRepOk,
-                        Invite2aGreeterGetHashedNonceRepOk,
-                        Invite2bClaimerSendNonceRepOk,
-                        Invite2bGreeterSendNonceRepOk,
-                        Invite3aClaimerSignifyTrustRepOk,
-                        Invite3aGreeterWaitPeerTrustRepOk,
-                        Invite3bClaimerWaitPeerTrustRepOk,
-                        Invite3bGreeterSignifyTrustRepOk,
-                        Invite4ClaimerCommunicateRepOk,
-                        Invite4GreeterCommunicateRepOk,
-                        InviteDeleteRepOk,
-                        InviteInfoRepOk,
-                        InviteNewRepOk,
-                        MessageGetRepOk,
-                        OrganizationConfigRepOk,
-                        OrganizationStatsRepOk,
-                        RealmCreateRepOk,
-                        RealmFinishReencryptionMaintenanceRepOk,
-                        RealmGetRoleCertificatesRepOk,
-                        RealmStartReencryptionMaintenanceRepOk,
-                        RealmStatsRepOk,
-                        RealmStatusRepOk,
-                        RealmUpdateRolesRepOk,
-                        VlobCreateRepOk,
-                        VlobListVersionsRepOk,
-                        VlobMaintenanceGetReencryptionBatchRepOk,
-                        VlobMaintenanceSaveReencryptionBatchRepOk,
-                        VlobPollChangesRepOk,
-                        VlobReadRepOk,
-                        VlobUpdateRepOk,
-                    ),
-                )  # Rust-based rep schemas
+            assert isinstance(
+                rep,
+                (
+                    AuthenticatedPingRepOk,
+                    BlockCreateRepOk,
+                    BlockReadRepOk,
+                    DeviceCreateRepOk,
+                    HumanFindRepOk,
+                    Invite1ClaimerWaitPeerRepOk,
+                    Invite1GreeterWaitPeerRepOk,
+                    Invite2aClaimerSendHashedNonceRepOk,
+                    Invite2aGreeterGetHashedNonceRepOk,
+                    Invite2bClaimerSendNonceRepOk,
+                    Invite2bGreeterSendNonceRepOk,
+                    Invite3aClaimerSignifyTrustRepOk,
+                    Invite3aGreeterWaitPeerTrustRepOk,
+                    Invite3bClaimerWaitPeerTrustRepOk,
+                    Invite3bGreeterSignifyTrustRepOk,
+                    Invite4ClaimerCommunicateRepOk,
+                    Invite4GreeterCommunicateRepOk,
+                    InviteDeleteRepOk,
+                    InviteInfoRepOk,
+                    InviteNewRepOk,
+                    MessageGetRepOk,
+                    OrganizationBootstrapRepOk,
+                    OrganizationConfigRepOk,
+                    OrganizationStatsRepOk,
+                    PkiEnrollmentAcceptRepOk,
+                    PkiEnrollmentInfoRepOk,
+                    PkiEnrollmentListRep,
+                    PkiEnrollmentRejectRep,
+                    RealmCreateRepOk,
+                    RealmFinishReencryptionMaintenanceRepOk,
+                    RealmGetRoleCertificatesRepOk,
+                    RealmStartReencryptionMaintenanceRepOk,
+                    RealmStatsRepOk,
+                    RealmStatusRepOk,
+                    RealmUpdateRolesRepOk,
+                    UserCreateRepOk,
+                    UserGetRepOk,
+                    UserRevokeRepOk,
+                    VlobCreateRepOk,
+                    VlobListVersionsRepOk,
+                    VlobMaintenanceGetReencryptionBatchRepOk,
+                    VlobMaintenanceSaveReencryptionBatchRepOk,
+                    VlobPollChangesRepOk,
+                    VlobReadRepOk,
+                    VlobUpdateRepOk,
+                ),
+            )  # Rust-based rep schemas
 
         return rep
 
-    async def __call__(self, ws, *args, req_post_processing: Callable = None, **kwargs):
-        check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-        await self._do_send(ws, req_post_processing, args, kwargs)
-        return await self._do_recv(ws, check_rep)
+    async def __call__(self, ws_or_rpc, *args, req_post_processing: Callable = None, **kwargs):
+        if isinstance(ws_or_rpc, BaseRpcApiClient):
+            req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
+            assert req_post_processing is None
+            return await ws_or_rpc.send(
+                req=req,
+                serializer=self.serializer,
+            )
+        else:
+            check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
+            await self._do_send(ws_or_rpc, req_post_processing, args, kwargs)
+            return await self._do_recv(ws_or_rpc, check_rep)
 
     class AsyncCallRepBox:
         def __init__(self, do_recv):

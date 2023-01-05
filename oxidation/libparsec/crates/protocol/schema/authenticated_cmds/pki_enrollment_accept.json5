@@ -1,0 +1,236 @@
+[
+    {
+        "major_versions": [
+            3
+        ],
+        "introduced_in": "3.2",
+        "req": {
+            "cmd": "pki_enrollment_accept",
+            "fields": [
+                // Signature should be checked before loading.
+                {
+                    "name": "accept_payload",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "accept_payload_signature",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "accepter_der_x509_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "enrollment_id",
+                    "type": "EnrollmentID"
+                },
+                {
+                    "name": "device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "user_certificate",
+                    "type": "Bytes"
+                },
+                // Same certificate than `device_certificate` but expunged of `device_label`.
+                {
+                    "name": "redacted_device_certificate",
+                    "type": "Bytes"
+                },
+                // Same certificate than `user_certificate` but expunged of `human_handle`.
+                {
+                    "name": "redacted_user_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_payload_data",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "no_longer_available",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "already_exists",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "active_users_limit_reached"
+            }
+        ]
+    },
+    {
+        "major_versions": [
+            2
+        ],
+        "introduced_in": "2.8",
+        "req": {
+            "cmd": "pki_enrollment_accept",
+            "fields": [
+                // Signature should be checked before loading.
+                {
+                    "name": "accept_payload",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "accept_payload_signature",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "accepter_der_x509_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "enrollment_id",
+                    "type": "EnrollmentID"
+                },
+                {
+                    "name": "device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "user_certificate",
+                    "type": "Bytes"
+                },
+                // Same certificate than `device_certificate` but expunged of `device_label`.
+                {
+                    "name": "redacted_device_certificate",
+                    "type": "Bytes"
+                },
+                // Same certificate than `user_certificate` but expunged of `human_handle`.
+                {
+                    "name": "redacted_user_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_payload_data",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "no_longer_available",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "already_exists",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "active_users_limit_reached"
+            }
+        ]
+    }
+]

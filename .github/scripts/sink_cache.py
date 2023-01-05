@@ -5,13 +5,13 @@
 # This script remove Cache entries a specified Github repository.
 # This allow future workflow to run on clear cache data (since they'll have to recreate them)
 import argparse
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import logging
 import subprocess
-from typing import Any, Dict, Optional
+from dataclasses import dataclass
+from datetime import datetime
 from logging import basicConfig, getLogger
+from typing import Any, Dict, Optional
 
 basicConfig(level=logging.INFO)
 logger = getLogger()

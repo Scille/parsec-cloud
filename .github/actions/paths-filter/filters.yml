@@ -7,6 +7,7 @@ rust:
   - oxidation/**/*.toml
   - Cargo.toml
   - Cargo.lock
+  - rust-toolchain.toml
 
 python:
   - *shared
@@ -40,3 +41,6 @@ client-web:
   - oxidation/bindings/web/**
   - oxidation/client/tests/**
   - oxidation/client/jest.config.js
+
+newsfragments:
+  - newsfragments/**

@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from parsec.core.config import CoreConfig
-from parsec.core.types import BackendAddr
-from parsec.core.core_events import CoreEvent
-from parsec.core.logged_core import logged_core_factory
-from parsec.core.backend_connection import BackendConnStatus
+import pytest
 
+from parsec._parsec import CoreEvent
+from parsec.core.backend_connection import BackendConnStatus
+from parsec.core.config import CoreConfig
+from parsec.core.logged_core import logged_core_factory
+from parsec.core.types import BackendAddr
 from tests.common.trio_clock import real_clock_timeout
 
 

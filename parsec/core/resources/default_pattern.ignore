@@ -1,7 +1,7 @@
 ###### Patterns of the file names to ignore #####
 
 # This file contains the default configuration for the file name to ignore in Parsec.
-# The files that matches any of those patterns will not be sychronized with other clients,
+# The files that matches any of those patterns will not be synchronized with other clients,
 # and will not be downloaded from other clients. Each pattern is defined using the fnmatch
 # syntax, as described here: https://docs.python.org/3.8/library/fnmatch.html
 

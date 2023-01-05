@@ -1,49 +1,43 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from pathlib import Path
 from collections import defaultdict
-from typing import (
-    TYPE_CHECKING,
-    cast,
-    Dict,
-    Tuple,
-    Set,
-    Optional,
-    AsyncIterator,
-    NoReturn,
-    Pattern,
-    List,
-)
-import trio
-from trio import lowlevel
-from parsec._parsec import DateTime
-from structlog import get_logger
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import TYPE_CHECKING, AsyncIterator, Dict, List, NoReturn, Set, Tuple, cast
 
+import trio
+from structlog import get_logger
+from trio import lowlevel
+
+from parsec._parsec import DateTime, Regex
+from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
+from parsec.core.fs.exceptions import FSError, FSInvalidFileDescriptor, FSLocalMissError
+from parsec.core.fs.storage.chunk_storage import BlockStorage, ChunkStorage
+from parsec.core.fs.storage.local_database import LocalDatabase
+from parsec.core.fs.storage.manifest_storage import ManifestStorage
+from parsec.core.fs.storage.version import (
+    get_workspace_cache_storage_db_path,
+    get_workspace_data_storage_db_path,
+)
 from parsec.core.types import (
-    EntryID,
     BlockID,
     ChunkID,
-    LocalDevice,
+    EntryID,
     FileDescriptor,
+    LocalDevice,
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
-from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
-from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
-from parsec.core.fs.storage.local_database import LocalDatabase
-from parsec.core.fs.storage.manifest_storage import ManifestStorage
-from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
-from parsec.core.fs.storage.version import (
-    get_workspace_data_storage_db_path,
-    get_workspace_cache_storage_db_path,
-)
 from parsec.core.types.manifest import AnyLocalManifest
-
 
 logger = get_logger()
 
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
+
+FAILSAFE_PATTERN_FILTER = Regex.from_regex_str(
+    r"^\b$"
+)  # Matches nothing (https://stackoverflow.com/a/2302992/2846140)
 
 
 async def workspace_storage_non_speculative_init(
@@ -94,7 +88,7 @@ class BaseWorkspaceStorage:
 
         # Pattern attributes
         # Set by `_load_prevent_sync_pattern` in WorkspaceStorage.run()
-        self._prevent_sync_pattern: Pattern[str]
+        self._prevent_sync_pattern: Regex
         self._prevent_sync_pattern_fully_applied: bool
 
     def _get_next_fd(self) -> FileDescriptor:
@@ -118,7 +112,7 @@ class BaseWorkspaceStorage:
         manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Set[ChunkID] | None = None,
     ) -> None:
         raise NotImplementedError
 
@@ -127,10 +121,10 @@ class BaseWorkspaceStorage:
 
     # Prevent sync pattern interface
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Regex) -> None:
         raise NotImplementedError
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
         raise NotImplementedError
 
     async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
@@ -158,7 +152,7 @@ class BaseWorkspaceStorage:
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
         if task != lowlevel.current_task():
-            raise RuntimeError(f"Entry `{entry_id.str}` modified without being locked")
+            raise RuntimeError(f"Entry `{entry_id.hex}` modified without being locked")
 
     # File management interface
 
@@ -187,17 +181,17 @@ class BaseWorkspaceStorage:
 
     async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
         assert isinstance(block_id, BlockID)
-        return await self.block_storage.set_chunk(ChunkID(block_id.uuid), block)
+        return await self.block_storage.set_chunk(ChunkID.from_block_id(block_id), block)
 
     async def clear_clean_block(self, block_id: BlockID) -> None:
         assert isinstance(block_id, BlockID)
         try:
-            await self.block_storage.clear_chunk(ChunkID(block_id.uuid))
+            await self.block_storage.clear_chunk(ChunkID.from_block_id(block_id))
         except FSLocalMissError:
             pass
 
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
-        return await self.chunk_storage.get_chunk(ChunkID(block_id.uuid))
+        return await self.chunk_storage.get_chunk(ChunkID.from_block_id(block_id))
 
     # Chunk interface
 
@@ -222,7 +216,7 @@ class BaseWorkspaceStorage:
 
     # "Prevent sync" pattern interface
 
-    def get_prevent_sync_pattern(self) -> Pattern[str]:
+    def get_prevent_sync_pattern(self) -> Regex:
         return self._prevent_sync_pattern
 
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
@@ -265,6 +259,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         data_base_dir: Path,
         device: LocalDevice,
         workspace_id: EntryID,
+        prevent_sync_pattern: Regex = FAILSAFE_PATTERN_FILTER,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
         data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
     ) -> AsyncIterator["WorkspaceStorage"]:
@@ -321,7 +316,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                             assert instance.workspace_id in instance.manifest_storage._cache
 
                             # Load "prevent sync" pattern
-                            await instance._load_prevent_sync_pattern()
+                            await instance.set_prevent_sync_pattern(prevent_sync_pattern)
 
                             # Yield point
                             yield instance
@@ -394,7 +389,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Set[ChunkID] | None = None,
     ) -> None:
         if check_lock_status:
             self._check_lock_status(entry_id)
@@ -412,30 +407,27 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
     # "Prevent sync" pattern interface
 
-    async def _load_prevent_sync_pattern(self) -> None:
-        (
-            self._prevent_sync_pattern,
-            self._prevent_sync_pattern_fully_applied,
-        ) = await self.manifest_storage.get_prevent_sync_pattern()
-
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Regex) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace
 
         This operation is idempotent,
         i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
         """
-        await self.manifest_storage.set_prevent_sync_pattern(pattern)
-        await self._load_prevent_sync_pattern()
+        self._prevent_sync_pattern = pattern
+        self._prevent_sync_pattern_fully_applied = (
+            await self.manifest_storage.set_prevent_sync_pattern(pattern)
+        )
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the
         workspace are compliant with the new pattern. The applied pattern is provided
         as an argument in order to avoid concurrency issues.
         """
-        await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
-        await self._load_prevent_sync_pattern()
+        self._prevent_sync_pattern_fully_applied = (
+            await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
+        )
 
     async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         return await self.chunk_storage.get_local_chunk_ids(chunk_id)
@@ -454,7 +446,7 @@ _PyWorkspaceStorage = WorkspaceStorage
 if not TYPE_CHECKING:
     try:
         from libparsec.types import WorkspaceStorage as _RsWorkspaceStorage
-    except:
+    except ImportError:
         pass
     else:
         WorkspaceStorage = _RsWorkspaceStorage
@@ -539,7 +531,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
         manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Set[ChunkID] | None = None,
     ) -> None:
         assert isinstance(entry_id, EntryID)
         if manifest.need_sync:

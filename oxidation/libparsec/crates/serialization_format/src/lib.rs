@@ -1,17 +1,22 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-mod parser;
+mod data;
+mod field;
+mod protocol;
+mod utils;
 
 use proc_macro::TokenStream;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    path::PathBuf,
+};
 use syn::{parse_macro_input, LitStr};
 
 fn path_from_str(path: &str) -> PathBuf {
-    let manifest_dir_path = std::env::var("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR should be set")
-        .parse::<PathBuf>()
+    let manifest_dir_path: PathBuf = std::env::var("CARGO_MANIFEST_DIR")
+        .expect("CARGO_MANIFEST_DIR must be set")
+        .parse()
         .expect("CARGO_MANIFEST_DIR must be a valid path");
     manifest_dir_path.join(path)
 }
@@ -22,6 +27,7 @@ fn content_from_file(path: &PathBuf) -> String {
     let mut content = String::new();
     for (i, line) in buf.lines().enumerate() {
         let line = line.unwrap_or_else(|_| panic!("Non-Utf-8 character found in line {i}"));
+        // Remove comments given JSON parser doesn't support them :(
         let line = match line.split_once("//") {
             Some((line, _)) => line,
             None => &line,
@@ -31,12 +37,68 @@ fn content_from_file(path: &PathBuf) -> String {
     content
 }
 
-fn content_from_dir(path: &PathBuf) -> String {
-    let dir = std::fs::read_dir(path).expect("Cannot read the directory");
-    dir.filter_map(|entry| entry.ok())
-        .map(|entry| content_from_file(&entry.path()))
-        .collect::<Vec<_>>()
-        .join(",")
+/// Procedural macro that takes a directory containing one JSON file per protocol command.
+#[proc_macro]
+pub fn parsec_protocol_cmds_familly(path: TokenStream) -> TokenStream {
+    let pathname = parse_macro_input!(path as LitStr).value();
+    let path = path_from_str(&pathname);
+
+    let familly_name = path
+        .file_name()
+        .and_then(|os_str| os_str.to_str())
+        .expect("Invalid path, cannot determine protocol familly name")
+        .to_owned();
+
+    let dir = std::fs::read_dir(path).expect("Cannot read directory");
+
+    let mut json_cmds = vec![];
+    for json_path in dir.filter_map(|entry| entry.ok()) {
+        let json_content = {
+            let json_without_outer_struct = content_from_file(&json_path.path());
+            // Hack around the fact Miniserde only supports struct as root ;-)
+            format!("{{\"items\": {json_without_outer_struct} }}")
+        };
+
+        let json_cmd = match miniserde::json::from_str::<protocol::JsonCmd>(&json_content) {
+            Ok(json_cmd) => json_cmd,
+            Err(err) => {
+                panic!("{:?}: JSON spec is not valid ({err:?})", json_path.path());
+            }
+        };
+        json_cmds.push(json_cmd);
+    }
+
+    TokenStream::from(protocol::generate_protocol_cmds_familly(
+        json_cmds,
+        &familly_name,
+    ))
+}
+
+// Useful for tests to avoid having to deal with file system
+#[proc_macro]
+pub fn generate_protocol_cmds_familly_from_contents(json_contents: TokenStream) -> TokenStream {
+    let json_contents: Vec<String> = {
+        let content = parse_macro_input!(json_contents as LitStr).value();
+        // Consider empty line as a separator between json files
+        content
+            .split("\n\n")
+            .into_iter()
+            .map(String::from)
+            .collect()
+    };
+    let familly_name = "protocol";
+    let mut json_cmds = vec![];
+    for json_without_outer_struct in json_contents {
+        // Hack around the fact Miniserde only supports struct as root ;-)
+        let json_content = format!("{{\"items\": {json_without_outer_struct} }}");
+        let json_cmd = miniserde::json::from_str::<protocol::JsonCmd>(&json_content)
+            .expect("JSON spec is not valid");
+        json_cmds.push(json_cmd);
+    }
+    TokenStream::from(protocol::generate_protocol_cmds_familly(
+        json_cmds,
+        familly_name,
+    ))
 }
 
 #[proc_macro]
@@ -44,22 +106,6 @@ pub fn parsec_data(path: TokenStream) -> TokenStream {
     let path = parse_macro_input!(path as LitStr).value();
     let content = content_from_file(&path_from_str(&path));
 
-    let data: parser::Data = miniserde::json::from_str(&content).expect("Data is not valid");
+    let data: data::Data = miniserde::json::from_str(&content).expect("Data is not valid");
     TokenStream::from(data.quote())
-}
-
-#[proc_macro]
-pub fn parsec_cmds(path: TokenStream) -> TokenStream {
-    let path = parse_macro_input!(path as LitStr).value();
-    let path = path_from_str(&path);
-    let content = content_from_dir(&path);
-    let dir_name = path
-        .file_name()
-        .expect("Couldn't convert the directory name to String")
-        .to_str()
-        .expect("Directory name contains non-utf-8 character");
-    let content = format!(r#"{{"family": "{dir_name}", "cmds": [{content}]}}"#);
-
-    let cmds: parser::Cmds = miniserde::json::from_str(&content).expect("Protocol is not valid");
-    TokenStream::from(cmds.quote())
 }

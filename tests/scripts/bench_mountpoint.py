@@ -1,14 +1,13 @@
 #! /usr/bin/env python3
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
-
+from __future__ import annotations
 
 import signal
-from pathlib import Path
-from time import sleep
-from tempfile import mkdtemp
-from subprocess import run, Popen, PIPE
 from contextlib import contextmanager
-
+from pathlib import Path
+from subprocess import PIPE, Popen, run
+from tempfile import mkdtemp
+from time import sleep
 
 PORT = 6778
 ORGNAME = "Org42"

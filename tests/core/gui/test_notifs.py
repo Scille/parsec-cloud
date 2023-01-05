@@ -1,17 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from pathlib import Path
 
 import pytest
-from pathlib import Path
-from parsec._parsec import DateTime
 
-from parsec.core.core_events import CoreEvent
+from parsec._parsec import CoreEvent, DateTime
+from parsec.api.data import EntryName, WorkspaceEntry
 from parsec.api.protocol import RealmRole
-from parsec.api.data import WorkspaceEntry, EntryName
 from parsec.core.fs import (
     FsPath,
+    FSWorkspaceInMaintenance,
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
-    FSWorkspaceInMaintenance,
 )
 from parsec.core.gui.lang import translate
 

@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import time
 import os.path
+import time
+from concurrent.futures import ThreadPoolExecutor
 from errno import EACCES
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-
-from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_exit
+from fuse import FUSE, FuseOSError, LoggingMixIn, Operations, fuse_exit
 
 
 class Loopback(LoggingMixIn, Operations):
@@ -105,7 +105,7 @@ class Loopback(LoggingMixIn, Operations):
             f.truncate(length)
 
     unlink = os.unlink
-    utimens = os.utime
+    utime_ns = os.utime
 
     def write(self, path, data, offset, fh):
         return os.pwrite(fh, data, offset)

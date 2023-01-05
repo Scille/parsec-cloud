@@ -1,19 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import trio
+from contextlib import ExitStack
+from inspect import iscoroutinefunction
+from unittest.mock import Mock
+
 import attr
 import pytest
-from unittest.mock import Mock
-from inspect import iscoroutinefunction
-from contextlib import ExitStack
-from parsec._parsec import DateTime
+import trio
 
-from parsec.core.core_events import CoreEvent
-from parsec.core.types import WorkspaceRole
-from parsec.core.logged_core import LoggedCore
-from parsec.core.fs import UserFS
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.transport import Transport, TransportError
-
+from parsec.core.fs import UserFS
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import WorkspaceRole
 from tests.common.trio_clock import real_clock_timeout
 
 
@@ -124,7 +124,7 @@ async def create_shared_workspace(name, creator, *shared_with):
     workspace version and (only for the Cores) be ready to listen to the
     workspace's vlob group events.
     This is *even* more tricky considering we want the cores involved in the
-    sharing to endup in a stable state (no event wildly fired or coroutine in
+    sharing to end up in a stable state (no event wildly fired or coroutine in
     the middle of a processing when leaving this function) to avoid polluting
     the actual test.
     """

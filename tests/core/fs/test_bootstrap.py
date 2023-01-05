@@ -1,16 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 import trio
-from parsec._parsec import DateTime
 
-from parsec.crypto import SecretKey
-from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
-from parsec.core.types import LocalUserManifest, WorkspaceRole
+from parsec._parsec import DateTime
+from parsec.api.data import EntryName, UserManifest, WorkspaceEntry
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-
+from parsec.core.types import LocalUserManifest, WorkspaceRole
+from parsec.crypto import SecretKey
 from tests.common import freeze_time
 from tests.common.fixtures_customisation import customize_fixtures
 

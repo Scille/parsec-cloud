@@ -1,47 +1,40 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import os
 import random
-from typing import Tuple, Optional
 from pathlib import Path
+from typing import Tuple, cast
 from uuid import uuid4
-from parsec._parsec import DateTime
 
-from parsec.api.data import UserCertificate, DeviceCertificate, EntryID, EntryName
+from parsec._parsec import DateTime, DeviceCreateRepOk, UserCreateRepOk
+from parsec.api.data import DeviceCertificate, EntryID, EntryName, UserCertificate
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
-    HumanHandle,
-    DeviceName,
     DeviceLabel,
+    DeviceName,
+    HumanHandle,
+    OrganizationID,
     UserProfile,
 )
-from parsec.crypto import SigningKey
 from parsec.core import logged_core_factory
-from parsec.core.logged_core import LoggedCore
-from parsec.core.types import (
-    WorkspaceRole,
-    BackendAddr,
-    BackendOrganizationBootstrapAddr,
-    LocalDevice,
-)
-from parsec.core.config import load_config
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
     backend_authenticated_cmds_factory,
 )
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.local_device import (
-    generate_new_device,
-    save_device_with_password_in_config,
-)
-from parsec.core.invite import (
-    bootstrap_organization,
-    DeviceGreetInitialCtx,
-    UserGreetInitialCtx,
-    claimer_retrieve_info,
-)
 from parsec.core.cli.create_organization import create_organization_req
+from parsec.core.config import load_config
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.invite import bootstrap_organization
+from parsec.core.local_device import generate_new_device, save_device_with_password_in_config
+from parsec.core.logged_core import LoggedCore
+from parsec.core.types import (
+    BackendAddr,
+    BackendOrganizationBootstrapAddr,
+    LocalDevice,
+    WorkspaceRole,
+)
+from parsec.crypto import SigningKey
 
 
 async def initialize_test_organization(
@@ -67,7 +60,9 @@ async def initialize_test_organization(
     # Bootstrap organization and Alice user and create device "laptop" for Alice
 
     alice_device = await bootstrap_organization(
-        organization_bootstrap_addr,
+        # Casting is fine here because `bootstrap_organization` needs the stored backend addr and
+        # `organization_id`. These attributes are present in `BackendOrganizationFileLinkAddr` too.
+        cast(BackendOrganizationBootstrapAddr, organization_bootstrap_addr),
         human_handle=HumanHandle(label="Alice", email="alice@example.com"),
         device_label=DeviceLabel("laptop"),
     )
@@ -159,7 +154,9 @@ async def initialize_test_organization(
     return (alice_device, other_alice_device, bob_device)
 
 
-async def _add_random_device(cmds, device, additional_devices_number):
+async def _add_random_device(
+    cmds: BackendAuthenticatedCmds, device: LocalDevice, additional_devices_number: int
+) -> None:
     for _ in range(additional_devices_number):
         device_label = DeviceLabel("device_" + str(uuid4())[:9])
         await _register_new_device(cmds=cmds, author=device, device_label=device_label)
@@ -173,18 +170,18 @@ async def _add_random_users(
     alice_ws_id: EntryID,
     bob_ws_id: EntryID,
     additional_users_number: int,
-):
+) -> None:
     """
     Add random number of users with random role, and share workspaces with them.
     1 out of 5 users will be revoked from organization.
     """
     for _ in range(additional_users_number):
         name = "test_" + str(uuid4())[:9]
-        user_profile = random.choice(list(UserProfile))
+        user_profile = random.choice(UserProfile.VALUES)
         if user_profile == UserProfile.OUTSIDER:
             realm_role = random.choice([WorkspaceRole.READER, WorkspaceRole.CONTRIBUTOR])
         else:
-            realm_role = random.choice(list(WorkspaceRole))
+            realm_role = random.choice(WorkspaceRole.VALUES)
         # Workspace_choice : 0 = add user to first_ws, 1 = add to second_ws, 2 = add in both workspace, other = nothing
         workspace_choice = random.randint(0, 3)
         # invite user to organization
@@ -205,69 +202,11 @@ async def _add_random_users(
             await alice_core.revoke_user(user_device.user_id)
 
 
-async def _init_ctx_create(cmds, token):
-    initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
-    in_progress_ctx = await initial_ctx.do_wait_peer()
-    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
-    return in_progress_ctx
-
-
-async def _init_ctx_claim(cmds):
-    initial_ctx = await claimer_retrieve_info(cmds=cmds)
-    in_progress_ctx = await initial_ctx.do_wait_peer()
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-    return in_progress_ctx
-
-
-async def _invite_user_task(cmds, token, host_device, profile: UserProfile = UserProfile.STANDARD):
-    in_progress_ctx = await _init_ctx_create(cmds=cmds, token=token)
-    await in_progress_ctx.do_create_new_user(
-        author=host_device,
-        human_handle=in_progress_ctx.requested_human_handle,
-        device_label=in_progress_ctx.requested_device_label,
-        profile=profile,
-    )
-
-
-async def _invite_device_task(cmds, device, device_label, token):
-    initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
-    in_progress_ctx = await initial_ctx.do_wait_peer()
-    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
-    await in_progress_ctx.do_create_new_device(
-        author=device, device_label=in_progress_ctx.requested_device_label
-    )
-
-
-async def _claim_user(cmds, claimer_email, requested_device_label, requested_user_label):
-    in_progress_ctx = await _init_ctx_claim(cmds)
-    new_device = await in_progress_ctx.do_claim_user(
-        requested_human_handle=HumanHandle(label=requested_user_label, email=claimer_email),
-        requested_device_label=requested_device_label,
-    )
-    return new_device
-
-
-async def _claim_device(cmds, requested_device_label):
-    initial_ctx = await claimer_retrieve_info(cmds=cmds)
-    in_progress_ctx = await initial_ctx.do_wait_peer()
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-    new_device = await in_progress_ctx.do_claim_device(
-        requested_device_label=requested_device_label
-    )
-    return new_device
-
-
 async def _register_new_user(
     cmds: BackendAuthenticatedCmds,
     author: LocalDevice,
-    device_label: Optional[DeviceLabel],
-    human_handle: Optional[HumanHandle],
+    device_label: DeviceLabel | None,
+    human_handle: HumanHandle | None,
     profile: UserProfile,
 ) -> LocalDevice:
     new_device = generate_new_device(
@@ -308,7 +247,7 @@ async def _register_new_user(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    if rep["status"] != "ok":
+    if not isinstance(rep, UserCreateRepOk):
         raise RuntimeError(f"Cannot create user: {rep}")
 
     return new_device
@@ -317,8 +256,8 @@ async def _register_new_user(
 async def _register_new_device(
     cmds: BackendAuthenticatedCmds,
     author: LocalDevice,
-    device_label: Optional[DeviceLabel],
-):
+    device_label: DeviceLabel | None,
+) -> LocalDevice:
 
     new_device = LocalDevice(
         organization_addr=author.organization_addr,
@@ -351,7 +290,7 @@ async def _register_new_device(
         redacted_device_certificate=redacted_device_certificate,
     )
 
-    if rep["status"] != "ok":
+    if not isinstance(rep, DeviceCreateRepOk):
         raise RuntimeError(f"Cannot create device: {rep}")
 
     return new_device

@@ -1,30 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec.backend.backend_events import BackendEvent
-import attr
-from typing import TYPE_CHECKING, List, Optional, Tuple
 from collections import defaultdict
-from parsec._parsec import DateTime
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Tuple
 
-from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
-    InvitationToken,
-    InvitationStatus,
-    InvitationDeletedReason,
-)
+import attr
+
+from parsec._parsec import DateTime, InvitationDeletedReason
+from parsec.api.protocol import InvitationStatus, InvitationToken, OrganizationID, UserID
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.invite import (
-    ConduitState,
     NEXT_CONDUIT_STATE,
-    ConduitListenCtx,
     BaseInviteComponent,
-    Invitation,
-    UserInvitation,
+    ConduitListenCtx,
+    ConduitState,
     DeviceInvitation,
-    InvitationNotFoundError,
+    Invitation,
     InvitationAlreadyDeletedError,
-    InvitationInvalidStateError,
     InvitationAlreadyMemberError,
+    InvitationInvalidStateError,
+    InvitationNotFoundError,
+    UserInvitation,
 )
 
 if TYPE_CHECKING:
@@ -34,32 +30,38 @@ if TYPE_CHECKING:
 @attr.s(slots=True, auto_attribs=True)
 class Conduit:
     state: ConduitState = ConduitState.STATE_1_WAIT_PEERS
-    claimer_payload: Optional[bytes] = None
-    greeter_payload: Optional[bytes] = None
+    claimer_payload: bytes | None = None
+    greeter_payload: bytes | None = None
 
 
 class OrganizationStore:
-    def __init__(self):
-        self.invitations = {}
-        self.deleted_invitations = {}
-        self.conduits = defaultdict(Conduit)
+    def __init__(self) -> None:
+        self.invitations: dict[InvitationToken, Invitation] = {}
+        self.deleted_invitations: dict[
+            InvitationToken, Tuple[DateTime, InvitationDeletedReason]
+        ] = {}
+        self.conduits: dict[InvitationToken, Conduit] = defaultdict(Conduit)
 
 
 class MemoryInviteComponent(BaseInviteComponent):
-    def __init__(self, send_event, *args, **kwargs):
+    def __init__(
+        self, send_event: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._send_event = send_event
-        self._organizations = defaultdict(OrganizationStore)
-        self._user_component: "MemoryUserComponent" = None
+        self._organizations: dict[OrganizationID, OrganizationStore] = defaultdict(
+            OrganizationStore
+        )
+        self._user_component: MemoryUserComponent | None = None
 
-    def register_components(self, user: "MemoryUserComponent", **other_components):
+    def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
         self._user_component = user
 
     def _get_invitation_and_conduit(
         self,
         organization_id: OrganizationID,
         token: InvitationToken,
-        expected_greeter: Optional[UserID] = None,
+        expected_greeter: UserID | None = None,
     ) -> Tuple[Invitation, Conduit]:
         org = self._organizations[organization_id]
         invitation = org.invitations.get(token)
@@ -72,7 +74,7 @@ class MemoryInviteComponent(BaseInviteComponent):
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: Optional[UserID],
+        greeter: UserID | None,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
@@ -90,7 +92,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if conduit.state != state or curr_our_payload is not None:
             # We are out of sync with the conduit:
-            # - the conduit state has changed in our back (maybe reseted by the peer)
+            # - the conduit state has changed in our back (maybe reset by the peer)
             # - we want to reset the conduit
             # - we have already provided a payload for the current conduit state (most
             #   likely because a retry of a command that failed due to connection outage)
@@ -127,7 +129,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             peer_payload=curr_peer_payload,
         )
 
-    async def _conduit_listen(self, ctx: ConduitListenCtx) -> Optional[bytes]:
+    async def _conduit_listen(self, ctx: ConduitListenCtx) -> bytes | None:
         _, conduit = self._get_invitation_and_conduit(
             ctx.organization_id, ctx.token, expected_greeter=ctx.greeter
         )
@@ -182,11 +184,13 @@ class MemoryInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         claimer_email: str,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> UserInvitation:
         """
         Raise: InvitationAlreadyMemberError
         """
+        assert self._user_component is not None
+
         org = self._user_component._organizations[organization_id]
 
         for _, user in org.users.items():
@@ -209,7 +213,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> DeviceInvitation:
         result = await self._new(
             organization_id=organization_id,
@@ -223,9 +227,11 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[DateTime],
-        claimer_email: Optional[str] = None,
+        created_on: DateTime | None,
+        claimer_email: str | None = None,
     ) -> Invitation:
+        assert self._user_component is not None
+
         org = self._organizations[organization_id]
         for invitation in org.invitations.values():
             if (

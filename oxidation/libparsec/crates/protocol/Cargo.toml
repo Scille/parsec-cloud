@@ -11,29 +11,30 @@ path = "tests/mod.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["use-rustcrypto"]
+use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
+use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+test = []
+
 [dependencies]
-libparsec_crypto = { path = "../crypto" }
-libparsec_types = { path = "../types" }
-serialization_format = { path = "../serialization_format" }
+libparsec_crypto = { path = "../crypto", default-features = false }
+libparsec_types = { path = "../types", default-features = false }
+libparsec_serialization_format = { path = "../serialization_format" }
 
 paste = "1.0.9"
 rand = "0.8.5"
-rmp-serde = "1.0.0"
-serde = { version = "1.0.144", features = ["derive"] }
-serde_json = "1.0.85"
-serde_with = "2.0.0"
-thiserror = "1.0.34"
-http = "0.2.8"
+rmp-serde = "1.1.1"
+serde = { version = "1.0.147", features = ["derive"] }
+serde_with = "2.1.0"
+thiserror = "1.0.37"
 futures = "0.3.24"
-dotenv = "0.15.0"
-smol = "1.2.5"
-async-std = "1.12.0"
-async-tungstenite = { version = "0.17.1", features = ["async-std-runtime"] }
 
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 hex-literal = "0.3.3"
-rstest = "0.15.0"
+rstest = "0.16.0"
+serde_json = "1.0.91"
 
-[features]
-test = []
+[build-dependencies]
+glob = "0.3.0"

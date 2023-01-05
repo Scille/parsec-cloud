@@ -1,21 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
-from parsec.api.data import UserManifest, EntryID, EntryName
-from parsec.crypto import SecretKey
+from parsec._parsec import DateTime
+from parsec.api.data import EntryID, EntryName, UserManifest
+from parsec.core.fs import FSBackendOfflineError, FSWorkspaceNotFoundError
 from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 from parsec.core.types import (
-    WorkspaceEntry,
-    WorkspaceRole,
     LocalUserManifest,
     LocalWorkspaceManifest,
+    WorkspaceEntry,
+    WorkspaceRole,
 )
-from parsec.core.fs import FSWorkspaceNotFoundError, FSBackendOfflineError
-
+from parsec.crypto import SecretKey
 from tests.common import freeze_time
-
 
 KEY = SecretKey.generate()
 
@@ -189,10 +188,10 @@ async def test_sync_under_concurrency(
     running_backend, alice_user_fs, alice2_user_fs, alice, alice2
 ):
     with freeze_time("2000-01-02"):
-        waid = await alice_user_fs.workspace_create(EntryName("wa"))
+        wksp_alice_id = await alice_user_fs.workspace_create(EntryName("wa"))
 
     with freeze_time("2000-01-03"):
-        wa2id = await alice2_user_fs.workspace_create(EntryName("wa2"))
+        wksp_alice2_id = await alice2_user_fs.workspace_create(EntryName("wa2"))
 
     with freeze_time("2000-01-04"):
         await alice_user_fs.sync()
@@ -216,7 +215,7 @@ async def test_sync_under_concurrency(
         workspaces=(
             WorkspaceEntry(
                 name=EntryName("wa"),
-                id=waid,
+                id=wksp_alice_id,
                 key=KEY,
                 encryption_revision=1,
                 encrypted_on=DateTime(2000, 1, 2),
@@ -225,7 +224,7 @@ async def test_sync_under_concurrency(
             ),
             WorkspaceEntry(
                 name=EntryName("wa2"),
-                id=wa2id,
+                id=wksp_alice2_id,
                 key=KEY,
                 encryption_revision=1,
                 encrypted_on=DateTime(2000, 1, 3),

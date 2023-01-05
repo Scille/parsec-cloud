@@ -1,16 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
-
-import pytest
-import trio
-import attr
+from __future__ import annotations
 
 from contextlib import contextmanager
-from unittest.mock import ANY
 from enum import Enum
+from unittest.mock import ANY
 
-from parsec._parsec import DateTime, EventsListenRep
+import attr
+import pytest
+import trio
+
+from parsec._parsec import CoreEvent, DateTime, EventsListenRep
 from parsec.event_bus import EventBus
-
 from tests.common import real_clock_timeout
 
 
@@ -151,11 +151,11 @@ class EventBusSpy:
 
     async def wait(self, event, kwargs=ANY, dt=ANY, update_event_func=None):
         expected = SpiedEvent(event, kwargs, dt)
-        for occured_event in reversed(self.events):
+        for occurred_event in reversed(self.events):
             if update_event_func:
-                occured_event = update_event_func(occured_event)
-            if expected == occured_event:
-                return occured_event
+                occurred_event = update_event_func(occurred_event)
+            if expected == occurred_event:
+                return occurred_event
 
         return await self._wait(expected, update_event_func)
 
@@ -163,7 +163,7 @@ class EventBusSpy:
         send_channel, receive_channel = trio.open_memory_channel(1)
 
         def _waiter(cooked_event):
-            from parsec.core.core_events import CoreEvent
+            from parsec._parsec import CoreEvent
 
             if update_event_func:
                 cooked_event = update_event_func(cooked_event)
@@ -184,7 +184,7 @@ class EventBusSpy:
     async def wait_multiple(self, events, in_order=True):
         expected_events = self._cook_events_params(events)
         try:
-            self.assert_events_occured(expected_events, in_order=in_order)
+            self.assert_events_occurred(expected_events, in_order=in_order)
             return
         except AssertionError:
             pass
@@ -193,7 +193,7 @@ class EventBusSpy:
 
         def _waiter(cooked_event):
             try:
-                self.assert_events_occured(expected_events, in_order=in_order)
+                self.assert_events_occurred(expected_events, in_order=in_order)
                 self._waiters.remove(_waiter)
                 done.set()
             except AssertionError:
@@ -207,13 +207,11 @@ class EventBusSpy:
         return cooked_events
 
     def _cook_event_params(self, event):
-        if isinstance(event, SpiedEvent):
-            return event
-        elif isinstance(event, EventsListenRep):
+        if isinstance(event, (SpiedEvent, EventsListenRep)):
             return event
         elif event is ANY:
             return event
-        elif isinstance(event, Enum):
+        elif isinstance(event, (CoreEvent, Enum)):
             return SpiedEvent(event, ANY, ANY)
         elif isinstance(event, tuple):
             event = event + (ANY,) * (3 - len(event))
@@ -224,15 +222,15 @@ class EventBusSpy:
                 "or an Enum"
             )
 
-    def assert_event_occured(self, event, kwargs=ANY, dt=ANY):
+    def assert_event_occurred(self, event, kwargs=ANY, dt=ANY):
         expected = SpiedEvent(event, kwargs, dt)
-        for occured in self.events:
-            if occured == expected:
+        for occurred in self.events:
+            if occurred == expected:
                 break
         else:
-            raise AssertionError(f"Event {expected} didn't occured")
+            raise AssertionError(f"Event {expected} didn't occurred")
 
-    def assert_events_occured(self, events, in_order=True):
+    def assert_events_occurred(self, events, in_order=True):
         expected_events = self._cook_events_params(events)
         current_events = self.events
         for event in expected_events:
@@ -241,7 +239,7 @@ class EventBusSpy:
                 i = current_events.index(event)
                 current_events = current_events[i + 1 :]
 
-    def assert_events_exactly_occured(self, events):
+    def assert_events_exactly_occurred(self, events):
         events = self._cook_events_params(events)
         assert events == self.events
 

@@ -1,0 +1,37 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_2a_claimer_send_hashed_nonce",
+            "fields": [
+                {
+                    "name": "claimer_hashed_nonce",
+                    "type": "HashDigest"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "greeter_nonce",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
+    }
+]

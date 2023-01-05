@@ -30,6 +30,24 @@ pub enum HandshakeError {
     InvalidMessage(&'static str),
 }
 
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum ProtocolError {
+    #[error("Encoding error: {exc}")]
+    EncodingError { exc: String },
+    #[error("Decoding error: {exc}")]
+    DecodingError { exc: String },
+    #[error("Invalid message")]
+    InvalidMessageError,
+    #[error("Message serialization error")]
+    MessageSerializationError,
+    #[error("Incompatible api version error")]
+    IncompatibleAPIVersionsError,
+    #[error("This protocol is not handled")]
+    NotHandled,
+    #[error("{exc}")]
+    BadRequest { exc: String },
+}
+
 #[derive(Debug, PartialEq)]
 pub struct ChallengeDataReport {
     pub challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],

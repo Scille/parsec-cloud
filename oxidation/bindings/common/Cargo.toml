@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libparsec = { path = "../../libparsec", default_features = false }
-base64 = "0.13.0"
+libparsec = { path = "../../libparsec", default_features = false, features = ["use-rustcrypto"] }
+base64 = "0.20.0"
 serde_json = "1.0.85"

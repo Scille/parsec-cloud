@@ -1,51 +1,52 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from secrets import token_hex
+from typing import Any, Union
 
 import attr
-from typing import List, Optional, Tuple, Union
-from secrets import token_hex
 
 from parsec._parsec import (
+    ActiveUsersLimit,
+    ClientType,
     DateTime,
-    OrganizationStatsReq,
+    OrganizationBootstrapRep,
+    OrganizationBootstrapRepAlreadyBootstrapped,
+    OrganizationBootstrapRepBadTimestamp,
+    OrganizationBootstrapRepInvalidCertification,
+    OrganizationBootstrapRepInvalidData,
+    OrganizationBootstrapRepNotFound,
+    OrganizationBootstrapRepOk,
+    OrganizationBootstrapReq,
+    OrganizationConfigRep,
+    OrganizationConfigRepNotFound,
+    OrganizationConfigRepOk,
+    OrganizationConfigReq,
+    OrganizationStats,
     OrganizationStatsRep,
-    OrganizationStatsRepOk,
     OrganizationStatsRepNotAllowed,
     OrganizationStatsRepNotFound,
-    OrganizationConfigReq,
-    OrganizationConfigRep,
-    OrganizationConfigRepOk,
-    OrganizationConfigRepNotFound,
-    UsersPerProfileDetailItem,
+    OrganizationStatsRepOk,
+    OrganizationStatsReq,
+    SequesterVerifyKeyDer,
+    VerifyKey,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
-from parsec.utils import timestamps_in_the_ballpark
-from parsec.crypto import VerifyKey
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import (
-    UserCertificate,
-    DeviceCertificate,
     DataError,
+    DeviceCertificate,
     SequesterAuthorityCertificate,
+    UserCertificate,
 )
-from parsec.api.protocol import (
-    OrganizationID,
-    UserProfile,
-    organization_bootstrap_serializer,
-    apiv1_organization_bootstrap_serializer,
-)
-from parsec.backend.utils import (
-    ClientType,
-    catch_protocol_errors,
-    api,
-    Unset,
-    UnsetType,
-)
-from parsec.backend.user import User, Device
-from parsec.backend.webhooks import WebhooksComponent
+from parsec.api.protocol import OrganizationID, UserProfile
+from parsec.backend.client_context import AnonymousClientContext, AuthenticatedClientContext
 from parsec.backend.config import BackendConfig
-from parsec.backend.client_context import (
-    AnonymousClientContext,
-    APIV1_AnonymousClientContext,
+from parsec.backend.user import Device, User
+from parsec.backend.utils import Unset, UnsetType, api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.backend.webhooks import WebhooksComponent
+from parsec.utils import (
+    BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+    timestamps_in_the_ballpark,
 )
 
 
@@ -88,27 +89,19 @@ class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
     is_expired: bool
-    root_verify_key: Optional[VerifyKey]
+    created_on: DateTime
+    bootstrapped_on: DateTime | None
+    root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
-    active_users_limit: Optional[int]
-    sequester_authority: Optional[SequesterAuthority]
-    sequester_services_certificates: Optional[Tuple[bytes, ...]]
+    active_users_limit: ActiveUsersLimit
+    sequester_authority: SequesterAuthority | None
+    sequester_services_certificates: tuple[bytes, ...] | None
 
-    def is_bootstrapped(self):
+    def is_bootstrapped(self) -> bool:
         return self.root_verify_key is not None
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> Organization:
         return attr.evolve(self, **kwargs)
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class OrganizationStats:
-    data_size: int
-    metadata_size: int
-    users: int
-    active_users: int
-    realms: int
-    users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
 
 
 def generate_bootstrap_token() -> str:
@@ -124,7 +117,7 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(OrganizationConfigReq, OrganizationConfigRep)
     async def api_authenticated_organization_config(
-        self, client_ctx, req: OrganizationConfigReq
+        self, client_ctx: AuthenticatedClientContext, req: OrganizationConfigReq
     ) -> OrganizationConfigRep:
         organization_id = client_ctx.organization_id
         try:
@@ -134,10 +127,10 @@ class BaseOrganizationComponent:
             return OrganizationConfigRepNotFound()
 
         if organization.sequester_authority:
-            sequester_authority_certificate: Optional[
-                bytes
-            ] = organization.sequester_authority.certificate
-            sequester_services_certificates: Optional[List[bytes]] = (
+            sequester_authority_certificate: bytes | None = (
+                organization.sequester_authority.certificate
+            )
+            sequester_services_certificates: list[bytes] | None = (
                 list(organization.sequester_services_certificates)
                 if organization.sequester_services_certificates
                 else []
@@ -157,7 +150,7 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(OrganizationStatsReq, OrganizationStatsRep)
     async def api_authenticated_organization_stats(
-        self, client_ctx, req: OrganizationStatsReq
+        self, client_ctx: AuthenticatedClientContext, req: OrganizationStatsReq
     ) -> OrganizationStatsRep:
         if client_ctx.profile != UserProfile.ADMIN:
             return OrganizationStatsRepNotAllowed(None)
@@ -180,171 +173,117 @@ class BaseOrganizationComponent:
 
     @api(
         "organization_bootstrap",
-        client_types=[ClientType.APIV1_ANONYMOUS, ClientType.ANONYMOUS],
+        client_types=[ClientType.ANONYMOUS],
     )
     @catch_protocol_errors
+    @api_typed_msg_adapter(OrganizationBootstrapReq, OrganizationBootstrapRep)
     async def api_organization_bootstrap(
         self,
-        client_ctx: Union[APIV1_AnonymousClientContext, AnonymousClientContext],
-        msg: dict,
-    ):
-        # Use the correct serializer depending on the API
-        if isinstance(client_ctx, APIV1_AnonymousClientContext):
-            serializer = apiv1_organization_bootstrap_serializer
-        else:
-            assert isinstance(client_ctx, AnonymousClientContext)
-            serializer = organization_bootstrap_serializer
-
-        msg = serializer.req_load(msg)
-
-        bootstrap_token = msg["bootstrap_token"]
-        root_verify_key = msg["root_verify_key"]
+        client_ctx: AnonymousClientContext,
+        req: OrganizationBootstrapReq,
+    ) -> OrganizationBootstrapRep:
+        bootstrap_token = req.bootstrap_token
+        root_verify_key = req.root_verify_key
 
         try:
             u_data = UserCertificate.verify_and_load(
-                msg["user_certificate"],
+                req.user_certificate,
                 author_verify_key=root_verify_key,
                 expected_author=None,
             )
             d_data = DeviceCertificate.verify_and_load(
-                msg["device_certificate"],
+                req.device_certificate,
                 author_verify_key=root_verify_key,
                 expected_author=None,
             )
 
-            ru_data = rd_data = None
-            # TODO: Remove this `if` statement once APIv1 is no longer supported
-            if "redacted_user_certificate" in msg:
-                ru_data = UserCertificate.verify_and_load(
-                    msg["redacted_user_certificate"],
-                    author_verify_key=root_verify_key,
-                    expected_author=None,
-                )
-            # TODO: Remove this `if` statement once APIv1 is no longer supported
-            if "redacted_device_certificate" in msg:
-                rd_data = DeviceCertificate.verify_and_load(
-                    msg["redacted_device_certificate"],
-                    author_verify_key=root_verify_key,
-                    expected_author=None,
-                )
+            ru_data = UserCertificate.verify_and_load(
+                req.redacted_user_certificate,
+                author_verify_key=root_verify_key,
+                expected_author=None,
+            )
+            rd_data = DeviceCertificate.verify_and_load(
+                req.redacted_device_certificate,
+                author_verify_key=root_verify_key,
+                expected_author=None,
+            )
 
-        except DataError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
+        except DataError:
+            return OrganizationBootstrapRepInvalidCertification(None)
         if u_data.profile != UserProfile.ADMIN:
-            return {
-                "status": "invalid_data",
-                "reason": "Bootstrapping user must have admin profile.",
-            }
+            return OrganizationBootstrapRepInvalidData(None)
 
         if u_data.timestamp != d_data.timestamp:
-            return {
-                "status": "invalid_data",
-                "reason": "Device and user certificates must have the same timestamp.",
-            }
+            return OrganizationBootstrapRepInvalidData(None)
 
         if u_data.user_id != d_data.device_id.user_id:
-            return {
-                "status": "invalid_data",
-                "reason": "Device and user must have the same user ID.",
-            }
+            return OrganizationBootstrapRepInvalidData(None)
 
         now = DateTime.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
-            return serializer.timestamp_out_of_ballpark_rep_dump(
-                backend_timestamp=now, client_timestamp=u_data.timestamp
+            return OrganizationBootstrapRepBadTimestamp(
+                reason=None,
+                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                backend_timestamp=now,
+                client_timestamp=u_data.timestamp,
             )
 
-        if ru_data:
-            if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted User certificate differs from User certificate.",
-                }
-            if ru_data.human_handle:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted User certificate must not contain a human_handle field.",
-                }
+        if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
+            return OrganizationBootstrapRepInvalidData(None)
+        if ru_data.human_handle:
+            return OrganizationBootstrapRepInvalidData(None)
 
-        if rd_data:
-            if rd_data.evolve(device_label=d_data.device_label) != d_data:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted Device certificate differs from Device certificate.",
-                }
-            if rd_data.device_label:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted Device certificate must not contain a device_label field.",
-                }
+        if rd_data.evolve(device_label=d_data.device_label) != d_data:
+            return OrganizationBootstrapRepInvalidData(None)
+        if rd_data.device_label:
+            return OrganizationBootstrapRepInvalidData(None)
 
-        if (rd_data and not ru_data) or (ru_data and not rd_data):
-            return {
-                "status": "invalid_data",
-                "reason": "Redacted user&device certificate must be provided together",
-            }
-
-        # Sequester can not be set with APIV1
-        if isinstance(client_ctx, APIV1_AnonymousClientContext):
+        sequester_authority_certificate = req.sequester_authority_certificate
+        if sequester_authority_certificate is None:
             sequester_authority = None
 
         else:
-            sequester_authority_certificate = msg["sequester_authority_certificate"]
-            if sequester_authority_certificate is None:
-                sequester_authority = None
-
-            else:
-                try:
-                    sequester_authority_certif_data = SequesterAuthorityCertificate.verify_and_load(
-                        sequester_authority_certificate,
-                        author_verify_key=root_verify_key,
-                        expected_author=None,
-                    )
-
-                except DataError:
-                    return {
-                        "status": "invalid_data",
-                        "reason": "Invalid signature for sequester authority certificate",
-                    }
-
-                if not timestamps_in_the_ballpark(sequester_authority_certif_data.timestamp, now):
-                    return serializer.timestamp_out_of_ballpark_rep_dump(
-                        backend_timestamp=now,
-                        client_timestamp=sequester_authority_certif_data.timestamp,
-                    )
-
-                if sequester_authority_certif_data.timestamp != u_data.timestamp:
-                    return {
-                        "status": "invalid_data",
-                        "reason": "Device, user and sequester authority certificates must have the same timestamp.",
-                    }
-
-                sequester_authority = SequesterAuthority(
-                    certificate=sequester_authority_certificate,
-                    verify_key_der=sequester_authority_certif_data.verify_key_der,
+            try:
+                sequester_authority_certif_data = SequesterAuthorityCertificate.verify_and_load(
+                    sequester_authority_certificate,
+                    author_verify_key=root_verify_key,
                 )
+
+            except DataError:
+                return OrganizationBootstrapRepInvalidData(None)
+
+            if not timestamps_in_the_ballpark(sequester_authority_certif_data.timestamp, now):
+                return OrganizationBootstrapRepBadTimestamp(
+                    reason=None,
+                    ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                    ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                    backend_timestamp=now,
+                    client_timestamp=sequester_authority_certif_data.timestamp,
+                )
+
+            if sequester_authority_certif_data.timestamp != u_data.timestamp:
+                return OrganizationBootstrapRepInvalidData(None)
+
+            sequester_authority = SequesterAuthority(
+                certificate=sequester_authority_certificate,
+                verify_key_der=sequester_authority_certif_data.verify_key_der,
+            )
 
         user = User(
             user_id=u_data.user_id,
             human_handle=u_data.human_handle,
             profile=u_data.profile,
-            user_certificate=msg["user_certificate"],
-            # TODO: Remove this `get` method once APIv1 is no longer supported
-            redacted_user_certificate=msg.get("redacted_user_certificate", msg["user_certificate"]),
+            user_certificate=req.user_certificate,
+            redacted_user_certificate=req.redacted_user_certificate,
             user_certifier=u_data.author,
             created_on=u_data.timestamp,
         )
         first_device = Device(
             device_id=d_data.device_id,
             device_label=d_data.device_label,
-            device_certificate=msg["device_certificate"],
-            # TODO: Remove this `get` method once APIv1 is no longer supported
-            redacted_device_certificate=msg.get(
-                "redacted_device_certificate", msg["device_certificate"]
-            ),
+            device_certificate=req.device_certificate,
+            redacted_device_certificate=req.redacted_device_certificate,
             device_certifier=d_data.author,
             created_on=d_data.timestamp,
         )
@@ -355,14 +294,15 @@ class BaseOrganizationComponent:
                 first_device=first_device,
                 bootstrap_token=bootstrap_token,
                 root_verify_key=root_verify_key,
+                bootstrapped_on=now,
                 sequester_authority=sequester_authority,
             )
 
         except OrganizationAlreadyBootstrappedError:
-            return {"status": "already_bootstrapped"}
+            return OrganizationBootstrapRepAlreadyBootstrapped()
 
         except (OrganizationNotFoundError, OrganizationInvalidBootstrapTokenError):
-            return {"status": "not_found"}
+            return OrganizationBootstrapRepNotFound()
 
         # Note: we let OrganizationFirstUserCreationError bubbles up given
         # it should not occurs under normal circumstances
@@ -376,7 +316,7 @@ class BaseOrganizationComponent:
             human_label=user.human_handle.label if user.human_handle else None,
         )
 
-        return serializer.rep_dump({"status": "ok"})
+        return OrganizationBootstrapRepOk()
 
     async def create(
         self,
@@ -385,8 +325,9 @@ class BaseOrganizationComponent:
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         # `None` stands for "no limit"
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        created_on: DateTime | None = None,
     ) -> None:
         """
         Raises:
@@ -408,7 +349,8 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_authority: Optional[SequesterAuthority] = None,
+        bootstrapped_on: DateTime | None = None,
+        sequester_authority: SequesterAuthority | None = None,
     ) -> None:
         """
         Raises:
@@ -419,10 +361,25 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def stats(self, id: OrganizationID) -> OrganizationStats:
+    async def stats(
+        self,
+        id: OrganizationID,
+        at: DateTime | None = None,
+    ) -> OrganizationStats:
         """
         Raises:
             OrganizationNotFoundError
+
+        Note: also raises `OrganizationNotFoundError` if the organization is
+        present in the database but has been created after `at` datetime.
+        """
+        raise NotImplementedError()
+
+    async def server_stats(
+        self, at: DateTime | None = None
+    ) -> dict[OrganizationID, OrganizationStats]:
+        """
+        Raises: Nothing !
         """
         raise NotImplementedError()
 
@@ -433,7 +390,7 @@ class BaseOrganizationComponent:
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         is_expired: Union[UnsetType, bool] = Unset,
         # `None` stands for "no limit"
-        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """

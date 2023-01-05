@@ -1,61 +1,62 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from collections import defaultdict
+from hashlib import sha1
+from pathlib import Path
+from typing import Iterable, Optional, Tuple, Union
 
 import attr
-import re
-import sys
-import subprocess
 import pytest
-from parsec._parsec import DateTime
-from collections import defaultdict
-from typing import Union, Optional, Tuple, Iterable
-from hashlib import sha1
-from uuid import UUID
-from pathlib import Path
 
-from parsec.crypto import SigningKey, PrivateKey
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.api.data import (
+    DataError,
+    DeviceCertificate,
+    PkiEnrollmentAnswerPayload,
+    PkiEnrollmentSubmitPayload,
+    RealmRoleCertificate,
+    RevokedUserCertificate,
     UserCertificate,
     UserManifest,
-    RevokedUserCertificate,
-    DeviceCertificate,
-    RealmRoleCertificate,
-    PkiEnrollmentSubmitPayload,
-    PkiEnrollmentAcceptPayload,
-    DataError,
 )
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
     DeviceID,
     DeviceLabel,
     HumanHandle,
-    RealmRole,
+    OrganizationID,
     RealmID,
-    VlobID,
+    RealmRole,
+    UserID,
     UserProfile,
+    VlobID,
 )
-from parsec.core.types import (
-    LocalDevice,
-    LocalUserManifest,
-    BackendOrganizationBootstrapAddr,
-    BackendPkiEnrollmentAddr,
-)
+from parsec.backend.backend_events import BackendEvent
+from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.user import Device as BackendDevice
+from parsec.backend.user import User as BackendUser
+from parsec.core.fs.storage import UserStorage
 from parsec.core.local_device import (
-    LocalDeviceNotFoundError,
-    LocalDeviceCryptoError,
-    LocalDevicePackingError,
     DeviceFileType,
-    _save_device,
+    LocalDeviceCryptoError,
+    LocalDeviceNotFoundError,
+    LocalDevicePackingError,
     _load_device,
+    _save_device,
     generate_new_device,
 )
-from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
-from parsec.core.fs.storage import UserStorage
-from parsec.backend.backend_events import BackendEvent
-from parsec.backend.user import User as BackendUser, Device as BackendDevice
-from parsec.backend.realm import RealmGrantedRole
-
-from tests.common import freeze_time, addr_with_device_subdomain
+from parsec.core.types import (
+    BackendOrganizationBootstrapAddr,
+    BackendPkiEnrollmentAddr,
+    LocalDevice,
+    LocalUserManifest,
+)
+from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
+from parsec.crypto import PrivateKey, SigningKey
+from tests.common import addr_with_device_subdomain, freeze_time
 
 
 @pytest.fixture
@@ -356,7 +357,7 @@ def initial_user_manifest_state():
     # manifest.
     # In most tests we want to be in a state were backend and devices all
     # store the same user manifest (named the "v1" here).
-    # But sometime we want a completly fresh start ("v1" doesn't exist,
+    # But sometime we want a completely fresh start ("v1" doesn't exist,
     # hence devices and backend are empty) or only a single device to begin
     # with no knowledge of the "v1".
     return InitialUserManifestState()
@@ -379,7 +380,7 @@ def initialize_local_user_manifest(initial_user_manifest_state):
                         storage.device
                     )
                     await storage.set_user_manifest(user_manifest)
-                    # Chcekpoint 1 *is* the upload of user manifest v1
+                    # Checkpoint 1 *is* the upload of user manifest v1
                     await storage.update_realm_checkpoint(1, {})
 
                 elif initial_user_manifest == "non_speculative_v0":
@@ -537,12 +538,12 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 author = device
             else:
                 author = self.get_device(device.organization_id, manifest.author)
-            realm_id = RealmID(author.user_manifest_id.uuid)
-            vlob_id = VlobID(author.user_manifest_id.uuid)
+            realm_id = RealmID.from_entry_id(author.user_manifest_id)
+            vlob_id = VlobID.from_entry_id(author.user_manifest_id)
 
             with self.backend.event_bus.listen() as spy:
 
-                # The realm needs to be created srictly before the manifest timestamp
+                # The realm needs to be created strictly before the manifest timestamp
                 realm_create_timestamp = manifest.timestamp.subtract(microseconds=1)
 
                 await self.backend.realm.create(
@@ -614,11 +615,11 @@ def backend_data_binder_factory(initial_user_manifest_state):
             assert org.organization_id == first_device.organization_id
             backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
             await self.backend.organization.bootstrap(
-                org.organization_id,
-                backend_user,
-                backend_first_device,
-                org.bootstrap_token,
-                org.root_verify_key,
+                id=org.organization_id,
+                user=backend_user,
+                first_device=backend_first_device,
+                bootstrap_token=org.bootstrap_token,
+                root_verify_key=org.root_verify_key,
             )
             self.certificates_store.store_user(
                 org.organization_id,
@@ -840,7 +841,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             config_dir: Path,
             x509_certificate: X509Certificate,
             addr: BackendPkiEnrollmentAddr,
-            enrollment_id: UUID,
+            enrollment_id: EnrollmentID,
             submitted_on: DateTime,
             submit_payload: PkiEnrollmentSubmitPayload,
             signing_key: SigningKey,
@@ -860,7 +861,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             return pending
 
         def pki_enrollment_load_local_pending_secret_part(
-            self, config_dir: Path, enrollment_id: UUID
+            self, config_dir: Path, enrollment_id: EnrollmentID
         ) -> Tuple[SigningKey, PrivateKey]:
             for (pending, secret_part) in self._pending_enrollments[config_dir]:
                 if pending.enrollment_id == enrollment_id:
@@ -891,12 +892,12 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             payload_signature: bytes,
             payload: bytes,
             extra_trust_roots: Iterable[Path] = (),
-        ) -> PkiEnrollmentAcceptPayload:
+        ) -> PkiEnrollmentAnswerPayload:
             computed_signature = self._compute_signature(der_x509_certificate, payload)
             if computed_signature != payload_signature:
                 raise LocalDeviceCryptoError()
             try:
-                accept_payload = PkiEnrollmentAcceptPayload.load(payload)
+                accept_payload = PkiEnrollmentAnswerPayload.load(payload)
             except DataError as exc:
                 raise LocalDevicePackingError(str(exc)) from exc
 

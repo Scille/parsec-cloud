@@ -1,17 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+import logging
+import re
+from io import StringIO
+from unittest.mock import ANY
 
 import pytest
-from unittest.mock import ANY
-from io import StringIO
-import re
-import logging
 import sentry_sdk
 
 from parsec._version import __version__ as parsec_version
 from parsec.logging import (
+    build_sentry_configuration,
     build_structlog_configuration,
     configure_stdlib_logger,
-    build_sentry_configuration,
 )
 
 
@@ -440,7 +442,7 @@ def test_sentry_structlog_integration(capsentry):
         }
     )
 
-    # Finaly Sentry trigger, this time with implicit exception info
+    # Finally Sentry trigger, this time with implicit exception info
 
     capsentry.clear()
     try:
@@ -571,7 +573,7 @@ def test_sentry_stdlib_integration(capsentry):
         }
     )
 
-    # Finaly Sentry trigger, this time with implicit exception info
+    # Finally Sentry trigger, this time with implicit exception info
 
     capsentry.clear()
     try:

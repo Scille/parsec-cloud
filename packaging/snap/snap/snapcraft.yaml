@@ -65,7 +65,7 @@ parts:
 
       # Bundled libssl doesn't know where host OS stores it CA certificates,
       # hence we bundle them instead.
-      # For this, Certifi provides the Mozilla-curated certifs bundled as a
+      # For this, Certifi provides the Mozilla-curated certificates bundled as a
       # single file and we just have to copy it into our Snap.
       # Note we don't use ubuntu package's  `ca-certificate` here given it
       # comes as multiple pem files that must be cooked with `update-ca-certificate`
@@ -195,7 +195,7 @@ parts:
       # apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.9
       - python3.9
       - python3.9-minimal
-      # Yes, we even package libc (otherwise it may cause issue when runnig on non-ubuntu OS)
+      # Yes, we even package libc (otherwise it may cause issue when running on non-ubuntu OS)
       - libc6
       - libcrypt1
       - libpython3.9-minimal

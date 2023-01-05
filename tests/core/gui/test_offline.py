@@ -1,12 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
 from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
-from parsec.core.backend_connection.authenticated import DESYNC_RETRY_TIME
-
 from tests.common import real_clock_timeout
 
 
@@ -35,30 +33,19 @@ async def test_offline_notification(aqtbot, running_backend, logged_gui):
             await aqtbot.wait_until(_offline)
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 async def test_backend_desync_notification(
     aqtbot,
-    frozen_clock,
     running_backend,
     logged_gui,
-    monkeypatch,
     autoclose_dialog,
     caplog,
     snackbar_catcher,
 ):
     central_widget = logged_gui.test_get_central_widget()
+    local_device = central_widget.core.device
     assert central_widget is not None
-    timestamp_shift_minutes = 0
-
-    def _timestamp(self):
-        return DateTime.now().subtract(minutes=timestamp_shift_minutes)
-
-    monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
-    monkeypatch.setattr("parsec.core.types.LocalDevice.timestamp", _timestamp)
 
     def _online():
         assert central_widget.menu.label_connection_state.text() == translate(
@@ -73,12 +60,17 @@ async def test_backend_desync_notification(
     def _assert_desync_dialog():
         assert snackbar_catcher.snackbars == [("WARN", translate("TEXT_BACKEND_STATE_DESYNC"))]
 
+    def _assert_desync_log():
+        caplog.assert_occurred(
+            "[info     ] Backend connection is desync   [parsec.core.backend_connection.authenticated]"
+        )
+
     # Wait until we're online
-    await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
+    local_device.time_provider.mock_time(speed=1000.0)
     await aqtbot.wait_until(_online)
 
     # Shift by 5 minutes
-    timestamp_shift_minutes = 5
+    local_device.time_provider.mock_time(shift=5 * 60)
 
     # Wait until we get the notification
     async with aqtbot.wait_signal(central_widget.systray_notification):
@@ -87,7 +79,7 @@ async def test_backend_desync_notification(
         await central_widget.core.user_fs.workspace_create(EntryName("test1"))
 
         # Wait until we're offline
-        await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
+        local_device.time_provider.mock_time(speed=1000.0)
         await aqtbot.wait_until(_offline)
 
     # Wait for the dialog
@@ -101,27 +93,24 @@ async def test_backend_desync_notification(
         caplog.clear()
         async with real_clock_timeout():
             with caplog.at_level("INFO"):
-                await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
-            caplog.assert_occured(
-                "[info     ] Backend connection is desync   [parsec.core.backend_connection.authenticated]"
-            )
+                await aqtbot.wait_until(_assert_desync_log)
 
     # There should be no new dialog
     assert len(autoclose_dialog.dialogs) == 0
 
     # Re-sync
-    timestamp_shift_minutes = 0
-    await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
+    local_device.time_provider.mock_time(shift=0)
+    local_device.time_provider.mock_time(speed=1000.0)
     await aqtbot.wait_until(_online)
 
     # Shift again
-    timestamp_shift_minutes = 5
+    local_device.time_provider.mock_time(shift=5 * 60)
 
     # Force sync by creating a workspace
     await central_widget.core.user_fs.workspace_create(EntryName("test2"))
 
     # Wait until we get the notification
-    await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
+    local_device.time_provider.mock_time(speed=1000.0)
     await aqtbot.wait_until(_offline)
 
     # There should be no new dialog

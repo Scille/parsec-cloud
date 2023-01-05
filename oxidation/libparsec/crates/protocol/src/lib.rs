@@ -3,7 +3,10 @@
 mod error;
 mod handshake;
 
-use serialization_format::parsec_cmds;
+use serde::{Deserialize, Serialize};
+use std::num::NonZeroU8;
+
+use libparsec_serialization_format::parsec_protocol_cmds_familly;
 
 pub use error::*;
 pub use handshake::*;
@@ -23,15 +26,36 @@ macro_rules! impl_dump_load {
 }
 pub(crate) use impl_dump_load;
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct IntegerBetween1And100(NonZeroU8);
+
+impl TryFrom<u64> for IntegerBetween1And100 {
+    type Error = &'static str;
+    fn try_from(data: u64) -> Result<Self, Self::Error> {
+        if data == 0 || data > 100 {
+            return Err("Invalid IntegerBetween1And100 value");
+        }
+
+        Ok(Self(NonZeroU8::new(data as u8).unwrap()))
+    }
+}
+
+impl From<IntegerBetween1And100> for u64 {
+    fn from(data: IntegerBetween1And100) -> Self {
+        u8::from(data.0) as u64
+    }
+}
+
 // This macro implements dump/load methods for client/server side.
 // It checks if both Req and Rep are implemented for a specified command
 // It also provides a way to use commands by specifying status, command and type.
 // For example:
 // Server side
-// authenticated_cmds::AnyCmdReq::load(..)
-// authenticated_cmds::block_create::Rep::Ok.dump()
+// authenticated_cmds::v2::AnyCmdReq::load(..)
+// authenticated_cmds::v2::block_create::Rep::Ok.dump()
 // Client side
-// authenticated_cmds::block_create::Req { .. }.dump()
-// authenticated_cmds::block_create::Rep::load(..)
-parsec_cmds!("schema/invited_cmds");
-parsec_cmds!("schema/authenticated_cmds");
+// authenticated_cmds::v2::block_create::Req { .. }.dump()
+// authenticated_cmds::v2::block_create::Rep::load(..)
+parsec_protocol_cmds_familly!("schema/invited_cmds");
+parsec_protocol_cmds_familly!("schema/authenticated_cmds");
+parsec_protocol_cmds_familly!("schema/anonymous_cmds");

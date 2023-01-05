@@ -1,17 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec.api.protocol import RealmRole, OrganizationID
+import triopg
+
+from parsec.api.protocol import OrganizationID, RealmRole
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.realm import RealmGrantedRole, RealmAlreadyExistsError
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
+    q_device_internal_id,
     q_organization_internal_id,
     q_user_internal_id,
-    q_device_internal_id,
+    query,
 )
-
+from parsec.backend.realm import RealmAlreadyExistsError, RealmGrantedRole
 
 _q_insert_realm = Q(
     f"""
@@ -65,16 +67,16 @@ SELECT
 
 @query(in_transaction=True)
 async def query_create(
-    conn, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    self_granted_role: RealmGrantedRole,
 ) -> None:
     assert self_granted_role.granted_by is not None
     assert self_granted_role.granted_by.user_id == self_granted_role.user_id
     assert self_granted_role.role == RealmRole.OWNER
 
     realm_internal_id = await conn.fetchval(
-        *_q_insert_realm(
-            organization_id=organization_id.str, realm_id=self_granted_role.realm_id.uuid
-        )
+        *_q_insert_realm(organization_id=organization_id.str, realm_id=self_granted_role.realm_id)
     )
     if not realm_internal_id:
         raise RealmAlreadyExistsError()

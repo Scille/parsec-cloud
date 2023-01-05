@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import os
 import sys
-import trio
-import pytest
 from pathlib import Path
 
+import pytest
+import trio
+
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
-from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
-
 from tests.common import create_shared_workspace
 
 
@@ -135,4 +136,4 @@ async def test_remote_error_event(
         else:
             expected_log = "[error    ] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
 
-        caplog.assert_occured_once(expected_log)
+        caplog.assert_occurred_once(expected_log)

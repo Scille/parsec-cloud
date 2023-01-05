@@ -1,18 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import os
 import re
 from enum import IntEnum
-from typing import Union, Optional, NoReturn, Type, Dict
+from typing import Dict, NoReturn, Type, Union
 
+from parsec.core.fs.exceptions import (
+    FSLocalStorageClosedError,
+    FSOffsetError,
+    FSUnsupportedOperation,
+)
+from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.types import FileDescriptor
-from parsec.core.fs.path import FsPath, AnyPath
-from parsec.core.fs.exceptions import (
-    FSUnsupportedOperation,
-    FSOffsetError,
-    FSLocalStorageClosedError,
-)
 
 
 class FileState(IntEnum):
@@ -32,27 +33,27 @@ class WorkspaceFile:
     Keyword arguments:
     transactions -- object to use for file transactions.
     path -- relative path of the file.
-    mode -- the mode where the file have been opened. It needs to have exactly one of "awrx".
+    mode -- the mode where the file have been opened. It needs to have exactly one of "arwx".
     mode("a") -> append file.
-    mode("b") -> have to be used with one of "awrx" mode, file will be write/read as bytes instead of string.
+    mode("b") -> have to be used with one of "arwx" mode, file will be write/read as bytes instead of string.
     mode("w") -> write file. If the file doesn't exist, create one.
     mode("r") -> read file.
     mode("x") -> If the file doesn't exist, create one, else, raise an Error. File will be opened in write mode.
-    mode("+") -> have to be used with one of "awrx" mode, file will be in read/write mode.
+    mode("+") -> have to be used with one of "arwx" mode, file will be in read/write mode.
     """
 
     def __init__(self, transactions: EntryTransactions, path: AnyPath, mode: str = "rb"):
-        self._fd: Optional[FileDescriptor] = None
+        self._fd: FileDescriptor | None = None
         self._offset = 0
         self._state = FileState.INIT
         self._path = FsPath(path)
         self._transactions = transactions
         mode = mode.lower()
         # Preventing to open in write and read in same time or write and append or open with no mode
-        if sum(c in mode for c in "rwax") != 1:
+        if sum(c in mode for c in "arwx") != 1:
             raise ValueError("must have exactly one of create/read/write/append mode")
-        # Preventing to open with non-existant mode
-        elif re.search("[^arwxb+]", mode) is not None:
+        # Preventing to open with non-existent mode
+        elif re.search("[^arwxb+]", mode) is not None:  # cspell: ignore arwxb
             raise ValueError(f"invalid mode: '{mode}'")
         if "b" not in mode:
             raise NotImplementedError("Text mode is not supported at the moment")
@@ -64,9 +65,9 @@ class WorkspaceFile:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[Exception]],
-        exc_value: Optional[Exception],
-        traceback: Optional[object],
+        exc_type: Type[Exception] | None,
+        exc_value: Exception | None,
+        traceback: object | None,
     ) -> None:
         await self.close()
 
@@ -145,7 +146,7 @@ class WorkspaceFile:
         return self._state == FileState.CLOSED
 
     async def stat(self) -> Dict[str, object]:
-        """Getting stat dictionnary"""
+        """Getting stat dictionary"""
         self._check_open_state()
         return await self._transactions.fd_info(self.fileno())
 
@@ -239,7 +240,7 @@ class WorkspaceFile:
             raise FSUnsupportedOperation
         return self._offset
 
-    async def truncate(self, size: Optional[int] = None) -> int:
+    async def truncate(self, size: int | None = None) -> int:
         """Resize the stream to the given size in bytes.
         Resize to the current position if size is not specified.
         The current stream position isn't changed.

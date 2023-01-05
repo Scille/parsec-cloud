@@ -1,22 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional
+import triopg
 
 from parsec._parsec import DateTime
-
-from parsec.api.protocol import OrganizationID, UserID, DeviceID
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyRevokedError
 from parsec.backend.postgresql.handler import send_signal
+from parsec.backend.postgresql.user_queries.create import q_take_user_device_write_lock
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
     q_device_internal_id,
+    q_organization_internal_id,
     q_user,
+    query,
 )
-from parsec.backend.postgresql.user_queries.create import q_take_user_device_write_lock
-
+from parsec.backend.user import UserAlreadyRevokedError, UserError, UserNotFoundError
 
 _q_revoke_user = Q(
     f"""
@@ -39,12 +38,12 @@ _q_revoke_user_error = Q(
 
 @query(in_transaction=True)
 async def query_revoke_user(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     user_id: UserID,
     revoked_user_certificate: bytes,
     revoked_user_certifier: DeviceID,
-    revoked_on: Optional[DateTime] = None,
+    revoked_on: DateTime | None = None,
 ) -> None:
     await q_take_user_device_write_lock(conn, organization_id)
     result = await conn.execute(

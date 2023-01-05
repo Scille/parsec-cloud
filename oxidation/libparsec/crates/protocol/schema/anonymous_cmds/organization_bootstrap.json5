@@ -1,0 +1,197 @@
+[
+    {
+        "major_versions": [
+            3
+        ],
+        "req": {
+            "cmd": "organization_bootstrap",
+            "fields": [
+                {
+                    "name": "bootstrap_token",
+                    "type": "String"
+                },
+                {
+                    "name": "root_verify_key",
+                    "type": "VerifyKey"
+                },
+                {
+                    "name": "user_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "device_certificate",
+                    "type": "Bytes"
+                },
+                // Same certificates than above, but expurged of human_handle
+                {
+                    "name": "redacted_user_certificate",
+                    "type": "Bytes"
+                },
+                // Same certificates than above, but expurged of device_label
+                {
+                    "name": "redacted_device_certificate",
+                    "type": "Bytes"
+                },
+                // Set to `None` for sequester disabled
+                // Note there is absolutely no way to change this later as this certif must
+                // be signed by the root key which has been destroyed after bootstrap
+                {
+                    "name": "sequester_authority_certificate",
+                    "type": "RequiredOption<Bytes>",
+                    "introduced_in": "3.2"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    },
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "already_bootstrapped"
+            },
+            {
+                "status": "not_found"
+            }
+        ]
+    },
+    {
+        "major_versions": [
+            2
+        ],
+        "req": {
+            "cmd": "organization_bootstrap",
+            "fields": [
+                {
+                    "name": "bootstrap_token",
+                    "type": "String"
+                },
+                {
+                    "name": "root_verify_key",
+                    "type": "VerifyKey"
+                },
+                {
+                    "name": "user_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "redacted_user_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "redacted_device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "sequester_authority_certificate",
+                    "type": "RequiredOption<Bytes>",
+                    "introduced_in": "2.8"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invalid_certification",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_data",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    },
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                ]
+            },
+            {
+                "status": "already_bootstrapped"
+            },
+            {
+                "status": "not_found"
+            }
+        ]
+    }
+]

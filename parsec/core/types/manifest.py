@@ -1,35 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, Type, Pattern
-
-from parsec.serde import fields
-from parsec.api.protocol import RealmRole, BlockID
-from parsec.api.data import (
-    WorkspaceEntry,
-    BlockAccess,
-    UserManifest as RemoteUserManifest,
-    WorkspaceManifest as RemoteWorkspaceManifest,
-    FolderManifest as RemoteFolderManifest,
-    FileManifest as RemoteFileManifest,
-    AnyRemoteManifest,
-)
 from enum import Enum
+from typing import TypeVar, Union
 
 from parsec._parsec import (
-    ChunkID,
     Chunk,
+    ChunkID,
+    DateTime,
     LocalFileManifest,
     LocalFolderManifest,
     LocalUserManifest,
     LocalWorkspaceManifest,
-    DateTime,
+    Regex,
     local_manifest_decrypt_and_load,
 )
+from parsec.api.data import AnyRemoteManifest, BlockAccess, WorkspaceEntry
+from parsec.api.data import FileManifest as RemoteFileManifest
+from parsec.api.data import FolderManifest as RemoteFolderManifest
+from parsec.api.data import UserManifest as RemoteUserManifest
+from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
+from parsec.api.protocol import BlockID, RealmRole
+from parsec.serde import fields
 
-if TYPE_CHECKING:
-    from parsec._parsec import AnyLocalManifest
-else:
-    AnyLocalManifest = Type["AnyLocalManifest"]
+AnyLocalManifest = Union[
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
+    LocalUserManifest,
+]
 
 __all__ = (
     "WorkspaceEntry",
@@ -53,7 +52,7 @@ DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 WorkspaceRole = RealmRole
 
 
-ChunkIDField: Type[fields.Field] = fields.uuid_based_field_factory(ChunkID)
+ChunkIDField = fields.uuid_based_field_factory(ChunkID)
 
 
 class LocalManifestType(Enum):
@@ -73,7 +72,7 @@ LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserM
 
 def manifest_from_remote(
     remote: AnyRemoteManifest,
-    prevent_sync_pattern: Pattern,
+    prevent_sync_pattern: Regex,
 ) -> AnyLocalManifest:
     if isinstance(remote, RemoteFileManifest):
         return LocalFileManifest.from_remote(remote)
@@ -88,7 +87,7 @@ def manifest_from_remote(
 
 def manifest_from_remote_with_local_context(
     remote: AnyRemoteManifest,
-    prevent_sync_pattern: Pattern,
+    prevent_sync_pattern: Regex,
     local_manifest: AnyLocalManifest,
     timestamp: DateTime,
 ) -> AnyLocalManifest:

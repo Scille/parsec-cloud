@@ -1,39 +1,41 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec._parsec import DateTime
-from typing import List, Optional
+from typing import Any, List
 
+import triopg
+
+from parsec._parsec import DateTime, InvitationDeletedReason
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
     HumanHandle,
+    InvitationStatus,
     InvitationToken,
     InvitationType,
-    InvitationStatus,
-    InvitationDeletedReason,
+    OrganizationID,
+    UserID,
 )
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.postgresql.handler import send_signal, PGHandler
 from parsec.backend.invite import (
-    ConduitState,
     NEXT_CONDUIT_STATE,
-    ConduitListenCtx,
     BaseInviteComponent,
-    Invitation,
-    UserInvitation,
+    ConduitListenCtx,
+    ConduitState,
     DeviceInvitation,
-    InvitationNotFoundError,
+    Invitation,
     InvitationAlreadyDeletedError,
-    InvitationInvalidStateError,
     InvitationAlreadyMemberError,
+    InvitationInvalidStateError,
+    InvitationNotFoundError,
+    UserInvitation,
 )
+from parsec.backend.postgresql.handler import PGHandler, send_signal
+from parsec.backend.postgresql.user_queries.find import query_retrieve_active_human_by_email
 from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
     q_user,
     q_user_internal_id,
 )
-from parsec.backend.postgresql.user_queries.find import query_retrieve_active_human_by_email
 
 _q_retrieve_compatible_user_invitation = Q(
     f"""
@@ -117,16 +119,16 @@ WHERE
 
 
 async def _do_delete_invitation(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     greeter: UserID,
     token: InvitationToken,
     on: DateTime,
     reason: InvitationDeletedReason,
-):
+) -> None:
     row = await conn.fetchrow(
         *_q_delete_invitation_info(
-            organization_id=organization_id.str, greeter=greeter.str, token=token.uuid
+            organization_id=organization_id.str, greeter=greeter.str, token=token
         )
     )
     if not row:
@@ -135,7 +137,7 @@ async def _do_delete_invitation(
     if deleted_on:
         raise InvitationAlreadyDeletedError(token)
 
-    await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.value))
+    await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
     await send_signal(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
@@ -247,9 +249,9 @@ WHERE
 
 
 async def _conduit_talk(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    greeter: Optional[UserID],
+    greeter: UserID | None,
     token: InvitationToken,
     state: ConduitState,
     payload: bytes,
@@ -265,12 +267,12 @@ async def _conduit_talk(
                 *_q_conduit_greeter_info(
                     organization_id=organization_id.str,
                     greeter_user_id=greeter.str,  # type: ignore[union-attr]
-                    token=token.uuid,
+                    token=token,
                 )
             )
         else:
             row = await conn.fetchrow(
-                *_q_conduit_claimer_info(organization_id=organization_id.str, token=token.uuid)
+                *_q_conduit_claimer_info(organization_id=organization_id.str, token=token)
             )
 
         if not row:
@@ -293,7 +295,7 @@ async def _conduit_talk(
 
         if curr_conduit_state != state or curr_our_payload is not None:
             # We are out of sync with the conduit:
-            # - the conduit state has changed in our back (maybe reseted by the peer)
+            # - the conduit state has changed in our back (maybe reset by the peer)
             # - we want to reset the conduit
             # - we have already provided a payload for the current conduit state (most
             #   likely because a retry of a command that failed due to connection outage)
@@ -337,21 +339,21 @@ async def _conduit_talk(
     )
 
 
-async def _conduit_listen(conn, ctx: ConduitListenCtx) -> Optional[bytes]:
+async def _conduit_listen(
+    conn: triopg._triopg.TrioConnectionProxy, ctx: ConduitListenCtx
+) -> bytes | None:
     async with conn.transaction():
         if ctx.is_greeter:
             row = await conn.fetchrow(
                 *_q_conduit_greeter_info(
                     organization_id=ctx.organization_id.str,
                     greeter_user_id=ctx.greeter.str,  # type: ignore[union-attr]
-                    token=ctx.token.uuid,
+                    token=ctx.token,
                 )
             )
         else:
             row = await conn.fetchrow(
-                *_q_conduit_claimer_info(
-                    organization_id=ctx.organization_id.str, token=ctx.token.uuid
-                )
+                *_q_conduit_claimer_info(organization_id=ctx.organization_id.str, token=ctx.token)
             )
 
         if not row:
@@ -417,17 +419,17 @@ async def _conduit_listen(conn, ctx: ConduitListenCtx) -> Optional[bytes]:
 
 
 async def _do_new_user_invitation(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     greeter_user_id: UserID,
-    claimer_email: Optional[str],
+    claimer_email: str | None,
     created_on: DateTime,
 ) -> InvitationToken:
     if claimer_email:
         invitation_type = InvitationType.USER
         q = _q_retrieve_compatible_user_invitation(
             organization_id=organization_id.str,
-            type=invitation_type.value,
+            type=invitation_type.str,
             greeter_user_id=greeter_user_id.str,
             claimer_email=claimer_email,
         )
@@ -435,21 +437,21 @@ async def _do_new_user_invitation(
         invitation_type = InvitationType.DEVICE
         q = _q_retrieve_compatible_device_invitation(
             organization_id=organization_id.str,
-            type=invitation_type.value,
+            type=invitation_type.str,
             greeter_user_id=greeter_user_id.str,
         )
 
     # Check if no compatible invitations already exists
     row = await conn.fetchrow(*q)
     if row:
-        token = InvitationToken(row["token"])
+        token = InvitationToken.from_hex(row["token"])
     else:
         # No risk of UniqueViolationError given token is a uuid4
         token = InvitationToken.new()
         await conn.execute(
             *_q_insert_invitation(
                 organization_id=organization_id.str,
-                type=invitation_type.value,
+                type=invitation_type.str,
                 token=token,
                 greeter_user_id=greeter_user_id.str,
                 claimer_email=claimer_email,
@@ -468,7 +470,7 @@ async def _do_new_user_invitation(
 
 
 class PGInviteComponent(BaseInviteComponent):
-    def __init__(self, dbh: PGHandler, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.dbh = dbh
 
@@ -477,7 +479,7 @@ class PGInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         claimer_email: str,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> UserInvitation:
         """
         Raise: InvitationAlreadyMemberError
@@ -509,7 +511,7 @@ class PGInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> DeviceInvitation:
         """
         Raise: Nothing
@@ -562,7 +564,7 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_on,
             deleted_reason,
         ) in rows:
-            token = InvitationToken(token_uuid)
+            token = InvitationToken.from_hex(token_uuid)
             greeter_human_handle = None
             if greeter_human_handle_email:
                 greeter_human_handle = HumanHandle(
@@ -577,7 +579,7 @@ class PGInviteComponent(BaseInviteComponent):
                 status = InvitationStatus.IDLE
 
             invitation: Invitation
-            if type == InvitationType.USER.value:
+            if type == InvitationType.USER.str:
                 invitation = UserInvitation(
                     greeter_user_id=UserID(greeter),
                     greeter_human_handle=greeter_human_handle,
@@ -600,7 +602,7 @@ class PGInviteComponent(BaseInviteComponent):
     async def info(self, organization_id: OrganizationID, token: InvitationToken) -> Invitation:
         async with self.dbh.pool.acquire() as conn:
             row = await conn.fetchrow(
-                *_q_info_invitation(organization_id=organization_id.str, token=token.uuid)
+                *_q_info_invitation(organization_id=organization_id.str, token=token)
             )
         if not row:
             raise InvitationNotFoundError(token)
@@ -625,7 +627,7 @@ class PGInviteComponent(BaseInviteComponent):
                 email=greeter_human_handle_email, label=greeter_human_handle_label
             )
 
-        if type == InvitationType.USER.value:
+        if type == InvitationType.USER.str:
             return UserInvitation(
                 greeter_user_id=UserID(greeter),
                 greeter_human_handle=greeter_human_handle,
@@ -646,7 +648,7 @@ class PGInviteComponent(BaseInviteComponent):
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: Optional[UserID],
+        greeter: UserID | None,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
@@ -654,7 +656,7 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             return await _conduit_talk(conn, organization_id, greeter, token, state, payload)
 
-    async def _conduit_listen(self, ctx: ConduitListenCtx) -> Optional[bytes]:
+    async def _conduit_listen(self, ctx: ConduitListenCtx) -> bytes | None:
         async with self.dbh.pool.acquire() as conn:
             return await _conduit_listen(conn, ctx)
 

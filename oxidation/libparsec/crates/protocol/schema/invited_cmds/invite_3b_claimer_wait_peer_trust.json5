@@ -1,0 +1,25 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_3b_claimer_wait_peer_trust"
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
+    }
+]

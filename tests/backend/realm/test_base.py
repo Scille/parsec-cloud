@@ -1,15 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import (
-    DateTime,
-    RealmStatusRepOk,
-    RealmStatusRepNotAllowed,
-)
+from parsec._parsec import DateTime, RealmStatusRepNotAllowed, RealmStatusRepOk
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmRole
-
 from tests.backend.common import realm_status, realm_update_roles
 
 

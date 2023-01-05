@@ -1,83 +1,85 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List
+
 import attr
 
 from parsec._parsec import (
     DateTime,
-    RealmCreateReq,
     RealmCreateRep,
-    RealmCreateRepOk,
+    RealmCreateRepAlreadyExists,
+    RealmCreateRepBadTimestamp,
     RealmCreateRepInvalidCertification,
     RealmCreateRepInvalidData,
     RealmCreateRepNotFound,
-    RealmCreateRepAlreadyExists,
-    RealmCreateRepBadTimestamp,
-    RealmStatusReq,
-    RealmStatusRep,
-    RealmStatusRepOk,
-    RealmStatusRepNotAllowed,
-    RealmStatusRepNotFound,
-    RealmStatsReq,
-    RealmStatsRep,
-    RealmStatsRepOk,
-    RealmStatsRepNotAllowed,
-    RealmStatsRepNotFound,
-    RealmGetRoleCertificatesReq,
+    RealmCreateRepOk,
+    RealmCreateReq,
+    RealmFinishReencryptionMaintenanceRep,
+    RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmFinishReencryptionMaintenanceRepMaintenanceError,
+    RealmFinishReencryptionMaintenanceRepNotAllowed,
+    RealmFinishReencryptionMaintenanceRepNotFound,
+    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
+    RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceReq,
     RealmGetRoleCertificatesRep,
-    RealmGetRoleCertificatesRepOk,
     RealmGetRoleCertificatesRepNotAllowed,
     RealmGetRoleCertificatesRepNotFound,
-    RealmUpdateRolesReq,
+    RealmGetRoleCertificatesRepOk,
+    RealmGetRoleCertificatesReq,
+    RealmStartReencryptionMaintenanceRep,
+    RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmStartReencryptionMaintenanceRepBadTimestamp,
+    RealmStartReencryptionMaintenanceRepInMaintenance,
+    RealmStartReencryptionMaintenanceRepMaintenanceError,
+    RealmStartReencryptionMaintenanceRepNotAllowed,
+    RealmStartReencryptionMaintenanceRepNotFound,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStartReencryptionMaintenanceReq,
+    RealmStatsRep,
+    RealmStatsRepNotAllowed,
+    RealmStatsRepNotFound,
+    RealmStatsRepOk,
+    RealmStatsReq,
+    RealmStatusRep,
+    RealmStatusRepNotAllowed,
+    RealmStatusRepNotFound,
+    RealmStatusRepOk,
+    RealmStatusReq,
     RealmUpdateRolesRep,
-    RealmUpdateRolesRepOk,
-    RealmUpdateRolesRepIncompatibleProfile,
     RealmUpdateRolesRepAlreadyGranted,
+    RealmUpdateRolesRepBadTimestamp,
+    RealmUpdateRolesRepIncompatibleProfile,
     RealmUpdateRolesRepInMaintenance,
     RealmUpdateRolesRepInvalidCertification,
     RealmUpdateRolesRepInvalidData,
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepNotFound,
-    RealmUpdateRolesRepUserRevoked,
-    RealmUpdateRolesRepBadTimestamp,
+    RealmUpdateRolesRepOk,
     RealmUpdateRolesRepRequireGreaterTimestamp,
-    RealmStartReencryptionMaintenanceReq,
-    RealmStartReencryptionMaintenanceRep,
-    RealmStartReencryptionMaintenanceRepOk,
-    RealmStartReencryptionMaintenanceRepNotFound,
-    RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
-    RealmStartReencryptionMaintenanceRepParticipantMismatch,
-    RealmStartReencryptionMaintenanceRepInMaintenance,
-    RealmStartReencryptionMaintenanceRepMaintenanceError,
-    RealmStartReencryptionMaintenanceRepNotAllowed,
-    RealmStartReencryptionMaintenanceRepBadTimestamp,
-    RealmFinishReencryptionMaintenanceReq,
-    RealmFinishReencryptionMaintenanceRep,
-    RealmFinishReencryptionMaintenanceRepOk,
-    RealmFinishReencryptionMaintenanceRepNotAllowed,
-    RealmFinishReencryptionMaintenanceRepNotFound,
-    RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
-    RealmFinishReencryptionMaintenanceRepMaintenanceError,
-    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
+    RealmUpdateRolesRepUserRevoked,
+    RealmUpdateRolesReq,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
+from parsec.api.data import DataError, RealmRoleCertificate
+from parsec.api.protocol import (
+    DeviceID,
+    MaintenanceType,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    UserID,
+    UserProfile,
+)
+from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.user import UserAlreadyRevokedError
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,
     BALLPARK_CLIENT_LATE_OFFSET,
     timestamps_in_the_ballpark,
 )
-from parsec.api.data import DataError, RealmRoleCertificate
-from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
-    DeviceID,
-    RealmID,
-    RealmRole,
-    MaintenanceType,
-    UserProfile,
-)
-from parsec.backend.utils import catch_protocol_errors, api
 
 
 class RealmError(Exception):
@@ -126,15 +128,15 @@ class RealmMaintenanceError(RealmError):
 
 class RealmRoleRequireGreaterTimestampError(RealmError):
     @property
-    def strictly_greater_than(self):
+    def strictly_greater_than(self) -> DateTime:
         return self.args[0]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
-    maintenance_type: Optional[MaintenanceType]
-    maintenance_started_on: Optional[DateTime]
-    maintenance_started_by: Optional[DeviceID]
+    maintenance_type: MaintenanceType | None
+    maintenance_started_on: DateTime | None
+    maintenance_started_by: DeviceID | None
     encryption_revision: int
 
     @property
@@ -143,11 +145,11 @@ class RealmStatus:
 
     @property
     def in_reencryption(self) -> bool:
-        return self.maintenance_type == MaintenanceType.REENCRYPTION()
+        return self.maintenance_type == MaintenanceType.REENCRYPTION
 
     @property
     def in_garbage_collection(self) -> bool:
-        return self.maintenance_type == MaintenanceType.GARBAGE_COLLECTION()
+        return self.maintenance_type == MaintenanceType.GARBAGE_COLLECTION
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -158,17 +160,17 @@ class RealmStats:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmGrantedRole:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.user_id.str} {self.role})"
 
-    def evolve(self, **kwargs) -> "RealmGrantedRole":
+    def evolve(self, **kwargs: Any) -> RealmGrantedRole:
         return attr.evolve(self, **kwargs)
 
     certificate: bytes
     realm_id: RealmID
     user_id: UserID
-    role: Optional[RealmRole]
-    granted_by: Optional[DeviceID]
+    role: RealmRole | None
+    granted_by: DeviceID | None
     granted_on: DateTime
 
 
@@ -176,7 +178,9 @@ class BaseRealmComponent:
     @api("realm_create")
     @catch_protocol_errors
     @api_typed_msg_adapter(RealmCreateReq, RealmCreateRep)
-    async def api_realm_create(self, client_ctx, req: RealmCreateReq) -> RealmCreateRep:
+    async def api_realm_create(
+        self, client_ctx: AuthenticatedClientContext, req: RealmCreateReq
+    ) -> RealmCreateRep:
         try:
             data = RealmRoleCertificate.verify_and_load(
                 req.role_certificate,
@@ -226,7 +230,9 @@ class BaseRealmComponent:
     @api("realm_status")
     @catch_protocol_errors
     @api_typed_msg_adapter(RealmStatusReq, RealmStatusRep)
-    async def api_realm_status(self, client_ctx, req: RealmStatusReq) -> RealmStatusRep:
+    async def api_realm_status(
+        self, client_ctx: AuthenticatedClientContext, req: RealmStatusReq
+    ) -> RealmStatusRep:
         try:
             status = await self.get_status(
                 client_ctx.organization_id, client_ctx.device_id, req.realm_id
@@ -249,7 +255,9 @@ class BaseRealmComponent:
     @api("realm_stats")
     @catch_protocol_errors
     @api_typed_msg_adapter(RealmStatsReq, RealmStatsRep)
-    async def api_realm_stats(self, client_ctx, req: RealmStatsReq) -> RealmStatsRep:
+    async def api_realm_stats(
+        self, client_ctx: AuthenticatedClientContext, req: RealmStatsReq
+    ) -> RealmStatsRep:
         try:
             stats = await self.get_stats(
                 client_ctx.organization_id, client_ctx.device_id, req.realm_id
@@ -264,7 +272,7 @@ class BaseRealmComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(RealmGetRoleCertificatesReq, RealmGetRoleCertificatesRep)
     async def api_realm_get_role_certificates(
-        self, client_ctx, req: RealmGetRoleCertificatesReq
+        self, client_ctx: AuthenticatedClientContext, req: RealmGetRoleCertificatesReq
     ) -> RealmGetRoleCertificatesRep:
         try:
             certificates = await self.get_role_certificates(
@@ -283,7 +291,7 @@ class BaseRealmComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(RealmUpdateRolesReq, RealmUpdateRolesRep)
     async def api_realm_update_roles(
-        self, client_ctx, req: RealmUpdateRolesReq
+        self, client_ctx: AuthenticatedClientContext, req: RealmUpdateRolesReq
     ) -> RealmUpdateRolesRep:
         """
         This API call, when successful, performs the writing of a new role certificate to the database.
@@ -379,7 +387,7 @@ class BaseRealmComponent:
         RealmStartReencryptionMaintenanceReq, RealmStartReencryptionMaintenanceRep
     )
     async def api_realm_start_reencryption_maintenance(
-        self, client_ctx, req: RealmStartReencryptionMaintenanceReq
+        self, client_ctx: AuthenticatedClientContext, req: RealmStartReencryptionMaintenanceReq
     ) -> RealmStartReencryptionMaintenanceRep:
         now = DateTime.now()
         if not timestamps_in_the_ballpark(req.timestamp, now):
@@ -427,7 +435,7 @@ class BaseRealmComponent:
         RealmFinishReencryptionMaintenanceReq, RealmFinishReencryptionMaintenanceRep
     )
     async def api_realm_finish_reencryption_maintenance(
-        self, client_ctx, req: RealmFinishReencryptionMaintenanceReq
+        self, client_ctx: AuthenticatedClientContext, req: RealmFinishReencryptionMaintenanceReq
     ) -> RealmFinishReencryptionMaintenanceRep:
         try:
             await self.finish_reencryption_maintenance(
@@ -508,7 +516,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: Optional[bytes] = None,
+        recipient_message: bytes | None = None,
     ) -> None:
         """
         Raises:

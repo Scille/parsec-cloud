@@ -1,14 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional, NewType, Tuple
-import trio
 import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncGenerator, NewType, Tuple, cast
 
-from parsec.api.protocol import OrganizationID, RealmID, BlockID, SequesterServiceID
-from parsec.backend.postgresql import PGHandler
+import trio
+import triopg
+
+from parsec.api.protocol import BlockID, OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.postgresql import PGHandler
 
 
 class RealmExporterError(Exception):
@@ -57,7 +60,7 @@ CREATE TABLE block (
 );
 
 -- Compared to Parsec's datamodel, we don't store `vlob_encryption_revision` given
--- the vlob is provided with third party encrytion key only once at creation time
+-- the vlob is provided with third party encryption key only once at creation time
 CREATE TABLE vlob_atom (
     -- We use vlob_update's index as primary key, this is convenient given it makes trivial
     -- keeping track of how far we got when restarting an export
@@ -75,7 +78,7 @@ CREATE TABLE vlob_atom (
     -- of the box so we have to roll our own integer-based format, note this is
     -- different than the 8bytes floating point format used in our msgpack-based
     -- serialization system (it was a bad idea, see Rust implementation for more info)
-    timestamp INTEGER NOT NULL,  -- ms since UNIX epoch
+    timestamp INTEGER NOT NULL,  -- us since UNIX epoch
 
     UNIQUE(vlob_id, version)
 );
@@ -111,9 +114,9 @@ async def _init_output_db(
     realm_id: RealmID,
     service_id: SequesterServiceID,
     output_db_path: Path,
-    input_conn,
+    input_conn: triopg._triopg.TrioConnectionProxy,
 ) -> None:
-    # 0) Retreive organization/realm/sequester service from input database
+    # 0) Retrieve organization/realm/sequester service from input database
 
     row = await input_conn.fetchrow(
         "SELECT _id, root_verify_key, sequester_authority_certificate FROM organization WHERE organization_id = $1",
@@ -124,7 +127,7 @@ async def _init_output_db(
     organization_internal_id = row["_id"]
     root_verify_key = row["root_verify_key"]
     if root_verify_key is None:
-        raise RealmExporterInputError(f"Organization `{organization_id.str}` is not boostrapped")
+        raise RealmExporterInputError(f"Organization `{organization_id.str}` is not bootstrapped")
     if not row["sequester_authority_certificate"]:
         raise RealmExporterInputError(
             f"Organization `{organization_id.str}` is not a sequestered organization"
@@ -133,17 +136,17 @@ async def _init_output_db(
     row = await input_conn.fetchrow(
         "SELECT 1 FROM realm WHERE organization = $1 AND realm_id = $2",
         organization_internal_id,
-        realm_id.uuid,
+        realm_id,
     )
     if not row:
         raise RealmExporterInputError(
-            f"Realm `{realm_id.str}` doesn't exist in organization `{organization_id.str}`"
+            f"Realm `{realm_id.hex}` doesn't exist in organization `{organization_id.str}`"
         )
 
     row = await input_conn.fetchrow(
         "SELECT 1 FROM sequester_service WHERE organization = $1 AND service_id = $2",
         organization_internal_id,
-        service_id.uuid,
+        service_id,
     )
     if not row:
         raise RealmExporterInputError(
@@ -152,7 +155,7 @@ async def _init_output_db(
 
     # 1) Check the output database and create it if needed
 
-    def _sqlite_init_db():
+    def _sqlite_init_db() -> None:
         try:
             con = sqlite3.connect(f"file:{output_db_path}?mode=rw", uri=True)
         except sqlite3.Error:
@@ -178,7 +181,7 @@ async def _init_output_db(
                     (OUTPUT_DB_MAGIC_NUMBER,),
                 ).fetchone()
             except sqlite3.Error as exc:
-                # If we endup here this is most likely because `info` table doesn't exists (or miss some columns)
+                # If we end up here this is most likely because `info` table doesn't exists (or miss some columns)
                 raise RealmExporterOutputDbError(
                     f"Existing output target is not a valid export database: {exc}"
                 ) from exc
@@ -194,7 +197,7 @@ async def _init_output_db(
                 )
             if db_realm_id != realm_id.bytes:
                 raise RealmExporterOutputDbError(
-                    f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{realm_id.bytes}`"
+                    f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{realm_id.bytes}`"  # type: ignore[str-bytes-safe]
                 )
             if db_root_verify_key != root_verify_key:
                 raise RealmExporterOutputDbError(
@@ -219,7 +222,7 @@ WHERE organization = (SELECT _id FROM organization WHERE organization_id = $1)
         organization_id.str,
     )
 
-    def _sqlite_save_user_certifs():
+    def _sqlite_save_user_certifs() -> None:
         output_con = sqlite3.connect(output_db_path)
         try:
             output_con.executemany(
@@ -247,7 +250,7 @@ SELECT _id FROM organization WHERE organization_id = $1
         organization_id.str,
     )
 
-    def _sqlite_save_device_certifs():
+    def _sqlite_save_device_certifs() -> None:
         output_con = sqlite3.connect(output_db_path)
         try:
             output_con.executemany(
@@ -274,10 +277,10 @@ AND organization = (SELECT _id FROM organization WHERE organization_id = $1)
 )
 """,
         organization_id.str,
-        realm_id.uuid,
+        realm_id,
     )
 
-    def _sqlite_save_realm_role_certifs():
+    def _sqlite_save_realm_role_certifs() -> None:
         output_con = sqlite3.connect(output_db_path)
         try:
             output_con.executemany(
@@ -318,7 +321,7 @@ class RealmExporter:
         output_db_path: Path,
         input_dbh: PGHandler,
         input_blockstore: BaseBlockStoreComponent,
-    ):
+    ) -> AsyncGenerator["RealmExporter", None]:
         async with input_dbh.pool.acquire() as input_conn:
             await _init_output_db(
                 organization_id=organization_id,
@@ -340,7 +343,7 @@ class RealmExporter:
     # Vlobs export
 
     async def compute_vlobs_export_status(self) -> Tuple[int, BatchOffsetMarker]:
-        def _retreive_vlobs_export_status():
+        def _retreive_vlobs_export_status() -> int:
             con = sqlite3.connect(self.output_db_path)
             try:
                 row = con.execute("SELECT max(_id) FROM vlob_atom").fetchone()
@@ -366,15 +369,15 @@ WHERE
             AND organization = (SELECT _id FROM organization WHERE organization_id = $2)
     )
 """,
-                self.realm_id.uuid,
+                self.realm_id,
                 self.organization_id.str,
             )
             to_export_count = rows[0][0]
 
-        return (to_export_count, last_exported_index)
+        return (cast(int, to_export_count), cast(BatchOffsetMarker, last_exported_index))
 
     async def export_vlobs(
-        self, batch_size: int = 1000, batch_offset_marker: Optional[BatchOffsetMarker] = None
+        self, batch_size: int = 1000, batch_offset_marker: BatchOffsetMarker | None = None
     ) -> BatchOffsetMarker:
         batch_offset_marker = batch_offset_marker or 0
 
@@ -407,18 +410,26 @@ WHERE
     AND sequester_service_vlob_atom.service = (SELECT _id FROM sequester_service WHERE service_id = $4)
 LIMIT $5
 """,
-                self.realm_id.uuid,
+                self.realm_id,
                 self.organization_id.str,
                 batch_offset_marker,
                 self.service_id,
                 batch_size,
             )
 
-            def _save_in_output_db():
+            def _save_in_output_db() -> None:
                 # Must convert `vlob_id`` fields from UUID to bytes given SQLite doesn't handle the former
                 # Must also convert datetime to a number of ms since UNIX epoch
                 cooked_rows = [
-                    (r[0], r[1].bytes, r[2], r[3], r[4], int(r[5].timestamp() * 1000)) for r in rows
+                    (
+                        r[0],
+                        VlobID.from_hex(r[1]).bytes,
+                        r[2],
+                        r[3],
+                        r[4],
+                        int(r[5].timestamp() * 1000000),
+                    )
+                    for r in rows
                 ]
                 con = sqlite3.connect(self.output_db_path)
                 try:
@@ -448,7 +459,7 @@ ON CONFLICT DO NOTHING
     # Blocks export
 
     async def compute_blocks_export_status(self) -> Tuple[int, BatchOffsetMarker]:
-        def _retreive_vlobs_export_status():
+        def _retreive_vlobs_export_status() -> int:
             con = sqlite3.connect(self.output_db_path)
             try:
                 row = con.execute("SELECT max(_id) FROM block").fetchone()
@@ -474,15 +485,15 @@ WHERE
             AND organization = (SELECT _id FROM organization WHERE organization_id = $2)
     )
 """,
-                self.realm_id.uuid,
+                self.realm_id,
                 self.organization_id.str,
             )
             to_export_count = rows[0][0]
 
-        return (to_export_count, last_exported_index)
+        return (cast(int, to_export_count), cast(BatchOffsetMarker, last_exported_index))
 
     async def export_blocks(
-        self, batch_size: int = 100, batch_offset_marker: Optional[BatchOffsetMarker] = None
+        self, batch_size: int = 100, batch_offset_marker: BatchOffsetMarker | None = None
     ) -> BatchOffsetMarker:
         batch_offset_marker = batch_offset_marker or 0
 
@@ -506,7 +517,7 @@ WHERE
     AND _id >= $3
 LIMIT $4
 """,
-                self.realm_id.uuid,
+                self.realm_id,
                 self.organization_id.str,
                 batch_offset_marker,
                 batch_size,
@@ -514,19 +525,19 @@ LIMIT $4
             cooked_rows = []
             for row in rows:
                 block = await self.input_blockstore.read(
-                    organization_id=self.organization_id, block_id=BlockID(row["block_id"])
+                    organization_id=self.organization_id, block_id=BlockID.from_hex(row["block_id"])
                 )
                 cooked_rows.append(
                     (
                         row["_id"],
                         # Must convert `block_id`` fields from UUID to bytes given SQLite doesn't handle the former
-                        row["block_id"].bytes,
+                        RealmID.from_hex(row["block_id"]).bytes,
                         block,
                         row["author"],
                     )
                 )
 
-            def _save_in_output_db():
+            def _save_in_output_db() -> None:
                 con = sqlite3.connect(self.output_db_path)
                 try:
                     # Must convert `vlob_id`` fields from UUID to bytes given SQLite doesn't handle the former

@@ -1,0 +1,154 @@
+[
+    {
+        "major_versions": [
+            3
+        ],
+        "introduced_in": "3.2",
+        "req": {
+            "cmd": "pki_enrollment_submit",
+            "fields": [
+                {
+                    "name": "enrollment_id",
+                    "type": "EnrollmentID"
+                },
+                {
+                    "name": "force",
+                    "type": "Boolean"
+                },
+                {
+                    "name": "submitter_der_x509_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "submitter_der_x509_certificate_email",
+                    "type": "RequiredOption<String>"
+                },
+                {
+                    "name": "submit_payload_signature",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "submit_payload",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "submitted_on",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "already_submitted",
+                "fields": [
+                    {
+                        "name": "submitted_on",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "id_already_used",
+                "fields": []
+            },
+            {
+                "status": "email_already_used",
+                "fields": []
+            },
+            {
+                "status": "already_enrolled",
+                "fields": []
+            },
+            {
+                "status": "invalid_payload_data",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "major_versions": [
+            2
+        ],
+        "introduced_in": "2.8",
+        "req": {
+            "cmd": "pki_enrollment_submit",
+            "fields": [
+                {
+                    "name": "enrollment_id",
+                    "type": "EnrollmentID"
+                },
+                {
+                    "name": "force",
+                    "type": "Boolean"
+                },
+                {
+                    "name": "submitter_der_x509_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "submitter_der_x509_certificate_email",
+                    "type": "RequiredOption<String>"
+                },
+                {
+                    "name": "submit_payload_signature",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "submit_payload",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "submitted_on",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "already_submitted",
+                "fields": [
+                    {
+                        "name": "submitted_on",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "id_already_used",
+                "fields": []
+            },
+            {
+                "status": "email_already_used",
+                "fields": []
+            },
+            {
+                "status": "already_enrolled",
+                "fields": []
+            },
+            {
+                "status": "invalid_payload_data",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            }
+        ]
+    }
+]

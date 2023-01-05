@@ -1,28 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, QEvent, QTimer
-from PyQt5.QtGui import QPixmap, QColor
-from PyQt5.QtWidgets import QWidget, QComboBox
+from typing import Callable, Union, cast
 
+from PyQt5.QtCore import QCoreApplication, QEvent, QObject, QTimer, pyqtSignal
+from PyQt5.QtGui import QColor, QPixmap
+from PyQt5.QtWidgets import QComboBox, QWidget
+
+from parsec.api.protocol import RealmRole
 from parsec.api.protocol.types import UserProfile
-from parsec.core.types import UserInfo
-from parsec.core.fs import FSError, FSBackendOfflineError
-from parsec.core.types import WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
-
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
-
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
+from parsec.core.fs import FSBackendOfflineError, FSError, UserFS, WorkspaceFS
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.workspace_roles import get_role_translation, NOT_SHARED_KEY
 from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.ui.workspace_sharing_widget import Ui_WorkspaceSharingWidget
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
+from parsec.core.gui.ui.workspace_sharing_widget import Ui_WorkspaceSharingWidget
+from parsec.core.gui.workspace_roles import get_role_translation
+from parsec.core.logged_core import LoggedCore, UserID
+from parsec.core.types import EntryName, UserInfo, WorkspaceRole
 
-
-_ROLES_TO_INDEX = {
-    NOT_SHARED_KEY: 0,
+_ROLES_TO_INDEX: dict[Union[WorkspaceRole, None], int] = {
+    None: 0,
     WorkspaceRole.READER: 1,
     WorkspaceRole.CONTRIBUTOR: 2,
     WorkspaceRole.MANAGER: 3,
@@ -30,15 +31,17 @@ _ROLES_TO_INDEX = {
 }
 
 
-def _index_to_role(index):
+def _index_to_role(index: int) -> RealmRole | None:
     for role, idx in _ROLES_TO_INDEX.items():
         if index == idx:
             return role
     return None
 
 
-async def _do_get_users(core, workspace_fs):
-    ret = {}
+async def _do_get_users(
+    core: LoggedCore, workspace_fs: WorkspaceFS
+) -> dict[UserInfo, WorkspaceRole | None]:
+    ret: dict[UserInfo, WorkspaceRole | None] = {}
     try:
         participants = await workspace_fs.get_user_roles()
         updated_participants = {}
@@ -52,13 +55,15 @@ async def _do_get_users(core, workspace_fs):
             ret[user_info] = role
         for user_info in users:
             if user_info not in ret:
-                ret[user_info] = NOT_SHARED_KEY
+                ret[user_info] = None
         return ret
-    except BackendNotAvailable as exc:
+    except (FSBackendOfflineError, BackendNotAvailable) as exc:
         raise JobResultError("offline") from exc
 
 
-async def _do_share_workspace(user_fs, workspace_fs, user_info, role):
+async def _do_share_workspace(
+    user_fs: UserFS, workspace_fs: WorkspaceFS, user_info: UserInfo, role: WorkspaceRole | None
+) -> tuple[UserInfo, WorkspaceRole | None, EntryName]:
     workspace_name = workspace_fs.get_workspace_name()
 
     try:
@@ -85,13 +90,35 @@ async def _do_share_workspace(user_fs, workspace_fs, user_info, role):
 class SharingWidget(QWidget, Ui_SharingWidget):
     role_changed = pyqtSignal(UserInfo, object)
 
-    def __init__(self, user_info, is_current_user, current_user_role, role, enabled):
+    def __init__(
+        self,
+        user_info: UserInfo,
+        is_current_user: bool,
+        current_user_role: WorkspaceRole,
+        role: WorkspaceRole | None,
+    ) -> None:
         super().__init__()
         self.setupUi(self)
 
         self.combo_role.installEventFilter(self)
 
-        self._role = role
+        enabled = True
+        # Current user cannot change their own permission on the workspace
+        if is_current_user:
+            enabled = False
+        # Current user is READER of CONTRIBUTOR, they cannot change the permission
+        elif (
+            current_user_role == WorkspaceRole.READER
+            or current_user_role == WorkspaceRole.CONTRIBUTOR
+        ):
+            enabled = False
+        # User has permission equivalent or higher than current user
+        elif current_user_role == WorkspaceRole.MANAGER and (
+            role == WorkspaceRole.OWNER or role == WorkspaceRole.MANAGER
+        ):
+            enabled = False
+
+        self._role: WorkspaceRole | None = role
         self.current_user_role = current_user_role
         self.is_current_user = is_current_user
         self.user_info = user_info
@@ -109,16 +136,19 @@ class SharingWidget(QWidget, Ui_SharingWidget):
             self.label_name.setFont(font)
             self.setToolTip(_("TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"))
 
+        self.setEnabled(enabled)
+
         if not enabled:
-            for role, index in _ROLES_TO_INDEX.items():
-                self.combo_role.insertItem(index, get_role_translation(role))
+            # Not enabled, no point in filling all the roles since they cannot be changed anyway
+            self.combo_role.addItem(get_role_translation(role))
         else:
-            current_index = _ROLES_TO_INDEX[self.current_user_role]
-            for role, index in _ROLES_TO_INDEX.items():
-                if current_index < index:
-                    break
-                self.combo_role.insertItem(index, get_role_translation(role))
-                if self.user_info.profile == UserProfile.OUTSIDER and role in (
+            for _role, index in _ROLES_TO_INDEX.items():
+                self.combo_role.insertItem(index, get_role_translation(_role))
+                # Outsider cannot be Manager or Owner, Manager cannot set Manager or Owner
+                if (
+                    self.user_info.profile == UserProfile.OUTSIDER
+                    or current_user_role == WorkspaceRole.MANAGER
+                ) and _role in (
                     WorkspaceRole.MANAGER,
                     WorkspaceRole.OWNER,
                 ):
@@ -127,55 +157,58 @@ class SharingWidget(QWidget, Ui_SharingWidget):
                     font = item.font()
                     font.setStrikeOut(True)
                     item.setFont(font)
-                    item.setToolTip(_("NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"))
+                    if current_user_role == WorkspaceRole.MANAGER:
+                        item.setToolTip(_("NOT_ALLOWED_FOR_MANAGER_ROLE_TOOLTIP"))
+                    else:
+                        item.setToolTip(_("NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"))
 
-        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role])
-        self.combo_role.currentIndexChanged.connect(self.on_role_changed)
-        self.status_timer = QTimer()
-        self.status_timer.setInterval(3000)
-        self.status_timer.setSingleShot(True)
-        self.status_timer.timeout.connect(self._refresh_status)
+            self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role])
+            self.combo_role.currentIndexChanged.connect(self.on_role_changed)
+            self.status_timer = QTimer()
+            self.status_timer.setInterval(3000)
+            self.status_timer.setSingleShot(True)
+            self.status_timer.timeout.connect(self._refresh_status)
 
     @property
-    def role(self):
-        return self._role if self._role != NOT_SHARED_KEY else None
+    def role(self) -> WorkspaceRole | None:
+        return self._role
 
     @role.setter
-    def role(self, val):
+    def role(self, val: WorkspaceRole | None) -> None:
         self._role = val
-        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role or NOT_SHARED_KEY])
+        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role])
 
-    def _refresh_status(self):
+    def _refresh_status(self) -> None:
         self.label_status.setPixmap(QPixmap())
 
-    def set_status_updating(self):
+    def set_status_updating(self) -> None:
         p = Pixmap(":/icons/images/material/update.svg")
         p.replace_color(QColor(0, 0, 0), QColor(0x99, 0x99, 0x99))
         self.label_status.setPixmap(p)
 
-    def set_status_updated(self):
+    def set_status_updated(self) -> None:
         p = Pixmap(":/icons/images/material/done.svg")
         p.replace_color(QColor(0, 0, 0), QColor(0x8B, 0xC3, 0x4A))
         self.label_status.setPixmap(p)
         self.status_timer.start()
 
-    def set_status_update_failed(self):
+    def set_status_update_failed(self) -> None:
         p = Pixmap(":/icons/images/material/sync_problem.svg")
         p.replace_color(QColor(0, 0, 0), QColor(0xF1, 0x96, 0x2B))
         self.label_status.setPixmap(p)
         self.status_timer.start()
 
-    def on_role_changed(self, index):
+    def on_role_changed(self, index: int) -> None:
         self.role_changed.emit(self.user_info, _index_to_role(index))
 
-    def eventFilter(self, obj_src, event):
+    def eventFilter(self, obj_src: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Wheel and isinstance(obj_src, QComboBox):
             event.ignore()
             return True
         return super().eventFilter(obj_src, event)
 
     @property
-    def user_id(self):
+    def user_id(self) -> UserID:
         return self.user_info.user_id
 
 
@@ -186,13 +219,20 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
     share_error = pyqtSignal(QtToTrioJob)
     closing = pyqtSignal(bool)
 
-    def __init__(self, user_fs, workspace_fs, core, jobs_ctx):
+    def __init__(
+        self,
+        user_fs: UserFS,
+        workspace_fs: WorkspaceFS,
+        core: LoggedCore,
+        jobs_ctx: QtToTrioJobScheduler,
+    ) -> None:
         super().__init__()
         self.setupUi(self)
         self.user_fs = user_fs
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.workspace_fs = workspace_fs
+        self.dialog: GreyedDialog[WorkspaceSharingWidget] | None = None
 
         self.has_changes = False
 
@@ -206,7 +246,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.current_user_role = ws_entry.role
         self.reset()
 
-    def _on_filter_changed(self, text):
+    def _on_filter_changed(self, text: str) -> None:
         text = text.lower()
         for i in range(self.scroll_content.layout().count()):
             w = self.scroll_content.layout().itemAt(i).widget()
@@ -216,45 +256,31 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                 else:
                     w.setVisible(False)
 
-    def add_participant(self, user_info, is_current_user, role):
-        enabled = True
-        if is_current_user:
-            enabled = False
-        elif (
-            self.current_user_role == WorkspaceRole.READER
-            or self.current_user_role == WorkspaceRole.CONTRIBUTOR
-        ):
-            enabled = False
-        elif self.current_user_role == WorkspaceRole.MANAGER and (
-            role == WorkspaceRole.OWNER or role == WorkspaceRole.MANAGER
-        ):
-            enabled = False
-
+    def add_participant(
+        self, user_info: UserInfo, is_current_user: bool, role: WorkspaceRole | None
+    ) -> None:
+        assert self.current_user_role is not None
         w = SharingWidget(
             user_info=user_info,
             is_current_user=is_current_user,
             current_user_role=self.current_user_role,
             role=role,
-            enabled=enabled,
         )
         w.role_changed.connect(self.on_role_changed)
-        w.setEnabled(enabled)
         self.scroll_content.layout().insertWidget(self.scroll_content.layout().count() - 1, w)
 
-    def _get_sharing_widget(self, user_id):
+    def _get_sharing_widget(self, user_id: UserID) -> SharingWidget | None:
         for i in range(self.scroll_content.layout().count() - 1):
             item = self.scroll_content.layout().itemAt(i)
             if item and item.widget() and item.widget().user_id == user_id:
-                return item.widget()
+                return cast(SharingWidget, item.widget())
         return None
 
-    def on_role_changed(self, user_info, role):
-        if role == NOT_SHARED_KEY:
-            role = None
+    def on_role_changed(self, user_info: UserInfo, role: WorkspaceRole | None) -> None:
         sharing_widget = self._get_sharing_widget(user_info.user_id)
         if sharing_widget:
             sharing_widget.set_status_updating()
-        self.jobs_ctx.submit_job(
+        _ = self.jobs_ctx.submit_job(
             (self, "share_success"),
             (self, "share_error"),
             _do_share_workspace,
@@ -264,7 +290,10 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             role=role,
         )
 
-    def _on_share_success(self, job):
+    def _on_share_success(
+        self, job: QtToTrioJob[tuple[UserInfo, WorkspaceRole | str, EntryName]]
+    ) -> None:
+        assert job.ret is not None
         user_info, new_role, workspace_name = job.ret
         old_role = None
 
@@ -273,7 +302,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         if sharing_widget:
             sharing_widget.set_status_updated()
             old_role = sharing_widget.role
-            sharing_widget.role = new_role
+            # Mypy: `SharingWidget::role` setter handle `WorkspaceRole` and `str`
+            sharing_widget.role = new_role  # type: ignore[assignment]
         if old_role is None:
             SnackbarManager.inform(
                 _("TEXT_WORKSPACE_SHARING_NEW_OK_workspace-user").format(
@@ -293,20 +323,26 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                 )
             )
 
-    def _on_share_error(self, job):
+    def _on_share_error(
+        self, job: QtToTrioJob[tuple[UserInfo, WorkspaceRole | str, EntryName]]
+    ) -> None:
         if job.status == "cancelled":
             return
         reset = True
-        user_info = job.exc.params.get("user_info")
-        role = job.exc.params.get("role")
-        workspace_name = job.exc.params.get("workspace_name")
+        assert isinstance(job.exc, JobResultError)
+        user_info: UserInfo | None = job.exc.params.get("user_info")
+        role: WorkspaceRole | str | None = job.exc.params.get("role")
+        workspace_name: EntryName | None = job.exc.params.get("workspace_name")
+
+        assert user_info is not None
+
         sharing_widget = self._get_sharing_widget(user_info.user_id)
         if sharing_widget:
             sharing_widget.set_status_update_failed()
         if job.status == "offline":
             SnackbarManager.warn(_("TEXT_WORKSPACE_SHARING_OFFLINE"))
             reset = False
-        elif role == NOT_SHARED_KEY:
+        elif role is None:
             SnackbarManager.warn(
                 _("TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user").format(
                     workspace=workspace_name, user=user_info.short_user_display
@@ -321,7 +357,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         if reset:
             self.reset()
 
-    def _on_get_users_success(self, job):
+    def _on_get_users_success(self, job: QtToTrioJob[dict[UserInfo, WorkspaceRole | None]]) -> None:
+        assert job.ret is not None
         users = job.ret
         while self.scroll_content.layout().count() > 1:
             item = self.scroll_content.layout().takeAt(0)
@@ -334,12 +371,12 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                 self.add_participant(
                     user_info,
                     is_current_user=user_info.user_id == self.core.device.user_id,
-                    role=role or "NOT_SHARED",
+                    role=role,
                 )
         self.spinner.hide()
         self.widget_users.show()
 
-    def _on_get_users_error(self, job):
+    def _on_get_users_error(self, job: QtToTrioJob[dict[UserInfo, WorkspaceRole | None]]) -> None:
         assert job.is_finished()
         assert job.status != "ok"
 
@@ -347,14 +384,16 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             show_error(self, _("TEXT_WORKSPACE_SHARING_OFFLINE"))
         self.spinner.hide()
         self.widget_users.show()
+        if self.dialog is not None:
+            self.dialog.reject()
 
-    def on_close(self):
+    def on_close(self) -> None:
         self.closing.emit(self.has_changes)
 
-    def reset(self):
+    def reset(self) -> None:
         self.spinner.show()
         self.widget_users.hide()
-        self.jobs_ctx.submit_job(
+        _ = self.jobs_ctx.submit_job(
             (self, "get_users_success"),
             (self, "get_users_error"),
             _do_get_users,
@@ -363,7 +402,15 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         )
 
     @classmethod
-    def show_modal(cls, user_fs, workspace_fs, core, jobs_ctx, parent, on_finished):
+    def show_modal(  # type: ignore[misc]
+        cls,
+        user_fs: UserFS,
+        workspace_fs: WorkspaceFS,
+        core: LoggedCore,
+        jobs_ctx: QtToTrioJobScheduler,
+        parent: QWidget,
+        on_finished: Callable[..., None],
+    ) -> WorkspaceSharingWidget:
         workspace_name = workspace_fs.get_workspace_name()
 
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
@@ -373,6 +420,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             parent=parent,
             width=1000,
         )
+        w.dialog = d
         d.closing.connect(w.on_close)
         w.closing.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop

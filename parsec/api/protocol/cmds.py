@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 AUTHENTICATED_CMDS = {
     "events_subscribe",
@@ -53,7 +54,7 @@ INVITED_CMDS = {
     "ping",  # TODO: remove ping and ping event (only have them in tests)
     "invite_info",
     "invite_1_claimer_wait_peer",
-    "invite_2a_claimer_send_hashed_nonce_hash_nonce",
+    "invite_2a_claimer_send_hashed_nonce",
     "invite_2b_claimer_send_nonce",
     "invite_3a_claimer_signify_trust",
     "invite_3b_claimer_wait_peer_trust",
@@ -64,6 +65,3 @@ ANONYMOUS_CMDS = {
     "pki_enrollment_info",
     "organization_bootstrap",
 }
-
-# TODO: remove me once API v1 is deprecated
-APIV1_ANONYMOUS_CMDS = {"organization_bootstrap"}

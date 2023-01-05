@@ -1,36 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from itertools import count
-from typing import Optional, Dict, AsyncIterator, Union, Pattern, Iterable
+from typing import AsyncIterator, Dict, Iterable, Union
 
-from parsec._parsec import DateTime
-
+from parsec._parsec import CoreEvent, DateTime, EntryNameError, Regex
+from parsec.api.data import AnyRemoteManifest
 from parsec.api.protocol import DeviceID
-from parsec.core.core_events import CoreEvent
-from parsec.api.data import EntryNameTooLongError, AnyRemoteManifest
+from parsec.core.fs.exceptions import (
+    FSFileConflictError,
+    FSIsADirectoryError,
+    FSLocalMissError,
+    FSNotADirectoryError,
+    FSReshapingRequiredError,
+)
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.types import (
+    AnyLocalManifest,
     Chunk,
     EntryID,
     EntryName,
     LocalFileManifest,
+    LocalFolderishManifests,
     LocalFolderManifest,
     LocalWorkspaceManifest,
-    LocalFolderishManifests,
     RemoteFolderishManifests,
-    AnyLocalManifest,
     local_manifest_from_remote,
     local_manifest_from_remote_with_local_context,
 )
-
-from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.fs.exceptions import (
-    FSFileConflictError,
-    FSReshapingRequiredError,
-    FSLocalMissError,
-    FSIsADirectoryError,
-    FSNotADirectoryError,
-)
-
 
 __all__ = "SyncTransactions"
 
@@ -61,7 +58,7 @@ def get_translated_message(preferred_language: str, key: str) -> str:
     return translations.get(key, key)
 
 
-def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Optional[EntryName]:
+def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> EntryName | None:
     gen = (name for name, child_id in manifest.children.items() if child_id == entry_id)
     return next(gen, None)
 
@@ -97,7 +94,7 @@ def full_name(name: EntryName, suffix: str) -> EntryName:
         try:
             return EntryName(".".join([f"{base_name} ({suffix})", *extensions]))
         # Entry name too long
-        except EntryNameTooLongError:
+        except EntryNameError:
             # Simply strip 10 characters from the first name then try again
             if len(base_name) > 10:
                 base_name = base_name[:-10]
@@ -195,10 +192,10 @@ def merge_folder_children(
 def merge_manifests(
     local_author: DeviceID,
     timestamp: DateTime,
-    prevent_sync_pattern: Pattern[str],
+    prevent_sync_pattern: Regex,
     local_manifest: AnyLocalManifest,
-    remote_manifest: Optional[AnyRemoteManifest] = None,
-    force_apply_pattern: Optional[bool] = False,
+    remote_manifest: AnyRemoteManifest | None = None,
+    force_apply_pattern: bool | None = False,
     preferred_language: str = "en",
 ) -> AnyLocalManifest:
     # Start by re-applying pattern (idempotent)
@@ -287,8 +284,8 @@ def merge_manifests(
     # - we rely on a base workspace manifest in version N
     # - remote workspace manifest is in version N+1 and already integrate the removal
     #
-    # /!\ Extra attention should be payed here if we want to add new fields
-    # /!\ with they own sync logic, as this optimization may shadow them !
+    # /!\ Extra attention should be paid here if we want to add new fields
+    # /!\ with their own sync logic, as this optimization may shadow them!
 
     if new_children == local_from_remote.children:  # type: ignore[union-attr]
         return local_from_remote
@@ -312,7 +309,7 @@ class SyncTransactions(EntryTransactions):
             if child_manifest.is_placeholder:
                 yield child_entry_id
 
-    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[AnyRemoteManifest]:
+    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> AnyRemoteManifest | None:
         manifest = await self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
@@ -322,7 +319,7 @@ class SyncTransactions(EntryTransactions):
     # Atomic transactions
 
     async def apply_prevent_sync_pattern(
-        self, entry_id: EntryID, prevent_sync_pattern: Pattern[str]
+        self, entry_id: EntryID, prevent_sync_pattern: Regex
     ) -> None:
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
@@ -338,15 +335,15 @@ class SyncTransactions(EntryTransactions):
             )
 
             # Set the new base manifest
-            if new_local_manifest != local_manifest:  # type: ignore[operator]
+            if new_local_manifest != local_manifest:
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
     async def synchronization_step(
         self,
         entry_id: EntryID,
-        remote_manifest: Optional[AnyRemoteManifest] = None,
+        remote_manifest: AnyRemoteManifest | None = None,
         final: bool = False,
-    ) -> Optional[AnyRemoteManifest]:
+    ) -> AnyRemoteManifest | None:
         """Perform a synchronization step.
 
         This step is meant to be called several times until the right state is reached.
@@ -413,7 +410,7 @@ class SyncTransactions(EntryTransactions):
             new_base_version = new_local_manifest.base_version
 
             # Set the new base manifest
-            if new_local_manifest != local_manifest:  # type: ignore[operator]
+            if new_local_manifest != local_manifest:
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event

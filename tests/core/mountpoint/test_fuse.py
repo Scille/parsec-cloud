@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import os
-import trio
 import errno
-import pytest
+import os
 from unittest.mock import patch
 
-from parsec.api.data import EntryName
-from parsec.core.core_events import CoreEvent
-from parsec.core.mountpoint import mountpoint_manager_factory, MountpointDriverCrash
+import pytest
+import trio
 
+from parsec._parsec import CoreEvent
+from parsec.api.data import EntryName
+from parsec.core.mountpoint import MountpointDriverCrash, mountpoint_manager_factory
 from tests.common import real_clock_timeout
 
 

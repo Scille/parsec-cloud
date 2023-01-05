@@ -1,27 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec.api.protocol.types import DeviceLabel
 
+from parsec._parsec import SecretKey
+from parsec.api.protocol.types import DeviceLabel
+from parsec.core.backend_connection import BackendConnectionRefused, BackendNotAvailable
 from parsec.core.local_device import (
     get_recovery_device_file_name,
     load_recovery_device,
     save_recovery_device,
 )
-from parsec.core.recovery import generate_recovery_device, generate_new_device_from_recovery
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionRefused
-from parsec.crypto import generate_recovery_passphrase, derivate_secret_key_from_recovery_passphrase
+from parsec.core.recovery import generate_new_device_from_recovery, generate_recovery_device
+from parsec.crypto import CryptoError
 
 
 def test_recovery_passphrase():
-    passphrase, key = generate_recovery_passphrase()
+    passphrase, key = SecretKey.generate_recovery_passphrase()
 
-    key2 = derivate_secret_key_from_recovery_passphrase(passphrase)
+    key2 = SecretKey.from_recovery_passphrase(passphrase)
     assert key2 == key
 
     # Add dummy stuff to the passphrase should not cause issues
     altered_passphrase = passphrase.lower().replace("-", "@  白")
-    key3 = derivate_secret_key_from_recovery_passphrase(altered_passphrase)
+    key3 = SecretKey.from_recovery_passphrase(altered_passphrase)
     assert key3 == key
 
 
@@ -30,7 +32,7 @@ def test_recovery_passphrase():
     [
         # Empty
         "",
-        # Only invalid characters (so endup empty)
+        # Only invalid characters (so end up empty)
         "-@//白",
         # Too short
         "D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO",
@@ -39,8 +41,8 @@ def test_recovery_passphrase():
     ],
 )
 def test_invalid_passphrase(bad_passphrase):
-    with pytest.raises(ValueError):
-        derivate_secret_key_from_recovery_passphrase(bad_passphrase)
+    with pytest.raises(CryptoError):
+        SecretKey.from_recovery_passphrase(bad_passphrase)
 
 
 @pytest.mark.trio

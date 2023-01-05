@@ -1,0 +1,57 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_info"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "unit": "UserOrDevice"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "UserOrDevice",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "User",
+                        "discriminant_value": "USER",
+                        "fields": [
+                            {
+                                "name": "claimer_email",
+                                "type": "String"
+                            },
+                            {
+                                "name": "greeter_user_id",
+                                "type": "UserID"
+                            },
+                            {
+                                "name": "greeter_human_handle",
+                                "type": "RequiredOption<HumanHandle>"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Device",
+                        "discriminant_value": "DEVICE",
+                        "fields": [
+                            {
+                                "name": "greeter_user_id",
+                                "type": "UserID"
+                            },
+                            {
+                                "name": "greeter_human_handle",
+                                "type": "RequiredOption<HumanHandle>"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

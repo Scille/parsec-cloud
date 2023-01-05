@@ -1,13 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Any
 
 import click
 
-from parsec.utils import trio_run
+from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
+from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
 from parsec.core.config import CoreConfig
 from parsec.core.types import LocalDevice
-from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
-from parsec.cli_utils import cli_exception_handler
+from parsec.utils import trio_run
 
 
 async def _human_find(
@@ -25,7 +28,10 @@ async def _human_find(
         )
     for user in user_info_tab:
         is_revoked = " (revoked)" if user.revoked_on is not None else ""
-        click.echo(f"{user.human_handle.str} - UserID: {user.user_id.str}{is_revoked}")
+        if user.human_handle:
+            click.echo(f"{user.human_handle.str} - UserID: {user.user_id.str}{is_revoked}")
+        else:
+            click.echo(f"<NO_HANDLE> - UserID: {user.user_id.str}{is_revoked}")
     if not nb:
         click.echo("No human found!")
 
@@ -36,7 +42,7 @@ async def _human_find(
 @core_config_and_device_options
 @cli_command_base_options
 def human_find(
-    config: CoreConfig, device: LocalDevice, query: str, include_revoked: bool, **kwargs
+    config: CoreConfig, device: LocalDevice, query: str, include_revoked: bool, **kwargs: Any
 ) -> None:
     with cli_exception_handler(config.debug):
         trio_run(_human_find, config, device, query, not include_revoked)

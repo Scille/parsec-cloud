@@ -3,13 +3,17 @@
 import { registerPlugin } from '@capacitor/core';
 
 import type { LibParsecPlugin } from './definitions';
-export type { LibParsecPlugin, Result, HelloError } from './definitions';
+export type { LibParsecPlugin, Result } from './definitions';
 
 export const libparsec = registerPlugin<LibParsecPlugin>(
   'LibParsec',
   {
     web: async () => {
-      const libparsecWasm: any = await import('../../../pkg');
+      // Don't put the module name as a literal in the import function,
+      // otherwise the compilation will eagerly try to access this module
+      // which doesn't exists when building from scratch for non-web.
+      const moduleName = '../../../pkg';
+      const libparsecWasm: any = await import(moduleName);
       await libparsecWasm.default();  // Call wasm module's init
       return libparsecWasm;
     },
@@ -20,6 +24,6 @@ export const libparsec = registerPlugin<LibParsecPlugin>(
 
 // Global exposition of libparsec for easier debugging with console
 declare global {
-    interface Window { libparsec: LibParsecPlugin; }
+  interface Window { libparsec: LibParsecPlugin; }
 }
 window.libparsec = libparsec;

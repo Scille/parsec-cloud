@@ -1,0 +1,48 @@
+{
+    "title": "Nested types",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "definition": "A custom type",
+        "oneOf": [
+            {
+                "type": "object",
+                "definition": "A Custom enum",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "discriminant_field": {
+                        "type": "string",
+                        "description": "The name of the field used to determine the type of the variant"
+                    },
+                    "variants": {
+                        "$ref": "./variants.schema.json"
+                    }
+                },
+                "required": [
+                    "name",
+                    "variants"
+                ],
+                "additionalProperties": false
+            },
+            {
+                "type": "object",
+                "description": "A Custom struct",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "fields": {
+                        "$ref": "./fields.schema.json"
+                    }
+                },
+                "required": [
+                    "name",
+                    "fields"
+                ],
+                "additionalProperties": false
+            }
+        ]
+    }
+}

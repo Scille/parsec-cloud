@@ -1,50 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional
-
-from parsec.crypto import SigningKey, VerifyKey
-from parsec.sequester_crypto import SequesterVerifyKeyDer
-from parsec.api.data import (
-    UserCertificate,
-    DeviceCertificate,
-    SequesterAuthorityCertificate,
+from parsec._parsec import (
+    OrganizationBootstrapRepAlreadyBootstrapped,
+    OrganizationBootstrapRepNotFound,
+    OrganizationBootstrapRepOk,
+    SequesterVerifyKeyDer,
+    SigningKey,
 )
-from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
-from parsec.core.backend_connection.exceptions import BackendNotAvailable
-from parsec.core.types import (
-    LocalDevice,
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-)
+from parsec.api.data import DeviceCertificate, SequesterAuthorityCertificate, UserCertificate
+from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
+from parsec.core.backend_connection import organization_bootstrap as cmd_organization_bootstrap
+from parsec.core.invite.exceptions import InviteAlreadyUsedError, InviteError, InviteNotFoundError
 from parsec.core.local_device import generate_new_device
-from parsec.core.backend_connection import (
-    apiv1_backend_anonymous_cmds_factory,
-    organization_bootstrap as cmd_organization_bootstrap,
-)
-from parsec.core.invite.exceptions import (
-    InviteError,
-    InviteNotFoundError,
-    InviteAlreadyUsedError,
-    InvitePeerResetError,
-)
-
-
-def _check_rep(rep, step_name):
-    if rep["status"] == "not_found":
-        raise InviteNotFoundError
-    elif rep["status"] == "already_bootstrapped":
-        raise InviteAlreadyUsedError
-    elif rep["status"] == "invalid_state":
-        raise InvitePeerResetError
-    elif rep["status"] != "ok":
-        raise InviteError(f"Backend error during {step_name}: {rep}")
+from parsec.core.types import BackendOrganizationAddr, BackendOrganizationBootstrapAddr, LocalDevice
 
 
 async def bootstrap_organization(
     addr: BackendOrganizationBootstrapAddr,
-    human_handle: Optional[HumanHandle],
-    device_label: Optional[DeviceLabel],
-    sequester_authority_verify_key: Optional[SequesterVerifyKeyDer] = None,
+    human_handle: HumanHandle | None,
+    device_label: DeviceLabel | None,
+    sequester_authority_verify_key: SequesterVerifyKeyDer | None = None,
 ) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
@@ -88,69 +64,42 @@ async def bootstrap_organization(
 
     if sequester_authority_verify_key:
         sequester_authority_certificate = SequesterAuthorityCertificate(
-            author=None,
             timestamp=timestamp,
             verify_key_der=sequester_authority_verify_key,
         )
-        sequester_authority_certificate = sequester_authority_certificate.dump_and_sign(
-            root_signing_key
+        sequester_authority_certificate_signed: bytes | None = (
+            sequester_authority_certificate.dump_and_sign(root_signing_key)
         )
     else:
-        sequester_authority_certificate = None
+        sequester_authority_certificate_signed = None
 
-    rep = await failsafe_organization_bootstrap(
+    # TODO: remove me when APIv2 is deprecated
+    #
+    # New HTTP-based bootstrap API has been introduced in APIv2.7 (Parsec v2.9.0)
+    # Prior to that we used the APIv1's bootstrap command, which now have been deprecated.
+    # Before Parsec v2.16.0 we used to first try to use the new HTTP-based bootstrap, then
+    # fallback to APIv1.
+    # Now if the server is too old to support the new HTTP-based bootstrap (come on, keep
+    # up to date your server !) we just fail with the default error:
+    # - server API version < 2.6: it doesn't know the HTTP anonymous route, we get a `BackendNotAvailable(404)`
+    # - server API version == 2.6: it doesn't know the HTTP anonymous command `organization_bootstrap`,
+    #   we get a `OrganizationBootstrapRepUnknownStatus(status="unknown_command")`
+
+    rep = await cmd_organization_bootstrap(
         addr=addr,
         root_verify_key=root_verify_key,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
-        sequester_authority_certificate=sequester_authority_certificate,
+        sequester_authority_certificate=sequester_authority_certificate_signed,
     )
-    _check_rep(rep, step_name="organization bootstrap")
+
+    if isinstance(rep, OrganizationBootstrapRepNotFound):
+        raise InviteNotFoundError
+    elif isinstance(rep, OrganizationBootstrapRepAlreadyBootstrapped):
+        raise InviteAlreadyUsedError
+    elif not isinstance(rep, OrganizationBootstrapRepOk):
+        raise InviteError(f"Backend error during organization bootstrap: {rep}")
 
     return device
-
-
-async def failsafe_organization_bootstrap(
-    addr: BackendOrganizationBootstrapAddr,
-    root_verify_key: VerifyKey,
-    user_certificate: bytes,
-    device_certificate: bytes,
-    redacted_user_certificate: bytes,
-    redacted_device_certificate: bytes,
-    sequester_authority_certificate: Optional[bytes] = None,
-) -> dict:
-    # Try the new anonymous API
-    try:
-        rep = await cmd_organization_bootstrap(
-            addr=addr,
-            root_verify_key=root_verify_key,
-            user_certificate=user_certificate,
-            device_certificate=device_certificate,
-            redacted_user_certificate=redacted_user_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-            sequester_authority_certificate=sequester_authority_certificate,
-        )
-    # If we get a 404 error, maybe the backend is too old to know about the anonymous route (API version < 2.6)
-    except BackendNotAvailable as exc:
-        inner_exc = exc.args[0]
-        if getattr(inner_exc, "status", None) != 404:
-            raise
-    # If we get an "unknown_command" status, the backend might be too old to know about the "organization_bootstrap" command (API version < 2.7)
-    else:
-        if rep["status"] != "unknown_command":
-            return rep
-    # Then we try again with the legacy version
-    if sequester_authority_certificate:
-        raise InviteError("Backend doesn't support sequestered organization")
-    async with apiv1_backend_anonymous_cmds_factory(addr) as anonymous_cmds:
-        return await anonymous_cmds.organization_bootstrap(
-            organization_id=addr.organization_id,
-            bootstrap_token=addr.token,
-            root_verify_key=root_verify_key,
-            user_certificate=user_certificate,
-            device_certificate=device_certificate,
-            redacted_user_certificate=redacted_user_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-        )

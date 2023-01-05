@@ -11,13 +11,13 @@ path = "tests/mod.rs"
 http = "0.2.8"
 futures = "0.3.24"
 dotenv = "0.15.0"
-smol = "1.2.5"
 async-std = "1.12.0"
-async-tungstenite = { version = "0.17.1", features = ["async-std-runtime"] }
+async-tungstenite = { version = "0.18.0", features = ["async-std-runtime"] }
 
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
+smol = "1.2.5"
 
-rstest = "0.15.0"
+rstest = "0.16.0"

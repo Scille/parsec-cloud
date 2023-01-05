@@ -1,22 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
+import logging
 import sys
+from asyncio import InvalidStateError
 from datetime import datetime, timezone
+from uuid import uuid4
 
-import trio
 import pytest
+import trio
 import triopg
 
-from parsec._parsec import DateTime
-from parsec.backend.cli.run import _run_backend, RetryPolicy
+from parsec._parsec import ActiveUsersLimit, DateTime, EntryID
+from parsec.backend.cli.run import RetryPolicy, _run_backend
 from parsec.backend.config import BackendConfig, PostgreSQLBlockStoreConfig
-from parsec.backend.postgresql.handler import handle_datetime
-
+from parsec.backend.postgresql.handler import handle_datetime, handle_integer, handle_uuid
 from tests.common import real_clock_timeout
-
-
-def records_filter_debug(records):
-    return [record for record in records if record.levelname != "DEBUG"]
 
 
 async def wait_for_listeners(conn, to_terminate=False):
@@ -74,6 +73,7 @@ async def test_retry_policy_no_retry(postgresql_url, asyncio_loop):
         administration_token="s3cr3t",
         db_min_connections=1,
         db_max_connections=5,
+        sse_keepalive=30,
         debug=False,
         blockstore_config=PostgreSQLBlockStoreConfig(),
         email_config=None,
@@ -115,11 +115,12 @@ async def test_retry_policy_no_retry(postgresql_url, asyncio_loop):
 
 @pytest.mark.trio
 @pytest.mark.postgresql
-async def test_retry_policy_allow_retry(postgresql_url, asyncio_loop):
+async def test_retry_policy_allow_retry(postgresql_url, asyncio_loop, caplog):
     app_config = BackendConfig(
         administration_token="s3cr3t",
         db_min_connections=1,
         db_max_connections=5,
+        sse_keepalive=30,
         debug=False,
         blockstore_config=PostgreSQLBlockStoreConfig(),
         email_config=None,
@@ -162,6 +163,89 @@ async def test_retry_policy_allow_retry(postgresql_url, asyncio_loop):
 
             # Cancel the backend nursery
             nursery.cancel_scope.cancel()
+
+    # Ignore error logs that looks like:
+    # *** asyncio.exceptions.InvalidStateError: invalid state
+    # Traceback (most recent call last):
+    # File "asyncio/base_events.py", line 1779, in call_exception_handler
+    #     self.default_exception_handler(context)
+    # File "site-packages/trio_asyncio/_async.py", line 44, in default_exception_handler
+    #     raise exception
+    # File "asyncio/selector_events.py", line 868, in _read_ready__data_received
+    #     self._protocol.data_received(data)
+    # File "site-packages/asyncpg/connect_utils.py", line 674, in data_received
+    #     self.on_data.set_result(False)
+    # Or like this:
+    # *** ConnectionError: unexpected connection_lost() call
+    # Traceback (most recent call last):
+    # File "asyncio/base_events.py", line 1779, in call_exception_handler
+    #     self.default_exception_handler(context)
+    # File "site-packages/trio_asyncio/_async.py", line 44, in default_exception_handler
+    #     raise exception
+    # Those happen about 14% and 5% of the runs, respectively.
+    # TODO: Investigate
+    for record in caplog.get_records("call"):
+        if record.levelno < logging.ERROR or record.name != "asyncio":
+            continue
+        try:
+            _, exc, _ = record.exc_info
+        except ValueError:
+            continue
+        if isinstance(exc, (ConnectionError, InvalidStateError)):
+            try:
+                caplog.asserted_records.add(record)
+            except AttributeError:
+                caplog.asserted_records = {record}
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_active_users_limit_correctly_serialized(postgresql_url, backend_factory):
+    user_limit_py = 2
+    user_limit_rs = ActiveUsersLimit.LimitedTo(2)
+
+    async with triopg.connect(postgresql_url) as vanilla_conn:
+        async with triopg.connect(postgresql_url) as patched_conn:
+            await handle_integer(patched_conn)
+
+            await vanilla_conn.execute(
+                f"""
+                DROP TABLE IF EXISTS active_users_limit;
+                CREATE TABLE IF NOT EXISTS active_users_limit (
+                    _id SERIAL PRIMARY KEY,
+                    user_limit integer
+                )"""
+            )
+
+            # Insert ActiveUsersLimit
+            await vanilla_conn.execute(
+                "INSERT INTO active_users_limit (_id, user_limit) VALUES (0, $1)",
+                user_limit_py,
+            )
+            await patched_conn.execute(
+                "INSERT INTO active_users_limit (_id, user_limit) VALUES (1, $1)",
+                user_limit_rs,
+            )
+
+            # Retrieve ActiveUsersLimit inserted by vanilla
+            from_vanilla_to_py = await vanilla_conn.fetchval(
+                "SELECT user_limit FROM active_users_limit WHERE _id = 0"
+            )
+            # Retrieve ActiveUsersLimit inserted by patched
+            from_patched_to_py = await vanilla_conn.fetchval(
+                "SELECT user_limit FROM active_users_limit WHERE _id = 1"
+            )
+            # Retrieve ActiveUsersLimit inserted by vanilla
+            from_vanilla_to_rs = await patched_conn.fetchval(
+                "SELECT user_limit FROM active_users_limit WHERE _id = 0"
+            )
+            # Retrieve ActiveUsersLimit inserted by patched
+            from_patched_to_rs = await patched_conn.fetchval(
+                "SELECT user_limit FROM active_users_limit WHERE _id = 1"
+            )
+
+            assert from_vanilla_to_py == from_patched_to_py
+            assert from_vanilla_to_rs == from_patched_to_rs
 
 
 @pytest.mark.trio
@@ -219,4 +303,59 @@ async def test_rust_datetime_correctly_serialized(postgresql_url, backend_factor
                 == from_patched_to_rs.timestamp()
                 == now_py.timestamp()
                 == now_rs.timestamp()
+            )
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_rust_uuid_correctly_serialized(postgresql_url, backend_factory):
+    id_py = uuid4()
+    id_rs = EntryID.from_hex(id_py.hex)
+
+    async with triopg.connect(postgresql_url) as vanilla_conn:
+        async with triopg.connect(postgresql_url) as patched_conn:
+            await handle_uuid(patched_conn)
+
+            await vanilla_conn.execute(
+                f"""
+                DROP TABLE IF EXISTS uuid;
+                CREATE TABLE IF NOT EXISTS uuid (
+                    _id SERIAL PRIMARY KEY,
+                    id UUID
+                )"""
+            )
+
+            # Insert DateTime
+            await vanilla_conn.execute(
+                "INSERT INTO uuid (_id, id) VALUES (0, $1)",
+                id_py,
+            )
+            await patched_conn.execute(
+                "INSERT INTO uuid (_id, id) VALUES (1, $1)",
+                id_rs,
+            )
+
+            # Retrieve uuid inserted by vanilla
+            from_vanilla_to_py = await vanilla_conn.fetchval("SELECT id FROM uuid WHERE _id = 0")
+            # Retrieve uuid inserted by patched
+            from_patched_to_py = await vanilla_conn.fetchval("SELECT id FROM uuid WHERE _id = 1")
+            # Retrieve hex inserted by vanilla
+            from_vanilla_to_rs = await patched_conn.fetchval("SELECT id FROM uuid WHERE _id = 0")
+            # Retrieve hex inserted by patched
+            from_patched_to_rs = await patched_conn.fetchval("SELECT id FROM uuid WHERE _id = 1")
+
+            # Test that we can retrieve our EntryIDs
+            # because deserializer doesn't know which ID
+            from_vanilla_to_rs = EntryID.from_hex(from_vanilla_to_rs)
+            from_patched_to_rs = EntryID.from_hex(from_patched_to_rs)
+
+            assert from_vanilla_to_py == from_patched_to_py
+            assert from_vanilla_to_rs == from_patched_to_rs
+            assert (
+                from_vanilla_to_py.hex
+                == from_patched_to_py.hex
+                == from_vanilla_to_rs.hex
+                == from_patched_to_rs.hex
+                == id_py.hex
+                == id_rs.hex
             )

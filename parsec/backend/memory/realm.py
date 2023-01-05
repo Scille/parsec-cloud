@@ -1,37 +1,39 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, Tuple
 
 import attr
-from parsec._parsec import DateTime
-from typing import TYPE_CHECKING, List, Dict, Optional, Tuple
 
-from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, UserProfile
+from parsec._parsec import DateTime
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, UserID, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import (
-    MaintenanceType,
-    RealmGrantedRole,
     BaseRealmComponent,
-    RealmRole,
-    RealmStatus,
-    RealmStats,
+    MaintenanceType,
     RealmAccessError,
-    RealmIncompatibleProfileError,
     RealmAlreadyExistsError,
+    RealmEncryptionRevisionError,
+    RealmGrantedRole,
+    RealmIncompatibleProfileError,
+    RealmInMaintenanceError,
+    RealmMaintenanceError,
+    RealmNotFoundError,
+    RealmNotInMaintenanceError,
+    RealmParticipantsMismatchError,
+    RealmRole,
     RealmRoleAlreadyGranted,
     RealmRoleRequireGreaterTimestampError,
-    RealmNotFoundError,
-    RealmEncryptionRevisionError,
-    RealmParticipantsMismatchError,
-    RealmMaintenanceError,
-    RealmInMaintenanceError,
-    RealmNotInMaintenanceError,
+    RealmStats,
+    RealmStatus,
 )
 from parsec.backend.user import UserAlreadyRevokedError, UserNotFoundError
 
 if TYPE_CHECKING:
-    from parsec.backend.memory.user import MemoryUserComponent
-    from parsec.backend.memory.message import MemoryMessageComponent
-    from parsec.backend.memory.vlob import MemoryVlobComponent
     from parsec.backend.memory.block import MemoryBlockComponent
+    from parsec.backend.memory.message import MemoryMessageComponent
+    from parsec.backend.memory.user import MemoryUserComponent
+    from parsec.backend.memory.vlob import MemoryVlobComponent
 
 
 @attr.s
@@ -40,6 +42,10 @@ class Realm:
     checkpoint: int = attr.ib(default=0)
     granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
     last_role_change_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
+
+    @property
+    def created_on(self) -> DateTime:
+        return min(r.granted_on for r in self.granted_roles)
 
     @property
     def roles(self) -> Dict[UserID, RealmRole]:
@@ -51,7 +57,7 @@ class Realm:
                 roles[x.user_id] = x.role
         return roles
 
-    def get_last_role(self, user_id: UserID) -> Optional[RealmGrantedRole]:
+    def get_last_role(self, user_id: UserID) -> RealmGrantedRole | None:
         filtered_roles = [role for role in self.granted_roles if role.user_id == user_id]
         try:
             return max(filtered_roles, key=lambda role: role.granted_on)
@@ -60,23 +66,23 @@ class Realm:
 
 
 class MemoryRealmComponent(BaseRealmComponent):
-    def __init__(self, send_event):
+    def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
-        self._user_component: "MemoryUserComponent" = None
-        self._message_component: "MemoryMessageComponent" = None
-        self._vlob_component: "MemoryVlobComponent" = None
-        self._block_component: "MemoryBlockComponent" = None
+        self._user_component: MemoryUserComponent | None = None
+        self._message_component: MemoryMessageComponent | None = None
+        self._vlob_component: MemoryVlobComponent | None = None
+        self._block_component: MemoryBlockComponent | None = None
         self._realms: Dict[Tuple[OrganizationID, RealmID], Realm] = {}
         self._maintenance_reencryption_is_finished_hook = None
 
     def register_components(
         self,
-        user: "MemoryUserComponent",
-        message: "MemoryMessageComponent",
-        vlob: "MemoryVlobComponent",
-        block: "MemoryBlockComponent",
-        **other_components,
-    ):
+        user: MemoryUserComponent,
+        message: MemoryMessageComponent,
+        vlob: MemoryVlobComponent,
+        block: MemoryBlockComponent,
+        **other_components: Any,
+    ) -> None:
         self._user_component = user
         self._message_component = message
         self._vlob_component = vlob
@@ -86,7 +92,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         try:
             return self._realms[(organization_id, realm_id)]
         except KeyError:
-            raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
+            raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     async def create(
         self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
@@ -122,6 +128,9 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def get_stats(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> RealmStats:
+        assert self._block_component is not None
+        assert self._vlob_component is not None
+
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
@@ -161,10 +170,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: Optional[bytes] = None,
+        recipient_message: bytes | None = None,
     ) -> None:
         assert new_role.granted_by is not None
         assert new_role.granted_by.user_id != new_role.user_id
+        assert self._user_component is not None
+        assert self._vlob_component is not None
+        assert self._message_component is not None
 
         # The only way for an OUTSIDER to be OWNER is to create his own realm
         # (given he needs to have one to store it user manifest).
@@ -205,12 +217,12 @@ class MemoryRealmComponent(BaseRealmComponent):
         if existing_user_role == new_role.role:
             raise RealmRoleAlreadyGranted()
 
-        # Timestamps for the role certificates of a given user should be striclty increasing
+        # Timestamps for the role certificates of a given user should be strictly increasing
         last_role = realm.get_last_role(new_role.user_id)
         if last_role is not None and last_role.granted_on >= new_role.granted_on:
             raise RealmRoleRequireGreaterTimestampError(last_role.granted_on)
 
-        # Perfrom extra checks when removing write rights
+        # Perform extra checks when removing write rights
         if new_role.role in (RealmRole.READER, None):
 
             # The change of role needs to occur strictly after the last upload for this user
@@ -265,11 +277,15 @@ class MemoryRealmComponent(BaseRealmComponent):
         per_participant_message: Dict[UserID, bytes],
         timestamp: DateTime,
     ) -> None:
+        assert self._message_component is not None
+        assert self._user_component is not None
+        assert self._vlob_component is not None
+
         realm = self._get_realm(organization_id, realm_id)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if realm.status.in_maintenance:
-            raise RealmInMaintenanceError(f"Realm `{realm_id.str}` alrealy in maintenance")
+            raise RealmInMaintenanceError(f"Realm `{realm_id.hex}` already in maintenance")
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         now = DateTime.now()
@@ -284,7 +300,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             )
 
         realm.status = RealmStatus(
-            maintenance_type=MaintenanceType.REENCRYPTION(),
+            maintenance_type=MaintenanceType.REENCRYPTION,
             maintenance_started_on=timestamp,
             maintenance_started_by=author,
             encryption_revision=encryption_revision,
@@ -313,11 +329,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_id: RealmID,
         encryption_revision: int,
     ) -> None:
+        assert self._vlob_component is not None
+
         realm = self._get_realm(organization_id, realm_id)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if not realm.status.in_maintenance:
-            raise RealmNotInMaintenanceError(f"Realm `{realm_id.str}` not under maintenance")
+            raise RealmNotInMaintenanceError(f"Realm `{realm_id.hex}` not under maintenance")
         if encryption_revision != realm.status.encryption_revision:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         if not self._vlob_component._maintenance_reencryption_is_finished_hook(

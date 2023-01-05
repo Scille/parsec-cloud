@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from unittest.mock import ANY
 
 import pytest
-from unittest.mock import ANY
 from PyQt5 import QtCore, QtGui
 
-from parsec.core.gui.users_widget import UserInvitationButton
+from parsec._parsec import ActiveUsersLimit
 from parsec.core.gui.lang import translate as _
-
+from parsec.core.gui.users_widget import UserInvitationButton
 from tests.common import customize_fixtures
 
 
@@ -17,11 +19,7 @@ def str_len_limiter(monkeypatch):
     )
 
 
-@pytest.mark.gui
-@pytest.mark.trio
-@pytest.mark.parametrize("online", (True, False))
-@customize_fixtures(logged_gui_as_admin=True)
-async def test_invite_user(
+async def _invite_user(
     aqtbot,
     logged_gui,
     bob,
@@ -106,12 +104,72 @@ async def test_invite_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("online", (True, False))
 @customize_fixtures(logged_gui_as_admin=True)
-async def test_invite_and_greet_user_whith_active_users_limit_reached(
+@customize_fixtures(alice_has_human_handle=True)
+async def test_invite_user_greeter_has_human_handle(
+    aqtbot,
+    logged_gui,
+    bob,
+    running_backend,
+    monkeypatch,
+    autoclose_dialog,
+    email_letterbox,
+    online,
+    snackbar_catcher,
+):
+    await _invite_user(
+        aqtbot,
+        logged_gui,
+        bob,
+        running_backend,
+        monkeypatch,
+        autoclose_dialog,
+        email_letterbox,
+        online,
+        snackbar_catcher,
+    )
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize("online", (True, False))
+@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(alice_has_human_handle=False)
+async def test_invite_user_greeter_does_not_have_human_handle(
+    aqtbot,
+    logged_gui,
+    bob,
+    running_backend,
+    monkeypatch,
+    autoclose_dialog,
+    email_letterbox,
+    online,
+    snackbar_catcher,
+):
+    await _invite_user(
+        aqtbot,
+        logged_gui,
+        bob,
+        running_backend,
+        monkeypatch,
+        autoclose_dialog,
+        email_letterbox,
+        online,
+        snackbar_catcher,
+    )
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_invite_and_greet_user_with_active_users_limit_reached(
     aqtbot, gui, alice, running_backend, monkeypatch, snackbar_catcher
 ):
     # Set the active user limit before login to ensure no cache information has been kept
-    await running_backend.backend.organization.update(alice.organization_id, active_users_limit=1)
+    await running_backend.backend.organization.update(
+        alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(1)
+    )
     await gui.test_switch_to_logged_in(alice)
     u_w = await gui.test_switch_to_users_widget()
 

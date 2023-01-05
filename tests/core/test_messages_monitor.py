@@ -1,15 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
+import trio
 
-from parsec.api.data import PingMessageContent, EntryName
+from parsec._parsec import CoreEvent, DateTime
+from parsec.api.data import EntryName, PingMessageContent
 from parsec.api.protocol import UserID
+from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
 from parsec.crypto import SecretKey
-from parsec.core.core_events import CoreEvent
-from parsec.core.backend_connection import BackendConnStatus
-
 from tests.common import create_shared_workspace, freeze_time
 
 
@@ -39,13 +39,13 @@ async def _send_msg(backend, author, recipient, ping="ping"):
     )
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 async def test_process_while_offline(
-    frozen_clock, running_backend, alice_core, bob_user_fs, alice, bob
+    running_backend, alice_core, bob_user_fs, alice, bob, monkeypatch
 ):
+    # TODO: use global time provider instead of disabling ballpark checks
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
@@ -55,7 +55,7 @@ async def test_process_while_offline(
 
             assert not alice_core.are_monitors_idle()
 
-            async with frozen_clock.real_clock_timeout():
+            with trio.fail_after(1.0):
                 await spy.wait(
                     CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
@@ -70,15 +70,16 @@ async def test_process_while_offline(
 
     with alice_core.event_bus.listen() as spy:
         # Alice is back online, should retrieve Bob's message fine
-        await frozen_clock.sleep_with_autojump(30)
-        async with frozen_clock.real_clock_timeout():
+        alice.time_provider.mock_time(speed=100.0)
+        with trio.fail_after(1.0):
             await spy.wait(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
             )
             await alice_core.wait_idle_monitors()
+        alice.time_provider.mock_time(speed=1.0)
         assert alice_core.backend_status == BackendConnStatus.READY
-        spy.assert_event_occured(CoreEvent.MESSAGE_PINGED, {"ping": "hello from Bob !"})
+        spy.assert_event_occurred(CoreEvent.MESSAGE_PINGED, {"ping": "hello from Bob !"})
 
 
 @pytest.mark.trio
@@ -189,12 +190,12 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
     with freeze_time("2000-01-02"):
         wid = await create_shared_workspace(EntryName("w"), alice_core, bob_core)
 
-    with alice_core.event_bus.listen() as aspy, bob_core.event_bus.listen() as bspy:
+    with alice_core.event_bus.listen() as a_spy, bob_core.event_bus.listen() as b_spy:
         with freeze_time("2000-01-03"):
             await alice_core.user_fs.workspace_start_reencryption(wid)
 
         # Each workspace participant should get the message
-        await aspy.wait_with_timeout(
+        await a_spy.wait_with_timeout(
             CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
@@ -218,7 +219,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
             },
             update_event_func=_update_event,
         )
-        await bspy.wait_with_timeout(
+        await b_spy.wait_with_timeout(
             CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(

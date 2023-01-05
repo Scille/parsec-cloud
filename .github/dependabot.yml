@@ -1,6 +1,50 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
+    directory: /.github/actions/paths-filter
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "00:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: github-actions
+    directory: /.github/actions/setup-python-poetry
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "00:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: github-actions
+    directory: /.github/actions/setup-rust
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "00:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: github-actions
+    directory: /.github/actions/use-pre-commit
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "00:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: github-actions
     directory: /
     pull-request-branch-name:
       separator: "-"
@@ -8,7 +52,8 @@ updates:
       interval: monthly
       time: "00:30"
       timezone: Europe/Paris
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: cargo
     directory: /
@@ -18,17 +63,8 @@ updates:
       interval: monthly
       time: "00:30"
       timezone: Europe/Paris
-    open-pull-requests-limit: 2
-
-  - package-ecosystem: pip
-    directory: /oxidation/libparsec_python
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: monthly
-      time: "00:30"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: pip
     directory: /
@@ -42,7 +78,8 @@ updates:
       interval: monthly
       time: "23:30"
       timezone: Europe/Paris
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: npm
     directory: /oxidation/client
@@ -52,17 +89,8 @@ updates:
       interval: monthly
       time: "23:30"
       timezone: Europe/Paris
-    open-pull-requests-limit: 2
-
-  - package-ecosystem: npm
-    directory: /oxidation/client/android
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: monthly
-      time: "23:30"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
 
   - package-ecosystem: npm
     directory: /oxidation/client/electron
@@ -72,4 +100,71 @@ updates:
       interval: monthly
       time: "23:30"
       timezone: Europe/Paris
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: gradle
+    directory: /oxidation/client/android
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: npm
+    directory: /oxidation/client/electron
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: npm
+    directory: /oxidation/bindings/electron
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: gradle
+    directory: /oxidation/bindings/android
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: npm
+    directory: /oxidation/bindings/web
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: cargo
+    directory: /oxidation/bindings/common
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled

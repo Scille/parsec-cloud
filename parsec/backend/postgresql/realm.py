@@ -1,23 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Dict, List
 
 from parsec._parsec import DateTime
-from typing import Dict, List, Optional
-
-from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole
-from parsec.backend.realm import BaseRealmComponent, RealmStatus, RealmGrantedRole, RealmStats
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, RealmRole, UserID
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.realm_queries import (
     query_create,
-    query_get_status,
-    query_get_stats,
-    query_get_current_roles,
-    query_get_role_certificates,
-    query_get_realms_for_user,
-    query_update_roles,
-    query_start_reencryption_maintenance,
-    query_finish_reencryption_maintenance,
     query_dump_realms_granted_roles,
+    query_finish_reencryption_maintenance,
+    query_get_current_roles,
+    query_get_realms_for_user,
+    query_get_role_certificates,
+    query_get_stats,
+    query_get_status,
+    query_start_reencryption_maintenance,
+    query_update_roles,
 )
+from parsec.backend.realm import BaseRealmComponent, RealmGrantedRole, RealmStats, RealmStatus
 
 
 class PGRealmComponent(BaseRealmComponent):
@@ -56,7 +57,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID
-    ) -> Dict[RealmID, RealmRole]:
+    ) -> dict[RealmID, RealmRole]:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_realms_for_user(conn, organization_id, user)
 
@@ -64,7 +65,7 @@ class PGRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: Optional[bytes] = None,
+        recipient_message: bytes | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_update_roles(conn, organization_id, new_role, recipient_message)

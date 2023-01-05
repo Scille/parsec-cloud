@@ -1,48 +1,40 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 from functools import wraps
-from typing import TypeVar, Callable, Awaitable, List
+from typing import TYPE_CHECKING, Awaitable, Callable, TypeVar, Union
+
+from typing_extensions import Concatenate, ParamSpec
 
 from parsec.api.transport import Transport
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 
-try:
-    # PEP 612 typing (available with Python>=3.10), This allow us to properly
-    # check the types of the arguments of all the `cmds` commands
-    from typing import ParamSpec, Concatenate
+if TYPE_CHECKING:
+    from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
+    from parsec.core.backend_connection.invited import BackendInvitedCmds
 
-    P = ParamSpec("P")
-    R = TypeVar("R")
-    ExposedCmdInput = Callable[Concatenate[Transport, P], R]
-    ExposedCmdOutput = Callable[P, R]
-    PArgs = P.args
-    PKwargs = P.kwargs
-except ImportError:
-    # Fallback typing
-    P = TypeVar("P")
-    R = TypeVar("R")
-    ExposedCmdInput = Callable[..., Awaitable[R]]
-    ExposedCmdOutput = Callable[..., Awaitable[R]]
-    PArgs = object
-    PKwargs = object
+    T_BACKEND = Union[BackendInvitedCmds, BackendAuthenticatedCmds]
 
-K = TypeVar("K", bound=List)
+P = ParamSpec("P")
 R = TypeVar("R")
-Cmd = TypeVar("Cmd", bound=Callable)
 
 
-def expose_cmds(cmd: ExposedCmdInput) -> ExposedCmdOutput:
+def expose_cmds(
+    cmd: Callable[Concatenate[Transport, P], Awaitable[R]]
+) -> Callable[Concatenate[T_BACKEND, P], Awaitable[R]]:
     @wraps(cmd)
-    async def wrapper(self, *args: PArgs, **kwargs: PKwargs) -> R:
+    async def wrapper(self: T_BACKEND, *args: P.args, **kwargs: P.kwargs) -> R:
         async with self.acquire_transport() as transport:
             return await cmd(transport, *args, **kwargs)
 
     return wrapper
 
 
-def expose_cmds_with_retrier(cmd: ExposedCmdInput) -> ExposedCmdOutput:
+def expose_cmds_with_retrier(
+    cmd: Callable[Concatenate[Transport, P], Awaitable[R]]
+) -> Callable[Concatenate[T_BACKEND, P], Awaitable[R]]:
     @wraps(cmd)
-    async def wrapper(self, *args: PArgs, **kwargs: PKwargs) -> R:
+    async def wrapper(self: T_BACKEND, *args: P.args, **kwargs: P.kwargs) -> R:
         # Reusing the transports expose us to `BackendNotAvailable` exceptions
         # due to inactivity timeout while the transport was in the pool.
         try:

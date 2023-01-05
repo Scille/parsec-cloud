@@ -1,17 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import (
-    RealmStatsRepOk,
-    RealmStatsRepNotAllowed,
-    RealmStatsRepNotFound,
-)
-from parsec.api.protocol import RealmID, VlobID, BlockID
-
-from tests.backend.common import realm_stats
-from tests.backend.common import vlob_create, block_create
-
+from parsec._parsec import RealmStatsRepNotAllowed, RealmStatsRepNotFound, RealmStatsRepOk
+from parsec.api.protocol import BlockID, RealmID, VlobID
+from tests.backend.common import block_create, realm_stats, vlob_create
 
 REALM_ID_FAKE = RealmID.from_hex("00000000-0000-0000-0000-000000000001")
 

@@ -1,15 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 import struct
-from structlog import get_logger
 from sys import byteorder
-from typing import List, Optional, Union
+from typing import List, Union
 
-from parsec.utils import open_service_nursery
-from parsec.api.protocol import OrganizationID, BlockID
+from structlog import get_logger
+from trio import Nursery
+
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
-
+from parsec.utils import open_service_nursery
 
 logger = get_logger()
 
@@ -39,9 +41,7 @@ def generate_checksum_chunk(chunks: List[bytes]) -> bytes:
     return _xor_buffers(*chunks)
 
 
-def rebuild_block_from_chunks(
-    chunks: List[Optional[bytes]], checksum_chunk: Optional[bytes]
-) -> bytes:
+def rebuild_block_from_chunks(chunks: List[bytes | None], checksum_chunk: bytes | None) -> bytes:
     valid_chunks = [chunk for chunk in chunks if chunk is not None]
     assert len(chunks) - len(valid_chunks) <= 1  # Cannot correct more than 1 chunk
     try:
@@ -69,9 +69,9 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
 
     async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         error_count = 0
-        fetch_results: List[Union[Exception, Optional[bytes]]] = [None] * len(self.blockstores)
+        fetch_results: List[Union[Exception, bytes | None]] = [None] * len(self.blockstores)
 
-        async def _partial_blockstore_read(nursery, blockstore_index: int) -> None:
+        async def _partial_blockstore_read(nursery: Nursery, blockstore_index: int) -> None:
             nonlocal error_count
             nonlocal fetch_results
             try:
@@ -121,7 +121,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block read error: More than 1 nodes have failed",
                 organization_id=organization_id.str,
-                block_id=block_id.str,
+                block_id=block_id.hex,
             )
             raise BlockStoreError("More than 1 RAID5 nodes have failed")
 
@@ -137,7 +137,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         error_count = 0
 
         async def _subblockstore_create(
-            nursery, blockstore_index: int, chunk_or_checksum: bytes
+            nursery: Nursery, blockstore_index: int, chunk_or_checksum: bytes
         ) -> None:
             nonlocal error_count
             try:
@@ -166,7 +166,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: More than 1 nodes have failed",
                     organization_id=organization_id.str,
-                    block_id=block_id.str,
+                    block_id=block_id.hex,
                 )
                 raise BlockStoreError("More than 1 RAID5 nodes have failed")
 
@@ -175,6 +175,6 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: A node have failed",
                     organization_id=organization_id.str,
-                    block_id=block_id.str,
+                    block_id=block_id.hex,
                 )
                 raise BlockStoreError("A RAID5 node have failed")

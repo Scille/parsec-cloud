@@ -1,23 +1,26 @@
 #! /usr/bin/env python3
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
-
+from __future__ import annotations
 
 import os
+
 import trio
-
-from tqdm import tqdm
 from humanize import naturalsize
+from tqdm import tqdm
 
-from parsec.core.logged_core import logged_core_factory
-from parsec.core.fs import FsPath
 from parsec.core.config import get_default_config_dir, load_config
+from parsec.core.fs import FsPath
 from parsec.core.local_device import list_available_devices, load_device_with_password
+from parsec.core.logged_core import logged_core_factory
+from parsec.test_utils import (
+    make_workspace_dir_complex_versions as make_workspace_dir_complex_versions_helper,
+)
 from parsec.test_utils import (
     make_workspace_dir_inconsistent as make_workspace_dir_inconsistent_helper,
-    make_workspace_dir_complex_versions as make_workspace_dir_complex_versions_helper,
+)
+from parsec.test_utils import (
     make_workspace_dir_simple_versions as make_workspace_dir_simple_versions_helper,
 )
-
 
 DEVICE_ID = "alice@laptop"
 PASSWORD = "test"

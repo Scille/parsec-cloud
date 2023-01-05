@@ -1,27 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+# cspell: ignore wsmsg
+from __future__ import annotations
 
+from typing import Type, Union
 from uuid import uuid4
-from typing import Optional, Type, Union
+
 import trio
+from h11 import Request as H11Request
+from structlog import get_logger
 from trio import BrokenResourceError
 from trio.abc import Stream
-from structlog import get_logger
-from h11 import Request as H11Request
-from wsproto import WSConnection, ConnectionType
-from wsproto.utilities import LocalProtocolError, RemoteProtocolError
-from wsproto.frame_protocol import CloseReason
+from wsproto import ConnectionType, WSConnection
 from wsproto.events import (
-    Event,
-    CloseConnection,
     AcceptConnection,
-    Request,
     BytesMessage,
+    CloseConnection,
+    Event,
     Ping,
     Pong,
+    Request,
 )
+from wsproto.frame_protocol import CloseReason
+from wsproto.utilities import LocalProtocolError, RemoteProtocolError
 
 from parsec._version import __version__
-
 
 __all__ = ("TransportError", "Transport")
 
@@ -47,7 +49,7 @@ class TransportClosedByPeer(TransportError):
 class Transport:
     RECEIVE_BYTES = 2**20  # 1Mo
 
-    def __init__(self, stream: Stream, ws: WSConnection, keepalive: Optional[int] = None):
+    def __init__(self, stream: Stream, ws: WSConnection, keepalive: int | None = None):
         self.stream = stream
         self.ws = ws
         self.keepalive = keepalive
@@ -93,12 +95,15 @@ class Transport:
         except RemoteProtocolError as exc:
             raise TransportError(*exc.args) from exc
 
+        except LocalProtocolError as exc:
+            raise TransportError(*exc.args) from exc
+
     @classmethod
     async def init_for_client(
         cls: Type["Transport"],
         stream: Stream,
         host: str,
-        keepalive: Optional[int] = None,
+        keepalive: int | None = None,
     ) -> "Transport":
         ws = WSConnection(ConnectionType.CLIENT)
         transport = cls(stream, ws, keepalive)
@@ -130,7 +135,7 @@ class Transport:
     async def init_for_server(
         cls: Type["Transport"],
         stream: Stream,
-        upgrade_request: Optional[H11Request] = None,
+        upgrade_request: H11Request | None = None,
     ) -> "Transport":
         ws = WSConnection(ConnectionType.SERVER)
         if upgrade_request:
@@ -139,7 +144,7 @@ class Transport:
             # https://github.com/python-hyper/wsproto/issues/174
             ws.initiate_upgrade_connection(
                 headers=upgrade_request.headers,  # type: ignore[arg-type]
-                path=upgrade_request.target,  # type: ignore[arg-type]
+                path=upgrade_request.target,
             )
         transport = cls(stream, ws)
 
@@ -186,7 +191,7 @@ class Transport:
             if self.keepalive:
                 with trio.move_on_after(self.keepalive) as cancel_scope:
                     event = await self._next_ws_event()
-                if cancel_scope.cancel_called:
+                if cancel_scope.cancelled_caught:
                     self.logger.debug("Sending keep alive ping")
                     await self._net_send(Ping())
                     continue

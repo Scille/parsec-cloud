@@ -1,1 +1,0 @@
-Add a way to filter out unmounted workspaces

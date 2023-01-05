@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use crate::{build_signature_path, TrustchainError, TrustchainResult};
 use libparsec_crypto::VerifyKey;
-use libparsec_protocol::authenticated_cmds::user_get::Trustchain;
+use libparsec_protocol::authenticated_cmds::v2::user_get::Trustchain;
 use libparsec_types::{
     CertificateSignerOwned, CertificateSignerRef, DateTime, DeviceCertificate, DeviceID,
     RevokedUserCertificate, TimeProvider, UserCertificate, UserID, UserProfile,
@@ -38,20 +38,20 @@ impl TrustchainContext {
         sign_chain: &[String],
     ) -> TrustchainResult<()> {
         // Author is either admin or signing one of it own devices
-        if author_device.device_id.user_id != *verified_data.0 {
-            match users_states.get(&author.user_id) {
+        if author_device.device_id.user_id() != verified_data.0 {
+            match users_states.get(author.user_id()) {
                 Some(certif_state)
                     if certif_state.borrow().content.profile != UserProfile::Admin =>
                 {
                     return Err(TrustchainError::InvalidSignatureGiven {
                         path: build_signature_path(sign_chain),
-                        user_id: author.user_id.clone(),
+                        user_id: author.user_id().clone(),
                     })
                 }
                 None => {
                     return Err(TrustchainError::MissingUserCertificate {
                         path: build_signature_path(sign_chain),
-                        user_id: author.user_id.clone(),
+                        user_id: author.user_id().clone(),
                     })
                 }
                 _ => (),
@@ -59,7 +59,7 @@ impl TrustchainContext {
         }
 
         // Also make sure author wasn't revoked at creation time
-        if let Some(author_revoked_user) = revoked_users_states.get(&author.user_id) {
+        if let Some(author_revoked_user) = revoked_users_states.get(author.user_id()) {
             let author_revoked_user = &author_revoked_user.borrow().content;
 
             if verified_data.1 > author_revoked_user.timestamp {
@@ -106,6 +106,7 @@ impl TrustchainContext {
                 state.certif,
                 &self.root_verify_key,
                 CertificateSignerRef::Root,
+                None,
             )
             .map_err(|exc| TrustchainError::InvalidCertificate {
                 path: build_signature_path(sign_chain),
@@ -124,6 +125,7 @@ impl TrustchainContext {
                     state.certif,
                     &author_device.verify_key,
                     CertificateSignerRef::User(&author_device.device_id),
+                    None,
                 )
                 .map_err(|exc| TrustchainError::InvalidCertificate {
                     path: build_signature_path(sign_chain),
@@ -134,7 +136,7 @@ impl TrustchainContext {
                     users_states,
                     revoked_users_states,
                     &author_device,
-                    (&verified.device_id.user_id, verified.timestamp),
+                    (verified.device_id.user_id(), verified.timestamp),
                     author,
                     sign_chain,
                 )?;
@@ -159,12 +161,14 @@ impl TrustchainContext {
                 certif,
                 &self.root_verify_key,
                 CertificateSignerRef::Root,
+                None,
+                None,
             )
             .map_err(|exc| TrustchainError::InvalidCertificate {
                 path: build_signature_path(&[format!("{user_id}'s creation")]),
                 exc: exc.to_string(),
             }),
-            CertificateSignerOwned::User(author) if author.user_id == *user_id => {
+            CertificateSignerOwned::User(author) if author.user_id() == user_id => {
                 Err(TrustchainError::InvalidSelfSignedUserCertificate {
                     user_id: user_id.clone(),
                 })
@@ -184,6 +188,8 @@ impl TrustchainContext {
                     certif,
                     &author_device.verify_key,
                     CertificateSignerRef::User(&author_device.device_id),
+                    None,
+                    None,
                 )
                 .map_err(|exc| TrustchainError::InvalidCertificate {
                     path: build_signature_path(&sign_chain),
@@ -215,7 +221,7 @@ impl TrustchainContext {
         let author = &unverified_content.author;
         let user_id = &unverified_content.user_id;
 
-        if author.user_id == *user_id {
+        if author.user_id() == user_id {
             Err(
                 TrustchainError::InvalidSelfSignedUserRevocationCertificate {
                     user_id: user_id.clone(),
@@ -236,6 +242,7 @@ impl TrustchainContext {
                 certif,
                 &author_device.verify_key,
                 &author_device.device_id,
+                None,
             )
             .map_err(|exc| TrustchainError::InvalidCertificate {
                 path: build_signature_path(&sign_chain),
@@ -557,7 +564,7 @@ impl TrustchainContext {
             },
             verified_devices
                 .into_iter()
-                .filter(|device| device.device_id.user_id == user_id)
+                .filter(|device| device.device_id.user_id() == &user_id)
                 .collect(),
         ))
     }

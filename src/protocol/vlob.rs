@@ -4,29 +4,65 @@ use std::collections::HashMap;
 
 use pyo3::{
     exceptions::PyNotImplementedError,
-    import_exception,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::{
+use libparsec::protocol::authenticated_cmds::v2::{
     vlob_create, vlob_list_versions, vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch, vlob_poll_changes, vlob_read, vlob_update,
 };
 
 use crate::{
     ids::{DeviceID, RealmID, SequesterServiceID, VlobID},
-    protocol::gen_rep,
-    protocol::{Bytes, ListOfBytes, Reason},
+    protocol::{
+        error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+        gen_rep, Bytes, ListOfBytes, OptionalDateTime, OptionalFloat, Reason,
+    },
     time::DateTime,
 };
 
-import_exception!(parsec.api.protocol, ProtocolError);
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct ReencryptionBatchEntry(pub libparsec::types::ReencryptionBatchEntry);
+
+crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __repr__);
+crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __richcmp__, eq);
+
+#[pymethods]
+impl ReencryptionBatchEntry {
+    #[new]
+    fn new(vlob_id: VlobID, version: u64, blob: Vec<u8>) -> PyResult<Self> {
+        let vlob_id = vlob_id.0;
+        Ok(Self(libparsec::types::ReencryptionBatchEntry {
+            vlob_id,
+            version,
+            blob,
+        }))
+    }
+
+    #[getter]
+    fn vlob_id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.vlob_id))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u64> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn blob(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.blob)
+    }
+}
 
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct VlobCreateReq(pub vlob_create::Req);
+
+crate::binding_utils::gen_proto!(VlobCreateReq, __repr__);
+crate::binding_utils::gen_proto!(VlobCreateReq, __richcmp__, eq);
 
 #[pymethods]
 impl VlobCreateReq {
@@ -55,22 +91,14 @@ impl VlobCreateReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -126,10 +154,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
     ],
     [NotASequesteredOrganization],
     [
@@ -137,6 +165,13 @@ gen_rep!(
         sequester_authority_certificate: Bytes,
         sequester_services_certificates: ListOfBytes
     ],
+    [
+        RejectedBySequesterService,
+        service_id: SequesterServiceID,
+        service_label: String,
+        reason: String
+    ],
+    [Timeout],
 );
 
 #[pyclass(extends=VlobCreateRep)]
@@ -153,6 +188,9 @@ impl VlobCreateRepOk {
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct VlobReadReq(pub vlob_read::Req);
+
+crate::binding_utils::gen_proto!(VlobReadReq, __repr__);
+crate::binding_utils::gen_proto!(VlobReadReq, __richcmp__, eq);
 
 #[pymethods]
 impl VlobReadReq {
@@ -173,22 +211,14 @@ impl VlobReadReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -235,7 +265,7 @@ impl VlobReadRepOk {
         blob: Vec<u8>,
         author: DeviceID,
         timestamp: DateTime,
-        author_last_role_granted_on: Option<DateTime>,
+        author_last_role_granted_on: DateTime,
     ) -> PyResult<(Self, VlobReadRep)> {
         Ok((
             Self,
@@ -245,7 +275,7 @@ impl VlobReadRepOk {
                 author: author.0,
                 timestamp: timestamp.0,
                 author_last_role_granted_on: libparsec::types::Maybe::Present(
-                    author_last_role_granted_on.map(|x| x.0),
+                    author_last_role_granted_on.0,
                 ),
             }),
         ))
@@ -290,7 +320,7 @@ impl VlobReadRepOk {
                 author_last_role_granted_on,
                 ..
             } => match author_last_role_granted_on {
-                libparsec::types::Maybe::Present(x) => x.map(DateTime),
+                libparsec::types::Maybe::Present(x) => Some(DateTime(*x)),
                 _ => None,
             },
             _ => return Err(PyNotImplementedError::new_err("")),
@@ -301,6 +331,9 @@ impl VlobReadRepOk {
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct VlobUpdateReq(pub vlob_update::Req);
+
+crate::binding_utils::gen_proto!(VlobUpdateReq, __repr__);
+crate::binding_utils::gen_proto!(VlobUpdateReq, __richcmp__, eq);
 
 #[pymethods]
 impl VlobUpdateReq {
@@ -328,22 +361,14 @@ impl VlobUpdateReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -400,10 +425,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
     ],
     [NotASequesteredOrganization],
     [
@@ -411,6 +436,13 @@ gen_rep!(
         sequester_authority_certificate: Bytes,
         sequester_services_certificates: ListOfBytes
     ],
+    [
+        RejectedBySequesterService,
+        service_id: SequesterServiceID,
+        service_label: String,
+        reason: String
+    ],
+    [Timeout],
 );
 
 #[pyclass(extends=VlobUpdateRep)]
@@ -425,8 +457,11 @@ impl VlobUpdateRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct VlobPollChangesReq(pub vlob_poll_changes::Req);
+
+crate::binding_utils::gen_proto!(VlobPollChangesReq, __repr__);
+crate::binding_utils::gen_proto!(VlobPollChangesReq, __richcmp__, eq);
 
 #[pymethods]
 impl VlobPollChangesReq {
@@ -439,22 +474,14 @@ impl VlobPollChangesReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -523,6 +550,9 @@ impl VlobPollChangesRepOk {
 #[derive(Clone)]
 pub(crate) struct VlobListVersionsReq(pub vlob_list_versions::Req);
 
+crate::binding_utils::gen_proto!(VlobListVersionsReq, __repr__);
+crate::binding_utils::gen_proto!(VlobListVersionsReq, __richcmp__, eq);
+
 #[pymethods]
 impl VlobListVersionsReq {
     #[new]
@@ -531,22 +561,14 @@ impl VlobListVersionsReq {
         Ok(Self(vlob_list_versions::Req { vlob_id }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -600,6 +622,9 @@ pub(crate) struct VlobMaintenanceGetReencryptionBatchReq(
     pub vlob_maintenance_get_reencryption_batch::Req,
 );
 
+crate::binding_utils::gen_proto!(VlobMaintenanceGetReencryptionBatchReq, __repr__);
+crate::binding_utils::gen_proto!(VlobMaintenanceGetReencryptionBatchReq, __richcmp__, eq);
+
 #[pymethods]
 impl VlobMaintenanceGetReencryptionBatchReq {
     #[new]
@@ -612,22 +637,14 @@ impl VlobMaintenanceGetReencryptionBatchReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -644,50 +661,6 @@ impl VlobMaintenanceGetReencryptionBatchReq {
     #[getter]
     fn size(&self) -> PyResult<u64> {
         Ok(self.0.size)
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct ReencryptionBatchEntry(pub libparsec::types::ReencryptionBatchEntry);
-
-#[pymethods]
-impl ReencryptionBatchEntry {
-    #[new]
-    fn new(vlob_id: VlobID, version: u64, blob: Vec<u8>) -> PyResult<Self> {
-        let vlob_id = vlob_id.0;
-        Ok(Self(libparsec::types::ReencryptionBatchEntry {
-            vlob_id,
-            version,
-            blob,
-        }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    #[getter]
-    fn vlob_id(&self) -> PyResult<VlobID> {
-        Ok(VlobID(self.0.vlob_id))
-    }
-
-    #[getter]
-    fn version(&self) -> PyResult<u64> {
-        Ok(self.0.version)
-    }
-
-    #[getter]
-    fn blob(&self) -> PyResult<&[u8]> {
-        Ok(&self.0.blob)
     }
 }
 
@@ -733,10 +706,13 @@ impl VlobMaintenanceGetReencryptionBatchRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct VlobMaintenanceSaveReencryptionBatchReq(
     pub vlob_maintenance_save_reencryption_batch::Req,
 );
+
+crate::binding_utils::gen_proto!(VlobMaintenanceSaveReencryptionBatchReq, __repr__);
+crate::binding_utils::gen_proto!(VlobMaintenanceSaveReencryptionBatchReq, __richcmp__, eq);
 
 #[pymethods]
 impl VlobMaintenanceSaveReencryptionBatchReq {
@@ -755,22 +731,14 @@ impl VlobMaintenanceSaveReencryptionBatchReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 

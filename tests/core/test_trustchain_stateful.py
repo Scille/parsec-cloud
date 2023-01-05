@@ -1,25 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from hypothesis import strategies as st, note
+from hypothesis import note
+from hypothesis import strategies as st
 from hypothesis.stateful import (
-    run_state_machine_as_test,
     Bundle,
-    precondition,
-    initialize,
-    rule,
-    consumes,
     RuleBasedStateMachine,
+    consumes,
+    initialize,
+    precondition,
+    rule,
+    run_state_machine_as_test,
 )
 
-from parsec.api.protocol import UserID, DeviceName, UserProfile
 from parsec._parsec import (
+    DeviceCertificate,
+    RevokedUserCertificate,
+    TimeProvider,
+    Trustchain,
     TrustchainContext,
     UserCertificate,
-    RevokedUserCertificate,
-    DeviceCertificate,
-    TimeProvider,
 )
+from parsec.api.protocol import DeviceName, UserID, UserProfile
 
 
 @pytest.mark.slow
@@ -184,11 +187,11 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
                 if device_id.user_id == user
             ]
             user_content, revoked_user_content, devices_contents = ctx.load_user_and_devices(
-                trustchain={
-                    "users": [certif for certif in self.users_certifs.values()],
-                    "revoked_users": [certif for certif in self.revoked_users_certifs.values()],
-                    "devices": [certif for certif in self.devices_certifs.values()],
-                },
+                trustchain=Trustchain(
+                    users=[certif for certif in self.users_certifs.values()],
+                    revoked_users=[certif for certif in self.revoked_users_certifs.values()],
+                    devices=[certif for certif in self.devices_certifs.values()],
+                ),
                 user_certif=user_certif,
                 revoked_user_certif=revoked_user_certif,
                 devices_certifs=devices_certifs,

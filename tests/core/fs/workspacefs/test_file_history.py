@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from unittest.mock import ANY
 
 import pytest
 
-from parsec.core.fs.workspacefs.versioning_helpers import VersionLister, TimestampBoundedData
 from parsec.core.fs import FsPath
-from unittest.mock import ANY
+from parsec.core.fs.workspacefs.versioning_helpers import TimestampBoundedData, VersionLister
 
 
 @pytest.mark.trio

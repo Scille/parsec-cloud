@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from PyQt5 import QtCore
-from unittest.mock import Mock
-from pathlib import Path
-from parsec._parsec import DateTime
 
-from parsec.api.data import EntryName, EntryID
-from parsec.core.types import WorkspaceRole
-from parsec.core.core_events import CoreEvent
-from parsec.core.fs import FSWorkspaceNoReadAccess, FsPath
-from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec._parsec import CoreEvent, DateTime
+from parsec.api.data import EntryID, EntryName
+from parsec.core.fs import FsPath, FSWorkspaceNoReadAccess
+from parsec.core.gui.lang import format_datetime, translate
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
-from parsec.core.gui.lang import translate, format_datetime
-
-from tests.common import freeze_time
+from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.types import WorkspaceRole
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ async def test_add_workspace(
     )
     aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
-    def _outcome_occured():
+    def _outcome_occurred():
         assert w_w.layout_workspaces.count() == 1
         if invalid_name:
             assert (
@@ -62,7 +62,7 @@ async def test_add_workspace(
             assert wk_button.name == EntryName("Workspace1")
             assert not autoclose_dialog.dialogs
 
-    await aqtbot.wait_until(_outcome_occured)
+    await aqtbot.wait_until(_outcome_occurred)
 
 
 @pytest.mark.gui
@@ -93,7 +93,7 @@ async def test_rename_workspace(
     )
     aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
 
-    def _outcome_occured():
+    def _outcome_occurred():
         assert w_w.layout_workspaces.count() == 1
         new_wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(new_wk_button, WorkspaceButton)
@@ -110,7 +110,7 @@ async def test_rename_workspace(
             assert wk_button.name == EntryName("Workspace1_Renamed")
             assert not autoclose_dialog.dialogs
 
-    await aqtbot.wait_until(_outcome_occured)
+    await aqtbot.wait_until(_outcome_occurred)
 
 
 @pytest.mark.gui
@@ -184,7 +184,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
     await aqtbot.wait_until(_initially_mounted)
 
-    # Now switch to umounted
+    # Now switch to unmounted
     aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
 
     def _unmounted():
@@ -448,8 +448,6 @@ async def test_display_timestamped_workspace_in_workspaces_list(
             wk_button = w_w.layout_workspaces.itemAt(0).widget()
             assert isinstance(wk_button, WorkspaceButton)
             assert wk_button.name == workspace_name
-            assert wk_button.file1_name.text() == "file1.txt"
-            assert wk_button.file2_name.text() == "file2.txt"
 
         await aqtbot.wait_until(_wait_workspace_refreshed)
 
@@ -493,8 +491,8 @@ async def test_display_timestamped_workspace_in_workspaces_list(
             ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
             assert isinstance(wk_button, WorkspaceButton)
             assert isinstance(ts_wk_button, WorkspaceButton)
-            assert not wk_button.timestamped
-            assert ts_wk_button.timestamped
+            assert not wk_button.is_timestamped
+            assert ts_wk_button.is_timestamped
 
         await aqtbot.wait_until(_new_workspace_listed)
 
@@ -546,7 +544,6 @@ async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
 
     # Now wait for GUI to take it into account
     def _workspace_visible(visible):
-        print(w_w.layout_workspaces.count(), visible)
         count = 1 if visible else 0
         assert w_w.layout_workspaces.count() == count
 
@@ -572,3 +569,42 @@ async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
     w_w.check_hide_unmounted.setChecked(True)
     aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(lambda: _workspace_visible(False))
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_workspace_button(aqtbot, running_backend, logged_gui, autoclose_dialog, bob, adam):
+    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    core = logged_gui.test_get_core()
+    wid = await core.user_fs.workspace_create(EntryName("Workspace"))
+
+    def _workspace_button_shown(people):
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == EntryName("Workspace")
+        if people == 0:
+            wk_button.label_shared_info.text() == translate("TEXT_WORKSPACE_IS_PRIVATE")
+        elif people == 1:
+            wk_button.label_shared_info.text() == translate(
+                "TEXT_WORKSPACE_IS_SHARED_WITH_user"
+            ).format(user="bob")
+        else:
+            wk_button.label_shared_info.text() == translate(
+                "TEXT_WORKSPACE_IS_SHARED_n_USERS"
+            ).format(n=people)
+
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=0))
+
+    await core.user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=1))
+
+    await core.user_fs.workspace_share(wid, adam.user_id, WorkspaceRole.MANAGER)
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=2))
+
+    await core.revoke_user(adam.user_id)
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=1))
+
+    await core.revoke_user(bob.user_id)
+    await aqtbot.wait_until(lambda: _workspace_button_shown(people=0))

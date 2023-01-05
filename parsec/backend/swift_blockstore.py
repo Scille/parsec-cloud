@@ -1,14 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-import trio
-from unittest.mock import Mock
-import pbr.version
 from functools import partial
+from unittest.mock import Mock
+
+import pbr.version
+import trio
 
 original_version_info = pbr.version.VersionInfo
 
 
-def side_effect(key):
+def side_effect(key: str) -> str:
     if key == "python-swiftclient":
         return "3.5.0"
 
@@ -19,26 +21,26 @@ def side_effect(key):
 pbr.version.VersionInfo = Mock(side_effect=side_effect)
 
 import swiftclient
-from swiftclient.exceptions import ClientException
 from structlog import get_logger
+from swiftclient.exceptions import ClientException
 
-from parsec.api.protocol import OrganizationID, BlockID
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
-
 
 logger = get_logger()
 
 
-def build_swift_slug(organization_id: OrganizationID, id: BlockID):
+def build_swift_slug(organization_id: OrganizationID, id: BlockID) -> str:
     # The slug uses the UUID canonical textual representation (eg.
-    # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`) where `BlockID.__str__`
-    # uses the short textual representation (eg. `3b91779235ac409f9af1fe6de8d2b905`)
-    return f"{organization_id.str}/{id.uuid}"
+    # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`)
+    return f"{organization_id.str}/{id.hyphenated}"
 
 
 class SwiftBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, auth_url, tenant, container, user, password):
+    def __init__(
+        self, auth_url: str, tenant: str, container: str, user: str, password: str
+    ) -> None:
         self.swift_client = swiftclient.Connection(
             authurl=auth_url, user=":".join([user, tenant]), key=password
         )
@@ -57,7 +59,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block read error",
                 organization_id=organization_id.str,
-                block_id=block_id.str,
+                block_id=block_id.hex,
                 exc_info=exc,
             )
             raise BlockStoreError(exc) from exc
@@ -77,7 +79,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block create error",
                 organization_id=organization_id.str,
-                block_id=block_id.str,
+                block_id=block_id.hex,
                 exc_info=exc,
             )
             raise BlockStoreError(exc) from exc

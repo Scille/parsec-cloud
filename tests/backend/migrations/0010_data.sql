@@ -57,6 +57,6 @@ INSERT INTO pki_enrollment(_id, organization, enrollment_id, submitter_der_x509_
     E'<certificate>',
     E'<signature>',
     E'<payload>'
-)
+);
 
 -- TODO add test accepted and accepter

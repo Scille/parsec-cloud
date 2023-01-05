@@ -1,0 +1,54 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "organization_stats"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "data_size",
+                        "type": "Size"
+                    },
+                    {
+                        "name": "metadata_size",
+                        "type": "Size"
+                    },
+                    {
+                        "name": "realms",
+                        "type": "Size"
+                    },
+                    {
+                        "name": "users",
+                        "type": "Size"
+                    },
+                    {
+                        "name": "active_users",
+                        "type": "Size"
+                    },
+                    {
+                        "name": "users_per_profile_detail",
+                        "type": "List<UsersPerProfileDetailItem>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_found"
+            }
+        ]
+    }
+]

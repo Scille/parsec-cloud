@@ -1,17 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import List, Tuple
 
-from parsec._parsec import (
-    DateTime,
-    MessageGetReq,
-    MessageGetRep,
-    MessageGetRepOk,
-    Message,
-)
-from parsec.api.protocol import DeviceID, UserID, OrganizationID
-from parsec.api.protocol.base import api_typed_msg_adapter
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec._parsec import DateTime, Message, MessageGetRep, MessageGetRepOk, MessageGetReq
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
+from parsec.backend.client_context import AuthenticatedClientContext
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 
 
 class MessageError(Exception):
@@ -22,7 +17,9 @@ class BaseMessageComponent:
     @api("message_get")
     @catch_protocol_errors
     @api_typed_msg_adapter(MessageGetReq, MessageGetRep)
-    async def api_message_get(self, client_ctx, req: MessageGetReq) -> MessageGetRep:
+    async def api_message_get(
+        self, client_ctx: AuthenticatedClientContext, req: MessageGetReq
+    ) -> MessageGetRep:
         offset = req.offset
         messages = await self.get(client_ctx.organization_id, client_ctx.user_id, offset)
 

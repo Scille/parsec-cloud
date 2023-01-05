@@ -1,23 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
+import errno
 import os
 import sys
-import errno
 from pathlib import Path
 from string import ascii_lowercase
 
 import attr
 import pytest
+from hypothesis import strategies as st
 from hypothesis.stateful import (
-    RuleBasedStateMachine,
     Bundle,
+    RuleBasedStateMachine,
     initialize,
     rule,
     run_state_machine_as_test,
 )
-from hypothesis import strategies as st
-from parsec.api.data import EntryName
 
+from parsec.api.data import EntryName
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
@@ -40,8 +41,8 @@ class expect_raises:
         if not exc_type:
             raise AssertionError(f"DID NOT RAISED {self.expected_exc!r}")
 
-        # WinFSP error handling is not stricly similar to the real
-        # Windows file system; so we often endup with the wrong exception
+        # WinFSP error handling is not strictly similar to the real
+        # Windows file system; so we often end up with the wrong exception
         # (e.g. `NotADirectoryError` when we expect `FileNotFoundError`)
         if sys.platform == "win32":
             allowed = OSError

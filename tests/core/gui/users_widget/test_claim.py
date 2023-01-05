@@ -1,29 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from functools import partial
 
 import pytest
 import trio
 from PyQt5 import QtCore
-from contextlib import asynccontextmanager
-from functools import partial
 
 from parsec._parsec import DateTime, InvitationType
 from parsec.api.protocol import (
     DeviceLabel,
-    InvitationToken,
     HumanHandle,
     InvitationDeletedReason,
+    InvitationToken,
     UserProfile,
 )
-from parsec.core.types import BackendInvitationAddr
-from parsec.core.invite import UserGreetInitialCtx
-from parsec.core.gui.lang import translate
 from parsec.core.gui.claim_user_widget import (
-    ClaimUserFinalizeWidget,
     ClaimUserCodeExchangeWidget,
-    ClaimUserProvideInfoWidget,
+    ClaimUserFinalizeWidget,
     ClaimUserInstructionsWidget,
+    ClaimUserProvideInfoWidget,
     ClaimUserWidget,
 )
+from parsec.core.gui.lang import translate
+from parsec.core.invite import UserGreetInitialCtx
+from parsec.core.types import BackendInvitationAddr
 
 
 @pytest.fixture
@@ -99,7 +101,7 @@ def ClaimUserTestBed(
             invitation_addr = BackendInvitationAddr.build(
                 backend_addr=self.author.organization_addr.get_backend_addr(),
                 organization_id=self.author.organization_id,
-                invitation_type=InvitationType.USER(),
+                invitation_type=InvitationType.USER,
                 token=invitation.token,
             )
 
@@ -116,7 +118,7 @@ def ClaimUserTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cu_w.isVisible()
-                assert cu_w.dialog.label_title.text() == "Register a user"
+                assert cu_w.dialog.label_title.text() == translate("TEXT_CLAIM_USER_TITLE")
                 assert cui_w.isVisible()
 
             await aqtbot.wait_until(_register_user_displayed)
@@ -140,7 +142,7 @@ def ClaimUserTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cu_w.isVisible()
-                assert cu_w.dialog.label_title.text() == "Register a user"
+                assert cu_w.dialog.label_title.text() == translate("TEXT_CLAIM_USER_TITLE")
                 assert cui_w.isVisible()
 
             await aqtbot.wait_until(_register_user_displayed)
@@ -164,17 +166,9 @@ def ClaimUserTestBed(
         async def step_1_start_claim(self):
             cui_w = self.claim_user_instructions_widget
 
-            def _info_retrieved():
-                assert cui_w.button_start.isEnabled()
-
-            await aqtbot.wait_until(_info_retrieved)
-
-            assert cui_w.button_start.isEnabled()
-            aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
-
             def _claimer_started():
                 assert not cui_w.button_start.isEnabled()
-                assert cui_w.button_start.text() == "Waiting for the other user"
+                assert cui_w.button_start.text() == translate("TEXT_CLAIM_USER_WAITING")
 
             await aqtbot.wait_until(_claimer_started)
 
@@ -187,6 +181,14 @@ def ClaimUserTestBed(
                 cmds=self.cmds, token=self.invitation_addr.token
             )
             self.greeter_in_progress_ctx = await self.greeter_initial_ctx.do_wait_peer()
+
+            def _claim_ready():
+                assert cui_w.button_start.isEnabled()
+                assert cui_w.button_start.text() == translate("TEXT_CLAIM_USER_READY")
+
+            await aqtbot.wait_until(_claim_ready)
+
+            aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
 
             cuce_w = await catch_claim_user_widget()
             assert isinstance(cuce_w, ClaimUserCodeExchangeWidget)
@@ -257,7 +259,7 @@ def ClaimUserTestBed(
             aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
 
             def _claim_info_submitted():
-                assert not cupi_w.button_ok.isEnabled()
+                assert not cupi_w.button_ok.isVisible()
                 assert cupi_w.label_wait.isVisible()
 
             await aqtbot.wait_until(_claim_info_submitted)
@@ -632,7 +634,7 @@ async def test_claim_user_already_deleted(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
     await backend.invite.delete(
@@ -664,7 +666,7 @@ async def test_claim_user_offline_backend(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
     with running_backend.offline():
@@ -688,7 +690,7 @@ async def test_claim_user_unknown_invitation(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=InvitationToken.new(),
     )
 
@@ -706,7 +708,7 @@ async def test_claim_user_unknown_invitation(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_claim_user_with_bad_start_arg(event_bus, core_config, gui_factory, autoclose_dialog):
-    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD&user_id=John"
+    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD&user_id=John"  # cspell: disable-line
 
     await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=bad_start_arg)
 
@@ -730,7 +732,7 @@ async def test_claim_user_backend_desync(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=InvitationToken.new(),
     )
 

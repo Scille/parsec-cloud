@@ -1,18 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 from typing import List, Tuple
 
-from parsec.backend.utils import OperationKind
-from parsec.backend.realm import RealmRole
-from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
+import triopg
+
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_vlob_encryption_revision_internal_id,
     q_organization_internal_id,
+    q_vlob_encryption_revision_internal_id,
+    query,
 )
 from parsec.backend.postgresql.vlob_queries.utils import _check_realm, _check_realm_access
-
+from parsec.backend.realm import RealmRole
+from parsec.backend.utils import OperationKind
 
 _q_maintenance_get_reencryption_batch = Q(
     f"""
@@ -119,8 +121,12 @@ SELECT (
 
 
 async def _check_realm_and_maintenance_access(
-    conn, organization_id, author, realm_id, encryption_revision
-):
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
+    encryption_revision: int,
+) -> None:
     await _check_realm(
         conn, organization_id, realm_id, encryption_revision, OperationKind.MAINTENANCE
     )
@@ -130,7 +136,7 @@ async def _check_realm_and_maintenance_access(
 
 @query(in_transaction=True)
 async def query_maintenance_get_reencryption_batch(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -143,17 +149,17 @@ async def query_maintenance_get_reencryption_batch(
     rep = await conn.fetch(
         *_q_maintenance_get_reencryption_batch(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             encryption_revision=encryption_revision,
             size=size,
         )
     )
-    return [(VlobID(row["vlob_id"]), row["version"], row["blob"]) for row in rep]
+    return [(VlobID.from_hex(row["vlob_id"]), row["version"], row["blob"]) for row in rep]
 
 
 @query(in_transaction=True)
 async def query_maintenance_save_reencryption_batch(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
@@ -167,8 +173,8 @@ async def query_maintenance_save_reencryption_batch(
         await conn.execute(
             *_q_maintenance_save_reencryption_batch(
                 organization_id=organization_id.str,
-                realm_id=realm_id.uuid,
-                vlob_id=vlob_id.uuid,
+                realm_id=realm_id,
+                vlob_id=vlob_id,
                 version=version,
                 encryption_revision=encryption_revision,
                 blob=blob,
@@ -179,7 +185,7 @@ async def query_maintenance_save_reencryption_batch(
     rep = await conn.fetchrow(
         *_q_maintenance_save_reencryption_batch_get_stat(
             organization_id=organization_id.str,
-            realm_id=realm_id.uuid,
+            realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
     )

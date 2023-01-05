@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 import trio
 
 from parsec._parsec import InvitationType
-from parsec.api.transport import Transport, BytesMessage, Ping, Pong
-from parsec.core.types import BackendInvitationAddr
+from parsec.api.transport import BytesMessage, Ping, Pong, Transport
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
 )
+from parsec.core.types import BackendInvitationAddr
 
 
 async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
@@ -78,7 +79,7 @@ async def test_invited_cmd_keepalive(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 

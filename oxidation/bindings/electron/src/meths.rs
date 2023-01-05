@@ -7,72 +7,166 @@
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
 
-// HelloError
+// AvailableDevice
 
 #[allow(dead_code)]
-fn variant_helloerror_js_to_rs<'a>(
+fn struct_availabledevice_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::HelloError> {
+) -> NeonResult<libparsec::AvailableDevice> {
+    let key_file_path = {
+        let js_val: Handle<JsString> = obj.get(cx, "key_file_path")?;
+        match js_val.value(cx).parse() {
+            Ok(val) => val,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    };
+    let organization_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "organization_id")?;
+        match js_val.value(cx).parse() {
+            Ok(val) => val,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    };
+    let device_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "device_id")?;
+        match js_val.value(cx).parse() {
+            Ok(val) => val,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    };
+    let human_handle = {
+        let js_val: Handle<JsValue> = obj.get(cx, "human_handle")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(match js_val.value(cx).parse() {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(err),
+                })
+            }
+        }
+    };
+    let device_label = {
+        let js_val: Handle<JsValue> = obj.get(cx, "device_label")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(match js_val.value(cx).parse() {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(err),
+                })
+            }
+        }
+    };
+    let slug = {
+        let js_val: Handle<JsString> = obj.get(cx, "slug")?;
+        js_val.value(cx)
+    };
+    let ty = {
+        let js_val: Handle<JsObject> = obj.get(cx, "ty")?;
+        variant_devicefiletype_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::AvailableDevice {
+        key_file_path,
+        organization_id,
+        device_id,
+        human_handle,
+        device_label,
+        slug,
+        ty,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_availabledevice_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AvailableDevice,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_key_file_path = JsString::try_new(cx, rs_obj.key_file_path).or_throw(cx)?;
+    js_obj.set(cx, "key_file_path", js_key_file_path)?;
+    let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
+    js_obj.set(cx, "organization_id", js_organization_id)?;
+    let js_device_id = JsString::try_new(cx, rs_obj.device_id).or_throw(cx)?;
+    js_obj.set(cx, "device_id", js_device_id)?;
+    let js_human_handle = match rs_obj.human_handle {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "human_handle", js_human_handle)?;
+    let js_device_label = match rs_obj.device_label {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "device_label", js_device_label)?;
+    let js_slug = JsString::try_new(cx, rs_obj.slug).or_throw(cx)?;
+    js_obj.set(cx, "slug", js_slug)?;
+    let js_ty = variant_devicefiletype_rs_to_js(cx, rs_obj.ty)?;
+    js_obj.set(cx, "ty", js_ty)?;
+    Ok(js_obj)
+}
+
+// DeviceFileType
+
+#[allow(dead_code)]
+fn variant_devicefiletype_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceFileType> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "EmptySubject" => Ok(libparsec::HelloError::EmptySubject {}),
-        "YouAreADog" => {
-            let hello = {
-                let js_val: Handle<JsString> = obj.get(cx, "hello")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::HelloError::YouAreADog { hello })
-        }
-        _ => cx.throw_type_error("Object is not a HelloError"),
+        "Password" => Ok(libparsec::DeviceFileType::Password {}),
+        "Recovery" => Ok(libparsec::DeviceFileType::Recovery {}),
+        "Smartcard" => Ok(libparsec::DeviceFileType::Smartcard {}),
+        _ => cx.throw_type_error("Object is not a DeviceFileType"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_helloerror_rs_to_js<'a>(
+fn variant_devicefiletype_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::HelloError,
+    rs_obj: libparsec::DeviceFileType,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::HelloError::EmptySubject {} => {
-            let js_tag = JsString::try_new(cx, "EmptySubject").or_throw(cx)?;
+        libparsec::DeviceFileType::Password {} => {
+            let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::HelloError::YouAreADog { hello } => {
-            let js_tag = JsString::try_new(cx, "YouAreADog").or_throw(cx)?;
+        libparsec::DeviceFileType::Recovery {} => {
+            let js_tag = JsString::try_new(cx, "Recovery").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_hello = JsString::try_new(cx, hello).or_throw(cx)?;
-            js_obj.set(cx, "hello", js_hello)?;
+        }
+        libparsec::DeviceFileType::Smartcard {} => {
+            let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
 }
 
-// hello_world
-fn hello_world(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let subject = {
+// list_available_devices
+fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let path = {
         let js_val = cx.argument::<JsString>(0)?;
-        js_val.value(&mut cx)
+        match js_val.value(&mut cx).parse() {
+            Ok(val) => val,
+            Err(err) => return cx.throw_type_error(err),
+        }
     };
-    let ret = libparsec::hello_world(&subject);
-    let js_ret = match ret {
-        Ok(ok) => {
-            let js_obj = JsObject::new(&mut cx);
-            let js_tag = JsBoolean::new(&mut cx, true);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = JsString::try_new(&mut cx, ok).or_throw(&mut cx)?;
-            js_obj.set(&mut cx, "value", js_value)?;
-            js_obj
+    let ret = libparsec::list_available_devices(path);
+    let js_ret = {
+        let js_array = JsArray::new(&mut cx, ret.len() as u32);
+        for (i, elem) in ret.into_iter().enumerate() {
+            let js_elem = struct_availabledevice_rs_to_js(&mut cx, elem)?;
+            js_array.set(&mut cx, i as u32, js_elem)?;
         }
-        Err(err) => {
-            let js_obj = (&mut cx).empty_object();
-            let js_tag = JsBoolean::new(&mut cx, false);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_helloerror_rs_to_js(&mut cx, err)?;
-            js_obj.set(&mut cx, "error", js_err)?;
-            js_obj
-        }
+        js_array
     };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
@@ -80,6 +174,6 @@ fn hello_world(mut cx: FunctionContext) -> JsResult<JsPromise> {
 }
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
-    cx.export_function("helloWorld", hello_world)?;
+    cx.export_function("listAvailableDevices", list_available_devices)?;
     Ok(())
 }

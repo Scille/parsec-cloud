@@ -1,19 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import trio
-from parsec._parsec import DateTime, mock_time
 from contextlib import contextmanager
 
+import trio
+
+from parsec._parsec import DateTime, mock_time
 from parsec.api.protocol import DeviceID
 from parsec.core.types import LocalDevice
-
 
 __freeze_time_dict = {}
 
 
 def _timestamp_mockup(device):
     _, time = __freeze_time_dict.get(device.device_id, (None, None))
-    return time or DateTime.now()
+    return time or device.time_provider.now()
 
 
 @contextmanager

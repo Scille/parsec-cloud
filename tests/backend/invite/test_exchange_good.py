@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-
-from parsec.crypto import HashDigest
 
 from parsec._parsec import (
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1GreeterWaitPeerRepInvalidState,
-    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceRepInvalidState,
     Invite2aGreeterGetHashedNonceRepInvalidState,
     Invite2bClaimerSendNonceRepInvalidState,
     Invite2bClaimerSendNonceRepOk,
@@ -23,11 +22,12 @@ from parsec._parsec import (
     Invite4ClaimerCommunicateRepInvalidState,
     Invite4GreeterCommunicateRepInvalidState,
 )
+from parsec.crypto import HashDigest
 
 INVALID_STATES_TYPES = (
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1GreeterWaitPeerRepInvalidState,
-    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceRepInvalidState,
     Invite2aGreeterGetHashedNonceRepInvalidState,
     Invite2bClaimerSendNonceRepInvalidState,
     Invite2bGreeterSendNonceRepInvalidState,
@@ -285,7 +285,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             )
             continue
         else:
-            # No reset occured at all... `reset_step` must be wrong !
+            # No reset occurred at all... `reset_step` must be wrong !
             assert False, reset_step
 
 

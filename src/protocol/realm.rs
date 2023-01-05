@@ -1,30 +1,53 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyNotImplementedError,
-    import_exception,
+    exceptions::{PyNotImplementedError, PyValueError},
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyTuple, PyType},
 };
 use std::collections::HashMap;
 
-use libparsec::protocol::authenticated_cmds::{
+use libparsec::protocol::authenticated_cmds::v2::{
     realm_create, realm_finish_reencryption_maintenance, realm_get_role_certificates,
     realm_start_reencryption_maintenance, realm_stats, realm_status, realm_update_roles,
 };
 
 use crate::{
     ids::{DeviceID, RealmID, UserID},
-    protocol::{gen_rep, OptionalDateTime, OptionalFloat, Reason},
+    protocol::{
+        error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+        gen_rep, OptionalDateTime, OptionalFloat, Reason,
+    },
     time::DateTime,
 };
 
-import_exception!(parsec.api.protocol, ProtocolError);
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct MaintenanceType(realm_status::MaintenanceType);
+
+crate::binding_utils::gen_proto!(MaintenanceType, __repr__);
+crate::binding_utils::gen_proto!(MaintenanceType, __richcmp__, eq);
+
+crate::binding_utils::impl_enum_field!(
+    MaintenanceType,
+    [
+        "GARBAGE_COLLECTION",
+        garbage_collection,
+        realm_status::MaintenanceType::GarbageCollection
+    ],
+    [
+        "REENCRYPTION",
+        reencryption,
+        realm_status::MaintenanceType::Reencryption
+    ]
+);
 
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct RealmCreateReq(pub realm_create::Req);
+
+crate::binding_utils::gen_proto!(RealmCreateReq, __repr__);
+crate::binding_utils::gen_proto!(RealmCreateReq, __richcmp__, eq);
 
 #[pymethods]
 impl RealmCreateReq {
@@ -33,22 +56,14 @@ impl RealmCreateReq {
         Ok(Self(realm_create::Req { role_certificate }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -90,6 +105,9 @@ impl RealmCreateRepOk {
 #[derive(Clone)]
 pub(crate) struct RealmStatusReq(pub realm_status::Req);
 
+crate::binding_utils::gen_proto!(RealmStatusReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStatusReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmStatusReq {
     #[new]
@@ -98,67 +116,20 @@ impl RealmStatusReq {
         Ok(Self(realm_status::Req { realm_id }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
     #[getter]
     fn realm_id(&self) -> PyResult<RealmID> {
         Ok(RealmID(self.0.realm_id))
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct MaintenanceType(realm_status::MaintenanceType);
-
-#[pymethods]
-impl MaintenanceType {
-    #[new]
-    fn new(maintenance_type: &str) -> PyResult<Self> {
-        Ok(Self(match maintenance_type {
-            "GARBAGE_COLLECTION" => realm_status::MaintenanceType::GarbageCollection,
-            "REENCRYPTION" => realm_status::MaintenanceType::Reencryption,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        }))
-    }
-    fn __richcmp__(&self, other: Option<Self>, op: CompareOp) -> PyResult<bool> {
-        let other = match other {
-            Some(other) => other,
-            None => return Ok(false),
-        };
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    #[classmethod]
-    #[pyo3(name = "GARBAGE_COLLECTION")]
-    fn garbage_collection(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(realm_status::MaintenanceType::GarbageCollection))
-    }
-
-    #[classmethod]
-    #[pyo3(name = "REENCRYPTION")]
-    fn reencryption(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(realm_status::MaintenanceType::Reencryption))
     }
 }
 
@@ -251,6 +222,9 @@ impl RealmStatusRepOk {
 #[derive(Clone)]
 pub(crate) struct RealmStatsReq(pub realm_stats::Req);
 
+crate::binding_utils::gen_proto!(RealmStatsReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStatsReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmStatsReq {
     #[new]
@@ -259,22 +233,14 @@ impl RealmStatsReq {
         Ok(Self(realm_stats::Req { realm_id }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -329,6 +295,9 @@ impl RealmStatsRepOk {
 #[derive(Clone)]
 pub(crate) struct RealmGetRoleCertificatesReq(pub realm_get_role_certificates::Req);
 
+crate::binding_utils::gen_proto!(RealmGetRoleCertificatesReq, __repr__);
+crate::binding_utils::gen_proto!(RealmGetRoleCertificatesReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmGetRoleCertificatesReq {
     #[new]
@@ -337,22 +306,14 @@ impl RealmGetRoleCertificatesReq {
         Ok(Self(realm_get_role_certificates::Req { realm_id }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -398,6 +359,9 @@ impl RealmGetRoleCertificatesRepOk {
 #[derive(Clone)]
 pub(crate) struct RealmUpdateRolesReq(pub realm_update_roles::Req);
 
+crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __repr__);
+crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmUpdateRolesReq {
     #[new]
@@ -408,22 +372,14 @@ impl RealmUpdateRolesReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -453,10 +409,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
     ],
 );
 
@@ -476,6 +432,9 @@ impl RealmUpdateRolesRepOk {
 pub(crate) struct RealmStartReencryptionMaintenanceReq(
     pub realm_start_reencryption_maintenance::Req,
 );
+
+crate::binding_utils::gen_proto!(RealmStartReencryptionMaintenanceReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStartReencryptionMaintenanceReq, __richcmp__, eq);
 
 #[pymethods]
 impl RealmStartReencryptionMaintenanceReq {
@@ -500,22 +459,14 @@ impl RealmStartReencryptionMaintenanceReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -560,10 +511,10 @@ gen_rep!(
     [
         BadTimestamp,
         reason: Reason,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime
+        ballpark_client_early_offset: OptionalFloat,
+        ballpark_client_late_offset: OptionalFloat,
+        backend_timestamp: OptionalDateTime,
+        client_timestamp: OptionalDateTime,
     ],
 );
 
@@ -587,6 +538,9 @@ pub(crate) struct RealmFinishReencryptionMaintenanceReq(
     pub realm_finish_reencryption_maintenance::Req,
 );
 
+crate::binding_utils::gen_proto!(RealmFinishReencryptionMaintenanceReq, __repr__);
+crate::binding_utils::gen_proto!(RealmFinishReencryptionMaintenanceReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmFinishReencryptionMaintenanceReq {
     #[new]
@@ -598,22 +552,14 @@ impl RealmFinishReencryptionMaintenanceReq {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 

@@ -1,26 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Iterable, List, Optional, Dict
 from pathlib import Path
-from uuid import UUID
-from parsec._parsec import DateTime
+from typing import Dict, Iterable, Union
+
 import attr
+
+from parsec._parsec import DateTime, EnrollmentID
+from parsec.api.data import DataError, PkiEnrollmentSubmitPayload
+from parsec.api.protocol.pki import EnrollmentIDField
+from parsec.core.local_device import MsgpackSerializer
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentLocalPendingError,
+    PkiEnrollmentLocalPendingNotFoundError,
+    PkiEnrollmentLocalPendingPackingError,
+    PkiEnrollmentLocalPendingValidationError,
+)
 from parsec.core.types.backend_address import (
     BackendPkiEnrollmentAddr,
     BackendPkiEnrollmentAddrField,
 )
 from parsec.core.types.base import BaseLocalData
-from parsec.core.pki.exceptions import (
-    PkiEnrollmentLocalPendingError,
-    PkiEnrollmentLocalPendingPackingError,
-    PkiEnrollmentLocalPendingNotFoundError,
-    PkiEnrollmentLocalPendingValidationError,
-)
-
 from parsec.serde import BaseSchema, fields, post_load
-from parsec.api.data import DataError
-from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.core.local_device import MsgpackSerializer
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -34,30 +35,30 @@ class X509Certificate:
         certificate_id = fields.String(required=True, allow_none=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Union[str, Dict[str, str], bytes]]) -> X509Certificate:
             data.pop("type", None)
-            return X509Certificate(**data)
+            return X509Certificate(**data)  # type: ignore[arg-type]
 
     issuer: Dict[str, str]
     subject: Dict[str, str]
     der_x509_certificate: bytes
     certificate_sha1: bytes
-    certificate_id: Optional[str]
+    certificate_id: str | None
 
-    def is_available_locally(self):
+    def is_available_locally(self) -> bool:
         """Certificates that are received from another peer are not available locally."""
         return self.certificate_id is not None
 
     @property
-    def subject_common_name(self) -> Optional[str]:
+    def subject_common_name(self) -> str | None:
         return self.subject.get("common_name")
 
     @property
-    def subject_email_address(self) -> Optional[str]:
+    def subject_email_address(self) -> str | None:
         return self.subject.get("email_address")
 
     @property
-    def issuer_common_name(self) -> Optional[str]:
+    def issuer_common_name(self) -> str | None:
         return self.issuer.get("common_name")
 
 
@@ -84,20 +85,23 @@ class LocalPendingEnrollment(BaseLocalData):
         x509_certificate = fields.Nested(X509Certificate.SCHEMA_CLS, required=True)
         addr = BackendPkiEnrollmentAddrField(required=True)
         submitted_on = fields.DateTime(required=True)
-        enrollment_id = fields.UUID(required=True)
-        submit_payload = fields.Nested(PkiEnrollmentSubmitPayload.SCHEMA_CLS, required=True)
+        enrollment_id = EnrollmentIDField(required=True)
+        submit_payload = fields.PkiEnrollmentSubmitPayloadField(required=True)
         encrypted_key = fields.Bytes(required=True)
         ciphertext = fields.Bytes(required=True)  # An encrypted PendingDeviceKeys
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(
+            self,
+            data: Dict[str, object],
+        ) -> LocalPendingEnrollment:
             data.pop("type", None)
-            return LocalPendingEnrollment(**data)
+            return LocalPendingEnrollment(**data)  # type: ignore[arg-type]
 
     x509_certificate: X509Certificate
     addr: BackendPkiEnrollmentAddr
     submitted_on: DateTime
-    enrollment_id: UUID
+    enrollment_id: EnrollmentID
     submit_payload: PkiEnrollmentSubmitPayload
     encrypted_key: bytes
     ciphertext: bytes
@@ -134,7 +138,7 @@ class LocalPendingEnrollment(BaseLocalData):
             yield path
 
     @classmethod
-    def load_from_path(cls, path: Path):
+    def load_from_path(cls, path: Path) -> LocalPendingEnrollment:
         """
         Raises:
             PkiEnrollmentLocalPendingError
@@ -156,7 +160,7 @@ class LocalPendingEnrollment(BaseLocalData):
 
     @classmethod
     def load_from_enrollment_id(
-        cls, config_dir: Path, enrollment_id: UUID
+        cls, config_dir: Path, enrollment_id: EnrollmentID
     ) -> "LocalPendingEnrollment":
         """
         Raises:
@@ -179,7 +183,7 @@ class LocalPendingEnrollment(BaseLocalData):
             ) from exc
 
     @classmethod
-    def list(cls, config_dir: Path) -> List["LocalPendingEnrollment"]:
+    def list(cls, config_dir: Path) -> list[LocalPendingEnrollment]:
         """Raises: Nothing"""
         result = []
         for path in cls.iter_path(config_dir):
@@ -191,7 +195,7 @@ class LocalPendingEnrollment(BaseLocalData):
         return result
 
     @classmethod
-    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: UUID) -> None:
+    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: EnrollmentID) -> None:
         """
         Raises:
             PkiEnrollmentLocalPendingError

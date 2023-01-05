@@ -135,7 +135,7 @@ use tests_fixtures::{alice, Device};
     false,
     UserProfile::Admin,
 )]
-#[case::legagacy_format_admin(
+#[case::legacy_format_admin(
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   organization_addr: parsec://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss"
@@ -161,7 +161,7 @@ use tests_fixtures::{alice, Device};
     false,
     UserProfile::Admin,
 )]
-#[case::legagacy_format_non_admin(
+#[case::legacy_format_non_admin(
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   organization_addr: parsec://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss"

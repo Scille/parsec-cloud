@@ -2,20 +2,25 @@
 
 use pyo3::{
     exceptions::PyNotImplementedError,
-    import_exception,
     prelude::*,
     types::{PyBytes, PyString},
 };
 
-use libparsec::protocol::{authenticated_cmds, invited_cmds};
+use libparsec::protocol::{
+    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+};
 
-use crate::protocol::gen_rep;
-
-import_exception!(parsec.api.protocol, ProtocolError);
+use crate::protocol::{
+    error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+    gen_rep,
+};
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct InvitedPingReq(pub invited_cmds::ping::Req);
+
+crate::binding_utils::gen_proto!(InvitedPingReq, __repr__);
+crate::binding_utils::gen_proto!(InvitedPingReq, __richcmp__, eq);
 
 #[pymethods]
 impl InvitedPingReq {
@@ -24,14 +29,14 @@ impl InvitedPingReq {
         Ok(Self(invited_cmds::ping::Req { ping }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 
@@ -63,8 +68,11 @@ impl InvitedPingRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct AuthenticatedPingReq(pub authenticated_cmds::ping::Req);
+
+crate::binding_utils::gen_proto!(AuthenticatedPingReq, __repr__);
+crate::binding_utils::gen_proto!(AuthenticatedPingReq, __richcmp__, eq);
 
 #[pymethods]
 impl AuthenticatedPingReq {
@@ -73,14 +81,14 @@ impl AuthenticatedPingReq {
         Ok(Self(authenticated_cmds::ping::Req { ping }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
         ))
     }
 

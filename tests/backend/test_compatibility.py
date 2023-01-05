@@ -1,20 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from parsec._parsec import DateTime, RealmCreateRepBadTimestamp
-from parsec.serde import BaseSchema, fields
-from parsec.api.protocol.base import packb
+from parsec._parsec import ApiVersion, DateTime, RealmCreateRepBadTimestamp
+from parsec.api.protocol.base import packb, serializer_factory
 from parsec.api.protocol.handshake import (
-    AuthenticatedClientHandshake,
-    ServerHandshake,
-    handshake_challenge_serializer,
-    handshake_answer_serializer,
-    handshake_result_serializer,
     ApiVersionField,
+    AuthenticatedClientHandshake,
     HandshakeType,
+    ServerHandshake,
+    handshake_answer_serializer,
+    handshake_challenge_serializer,
+    handshake_result_serializer,
 )
-from parsec.api.protocol.base import serializer_factory
-
-from parsec.api.version import ApiVersion
+from parsec.serde import BaseSchema, fields
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 
@@ -72,7 +70,7 @@ def test_handshake_challenge_schema_compatibility():
 
     # Backend API < 2.4 with newer clients
     data = older_handshake_challenge_serializer.dumps(old_data)
-    assert handshake_challenge_serializer.loads(data) == compat_data
+    assert handshake_challenge_serializer.loads(data) == {**compat_data, "client_timestamp": None}
 
 
 def test_handshake_challenge_schema_for_client_server_api_compatibility(

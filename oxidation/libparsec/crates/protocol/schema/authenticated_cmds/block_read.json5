@@ -1,0 +1,40 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "block_read",
+            "fields": [
+                {
+                    "name": "block_id",
+                    "type": "BlockID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "block",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "timeout"
+            },
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "in_maintenance"
+            }
+        ]
+    }
+]

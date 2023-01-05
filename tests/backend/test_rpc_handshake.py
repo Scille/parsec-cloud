@@ -1,18 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
+import logging
+from base64 import b64encode
 from typing import Union
 from unittest.mock import patch
-from base64 import b64encode
 
-from parsec._parsec import DateTime, LocalDevice, DeviceID
-from parsec.api.version import ApiVersion, API_VERSION
+import pytest
+
+from parsec._parsec import DateTime, DeviceID, LocalDevice
+from parsec.api.version import API_VERSION, ApiVersion
 from parsec.serde import unpackb
-
-from tests.common import (
-    AuthenticatedRpcApiClient,
-    AnonymousRpcApiClient,
-)
+from tests.common import AnonymousRpcApiClient, AuthenticatedRpcApiClient
 
 
 async def _test_good_handshake(client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient]):
@@ -220,3 +219,26 @@ async def test_handshake(
     await _test_handshake_body_not_msgpack(anonymous_rpc, alice)
 
     await _test_authenticated_handshake_author_not_found(alice_rpc)
+
+
+@pytest.mark.trio
+async def test_client_version_in_logs(
+    alice_rpc: AuthenticatedRpcApiClient, anonymous_rpc: AnonymousRpcApiClient, caplog
+):
+    client_api_version = ApiVersion(3, 99)
+    alice_rpc.API_VERSION = client_api_version
+    anonymous_rpc.API_VERSION = client_api_version
+    with caplog.at_level(logging.INFO):
+        # Authenticated
+        await _test_good_handshake(alice_rpc)
+        assert (
+            f"Authenticated client successfully connected (client/server API version: {client_api_version}/{API_VERSION})"
+            in caplog.text
+        )
+
+        # Anonymous
+        await _test_good_handshake(anonymous_rpc)
+        assert (
+            f"Anonymous client successfully connected (client/server API version: {client_api_version}/{API_VERSION})"
+            in caplog.text
+        )

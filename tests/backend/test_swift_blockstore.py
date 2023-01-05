@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from unittest.mock import Mock
 from unittest import mock
-from swiftclient.exceptions import ClientException
-import pytest
+from unittest.mock import Mock
 
-from parsec.api.protocol import OrganizationID, BlockID
+import pytest
+from swiftclient.exceptions import ClientException
+
+from parsec.api.protocol import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.swift_blockstore import SwiftBlockStoreComponent
 
@@ -16,9 +18,9 @@ async def test_swift_get(caplog):
     block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
-        log = caplog.assert_occured_once("[warning  ] Block read error")
+        log = caplog.assert_occurred_once("[warning  ] Block read error")
         assert f"organization_id={org_id.str}" in log
-        assert f"block_id={block_id.str}" in log
+        assert f"block_id={block_id.hex}" in log
         assert len(caplog.messages) == 1
         caplog.clear()
 
@@ -55,9 +57,9 @@ async def test_swift_create(caplog):
     block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
 
     def _assert_log():
-        log = caplog.assert_occured_once("[warning  ] Block create error")
+        log = caplog.assert_occurred_once("[warning  ] Block create error")
         assert f"organization_id={org_id.str}" in log
-        assert f"block_id={block_id.str}" in log
+        assert f"block_id={block_id.hex}" in log
         assert len(caplog.messages) == 1
         caplog.clear()
 

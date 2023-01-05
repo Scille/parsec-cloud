@@ -1,25 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import re
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import AsyncContextManager, AsyncIterator, Dict, Set, Tuple, Union
 
 import trio
-from pathlib import Path
 from structlog import get_logger
-from typing import (
-    Dict,
-    Tuple,
-    Set,
-    Optional,
-    Union,
-    Pattern,
-    AsyncIterator,
-    AsyncContextManager,
-)
-from contextlib import asynccontextmanager
 
+from parsec._parsec import Regex
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
-from parsec.core.types import EntryID, ChunkID, LocalDevice, BlockID
-from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
+from parsec.core.fs.storage.local_database import Cursor, LocalDatabase
+from parsec.core.types import BlockID, ChunkID, EntryID, LocalDevice
 from parsec.core.types.manifest import AnyLocalManifest, local_manifest_decrypt_and_load
 
 logger = get_logger()
@@ -131,15 +123,8 @@ class ManifestStorage:
 
     # "Prevent sync" pattern operations
 
-    async def get_prevent_sync_pattern(self) -> Tuple[Pattern[str], bool]:
-        async with self._open_cursor() as cursor:
-            cursor.execute("SELECT pattern, fully_applied FROM prevent_sync_pattern WHERE _id = 0")
-            reply = cursor.fetchone()
-            pattern, fully_applied = reply
-            return (re.compile(pattern), bool(fully_applied))
-
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
-        """Set the "prevent sync" pattern for the corresponding workspace
+    async def set_prevent_sync_pattern(self, pattern: Regex) -> bool:
+        """Set the "prevent sync" pattern for the corresponding workspace.
 
         This operation is idempotent,
         i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
@@ -149,8 +134,12 @@ class ManifestStorage:
                 """UPDATE prevent_sync_pattern SET pattern = ?, fully_applied = 0 WHERE _id = 0 AND pattern != ?""",
                 (pattern.pattern, pattern.pattern),
             )
+            cursor.execute("SELECT fully_applied FROM prevent_sync_pattern WHERE _id = 0")
+            reply = cursor.fetchone()
+            (fully_applied,) = reply
+            return fully_applied
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> bool:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the
@@ -162,6 +151,10 @@ class ManifestStorage:
                 """UPDATE prevent_sync_pattern SET fully_applied = 1 WHERE _id = 0 AND pattern = ?""",
                 (pattern.pattern,),
             )
+            cursor.execute("SELECT fully_applied FROM prevent_sync_pattern WHERE _id = 0")
+            reply = cursor.fetchone()
+            (fully_applied,) = reply
+            return fully_applied
 
     # Checkpoint operations
 
@@ -249,7 +242,7 @@ class ManifestStorage:
         entry_id: EntryID,
         manifest: AnyLocalManifest,
         cache_only: bool = False,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Set[ChunkID] | None = None,
     ) -> None:
         """
         Raises: Nothing !
@@ -318,7 +311,7 @@ class ManifestStorage:
             await self.localdb.run_in_thread(_thread_target)
 
         # Tag entry as up-to-date only if no new manifest has been written in the meantime
-        if manifest == self._cache[entry_id]:  # type: ignore[operator]
+        if manifest == self._cache[entry_id]:
             self._cache_ahead_of_localdb.pop(entry_id)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:

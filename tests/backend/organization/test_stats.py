@@ -1,16 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import (
-    DateTime,
-    OrganizationStatsRepOk,
-    UsersPerProfileDetailItem,
-)
-from parsec.api.protocol import VlobID, BlockID, UserProfile
-
-from tests.common import customize_fixtures
+from parsec._parsec import DateTime, OrganizationStatsRepOk, UsersPerProfileDetailItem
+from parsec.api.protocol import BlockID, UserProfile, VlobID
 from tests.backend.common import organization_stats
+from tests.common import customize_fixtures
 
 
 @pytest.mark.trio
@@ -127,7 +123,7 @@ async def test_organization_stats_users(
     )
 
     async with backend_authenticated_ws_factory(backend_asgi_app, godfrey1) as sock:
-        for profile in UserProfile:
+        for profile in UserProfile.VALUES:
             i = [
                 i
                 for i, v in enumerate(expected_stats.users_per_profile_detail)

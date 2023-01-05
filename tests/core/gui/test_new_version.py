@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
-from parsec.core.gui.new_version import do_check_new_version, Version
+from parsec.core.gui.new_version import Version, do_check_new_version
 
 
 @pytest.mark.trio
@@ -280,6 +281,6 @@ async def test_check_new_version_bad_api_payload(monkeypatch, caplog, payload):
 
     result = await do_check_new_version(api_url="https://api.com/releases")
     assert result is None
-    caplog.assert_occured_once(
+    caplog.assert_occurred_once(
         "[error    ] Cannot load releases info from API [parsec.core.gui.new_version]"
     )

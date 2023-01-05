@@ -1,32 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-import trio
-import click
-from structlog import get_logger
-from typing import Optional, Tuple
-from functools import partial
+import math
 import tempfile
+from functools import partial
 from pathlib import Path
+from typing import Any, Tuple
 
-from parsec.utils import trio_run
-from parsec.cli_utils import (
-    cli_exception_handler,
-    logging_config_options,
-    sentry_config_options,
-    debug_config_options,
-)
-from parsec.backend.cli.utils import db_backend_options, blockstore_backend_options
+import click
+import trio
+from structlog import get_logger
+
+from parsec._parsec import ActiveUsersLimit, BackendAddr
 from parsec.backend import backend_app_factory
 from parsec.backend.asgi import serve_backend_with_asgi
+from parsec.backend.cli.utils import blockstore_backend_options, db_backend_options
 from parsec.backend.config import (
     BackendConfig,
-    EmailConfig,
     BaseBlockStoreConfig,
-    SmtpEmailConfig,
+    EmailConfig,
     MockedEmailConfig,
+    SmtpEmailConfig,
 )
-from parsec.core.types import BackendAddr
-
+from parsec.cli_utils import (
+    cli_exception_handler,
+    debug_config_options,
+    logging_config_options,
+    sentry_config_options,
+)
+from parsec.utils import trio_run
 
 logger = get_logger()
 
@@ -35,8 +37,8 @@ DEFAULT_EMAIL_SENDER = "no-reply@parsec.com"
 
 
 def _parse_forward_proto_enforce_https_check_param(
-    raw_param: Optional[str],
-) -> Optional[Tuple[str, str]]:
+    raw_param: str | None,
+) -> Tuple[str, str] | None:
     if raw_param is None:
         return None
     try:
@@ -48,7 +50,9 @@ def _parse_forward_proto_enforce_https_check_param(
 
 
 class DevOption(click.Option):
-    def handle_parse_result(self, ctx, opts, args):
+    def handle_parse_result(
+        self, ctx: click.Context, opts: Any, args: list[str]
+    ) -> Tuple[Any, list[str]]:
         value, args = super().handle_parse_result(ctx, opts, args)
         if value:
 
@@ -270,6 +274,15 @@ organization_id, device_id, device_label (can be null), human_email (can be null
         " --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
     ),
 )
+@click.option(
+    "--sse-keepalive",
+    default=30,
+    show_default=True,
+    type=float,
+    callback=lambda ctx, param, value: math.inf if value is None or value <= 0 else value,
+    envvar="PARSEC_SSE_KEEPALIVE",
+    help="Keep SSE connection open by sending keepalive messages to client (pass <= 0 to disable)",
+)
 # Add --debug
 @debug_config_options
 def run_cmd(
@@ -278,6 +291,7 @@ def run_cmd(
     db: str,
     db_min_connections: int,
     db_max_connections: int,
+    sse_keepalive: float,
     maximum_database_connection_attempts: int,
     pause_before_retry_database_connection: float,
     blockstore: BaseBlockStoreConfig,
@@ -289,18 +303,18 @@ def run_cmd(
     backend_addr: BackendAddr,
     email_host: str,
     email_port: int,
-    email_host_user: Optional[str],
-    email_host_password: Optional[str],
+    email_host_user: str | None,
+    email_host_password: str | None,
     email_use_ssl: bool,
     email_use_tls: bool,
     email_sender: str,
-    forward_proto_enforce_https: Optional[Tuple[str, str]],
-    ssl_keyfile: Optional[Path],
-    ssl_certfile: Optional[Path],
+    forward_proto_enforce_https: Tuple[str, str] | None,
+    ssl_keyfile: Path | None,
+    ssl_certfile: Path | None,
     log_level: str,
     log_format: str,
-    log_file: Optional[str],
-    sentry_dsn: Optional[str],
+    log_file: str | None,
+    sentry_dsn: str | None,
     sentry_environment: str,
     debug: bool,
     dev: bool,
@@ -333,6 +347,7 @@ def run_cmd(
             db_url=db,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
+            sse_keepalive=sse_keepalive,
             blockstore_config=blockstore,
             email_config=email_config,
             forward_proto_enforce_https=forward_proto_enforce_https,
@@ -340,7 +355,11 @@ def run_cmd(
             debug=debug,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
-            organization_initial_active_users_limit=organization_initial_active_users_limit,
+            organization_initial_active_users_limit=ActiveUsersLimit.LimitedTo(
+                organization_initial_active_users_limit
+            )
+            if organization_initial_active_users_limit is not None
+            else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
         )
 
@@ -395,8 +414,8 @@ class RetryPolicy:
 async def _run_backend(
     host: str,
     port: int,
-    ssl_certfile: Optional[Path],
-    ssl_keyfile: Optional[Path],
+    ssl_certfile: Path | None,
+    ssl_keyfile: Path | None,
     retry_policy: RetryPolicy,
     app_config: BackendConfig,
 ) -> None:

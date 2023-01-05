@@ -1,51 +1,54 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional, cast
-from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
-from PyQt5.QtGui import QPixmap, QColor, QIcon
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
+import time
 from pathlib import PurePath
+from typing import cast
 
-from parsec.event_bus import EventBus, EventCallback
-from parsec.api.protocol import (
-    HandshakeRevokedDevice,
-    HandshakeOrganizationExpired,
-    IncompatibleAPIVersionsError,
-)
+from PyQt5.QtCore import pyqtBoundSignal, pyqtSignal
+from PyQt5.QtGui import QColor, QIcon, QPixmap
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QMenu, QWidget
+
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
-from parsec.core.core_events import CoreEvent
-from parsec.core.logged_core import LoggedCore
-from parsec.core.types import UserInfo, BackendOrganizationFileLinkAddr
-from parsec.core.fs import FsPath
+from parsec.api.protocol import (
+    HandshakeOrganizationExpired,
+    HandshakeRevokedDevice,
+    IncompatibleAPIVersionsError,
+)
 from parsec.core.backend_connection import (
     BackendConnectionError,
-    BackendNotAvailable,
     BackendConnStatus,
+    BackendNotAvailable,
 )
-from parsec.core.pki import is_pki_enrollment_available
-from parsec.core.fs import FSWorkspaceNotFoundError
 from parsec.core.fs import (
-    FSWorkspaceNoReadAccess,
-    FSWorkspaceNoWriteAccess,
+    FsPath,
     FSWorkspaceInMaintenance,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNotFoundError,
+    FSWorkspaceNoWriteAccess,
+    WorkspaceFSTimestamped,
 )
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.mount_widget import MountWidget
-from parsec.core.gui.users_widget import UsersWidget
-from parsec.core.gui.devices_widget import DevicesWidget
-from parsec.core.gui.enrollment_widget import EnrollmentWidget
-from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui import desktop
 from parsec.core.gui.authentication_change_widget import AuthenticationChangeWidget
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.commercial import is_saas_addr
 from parsec.core.gui.custom_dialogs import show_error
-from parsec.core.gui.ui.central_widget import Ui_CentralWidget
+from parsec.core.gui.custom_widgets import Pixmap
+from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.enrollment_widget import EnrollmentWidget
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.menu_widget import MenuWidget
+from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.organization_info_widget import OrganizationInfoWidget
-import time
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.ui.central_widget import Ui_CentralWidget
+from parsec.core.gui.users_widget import UsersWidget
+from parsec.core.logged_core import LoggedCore
+from parsec.core.pki import is_pki_enrollment_available
+from parsec.core.types import BackendOrganizationFileLinkAddr, UserInfo
+from parsec.event_bus import EventBus, EventCallback
 
 
 class GoToFileLinkError(Exception):
@@ -85,8 +88,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         jobs_ctx: QtToTrioJobScheduler,
         event_bus: EventBus,
         systray_notification: pyqtBoundSignal,
-        file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None,
-        parent: Optional[QWidget] = None,
+        file_link_addr: BackendOrganizationFileLinkAddr | None = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent=parent)
 
@@ -231,7 +234,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     def _on_route_clicked(self, path: FsPath) -> None:
         self.mount_widget.load_path(path)
 
-    def _on_folder_changed(self, workspace_name: Optional[EntryName], path: Optional[str]) -> None:
+    def _on_folder_changed(self, workspace_name: EntryName | None, path: str | None) -> None:
         if workspace_name and path:
             self.navigation_bar_widget.from_path(workspace_name, path)
         else:
@@ -300,7 +303,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 kwargs["previous_entry"], WorkspaceEntry
             )
             new_entry: WorkspaceEntry = kwargs["new_entry"]
-            previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]
+            previous_entry: WorkspaceEntry | None = kwargs["previous_entry"]
             new_role = new_entry.role
             previous_role = previous_entry.role if previous_entry is not None else None
             if new_role is not None and previous_role is None:
@@ -325,11 +328,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 )
 
     def _on_connection_state_changed(
-        self, status: BackendConnStatus, status_exc: Optional[Exception], allow_systray: bool = True
+        self, status: BackendConnStatus, status_exc: Exception | None, allow_systray: bool = True
     ) -> None:
-        text = None
-        icon = None
-        tooltip = None
+        text: str | None = None
+        icon: QPixmap | None = None
+        tooltip: str | None = None
         notif = None
         disconnected = None
 
@@ -388,6 +391,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 notif = ("WARN", tooltip)
                 disconnected = True
 
+        # These variables should not be None as they're assigned above
+        assert text is not None
+        assert tooltip is not None
+        assert icon is not None
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
             self.new_notification.emit(*notif)
@@ -423,13 +430,20 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             raise GoToFileLinkBadWorkspaceIDError from exc
         try:
             path = workspace.decrypt_file_link_path(addr)
+            ts = workspace.decrypt_timestamp(addr)
         except ValueError as exc:
             raise GoToFileLinkPathDecryptionError from exc
 
         self.show_mount_widget()
-        self.mount_widget.show_files_widget(workspace, path, selected=True, mount_it=mount)
+        self.mount_widget.show_files_widget(
+            WorkspaceFSTimestamped(workspace, ts) if ts is not None else workspace,
+            path,
+            selected=True,
+            mount_it=mount,
+            timestamp=ts,
+        )
 
-    def show_mount_widget(self, user_info: Optional[UserInfo] = None) -> None:
+    def show_mount_widget(self, user_info: UserInfo | None = None) -> None:
         self.clear_widgets()
         self.menu.activate_files()
         self.label_title.setText(_("ACTION_MENU_DOCUMENTS"))

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 try:
     from parsec.core.gui._resources_rc import *  # noqa
@@ -13,6 +14,6 @@ Running `python misc/generate_pyqt.py build` should fix the issue
 if __name__ == "__main__":
     from PyQt5.QtCore import QDirIterator
 
-    it = QDirIterator(":", QDirIterator.Subdirectories)
+    it = QDirIterator(":", QDirIterator.IteratorFlags(QDirIterator.Subdirectories))
     while it.hasNext():
         print(it.next())

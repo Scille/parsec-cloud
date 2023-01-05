@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Dict, Any
-import zlib
 import json
+import zlib
+from typing import Any, Dict
+
 from marshmallow import ValidationError
 
-from parsec.serde.packing import packb, unpackb, SerdePackingError
 from parsec.serde.exceptions import SerdeValidationError
+from parsec.serde.packing import SerdePackingError, packb, unpackb
 
 
 class BaseSerializer:
@@ -14,8 +16,11 @@ class BaseSerializer:
         return f"{self.__class__.__name__}(schema={self.schema.__class__.__name__})"
 
     def __init__(
-        self, schema_cls, validation_exc=SerdeValidationError, packing_exc=SerdePackingError
-    ):
+        self,
+        schema_cls: Any,
+        validation_exc: Any = SerdeValidationError,
+        packing_exc: Any = SerdePackingError,
+    ) -> None:
         if isinstance(validation_exc, SerdeValidationError):
             raise ValueError("validation_exc must subclass SerdeValidationError")
         if isinstance(packing_exc, SerdePackingError):
@@ -55,7 +60,7 @@ class BaseSerializer:
 
 
 class JSONSerializer(BaseSerializer):
-    def loads(self, data: bytes) -> dict:
+    def loads(self, data: bytes) -> dict[str, Any]:
         """
         Raises:
             SerdeValidationError
@@ -67,7 +72,7 @@ class JSONSerializer(BaseSerializer):
             raise self.packing_exc from exc
         return self.load(decoded_data)
 
-    def dumps(self, data: dict) -> bytes:
+    def dumps(self, data: dict[str, Any]) -> bytes:
         """
         Raises:
             SerdeValidationError
@@ -77,7 +82,7 @@ class JSONSerializer(BaseSerializer):
 
 
 class MsgpackSerializer(BaseSerializer):
-    def loads(self, data: bytes) -> dict:
+    def loads(self, data: bytes) -> dict[str, Any]:
         """
         Raises:
             SerdeValidationError
@@ -85,7 +90,7 @@ class MsgpackSerializer(BaseSerializer):
         """
         return self.load(unpackb(data, self.packing_exc))
 
-    def dumps(self, data: dict) -> bytes:
+    def dumps(self, data: dict[str, Any]) -> bytes:
         """
         Raises:
             SerdeValidationError
@@ -95,7 +100,7 @@ class MsgpackSerializer(BaseSerializer):
 
 
 class ZipMsgpackSerializer(MsgpackSerializer):
-    def loads(self, data: bytes) -> dict:
+    def loads(self, data: bytes) -> dict[str, Any]:
         """
         Raises:
             SerdeValidationError
@@ -107,7 +112,7 @@ class ZipMsgpackSerializer(MsgpackSerializer):
             raise self.packing_exc(str(exc)) from exc
         return super().loads(unzipped)
 
-    def dumps(self, data: dict) -> bytes:
+    def dumps(self, data: dict[str, Any]) -> bytes:
         """
         Raises:
             SerdeValidationError

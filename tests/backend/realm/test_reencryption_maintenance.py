@@ -1,69 +1,69 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
 from parsec._parsec import (
-    DateTime,
-    BlockReadRepOk,
     BlockCreateRepInMaintenance,
+    BlockReadRepOk,
+    DateTime,
     EventsListenRepNoEvents,
     EventsListenRepOkMessageReceived,
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
-    MessageGetRepOk,
     Message,
-    RealmStatusRepOk,
-    RealmStartReencryptionMaintenanceRepOk,
-    RealmStartReencryptionMaintenanceRepNotAllowed,
-    RealmStartReencryptionMaintenanceRepInMaintenance,
-    RealmStartReencryptionMaintenanceRepParticipantMismatch,
-    RealmStartReencryptionMaintenanceRepBadTimestamp,
-    RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
-    RealmStartReencryptionMaintenanceRepNotFound,
-    RealmFinishReencryptionMaintenanceRepOk,
+    MessageGetRepOk,
     RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
     RealmFinishReencryptionMaintenanceRepMaintenanceError,
-    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepNotAllowed,
+    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
+    RealmFinishReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmStartReencryptionMaintenanceRepBadTimestamp,
+    RealmStartReencryptionMaintenanceRepInMaintenance,
+    RealmStartReencryptionMaintenanceRepNotAllowed,
+    RealmStartReencryptionMaintenanceRepNotFound,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStatusRepOk,
+    ReencryptionBatchEntry,
     VlobCreateRepInMaintenance,
-    VlobReadRepOk,
-    VlobReadRepBadEncryptionRevision,
-    VlobReadRepInMaintenance,
-    VlobUpdateRepInMaintenance,
-    VlobPollChangesRepOk,
     VlobListVersionsRepOk,
-    VlobMaintenanceGetReencryptionBatchRepOk,
     VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
-    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepOk,
     VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
-    ReencryptionBatchEntry,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobPollChangesRepOk,
+    VlobReadRepBadEncryptionRevision,
+    VlobReadRepInMaintenance,
+    VlobReadRepOk,
+    VlobUpdateRepInMaintenance,
 )
+from parsec.api.protocol import BlockID, MaintenanceType, RealmRole, UserID, VlobID
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import UserID, VlobID, BlockID, RealmRole, MaintenanceType
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
-
-from tests.common import freeze_time, real_clock_timeout
-from tests.backend.test_message import message_get
 from tests.backend.common import (
-    realm_status,
-    realm_start_reencryption_maintenance,
+    block_create,
+    block_read,
+    events_listen_nowait,
+    events_subscribe,
     realm_finish_reencryption_maintenance,
-    vlob_read,
-    vlob_list_versions,
-    vlob_poll_changes,
+    realm_start_reencryption_maintenance,
+    realm_status,
     vlob_create,
-    vlob_update,
+    vlob_list_versions,
     vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch,
-    block_read,
-    block_create,
-    events_subscribe,
-    events_listen_nowait,
+    vlob_poll_changes,
+    vlob_read,
+    vlob_update,
 )
+from tests.backend.test_message import message_get
+from tests.common import freeze_time, real_clock_timeout
 
 
 @pytest.mark.trio
@@ -203,7 +203,7 @@ async def test_start_reencryption_update_status(alice_ws, alice, realm):
         in_maintenance=True,
         maintenance_started_by=alice.device_id,
         maintenance_started_on=DateTime(2000, 1, 2),
-        maintenance_type=MaintenanceType.REENCRYPTION(),
+        maintenance_type=MaintenanceType.REENCRYPTION,
     )
 
 
@@ -323,7 +323,7 @@ async def test_finish_while_reencryption_not_done(alice_ws, realm, alice, vlobs)
             ReencryptionBatchEntry(
                 entry.vlob_id,
                 entry.version,
-                f"{entry.vlob_id.str}::{entry.version} reencrypted".encode(),
+                f"{entry.vlob_id.hex}::{entry.version} reencrypted".encode(),
             )
         )
     await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, batch)
@@ -355,7 +355,7 @@ async def test_reencrypt_and_finish_check_access_rights(
             ReencryptionBatchEntry(
                 vlob_id=vlob_id,
                 version=version,
-                blob=f"{vlob_id.str}::{version}::{encryption_revision}".encode(),
+                blob=f"{vlob_id.hex}::{version}::{encryption_revision}".encode(),
             )
             for vlob_id, version in {(vlobs[0], 1), (vlobs[0], 2), (vlobs[1], 1)}
         ]
@@ -367,31 +367,21 @@ async def test_reencrypt_and_finish_check_access_rights(
         await realm_finish_reencryption_maintenance(alice_ws, realm, encryption_revision)
 
     async def _assert_bob_maintenance_access(allowed):
-        if allowed:
-            expected_status = "ok"
-        else:
-            expected_status = "not_allowed"
         rep = await vlob_maintenance_save_reencryption_batch(
             bob_ws, realm, encryption_revision, [], check_rep=False
         )
-        if isinstance(rep, dict):
-            assert rep["status"] == expected_status
+        if allowed:
+            assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepOk)
         else:
-            if allowed:
-                assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepOk)
-            else:
-                assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotAllowed)
+            assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotAllowed)
 
         rep = await realm_finish_reencryption_maintenance(
             bob_ws, realm, encryption_revision, check_rep=False
         )
-        if isinstance(rep, dict):
-            assert rep["status"] == expected_status
+        if allowed:
+            assert isinstance(rep, RealmFinishReencryptionMaintenanceRepOk)
         else:
-            if allowed:
-                assert isinstance(rep, RealmFinishReencryptionMaintenanceRepOk)
-            else:
-                assert isinstance(rep, RealmFinishReencryptionMaintenanceRepNotAllowed)
+            assert isinstance(rep, RealmFinishReencryptionMaintenanceRepNotAllowed)
 
     # User not part of the realm
     await _ready_to_finish(bob_in_workspace=False)
@@ -490,7 +480,7 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
                 ReencryptionBatchEntry(
                     entry.vlob_id,
                     entry.version,
-                    f"{entry.vlob_id.str}::{entry.version} reencrypted".encode(),
+                    f"{entry.vlob_id.hex}::{entry.version} reencrypted".encode(),
                 )
             )
         rep = await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, batch)
@@ -507,7 +497,7 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
     # Check the vlob have changed
     for vlob_id, version in vlob_atoms:
         rep = await vlob_read(alice_ws, vlob_id, version, encryption_revision=2)
-        assert rep.blob == f"{vlob_id.str}::{version} reencrypted".encode()
+        assert rep.blob == f"{vlob_id.hex}::{version} reencrypted".encode()
 
 
 @pytest.mark.trio
@@ -590,6 +580,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
         author=alice.device_id,
         realm_id=realm_id,
         block_id=block_id,
+        created_on=next_timestamp(),
         block=b"<block_data>",
     )
 

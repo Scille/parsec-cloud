@@ -1,23 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Union
 
 from marshmallow import ValidationError
-from parsec.serde import fields
+
 from parsec._parsec import (
-    BackendAddr,
     BackendActionAddr,
+    BackendAddr,
     BackendInvitationAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
     BackendPkiEnrollmentAddr,
 )
-from typing import Union
+from parsec.serde import fields
 
 PARSEC_SCHEME = "parsec"
 
 BackendAddrType = Union[
     BackendAddr,
-    BackendActionAddr,
     BackendInvitationAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
@@ -26,45 +28,21 @@ BackendAddrType = Union[
 ]
 
 
-class BackendOrganizationAddrField(fields.Field):
-    def _deserialize(self, value, attr, data):
-        try:
-            return BackendOrganizationAddr.from_url(value)
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
-
-    def _serialize(self, value, attr, data):
-        if value is None:
-            return None
-
-        return value.to_url()
-
-
-class BackendAddrField(fields.Field):
-    def _deserialize(self, value, attr, data):
-        try:
-            return BackendAddr.from_url(value)
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
-
-    def _serialize(self, value, attr, data):
-        if value is None:
-            return None
-
-        return value.to_url()
-
-
-class BackendPkiEnrollmentAddrField(fields.Field):
-    def _deserialize(self, value, attr, data):
+class BackendPkiEnrollmentAddrField(fields.Field[BackendPkiEnrollmentAddr]):
+    def _deserialize(self, value: object, attr: str, data: object) -> BackendPkiEnrollmentAddr:
+        if not isinstance(value, str):
+            raise ValidationError(f"expected 'str' for got '{type(value)}'")
         try:
             return BackendPkiEnrollmentAddr.from_url(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
-    def _serialize(self, value, attr, data):
+    def _serialize(
+        self, value: BackendPkiEnrollmentAddr | None, attr: str, data: object
+    ) -> str | None:
         if value is None:
             return None
-
+        assert isinstance(value, BackendPkiEnrollmentAddr)
         return value.to_url()
 
 

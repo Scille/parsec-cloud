@@ -1,0 +1,1 @@
+Fixed error when opening the QRCode for device invitation

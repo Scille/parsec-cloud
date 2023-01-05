@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
-use serialization_format::parsec_data;
 use sha2::Digest;
 
-use libparsec_crypto::*;
+use libparsec_crypto::prelude::*;
 use libparsec_types::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -96,11 +96,11 @@ impl LocalDevice {
     }
 
     pub fn device_name(&self) -> &DeviceName {
-        &self.device_id.device_name
+        self.device_id.device_name()
     }
 
     pub fn user_id(&self) -> &UserID {
-        &self.device_id.user_id
+        self.device_id.user_id()
     }
 
     pub fn verify_key(&self) -> VerifyKey {
@@ -111,24 +111,24 @@ impl LocalDevice {
         self.private_key.public_key()
     }
 
-    pub fn user_display(&self) -> String {
-        match self.human_handle {
-            Some(ref human_handle) => human_handle.to_string(),
-            None => self.user_id().to_string(),
+    pub fn user_display(&self) -> &str {
+        match &self.human_handle {
+            Some(human_handle) => human_handle.as_ref(),
+            None => self.user_id().as_ref(),
         }
     }
 
-    pub fn short_user_display(&self) -> String {
-        match self.human_handle {
-            Some(ref human_handle) => human_handle.label.to_string(),
-            None => self.user_id().to_string(),
+    pub fn short_user_display(&self) -> &str {
+        match &self.human_handle {
+            Some(human_handle) => human_handle.label(),
+            None => self.user_id().as_ref(),
         }
     }
 
-    pub fn device_display(&self) -> String {
-        match self.device_label {
-            Some(ref device_label) => device_label.to_string(),
-            None => self.device_id.device_name.to_string(),
+    pub fn device_display(&self) -> &str {
+        match &self.device_label {
+            Some(device_label) => device_label.as_ref(),
+            None => self.device_id.device_name().as_ref(),
         }
     }
 
@@ -213,24 +213,24 @@ pub struct UserInfo {
 }
 
 impl UserInfo {
-    pub fn user_display(&self) -> String {
+    pub fn user_display(&self) -> &str {
         self.human_handle
             .as_ref()
-            .map(|x| x.to_string())
-            .unwrap_or_else(|| self.user_id.to_string())
+            .map(|x| x.as_ref())
+            .unwrap_or_else(|| self.user_id.as_ref())
     }
 
-    pub fn short_user_display(&self) -> String {
+    pub fn short_user_display(&self) -> &str {
         self.human_handle
             .as_ref()
-            .map(|x| x.label.to_string())
-            .unwrap_or_else(|| self.user_id.to_string())
+            .map(|x| x.label())
+            .unwrap_or_else(|| self.user_id.as_ref())
     }
 
     /// Note that we might consider a user revoked even though our current time is still
-    /// below the revokation timestamp. This is because there is no clear causality between
-    /// our time and the production of the revokation timestamp (as it might have been produced
-    /// by another device). So we simply consider a user revoked if a revokation timestamp has
+    /// below the revocation timestamp. This is because there is no clear causality between
+    /// our time and the production of the revocation timestamp (as it might have been produced
+    /// by another device). So we simply consider a user revoked if a revocation timestamp has
     /// been issued.
     pub fn is_revoked(&self) -> bool {
         self.revoked_on.is_some()
@@ -252,14 +252,14 @@ pub struct DeviceInfo {
 
 impl DeviceInfo {
     pub fn device_name(&self) -> &DeviceName {
-        &self.device_id.device_name
+        self.device_id.device_name()
     }
 
-    pub fn device_display(&self) -> String {
+    pub fn device_display(&self) -> &str {
         self.device_label
             .as_ref()
-            .map(|x| x.to_string())
-            .unwrap_or_else(|| self.device_id.device_name.to_string())
+            .map(|x| x.as_ref())
+            .unwrap_or_else(|| self.device_id.device_name().as_ref())
     }
 }
 

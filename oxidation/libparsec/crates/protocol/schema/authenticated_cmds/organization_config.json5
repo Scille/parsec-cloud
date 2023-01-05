@@ -1,0 +1,40 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "organization_config"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "user_profile_outsider_allowed",
+                        "type": "Boolean"
+                    },
+                    // `None` stands for "no limit" here
+                    {
+                        "name": "active_users_limit",
+                        "type": "ActiveUsersLimit"
+                    },
+                    {
+                        "name": "sequester_authority_certificate",
+                        "type": "RequiredOption<Bytes>",
+                        "introduced_in": "2.8"
+                    },
+                    {
+                        "name": "sequester_services_certificates",
+                        "type": "RequiredOption<List<Bytes>>",
+                        "introduced_in": "2.8"
+                    }
+                ]
+            },
+            {
+                "status": "not_found"
+            }
+        ]
+    }
+]

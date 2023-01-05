@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "parsec-cloud"
-version = "v2.12.1+dev"
+version = "v2.15.0+dev"
 description = "Secure cloud framework"
 authors = ["Scille SAS <contact@scille.fr>"]
 readme = "README.rst"
@@ -42,30 +42,29 @@ python = "~3.9.0"
 # Base requirements
 
 certifi = ">=2021,<2023"
-attrs = "^21.4"
+attrs = ">=21.4,<23.0"
 click = "^8.0"
 msgpack = "^1.0"
 wsproto = "^1.0"
-h11 = "^0.13"
+h11 = ">=0.13,<0.15"
 # Can use marshmallow or the toasted flavour as you like ;-)
 # marshmallow = "2.14.0"
-toastedmarshmallow = "0.2.6" # updating causes consitency problem in test
+toastedmarshmallow = "0.2.6" # updating causes consistency problem in test
 PyNaCl = "^1.5"
-trio = ">=0.20,<0.22"
-trio_typing = "^0.5" # updating causes conflict with qtrio dependency
+trio = "^0.22"
+trio_typing = "^0.7"
 sentry-sdk = "^1.5"
 structlog = ">=21.5,<23.0"
 # colorama = "^0.4.4  # structlog colored output"
 async_exit_stack = "^1.0"
 outcome = "^1.1"
-oscrypto = "^1.2.1"
 
 # Backend-only requirements
 
 jinja2 = { version="^3.0", optional=true }
 # Quart
-quart-trio = { version="^0.9.1", optional=true }
-quart = { version="^0.17.0", optional=true }
+quart-trio = { version="^0.10.0", optional=true }
+quart = { version="^0.18.1", optional=true }
 hypercorn = { version="^0.13.2", optional=true }
 # PostgreSQL
 triopg = { version="^0.6", optional=true }
@@ -79,10 +78,10 @@ pbr = { version="^5.9", optional=true }
 
 # Core-only requirements
 
-packaging = "^21.3"
+packaging = ">=21.3,<23.0"
 PyQt5 = { version="^5.15", optional=true }
 pyqt5-sip = { version="^12.9", optional=true }
-qtrio = { version="^0.5", optional=true }
+qtrio = { version="^0.6.0", optional=true }
 qrcode = { version="^7.3", optional=true }
 fusepy = { version="^3.0", markers="platform_system=='Linux' or platform_system=='Darwin'", optional=true }
 winfspy = { version="^0.8", markers="platform_system=='Windows'", optional=true }
@@ -116,13 +115,13 @@ core = [
     "pypac",
 ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
-pytest-cov = "^3.0"
-pytest-xdist = "^2.5"
-pytest-trio = "^0.7"
+pytest-cov = "^4.0"
+pytest-xdist = "^3.1"
+pytest-trio = "^0.8"
 pytest-qt = "^4.0"
-pytest-rerunfailures =  "^10.2"
+pytest-rerunfailures = "^10.2"
 hypothesis = "^6.54"
 hypothesis-trio = "^0.6"
 trustme = "^0.9"
@@ -137,15 +136,16 @@ PyQt5_stubs = "^5.15"
 # it dependencies won't clash with the rest of the project.
 pyinstaller = "^5.3"
 
-flake8 = "5.0.4"
+ruff = "^0.0.171"
 black = "^22.6.0"
-# Latest version compatible with `trio_typing~=0.5`, required by qtrio
-mypy = "v0.910"
+mypy = "^0.982"
 
 setuptools = "^63.1.0"
-maturin = "~=0.13"
-cibuildwheel = "2.9.0"
+maturin = "~=0.14"
+cibuildwheel = "2.10.0"
 editorconfig-checker = "2.4.0"
+types-requests = "^2.28"
+boto3-stubs = "^1.26"
 
 [tool.poetry.build]
 generate-setup-file = false
@@ -163,9 +163,47 @@ test-command = "parsec --version && parsec core list_devices"
 [tool.cibuildwheel.environment]
 # As it name suggests, `misc/setup-rust.sh` (run during cibuildwheel's before-all) will
 # install Rust if it is not already available. In this case, Rust bin dir was previously
-# non-existant and hence $PATH don't know about it (and maturin will fail when calling cargo).
+# non-existent and hence $PATH don't know about it (and maturin will fail when calling cargo).
 # For this reason we force $PATH to contain Rust bin dir.
 PATH = "$PATH:$HOME/.cargo/bin"
+
+[tool.maturin]
+features = ["extension-module"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+select = [
+    # Pyflakes
+    "F",
+    # Pycodestyle
+    "E",
+    "W",
+    # Unused noqa directive
+    "RUF100",
+    # isort
+    "I",
+]
+
+# Handled by black:
+# E501: Line too long
+#
+# Currently not passing errors:
+# E402 Module level import not at top of file
+# F541 f-string without any placeholders
+ignore = ["E501", "E402", "F541"]
+
+extend-exclude = [
+    "docs",
+    "oxidation/",
+    "parsec/core/gui/_resources_rc.py",
+    "parsec/core/gui/ui/",
+    "misc/bench.py",
+]
+
+[tool.ruff.isort]
+known-first-party = ["parsec"]
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,

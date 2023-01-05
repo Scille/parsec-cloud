@@ -1,30 +1,32 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 from parsec._parsec import (
-    BlockCreateRepOk,
-    BlockCreateRepTimeout,
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
     BlockCreateRepNotFound,
-    BlockReadRepOk,
+    BlockCreateRepOk,
+    BlockCreateRepTimeout,
     BlockReadRepInMaintenance,
     BlockReadRepNotAllowed,
     BlockReadRepNotFound,
+    BlockReadRepOk,
     BlockReadRepTimeout,
+    DateTime,
 )
 from parsec.api.protocol import (
-    OrganizationID,
-    DeviceID,
-    RealmID,
-    BlockID,
-    BlockReadReq,
-    BlockReadRep,
-    BlockCreateReq,
     BlockCreateRep,
-    api_typed_msg_adapter,
+    BlockCreateReq,
+    BlockID,
+    BlockReadRep,
+    BlockReadReq,
+    DeviceID,
+    OrganizationID,
+    RealmID,
 )
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.client_context import AuthenticatedClientContext
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 
 
 class BlockError(Exception):
@@ -55,7 +57,9 @@ class BaseBlockComponent:
     @api("block_read")
     @catch_protocol_errors
     @api_typed_msg_adapter(BlockReadReq, BlockReadRep)
-    async def api_block_read(self, client_ctx, req: BlockReadReq) -> BlockReadRep:
+    async def api_block_read(
+        self, client_ctx: AuthenticatedClientContext, req: BlockReadReq
+    ) -> BlockReadRep:
         try:
             block = await self.read(client_ctx.organization_id, client_ctx.device_id, req.block_id)
 
@@ -77,14 +81,17 @@ class BaseBlockComponent:
     @api("block_create")
     @catch_protocol_errors
     @api_typed_msg_adapter(BlockCreateReq, BlockCreateRep)
-    async def api_block_create(self, client_ctx, req: BlockCreateReq) -> BlockCreateRep:
+    async def api_block_create(
+        self, client_ctx: AuthenticatedClientContext, req: BlockCreateReq
+    ) -> BlockCreateRep:
         try:
             await self.create(
-                client_ctx.organization_id,
-                client_ctx.device_id,
-                req.block_id,
-                req.realm_id,
-                req.block,
+                organization_id=client_ctx.organization_id,
+                author=client_ctx.device_id,
+                block_id=req.block_id,
+                realm_id=req.realm_id,
+                block=req.block,
+                created_on=DateTime.now(),
             )
 
         except BlockAlreadyExistsError:
@@ -124,6 +131,7 @@ class BaseBlockComponent:
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
+        created_on: DateTime | None = None,
     ) -> None:
         """
         Raises:

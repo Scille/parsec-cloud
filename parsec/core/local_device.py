@@ -1,37 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from enum import Enum
+from hashlib import sha256
+from importlib import import_module
+from pathlib import Path, PurePath
+from types import ModuleType
+from typing import Callable, Dict, Iterator, List, Tuple, cast
 
 import attr
 import trio
-from enum import Enum
-from pathlib import Path, PurePath
-from hashlib import sha256
-from typing import Callable, List, Optional, Iterator, Dict, Tuple
-from importlib import import_module
 
-from parsec.serde import BaseSchema, fields, MsgpackSerializer, OneOfSchema
-from parsec.crypto import (
-    SecretKey,
-    SigningKey,
-    PrivateKey,
-    CryptoError,
-    derivate_secret_key_from_password,
-    generate_recovery_passphrase,
-    derivate_secret_key_from_recovery_passphrase,
-)
+from parsec.api.data import DataError
 from parsec.api.protocol import (
-    OrganizationID,
     DeviceID,
-    HumanHandle,
-    HumanHandleField,
-    OrganizationIDField,
     DeviceIDField,
     DeviceLabel,
     DeviceLabelField,
+    HumanHandle,
+    HumanHandleField,
+    OrganizationID,
+    OrganizationIDField,
     UserProfile,
 )
-from parsec.api.data import DataError
-from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr
-
+from parsec.core.types import BackendOrganizationAddr, EntryID, LocalDevice
+from parsec.crypto import CryptoError, PrivateKey, SecretKey, SigningKey
+from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
 # .keys files are not supposed to leave the parsec configuration folder,
 # so it's ok to have such a common suffix
@@ -41,10 +35,11 @@ RECOVERY_DEVICE_FILE_SUFFIX = ".psrk"
 
 
 # Save key file data for later user
-_KEY_FILE_DATA: Dict[DeviceID, Dict] = {}
+_KEY_FILE_DATA: Dict[DeviceID, Dict[str, object]] = {}
 
 
-def get_key_file_data(device_id: DeviceID) -> Dict:
+# Function used in parsec-extensions and use a private global variable
+def get_key_file_data(device_id: DeviceID) -> Dict[str, object]:
     """Retrieve key file data for a given device"""
     return _KEY_FILE_DATA.get(device_id, {})
 
@@ -83,8 +78,6 @@ class LocalDevicePackingError(LocalDeviceError):
 
 class LocalDeviceCertificateNotFoundError(LocalDeviceError):
     """Used in parsec-extensions for smartcard devices."""
-
-    pass
 
 
 class DeviceFileType(Enum):
@@ -167,12 +160,12 @@ key_file_serializer = MsgpackSerializer(
 
 def generate_new_device(
     organization_addr: BackendOrganizationAddr,
-    device_id: Optional[DeviceID] = None,
+    device_id: DeviceID | None = None,
     profile: UserProfile = UserProfile.STANDARD,
-    human_handle: Optional[HumanHandle] = None,
-    device_label: Optional[DeviceLabel] = None,
-    signing_key: Optional[SigningKey] = None,
-    private_key: Optional[PrivateKey] = None,
+    human_handle: HumanHandle | None = None,
+    device_label: DeviceLabel | None = None,
+    signing_key: SigningKey | None = None,
+    private_key: PrivateKey | None = None,
 ) -> LocalDevice:
     return LocalDevice(
         organization_addr=organization_addr,
@@ -193,8 +186,8 @@ class AvailableDevice:
     key_file_path: Path
     organization_id: OrganizationID
     device_id: DeviceID
-    human_handle: Optional[HumanHandle]
-    device_label: Optional[DeviceLabel]
+    human_handle: HumanHandle | None
+    device_label: DeviceLabel | None
     slug: str
     type: DeviceFileType
 
@@ -235,7 +228,7 @@ def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:
     return get_devices_dir(config_dir) / f"{device.slughash}{DEVICE_FILE_SUFFIX}"
 
 
-def get_recovery_device_file_name(recovery_device: LocalDevice) -> str:
+def get_recovery_device_file_name(recovery_device: LocalDevice | AvailableDevice) -> str:
     return f"parsec-recovery-{recovery_device.organization_id.str}-{recovery_device.short_user_display}{RECOVERY_DEVICE_FILE_SUFFIX}"
 
 
@@ -243,7 +236,7 @@ def get_devices_dir(config_dir: Path) -> Path:
     return config_dir / "devices"
 
 
-def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
+def _load_legacy_device_file(key_file_path: Path) -> AvailableDevice | None:
     # For the legacy device files, the slug is contained in the device filename
     slug = key_file_path.stem
 
@@ -271,7 +264,7 @@ def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
     )
 
 
-def load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
+def load_device_file(key_file_path: Path) -> AvailableDevice | None:
     try:
         data = key_file_serializer.loads(key_file_path.read_bytes())
 
@@ -328,20 +321,22 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
         LocalDevicePackingError
     """
 
-    def _decrypt_ciphertext(data: dict) -> bytes:
+    def _decrypt_ciphertext(data: dict[str, object]) -> bytes:
         if data["type"] != DeviceFileType.PASSWORD:
             raise LocalDeviceValidationError("Not a password-protected device file")
 
         try:
-            key, _ = derivate_secret_key_from_password(password, data["salt"])
-            return key.decrypt(data["ciphertext"])
+            key = SecretKey.from_password(password, cast(bytes, data["salt"]))
+            return key.decrypt(cast(bytes, data["ciphertext"]))
         except CryptoError as exc:
             raise LocalDeviceCryptoError(str(exc)) from exc
 
     return _load_device(key_file, _decrypt_ciphertext)
 
 
-def _load_device(key_file: Path, decrypt_ciphertext: Callable[[dict], bytes]) -> LocalDevice:
+def _load_device(
+    key_file: Path, decrypt_ciphertext: Callable[[dict[str, object]], bytes]
+) -> LocalDevice:
     try:
         ciphertext = key_file.read_bytes()
     except OSError as exc:
@@ -377,8 +372,8 @@ def save_device_with_password_in_config(
     # Why do we use `force=True` here ?
     # Key file name is per-device unique (given it contains the device slughash),
     # hence there is no risk to overwrite another device.
-    # So if we are overwritting a key file it could be by:
-    # - the same device object, hence overwritting has no effect
+    # So if we are overwriting a key file it could be by:
+    # - the same device object, hence overwriting has no effect
     # - a device object with same slughash but different device/user keys
     #   This would mean the device enrollment has been replayed (which is
     #   not possible in theory, but could occur in case of a rollback in the
@@ -398,9 +393,10 @@ def save_device_with_password(
         LocalDevicePackingError
     """
 
-    def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict]:
+    def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict[str, bytes]]:
         try:
-            key, salt = derivate_secret_key_from_password(password)
+            salt = SecretKey.generate_salt()
+            key = SecretKey.from_password(password, salt)
             ciphertext = key.encrypt(cleartext)
 
         except CryptoError as exc:
@@ -416,7 +412,7 @@ def _save_device(
     key_file: Path,
     device: LocalDevice,
     force: bool,
-    encrypt_dump: Callable[[bytes], Tuple[DeviceFileType, bytes, dict]],
+    encrypt_dump: Callable[[bytes], Tuple[DeviceFileType, bytes, dict[str, bytes]]],
 ) -> None:
     assert key_file.suffix == DEVICE_FILE_SUFFIX
 
@@ -482,8 +478,8 @@ async def load_recovery_device(key_file: PurePath, passphrase: str) -> LocalDevi
         raise LocalDeviceValidationError("Not a device recovery file")
 
     try:
-        key = derivate_secret_key_from_recovery_passphrase(passphrase)
-    except ValueError as exc:
+        key = SecretKey.from_recovery_passphrase(passphrase)
+    except CryptoError as exc:
         # Not really a crypto operation, but it is more coherent for the caller
         raise LocalDeviceCryptoError("Invalid passphrase") from exc
 
@@ -509,7 +505,7 @@ async def save_recovery_device(key_file: PurePath, device: LocalDevice, force: b
     if await key_file.exists() and not force:
         raise LocalDeviceAlreadyExistsError(f"Device key file `{key_file}` already exists")
 
-    passphrase, key = generate_recovery_passphrase()
+    passphrase, key = SecretKey.generate_recovery_passphrase()
 
     try:
         ciphertext = key.encrypt(device.dump())
@@ -539,7 +535,7 @@ async def save_recovery_device(key_file: PurePath, device: LocalDevice, force: b
     return passphrase
 
 
-def _load_smartcard_extension():
+def _load_smartcard_extension() -> ModuleType:
     try:
         return import_module("parsec_ext.smartcard")
     except ModuleNotFoundError as exc:
@@ -581,8 +577,8 @@ async def load_device_with_smartcard(key_file: Path) -> LocalDevice:
 async def save_device_with_smartcard_in_config(
     config_dir: Path,
     device: LocalDevice,
-    certificate_id: Optional[str] = None,
-    certificate_sha1: Optional[bytes] = None,
+    certificate_id: str | None = None,
+    certificate_sha1: bytes | None = None,
 ) -> Path:
     """
     Raises:
@@ -597,8 +593,8 @@ async def save_device_with_smartcard_in_config(
     # Why do we use `force=True` here ?
     # Key file name is per-device unique (given it contains the device slughash),
     # hence there is no risk to overwrite another device.
-    # So if we are overwritting a key file it could be by:
-    # - the same device object, hence overwritting has no effect
+    # So if we are overwriting a key file it could be by:
+    # - the same device object, hence overwriting has no effect
     # - a device object with same slughash but different device/user keys
     #   This would mean the device enrollment has been replayed (which is
     #   not possible in theory, but could occur in case of a rollback in the

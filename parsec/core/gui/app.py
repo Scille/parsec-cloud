@@ -1,35 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import sys
 import signal
-from typing import Optional
+import sys
 from contextlib import contextmanager
+from types import TracebackType
+from typing import Any, Callable, Iterator, Type
 
-import trio
 import qtrio
-from structlog import get_logger
-from PyQt5.QtCore import QTimer, Qt
+import trio
+import trio_typing
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication
+from structlog import get_logger
 
-from parsec.event_bus import EventBus
-from parsec.core.core_events import CoreEvent
+from parsec._parsec import CoreEvent
 from parsec.core.config import CoreConfig
 from parsec.core.ipcinterface import (
-    run_ipc_server,
-    send_to_ipc_server,
+    IPCCommand,
     IPCServerAlreadyRunning,
     IPCServerNotRunning,
-    IPCCommand,
+    run_ipc_server,
+    send_to_ipc_server,
 )
+from parsec.event_bus import EventBus
 
 try:
     from parsec.core.gui import lang
-    from parsec.core.gui.parsec_application import ParsecApp
-    from parsec.core.gui.new_version import CheckNewVersion
-    from parsec.core.gui.systray import systray_available, Systray
-    from parsec.core.gui.main_window import MainWindow
-    from parsec.core.gui.trio_jobs import run_trio_job_scheduler
     from parsec.core.gui.custom_dialogs import QDialogInProcess
+    from parsec.core.gui.main_window import MainWindow
+    from parsec.core.gui.new_version import CheckNewVersion
+    from parsec.core.gui.parsec_application import ParsecApp
+    from parsec.core.gui.systray import Systray, systray_available
+    from parsec.core.gui.trio_jobs import run_trio_job_scheduler
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
@@ -41,25 +44,30 @@ Running `python misc/generate_pyqt.py build` should fix the issue
 logger = get_logger()
 
 
-def before_quit(systray):
-    def _before_quit():
+def before_quit(systray: Systray) -> Callable[[], None]:
+    def _before_quit() -> None:
         systray.hide()
 
     return _before_quit
 
 
-async def _run_ipc_server(config, main_window, start_arg, task_status=trio.TASK_STATUS_IGNORED):
+async def _run_ipc_server(
+    config: CoreConfig,
+    main_window: MainWindow,
+    start_arg: str | None,
+    task_status: trio_typing.TaskStatus[None] = trio.TASK_STATUS_IGNORED,
+) -> None:
     new_instance_needed = main_window.new_instance_needed
     foreground_needed = main_window.foreground_needed
 
-    async def _cmd_handler(cmd):
+    async def _cmd_handler(cmd: dict[str, object]) -> dict[str, str]:
         if cmd["cmd"] == IPCCommand.FOREGROUND:
             foreground_needed.emit()
         elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
             new_instance_needed.emit(cmd.get("start_arg"))
         return {"status": "ok"}
 
-    # Loop over attemps at running an IPC server or sending the command to an existing one
+    # Loop over attempts at running an IPC server or sending the command to an existing one
     while True:
 
         # Attempt to run an IPC server if Parsec is not already started
@@ -86,16 +94,18 @@ async def _run_ipc_server(config, main_window, start_arg, task_status=trio.TASK_
             except IPCServerNotRunning:
                 continue
 
-            # We have successfuly noticed the other running application
+            # We have successfully noticed the other running application
             # We can now forward the exception to the caller
             raise
 
 
 @contextmanager
-def fail_on_first_exception(kill_window):
+def fail_on_first_exception(kill_window: Callable[[], None]) -> Iterator[None]:
     exceptions = []
 
-    def excepthook(etype, exception, traceback):
+    def excepthook(
+        etype: Type[BaseException], exception: BaseException, traceback: TracebackType | None
+    ) -> object:
         exceptions.append(exception)
         kill_window()
         return previous_hook(etype, exception, traceback)
@@ -111,12 +121,14 @@ def fail_on_first_exception(kill_window):
 
 
 @contextmanager
-def log_pyqt_exceptions():
-    # Override sys.excepthook to be able to properly log exceptions occuring in Qt slots.
-    # Exceptions occuring in the core while in the Qt app should be catched sooner by the
+def log_pyqt_exceptions() -> Iterator[None]:
+    # Override sys.excepthook to be able to properly log exceptions occurring in Qt slots.
+    # Exceptions occurring in the core while in the Qt app should be caught sooner by the
     # job.
 
-    def log_except(etype, exception, traceback):
+    def log_except(
+        etype: Type[BaseException], exception: BaseException, traceback: TracebackType | None
+    ) -> None:
         logger.exception("Exception in Qt slot", exc_info=(etype, exception, traceback))
 
     sys.excepthook, previous_hook = log_except, sys.excepthook
@@ -126,7 +138,7 @@ def log_pyqt_exceptions():
         sys.excepthook = previous_hook
 
 
-def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool = False):
+def run_gui(config: CoreConfig, start_arg: str | None = None, diagnose: bool = False) -> object:
     logger.info("Starting UI")
 
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
@@ -136,7 +148,7 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
 
-    # The parsec app needs to be instanciated before qtrio runs in order
+    # The parsec app needs to be instantiated before qtrio runs in order
     # to be the default QApplication instance
     app = ParsecApp()
     assert QApplication.instance() is app
@@ -144,8 +156,8 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
 
 
 async def _run_gui(
-    app: ParsecApp, config: CoreConfig, start_arg: str = None, diagnose: bool = False
-):
+    app: ParsecApp, config: CoreConfig, start_arg: str | None = None, diagnose: bool = False
+) -> None:
     app.load_stylesheet()
     app.load_font()
 
@@ -199,7 +211,7 @@ async def _run_gui(
 
             ensure_macfuse_available_or_show_dialogue(win)
 
-        def kill_window(*args):
+        def kill_window(*args: Any) -> None:
             win.close_app(force=True)
 
         signal.signal(signal.SIGINT, kill_window)

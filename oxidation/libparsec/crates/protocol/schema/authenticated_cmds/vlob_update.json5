@@ -1,0 +1,278 @@
+[
+    {
+        "major_versions": [
+            3
+        ],
+        "req": {
+            "cmd": "vlob_update",
+            "fields": [
+                {
+                    "name": "encryption_revision",
+                    "type": "Index"
+                },
+                {
+                    "name": "vlob_id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    "name": "version",
+                    "type": "Version"
+                },
+                {
+                    "name": "blob",
+                    "type": "Bytes"
+                },
+                // Field set to `None` if sequester is disabled for the organization
+                // Key is sequester service ID, value is blob encrypted with the service key
+                // New in API version 2.8/3.2 (Parsec 2.11.0)
+                {
+                    "name": "sequester_blob",
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>",
+                    "introduced_in": "3.2"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "bad_version"
+            },
+            {
+                "status": "bad_encryption_revision"
+            },
+            {
+                "status": "in_maintenance"
+            },
+            {
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    },
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                ]
+            },
+            {
+                "status": "not_a_sequestered_organization"
+            },
+            {
+                "status": "sequester_inconsistency",
+                "fields": [
+                    {
+                        "name": "sequester_authority_certificate",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "sequester_services_certificates",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            },
+            {
+                "status": "rejected_by_sequester_service",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": "SequesterServiceID"
+                    },
+                    {
+                        "name": "service_label",
+                        "type": "String"
+                    },
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "timeout"
+            }
+        ]
+    },
+    {
+        "major_versions": [
+            2
+        ],
+        "req": {
+            "cmd": "vlob_update",
+            "fields": [
+                {
+                    "name": "encryption_revision",
+                    "type": "Index"
+                },
+                {
+                    "name": "vlob_id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    "name": "version",
+                    "type": "Version"
+                },
+                {
+                    "name": "blob",
+                    "type": "Bytes"
+                },
+                // Field set to `None` if sequester is disabled for the organization
+                // Key is sequester service ID, value is blob encrypted with the service key
+                // New in API version 2.8/3.2 (Parsec 2.11.0)
+                {
+                    "name": "sequester_blob",
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>",
+                    "introduced_in": "2.8"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "bad_version"
+            },
+            {
+                "status": "bad_encryption_revision"
+            },
+            {
+                "status": "in_maintenance"
+            },
+            {
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    },
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime",
+                        "introduced_in": "2.4"
+                    }
+                ]
+            },
+            {
+                "status": "not_a_sequestered_organization"
+            },
+            {
+                "status": "sequester_inconsistency",
+                "fields": [
+                    {
+                        "name": "sequester_authority_certificate",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "sequester_services_certificates",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            },
+            {
+                "status": "rejected_by_sequester_service",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": "SequesterServiceID"
+                    },
+                    {
+                        "name": "service_label",
+                        "type": "String"
+                    },
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "timeout"
+            }
+        ]
+    }
+]

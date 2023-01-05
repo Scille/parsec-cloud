@@ -1,19 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, SequesterServiceID
 from parsec.backend.sequester import (
-    SequesterOrganizationNotFoundError,
-    SequesterServiceNotFoundError,
-    SequesterDisabledError,
     SequesterCertificateValidationError,
-    SequesterServiceAlreadyExists,
-    SequesterCertificateOutOfBallparkError,
+    SequesterDisabledError,
+    SequesterOrganizationNotFoundError,
     SequesterServiceAlreadyDisabledError,
+    SequesterServiceAlreadyExists,
+    SequesterServiceNotFoundError,
+    SequesterServiceType,
 )
-
 from tests.common import (
     OrganizationFullData,
     customize_fixtures,
@@ -63,14 +63,13 @@ async def test_create_disable_services(
             service=service_signed_by_bad_authority.backend_service,
         )
 
-    # Service certificate timestamp out of ballpark
-    service_bad_timestamp = sequester_service_factory(
+    # Service certificate timestamp out of ballpark are allowed !
+    service_very_old_timestamp = sequester_service_factory(
         "sequester_service_1", coolorg.sequester_authority, timestamp=DateTime(2000, 1, 1)
     )
-    with pytest.raises(SequesterCertificateOutOfBallparkError):
-        await backend.sequester.create_service(
-            organization_id=coolorg.organization_id, service=service_bad_timestamp.backend_service
-        )
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=service_very_old_timestamp.backend_service
+    )
 
     # Successful service creation
     await backend.sequester.create_service(
@@ -87,7 +86,7 @@ async def test_create_disable_services(
     services = await backend.sequester.get_organization_services(
         organization_id=coolorg.organization_id
     )
-    assert services == [service.backend_service]
+    assert services == [service_very_old_timestamp.backend_service, service.backend_service]
 
     # Cannot retreive service list on non sequestered organization
     with pytest.raises(SequesterDisabledError):
@@ -141,7 +140,10 @@ async def test_create_disable_services(
     services = await backend.sequester.get_organization_services(
         organization_id=coolorg.organization_id
     )
-    assert services == [service.backend_service.evolve(disabled_on=disabled_on)]
+    assert services == [
+        service_very_old_timestamp.backend_service,
+        service.backend_service.evolve(disabled_on=disabled_on),
+    ]
 
     # 3) Bonus: Create after disabled
 
@@ -164,13 +166,17 @@ async def test_create_disable_services(
         organization_id=coolorg.organization_id
     )
     expected_backend_service1 = service.backend_service.evolve(disabled_on=disabled_on)
-    assert services == [expected_backend_service1, backend_service2]
+    assert services == [
+        service_very_old_timestamp.backend_service,
+        expected_backend_service1,
+        backend_service2,
+    ]
 
     # Retreive single service
-    retreived_backend_service1 = await backend.sequester.get_service(
+    retrieved_backend_service1 = await backend.sequester.get_service(
         organization_id=coolorg.organization_id, service_id=service.service_id
     )
-    assert retreived_backend_service1 == expected_backend_service1
+    assert retrieved_backend_service1 == expected_backend_service1
 
     # Retreive single service unknown organization ID
     with pytest.raises(SequesterOrganizationNotFoundError):
@@ -199,3 +205,30 @@ async def test_create_disable_services(
         await backend.sequester.get_service(
             organization_id=otherorg.organization_id, service_id=service.service_id
         )
+
+    # 5) Bonus: webhook service
+    webhook_service = sequester_service_factory(
+        "TestWebhookService",
+        coolorg.sequester_authority,
+        service_type=SequesterServiceType.WEBHOOK,
+        webhook_url="http://somewhere.post",
+    )
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=webhook_service.backend_service
+    )
+    services = await backend.sequester.get_organization_services(
+        organization_id=coolorg.organization_id
+    )
+    assert services == [
+        service_very_old_timestamp.backend_service,
+        expected_backend_service1,
+        backend_service2,
+        webhook_service.backend_service,
+    ]
+
+    # 6) Bonus: service creation in a expired organization is allowed
+    await backend.organization.update(id=coolorg.organization_id, is_expired=True)
+    backend_service3 = service.backend_service.evolve(service_id=SequesterServiceID.new())
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=backend_service3
+    )

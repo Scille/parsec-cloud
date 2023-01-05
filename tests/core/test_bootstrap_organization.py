@@ -1,28 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import oscrypto
 import pytest
-from quart import Response
 
-from parsec.serde import packb
+from parsec._parsec import SequesterSigningKeyDer
 from parsec.api.data import EntryName
-from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle, UserProfile
-from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
+from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID, UserProfile
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.sequester_crypto import SequesterVerifyKeyDer, sequester_authority_sign
+from parsec.core.invite import InviteAlreadyUsedError, InviteNotFoundError, bootstrap_organization
+from parsec.core.types import BackendOrganizationBootstrapAddr
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
-@pytest.mark.parametrize("backend_version", ["2.5", "2.6", "latest"])
-async def test_good(
-    running_backend, backend, user_fs_factory, with_labels, data_base_dir, backend_version
-):
+async def test_good(running_backend, backend, user_fs_factory, with_labels, data_base_dir):
 
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
-    await backend.organization.create(org_id, org_token)
+    await backend.organization.create(id=org_id, bootstrap_token=org_token)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(
         running_backend.addr, org_id, org_token
@@ -34,24 +29,6 @@ async def test_good(
     else:
         human_handle = None
         device_label = None
-
-    if backend_version == "2.5":
-
-        def _mock_anonymous_api(*args, **kwargs):
-            return Response(response=packb({}), status=404, content_type="application/msgpack")
-
-        running_backend.asgi_app.view_functions["anonymous_api.anonymous_api"] = _mock_anonymous_api
-
-    if backend_version == "2.6":
-
-        def _mock_anonymous_api(*args, **kwargs):
-            return Response(
-                response=packb({"status": "unknown_command"}),
-                status=200,
-                content_type="application/msgpack",
-            )
-
-        running_backend.asgi_app.view_functions["anonymous_api.anonymous_api"] = _mock_anonymous_api
 
     new_device = await bootstrap_organization(
         organization_addr, human_handle=human_handle, device_label=device_label
@@ -68,15 +45,15 @@ async def test_good(
     await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=new_device)
 
     # Test the behavior of this new device
-    async with user_fs_factory(new_device, data_base_dir=data_base_dir) as newfs:
+    async with user_fs_factory(new_device, data_base_dir=data_base_dir) as new_fs:
         # New user should start with a non-speculative user manifest
-        um = newfs.get_user_manifest()
+        um = new_fs.get_user_manifest()
         assert um.is_placeholder
         assert not um.speculative
 
-        await newfs.workspace_create(EntryName("wa"))
-        await newfs.sync()
-        um = newfs.get_user_manifest()
+        await new_fs.workspace_create(EntryName("wa"))
+        await new_fs.sync()
+        um = new_fs.get_user_manifest()
         assert not um.is_placeholder
         assert not um.speculative
 
@@ -106,7 +83,7 @@ async def test_good(
 async def test_bootstrap_sequester_verify_key(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
-    await backend.organization.create(org_id, org_token)
+    await backend.organization.create(id=org_id, bootstrap_token=org_token)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(
         running_backend.addr, org_id, org_token
@@ -114,16 +91,18 @@ async def test_bootstrap_sequester_verify_key(running_backend, backend):
     human_handle = HumanHandle(email="zack@example.com", label="Zack")
     device_label = DeviceLabel("PC1")
 
-    verify_key, signing_key = oscrypto.asymmetric.generate_pair("rsa", bit_size=1024)
+    # Don't use such a small key size in real world, this is only for test !
+    # (RSA key generation gets ~10x slower between 1024 and 4096)
+    signing_key, verify_key = SequesterSigningKeyDer.generate_pair(1024)
+
     ref_data = b"SomeData"
-    ref_data_sign = sequester_authority_sign(signing_key, ref_data)
-    der_verify_key = SequesterVerifyKeyDer(verify_key)
+    ref_data_sign = signing_key.sign(ref_data)
 
     await bootstrap_organization(
         organization_addr,
         human_handle=human_handle,
         device_label=device_label,
-        sequester_authority_verify_key=der_verify_key,
+        sequester_authority_verify_key=verify_key,
     )
 
     organization = await backend.organization.get(org_id)
@@ -137,8 +116,8 @@ async def test_invalid_token(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     old_token = "123456"
     new_token = "abcdef"
-    await backend.organization.create(org_id, old_token)
-    await backend.organization.create(org_id, new_token)
+    await backend.organization.create(id=org_id, bootstrap_token=old_token)
+    await backend.organization.create(id=org_id, bootstrap_token=new_token)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(
         running_backend.addr, org_id, old_token
@@ -152,7 +131,7 @@ async def test_invalid_token(running_backend, backend):
 async def test_already_bootstrapped(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
-    await backend.organization.create(org_id, org_token)
+    await backend.organization.create(id=org_id, bootstrap_token=org_token)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(
         running_backend.addr, org_id, org_token

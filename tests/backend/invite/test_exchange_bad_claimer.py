@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 import trio
-from parsec._parsec import DateTime
-
-from parsec.api.protocol import InvitationDeletedReason
-from parsec.backend.events import BackendEvent
-
 from quart.testing.connections import WebsocketDisconnectError
 
+from parsec._parsec import DateTime
+from parsec.api.protocol import InvitationDeletedReason
+from parsec.backend.events import BackendEvent
 from tests.common import real_clock_timeout
 
 
@@ -34,7 +33,7 @@ async def test_delete_invitation_while_claimer_connected(exchange_testbed, backe
                 if retrieve_previous_result:
                     await tb.get_result("claimer")
                 # Even if we had to retrieve an existing result, it could have
-                # been returned by backend before the invitation delete occured,
+                # been returned by backend before the invitation delete occurred,
                 # hence we must poll with additional requests not matter what.
                 # On top of that claimer connection can take some time to be
                 # closed, so we need a polling loop here.

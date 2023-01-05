@@ -1,27 +1,32 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Optional
 
 import pytest
 import trio
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     AuthenticatedPingRepOk,
+    ClientType,
+    CoreEvent,
     EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOkVlobsUpdated,
+    EventsListenRepOkRealmVlobsUpdated,
+    OrganizationConfig,
     RealmID,
 )
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, VlobID
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.utils import ClientType
-from parsec.core.types import OrganizationConfig
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
+    BackendConnectionRefused,
     BackendConnStatus,
     BackendNotAvailable,
-    BackendConnectionRefused,
 )
-from parsec.core.core_events import CoreEvent
-
+from parsec.core.fs.userfs.userfs import UserFS
+from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
 
 
@@ -29,9 +34,7 @@ from tests.common import real_clock_timeout
 async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
     await running_backend_ready()
     event_bus = event_bus_factory()
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     with event_bus.listen() as spy:
         async with conn.run():
             await spy.wait_with_timeout(
@@ -69,7 +72,11 @@ async def test_init_with_backend_online(
         "organization_config"
     ] = _mocked_organization_config
 
-    async def _monitor(*, task_status=trio.TASK_STATUS_IGNORED):
+    async def _monitor(
+        task_status=trio.TASK_STATUS_IGNORED,
+        user_fs: Optional[UserFS] = None,
+        event_bus: Optional[EventBus] = None,
+    ):
         nonlocal monitor_initialized, monitor_teardown
         monitor_initialized = True
         try:
@@ -78,13 +85,11 @@ async def test_init_with_backend_online(
         finally:
             monitor_teardown = True
 
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     assert conn.status == BackendConnStatus.LOST
     default_organization_config = OrganizationConfig(
         user_profile_outsider_allowed=False,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services=None,
     )
@@ -113,7 +118,7 @@ async def test_init_with_backend_online(
             if apiv22_organization_cmd_supported:
                 assert conn.get_organization_config() == OrganizationConfig(
                     user_profile_outsider_allowed=True,
-                    active_users_limit=None,
+                    active_users_limit=ActiveUsersLimit.NO_LIMIT,
                     sequester_authority=None,
                     sequester_services=None,
                 )
@@ -139,13 +144,11 @@ async def test_init_with_backend_online(
 
 @pytest.mark.trio
 async def test_init_with_backend_offline(event_bus, alice):
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     assert conn.status == BackendConnStatus.LOST
     default_organization_config = OrganizationConfig(
         user_profile_outsider_allowed=False,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services=None,
     )
@@ -175,9 +178,7 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
         await trio.sleep(0)
         raise RuntimeError("D'oh !")
 
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     with event_bus.listen() as spy:
         conn.register_monitor(_bad_monitor)
         async with conn.run():
@@ -186,7 +187,7 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
                 {"status": BackendConnStatus.CRASHED, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.CRASHED
-            caplog.assert_occured_once(
+            caplog.assert_occurred_once(
                 "[error    ] Unhandled exception            [parsec.core.backend_connection.authenticated]"
             )
 
@@ -198,9 +199,7 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
 
 @pytest.mark.trio
 async def test_switch_offline(frozen_clock, running_backend, event_bus, alice):
-    conn = BackendAuthenticatedConn(
-        alice.organization_addr, alice.device_id, alice.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(alice, event_bus)
     with event_bus.listen() as spy:
         async with conn.run():
 
@@ -256,9 +255,7 @@ async def test_concurrency_sends(running_backend, alice, event_bus):
             work_all_done.set()
 
     conn = BackendAuthenticatedConn(
-        alice.organization_addr,
-        alice.device_id,
-        alice.signing_key,
+        alice,
         event_bus,
         max_pool=CONCURRENCY // 2,
     )
@@ -287,12 +284,22 @@ async def test_realm_notif_on_new_entry_sync(running_backend, alice_backend_conn
                 # File manifest creation
                 (
                     CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-                    {"realm_id": wid, "checkpoint": 1, "src_id": entry_id, "src_version": 1},
+                    {
+                        "realm_id": wid,
+                        "checkpoint": 1,
+                        "src_id": entry_id,
+                        "src_version": 1,
+                    },
                 ),
                 # Workspace manifest creation containing the file entry
                 (
                     CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-                    {"realm_id": wid, "checkpoint": 2, "src_id": wid, "src_version": 1},
+                    {
+                        "realm_id": wid,
+                        "checkpoint": 2,
+                        "src_id": wid,
+                        "src_version": 1,
+                    },
                 ),
             ]
         )
@@ -311,10 +318,10 @@ async def test_realm_notif_on_new_workspace_sync(
             [
                 # Access to newly created realm
                 EventsListenRepOkRealmRolesUpdated(RealmID.from_bytes(wid.bytes), RealmRole.OWNER),
-                EventsListenRepOkVlobsUpdated(
+                EventsListenRepOkRealmVlobsUpdated(
                     RealmID.from_bytes(wid.bytes), 1, VlobID.from_bytes(wid.bytes), 1
                 ),
-                EventsListenRepOkVlobsUpdated(
+                EventsListenRepOkRealmVlobsUpdated(
                     RealmID.from_bytes(uid.bytes), 2, VlobID.from_bytes(uid.bytes), 2
                 ),
             ]
@@ -354,9 +361,7 @@ async def test_realm_notif_maintenance(running_backend, alice_backend_conn, alic
 
 @pytest.mark.trio
 async def test_connection_refused(running_backend, event_bus, mallory):
-    conn = BackendAuthenticatedConn(
-        mallory.organization_addr, mallory.device_id, mallory.signing_key, event_bus
-    )
+    conn = BackendAuthenticatedConn(mallory, event_bus)
     with event_bus.listen() as spy:
         async with conn.run():
 
@@ -366,6 +371,6 @@ async def test_connection_refused(running_backend, event_bus, mallory):
                 {"status": BackendConnStatus.REFUSED, "status_exc": spy.ANY},
             )
 
-            # Trying to use the connection should endup with an exception
+            # Trying to use the connection should end up with an exception
             with pytest.raises(BackendConnectionRefused):
                 await conn.cmds.ping()

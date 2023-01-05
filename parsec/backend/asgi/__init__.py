@@ -1,29 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Type, Optional, List, Tuple
-from pathlib import Path
 import logging
+from pathlib import Path
+from typing import Any, List, Tuple, Type, TypeVar
+
 import trio
-from quart import (
-    render_template,
-    ResponseReturnValue,
-    request,
-    redirect as quart_redirect,
-    ctx,
-)
-from quart_trio import QuartTrio
+import trio_typing
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
+from quart import ResponseReturnValue, ctx, render_template, request
+from quart import redirect as quart_redirect
+from quart_trio import QuartTrio
 
 from parsec import __version__ as parsec_version
 from parsec.backend.app import BackendApp
-from parsec.backend.asgi.logger import ParsecLogger
-from parsec.backend.config import BackendConfig
 from parsec.backend.asgi.administration import administration_bp
+from parsec.backend.asgi.logger import ParsecLogger
 from parsec.backend.asgi.redirect import redirect_bp
 from parsec.backend.asgi.rpc import rpc_bp
 from parsec.backend.asgi.ws import ws_bp
+from parsec.backend.config import BackendConfig
 from parsec.backend.templates import JINJA_ENV_CONFIG
+
+T = TypeVar("T")
 
 
 # Max size for HTTP body, 1Mo seems plenty given our API never upload big chunk of data
@@ -64,7 +64,7 @@ def app_factory(
         header_key, header_expected_value = backend.config.forward_proto_enforce_https
 
         @app.before_request
-        def redirect_unsecure() -> Optional[ResponseReturnValue]:
+        def redirect_unsecure() -> ResponseReturnValue | None:  # type: ignore[misc]
             header_value = request.headers.get(header_key)
             # If redirection header match and protocol match, then no need for a redirection.
             if header_value is not None and header_value != header_expected_value:
@@ -73,11 +73,11 @@ def app_factory(
             return None
 
     @app.route("/", methods=["GET"])
-    async def root():
+    async def root() -> Any:  # type: ignore[misc]
         return await render_template("index.html")
 
     @app.errorhandler(404)
-    async def page_not_found(e):
+    async def page_not_found(e: Any) -> Any:  # type: ignore[misc]
         return await render_template("404.html"), 404
 
     return app
@@ -115,9 +115,9 @@ async def serve_backend_with_asgi(
     backend: BackendApp,
     host: str,
     port: int,
-    ssl_certfile: Optional[Path] = None,
-    ssl_keyfile: Optional[Path] = None,
-    task_status=trio.TASK_STATUS_IGNORED,
+    ssl_certfile: Path | None = None,
+    ssl_keyfile: Path | None = None,
+    task_status: trio_typing.TaskStatus[T] = trio.TASK_STATUS_IGNORED,
 ) -> None:
     app = app_factory(backend)
     # Note: Hypercorn comes with default values for incoming data size to

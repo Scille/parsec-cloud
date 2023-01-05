@@ -1,34 +1,41 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-from importlib import import_module
-from async_exit_stack import AsyncExitStack
 from contextlib import asynccontextmanager
+from importlib import import_module
+from typing import Callable, Type
 
-import trio
-import qtrio
 import pytest
+import qtrio
+import trio
+from async_exit_stack import AsyncExitStack
 from PyQt5 import QtCore, QtTest
 
 from parsec import __version__ as parsec_version
+from parsec._parsec import LocalDevice
 from parsec.api.data import EntryName
-from parsec.core.local_device import save_device_with_password_in_config, DeviceFileType
-from parsec.core.gui.main_window import MainWindow
-from parsec.core.gui.workspaces_widget import WorkspaceButton
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.login_widget import (
-    LoginWidget,
-    LoginPasswordInputWidget,
-    LoginAccountsWidget,
-    AccountButton,
-    LoginSmartcardInputWidget,
-)
+from parsec.core.config import CoreConfig
 from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.lang import switch_language
+from parsec.core.gui.login_widget import (
+    AccountButton,
+    LoginAccountsWidget,
+    LoginPasswordInputWidget,
+    LoginSmartcardInputWidget,
+    LoginWidget,
+)
+from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.local_device import LocalDeviceAlreadyExistsError
-
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.workspaces_widget import WorkspaceButton, WorkspacesWidget
+from parsec.core.local_device import (
+    DeviceFileType,
+    LocalDeviceAlreadyExistsError,
+    save_device_with_password_in_config,
+)
+from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
-
 
 DEFAULT_PASSWORD = "P@ssw0rd"
 
@@ -182,7 +189,7 @@ def snackbar_catcher(monkeypatch):
 
     spy = SnackbarSpy()
 
-    def _show_snackbar(message, *args, **kargs):
+    def _show_snackbar(message, *args, **kwargs):
         spy.snackbars.append(message)
 
     monkeypatch.setattr(
@@ -250,7 +257,7 @@ def throttled_job_fast_wait(monkeypatch):
 def gui_factory(
     aqtbot,
     job_scheduler,
-    testing_main_window_cls,
+    testing_main_window_cls: Type[MainWindow],
     core_config,
     event_bus_factory,
     running_backend_ready,
@@ -263,7 +270,7 @@ def gui_factory(
         start_arg=None,
         skip_dialogs=True,
         throttle_job_no_wait=True,
-    ):
+    ) -> MainWindow:
         # Wait for the backend to run if necessary
         await running_backend_ready()
 
@@ -307,7 +314,12 @@ def gui_factory(
 
 
 @pytest.fixture
-async def gui(aqtbot, gui_factory, event_bus, core_config):
+async def gui(
+    aqtbot,
+    gui_factory: Callable[[EventBus, CoreConfig], MainWindow],
+    event_bus: EventBus,
+    core_config: CoreConfig,
+):
     _gui = await gui_factory(event_bus, core_config)
 
     def _gui_displayed():
@@ -319,7 +331,14 @@ async def gui(aqtbot, gui_factory, event_bus, core_config):
 
 
 @pytest.fixture
-async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_customization):
+async def logged_gui(
+    aqtbot,
+    gui_factory: Callable[[], MainWindow],
+    core_config: CoreConfig,
+    alice: LocalDevice,
+    bob: LocalDevice,
+    fixtures_customization,
+):
     # Logged as bob (i.e. standard profile) by default
     if fixtures_customization.get("logged_gui_as_admin", False):
         device = alice
@@ -334,7 +353,7 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
 
 
 @pytest.fixture
-def testing_main_window_cls(aqtbot):
+def testing_main_window_cls(aqtbot) -> Type[MainWindow]:
     # Since widgets are not longer persistent and are instantiated only when needed,
     # we can no longer simply access them.
     # These methods help to retrieve a widget according to the current state of the GUI.
@@ -500,7 +519,7 @@ def testing_main_window_cls(aqtbot):
                 aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
             return u_w
 
-        async def test_switch_to_workspaces_widget(self, error=False):
+        async def test_switch_to_workspaces_widget(self, error=False) -> WorkspacesWidget:
             central_widget = self.test_get_central_widget()
             w_w = self.test_get_workspaces_widget()
             signal = w_w.list_error if error else w_w.list_success
@@ -508,7 +527,9 @@ def testing_main_window_cls(aqtbot):
                 aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
             return w_w
 
-        async def test_switch_to_files_widget(self, workspace_name, error=False):
+        async def test_switch_to_files_widget(
+            self, workspace_name: EntryName, error: bool = False
+        ) -> FilesWidget:
             assert isinstance(workspace_name, EntryName)
             w_w = await self.test_switch_to_workspaces_widget()
 

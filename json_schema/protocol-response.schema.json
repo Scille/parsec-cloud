@@ -1,0 +1,51 @@
+{
+    "title": "Protocol response",
+    "description": "The list of possible response for a protocol request",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "oneOf": [
+            {
+                "required": ["status"],
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            {
+                "required": [
+                    "status",
+                    "unit"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "description": "The status of an `nested-types`"
+                    }
+                },
+                "additionalProperties": false
+            },
+            {
+                "required": [
+                    "status",
+                    "fields"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "fields": {
+                        "description": "Additional fields to send alongside the response",
+                        "$ref": "./fields.schema.json"
+                    }
+                },
+                "additionalProperties": false
+            }
+        ]
+    }
+}

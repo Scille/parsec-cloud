@@ -1,34 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
+
+from typing import Any, List, Tuple
 
 from parsec._parsec import DateTime
-from typing import Tuple, List, Optional
-
-from parsec.api.protocol import UserID, DeviceID, OrganizationID
-from parsec.backend.user import (
-    BaseUserComponent,
-    User,
-    Device,
-    Trustchain,
-    GetUserAndDevicesResult,
-    HumanFindResultItem,
-)
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries import (
-    query_create_user,
     query_create_device,
+    query_create_user,
+    query_dump_users,
     query_find_humans,
     query_get_user,
-    query_get_user_with_trustchain,
+    query_get_user_with_device,
     query_get_user_with_device_and_trustchain,
     query_get_user_with_devices_and_trustchain,
-    query_get_user_with_device,
+    query_get_user_with_trustchain,
     query_revoke_user,
-    query_dump_users,
+)
+from parsec.backend.user import (
+    BaseUserComponent,
+    Device,
+    GetUserAndDevicesResult,
+    HumanFindResultItem,
+    Trustchain,
+    User,
 )
 
 
 class PGUserComponent(BaseUserComponent):
-    def __init__(self, dbh: PGHandler, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.dbh = dbh
 
@@ -77,7 +78,7 @@ class PGUserComponent(BaseUserComponent):
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: Optional[str] = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -85,7 +86,7 @@ class PGUserComponent(BaseUserComponent):
     ) -> Tuple[List[HumanFindResultItem], int]:
         async with self.dbh.pool.acquire() as conn:
             return await query_find_humans(
-                conn=conn,
+                conn,
                 organization_id=organization_id,
                 query=query,
                 page=page,
@@ -100,7 +101,7 @@ class PGUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[DateTime] = None,
+        revoked_on: DateTime | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             return await query_revoke_user(

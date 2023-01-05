@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import re
-import attr
-import fnmatch
-from pathlib import Path
 import importlib.resources
-from typing import Optional, Tuple, List, Pattern
-from structlog import get_logger
-from functools import partial
 from contextlib import asynccontextmanager
+from functools import partial
+from pathlib import Path
+from typing import AsyncIterator, List, Tuple, Union
+
+import attr
+from structlog import get_logger
 
 from parsec._parsec import (
+    HumanFindRepOk,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationType,
@@ -21,94 +22,75 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepOk,
+    OrganizationConfig,
+    OrganizationStats,
     OrganizationStatsRepOk,
+    Regex,
+    UserRevokeRepOk,
+    WorkspaceEntry,
 )
-from parsec.event_bus import EventBus
-from parsec.api.protocol import (
-    UserID,
-    InvitationToken,
-)
-from parsec.api.data import RevokedUserCertificate, EntryName
-from parsec.core.pki import accepter_list_submitted_from_backend
-from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
+from parsec.api.data import EntryName, RevokedUserCertificate
+from parsec.api.protocol import InvitationToken, UserID
 from parsec.core import resources as core_resources
-from parsec.core.config import CoreConfig
-from parsec.core.types import OrganizationConfig, OrganizationStats
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
-    BackendNotFoundError,
-    BackendInvitationNotFound,
-    BackendInvitationAlreadyUsed,
-    BackendInvitationOnExistingMember,
     BackendConnStatus,
+    BackendInvitationAlreadyUsed,
+    BackendInvitationNotFound,
+    BackendInvitationOnExistingMember,
     BackendNotAvailable,
+    BackendNotFoundError,
 )
+from parsec.core.config import CoreConfig
+from parsec.core.fs import UserFS
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
+from parsec.core.fs.storage.workspace_storage import FAILSAFE_PATTERN_FILTER
 from parsec.core.invite import (
-    UserGreetInitialCtx,
-    UserGreetInProgress1Ctx,
     DeviceGreetInitialCtx,
     DeviceGreetInProgress1Ctx,
+    UserGreetInitialCtx,
+    UserGreetInProgress1Ctx,
+)
+from parsec.core.messages_monitor import monitor_messages
+from parsec.core.mountpoint import MountpointManager, mountpoint_manager_factory
+from parsec.core.pki import accepter_list_submitted_from_backend
+from parsec.core.pki.accepter import (
+    PkiEnrollmentAccepterInvalidSubmittedCtx,
+    PkiEnrollmentAccepterValidSubmittedCtx,
 )
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
-    RemoteDevicesManagerError,
     RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerError,
     RemoteDevicesManagerNotFoundError,
 )
-from parsec.core.mountpoint import mountpoint_manager_factory, MountpointManager
-from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
-from parsec.core.fs import UserFS
-from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
-
+from parsec.core.types import BackendInvitationAddr, DeviceInfo, LocalDevice, UserInfo
+from parsec.event_bus import EventBus
 
 logger = get_logger()
 
-FAILSAFE_PATTERN_FILTER = re.compile(
-    r"^\b$"
-)  # Matches nothing (https://stackoverflow.com/a/2302992/2846140)
 
-
-def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Pattern]:
+def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Regex | None:
     try:
-        data = prevent_sync_pattern_path.read_text()
+        return Regex.from_file(str(prevent_sync_pattern_path))
     except OSError as exc:
         logger.warning(
-            "Path to the file containing the filename patterns to ignore is not properly defined",
-            exc_info=exc,
-        )
-        return None
-    try:
-        regex = []
-        for line in data.splitlines():
-            line = line.strip()
-            if line and not line.startswith("#"):
-                regex.append(fnmatch.translate(line))
-        regex = "|".join(regex)
-    except ValueError as exc:
-        logger.warning(
-            "Could not parse the file containing the filename patterns to ignore", exc_info=exc
-        )
-        return None
-    try:
-        return re.compile(regex)
-    except re.error as exc:
-        logger.warning(
-            "Could not compile the file containing the filename patterns to ignore into a regex pattern",
+            "Failed to load the file containing the filename patterns to ignore",
             exc_info=exc,
         )
         return None
 
 
-def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -> Pattern:
+def get_prevent_sync_pattern(prevent_sync_pattern_path: Path | None = None) -> Regex:
     pattern = None
     # Get the pattern from the path defined in the core config
     if prevent_sync_pattern_path is not None:
         pattern = _get_prevent_sync_pattern(prevent_sync_pattern_path)
     # Default to the pattern from the ignore file in the core resources
     if pattern is None:
-        with importlib.resources.files(core_resources).joinpath("default_pattern.ignore") as path:
+        with importlib.resources.files(core_resources).joinpath("default_pattern.ignore") as path:  # type: ignore[attr-defined]
             pattern = _get_prevent_sync_pattern(path)
     # As a last resort use the failsafe
     if pattern is None:
@@ -137,10 +119,10 @@ class LoggedCore:
         return self._backend_conn.status
 
     @property
-    def backend_status_exc(self) -> Optional[Exception]:
+    def backend_status_exc(self) -> Exception | None:
         return self._backend_conn.status_exc
 
-    def find_workspace_from_name(self, workspace_name: EntryName):
+    def find_workspace_from_name(self, workspace_name: EntryName) -> WorkspaceEntry:
         for workspace in self.user_fs.get_user_manifest().workspaces:
             if workspace_name == workspace.name:
                 return workspace
@@ -148,7 +130,7 @@ class LoggedCore:
 
     async def find_humans(
         self,
-        query: str = None,
+        query: str | None = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -165,15 +147,15 @@ class LoggedCore:
             omit_revoked=omit_revoked,
             omit_non_human=omit_non_human,
         )
-        if rep["status"] != "ok":
+        if not isinstance(rep, HumanFindRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
         results = []
-        for item in rep["results"]:
+        for item in rep.results:
             # Note `BackendNotFoundError` should never occurs (unless backend is broken !)
             # here given we are feeding the backend the user IDs it has provided us
-            user_info = await self.get_user_info(item["user_id"])
+            user_info = await self.get_user_info(item.user_id)
             results.append(user_info)
-        return (results, rep["total"])
+        return (results, rep.total)
 
     async def get_organization_stats(self) -> OrganizationStats:
         """
@@ -205,7 +187,7 @@ class LoggedCore:
         except RemoteDevicesManagerNotFoundError as exc:
             raise BackendNotFoundError(str(exc)) from exc
         except RemoteDevicesManagerError as exc:
-            # TODO: we should be using our own kind of exception instead of borowing BackendConnectionError...
+            # TODO: we should be using our own kind of exception instead of borrowing BackendConnectionError...
             raise BackendConnectionError(
                 f"Error while fetching user {user_id.str} certificates"
             ) from exc
@@ -217,7 +199,7 @@ class LoggedCore:
             created_on=user_certif.timestamp,
         )
 
-    async def get_user_devices_info(self, user_id: UserID = None) -> List[DeviceInfo]:
+    async def get_user_devices_info(self, user_id: UserID | None = None) -> List[DeviceInfo]:
         """
         Raises:
             BackendConnectionError
@@ -234,7 +216,7 @@ class LoggedCore:
         except RemoteDevicesManagerNotFoundError as exc:
             raise BackendNotFoundError(str(exc)) from exc
         except RemoteDevicesManagerError as exc:
-            # TODO: we should be using our own kind of exception instead of borowing BackendConnectionError...
+            # TODO: we should be using our own kind of exception instead of borrowing BackendConnectionError...
             raise BackendConnectionError(
                 f"Error while fetching user {user_id.str} certificates"
             ) from exc
@@ -262,8 +244,8 @@ class LoggedCore:
         rep = await self._backend_conn.cmds.user_revoke(
             revoked_user_certificate=revoked_user_certificate
         )
-        if rep["status"] != "ok":
-            raise BackendConnectionError(f"Error while trying to revoke user {user_id.str}: {rep}")
+        if not isinstance(rep, UserRevokeRepOk):
+            raise BackendConnectionError(f"Error while trying to revoke user {user_id}: {rep}")
 
         # Invalidate potential cache to avoid displaying the user as not-revoked
         self._remote_devices_manager.invalidate_user_cache(user_id)
@@ -276,7 +258,7 @@ class LoggedCore:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_new(
-            type=InvitationType.USER(), claimer_email=email, send_email=send_email
+            type=InvitationType.USER, claimer_email=email, send_email=send_email
         )
         if isinstance(rep, InviteNewRepAlreadyMember):
             raise BackendInvitationOnExistingMember("An user already exist with this email")
@@ -292,7 +274,7 @@ class LoggedCore:
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
-                invitation_type=InvitationType.USER(),
+                invitation_type=InvitationType.USER,
                 token=rep.token,
             ),
             email_sent,
@@ -306,22 +288,21 @@ class LoggedCore:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_new(
-            type=InvitationType.DEVICE(), send_email=send_email
+            type=InvitationType.DEVICE, send_email=send_email
         )
         if not isinstance(rep, InviteNewRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
 
         try:
-            if rep.email_sent:
-                email_sent = rep.email_sent
+            email_sent = rep.email_sent
         except AttributeError:
-            email_sent = InvitationEmailSentStatus.SUCCESS()
+            email_sent = InvitationEmailSentStatus.SUCCESS
 
         return (
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
-                invitation_type=InvitationType.DEVICE(),
+                invitation_type=InvitationType.DEVICE,
                 token=rep.token,
             ),
             email_sent,
@@ -330,7 +311,7 @@ class LoggedCore:
     async def delete_invitation(
         self,
         token: InvitationToken,
-        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED(),
+        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED,
     ) -> None:
         """
         Raises:
@@ -375,7 +356,11 @@ class LoggedCore:
     def get_organization_config(self) -> OrganizationConfig:
         return self._backend_conn.get_organization_config()
 
-    async def list_submitted_enrollment_requests(self):
+    async def list_submitted_enrollment_requests(
+        self,
+    ) -> List[
+        Union[PkiEnrollmentAccepterInvalidSubmittedCtx, PkiEnrollmentAccepterValidSubmittedCtx]
+    ]:
         return await accepter_list_submitted_from_backend(
             cmds=self._backend_conn.cmds, extra_trust_roots=self.config.pki_extra_trust_roots
         )
@@ -383,14 +368,12 @@ class LoggedCore:
 
 @asynccontextmanager
 async def logged_core_factory(
-    config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
-):
+    config: CoreConfig, device: LocalDevice, event_bus: EventBus | None = None
+) -> AsyncIterator[LoggedCore]:
     event_bus = event_bus or EventBus()
     prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)
     backend_conn = BackendAuthenticatedConn(
-        addr=device.organization_addr,
-        device_id=device.device_id,
-        signing_key=device.signing_key,
+        device=device,
         event_bus=event_bus,
         max_cooldown=config.backend_max_cooldown,
         max_pool=config.backend_max_connections,

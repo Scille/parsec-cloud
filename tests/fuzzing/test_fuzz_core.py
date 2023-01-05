@@ -1,18 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
+from collections import defaultdict
+from random import choice, randrange
+from string import ascii_lowercase
+from time import monotonic
+
+import attr
 import pytest
 import trio
-import attr
-from time import monotonic
-from collections import defaultdict
-from random import randrange, choice
-from string import ascii_lowercase
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import UserID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
-
 
 FUZZ_PARALLELISM = 10
 FUZZ_TIME = 10.0
@@ -113,7 +114,7 @@ class FSState:
             self.folders.append(new_path)
 
     def get_new_path(self):
-        return ("%s/%s" % (self.get_folder(), generate_name())).replace("//", "/")
+        return "{}/{}".format(self.get_folder(), generate_name()).replace("//", "/")
 
 
 class SkipCommand(Exception):
@@ -264,4 +265,4 @@ async def test_fuzz_core(request, running_backend, alice_core):
         print()
         print("Stats:")
         for k, v in fs_state.get_cooked_stats():
-            print(" - %s: %s%%" % (k, v))
+            print(f" - {k}: {v}%")

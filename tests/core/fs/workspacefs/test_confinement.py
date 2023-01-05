@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import re
 import pytest
 
+from parsec._parsec import Regex
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
+from parsec.core.logged_core import get_prevent_sync_pattern
 from tests.common import create_shared_workspace
 
 
@@ -18,7 +20,7 @@ async def assert_path_info(workspace, path, **kwargs):
 async def test_local_confinement_points(alice_workspace, running_backend):
 
     # Apply a *.tmp pattern
-    pattern = re.compile(r".*\.tmp$")
+    pattern = Regex.from_regex_str(".*\\.tmp$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
@@ -104,12 +106,12 @@ async def test_sync_with_different_patterns(running_backend, alice_user_fs, alic
     workspace2 = alice2_user_fs.get_workspace(wid)
 
     # Workspace 1 patterns .tmp files
-    pattern1 = re.compile(r".*\.tmp$")
+    pattern1 = Regex.from_regex_str(r".*\.tmp$")
     await workspace1.set_and_apply_prevent_sync_pattern(pattern1)
     await workspace1.sync()
 
     # Workspace 2 patterns ~ files
-    pattern2 = re.compile(r".*~$")
+    pattern2 = Regex.from_regex_str(r".*~$")
     await workspace2.set_and_apply_prevent_sync_pattern(pattern2)
     await workspace2.sync()
 
@@ -174,7 +176,7 @@ async def test_change_pattern(alice_workspace, running_backend):
     root_id = alice_workspace.workspace_id
 
     # Apply a *.x pattern
-    pattern = re.compile(r".*\.x$")
+    pattern = Regex.from_regex_str(r".*\.x$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
@@ -203,8 +205,8 @@ async def test_change_pattern(alice_workspace, running_backend):
     await assert_path_info(alice_workspace, "/test2.y", confinement_point=None, need_sync=True)
     await assert_path_info(alice_workspace, "/test2.y", confinement_point=None, need_sync=True)
 
-    # Appy Y pattern
-    pattern = re.compile(r".*\.y$")
+    # Apply Y pattern
+    pattern = Regex.from_regex_str(r".*\.y$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
@@ -228,7 +230,7 @@ async def test_change_pattern(alice_workspace, running_backend):
     await assert_path_info(alice_workspace, "/test2.z", confinement_point=None, need_sync=False)
 
     # Rollback to X pattern
-    pattern = re.compile(r".*\.x$")
+    pattern = Regex.from_regex_str(r".*\.x$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
@@ -283,11 +285,45 @@ async def test_common_temporary_files(alice_workspace):
         "test.lnk",
         ".~test",
         "~$test",
-        "mydoc.docx.sb-324kJJ4-AGBJ32A",
+        "mydoc.docx.sb-324kJJ4-AGBJ32A",  # cspell: disable-line
     ]
     for path in confined_file_list:
         path = "/" + path
         await alice_workspace.touch(path)
+        print(path)
         await assert_path_info(
             alice_workspace, path, confinement_point=alice_workspace.workspace_id
         )
+
+
+def test_stable_prevent_sync_pattern():
+    """
+    Prevent sync pattern are compared in the local database
+    so we need to make they are stable.
+
+    See issue #3145 for more information.
+    """
+    a = get_prevent_sync_pattern()
+    b = get_prevent_sync_pattern()
+    assert a.pattern == b.pattern
+
+
+@pytest.mark.trio
+async def test_database_with_invalid_pattern_resilience(core_factory, alice):
+    with pytest.raises(ValueError):
+        Regex.from_regex_str("[")
+
+    class InvalidRegex:
+        pattern = "["
+
+    # Set an invalid regex in the local database
+    async with core_factory(alice) as core:
+        wid = await core.user_fs.workspace_create(EntryName("w"))
+        workspace = core.user_fs.get_workspace(wid)
+        await workspace.local_storage.manifest_storage.set_prevent_sync_pattern(InvalidRegex())
+
+    async with core_factory(alice) as core:
+        workspace = core.user_fs.get_workspace(wid)
+        await workspace.path_info("/")
+        assert workspace.local_storage.get_prevent_sync_pattern() == get_prevent_sync_pattern()
+        assert workspace.local_storage.get_prevent_sync_pattern_fully_applied()

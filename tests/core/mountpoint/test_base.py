@@ -1,28 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
+import errno
 import os
 import sys
-import errno
 from itertools import count
-import trio
-import pytest
 from pathlib import Path, PurePath
 
+import pytest
+import trio
+
+from parsec._parsec import CoreEvent
 from parsec.api.data import EntryID, EntryName
-from parsec.core.mountpoint import (
-    mountpoint_manager_factory,
-    MountpointConfigurationError,
-    MountpointAlreadyMounted,
-    MountpointNotMounted,
-    MountpointFuseNotAvailable,
-    MountpointWinfspNotAvailable,
-)
-
-from parsec.core.core_events import CoreEvent
 from parsec.core import logged_core_factory
-from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
-
+from parsec.core.mountpoint import (
+    MountpointAlreadyMounted,
+    MountpointConfigurationError,
+    MountpointFuseNotAvailable,
+    MountpointNotMounted,
+    MountpointWinfspNotAvailable,
+    mountpoint_manager_factory,
+)
+from parsec.core.types import WorkspaceRole
 from tests.common import create_shared_workspace, real_clock_timeout
 
 
@@ -58,7 +58,7 @@ async def test_mount_unknown_workspace(base_mountpoint, alice_user_fs, event_bus
         with pytest.raises(MountpointConfigurationError) as exc:
             await mountpoint_manager.mount_workspace(wid)
 
-        assert exc.value.args == (f"Workspace `{wid.str}` doesn't exist",)
+        assert exc.value.args == (f"Workspace `{wid.hex}` doesn't exist",)
 
 
 @pytest.mark.trio
@@ -92,13 +92,13 @@ async def test_mountpoint_path_already_in_use(
     await alice_user_fs.sync()
     await alice2_user_fs.sync()
 
-    # Easily differenciate alice&alice2
+    # Easily differentiate alice&alice2
     await alice2_user_fs.get_workspace(wid).touch("/I_am_alice2.txt")
     await alice_user_fs.get_workspace(wid).touch("/I_am_alice.txt")
 
     naive_workspace_path = (base_mountpoint / "w").absolute()
 
-    # Default workspace path already exists, souldn't be able to use it
+    # Default workspace path already exists, shouldn't be able to use it
     await trio.Path(base_mountpoint / "w").mkdir(parents=True)
     await trio.Path(base_mountpoint / "w" / "bar.txt").touch()
 
@@ -146,7 +146,7 @@ async def test_mount_and_explore_workspace(
             mountpoint_path = get_path_in_mountpoint(mountpoint_manager, wid, "/")
             expected = {"mountpoint": mountpoint_path, "workspace_id": wid, "timestamp": None}
 
-            spy.assert_events_occured(
+            spy.assert_events_occurred(
                 [
                     (CoreEvent.MOUNTPOINT_STARTING, expected),
                     (CoreEvent.MOUNTPOINT_STARTED, expected),
@@ -173,11 +173,11 @@ async def test_mount_and_explore_workspace(
             if manual_unmount:
                 await mountpoint_manager.unmount_workspace(wid)
                 # Mountpoint should be stopped by now
-                spy.assert_events_occured([(CoreEvent.MOUNTPOINT_STOPPED, expected)])
+                spy.assert_events_occurred([(CoreEvent.MOUNTPOINT_STOPPED, expected)])
 
         if not manual_unmount:
             # Mountpoint should be stopped by now
-            spy.assert_events_occured([(CoreEvent.MOUNTPOINT_STOPPED, expected)])
+            spy.assert_events_occurred([(CoreEvent.MOUNTPOINT_STOPPED, expected)])
 
 
 @pytest.mark.trio
@@ -313,12 +313,12 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
 
     assert exc.value.errno == errno.EINVAL
     if sys.platform == "win32":
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             "[error    ] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
         )
 
     else:
-        caplog.assert_occured_once(
+        caplog.assert_occurred_once(
             "[error    ] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
         )
 
@@ -593,7 +593,7 @@ async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus)
     wid = await alice_user_fs.workspace_create(EntryName("w"))
 
     # Reuse the same mountpoint manager for all the mountings to
-    # make sure state is not polutated by previous mount attempts
+    # make sure state is not populated by previous mount attempts
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
@@ -628,7 +628,7 @@ def test_deadlock_detection(mountpoint_service, caplog, monkeypatch):
             os.open(mountpoint_service.wpath / "foo.txt", os.O_RDONLY)
 
         # TODO: Inconsistent status returned by macOS, it might be because the
-        # mountpount is not fully ready when we try our access (though it is
+        # mountpoint is not fully ready when we try our access (though it is
         # unlikely given we do active stat polling as part of the mount
         # operation especially to avoid such situation... on top of that it
         # seems retrying the os access always return a ENXIO errno)
@@ -640,13 +640,13 @@ def test_deadlock_detection(mountpoint_service, caplog, monkeypatch):
         # going to create extra errors logs. Hence we check we have at least one
         # "trio thread is unreachable" error (and not exactly one !).
         if sys.platform == "win32":
-            caplog.assert_occured(
-                "[error    ] The trio thread is unreachable, a deadlock might have occured [parsec.core.mountpoint.winfsp_operations]"
+            caplog.assert_occurred(
+                "[error    ] The trio thread is unreachable, a deadlock might have occurred [parsec.core.mountpoint.winfsp_operations]"
             )
         else:
             assert ctx.value.errno == errno.EINVAL
-            caplog.assert_occured(
-                "[error    ] The trio thread is unreachable, a deadlock might have occured [parsec.core.mountpoint.fuse_operations]"
+            caplog.assert_occurred(
+                "[error    ] The trio thread is unreachable, a deadlock might have occurred [parsec.core.mountpoint.fuse_operations]"
             )
 
     # Lower the deadlock timeout detection to 100 ms to make the test faster

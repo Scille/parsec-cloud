@@ -1,30 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
 from parsec._parsec import (
     DateTime,
-    RealmUpdateRolesRepOk,
+    RealmGetRoleCertificatesRepNotAllowed,
+    RealmGetRoleCertificatesRepNotFound,
+    RealmGetRoleCertificatesRepOk,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepIncompatibleProfile,
     RealmUpdateRolesRepInMaintenance,
     RealmUpdateRolesRepInvalidData,
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepNotFound,
+    RealmUpdateRolesRepOk,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
-    RealmGetRoleCertificatesRepOk,
-    RealmGetRoleCertificatesRepNotFound,
-    RealmGetRoleCertificatesRepNotAllowed,
     VlobCreateRepOk,
 )
-from parsec.api.protocol import VlobID, RealmID, RealmRole, UserProfile
 from parsec.api.data import RealmRoleCertificate
+from parsec.api.protocol import RealmID, RealmRole, UserProfile, VlobID
 from parsec.backend.realm import RealmGrantedRole
-
-from tests.common import freeze_time, customize_fixtures
-from tests.backend.common import realm_update_roles, realm_get_role_certificates, vlob_create
-
+from tests.backend.common import realm_get_role_certificates, realm_update_roles, vlob_create
+from tests.common import customize_fixtures, freeze_time
 
 NOW = DateTime(2000, 1, 1)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
@@ -219,7 +218,7 @@ async def test_remove_role_idempotent(
 async def test_update_roles_as_owner(
     backend, alice, bob, alice_ws, bob_ws, realm, realm_generate_certif_and_update_roles_or_fail
 ):
-    for role in RealmRole:
+    for role in RealmRole.VALUES:
         rep = await realm_generate_certif_and_update_roles_or_fail(
             alice_ws, alice, realm, bob.user_id, role
         )
@@ -327,7 +326,7 @@ async def test_role_update_not_allowed(
     )
 
     # Cannot give role
-    for role in RealmRole:
+    for role in RealmRole.VALUES:
         rep = await realm_generate_certif_and_update_roles_or_fail(
             alice_ws, alice, realm, bob.user_id, role
         )
@@ -384,7 +383,7 @@ async def test_role_access_during_maintenance(
     rep = await realm_get_role_certificates(alice_ws, realm)
     assert isinstance(rep, RealmGetRoleCertificatesRepOk)
 
-    # ...buit not update role
+    # ...but not update role
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.MANAGER
     )

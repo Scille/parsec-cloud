@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import sys
-import pytest
-from hypothesis import strategies as st
-from hypothesis_trio.stateful import initialize, rule, Bundle
 from string import ascii_lowercase
 
-from parsec.api.data import EntryName, EntryID
-from parsec.core.fs import FSWorkspaceNotFoundError
+import pytest
+from hypothesis import strategies as st
+from hypothesis_trio.stateful import Bundle, initialize, rule
 
+from parsec.api.data import EntryID, EntryName
+from parsec.core.fs import FSWorkspaceNotFoundError
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)

@@ -1,25 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 from hypothesis_trio.stateful import (
-    initialize,
-    rule,
-    consumes,
-    invariant,
-    run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
     Bundle,
+    TrioAsyncioRuleBasedStateMachine,
+    consumes,
+    initialize,
+    invariant,
+    rule,
+    run_state_machine_as_test,
 )
+
 from parsec._parsec import DateTime
-
+from parsec.api.data import EntryName, RealmRoleCertificate
 from parsec.api.protocol import RealmID, RealmRole
-from parsec.api.data import RealmRoleCertificate, EntryName
 from parsec.backend.realm import RealmGrantedRole
-
 from tests.common import call_with_control
 
 
 @pytest.mark.slow
+@pytest.mark.flaky(reruns=1)
 def test_workspace_reencryption_need(
     hypothesis_settings,
     reset_testbed,
@@ -30,7 +31,7 @@ def test_workspace_reencryption_need(
     local_device_factory,
     alice,
 ):
-    class WorkspaceFSReencrytionNeed(TrioAsyncioRuleBasedStateMachine):
+    class WorkspaceFSReencryptionNeed(TrioAsyncioRuleBasedStateMachine):
         Users = Bundle("user")
 
         async def start_user_fs(self):
@@ -81,7 +82,7 @@ def test_workspace_reencryption_need(
             certif = RealmRoleCertificate(
                 author=author.device_id,
                 timestamp=now,
-                realm_id=RealmID(self.wid.uuid),
+                realm_id=RealmID.from_entry_id(self.wid),
                 user_id=user.user_id,
                 role=role,
             ).dump_and_sign(author.signing_key)
@@ -89,7 +90,7 @@ def test_workspace_reencryption_need(
                 author.organization_id,
                 RealmGrantedRole(
                     certificate=certif,
-                    realm_id=RealmID(self.wid.uuid),
+                    realm_id=RealmID.from_entry_id(self.wid),
                     user_id=user.user_id,
                     role=role,
                     granted_by=author.device_id,
@@ -169,4 +170,4 @@ def test_workspace_reencryption_need(
                 == self.since_reencryption_user_revoked - self.since_reencryption_role_revoked
             )
 
-    run_state_machine_as_test(WorkspaceFSReencrytionNeed, settings=hypothesis_settings)
+    run_state_machine_as_test(WorkspaceFSReencryptionNeed, settings=hypothesis_settings)

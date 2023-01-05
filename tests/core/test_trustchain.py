@@ -1,14 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
 from typing import Dict, Optional, Tuple
 
-from parsec._parsec import DateTime, TimeProvider, TrustchainContext
-from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
+import pytest
+
+from parsec._parsec import (
+    DateTime,
+    TimeProvider,
+    Trustchain,
+    TrustchainContext,
+    TrustchainErrorException,
+)
+from parsec.api.data import DeviceCertificate, RevokedUserCertificate, UserCertificate
 from parsec.api.protocol import UserID, UserProfile
 from parsec.api.protocol.types import DeviceID
 from parsec.core.types import LocalDevice
-from parsec.core.trustchain import TrustchainError
 
 
 class TrustchainData:
@@ -23,11 +30,11 @@ class TrustchainData:
     def run_trustchain_load_user_and_devices(self, user: UserID):
         ctx = self.trustchain_ctx_factory()
         return ctx.load_user_and_devices(
-            trustchain={
-                "users": [certif for _, certif in self.users_certifs.values()],
-                "revoked_users": [certif for _, certif in self.revoked_users_certifs.values()],
-                "devices": [certif for _, certif in self.devices_certifs.values()],
-            },
+            trustchain=Trustchain(
+                users=[certif for _, certif in self.users_certifs.values()],
+                revoked_users=[certif for _, certif in self.revoked_users_certifs.values()],
+                devices=[certif for _, certif in self.devices_certifs.values()],
+            ),
             user_certif=self.get_user_certif(user),
             revoked_user_certif=self.get_revoked_user_certif(user),
             devices_certifs=self.get_devices_certifs(user),
@@ -191,9 +198,9 @@ def test_bad_expected_user(trustchain_data_factory):
         todo_devices=({"id": "alice@dev1"},), todo_users=({"id": "alice"},)
     )
     ctx = data.trustchain_ctx_factory()
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         ctx.load_user_and_devices(
-            trustchain={"users": [], "revoked_users": [], "devices": []},
+            trustchain=Trustchain(users=[], revoked_users=[], devices=[]),
             user_certif=data.get_user_certif("alice"),
             revoked_user_certif=None,
             devices_certifs=[data.get_device_certif("alice@dev1")],
@@ -225,7 +232,7 @@ def test_bad_user_self_signed(trustchain_data_factory):
         todo_devices=({"id": "alice@dev1"},),
         todo_users=({"id": "alice", "certifier": "alice@dev1"},),
     )
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("alice"))
     assert str(exc.value) == "alice: Invalid self-signed user certificate"
 
@@ -234,7 +241,7 @@ def test_bad_revoked_user_self_signed(trustchain_data_factory):
     data = trustchain_data_factory(
         todo_devices=({"id": "alice@dev1"},), todo_users=({"id": "alice", "revoker": "alice@dev1"},)
     )
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("alice"))
     assert str(exc.value) == "alice: Invalid self-signed user revocation certificate"
 
@@ -253,7 +260,7 @@ def test_invalid_loop_on_device_certif_trustchain_error(trustchain_data_factory)
     loop_certif = certif.evolve(author=bob.device_id)
     data.add_device_certif(loop_certif, loop_certif.dump_and_sign(bob.signing_key))
 
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("alice"))
     assert (
         str(exc.value)
@@ -279,11 +286,11 @@ def test_device_signature_while_revoked(trustchain_data_factory):
             {"id": "mallory"},
         ),
     )
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("mallory"))
     assert str(exc.value) == (
-        "mallory@dev1 <-sign- alice@dev1: Signature (2000-01-02T00:00:00+00:00)"
-        " is posterior to user revocation (2000-01-01T00:00:00+00:00)"
+        "mallory@dev1 <-sign- alice@dev1: Signature (2000-01-02T00:00:00Z)"
+        " is posterior to user revocation (2000-01-01T00:00:00Z)"
     )
 
 
@@ -299,11 +306,11 @@ def test_user_signature_while_revoked(trustchain_data_factory):
             {"id": "mallory", "certifier": "alice@dev1", "created_on": d2},
         ),
     )
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("mallory"))
     assert str(exc.value) == (
-        "mallory's creation <-sign- alice@dev1: Signature (2000-01-02T00:00:00+00:00)"
-        " is posterior to user revocation (2000-01-01T00:00:00+00:00)"
+        "mallory's creation <-sign- alice@dev1: Signature (2000-01-02T00:00:00Z)"
+        " is posterior to user revocation (2000-01-01T00:00:00Z)"
     )
 
 
@@ -319,11 +326,11 @@ def test_revoked_user_signature_while_revoked(trustchain_data_factory):
             {"id": "mallory", "revoker": "alice@dev1", "revoked_on": d2},
         ),
     )
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("mallory"))
     assert str(exc.value) == (
-        "mallory's revocation <-sign- alice@dev1: Signature (2000-01-02T00:00:00+00:00)"
-        " is posterior to user revocation (2000-01-01T00:00:00+00:00)"
+        "mallory's revocation <-sign- alice@dev1: Signature (2000-01-02T00:00:00Z)"
+        " is posterior to user revocation (2000-01-01T00:00:00Z)"
     )
 
 
@@ -332,7 +339,7 @@ def test_create_user_not_admin(trustchain_data_factory):
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1"}),
         todo_users=({"id": "alice", "certifier": "bob@dev1"}, {"id": "bob"}),
     )
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("alice"))
     assert (
         str(exc.value)
@@ -345,7 +352,7 @@ def test_revoked_user_not_admin(trustchain_data_factory):
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1"}),
         todo_users=({"id": "alice", "revoker": "bob@dev1"}, {"id": "bob"}),
     )
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("alice"))
     assert (
         str(exc.value)
@@ -368,7 +375,7 @@ def test_verify_user_with_broken_trustchain(trustchain_data_factory):
     )
     # Remove a certificate
     data.devices_certifs.pop(DeviceID("mallory@dev1"))
-    with pytest.raises(TrustchainError) as exc:
+    with pytest.raises(TrustchainErrorException) as exc:
         data.run_trustchain_load_user_and_devices(UserID("alice"))
     assert str(exc.value) == (
         "bob@dev1 <-sign- mallory@dev1: Missing device certificate for mallory@dev1"

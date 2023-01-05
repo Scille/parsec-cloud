@@ -1,26 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from urllib.request import HTTPError, Request, urlopen
 
 import pytest
 import trio
-from urllib.request import urlopen, Request, HTTPError
 
 from parsec import __version__ as parsec_version
-from parsec.api.protocol import OrganizationID, InvitationToken
-from parsec.core.types.backend_address import BackendInvitationAddr
-from parsec.backend.asgi import MAX_CONTENT_LENGTH, serve_backend_with_asgi
-
 from parsec._parsec import InvitationType
-
+from parsec.api.protocol import InvitationToken, OrganizationID
+from parsec.backend.asgi import MAX_CONTENT_LENGTH, serve_backend_with_asgi
+from parsec.core.types.backend_address import BackendInvitationAddr
 from tests.common import customize_fixtures
 
 
 async def _do_test_redirect(client):
-    # No redirection header. shouln't redirect.
+    # No redirection header. shouldn't redirect.
     rep = await client.get("/test")
     assert rep.status == "404 NOT FOUND"
 
-    # Incorrect redirection header with good redirection protocol. shouln't redirect.
-    rep = await client.get("/test", headers={"X-Forwa-P": "https"})
+    # Incorrect redirection header with good redirection protocol. shouldn't redirect.
+    rep = await client.get("/test", headers={"X-Forwa-P": "https"})  # cspell: ignore Forwa
     assert rep.status == "404 NOT FOUND"
 
     # Correct header redirection but not same redirection protocol. should redirect.
@@ -118,7 +118,7 @@ async def test_unexpected_exception_get_500(backend_asgi_app, monkeypatch, caplo
     assert rep.status == "500 INTERNAL SERVER ERROR"
 
     # ASGI app also report the crash in the log
-    caplog.assert_occured_once("Exception on request GET /dummy")
+    caplog.assert_occurred_once("Exception on request GET /dummy")
     caplog.clear()
 
 
@@ -204,7 +204,7 @@ async def test_get_redirect_invitation(backend_asgi_app, backend_addr):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=backend_addr,
         organization_id=OrganizationID("Org"),
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=InvitationToken.new(),
     )
     # TODO: should use invitation_addr.to_redirection_url() when available !

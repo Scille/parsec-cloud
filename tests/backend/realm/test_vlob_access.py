@@ -1,51 +1,51 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
 
 from parsec._parsec import (
     DateTime,
     RealmUpdateRolesRepOk,
-    VlobCreateRepOk,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
+    VlobCreateRepBadTimestamp,
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
+    VlobCreateRepOk,
     VlobCreateRepRequireGreaterTimestamp,
-    VlobCreateRepBadTimestamp,
-    VlobReadRepOk,
+    VlobListVersionsRepNotAllowed,
+    VlobListVersionsRepNotFound,
+    VlobListVersionsRepOk,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepBadVersion,
     VlobReadRepInMaintenance,
     VlobReadRepNotAllowed,
     VlobReadRepNotFound,
-    VlobUpdateRepOk,
+    VlobReadRepOk,
     VlobUpdateRepBadEncryptionRevision,
+    VlobUpdateRepBadTimestamp,
     VlobUpdateRepBadVersion,
     VlobUpdateRepInMaintenance,
     VlobUpdateRepNotAllowed,
     VlobUpdateRepNotFound,
+    VlobUpdateRepOk,
     VlobUpdateRepRequireGreaterTimestamp,
-    VlobUpdateRepBadTimestamp,
-    VlobListVersionsRepOk,
-    VlobListVersionsRepNotFound,
-    VlobListVersionsRepNotAllowed,
 )
 from parsec.api.protocol import (
-    packb,
     RealmID,
-    VlobID,
     RealmRole,
+    VlobID,
+    packb,
     vlob_create_serializer,
+    vlob_list_versions_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
-    vlob_list_versions_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
-
-from tests.common import freeze_time
-from tests.backend.common import vlob_create, vlob_update, vlob_read, vlob_list_versions
+from tests.backend.common import vlob_create, vlob_list_versions, vlob_read, vlob_update
 from tests.backend.realm.test_roles import realm_generate_certif_and_update_roles_or_fail
+from tests.common import freeze_time
 
 # Fixture
 realm_generate_certif_and_update_roles_or_fail
@@ -269,7 +269,7 @@ async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlob
     rep = await vlob_read(bob_ws, vlobs[0])
     assert isinstance(rep, VlobReadRepNotAllowed)
 
-    for role in RealmRole:
+    for role in RealmRole.VALUES:
         await backend.realm.update_roles(
             alice.organization_id,
             RealmGrantedRole(
@@ -311,13 +311,13 @@ async def test_read_other_organization(backend_asgi_app, ws_from_other_organizat
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": VLOB_ID.str, "bad_field": "foo"},
+        {"id": VLOB_ID.hex, "bad_field": "foo"},
         {"id": "<not an uuid>"},
-        {"id": VLOB_ID.str},  # TODO: really bad ?
+        {"id": VLOB_ID.hex},  # TODO: really bad ?
         {"id": 42},
         {"id": None},
-        {"id": VLOB_ID.str, "version": 0},
-        {"id": VLOB_ID.str, "version": "foo"},
+        {"id": VLOB_ID.hex, "version": 0},
+        {"id": VLOB_ID.hex, "version": "foo"},
         {},
     ],
 )
@@ -452,12 +452,12 @@ async def test_update_other_organization(
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": VLOB_ID.str, "version": 42, "blob": b"...", "bad_field": "foo"},
-        {"id": VLOB_ID.str, "version": 42, "blob": None},
-        {"id": VLOB_ID.str, "version": 42, "blob": 42},
-        {"id": VLOB_ID.str, "version": 42},
-        {"id": VLOB_ID.str, "version": None, "blob": b"..."},
-        {"id": VLOB_ID.str, "version": -1, "blob": b"..."},
+        {"id": VLOB_ID.hex, "version": 42, "blob": b"...", "bad_field": "foo"},
+        {"id": VLOB_ID.hex, "version": 42, "blob": None},
+        {"id": VLOB_ID.hex, "version": 42, "blob": 42},
+        {"id": VLOB_ID.hex, "version": 42},
+        {"id": VLOB_ID.hex, "version": None, "blob": b"..."},
+        {"id": VLOB_ID.hex, "version": -1, "blob": b"..."},
         {"id": 42, "version": 42, "blob": b"..."},
         {"id": None, "version": 42, "blob": b"..."},
         {"version": 42, "blob": b"..."},
@@ -527,7 +527,7 @@ async def test_list_versions_check_access_rights(
     rep = await vlob_list_versions(bob_ws, vlobs[0])
     assert isinstance(rep, VlobListVersionsRepNotAllowed)
 
-    for role in RealmRole:
+    for role in RealmRole.VALUES:
         await backend.realm.update_roles(
             alice.organization_id,
             RealmGrantedRole(
@@ -571,12 +571,12 @@ async def test_list_versions_other_organization(
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": VLOB_ID.str, "bad_field": "foo"},
+        {"id": VLOB_ID.hex, "bad_field": "foo"},
         {"id": "<not an uuid>"},
-        {"id": VLOB_ID.str},  # TODO: really bad ?
+        {"id": VLOB_ID.hex},  # TODO: really bad ?
         {"id": 42},
         {"id": None},
-        {"id": VLOB_ID.str, "version": 1},
+        {"id": VLOB_ID.hex, "version": 1},
         {},
     ],
 )
@@ -646,7 +646,7 @@ async def test_vlob_updates_causality_checks(
     # Advance ref
     ref = ref.add(seconds=10)
 
-    # Bob successfuly write version 1
+    # Bob successfully write version 1
     rep = await vlob_create(
         bob_ws, realm, VLOB_ID, blob=b"ciphered", timestamp=ref, check_rep=False
     )

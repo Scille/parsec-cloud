@@ -1,29 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
 import zlib
 from unicodedata import normalize
 
-from parsec.serde import packb
-from parsec.crypto import SecretKey
-from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
-from parsec.api.data import (
-    DataError,
-    SASCode,
-    EntryName,
-    EntryNameTooLongError,
-    FileManifest as RemoteFileManifest,
-    FolderManifest as RemoteFolderManifest,
-    WorkspaceManifest as RemoteWorkspaceManifest,
-    UserManifest as RemoteUserManifest,
-)
+import pytest
+
+from parsec._parsec import EntryNameError, LocalDevice
+from parsec.api.data import DataError, EntryName, SASCode
+from parsec.api.data import FileManifest as RemoteFileManifest
+from parsec.api.data import FolderManifest as RemoteFolderManifest
+from parsec.api.data import UserManifest as RemoteUserManifest
+from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
+from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, OrganizationID, UserID
 from parsec.core.types import (
     LocalFileManifest,
     LocalFolderManifest,
-    LocalWorkspaceManifest,
     LocalUserManifest,
+    LocalWorkspaceManifest,
 )
-from parsec._parsec import LocalDevice
+from parsec.crypto import SecretKey
+from parsec.serde import packb
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -47,7 +44,7 @@ def test_max_bytes_size(cls, data):
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
 def test_normalization(cls):
-    nfc_str = normalize("NFC", "àæßšūÿź")
+    nfc_str = normalize("NFC", "àæßšūÿź")  # cspell: disable-line
     nfd_str = normalize("NFD", nfc_str)
 
     assert nfc_str != nfd_str
@@ -143,9 +140,9 @@ def test_invalid_human_handle(email, label):
 
 
 def test_human_handle_normalization():
-    nfc_label = normalize("NFC", "àæßšūÿź")
+    nfc_label = normalize("NFC", "àæßšūÿź")  # cspell: disable-line
     nfd_label = normalize("NFD", nfc_label)
-    nfc_email = normalize("NFC", "àæßš@ūÿ.ź")
+    nfc_email = normalize("NFC", "àæßš@ūÿ.ź")  # cspell: disable-line
     nfd_email = normalize("NFD", nfc_email)
     assert nfc_label != nfd_label
     assert nfc_email != nfd_email
@@ -161,7 +158,7 @@ def test_human_handle_normalization():
 
 def test_sas_code():
     assert SASCode.from_int(0x0) == SASCode("AAAA")
-    assert SASCode.from_int(0x1) == SASCode("BAAA")
+    assert SASCode.from_int(0x1) == SASCode("BAAA")  # cspell: disable-line
     # [...]
     assert SASCode.from_int(0x84001) == SASCode("BASS")
     # [...]
@@ -175,7 +172,16 @@ def test_sas_code():
     with pytest.raises((ValueError, OverflowError)):
         SASCode.from_int(-1)
 
-    for invalid in ["", "AAA", "AAAAA", "aaaa", "AAAI", "AAAO", "AAA0", "AAA1"]:
+    for invalid in [
+        "",
+        "AAA",
+        "AAAAA",
+        "aaaa",
+        "AAAI",  # cspell: disable-line
+        "AAAO",  # cspell: disable-line
+        "AAA0",
+        "AAA1",
+    ]:
         with pytest.raises(ValueError):
             SASCode(invalid)
 
@@ -201,7 +207,7 @@ def test_valid_entry_name(data):
 
 @pytest.mark.parametrize("data", ("x" * 256, "飞" * 85 + "x"))
 def test_entry_name_too_long(data):
-    with pytest.raises(EntryNameTooLongError):
+    with pytest.raises(EntryNameError):
         EntryName(data)
 
 
@@ -226,7 +232,9 @@ def test_invalid_entry_name(data):
 
 
 def test_entry_name_normalization():
-    nfc_str = normalize("NFC", "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż")
+    nfc_str = normalize(
+        "NFC", "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż"  # cspell: disable-line
+    )
     nfd_str = normalize("NFD", nfc_str)
 
     assert nfc_str != nfd_str

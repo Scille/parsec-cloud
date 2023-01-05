@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
-
-from tests.common import freeze_time, customize_fixtures
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
                 organization_id=alice.organization_id,
                 author=options["backend_author"],
                 encryption_revision=1,
-                vlob_id=VlobID(wid.uuid),
+                vlob_id=VlobID.from_entry_id(wid),
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],
@@ -99,18 +99,18 @@ async def test_invalid_timestamp(testbed, alice, alice2):
     bad_timestamp = DateTime(2000, 1, 3)
 
     # Invalid timestamp field in manifest
-    exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-02T00:00:00+00:00`, got `2000-01-03T00:00:00+00:00`"
+    exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-02T00:00:00Z`, got `2000-01-03T00:00:00Z`"
     await testbed.run(signed_timestamp=bad_timestamp, exc_msg=exc_msg)
 
     # Invalid expected timestamp stored in backend
-    exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-03T00:00:00+00:00`, got `2000-01-02T00:00:00+00:00`"
+    exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-03T00:00:00Z`, got `2000-01-02T00:00:00Z`"
     await testbed.run(backend_timestamp=bad_timestamp, exc_msg=exc_msg)
 
 
 def backend_disable_vlob_checks(backend):
+    from parsec.backend.memory.vlob import MemoryVlobComponent
     from parsec.backend.realm import RealmNotFoundError
     from parsec.backend.vlob import VlobRealmNotFoundError
-    from parsec.backend.memory.vlob import MemoryVlobComponent
 
     # Disable checks in the backend to allow invalid data to be stored
 
@@ -128,7 +128,7 @@ def backend_disable_vlob_checks(backend):
 @customize_fixtures(backend_force_mocked=True)
 async def test_no_user_certif(running_backend, testbed, alice, bob):
     # Data created before workspace manifest access
-    exc_msg = "Manifest was created at 2000-01-02T00:00:00+00:00 by `bob@dev1` which had no right to access the workspace at that time"
+    exc_msg = "Manifest was created at 2000-01-02T00:00:00Z by `bob@dev1` which had no right to access the workspace at that time"
 
     # Backend enforces consistency between user role and vlob access, so we have
     # to disable those checks to be able to send our invalid data to the core

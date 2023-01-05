@@ -1,8 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
 import re
-from typing import Callable, Dict, List, Any, Optional, Tuple
 from functools import wraps
+from typing import Any, Awaitable, Callable, Dict, List, Tuple, TypeVar
+
+import triopg
+from typing_extensions import Concatenate, ParamSpec
+
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 class Q:
@@ -38,7 +45,7 @@ class Q:
         if kwargs.keys() != self._variables.keys():
             missing = self._variables.keys() - kwargs.keys()
             unknown = kwargs.keys() - self._variables.keys()
-            raise ValueError(f"Invalid paramaters, missing: {missing}, unknown: {unknown}")
+            raise ValueError(f"Invalid parameters, missing: {missing}, unknown: {unknown}")
         args = [self._stripped_sql]
         for variable in self._variables:
             args.append(kwargs[variable])
@@ -46,8 +53,8 @@ class Q:
 
 
 def q_organization(
-    organization_id: Optional[str] = None,
-    _id: Optional[str] = None,
+    organization_id: str | None = None,
+    _id: str | None = None,
     table: str = "organization",
     select: str = "*",
 ) -> str:
@@ -67,13 +74,13 @@ def _table_q_factory(
     table: str, public_id_field: str
 ) -> Tuple[Callable[..., str], Callable[..., str]]:
     def _q(
-        organization_id: Optional[str] = None,
-        organization: Optional[str] = None,
-        _id: Optional[str] = None,
-        table_alias: Optional[str] = None,
+        organization_id: str | None = None,
+        organization: str | None = None,
+        _id: str | None = None,
+        table_alias: str | None = None,
         select: str = "*",
-        suffix: Optional[str] = None,
-        **kwargs,
+        suffix: str | None = None,
+        **kwargs: Any,
     ) -> str:
         if table_alias:
             from_table = f"{table} as {table_alias}"
@@ -96,7 +103,7 @@ def _table_q_factory(
         suffix = suffix or ""
         return f"(SELECT {select} FROM {from_table} WHERE {condition} {suffix})"
 
-    def _q_internal_id(**kwargs) -> str:
+    def _q_internal_id(**kwargs: Any) -> str:
         return _q(select="_id", **kwargs)
 
     _q.__name__ = f"q_{table}"
@@ -114,10 +121,10 @@ q_human, q_human_internal_id = _table_q_factory("human", "email")
 
 def q_vlob_encryption_revision_internal_id(
     encryption_revision: str,
-    organization_id: Optional[str] = None,
-    organization: Optional[str] = None,
-    realm_id: Optional[str] = None,
-    realm: Optional[str] = None,
+    organization_id: str | None = None,
+    organization: str | None = None,
+    realm_id: str | None = None,
+    realm: str | None = None,
     table: str = "vlob_encryption_revision",
 ) -> str:
     if realm is None:
@@ -141,12 +148,12 @@ WHERE
 
 
 def q_user_can_read_vlob(
-    user: Optional[str] = None,
-    user_id: Optional[str] = None,
-    realm: Optional[str] = None,
-    realm_id: Optional[str] = None,
-    organization: Optional[str] = None,
-    organization_id: Optional[str] = None,
+    user: str | None = None,
+    user_id: str | None = None,
+    realm: str | None = None,
+    realm_id: str | None = None,
+    organization: str | None = None,
+    organization_id: str | None = None,
     table: str = "realm_user_role",
 ) -> str:
     if user is None:
@@ -182,12 +189,12 @@ COALESCE(
 
 
 def q_user_can_write_vlob(
-    user: Optional[str] = None,
-    user_id: Optional[str] = None,
-    realm: Optional[str] = None,
-    realm_id: Optional[str] = None,
-    organization: Optional[str] = None,
-    organization_id: Optional[str] = None,
+    user: str | None = None,
+    user_id: str | None = None,
+    realm: str | None = None,
+    realm_id: str | None = None,
+    organization: str | None = None,
+    organization_id: str | None = None,
     table: str = "realm_user_role",
 ) -> str:
     if user is None:
@@ -222,12 +229,21 @@ COALESCE(
 """
 
 
-def query(in_transaction: bool = False):
+def query(
+    in_transaction: bool = False,
+) -> Callable[
+    [Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]],
+    Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]],
+]:
     if in_transaction:
 
-        def decorator(fn):
+        def decorator(
+            fn: Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]
+        ) -> Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]:
             @wraps(fn)
-            async def wrapper(conn, *args, **kwargs):
+            async def wrapper(
+                conn: triopg._triopg.TrioConnectionProxy, *args: P.args, **kwargs: P.kwargs
+            ) -> T:
                 async with conn.transaction():
                     return await fn(conn, *args, **kwargs)
 
@@ -235,7 +251,9 @@ def query(in_transaction: bool = False):
 
     else:
 
-        def decorator(fn):
+        def decorator(
+            fn: Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]
+        ) -> Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]:
             return fn
 
     return decorator

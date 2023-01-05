@@ -1,23 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import os
-import click
 from pathlib import Path
+from typing import Any
+
+import click
 
 from parsec.cli_utils import cli_exception_handler
-from parsec.core.config import get_default_config_dir
-from parsec.core.local_device import AvailableDevice, list_available_devices
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_available_device_options,
     format_available_devices,
 )
+from parsec.core.config import get_default_config_dir
+from parsec.core.local_device import AvailableDevice, list_available_devices
 
 
 @click.command()
 @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
 @cli_command_base_options
-def list_devices(config_dir: Path, debug: bool, **kwargs) -> None:
+def list_devices(
+    config_dir: Path,
+    debug: bool,
+    **kwargs: Any,
+) -> None:
     with cli_exception_handler(debug):
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
         devices = list_available_devices(config_dir)
@@ -30,7 +37,11 @@ def list_devices(config_dir: Path, debug: bool, **kwargs) -> None:
 @click.command()
 @cli_command_base_options
 @core_config_and_available_device_options
-def remove_device(device: AvailableDevice, debug: bool, **kwargs) -> None:
+def remove_device(
+    device: AvailableDevice,
+    debug: bool,
+    **kwargs: Any,
+) -> None:
     with cli_exception_handler(debug):
         click.echo("You are about to remove the following device:")
         click.echo(format_available_devices([device]))

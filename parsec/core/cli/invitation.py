@@ -1,9 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import click
 import platform
 from functools import partial
-from typing import Union, Callable, Tuple
+from typing import Any, Tuple, Union
+
+import click
 
 from parsec._parsec import (
     InvitationDeletedReason,
@@ -14,36 +16,32 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepOk,
 )
-from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler, spinner, aprompt
-from parsec.api.protocol import (
-    DeviceLabel,
-    HumanHandle,
-    InvitationToken,
-    UserProfile,
-)
-from parsec.core.types import BackendInvitationAddr, LocalDevice
-from parsec.core.config import CoreConfig
+from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationToken, UserProfile
+from parsec.cli_utils import async_prompt, cli_exception_handler, spinner
 from parsec.core.backend_connection import (
+    BackendConnectionRefused,
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
-    BackendConnectionRefused,
 )
-from parsec.core.invite import (
-    InviteError,
-    DeviceClaimInitialCtx,
-    DeviceGreetInitialCtx,
-    UserClaimInitialCtx,
-    UserGreetInitialCtx,
-    claimer_retrieve_info,
-)
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.cli.bootstrap_organization import SaveDeviceWithSelectedAuth
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
     core_config_options,
     save_device_options,
 )
+from parsec.core.config import CoreConfig
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.invite import (
+    DeviceClaimInitialCtx,
+    DeviceGreetInitialCtx,
+    InviteError,
+    UserClaimInitialCtx,
+    UserGreetInitialCtx,
+    claimer_retrieve_info,
+)
+from parsec.core.types import BackendInvitationAddr, LocalDevice
+from parsec.utils import trio_run
 
 
 async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
@@ -54,11 +52,11 @@ async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
             signing_key=device.signing_key,
             keepalive=config.backend_connection_keepalive,
         ) as cmds:
-            rep = await cmds.invite_new(type=InvitationType.DEVICE())
+            rep = await cmds.invite_new(type=InvitationType.DEVICE)
             if not isinstance(rep, InviteNewRepOk):
                 raise RuntimeError(f"Backend refused to create device invitation: {rep}")
             try:
-                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS():
+                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS:
                     click.secho("Email could not be sent", fg="red")
             except AttributeError:
                 pass
@@ -66,7 +64,7 @@ async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=rep.token,
     )
     action_addr_display = click.style(action_addr.to_url(), fg="yellow")
@@ -76,7 +74,11 @@ async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
 @click.command(short_help="create device invitation")
 @core_config_and_device_options
 @cli_command_base_options
-def invite_device(config: CoreConfig, device: LocalDevice, **kwargs) -> None:
+def invite_device(
+    config: CoreConfig,
+    device: LocalDevice,
+    **kwargs: Any,
+) -> None:
     """
     Create new device invitation
     """
@@ -95,13 +97,13 @@ async def _invite_user(
             keepalive=config.backend_connection_keepalive,
         ) as cmds:
             rep = await cmds.invite_new(
-                type=InvitationType.USER(), claimer_email=email, send_email=send_email
+                type=InvitationType.USER, claimer_email=email, send_email=send_email
             )
             if not isinstance(rep, InviteNewRepOk):
                 raise RuntimeError(f"Backend refused to create user invitation: {rep}")
 
             try:
-                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS():
+                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS:
                     click.secho("Email could not be sent", fg="red")
             except AttributeError:
                 pass
@@ -109,7 +111,7 @@ async def _invite_user(
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=rep.token,
     )
     action_addr_display = click.style(action_addr.to_url(), fg="yellow")
@@ -122,7 +124,11 @@ async def _invite_user(
 @core_config_and_device_options
 @cli_command_base_options
 def invite_user(
-    config: CoreConfig, device: LocalDevice, email: str, send_email: bool, **kwargs
+    config: CoreConfig,
+    device: LocalDevice,
+    email: str,
+    send_email: bool,
+    **kwargs: Any,
 ) -> None:
     """
     Create new user invitation
@@ -132,11 +138,13 @@ def invite_user(
 
 
 async def ask_info_new_user(
-    default_device_label: DeviceLabel, default_user_label: str, default_user_email: str
+    default_device_label: DeviceLabel | None,
+    default_user_label: str | None,
+    default_user_email: str | None,
 ) -> Tuple[DeviceLabel, HumanHandle, UserProfile]:
     while True:
-        granted_label = await aprompt("New user label", default=default_user_label)
-        granted_email = await aprompt("New user email", default=default_user_email)
+        granted_label = await async_prompt("New user label", default=default_user_label)
+        granted_email = await async_prompt("New user email", default=default_user_email)
         try:
             granted_human_handle = HumanHandle(email=granted_email, label=granted_label)
             break
@@ -147,18 +155,21 @@ async def ask_info_new_user(
     while True:
         try:
             granted_device_label = DeviceLabel(
-                await aprompt("New user device label", default=default_device_label.str)
+                await async_prompt(
+                    "New user device label",
+                    default=default_device_label.str if default_device_label is not None else None,
+                )
             )
             break
         except ValueError:
             click.echo("Invalid value")
             continue
 
-    choices = list(UserProfile)
-    for i, choice in enumerate(UserProfile):
-        display_choice = click.style(choice.value, fg="yellow")
+    choices = UserProfile.VALUES
+    for i, choice in enumerate(choices):
+        display_choice = click.style(choice.str, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    choice_index = await aprompt(
+    choice_index = await async_prompt(
         "New user profile", default="1", type=click.Choice([str(i) for i, _ in enumerate(choices)])
     )
     granted_profile = choices[int(choice_index)]
@@ -167,37 +178,41 @@ async def ask_info_new_user(
 
 async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) -> bool:
     async with spinner("Waiting for claimer"):
-        in_progress_ctx = await initial_ctx.do_wait_peer()
+        in_progress1_ctx = await initial_ctx.do_wait_peer()
 
-    display_greeter_sas = click.style(str(in_progress_ctx.greeter_sas), fg="yellow")
+    display_greeter_sas = click.style(str(in_progress1_ctx.greeter_sas), fg="yellow")
     click.echo(f"Code to provide to claimer: {display_greeter_sas}")
     async with spinner("Waiting for claimer"):
-        in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+        in_progress2_ctx = await in_progress1_ctx.do_wait_peer_trust()
 
-    choices = in_progress_ctx.generate_claimer_sas_choices(size=3)
+    choices = in_progress2_ctx.generate_claimer_sas_choices(size=3)
     for i, choice in enumerate(choices):
         display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = await aprompt(
+    code = await async_prompt(
         f"Select code provided by claimer",
         type=click.Choice([str(i) for i, _ in enumerate(choices)]),
     )
-    if choices[int(code)] != in_progress_ctx.claimer_sas:
+    if choices[int(code)] != in_progress2_ctx.claimer_sas:
         click.secho("Wrong code provided", fg="red")
         return False
 
     async with spinner("Waiting for claimer"):
-        in_progress_ctx = await in_progress_ctx.do_signify_trust()
-        in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
+        in_progress3_ctx = await in_progress2_ctx.do_signify_trust()
+        in_progress4_ctx = await in_progress3_ctx.do_get_claim_requests()
 
     granted_device_label, granted_human_handle, granted_profile = await ask_info_new_user(
-        default_device_label=in_progress_ctx.requested_device_label,
-        default_user_label=in_progress_ctx.requested_human_handle.label,
-        default_user_email=in_progress_ctx.requested_human_handle.email,
+        default_device_label=in_progress4_ctx.requested_device_label,
+        default_user_label=in_progress4_ctx.requested_human_handle.label
+        if in_progress4_ctx.requested_human_handle is not None
+        else None,
+        default_user_email=in_progress4_ctx.requested_human_handle.email
+        if in_progress4_ctx.requested_human_handle is not None
+        else None,
     )
 
     async with spinner("Creating the user in the backend"):
-        await in_progress_ctx.do_create_new_user(
+        await in_progress4_ctx.do_create_new_user(
             author=device,
             device_label=granted_device_label,
             human_handle=granted_human_handle,
@@ -214,28 +229,31 @@ async def _do_greet_device(device: LocalDevice, initial_ctx: DeviceGreetInitialC
     display_greeter_sas = click.style(str(in_progress_ctx.greeter_sas), fg="yellow")
     click.echo(f"Code to provide to claimer: {display_greeter_sas}")
     async with spinner("Waiting for claimer"):
-        in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+        in_progress2_ctx = await in_progress_ctx.do_wait_peer_trust()
 
-    choices = in_progress_ctx.generate_claimer_sas_choices(size=3)
+    choices = in_progress2_ctx.generate_claimer_sas_choices(size=3)
     for i, choice in enumerate(choices):
         display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = await aprompt(
+    code = await async_prompt(
         f"Select code provided by claimer", type=click.Choice([str(x) for x in range(len(choices))])
     )
-    if choices[int(code)] != in_progress_ctx.claimer_sas:
+    if choices[int(code)] != in_progress2_ctx.claimer_sas:
         click.secho("Wrong code provided", fg="red")
         return False
 
     async with spinner("Waiting for claimer"):
-        in_progress_ctx = await in_progress_ctx.do_signify_trust()
-        in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
+        in_progress3_ctx = await in_progress2_ctx.do_signify_trust()
+        in_progress4_ctx = await in_progress3_ctx.do_get_claim_requests()
 
-    granted_device_label = await aprompt(
-        "New device label", default=in_progress_ctx.requested_device_label.str
+    granted_device_label = await async_prompt(
+        "New device label",
+        default=in_progress4_ctx.requested_device_label.str
+        if in_progress4_ctx.requested_device_label is not None
+        else None,
     )
     async with spinner("Creating the device in the backend"):
-        await in_progress_ctx.do_create_new_device(
+        await in_progress4_ctx.do_create_new_device(
             author=device, device_label=DeviceLabel(granted_device_label)
         )
 
@@ -261,13 +279,13 @@ async def _greet_invitation(
         else:
             raise RuntimeError(f"Invitation not found")
 
-        if invitation.type == InvitationType.USER():
-            initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
-            do_greet = partial(_do_greet_user, device, initial_ctx)
+        if invitation.type == InvitationType.USER:
+            user_initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
+            do_greet = partial(_do_greet_user, device, user_initial_ctx)
         else:
-            assert invitation.type == InvitationType.DEVICE()
-            initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
-            do_greet = partial(_do_greet_device, device, initial_ctx)
+            assert invitation.type == InvitationType.DEVICE
+            device_initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
+            do_greet = partial(_do_greet_device, device, device_initial_ctx)
 
         while True:
             try:
@@ -311,7 +329,7 @@ def greet_invitation(
     config: CoreConfig,
     device: LocalDevice,
     token_or_url: Union[BackendInvitationAddr, InvitationToken],
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     """
     Greet a new device or user into the organization
@@ -322,7 +340,7 @@ def greet_invitation(
         trio_run(_greet_invitation, config, device, token)
 
 
-async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> LocalDevice:
+async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> LocalDevice | None:
     async with spinner("Initializing connection with greeter for claiming user"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -330,24 +348,24 @@ async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> LocalDevice:
     for i, choice in enumerate(choices):
         display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = await aprompt(
+    code = await async_prompt(
         f"Select code provided by greeter", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress_ctx.greeter_sas:
         click.secho("Wrong code provided", fg="red")
         return None
 
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    display_claimer_sas = click.style(str(in_progress_ctx.claimer_sas), fg="yellow")
+    in_progress2_ctx = await in_progress_ctx.do_signify_trust()
+    display_claimer_sas = click.style(str(in_progress2_ctx.claimer_sas), fg="yellow")
     click.echo(f"Code to provide to greeter: {display_claimer_sas}")
     async with spinner("Waiting for greeter"):
-        in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+        in_progress3_ctx = await in_progress2_ctx.do_wait_peer_trust()
 
-    requested_label = await aprompt("User fullname")
+    requested_label = await async_prompt("User fullname")
     requested_email = initial_ctx.claimer_email
-    requested_device_label = await aprompt("Device label", default=platform.node())
+    requested_device_label = await async_prompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
-        new_device = await in_progress_ctx.do_claim_user(
+        new_device = await in_progress3_ctx.do_claim_user(
             requested_device_label=DeviceLabel(requested_device_label),
             requested_human_handle=HumanHandle(email=requested_email, label=requested_label),
         )
@@ -355,7 +373,7 @@ async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> LocalDevice:
     return new_device
 
 
-async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> LocalDevice:
+async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> LocalDevice | None:
     async with spinner("Initializing connection with greeter for claiming device"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -363,22 +381,22 @@ async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> LocalDevice:
     for i, choice in enumerate(choices):
         display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = await aprompt(
+    code = await async_prompt(
         f"Select code provided by greeter", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress_ctx.greeter_sas:
         click.secho("Wrong code provided", fg="red")
         return None
 
-    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-    display_claimer_sas = click.style(str(in_progress_ctx.claimer_sas), fg="yellow")
+    in_progress2_ctx = await in_progress_ctx.do_signify_trust()
+    display_claimer_sas = click.style(str(in_progress2_ctx.claimer_sas), fg="yellow")
     click.echo(f"Code to provide to greeter: {display_claimer_sas}")
     async with spinner("Waiting for greeter"):
-        in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+        in_progress3_ctx = await in_progress2_ctx.do_wait_peer_trust()
 
-    requested_device_label = await aprompt("Device label", default=platform.node())
+    requested_device_label = await async_prompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
-        new_device = await in_progress_ctx.do_claim_device(
+        new_device = await in_progress3_ctx.do_claim_device(
             requested_device_label=DeviceLabel(requested_device_label)
         )
 
@@ -386,7 +404,9 @@ async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> LocalDevice:
 
 
 async def _claim_invitation(
-    config: CoreConfig, addr: BackendInvitationAddr, save_device_with_selected_auth: Callable
+    config: CoreConfig,
+    addr: BackendInvitationAddr,
+    save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
 ) -> None:
     async with backend_invited_cmds_factory(
         addr=addr, keepalive=config.backend_connection_keepalive
@@ -417,7 +437,7 @@ async def _claim_invitation(
 
         # Claiming a user means we are it first device, hence we know there
         # is no existing user manifest (hence our placeholder is non-speculative)
-        if addr.invitation_type == InvitationType.USER():
+        if addr.invitation_type == InvitationType.USER:
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=new_device
             )
@@ -432,8 +452,8 @@ async def _claim_invitation(
 def claim_invitation(
     config: CoreConfig,
     addr: BackendInvitationAddr,
-    save_device_with_selected_auth: Callable,
-    **kwargs,
+    save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
+    **kwargs: Any,
 ) -> None:
     """
     Claim a device or user from a invitation
@@ -454,14 +474,14 @@ async def _list_invitations(config: CoreConfig, device: LocalDevice) -> None:
         if not isinstance(rep, InviteListRepOk):
             raise RuntimeError(f"Backend error while listing invitations: {rep}")
         display_statuses = {
-            InvitationStatus.READY().name: click.style("ready", fg="green"),
-            InvitationStatus.IDLE().name: click.style("idle", fg="yellow"),
-            InvitationStatus.DELETED().name: click.style("deleted", fg="red"),
+            InvitationStatus.READY: click.style("ready", fg="green"),
+            InvitationStatus.IDLE: click.style("idle", fg="yellow"),
+            InvitationStatus.DELETED: click.style("deleted", fg="red"),
         }
         for invitation in rep.invitations:
-            display_status = display_statuses[invitation.status.name]
+            display_status = display_statuses[invitation.status]
             display_token = invitation.token.hex
-            if invitation.type == InvitationType.USER():
+            if invitation.type == InvitationType.USER:
                 display_type = f"user (email={invitation.claimer_email})"
             else:  # Device
                 display_type = f"device"
@@ -473,7 +493,7 @@ async def _list_invitations(config: CoreConfig, device: LocalDevice) -> None:
 @click.command(short_help="list invitations")
 @core_config_and_device_options
 @cli_command_base_options
-def list_invitations(config: CoreConfig, device: LocalDevice, **kwargs) -> None:
+def list_invitations(config: CoreConfig, device: LocalDevice, **kwargs: Any) -> None:
     """
     List invitations
     """
@@ -490,7 +510,7 @@ async def _cancel_invitation(
         signing_key=device.signing_key,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
-        rep = await cmds.invite_delete(token=token, reason=InvitationDeletedReason.CANCELLED())
+        rep = await cmds.invite_delete(token=token, reason=InvitationDeletedReason.CANCELLED)
         if not isinstance(rep, InviteDeleteRepOk):
             raise RuntimeError(f"Backend error while cancelling invitation: {rep}")
         click.echo("Invitation deleted.")
@@ -504,7 +524,7 @@ def cancel_invitation(
     config: CoreConfig,
     device: LocalDevice,
     token_or_url: Union[BackendInvitationAddr, InvitationToken],
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     """
     Cancel invitation

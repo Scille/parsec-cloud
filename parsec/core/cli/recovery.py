@@ -1,26 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
 
 import click
-from pathlib import Path
-from typing import Callable
 
 from parsec.api.protocol import DeviceLabel
+from parsec.cli_utils import cli_exception_handler, operation, spinner
 from parsec.core import CoreConfig
-from parsec.core.recovery import generate_recovery_device, generate_new_device_from_recovery
-from parsec.core.local_device import (
-    get_recovery_device_file_name,
-    load_recovery_device,
-    save_recovery_device,
-)
-from parsec.core.types import LocalDevice
-from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler, spinner, operation
+from parsec.core.cli.bootstrap_organization import SaveDeviceWithSelectedAuth
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
     core_config_options,
     save_device_options,
 )
+from parsec.core.local_device import (
+    get_recovery_device_file_name,
+    load_recovery_device,
+    save_recovery_device,
+)
+from parsec.core.recovery import generate_new_device_from_recovery, generate_recovery_device
+from parsec.core.types import LocalDevice
+from parsec.utils import trio_run
 
 
 async def _export_recovery_device(
@@ -52,7 +55,9 @@ async def _export_recovery_device(
 )
 @core_config_and_device_options
 @cli_command_base_options
-def export_recovery_device(config: CoreConfig, device: LocalDevice, output: Path, **kwargs) -> None:
+def export_recovery_device(
+    config: CoreConfig, device: LocalDevice, output: Path, **kwargs: Any
+) -> None:
     """
     Create a new recovery device for the user.
     """
@@ -65,7 +70,7 @@ async def _import_recovery_device(
     recovery_file: Path,
     passphrase: str,
     new_device_label: DeviceLabel,
-    save_device_with_selected_auth: Callable,
+    save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
 ) -> None:
 
     recovery_device = await load_recovery_device(recovery_file, passphrase)
@@ -105,8 +110,8 @@ def import_recovery_device(
     file: Path,
     passphrase: str,
     device_label: DeviceLabel,
-    save_device_with_selected_auth: Callable,
-    **kwargs,
+    save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
+    **kwargs: Any,
 ) -> None:
     """
     Create a new device from a .psrk recovery device file.

@@ -2,59 +2,25 @@
 
 use pyo3::{
     exceptions::PyNotImplementedError,
-    import_exception,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::message_get;
+use libparsec::protocol::authenticated_cmds::v2::message_get;
 
 use crate::ids::DeviceID;
-use crate::protocol::gen_rep;
+use crate::protocol::{
+    error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
+    gen_rep,
+};
 use crate::time::DateTime;
-
-import_exception!(parsec.api.protocol, ProtocolError);
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct MessageGetReq(pub message_get::Req);
-
-#[pymethods]
-impl MessageGetReq {
-    #[new]
-    fn new(offset: u64) -> PyResult<Self> {
-        Ok(Self(message_get::Req { offset }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
-        ))
-    }
-
-    #[getter]
-    fn offset(&self) -> PyResult<u64> {
-        Ok(self.0.offset)
-    }
-}
 
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct Message(pub message_get::Message);
+
+crate::binding_utils::gen_proto!(Message, __repr__);
+crate::binding_utils::gen_proto!(Message, __richcmp__, eq);
 
 #[pymethods]
 impl Message {
@@ -68,18 +34,6 @@ impl Message {
             timestamp,
             body,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     #[getter]
@@ -100,6 +54,37 @@ impl Message {
     #[getter]
     fn body<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(py, &self.0.body))
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct MessageGetReq(pub message_get::Req);
+
+crate::binding_utils::gen_proto!(MessageGetReq, __repr__);
+crate::binding_utils::gen_proto!(MessageGetReq, __richcmp__, eq);
+
+#[pymethods]
+impl MessageGetReq {
+    #[new]
+    fn new(offset: u64) -> PyResult<Self> {
+        Ok(Self(message_get::Req { offset }))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
+        ))
+    }
+
+    #[getter]
+    fn offset(&self) -> PyResult<u64> {
+        Ok(self.0.offset)
     }
 }
 

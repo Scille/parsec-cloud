@@ -40,7 +40,6 @@ FORMS += forms/main_window.ui \
     forms/empty_workspace_widget.ui \
     forms/loading_widget.ui \
     forms/password_strength_widget.ui \
-    forms/password_recovery.ui \
     forms/file_history_button.ui \
     forms/create_org_widget.ui \
     forms/greet_user_widget.ui \

@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import argparse
-from pathlib import Path
-import subprocess
-import shutil
 import re
-
+import shutil
+import subprocess
+from pathlib import Path
 
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
@@ -32,7 +31,7 @@ def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
     all_requirements = output_dir / "all-requirements.txt"
     constraints = output_dir / "constraints.txt"
 
-    # poetry export has a --output option, but it alway consider the file relative to
+    # poetry export has a --output option, but it always consider the file relative to
     # the project directory !
     # On top of that we cannot use stdout because poetry may print random `Creating virtualenv`
     # if we are not already within a virtualenv (please poetry, add a --no-venv option !!!)

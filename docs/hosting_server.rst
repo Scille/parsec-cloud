@@ -10,7 +10,7 @@ Hosting Server
 Requirements
 ============
 
-- Python >= 3.6
+- Python >= 3.9
 - PostgreSQL >= 10
 
 On top of that, an object storage service should also be provided to store the encrypted data blocks.
@@ -268,8 +268,8 @@ Allow organization bootstrap without prior creation.
 Without this flag, an organization must be created by administration
 (see ``parsec core create_organization`` command) before bootstrap can occur.
 
-With this flag, the server allows anybody to bootstrap an organanization
-by providing an empty bootstrap token given 1) the organization is not boostrapped yet
+With this flag, the server allows anybody to bootstrap an organization
+by providing an empty bootstrap token given 1) the organization is not bootstrapped yet
 and 2) the organization hasn't been created by administration (which would act as a
 reservation and change the bootstrap token)
 
@@ -293,6 +293,15 @@ Example:
         "human_email": "j.doe@example.com",
         "human_label": "John Doe"
     }
+
+SSE Keepalive
+-------------
+
+* ``--sse-keepalive <float>``
+* Environ: ``PARSEC_SSE_KEEPALIVE``
+* Default: ``30``
+
+Keep SSE connection open by sending keepalive messages to client (pass <= 0 to disable).
 
 Sentry
 ------

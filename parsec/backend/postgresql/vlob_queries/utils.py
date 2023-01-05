@@ -1,34 +1,37 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Tuple
+
+import triopg
+
 from parsec._parsec import DateTime
-
-from parsec.api.protocol import OrganizationID, RealmID, DeviceID, VlobID
-from parsec.backend.utils import OperationKind
+from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
+from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
+    q_organization_internal_id,
     q_realm_internal_id,
     q_user_internal_id,
-    q_organization_internal_id,
 )
 from parsec.backend.realm import RealmRole
+from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import (
-    VlobNotFoundError,
-    VlobRealmNotFoundError,
-    VlobInMaintenanceError,
-    VlobNotInMaintenanceError,
-    VlobEncryptionRevisionError,
     VlobAccessError,
+    VlobEncryptionRevisionError,
+    VlobInMaintenanceError,
+    VlobNotFoundError,
+    VlobNotInMaintenanceError,
+    VlobRealmNotFoundError,
     VlobRequireGreaterTimestampError,
 )
-from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
 
 
 async def _check_realm(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_id: RealmID,
-    encryption_revision: Optional[int],
+    encryption_revision: int | None,
     operation_kind: OperationKind,
 ) -> None:
     # Get the current realm status
@@ -49,7 +52,7 @@ async def _check_realm(
 
         # The vlob is not available yet for the current revision
         if encryption_revision is not None and encryption_revision == status.encryption_revision:
-            raise VlobInMaintenanceError(f"Realm `{realm_id.str}` is currently under maintenance")
+            raise VlobInMaintenanceError(f"Realm `{realm_id.hex}` is currently under maintenance")
 
         # The vlob is only available at the previous revision
         if (
@@ -67,7 +70,7 @@ async def _check_realm(
 
         # A maintenance state was expected
         if operation_kind == OperationKind.MAINTENANCE and not status.in_maintenance:
-            raise VlobNotInMaintenanceError(f"Realm `{realm_id.str}` not under maintenance")
+            raise VlobNotInMaintenanceError(f"Realm `{realm_id.hex}` not under maintenance")
 
         # Otherwise simply check that the revisions match
         if encryption_revision is not None and status.encryption_revision != encryption_revision:
@@ -92,7 +95,7 @@ WHERE user_._id = { q_user_internal_id(organization_id="$organization_id", user_
 
 
 async def _check_realm_access(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_id: RealmID,
     author: DeviceID,
@@ -100,14 +103,14 @@ async def _check_realm_access(
 ) -> DateTime:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
-            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
+            organization_id=organization_id.str, realm_id=realm_id, user_id=author.user_id.str
         )
     )
 
     if not rep:
         raise VlobNotFoundError(f"User `{author.user_id.str}` doesn't exist")
 
-    role = RealmRole(rep[0]) if rep[0] is not None else None
+    role = RealmRole.from_str(rep[0]) if rep[0] is not None else None
     if role not in allowed_roles:
         raise VlobAccessError()
 
@@ -116,11 +119,11 @@ async def _check_realm_access(
 
 
 async def _check_realm_and_read_access(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
-    encryption_revision: Optional[int],
+    encryption_revision: int | None,
 ) -> None:
     await _check_realm(
         conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_READ
@@ -130,11 +133,11 @@ async def _check_realm_and_read_access(
 
 
 async def _check_realm_and_write_access(
-    conn,
+    conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
-    encryption_revision: Optional[int],
+    encryption_revision: int | None,
     timestamp: DateTime,
 ) -> None:
     await _check_realm(
@@ -172,22 +175,25 @@ LIMIT 1
 
 
 async def _get_realm_id_from_vlob_id(
-    conn, organization_id: OrganizationID, vlob_id: VlobID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, vlob_id: VlobID
 ) -> RealmID:
     realm_id_uuid = await conn.fetchval(
-        *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
+        *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id)
     )
     if not realm_id_uuid:
-        raise VlobNotFoundError(f"Vlob `{vlob_id.str}` doesn't exist")
-    return RealmID(realm_id_uuid)
+        raise VlobNotFoundError(f"Vlob `{vlob_id.hex}` doesn't exist")
+    return RealmID.from_hex(realm_id_uuid)
 
 
 async def _get_last_role_granted_on(
-    conn, organization_id: OrganizationID, realm_id: RealmID, author: DeviceID
-) -> Optional[DateTime]:
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    author: DeviceID,
+) -> DateTime | None:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
-            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
+            organization_id=organization_id.str, realm_id=realm_id, user_id=author.user_id.str
         )
     )
     return None if rep is None else rep[1]

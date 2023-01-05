@@ -1,0 +1,37 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_4_claimer_communicate",
+            "fields": [
+                {
+                    "name": "payload",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "payload",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "already_deleted"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "invalid_state"
+            }
+        ]
+    }
+]

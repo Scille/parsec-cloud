@@ -1,20 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
+import logging
 from unittest.mock import ANY
 
-from parsec.api.protocol import packb, unpackb
-from parsec.api.protocol.handshake import ServerHandshake
-from parsec.api.version import ApiVersion, API_VERSION
+import pytest
+
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
+    HandshakeBadIdentity,
+    HandshakeOrganizationExpired,
+    HandshakeRVKMismatch,
     InvitationToken,
     InvitationType,
     InvitedClientHandshake,
-    HandshakeRVKMismatch,
-    HandshakeBadIdentity,
-    HandshakeOrganizationExpired,
+    packb,
+    unpackb,
 )
+from parsec.api.protocol.handshake import ServerHandshake
+from parsec.api.version import API_VERSION, ApiVersion
 from parsec.backend.backend_events import BackendEvent
 
 
@@ -110,7 +114,7 @@ async def test_authenticated_handshake_bad_rvk(backend_asgi_app, alice, otherorg
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("invitation_type", InvitationType)
+@pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
 async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitation_type):
     if invitation_type == InvitationType.USER:
         invitation = await backend.invite.new_for_user(
@@ -143,7 +147,40 @@ async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitati
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("invitation_type", InvitationType)
+async def test_api_version_in_logs_on_handshake(backend_asgi_app, backend, alice, caplog):
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="zack@example.com",
+    )
+
+    ch = InvitedClientHandshake(
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.USER,
+        token=invitation.token,
+    )
+    client_api_version = ApiVersion(3, 99)
+    ch.SUPPORTED_API_VERSIONS = [client_api_version]
+    client = backend_asgi_app.test_client()
+    with caplog.at_level(logging.INFO):
+        async with client.websocket("/ws") as ws:
+
+            challenge_req = await ws.receive()
+            answer_req = ch.process_challenge_req(challenge_req)
+
+            await ws.send(answer_req)
+            result_req = await ws.receive()
+            ch.process_result_req(result_req)
+
+            # Sanity checks
+            assert ch.client_api_version == client_api_version
+            assert ch.backend_api_version == API_VERSION
+
+        assert f"(client/server API version: {client_api_version}/{API_VERSION})" in caplog.text
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
 async def test_invited_handshake_bad_token(backend_asgi_app, coolorg, invitation_type):
     ch = InvitedClientHandshake(
         organization_id=coolorg.organization_id,

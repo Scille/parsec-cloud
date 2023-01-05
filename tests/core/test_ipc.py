@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+from uuid import uuid4
 
 import pytest
-import sys
-import subprocess
-from uuid import uuid4
-from pathlib import Path
 
 from parsec.core.ipcinterface import (
     IPCCommand,
-    _install_win32_mutex,
+    IPCServerAlreadyRunning,
+    IPCServerBadResponse,
+    IPCServerError,
     _install_posix_file_lock,
+    _install_win32_mutex,
     run_ipc_server,
     send_to_ipc_server,
-    IPCServerError,
-    IPCServerBadResponse,
-    IPCServerAlreadyRunning,
 )
-
 from tests.common import real_clock_timeout
 
 

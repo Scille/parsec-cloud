@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import trio
-import pytest
 from functools import partial
 
-from parsec._parsec import DateTime, AuthenticatedPingRepOk, EventsListenRepOkPinged
-from parsec.backend.utils import ClientType
-from parsec.api.transport import Transport, Ping, Pong
+import pytest
+import trio
+
+from parsec._parsec import AuthenticatedPingRepOk, ClientType, DateTime, EventsListenRepOkPinged
 from parsec.api.data import RevokedUserCertificate
-from parsec.api.protocol import ServerHandshake, AUTHENTICATED_CMDS, OrganizationID
-from parsec.core.types import BackendOrganizationAddr
+from parsec.api.protocol import AUTHENTICATED_CMDS, OrganizationID, ServerHandshake
+from parsec.api.transport import Ping, Pong, Transport
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
-    BackendNotAvailable,
     BackendConnectionRefused,
+    BackendNotAvailable,
     backend_authenticated_cmds_factory,
 )
-from parsec.backend.backend_events import BackendEvent
-
+from parsec.core.types import BackendOrganizationAddr
 from tests.common import correct_addr
 from tests.core.backend_connection.common import ALL_CMDS
 

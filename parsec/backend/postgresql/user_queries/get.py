@@ -1,24 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-from typing import Tuple, List, Optional
+from typing import List, Tuple
+
+import triopg
 
 from parsec.api.protocol import (
-    OrganizationID,
-    UserID,
     DeviceID,
     DeviceLabel,
     HumanHandle,
+    OrganizationID,
+    UserID,
     UserProfile,
 )
-from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
-    q_organization_internal_id,
     q_device,
-    q_user_internal_id,
     q_human,
+    q_organization_internal_id,
+    q_user_internal_id,
+    query,
 )
+from parsec.backend.user import Device, GetUserAndDevicesResult, Trustchain, User, UserNotFoundError
 
 _q_get_organization_users = Q(
     f"""
@@ -211,7 +214,9 @@ FROM cte2;
 )
 
 
-async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> User:
+async def _get_user(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
+) -> User:
     row = await conn.fetchrow(
         *_q_get_user(organization_id=organization_id.str, user_id=user_id.str)
     )
@@ -225,7 +230,7 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
     return User(
         user_id=user_id,
         human_handle=human_handle,
-        profile=UserProfile(row["profile"]),
+        profile=UserProfile.from_str(row["profile"]),
         user_certificate=row["user_certificate"],
         redacted_user_certificate=row["redacted_user_certificate"],
         user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
@@ -238,7 +243,9 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
     )
 
 
-async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID) -> Device:
+async def _get_device(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, device_id: DeviceID
+) -> Device:
     row = await conn.fetchrow(
         *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
     )
@@ -256,7 +263,10 @@ async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID
 
 
 async def _get_trustchain(
-    conn, organization_id: OrganizationID, *device_ids: Optional[DeviceID], redacted: bool = False
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    *device_ids: DeviceID | None,
+    redacted: bool = False,
 ) -> Trustchain:
     rows = await conn.fetch(
         *_q_get_trustchain(
@@ -284,7 +294,7 @@ async def _get_trustchain(
 
 
 async def _get_user_devices(
-    conn, organization_id: OrganizationID, user_id: UserID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
 ) -> Tuple[Device, ...]:
     results = await conn.fetch(
         *_q_get_user_devices(organization_id=organization_id.str, user_id=user_id.str)
@@ -304,13 +314,15 @@ async def _get_user_devices(
 
 
 @query()
-async def query_get_user(conn, organization_id: OrganizationID, user_id: UserID) -> User:
+async def query_get_user(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
+) -> User:
     return await _get_user(conn, organization_id, user_id)
 
 
 @query(in_transaction=True)
 async def query_get_user_with_trustchain(
-    conn, organization_id: OrganizationID, user_id: UserID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
 ) -> Tuple[User, Trustchain]:
     user = await _get_user(conn, organization_id, user_id)
     trustchain = await _get_trustchain(conn, organization_id, user.user_certifier)
@@ -319,7 +331,7 @@ async def query_get_user_with_trustchain(
 
 @query(in_transaction=True)
 async def query_get_user_with_device_and_trustchain(
-    conn, organization_id: OrganizationID, device_id: DeviceID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, device_id: DeviceID
 ) -> Tuple[User, Device, Trustchain]:
     user = await _get_user(conn, organization_id, device_id.user_id)
     user_device = await _get_device(conn, organization_id, device_id)
@@ -335,7 +347,10 @@ async def query_get_user_with_device_and_trustchain(
 
 @query(in_transaction=True)
 async def query_get_user_with_devices_and_trustchain(
-    conn, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user_id: UserID,
+    redacted: bool = False,
 ) -> GetUserAndDevicesResult:
     user = await _get_user(conn, organization_id, user_id)
     user_devices = await _get_user_devices(conn, organization_id, user_id)
@@ -362,7 +377,7 @@ async def query_get_user_with_devices_and_trustchain(
 
 @query(in_transaction=True)
 async def query_get_user_with_device(
-    conn, organization_id: OrganizationID, device_id: DeviceID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, device_id: DeviceID
 ) -> Tuple[User, Device]:
     d_row = await conn.fetchrow(
         *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
@@ -388,7 +403,7 @@ async def query_get_user_with_device(
     user = User(
         user_id=device_id.user_id,
         human_handle=human_handle,
-        profile=UserProfile(u_row["profile"]),
+        profile=UserProfile.from_str(u_row["profile"]),
         user_certificate=u_row["user_certificate"],
         redacted_user_certificate=u_row["redacted_user_certificate"],
         user_certifier=DeviceID(u_row["user_certifier"]) if u_row["user_certifier"] else None,
@@ -404,7 +419,7 @@ async def query_get_user_with_device(
 
 @query()
 async def query_dump_users(
-    conn, organization_id: OrganizationID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID
 ) -> Tuple[List[User], List[Device]]:
     users = []
     devices = []
@@ -415,7 +430,7 @@ async def query_dump_users(
             User(
                 user_id=UserID(row["user_id"]),
                 human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
-                profile=UserProfile(row["profile"]),
+                profile=UserProfile.from_str(row["profile"]),
                 user_certificate=row["user_certificate"],
                 redacted_user_certificate=row["redacted_user_certificate"],
                 user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,

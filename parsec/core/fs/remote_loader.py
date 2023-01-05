@@ -1,100 +1,106 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import math
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Iterable, Tuple, cast, Iterator, Callable, Awaitable
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, Iterable, Iterator, List, Tuple
+
 import trio
-from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
+from trio import MemoryReceiveChannel, MemorySendChannel, open_memory_channel
 
 from parsec._parsec import (
-    DateTime,
-    BlockCreateRepOk,
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
-    BlockReadRepOk,
-    BlockReadRepNotFound,
+    BlockCreateRepOk,
+    BlockCreateRepTimeout,
     BlockReadRepInMaintenance,
     BlockReadRepNotAllowed,
-    RealmCreateRepOk,
+    BlockReadRepNotFound,
+    BlockReadRepOk,
+    DateTime,
     RealmCreateRepAlreadyExists,
-    RealmGetRoleCertificatesRepOk,
+    RealmCreateRepOk,
     RealmGetRoleCertificatesRepNotAllowed,
-    VlobCreateRepOk,
-    VlobCreateRepSequesterInconsistency,
+    RealmGetRoleCertificatesRepOk,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
+    VlobCreateRepOk,
+    VlobCreateRepRejectedBySequesterService,
     VlobCreateRepRequireGreaterTimestamp,
-    VlobReadRepOk,
-    VlobReadRepNotAllowed,
+    VlobCreateRepSequesterInconsistency,
+    VlobCreateRepTimeout,
+    VlobListVersionsRepInMaintenance,
+    VlobListVersionsRepNotAllowed,
+    VlobListVersionsRepNotFound,
+    VlobListVersionsRepOk,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepBadVersion,
     VlobReadRepInMaintenance,
+    VlobReadRepNotAllowed,
     VlobReadRepNotFound,
-    VlobUpdateRepOk,
+    VlobReadRepOk,
     VlobUpdateRepBadEncryptionRevision,
     VlobUpdateRepBadVersion,
     VlobUpdateRepInMaintenance,
     VlobUpdateRepNotAllowed,
     VlobUpdateRepNotFound,
+    VlobUpdateRepOk,
+    VlobUpdateRepRejectedBySequesterService,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
-    VlobListVersionsRepOk,
-    VlobListVersionsRepInMaintenance,
-    VlobListVersionsRepNotAllowed,
-    VlobListVersionsRepNotFound,
+    VlobUpdateRepTimeout,
 )
-
-from parsec.crypto import HashDigest, CryptoError, VerifyKey
-from parsec.utils import open_service_nursery
-from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID, SequesterServiceID
 from parsec.api.data import (
-    DataError,
-    BlockAccess,
-    RealmRoleCertificate,
     AnyRemoteManifest,
-    UserCertificate,
+    BlockAccess,
+    DataError,
     DeviceCertificate,
+    RealmRoleCertificate,
     RevokedUserCertificate,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
+    UserCertificate,
 )
 from parsec.api.data.manifest import manifest_decrypt_verify_and_load
-from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
-from parsec.core.backend_connection import (
-    BackendConnectionError,
-    BackendNotAvailable,
-    BackendAuthenticatedCmds,
+from parsec.api.protocol import DeviceID, RealmID, RealmRole, SequesterServiceID, UserID, VlobID
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.fs.exceptions import (
+    FSBackendOfflineError,
+    FSBadEncryptionRevision,
+    FSDeviceNotFoundError,
+    FSError,
+    FSInvalidTrustchainError,
+    FSLocalMissError,
+    FSRemoteBlockNotFound,
+    FSRemoteManifestNotFound,
+    FSRemoteManifestNotFoundBadVersion,
+    FSRemoteOperationError,
+    FSRemoteSyncError,
+    FSSequesterServiceRejectedError,
+    FSServerUploadTemporarilyUnavailableError,
+    FSUserNotFoundError,
+    FSWorkspaceInMaintenance,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNoWriteAccess,
 )
+from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
     RemoteDevicesManagerBackendOfflineError,
-    RemoteDevicesManagerError,
-    RemoteDevicesManagerUserNotFoundError,
     RemoteDevicesManagerDeviceNotFoundError,
+    RemoteDevicesManagerError,
     RemoteDevicesManagerInvalidTrustchainError,
+    RemoteDevicesManagerUserNotFoundError,
 )
-from parsec.core.fs.exceptions import (
-    FSError,
-    FSRemoteSyncError,
-    FSRemoteOperationError,
-    FSRemoteManifestNotFound,
-    FSRemoteManifestNotFoundBadVersion,
-    FSRemoteBlockNotFound,
-    FSBackendOfflineError,
-    FSWorkspaceInMaintenance,
-    FSBadEncryptionRevision,
-    FSWorkspaceNoReadAccess,
-    FSWorkspaceNoWriteAccess,
-    FSUserNotFoundError,
-    FSDeviceNotFoundError,
-    FSInvalidTrustchainError,
-    FSLocalMissError,
-)
-from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.types import ChunkID, EntryID, LocalDevice, WorkspaceEntry
+from parsec.crypto import CryptoError, HashDigest, VerifyKey
+from parsec.utils import open_service_nursery
 
+if TYPE_CHECKING:
+    from parsec.core.backend_connection import BackendAuthenticatedCmds
 
 # This value is used to increment the timestamp provided by the backend
 # when a manifest restamping is required. This value should be kept small
@@ -127,9 +133,9 @@ class VlobSequesterInconsistencyError(Exception):
 
 def _validate_sequester_config(
     root_verify_key: VerifyKey,
-    sequester_authority_certificate: Optional[bytes],
-    sequester_services_certificates: Optional[Iterable[bytes]],
-) -> Tuple[Optional[SequesterAuthorityCertificate], Optional[List[SequesterServiceCertificate]]]:
+    sequester_authority_certificate: bytes | None,
+    sequester_services_certificates: Iterable[bytes] | None,
+) -> Tuple[SequesterAuthorityCertificate | None, List[SequesterServiceCertificate] | None]:
     if sequester_authority_certificate is None:
         return None, None
 
@@ -142,7 +148,7 @@ def _validate_sequester_config(
         # 1) Validate authority certificate
         # Sequestery authority is always signed by the root key, hence `expected_author` is always None
         authority = SequesterAuthorityCertificate.verify_and_load(
-            sequester_authority_certificate, author_verify_key=root_verify_key, expected_author=None
+            sequester_authority_certificate, author_verify_key=root_verify_key
         )
 
         # 2) Validate services certificates
@@ -193,7 +199,7 @@ class UserRemoteLoader:
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
     ):
@@ -203,15 +209,15 @@ class UserRemoteLoader:
         self.get_previous_workspace_entry = get_previous_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
-        self._realm_role_certificates_cache: Optional[List[RealmRoleCertificate]] = None
-        self._sequester_services_cache: Optional[List[SequesterServiceCertificate]] = None
+        self._realm_role_certificates_cache: List[RealmRoleCertificate] | None = None
+        self._sequester_services_cache: List[SequesterServiceCertificate] | None = None
 
     def clear_realm_role_certificate_cache(self) -> None:
         self._realm_role_certificates_cache = None
 
     async def _get_user_realm_role_at(
         self, user_id: UserID, timestamp: DateTime, author_last_role_granted_on: DateTime
-    ) -> Optional[RealmRole]:
+    ) -> RealmRole | None:
 
         # Lazily iterate over user certificates from newest to oldest
         def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificate]:
@@ -238,11 +244,11 @@ class UserRemoteLoader:
             return None
 
     async def _load_realm_role_certificates(
-        self, realm_id: Optional[EntryID] = None
+        self, realm_id: EntryID | None = None
     ) -> Tuple[List[RealmRoleCertificate], Dict[UserID, RealmRole]]:
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.realm_get_role_certificates(
-                RealmID((realm_id or self.workspace_id).uuid)
+                RealmID.from_entry_id(realm_id or self.workspace_id)
             )
         if isinstance(rep, RealmGetRoleCertificatesRepNotAllowed):
             # Seems we lost the access to the realm
@@ -266,9 +272,12 @@ class UserRemoteLoader:
 
             # Now verify each certif
             for unsecure_certif, raw_certif in unsecure_certifs:
+                certif_author = unsecure_certif.author
+                if certif_author is None:
+                    raise FSError("Expected a certificate signed by a user")
 
                 with translate_remote_devices_manager_errors():
-                    author = await self.remote_devices_manager.get_device(unsecure_certif.author)
+                    author = await self.remote_devices_manager.get_device(certif_author)
 
                 RealmRoleCertificate.verify_and_load(
                     raw_certif,
@@ -280,7 +289,7 @@ class UserRemoteLoader:
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
                 if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
                     # First user is auto-signed
-                    needed_roles: Tuple[Optional[RealmRole], ...] = (None,)
+                    needed_roles: Tuple[RealmRole | None, ...] = (None,)
                 elif (
                     existing_user_role in owner_or_manager
                     or unsecure_certif.role in owner_or_manager
@@ -288,11 +297,8 @@ class UserRemoteLoader:
                     needed_roles = owner_only
                 else:
                     needed_roles = owner_or_manager
-                # TODO: typing, author is optional in base.py but it seems that manifests always have an author (no RVK)
-                if (
-                    current_roles.get(cast(DeviceID, unsecure_certif.author).user_id)
-                    not in needed_roles
-                ):
+
+                if current_roles.get(certif_author.user_id) not in needed_roles:
                     raise FSError(
                         f"Invalid realm role certificates: "
                         f"{unsecure_certif.author} has not right to give "
@@ -309,11 +315,11 @@ class UserRemoteLoader:
         except DataError as exc:
             raise FSError(f"Invalid realm role certificates: {exc}") from exc
 
-        # Now unsecure_certifs is no longer unsecure given we have validated its items
+        # Now unsecure_certifs is no longer insecure given we have validated its items
         return [c for c, _ in unsecure_certifs], current_roles
 
     async def load_realm_role_certificates(
-        self, realm_id: Optional[EntryID] = None
+        self, realm_id: EntryID | None = None
     ) -> List[RealmRoleCertificate]:
         """
         Raises:
@@ -329,7 +335,7 @@ class UserRemoteLoader:
         return certificates
 
     async def load_realm_current_roles(
-        self, realm_id: Optional[EntryID] = None
+        self, realm_id: EntryID | None = None
     ) -> Dict[UserID, RealmRole]:
         """
         Raises:
@@ -346,7 +352,7 @@ class UserRemoteLoader:
 
     async def get_user(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate]]:
+    ) -> Tuple[UserCertificate, RevokedUserCertificate | None]:
         """
         Raises:
             FSRemoteOperationError
@@ -379,7 +385,7 @@ class UserRemoteLoader:
             FSRemoteManifestNotFound
         """
         with translate_backend_cmds_errors():
-            rep = await self.backend_cmds.vlob_list_versions(VlobID(entry_id.uuid))
+            rep = await self.backend_cmds.vlob_list_versions(VlobID.from_entry_id(entry_id))
         if isinstance(rep, VlobListVersionsRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
@@ -390,7 +396,7 @@ class UserRemoteLoader:
                 "Cannot download vlob while the workspace is in maintenance"
             )
         elif not isinstance(rep, VlobListVersionsRepOk):
-            raise FSError(f"Cannot fetch vlob {entry_id.str}: {rep}")
+            raise FSError(f"Cannot fetch vlob {entry_id.hex}: {rep}")
 
         return rep.versions
 
@@ -403,7 +409,9 @@ class UserRemoteLoader:
         """
         timestamp = self.device.timestamp()
         certif = RealmRoleCertificate.build_realm_root_certif(
-            author=self.device.device_id, timestamp=timestamp, realm_id=RealmID(realm_id.uuid)
+            author=self.device.device_id,
+            timestamp=timestamp,
+            realm_id=RealmID.from_entry_id(realm_id),
         ).dump_and_sign(self.device.signing_key)
 
         with translate_backend_cmds_errors():
@@ -415,7 +423,7 @@ class UserRemoteLoader:
             # we play idempotent here.
             return
         elif not isinstance(rep, RealmCreateRepOk):
-            raise FSError(f"Cannot create realm {realm_id.str}: {rep}")
+            raise FSError(f"Cannot create realm {realm_id.hex}: {rep}")
 
 
 class RemoteLoader(UserRemoteLoader):
@@ -424,7 +432,7 @@ class RemoteLoader(UserRemoteLoader):
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: BaseWorkspaceStorage,
@@ -549,7 +557,7 @@ class RemoteLoader(UserRemoteLoader):
         # Upload block
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.block_create(
-                access.id, RealmID(self.workspace_id.uuid), ciphered
+                access.id, RealmID.from_entry_id(self.workspace_id), ciphered
             )
 
         if isinstance(rep, BlockCreateRepAlreadyExists):
@@ -561,20 +569,22 @@ class RemoteLoader(UserRemoteLoader):
             raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access")
         elif isinstance(rep, BlockCreateRepInMaintenance):
             raise FSWorkspaceInMaintenance("Cannot upload block while the workspace in maintenance")
+        elif isinstance(rep, BlockCreateRepTimeout):
+            raise FSServerUploadTemporarilyUnavailableError("Temporary failure during block upload")
         elif not isinstance(rep, BlockCreateRepOk):
             raise FSError(f"Cannot upload block: {rep}")
 
         # Update local storage
         await self.local_storage.set_clean_block(access.id, data)
-        await self.local_storage.clear_chunk(ChunkID(access.id.uuid), miss_ok=True)
+        await self.local_storage.clear_chunk(ChunkID.from_block_id(access.id), miss_ok=True)
 
     async def load_manifest(
         self,
         entry_id: EntryID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
-        expected_backend_timestamp: Optional[DateTime] = None,
-        workspace_entry: Optional[WorkspaceEntry] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
+        expected_backend_timestamp: DateTime | None = None,
+        workspace_entry: WorkspaceEntry | None = None,
     ) -> AnyRemoteManifest:
         """
         Download a manifest.
@@ -606,7 +616,7 @@ class RemoteLoader(UserRemoteLoader):
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_read(
                 workspace_entry.encryption_revision,
-                VlobID(entry_id.uuid),
+                VlobID.from_entry_id(entry_id),
                 version=version,
                 timestamp=timestamp if version is None else None,
             )
@@ -649,27 +659,27 @@ class RemoteLoader(UserRemoteLoader):
             raise FSRemoteManifestNotFoundBadVersion(entry_id)
         elif isinstance(rep, VlobReadRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
-                f"Cannot fetch vlob {entry_id.str}: Bad encryption revision provided"
+                f"Cannot fetch vlob {entry_id.hex}: Bad encryption revision provided"
             )
         elif isinstance(rep, VlobReadRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot download vlob while the workspace is in maintenance"
             )
         elif not isinstance(rep, VlobReadRepOk):
-            raise FSError(f"Cannot fetch vlob {entry_id.str}: {rep}")
+            raise FSError(f"Cannot fetch vlob {entry_id.hex}: {rep}")
 
         expected_version = rep.version
         expected_author = rep.author
         expected_timestamp = rep.timestamp
         if version not in (None, expected_version):
             raise FSError(
-                f"Backend returned invalid version for vlob {entry_id.str} (expecting {version}, "
+                f"Backend returned invalid version for vlob {entry_id.hex} (expecting {version}, "
                 f"got {expected_version})"
             )
 
         if expected_backend_timestamp and expected_backend_timestamp != expected_timestamp:
             raise FSError(
-                f"Backend returned invalid expected timestamp for vlob {entry_id.str} at version "
+                f"Backend returned invalid expected timestamp for vlob {entry_id.hex} at version "
                 f"{version} (expecting {expected_backend_timestamp}, got {expected_timestamp})"
             )
 
@@ -716,7 +726,7 @@ class RemoteLoader(UserRemoteLoader):
         self,
         entry_id: EntryID,
         manifest: AnyRemoteManifest,
-        timestamp_greater_than: Optional[DateTime] = None,
+        timestamp_greater_than: DateTime | None = None,
     ) -> AnyRemoteManifest:
         """
         Raises:
@@ -798,6 +808,10 @@ class RemoteLoader(UserRemoteLoader):
             # Update our cache and retry the request
             self._sequester_services_cache = sequester_services
             return await self.upload_manifest(entry_id, manifest)
+        except FSSequesterServiceRejectedError as exc:
+            # Small hack to provide the manifest object that was lacking when the exception was raised
+            exc.manifest = manifest
+            raise exc
         else:
             return manifest
 
@@ -807,7 +821,7 @@ class RemoteLoader(UserRemoteLoader):
         entry_id: EntryID,
         ciphered: bytes,
         now: DateTime,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         """
         Raises:
@@ -823,9 +837,9 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_create(
-                RealmID(self.workspace_id.uuid),
+                RealmID.from_entry_id(self.workspace_id),
                 encryption_revision,
-                VlobID(entry_id.uuid),
+                VlobID.from_entry_id(entry_id),
                 now,
                 ciphered,
                 sequester_blob,
@@ -839,7 +853,7 @@ class RemoteLoader(UserRemoteLoader):
             raise VlobRequireGreaterTimestampError(rep.strictly_greater_than)
         elif isinstance(rep, VlobCreateRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
-                f"Cannot create vlob {entry_id.str}: Bad encryption revision provided"
+                f"Cannot create vlob {entry_id.hex}: Bad encryption revision provided"
             )
         elif isinstance(rep, VlobCreateRepInMaintenance):
             raise FSWorkspaceInMaintenance(
@@ -850,8 +864,17 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_authority_certificate=rep.sequester_authority_certificate,
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
+        elif isinstance(rep, VlobCreateRepRejectedBySequesterService):
+            raise FSSequesterServiceRejectedError(
+                id=entry_id,
+                service_id=rep.service_id,
+                service_label=rep.service_label,
+                reason=rep.reason,
+            )
+        elif isinstance(rep, VlobCreateRepTimeout):
+            raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
         elif not isinstance(rep, VlobCreateRepOk):
-            raise FSError(f"Cannot create vlob {entry_id.str}: {rep}")
+            raise FSError(f"Cannot create vlob {entry_id.hex}: {rep}")
 
     async def _vlob_update(
         self,
@@ -860,7 +883,7 @@ class RemoteLoader(UserRemoteLoader):
         ciphered: bytes,
         now: DateTime,
         version: int,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         """
         Raises:
@@ -875,7 +898,12 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_update(
-                encryption_revision, VlobID(entry_id.uuid), version, now, ciphered, sequester_blob
+                encryption_revision,
+                VlobID.from_entry_id(entry_id),
+                version,
+                now,
+                ciphered,
+                sequester_blob,
             )
 
         if isinstance(rep, VlobUpdateRepNotFound):
@@ -889,7 +917,7 @@ class RemoteLoader(UserRemoteLoader):
             raise FSRemoteSyncError(entry_id)
         elif isinstance(rep, VlobUpdateRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
-                f"Cannot update vlob {entry_id.str}: Bad encryption revision provided"
+                f"Cannot update vlob {entry_id.hex}: Bad encryption revision provided"
             )
         elif isinstance(rep, VlobUpdateRepInMaintenance):
             raise FSWorkspaceInMaintenance(
@@ -900,8 +928,17 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_authority_certificate=rep.sequester_authority_certificate,
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
+        elif isinstance(rep, VlobUpdateRepRejectedBySequesterService):
+            raise FSSequesterServiceRejectedError(
+                id=entry_id,
+                service_id=rep.service_id,
+                service_label=rep.service_label,
+                reason=rep.reason,
+            )
+        elif isinstance(rep, VlobUpdateRepTimeout):
+            raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
         elif not isinstance(rep, VlobUpdateRepOk):
-            raise FSError(f"Cannot update vlob {entry_id.str}: {rep}")
+            raise FSError(f"Cannot update vlob {entry_id.hex}: {rep}")
 
     def to_timestamped(self, timestamp: DateTime) -> "RemoteLoaderTimestamped":
         return RemoteLoaderTimestamped(self, timestamp)
@@ -925,10 +962,10 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def load_manifest(
         self,
         entry_id: EntryID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
-        expected_backend_timestamp: Optional[DateTime] = None,
-        workspace_entry: Optional[WorkspaceEntry] = None,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
+        expected_backend_timestamp: DateTime | None = None,
+        workspace_entry: WorkspaceEntry | None = None,
     ) -> AnyRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
@@ -960,7 +997,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self,
         entry_id: EntryID,
         manifest: AnyRemoteManifest,
-        timestamp_greater_than: Optional[DateTime] = None,
+        timestamp_greater_than: DateTime | None = None,
     ) -> AnyRemoteManifest:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
@@ -970,7 +1007,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         entry_id: EntryID,
         ciphered: bytes,
         now: DateTime,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         raise FSError("Cannot create vlob through a timestamped remote loader")
 
@@ -981,6 +1018,6 @@ class RemoteLoaderTimestamped(RemoteLoader):
         ciphered: bytes,
         now: DateTime,
         version: int,
-        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         raise FSError("Cannot update vlob through a timestamped remote loader")

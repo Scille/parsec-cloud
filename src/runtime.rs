@@ -1,8 +1,9 @@
 use pyo3::{
-    import_exception, once_cell::GILOnceCell, pyclass, pymethods, IntoPy, PyAny, PyObject,
-    PyResult, Python,
+    import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, wrap_pyfunction,
+    IntoPy, Py, PyAny, PyObject, PyResult, Python,
 };
 use std::future::Future;
+use std::pin::Pin;
 use tokio::task::JoinHandle;
 
 import_exception!(trio, RunFinishedError);
@@ -51,6 +52,18 @@ fn get_stuff(py: Python<'_>) -> PyResult<&Stuff> {
     }
 }
 
+#[pyfunction]
+fn safe_trio_reschedule_fn(py: Python, task: &PyAny, value: &PyAny) -> PyResult<()> {
+    // Check `task.custom_sleep_data` to know if scheduling is required or forbidden
+    let rescheduling_required = task.getattr("custom_sleep_data")?.is_true()?;
+    if !rescheduling_required {
+        return Ok(());
+    }
+    let stuff = get_stuff(py)?;
+    stuff.trio_reschedule_fn.call1(py, (task, value))?;
+    Ok(())
+}
+
 #[pyclass]
 struct TokioTaskAborterFromTrio {
     handle: JoinHandle<()>,
@@ -60,89 +73,95 @@ struct TokioTaskAborterFromTrio {
 #[pymethods]
 impl TokioTaskAborterFromTrio {
     fn __call__(&self, py: Python, _raise_cancel: &PyAny) -> PyResult<PyObject> {
-        // Given we return `trio.lowlevel.Abort.SUCCEEDED` we have given our word to
-        // trio we won't call reschedule for this task
-        // So we store the aborted information in the `task.custom_sleep_data` attribute
-        // that trio has designed for us just for this kind of need \^^/
-        // Also note the GIL makes our life easy here: given we hold it during the whole
-        // "read `custom_sleep_data` then call reschedule if needed", we cannot have
-        // concurrency issues when modifying `custom_sleep_data`.
-        self.task.setattr(py, "custom_sleep_data", true)?;
+        // Given we return `trio.lowlevel.Abort.SUCCEEDED` we have given our word to trio we won't call reschedule for this task.
+        // So we clear the `task.custom_sleep_data` attribute to indicate the rescheduling is no longer required.
+        self.task.setattr(py, "custom_sleep_data", py.None())?;
         self.handle.abort();
         Ok(get_stuff(py)?.trio_abort_succeeded.clone())
     }
 }
 
-pub(crate) fn spawn_future_into_trio_coroutine<F, T>(py: Python, fut: F) -> PyResult<&PyAny>
-where
-    F: Future<Output = PyResult<T>> + Send + 'static,
-    T: IntoPy<PyObject>,
-{
-    let stuff = get_stuff(py)?;
-    let trio_token = stuff.trio_current_trio_token_fn.call0(py)?;
-    let trio_reschedule_fn = stuff.trio_reschedule_fn.clone();
-    let outcome_value_fn = stuff.outcome_value_fn.clone();
-    let outcome_error_fn = stuff.outcome_error_fn.clone();
+#[pyclass]
+pub(crate) struct FutureIntoCoroutine(
+    Option<Pin<Box<dyn Future<Output = PyResult<()>> + Send + 'static>>>,
+);
 
-    let trio_current_task = stuff.trio_current_task_fn.call0(py)?;
-    let trio_current_task2 = trio_current_task.clone();
+impl FutureIntoCoroutine {
+    pub fn new<F>(fut: F) -> Self
+    where
+        F: Future<Output = PyResult<()>> + Send + 'static,
+    {
+        FutureIntoCoroutine(Some(Box::pin(fut)))
+    }
+}
 
-    // Schedule the Tokio future
-    let handle = stuff.tokio_runtime.spawn(async move {
-        // Here we have left the trio thread and are inside a thread provided by the Tokio runtime
+#[pymethods]
+impl FutureIntoCoroutine {
+    fn __await__<'a>(&mut self, py: Python<'a>) -> PyResult<&'a PyAny> {
+        let stuff = get_stuff(py)?;
+        let trio_token = stuff.trio_current_trio_token_fn.call0(py)?;
+        let trio_reschedule_fn: Py<PyAny> =
+            wrap_pyfunction!(safe_trio_reschedule_fn, py)?.into_py(py);
+        let outcome_value_fn = stuff.outcome_value_fn.clone();
+        let outcome_error_fn = stuff.outcome_error_fn.clone();
 
-        // Actual run of the Tokio future
-        let ret = fut.await;
+        let trio_current_task = stuff.trio_current_task_fn.call0(py)?;
+        let task = trio_current_task.clone();
+        let fut = self.0.take().unwrap();
 
-        // Now that our job is done we have to call trio's reschedule function and
-        // pass it the result as an outcome object
+        // Set `custom_sleep_data` to indicate the rescheduling is required.
+        // This will be cleared if the task is rescheduled or cancelled.
+        trio_current_task.setattr(py, "custom_sleep_data", true)?;
 
-        Python::with_gil(|py| {
-            let trio_current_task = trio_current_task.as_ref(py);
+        // Schedule the Tokio future
+        let handle = stuff.tokio_runtime.spawn(async move {
+            // Here we have left the trio thread and are inside a thread provided by the Tokio runtime
 
-            // Special case if trio has already cancelled the coroutine
-            let aborted = trio_current_task.getattr("custom_sleep_data").expect("Cannot access `<task>.custom_sleep_data`");
-            if aborted.is_true().expect("Cannot evaluate `<task>.custom_sleep_data`") {
-                return
-            }
+            // Actual run of the Tokio future
+            let ret = fut.await;
 
-            // Create the outcome object
-            let outcome = match ret {
-                Ok(val) => {
-                    outcome_value_fn.call1(py, (val, )).expect("Cannot create `outcome.Value(<result>)`")
-                },
-                Err(err) =>  {
-                    outcome_error_fn.call1(py, (err, )).expect("Cannot create `outcome.Error(<result>)`")
-                },
-            };
+            // Now that our job is done we have to call trio's reschedule function and
+            // pass it the result as an outcome object
 
-            // Reschedule the coroutine, this must be done from within the trio thread so we have to use
-            // the trio token to schedule a synchronous function that will do the actual schedule call
-            match trio_token.call_method1(
-                py, "run_sync_soon", (trio_reschedule_fn.as_ref(py), trio_current_task, outcome)
-            ) {
-                Ok(_) => (),
-                // We can ignore the error if the trio loop has been closed...
-                Err(err) if err.is_instance_of::<RunFinishedError>(py)  => (),
-                // ...but for any other exception there is not much we can do :'(
-                Err(err) => {
-                    panic!("Cannot call `TrioToken.run_sync_soon(trio.lowlevel.reschedule, <outcome>)`: {:?}", err);
+            Python::with_gil(|py| {
+                let trio_current_task = trio_current_task.as_ref(py);
+
+                // Create the outcome object
+                let outcome = match ret {
+                    Ok(val) => {
+                        outcome_value_fn.call1(py, (val, )).expect("Cannot create `outcome.Value(<result>)`")
+                    },
+                    Err(err) =>  {
+                        outcome_error_fn.call1(py, (err, )).expect("Cannot create `outcome.Error(<result>)`")
+                    },
+                };
+
+                // Reschedule the coroutine, this must be done from within the trio thread so we have to use
+                // the trio token to schedule a synchronous function that will do the actual schedule call
+                match trio_token.call_method1(
+                    py, "run_sync_soon", (trio_reschedule_fn, trio_current_task, outcome)
+                ) {
+                    Ok(_) => (),
+                    // We can ignore the error if the trio loop has been closed...
+                    Err(err) if err.is_instance_of::<RunFinishedError>(py)  => (),
+                    // ...but for any other exception there is not much we can do :'(
+                    Err(err) => {
+                        panic!("Cannot call `TrioToken.run_sync_soon(trio.lowlevel.reschedule, <outcome>)`: {:?}", err);
+                    }
                 }
-            }
-        })
-    });
+            })
+        });
 
-    // This aborter is callback that will be called by trio if our coroutine gets
-    // cancelled, this allow us to cancel the related tokio task
-    let aborter = TokioTaskAborterFromTrio {
-        handle,
-        task: trio_current_task2,
-    };
+        // This aborter is callback that will be called by trio if our coroutine gets
+        // cancelled, this allow us to cancel the related tokio task
+        let aborter = TokioTaskAborterFromTrio { handle, task };
 
-    // Return the special coroutine object that tells trio loop to block our task
-    // until it is manually rescheduled
-    stuff
-        .trio_wait_task_rescheduled
-        .as_ref(py)
-        .call1((aborter,))
+        // Return the special coroutine object that tells trio loop to block our task
+        // until it is manually rescheduled
+        stuff
+            .trio_wait_task_rescheduled
+            .as_ref(py)
+            .call1((aborter,))?
+            .call_method0("__await__")
+    }
 }

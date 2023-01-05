@@ -1,32 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
-import pytest
-from parsec._parsec import DateTime
 from unittest.mock import ANY
 from uuid import uuid4
 
+import pytest
+
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
-    OrganizationID,
-    packb,
-    unpackb,
+    AuthenticatedClientHandshake,
+    BaseClientHandshake,
+    HandshakeBadAdministrationToken,
+    HandshakeBadIdentity,
+    HandshakeFailedChallenge,
+    HandshakeOrganizationExpired,
+    HandshakeRevokedDevice,
+    HandshakeRVKMismatch,
+    HandshakeType,
+    IncompatibleAPIVersionsError,
     InvalidMessageError,
     InvitationToken,
     InvitationType,
-    HandshakeFailedChallenge,
-    HandshakeBadIdentity,
-    HandshakeBadAdministrationToken,
-    HandshakeRVKMismatch,
-    HandshakeRevokedDevice,
-    HandshakeType,
-    ServerHandshake,
-    BaseClientHandshake,
-    AuthenticatedClientHandshake,
     InvitedClientHandshake,
-    HandshakeOrganizationExpired,
-    IncompatibleAPIVersionsError,
+    OrganizationID,
+    ServerHandshake,
+    packb,
+    unpackb,
 )
 from parsec.api.protocol.handshake import answer_serializer
-
 from parsec.api.version import API_VERSION, ApiVersion
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
@@ -300,7 +301,7 @@ def test_process_challenge_req_good_multiple_api_version(
         {
             "handshake": "answer",
             "type": HandshakeType.INVITED.value,
-            "invitation_type": InvitationType.USER.value,
+            "invitation_type": InvitationType.USER.str,
             "organization_id": "d@mmy",  # Invalid OrganizationID
             "token": "<good>",
         },
@@ -314,7 +315,7 @@ def test_process_challenge_req_good_multiple_api_version(
         {
             "handshake": "answer",
             "type": HandshakeType.INVITED.value,
-            "invitation_type": InvitationType.USER.value,
+            "invitation_type": InvitationType.USER.str,
             "organization_id": "<good>",
             "token": "abc123",  # Invalid token type
         },

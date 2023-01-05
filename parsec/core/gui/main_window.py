@@ -1,63 +1,65 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
 import sys
-from typing import Callable, Optional, cast, Awaitable
-from structlog import get_logger
 from distutils.version import LooseVersion
+from typing import Awaitable, Callable, cast
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
-from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
-from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
+from PyQt5.QtCore import QCoreApplication, QSize, Qt, pyqtSignal
+from PyQt5.QtGui import QCloseEvent, QColor, QIcon, QKeySequence, QResizeEvent
+from PyQt5.QtWidgets import QMainWindow, QMenu, QMenuBar, QShortcut, QWidget
+from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
-from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
-from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
-from parsec.event_bus import EventBus, EventCallback
-from parsec._parsec import InvitationType
-from parsec.core.types import (
-    LocalDevice,
-    BackendActionAddr,
-    BackendInvitationAddr,
-    BackendOrganizationBootstrapAddr,
-    BackendOrganizationFileLinkAddr,
-)
-from parsec.core.core_events import CoreEvent
-from parsec.core.config import CoreConfig, save_config
-from parsec.core.pki import is_pki_enrollment_available
-from parsec.core.local_device import list_available_devices, get_key_file, DeviceFileType
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.instance_widget import InstanceWidget
-from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.gui import telemetry
-from parsec.core.gui import desktop
+from parsec._parsec import CoreEvent, InvitationType
 from parsec.core import win_registry
-from parsec.core.gui import validators
-from parsec.core.gui.changelog_widget import ChangelogWidget
-from parsec.core.gui.claim_user_widget import ClaimUserWidget
-from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
-from parsec.core.gui.license_widget import LicenseWidget
+from parsec.core.config import CoreConfig, save_config
+from parsec.core.gui import desktop, telemetry, validators
 from parsec.core.gui.about_widget import AboutWidget
-from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.custom_dialogs import (
-    ask_question,
-    show_error,
-    show_info,
-    GreyedDialog,
-    get_text_input,
-)
-from parsec.core.gui.device_recovery_export_widget import DeviceRecoveryExportWidget
-from parsec.core.gui.device_recovery_import_widget import DeviceRecoveryImportWidget
-from parsec.core.gui.custom_widgets import Button, ensure_string_size
-from parsec.core.gui.create_org_widget import CreateOrgWidget
-from parsec.core.gui.ui.main_window import Ui_MainWindow
 from parsec.core.gui.central_widget import (
     GoToFileLinkBadOrganizationIDError,
     GoToFileLinkBadWorkspaceIDError,
     GoToFileLinkPathDecryptionError,
 )
-
+from parsec.core.gui.changelog_widget import ChangelogWidget
+from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
+from parsec.core.gui.claim_user_widget import ClaimUserWidget
+from parsec.core.gui.create_org_widget import CreateOrgWidget
+from parsec.core.gui.custom_dialogs import (
+    GreyedDialog,
+    ask_question,
+    get_text_input,
+    show_error,
+    show_info,
+)
+from parsec.core.gui.custom_widgets import Button, ensure_string_size
+from parsec.core.gui.device_recovery_export_widget import DeviceRecoveryExportWidget
+from parsec.core.gui.device_recovery_import_widget import DeviceRecoveryImportWidget
+from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
+from parsec.core.gui.instance_widget import InstanceWidget
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.license_widget import LicenseWidget
+from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.settings_widget import SettingsWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.ui.main_window import Ui_MainWindow
+from parsec.core.local_device import (
+    DeviceFileType,
+    get_available_device,
+    get_key_file,
+    list_available_devices,
+)
+from parsec.core.pki import is_pki_enrollment_available
+from parsec.core.types import (
+    BackendActionAddr,
+    BackendInvitationAddr,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationFileLinkAddr,
+    LocalDevice,
+)
+from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
+from parsec.event_bus import EventBus, EventCallback
 
 logger = get_logger()
 
@@ -78,7 +80,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         event_bus: EventBus,
         config: CoreConfig,
         minimize_on_close: bool = False,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent=parent)
         self.setupUi(self)
@@ -331,7 +333,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         d.exec_()
 
     def _on_manage_keys(self) -> None:
-        devices = [device for device in list_available_devices(self.config.config_dir)]
+        devices = list_available_devices(self.config.config_dir)
         options = [_("ACTION_CANCEL"), _("ACTION_RECOVER_DEVICE")]
         if len(devices):
             options.append(_("ACTION_CREATE_RECOVERY_DEVICE"))
@@ -364,12 +366,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         async def wrapper(instance: "MainWindow") -> None:
             return await callback()
 
-        # TODO: remove type ignore comment when using a newer mypy version
-        return wrapper.__get__(self)  # type: ignore[attr-defined]
+        return wrapper.__get__(self)
 
-    def _on_create_org_clicked(
-        self, addr: Optional[BackendOrganizationBootstrapAddr] = None
-    ) -> None:
+    def _on_create_org_clicked(self, addr: BackendOrganizationBootstrapAddr | None = None) -> None:
         widget: CreateOrgWidget
 
         @self._bind_async_callback
@@ -394,7 +393,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             if answer == _("ACTION_CREATE_RECOVERY_DEVICE"):
                 DeviceRecoveryExportWidget.show_modal(
-                    self.config, self.jobs_ctx, [device], parent=self
+                    self.config,
+                    self.jobs_ctx,
+                    [get_available_device(self.config.config_dir, device)],
+                    parent=self,
                 )
 
         widget = CreateOrgWidget.show_modal(
@@ -432,9 +434,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             self._on_create_org_clicked(action_addr)
         elif isinstance(action_addr, BackendInvitationAddr):
-            if action_addr.invitation_type == InvitationType.USER():
+            if action_addr.invitation_type == InvitationType.USER:
                 self._on_claim_user_clicked(action_addr)
-            elif action_addr.invitation_type == InvitationType.DEVICE():
+            elif action_addr.invitation_type == InvitationType.DEVICE:
                 self._on_claim_device_clicked(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):
             if not is_pki_enrollment_available():
@@ -493,7 +495,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 oriented_question=True,
             )
             if answer == _("ACTION_CREATE_RECOVERY_DEVICE"):
-                DeviceRecoveryExportWidget.show_modal(self.config, self.jobs_ctx, [device], self)
+                DeviceRecoveryExportWidget.show_modal(
+                    self.config,
+                    self.jobs_ctx,
+                    [get_available_device(self.config.config_dir, device)],
+                    self,
+                )
 
         widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -560,7 +567,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_foreground_needed(self) -> None:
         self.show_top()
 
-    def _on_new_instance_needed(self, start_arg: Optional[str]) -> None:
+    def _on_new_instance_needed(self, start_arg: str | None) -> None:
         self.add_instance(start_arg)
         self.show_top()
 
@@ -571,7 +578,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_window(self, skip_dialogs: bool = False) -> None:
         try:
-            if not self.restoreGeometry(self.config.gui_geometry):
+            if self.config.gui_geometry is not None and not self.restoreGeometry(
+                self.config.gui_geometry
+            ):
                 self.showMaximized()
         except TypeError:
             self.showMaximized()
@@ -652,6 +661,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     log_widget.reload_devices()
         elif state == "connected":
             device = tab.current_device
+            assert device is not None
             tab_name = f"{device.organization_id.str} - {device.short_user_display} - {device.device_display}"
             self.tab_center.setTabToolTip(idx, tab_name)
             self.tab_center.setTabText(
@@ -693,14 +703,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setCurrentIndex(idx)
 
     def switch_to_login_tab(
-        self, file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None
+        self, file_link_addr: BackendOrganizationFileLinkAddr | None = None
     ) -> None:
         # Retrieve the login tab
         idx = self._get_login_tab_index()
         if idx != -1:
             self.switch_to_tab(idx)
         else:
-            # No loging tab, create one
+            # No login tab, create one
             tab = self.add_new_tab()
             tab.show_login_widget()
             self.on_tab_state_changed(tab, "login")
@@ -803,7 +813,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.switch_to_login_tab()
         self._on_claim_pki_clicked(action_addr)
 
-    def add_instance(self, start_arg: Optional[str] = None) -> None:
+    def add_instance(self, start_arg: str | None = None) -> None:
         action_addr = None
         if start_arg:
             try:
@@ -820,12 +830,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_create_org_widget(action_addr)
         elif (
             isinstance(action_addr, BackendInvitationAddr)
-            and action_addr.invitation_type == InvitationType.USER()
+            and action_addr.invitation_type == InvitationType.USER
         ):
             self.show_claim_user_widget(action_addr)
         elif (
             isinstance(action_addr, BackendInvitationAddr)
-            and action_addr.invitation_type == InvitationType.DEVICE()
+            and action_addr.invitation_type == InvitationType.DEVICE
         ):
             self.show_claim_device_widget(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):
@@ -853,7 +863,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def close_tab(self, index: int, force: bool = False) -> None:
         tab = self.tab_center.widget(index)
         if not force:
-            r = _("ACTION_TAB_CLOSE_CONFIRM")
+            r: str | None = _("ACTION_TAB_CLOSE_CONFIRM")
             if tab and tab.is_logged_in:
                 r = ask_question(
                     self,

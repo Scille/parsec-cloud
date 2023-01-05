@@ -1,14 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+from __future__ import annotations
 
+import base64
+import binascii
+import json
 import os
 import sys
-import attr
-import json
-from typing import Optional, FrozenSet
 from pathlib import Path
+from typing import Any, FrozenSet, Mapping
+
+import attr
 from structlog import get_logger
-import binascii
-import base64
+
 from parsec.api.data import EntryID
 from parsec.core.types import BackendAddr
 
@@ -17,7 +20,7 @@ DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE = 512 * 1024 * 1024
 logger = get_logger()
 
 
-def get_default_data_base_dir(environ: dict) -> Path:
+def get_default_data_base_dir(environ: Mapping[str, str]) -> Path:
     if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
@@ -27,7 +30,7 @@ def get_default_data_base_dir(environ: dict) -> Path:
         return Path(path) / "parsec"
 
 
-def get_default_config_dir(environ: dict) -> Path:
+def get_default_config_dir(environ: Mapping[str, str]) -> Path:
     if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:
@@ -37,7 +40,7 @@ def get_default_config_dir(environ: dict) -> Path:
         return Path(path) / "parsec"
 
 
-def get_default_mountpoint_base_dir(environ: dict) -> Path:
+def get_default_mountpoint_base_dir(environ: Mapping[str, str]) -> Path:
     return Path.home() / "Parsec"
 
 
@@ -46,12 +49,12 @@ class CoreConfig:
     config_dir: Path
     data_base_dir: Path
     mountpoint_base_dir: Path
-    prevent_sync_pattern_path: Optional[Path] = None  # Use `default_pattern.ignore` by default
+    prevent_sync_pattern_path: Path | None = None  # Use `default_pattern.ignore` by default
     preferred_org_creation_backend_addr: BackendAddr
     debug: bool = False
 
     backend_max_cooldown: int = 30
-    backend_connection_keepalive: Optional[int] = 29
+    backend_connection_keepalive: int | None = 29
     backend_max_connections: int = 4
 
     invitation_token_size: int = 8
@@ -59,17 +62,17 @@ class CoreConfig:
     mountpoint_enabled: bool = False
     disabled_workspaces: FrozenSet[EntryID] = frozenset()
 
-    sentry_dsn: Optional[str] = None
+    sentry_dsn: str | None = None
     sentry_environment: str = ""
     telemetry_enabled: bool = True
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
     pki_extra_trust_roots: FrozenSet[Path] = frozenset()
 
-    gui_last_device: Optional[str] = None
+    gui_last_device: str | None = None
     gui_tray_enabled: bool = True
-    gui_language: Optional[str] = None
+    gui_language: str | None = None
     gui_first_launch: bool = True
-    gui_last_version: Optional[str] = None
+    gui_last_version: str | None = None
     gui_check_version_at_startup: bool = True
     gui_check_version_url: str = "https://github.com/Scille/parsec-cloud/releases/latest"
     gui_check_version_api_url: str = "https://api.github.com/repos/Scille/parsec-cloud/releases"
@@ -77,45 +80,48 @@ class CoreConfig:
     gui_confirmation_before_close: bool = True
     gui_allow_multiple_instances: bool = False
     gui_show_confined: bool = False
-    gui_geometry: bytes = None
+    gui_geometry: bytes | None = None
 
-    ipc_socket_file: Path = None
     ipc_win32_mutex_name: str = "parsec-cloud"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> CoreConfig:
         return attr.evolve(self, **kwargs)
+
+    @property
+    def ipc_socket_file(self) -> Path:
+        return self.data_base_dir / "parsec-cloud.lock"
 
 
 def config_factory(
-    config_dir: Path = None,
-    data_base_dir: Path = None,
-    mountpoint_base_dir: Path = None,
-    prevent_sync_pattern_path: Optional[Path] = None,
+    config_dir: Path | None = None,
+    data_base_dir: Path | None = None,
+    mountpoint_base_dir: Path | None = None,
+    prevent_sync_pattern_path: Path | None = None,
     mountpoint_enabled: bool = False,
     disabled_workspaces: FrozenSet[EntryID] = frozenset(),
     backend_max_cooldown: int = 30,
-    backend_connection_keepalive: Optional[int] = 29,
+    backend_connection_keepalive: int | None = 29,
     backend_max_connections: int = 4,
-    sentry_dsn: str = None,
+    sentry_dsn: str | None = None,
     sentry_environment: str = "",
     telemetry_enabled: bool = True,
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     pki_extra_trust_roots: FrozenSet[Path] = frozenset(),
     debug: bool = False,
-    gui_last_device: str = None,
+    gui_last_device: str | None = None,
     gui_tray_enabled: bool = True,
-    gui_language: str = None,
+    gui_language: str | None = None,
     gui_first_launch: bool = True,
-    gui_last_version: str = None,
+    gui_last_version: str | None = None,
     gui_check_version_at_startup: bool = True,
     gui_check_version_allow_pre_release: bool = False,
     gui_allow_multiple_instances: bool = False,
-    preferred_org_creation_backend_addr: Optional[BackendAddr] = None,
+    preferred_org_creation_backend_addr: BackendAddr | None = None,
     gui_show_confined: bool = False,
-    gui_geometry: bytes = None,
+    gui_geometry: bytes | None = None,
     ipc_win32_mutex_name: str = "parsec-cloud",
-    environ: dict = {},
-    **_,
+    environ: Mapping[str, str] = {},
+    **_: object,
 ) -> CoreConfig:
 
     # The environment variable we always be used first, and if it is not present,
@@ -159,7 +165,6 @@ def config_factory(
         preferred_org_creation_backend_addr=preferred_org_creation_backend_addr,
         gui_show_confined=gui_show_confined,
         gui_geometry=gui_geometry,
-        ipc_socket_file=data_base_dir / "parsec-cloud.lock",
         ipc_win32_mutex_name=ipc_win32_mutex_name,
     )
 
@@ -174,7 +179,7 @@ def config_factory(
     return core_config
 
 
-def load_config(config_dir: Path, **extra_config) -> CoreConfig:
+def load_config(config_dir: Path, **extra_config: Any) -> CoreConfig:
 
     config_file = config_dir / "config.json"
     try:
@@ -231,7 +236,7 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except (AttributeError, KeyError, UnicodeEncodeError, binascii.Error):
         data_conf["gui_geometry"] = None
 
-    # Work around versionning issue with parsec releases:
+    # Work around versioning issue with parsec releases:
     # - v1.12.0, v1.11.4, v1.11.3, v1.11.2, v1.11.1, v1.11.0 and v1.10.0
     # A `v` has been incorrectly added to `parsec.__version__`, potentially
     # affecting the `gui_last_version` entry in the configuration file.
@@ -241,11 +246,7 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     return config_factory(config_dir=config_dir, **data_conf, **extra_config, environ=os.environ)
 
 
-def reload_config(config: CoreConfig) -> CoreConfig:
-    return load_config(config.config_dir, debug=config.debug)
-
-
-def save_config(config: CoreConfig):
+def save_config(config: CoreConfig) -> None:
     config_path = config.config_dir
     config_path.mkdir(mode=0o700, parents=True, exist_ok=True)
     config_path /= "config.json"
@@ -256,7 +257,7 @@ def save_config(config: CoreConfig):
                 "data_base_dir": str(config.data_base_dir),
                 "prevent_sync_pattern": str(config.prevent_sync_pattern_path),
                 "telemetry_enabled": config.telemetry_enabled,
-                "disabled_workspaces": list(map(lambda e: e.str, config.disabled_workspaces)),
+                "disabled_workspaces": list(map(lambda e: e.hex, config.disabled_workspaces)),
                 "backend_max_cooldown": config.backend_max_cooldown,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
                 "workspace_storage_cache_size": config.workspace_storage_cache_size,

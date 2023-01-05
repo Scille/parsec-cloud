@@ -1,25 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+from __future__ import annotations
 
-import attr
-import trio
 import smtplib
 import ssl
 import sys
 import tempfile
-from enum import Enum
 from collections import defaultdict
-from typing import Dict, List, Optional, Union, Set, cast
-from parsec._parsec import DateTime
+from email.header import Header
 from email.message import Message
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Dict, List, Set, Union, cast
+
+import attr
+import trio
 from structlog import get_logger
-from parsec.api.protocol import (
-    # TODO: Remove legacy InvitationType see issue(#3105)
-    # https://github.com/Scille/parsec-cloud/issues/3105
-    InvitationType as PyInvitationType,
-)
+
 from parsec._parsec import (
+    BackendInvitationAddr,
+    ClientType,
+    DateTime,
+    InvitationDeletedReason,
+    InvitationEmailSentStatus,
     InvitationType,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerRepInvalidState,
@@ -32,17 +35,20 @@ from parsec._parsec import (
     Invite1GreeterWaitPeerRepNotFound,
     Invite1GreeterWaitPeerRepOk,
     Invite1GreeterWaitPeerReq,
-    Invite2aClaimerSendHashedNonceHashNonceRep,
-    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
-    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
-    Invite2aClaimerSendHashedNonceHashNonceRepOk,
-    Invite2aClaimerSendHashedNonceHashNonceReq,
+    Invite2aClaimerSendHashedNonceRep,
+    Invite2aClaimerSendHashedNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceRepNotFound,
+    Invite2aClaimerSendHashedNonceRepOk,
+    Invite2aClaimerSendHashedNonceReq,
     Invite2aGreeterGetHashedNonceRep,
     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
     Invite2aGreeterGetHashedNonceRepInvalidState,
     Invite2aGreeterGetHashedNonceRepNotFound,
     Invite2aGreeterGetHashedNonceRepOk,
     Invite2aGreeterGetHashedNonceReq,
+    Invite2bClaimerSendNonceRep,
+    Invite2bClaimerSendNonceRepInvalidState,
+    Invite2bClaimerSendNonceRepNotFound,
     Invite2bClaimerSendNonceRepOk,
     Invite2bClaimerSendNonceReq,
     Invite2bGreeterSendNonceRep,
@@ -103,31 +109,23 @@ from parsec._parsec import (
     InviteNewRepOk,
     InviteNewReq,
 )
-
-from parsec.crypto import PublicKey, HashDigest
-from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 from parsec.api.protocol import (
+    HumanHandle,
+    InvitationStatus,
+    InvitationToken,
     OrganizationID,
     UserID,
-    HumanHandle,
-    InvitationToken,
-    InvitationDeletedReason,
-    InvitationStatus,
-    InvitationEmailSentStatus,
     UserProfile,
 )
-from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.backend.backend_events import BackendEvent
+from parsec.backend.config import BackendConfig, EmailConfig, MockedEmailConfig, SmtpEmailConfig
 from parsec.backend.templates import get_template
-from parsec.backend.utils import catch_protocol_errors, api, ClientType
-from parsec.backend.config import (
-    BackendConfig,
-    EmailConfig,
-    SmtpEmailConfig,
-    MockedEmailConfig,
-)
-from parsec.core.types import BackendInvitationAddr
+from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.crypto import HashDigest, PublicKey
+from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 
+if TYPE_CHECKING:
+    from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
 
 logger = get_logger()
 
@@ -188,41 +186,41 @@ NEXT_CONDUIT_STATE = {
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ConduitListenCtx:
     organization_id: OrganizationID
-    greeter: Optional[UserID]
+    greeter: UserID | None
     token: InvitationToken
     state: ConduitState
     payload: bytes
-    peer_payload: Optional[bytes]
+    peer_payload: bytes | None
 
     @property
-    def is_greeter(self):
+    def is_greeter(self) -> bool:
         return self.greeter is not None
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserInvitation:
-    TYPE = PyInvitationType.USER
+    TYPE = InvitationType.USER
     greeter_user_id: UserID
-    greeter_human_handle: Optional[HumanHandle]
+    greeter_human_handle: HumanHandle | None
     claimer_email: str
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> UserInvitation:
         return attr.evolve(self, **kwargs)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceInvitation:
-    TYPE = PyInvitationType.DEVICE
+    TYPE = InvitationType.DEVICE
     greeter_user_id: UserID
-    greeter_human_handle: Optional[HumanHandle]
+    greeter_human_handle: HumanHandle | None
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs: Any) -> DeviceInvitation:
         return attr.evolve(self, **kwargs)
 
 
@@ -232,8 +230,8 @@ Invitation = Union[UserInvitation, DeviceInvitation]
 def generate_invite_email(
     from_addr: str,
     to_addr: str,
-    reply_to: Optional[str],
-    greeter_name: Optional[str],  # Noe for device invitation
+    reply_to: str | None,
+    greeter_name: str | None,  # None for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
     backend_url: str,
@@ -262,8 +260,11 @@ def generate_invite_email(
         message["Subject"] = f"[Parsec] New device invitation to { organization_id.str }"
     message["From"] = from_addr
     message["To"] = to_addr
-    if reply_to:
-        message["Reply-To"] = reply_to
+    if reply_to is not None and greeter_name is not None:
+        # Contrary to the other address fields, the greeter name can include non-ascii characters
+        # Example: "Jean-José" becomes "=?utf-8?q?Jean-Jos=C3=A9?="
+        encoded_greeter_name = Header(greeter_name.encode("utf-8"), "utf-8").encode()
+        message["Reply-To"] = f"{encoded_greeter_name} <{reply_to}>"
 
     # Turn parts into MIMEText objects
     part1 = MIMEText(text, "plain")
@@ -278,18 +279,20 @@ def generate_invite_email(
 
 
 async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: Message) -> None:
-    def _do():
+    def _do() -> None:
         try:
             context = ssl.create_default_context()
             if email_config.use_ssl:
-                server = smtplib.SMTP_SSL(email_config.host, email_config.port, context=context)
+                server: Union[smtplib.SMTP, smtplib.SMTP_SSL] = smtplib.SMTP_SSL(
+                    email_config.host, email_config.port, context=context
+                )
             else:
                 server = smtplib.SMTP(email_config.host, email_config.port)
 
             with server:
                 if email_config.use_tls and not email_config.use_ssl:
                     if server.starttls(context=context)[0] != 220:
-                        logger.warning("Email TLS connexion isn't encrypted")
+                        logger.warning("Email TLS connection isn't encrypted")
                 if email_config.host_user and email_config.host_password:
                     server.login(email_config.host_user, email_config.host_password)
                 server.sendmail(email_config.sender, to_addr, message.as_string())
@@ -306,7 +309,7 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
 async def _mocked_send_mail(
     email_config: MockedEmailConfig, to_addr: str, message: Message
 ) -> None:
-    def _do():
+    def _do() -> None:
         tmpfile_fd, tmpfile_path = tempfile.mkstemp(
             prefix="tmp-email-", suffix=".html", dir=email_config.tmpdir
         )
@@ -335,7 +338,7 @@ class BaseInviteComponent:
         self._event_bus = event_bus
         self._config = config
         # We use the `invite.status_changed` event to keep a list of all the
-        # invitation claimers connected accross all backends.
+        # invitation claimers connected across all backends.
         #
         # This is useful to display the invitations ready to be greeted.
         # Note we rely on a per-backend list in memory instead of storing this
@@ -344,7 +347,7 @@ class BaseInviteComponent:
         #
         # However there are multiple ways this list can go out of sync:
         # - a claimer can be connected to a backend, then another backend starts
-        # - the backend the claimer is connected to crashes witout being able
+        # - the backend the claimer is connected to crashes without being able
         #   to notify the other backends
         # - a claimer open multiple connections at the same time, then is
         #   considered disconnected as soon as he closes one of his connections
@@ -374,72 +377,34 @@ class BaseInviteComponent:
     @api("invite_new")
     @catch_protocol_errors
     @api_typed_msg_adapter(InviteNewReq, InviteNewRep)
-    async def api_invite_new(self, client_ctx, req):
-        # TODO: Use builtin Invitation type, this function is here to convert
-        # types when needed because BackendInvitationAddr::build() has been
-        # modified to take the builtin version of InvitationType (see issue #3105)
-        # https://github.com/Scille/parsec-cloud/issues/3105
-        def _to_builtin_invitation_type(invit_type: PyInvitationType):
-            if type(invit_type) == PyInvitationType:
-                if invit_type == PyInvitationType.DEVICE:
-                    return InvitationType.DEVICE()
-                elif invit_type == PyInvitationType.USER:
-                    return InvitationType.USER()
-
-            return invit_type
-
-        def _to_http_redirection_url(client_ctx, invitation):
+    async def api_invite_new(
+        self, client_ctx: AuthenticatedClientContext, req: InviteNewReq
+    ) -> InviteNewRep:
+        # Define helper
+        def _to_http_redirection_url(
+            client_ctx: AuthenticatedClientContext,
+            invitation: Union[UserInvitation, DeviceInvitation],
+        ) -> str:
+            assert self._config.backend_addr
             return BackendInvitationAddr.build(
                 backend_addr=self._config.backend_addr,
                 organization_id=client_ctx.organization_id,
-                invitation_type=_to_builtin_invitation_type(invitation.TYPE),
+                invitation_type=invitation.TYPE,
                 token=invitation.token,
             ).to_http_redirection_url()
 
-        if req.type == InvitationType.USER():
+        # Create new user / new device
+        if req.type == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return InviteNewRepNotAllowed()
             try:
-                invitation = await self.new_for_user(
+                invitation: UserInvitation | DeviceInvitation = await self.new_for_user(
                     organization_id=client_ctx.organization_id,
                     greeter_user_id=client_ctx.user_id,
                     claimer_email=req.claimer_email,
                 )
             except InvitationAlreadyMemberError:
                 return InviteNewRepAlreadyMember()
-
-            if req.send_email:
-                if client_ctx.human_handle:
-                    greeter_name = client_ctx.human_handle.label
-                    reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
-                else:
-                    greeter_name = client_ctx.user_id.str
-                    reply_to = None
-                message = generate_invite_email(
-                    from_addr=self._config.email_config.sender,
-                    to_addr=invitation.claimer_email,
-                    greeter_name=greeter_name,
-                    reply_to=reply_to,
-                    organization_id=client_ctx.organization_id,
-                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
-                    backend_url=self._config.backend_addr.to_http_domain_url(),
-                )
-                try:
-                    await send_email(
-                        email_config=self._config.email_config,
-                        to_addr=invitation.claimer_email,
-                        message=message,
-                    )
-                    email_sent_status = InvitationEmailSentStatus.SUCCESS
-                except InvitationEmailConfigError:
-                    email_sent_status = InvitationEmailSentStatus.NOT_AVAILABLE
-                except InvitationEmailRecipientError:
-                    email_sent_status = InvitationEmailSentStatus.BAD_RECIPIENT
-                else:
-                    email_sent_status = InvitationEmailSentStatus.SUCCESS
-                finally:
-                    return InviteNewRepOk(invitation.token, email_sent_status)
-
         else:  # Device
             if req.send_email and not client_ctx.human_handle:
                 return InviteNewRepNotAvailable()
@@ -449,45 +414,84 @@ class BaseInviteComponent:
                 greeter_user_id=client_ctx.user_id,
             )
 
-            if req.send_email:
-                message = generate_invite_email(
-                    from_addr=self._config.email_config.sender,
-                    to_addr=client_ctx.human_handle.email,
-                    greeter_name=None,
-                    reply_to=None,
-                    organization_id=client_ctx.organization_id,
-                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
-                    backend_url=self._config.backend_addr.to_http_domain_url(),
-                )
-                try:
-                    await send_email(
-                        email_config=self._config.email_config,
-                        to_addr=client_ctx.human_handle.email,
-                        message=message,
-                    )
-                    email_sent_status = InvitationEmailSentStatus.SUCCESS
-                except InvitationEmailConfigError:
-                    email_sent_status = InvitationEmailSentStatus.NOT_AVAILABLE
-                except InvitationEmailRecipientError:
-                    email_sent_status = InvitationEmailSentStatus.BAD_RECIPIENT
-                else:
-                    email_sent_status = InvitationEmailSentStatus.SUCCESS
-                finally:
-                    return InviteNewRepOk(invitation.token, email_sent_status)
+        # No need to send email, we're done
+        if not req.send_email:
+            # Note: before parsec v2.13.0, we used to reply with a missing `email_sent` field in this case.
+            # However, we'd rather limit the use of missing fields to compatibility use cases (e.g when a
+            # field has been added in a new version but does not exist in older versions). In this case, we
+            # can replace the missing field with `SUCCESS` without breaking compatibility with older clients
+            # since they also choose `SUCCESS` as value when getting an `AttributeError` on the reply.
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS)
 
-        return InviteNewRepOk(invitation.token, None)
+        # Backend address not configured, we won't be able to send the email
+        if not self._config.backend_addr:
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+
+        # Generate email message
+        if req.type == InvitationType.USER:
+            assert isinstance(invitation, UserInvitation)
+            to_addr = invitation.claimer_email
+            if client_ctx.human_handle:
+                greeter_name = client_ctx.human_handle.label
+                reply_to = client_ctx.human_handle.email
+            else:
+                greeter_name = client_ctx.user_id.str
+                reply_to = None
+            message = generate_invite_email(
+                from_addr=self._config.email_config.sender,
+                to_addr=invitation.claimer_email,
+                greeter_name=greeter_name,
+                reply_to=reply_to,
+                organization_id=client_ctx.organization_id,
+                invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                backend_url=self._config.backend_addr.to_http_domain_url(),
+            )
+        else:  # Device
+            assert isinstance(invitation, DeviceInvitation)
+            assert client_ctx.human_handle is not None
+            to_addr = client_ctx.human_handle.email
+            message = generate_invite_email(
+                from_addr=self._config.email_config.sender,
+                to_addr=to_addr,
+                greeter_name=None,
+                reply_to=None,
+                organization_id=client_ctx.organization_id,
+                invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                backend_url=self._config.backend_addr.to_http_domain_url(),
+            )
+
+        # Send the email
+        try:
+            await send_email(
+                email_config=self._config.email_config,
+                to_addr=to_addr,
+                message=message,
+            )
+        except InvitationEmailRecipientError:
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.BAD_RECIPIENT)
+        except InvitationEmailConfigError:
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+        except Exception:
+            # Fail-safe: since the device/user has been created, we don't want to fail too hard
+            logger.exception("Unexpected exception while sending an email")
+            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+
+        # The email has been successfully sent
+        return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS)
 
     @api("invite_delete")
     @catch_protocol_errors
     @api_typed_msg_adapter(InviteDeleteReq, InviteDeleteRep)
-    async def api_invite_delete(self, client_ctx, msg):
+    async def api_invite_delete(
+        self, client_ctx: AuthenticatedClientContext, req: InviteDeleteReq
+    ) -> InviteDeleteRep:
         try:
             await self.delete(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg.token,
+                token=req.token,
                 on=DateTime.now(),
-                reason=msg.reason,
+                reason=req.reason,
             )
 
         except InvitationNotFoundError:
@@ -501,7 +505,9 @@ class BaseInviteComponent:
     @api("invite_list")
     @catch_protocol_errors
     @api_typed_msg_adapter(InviteListReq, InviteListRep)
-    async def api_invite_list(self, client_ctx, _):
+    async def api_invite_list(
+        self, client_ctx: AuthenticatedClientContext, req: InviteListReq
+    ) -> InviteListRep:
         invitations = await self.list(
             organization_id=client_ctx.organization_id, greeter=client_ctx.user_id
         )
@@ -518,7 +524,9 @@ class BaseInviteComponent:
     @api("invite_info", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     @api_typed_msg_adapter(InviteInfoReq, InviteInfoRep)
-    async def api_invite_info(self, client_ctx, _):
+    async def api_invite_info(
+        self, client_ctx: InvitedClientContext, req: InviteInfoReq
+    ) -> InviteInfoRep:
         # Invitation has already been fetched during handshake, this
         # means we don't have to access the database at all here.
         # Not accessing the database also means we cannot detect if invitation
@@ -527,14 +535,14 @@ class BaseInviteComponent:
         invitation = client_ctx.invitation
         if isinstance(invitation, UserInvitation):
             return InviteInfoRepOk(
-                InvitationType.USER(),
+                InvitationType.USER,
                 invitation.claimer_email,
                 invitation.greeter_user_id,
                 invitation.greeter_human_handle,
             )
         else:  # DeviceInvitation
             return InviteInfoRepOk(
-                InvitationType.DEVICE(),
+                InvitationType.DEVICE,
                 claimer_email=None,
                 greeter_user_id=invitation.greeter_user_id,
                 greeter_human_handle=invitation.greeter_human_handle,
@@ -547,7 +555,9 @@ class BaseInviteComponent:
     )
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite1ClaimerWaitPeerReq, Invite1ClaimerWaitPeerRep)
-    async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
+    async def api_invite_1_claimer_wait_peer(
+        self, client_ctx: InvitedClientContext, req: Invite1ClaimerWaitPeerReq
+    ) -> Invite1ClaimerWaitPeerRep:
         """
         Raises:
             CloseInviteConnection
@@ -558,7 +568,7 @@ class BaseInviteComponent:
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_1_WAIT_PEERS,
-                payload=msg.claimer_public_key.encode(),
+                payload=req.claimer_public_key.encode(),
             )
 
         except InvitationAlreadyDeletedError as exc:
@@ -576,14 +586,16 @@ class BaseInviteComponent:
     @api("invite_1_greeter_wait_peer")
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite1GreeterWaitPeerReq, Invite1GreeterWaitPeerRep)
-    async def api_invite_1_greeter_wait_peer(self, client_ctx, msg):
+    async def api_invite_1_greeter_wait_peer(
+        self, client_ctx: AuthenticatedClientContext, req: Invite1GreeterWaitPeerReq
+    ) -> Invite1GreeterWaitPeerRep:
         try:
             claimer_public_key_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg.token,
+                token=req.token,
                 state=ConduitState.STATE_1_WAIT_PEERS,
-                payload=msg.greeter_public_key.encode(),
+                payload=req.greeter_public_key.encode(),
             )
 
         except InvitationNotFoundError:
@@ -598,15 +610,17 @@ class BaseInviteComponent:
         return Invite1GreeterWaitPeerRepOk(PublicKey(claimer_public_key_raw))
 
     @api(
-        "invite_2a_claimer_send_hashed_nonce_hash_nonce",
+        "invite_2a_claimer_send_hashed_nonce",
         client_types=[ClientType.INVITED],
     )
     @catch_protocol_errors
     @api_typed_msg_adapter(
-        Invite2aClaimerSendHashedNonceHashNonceReq,
-        Invite2aClaimerSendHashedNonceHashNonceRep,
+        Invite2aClaimerSendHashedNonceReq,
+        Invite2aClaimerSendHashedNonceRep,
     )
-    async def api_invite_2a_claimer_send_hash_nonce(self, client_ctx, msg):
+    async def api_invite_2a_claimer_send_hash_nonce(
+        self, client_ctx: InvitedClientContext, req: Invite2aClaimerSendHashedNonceReq
+    ) -> Invite2aClaimerSendHashedNonceRep:
         """
         Raises:
             CloseInviteConnection
@@ -617,7 +631,7 @@ class BaseInviteComponent:
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
-                payload=msg.claimer_hashed_nonce.digest,
+                payload=req.claimer_hashed_nonce.digest,
             )
 
             greeter_nonce = await self.conduit_exchange(
@@ -633,27 +647,29 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite2aClaimerSendHashedNonceHashNonceRepNotFound()
+            return Invite2aClaimerSendHashedNonceRepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite2aClaimerSendHashedNonceHashNonceRepInvalidState()
+            return Invite2aClaimerSendHashedNonceRepInvalidState()
 
-        return Invite2aClaimerSendHashedNonceHashNonceRepOk(greeter_nonce)
+        return Invite2aClaimerSendHashedNonceRepOk(greeter_nonce)
 
     @api("invite_2a_greeter_get_hashed_nonce")
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite2aGreeterGetHashedNonceReq, Invite2aGreeterGetHashedNonceRep)
-    async def api_invite_2a_greeter_get_hashed_nonce(self, client_ctx, msg):
+    async def api_invite_2a_greeter_get_hashed_nonce(
+        self, client_ctx: AuthenticatedClientContext, req: Invite2aGreeterGetHashedNonceReq
+    ) -> Invite2aGreeterGetHashedNonceRep:
         try:
-            claimer_hashed_nonce = await self.conduit_exchange(
+            claimer_hashed_nonce_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg.token,
+                token=req.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
                 payload=b"",
             )
             # Should not fail given data is check on DB insertion
-            claimer_hashed_nonce = HashDigest(claimer_hashed_nonce)
+            claimer_hashed_nonce = HashDigest(claimer_hashed_nonce_raw)
 
         except InvitationNotFoundError:
             return Invite2aGreeterGetHashedNonceRepNotFound()
@@ -669,20 +685,22 @@ class BaseInviteComponent:
     @api("invite_2b_greeter_send_nonce")
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite2bGreeterSendNonceReq, Invite2bGreeterSendNonceRep)
-    async def api_invite_2b_greeter_send_nonce(self, client_ctx, msg):
+    async def api_invite_2b_greeter_send_nonce(
+        self, client_ctx: AuthenticatedClientContext, req: Invite2bGreeterSendNonceReq
+    ) -> Invite2bGreeterSendNonceRep:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg.token,
+                token=req.token,
                 state=ConduitState.STATE_2_2_GREETER_NONCE,
-                payload=msg.greeter_nonce,
+                payload=req.greeter_nonce,
             )
 
             claimer_nonce = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg.token,
+                token=req.token,
                 state=ConduitState.STATE_2_3_CLAIMER_NONCE,
                 payload=b"",
             )
@@ -700,8 +718,10 @@ class BaseInviteComponent:
 
     @api("invite_2b_claimer_send_nonce", client_types=[ClientType.INVITED])
     @catch_protocol_errors
-    @api_typed_msg_adapter(Invite2bClaimerSendNonceReq, Invite2bGreeterSendNonceRep)
-    async def api_invite_2b_claimer_send_nonce(self, client_ctx, msg):
+    @api_typed_msg_adapter(Invite2bClaimerSendNonceReq, Invite2bClaimerSendNonceRep)
+    async def api_invite_2b_claimer_send_nonce(
+        self, client_ctx: InvitedClientContext, req: Invite2bClaimerSendNonceReq
+    ) -> Invite2bClaimerSendNonceRep:
         """
         Raises:
             CloseInviteConnection
@@ -712,7 +732,7 @@ class BaseInviteComponent:
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_3_CLAIMER_NONCE,
-                payload=msg.claimer_nonce,
+                payload=req.claimer_nonce,
             )
 
         except InvitationAlreadyDeletedError as exc:
@@ -720,22 +740,24 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite2bGreeterSendNonceRepNotFound()
+            return Invite2bClaimerSendNonceRepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite2bGreeterSendNonceRepInvalidState()
+            return Invite2bClaimerSendNonceRepInvalidState()
 
         return Invite2bClaimerSendNonceRepOk()
 
     @api("invite_3a_greeter_wait_peer_trust")
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite3aGreeterWaitPeerTrustReq, Invite3aGreeterWaitPeerTrustRep)
-    async def api_invite_3a_greeter_wait_peer_trust(self, client_ctx, msg):
+    async def api_invite_3a_greeter_wait_peer_trust(
+        self, client_ctx: AuthenticatedClientContext, req: Invite3aGreeterWaitPeerTrustReq
+    ) -> Invite3aGreeterWaitPeerTrustRep:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg.token,
+                token=req.token,
                 state=ConduitState.STATE_3_1_CLAIMER_TRUST,
                 payload=b"",
             )
@@ -754,7 +776,9 @@ class BaseInviteComponent:
     @api("invite_3b_claimer_wait_peer_trust", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite3bClaimerWaitPeerTrustReq, Invite3bClaimerWaitPeerTrustRep)
-    async def api_invite_3b_claimer_wait_peer_trust(self, client_ctx, msg):
+    async def api_invite_3b_claimer_wait_peer_trust(
+        self, client_ctx: InvitedClientContext, req: Invite3bClaimerWaitPeerTrustReq
+    ) -> Invite3bClaimerWaitPeerTrustRep:
         """
         Raises:
             CloseInviteConnection
@@ -783,12 +807,14 @@ class BaseInviteComponent:
     @api("invite_3b_greeter_signify_trust")
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite3bGreeterSignifyTrustReq, Invite3bGreeterSignifyTrustRep)
-    async def api_invite_3b_greeter_signify_trust(self, client_ctx, msg):
+    async def api_invite_3b_greeter_signify_trust(
+        self, client_ctx: AuthenticatedClientContext, req: Invite3bGreeterSignifyTrustReq
+    ) -> Invite3bGreeterSignifyTrustRep:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg.token,
+                token=req.token,
                 state=ConduitState.STATE_3_2_GREETER_TRUST,
                 payload=b"",
             )
@@ -807,7 +833,9 @@ class BaseInviteComponent:
     @api("invite_3a_claimer_signify_trust", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite3aClaimerSignifyTrustReq, Invite3aClaimerSignifyTrustRep)
-    async def api_invite_3a_claimer_signify_trust(self, client_ctx, msg):
+    async def api_invite_3a_claimer_signify_trust(
+        self, client_ctx: InvitedClientContext, req: Invite3aClaimerSignifyTrustReq
+    ) -> Invite3aClaimerSignifyTrustRep:
         """
         Raises:
             CloseInviteConnection
@@ -836,14 +864,16 @@ class BaseInviteComponent:
     @api("invite_4_greeter_communicate")
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite4GreeterCommunicateReq, Invite4GreeterCommunicateRep)
-    async def api_invite_4_greeter_communicate(self, client_ctx, msg):
+    async def api_invite_4_greeter_communicate(
+        self, client_ctx: AuthenticatedClientContext, req: Invite4GreeterCommunicateReq
+    ) -> Invite4GreeterCommunicateRep:
         try:
             answer_payload = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg.token,
+                token=req.token,
                 state=ConduitState.STATE_4_COMMUNICATE,
-                payload=msg.payload,
+                payload=req.payload,
             )
 
         except InvitationNotFoundError:
@@ -860,7 +890,9 @@ class BaseInviteComponent:
     @api("invite_4_claimer_communicate", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     @api_typed_msg_adapter(Invite4ClaimerCommunicateReq, Invite4ClaimerCommunicateRep)
-    async def api_invite_4_claimer_communicate(self, client_ctx, msg):
+    async def api_invite_4_claimer_communicate(
+        self, client_ctx: InvitedClientContext, req: Invite4ClaimerCommunicateReq
+    ) -> Invite4ClaimerCommunicateRep:
         """
         Raises:
             CloseInviteConnection
@@ -871,7 +903,7 @@ class BaseInviteComponent:
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_4_COMMUNICATE,
-                payload=msg.payload,
+                payload=req.payload,
             )
 
         except InvitationAlreadyDeletedError as exc:
@@ -889,7 +921,7 @@ class BaseInviteComponent:
     async def conduit_exchange(
         self,
         organization_id: OrganizationID,
-        greeter: Optional[UserID],
+        greeter: UserID | None,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
@@ -907,8 +939,8 @@ class BaseInviteComponent:
             event: Enum,
             organization_id: OrganizationID,
             token: InvitationToken,
-            **kwargs,
-        ):
+            **kwargs: Any,
+        ) -> bool:
             return organization_id == filter_organization_id and token == filter_token
 
         with self._event_bus.waiter_on_first(
@@ -920,7 +952,7 @@ class BaseInviteComponent:
             listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
 
             # Unlike what it name may imply, `_conduit_listen` doesn't wait for the peer
-            # to answer (it returns `None` instead), so we wait for some events to occure
+            # to answer (it returns `None` instead), so we wait for some events to occur
             # before calling:
             # - INVITE_CONDUIT_UPDATED: Triggered when the peer has completed it own talk
             #   step, `_conduit_listen` will most likely return the peer payload now
@@ -937,7 +969,7 @@ class BaseInviteComponent:
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: Optional[UserID],  # None for claimer
+        greeter: UserID | None,  # None for claimer
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
@@ -950,7 +982,7 @@ class BaseInviteComponent:
         """
         raise NotImplementedError()
 
-    async def _conduit_listen(self, ctx: ConduitListenCtx) -> Optional[bytes]:
+    async def _conduit_listen(self, ctx: ConduitListenCtx) -> bytes | None:
         """
         Returns ``None`` is listen is still needed
         Raises:
@@ -965,7 +997,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         claimer_email: str,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> UserInvitation:
         """
         Raise: Nothing
@@ -976,7 +1008,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[DateTime] = None,
+        created_on: DateTime | None = None,
     ) -> DeviceInvitation:
         """
         Raise: Nothing
