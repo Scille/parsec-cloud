@@ -6,6 +6,7 @@ from unittest.mock import ANY
 import pytest
 from PyQt5 import QtCore, QtGui
 
+from parsec._parsec import ActiveUsersLimit
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.users_widget import UserInvitationButton
 from tests.common import customize_fixtures
@@ -166,7 +167,9 @@ async def test_invite_and_greet_user_with_active_users_limit_reached(
     aqtbot, gui, alice, running_backend, monkeypatch, snackbar_catcher
 ):
     # Set the active user limit before login to ensure no cache information has been kept
-    await running_backend.backend.organization.update(alice.organization_id, active_users_limit=1)
+    await running_backend.backend.organization.update(
+        alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(1)
+    )
     await gui.test_switch_to_logged_in(alice)
     u_w = await gui.test_switch_to_users_widget()
 

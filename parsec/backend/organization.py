@@ -7,6 +7,7 @@ from typing import Any, Union
 import attr
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     ClientType,
     DateTime,
     OrganizationBootstrapRep,
@@ -92,7 +93,7 @@ class Organization:
     bootstrapped_on: DateTime | None
     root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
-    active_users_limit: int | None
+    active_users_limit: ActiveUsersLimit
     sequester_authority: SequesterAuthority | None
     sequester_services_certificates: tuple[bytes, ...] | None
 
@@ -324,7 +325,7 @@ class BaseOrganizationComponent:
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         # `None` stands for "no limit"
-        active_users_limit: Union[UnsetType, int | None] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
         created_on: DateTime | None = None,
     ) -> None:
@@ -389,7 +390,7 @@ class BaseOrganizationComponent:
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         is_expired: Union[UnsetType, bool] = Unset,
         # `None` stands for "no limit"
-        active_users_limit: Union[UnsetType, int | None] = Unset,
+        active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """

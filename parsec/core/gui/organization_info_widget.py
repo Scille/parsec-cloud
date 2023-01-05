@@ -5,7 +5,7 @@ from typing import Type
 
 from PyQt5.QtWidgets import QWidget
 
-from parsec._parsec import OrganizationConfig, OrganizationStats
+from parsec._parsec import ActiveUsersLimit, OrganizationConfig, OrganizationStats
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.core.gui import desktop, file_size
 from parsec.core.gui.custom_dialogs import GreyedDialog
@@ -78,12 +78,12 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
                 self.label_outsider_allowed.setText(translate("TEXT_ORG_INFO_OUTSIDER_ALLOWED"))
             else:
                 self.label_outsider_allowed.setText(translate("TEXT_ORG_INFO_OUTSIDER_NOT_ALLOWED"))
-            if not config.active_users_limit:
+            if config.active_users_limit == ActiveUsersLimit.NO_LIMIT:
                 self.label_user_limit.setText(translate("TEXT_ORG_INFO_USER_LIMIT_UNLIMITED"))
             else:
                 self.label_user_limit.setText(
                     translate("TEXT_ORG_INFO_USER_LIMIT-limit").format(
-                        limit=config.active_users_limit
+                        limit=config.active_users_limit.to_int()
                     )
                 )
             self.label_sequestration_state.setToolTip(

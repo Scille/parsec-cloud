@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import OrganizationConfigRepOk
+from parsec._parsec import ActiveUsersLimit, OrganizationConfigRepOk
 from tests.backend.common import organization_config
 from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
@@ -19,12 +19,14 @@ async def test_organization_config_ok(coolorg: OrganizationFullData, alice_ws, b
     )
 
     await backend.organization.update(
-        id=coolorg.organization_id, user_profile_outsider_allowed=False, active_users_limit=42
+        id=coolorg.organization_id,
+        user_profile_outsider_allowed=False,
+        active_users_limit=ActiveUsersLimit.LimitedTo(42),
     )
     rep = await organization_config(alice_ws)
     assert rep == OrganizationConfigRepOk(
         user_profile_outsider_allowed=False,
-        active_users_limit=42,
+        active_users_limit=ActiveUsersLimit.LimitedTo(42),
         sequester_authority_certificate=None,
         sequester_services_certificates=None,
     )

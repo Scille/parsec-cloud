@@ -11,7 +11,7 @@ import click
 import trio
 from structlog import get_logger
 
-from parsec._parsec import BackendAddr
+from parsec._parsec import ActiveUsersLimit, BackendAddr
 from parsec.backend import backend_app_factory
 from parsec.backend.asgi import serve_backend_with_asgi
 from parsec.backend.cli.utils import blockstore_backend_options, db_backend_options
@@ -355,7 +355,11 @@ def run_cmd(
             debug=debug,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
-            organization_initial_active_users_limit=organization_initial_active_users_limit,
+            organization_initial_active_users_limit=ActiveUsersLimit.LimitedTo(
+                organization_initial_active_users_limit
+            )
+            if organization_initial_active_users_limit is not None
+            else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
         )
 

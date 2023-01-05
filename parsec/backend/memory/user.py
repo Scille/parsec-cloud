@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterable, List
 
 import attr
 
-from parsec._parsec import DateTime
+from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, OrganizationID, UserID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import (
@@ -61,7 +61,9 @@ class MemoryUserComponent(BaseUserComponent):
             organization_id
         ].active_users_limit
         active_users = (u for u in org.users.values() if u.revoked_on is None)
-        if active_users_limit is not None and active_users_limit <= len(list(active_users)):
+        if active_users_limit is not None and active_users_limit <= ActiveUsersLimit.LimitedTo(
+            len(list(active_users))
+        ):
             raise UserActiveUsersLimitReached()
 
         if user.user_id in org.users:

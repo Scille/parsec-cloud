@@ -17,7 +17,7 @@ from structlog import get_logger
 from triopg import PostgresError, UndefinedTableError, UniqueViolationError
 from typing_extensions import ParamSpec
 
-from parsec._parsec import DateTime
+from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.backend.backend_events import BackendEvent, backend_event_serializer
 from parsec.backend.postgresql import migrations as migrations_module
 from parsec.event_bus import EventBus
@@ -184,6 +184,23 @@ async def handle_uuid(conn: triopg._triopg.TrioConnectionProxy) -> None:
     )
 
 
+async def handle_integer(conn: triopg._triopg.TrioConnectionProxy) -> None:
+    def _encode(x: int | ActiveUsersLimit) -> str:
+        if isinstance(x, ActiveUsersLimit):
+            # encoder cannot return `None`. `NO_LIMIT` case should be handled before the insertion/update
+            assert x is not ActiveUsersLimit.NO_LIMIT
+            return str(x.to_int())
+        return str(x)
+
+    await conn.set_type_codec(
+        "integer",
+        encoder=_encode,
+        decoder=lambda x: int(x) if x is not None else None,
+        schema="pg_catalog",
+        format="text",
+    )
+
+
 # TODO: replace by a function
 class PGHandler:
     def __init__(self, url: str, min_connections: int, max_connections: int, event_bus: EventBus):
@@ -210,6 +227,7 @@ class PGHandler:
         async def _init_connection(conn: triopg._triopg.TrioConnectionProxy) -> None:
             await handle_datetime(conn)
             await handle_uuid(conn)
+            await handle_integer(conn)
 
         async with triopg.create_pool(
             self.url,

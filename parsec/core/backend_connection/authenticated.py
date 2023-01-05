@@ -19,6 +19,7 @@ from structlog import get_logger
 from trio_typing import TaskStatus
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     CoreEvent,
     EventsListenRep,
     EventsListenRepOk,
@@ -296,7 +297,7 @@ class BackendAuthenticatedConn:
         # value so organization config is guaranteed to be always available \o/
         self._organization_config = OrganizationConfig(
             user_profile_outsider_allowed=False,
-            active_users_limit=None,
+            active_users_limit=ActiveUsersLimit.NO_LIMIT,
             sequester_authority=None,
             sequester_services=None,
         )

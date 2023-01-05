@@ -81,6 +81,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "FolderManifest" => "libparsec_types::FolderManifest",
                 "WorkspaceManifest" => "libparsec_types::WorkspaceManifest",
                 "UserManifest" => "libparsec_types::UserManifest",
+                "ActiveUsersLimit" => "libparsec_types::ActiveUsersLimit",
                 "Chunk" => "libparsec_client_types::Chunk",
                 "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
                 "UsersPerProfileDetailItem" => "libparsec_types::UsersPerProfileDetailItem",

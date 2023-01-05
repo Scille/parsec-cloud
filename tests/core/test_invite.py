@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import DateTime, InvitationType, InviteListRepOk
+from parsec._parsec import ActiveUsersLimit, DateTime, InvitationType, InviteListRepOk
 from parsec.api.data import EntryName
 from parsec.api.protocol import (
     DeviceLabel,
@@ -608,7 +608,9 @@ async def test_claimer_handle_command_failure(
 @pytest.mark.trio
 async def test_user_claim_but_active_users_limit_reached(backend, running_backend, alice):
     # Organization has reached active user limit
-    await backend.organization.update(alice.organization_id, active_users_limit=1)
+    await backend.organization.update(
+        alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(1)
+    )
 
     # Invitation is still ok...
     invitation = await backend.invite.new_for_user(

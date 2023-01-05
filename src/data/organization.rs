@@ -3,7 +3,7 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use crate::data::UsersPerProfileDetailItem;
+use crate::{data::UsersPerProfileDetailItem, protocol::ActiveUsersLimit};
 
 #[pyclass]
 pub(crate) struct OrganizationStats(pub libparsec::types::OrganizationStats);
@@ -80,13 +80,13 @@ impl OrganizationConfig {
     #[new]
     fn new(
         user_profile_outsider_allowed: bool,
-        active_users_limit: Option<u64>,
+        active_users_limit: ActiveUsersLimit,
         sequester_authority: Option<Vec<u8>>,
         sequester_services: Option<Vec<Vec<u8>>>,
     ) -> Self {
         Self(libparsec::types::OrganizationConfig {
             user_profile_outsider_allowed,
-            active_users_limit,
+            active_users_limit: active_users_limit.0,
             sequester_authority,
             sequester_services,
         })
@@ -98,8 +98,8 @@ impl OrganizationConfig {
     }
 
     #[getter]
-    fn active_users_limit(&self) -> Option<u64> {
-        self.0.active_users_limit
+    fn active_users_limit(&self) -> ActiveUsersLimit {
+        ActiveUsersLimit(self.0.active_users_limit)
     }
 
     #[getter]

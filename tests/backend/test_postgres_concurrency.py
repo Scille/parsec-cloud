@@ -8,7 +8,7 @@ import pytest
 import trio
 import triopg
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import ActiveUsersLimit, DateTime, EnrollmentID
 from parsec.backend.organization import OrganizationAlreadyBootstrappedError
 from parsec.backend.pki import PkiEnrollmentNoLongerAvailableError
 from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
@@ -180,7 +180,9 @@ async def test_concurrency_create_user_with_limit_reached(
         await binder.bind_organization(coolorg, alice)
 
         # Set a limit that will be soon reached
-        await backend.organization.update(alice.organization_id, active_users_limit=3)
+        await backend.organization.update(
+            alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(3)
+        )
 
         # Concurrent user creation
         with ensure_pg_transaction_concurrency_barrier(concurrency=10):

@@ -109,6 +109,7 @@ from parsec._parsec_pyi.misc import ApiVersion
 from parsec._parsec_pyi.organization import OrganizationConfig, OrganizationStats
 from parsec._parsec_pyi.pki import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec._parsec_pyi.protocol import (
+    ActiveUsersLimit,
     # Cmd
     AnonymousAnyCmdReq,
     AuthenticatedAnyCmdReq,
@@ -804,6 +805,8 @@ __all__ = [
     "OrganizationConfigRepOk",
     "OrganizationConfigRepNotFound",
     "OrganizationConfigRepUnknownStatus",
+    "UsersPerProfileDetailItem",
+    "ActiveUsersLimit",
     # Pki commands
     "PkiEnrollmentAcceptRep",
     "PkiEnrollmentAcceptRepActiveUsersLimitReached",

@@ -7,6 +7,7 @@ import pytest
 import trio
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     AuthenticatedPingRepOk,
     ClientType,
     CoreEvent,
@@ -88,7 +89,7 @@ async def test_init_with_backend_online(
     assert conn.status == BackendConnStatus.LOST
     default_organization_config = OrganizationConfig(
         user_profile_outsider_allowed=False,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services=None,
     )
@@ -117,7 +118,7 @@ async def test_init_with_backend_online(
             if apiv22_organization_cmd_supported:
                 assert conn.get_organization_config() == OrganizationConfig(
                     user_profile_outsider_allowed=True,
-                    active_users_limit=None,
+                    active_users_limit=ActiveUsersLimit.NO_LIMIT,
                     sequester_authority=None,
                     sequester_services=None,
                 )
@@ -147,7 +148,7 @@ async def test_init_with_backend_offline(event_bus, alice):
     assert conn.status == BackendConnStatus.LOST
     default_organization_config = OrganizationConfig(
         user_profile_outsider_allowed=False,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services=None,
     )

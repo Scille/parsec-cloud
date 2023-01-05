@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyNotImplementedError,
     prelude::*,
-    types::{PyBytes, PyDict, PyTuple},
+    types::{PyBytes, PyDict, PyTuple, PyType},
 };
 
 use libparsec::{
@@ -11,11 +11,12 @@ use libparsec::{
         anonymous_cmds::v2::organization_bootstrap,
         authenticated_cmds::v2::{organization_config, organization_stats},
     },
-    types::Maybe,
+    types::{self, Maybe},
 };
 
 use crate::{
     api_crypto::VerifyKey,
+    binding_utils::gen_proto,
     data::UsersPerProfileDetailItem,
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
@@ -175,6 +176,53 @@ impl OrganizationConfigReq {
     }
 }
 
+#[pyclass]
+#[derive(Debug, Clone)]
+pub(crate) struct ActiveUsersLimit(pub types::ActiveUsersLimit);
+
+#[pymethods]
+impl ActiveUsersLimit {
+    #[classmethod]
+    #[pyo3(name = "LimitedTo")]
+    fn limited_to(_cls: &PyType, user_count_limit: u64) -> Self {
+        Self(types::ActiveUsersLimit::LimitedTo(user_count_limit))
+    }
+
+    #[classattr]
+    #[pyo3(name = "NO_LIMIT")]
+    fn no_limit() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    ActiveUsersLimit(types::ActiveUsersLimit::NoLimit)
+                        .into_py(py)
+                })
+            };
+        };
+
+        &VALUE
+    }
+
+    #[classmethod]
+    #[pyo3(name = "FromOptionalInt")]
+    fn from_optional_int<'py>(cls: &'py PyType, py: Python<'py>, count: Option<u64>) -> &'py PyAny {
+        match count {
+            Some(x) => Self::limited_to(cls, x).into_py(py).into_ref(py),
+            None => Self::no_limit().as_ref(py),
+        }
+    }
+
+    fn to_int(&self) -> Option<u64> {
+        match self.0 {
+            types::ActiveUsersLimit::LimitedTo(user_count_limit) => Some(user_count_limit),
+            types::ActiveUsersLimit::NoLimit => None,
+        }
+    }
+}
+
+gen_proto!(ActiveUsersLimit, __richcmp__, ord);
+gen_proto!(ActiveUsersLimit, __repr__);
+
 gen_rep!(
     organization_config,
     OrganizationConfigRep,
@@ -190,7 +238,7 @@ impl OrganizationConfigRepOk {
     #[new]
     fn new(
         user_profile_outsider_allowed: bool,
-        active_users_limit: Option<u64>,
+        active_users_limit: ActiveUsersLimit,
         sequester_authority_certificate: Option<Vec<u8>>,
         sequester_services_certificates: Option<Vec<Vec<u8>>>,
     ) -> PyResult<(Self, OrganizationConfigRep)> {
@@ -198,7 +246,7 @@ impl OrganizationConfigRepOk {
             Self,
             OrganizationConfigRep(organization_config::Rep::Ok {
                 user_profile_outsider_allowed,
-                active_users_limit,
+                active_users_limit: active_users_limit.0,
                 sequester_authority_certificate: libparsec::types::Maybe::Present(
                     sequester_authority_certificate,
                 ),
@@ -221,11 +269,11 @@ impl OrganizationConfigRepOk {
     }
 
     #[getter]
-    fn active_users_limit(_self: PyRef<'_, Self>) -> PyResult<Option<u64>> {
-        Ok(match _self.as_ref().0 {
+    fn active_users_limit(_self: PyRef<'_, Self>) -> PyResult<ActiveUsersLimit> {
+        Ok(match &_self.as_ref().0 {
             organization_config::Rep::Ok {
                 active_users_limit, ..
-            } => active_users_limit,
+            } => ActiveUsersLimit(*active_users_limit),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
