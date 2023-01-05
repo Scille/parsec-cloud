@@ -22,7 +22,6 @@ from marshmallow.fields import (
 
 from parsec._parsec import DateTime as RsDateTime
 from parsec._parsec import HashDigest as _HashDigest
-from parsec._parsec import PkiEnrollmentSubmitPayload as _PkiEnrollmentSubmitPayload
 from parsec._parsec import PrivateKey as _PrivateKey
 from parsec._parsec import PublicKey as _PublicKey
 from parsec._parsec import SecretKey as _SecretKey
@@ -468,23 +467,3 @@ class SecretKeyField(Field[_SecretKey]):
 
 
 SecretKey = SecretKeyField
-
-
-class PkiEnrollmentSubmitPayloadField(Field[_PkiEnrollmentSubmitPayload]):
-    def _serialize(
-        self, value: _PkiEnrollmentSubmitPayload | None, attr: str, obj: Any
-    ) -> bytes | None:
-        if value is None:
-            return None
-        assert isinstance(value, _PkiEnrollmentSubmitPayload)
-        return value.dump()
-
-    def _deserialize(
-        self, value: object, attr: str, data: dict[str, object]
-    ) -> _PkiEnrollmentSubmitPayload:
-        if not isinstance(value, bytes):
-            raise ValidationError("Expecting bytes")
-        try:
-            return _PkiEnrollmentSubmitPayload.load(value)
-        except Exception as exc:
-            raise ValidationError(str(exc)) from exc
