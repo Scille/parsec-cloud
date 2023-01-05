@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::path::PathBuf;
 use thiserror::Error;
 
 use crate::{DateTime, DeviceID, EntryID, RealmID, Regex, UserID};
@@ -80,3 +81,20 @@ impl From<CryptoError> for Box<DataError> {
         Box::new(DataError::Crypto { exc })
     }
 }
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum PkiEnrollmentLocalPendingError {
+    #[error("Cannot read {path}: {exc}")]
+    CannotRead { path: PathBuf, exc: String },
+
+    #[error("Cannot remove {path}: {exc}")]
+    CannotRemove { path: PathBuf, exc: String },
+
+    #[error("Cannot save {path}: {exc}")]
+    CannotSave { path: PathBuf, exc: String },
+
+    #[error("Cannot load local enrollment request: {exc}")]
+    Validation { exc: DataError },
+}
+
+pub type PkiEnrollmentLocalPendingResult<T> = Result<T, Box<PkiEnrollmentLocalPendingError>>;

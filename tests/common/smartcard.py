@@ -10,7 +10,7 @@ from typing import Iterable, Optional, Tuple
 
 import pytest
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import DateTime, EnrollmentID, PrivateKey, SigningKey
 from parsec.api.data import DataError, PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec.core.local_device import (
     DeviceFileType,
@@ -22,7 +22,6 @@ from parsec.core.local_device import (
 )
 from parsec.core.types import BackendPkiEnrollmentAddr, LocalDevice
 from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
-from parsec.crypto import PrivateKey, SigningKey
 
 
 def create_test_certificates(tmp_path):
@@ -118,7 +117,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
                 subject={"common_name": "John Doe", "email_address": "john@example.com"},
                 der_x509_certificate=der_x509_certificate,
                 certificate_sha1=sha1(der_x509_certificate).digest(),
-                certificate_id=42,
+                certificate_id="42",
             )
 
         @staticmethod

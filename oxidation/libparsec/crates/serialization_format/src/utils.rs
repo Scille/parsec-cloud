@@ -85,6 +85,9 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "Chunk" => "libparsec_client_types::Chunk",
                 "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
                 "UsersPerProfileDetailItem" => "libparsec_types::UsersPerProfileDetailItem",
+                "BackendPkiEnrollmentAddr" => "libparsec_types::BackendPkiEnrollmentAddr",
+                "PkiEnrollmentSubmitPayload" => "PkiEnrollmentSubmitPayload",
+                "X509Certificate" => "libparsec_types::X509Certificate",
                 // Used only in protocol
                 "IntegerBetween1And100" => "crate::IntegerBetween1And100",
                 ident if types.get(ident).is_some() => {
