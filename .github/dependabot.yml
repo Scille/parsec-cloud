@@ -115,17 +115,6 @@ updates:
     rebase-strategy: disabled
 
   - package-ecosystem: npm
-    directory: /oxidation/client/electron
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: monthly
-      time: "23:30"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
-
-  - package-ecosystem: npm
     directory: /oxidation/bindings/electron
     pull-request-branch-name:
       separator: "-"
