@@ -44,7 +44,7 @@ class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.setupUi(self)
 
         self.dialog: GreyedDialog[AcceptCheckInfoWidget] | None = None
-        self.label_waiting.hide()
+        self.widget_waiting.setVisible(False)
 
         self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
         self.line_edit_user_full_name.set_validator(validators.UserNameValidator())
