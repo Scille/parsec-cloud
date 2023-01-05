@@ -17,8 +17,6 @@ from parsec._parsec import (
 from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.serde import fields
 
-EnrollmentIDField = fields.uuid_based_field_factory(EnrollmentID)
-
 # pki_enrollment_submit
 pki_enrollment_submit_serializer = ApiCommandSerializer(
     PkiEnrollmentSubmitReq, PkiEnrollmentSubmitRep
