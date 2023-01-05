@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Dict, Tuple
 
+from parsec._parsec import EntryID
 from parsec.api.data import UserManifest, WorkspaceEntry
-from parsec.api.data.entry import EntryID
 from parsec.core.types import LocalUserManifest
 
 

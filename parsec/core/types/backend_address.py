@@ -12,7 +12,6 @@ from parsec._parsec import (
     BackendOrganizationFileLinkAddr,
     BackendPkiEnrollmentAddr,
 )
-from parsec.serde import fields
 
 PARSEC_SCHEME = "parsec"
 

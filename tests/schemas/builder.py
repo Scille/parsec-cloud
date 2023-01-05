@@ -31,9 +31,7 @@ _SERIALIZER_TO_STR = {
     ZipMsgpackSerializer: "zip+msgpack",
     BaseSerializer: None,  # Not serializable
 }
-_BASE_DATA_CLASSES = (
-    MessageContent,
-)
+_BASE_DATA_CLASSES = (MessageContent,)
 
 
 def field_to_spec(field):

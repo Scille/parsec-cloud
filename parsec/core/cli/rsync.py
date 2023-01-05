@@ -6,8 +6,7 @@ from typing import Any, List, Tuple, Union
 import click
 import trio
 
-from parsec._parsec import EntryName
-from parsec.api.data.entry import EntryID
+from parsec._parsec import EntryID, EntryName
 from parsec.api.data.manifest import FolderManifest, WorkspaceEntry, WorkspaceManifest
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory

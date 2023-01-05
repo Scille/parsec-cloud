@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import NewType, Union
 
 from parsec._parsec import DeviceInfo, LocalDevice, UserInfo
-from parsec.api.data import EntryID, EntryName, EntryNameField
+from parsec.api.data import EntryID, EntryName
 from parsec.api.data import FolderManifest as RemoteFolderManifest
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.core.types.backend_address import (
@@ -49,7 +49,6 @@ __all__ = (
     # Entry
     "EntryID",
     "EntryName",
-    "EntryNameField",
     # Backend address
     "BackendAddr",
     "BackendOrganizationAddr",
