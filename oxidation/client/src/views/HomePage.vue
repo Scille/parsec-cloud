@@ -8,55 +8,62 @@
     >
       <div id="container">
         <img
-          src="../assets/images/parsec.svg"
+          src="../assets/images/Logo/Logo/PNG/logo_blue.png"
           class="logo"
         >
         <ion-card>
-          <ion-card-content>
-            <ion-card-title>{{ $t('HomePage.organizationList.title') }}</ion-card-title>
-            <p>{{ $t('HomePage.pleaseConnectToAnOrganization') }}</p>
-            <ion-button
-              @click="openCreateOrganizationModal()"
-              expand="full"
-              size="large"
-              id="create-organization-button"
-            >
-              <ion-icon
-                slot="start"
-                :icon="add"
-              />
-              {{ $t('HomePage.createOrganization') }}
-            </ion-button>
-            <ion-button
-              @click="openJoinByLinkModal()"
-              expand="full"
-              size="large"
-            >
-              <ion-icon
-                slot="start"
-                :icon="link"
-              />
-              {{ $t('HomePage.joinByLink') }}
-            </ion-button>
-            <ion-button
-              v-if="isPlatform('mobile')"
-              expand="full"
-              size="large"
-            >
-              <ion-icon
-                slot="start"
-                :icon="qrCodeSharp"
-              />
-              {{ $t('HomePage.joinByQRcode') }}
-            </ion-button>
+          <ion-card-content class="organization-list">
+            <ion-card-title color="tertiary">
+              {{ $t('HomePage.organizationList.title') }}
+            </ion-card-title>
+            <ion-grid>
+              <ion-row>
+                <ion-col
+                  size="1"
+                  v-for="organization in organizationList"
+                  :key="organization.label"
+                >
+                  <ion-card
+                    class="organization-card"
+                  >
+                    <ion-card-content>
+                      <ion-grid>
+                        <ion-row class="ion-align-items-center">
+                          <ion-col size="auto">
+                            <ion-avatar>
+                              <span>{{ organization.label.substring(0, 2) }}</span>
+                            </ion-avatar>
+                          </ion-col>
+                          <ion-col size="auto">
+                            <p class="organization-label">
+                              {{ organization.label }}
+                            </p>
+                            <p>
+                              {{ organization.username }}
+                            </p>
+                          </ion-col>
+                        </ion-row>
+                        <ion-row>
+                          <ion-col size="auto">
+                            <p>
+                              {{ $t('HomePage.organizationList.organizationCard.lastLogin') }} {{$d(organization.lastLogin, 'long')}}
+                            </p>
+                          </ion-col>
+                        </ion-row>
+                      </ion-grid>
+                    </ion-card-content>
+                  </ion-card>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
           </ion-card-content>
 
-          <ion-card-content class="noExistingOrganization">
-            <ion-card-title>{{ $t('HomePage.noExistingOrganization.title') }}</ion-card-title>
-            <p>{{ $t('HomePage.pleaseConnectToAnOrganization') }}</p>
+          <ion-card-content class="no-existing-organization">
+            <ion-card-title color="tertiary">
+              {{ $t('HomePage.noExistingOrganization.title') }}
+            </ion-card-title>
             <ion-button
               @click="openCreateOrganizationModal()"
-              expand="full"
               size="large"
               id="create-organization-button"
             >
@@ -64,29 +71,18 @@
                 slot="start"
                 :icon="add"
               />
-              {{ $t('HomePage.createOrganization') }}
+              {{ $t('HomePage.noExistingOrganization.createOrganization') }}
             </ion-button>
             <ion-button
               @click="openJoinByLinkModal()"
-              expand="full"
+              fill="outline"
               size="large"
             >
               <ion-icon
                 slot="start"
                 :icon="link"
               />
-              {{ $t('HomePage.joinByLink') }}
-            </ion-button>
-            <ion-button
-              v-if="isPlatform('mobile')"
-              expand="full"
-              size="large"
-            >
-              <ion-icon
-                slot="start"
-                :icon="qrCodeSharp"
-              />
-              {{ $t('HomePage.joinByQRcode') }}
+              {{ $t('HomePage.noExistingOrganization.joinOrganization') }}
             </ion-button>
           </ion-card-content>
         </ion-card>
@@ -97,14 +93,18 @@
 
 <script setup lang="ts">
 import {
+  IonAvatar,
   IonContent,
   IonPage,
   IonCard,
-  IonCardHeader,
   IonCardContent,
   IonCardTitle,
+  IonCardSubtitle,
   IonButton,
   IonIcon,
+  IonRow,
+  IonCol,
+  IonGrid,
   isPlatform,
   modalController
 } from '@ionic/vue';
@@ -119,6 +119,28 @@ import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import { createAlert } from '@/components/AlertConfirmation';
 
 const { t } = useI18n();
+const organizationList = [
+  {
+    label: 'Ionic',
+    username: 'Maxime Grandcolas',
+    lastLogin: new Date()
+  },
+  {
+    label: 'Ionic 2',
+    username: 'Maxime Grandcolas',
+    lastLogin: new Date()
+  },
+  {
+    label: 'Ionic 3',
+    username: 'Maxime Grandcolas',
+    lastLogin: new Date()
+  },
+  {
+    label: 'Ionic 3',
+    username: 'Maxime Grandcolas',
+    lastLogin: new Date()
+  }
+];
 
 async function openJoinByLinkModal(): Promise<void> {
   const modal = await modalController.create({
@@ -167,25 +189,58 @@ async function canDismissModal(): Promise<boolean> {
 <style lang="scss" scoped>
 #container {
   height: 100%;
-  justify-content: center;
   display: flex;
+  justify-content: center;
   flex-direction: column;
-  // position: absolute;
-  // left: 0;
-  // right: 0;
-  // top: 50%;
-  // transform: translateY(-50%);
 
-  max-width: 680px;
+  max-width: 50vw;
   margin: 0 auto;
-
-  p {
-    font-weight: bold;
-  }
 
   .logo {
     max-width: 10em;
     align-self: center;
+  }
+
+  .organization-list {
+    padding: 3em;
+    padding-bottom: 4em;
+
+    ion-grid {
+      --ion-grid-padding: 1em;
+      --ion-grid-columns: 2;
+    }
+
+    .organization-card {
+      background: #F9F9FB;
+      margin: 1em 1.5em;
+
+      ion-avatar {
+        background: white;
+        color: #0058cc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2em;
+        text-transform: uppercase;
+      }
+
+      .organization-label {
+        color: #004299;
+        font-size: 1.5em;
+      }
+
+      &:hover {
+        background: #E5F1FF;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .no-existing-organization {
+    border-top: 1px solid #cce2ff;
+    background: #fafafa;
+    padding: 3em;
+    padding-bottom: 4em;
   }
 }
 

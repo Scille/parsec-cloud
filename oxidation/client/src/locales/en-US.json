@@ -9,8 +9,7 @@
         "noExistingOrganization": {
             "title": "Need to create or join an organization?",
             "createOrganization": "Create an organization",
-            "joinByLink": "Join by link",
-            "joinByQRcode": "Join by QR code"
+            "joinOrganization": "Join an organization"
         },
         "mainMenu": {
             "changelog": "Changelog"

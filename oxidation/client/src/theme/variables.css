@@ -34,7 +34,7 @@ http://ionicframework.com/docs/theming/ */
     --ion-color-secondary-shade: #003a87;
     --ion-color-secondary-tint: #1a55a3;
 
-    --ion-color-tertiary: #99c5ff;
+    --ion-color-tertiary: #004299;
     --ion-color-tertiary-rgb: 153,197,255;
     --ion-color-tertiary-contrast: #ffffff;
     --ion-color-tertiary-contrast-rgb: 0,0,0;
@@ -248,4 +248,13 @@ ion-modal.join-by-link-modal::part(content) {
 
 ion-modal.one-line-modal::part(content) {
     height: 210px;
+}
+
+ion-card-title {
+    margin: 1em 0;
+    font-weight: bold;
+}
+
+ion-card {
+    box-shadow: none;
 }

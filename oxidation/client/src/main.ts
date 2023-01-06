@@ -50,6 +50,38 @@ async function setupApp(): Promise<void> {
     messages: {
       'fr-FR': frFR,
       'en-US': enUS
+    },
+    datetimeFormats: {
+      'en-US': {
+        short: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        },
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: 'numeric',
+          minute: 'numeric'
+        }
+      },
+      'fr-FR': {
+        short: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        },
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: 'numeric',
+          minute: 'numeric'
+        }
+      }
     }
   });
 
