@@ -73,18 +73,6 @@ async def bootstrap_organization(
     else:
         sequester_authority_certificate_signed = None
 
-    # TODO: remove me when APIv2 is deprecated
-    #
-    # New HTTP-based bootstrap API has been introduced in APIv2.7 (Parsec v2.9.0)
-    # Prior to that we used the APIv1's bootstrap command, which now have been deprecated.
-    # Before Parsec v2.16.0 we used to first try to use the new HTTP-based bootstrap, then
-    # fallback to APIv1.
-    # Now if the server is too old to support the new HTTP-based bootstrap (come on, keep
-    # up to date your server !) we just fail with the default error:
-    # - server API version < 2.6: it doesn't know the HTTP anonymous route, we get a `BackendNotAvailable(404)`
-    # - server API version == 2.6: it doesn't know the HTTP anonymous command `organization_bootstrap`,
-    #   we get a `OrganizationBootstrapRepUnknownStatus(status="unknown_command")`
-
     rep = await cmd_organization_bootstrap(
         addr=addr,
         root_verify_key=root_verify_key,
