@@ -31,6 +31,7 @@
                 :button="true"
                 :detail="false"
                 @click="router.push({ name: 'about' })"
+                id="trigger-about-button"
               >
                 <ion-label>{{ $t('HeaderPage.about') }}</ion-label>
               </ion-item>
@@ -39,6 +40,7 @@
                 :button="true"
                 :detail="false"
                 @click="router.push({ name: 'support' })"
+                id="trigger-support-button"
               >
                 <ion-label>{{ $t('HeaderPage.support') }}</ion-label>
               </ion-item>

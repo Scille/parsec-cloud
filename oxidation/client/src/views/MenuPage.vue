@@ -17,6 +17,7 @@
               lines="none"
               button
               @click="navigateToPage('workspaces')"
+              id="workspaces-link"
             >
               <ion-icon
                 :icon="folderOutline"

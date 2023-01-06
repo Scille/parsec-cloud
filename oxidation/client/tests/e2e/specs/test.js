@@ -3,6 +3,12 @@
 describe('My First Test', () => {
   it('Visits the app root url', () => {
     cy.visit('/');
-    cy.contains('#container', 'Ready to create an app?');
+    cy.contains('Welcome. Please add an organization to start using Parsec.');
+  });
+
+  it('Visits the app root url', () => {
+    cy.visit('/');
+    cy.get('#workspaces-link').click();
+    cy.url().should('include', '/documents/workspaces');
   });
 });

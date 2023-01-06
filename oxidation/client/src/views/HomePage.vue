@@ -11,6 +11,7 @@
           @click="openCreateOrganizationModal()"
           expand="full"
           size="large"
+          id="create-organization-button"
         >
           <ion-icon
             slot="start"
