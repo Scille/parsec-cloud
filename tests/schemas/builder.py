@@ -7,9 +7,7 @@ import pkgutil
 from types import ModuleType
 
 from parsec.api.data import MessageContent
-from parsec.api.data.base import BaseData
 from parsec.api.protocol.types import HumanHandleField
-from parsec.core.types.base import BaseLocalData
 from parsec.serde import (
     BaseSerializer,
     JSONSerializer,
@@ -33,11 +31,7 @@ _SERIALIZER_TO_STR = {
     ZipMsgpackSerializer: "zip+msgpack",
     BaseSerializer: None,  # Not serializable
 }
-_BASE_DATA_CLASSES = (
-    BaseData,
-    BaseLocalData,
-    MessageContent,
-)
+_BASE_DATA_CLASSES = (MessageContent,)
 
 
 def field_to_spec(field):
