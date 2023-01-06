@@ -51,7 +51,7 @@ class UserStorage:
     # Checkpoint interface
 
     async def get_realm_checkpoint(self) -> int:
-        return await trio.to_thread.run_sync(self.sync_instance.get_realm_checkpoint)
+        return self.sync_instance.get_realm_checkpoint()
 
     async def update_realm_checkpoint(
         self, new_checkpoint: int, changed_vlobs: dict[EntryID, int]
@@ -64,7 +64,7 @@ class UserStorage:
         )
 
     async def get_need_sync_entries(self) -> tuple[set[EntryID], set[EntryID]]:
-        return await trio.to_thread.run_sync(self.sync_instance.get_need_sync_entries)
+        return self.sync_instance.get_need_sync_entries()
 
     # User manifest
 

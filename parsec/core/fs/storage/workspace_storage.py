@@ -183,7 +183,10 @@ class WorkspaceStorage:
 
     @manage_operational_error
     async def clear_memory_cache(self, flush: bool = True) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.clear_memory_cache, flush)
+        if flush:
+            return await trio.to_thread.run_sync(self.sync_instance.clear_memory_cache, True)
+        else:
+            return self.sync_instance.clear_memory_cache(False)
 
     # Locking helpers
 
@@ -213,7 +216,7 @@ class WorkspaceStorage:
 
     @manage_operational_error
     async def load_file_descriptor(self, fd: PseudoFileDescriptor) -> LocalFileManifest:
-        return await trio.to_thread.run_sync(self.sync_instance.load_file_descriptor, fd)
+        return self.sync_instance.load_file_descriptor(fd)
 
     def remove_file_descriptor(self, fd: int) -> None:
         return self.sync_instance.remove_file_descriptor(fd)
@@ -276,10 +279,10 @@ class WorkspaceStorage:
         )
 
     async def get_local_chunk_ids(self, chunk_ids: list[ChunkID]) -> tuple[ChunkID, ...]:
-        return await trio.to_thread.run_sync(self.sync_instance.get_local_chunk_ids, chunk_ids)
+        return self.sync_instance.get_local_chunk_ids(chunk_ids)
 
     async def get_local_block_ids(self, chunk_ids: list[ChunkID]) -> tuple[ChunkID, ...]:
-        return await trio.to_thread.run_sync(self.sync_instance.get_local_block_ids, chunk_ids)
+        return self.sync_instance.get_local_block_ids(chunk_ids)
 
     # Manifest interface
 
@@ -319,7 +322,7 @@ class WorkspaceStorage:
 
     @manage_operational_error
     async def get_realm_checkpoint(self) -> int:
-        return await trio.to_thread.run_sync(self.sync_instance.get_realm_checkpoint)
+        return self.sync_instance.get_realm_checkpoint()
 
     @manage_operational_error
     async def update_realm_checkpoint(
@@ -330,7 +333,7 @@ class WorkspaceStorage:
         )
 
     async def get_need_sync_entries(self) -> tuple[set[EntryID], set[EntryID]]:
-        return await trio.to_thread.run_sync(self.sync_instance.get_need_sync_entries)
+        return self.sync_instance.get_need_sync_entries()
 
     @manage_operational_error
     async def run_vacuum(self) -> None:
@@ -338,9 +341,7 @@ class WorkspaceStorage:
 
     @manage_operational_error
     async def is_manifest_cache_ahead_of_persistance(self, entry_id: EntryID) -> bool:
-        return await trio.to_thread.run_sync(
-            self.sync_instance.is_manifest_cache_ahead_of_persistance, entry_id
-        )
+        return self.sync_instance.is_manifest_cache_ahead_of_persistance(entry_id)
 
     # Timestamped workspace
 
@@ -426,8 +427,7 @@ class WorkspaceStorageSnapshot:
 
     async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         """Raises: FSLocalMissError"""
-        manifest = await trio.to_thread.run_sync(self.sync_instance.get_manifest, entry_id)
-        return manifest
+        return self.sync_instance.get_manifest(entry_id)
 
     async def set_manifest(
         self,
@@ -463,8 +463,7 @@ class WorkspaceStorageSnapshot:
         return cast(FileDescriptor, self.sync_instance.create_file_descriptor(manifest))
 
     async def load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
-        manifest = await trio.to_thread.run_sync(self.sync_instance.load_file_descriptor, fd)
-        return manifest
+        return self.sync_instance.load_file_descriptor(fd)
 
     def remove_file_descriptor(self, fd: FileDescriptor) -> None:
         return self.sync_instance.remove_file_descriptor(fd)
@@ -505,7 +504,7 @@ class WorkspaceStorageSnapshot:
         raise NotImplementedError
 
     async def clear_local_cache(self) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.clear_local_cache)
+        return self.sync_instance.clear_local_cache()
 
     def get_prevent_sync_pattern(self) -> Regex:
         return self.sync_instance.get_prevent_sync_pattern()
