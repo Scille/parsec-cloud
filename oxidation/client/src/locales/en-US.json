@@ -1,5 +1,17 @@
 {
     "HomePage": {
+        "organizationList": {
+            "title": "List of your organizations",
+            "organizationCard": {
+                "lastLogin": "Last login:"
+            }
+        },
+        "noExistingOrganization": {
+            "title": "Need to create or join an organization?",
+            "createOrganization": "Create an organization",
+            "joinByLink": "Join by link",
+            "joinByQRcode": "Join by QR code"
+        },
         "mainMenu": {
             "changelog": "Changelog"
         },

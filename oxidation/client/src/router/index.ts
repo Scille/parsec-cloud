@@ -10,6 +10,11 @@ const routes: Array<RouteRecordRaw> = [
     redirect: '/home'
   },
   {
+    path: '/home',
+    name: 'home',
+    component: () => import('@/views/HomePage.vue')
+  },
+  {
     path: '/menu',
     component: () => import('@/views/MenuPage.vue'),
     children: [
@@ -24,11 +29,6 @@ const routes: Array<RouteRecordRaw> = [
           {
             path: '',
             redirect: '/'
-          },
-          {
-            path: '/home',
-            name: 'home',
-            component: () => import('@/views/HomePage.vue')
           },
           {
             path: 'workspaces',

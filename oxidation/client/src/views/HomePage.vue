@@ -4,43 +4,92 @@
   <ion-page>
     <ion-content
       :fullscreen="true"
+      color="secondary"
     >
       <div id="container">
-        <p>{{ $t('HomePage.pleaseConnectToAnOrganization') }}</p>
-        <ion-button
-          @click="openCreateOrganizationModal()"
-          expand="full"
-          size="large"
-          id="create-organization-button"
+        <img
+          src="../assets/images/parsec.svg"
+          class="logo"
         >
-          <ion-icon
-            slot="start"
-            :icon="add"
-          />
-          {{ $t('HomePage.createOrganization') }}
-        </ion-button>
-        <ion-button
-          @click="openJoinByLinkModal()"
-          expand="full"
-          size="large"
-        >
-          <ion-icon
-            slot="start"
-            :icon="link"
-          />
-          {{ $t('HomePage.joinByLink') }}
-        </ion-button>
-        <ion-button
-          v-if="isPlatform('mobile')"
-          expand="full"
-          size="large"
-        >
-          <ion-icon
-            slot="start"
-            :icon="qrCodeSharp"
-          />
-          {{ $t('HomePage.joinByQRcode') }}
-        </ion-button>
+        <ion-card>
+          <ion-card-content>
+            <ion-card-title>{{ $t('HomePage.organizationList.title') }}</ion-card-title>
+            <p>{{ $t('HomePage.pleaseConnectToAnOrganization') }}</p>
+            <ion-button
+              @click="openCreateOrganizationModal()"
+              expand="full"
+              size="large"
+              id="create-organization-button"
+            >
+              <ion-icon
+                slot="start"
+                :icon="add"
+              />
+              {{ $t('HomePage.createOrganization') }}
+            </ion-button>
+            <ion-button
+              @click="openJoinByLinkModal()"
+              expand="full"
+              size="large"
+            >
+              <ion-icon
+                slot="start"
+                :icon="link"
+              />
+              {{ $t('HomePage.joinByLink') }}
+            </ion-button>
+            <ion-button
+              v-if="isPlatform('mobile')"
+              expand="full"
+              size="large"
+            >
+              <ion-icon
+                slot="start"
+                :icon="qrCodeSharp"
+              />
+              {{ $t('HomePage.joinByQRcode') }}
+            </ion-button>
+          </ion-card-content>
+
+          <ion-card-content class="noExistingOrganization">
+            <ion-card-title>{{ $t('HomePage.noExistingOrganization.title') }}</ion-card-title>
+            <p>{{ $t('HomePage.pleaseConnectToAnOrganization') }}</p>
+            <ion-button
+              @click="openCreateOrganizationModal()"
+              expand="full"
+              size="large"
+              id="create-organization-button"
+            >
+              <ion-icon
+                slot="start"
+                :icon="add"
+              />
+              {{ $t('HomePage.createOrganization') }}
+            </ion-button>
+            <ion-button
+              @click="openJoinByLinkModal()"
+              expand="full"
+              size="large"
+            >
+              <ion-icon
+                slot="start"
+                :icon="link"
+              />
+              {{ $t('HomePage.joinByLink') }}
+            </ion-button>
+            <ion-button
+              v-if="isPlatform('mobile')"
+              expand="full"
+              size="large"
+            >
+              <ion-icon
+                slot="start"
+                :icon="qrCodeSharp"
+              />
+              {{ $t('HomePage.joinByQRcode') }}
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
       </div>
     </ion-content>
   </ion-page>
@@ -50,6 +99,10 @@
 import {
   IonContent,
   IonPage,
+  IonCard,
+  IonCardHeader,
+  IonCardContent,
+  IonCardTitle,
   IonButton,
   IonIcon,
   isPlatform,
@@ -113,18 +166,26 @@ async function canDismissModal(): Promise<boolean> {
 
 <style lang="scss" scoped>
 #container {
-  text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  height: 100%;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  // position: absolute;
+  // left: 0;
+  // right: 0;
+  // top: 50%;
+  // transform: translateY(-50%);
 
   max-width: 680px;
   margin: 0 auto;
 
   p {
     font-weight: bold;
+  }
+
+  .logo {
+    max-width: 10em;
+    align-self: center;
   }
 }
 
