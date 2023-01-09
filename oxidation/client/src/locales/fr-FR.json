@@ -129,5 +129,8 @@
                 "revoke": "Révoquer"
             }
         }
+    },
+    "OrganizationCard": {
+        "lastLogin": "Dernière connexion : "
     }
 }
