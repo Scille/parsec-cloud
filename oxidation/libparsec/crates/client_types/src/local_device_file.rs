@@ -101,6 +101,24 @@ impl DeviceFile {
     }
 }
 
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct LegacyDeviceFilePassword {
+    #[serde_as(as = "Bytes")]
+    pub salt: Vec<u8>,
+    #[serde_as(as = "Bytes")]
+    pub ciphertext: Vec<u8>,
+    pub human_handle: Option<HumanHandle>,
+    pub device_label: Option<DeviceLabel>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+#[serde(tag = "type")]
+pub enum LegacyDeviceFile {
+    Password(LegacyDeviceFilePassword),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceFileType {
