@@ -44,13 +44,14 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
 
     m.add_class::<enumerate::ClientType>()?;
-    m.add_class::<enumerate::InvitationEmailSentStatus>()?;
+    m.add_class::<enumerate::CoreEvent>()?;
+    m.add_class::<enumerate::DeviceFileType>()?;
     m.add_class::<enumerate::InvitationDeletedReason>()?;
+    m.add_class::<enumerate::InvitationEmailSentStatus>()?;
     m.add_class::<enumerate::InvitationStatus>()?;
     m.add_class::<enumerate::InvitationType>()?;
     m.add_class::<enumerate::RealmRole>()?;
     m.add_class::<enumerate::UserProfile>()?;
-    m.add_class::<enumerate::CoreEvent>()?;
 
     m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
     m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;

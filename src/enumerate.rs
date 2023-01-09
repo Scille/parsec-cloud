@@ -326,3 +326,21 @@ crate::binding_utils::impl_enum_field!(
 crate::binding_utils::gen_proto!(CoreEvent, __hash__);
 crate::binding_utils::gen_proto!(CoreEvent, __repr__);
 crate::binding_utils::gen_proto!(CoreEvent, __richcmp__, eq);
+
+#[pyclass]
+pub(crate) struct DeviceFileType(client_types::DeviceFileType);
+
+crate::binding_utils::impl_enum_field!(
+    DeviceFileType,
+    ["PASSWORD", password, client_types::DeviceFileType::Password],
+    [
+        "SMARTCARD",
+        smartcard,
+        client_types::DeviceFileType::Smartcard
+    ],
+    ["RECOVERY", recovery, client_types::DeviceFileType::Recovery]
+);
+
+crate::binding_utils::gen_proto!(DeviceFileType, __hash__);
+crate::binding_utils::gen_proto!(DeviceFileType, __repr__);
+crate::binding_utils::gen_proto!(DeviceFileType, __richcmp__, eq);
