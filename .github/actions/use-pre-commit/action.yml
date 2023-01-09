@@ -13,7 +13,7 @@ inputs:
   version:
     description: pre-commit version to use
     required: false
-    default: 2.19.0
+    default: 2.21.0
 
 outputs:
   cache-hit:
