@@ -127,6 +127,16 @@ pub enum DeviceFileType {
     Smartcard,
 }
 
+impl LegacyDeviceFile {
+    pub fn decode(serialized: &[u8]) -> Result<Self, &'static str> {
+        rmp_serde::from_slice(serialized).map_err(|_| "Invalid serialization")
+    }
+
+    pub fn dump(&self) -> Vec<u8> {
+        rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct AvailableDevice {
     pub key_file_path: StrPath,
