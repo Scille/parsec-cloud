@@ -199,6 +199,7 @@ async function canDismissModal(): Promise<boolean> {
   .logo {
     max-width: 10em;
     align-self: center;
+    margin-bottom: 2em;
   }
 
   .organization-list {
@@ -241,6 +242,10 @@ async function canDismissModal(): Promise<boolean> {
     background: #fafafa;
     padding: 3em;
     padding-bottom: 4em;
+  }
+
+  #create-organization-button {
+    margin-right: 1em;
   }
 }
 
