@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import pathlib
 import sys
 from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
 
+from parsec._parsec import change_device_password, save_device_with_password_in_config
 from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID
 from parsec.core.local_device import (
     AvailableDevice,
@@ -14,13 +16,11 @@ from parsec.core.local_device import (
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
     LocalDevicePackingError,
-    change_device_password,
     get_default_key_file,
     get_devices_dir,
     get_key_file,
     list_available_devices,
     load_device_with_password,
-    save_device_with_password_in_config,
 )
 from parsec.core.types import LocalDevice
 from parsec.crypto import SigningKey
@@ -266,7 +266,7 @@ def test_change_password(config_dir, alice):
     save_device_with_password_in_config(config_dir, alice, old_password)
     key_file = get_key_file(config_dir, alice)
 
-    change_device_password(key_file, old_password, new_password)
+    change_device_password(str(key_file), old_password, new_password)
 
     alice_reloaded = load_device_with_password(key_file, new_password)
     assert alice == alice_reloaded
@@ -409,7 +409,7 @@ def test_list_devices_support_key_file(config_dir, type):
 
 
 def test_multiple_files_same_device(config_dir, alice):
-    path = save_device_with_password_in_config(config_dir, alice, "test")
+    path = pathlib.Path(save_device_with_password_in_config(config_dir, alice, "test"))
 
     # File names contain the slughash
     assert path.stem == alice.slughash

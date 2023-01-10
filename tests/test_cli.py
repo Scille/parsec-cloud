@@ -27,7 +27,7 @@ from click.testing import CliRunner
 from click.testing import Result as CliResult
 
 from parsec import __version__ as parsec_version
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, save_device_with_password_in_config
 from parsec.api.protocol import RealmID
 from parsec.backend.postgresql import MigrationItem
 from parsec.backend.sequester import (
@@ -38,7 +38,6 @@ from parsec.backend.sequester import (
 from parsec.cli import cli
 from parsec.cli_utils import ParsecDateTimeClickType
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
-from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types import (
     BackendAddr,
     BackendOrganizationAddr,

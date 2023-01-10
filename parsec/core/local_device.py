@@ -359,55 +359,6 @@ def _load_device(
     return local_device
 
 
-def save_device_with_password_in_config(
-    config_dir: Path, device: LocalDevice, password: str
-) -> Path:
-    """
-    Raises:
-        LocalDeviceError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-    """
-    key_file = get_default_key_file(config_dir, device)
-    # Why do we use `force=True` here ?
-    # Key file name is per-device unique (given it contains the device slughash),
-    # hence there is no risk to overwrite another device.
-    # So if we are overwriting a key file it could be by:
-    # - the same device object, hence overwriting has no effect
-    # - a device object with same slughash but different device/user keys
-    #   This would mean the device enrollment has been replayed (which is
-    #   not possible in theory, but could occur in case of a rollback in the
-    #   Parsec server), in this case the old device object is now invalid
-    #   and it's a good thing to replace it.
-    save_device_with_password(key_file, device, password, force=True)
-    return key_file
-
-
-def save_device_with_password(
-    key_file: Path, device: LocalDevice, password: str, force: bool
-) -> None:
-    """
-    Raises:
-        LocalDeviceError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-    """
-
-    def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict[str, bytes]]:
-        try:
-            salt = SecretKey.generate_salt()
-            key = SecretKey.from_password(password, salt)
-            ciphertext = key.encrypt(cleartext)
-
-        except CryptoError as exc:
-            raise LocalDeviceValidationError(f"Cannot dump local device: {exc}") from exc
-
-        extra_args = {"salt": salt}
-        return DeviceFileType.PASSWORD, ciphertext, extra_args
-
-    _save_device(key_file, device, force, _encrypt_dump)
-
-
 def _save_device(
     key_file: Path,
     device: LocalDevice,
@@ -440,18 +391,6 @@ def _save_device(
 
     except OSError as exc:
         raise LocalDeviceError(f"Cannot save {key_file}: {exc}") from exc
-
-
-def change_device_password(key_file: Path, old_password: str, new_password: str) -> None:
-    """
-    LocalDeviceError
-    LocalDeviceNotFoundError
-    LocalDeviceCryptoError
-    LocalDeviceValidationError
-    LocalDevicePackingError
-    """
-    device = load_device_with_password(key_file, password=old_password)
-    save_device_with_password(key_file, device, password=new_password, force=True)
 
 
 async def load_recovery_device(key_file: PurePath, passphrase: str) -> LocalDevice:

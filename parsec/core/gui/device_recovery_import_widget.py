@@ -7,7 +7,7 @@ from typing import Callable
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec._parsec import SecretKey
+from parsec._parsec import SecretKey, save_device_with_password_in_config
 from parsec.api.protocol import DeviceLabel
 from parsec.core import CoreConfig
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
@@ -27,7 +27,6 @@ from parsec.core.local_device import (
     LocalDeviceError,
     LocalDeviceNotFoundError,
     load_recovery_device,
-    save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
 )
 from parsec.core.recovery import generate_new_device_from_recovery
