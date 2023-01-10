@@ -43,6 +43,7 @@ from parsec._parsec_pyi.crypto import (
     VerifyKey,
     generate_nonce,
 )
+from parsec._parsec_pyi.device import DeviceFileType
 from parsec._parsec_pyi.enumerate import (
     ClientType,
     InvitationDeletedReason,
@@ -549,6 +550,8 @@ __all__ = [
     "RealmRoleCertificate",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",
+    # Device
+    "DeviceFileType",
     # Crypto
     "SecretKey",
     "HashDigest",
