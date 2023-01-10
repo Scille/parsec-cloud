@@ -1,12 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use sha2::Digest;
+use std::path::{Path, PathBuf};
 
 use libparsec_crypto::prelude::*;
+use libparsec_serialization_format::parsec_data;
 use libparsec_types::*;
+
+use crate::{DeviceFile, DeviceFileType, LocalDeviceError};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
@@ -25,6 +28,50 @@ pub struct LocalDevice {
 }
 
 impl LocalDevice {
+    pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
+        let mut default_key_path = Self::get_devices_dir(config_dir);
+        default_key_path.push(format!(
+            "{}.{}",
+            device.slughash(),
+            crate::DEVICE_FILE_SUFFIX
+        ));
+        default_key_path
+    }
+
+    pub fn get_devices_dir(config_dir: &Path) -> PathBuf {
+        let mut device_path = config_dir.to_path_buf();
+        device_path.push("devices");
+
+        device_path
+    }
+
+    pub fn load_device_with_password(
+        key_file: &Path,
+        password: &str,
+    ) -> Result<Self, LocalDeviceError> {
+        let ciphertext = std::fs::read(key_file)
+            .map_err(|_| LocalDeviceError::Access(key_file.to_path_buf()))?;
+        let device_file: DeviceFile = match rmp_serde::from_slice(&ciphertext) {
+            Ok(result) => result,
+            Err(_) => todo!("Handle legacy device"),
+        };
+
+        match device_file {
+            DeviceFile::Password(p) => {
+                let key = SecretKey::from_password(password, &p.salt);
+                let data = key
+                    .decrypt(&p.ciphertext)
+                    .map_err(LocalDeviceError::CryptoError)?;
+
+                LocalDevice::load(&data)
+                    .map_err(|_| LocalDeviceError::Validation(DeviceFileType::Password))
+            }
+            _ => unreachable!(
+                "Tried to load recovery/smartcard device with `load_device_with_password`"
+            ),
+        }
+    }
+
     pub fn dump(&self) -> Vec<u8> {
         rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!())
     }
