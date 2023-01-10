@@ -276,3 +276,7 @@ ion-button.button-outline {
 ion-button.button-outline:hover {
     --border-color: #004299;
 }
+
+ion-grid.md {
+    padding: 0;
+}

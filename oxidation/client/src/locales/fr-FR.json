@@ -11,6 +11,11 @@
             "createOrganization": "Créer une organisation",
             "joinOrganization": "Rejoindre une organisation"
         },
+        "organizationLogin": {
+            "backToList": "Retour aux organisations",
+            "password": "Mot de passe",
+            "login": "Se connecter"
+        },
         "mainMenu": {
             "changelog": "Journal des modifications"
         },

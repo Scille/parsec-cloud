@@ -7,85 +7,90 @@
       color="secondary"
     >
       <div id="container">
-        <img
-          src="../assets/images/Logo/Logo/PNG/logo_blue.png"
-          class="logo"
-        >
-        <ion-card>
-          <ion-card-content class="organization-list">
-            <ion-card-title color="tertiary">
-              {{ $t('HomePage.organizationList.title') }}
-            </ion-card-title>
-            <ion-grid>
-              <ion-row>
-                <ion-col
-                  size="1"
-                  v-for="organization in organizationList"
-                  :key="organization.label"
-                >
-                  <ion-card
-                    class="organization-card"
+        <div class="logo">
+          <img src="../assets/images/Logo/Logo/PNG/logo_blue.png">
+        </div>
+        <transition-group name="slide">
+          <ion-card v-if="showOrganizationList">
+            <ion-card-content class="organization-list">
+              <ion-card-title color="tertiary">
+                {{ $t('HomePage.organizationList.title') }}
+              </ion-card-title>
+              <ion-grid>
+                <ion-row>
+                  <ion-col
+                    size="1"
+                    v-for="device in deviceList"
+                    :key="device.slug"
                   >
-                    <ion-card-content>
-                      <ion-grid>
-                        <ion-row class="ion-align-items-center">
-                          <ion-col size="auto">
-                            <ion-avatar>
-                              <span>{{ organization.label.substring(0, 2) }}</span>
-                            </ion-avatar>
-                          </ion-col>
-                          <ion-col size="auto">
-                            <p class="organization-label">
-                              {{ organization.label }}
-                            </p>
-                            <p>
-                              {{ organization.username }}
-                            </p>
-                          </ion-col>
-                        </ion-row>
-                        <ion-row>
-                          <ion-col size="auto">
-                            <p>
-                              {{ $t('HomePage.organizationList.organizationCard.lastLogin') }} {{$d(organization.lastLogin, 'long')}}
-                            </p>
-                          </ion-col>
-                        </ion-row>
-                      </ion-grid>
-                    </ion-card-content>
-                  </ion-card>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-
-          <ion-card-content class="no-existing-organization">
-            <ion-card-title color="tertiary">
-              {{ $t('HomePage.noExistingOrganization.title') }}
-            </ion-card-title>
-            <ion-button
-              @click="openCreateOrganizationModal()"
-              size="large"
-              id="create-organization-button"
-            >
-              <ion-icon
-                slot="start"
-                :icon="add"
-              />
-              {{ $t('HomePage.noExistingOrganization.createOrganization') }}
-            </ion-button>
-            <ion-button
-              @click="openJoinByLinkModal()"
-              fill="outline"
-              size="large"
-            >
-              <ion-icon
-                slot="start"
-                :icon="link"
-              />
-              {{ $t('HomePage.noExistingOrganization.joinOrganization') }}
-            </ion-button>
-          </ion-card-content>
-        </ion-card>
+                    <ion-card
+                      button
+                      class="organization-card-container"
+                      @click="onOrganizationCardClick(device)"
+                    >
+                      <ion-card-content>
+                        <ion-grid>
+                          <OrganizationCard :device="device"></OrganizationCard>
+                          <ion-row>
+                            <ion-col size="auto" v-if="getDeviceLocalStorageData(device.slug)">
+                              {{ $t('HomePage.organizationList.organizationCard.lastLogin') }}
+                              {{ $d(getDeviceLocalStorageData(device.slug).lastLogin, 'long') }}
+                            </ion-col>
+                          </ion-row>
+                        </ion-grid>
+                      </ion-card-content>
+                    </ion-card>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+            <ion-card-content class="no-existing-organization">
+              <ion-card-title color="tertiary">
+                {{ $t('HomePage.noExistingOrganization.title') }}
+              </ion-card-title>
+              <ion-button
+                @click="openCreateOrganizationModal()"
+                size="large"
+                id="create-organization-button"
+              >
+                <ion-icon
+                  slot="start"
+                  :icon="add"
+                />
+                {{ $t('HomePage.noExistingOrganization.createOrganization') }}
+              </ion-button>
+              <ion-button
+                @click="openJoinByLinkModal()"
+                fill="outline"
+                size="large"
+              >
+                <ion-icon
+                  slot="start"
+                  :icon="link"
+                />
+                {{ $t('HomePage.noExistingOrganization.joinOrganization') }}
+              </ion-button>
+            </ion-card-content>
+          </ion-card>
+          <ion-card v-if="!showOrganizationList">
+            <ion-card-content class="organization-list">
+              <ion-card-title color="tertiary">
+                {{ $t('HomePage.organizationLogin.backToList') }}
+              </ion-card-title>
+              <ion-card
+                button
+                class="organization-card-container"
+                @click="showOrganizationList = !showOrganizationList"
+              >
+                <ion-card-content>
+                  <ion-grid>
+                    <OrganizationCard :device="selectedDevice"></OrganizationCard>
+                  </ion-grid>
+                </ion-card-content>
+              </ion-card>
+            </ion-card-content>
+          </ion-card>
+        </transition-group>
       </div>
     </ion-content>
   </ion-page>
@@ -114,33 +119,76 @@ import {
   qrCodeSharp
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
+import { ref } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
+import OrganizationCard from '@/components/OrganizationCard.vue';
 import { createAlert } from '@/components/AlertConfirmation';
+import { AvailableDevice } from '../plugins/libparsec/definitions';
 
 const { t } = useI18n();
-const organizationList = [
+const deviceList: AvailableDevice[] = [
   {
-    label: 'Ionic',
-    username: 'Maxime Grandcolas',
-    lastLogin: new Date()
+    'organization_id': 'MegaShark',
+    'human_handle': 'Maxime Grandcolas',
+    'device_label': 'device_label',
+    'key_file_path': 'key_file_path',
+    'device_id': 'device_id',
+    'slug': 'slug1',
+    'ty': {'tag': 'Password'}
   },
   {
-    label: 'Ionic 2',
-    username: 'Maxime Grandcolas',
-    lastLogin: new Date()
+    'organization_id': 'Resana',
+    'human_handle': 'Maxime Grandcolas',
+    'device_label': 'device_label',
+    'key_file_path': 'key_file_path',
+    'device_id': 'device_id',
+    'slug': 'slug2',
+    'ty': {'tag': 'Password'}
   },
   {
-    label: 'Ionic 3',
-    username: 'Maxime Grandcolas',
-    lastLogin: new Date()
+    'organization_id': 'Oxymore',
+    'human_handle': 'Maxime Grandcolas',
+    'device_label': 'device_label',
+    'key_file_path': 'key_file_path',
+    'device_id': 'device_id',
+    'slug': 'slug3',
+    'ty': {'tag': 'Password'}
   },
   {
-    label: 'Ionic 3',
-    username: 'Maxime Grandcolas',
-    lastLogin: new Date()
+    'organization_id': 'EddyMalou',
+    'human_handle': 'Maxime Grandcolas',
+    'device_label': 'device_label',
+    'key_file_path': 'key_file_path',
+    'device_id': 'device_id',
+    'slug': 'slug4',
+    'ty': {'tag': 'Password'}
   }
 ];
+let selectedDevice:AvailableDevice;
+const showOrganizationList = ref(true);
+
+export interface DeviceLocalStorageData {
+    slug: string;
+    lastLogin: Date;
+}
+
+const deviceLocalStorageDataList = [
+  {slug: 'slug1', lastLogin: new Date()},
+  {slug: 'slug2', lastLogin: new Date()},
+  {slug: 'slug3', lastLogin: new Date()}
+];
+
+function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData {
+  return deviceLocalStorageDataList.find((device) => {
+    return device.slug === deviceSlug;
+  });
+}
+
+function onOrganizationCardClick(device: AvailableDevice): void {
+  showOrganizationList.value = !showOrganizationList.value;
+  selectedDevice = device;
+}
 
 async function openJoinByLinkModal(): Promise<void> {
   const modal = await modalController.create({
@@ -188,9 +236,8 @@ async function canDismissModal(): Promise<boolean> {
 
 <style lang="scss" scoped>
 #container {
-  height: 100%;
+  height: 100vh;
   display: flex;
-  justify-content: center;
   flex-direction: column;
 
   max-width: 50vw;
@@ -199,7 +246,31 @@ async function canDismissModal(): Promise<boolean> {
   .logo {
     max-width: 10em;
     align-self: center;
-    margin-bottom: 2em;
+    display: flex;
+    align-items: end;
+    padding-bottom: 2em;
+    flex-basis: 25%;
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+
+  .slide-enter-active {
+    transition: 0.5s ease-in-out;
+    transition-delay: 0.5s;
+  }
+
+  .slide-leave-active {
+    transition: 0.5s;
+  }
+
+  .slide-enter-from {
+    opacity: 0;
+    transform: translate(100%, 0);
+  }
+
+  .slide-leave-to {
+    opacity: 0;
+    transform: translate(-100%, 0);
   }
 
   .organization-list {
@@ -211,23 +282,13 @@ async function canDismissModal(): Promise<boolean> {
       --ion-grid-columns: 2;
     }
 
-    .organization-card {
+    .organization-card-container {
       background: #F9F9FB;
       margin: 1em 1.5em;
+      user-select: none;
 
-      ion-avatar {
-        background: white;
-        color: #0058cc;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 2em;
-        text-transform: uppercase;
-      }
-
-      .organization-label {
-        color: #004299;
-        font-size: 1.5em;
+      ion-row {
+        height: 2em;
       }
 
       &:hover {

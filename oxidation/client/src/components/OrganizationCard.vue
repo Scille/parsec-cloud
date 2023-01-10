@@ -35,8 +35,6 @@ defineProps<{
 
 <style lang="scss" scoped>
 .organization-card {
-  background: #F9F9FB;
-  margin: 1em 1.5em;
   ion-avatar {
     background: white;
     color: #0058cc;
@@ -60,11 +58,6 @@ defineProps<{
       font-size: 1.5em;
     }
   }
-}
-
-.organization-card-hover:hover {
-  background: #E5F1FF;
-  cursor: pointer;
 }
 
 </style>
