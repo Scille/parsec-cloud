@@ -23,13 +23,6 @@
               </p>
             </ion-col>
           </ion-row>
-          <ion-row v-if="lastLogin">
-            <ion-col size="auto">
-              <p>
-                {{ $t('OrganizationCard.lastLogin') }} {{ $d(lastLogin, 'long') }}
-              </p>
-            </ion-col>
-          </ion-row>
         </ion-grid>
       </ion-card-content>
     </ion-card>
@@ -44,7 +37,6 @@ import { AvailableDevice } from '../plugins/libparsec/definitions';
 defineProps<{
   device: AvailableDevice
   hoverEnabled: boolean
-  lastLogin: Date
 }>();
 
 </script>
