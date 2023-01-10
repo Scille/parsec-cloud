@@ -28,4 +28,29 @@ with tempfile.NamedTemporaryFile(suffix=".keys") as fp:
     raw = fp.read()
 content = display(f"device file (password: {password})", raw, [])
 key = SecretKey.from_password(password, salt=content["salt"])
+
+# Legacy device key file without `human_handle` and `device_label`
+raw = legacy_key_file_serializer.dumps(
+    {
+        "type": "password",
+        "salt": content["salt"],
+        "ciphertext": content["ciphertext"],
+    }
+)
+
+display("legacy device file without `human_handle` and `device_label`", raw, [])
+
+# With `human_handle` and `device_label`
+raw = legacy_key_file_serializer.dumps(
+    {
+        "type": "password",
+        "salt": content["salt"],
+        "ciphertext": content["ciphertext"],
+        "human_handle": ALICE.human_handle,
+        "device_label": ALICE.device_label,
+    }
+)
+
+display("legacy device file with `human_handle` and `device_label`", raw, [])
+
 content = display(f"device file (password: {password})", content["ciphertext"], [key])
