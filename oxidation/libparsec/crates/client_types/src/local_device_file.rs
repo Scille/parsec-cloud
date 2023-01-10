@@ -113,6 +113,9 @@ pub struct LegacyDeviceFilePassword {
     pub device_label: Option<DeviceLabel>,
 }
 
+/// Represents a legacy device file. This enum is mandatory because legacy device
+/// files used to be serialized with a `type` field set to `password`. In order to
+/// enforce this property serde's `tag` attribute is set to `type` field here.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 #[cfg_attr(test, derive(Serialize))]
 #[serde(rename_all = "lowercase")]
