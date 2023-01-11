@@ -421,7 +421,20 @@ jobs:
         run: npm clean-install
         working-directory: oxidation/client
 
-      - name: Test WebApp codebase
+      - name: E2E tests
         if: steps.web-change.outputs.run == 'true'
-        run: npm run test
+        # Without `VUE_CLI_TEST` set, the command hangs forever because
+        # it fails to stop the server :'(
+        # (see https://github.com/vuejs/vue-cli/issues/3401)
+        run: VUE_CLI_TEST=1 npm run test:e2e:headless
         working-directory: oxidation/client
+        timeout-minutes: 10
+
+      # Need to run e2e first, as it will trigger compilation of the
+      # libparsec web plugin that is also needed for the unit tests (but
+      # which doesn't trigger it compilation...)
+      - name: Unit tests
+        if: steps.web-change.outputs.run == 'true'
+        run: npm run test:unit
+        working-directory: oxidation/client
+        timeout-minutes: 10
