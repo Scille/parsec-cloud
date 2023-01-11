@@ -4,7 +4,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Dict, List, NamedTuple, Tuple, cast
 
-from parsec._parsec import CoreEvent
+from parsec._parsec import ChunkID, CoreEvent
 from parsec.api.data import BlockAccess
 from parsec.core.fs.exceptions import (
     FSCrossDeviceError,
@@ -36,9 +36,9 @@ WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.C
 
 
 class BlockInfo(NamedTuple):
-    local_and_remote_blocks: List[BlockAccess | None]
-    local_only_blocks: List[BlockAccess | None]
-    remote_only_blocks: List[BlockAccess | None]
+    local_and_remote_blocks: List[BlockAccess]
+    local_only_blocks: List[BlockAccess]
+    remote_only_blocks: List[BlockAccess]
     file_size: int
     proper_blocks_size: int
     pending_chunks_size: int
@@ -190,17 +190,20 @@ class EntryTransactions(FileTransactions):
 
     # Transactions
     async def entry_get_blocks_by_type(self, path: FsPath, limit: int) -> BlockInfo:
-
         manifest, confinement_point = await self._get_manifest_from_path(path)
-        manifest: LocalFileManifest
-        block_dict = {}
+        if not isinstance(manifest, LocalFileManifest):
+            raise FSIsADirectoryError
+        return await self._get_blocks_by_type(manifest, limit)
+
+    async def _get_blocks_by_type(self, manifest: LocalFileManifest, limit: int) -> BlockInfo:
+        block_dict: dict[ChunkID, BlockAccess] = {}
         total_size = 0
         for manifest_blocks in manifest.blocks:
             for chunk in manifest_blocks:
                 if limit < (total_size + chunk.raw_size):
                     break
-                if chunk.access:
-                    block_dict[chunk.id] = chunk
+                if chunk.access is not None:
+                    block_dict[chunk.id] = chunk.access
                     total_size += chunk.raw_size
 
         block_ids = set(block_dict)
@@ -220,11 +223,9 @@ class EntryTransactions(FileTransactions):
         local_only_block_ids = set(await self.local_storage.get_local_chunk_ids(list(block_ids)))
         remote_only_block_ids = block_ids - local_and_remote_block_ids - local_only_block_ids
 
-        local_only_blocks = [block_dict[block_id].access for block_id in local_only_block_ids]
-        remote_only_blocks = [block_dict[block_id].access for block_id in remote_only_block_ids]
-        local_and_remote_blocks = [
-            block_dict[block_id].access for block_id in local_and_remote_block_ids
-        ]
+        local_only_blocks = [block_dict[block_id] for block_id in local_only_block_ids]
+        remote_only_blocks = [block_dict[block_id] for block_id in remote_only_block_ids]
+        local_and_remote_blocks = [block_dict[block_id] for block_id in local_and_remote_block_ids]
 
         return BlockInfo(
             local_and_remote_blocks,

@@ -67,7 +67,7 @@ class BaseWorkspaceStorage:
         self,
         device: LocalDevice,
         workspace_id: EntryID,
-        block_storage: ChunkStorage,
+        block_storage: BlockStorage,
         chunk_storage: ChunkStorage,
     ):
         self.device = device
@@ -246,7 +246,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         workspace_id: EntryID,
         data_localdb: LocalDatabase,
         cache_localdb: LocalDatabase,
-        block_storage: ChunkStorage,
+        block_storage: BlockStorage,
         chunk_storage: ChunkStorage,
         manifest_storage: ManifestStorage,
     ):
@@ -265,7 +265,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         prevent_sync_pattern: Regex = FAILSAFE_PATTERN_FILTER,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
         data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
-    ) -> AsyncIterator["WorkspaceStorage"]:
+    ) -> AsyncIterator[WorkspaceStorage]:
         data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
         cache_path = get_workspace_cache_storage_db_path(data_base_dir, device, workspace_id)
 
