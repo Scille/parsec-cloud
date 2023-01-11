@@ -252,6 +252,10 @@ impl BlockAccess {
     fn digest(&self) -> PyResult<HashDigest> {
         Ok(HashDigest(self.0.digest.clone()))
     }
+
+    fn __hash__(&self) -> PyResult<u64> {
+        crate::binding_utils::hash_generic(self.0.id)
+    }
 }
 
 #[pyclass]
