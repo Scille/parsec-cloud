@@ -5,24 +5,33 @@
     <ion-row>
       <ion-col>
         <ion-item>
-          <ion-label position="stacked">{{ label }}</ion-label>
-          <ion-input :type="passwordVisible ? 'text' : 'password'"></ion-input>
+          <ion-label position="floating">
+            {{ label }}
+          </ion-label>
+          <ion-input
+            :type="passwordVisible ? 'text' : 'password'"
+            v-model="passwordRef"
+            @ion-change="$emit('change', $event.detail.value)"
+            @keyup.enter="$emit('enter')"
+          />
+          <ion-button
+            @click="passwordVisible = !passwordVisible"
+            slot="end"
+            fill="clear"
+          >
+            <ion-icon
+              slot="icon-only"
+              :icon="passwordVisible ? eyeOffOutline : eyeOutline"
+            />
+          </ion-button>
         </ion-item>
-      </ion-col>
-      <ion-col size="auto">
-        <ion-button @click="passwordVisible = !passwordVisible">
-          <ion-icon
-            slot="icon-only"
-            :icon="passwordVisible ? eyeOffOutline : eyeOutline">
-          </ion-icon>
-        </ion-button>
       </ion-col>
     </ion-row>
   </ion-grid>
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref } from 'vue';
+import { defineProps, defineEmits, ref } from 'vue';
 import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon, IonLabel } from '@ionic/vue';
 import {
   eyeOutline,
@@ -33,10 +42,17 @@ defineProps<{
   label: string
 }>();
 
-const passwordVisible = ref(false);
+const emit = defineEmits<{
+  (e: 'change', value: string): void
+  (e: 'enter'): void
+}>();
 
+const passwordVisible = ref(false);
+const passwordRef = ref('');
 </script>
 
 <style lang="scss" scoped>
-
+  ion-item {
+    align-items: center;
+  }
 </style>

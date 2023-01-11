@@ -35,6 +35,8 @@ defineProps<{
 
 <style lang="scss" scoped>
 .organization-card {
+  user-select: none;
+
   ion-avatar {
     background: white;
     color: #0058cc;
@@ -43,7 +45,6 @@ defineProps<{
     align-items: center;
     font-size: 2em;
     text-transform: uppercase;
-    border-radius: 8px;
   }
 
   .organization-info {

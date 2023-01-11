@@ -13,6 +13,7 @@
         },
         "organizationLogin": {
             "backToList": "Retour aux organisations",
+            "forgottenPassword": "Mot de passe oublié ?",
             "passwordLabel": "Mot de passe",
             "login": "Se connecter"
         },

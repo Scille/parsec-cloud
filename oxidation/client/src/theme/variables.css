@@ -259,7 +259,7 @@ ion-card {
     box-shadow: none;
 }
 
-ion-button:not(.button-outline) {
+ion-button:not(.button-outline):not(.button-clear) {
     --background-hover: #004299;
     --background-hover-opacity: none;
 }

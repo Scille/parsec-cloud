@@ -8,9 +8,9 @@
     >
       <div id="container">
         <div class="logo">
-          <img src="../assets/images/Logo/Logo/PNG/logo_blue.png">
+          <img src="../assets/images/Logo/logo_blue.png">
         </div>
-        <transition-group name="slide">
+        <transition-group :name="showOrganizationList ? 'slide-left' : 'slide-right'">
           <ion-card v-if="showOrganizationList">
             <ion-card-content class="organization-list">
               <ion-card-title color="tertiary">
@@ -30,9 +30,12 @@
                     >
                       <ion-card-content>
                         <ion-grid>
-                          <OrganizationCard :device="device"></OrganizationCard>
+                          <OrganizationCard :device="device" />
                           <ion-row>
-                            <ion-col size="auto" v-if="getDeviceLocalStorageData(device.slug)">
+                            <ion-col
+                              size="auto"
+                              v-if="getDeviceLocalStorageData(device.slug)"
+                            >
                               {{ $t('HomePage.organizationList.organizationCard.lastLogin') }}
                               {{ $d(getDeviceLocalStorageData(device.slug).lastLogin, 'long') }}
                             </ion-col>
@@ -75,8 +78,14 @@
           <ion-card v-if="!showOrganizationList">
             <ion-card-content class="organization-list">
               <ion-card-title color="tertiary">
-                <ion-button fill="clear" @click="showOrganizationList = !showOrganizationList">
-                  <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
+                <ion-button
+                  fill="clear"
+                  @click="showOrganizationList = !showOrganizationList"
+                >
+                  <ion-icon
+                    slot="start"
+                    :icon="chevronBackOutline"
+                  />
                   {{ $t('HomePage.organizationLogin.backToList') }}
                 </ion-button>
               </ion-card-title>
@@ -84,14 +93,30 @@
                 <ion-card id="login-card-container">
                   <ion-card-content>
                     <ion-grid>
-                      <OrganizationCard :device="selectedDevice"></OrganizationCard>
-                      <PasswordInput :placeholder="''" :label="t('HomePage.organizationLogin.passwordLabel')"></PasswordInput>
+                      <OrganizationCard :device="selectedDevice" />
+                      <PasswordInput
+                        :label="t('HomePage.organizationLogin.passwordLabel')"
+                        @change="onPasswordChange"
+                        @enter="login"
+                      />
+                      <ion-button
+                        fill="clear"
+                        @click="onForgottenPasswordClick"
+                      >
+                        {{ $t('HomePage.organizationLogin.forgottenPassword') }}
+                      </ion-button>
                     </ion-grid>
                   </ion-card-content>
                 </ion-card>
                 <div id="login-button-container">
-                  <ion-button @click="onLoginClicked(selectedDevice)">
-                    <ion-icon slot="start" :icon="logIn"></ion-icon>
+                  <ion-button
+                    @click="login"
+                    size="large"
+                  >
+                    <ion-icon
+                      slot="start"
+                      :icon="logIn"
+                    />
                     {{ $t("HomePage.organizationLogin.login") }}
                   </ion-button>
                 </div>
@@ -106,19 +131,16 @@
 
 <script setup lang="ts">
 import {
-  IonAvatar,
   IonContent,
   IonPage,
   IonCard,
   IonCardContent,
   IonCardTitle,
-  IonCardSubtitle,
   IonButton,
   IonIcon,
   IonRow,
   IonCol,
   IonGrid,
-  isPlatform,
   modalController
 } from '@ionic/vue';
 import {
@@ -195,13 +217,21 @@ function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData {
   });
 }
 
+function onPasswordChange(ev: Event): void {
+  // console.log(ev);
+}
+
 function onOrganizationCardClick(device: AvailableDevice): void {
   showOrganizationList.value = !showOrganizationList.value;
   selectedDevice = device;
 }
 
-function onLoginClicked(device: AvailableDevice): void {
+function login(): void {
   console.log('Log In!');
+}
+
+function onForgottenPasswordClick(): void {
+  console.log('forgotten password!');
 }
 
 async function openJoinByLinkModal(): Promise<void> {
@@ -253,6 +283,7 @@ async function canDismissModal(): Promise<boolean> {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   max-width: 50vw;
   margin: 0 auto;
@@ -268,23 +299,28 @@ async function canDismissModal(): Promise<boolean> {
     flex-shrink: 0;
   }
 
-  .slide-enter-active {
+  ion-card {
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+
+  .slide-left-enter-active, .slide-right-enter-active {
     transition: 0.5s ease-in-out;
     transition-delay: 0.5s;
   }
 
-  .slide-leave-active {
+  .slide-left-leave-active, .slide-right-leave-active {
     transition: 0.5s;
   }
 
-  .slide-enter-from {
-    opacity: 0;
-    transform: translate(100%, 0);
-  }
-
-  .slide-leave-to {
+  .slide-left-enter-from, .slide-right-leave-to {
     opacity: 0;
     transform: translate(-100%, 0);
+  }
+
+  .slide-left-leave-to, .slide-right-enter-from {
+    opacity: 0;
+    transform: translate(100%, 0);
   }
 
   .organization-list {
@@ -322,28 +358,24 @@ async function canDismissModal(): Promise<boolean> {
   #create-organization-button {
     margin-right: 1em;
   }
-}
 
-.lang-list {
-  .item {
-    ion-label {
-      margin-left: 3.5em;
+  #login-container {
+    margin-right: 3em;
+    margin-left: 3em;
+
+    #login-card-container {
+      background: #f9f9fb;
+      border-radius: 8px;
+      padding: 2em;
+
+      .organization-card {
+        margin-bottom: 2em;
+      }
+    }
+
+    #login-button-container {
+      text-align: right;
     }
   }
-}
-
-#login-container {
-  margin-right: 3em;
-  margin-left: 3em;
-}
-
-#login-card-container {
-  background: #f9f9fb;
-  border-radius: 8px;
-  padding: 2em;
-}
-
-#login-button-container {
-  text-align: right;
 }
 </style>
