@@ -52,6 +52,7 @@ const props = defineProps<{
   role: string
 }>();
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const emit = defineEmits<{
   (event: 'trigger-action-sheet'): void
 }>();

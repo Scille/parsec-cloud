@@ -72,6 +72,7 @@ const props = defineProps<{
   thirdLabel?: string | number
 }>();
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const emit = defineEmits<{
   (event: 'trigger-action-sheet'): void
   (event: 'trigger-share'): void
@@ -79,6 +80,7 @@ const emit = defineEmits<{
 
 const isSelected = ref(false);
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setSelected(bool: boolean): void {
   isSelected.value = bool;
 }

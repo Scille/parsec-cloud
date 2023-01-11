@@ -1,4 +1,4 @@
-import { mount, shallowMount } from '@vue/test-utils';
+import { mount } from '@vue/test-utils';
 import { createI18n } from 'vue-i18n';
 import HeaderPage from '@/views/HeaderPage.vue';
 import router from '../../src/router';
@@ -24,9 +24,9 @@ describe('HeaderPage.vue', () => {
     }
   });
 
-  const mockRouter = {
-    push: jest.fn()
-  };
+  // const mockRouter = {
+  //   push: jest.fn()
+  // };
 
   const wrapper = mount(HeaderPage, {
     global: {

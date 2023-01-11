@@ -207,7 +207,7 @@ import {
 } from '@ionic/vue';
 
 import {
-  add, ban, grid, informationCircle, list, personAdd, personRemove, help
+  add, ban, grid, informationCircle, list, personAdd, personRemove
 } from 'ionicons/icons';
 import ItemGrid from '@/components/ItemGrid.vue';
 import MobileItemList from '@/components/MobileItemList.vue';

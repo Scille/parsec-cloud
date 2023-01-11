@@ -22,7 +22,10 @@
       <div id="container">
         <strong>Ready to create Parsec?</strong>
         <div>
-          <ion-input v-model="name" placeholder="Your name"></ion-input>,
+          <ion-input
+            v-model="name"
+            placeholder="Your name"
+          />,
           <ion-button @click="onSubmit">
             Let's go!
           </ion-button>
@@ -43,8 +46,7 @@ import {
   IonTitle,
   IonToolbar,
   IonButton,
-  IonInput,
-  toastController
+  IonInput
 } from '@ionic/vue';
 import { ref } from 'vue';
 import { libparsec } from '../plugins/libparsec';

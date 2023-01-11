@@ -9,7 +9,10 @@
             <span>{{ device.organization_id?.substring(0, 2) }}</span>
           </ion-avatar>
         </ion-col>
-        <ion-col size="auto" class="organization-info">
+        <ion-col
+          size="auto"
+          class="organization-info"
+        >
           <p class="organization-label">
             {{ device.organization_id }}
           </p>
