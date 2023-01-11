@@ -218,7 +218,7 @@ function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData {
 }
 
 function onPasswordChange(ev: Event): void {
-  // console.log(ev);
+  console.log(ev);
 }
 
 function onOrganizationCardClick(device: AvailableDevice): void {
