@@ -89,7 +89,7 @@ allowCompoundWords: true
 ignorePaths:
   - ./oxidation/libparsec_python
   - '**/parsec/core/resources/default_*.ignore'
-  - '*.svg'
+  - '**/*.svg'
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"
