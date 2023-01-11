@@ -15,7 +15,8 @@ BASEDIR = Path(__file__).parent
 
 
 # Meta-types are defined in the api module for simplicity, `generate_api_specs` will take care of retreiving them
-META_TYPES = ["Result", "Ref", "StrBasedType", "Variant", "Structure"]
+META_TYPES = ["IntBasedType", "Result", "Ref", "StrBasedType", "Variant", "Structure"]
+IntBasedType: Type = None
 Result: Type = None
 Ref: Type = None
 StrBasedType: Type = None
@@ -93,6 +94,9 @@ class BaseTypeInUse:
         elif issubclass(param, StrBasedType):
             return StrBasedTypeInUse(name=param.__name__)
 
+        elif issubclass(param, IntBasedType):
+            return IntBasedTypeInUse(name=param.__name__)
+
         else:
             typespec = TYPESDB.get(param)
             assert typespec is not None, f"Bad param `{param!r}`, not a scalar/variant/struct"
@@ -136,6 +140,12 @@ class ResultTypeInUse(BaseTypeInUse):
 class RefTypeInUse(BaseTypeInUse):
     kind = "ref"
     elem: BaseTypeInUse
+
+
+@dataclass
+class IntBasedTypeInUse(BaseTypeInUse):
+    kind = "int_based"
+    name: int
 
 
 @dataclass

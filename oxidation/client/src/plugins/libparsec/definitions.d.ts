@@ -33,6 +33,20 @@ export type DeviceFileType =
   | DeviceFileTypeRecovery
   | DeviceFileTypeSmartcard
 
+// LoggedCoreError
+export interface LoggedCoreErrorDisconnected {
+    tag: 'Disconnected'
+}
+export interface LoggedCoreErrorInvalidHandle {
+    tag: 'InvalidHandle'
+    handle: number;
+}
+export type LoggedCoreError =
+  | LoggedCoreErrorDisconnected
+  | LoggedCoreErrorInvalidHandle
+
 export interface LibParsecPlugin {
     listAvailableDevices(path: string): Promise<Array<AvailableDevice>>;
+    login(test_device_id: string): Promise<number>;
+    loggedCoreGetTestDeviceId(handle: number): Promise<Result<string, LoggedCoreError>>;
 }

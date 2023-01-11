@@ -22,7 +22,10 @@
       <div id="container">
         <strong>Ready to create Parsec?</strong>
         <div>
-          <ion-input v-model="name" placeholder="Your name"></ion-input>,
+          <ion-input
+            v-model="name"
+            placeholder="Your name"
+          />,
           <ion-button @click="onSubmit">
             Let's go!
           </ion-button>
@@ -53,24 +56,11 @@ const name = ref('Scruffy');
 const message = ref('bonyour!');
 
 async function onSubmit(): Promise<void> {
-  console.log(`calling helloWorld(${name.value})`);
-  const rep = await libparsec.helloWorld(name.value);
-  console.log('helloWorld returned', rep);
-  switch (rep.ok) {
-  case true:
-    message.value = rep.value;
-    break;
-  case false:
-    switch (rep.error.tag) {
-    case 'EmptySubject':
-      message.value = 'Where is your name ?';
-      break;
-    case 'YouAreADog':
-      message.value = `Who's a good boy ? ${rep.error.hello} ! You are !`;
-      break;
-    }
-    break;
-  }
+  console.log('Submitting');
+  const key = await libparsec.login('a7d1edf7a8014e76b2d89e63f430d9fc@010cfc8b95ea4436bd594d919ec966fc');
+  console.log(key);
+  const rep = await libparsec.loggedCoreGetTestDeviceId(key);
+  console.log(rep);
 }
 </script>
 

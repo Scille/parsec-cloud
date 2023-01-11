@@ -2,10 +2,12 @@
 
 mod error;
 mod events;
+mod logged_core;
 mod remote_devices_manager;
 mod trustchain;
 
 pub use error::*;
 pub use events::*;
+pub use logged_core::*;
 pub use remote_devices_manager::*;
 pub use trustchain::*;

@@ -159,6 +159,50 @@ fn variant_devicefiletype_rs_to_js(rs_obj: libparsec::DeviceFileType) -> Result<
     Ok(js_obj)
 }
 
+// LoggedCoreError
+
+#[allow(dead_code)]
+fn variant_loggedcoreerror_js_to_rs(obj: JsValue) -> Result<libparsec::LoggedCoreError, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Disconnected") => {
+            Ok(libparsec::LoggedCoreError::Disconnected {})
+        }
+        tag if tag == JsValue::from_str("InvalidHandle") => {
+            let handle = {
+                let js_val = Reflect::get(&obj, &"handle".into())?;
+                (js_val
+                    .dyn_into::<Number>()
+                    .map_err(|_| TypeError::new("Not a number"))?
+                    .value_of() as i32)
+                    .into()
+            };
+            Ok(libparsec::LoggedCoreError::InvalidHandle { handle })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a LoggedCoreError",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_loggedcoreerror_rs_to_js(
+    rs_obj: libparsec::LoggedCoreError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::LoggedCoreError::Disconnected {} => {
+            Reflect::set(&js_obj, &"tag".into(), &"Disconnected".into())?;
+        }
+        libparsec::LoggedCoreError::InvalidHandle { handle } => {
+            Reflect::set(&js_obj, &"tag".into(), &"InvalidHandle".into())?;
+            let js_handle = JsValue::from(i32::from(handle));
+            Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // list_available_devices
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -175,6 +219,47 @@ pub fn listAvailableDevices(path: String) -> Promise {
                 js_array.push(&js_elem);
             }
             js_array.into()
+        })
+    })
+}
+
+// login
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn login(test_device_id: String) -> Promise {
+    future_to_promise(async move {
+        let test_device_id = test_device_id
+            .parse()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceID")))?;
+
+        let ret = libparsec::login(test_device_id).await;
+        Ok(JsValue::from(i32::from(ret)))
+    })
+}
+
+// logged_core_get_test_device_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn loggedCoreGetTestDeviceId(handle: i32) -> Promise {
+    future_to_promise(async move {
+        let handle = handle.into();
+
+        let ret = libparsec::logged_core_get_test_device_id(handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str(value.as_ref());
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_loggedcoreerror_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     })
 }
