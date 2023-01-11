@@ -169,9 +169,8 @@ impl SASCode {
         combined_hmac[3..8].clone_from_slice(&shared_secret_key.hmac(&combined_nonce, 5)[..]);
         let hmac_as_int = u64::from_be_bytes(combined_hmac);
 
-        let claimer_part_as_int = (hmac_as_int % 2u64.pow(SAS_CODE_BITS) as u64) as u32;
-        let greeter_part_as_int =
-            ((hmac_as_int >> SAS_CODE_BITS) % 2u64.pow(SAS_CODE_BITS) as u64) as u32;
+        let claimer_part_as_int = (hmac_as_int % 2u64.pow(SAS_CODE_BITS)) as u32;
+        let greeter_part_as_int = ((hmac_as_int >> SAS_CODE_BITS) % 2u64.pow(SAS_CODE_BITS)) as u32;
 
         // Big endian number extracted from bits [0, 20[
         let claimer_sas = SASCode::try_from(claimer_part_as_int).unwrap_or_else(|_| unreachable!());
