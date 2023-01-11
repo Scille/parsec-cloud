@@ -10,7 +10,7 @@ Visual Studio installer). You can use `Visual Studio` to build these two dlls __
 or invoke `msbuild` from the command line (you have to manually add `msbuild` to your `PATH`).
 
 ```shell
-msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\windows-icon-handlers.sln
+msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\windows-icon-handler.sln
 ```
 
 Run the `freeze_program.py` Python script with the path to the Parsec sources to use:

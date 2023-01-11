@@ -278,19 +278,22 @@ InstallDir "$PROGRAMFILES\Parsec Cloud"
 ShowInstDetails hide
 ShowUnInstDetails hide
 
+# When upgrading or uninstalling, shell extensions may be loaded by `explorer.exe`
+# thus windows will prevent us to delete or modify the dll extensions. The trick
+# here is to move the loaded dll somewhere else (like in a temp folder) and then resume
+# the upgrade/uninstall process as usual.
+!macro MoveParsecShellExtension
+    RmDir /r "$TEMP\parsec_tmp"
+    CreateDirectory "$TEMP\parsec_tmp"
+    Rename "$INSTDIR\check-icon-handler.dll" "$TEMP\parsec_tmp\check-icon-handler.dll.old"
+    Rename "$INSTDIR\refresh-icon-handler.dll" "$TEMP\parsec_tmp\refresh-icon-handler.dll.old"
+    Rename "$INSTDIR\vcruntime140.dll" "$TEMP\parsec_tmp\vcruntime140.dll.old"
+    Rename "$INSTDIR\vcruntime140_1.dll" "$TEMP\parsec_tmp\vcruntime140_1.dll.old"
+!macroend
+
 # Install main application
 Section "Parsec Cloud Sharing" Section1
-      # Delete file used by the shell extensions if there're already in the temp folder
-      # and move the previously installed extensions files into it.
-      # This is a hack because windows doesn't allow to overwrite these extensions as
-      # it is because they may be in use by explorer.exe
-      RmDir /r "$TEMP\parsec_tmp"
-      CreateDirectory "$TEMP\parsec_tmp"
-      Rename "$INSTDIR\check-icon-handler.dll" "$TEMP\parsec_tmp\check-icon-handler.dll.old"
-      Rename "$INSTDIR\refresh-icon-handler.dll" "$TEMP\parsec_tmp\refresh-icon-handler.dll.old"
-      Rename "$INSTDIR\vcruntime140.dll" "$TEMP\parsec_tmp\vcruntime140.dll.old"
-      Rename "$INSTDIR\vcruntime140_1.dll" "$TEMP\parsec_tmp\vcruntime140_1.dll.old"
-
+    !insertmacro MoveParsecShellExtension
     SectionIn RO
     !include "${BUILD_DIR}\install_files.nsh"
 
@@ -387,6 +390,8 @@ SectionEnd
 
 # --- Uninstallation section ---
 Section Uninstall
+  !insertmacro MoveParsecShellExtension
+
     # Delete program files.
     Delete "$INSTDIR\homepage.url"
     Delete ${PROGRAM_UNINST_FILENAME}
