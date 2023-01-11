@@ -187,7 +187,7 @@ fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
 ) -> NeonResult<libparsec::{{ struct.name }}> {
 {% for attr_name, attr_type in struct.attributes.items() %}
     let {{ attr_name }} = {
-        let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "{{ attr_name }}")?;
+        let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "{{ attr_name | snake2camel }}")?;
         {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(8) }}
     };
 {% endfor %}
@@ -209,7 +209,7 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
     let js_obj = cx.empty_object();
 {% for attr_name, attr_type in struct.attributes.items() %}
     let js_{{ attr_name }} = {{ render_rs_to_js("rs_obj.%s" % attr_name, attr_type, mut_cx_ref="cx") | indent }};
-    js_obj.set(cx, "{{ attr_name }}", js_{{ attr_name }})?;
+    js_obj.set(cx, "{{ attr_name | snake2camel }}", js_{{ attr_name }})?;
 {% endfor %}
     Ok(js_obj)
 }
@@ -432,7 +432,7 @@ use neon::{prelude::*, types::buffer::TypedArray};
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
 {% for meth in api.meths %}
-    cx.export_function("{{ meth.pascalName }}", {{ meth.name }})?;
+    cx.export_function("{{ meth.name | snake2camel }}", {{ meth.name }})?;
 {% endfor %}
     Ok(())
 }

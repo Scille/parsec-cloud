@@ -17,7 +17,7 @@ use wasm_bindgen_futures::*;
 #[allow(dead_code)]
 fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableDevice, JsValue> {
     let key_file_path = {
-        let js_val = Reflect::get(&obj, &"key_file_path".into())?;
+        let js_val = Reflect::get(&obj, &"keyFilePath".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
@@ -27,7 +27,7 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
             .map_err(|_| TypeError::new("Not a valid StrPath"))?
     };
     let organization_id = {
-        let js_val = Reflect::get(&obj, &"organization_id".into())?;
+        let js_val = Reflect::get(&obj, &"organizationId".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
@@ -37,7 +37,7 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
             .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
     };
     let device_id = {
-        let js_val = Reflect::get(&obj, &"device_id".into())?;
+        let js_val = Reflect::get(&obj, &"deviceId".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
@@ -47,7 +47,7 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
             .map_err(|_| TypeError::new("Not a valid DeviceID"))?
     };
     let human_handle = {
-        let js_val = Reflect::get(&obj, &"human_handle".into())?;
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
         if js_val.is_null() {
             None
         } else {
@@ -63,7 +63,7 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
         }
     };
     let device_label = {
-        let js_val = Reflect::get(&obj, &"device_label".into())?;
+        let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
         if js_val.is_null() {
             None
         } else {
@@ -105,21 +105,21 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
 fn struct_availabledevice_rs_to_js(rs_obj: libparsec::AvailableDevice) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_key_file_path = JsValue::from_str(rs_obj.key_file_path.as_ref());
-    Reflect::set(&js_obj, &"key_file_path".into(), &js_key_file_path)?;
+    Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
-    Reflect::set(&js_obj, &"organization_id".into(), &js_organization_id)?;
+    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
     let js_device_id = JsValue::from_str(rs_obj.device_id.as_ref());
-    Reflect::set(&js_obj, &"device_id".into(), &js_device_id)?;
+    Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
     let js_human_handle = match rs_obj.human_handle {
         Some(val) => JsValue::from_str(val.as_ref()),
         None => JsValue::NULL,
     };
-    Reflect::set(&js_obj, &"human_handle".into(), &js_human_handle)?;
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_device_label = match rs_obj.device_label {
         Some(val) => JsValue::from_str(val.as_ref()),
         None => JsValue::NULL,
     };
-    Reflect::set(&js_obj, &"device_label".into(), &js_device_label)?;
+    Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
     let js_slug = rs_obj.slug.into();
     Reflect::set(&js_obj, &"slug".into(), &js_slug)?;
     let js_ty = variant_devicefiletype_rs_to_js(rs_obj.ty)?;
