@@ -43,6 +43,7 @@ defineProps<{
     align-items: center;
     font-size: 2em;
     text-transform: uppercase;
+    border-radius: 8px;
   }
 
   .organization-info {

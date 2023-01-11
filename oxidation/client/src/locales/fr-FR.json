@@ -13,7 +13,7 @@
         },
         "organizationLogin": {
             "backToList": "Retour aux organisations",
-            "password": "Mot de passe",
+            "passwordLabel": "Mot de passe",
             "login": "Se connecter"
         },
         "mainMenu": {

@@ -75,19 +75,27 @@
           <ion-card v-if="!showOrganizationList">
             <ion-card-content class="organization-list">
               <ion-card-title color="tertiary">
-                {{ $t('HomePage.organizationLogin.backToList') }}
+                <ion-button fill="clear" @click="showOrganizationList = !showOrganizationList">
+                  <ion-icon slot="start" :icon="chevronBackOutline"></ion-icon>
+                  {{ $t('HomePage.organizationLogin.backToList') }}
+                </ion-button>
               </ion-card-title>
-              <ion-card
-                button
-                class="organization-card-container"
-                @click="showOrganizationList = !showOrganizationList"
-              >
-                <ion-card-content>
-                  <ion-grid>
-                    <OrganizationCard :device="selectedDevice"></OrganizationCard>
-                  </ion-grid>
-                </ion-card-content>
-              </ion-card>
+              <div id="login-container">
+                <ion-card id="login-card-container">
+                  <ion-card-content>
+                    <ion-grid>
+                      <OrganizationCard :device="selectedDevice"></OrganizationCard>
+                      <PasswordInput :placeholder="''" :label="t('HomePage.organizationLogin.passwordLabel')"></PasswordInput>
+                    </ion-grid>
+                  </ion-card-content>
+                </ion-card>
+                <div id="login-button-container">
+                  <ion-button @click="onLoginClicked(selectedDevice)">
+                    <ion-icon slot="start" :icon="logIn"></ion-icon>
+                    {{ $t("HomePage.organizationLogin.login") }}
+                  </ion-button>
+                </div>
+              </div>
             </ion-card-content>
           </ion-card>
         </transition-group>
@@ -116,13 +124,15 @@ import {
 import {
   add,
   link,
-  qrCodeSharp
+  chevronBackOutline,
+  logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { ref } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
+import PasswordInput from '@/components/PasswordInput.vue';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 
@@ -156,7 +166,7 @@ const deviceList: AvailableDevice[] = [
     'ty': {'tag': 'Password'}
   },
   {
-    'organization_id': 'EddyMalou',
+    'organization_id': 'Eddy',
     'human_handle': 'Maxime Grandcolas',
     'device_label': 'device_label',
     'key_file_path': 'key_file_path',
@@ -188,6 +198,10 @@ function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData {
 function onOrganizationCardClick(device: AvailableDevice): void {
   showOrganizationList.value = !showOrganizationList.value;
   selectedDevice = device;
+}
+
+function onLoginClicked(device: AvailableDevice): void {
+  console.log('Log In!');
 }
 
 async function openJoinByLinkModal(): Promise<void> {
@@ -316,5 +330,20 @@ async function canDismissModal(): Promise<boolean> {
       margin-left: 3.5em;
     }
   }
+}
+
+#login-container {
+  margin-right: 3em;
+  margin-left: 3em;
+}
+
+#login-card-container {
+  background: #f9f9fb;
+  border-radius: 8px;
+  padding: 2em;
+}
+
+#login-button-container {
+  text-align: right;
 }
 </style>
