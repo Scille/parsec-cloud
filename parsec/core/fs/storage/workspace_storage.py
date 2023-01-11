@@ -193,6 +193,9 @@ class BaseWorkspaceStorage:
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
         return await self.chunk_storage.get_chunk(ChunkID.from_block_id(block_id))
 
+    async def is_clean_block(self, block_id: BlockID) -> bool:
+        return await self.block_storage.is_chunk(ChunkID.from_block_id(block_id))
+
     # Chunk interface
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:

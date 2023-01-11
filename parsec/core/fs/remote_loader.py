@@ -492,6 +492,9 @@ class RemoteLoader(UserRemoteLoader):
             FSWorkspaceInMaintenance
             FSWorkspaceNoAccess
         """
+        # Already present
+        if await self.local_storage.is_clean_block(access.id):
+            return
         # Download
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.block_read(access.id)
