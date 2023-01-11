@@ -421,6 +421,12 @@ jobs:
         run: npm clean-install
         working-directory: oxidation/client
 
+      - name: ESLint
+        if: steps.web-change.outputs.run == 'true'
+        run: npm run lint
+        working-directory: oxidation/client
+        timeout-minutes: 10
+
       - name: E2E tests
         if: steps.web-change.outputs.run == 'true'
         # Without `VUE_CLI_TEST` set, the command hangs forever because
@@ -435,6 +441,6 @@ jobs:
       # which doesn't trigger it compilation...)
       - name: Unit tests
         if: steps.web-change.outputs.run == 'true'
-        run: npm run test:unit
+        run: npm run test:unit -- --ci
         working-directory: oxidation/client
         timeout-minutes: 10

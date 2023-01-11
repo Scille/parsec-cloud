@@ -8,7 +8,7 @@
         "test:unit": "vue-cli-service test:unit",
         "test:e2e": "vue-cli-service test:e2e",
         "test:e2e:headless": "vue-cli-service test:e2e --headless",
-        "lint": "vue-cli-service lint",
+        "lint": "vue-cli-service lint  --max-errors 0 --max-warnings 0",
         "native:build": "vue-cli-service build",
         "android:copy": "npm run native:build && npx cap copy android",
         "android:copy:release": "npm run native:build && npx cap copy android",

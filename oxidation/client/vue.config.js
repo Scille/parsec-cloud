@@ -13,6 +13,7 @@ if (process.env.npm_lifecycle_event !== undefined && process.env.npm_lifecycle_e
   if (
     process.env.npm_lifecycle_event.startsWith('web:')
     || process.env.npm_lifecycle_event.startsWith('test:')
+    || process.env.npm_lifecycle_event.startsWith('lint')
   ) {
     platform = 'web';
   } else if (process.env.npm_lifecycle_event.startsWith('native:')) {
@@ -43,11 +44,11 @@ if (process.env.npm_lifecycle_event !== undefined && process.env.npm_lifecycle_e
 
 // 2) Now that we know the platform, we can create `trampoline.ts` accordingly
 
-const libparsecPluginPath = path.join(__dirname, 'src/plugins/libparsec/');
+const libparsecPluginPath = 'src/plugins/libparsec/';
 const src = path.join(libparsecPluginPath, `trampoline-${platform}.ts.in`);
 const dst = path.join(libparsecPluginPath, 'trampoline.ts');
 console.log(`Copy ${src} -> ${dst}`);
-fs.copyFileSync(src, dst);
+fs.copyFileSync(path.join(__dirname, src), path.join(__dirname, dst));
 
 // 3) Finally add the packaging of the Wasm stuff if the platform requires it
 
