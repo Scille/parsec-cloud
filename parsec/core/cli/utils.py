@@ -9,6 +9,7 @@ from typing import Any, Callable, List, TypeVar, cast
 import click
 import trio
 
+from parsec._parsec import save_device_with_password_in_config
 from parsec.cli_utils import (
     async_prompt,
     debug_config_options,
@@ -25,7 +26,6 @@ from parsec.core.local_device import (
     list_available_devices,
     load_device_with_password,
     load_device_with_smartcard_sync,
-    save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
 )
 from parsec.core.types import LocalDevice

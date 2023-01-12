@@ -1,10 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyValueError,
+    exceptions::{PyException, PyValueError},
     prelude::*,
     types::{PyBytes, PyDict, PyType},
 };
+use std::path::PathBuf;
+
+use libparsec::client_types;
 
 use crate::{
     addrs::BackendOrganizationAddr,
@@ -402,4 +405,37 @@ impl DeviceInfo {
     fn device_display(&self) -> PyResult<&str> {
         Ok(self.0.device_display())
     }
+}
+
+crate::binding_utils::create_exception!(LocalDevice, PyException, client_types::LocalDeviceError);
+
+#[pyfunction]
+pub(crate) fn save_device_with_password(
+    key_file: PathBuf,
+    device: &LocalDevice,
+    password: &str,
+    force: bool,
+) -> LocalDeviceResult<()> {
+    client_types::save_device_with_password(&key_file, &device.0, password, force)
+        .map_err(|e| e.into())
+}
+
+#[pyfunction]
+pub(crate) fn save_device_with_password_in_config(
+    config_dir: PathBuf,
+    device: &LocalDevice,
+    password: &str,
+) -> LocalDeviceResult<PathBuf> {
+    client_types::save_device_with_password_in_config(&config_dir, &device.0, password)
+        .map_err(|e| e.into())
+}
+
+#[pyfunction]
+pub(crate) fn change_device_password(
+    key_file: PathBuf,
+    old_password: &str,
+    new_password: &str,
+) -> LocalDeviceResult<()> {
+    client_types::change_device_password(&key_file, old_password, new_password)
+        .map_err(|e| e.into())
 }

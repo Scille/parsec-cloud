@@ -14,6 +14,7 @@ from parsec._parsec import (
     HumanHandle,
     LocalDevice,
     OrganizationID,
+    save_device_with_password_in_config,
 )
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
@@ -36,7 +37,6 @@ from parsec.core.local_device import (
     LocalDeviceCryptoError,
     LocalDeviceError,
     LocalDeviceNotFoundError,
-    save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
 )
 

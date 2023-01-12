@@ -4,13 +4,13 @@ from __future__ import annotations
 import pytest
 from PyQt5 import QtCore
 
+from parsec._parsec import save_device_with_password_in_config
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
     backend_authenticated_cmds_factory,
 )
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
-from parsec.core.local_device import save_device_with_password_in_config
 from tests.common import customize_fixtures, freeze_time
 
 

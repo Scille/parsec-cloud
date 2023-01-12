@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Tuple
 
 from parsec._parsec_pyi.addrs import BackendOrganizationAddr
@@ -153,3 +154,11 @@ class DeviceInfo:
     def device_name(self) -> DeviceName: ...
     @property
     def device_display(self) -> str: ...
+
+def save_device_with_password(
+    key_file: Path, device: LocalDevice, password: str, force: bool
+) -> None: ...
+def save_device_with_password_in_config(
+    config_dir: Path, device: LocalDevice, password: str
+) -> Path: ...
+def change_device_password(key_file: Path, old_password: str, new_password: str) -> None: ...
