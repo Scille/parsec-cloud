@@ -1,4 +1,9 @@
 exclude: ^misc/bench.py$
+
+default_language_version:
+  rust: 1.65.0
+  node: 18.13.0
+
 repos:
   ##############
   # Common stuff
