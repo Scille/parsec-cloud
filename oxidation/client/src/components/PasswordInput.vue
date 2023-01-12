@@ -12,7 +12,7 @@
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
             @ion-change="$emit('change', $event.detail.value)"
-            @keyup.enter="$emit('enter')"
+            @keyup.enter="onEnterPress"
           />
           <ion-button
             @click="passwordVisible = !passwordVisible"
@@ -42,10 +42,16 @@ defineProps<{
   label: string
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'change', value: string): void
   (e: 'enter'): void
 }>();
+
+function onEnterPress() : void {
+  if (passwordRef.value.length > 0) {
+    emits('enter');
+  }
+}
 
 const passwordVisible = ref(false);
 const passwordRef = ref('');

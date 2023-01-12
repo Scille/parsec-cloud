@@ -112,6 +112,7 @@
                   <ion-button
                     @click="login"
                     size="large"
+                    :disabled="password.length == 0"
                   >
                     <ion-icon
                       slot="start"
@@ -197,7 +198,8 @@ const deviceList: AvailableDevice[] = [
     'ty': {'tag': 'Password'}
   }
 ];
-let selectedDevice:AvailableDevice;
+let selectedDevice: AvailableDevice;
+const password = ref('');
 const showOrganizationList = ref(true);
 
 export interface DeviceLocalStorageData {
@@ -217,8 +219,8 @@ function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData {
   });
 }
 
-function onPasswordChange(ev: Event): void {
-  console.log(ev);
+function onPasswordChange(pwd: string): void {
+  password.value = pwd;
 }
 
 function onOrganizationCardClick(device: AvailableDevice): void {
@@ -227,7 +229,7 @@ function onOrganizationCardClick(device: AvailableDevice): void {
 }
 
 function login(): void {
-  console.log('Log In!');
+  console.log(`Log in to ${selectedDevice.organization_id} with password "${password.value}"`);
 }
 
 function onForgottenPasswordClick(): void {
