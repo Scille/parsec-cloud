@@ -7,7 +7,12 @@ from pathlib import Path
 from typing import Tuple, cast
 from uuid import uuid4
 
-from parsec._parsec import DateTime, DeviceCreateRepOk, UserCreateRepOk
+from parsec._parsec import (
+    DateTime,
+    DeviceCreateRepOk,
+    UserCreateRepOk,
+    save_device_with_password_in_config,
+)
 from parsec.api.data import DeviceCertificate, EntryID, EntryName, UserCertificate
 from parsec.api.protocol import (
     DeviceID,
@@ -26,7 +31,7 @@ from parsec.core.cli.create_organization import create_organization_req
 from parsec.core.config import load_config
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization
-from parsec.core.local_device import generate_new_device, save_device_with_password_in_config
+from parsec.core.local_device import generate_new_device
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import (
     BackendAddr,

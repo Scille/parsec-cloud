@@ -1,9 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import pathlib
+
 import pytest
 from PyQt5 import QtCore, QtWidgets
 
+from parsec._parsec import save_device_with_password_in_config
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.login_widget import (
     LoginAccountsWidget,
@@ -12,11 +15,7 @@ from parsec.core.gui.login_widget import (
     LoginWidget,
 )
 from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.local_device import (
-    list_available_devices,
-    load_device_file,
-    save_device_with_password_in_config,
-)
+from parsec.core.local_device import list_available_devices, load_device_file
 
 
 @pytest.mark.gui
@@ -133,7 +132,7 @@ async def test_login_device_list(
 
     for d in local_devices:
         path = save_device_with_password_in_config(core_config.config_dir, d, password)
-        devices.append(load_device_file(path))
+        devices.append(load_device_file(pathlib.Path(path)))
 
     # Settings the last device used
     core_config = core_config.evolve(gui_last_device=bob.device_id.str)

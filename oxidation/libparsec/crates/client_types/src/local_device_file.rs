@@ -14,6 +14,8 @@ use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
 
 use crate::{LocalDevice, LocalDeviceError, LocalDeviceResult, StrPath};
 
+pub(crate) const DEVICE_FILE_SUFFIX: &str = "keys";
+
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DeviceFilePassword {
@@ -236,16 +238,6 @@ impl AvailableDevice {
     }
 }
 
-/// Return the default keyfile path for a given device.
-///
-/// Note that the filename does not carry any intrinsic meaning.
-/// Here, we simply use the slughash to avoid name collision.
-pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
-    let devices_dir = config_dir.join("devices");
-    let _ = std::fs::create_dir_all(&devices_dir);
-    devices_dir.join(device.slughash() + ".keys")
-}
-
 fn read_key_file_paths(path: PathBuf) -> LocalDeviceResult<Vec<PathBuf>> {
     let mut key_file_paths = vec![];
 
@@ -348,4 +340,65 @@ pub async fn load_recovery_device(
         .map_err(LocalDeviceError::CryptoError)?;
     LocalDevice::load(&plaintext)
         .map_err(|_| LocalDeviceError::Deserialization(key_file.to_path_buf()))
+}
+
+pub fn save_device_with_password(
+    key_file: &Path,
+    device: &LocalDevice,
+    password: &str,
+    force: bool,
+) -> Result<(), LocalDeviceError> {
+    if key_file.exists() && !force {
+        return Err(LocalDeviceError::AlreadyExists(key_file.to_path_buf()));
+    }
+
+    let cleartext = device.dump();
+    let salt = SecretKey::generate_salt();
+    let key = SecretKey::from_password(password, &salt);
+
+    let ciphertext = key.encrypt(&cleartext);
+    let key_file_content = DeviceFile::Password(DeviceFilePassword {
+        salt,
+        ciphertext,
+        // TODO: Can we avoid these copy?
+        human_handle: device.human_handle.clone(),
+        device_label: device.device_label.clone(),
+        device_id: device.device_id.clone(),
+        organization_id: device.organization_id().clone(),
+        slug: Some(device.slug()),
+    });
+    key_file_content.save(key_file)?;
+
+    Ok(())
+}
+
+pub fn save_device_with_password_in_config(
+    config_dir: &Path,
+    device: &LocalDevice,
+    password: &str,
+) -> Result<PathBuf, LocalDeviceError> {
+    let key_file = LocalDevice::get_default_key_file(config_dir, device);
+
+    // Why do we use `force=True` here ?
+    // Key file name is per-device unique (given it contains the device slughash),
+    // hence there is no risk to overwrite another device.
+    // So if we are overwriting a key file it could be by:
+    // - the same device object, hence overwriting has no effect
+    // - a device object with same slughash but different device/user keys
+    //   This would mean the device enrollment has been replayed (which is
+    //   not possible in theory, but could occur in case of a rollback in the
+    //   Parsec server), in this case the old device object is now invalid
+    //   and it's a good thing to replace it.
+    save_device_with_password(&key_file, device, password, true)?;
+
+    Ok(key_file)
+}
+
+pub fn change_device_password(
+    key_file: &Path,
+    old_password: &str,
+    new_password: &str,
+) -> Result<(), LocalDeviceError> {
+    let device = LocalDevice::load_device_with_password(key_file, old_password)?;
+    save_device_with_password(key_file, &device, new_password, true)
 }

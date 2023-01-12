@@ -6,7 +6,7 @@ from typing import Any
 from PyQt5.QtWidgets import QApplication, QWidget
 from structlog import get_logger
 
-from parsec._parsec import LocalDevice
+from parsec._parsec import LocalDevice, save_device_with_password_in_config
 from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_error, show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
@@ -19,7 +19,6 @@ from parsec.core.local_device import (
     get_available_device,
     load_device_with_password,
     load_device_with_smartcard,
-    save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
 )
 from parsec.core.logged_core import LoggedCore

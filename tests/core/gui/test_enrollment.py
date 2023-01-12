@@ -4,11 +4,11 @@ from __future__ import annotations
 import pytest
 from PyQt5 import QtCore
 
+from parsec._parsec import save_device_with_password_in_config
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.enrollment_widget import EnrollmentButton
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import AccountButton, EnrollmentPendingButton
-from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 
 
