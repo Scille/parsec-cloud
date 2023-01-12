@@ -11,11 +11,11 @@ export type Result<T, E = Error> =
 
 
 export interface AvailableDevice {
-    key_file_path: string;
-    organization_id: string;
-    device_id: string;
-    human_handle: string | null;
-    device_label: string | null;
+    keyFilePath: string;
+    organizationId: string;
+    deviceId: string;
+    humanHandle: string | null;
+    deviceLabel: string | null;
     slug: string;
     ty: DeviceFileType;
 }

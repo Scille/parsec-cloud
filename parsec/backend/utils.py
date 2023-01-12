@@ -11,7 +11,7 @@ from typing_extensions import Final, Literal, ParamSpec
 
 from parsec._parsec import AuthenticatedAnyCmdReq, ClientType, InvitedAnyCmdReq, ProtocolError
 from parsec.api.protocol import InvalidMessageError
-from parsec.api.version import API_V1_VERSION, API_V2_VERSION
+from parsec.api.version import API_V3_VERSION
 from parsec.serde.packing import packb, unpackb
 from parsec.utils import open_service_nursery
 
@@ -24,7 +24,9 @@ if TYPE_CHECKING:
     CmdReq = Union[InvitedAnyCmdReq, AuthenticatedAnyCmdReq]
 
 PEER_EVENT_MAX_WAIT = 3  # 5mn
-ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
+ALLOWED_API_VERSIONS = {
+    API_V3_VERSION.version,
+}
 
 
 # Enumeration used to check access rights for a given kind of operation

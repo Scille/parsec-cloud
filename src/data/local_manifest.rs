@@ -782,13 +782,7 @@ impl LocalFolderManifest {
     fn to_stats<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
-        let mut children = self
-            .0
-            .children
-            .clone()
-            .into_iter()
-            .map(|(k, _)| k)
-            .collect::<Vec<_>>();
+        let mut children = self.0.children.clone().into_keys().collect::<Vec<_>>();
 
         children.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
 
@@ -1139,13 +1133,7 @@ impl LocalWorkspaceManifest {
     fn to_stats<'py>(&self, py: Python<'py>) -> &'py PyDict {
         let created = DateTime(self.0.base.created).into_py(py);
         let updated = DateTime(self.0.updated).into_py(py);
-        let mut children = self
-            .0
-            .children
-            .clone()
-            .into_iter()
-            .map(|(k, _)| k)
-            .collect::<Vec<_>>();
+        let mut children = self.0.children.clone().into_keys().collect::<Vec<_>>();
 
         children.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
 

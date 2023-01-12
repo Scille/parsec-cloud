@@ -1,0 +1,1 @@
+Drop API V2 support on the client side.

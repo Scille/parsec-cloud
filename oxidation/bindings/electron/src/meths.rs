@@ -15,28 +15,28 @@ fn struct_availabledevice_js_to_rs<'a>(
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::AvailableDevice> {
     let key_file_path = {
-        let js_val: Handle<JsString> = obj.get(cx, "key_file_path")?;
+        let js_val: Handle<JsString> = obj.get(cx, "keyFilePath")?;
         match js_val.value(cx).parse() {
             Ok(val) => val,
             Err(err) => return cx.throw_type_error(err),
         }
     };
     let organization_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "organization_id")?;
+        let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
         match js_val.value(cx).parse() {
             Ok(val) => val,
             Err(err) => return cx.throw_type_error(err),
         }
     };
     let device_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "device_id")?;
+        let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
         match js_val.value(cx).parse() {
             Ok(val) => val,
             Err(err) => return cx.throw_type_error(err),
         }
     };
     let human_handle = {
-        let js_val: Handle<JsValue> = obj.get(cx, "human_handle")?;
+        let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
         {
             if js_val.is_a::<JsNull, _>(cx) {
                 None
@@ -50,7 +50,7 @@ fn struct_availabledevice_js_to_rs<'a>(
         }
     };
     let device_label = {
-        let js_val: Handle<JsValue> = obj.get(cx, "device_label")?;
+        let js_val: Handle<JsValue> = obj.get(cx, "deviceLabel")?;
         {
             if js_val.is_a::<JsNull, _>(cx) {
                 None
@@ -89,21 +89,21 @@ fn struct_availabledevice_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_key_file_path = JsString::try_new(cx, rs_obj.key_file_path).or_throw(cx)?;
-    js_obj.set(cx, "key_file_path", js_key_file_path)?;
+    js_obj.set(cx, "keyFilePath", js_key_file_path)?;
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
-    js_obj.set(cx, "organization_id", js_organization_id)?;
+    js_obj.set(cx, "organizationId", js_organization_id)?;
     let js_device_id = JsString::try_new(cx, rs_obj.device_id).or_throw(cx)?;
-    js_obj.set(cx, "device_id", js_device_id)?;
+    js_obj.set(cx, "deviceId", js_device_id)?;
     let js_human_handle = match rs_obj.human_handle {
         Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
-    js_obj.set(cx, "human_handle", js_human_handle)?;
+    js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_device_label = match rs_obj.device_label {
         Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
-    js_obj.set(cx, "device_label", js_device_label)?;
+    js_obj.set(cx, "deviceLabel", js_device_label)?;
     let js_slug = JsString::try_new(cx, rs_obj.slug).or_throw(cx)?;
     js_obj.set(cx, "slug", js_slug)?;
     let js_ty = variant_devicefiletype_rs_to_js(cx, rs_obj.ty)?;

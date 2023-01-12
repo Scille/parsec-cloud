@@ -45,9 +45,9 @@ export type Result<T, E = Error> =
 export interface {{ struct.name }} {
 {% for attr_name, attr_type in struct.attributes.items() %}
 {% if attr_type.kind == "optional" %}
-    {{ attr_name }}: {{ render_type(attr_type) }};
+    {{ attr_name | snake2camel }}: {{ render_type(attr_type) }};
 {% else %}
-    {{ attr_name }}: {{ render_type(attr_type) }};
+    {{ attr_name | snake2camel }}: {{ render_type(attr_type) }};
 {% endif %}
 {% endfor %}
 }
@@ -78,7 +78,7 @@ export type {{ variant.name }} =
 
 {# Methods #}
 {% for meth in api.meths %}
-export function {{ meth.pascalName }}(
+export function {{ meth.name | snake2camel }}(
 {%- for arg_name, arg_type in meth.params.items() -%}
     {{ arg_name }}: {{ render_type(arg_type) }}{{ ", " if not loop.last else "" }}
 {%- endfor -%}
