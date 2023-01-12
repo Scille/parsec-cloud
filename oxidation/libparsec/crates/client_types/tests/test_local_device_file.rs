@@ -5,8 +5,8 @@ use rstest::rstest;
 use std::collections::HashSet;
 
 use libparsec_client_types::{
-    get_default_key_file, list_available_devices, AvailableDevice, DeviceFile, DeviceFilePassword,
-    DeviceFileRecovery, DeviceFileType, LocalDevice, LocalDeviceError,
+    list_available_devices, AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileRecovery,
+    DeviceFileType, LocalDevice, LocalDeviceError,
 };
 use tests_fixtures::{alice, bob, mallory, tmp_path, Device, TmpPath};
 
@@ -182,7 +182,7 @@ fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &
     let bob_device = device_file_factory(bob.clone());
     let mallory_device = device_file_factory(mallory.clone());
 
-    let alice_file_path = get_default_key_file(&tmp_path, &alice);
+    let alice_file_path = LocalDevice::get_default_key_file(&tmp_path, &alice);
     // Device must have a .keys extension, but can be in nested directories with a random name
     let bob_file_path = tmp_path.join("devices/foo/whatever.keys");
     let mallory_file_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
@@ -279,7 +279,7 @@ fn test_available_device_display(tmp_path: TmpPath, alice: &Device) {
     let alice = alice.local_device();
 
     let without_labels = AvailableDevice {
-        key_file_path: get_default_key_file(&tmp_path, &alice).into(),
+        key_file_path: LocalDevice::get_default_key_file(&tmp_path, &alice).into(),
         organization_id: alice.organization_id().clone(),
         device_id: alice.device_id.clone(),
         human_handle: None,
@@ -289,7 +289,7 @@ fn test_available_device_display(tmp_path: TmpPath, alice: &Device) {
     };
 
     let with_labels = AvailableDevice {
-        key_file_path: get_default_key_file(&tmp_path, &alice).into(),
+        key_file_path: LocalDevice::get_default_key_file(&tmp_path, &alice).into(),
         organization_id: alice.organization_id().clone(),
         device_id: alice.device_id.clone(),
         human_handle: alice.human_handle.clone(),

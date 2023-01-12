@@ -85,7 +85,14 @@ from parsec._parsec_pyi.invite import (
     generate_sas_code_candidates,
     generate_sas_codes,
 )
-from parsec._parsec_pyi.local_device import DeviceInfo, LocalDevice, UserInfo
+from parsec._parsec_pyi.local_device import (
+    DeviceInfo,
+    LocalDevice,
+    UserInfo,
+    change_device_password,
+    save_device_with_password,
+    save_device_with_password_in_config,
+)
 from parsec._parsec_pyi.local_manifest import (
     Chunk,
     LocalFileManifest,
@@ -654,6 +661,9 @@ __all__ = [
     "LocalDevice",
     "UserInfo",
     "DeviceInfo",
+    "save_device_with_password",
+    "save_device_with_password_in_config",
+    "change_device_password",
     # File Operations
     "prepare_read",
     "prepare_reshape",

@@ -4,11 +4,11 @@ from __future__ import annotations
 import pytest
 from PyQt5 import QtCore, QtWidgets
 
+from parsec._parsec import save_device_with_password_in_config
 from parsec.api.data import EntryName
 from parsec.api.protocol import UserProfile
 from parsec.core.gui.lang import translate
 from parsec.core.gui.workspace_button import SharingStatus, WorkspaceButton
-from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types import WorkspaceRole
 from tests.common import customize_fixtures
 
