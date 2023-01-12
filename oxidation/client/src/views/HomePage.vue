@@ -36,8 +36,7 @@
                               size="auto"
                               v-if="getDeviceLocalStorageData(device.slug)"
                             >
-                              {{ $t('HomePage.organizationList.organizationCard.lastLogin') }}
-                              {{ $d(getDeviceLocalStorageData(device.slug).lastLogin, 'long') }}
+                              {{ formatLastLogin(getDeviceLocalStorageData(device.slug).lastLogin) }}
                             </ion-col>
                           </ion-row>
                         </ion-grid>
@@ -158,8 +157,14 @@ import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
+import { toComputedKey } from '@babel/types';
 
-const { t } = useI18n();
+export interface DeviceLocalStorageData {
+    slug: string;
+    lastLogin: Date;
+}
+
+const { t, d } = useI18n();
 const deviceList: AvailableDevice[] = [
   {
     'organization_id': 'MegaShark',
@@ -202,15 +207,10 @@ let selectedDevice: AvailableDevice;
 const password = ref('');
 const showOrganizationList = ref(true);
 
-export interface DeviceLocalStorageData {
-    slug: string;
-    lastLogin: Date;
-}
-
 const deviceLocalStorageDataList = [
-  {slug: 'slug1', lastLogin: new Date()},
-  {slug: 'slug2', lastLogin: new Date()},
-  {slug: 'slug3', lastLogin: new Date()}
+  {slug: 'slug1', lastLogin: new Date('01/11/2023')},
+  {slug: 'slug2', lastLogin: new Date('01/12/2023 12:03:05')},
+  {slug: 'slug3', lastLogin: new Date('01/12/2023 15:12:04')}
 ];
 
 function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData {
@@ -230,6 +230,39 @@ function onOrganizationCardClick(device: AvailableDevice): void {
 
 function login(): void {
   console.log(`Log in to ${selectedDevice.organization_id} with password "${password.value}"`);
+}
+
+function formatLastLogin(lastLogin: Date | undefined) : string {
+  if (!lastLogin) {
+    return '';
+  }
+  // Get the difference in ms
+  let diff = Date.now().valueOf() - lastLogin.valueOf();
+  // To seconds
+  diff = Math.ceil(diff / 1000);
+
+  if (diff < 60) {
+    console.log(`${diff} seconds`);
+    return t('HomePage.organizationList.lastLoginSeconds', {seconds: diff}, diff);
+  }
+  // To minutes
+  diff = Math.ceil(diff / 60);
+
+  if (diff < 60) {
+    console.log(`${diff} minutes`);
+    return t('HomePage.organizationList.lastLoginMinutes', {minutes: diff}, diff);
+  }
+
+  // To hours
+  diff = Math.ceil(diff / 60);
+  if (diff < 24) {
+    console.log(`${diff} hours`);
+    return t('HomePage.organizationList.lastLoginHours', {hours: diff}, diff);
+  }
+
+  // Too long, let's use the date as is
+  console.log('Date as is');
+  return t('HomePage.organizationList.lastLogin', {date: d(lastLogin, 'long')});
 }
 
 function onForgottenPasswordClick(): void {

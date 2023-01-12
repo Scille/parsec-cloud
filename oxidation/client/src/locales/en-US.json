@@ -2,9 +2,10 @@
     "HomePage": {
         "organizationList": {
             "title": "List of your organizations",
-            "organizationCard": {
-                "lastLogin": "Last login:"
-            }
+            "lastLogin": "Last login: {date}",
+            "lastLoginSeconds": "Last login: one second ago | Last login: {seconds} seconds ago",
+            "lastLoginMinutes": "Last login: one minute ago | Last login: {minutes} minutes ago",
+            "lastLoginHours": "Last login: one hour ago | Last login: {hours} hours ago"
         },
         "noExistingOrganization": {
             "title": "Need to create or join an organization?",
