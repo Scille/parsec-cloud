@@ -30,7 +30,7 @@ describe('HomePage.vue', () => {
   });
 
   it('renders home vue', () => {
-    expect(wrapper.text()).toMatch(new RegExp('^Welcome. Please add an organization to start using Parsec.'));
+    expect(wrapper.text()).toMatch(new RegExp('^List of your organizations'));
   });
 
   it('calls openCreateOrganizationModal when click on button', () => {

@@ -43,7 +43,7 @@
 <script setup lang="ts">
 import {
   IonSegment, IonSegmentButton, IonToolbar,
-  IonPage, IonButtons, IonContent, IonRouterOutlet, IonHeader, IonTitle, IonLabel, IonBackButton, IonMenuButton
+  IonPage, IonButtons, IonContent, IonRouterOutlet, IonHeader, IonTitle, IonLabel, IonBackButton
 } from '@ionic/vue';
 
 </script>

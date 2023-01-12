@@ -42,7 +42,7 @@ defineProps<{
   label: string
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'change', value: string): void
   (e: 'enter'): void
 }>();
