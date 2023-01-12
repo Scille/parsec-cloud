@@ -78,7 +78,11 @@ class AvailableDevice(Structure):
     ty: DeviceFileType
 
 
-def list_available_devices(path: StrPath) -> List[AvailableDevice]:
+async def list_available_devices(path: StrPath) -> List[AvailableDevice]:
+    ...
+
+
+async def test_gen_default_devices():
     ...
 
 

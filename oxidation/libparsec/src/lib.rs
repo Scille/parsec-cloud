@@ -11,12 +11,14 @@ pub use libparsec_types as types;
 
 pub use libparsec_core as core;
 pub use libparsec_crypto as crypto;
+pub use libparsec_platform_device_loader as platform_device_loader;
 
 // TODO: replace me by the high-level API here ;-)
 pub use libparsec_client_types::{AvailableDevice, DeviceFileType, StrPath};
 pub use libparsec_core::{logged_core_get_test_device_id, login, LoggedCoreError};
+pub use libparsec_platform_device_loader::test_gen_default_devices;
 
-pub fn list_available_devices(config_dir: StrPath) -> Vec<AvailableDevice> {
-    libparsec_client_types::list_available_devices(&std::path::PathBuf::from(config_dir))
-        .unwrap_or_default()
+pub async fn list_available_devices(config_dir: StrPath) -> Vec<AvailableDevice> {
+    libparsec_platform_device_loader::list_available_devices(&std::path::PathBuf::from(config_dir))
+        .await
 }

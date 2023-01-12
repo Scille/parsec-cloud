@@ -17,6 +17,7 @@ on:
 
 env:
   rust-version: 1.66.1
+  node-version: 18.13.0
   python-version: 3.9
   poetry-version: 1.2.2
 

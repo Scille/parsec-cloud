@@ -9,8 +9,6 @@ use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
 use libparsec_types::*;
 
-use crate::{DeviceFile, DeviceFileType, LocalDeviceError};
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
 pub struct LocalDevice {
@@ -43,28 +41,6 @@ impl LocalDevice {
         device_path.push("devices");
 
         device_path
-    }
-
-    pub fn load_device_with_password(
-        key_file: &Path,
-        password: &str,
-    ) -> Result<Self, LocalDeviceError> {
-        let device_file = DeviceFile::load(key_file)?;
-
-        match device_file {
-            DeviceFile::Password(p) => {
-                let key = SecretKey::from_password(password, &p.salt);
-                let data = key
-                    .decrypt(&p.ciphertext)
-                    .map_err(LocalDeviceError::CryptoError)?;
-
-                LocalDevice::load(&data)
-                    .map_err(|_| LocalDeviceError::Validation(DeviceFileType::Password))
-            }
-            _ => unreachable!(
-                "Tried to load recovery/smartcard device with `load_device_with_password`"
-            ),
-        }
     }
 
     pub fn dump(&self) -> Vec<u8> {

@@ -51,5 +51,6 @@ export type LoggedCoreError =
 
 
 export function listAvailableDevices(path: string): Promise<Array<AvailableDevice>>;
+export function testGenDefaultDevices(): Promise<null>;
 export function login(test_device_id: string): Promise<number>;
 export function loggedCoreGetTestDeviceId(handle: number): Promise<Result<string, LoggedCoreError>>;

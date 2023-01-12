@@ -8,6 +8,7 @@ use pyo3::{
 use std::path::PathBuf;
 
 use libparsec::client_types;
+use libparsec::platform_device_loader;
 
 use crate::{
     addrs::BackendOrganizationAddr,
@@ -150,7 +151,7 @@ impl LocalDevice {
         key_file: PathBuf,
         password: &str,
     ) -> LocalDeviceResult<Self> {
-        client_types::LocalDevice::load_device_with_password(&key_file, password)
+        platform_device_loader::load_device_with_password(&key_file, password)
             .map(LocalDevice)
             .map_err(|e| e.into())
     }
@@ -428,7 +429,7 @@ pub(crate) fn save_device_with_password(
     password: &str,
     force: bool,
 ) -> LocalDeviceResult<()> {
-    client_types::save_device_with_password(&key_file, &device.0, password, force)
+    platform_device_loader::save_device_with_password(&key_file, &device.0, password, force)
         .map_err(|e| e.into())
 }
 
@@ -438,7 +439,7 @@ pub(crate) fn save_device_with_password_in_config(
     device: &LocalDevice,
     password: &str,
 ) -> LocalDeviceResult<PathBuf> {
-    client_types::save_device_with_password_in_config(&config_dir, &device.0, password)
+    platform_device_loader::save_device_with_password_in_config(&config_dir, &device.0, password)
         .map_err(|e| e.into())
 }
 
@@ -448,7 +449,7 @@ pub(crate) fn change_device_password(
     old_password: &str,
     new_password: &str,
 ) -> LocalDeviceResult<()> {
-    client_types::change_device_password(&key_file, old_password, new_password)
+    platform_device_loader::change_device_password(&key_file, old_password, new_password)
         .map_err(|e| e.into())
 }
 
@@ -481,7 +482,7 @@ impl AvailableDevice {
     #[classmethod]
     fn load(_cls: &PyType, key_file_path: PathBuf) -> LocalDeviceResult<Self> {
         Ok(Self(
-            client_types::AvailableDevice::load(key_file_path)
+            platform_device_loader::load_available_device(key_file_path)
                 .map_err(|e| LocalDeviceExc(Box::new(e)))?,
         ))
     }
@@ -549,7 +550,7 @@ crate::binding_utils::gen_proto!(AvailableDevice, __hash__);
 pub(crate) fn list_available_devices(
     config_dir: PathBuf,
 ) -> LocalDeviceResult<Vec<AvailableDevice>> {
-    client_types::list_available_devices(&config_dir)
+    platform_device_loader::list_available_devices_core(&config_dir)
         .map(|devices| devices.iter().map(|d| AvailableDevice(d.clone())).collect())
         .map_err(|e| LocalDeviceExc(Box::new(e)))
 }
@@ -559,7 +560,7 @@ pub(crate) fn get_available_device(
     config_dir: PathBuf,
     slug: &str,
 ) -> LocalDeviceResult<AvailableDevice> {
-    client_types::get_available_device(&config_dir, slug)
+    platform_device_loader::get_available_device(&config_dir, slug)
         .map(AvailableDevice)
         .map_err(|e| LocalDeviceExc(Box::new(e)))
 }

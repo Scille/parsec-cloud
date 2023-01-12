@@ -1,0 +1,28 @@
+[package]
+name = "libparsec_platform_device_loader"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["use-rustcrypto"]
+use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
+use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+
+[dependencies]
+libparsec_client_types = { path = "../client_types", default-features = false }
+libparsec_crypto = { path = "../crypto", default-features = false }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+base64 = "0.21.0"
+web-sys = { version = "0.3.60", features = ["Window", "Storage"] }
+
+[dev-dependencies]
+tests_fixtures = { path = "../tests_fixtures" }
+
+tokio = "1.24.1"
+base64 = "0.21.0"
+rstest = "0.16.0"
+
+[[test]]
+name = "integration"
+path = "tests/mod.rs"
