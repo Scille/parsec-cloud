@@ -6,7 +6,7 @@
       <ion-row class="ion-align-items-center">
         <ion-col size="auto">
           <ion-avatar>
-            <span>{{ device.organization_id?.substring(0, 2) }}</span>
+            <span>{{ device.organizationId?.substring(0, 2) }}</span>
           </ion-avatar>
         </ion-col>
         <ion-col
@@ -14,10 +14,10 @@
           class="organization-info"
         >
           <p class="organization-label">
-            {{ device.organization_id }}
+            {{ device.organizationId }}
           </p>
           <p>
-            {{ device.human_handle }}
+            {{ device.humanHandle }}
           </p>
         </ion-col>
       </ion-row>

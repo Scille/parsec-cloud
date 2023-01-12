@@ -157,7 +157,6 @@ import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
-import { toComputedKey } from '@babel/types';
 
 export interface DeviceLocalStorageData {
     slug: string;
@@ -167,40 +166,40 @@ export interface DeviceLocalStorageData {
 const { t, d } = useI18n();
 const deviceList: AvailableDevice[] = [
   {
-    'organization_id': 'MegaShark',
-    'human_handle': 'Maxime Grandcolas',
-    'device_label': 'device_label',
-    'key_file_path': 'key_file_path',
-    'device_id': 'device_id',
-    'slug': 'slug1',
-    'ty': {'tag': 'Password'}
+    organizationId: 'MegaShark',
+    humanHandle: 'Maxime Grandcolas',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug1',
+    ty: {tag: 'Password'}
   },
   {
-    'organization_id': 'Resana',
-    'human_handle': 'Maxime Grandcolas',
-    'device_label': 'device_label',
-    'key_file_path': 'key_file_path',
-    'device_id': 'device_id',
-    'slug': 'slug2',
-    'ty': {'tag': 'Password'}
+    organizationId: 'Resana',
+    humanHandle: 'Maxime Grandcolas',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug2',
+    ty: {tag: 'Password'}
   },
   {
-    'organization_id': 'Oxymore',
-    'human_handle': 'Maxime Grandcolas',
-    'device_label': 'device_label',
-    'key_file_path': 'key_file_path',
-    'device_id': 'device_id',
-    'slug': 'slug3',
-    'ty': {'tag': 'Password'}
+    organizationId: 'Oxymore',
+    humanHandle: 'Maxime Grandcolas',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug3',
+    ty: {tag: 'Password'}
   },
   {
-    'organization_id': 'Eddy',
-    'human_handle': 'Maxime Grandcolas',
-    'device_label': 'device_label',
-    'key_file_path': 'key_file_path',
-    'device_id': 'device_id',
-    'slug': 'slug4',
-    'ty': {'tag': 'Password'}
+    organizationId: 'Eddy',
+    humanHandle: 'Maxime Grandcolas',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug4',
+    ty: {tag: 'Password'}
   }
 ];
 let selectedDevice: AvailableDevice;
@@ -229,7 +228,7 @@ function onOrganizationCardClick(device: AvailableDevice): void {
 }
 
 function login(): void {
-  console.log(`Log in to ${selectedDevice.organization_id} with password "${password.value}"`);
+  console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
 }
 
 function formatLastLogin(lastLogin: Date | undefined) : string {
