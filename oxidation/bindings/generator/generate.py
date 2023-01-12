@@ -4,6 +4,7 @@ from types import ModuleType
 from typing import Union, Dict, List, OrderedDict, Type, Optional
 from importlib import import_module
 import argparse
+import inspect
 from dataclasses import dataclass
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from pathlib import Path
@@ -31,6 +32,24 @@ env = Environment(
     undefined=StrictUndefined,
     keep_trailing_newline=True,
 )
+
+
+def snake_case_to_camel_case(s: str) -> str:
+    camel = ""
+    next_is_uppercase = False
+    for c in s:
+        if c == "_":
+            next_is_uppercase = True
+            continue
+        if next_is_uppercase:
+            camel += c.upper()
+            next_is_uppercase = False
+        else:
+            camel += c
+    return camel
+
+
+env.filters["snake2camel"] = snake_case_to_camel_case
 
 
 def _raise_helper(msg):
@@ -136,21 +155,6 @@ class MethSpec:
     params: OrderedDict[str, BaseTypeInUse]
     return_type: Optional[BaseTypeInUse]
     is_async: bool
-
-    @property
-    def pascalName(self):
-        camel = ""
-        next_is_uppercase = False
-        for c in self.name:
-            if c == "_":
-                next_is_uppercase = True
-                continue
-            if next_is_uppercase:
-                camel += c.upper()
-                next_is_uppercase = False
-            else:
-                camel += c
-        return camel
 
 
 @dataclass
