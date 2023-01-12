@@ -238,30 +238,26 @@ function formatLastLogin(lastLogin: Date | undefined) : string {
   }
   // Get the difference in ms
   let diff = Date.now().valueOf() - lastLogin.valueOf();
+
   // To seconds
   diff = Math.ceil(diff / 1000);
-
   if (diff < 60) {
-    console.log(`${diff} seconds`);
     return t('HomePage.organizationList.lastLoginSeconds', {seconds: diff}, diff);
   }
+
   // To minutes
   diff = Math.ceil(diff / 60);
-
   if (diff < 60) {
-    console.log(`${diff} minutes`);
     return t('HomePage.organizationList.lastLoginMinutes', {minutes: diff}, diff);
   }
 
   // To hours
   diff = Math.ceil(diff / 60);
   if (diff < 24) {
-    console.log(`${diff} hours`);
     return t('HomePage.organizationList.lastLoginHours', {hours: diff}, diff);
   }
 
   // Too long, let's use the date as is
-  console.log('Date as is');
   return t('HomePage.organizationList.lastLogin', {date: d(lastLogin, 'long')});
 }
 
