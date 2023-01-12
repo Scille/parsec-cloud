@@ -11,10 +11,12 @@ pub mod wasm32;
 pub use wasm32 as platform;
 
 pub use flume as channel;
-pub use futures::prelude::*;
-pub use futures::select;
-pub use platform::join_set::JoinSet;
-pub use platform::sleep;
-pub use platform::sync::watch;
-pub use platform::sync::Notify;
-pub use platform::task::{spawn, Task};
+pub use futures::{self, prelude::*, select};
+pub use platform::{
+    join_set::JoinSet,
+    sleep,
+    sync::{watch, Notify},
+    task::{spawn, Task},
+};
+#[cfg(not(target_arch = "wasm32"))]
+pub use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError};
