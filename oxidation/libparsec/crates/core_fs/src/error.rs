@@ -8,8 +8,8 @@ use libparsec_types::{EntryID, FileDescriptor};
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum FSError {
-    #[error("ConfigurationError")]
-    Configuration,
+    #[error("ConfigurationError: {0}")]
+    Configuration(String),
 
     #[error("ConnectionError: {0}")]
     Connection(String),
@@ -92,6 +92,41 @@ impl From<diesel::result::Error> for FSError {
                 Self::DatabaseOperationalError(msg.message().to_string())
             }
             _ => Self::DatabaseQueryError(e.to_string()),
+        }
+    }
+}
+
+impl From<diesel::result::ConnectionError> for FSError {
+    fn from(e: diesel::result::ConnectionError) -> Self {
+        match e {
+            diesel::ConnectionError::InvalidCString(e) => {
+                Self::Configuration(format!("Invalid c string: {e}"))
+            }
+            diesel::ConnectionError::BadConnection(e) => {
+                Self::Configuration(format!("Bad connection: {e}"))
+            }
+            diesel::ConnectionError::InvalidConnectionUrl(e) => {
+                Self::Configuration(format!("Invalid connection url: {e}"))
+            }
+            diesel::ConnectionError::CouldntSetupConfiguration(e) => {
+                Self::Configuration(format!("Couldnt setup configuration: {e}"))
+            }
+            _ => Self::Configuration("Unknown error".to_string()),
+        }
+    }
+}
+
+impl From<local_db::DatabaseError> for FSError {
+    fn from(e: local_db::DatabaseError) -> Self {
+        match e {
+            local_db::DatabaseError::Closed => {
+                Self::DatabaseClosed("Database is closed".to_string())
+            }
+            local_db::DatabaseError::DieselDatabaseError(kind, err) => {
+                Self::from(diesel::result::Error::DatabaseError(kind, err))
+            }
+            local_db::DatabaseError::Diesel(e) => Self::from(e),
+            local_db::DatabaseError::DieselConnectionError(e) => Self::from(e),
         }
     }
 }
