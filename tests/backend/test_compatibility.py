@@ -8,6 +8,7 @@ from parsec.api.protocol.handshake import (
     AuthenticatedClientHandshake,
     HandshakeType,
     ServerHandshake,
+    answer_serializer,
     handshake_answer_serializer,
     handshake_challenge_serializer,
     handshake_result_serializer,
@@ -78,15 +79,10 @@ def test_handshake_challenge_schema_for_client_server_api_compatibility(
 ):
     ash = ServerHandshake()
 
-    bch = AuthenticatedClientHandshake(
-        mallory.organization_id, mallory.device_id, mallory.signing_key, mallory.root_verify_key
-    )
-
     challenge = b"1234567890"
 
-    # Backend API >= 2.5 and Client API < 2.5
+    # Test server handshake: client API <= 2.4 server > 3.0
     client_version = ApiVersion(2, 4)
-    backend_version = ApiVersion(2, 5)
 
     answer = {
         "handshake": "answer",
@@ -100,21 +96,43 @@ def test_handshake_challenge_schema_for_client_server_api_compatibility(
 
     ash.build_challenge_req()
     ash.challenge = challenge
-
     ash.process_answer_req(packb(answer))
     result_req = ash.build_result_req(alice.verify_key)
-
     result = handshake_result_serializer.loads(result_req)
     assert result["result"] == "ok"
 
-    # Backend API < 2.5 and Client API >= 2.5
-    client_version = ApiVersion(2, 5)
-    backend_version = ApiVersion(2, 4)
+    # Test server handshake: client API <= 2.8 server > 3.0
+
+    ash = ServerHandshake()
+    client_version = ApiVersion(2, 8)
+    answer = {
+        "handshake": "answer",
+        "type": HandshakeType.AUTHENTICATED.value,
+        "client_api_version": client_version,
+        "organization_id": alice.organization_id.str,
+        "device_id": alice.device_id.str,
+        "rvk": alice.root_verify_key.encode(),
+        "answer": alice.signing_key.sign(answer_serializer.dumps({"answer": challenge})),
+    }
+    ash.build_challenge_req()
+    ash.challenge = challenge
+    ash.process_answer_req(packb(answer))
+    result_req = ash.build_result_req(alice.verify_key)
+    result = handshake_result_serializer.loads(result_req)
+    assert result["result"] == "ok"
+
+    # Authenticated client handsake: client api < 3
+
+    bch = AuthenticatedClientHandshake(
+        mallory.organization_id, mallory.device_id, mallory.signing_key, mallory.root_verify_key
+    )
+
+    client_version = ApiVersion(2, 8)
 
     req = {
         "handshake": "challenge",
         "challenge": challenge,
-        "supported_api_versions": [backend_version],
+        "supported_api_versions": ServerHandshake.SUPPORTED_API_VERSIONS,
         "backend_timestamp": DateTime.now(),
         "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
         "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
@@ -125,4 +143,6 @@ def test_handshake_challenge_schema_for_client_server_api_compatibility(
     answer_req = bch.process_challenge_req(packb(req))
 
     answer = handshake_answer_serializer.loads(answer_req)
-    assert mallory.verify_key.verify(answer["answer"]) == challenge
+    assert mallory.verify_key.verify(answer["answer"]) == answer_serializer.dumps(
+        {"answer": challenge}
+    )

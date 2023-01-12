@@ -362,29 +362,27 @@ class BaseClientHandshake:
         ballpark_client_early_offset = self.challenge_data["ballpark_client_early_offset"]
         ballpark_client_late_offset = self.challenge_data["ballpark_client_late_offset"]
 
-        # Those fields are missing with parsec API 2.3 and lower
-        if (
-            backend_timestamp is not None
-            and ballpark_client_early_offset is not None
-            and ballpark_client_late_offset is not None
+        # Sanity check due to old APIV2 compatibility
+        assert backend_timestamp is not None
+        assert ballpark_client_early_offset is not None
+        assert ballpark_client_late_offset is not None
+
+        # Add `client_timestamp` to challenge data
+        # so the dictionary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+        self.challenge_data["client_timestamp"] = self.client_timestamp
+
+        # The client is a bit less tolerant than the backend
+        ballpark_client_early_offset *= BALLPARK_CLIENT_TOLERANCE
+        ballpark_client_late_offset *= BALLPARK_CLIENT_TOLERANCE
+
+        # Check whether our system clock is in sync with the backend
+        if not timestamps_in_the_ballpark(
+            client=self.client_timestamp,
+            backend=backend_timestamp,
+            ballpark_client_early_offset=ballpark_client_early_offset,
+            ballpark_client_late_offset=ballpark_client_late_offset,
         ):
-
-            # Add `client_timestamp` to challenge data
-            # so the dictionary exposes the same fields as `TimestampOutOfBallparkRepSchema`
-            self.challenge_data["client_timestamp"] = self.client_timestamp
-
-            # The client is a bit less tolerant than the backend
-            ballpark_client_early_offset *= BALLPARK_CLIENT_TOLERANCE
-            ballpark_client_late_offset *= BALLPARK_CLIENT_TOLERANCE
-
-            # Check whether our system clock is in sync with the backend
-            if not timestamps_in_the_ballpark(
-                client=self.client_timestamp,
-                backend=backend_timestamp,
-                ballpark_client_early_offset=ballpark_client_early_offset,
-                ballpark_client_late_offset=ballpark_client_late_offset,
-            ):
-                raise HandshakeOutOfBallparkError(self.challenge_data)
+            raise HandshakeOutOfBallparkError(self.challenge_data)
 
     def process_result_req(self, req: bytes) -> None:
         data = handshake_result_serializer.loads(req)
@@ -411,7 +409,7 @@ class BaseClientHandshake:
 
 
 class AuthenticatedClientHandshake(BaseClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V2_VERSION, API_V3_VERSION)
+    SUPPORTED_API_VERSIONS = (API_V3_VERSION,)
     HANDSHAKE_TYPE: HandshakeType = HandshakeType.AUTHENTICATED
     HANDSHAKE_ANSWER_SERIALIZER = handshake_answer_serializer
 
@@ -434,16 +432,10 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
         assert isinstance(challenge, bytes)
 
-        # Provides compatibility with API version 2.4 and below
-        # TODO: Remove once API v2.x is deprecated
-        if ApiVersion(2, 0) <= self.backend_api_version < ApiVersion(2, 5):
-            answer = self.user_signkey.sign(challenge)
-
         # Used in API v2.5+ and API v3.x
-        else:
-            answer = self.user_signkey.sign(
-                answer_serializer.dumps({"type": "signed_answer", "answer": challenge})
-            )
+        answer = self.user_signkey.sign(
+            answer_serializer.dumps({"type": "signed_answer", "answer": challenge})
+        )
 
         return self.HANDSHAKE_ANSWER_SERIALIZER.dumps(
             {
@@ -459,7 +451,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
 
 class InvitedClientHandshake(BaseClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V2_VERSION, API_V3_VERSION)
+    SUPPORTED_API_VERSIONS = (API_V3_VERSION,)
 
     def __init__(
         self,
