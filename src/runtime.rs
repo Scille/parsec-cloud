@@ -83,15 +83,37 @@ impl TokioTaskAborterFromTrio {
 
 #[pyclass]
 pub(crate) struct FutureIntoCoroutine(
-    Option<Pin<Box<dyn Future<Output = PyResult<()>> + Send + 'static>>>,
+    Option<Pin<Box<dyn Future<Output = PyResult<PyObject>> + Send + 'static>>>,
 );
 
 impl FutureIntoCoroutine {
     pub fn new<F>(fut: F) -> Self
     where
-        F: Future<Output = PyResult<()>> + Send + 'static,
+        F: Future<Output = PyResult<PyObject>> + Send + 'static,
     {
         FutureIntoCoroutine(Some(Box::pin(fut)))
+    }
+
+    pub fn from<F, R>(fut: F) -> Self
+    where
+        F: Future<Output = PyResult<R>> + Send + 'static,
+        R: IntoPy<PyObject>,
+    {
+        FutureIntoCoroutine(Some(Box::pin(async move {
+            let res = fut.await?;
+            Python::with_gil(|py| Ok(res.into_py(py)))
+        })))
+    }
+
+    pub fn from_safe<F, R>(fut: F) -> Self
+    where
+        F: Future<Output = R> + Send + 'static,
+        R: IntoPy<PyObject>,
+    {
+        Self::from(async move {
+            let res: R = fut.await;
+            Ok(res)
+        })
     }
 }
 
@@ -143,7 +165,7 @@ impl FutureIntoCoroutine {
                 ) {
                     Ok(_) => (),
                     // We can ignore the error if the trio loop has been closed...
-                    Err(err) if err.is_instance_of::<RunFinishedError>(py)  => (),
+                    Err(err) if err.is_instance_of::<RunFinishedError>(py) => (),
                     // ...but for any other exception there is not much we can do :'(
                     Err(err) => {
                         panic!("Cannot call `TrioToken.run_sync_soon(trio.lowlevel.reschedule, <outcome>)`: {:?}", err);
