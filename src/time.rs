@@ -47,7 +47,7 @@ impl TimeProvider {
     // Booyakasha !
     pub fn sleep(&self, time: f64) -> FutureIntoCoroutine {
         let time_provider = self.0.clone();
-        FutureIntoCoroutine::new(async move {
+        FutureIntoCoroutine::from(async move {
             time_provider
                 .sleep(libparsec::types::Duration::microseconds(
                     (time * 1e6) as i64,
