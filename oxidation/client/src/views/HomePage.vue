@@ -1,5 +1,4 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
-
 <template>
   <ion-page>
     <ion-content
@@ -34,9 +33,9 @@
                           <ion-row>
                             <ion-col
                               size="auto"
-                              v-if="getDeviceLocalStorageData(device.slug)"
+                              v-if="deviceLocalStorageDataList[device.slug]"
                             >
-                              {{ formatLastLogin(getDeviceLocalStorageData(device.slug).lastLogin) }}
+                              {{ formatLastLogin(deviceLocalStorageDataList[device.slug].lastLogin) }}
                             </ion-col>
                           </ion-row>
                         </ion-grid>
@@ -150,16 +149,16 @@ import {
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
-import { ref } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
+import { Storage } from '@ionic/storage';
 
 export interface DeviceLocalStorageData {
-    slug: string;
     lastLogin: Date;
 }
 
@@ -205,18 +204,23 @@ const deviceList: AvailableDevice[] = [
 let selectedDevice: AvailableDevice;
 const password = ref('');
 const showOrganizationList = ref(true);
+const store = new Storage();
 
-const deviceLocalStorageDataList = [
-  {slug: 'slug1', lastLogin: new Date('01/11/2023')},
-  {slug: 'slug2', lastLogin: new Date('01/12/2023 12:03:05')},
-  {slug: 'slug3', lastLogin: new Date('01/12/2023 15:12:04')}
-];
+const deviceLocalStorageDataList = ref({});
 
-function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData {
-  return deviceLocalStorageDataList.find((device) => {
-    return device.slug === deviceSlug;
-  });
-}
+onMounted(async (): Promise<void> => {
+  await store.create();
+  deviceLocalStorageDataList.value = await store.get('devicesData') || {};
+  // temporary, delete this when true data will exists by bindings
+  if (Object.keys(deviceLocalStorageDataList.value).length === 0) {
+    deviceLocalStorageDataList.value = {
+      slug1: { lastLogin: new Date('01/11/2023') },
+      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
+      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
+    };
+    await store.set('devicesData', toRaw(deviceLocalStorageDataList.value));
+  }
+});
 
 function onPasswordChange(pwd: string): void {
   password.value = pwd;
@@ -227,7 +231,16 @@ function onOrganizationCardClick(device: AvailableDevice): void {
   selectedDevice = device;
 }
 
-function login(): void {
+async function login(): Promise<void> {
+  await store.create();
+  if (!deviceLocalStorageDataList.value[selectedDevice.slug]) {
+    deviceLocalStorageDataList.value[selectedDevice.slug] = {
+      lastLogin: new Date()
+    };
+  } else {
+    deviceLocalStorageDataList.value[selectedDevice.slug].lastLogin = new Date();
+  }
+  await store.set('devicesData', toRaw(deviceLocalStorageDataList.value));
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
 }
 
