@@ -36,7 +36,7 @@
                               size="auto"
                               v-if="getDeviceLocalStorageData(device.slug)"
                             >
-                              {{ formatLastLogin(getDeviceLocalStorageData(device.slug).lastLogin) }}
+                              {{ formatLastLogin((getDeviceLocalStorageData(device.slug) as DeviceLocalStorageData).lastLogin) }}
                             </ion-col>
                           </ion-row>
                         </ion-grid>
@@ -212,7 +212,7 @@ const deviceLocalStorageDataList = [
   {slug: 'slug3', lastLogin: new Date('01/12/2023 15:12:04')}
 ];
 
-function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData {
+function getDeviceLocalStorageData(deviceSlug: string): DeviceLocalStorageData | undefined {
   return deviceLocalStorageDataList.find((device) => {
     return device.slug === deviceSlug;
   });
