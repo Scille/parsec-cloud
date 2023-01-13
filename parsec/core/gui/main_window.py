@@ -11,7 +11,13 @@ from PyQt5.QtWidgets import QMainWindow, QMenu, QMenuBar, QShortcut, QWidget
 from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
-from parsec._parsec import CoreEvent, InvitationType
+from parsec._parsec import (
+    CoreEvent,
+    DeviceFileType,
+    InvitationType,
+    get_available_device,
+    list_available_devices,
+)
 from parsec.core import win_registry
 from parsec.core.config import CoreConfig, save_config
 from parsec.core.gui import desktop, telemetry, validators
@@ -44,12 +50,7 @@ from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.ui.main_window import Ui_MainWindow
-from parsec.core.local_device import (
-    DeviceFileType,
-    get_available_device,
-    get_key_file,
-    list_available_devices,
-)
+from parsec.core.local_device import get_key_file
 from parsec.core.pki import is_pki_enrollment_available
 from parsec.core.types import (
     BackendActionAddr,
@@ -373,6 +374,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         @self._bind_async_callback
         async def _on_finished() -> None:
+            from parsec._parsec import get_available_device
+
             nonlocal widget
             # It's safe to access the widget status here since this does not perform a Qt call.
             # But the underlying C++ widget might already be deleted so we should make sure not
@@ -395,7 +398,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 DeviceRecoveryExportWidget.show_modal(
                     self.config,
                     self.jobs_ctx,
-                    [get_available_device(self.config.config_dir, device)],
+                    [get_available_device(self.config.config_dir, device.slug)],
                     parent=self,
                 )
 
@@ -498,7 +501,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 DeviceRecoveryExportWidget.show_modal(
                     self.config,
                     self.jobs_ctx,
-                    [get_available_device(self.config.config_dir, device)],
+                    [get_available_device(self.config.config_dir, device.slug)],
                     self,
                 )
 
@@ -541,7 +544,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             tab = self.add_new_tab()
         else:
             tab = self.tab_center.widget(idx)
-        kf = get_key_file(self.config.config_dir, device)
+        kf = get_key_file(self.config.config_dir, device.slug)
         if auth_method == DeviceFileType.PASSWORD:
             tab.login_with_password(kf, password)
         elif auth_method == DeviceFileType.SMARTCARD:

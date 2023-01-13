@@ -12,7 +12,7 @@ from msgpack import packb as msgpack_packb
 from msgpack import unpackb as msgpack_unpackb
 from msgpack.exceptions import ExtraData, FormatError, StackError
 
-from parsec._parsec import ApiVersion, DateTime
+from parsec._parsec import ApiVersion, DateTime, DeviceFileType
 from parsec.serde.exceptions import SerdePackingError
 
 MAX_BIN_LEN = 1024 * 1024  # 1 MB
@@ -49,6 +49,8 @@ def _unpackb_ext_hook(code: int, data: bytes) -> Any:
         return UUID(bytes=data)
     elif code == 3:
         return ApiVersion.from_bytes(data)
+    elif code == 4:
+        return DeviceFileType.load(data)
 
     return ExtType(code, data)
 

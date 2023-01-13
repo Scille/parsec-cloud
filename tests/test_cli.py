@@ -5,6 +5,7 @@ import os
 import re
 from functools import partial
 from pathlib import Path
+from traceback import print_exception
 from uuid import UUID
 
 import click
@@ -821,6 +822,7 @@ def test_pki_enrollment_not_available(tmp_path, alice, no_parsec_extension):
     ]:
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 1
+        print_exception(*result.exc_info)
         assert "Error: Parsec smartcard extension not available" in result.output
 
 
