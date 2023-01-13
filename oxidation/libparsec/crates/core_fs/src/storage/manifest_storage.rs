@@ -345,7 +345,7 @@ impl ManifestStorage {
         // It is difficult to build a raw sql query with bind in a for loop
         // Another solution is to query all data then insert
 
-        for (id, version) in changed_vlobs.iter().cloned() {
+        for (id, version) in changed_vlobs.iter().copied() {
             self.conn
                 .exec_with_error_handler(
                     move |conn| {
@@ -527,19 +527,19 @@ impl ManifestStorage {
             .await
     }
 
-    async fn ensure_manifest_persistent_unlock<'a>(
+    async fn ensure_manifest_persistent_unlock(
         &self,
         entry_id: EntryID,
-        mut cache: AsyncMutexGuard<'a, CacheEntry>,
+        mut cache: AsyncMutexGuard<'_, CacheEntry>,
     ) -> FSResult<()> {
         if let (Some(manifest), Some(pending_chunk_ids)) =
-            (cache.manifest.clone(), cache.pending_chunk_ids.clone())
+            (cache.manifest.as_ref(), cache.pending_chunk_ids.clone())
         {
             let ciphered = manifest.dump_and_encrypt(&self.local_symkey);
-            let chunk_ids = pending_chunk_ids
-                .iter()
-                .map(|chunk_id| chunk_id.as_ref().to_vec())
-                .collect::<Vec<_>>();
+            let chunk_ids = pending_chunk_ids.into_iter().collect::<Vec<_>>();
+
+            let manifest_need_sync = manifest.need_sync();
+            let manifest_base_version = manifest.base_version() as i64;
 
             self.conn.exec(move |conn| {
                 let vlob_id = (*entry_id).as_ref();
@@ -554,23 +554,25 @@ impl ManifestStorage {
                         )")
                         .bind::<diesel::sql_types::Binary, _>(vlob_id)
                         .bind::<diesel::sql_types::Binary, _>(ciphered)
-                        .bind::<diesel::sql_types::Bool, _>(manifest.need_sync())
-                        .bind::<diesel::sql_types::BigInt, _>(manifest.base_version() as i64)
-                        .bind::<diesel::sql_types::BigInt, _>(manifest.base_version() as i64)
+                        .bind::<diesel::sql_types::Bool, _>(manifest_need_sync)
+                        .bind::<diesel::sql_types::BigInt, _>(manifest_base_version)
+                        .bind::<diesel::sql_types::BigInt, _>(manifest_base_version)
                         .bind::<diesel::sql_types::Binary, _>(vlob_id)
                         .execute(conn)
             }).await?;
 
-            for pending_chunk_id in chunk_ids
+            for pending_ids in chunk_ids
                 .chunks(LOCAL_DATABASE_MAX_VARIABLE_NUMBER)
                 .map(|chunk| chunk.to_vec())
             {
                 self.conn
                     .exec(move |conn| {
-                        diesel::delete(
-                            chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_id)),
-                        )
-                        .execute(conn)
+                        let ids = pending_ids.iter().map(ChunkOrBlockID::as_ref);
+                        let query = chunks::table.filter(chunks::chunk_id.eq_any(ids));
+                        let res: diesel::result::QueryResult<usize> =
+                            diesel::delete(query).execute(conn);
+
+                        res
                     })
                     .await?;
             }
@@ -613,21 +615,17 @@ impl ManifestStorage {
             > 0;
 
         if let Some(pending_chunk_ids) = cache_unlock.pending_chunk_ids.clone() {
-            let pending_chunk_ids = pending_chunk_ids
-                .iter()
-                .map(|chunk| chunk.as_ref().to_vec())
-                .collect::<Vec<_>>();
+            let pending_chunk_ids = pending_chunk_ids.into_iter().collect::<Vec<_>>();
 
-            for pending_chunk_ids_chunk in pending_chunk_ids
+            for chunked_ids in pending_chunk_ids
                 .chunks(LOCAL_DATABASE_MAX_VARIABLE_NUMBER)
                 .map(|chunks| chunks.to_vec())
             {
                 self.conn
                     .exec(move |conn| {
-                        diesel::delete(
-                            chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
-                        )
-                        .execute(conn)
+                        let ids = chunked_ids.iter().map(ChunkOrBlockID::as_ref);
+                        let query = chunks::table.filter(chunks::chunk_id.eq_any(ids));
+                        diesel::delete(query).execute(conn)
                     })
                     .await?;
             }

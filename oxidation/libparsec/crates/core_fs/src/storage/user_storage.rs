@@ -51,7 +51,6 @@ impl UserStorage {
     /// Event tho they will be closes when [UserStorage] is dropped.
     pub async fn close_connections(&self) {
         self.data_conn.close().await
-        // self.data_conn.close_connection()
     }
 
     // Checkpoint Interface

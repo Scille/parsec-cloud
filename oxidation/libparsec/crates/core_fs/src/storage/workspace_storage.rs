@@ -50,7 +50,7 @@ impl<T: Eq + Hash + Copy> Locker<T> {
         map.get(&id).unwrap_or_else(|| unreachable!()).clone()
     }
 
-    async fn release<'a>(&self, id: T, guard: AsyncMutexGuard<'a, ()>) {
+    async fn release(&self, id: T, guard: AsyncMutexGuard<'_, ()>) {
         drop(guard);
         self.0.lock().await.remove(&id);
     }
@@ -173,7 +173,7 @@ impl WorkspaceStorage {
         self.entry_locks.acquire(entry_id).await
     }
 
-    pub async fn release_entry_id<'a>(&self, entry_id: EntryID, guard: AsyncMutexGuard<'a, ()>) {
+    pub async fn release_entry_id(&self, entry_id: EntryID, guard: AsyncMutexGuard<'_, ()>) {
         self.entry_locks.release(entry_id, guard).await
     }
 
@@ -509,7 +509,7 @@ impl WorkspaceStorageSnapshot {
             .lock()
             .expect("Mutex is poisoned")
             .get(&fd)
-            .cloned()
+            .copied()
             .ok_or(FSError::InvalidFileDescriptor(fd))?;
 
         match self.get_manifest(entry_id).await {
@@ -599,7 +599,7 @@ impl WorkspaceStorageSnapshot {
         self.workspace_storage.lock_entry_id(entry_id).await
     }
 
-    pub async fn release_entry_id<'a>(&self, entry_id: EntryID, guard: AsyncMutexGuard<'a, ()>) {
+    pub async fn release_entry_id(&self, entry_id: EntryID, guard: AsyncMutexGuard<'_, ()>) {
         self.workspace_storage
             .release_entry_id(entry_id, guard)
             .await
