@@ -3,7 +3,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use sha2::Digest;
-use std::path::{Path, PathBuf};
 
 use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
@@ -48,23 +47,6 @@ impl LocalDevice {
             local_symkey: SecretKey::generate(),
             time_provider: TimeProvider::default(),
         }
-    }
-
-    pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
-        let mut default_key_path = Self::get_devices_dir(config_dir);
-        default_key_path.push(format!(
-            "{}.{}",
-            device.slughash(),
-            crate::DEVICE_FILE_SUFFIX
-        ));
-        default_key_path
-    }
-
-    pub fn get_devices_dir(config_dir: &Path) -> PathBuf {
-        let mut device_path = config_dir.to_path_buf();
-        device_path.push("devices");
-
-        device_path
     }
 
     pub fn dump(&self) -> Vec<u8> {
