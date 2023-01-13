@@ -2,9 +2,11 @@
 
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
+use sha2::{Digest, Sha256};
 use std::{
     collections::HashSet,
     ffi::OsStr,
+    fmt::Write,
     fs::File,
     path::{Path, PathBuf},
 };
@@ -94,12 +96,39 @@ impl DeviceFile {
             .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))
     }
 
-    fn load(key_file_path: &Path) -> LocalDeviceResult<Self> {
+    pub fn load(key_file_path: &Path) -> LocalDeviceResult<Self> {
         let data = std::fs::read(key_file_path)
             .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))?;
 
+        // In case of failure try to load a legacy_device and convert it to a
+        // regular device file
         rmp_serde::from_slice::<DeviceFile>(&data)
             .map_err(|_| LocalDeviceError::Deserialization(key_file_path.to_path_buf()))
+            .or_else(|_| Self::load_legacy_device_file(key_file_path, &data))
+    }
+
+    fn load_legacy_device_file(
+        key_file: &Path,
+        ciphertext: &[u8],
+    ) -> LocalDeviceResult<DeviceFile> {
+        let LegacyDeviceFile::Password(legacy_device) =
+            rmp_serde::from_slice::<LegacyDeviceFile>(ciphertext)
+                .map_err(|_| LocalDeviceError::Deserialization(key_file.to_path_buf()))?;
+
+        // Legacy device slug is their stem
+        let slug = key_file.file_stem().unwrap().to_str().unwrap();
+        let (organization_id, device_id) =
+            LocalDevice::load_slug(slug).map_err(|_| LocalDeviceError::InvalidSlug)?;
+
+        Ok(DeviceFile::Password(crate::DeviceFilePassword {
+            salt: legacy_device.salt,
+            ciphertext: legacy_device.ciphertext,
+            human_handle: legacy_device.human_handle,
+            device_label: legacy_device.device_label,
+            device_id,
+            organization_id,
+            slug: Some(slug.to_string()),
+        }))
     }
 }
 
@@ -137,12 +166,22 @@ impl LegacyDeviceFile {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceFileType {
     Password,
     Recovery,
     Smartcard,
+}
+
+impl DeviceFileType {
+    pub fn dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
+        rmp_serde::to_vec_named(self)
+    }
+
+    pub fn load(bytes: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
+        rmp_serde::from_slice(bytes)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
@@ -179,8 +218,21 @@ impl AvailableDevice {
             .unwrap_or_else(|| self.device_id.device_name().as_ref())
     }
 
+    /// Return a `sha256` hash of device slug as hex string
+    pub fn slughash(&self) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(self.slug.as_bytes());
+        let hash_digest = hasher.finalize();
+
+        // Two characters per bytes so string size will be `digest_len * 2`
+        let mut hex_str = String::with_capacity(hash_digest.len() * 2);
+        write!(&mut hex_str, "{:x}", hash_digest).unwrap();
+
+        hex_str
+    }
+
     /// For the legacy device files, the slug is contained in the device filename
-    fn load(key_file_path: PathBuf) -> LocalDeviceResult<Self> {
+    pub fn load(key_file_path: PathBuf) -> LocalDeviceResult<Self> {
         let (ty, organization_id, device_id, human_handle, device_label, slug) =
             match DeviceFile::load(&key_file_path)? {
                 DeviceFile::Password(device) => (
@@ -239,21 +291,12 @@ impl AvailableDevice {
 }
 
 fn read_key_file_paths(path: PathBuf) -> LocalDeviceResult<Vec<PathBuf>> {
-    let mut key_file_paths = vec![];
-
-    for path in std::fs::read_dir(&path)
+    let glob_str = format!("{}/**/*.{}", path.to_string_lossy(), DEVICE_FILE_SUFFIX);
+    Ok(glob::glob(&glob_str)
         .map_err(|_| LocalDeviceError::Access(path))?
-        .filter_map(|path| path.ok())
-        .map(|entry| entry.path())
-    {
-        if path.extension() == Some(OsStr::new("keys")) {
-            key_file_paths.push(path)
-        } else if path.is_dir() {
-            key_file_paths.append(&mut read_key_file_paths(path)?)
-        }
-    }
-
-    Ok(key_file_paths)
+        .filter(Result::is_ok)
+        .map(Result::unwrap)
+        .collect())
 }
 
 pub fn list_available_devices(config_dir: &Path) -> LocalDeviceResult<Vec<AvailableDevice>> {
@@ -401,4 +444,14 @@ pub fn change_device_password(
 ) -> Result<(), LocalDeviceError> {
     let device = LocalDevice::load_device_with_password(key_file, old_password)?;
     save_device_with_password(key_file, &device, new_password, true)
+}
+
+pub fn get_available_device(config_dir: &Path, slug: &str) -> LocalDeviceResult<AvailableDevice> {
+    let devices = list_available_devices(config_dir)?;
+
+    devices
+        .iter()
+        .find(|d| d.slug == slug)
+        .ok_or_else(|| LocalDeviceError::Access(config_dir.to_path_buf()))
+        .cloned()
 }

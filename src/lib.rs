@@ -86,6 +86,13 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
     m.add_function(wrap_pyfunction!(local_device::change_device_password, m)?)?;
+    m.add_class::<local_device::AvailableDevice>()?;
+    m.add_function(wrap_pyfunction!(local_device::list_available_devices, m)?)?;
+    m.add_function(wrap_pyfunction!(local_device::get_available_device, m)?)?;
+    m.add(
+        "LocalDeviceExc",
+        py.get_type::<local_device::LocalDeviceError>(),
+    )?;
 
     // Time
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
