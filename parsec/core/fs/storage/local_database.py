@@ -20,7 +20,13 @@ class LocalDatabase:
     # Make the trio run_sync function patchable for the tests
     run_in_thread = staticmethod(trio.to_thread.run_sync)
 
-    def __init__(self, path: Union[str, Path, trio.Path], vacuum_threshold: int | None = None):
+    def __init__(
+        self,
+        path: Union[str, Path, trio.Path],
+        vacuum_threshold: int | None = None,
+        auto_vacuum: bool = False,
+    ):
+
         # Make sure only a single task access the connection object at a time
         self._lock = trio.Lock()
 
@@ -28,7 +34,11 @@ class LocalDatabase:
         self._conn: Connection
         self._abort_service_send_channel: trio.MemorySendChannel[Exception]
 
+        # Set arguments
+        if auto_vacuum:
+            assert vacuum_threshold is None
         self.path = trio.Path(path)
+        self.auto_vacuum = auto_vacuum
         self.vacuum_threshold = vacuum_threshold
 
     @asynccontextmanager
@@ -58,10 +68,13 @@ class LocalDatabase:
     @classmethod
     @asynccontextmanager
     async def run(
-        cls, path: Union[str, Path], vacuum_threshold: int | None = None
+        cls,
+        path: Union[str, Path],
+        vacuum_threshold: int | None = None,
+        auto_vacuum: bool = False,
     ) -> AsyncIterator["LocalDatabase"]:
         # Instantiate the local database
-        self = cls(path, vacuum_threshold)
+        self = cls(path, vacuum_threshold, auto_vacuum)
 
         # Create the connection to the sqlite database
         try:
@@ -157,6 +170,15 @@ class LocalDatabase:
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA synchronous=NORMAL")
 
+            # Manage auto_vacuum
+            cursor = self._conn.execute("PRAGMA auto_vacuum")
+            rep = cursor.fetchone()
+            current_auto_vacuum = rep and rep[0]
+
+            if self.auto_vacuum != current_auto_vacuum:
+                self._conn.execute(f"PRAGMA auto_vacuum={int(self.auto_vacuum)}")
+                self._conn.execute("VACUUM")
+
     async def _connect(self) -> None:
         # Lock the access to the connection object
         async with self._lock:
@@ -248,6 +270,8 @@ class LocalDatabase:
         return disk_usage
 
     async def run_vacuum(self) -> None:
+        if self.auto_vacuum:
+            return
 
         # Lock the access to the connection object
         async with self._lock:
