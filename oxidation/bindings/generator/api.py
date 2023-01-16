@@ -33,7 +33,7 @@ class IntBasedType:
     pass
 
 
-class DeviceHandle(IntBasedType):
+class LoggedCoreHandle(IntBasedType):
     pass
 
 
@@ -82,17 +82,19 @@ def list_available_devices(path: StrPath) -> List[AvailableDevice]:
     ...
 
 
-async def login(test_device_id: DeviceID) -> DeviceHandle:
+async def login(test_device_id: DeviceID) -> LoggedCoreHandle:
     ...
 
 
 class LoggedCoreError(Variant):
     class InvalidHandle:
-        handle: DeviceHandle
+        handle: LoggedCoreHandle
 
     class Disconnected:
         pass
 
 
-async def logged_core_get_test_device_id(handle: DeviceHandle) -> Result[DeviceID, LoggedCoreError]:
+async def logged_core_get_test_device_id(
+    handle: LoggedCoreHandle,
+) -> Result[DeviceID, LoggedCoreError]:
     ...

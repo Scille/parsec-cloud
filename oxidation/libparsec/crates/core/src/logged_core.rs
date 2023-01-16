@@ -11,22 +11,22 @@ static CORE: OnceCell<Mutex<Vec<Option<LoggedCore>>>> = OnceCell::new();
 
 /// i32 is because javascript number is a 64 bits float
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct DeviceHandle(i32);
+pub struct LoggedCoreHandle(i32);
 
-impl From<i32> for DeviceHandle {
+impl From<i32> for LoggedCoreHandle {
     fn from(value: i32) -> Self {
         Self(value)
     }
 }
 
-impl From<DeviceHandle> for i32 {
-    fn from(value: DeviceHandle) -> Self {
+impl From<LoggedCoreHandle> for i32 {
+    fn from(value: LoggedCoreHandle) -> Self {
         value.0
     }
 }
 
-impl From<DeviceHandle> for usize {
-    fn from(value: DeviceHandle) -> Self {
+impl From<LoggedCoreHandle> for usize {
+    fn from(value: LoggedCoreHandle) -> Self {
         value.0 as usize
     }
 }
@@ -37,7 +37,7 @@ struct LoggedCore {
     test_device_id: DeviceID,
 }
 
-pub async fn login(test_device_id: DeviceID) -> DeviceHandle {
+pub async fn login(test_device_id: DeviceID) -> LoggedCoreHandle {
     let mut core = CORE.get_or_init(|| Mutex::new(Vec::new())).lock().await;
 
     let index = core.len() as i32;
@@ -45,11 +45,13 @@ pub async fn login(test_device_id: DeviceID) -> DeviceHandle {
     // Store in memory
     core.push(Some(LoggedCore { test_device_id }));
 
-    DeviceHandle(index)
+    LoggedCoreHandle(index)
 }
 
 // TODO: Remove me when LoggedCore is implemented
-pub async fn logged_core_get_test_device_id(handle: DeviceHandle) -> LoggedCoreResult<DeviceID> {
+pub async fn logged_core_get_test_device_id(
+    handle: LoggedCoreHandle,
+) -> LoggedCoreResult<DeviceID> {
     if let Some(logged_core) = CORE
         .get_or_init(|| Mutex::new(Vec::new()))
         .lock()
@@ -66,7 +68,7 @@ pub async fn logged_core_get_test_device_id(handle: DeviceHandle) -> LoggedCoreR
     Err(LoggedCoreError::InvalidHandle { handle })
 }
 
-pub async fn logout(handle: DeviceHandle) -> LoggedCoreResult<()> {
+pub async fn logout(handle: LoggedCoreHandle) -> LoggedCoreResult<()> {
     if let Some(logged_core) = CORE
         .get_or_init(|| Mutex::new(Vec::new()))
         .lock()

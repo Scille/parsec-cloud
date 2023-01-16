@@ -13,7 +13,7 @@ type DeviceLabel = string;
 type HumanHandle = string;
 type StrPath = string;
 type DeviceID = string;
-type DeviceHandle = number;
+type LoggedCoreHandle = number;
 
 export interface AvailableDevice {
     keyFilePath: StrPath;
