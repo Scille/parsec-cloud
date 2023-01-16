@@ -18,11 +18,7 @@ libparsec_client_types = { path = "crates/client_types", default-features = fals
 libparsec_platform_async = { path = "crates/platform_async", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-libparsec_platform_native = { path = "crates/platform_native" }
 libparsec_protocol = { path = "crates/protocol", default-features = false }
 libparsec_core = { path = "crates/core", default-features = false }
 libparsec_core_fs = { path = "crates/core_fs", default-features = false }
 libparsec_types = { path = "crates/types", default-features = false }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-libparsec_platform_web = { path = "crates/platform_web" }

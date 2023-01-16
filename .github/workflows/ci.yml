@@ -20,10 +20,9 @@ env:
     -vv
     -x
   cargo-exclude-unused-crates: >-
-    --exclude=libparsec_bindings_jni
+    --exclude=libparsec_bindings_android
     --exclude=libparsec_bindings_web
     --exclude=libparsec_bindings_electron
-    --exclude=libparsec_bindings_common
   # Temporary fix for macos tests:
   # See: https://github.com/python-poetry/poetry/issues/7161
   SYSTEM_VERSION_COMPAT: "0"
