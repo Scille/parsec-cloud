@@ -15,6 +15,7 @@ from parsec._parsec import (
     InviteDeleteRepOk,
     InviteListRepOk,
     InviteNewRepOk,
+    user_storage_non_speculative_init,
 )
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationToken, UserProfile
 from parsec.cli_utils import async_prompt, cli_exception_handler, spinner
@@ -31,7 +32,6 @@ from parsec.core.cli.utils import (
     save_device_options,
 )
 from parsec.core.config import CoreConfig
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import (
     DeviceClaimInitialCtx,
     DeviceGreetInitialCtx,
