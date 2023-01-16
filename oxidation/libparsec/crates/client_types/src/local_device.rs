@@ -28,6 +28,30 @@ pub struct LocalDevice {
 }
 
 impl LocalDevice {
+    pub fn generate_new_device(
+        organization_addr: BackendOrganizationAddr,
+        device_id: Option<DeviceID>,
+        profile: UserProfile,
+        human_handle: Option<HumanHandle>,
+        device_label: Option<DeviceLabel>,
+        signing_key: Option<SigningKey>,
+        private_key: Option<PrivateKey>,
+    ) -> Self {
+        Self {
+            organization_addr,
+            device_id: device_id.unwrap_or_default(),
+            device_label,
+            human_handle,
+            signing_key: signing_key.unwrap_or_else(SigningKey::generate),
+            private_key: private_key.unwrap_or_else(PrivateKey::generate),
+            profile,
+            user_manifest_id: EntryID::default(),
+            user_manifest_key: SecretKey::generate(),
+            local_symkey: SecretKey::generate(),
+            time_provider: TimeProvider::default(),
+        }
+    }
+
     pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
         let mut default_key_path = Self::get_devices_dir(config_dir);
         default_key_path.push(format!(
