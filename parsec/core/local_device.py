@@ -12,17 +12,13 @@ import trio
 from parsec._parsec import AvailableDevice, get_available_device
 from parsec.api.data import DataError
 from parsec.api.protocol import (
-    DeviceID,
     DeviceIDField,
-    DeviceLabel,
     DeviceLabelField,
-    HumanHandle,
     HumanHandleField,
     OrganizationIDField,
-    UserProfile,
 )
-from parsec.core.types import BackendOrganizationAddr, EntryID, LocalDevice
-from parsec.crypto import CryptoError, PrivateKey, SecretKey, SigningKey
+from parsec.core.types import LocalDevice
+from parsec.crypto import CryptoError, SecretKey
 from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
 # .keys files are not supposed to leave the parsec configuration folder,
@@ -146,31 +142,8 @@ key_file_serializer = MsgpackSerializer(
 )
 
 
-def generate_new_device(
-    organization_addr: BackendOrganizationAddr,
-    device_id: DeviceID | None = None,
-    profile: UserProfile = UserProfile.STANDARD,
-    human_handle: HumanHandle | None = None,
-    device_label: DeviceLabel | None = None,
-    signing_key: SigningKey | None = None,
-    private_key: PrivateKey | None = None,
-) -> LocalDevice:
-    return LocalDevice(
-        organization_addr=organization_addr,
-        device_id=device_id or DeviceID.new(),
-        device_label=device_label,
-        human_handle=human_handle,
-        signing_key=signing_key or SigningKey.generate(),
-        private_key=private_key or PrivateKey.generate(),
-        profile=profile,
-        user_manifest_id=EntryID.new(),
-        user_manifest_key=SecretKey.generate(),
-        local_symkey=SecretKey.generate(),
-    )
-
-
-def get_key_file(config_dir: Path, slug: str) -> Path:
-    return Path(get_available_device(config_dir, slug).key_file_path)
+def get_key_file(config_dir: Path, device: str) -> Path:
+    return Path(get_available_device(config_dir, device).key_file_path)
 
 
 def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:

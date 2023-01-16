@@ -103,6 +103,17 @@ class LocalDevice:
     def load(cls, encrypted: bytes) -> LocalDevice: ...
     @classmethod
     def load_device_with_password(cls, key_file: Path, password: str) -> LocalDevice: ...
+    @classmethod
+    def generate_new_device(
+        cls,
+        organization_addr: BackendOrganizationAddr,
+        profile: UserProfile,
+        device_id: DeviceID | None = None,
+        human_handle: HumanHandle | None = None,
+        device_label: DeviceLabel | None = None,
+        signing_key: SigningKey | None = None,
+        private_key: PrivateKey | None = None,
+    ) -> LocalDevice: ...
 
 class UserInfo:
     def __init__(
