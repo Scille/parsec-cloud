@@ -8,12 +8,19 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E };
 
+type OrganizationID = string;
+type DeviceLabel = string;
+type HumanHandle = string;
+type StrPath = string;
+type DeviceID = string;
+type DeviceHandle = number;
+
 export interface AvailableDevice {
-    keyFilePath: string;
-    organizationId: string;
-    deviceId: string;
-    humanHandle: string | null;
-    deviceLabel: string | null;
+    keyFilePath: StrPath;
+    organizationId: OrganizationID;
+    deviceId: DeviceID;
+    humanHandle: HumanHandle | null;
+    deviceLabel: DeviceLabel | null;
     slug: string;
     ty: DeviceFileType;
 }
@@ -46,7 +53,7 @@ export type LoggedCoreError =
   | LoggedCoreErrorInvalidHandle
 
 export interface LibParsecPlugin {
-    listAvailableDevices(path: string): Promise<Array<AvailableDevice>>;
-    login(test_device_id: string): Promise<number>;
-    loggedCoreGetTestDeviceId(handle: number): Promise<Result<string, LoggedCoreError>>;
+    listAvailableDevices(path: StrPath): Promise<Array<AvailableDevice>>;
+    login(test_device_id: DeviceID): Promise<number>;
+    loggedCoreGetTestDeviceId(handle: number): Promise<Result<DeviceID, LoggedCoreError>>;
 }

@@ -28,6 +28,15 @@ class StrBasedType:
     pass
 
 
+# A type that should be converted from/into int
+class IntBasedType:
+    pass
+
+
+class DeviceHandle(IntBasedType):
+    pass
+
+
 class OrganizationID(StrBasedType):
     pass
 
@@ -45,15 +54,6 @@ class StrPath(StrBasedType):
 
 
 class DeviceID(StrBasedType):
-    pass
-
-
-# A type that should be converted from/into int
-class IntBasedType:
-    pass
-
-
-class DeviceHandle(IntBasedType):
     pass
 
 
