@@ -291,12 +291,25 @@ impl AvailableDevice {
 }
 
 fn read_key_file_paths(path: PathBuf) -> LocalDeviceResult<Vec<PathBuf>> {
-    let glob_str = format!("{}/**/*.{}", path.to_string_lossy(), DEVICE_FILE_SUFFIX);
-    Ok(glob::glob(&glob_str)
+    let mut key_file_paths = vec![];
+
+    if !path.exists() {
+        return Ok(key_file_paths);
+    }
+
+    for path in std::fs::read_dir(&path)
         .map_err(|_| LocalDeviceError::Access(path))?
-        .filter(Result::is_ok)
-        .map(Result::unwrap)
-        .collect())
+        .filter_map(|path| path.ok())
+        .map(|entry| entry.path())
+    {
+        if path.extension() == Some(OsStr::new("keys")) {
+            key_file_paths.push(path)
+        } else if path.is_dir() {
+            key_file_paths.append(&mut read_key_file_paths(path)?)
+        }
+    }
+
+    Ok(key_file_paths)
 }
 
 pub fn list_available_devices(config_dir: &Path) -> LocalDeviceResult<Vec<AvailableDevice>> {
