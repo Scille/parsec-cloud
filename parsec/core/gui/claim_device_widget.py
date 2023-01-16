@@ -10,7 +10,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 from structlog import get_logger
 
-from parsec._parsec import SASCode, save_device_with_password_in_config
+from parsec._parsec import DeviceFileType, SASCode, save_device_with_password_in_config
 from parsec.api.protocol import DeviceLabel
 from parsec.core import CoreConfig
 from parsec.core.backend_connection import (
@@ -31,7 +31,6 @@ from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDevicePr
 from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
 from parsec.core.invite import InvitePeerResetError, claimer_retrieve_info
 from parsec.core.local_device import (
-    DeviceFileType,
     LocalDeviceCryptoError,
     LocalDeviceError,
     LocalDeviceNotFoundError,

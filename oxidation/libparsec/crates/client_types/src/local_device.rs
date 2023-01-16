@@ -49,12 +49,7 @@ impl LocalDevice {
         key_file: &Path,
         password: &str,
     ) -> Result<Self, LocalDeviceError> {
-        let ciphertext = std::fs::read(key_file)
-            .map_err(|_| LocalDeviceError::Access(key_file.to_path_buf()))?;
-        let device_file: DeviceFile = match rmp_serde::from_slice(&ciphertext) {
-            Ok(result) => result,
-            Err(_) => todo!("Handle legacy device"),
-        };
+        let device_file = DeviceFile::load(key_file)?;
 
         match device_file {
             DeviceFile::Password(p) => {

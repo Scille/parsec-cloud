@@ -6,7 +6,7 @@ import pathlib
 import pytest
 from PyQt5 import QtCore, QtWidgets
 
-from parsec._parsec import save_device_with_password_in_config
+from parsec._parsec import list_available_devices, save_device_with_password_in_config
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.login_widget import (
     LoginAccountsWidget,
@@ -15,7 +15,7 @@ from parsec.core.gui.login_widget import (
     LoginWidget,
 )
 from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.local_device import list_available_devices, load_device_file
+from parsec.core.local_device import load_device_file
 
 
 @pytest.mark.gui

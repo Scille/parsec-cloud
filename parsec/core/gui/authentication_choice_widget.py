@@ -6,11 +6,12 @@ from typing import Any, List, cast
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+from parsec._parsec import DeviceFileType
 from parsec.core.gui.lang import translate
 from parsec.core.gui.password_authentication_widget import PasswordAuthenticationWidget
 from parsec.core.gui.smartcard_authentication_widget import SmartCardAuthenticationWidget
 from parsec.core.gui.ui.authentication_choice_widget import Ui_AuthenticationChoiceWidget
-from parsec.core.local_device import DeviceFileType, is_smartcard_extension_available
+from parsec.core.local_device import is_smartcard_extension_available
 
 
 class AuthenticationChoiceWidget(QWidget, Ui_AuthenticationChoiceWidget):
