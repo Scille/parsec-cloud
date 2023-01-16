@@ -37,4 +37,19 @@ export type DeviceFileType =
   | DeviceFileTypeSmartcard
 
 
+// LoggedCoreError
+export interface LoggedCoreErrorDisconnected {
+    tag: "Disconnected"
+}
+export interface LoggedCoreErrorInvalidHandle {
+    tag: "InvalidHandle"
+    handle: number;
+}
+export type LoggedCoreError =
+  | LoggedCoreErrorDisconnected
+  | LoggedCoreErrorInvalidHandle
+
+
 export function listAvailableDevices(path: string): Promise<Array<AvailableDevice>>;
+export function login(test_device_id: string): Promise<number>;
+export function loggedCoreGetTestDeviceId(handle: number): Promise<Result<string, LoggedCoreError>>;
