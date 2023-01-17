@@ -143,10 +143,11 @@ JsValue::from_str({{ rs_value }}.as_ref())
 JsValue::from(Uint8Array::from({{ rs_value }}.as_ref()))
 {%- elif type.kind == "list" -%}
 {
+    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
     let js_array = Array::new_with_length({{ rs_value }}.len() as u32);
-    for elem in {{ rs_value }} {
+    for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
         let js_elem = {{ render_rs_to_js_value("elem", type.elem) | indent(8) }};
-        js_array.push(&js_elem);
+        js_array.set(i as u32, js_elem);
     }
     js_array.into()
 }

@@ -7,6 +7,7 @@ Boby
 coolorg
 Cüneyt
 cunyet
+Dalvik
 dorny
 dtolnay
 expiredorg
@@ -18,6 +19,7 @@ Goku
 Leblond
 michu
 murcielago
+mypc
 oremanj
 Parsec
 Reynholm
@@ -28,4 +30,3 @@ Scille
 titeuf
 werkzeug
 zoidberg
-Dalvik

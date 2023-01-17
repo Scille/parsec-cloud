@@ -211,15 +211,27 @@ pub fn listAvailableDevices(path: String) -> Promise {
         let path = path
             .parse()
             .map_err(|_| JsValue::from(TypeError::new("Not a valid StrPath")))?;
-        let ret = libparsec::list_available_devices(path);
+
+        let ret = libparsec::list_available_devices(path).await;
         Ok({
+            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
             let js_array = Array::new_with_length(ret.len() as u32);
-            for elem in ret {
+            for (i, elem) in ret.into_iter().enumerate() {
                 let js_elem = struct_availabledevice_rs_to_js(elem)?;
-                js_array.push(&js_elem);
+                js_array.set(i as u32, js_elem);
             }
             js_array.into()
         })
+    })
+}
+
+// test_gen_default_devices
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testGenDefaultDevices() -> Promise {
+    future_to_promise(async move {
+        libparsec::test_gen_default_devices().await;
+        Ok(JsValue::NULL)
     })
 }
 

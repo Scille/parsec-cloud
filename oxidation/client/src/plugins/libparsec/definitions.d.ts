@@ -54,6 +54,7 @@ export type LoggedCoreError =
 
 export interface LibParsecPlugin {
     listAvailableDevices(path: StrPath): Promise<Array<AvailableDevice>>;
+    testGenDefaultDevices(): Promise<null>;
     login(test_device_id: DeviceID): Promise<number>;
     loggedCoreGetTestDeviceId(handle: number): Promise<Result<DeviceID, LoggedCoreError>>;
 }

@@ -201,17 +201,53 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
             Err(err) => return cx.throw_type_error(err),
         }
     };
-    let ret = libparsec::list_available_devices(path);
-    let js_ret = {
-        let js_array = JsArray::new(&mut cx, ret.len() as u32);
-        for (i, elem) in ret.into_iter().enumerate() {
-            let js_elem = struct_availabledevice_rs_to_js(&mut cx, elem)?;
-            js_array.set(&mut cx, i as u32, js_elem)?;
-        }
-        js_array
-    };
+    let channel = cx.channel();
     let (deferred, promise) = cx.promise();
-    deferred.resolve(&mut cx, js_ret);
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::list_available_devices(path).await;
+
+            channel.send(move |mut cx| {
+                let js_ret = {
+                    // JsArray::new allocates with `undefined` value, that's why we `set` value
+                    let js_array = JsArray::new(&mut cx, ret.len() as u32);
+                    for (i, elem) in ret.into_iter().enumerate() {
+                        let js_elem = struct_availabledevice_rs_to_js(&mut cx, elem)?;
+                        js_array.set(&mut cx, i as u32, js_elem)?;
+                    }
+                    js_array
+                };
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
+    Ok(promise)
+}
+
+// test_gen_default_devices
+fn test_gen_default_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            libparsec::test_gen_default_devices().await;
+
+            channel.send(move |mut cx| {
+                let js_ret = cx.null();
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
     Ok(promise)
 }
 
@@ -289,6 +325,7 @@ fn logged_core_get_test_device_id(mut cx: FunctionContext) -> JsResult<JsPromise
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("listAvailableDevices", list_available_devices)?;
+    cx.export_function("testGenDefaultDevices", test_gen_default_devices)?;
     cx.export_function("login", login)?;
     cx.export_function("loggedCoreGetTestDeviceId", logged_core_get_test_device_id)?;
     Ok(())

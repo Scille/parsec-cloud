@@ -110,6 +110,7 @@ match {{ js_val }}.value({{ mut_cx_ref }}).parse() {
 {{ render_rs_to_js(rs_value, type.elem, mut_cx_ref) }}
 {%- elif type.kind == "list" -%}
 {
+    // JsArray::new allocates with `undefined` value, that's why we `set` value
     let js_array = JsArray::new({{ mut_cx_ref }}, {{ rs_value }}.len() as u32);
     for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
         let js_elem = {{ render_rs_to_js("elem", type.elem, mut_cx_ref) | indent(8) }};
@@ -318,7 +319,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {% if meth.return_type is none %}
         libparsec::{{ meth.name }}(
 {% elif meth.return_type.kind == "list" %}
-        let mut ret = libparsec::{{ meth.name }}(
+        let ret = libparsec::{{ meth.name }}(
 {% else %}
         let ret = libparsec::{{ meth.name }}(
 {% endif %}
