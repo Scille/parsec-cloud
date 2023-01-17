@@ -10,52 +10,86 @@ export type Result<T, E = Error> =
   | { ok: false; error: E };
 
 
-export interface AvailableDevice {
-    keyFilePath: string;
-    organizationId: string;
-    deviceId: string;
-    humanHandle: string | null;
-    deviceLabel: string | null;
-    slug: string;
-    ty: DeviceFileType;
+export interface ClientConfig {
+    configDir: string;
+    dataBaseDir: string;
+    mountpointBaseDir: string;
+    preferredOrgCreationBackendAddr: string;
+    workspaceStorageCacheSize: WorkspaceStorageCacheSize;
 }
 
 
-// DeviceFileType
-export interface DeviceFileTypePassword {
+// ClientEvent
+export interface ClientEventClientConnectionChanged {
+    tag: "ClientConnectionChanged"
+    client: number;
+}
+export interface ClientEventWorkspaceReencryptionEnded {
+    tag: "WorkspaceReencryptionEnded"
+}
+export interface ClientEventWorkspaceReencryptionNeeded {
+    tag: "WorkspaceReencryptionNeeded"
+}
+export interface ClientEventWorkspaceReencryptionStarted {
+    tag: "WorkspaceReencryptionStarted"
+}
+export type ClientEvent =
+  | ClientEventClientConnectionChanged
+  | ClientEventWorkspaceReencryptionEnded
+  | ClientEventWorkspaceReencryptionNeeded
+  | ClientEventWorkspaceReencryptionStarted
+
+
+// WorkspaceStorageCacheSize
+export interface WorkspaceStorageCacheSizeCustom {
+    tag: "Custom"
+    size: number;
+}
+export interface WorkspaceStorageCacheSizeDefault {
+    tag: "Default"
+}
+export type WorkspaceStorageCacheSize =
+  | WorkspaceStorageCacheSizeCustom
+  | WorkspaceStorageCacheSizeDefault
+
+
+// DeviceAccessParams
+export interface DeviceAccessParamsPassword {
     tag: "Password"
+    path: string;
+    password: string;
 }
-export interface DeviceFileTypeRecovery {
-    tag: "Recovery"
-}
-export interface DeviceFileTypeSmartcard {
+export interface DeviceAccessParamsSmartcard {
     tag: "Smartcard"
+    path: string;
 }
-export type DeviceFileType =
-  | DeviceFileTypePassword
-  | DeviceFileTypeRecovery
-  | DeviceFileTypeSmartcard
+export type DeviceAccessParams =
+  | DeviceAccessParamsPassword
+  | DeviceAccessParamsSmartcard
 
 
-// LoggedCoreError
-export interface LoggedCoreErrorDisconnected {
-    tag: "Disconnected"
+// ClientLoginError
+export interface ClientLoginErrorAccessMethodNotAvailable {
+    tag: "AccessMethodNotAvailable"
 }
-export interface LoggedCoreErrorInvalidHandle {
-    tag: "InvalidHandle"
-    handle: number;
+export interface ClientLoginErrorDecryptionFailed {
+    tag: "DecryptionFailed"
 }
-export interface LoggedCoreErrorLoginFailed {
-    tag: "LoginFailed"
-    help: string;
+export interface ClientLoginErrorDeviceAlreadyLoggedIn {
+    tag: "DeviceAlreadyLoggedIn"
 }
-export type LoggedCoreError =
-  | LoggedCoreErrorDisconnected
-  | LoggedCoreErrorInvalidHandle
-  | LoggedCoreErrorLoginFailed
+export interface ClientLoginErrorDeviceInvalidFormat {
+    tag: "DeviceInvalidFormat"
+}
+export type ClientLoginError =
+  | ClientLoginErrorAccessMethodNotAvailable
+  | ClientLoginErrorDecryptionFailed
+  | ClientLoginErrorDeviceAlreadyLoggedIn
+  | ClientLoginErrorDeviceInvalidFormat
 
 
-export function listAvailableDevices(path: string): Promise<Array<AvailableDevice>>;
-export function login(key: string, password: string): Promise<Result<number, LoggedCoreError>>;
-export function loggedCoreGetDeviceId(handle: number): Promise<Result<string, LoggedCoreError>>;
-export function loggedCoreGetDeviceDisplay(handle: number): Promise<Result<string, LoggedCoreError>>;
+export function clientLogin(
+    load_device_params: DeviceAccessParams,
+    config: ClientConfig,
+    on_event_callback: (ClientEvent) => void
+): Promise<Result<number, ClientLoginError>>;

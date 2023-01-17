@@ -22,6 +22,8 @@ number
 string
 {%- elif t.kind == "bytes" -%}
 Uint8Array
+{%- elif t.kind == "OnClientEventCallback" -%}
+(ClientEvent) => void
 {%- else -%}
 {{ raise("Unsupported type %r" % t) }}
 {%- endif -%}
@@ -79,8 +81,8 @@ export type {{ variant.name }} =
 {# Methods #}
 {% for meth in api.meths %}
 export function {{ meth.name | snake2camel }}(
-{%- for arg_name, arg_type in meth.params.items() -%}
+{% for arg_name, arg_type in meth.params.items() %}
     {{ arg_name }}: {{ render_type(arg_type) }}{{ ", " if not loop.last else "" }}
-{%- endfor -%}
+{% endfor %}
 ): Promise<{{ render_type(meth.return_type) if meth.return_type else "null" }}>;
 {% endfor %}

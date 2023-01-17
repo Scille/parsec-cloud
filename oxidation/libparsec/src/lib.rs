@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+pub use libparsec_client_high_level_api::*;
+
 #[cfg(not(target_arch = "wasm32"))]
 pub use libparsec_client_types as client_types;
 #[cfg(not(target_arch = "wasm32"))]
