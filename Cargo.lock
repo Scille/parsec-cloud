@@ -1155,6 +1155,7 @@ name = "libparsec"
 version = "0.0.0"
 dependencies = [
  "libparsec_client_connection",
+ "libparsec_client_high_level_api",
  "libparsec_client_types",
  "libparsec_core",
  "libparsec_core_fs",
@@ -1216,6 +1217,16 @@ dependencies = [
  "reqwest",
  "tokio",
  "url",
+]
+
+[[package]]
+name = "libparsec_client_high_level_api"
+version = "0.0.0"
+dependencies = [
+ "libparsec_client_types",
+ "libparsec_crypto",
+ "libparsec_protocol",
+ "libparsec_types",
 ]
 
 [[package]]

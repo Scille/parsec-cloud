@@ -1,0 +1,14 @@
+[package]
+name = "libparsec_client_high_level_api"
+version = "0.0.0"
+edition = "2021"
+license = " BUSL-1.1"
+
+[features]
+use-sodiumoxide = [ "libparsec_crypto/use-sodiumoxide" ]
+
+[dependencies]
+libparsec_types = { path = "../types" }
+libparsec_client_types = { path = "../client_types" }
+libparsec_crypto = { path = "../crypto" }
+libparsec_protocol = { path = "../protocol" }

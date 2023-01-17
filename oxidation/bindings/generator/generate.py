@@ -3,8 +3,8 @@
 from types import ModuleType
 from typing import Union, Dict, List, OrderedDict, Type, Optional
 from importlib import import_module
+from collections import namedtuple
 import argparse
-import inspect
 from dataclasses import dataclass
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from pathlib import Path
@@ -15,13 +15,22 @@ BASEDIR = Path(__file__).parent
 
 
 # Meta-types are defined in the api module for simplicity, `generate_api_specs` will take care of retreiving them
-META_TYPES = ["Result", "Ref", "StrBasedType", "IntBasedType", "Variant", "Structure"]
+META_TYPES = [
+    "Result",
+    "Ref",
+    "StrBasedType",
+    "IntBasedType",
+    "Variant",
+    "Structure",
+    "OnClientEventCallback",
+]
 Result: Type = None
 Ref: Type = None
 StrBasedType: Type = None
 IntBasedType: Type = None
 Variant: Type = None
 Structure: Type = None
+OnClientEventCallback: Type = None
 
 
 env = Environment(
@@ -65,7 +74,7 @@ class BaseTypeInUse:
     kind: str
 
     @staticmethod
-    def parse(param) -> "BaseTypeInUse":
+    def parse(param: str) -> "BaseTypeInUse":
         assert not isinstance(
             param, str
         ), f"Bad param `{param!r}`, passing type as string is not supported"
@@ -91,10 +100,22 @@ class BaseTypeInUse:
             assert len(param.__args__) == 1
             return RefTypeInUse(elem=BaseTypeInUse.parse(param.__args__[0]))
 
-        elif issubclass(param, StrBasedType):
-            return StrBasedTypeInUse(name=param.__name__)
+        elif param is OnClientEventCallback:
+            spec = OpaqueSpec(kind="OnClientEventCallback")
+            # Ugly hack to make template rendering happy
+            spec.event_type = namedtuple("Type", "name")("ClientEvent")
 
-        elif issubclass(param, IntBasedType):
+            # spec.event_type = param.__orig_bases__[0].__args__[0]
+            return spec
+
+        elif isinstance(param, type) and issubclass(param, StrBasedType):
+            return StrBasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_string=getattr(param, "custom_from_rs_string", None),
+                custom_to_rs_string=getattr(param, "custom_to_rs_string", None),
+            )
+
+        elif isinstance(param, type) and issubclass(param, IntBasedType):
             return IntBasedTypeInUse(name=param.__name__)
 
         else:
@@ -146,6 +167,12 @@ class RefTypeInUse(BaseTypeInUse):
 class StrBasedTypeInUse(BaseTypeInUse):
     kind = "str_based"
     name: str
+
+    # If set, custom_from_rs_string/custom_to_rs_string should inlined rust functions
+    # `fn (String) -> Result<X, AsRef<str>>`
+    custom_from_rs_string: Union[str, None] = None
+    # `fn (&X) -> Result<String, AsRef<str>>`
+    custom_to_rs_string: Union[str, None] = None
 
 
 @dataclass
@@ -202,7 +229,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             globals()[item_name] = getattr(api_module, item_name)
             continue
         # Ignore items that have been imported from another module
-        if getattr(item, "__module__", None) != api_module.__name__:
+        if not getattr(item, "__module__", "").startswith(api_module.__name__):
             continue
         api_items[item_name] = item
 
