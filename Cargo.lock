@@ -1154,6 +1154,7 @@ checksum = "348108ab3fba42ec82ff6e9564fc4ca0247bdccdc68dd8af9764bbc79c3c8ffb"
 name = "libparsec"
 version = "0.0.0"
 dependencies = [
+ "libparsec_client_connection",
  "libparsec_client_types",
  "libparsec_core",
  "libparsec_core_fs",

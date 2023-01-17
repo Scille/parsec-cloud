@@ -7,7 +7,7 @@ use std::{
     str::FromStr,
 };
 
-use libparsec_client_connection::{AuthenticatedCmds, CommandError};
+use libparsec_client_connection::{client::generate_client, AuthenticatedCmds, CommandError};
 use libparsec_crypto::SigningKey;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::{BackendOrganizationAddr, DeviceID};
@@ -123,18 +123,6 @@ fn setup_logger() {
     {
         log::warn!("failed to initialize logger, reason: {e}");
     }
-}
-
-fn generate_client(
-    signing_key: SigningKey,
-    device_id: DeviceID,
-    root_url: BackendOrganizationAddr,
-) -> AuthenticatedCmds {
-    let client = reqwest::ClientBuilder::new()
-        .build()
-        .expect("cannot build client");
-    AuthenticatedCmds::new(client, root_url, device_id, signing_key)
-        .expect("failed to build auth cmds client")
 }
 
 async fn send_ping(
