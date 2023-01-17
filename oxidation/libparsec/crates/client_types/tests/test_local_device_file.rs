@@ -1,9 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
+use libparsec_types::{HumanHandle, OrganizationID};
 use rstest::rstest;
 
-use libparsec_client_types::{DeviceFilePassword, DeviceFileRecovery};
+use libparsec_client_types::{
+    AvailableDevice, DeviceFilePassword, DeviceFileRecovery, DeviceFileType,
+};
 use tests_fixtures::{alice, Device};
 
 #[rstest]
@@ -138,4 +141,49 @@ fn recovery_device_file(alice: &Device) {
     assert_eq!(file_device, expected);
 
     // TODO: Test ciphertext decryption
+}
+
+#[rstest]
+fn test_available_device() {
+    let org: OrganizationID = "CoolOrg".parse().unwrap();
+
+    let available = AvailableDevice {
+        key_file_path: "/foo/bar".into(),
+        organization_id: org.clone(),
+        device_id: "9c50250fa3b644e29f77eeefa53dc37d@9fd3863a3eb240cfaec64904efe5bed3"
+            .parse()
+            .unwrap(),
+        slug:
+            "672d515cbb#CoolOrg#9c50250fa3b644e29f77eeefa53dc37d@9fd3863a3eb240cfaec64904efe5bed3"
+                .to_owned(),
+        human_handle: Some(HumanHandle::new("john@example.com", "John Doe").unwrap()),
+        device_label: Some("MyPc".parse().unwrap()),
+        ty: DeviceFileType::Password,
+    };
+
+    assert_eq!(
+        available.slughash(),
+        "57f426e7a3cd5dc4a5d19fb8a83addb9112a65d12a13e2f72dd1fdfb9a8a4971"
+    );
+    assert_eq!(available.user_display(), "John Doe <john@example.com>");
+    assert_eq!(available.short_user_display(), "John Doe");
+    assert_eq!(available.device_display(), "MyPc");
+
+    let available_legacy = AvailableDevice {
+        key_file_path: "/foo/bar".into(),
+        organization_id: org,
+        device_id: "john@mypc".parse().unwrap(),
+        slug: "672d515cbb#CoolOrg#john@mypc".to_owned(),
+        human_handle: None,
+        device_label: None,
+        ty: DeviceFileType::Password,
+    };
+
+    assert_eq!(
+        available_legacy.slughash(),
+        "35e1d5ceb858ea3fd89973e084105d2bd928de10047cdd6d0037259030954ca1"
+    );
+    assert_eq!(available_legacy.user_display(), "john");
+    assert_eq!(available_legacy.short_user_display(), "john");
+    assert_eq!(available_legacy.device_display(), "mypc");
 }
