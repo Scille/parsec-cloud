@@ -162,15 +162,7 @@ fn sign_request(
     body: &[u8],
 ) -> RequestBuilder {
     let timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-    let data_to_sign = Vec::from_iter(
-        device_id
-            .as_bytes()
-            .iter()
-            .chain(timestamp.as_bytes())
-            .chain(body)
-            .copied(),
-    );
-    let signature = signing_key.sign_only_signature(&data_to_sign);
+    let signature = signing_key.sign_only_signature(body);
     let signature = base64::encode(signature);
 
     let mut authorization_headers = HeaderMap::with_capacity(4);
