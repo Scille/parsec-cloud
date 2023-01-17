@@ -1,6 +1,6 @@
 [package]
 name = "libparsec_platform_device_loader"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 
 [features]

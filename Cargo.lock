@@ -1339,7 +1339,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_device_loader"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "base64 0.21.0",
  "libparsec_client_types",

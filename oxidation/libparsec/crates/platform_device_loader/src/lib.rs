@@ -3,12 +3,12 @@
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
 #[cfg(target_arch = "wasm32")]
-mod wasm32;
+mod web;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::*;
 #[cfg(target_arch = "wasm32")]
-pub use wasm32::*;
+pub use web::*;
 
 /* cSpell:disable */
 /// TODO: Remove me once wasm doesn't need to mock
