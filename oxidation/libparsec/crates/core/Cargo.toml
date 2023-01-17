@@ -32,4 +32,3 @@ thiserror = "1.0.37"
 tests_fixtures = { path = "../tests_fixtures" }
 
 rstest = "0.16.0"
-chrono = "0.4.22"

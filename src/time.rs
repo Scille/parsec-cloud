@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::{PyTypeError, PyValueError},
+    exceptions::{PyAttributeError, PyTypeError, PyValueError},
     prelude::*,
     types::PyType,
     PyAny, PyResult,
@@ -119,7 +119,7 @@ impl DateTime {
         second: u32,
         microsecond: u32,
     ) -> PyResult<Self> {
-        Ok(Self(libparsec::types::DateTime::from_ymd_hms_us(
+        libparsec::types::DateTime::from_ymd_hms_us(
             year,
             month,
             day,
@@ -127,7 +127,10 @@ impl DateTime {
             minute,
             second,
             microsecond,
-        )))
+        )
+        .single()
+        .ok_or_else(|| PyAttributeError::new_err("Invalid attributes"))
+        .map(Self)
     }
 
     #[getter]
@@ -272,7 +275,7 @@ impl LocalDateTime {
         second: u32,
         microsecond: u32,
     ) -> PyResult<Self> {
-        Ok(Self(libparsec::types::LocalDateTime::from_ymd_hms_us(
+        libparsec::types::LocalDateTime::from_ymd_hms_us(
             year,
             month,
             day,
@@ -280,7 +283,10 @@ impl LocalDateTime {
             minute,
             second,
             microsecond,
-        )))
+        )
+        .single()
+        .ok_or_else(|| PyAttributeError::new_err("Invalid attributes"))
+        .map(Self)
     }
 
     #[getter]
