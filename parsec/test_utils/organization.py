@@ -31,7 +31,6 @@ from parsec.core.cli.create_organization import create_organization_req
 from parsec.core.config import load_config
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization
-from parsec.core.local_device import generate_new_device
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import (
     BackendAddr,
@@ -214,7 +213,7 @@ async def _register_new_user(
     human_handle: HumanHandle | None,
     profile: UserProfile,
 ) -> LocalDevice:
-    new_device = generate_new_device(
+    new_device = LocalDevice.generate_new_device(
         organization_addr=cmds.addr,
         device_label=device_label,
         human_handle=human_handle,

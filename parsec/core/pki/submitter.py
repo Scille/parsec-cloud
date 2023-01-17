@@ -22,7 +22,6 @@ from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.protocol import DeviceLabel
 from parsec.core.backend_connection import pki_enrollment_info as cmd_pki_enrollment_info
 from parsec.core.backend_connection import pki_enrollment_submit as cmd_pki_enrollment_submit
-from parsec.core.local_device import generate_new_device
 from parsec.core.pki.exceptions import (
     PkiEnrollmentError,
     PkiEnrollmentInfoError,
@@ -480,7 +479,7 @@ class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
             organization_id=self.addr.organization_id,
             root_verify_key=self.accept_payload.root_verify_key,
         )
-        new_device = generate_new_device(
+        new_device = LocalDevice.generate_new_device(
             organization_addr=organization_addr,
             device_id=self.accept_payload.device_id,
             profile=self.accept_payload.profile,

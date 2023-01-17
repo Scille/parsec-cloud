@@ -117,6 +117,37 @@ impl LocalDevice {
         Ok(Self(r))
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[classmethod]
+    #[args(
+        profil = "UserProfile::standard()",
+        device_id = "None",
+        human_handle = "None",
+        device_label = "None",
+        signing_key = "None",
+        private_key = "None"
+    )]
+    fn generate_new_device(
+        _cls: &PyType,
+        organization_addr: BackendOrganizationAddr,
+        profile: UserProfile,
+        device_id: Option<DeviceID>,
+        human_handle: Option<HumanHandle>,
+        device_label: Option<DeviceLabel>,
+        signing_key: Option<SigningKey>,
+        private_key: Option<PrivateKey>,
+    ) -> Self {
+        Self(client_types::LocalDevice::generate_new_device(
+            organization_addr.0,
+            device_id.map(|d| d.0),
+            profile.0,
+            human_handle.map(|h| h.0),
+            device_label.map(|d| d.0),
+            signing_key.map(|s| s.0),
+            private_key.map(|p| p.0),
+        ))
+    }
+
     #[getter]
     fn is_admin(&self) -> PyResult<bool> {
         Ok(self.0.profile == libparsec::types::UserProfile::Admin)
