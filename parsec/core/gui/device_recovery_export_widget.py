@@ -7,7 +7,12 @@ from typing import Sequence
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec._parsec import AvailableDevice, DeviceFileType, get_available_device
+from parsec._parsec import (
+    AvailableDevice,
+    DeviceFileType,
+    get_available_device,
+    save_recovery_device,
+)
 from parsec.core import CoreConfig
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.gui.custom_dialogs import (
@@ -31,7 +36,6 @@ from parsec.core.local_device import (
     LocalDeviceError,
     get_recovery_device_file_name,
     load_device_with_smartcard,
-    save_recovery_device,
 )
 from parsec.core.recovery import generate_recovery_device
 from parsec.core.types import LocalDevice
@@ -161,7 +165,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
     ) -> tuple[LocalDevice, PurePath, str]:
         try:
             recovery_device = await generate_recovery_device(device)
-            passphrase = await save_recovery_device(export_path, recovery_device, force=True)
+            passphrase = await save_recovery_device(Path(export_path), recovery_device, force=True)
             return recovery_device, export_path, passphrase
         except BackendNotAvailable as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_OFFLINE"), exception=exc)

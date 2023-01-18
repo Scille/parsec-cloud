@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from enum import Enum
 from importlib import import_module
-from pathlib import Path, PurePath
+from pathlib import Path
 from types import ModuleType
 from typing import Callable, Dict, Tuple
 
@@ -18,7 +18,6 @@ from parsec.api.protocol import (
     OrganizationIDField,
 )
 from parsec.core.types import LocalDevice
-from parsec.crypto import CryptoError, SecretKey
 from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
 # .keys files are not supposed to leave the parsec configuration folder,
@@ -227,87 +226,6 @@ def _save_device(
 
     except OSError as exc:
         raise LocalDeviceError(f"Cannot save {key_file}: {exc}") from exc
-
-
-async def load_recovery_device(key_file: PurePath, passphrase: str) -> LocalDevice:
-    """
-    Raises:
-        LocalDeviceError
-        LocalDeviceNotFoundError
-        LocalDeviceCryptoError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-    """
-    key_file = trio.Path(key_file)
-    try:
-        ciphertext = await key_file.read_bytes()
-    except OSError as exc:
-        raise LocalDeviceNotFoundError(f"Recovery file `{key_file}` is missing") from exc
-
-    try:
-        data = key_file_serializer.loads(ciphertext)
-    except LocalDevicePackingError as exc:
-        raise LocalDeviceValidationError("Not a device recovery file") from exc
-
-    if data["type"] != DeviceFileType.RECOVERY:
-        raise LocalDeviceValidationError("Not a device recovery file")
-
-    try:
-        key = SecretKey.from_recovery_passphrase(passphrase)
-    except CryptoError as exc:
-        # Not really a crypto operation, but it is more coherent for the caller
-        raise LocalDeviceCryptoError("Invalid passphrase") from exc
-
-    try:
-        plaintext = key.decrypt(data["ciphertext"])
-    except CryptoError as exc:
-        raise LocalDeviceCryptoError(str(exc)) from exc
-
-    try:
-        return LocalDevice.load(plaintext)
-
-    except DataError as exc:
-        raise LocalDeviceValidationError(f"Cannot load local device: {exc}") from exc
-
-
-async def save_recovery_device(key_file: PurePath, device: LocalDevice, force: bool = False) -> str:
-    """
-    Return the recovery passphrase
-    """
-    assert key_file.suffix == RECOVERY_DEVICE_FILE_SUFFIX
-    key_file = trio.Path(key_file)
-
-    if await key_file.exists() and not force:
-        raise LocalDeviceAlreadyExistsError(f"Device key file `{key_file}` already exists")
-
-    passphrase, key = SecretKey.generate_recovery_passphrase()
-
-    try:
-        ciphertext = key.encrypt(device.dump())
-
-    except (CryptoError, DataError) as exc:
-        raise LocalDeviceValidationError(f"Cannot dump local device: {exc}") from exc
-
-    key_file_content = key_file_serializer.dumps(
-        {
-            "type": DeviceFileType.RECOVERY,
-            "ciphertext": ciphertext,
-            "human_handle": device.human_handle,
-            "device_label": device.device_label,
-            "organization_id": device.organization_id,
-            "device_id": device.device_id,
-            "slug": device.slug,
-        }
-    )
-
-    try:
-        await key_file.parent.mkdir(mode=0o700, exist_ok=True, parents=True)
-        await key_file.write_bytes(key_file_content)
-
-    except OSError as exc:
-        raise LocalDeviceError(f"Cannot save {key_file}: {exc}") from exc
-
-    return passphrase
 
 
 def _load_smartcard_extension() -> ModuleType:
