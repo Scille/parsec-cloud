@@ -7,4 +7,9 @@ use libparsec::client_connection;
 #[pyclass]
 pub(crate) struct CommandError(pub client_connection::CommandError);
 
-crate::binding_utils::create_exception!(CommandError, PyException, client_connection::CommandError);
+crate::binding_utils::create_exception!(
+    CommandError,
+    PyException,
+    client_connection::CommandError,
+    no_result_type
+);
