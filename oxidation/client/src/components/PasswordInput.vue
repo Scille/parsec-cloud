@@ -5,7 +5,9 @@
     <ion-row>
       <ion-col>
         <ion-item>
-          <ion-label position="floating">
+          <ion-label
+            position="floating"
+          >
             {{ label }}
           </ion-label>
           <ion-input
@@ -42,6 +44,9 @@ defineProps<{
   label: string
 }>();
 
+const passwordVisible = ref(false);
+const passwordRef = ref('');
+
 const emits = defineEmits<{
   (e: 'change', value: string): void
   (e: 'enter'): void
@@ -52,9 +57,6 @@ function onEnterPress() : void {
     emits('enter');
   }
 }
-
-const passwordVisible = ref(false);
-const passwordRef = ref('');
 </script>
 
 <style lang="scss" scoped>

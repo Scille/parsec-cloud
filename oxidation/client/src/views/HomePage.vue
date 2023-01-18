@@ -156,6 +156,7 @@ import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { createAlert } from '@/components/AlertConfirmation';
+import { libparsec } from '../plugins/libparsec';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 
 export interface DeviceLocalStorageData {
@@ -164,6 +165,9 @@ export interface DeviceLocalStorageData {
 }
 
 const { t, d } = useI18n();
+
+// Not ready yet
+// const deviceList = libparsec.listAvailableDevices();
 const deviceList: AvailableDevice[] = [
   {
     organizationId: 'MegaShark',
