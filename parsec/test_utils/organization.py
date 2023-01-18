@@ -12,6 +12,7 @@ from parsec._parsec import (
     DeviceCreateRepOk,
     UserCreateRepOk,
     save_device_with_password_in_config,
+    user_storage_non_speculative_init,
 )
 from parsec.api.data import DeviceCertificate, EntryID, EntryName, UserCertificate
 from parsec.api.protocol import (
@@ -29,7 +30,6 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.cli.create_organization import create_organization_req
 from parsec.core.config import load_config
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import (

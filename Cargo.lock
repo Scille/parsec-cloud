@@ -72,6 +72,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-trait"
+version = "0.1.61"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "705339e0e4a9690e2908d2b3d049d85682cf19fbd5782494498fbf7003a6a282"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1268,16 +1279,20 @@ dependencies = [
 name = "libparsec_core_fs"
 version = "0.0.0"
 dependencies = [
+ "async-trait",
  "diesel",
  "lazy_static",
  "libparsec_client_types",
  "libparsec_crypto",
+ "libparsec_platform_async",
  "libparsec_types",
  "libsqlite3-sys",
+ "platform_local_db",
  "regex",
  "rstest",
  "tests_fixtures",
  "thiserror",
+ "tokio",
  "uuid",
 ]
 
@@ -1934,6 +1949,17 @@ name = "pkg-config"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
+
+[[package]]
+name = "platform_local_db"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "diesel",
+ "libparsec_platform_async",
+ "thiserror",
+ "tokio",
+]
 
 [[package]]
 name = "poly1305"

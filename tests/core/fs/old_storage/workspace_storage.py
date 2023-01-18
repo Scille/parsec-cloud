@@ -48,7 +48,7 @@ FAILSAFE_PATTERN_FILTER = Regex.from_regex_str(
 
 
 async def workspace_storage_non_speculative_init(
-    data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
+    data_base_dir: Path, device: LocalDevice, workspace_id: EntryID, timestamp: DateTime
 ) -> None:
     db_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
 
@@ -58,7 +58,6 @@ async def workspace_storage_non_speculative_init(
         # Manifest storage service
         async with ManifestStorage.run(device, data_localdb, workspace_id) as manifest_storage:
 
-            timestamp = device.timestamp()
             manifest = LocalWorkspaceManifest.new_placeholder(
                 author=device.device_id, id=workspace_id, timestamp=timestamp, speculative=False
             )
