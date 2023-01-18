@@ -7,7 +7,7 @@ use libparsec_client_types::{DeviceFile, LocalDevice, LocalDeviceResult};
 use crate::load_device_file;
 use crate::load_device_with_password_core;
 
-pub fn load_device_with_password(
+pub fn load_device_with_password_from_path(
     key_file: &Path,
     password: &str,
 ) -> LocalDeviceResult<LocalDevice> {
@@ -19,4 +19,8 @@ pub fn load_device_with_password(
             unreachable!("Tried to load recovery/smartcard device with `load_device_with_password`")
         }
     }
+}
+
+pub fn load_device_with_password(key: &str, password: &str) -> LocalDeviceResult<LocalDevice> {
+    load_device_with_password_from_path(Path::new(key), password)
 }

@@ -54,14 +54,17 @@ import { libparsec } from '../plugins/libparsec';
 
 const name = ref('Scruffy');
 
+const path = 'PATH/TO/.config/parsec/';
+const password = 'PASSWORD';
+
 async function onSubmit(): Promise<void> {
   console.log('Submitting');
-  await libparsec.testGenDefaultDevices();
-  const devices = await libparsec.listAvailableDevices('PATH/TO/CONFIG/.config/parsec');
+  const devices = await libparsec.listAvailableDevices(path);
   console.log(devices);
-  const key = await libparsec.login('a7d1edf7a8014e76b2d89e63f430d9fc@010cfc8b95ea4436bd594d919ec966fc');
-  console.log(key);
-  const deviceID = await libparsec.loggedCoreGetTestDeviceId(key);
+  const handle = await libparsec.login(devices[0].keyFilePath, password);
+  // const handle = await libparsec.login(devices[0].slug, password);
+  console.log(handle);
+  const deviceID = await libparsec.loggedCoreGetDeviceId(0);
   console.log(deviceID);
 }
 </script>

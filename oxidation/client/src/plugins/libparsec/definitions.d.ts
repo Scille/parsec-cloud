@@ -48,13 +48,18 @@ export interface LoggedCoreErrorInvalidHandle {
     tag: 'InvalidHandle'
     handle: number;
 }
+export interface LoggedCoreErrorLoginFailed {
+    tag: 'LoginFailed'
+    help: string;
+}
 export type LoggedCoreError =
   | LoggedCoreErrorDisconnected
   | LoggedCoreErrorInvalidHandle
+  | LoggedCoreErrorLoginFailed
 
 export interface LibParsecPlugin {
     listAvailableDevices(path: StrPath): Promise<Array<AvailableDevice>>;
-    testGenDefaultDevices(): Promise<null>;
-    login(test_device_id: DeviceID): Promise<number>;
-    loggedCoreGetTestDeviceId(handle: number): Promise<Result<DeviceID, LoggedCoreError>>;
+    login(key: string, password: string): Promise<Result<number, LoggedCoreError>>;
+    loggedCoreGetDeviceId(handle: number): Promise<Result<DeviceID, LoggedCoreError>>;
+    loggedCoreGetDeviceDisplay(handle: number): Promise<Result<string, LoggedCoreError>>;
 }

@@ -45,12 +45,17 @@ export interface LoggedCoreErrorInvalidHandle {
     tag: "InvalidHandle"
     handle: number;
 }
+export interface LoggedCoreErrorLoginFailed {
+    tag: "LoginFailed"
+    help: string;
+}
 export type LoggedCoreError =
   | LoggedCoreErrorDisconnected
   | LoggedCoreErrorInvalidHandle
+  | LoggedCoreErrorLoginFailed
 
 
 export function listAvailableDevices(path: string): Promise<Array<AvailableDevice>>;
-export function testGenDefaultDevices(): Promise<null>;
-export function login(test_device_id: string): Promise<number>;
-export function loggedCoreGetTestDeviceId(handle: number): Promise<Result<string, LoggedCoreError>>;
+export function login(key: string, password: string): Promise<Result<number, LoggedCoreError>>;
+export function loggedCoreGetDeviceId(handle: number): Promise<Result<string, LoggedCoreError>>;
+export function loggedCoreGetDeviceDisplay(handle: number): Promise<Result<string, LoggedCoreError>>;

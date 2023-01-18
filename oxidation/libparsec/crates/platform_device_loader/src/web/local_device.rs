@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use base64::{engine::general_purpose::STANDARD, Engine};
-
 use libparsec_client_types::{DeviceFile, LocalDevice, LocalDeviceError, LocalDeviceResult};
 
 use crate::load_device_with_password_core;
@@ -10,10 +8,9 @@ pub fn load_device_with_password(slug: &str, password: &str) -> LocalDeviceResul
     let window = web_sys::window().unwrap();
     if let Ok(Some(storage)) = window.local_storage() {
         if let Ok(Some(devices)) = storage.get_item("devices") {
+            let devices = serde_json::from_str::<Vec<DeviceFile>>(&devices).unwrap_or_default();
             let device_file = devices
-                .split(':')
-                .filter_map(|x| STANDARD.decode(x).ok())
-                .filter_map(|x| DeviceFile::load(&x).ok())
+                .into_iter()
                 .filter_map(|x| match x {
                     DeviceFile::Password(x) => Some(x),
                     _ => None,

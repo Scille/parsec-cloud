@@ -15,8 +15,10 @@ pub use libparsec_platform_device_loader as platform_device_loader;
 
 // TODO: replace me by the high-level API here ;-)
 pub use libparsec_client_types::{AvailableDevice, DeviceFileType, StrPath};
-pub use libparsec_core::{logged_core_get_test_device_id, login, LoggedCoreError};
-pub use libparsec_platform_device_loader::test_gen_default_devices;
+pub use libparsec_core::{
+    logged_core_get_device_display, logged_core_get_device_id, login, LoggedCoreError,
+    LoggedCoreHandle, LoggedCoreResult,
+};
 
 pub async fn list_available_devices(config_dir: StrPath) -> Vec<AvailableDevice> {
     libparsec_platform_device_loader::list_available_devices(&std::path::PathBuf::from(config_dir))

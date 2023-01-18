@@ -13,14 +13,9 @@ use libparsec_client_types::{
 };
 use libparsec_crypto::SecretKey;
 
-use crate::load_device_with_password;
+use crate::load_device_with_password_from_path;
 
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
-
-/// TODO: Remove me once wasm doesn't need to mock
-pub async fn test_gen_default_devices() {
-    panic!("This function shouldn't be called in native platform")
-}
 
 pub fn list_available_devices_core(config_dir: &Path) -> LocalDeviceResult<Vec<AvailableDevice>> {
     let mut list = vec![];
@@ -309,7 +304,7 @@ pub fn change_device_password(
     old_password: &str,
     new_password: &str,
 ) -> Result<(), LocalDeviceError> {
-    let device = load_device_with_password(key_file, old_password)?;
+    let device = load_device_with_password_from_path(key_file, old_password)?;
     save_device_with_password(key_file, &device, new_password, true)
 }
 

@@ -79,10 +79,12 @@ impl From<TrustchainError> for RemoteDevicesManagerError {
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum LoggedCoreError {
-    #[error("The handle provided is invalid: {handle:?}")]
-    InvalidHandle { handle: LoggedCoreHandle },
     #[error("The device is disconnected")]
     Disconnected,
+    #[error("The handle provided is invalid: {handle:?}")]
+    InvalidHandle { handle: LoggedCoreHandle },
+    #[error("The login has failed: {help}")]
+    LoginFailed { help: String },
 }
 
 pub type LoggedCoreResult<T> = Result<T, LoggedCoreError>;
