@@ -18,6 +18,7 @@ import structlog
 import trio
 import trio_asyncio
 
+from parsec._parsec import test_clear_local_db_in_memory_mock, test_toggle_local_db_in_memory_mock
 from parsec.backend.config import (
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
@@ -442,19 +443,24 @@ def persistent_mockup(
     if fixtures_customization.get("real_data_storage", False) or fixtures_customization.get(
         "alternate_workspace_storage", False
     ):
+        test_toggle_local_db_in_memory_mock(False)
         yield None
-        return
 
-    from parsec._parsec import clear_local_db_in_memory, toggle_local_db_in_memory
+    else:
+        test_toggle_local_db_in_memory_mock(True)
+        # No database should be in use while we clear the mock. Hence it's
+        # better to do the clear as part of the init given autouse fixtures
+        # run first.
+        test_clear_local_db_in_memory_mock()
 
-    toggle_local_db_in_memory(True)
+        yield test_clear_local_db_in_memory_mock
 
-    yield clear_local_db_in_memory
 
-    toggle_local_db_in_memory(False)
-    clear_local_db_in_memory()
-
-    return
+# `persistent_mockup` is autouse, hence a test only have it explicitly has dependency to be
+# able to use it clear function. Here we just re-expose this function with a better name ;-)
+@pytest.fixture
+def clear_persistent_mockup(persistent_mockup):
+    return persistent_mockup or (lambda: None)
 
 
 @pytest.fixture
@@ -493,15 +499,14 @@ def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
 def reset_testbed(
     request,
     caplog,
-    persistent_mockup: Callable[[], None] | None,
+    clear_persistent_mockup: Callable[[], None],
     clear_database_dir: Callable[[bool], None],
 ):
     async def _reset_testbed(keep_logs=False):
         if request.config.getoption("--postgresql"):
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
-        clear_database_dir(True)
-        if persistent_mockup is not None:
-            persistent_mockup()
+        clear_database_dir(allow_missing_path=True)
+        clear_persistent_mockup()
         if not keep_logs:
             caplog.clear()
 

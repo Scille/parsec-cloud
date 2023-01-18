@@ -10,7 +10,7 @@ rust-version = "1.62.0"
 default = ["use-rustcrypto"]
 use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
-test-utils = ["libparsec_types/test-utils", "platform_local_db/test-utils"]
+test-utils = ["libparsec_types/test-utils", "libparsec_platform_local_db/test-utils"]
 
 [dependencies]
 libparsec_core = { path = "crates/core", default-features = false }
@@ -23,4 +23,4 @@ libparsec_platform_device_loader = { path = "crates/platform_device_loader", def
 libparsec_protocol = { path = "crates/protocol", default-features = false }
 libparsec_core_fs = { path = "crates/core_fs", default-features = false }
 libparsec_types = { path = "crates/types", default-features = false }
-platform_local_db = { path = "crates/platform_local_db", optionnal = true }
+libparsec_platform_local_db = { path = "crates/platform_local_db", optionnal = true }

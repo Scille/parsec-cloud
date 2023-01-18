@@ -630,18 +630,22 @@ pub async fn workspace_storage_non_speculative_init(
     )
     .await?;
     let manifest_storage =
-        ManifestStorage::new(device.local_symkey.clone(), workspace_id, conn).await?;
+        ManifestStorage::new(device.local_symkey.clone(), workspace_id, conn.clone()).await?;
     let timestamp = timestamp.unwrap_or_else(|| device.now());
     let manifest =
         LocalWorkspaceManifest::new(device.device_id, timestamp, Some(workspace_id), false);
-    manifest_storage
+    let res = manifest_storage
         .set_manifest(
             workspace_id,
             LocalManifest::Workspace(manifest),
             false,
             None,
         )
-        .await
+        .await;
+
+    conn.close().await;
+
+    res
 }
 
 #[cfg(test)]
