@@ -8,9 +8,12 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::authenticated_cmds::v2::{
-    vlob_create, vlob_list_versions, vlob_maintenance_get_reencryption_batch,
-    vlob_maintenance_save_reencryption_batch, vlob_poll_changes, vlob_read, vlob_update,
+use libparsec::protocol::{
+    authenticated_cmds::v2::{
+        vlob_create, vlob_list_versions, vlob_maintenance_get_reencryption_batch,
+        vlob_maintenance_save_reencryption_batch, vlob_poll_changes, vlob_read, vlob_update,
+    },
+    Request,
 };
 
 use crate::{

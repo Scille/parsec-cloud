@@ -13,9 +13,10 @@ itertools = "0.10.5"
 miniserde = "0.1.27"
 proc-macro2 = "1.0.47"
 quote = "1.0.23"
-syn = "1.0.105"
+syn = { version = "1.0.105", features = ["extra-traits"] }
 
 [dev-dependencies]
+libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
 rstest = "0.16.0"
 pretty_assertions = "1.3.0"
