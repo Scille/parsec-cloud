@@ -319,7 +319,7 @@ def GreetUserTestBed(
             def _greet_done():
                 assert not gu_w.isVisible()
                 assert autoclose_dialog.dialogs == [
-                    ("", "The user was successfully greeted in your organization.")
+                    ("", "The user was successfully onboarded in your organization.")
                 ]
                 # User list should be updated
                 assert u_w.layout_users.count() == 4
