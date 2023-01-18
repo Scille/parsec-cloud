@@ -378,7 +378,7 @@ jobs:
         shell: bash
         run: |
           set -ex
-          cargo test --profile ci-rust --workspace --features mock-time ${{ env.cargo-exclude-unused-crates }} --exclude libparsec_crypto
+          cargo test --profile ci-rust --workspace --features test-utils ${{ env.cargo-exclude-unused-crates }} --exclude libparsec_crypto
           cargo test --profile ci-rust --package libparsec_crypto --no-default-features --features use-sodiumoxide
           cargo test --profile ci-rust --package libparsec_crypto
 

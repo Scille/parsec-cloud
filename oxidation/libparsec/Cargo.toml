@@ -10,7 +10,7 @@ rust-version = "1.62.0"
 default = ["use-rustcrypto"]
 use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
-mock-time = ["libparsec_types/mock-time"]
+test-utils = ["libparsec_types/test-utils"]
 
 [dependencies]
 libparsec_core = { path = "crates/core", default-features = false }

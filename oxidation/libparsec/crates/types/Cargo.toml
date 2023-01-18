@@ -16,7 +16,7 @@ default = ["use-rustcrypto"]
 use-rustcrypto = ["uuid/fast-rng", "libparsec_crypto/use-rustcrypto"]
 use-sodiumoxide = ["uuid/fast-rng", "libparsec_crypto/use-sodiumoxide"]
 js = ["uuid/js"]
-mock-time = []
+test-utils = []
 
 [dependencies]
 libparsec_crypto = { path = "../crypto", default-features = false }

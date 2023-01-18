@@ -24,10 +24,10 @@ members = [
 default-members = ["oxidation/libparsec"]
 
 [features]
-default = ["mock-time", "libparsec/use-rustcrypto"]
-use-rustcrypto = ["mock-time", "libparsec/use-rustcrypto", "extension-module"]
-use-sodiumoxide = ["mock-time", "libparsec/use-sodiumoxide", "extension-module"]
-mock-time = ["libparsec/mock-time"]
+default = ["test-utils", "libparsec/use-rustcrypto"]
+use-rustcrypto = ["test-utils", "libparsec/use-rustcrypto", "extension-module"]
+use-sodiumoxide = ["test-utils", "libparsec/use-sodiumoxide", "extension-module"]
+test-utils = ["libparsec/test-utils"]
 extension-module = ["pyo3/extension-module"]
 
 [dependencies]
