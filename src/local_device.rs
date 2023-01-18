@@ -16,6 +16,7 @@ use crate::{
     enumerate::{DeviceFileType, UserProfile},
     ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID},
     local_device::client_types::StrPath,
+    runtime::FutureIntoCoroutine,
     time::{DateTime, TimeProvider},
 };
 
@@ -594,4 +595,27 @@ pub(crate) fn get_available_device(
     platform_device_loader::get_available_device(&config_dir, slug)
         .map(AvailableDevice)
         .map_err(|e| LocalDeviceExc(Box::new(e)))
+}
+
+#[pyfunction]
+pub(crate) fn load_recovery_device(key_file: PathBuf, password: String) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::load_recovery_device(&key_file, &password)
+            .await
+            .map(LocalDevice)
+            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
+}
+
+#[pyfunction]
+pub(crate) fn save_recovery_device(
+    key_file: PathBuf,
+    device: LocalDevice,
+    force: bool,
+) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::save_recovery_device(&key_file, device.0, force)
+            .await
+            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
 }
