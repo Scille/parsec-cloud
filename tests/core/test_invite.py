@@ -4,7 +4,13 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import ActiveUsersLimit, DateTime, InvitationType, InviteListRepOk
+from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    InvitationType,
+    InviteListRepOk,
+    user_storage_non_speculative_init,
+)
 from parsec.api.data import EntryName
 from parsec.api.protocol import (
     DeviceLabel,
@@ -19,7 +25,6 @@ from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
 )
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import (
     DeviceClaimInitialCtx,
     DeviceGreetInitialCtx,

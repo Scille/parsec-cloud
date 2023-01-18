@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from importlib import import_module
-from typing import Callable, Type
+from typing import Awaitable, Callable, Type
 
 import pytest
 import qtrio
@@ -329,12 +329,12 @@ async def gui(
 @pytest.fixture
 async def logged_gui(
     aqtbot,
-    gui_factory: Callable[[], MainWindow],
+    gui_factory: Callable[[], Awaitable[MainWindow]],
     core_config: CoreConfig,
     alice: LocalDevice,
     bob: LocalDevice,
     fixtures_customization,
-):
+) -> MainWindow:
     # Logged as bob (i.e. standard profile) by default
     if fixtures_customization.get("logged_gui_as_admin", False):
         device = alice

@@ -1,0 +1,13 @@
+[package]
+name = "platform_local_db"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.61"
+tokio = { version = "1.24.1", features = ["fs", "sync"] }
+thiserror = "1.0.37"
+diesel = { version = "2.0.2", features = ["sqlite"], default-features = false }
+platform_async = { path = "../platform_async", package = "libparsec_platform_async"}

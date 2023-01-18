@@ -69,6 +69,7 @@ from parsec._parsec import (
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepTimeout,
+    workspace_storage_non_speculative_init,
 )
 from parsec.api.data import (
     DataError,
@@ -104,11 +105,7 @@ from parsec.core.fs.remote_loader import (
     UserRemoteLoader,
     _validate_sequester_config,
 )
-from parsec.core.fs.storage import (
-    UserStorage,
-    WorkspaceStorage,
-    workspace_storage_non_speculative_init,
-)
+from parsec.core.fs.storage import UserStorage, WorkspaceStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.remote_devices_manager import RemoteDevicesManager
@@ -510,6 +507,7 @@ class UserFS:
                 data_base_dir=self.data_base_dir,
                 device=self.device,
                 workspace_id=workspace_entry.id,
+                timestamp=self.device.timestamp(),
             )
             await self.set_user_manifest(user_manifest)
             self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)

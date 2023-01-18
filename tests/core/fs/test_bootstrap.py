@@ -16,9 +16,9 @@ from parsec._parsec import (
     SecretKey,
     UserManifest,
     WorkspaceEntry,
+    user_storage_non_speculative_init,
 )
 from parsec.core.fs import UserFS
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.types import WorkspaceRole
 from tests.common import freeze_time
 from tests.common.fixtures_customisation import customize_fixtures
