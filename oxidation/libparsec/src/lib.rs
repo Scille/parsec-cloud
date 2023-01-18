@@ -8,6 +8,8 @@ pub use libparsec_core_fs as core_fs;
 pub use libparsec_protocol as protocol;
 #[cfg(not(target_arch = "wasm32"))]
 pub use libparsec_types as types;
+#[cfg(not(target_arch = "wasm32"))]
+pub use platform_local_db as local_db;
 
 pub use libparsec_core as core;
 pub use libparsec_crypto as crypto;

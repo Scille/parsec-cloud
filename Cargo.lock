@@ -1178,6 +1178,7 @@ dependencies = [
  "libparsec_platform_device_loader",
  "libparsec_protocol",
  "libparsec_types",
+ "platform_local_db",
 ]
 
 [[package]]
