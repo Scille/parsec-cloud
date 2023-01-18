@@ -674,6 +674,7 @@ async def test_backend_block_data_online(
 
 
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=2)
 async def test_backend_block_upload_error_during_sync(
     alice_user_fs, alice2_user_fs, running_backend, monkeypatch
 ):

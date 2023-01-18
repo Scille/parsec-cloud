@@ -145,6 +145,7 @@ def user_fs_offline_state_machine(
     monkeypatch: pytest.MonkeyPatch,
     user_fs_factory: UserFsFactory,
     clear_database_dir: Callable[[bool], None],
+    persistent_mockup: Callable[[], None] | None,
     reset_testbed,
     hypothesis_settings,
     fixtures_customization: dict[str, Any],
@@ -178,6 +179,8 @@ def user_fs_offline_state_machine(
             del self.user_fs_controller.user_fs
             del self.user_fs_controller
             clear_database_dir(True)
+            if persistent_mockup is not None:
+                persistent_mockup()
             await self.start_user_fs(device)
 
         async def reset_all(self):
