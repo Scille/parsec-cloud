@@ -27,7 +27,12 @@ impl SqliteExecutor {
             job_receiver,
             connection,
         };
-        let handle = std::thread::spawn(move || background_executor.serve());
+        // TODO: currently if the thread panic the error is printed to stderr,
+        // we should instead have a proper panic handler that log an error
+        let handle = std::thread::Builder::new()
+            .name("SqliteExecutor".to_string())
+            .spawn(move || background_executor.serve())
+            .expect("failed to spawn thread");
 
         Self {
             job_sender,
@@ -43,7 +48,14 @@ impl SqliteExecutor {
         let (tx, rx) = channel::bounded::<R>(1);
         let wrapped_job = move |conn: &mut SqliteConnection| {
             let res = job(conn);
-            tx.send(res).unwrap();
+            // If send fails it means the caller's future has been dropped
+            // (hence dropping `rx`). In theory there is nothing wrong about
+            // it, however we log it anyway given the caller's unexpected drop
+            // may also be the sign of a bug...
+            if tx.send(res).is_err() {
+                // TODO: replace this by a proper warning log !
+                eprintln!("Caller has left");
+            }
         };
         let wrapped_job = Box::new(wrapped_job);
         self.raw_exec(wrapped_job).await?;
@@ -60,11 +72,21 @@ impl SqliteExecutor {
 
 impl Drop for SqliteExecutor {
     fn drop(&mut self) {
-        if let Err(e) = self.job_sender.send(ExecOrStop::Stop) {
-            eprintln!("Cannot send message to the background executor (Could just mean the executor is closed): {e}")
+        if self.job_sender.send(ExecOrStop::Stop).is_err() {
+            // If the send fails, this is most likely because the executor
+            // thread is already stopped. This might be because:
+            // - the thread has panicked
+            // - a bug in the code has cause another `ExecOrStop::Stop` to be
+            //   send to the thead before
+            // In both case something fishy is going on here :/
+            // TODO: replace this by a proper warning log !
+            eprintln!("Cannot send stop message to thread");
         }
-        if let Some(Err(e)) = self.handle.take().map(|handle| handle.join()) {
-            eprintln!("Cannot wait for the thread to finish: {e:?}");
+        if let Some(handle) = self.handle.take() {
+            // An error is returned in case the joined thread has panicked
+            // We can ignore the error given it should have already been
+            // logged as part of the panic handling system.
+            let _ = handle.join();
         }
     }
 }

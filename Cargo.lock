@@ -1170,9 +1170,9 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
+ "libparsec_platform_local_db",
  "libparsec_protocol",
  "libparsec_types",
- "platform_local_db",
 ]
 
 [[package]]
@@ -1282,9 +1282,9 @@ dependencies = [
  "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_platform_async",
+ "libparsec_platform_local_db",
  "libparsec_types",
  "libsqlite3-sys",
- "platform_local_db",
  "regex",
  "rstest",
  "tests_fixtures",
@@ -1360,6 +1360,21 @@ dependencies = [
  "tests_fixtures",
  "tokio",
  "web-sys",
+]
+
+[[package]]
+name = "libparsec_platform_local_db"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "diesel",
+ "lazy_static",
+ "libparsec_platform_async",
+ "libsqlite3-sys",
+ "rstest",
+ "tests_fixtures",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -1948,18 +1963,6 @@ name = "pkg-config"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
-
-[[package]]
-name = "platform_local_db"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "diesel",
- "lazy_static",
- "libparsec_platform_async",
- "thiserror",
- "tokio",
-]
 
 [[package]]
 name = "poly1305"

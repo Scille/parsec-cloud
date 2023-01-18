@@ -372,11 +372,10 @@ async def test_workspace_reencryption_do_one_batch_error(
         )
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=5)
+# We actually don't need to be admin, but we want to log as alice to have alice2 available
+@customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_continue(
     aqtbot,
     running_backend,
@@ -385,22 +384,21 @@ async def test_workspace_reencryption_continue(
     monkeypatch,
     alice2_user_fs,
     bob_user_fs,
-    bob,
     alice,
 ):
     # Create a shared workspace
-    wid = await alice2_user_fs.workspace_create(EntryName("w1"))
-    workspace = alice2_user_fs.get_workspace(wid)
+    wid = await bob_user_fs.workspace_create(EntryName("w1"))
+    workspace = bob_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
     await workspace.sync()
-    await alice2_user_fs.sync()
-    await alice2_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.OWNER)
-    await bob_user_fs.process_last_messages()
+    await bob_user_fs.sync()
+    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.OWNER)
+    await alice2_user_fs.process_last_messages()
 
-    await alice2_user_fs.workspace_start_reencryption(wid)
+    await bob_user_fs.workspace_start_reencryption(wid)
 
     gui = await gui_factory()
-    await gui.test_switch_to_logged_in(bob)
+    await gui.test_switch_to_logged_in(alice)
     w_w = gui.test_get_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)

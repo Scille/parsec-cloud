@@ -13,7 +13,7 @@ mod test_utils;
 
 pub use error::{DatabaseError, DatabaseResult};
 #[cfg(feature = "test-utils")]
-pub use test_utils::{clear_local_db_in_memory, toggle_local_db_in_memory};
+pub use test_utils::{test_clear_local_db_in_memory_mock, test_toggle_local_db_in_memory_mock};
 
 /// Maximum Number Of Host Parameters In A Single SQL Statement
 /// https://www.sqlite.org/limits.html#max_variable_number
@@ -22,35 +22,36 @@ pub const LOCAL_DATABASE_MAX_VARIABLE_NUMBER: usize = 999;
 #[derive(Clone)]
 pub struct LocalDatabase {
     #[cfg(feature = "test-utils")]
-    executor: Arc<RwLock<Option<Arc<SqliteExecutor>>>>,
-    #[cfg(not(feature = "test-utils"))]
+    path: String,
+    #[cfg(feature = "test-utils")]
+    is_in_memory: bool,
     executor: Arc<RwLock<Option<SqliteExecutor>>>,
 }
 
 impl LocalDatabase {
+    #[cfg(feature = "test-utils")]
     pub async fn from_path(path: &str) -> DatabaseResult<Self> {
-        #[cfg(feature = "test-utils")]
-        if let Some(local_db) = test_utils::open_local_db_in_memory(path) {
-            return local_db;
-        }
-
-        let connection = new_sqlite_connection_from_path(path).await?;
-        Self::from_sqlite_connection(connection).await
+        let (executor, is_in_memory) = match test_utils::maybe_open_sqlite_in_memory(path) {
+            Some(executor) => (executor, true),
+            None => {
+                let conn = new_sqlite_connection_from_path(path).await?;
+                (SqliteExecutor::spawn(conn), false)
+            }
+        };
+        Ok(Self {
+            path: path.to_string(),
+            is_in_memory,
+            executor: Arc::new(RwLock::new(Some(executor))),
+        })
     }
 
-    pub async fn new_in_memory() -> DatabaseResult<Self> {
-        let connection = SqliteConnection::establish(":memory:")?;
-
-        Self::from_sqlite_connection(connection).await
-    }
-
-    pub async fn from_sqlite_connection(connection: SqliteConnection) -> DatabaseResult<Self> {
-        let executor = SqliteExecutor::spawn(connection);
-        #[cfg(feature = "test-utils")]
-        let executor = Arc::new(executor);
-        let executor = Arc::new(RwLock::new(Some(executor)));
-
-        Ok(Self { executor })
+    #[cfg(not(feature = "test-utils"))]
+    pub async fn from_path(path: &str) -> DatabaseResult<Self> {
+        let conn = new_sqlite_connection_from_path(path).await?;
+        let executor = SqliteExecutor::spawn(conn);
+        Ok(Self {
+            executor: Arc::new(RwLock::new(Some(executor))),
+        })
     }
 }
 
@@ -80,7 +81,13 @@ async fn new_sqlite_connection_from_path(path: &str) -> Result<SqliteConnection,
 impl LocalDatabase {
     /// Close the actual connection to the database.
     pub async fn close(&self) {
-        self.executor.write().await.take();
+        let _executor = self.executor.write().await.take();
+        #[cfg(feature = "test-utils")]
+        if let Some(executor) = _executor {
+            if self.is_in_memory {
+                test_utils::return_sqlite_in_memory_db(&self.path, executor);
+            }
+        }
     }
 }
 

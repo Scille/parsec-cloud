@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use diesel::{sql_query, table, Insertable, Queryable, RunQueryDsl};
-use platform_local_db::LocalDatabase;
+use libparsec_platform_local_db::LocalDatabase;
 
 table! {
     books(id) {

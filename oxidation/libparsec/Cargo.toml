@@ -9,7 +9,10 @@ rust-version = "1.62.0"
 [features]
 # Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
 use-sodiumoxide = [ "libparsec_crypto/use-sodiumoxide" ]
-test-utils = [ "libparsec_types/test-mock-time", "platform_local_db/test-utils" ]
+test-utils = [
+    "libparsec_types/test-mock-time",
+    "dep:libparsec_platform_local_db"
+]
 
 [dependencies]
 libparsec_core = { path = "crates/core" }
@@ -22,4 +25,4 @@ libparsec_platform_device_loader = { path = "crates/platform_device_loader" }
 libparsec_protocol = { path = "crates/protocol" }
 libparsec_core_fs = { path = "crates/core_fs" }
 libparsec_types = { path = "crates/types" }
-platform_local_db = { path = "crates/platform_local_db", optionnal = true }
+libparsec_platform_local_db = { path = "crates/platform_local_db", features = ["test-utils"], optional = true }

@@ -3,18 +3,18 @@
 use pyo3::prelude::{pyfunction, wrap_pyfunction, PyModule, PyResult, Python};
 
 pub(crate) fn add_mod(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(toggle_local_db_in_memory, m)?)?;
-    m.add_function(wrap_pyfunction!(clear_local_db_in_memory, m)?)?;
+    m.add_function(wrap_pyfunction!(test_toggle_local_db_in_memory_mock, m)?)?;
+    m.add_function(wrap_pyfunction!(test_clear_local_db_in_memory_mock, m)?)?;
 
     Ok(())
 }
 
 #[pyfunction]
-pub(crate) fn toggle_local_db_in_memory(enabled: bool) {
-    libparsec::local_db::toggle_local_db_in_memory(enabled)
+pub(crate) fn test_toggle_local_db_in_memory_mock(enabled: bool) {
+    libparsec::local_db::test_toggle_local_db_in_memory_mock(enabled)
 }
 
 #[pyfunction]
-fn clear_local_db_in_memory() {
-    libparsec::local_db::clear_local_db_in_memory()
+fn test_clear_local_db_in_memory_mock() {
+    libparsec::local_db::test_clear_local_db_in_memory_mock()
 }

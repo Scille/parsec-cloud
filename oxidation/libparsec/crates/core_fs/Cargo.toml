@@ -21,7 +21,7 @@ regex = "1.6.0"
 thiserror = "1.0.37"
 uuid = { version = "1.2.1", features = ["v4", "fast-rng"] }
 lazy_static = "1.4.0"
-local_db = { path = "../platform_local_db", package = "platform_local_db"}
+local_db = { path = "../platform_local_db", package = "libparsec_platform_local_db"}
 async-trait = "0.1.61"
 platform_async = { path = "../platform_async", package = "libparsec_platform_async" }
 
