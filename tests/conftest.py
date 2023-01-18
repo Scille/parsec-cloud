@@ -8,7 +8,7 @@ import shutil
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Generator
 from unittest.mock import patch
 
 import hypothesis
@@ -435,6 +435,28 @@ def blockstore(backend_store, fixtures_customization):
     return config
 
 
+@pytest.fixture(autouse=True)
+def persistent_mockup(
+    fixtures_customization: dict[str, Any]
+) -> Generator[None, None, Callable[[], None] | None]:
+    if fixtures_customization.get("real_data_storage", False) or fixtures_customization.get(
+        "alternate_workspace_storage", False
+    ):
+        yield None
+        return
+
+    from parsec._parsec import clear_local_db_in_memory, toggle_local_db_in_memory
+
+    toggle_local_db_in_memory(True)
+
+    yield clear_local_db_in_memory
+
+    toggle_local_db_in_memory(False)
+    clear_local_db_in_memory()
+
+    return
+
+
 @pytest.fixture
 def data_base_dir(tmp_path: Path) -> Path:
     return tmp_path / "data"
@@ -468,11 +490,18 @@ def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
 
 
 @pytest.fixture
-def reset_testbed(request, caplog, clear_database_dir: Callable[[bool], None]):
+def reset_testbed(
+    request,
+    caplog,
+    persistent_mockup: Callable[[], None] | None,
+    clear_database_dir: Callable[[bool], None],
+):
     async def _reset_testbed(keep_logs=False):
         if request.config.getoption("--postgresql"):
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
         clear_database_dir(True)
+        if persistent_mockup is not None:
+            persistent_mockup()
         if not keep_logs:
             caplog.clear()
 

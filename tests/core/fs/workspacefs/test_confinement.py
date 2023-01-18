@@ -12,6 +12,7 @@ from parsec._parsec import EntryName, LocalDevice, Regex
 from parsec.core.fs import FsPath, UserFS, WorkspaceFS
 from parsec.core.logged_core import LoggedCore, get_prevent_sync_pattern
 from tests.common import create_shared_workspace
+from tests.common.fixtures_customisation import customize_fixtures
 from tests.core.fs.old_storage.version import get_workspace_data_storage_db_path
 
 
@@ -316,6 +317,7 @@ def test_stable_prevent_sync_pattern():
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_database_with_invalid_pattern_resilience(
     core_factory: Callable[..., _AsyncGeneratorContextManager[LoggedCore]],
     alice: LocalDevice,

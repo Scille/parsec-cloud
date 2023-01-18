@@ -45,6 +45,7 @@ async def test_user_manifest_access_while_speculative(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_manifest_access_while_speculative(
     user_fs_factory: UserFsFactory, alice: LocalDevice, tmp_path: Path
 ):
