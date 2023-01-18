@@ -94,8 +94,10 @@ from parsec._parsec_pyi.local_device import (
     change_device_password,
     get_available_device,
     list_available_devices,
+    load_recovery_device,
     save_device_with_password,
     save_device_with_password_in_config,
+    save_recovery_device,
 )
 from parsec._parsec_pyi.local_manifest import (
     Chunk,
@@ -670,8 +672,10 @@ __all__ = [
     "change_device_password",
     "get_available_device",
     "list_available_devices",
+    "load_recovery_device",
     "save_device_with_password",
     "save_device_with_password_in_config",
+    "save_recovery_device",
     # File Operations
     "prepare_read",
     "prepare_reshape",

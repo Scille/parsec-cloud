@@ -93,6 +93,8 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         "LocalDeviceExc",
         py.get_type::<local_device::LocalDeviceError>(),
     )?;
+    m.add_function(wrap_pyfunction!(local_device::load_recovery_device, m)?)?;
+    m.add_function(wrap_pyfunction!(local_device::save_recovery_device, m)?)?;
 
     // Time
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;

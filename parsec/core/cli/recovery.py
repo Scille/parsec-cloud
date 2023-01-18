@@ -6,6 +6,7 @@ from typing import Any
 
 import click
 
+from parsec._parsec import load_recovery_device, save_recovery_device
 from parsec.api.protocol import DeviceLabel
 from parsec.cli_utils import cli_exception_handler, operation, spinner
 from parsec.core import CoreConfig
@@ -16,11 +17,7 @@ from parsec.core.cli.utils import (
     core_config_options,
     save_device_options,
 )
-from parsec.core.local_device import (
-    get_recovery_device_file_name,
-    load_recovery_device,
-    save_recovery_device,
-)
+from parsec.core.local_device import get_recovery_device_file_name
 from parsec.core.recovery import generate_new_device_from_recovery, generate_recovery_device
 from parsec.core.types import LocalDevice
 from parsec.utils import trio_run
@@ -36,7 +33,7 @@ async def _export_recovery_device(
     file_path = output / file_name
     file_path_display = click.style(str(file_path.absolute()), fg="yellow")
     with operation(f"Saving recovery device file in {file_path_display}"):
-        passphrase = await save_recovery_device(file_path, recovery_device)
+        passphrase = await save_recovery_device(file_path, recovery_device, force=False)
 
     p1 = click.style("Save the recovery passphrase in a safe place:", fg="red")
     p2 = click.style(passphrase, fg="green")

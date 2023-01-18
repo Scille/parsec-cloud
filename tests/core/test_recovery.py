@@ -3,14 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import SecretKey
+from parsec._parsec import SecretKey, load_recovery_device, save_recovery_device
 from parsec.api.protocol.types import DeviceLabel
 from parsec.core.backend_connection import BackendConnectionRefused, BackendNotAvailable
-from parsec.core.local_device import (
-    get_recovery_device_file_name,
-    load_recovery_device,
-    save_recovery_device,
-)
+from parsec.core.local_device import get_recovery_device_file_name
 from parsec.core.recovery import generate_new_device_from_recovery, generate_recovery_device
 from parsec.crypto import CryptoError
 
@@ -65,7 +61,7 @@ async def test_recovery_ok(tmp_path, user_fs_factory, running_backend, bob):
     file_name = get_recovery_device_file_name(recovery_device)
 
     file_path = tmp_path / file_name
-    passphrase = await save_recovery_device(file_path, recovery_device)
+    passphrase = await save_recovery_device(file_path, recovery_device, force=False)
 
     # 2) Load recovery device file and create a new device
 

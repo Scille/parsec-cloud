@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from PyQt5 import QtCore
 
-from parsec._parsec import save_device_with_password_in_config
+from parsec._parsec import save_device_with_password_in_config, save_recovery_device
 from parsec.api.protocol import DeviceLabel
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 from parsec.core.gui.device_recovery_export_widget import (
@@ -15,7 +15,7 @@ from parsec.core.gui.device_recovery_export_widget import (
 )
 from parsec.core.gui.device_recovery_import_widget import DeviceRecoveryImportPage1Widget
 from parsec.core.gui.lang import translate
-from parsec.core.local_device import get_recovery_device_file_name, save_recovery_device
+from parsec.core.local_device import get_recovery_device_file_name
 from parsec.core.recovery import generate_recovery_device
 
 
@@ -128,7 +128,7 @@ async def test_import_recovery_device(
     recovery_device = await generate_recovery_device(alice)
     file_name = get_recovery_device_file_name(recovery_device)
     file_path = tmp_path / file_name
-    passphrase = await save_recovery_device(file_path, recovery_device)
+    passphrase = await save_recovery_device(file_path, recovery_device, force=False)
 
     with monkeypatch.context() as m:
         m.setattr(

@@ -7,7 +7,12 @@ from typing import Callable
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec._parsec import DeviceFileType, SecretKey, save_device_with_password_in_config
+from parsec._parsec import (
+    DeviceFileType,
+    SecretKey,
+    load_recovery_device,
+    save_device_with_password_in_config,
+)
 from parsec.api.protocol import DeviceLabel
 from parsec.core import CoreConfig
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
@@ -25,7 +30,6 @@ from parsec.core.local_device import (
     LocalDeviceCryptoError,
     LocalDeviceError,
     LocalDeviceNotFoundError,
-    load_recovery_device,
     save_device_with_smartcard_in_config,
 )
 from parsec.core.recovery import generate_new_device_from_recovery
@@ -125,7 +129,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         self, device_label: DeviceLabel, file_path: PurePath, passphrase: str
     ) -> LocalDevice:
         try:
-            recovery_device = await load_recovery_device(file_path, passphrase)
+            recovery_device = await load_recovery_device(Path(file_path), passphrase)
             new_device = await generate_new_device_from_recovery(recovery_device, device_label)
             return new_device
         except LocalDeviceError as exc:
