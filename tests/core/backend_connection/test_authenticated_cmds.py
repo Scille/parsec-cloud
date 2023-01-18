@@ -263,9 +263,7 @@ async def test_authenticated_cmds_has_right_methods(running_backend, alice):
 
 @pytest.mark.trio
 async def test_rust_authenticated_ping(running_backend, alice):
-    # async with backend_authenticated_cmds_factory(alice.organization_addr, alice.device_id, alice.signing_key) as cmds:
     auth_cmds = AuthenticatedCmds(alice.organization_addr, alice.device_id, alice.signing_key)
     cmd_result = await auth_cmds.ping("Hello from alice")
-    # cmd_result = await cmds.ping("Hello from alice")
     assert isinstance(cmd_result, AuthenticatedPingRepOk)
     assert cmd_result.pong == "Hello from alice"
