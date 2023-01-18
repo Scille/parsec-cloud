@@ -5,17 +5,7 @@ import functools
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    NoReturn,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, AsyncIterator, Awaitable, Callable, NoReturn, Type, TypeVar, Union
 
 import trio
 from structlog import get_logger
@@ -23,11 +13,8 @@ from trio_typing import TaskStatus
 from typing_extensions import Concatenate, ParamSpec
 
 from parsec._parsec import BlockID, ChunkID, DateTime, EntryID, Regex
-from parsec._parsec import WorkspaceStorage as _SyncWorkspaceStorage
-from parsec._parsec import WorkspaceStorageSnapshot as _SyncWorkspaceStorageSnapshot
-from parsec._parsec import (
-    workspace_storage_non_speculative_init as _sync_workspace_storage_non_speculative_init,
-)
+from parsec._parsec import WorkspaceStorage as _RsWorkspaceStorage
+from parsec._parsec import WorkspaceStorageSnapshot as _RsWorkspaceStorageSnapshot
 from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 from parsec.core.fs.exceptions import (
     FSError,
@@ -63,27 +50,12 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-async def workspace_storage_non_speculative_init(
-    data_base_dir: Path,
-    device: LocalDevice,
-    workspace_id: EntryID,
-) -> None:
-
-    return await trio.to_thread.run_sync(
-        _sync_workspace_storage_non_speculative_init,
-        data_base_dir,
-        device,
-        workspace_id,
-        device.timestamp(),
-    )
-
-
 def manage_operational_error(
     func: Callable[Concatenate[WorkspaceStorage, P], Awaitable[R]]
 ) -> Callable[Concatenate[WorkspaceStorage, P], Awaitable[R]]:
     @functools.wraps(func)
     async def wrapper(self: WorkspaceStorage, *args: P.args, **kwargs: P.kwargs) -> R:
-        if not hasattr(self, "sync_instance"):
+        if not hasattr(self, "rs_instance"):
             raise FSLocalStorageClosedError("Service is closed")
         try:
             return await func.__get__(self)(*args, **kwargs)
@@ -98,32 +70,19 @@ def manage_operational_error(
 
 
 class WorkspaceStorage:
-    def __init__(
-        self,
-        data_base_dir: Path,
-        device: LocalDevice,
-        workspace_id: EntryID,
-        prevent_sync_pattern: Regex,
-        cache_size: int,
-    ):
-        self.sync_instance = _SyncWorkspaceStorage(
-            data_base_dir,
-            device,
-            workspace_id,
-            prevent_sync_pattern,
-            cache_size,
-        )
+    def __init__(self, rs_instance: _RsWorkspaceStorage):
+        self.rs_instance = rs_instance
         # Locking structures
         self.locking_tasks: dict[EntryID, trio.lowlevel.Task] = {}
         self.entry_locks: dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
     @property
     def device(self) -> LocalDevice:
-        return self.sync_instance.device
+        return self.rs_instance.device
 
     @property
     def workspace_id(self) -> EntryID:
-        return self.sync_instance.workspace_id
+        return self.rs_instance.workspace_id
 
     @asynccontextmanager
     async def _service_abort_context(self) -> AsyncIterator[None]:
@@ -160,13 +119,11 @@ class WorkspaceStorage:
         prevent_sync_pattern: Regex = FAILSAFE_PATTERN_FILTER,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     ) -> AsyncIterator["WorkspaceStorage"]:
-        instance = cls(
-            data_base_dir,
-            device,
-            workspace_id,
-            prevent_sync_pattern,
-            cache_size,
+        rs_instance = await _RsWorkspaceStorage.new(
+            data_base_dir, device, workspace_id, prevent_sync_pattern, cache_size
         )
+        instance = cls(rs_instance)
+
         try:
             async with instance._service_abort_context():
                 # Load "prevent sync" pattern
@@ -174,16 +131,17 @@ class WorkspaceStorage:
 
                 yield instance
         finally:
-            instance.sync_instance.clear_memory_cache(flush=True)
-            instance.sync_instance.close_connections()
-            # del instance.sync_instance
+            with trio.CancelScope(shield=True):
+                await instance.rs_instance.clear_memory_cache(flush=True)
+                await instance.rs_instance.close_connections()
+            # del instance.rs_instance
             # gc.collect()
 
     # Helpers
 
     @manage_operational_error
     async def clear_memory_cache(self, flush: bool = True) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.clear_memory_cache, flush)
+        return await self.rs_instance.clear_memory_cache(flush)
 
     # Locking helpers
 
@@ -209,50 +167,50 @@ class WorkspaceStorage:
     # File management interface
 
     def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
-        return cast(FileDescriptor, self.sync_instance.create_file_descriptor(manifest))
+        return FileDescriptor(self.rs_instance.create_file_descriptor(manifest))
 
     @manage_operational_error
     async def load_file_descriptor(self, fd: PseudoFileDescriptor) -> LocalFileManifest:
-        return await trio.to_thread.run_sync(self.sync_instance.load_file_descriptor, fd)
+        return await self.rs_instance.load_file_descriptor(fd)
 
     def remove_file_descriptor(self, fd: int) -> None:
-        return self.sync_instance.remove_file_descriptor(fd)
+        return self.rs_instance.remove_file_descriptor(fd)
 
     # Block interface
 
     @manage_operational_error
     async def set_clean_block(self, block_id: BlockID, blocks: bytes) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.set_clean_block, block_id, blocks)
+        return await self.rs_instance.set_clean_block(block_id, blocks)
 
     @manage_operational_error
     async def clear_clean_block(self, block_id: BlockID) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.clear_clean_block, block_id)
+        return await self.rs_instance.clear_clean_block(block_id)
 
     @manage_operational_error
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
-        return await trio.to_thread.run_sync(self.sync_instance.get_dirty_block, block_id)
+        return await self.rs_instance.get_dirty_block(block_id)
 
     # Chunk interface
 
     @manage_operational_error
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
-        return await trio.to_thread.run_sync(self.sync_instance.get_chunk, chunk_id)
+        return await self.rs_instance.get_chunk(chunk_id)
 
     @manage_operational_error
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.set_chunk, chunk_id, block)
+        return await self.rs_instance.set_chunk(chunk_id, block)
 
     @manage_operational_error
     async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.clear_chunk, chunk_id, miss_ok)
+        return await self.rs_instance.clear_chunk(chunk_id, miss_ok)
 
     # "Prevent sync" pattern interface
 
     def get_prevent_sync_pattern(self) -> Regex:
-        return self.sync_instance.get_prevent_sync_pattern()
+        return self.rs_instance.get_prevent_sync_pattern()
 
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
-        return self.sync_instance.get_prevent_sync_pattern_fully_applied()
+        return self.rs_instance.get_prevent_sync_pattern_fully_applied()
 
     @manage_operational_error
     async def set_prevent_sync_pattern(self, pattern: Regex) -> None:
@@ -261,7 +219,7 @@ class WorkspaceStorage:
         This operation is idempotent,
         i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
         """
-        return await trio.to_thread.run_sync(self.sync_instance.set_prevent_sync_pattern, pattern)
+        return await self.rs_instance.set_prevent_sync_pattern(pattern)
 
     @manage_operational_error
     async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
@@ -271,24 +229,22 @@ class WorkspaceStorage:
         workspace are compliant with the new pattern. The applied pattern is provided
         as an argument in order to avoid concurrency issues.
         """
-        return await trio.to_thread.run_sync(
-            self.sync_instance.mark_prevent_sync_pattern_fully_applied, pattern
-        )
+        return await self.rs_instance.mark_prevent_sync_pattern_fully_applied(pattern)
 
     async def get_local_chunk_ids(self, chunk_ids: list[ChunkID]) -> tuple[ChunkID, ...]:
-        return await trio.to_thread.run_sync(self.sync_instance.get_local_chunk_ids, chunk_ids)
+        return await self.rs_instance.get_local_chunk_ids(chunk_ids)
 
     async def get_local_block_ids(self, chunk_ids: list[ChunkID]) -> tuple[ChunkID, ...]:
-        return await trio.to_thread.run_sync(self.sync_instance.get_local_block_ids, chunk_ids)
+        return await self.rs_instance.get_local_block_ids(chunk_ids)
 
     # Manifest interface
 
     def get_workspace_manifest(self) -> LocalWorkspaceManifest:
-        return self.sync_instance.get_workspace_manifest()
+        return self.rs_instance.get_workspace_manifest()
 
     @manage_operational_error
     async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
-        return await trio.to_thread.run_sync(self.sync_instance.get_manifest, entry_id)
+        return await self.rs_instance.get_manifest(entry_id)
 
     @manage_operational_error
     async def set_manifest(
@@ -301,51 +257,45 @@ class WorkspaceStorage:
     ) -> None:
         if check_lock_status:
             self._check_lock_status(entry_id)
-        await trio.to_thread.run_sync(
-            self.sync_instance.set_manifest, entry_id, manifest, cache_only, removed_ids
-        )
+        await self.rs_instance.set_manifest(entry_id, manifest, cache_only, removed_ids)
 
     @manage_operational_error
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
-        await trio.to_thread.run_sync(self.sync_instance.ensure_manifest_persistent, entry_id)
+        await self.rs_instance.ensure_manifest_persistent(entry_id)
 
     @manage_operational_error
     async def clear_manifest(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
-        await trio.to_thread.run_sync(self.sync_instance.clear_manifest, entry_id)
+        await self.rs_instance.clear_manifest(entry_id)
 
     # Checkpoint interface
 
     @manage_operational_error
     async def get_realm_checkpoint(self) -> int:
-        return await trio.to_thread.run_sync(self.sync_instance.get_realm_checkpoint)
+        return await self.rs_instance.get_realm_checkpoint()
 
     @manage_operational_error
     async def update_realm_checkpoint(
         self, new_checkpoint: int, change_vlobs: dict[EntryID, int]
     ) -> None:
-        return await trio.to_thread.run_sync(
-            self.sync_instance.update_realm_checkpoint, new_checkpoint, change_vlobs
-        )
+        return await self.rs_instance.update_realm_checkpoint(new_checkpoint, change_vlobs)
 
     async def get_need_sync_entries(self) -> tuple[set[EntryID], set[EntryID]]:
-        return await trio.to_thread.run_sync(self.sync_instance.get_need_sync_entries)
+        return await self.rs_instance.get_need_sync_entries()
 
     @manage_operational_error
     async def run_vacuum(self) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.run_vacuum)
+        return await self.rs_instance.run_vacuum()
 
     @manage_operational_error
     async def is_manifest_cache_ahead_of_persistance(self, entry_id: EntryID) -> bool:
-        return await trio.to_thread.run_sync(
-            self.sync_instance.is_manifest_cache_ahead_of_persistance, entry_id
-        )
+        return await self.rs_instance.is_manifest_cache_ahead_of_persistance(entry_id)
 
     # Timestamped workspace
 
     def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageSnapshot":
-        return WorkspaceStorageSnapshot(self.sync_instance, timestamp)
+        return WorkspaceStorageSnapshot(self.rs_instance, timestamp)
 
 
 class WorkspaceStorageSnapshot:
@@ -360,32 +310,32 @@ class WorkspaceStorageSnapshot:
 
     def __init__(
         self,
-        workspace_storage: _SyncWorkspaceStorage | _SyncWorkspaceStorageSnapshot,
+        workspace_storage: _RsWorkspaceStorage | _RsWorkspaceStorageSnapshot,
         timestamp: DateTime,
     ):
-        assert isinstance(workspace_storage, (_SyncWorkspaceStorage, _SyncWorkspaceStorageSnapshot))
+        assert isinstance(workspace_storage, (_RsWorkspaceStorage, _RsWorkspaceStorageSnapshot))
 
-        if isinstance(workspace_storage, _SyncWorkspaceStorage):
-            sync_instance = _SyncWorkspaceStorageSnapshot(workspace_storage)
-        elif isinstance(workspace_storage, _SyncWorkspaceStorageSnapshot):
-            sync_instance = workspace_storage
+        if isinstance(workspace_storage, _RsWorkspaceStorage):
+            rs_instance = _RsWorkspaceStorageSnapshot(workspace_storage)
+        elif isinstance(workspace_storage, _RsWorkspaceStorageSnapshot):
+            rs_instance = workspace_storage
 
         self.timestamp = timestamp
-        self.sync_instance: _SyncWorkspaceStorageSnapshot = sync_instance
+        self.rs_instance: _RsWorkspaceStorageSnapshot = rs_instance
         # Locking structures
         self.locking_tasks: dict[EntryID, trio.lowlevel.Task] = {}
         self.entry_locks: dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
     @property
     def device(self) -> LocalDevice:
-        return self.sync_instance.device
+        return self.rs_instance.device
 
     @property
     def workspace_id(self) -> EntryID:
-        return self.sync_instance.workspace_id
+        return self.rs_instance.workspace_id
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
-        return await trio.to_thread.run_sync(self.sync_instance.get_chunk, chunk_id)
+        return await self.rs_instance.get_chunk(chunk_id)
 
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> NoReturn:
         self._throw_permission_error()
@@ -422,12 +372,11 @@ class WorkspaceStorageSnapshot:
         """
         Raises nothing, workspace manifest is guaranteed to be always available
         """
-        return self.sync_instance.get_workspace_manifest()
+        return self.rs_instance.get_workspace_manifest()
 
     async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         """Raises: FSLocalMissError"""
-        manifest = await trio.to_thread.run_sync(self.sync_instance.get_manifest, entry_id)
-        return manifest
+        return await self.rs_instance.get_manifest(entry_id)
 
     async def set_manifest(
         self,
@@ -441,7 +390,7 @@ class WorkspaceStorageSnapshot:
         if manifest.need_sync:
             self._throw_permission_error()
         self._check_lock_status(entry_id)
-        return await trio.to_thread.run_sync(self.sync_instance.set_manifest, entry_id, manifest)
+        return await self.rs_instance.set_manifest(entry_id, manifest)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass
@@ -449,25 +398,24 @@ class WorkspaceStorageSnapshot:
     # Block interface
 
     async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.set_clean_block, block_id, block)
+        return await self.rs_instance.set_clean_block(block_id, block)
 
     async def clear_clean_block(self, block_id: BlockID) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.clear_clean_block, block_id)
+        return await self.rs_instance.clear_clean_block(block_id)
 
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
-        return await trio.to_thread.run_sync(self.sync_instance.get_dirty_block, block_id)
+        return await self.rs_instance.get_dirty_block(block_id)
 
     # File management interface
 
     def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
-        return cast(FileDescriptor, self.sync_instance.create_file_descriptor(manifest))
+        return FileDescriptor(self.rs_instance.create_file_descriptor(manifest))
 
     async def load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
-        manifest = await trio.to_thread.run_sync(self.sync_instance.load_file_descriptor, fd)
-        return manifest
+        return await self.rs_instance.load_file_descriptor(fd)
 
     def remove_file_descriptor(self, fd: FileDescriptor) -> None:
-        return self.sync_instance.remove_file_descriptor(fd)
+        return self.rs_instance.remove_file_descriptor(fd)
 
     # Locking helpers
 
@@ -505,14 +453,14 @@ class WorkspaceStorageSnapshot:
         raise NotImplementedError
 
     async def clear_local_cache(self) -> None:
-        return await trio.to_thread.run_sync(self.sync_instance.clear_local_cache)
+        return await self.rs_instance.clear_local_cache()
 
     def get_prevent_sync_pattern(self) -> Regex:
-        return self.sync_instance.get_prevent_sync_pattern()
+        return self.rs_instance.get_prevent_sync_pattern()
 
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
-        return self.sync_instance.get_prevent_sync_pattern_fully_applied()
+        return self.rs_instance.get_prevent_sync_pattern_fully_applied()
 
     def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageSnapshot":
-        wss = WorkspaceStorageSnapshot(self.sync_instance.to_timestamp(), timestamp)
+        wss = WorkspaceStorageSnapshot(self.rs_instance.to_timestamp(), timestamp)
         return wss

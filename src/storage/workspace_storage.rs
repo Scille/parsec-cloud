@@ -8,6 +8,7 @@ use pyo3::{
 use std::{
     collections::{HashMap, HashSet},
     path::PathBuf,
+    sync::Arc,
 };
 
 use crate::{
@@ -15,6 +16,7 @@ use crate::{
     ids::{BlockID, ChunkID, EntryID},
     local_device::LocalDevice,
     regex::Regex,
+    runtime::FutureIntoCoroutine,
     time::DateTime,
 };
 
@@ -29,20 +31,24 @@ import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 /// methods are called in trio.to_thread to connect the sync and async world
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct WorkspaceStorage(pub libparsec::core_fs::WorkspaceStorage, pub Option<Regex>);
+pub(crate) struct WorkspaceStorage(
+    pub Arc<libparsec::core_fs::WorkspaceStorage>,
+    pub Option<Regex>,
+);
 
 #[pymethods]
 impl WorkspaceStorage {
-    #[new]
+    #[staticmethod]
     #[args(cache_size = "512 * 1024 * 1024")]
-    fn new(
+    #[pyo3(name = "new")]
+    fn new_async(
         data_base_dir: PathBuf,
         device: LocalDevice,
         workspace_id: EntryID,
         prevent_sync_pattern: Regex,
         cache_size: u64,
-    ) -> PyResult<Self> {
-        Ok(Self(
+    ) -> FutureIntoCoroutine {
+        FutureIntoCoroutine::from(async move {
             libparsec::core_fs::WorkspaceStorage::new(
                 data_base_dir,
                 device.0,
@@ -50,74 +56,89 @@ impl WorkspaceStorage {
                 prevent_sync_pattern.0,
                 cache_size,
             )
-            .map_err(fs_to_python_error)?,
-            None,
-        ))
+            .await
+            .map_err(fs_to_python_error)
+            .map(|ws| Self(Arc::new(ws), None))
+        })
     }
 
-    fn close_connections(&self) {
-        self.0.close_connections()
-    }
+    fn close_connections(&self) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
 
-    fn set_prevent_sync_pattern(&mut self, py: Python, pattern: &Regex) -> PyResult<()> {
-        self.1 = Some(pattern.clone());
-        let pattern = &pattern.0;
-        py.allow_threads(|| {
-            self.0
-                .set_prevent_sync_pattern(pattern)
-                .map_err(fs_to_python_error)?;
+        FutureIntoCoroutine::from(async move {
+            ws.close_connections().await;
             Ok(())
         })
     }
 
-    fn mark_prevent_sync_pattern_fully_applied(&self, py: Python, pattern: &Regex) -> PyResult<()> {
-        let pattern = &pattern.0;
-        py.allow_threads(|| {
-            self.0
-                .mark_prevent_sync_pattern_fully_applied(pattern)
+    fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> FutureIntoCoroutine {
+        let pattern = pattern.clone();
+        let ws = self.0.clone();
+        self.1 = Some(pattern.clone());
+
+        FutureIntoCoroutine::from(async move {
+            let pattern = &pattern.0;
+            ws.set_prevent_sync_pattern(pattern)
+                .await
                 .map_err(fs_to_python_error)
         })
     }
 
-    fn get_prevent_sync_pattern<'py>(&'py self, py: Python<'py>) -> PyResult<Regex> {
-        let pattern = self.1.as_ref().cloned().unwrap_or_else(|| {
-            let pattern = py.allow_threads(|| self.0.get_prevent_sync_pattern());
-            Regex(pattern)
-        });
-        Ok(pattern)
-    }
+    fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FutureIntoCoroutine {
+        let pattern = pattern.clone();
+        let ws = self.0.clone();
 
-    fn get_prevent_sync_pattern_fully_applied(&self, py: Python) -> PyResult<bool> {
-        py.allow_threads(|| Ok(self.0.get_prevent_sync_pattern_fully_applied()))
-    }
-
-    fn get_workspace_manifest(&self, py: Python) -> PyResult<LocalWorkspaceManifest> {
-        py.allow_threads(|| {
-            Ok(LocalWorkspaceManifest(
-                self.0
-                    .get_workspace_manifest()
-                    .map_err(fs_to_python_error)?,
-            ))
+        FutureIntoCoroutine::from(async move {
+            let pattern = &pattern.0;
+            ws.mark_prevent_sync_pattern_fully_applied(pattern)
+                .await
+                .map_err(fs_to_python_error)
         })
     }
 
-    fn get_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<PyObject> {
-        let manifest = py
-            .allow_threads(|| self.0.get_manifest(entry_id.0))
-            .map_err(|_| FSLocalMissError::new_err(entry_id))?;
-        Ok(match manifest {
-            libparsec::client_types::LocalManifest::File(manifest) => {
-                LocalFileManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::Folder(manifest) => {
-                LocalFolderManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::Workspace(manifest) => {
-                LocalWorkspaceManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::User(manifest) => {
-                LocalUserManifest(manifest).into_py(py)
-            }
+    fn get_prevent_sync_pattern(&self) -> Regex {
+        self.1
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| Regex(self.0.get_prevent_sync_pattern()))
+    }
+
+    fn get_prevent_sync_pattern_fully_applied(&self) -> bool {
+        self.0.get_prevent_sync_pattern_fully_applied()
+    }
+
+    fn get_workspace_manifest(&self) -> PyResult<LocalWorkspaceManifest> {
+        self.0
+            .get_workspace_manifest()
+            .map_err(fs_to_python_error)
+            .map(LocalWorkspaceManifest)
+    }
+
+    fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from_raw(async move {
+            let manifest = ws
+                .get_manifest(entry_id.0)
+                .await
+                .map_err(|_| FSLocalMissError::new_err(entry_id))?;
+            Python::with_gil(|py| {
+                let object: PyObject = match manifest {
+                    libparsec::client_types::LocalManifest::File(manifest) => {
+                        LocalFileManifest(manifest).into_py(py)
+                    }
+                    libparsec::client_types::LocalManifest::Folder(manifest) => {
+                        LocalFolderManifest(manifest).into_py(py)
+                    }
+                    libparsec::client_types::LocalManifest::Workspace(manifest) => {
+                        LocalWorkspaceManifest(manifest).into_py(py)
+                    }
+                    libparsec::client_types::LocalManifest::User(manifest) => {
+                        LocalUserManifest(manifest).into_py(py)
+                    }
+                };
+                Ok(object)
+            })
         })
     }
 
@@ -129,7 +150,7 @@ impl WorkspaceStorage {
         manifest: PyObject,
         cache_only: bool,
         removed_ids: Option<HashSet<ChunkID>>,
-    ) -> PyResult<()> {
+    ) -> PyResult<FutureIntoCoroutine> {
         let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
             libparsec::client_types::LocalManifest::File(manifest.0)
         } else if let Ok(manifest) = manifest.extract::<LocalFolderManifest>(py) {
@@ -141,27 +162,33 @@ impl WorkspaceStorage {
                 manifest.extract::<LocalUserManifest>(py)?.0,
             )
         };
-        py.allow_threads(|| {
-            self.0
-                .set_manifest(
-                    entry_id.0,
-                    manifest,
-                    cache_only,
-                    false,
-                    removed_ids.map(|x| {
-                        x.into_iter()
-                            .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
-                            .collect()
-                    }),
-                )
-                .map_err(fs_to_python_error)
-        })
+        let ws = self.0.clone();
+
+        let fut = FutureIntoCoroutine::from(async move {
+            ws.set_manifest(
+                entry_id.0,
+                manifest,
+                cache_only,
+                false,
+                removed_ids.map(|x| {
+                    x.into_iter()
+                        .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
+                        .collect()
+                }),
+            )
+            .await
+            .map_err(fs_to_python_error)
+        });
+
+        Ok(fut)
     }
 
-    fn clear_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .clear_manifest(entry_id.0, false)
+    fn clear_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.clear_manifest(entry_id.0, false)
+                .await
                 .map_err(|e| match e {
                     FSError::LocalMiss(_) => FSLocalMissError::new_err(entry_id),
                     _ => fs_to_python_error(e),
@@ -169,79 +196,95 @@ impl WorkspaceStorage {
         })
     }
 
-    fn create_file_descriptor(&self, py: Python, manifest: LocalFileManifest) -> PyResult<u32> {
-        py.allow_threads(|| Ok(self.0.create_file_descriptor(manifest.0).0))
+    fn create_file_descriptor(&self, manifest: LocalFileManifest) -> u32 {
+        self.0.create_file_descriptor(manifest.0).0
     }
 
-    fn load_file_descriptor(&self, py: Python, fd: u32) -> PyResult<LocalFileManifest> {
-        py.allow_threads(|| {
-            Ok(LocalFileManifest(
-                self.0
-                    .load_file_descriptor(libparsec::types::FileDescriptor(fd))
-                    .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
-            ))
+    fn load_file_descriptor(&self, fd: u32) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.load_file_descriptor(libparsec::types::FileDescriptor(fd))
+                .await
+                .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
+                .map(LocalFileManifest)
         })
     }
 
-    fn remove_file_descriptor(&self, py: Python, fd: u32) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .remove_file_descriptor(libparsec::types::FileDescriptor(fd))
-                .map(|_| ())
-                .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
-        })
+    fn remove_file_descriptor(&self, fd: u32) -> PyResult<()> {
+        self.0
+            .remove_file_descriptor(libparsec::types::FileDescriptor(fd))
+            .map(|_| ())
+            .ok_or_else(|| {
+                FSInvalidFileDescriptor::new_err(format!("File descriptor `{fd}` is invalid"))
+            })
     }
 
-    fn set_clean_block(&self, py: Python, block_id: BlockID, block: &[u8]) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .set_clean_block(block_id.0, block)
+    fn set_clean_block(&self, block_id: BlockID, block: &[u8]) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+        let block = block.to_vec();
+
+        FutureIntoCoroutine::from(async move {
+            ws.set_clean_block(block_id.0, &block)
+                .await
                 .map_err(fs_to_python_error)
         })
     }
 
-    fn clear_clean_block(&self, py: Python, block_id: BlockID) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0.clear_clean_block(block_id.0);
+    fn clear_clean_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.clear_clean_block(block_id.0).await;
             Ok(())
         })
     }
 
-    fn get_dirty_block<'py>(&self, py: Python<'py>, block_id: BlockID) -> PyResult<&'py PyBytes> {
-        let block = py
-            .allow_threads(|| self.0.get_dirty_block(block_id.0))
-            .map_err(|e| match e {
+    fn get_dirty_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from_raw(async move {
+            let block = ws.get_dirty_block(block_id.0).await.map_err(|e| match e {
                 FSError::LocalMiss(_) => FSLocalMissError::new_err(block_id),
                 _ => fs_to_python_error(e),
             })?;
-        Ok(PyBytes::new(py, &block))
+
+            Ok(Python::with_gil(|py| PyBytes::new(py, &block).into_py(py)))
+        })
     }
 
-    fn get_chunk<'py>(&self, py: Python<'py>, chunk_id: ChunkID) -> PyResult<&'py PyBytes> {
-        let chunk = py
-            .allow_threads(|| self.0.get_chunk(chunk_id.0))
-            .map_err(|e| match e {
+    fn get_chunk(&self, chunk_id: ChunkID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from_raw(async move {
+            let chunk = ws.get_chunk(chunk_id.0).await.map_err(|e| match e {
                 FSError::LocalMiss(_) => FSLocalMissError::new_err(chunk_id),
                 _ => fs_to_python_error(e),
             })?;
-        Ok(PyBytes::new(py, &chunk))
+
+            Ok(Python::with_gil(|py| PyBytes::new(py, &chunk).into_py(py)))
+        })
     }
 
     // Pyo3 is inefficient with Vec<u8> but set_chunk must handle PyByteArray and PyBytes
     // but can't safely call unsafe { block.as_bytes() } because it's called in multiple threads
-    fn set_chunk(&self, py: Python, chunk_id: ChunkID, block: Vec<u8>) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .set_chunk(chunk_id.0, &block)
+    fn set_chunk(&self, chunk_id: ChunkID, block: Vec<u8>) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.set_chunk(chunk_id.0, &block)
+                .await
                 .map_err(fs_to_python_error)
         })
     }
 
     #[args(miss_ok = false)]
-    fn clear_chunk(&self, py: Python, chunk_id: ChunkID, miss_ok: bool) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .clear_chunk(chunk_id.0, miss_ok)
+    fn clear_chunk(&self, chunk_id: ChunkID, miss_ok: bool) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.clear_chunk(chunk_id.0, miss_ok)
+                .await
                 .map_err(|e| match e {
                     FSError::LocalMiss(_) => FSLocalMissError::new_err(chunk_id),
                     _ => fs_to_python_error(e),
@@ -249,89 +292,102 @@ impl WorkspaceStorage {
         })
     }
 
-    fn get_realm_checkpoint(&self, py: Python) -> PyResult<i64> {
-        py.allow_threads(|| Ok(self.0.get_realm_checkpoint()))
+    fn get_realm_checkpoint(&self) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move { Ok(ws.get_realm_checkpoint().await) })
     }
 
     fn update_realm_checkpoint(
         &self,
-        py: Python,
         new_checkpoint: i64,
         changed_vlobs: HashMap<EntryID, i64>,
-    ) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .update_realm_checkpoint(
-                    new_checkpoint,
-                    &changed_vlobs
-                        .into_iter()
-                        .map(|(id, x)| (id.0, x))
-                        .collect::<Vec<_>>()[..],
-                )
-                .map_err(fs_to_python_error)
+    ) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.update_realm_checkpoint(
+                new_checkpoint,
+                &changed_vlobs
+                    .into_iter()
+                    .map(|(id, x)| (id.0, x))
+                    .collect::<Vec<_>>()[..],
+            )
+            .await
+            .map_err(fs_to_python_error)
         })
     }
 
-    fn get_need_sync_entries(&self, py: Python) -> PyResult<(HashSet<EntryID>, HashSet<EntryID>)> {
-        py.allow_threads(|| {
-            self.0
-                .get_need_sync_entries()
+    fn get_need_sync_entries(&self) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.get_need_sync_entries()
+                .await
                 .map(|(res0, res1)| {
                     (
-                        res0.into_iter().map(EntryID).collect(),
-                        res1.into_iter().map(EntryID).collect(),
+                        res0.into_iter().map(EntryID).collect::<HashSet<EntryID>>(),
+                        res1.into_iter().map(EntryID).collect::<HashSet<EntryID>>(),
                     )
                 })
                 .map_err(fs_to_python_error)
         })
     }
 
-    fn ensure_manifest_persistent(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .ensure_manifest_persistent(entry_id.0, false)
+    fn ensure_manifest_persistent(&self, entry_id: EntryID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.ensure_manifest_persistent(entry_id.0, false)
+                .await
                 .map_err(fs_to_python_error)
         })
     }
 
     #[args(flush = true)]
-    fn clear_memory_cache(&self, py: Python, flush: bool) -> PyResult<()> {
-        py.allow_threads(|| self.0.clear_memory_cache(flush).map_err(fs_to_python_error))
+    fn clear_memory_cache(&self, flush: bool) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.clear_memory_cache(flush)
+                .await
+                .map_err(fs_to_python_error)
+        })
     }
 
-    fn run_vacuum(&self, py: Python) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .run_vacuum()
+    fn run_vacuum(&self) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.run_vacuum()
+                .await
                 .map_err(|_| FSInternalError::new_err("Vacuum failed"))
         })
     }
 
-    fn get_local_block_ids(&self, py: Python, chunk_ids: Vec<ChunkID>) -> PyResult<Vec<ChunkID>> {
-        py.allow_threads(|| {
-            Ok(self
-                .0
-                .get_local_block_ids(&chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>())
-                .map_err(fs_to_python_error)?
-                .into_iter()
-                .map(ChunkID)
-                .collect())
+    fn get_local_block_ids(&self, chunk_ids: Vec<ChunkID>) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.get_local_block_ids(&chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>())
+                .await
+                .map(|chunk_ids| chunk_ids.into_iter().map(ChunkID).collect::<Vec<_>>())
+                .map_err(fs_to_python_error)
         })
     }
 
-    fn get_local_chunk_ids(&self, py: Python, chunk_ids: Vec<ChunkID>) -> PyResult<Vec<ChunkID>> {
-        py.allow_threads(|| {
-            Ok(self
-                .0
-                .get_local_chunk_ids(&chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>())
-                .map_err(fs_to_python_error)?
-                .into_iter()
-                .map(ChunkID)
-                .collect())
+    fn get_local_chunk_ids(&self, chunk_ids: Vec<ChunkID>) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.get_local_chunk_ids(&chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>())
+                .await
+                .map(|chunk_ids| chunk_ids.into_iter().map(ChunkID).collect::<Vec<_>>())
+                .map_err(fs_to_python_error)
         })
     }
 
-    fn to_timestamp(&self) -> PyResult<WorkspaceStorageSnapshot> {
+    fn to_timestamp(&self) -> WorkspaceStorageSnapshot {
         WorkspaceStorageSnapshot::new(self.clone())
     }
 
@@ -345,96 +401,109 @@ impl WorkspaceStorage {
         Ok(EntryID(self.0.workspace_id))
     }
 
-    fn is_manifest_cache_ahead_of_persistance(
-        &self,
-        py: Python,
-        entry_id: EntryID,
-    ) -> PyResult<bool> {
-        Ok(py.allow_threads(|| self.0.is_manifest_cache_ahead_of_persistance(&entry_id.0)))
+    fn is_manifest_cache_ahead_of_persistance(&self, entry_id: EntryID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            Ok(ws.is_manifest_cache_ahead_of_persistance(&entry_id.0).await)
+        })
     }
 }
 
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct WorkspaceStorageSnapshot(
-    pub libparsec::core_fs::WorkspaceStorageSnapshot,
+    pub Arc<libparsec::core_fs::WorkspaceStorageSnapshot>,
     pub Option<Regex>,
 );
 
 #[pymethods]
 impl WorkspaceStorageSnapshot {
     #[new]
-    fn new(workspace_storage: WorkspaceStorage) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::core_fs::WorkspaceStorageSnapshot::from(workspace_storage.0),
+    fn new(workspace_storage: WorkspaceStorage) -> Self {
+        Self(
+            Arc::new(libparsec::core_fs::WorkspaceStorageSnapshot::from(
+                workspace_storage.0.as_ref().clone(),
+            )),
             workspace_storage.1,
-        ))
+        )
     }
 
-    fn create_file_descriptor(&self, py: Python, manifest: LocalFileManifest) -> PyResult<u32> {
-        py.allow_threads(|| Ok(self.0.create_file_descriptor(manifest.0).0))
+    fn create_file_descriptor(&self, manifest: LocalFileManifest) -> u32 {
+        self.0.create_file_descriptor(manifest.0).0
     }
 
-    fn load_file_descriptor(&self, py: Python, fd: u32) -> PyResult<LocalFileManifest> {
-        py.allow_threads(|| {
-            Ok(LocalFileManifest(
-                self.0
-                    .load_file_descriptor(libparsec::types::FileDescriptor(fd))
-                    .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
-            ))
+    fn load_file_descriptor(&self, fd: u32) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.load_file_descriptor(libparsec::types::FileDescriptor(fd))
+                .await
+                .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
+                .map(LocalFileManifest)
         })
     }
 
-    fn remove_file_descriptor(&self, py: Python, fd: u32) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .remove_file_descriptor(libparsec::types::FileDescriptor(fd))
-                .map(|_| ())
-                .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
-        })
+    fn remove_file_descriptor(&self, fd: u32) -> PyResult<()> {
+        self.0
+            .remove_file_descriptor(libparsec::types::FileDescriptor(fd))
+            .map(|_| ())
+            .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
     }
 
-    fn get_chunk<'py>(&self, py: Python<'py>, chunk_id: ChunkID) -> PyResult<&'py PyBytes> {
-        let chunk = py
-            .allow_threads(|| self.0.get_chunk(chunk_id.0))
-            .map_err(|e| match e {
+    fn get_chunk(&self, chunk_id: ChunkID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from_raw(async move {
+            let chunk = ws.get_chunk(chunk_id.0).await.map_err(|e| match e {
                 FSError::LocalMiss(_) => FSLocalMissError::new_err(chunk_id),
                 _ => fs_to_python_error(e),
             })?;
-        Ok(PyBytes::new(py, &chunk))
-    }
 
-    fn get_workspace_manifest(&self, py: Python) -> PyResult<LocalWorkspaceManifest> {
-        py.allow_threads(|| {
-            Ok(LocalWorkspaceManifest(
-                self.0
-                    .get_workspace_manifest()
-                    .map_err(fs_to_python_error)?,
-            ))
+            Ok(Python::with_gil(|py| PyBytes::new(py, &chunk).into_py(py)))
         })
     }
 
-    fn get_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<PyObject> {
-        let manifest = py
-            .allow_threads(|| self.0.get_manifest(entry_id.0))
-            .map_err(|_| FSLocalMissError::new_err(entry_id))?;
-        Ok(match manifest {
-            libparsec::client_types::LocalManifest::File(manifest) => {
-                LocalFileManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::Folder(manifest) => {
-                LocalFolderManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::Workspace(manifest) => {
-                LocalWorkspaceManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::User(manifest) => {
-                LocalUserManifest(manifest).into_py(py)
-            }
+    fn get_workspace_manifest(&self) -> PyResult<LocalWorkspaceManifest> {
+        self.0
+            .get_workspace_manifest()
+            .map_err(fs_to_python_error)
+            .map(LocalWorkspaceManifest)
+    }
+
+    fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from_raw(async move {
+            let manifest = ws
+                .get_manifest(entry_id.0)
+                .await
+                .map_err(|_| FSLocalMissError::new_err(entry_id))?;
+            Python::with_gil(|py| {
+                Ok(match manifest {
+                    libparsec::client_types::LocalManifest::File(manifest) => {
+                        LocalFileManifest(manifest).into_py(py)
+                    }
+                    libparsec::client_types::LocalManifest::Folder(manifest) => {
+                        LocalFolderManifest(manifest).into_py(py)
+                    }
+                    libparsec::client_types::LocalManifest::Workspace(manifest) => {
+                        LocalWorkspaceManifest(manifest).into_py(py)
+                    }
+                    libparsec::client_types::LocalManifest::User(manifest) => {
+                        LocalUserManifest(manifest).into_py(py)
+                    }
+                })
+            })
         })
     }
 
-    fn set_manifest(&self, py: Python, entry_id: EntryID, manifest: PyObject) -> PyResult<()> {
+    fn set_manifest(
+        &self,
+        py: Python,
+        entry_id: EntryID,
+        manifest: PyObject,
+    ) -> PyResult<FutureIntoCoroutine> {
         let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
             libparsec::client_types::LocalManifest::File(manifest.0)
         } else if let Ok(manifest) = manifest.extract::<LocalFolderManifest>(py) {
@@ -446,56 +515,72 @@ impl WorkspaceStorageSnapshot {
                 manifest.extract::<LocalUserManifest>(py)?.0,
             )
         };
-        py.allow_threads(|| {
-            self.0
-                .set_manifest(entry_id.0, manifest, false)
-                .map_err(fs_to_python_error)
-        })
-    }
+        let ws = self.0.clone();
 
-    fn get_prevent_sync_pattern<'py>(&'py self, py: Python<'py>) -> PyResult<Regex> {
-        let pattern = self.1.as_ref().cloned().unwrap_or_else(|| {
-            let pattern = py.allow_threads(|| self.0.get_prevent_sync_pattern());
-            Regex(pattern)
+        let fut = FutureIntoCoroutine::from(async move {
+            ws.set_manifest(entry_id.0, manifest, false)
+                .await
+                .map_err(fs_to_python_error)
         });
-        Ok(pattern)
+
+        Ok(fut)
     }
 
-    fn get_prevent_sync_pattern_fully_applied(&self, py: Python) -> PyResult<bool> {
-        py.allow_threads(|| Ok(self.0.get_prevent_sync_pattern_fully_applied()))
+    fn get_prevent_sync_pattern(&self) -> Regex {
+        self.1
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| Regex(self.0.get_prevent_sync_pattern()))
     }
 
-    fn set_clean_block(&self, py: Python, block_id: BlockID, block: &[u8]) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .set_clean_block(block_id.0, block)
+    fn get_prevent_sync_pattern_fully_applied(&self) -> bool {
+        self.0.get_prevent_sync_pattern_fully_applied()
+    }
+
+    fn set_clean_block(&self, block_id: BlockID, block: &[u8]) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+        let block = block.to_vec();
+
+        FutureIntoCoroutine::from(async move {
+            ws.set_clean_block(block_id.0, &block)
+                .await
                 .map_err(fs_to_python_error)
         })
     }
 
-    fn clear_clean_block(&self, py: Python, block_id: BlockID) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0.clear_clean_block(block_id.0);
+    fn clear_clean_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.clear_clean_block(block_id.0).await;
             Ok(())
         })
     }
 
-    fn get_dirty_block<'py>(&self, py: Python<'py>, block_id: BlockID) -> PyResult<&'py PyBytes> {
-        let block = py
-            .allow_threads(|| self.0.get_dirty_block(block_id.0))
-            .map_err(|e| match e {
+    fn get_dirty_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from_raw(async move {
+            let block = ws.get_dirty_block(block_id.0).await.map_err(|e| match e {
                 FSError::LocalMiss(_) => FSLocalMissError::new_err(block_id),
                 _ => fs_to_python_error(e),
             })?;
-        Ok(PyBytes::new(py, &block))
+
+            Ok(Python::with_gil(|py| PyBytes::new(py, &block).into_py(py)))
+        })
     }
 
     fn to_timestamp(&self) -> PyResult<Self> {
-        Ok(Self(self.0.to_timestamp(), self.1.clone()))
+        Ok(Self(Arc::new(self.0.to_timestamp()), self.1.clone()))
     }
 
-    fn clear_local_cache(&self, py: Python) {
-        py.allow_threads(|| self.0.clear_local_cache())
+    fn clear_local_cache(&self) -> FutureIntoCoroutine {
+        let ws = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            ws.clear_local_cache().await;
+            Ok(())
+        })
     }
 
     #[getter]
@@ -511,19 +596,19 @@ impl WorkspaceStorageSnapshot {
 
 #[pyfunction]
 pub(crate) fn workspace_storage_non_speculative_init(
-    py: Python,
     data_base_dir: PathBuf,
     device: LocalDevice,
     workspace_id: EntryID,
     timestamp: Option<DateTime>,
-) -> PyResult<()> {
-    py.allow_threads(|| {
+) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
         libparsec::core_fs::workspace_storage_non_speculative_init(
             &data_base_dir,
             device.0,
             workspace_id.0,
             timestamp.map(|wrapped| wrapped.0),
         )
+        .await
         .map_err(fs_to_python_error)
     })
 }

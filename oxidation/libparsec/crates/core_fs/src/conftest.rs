@@ -26,7 +26,7 @@ impl std::ops::DerefMut for TmpWorkspaceStorage {
 }
 
 #[fixture]
-pub fn alice_workspace_storage(alice: &Device, tmp_path: TmpPath) -> TmpWorkspaceStorage {
+pub async fn alice_workspace_storage(alice: &Device, tmp_path: TmpPath) -> TmpWorkspaceStorage {
     let db_path = tmp_path.join("workspace_storage.sqlite");
 
     let ws = WorkspaceStorage::new(
@@ -36,6 +36,7 @@ pub fn alice_workspace_storage(alice: &Device, tmp_path: TmpPath) -> TmpWorkspac
         FAILSAFE_PATTERN_FILTER.clone(),
         DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     )
+    .await
     .unwrap();
 
     TmpWorkspaceStorage {

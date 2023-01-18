@@ -199,10 +199,10 @@ def user_fs_offline_state_machine(
         pytest.skip()
 
     if param:
+        from parsec._parsec import user_storage_non_speculative_init as rs_user_storage_init
+        from parsec._parsec import workspace_storage_non_speculative_init as rs_wk_init
         from parsec.core.fs.storage import UserStorage as RSUserStorage
         from parsec.core.fs.storage import WorkspaceStorage as RSWorkspaceStorage
-        from parsec.core.fs.storage import user_storage_non_speculative_init as rs_user_storage_init
-        from parsec.core.fs.storage import workspace_storage_non_speculative_init as rs_wk_init
         from parsec.core.fs.storage.workspace_storage import (
             DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
             FAILSAFE_PATTERN_FILTER,
@@ -300,23 +300,29 @@ def user_fs_offline_state_machine(
             data_base_dir: Path,
             device: LocalDevice,
             workspace_id: EntryID,
+            timestamp: DateTime,
         ) -> None:
             nonlocal use_rust_storage_impl
 
             if use_rust_storage_impl:
                 print("[workspace_storage_non_speculative_init] Using rust impl")
                 await original_wk_init(
-                    data_base_dir=data_base_dir, device=device, workspace_id=workspace_id
+                    data_base_dir=data_base_dir,
+                    device=device,
+                    workspace_id=workspace_id,
+                    timestamp=timestamp,
                 )
             else:
                 print("[workspace_storage_non_speculative_init] Using python impl")
                 await py_wk_init(
-                    data_base_dir=data_base_dir, device=device, workspace_id=workspace_id
+                    data_base_dir=data_base_dir,
+                    device=device,
+                    workspace_id=workspace_id,
+                    timestamp=timestamp,
                 )
 
         for path in [
-            "parsec.core.fs.storage",
-            "parsec.core.fs.storage.workspace_storage",
+            # "parsec._parsec",
             "parsec.core.fs.userfs.userfs",
         ]:
             monkeypatch.setattr(path + ".workspace_storage_non_speculative_init", switching_wk_init)
@@ -334,8 +340,11 @@ def user_fs_offline_state_machine(
                 await py_user_storage_init(data_base_dir=data_base_dir, device=device)
 
         for path in [
-            "parsec.core.fs.storage",
-            "parsec.core.fs.storage.user_storage",
+            # "parsec._parsec",
+            "parsec.core.cli.bootstrap_organization",
+            "parsec.core.cli.invitation",
+            "parsec.core.gui.claim_user_widget",
+            "parsec.core.gui.create_org_widget",
         ]:
             monkeypatch.setattr(
                 path + ".user_storage_non_speculative_init", switching_user_storage_init

@@ -12,12 +12,17 @@ use std::{
 use libparsec_client_types::LocalManifest;
 use libparsec_crypto::{CryptoError, SecretKey};
 use libparsec_types::{BlockID, ChunkID, EntryID, Regex};
+use platform_async::{
+    future::{self, TryFutureExt},
+    futures::executor::block_on,
+    Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard,
+};
 
-use super::local_database::{LockedSqliteConnection, SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::{
     error::{FSError, FSResult},
     storage::chunk_storage::chunks,
 };
+use local_db::{LocalDatabase, LOCAL_DATABASE_MAX_VARIABLE_NUMBER};
 
 table! {
     prevent_sync_pattern (_id) {
@@ -89,11 +94,11 @@ struct NewPreventSyncPattern<'a> {
 #[derive(Clone)]
 pub struct ManifestStorage {
     local_symkey: SecretKey,
-    conn: SqliteConn,
+    conn: LocalDatabase,
     pub realm_id: EntryID,
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
-    caches: Arc<Mutex<HashMap<EntryID, Arc<Mutex<CacheEntry>>>>>,
+    caches: Arc<Mutex<HashMap<EntryID, Arc<AsyncMutex<CacheEntry>>>>>,
 }
 
 /// A cache entry that may contain a manifest and its pending chunk.
@@ -117,28 +122,32 @@ impl CacheEntry {
 
 impl Drop for ManifestStorage {
     fn drop(&mut self) {
-        self.flush_cache_ahead_of_persistance()
+        block_on(async { self.flush_cache_ahead_of_persistance().await })
             .expect("Cannot flush cache when ManifestStorage dropped");
     }
 }
 
 impl ManifestStorage {
-    pub fn new(local_symkey: SecretKey, realm_id: EntryID, conn: SqliteConn) -> FSResult<Self> {
+    pub async fn new(
+        local_symkey: SecretKey,
+        realm_id: EntryID,
+        conn: LocalDatabase,
+    ) -> FSResult<Self> {
         let instance = Self {
             local_symkey,
             conn,
             realm_id,
             caches: Arc::new(Mutex::new(HashMap::default())),
         };
-        instance.create_db()?;
+        instance.create_db().await?;
         Ok(instance)
     }
 
     /// Database initialization
-    pub fn create_db(&self) -> FSResult<()> {
-        let mut conn = self.conn.lock_connection();
+    pub async fn create_db(&self) -> FSResult<()> {
+        let conn = &self.conn;
 
-        conn.exec_with_handler(
+        conn.exec_with_error_handler(
             |conn| {
                 sql_query(
                     "CREATE TABLE IF NOT EXISTS vlobs (
@@ -152,9 +161,10 @@ impl ManifestStorage {
                 .execute(conn)
             },
             |e| FSError::CreateTable(format!("vlobs {e}")),
-        )?;
+        )
+        .await?;
         // Singleton storing the checkpoint
-        conn.exec_with_handler(
+        conn.exec_with_error_handler(
             |conn| {
                 sql_query(
                     "CREATE TABLE IF NOT EXISTS realm_checkpoint (
@@ -165,9 +175,10 @@ impl ManifestStorage {
                 .execute(conn)
             },
             |e| FSError::CreateTable(format!("realm_checkpoint {e}")),
-        )?;
+        )
+        .await?;
         // Singleton storing the prevent_sync_pattern
-        conn.exec_with_handler(
+        conn.exec_with_error_handler(
             |conn| {
                 sql_query(
                     "CREATE TABLE IF NOT EXISTS prevent_sync_pattern (
@@ -179,7 +190,8 @@ impl ManifestStorage {
                 .execute(conn)
             },
             |e| FSError::CreateTable(format!("prevent_sync_pattern {e}")),
-        )?;
+        )
+        .await?;
 
         let pattern = NewPreventSyncPattern {
             _id: 0,
@@ -191,35 +203,39 @@ impl ManifestStorage {
             diesel::insert_or_ignore_into(prevent_sync_pattern::table)
                 .values(pattern)
                 .execute(conn)
-        })?;
+        })
+        .await?;
 
         Ok(())
     }
 
     #[cfg(test)]
-    fn drop_db(&self) -> FSResult<()> {
-        let mut conn = self.conn.lock_connection();
-
-        conn.exec(|conn| {
-            sql_query("DROP TABLE IF EXISTS vlobs;").execute(conn)?;
-            sql_query("DROP TABLE IF EXISTS realm_checkpoints;").execute(conn)?;
-            sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;").execute(conn)
-        })?;
+    async fn drop_db(&self) -> FSResult<()> {
+        self.conn
+            .exec(|conn| {
+                sql_query("DROP TABLE IF EXISTS vlobs;").execute(conn)?;
+                sql_query("DROP TABLE IF EXISTS realm_checkpoints;").execute(conn)?;
+                sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;").execute(conn)
+            })
+            .await?;
 
         Ok(())
     }
 
-    pub fn clear_memory_cache(&self, flush: bool) -> FSResult<()> {
-        let mut caches_lock = self.caches.lock().expect("Mutex is poisoned");
-        let drained = caches_lock.drain();
-        if flush {
-            let items = drained
-                .map(|(entry_id, entry)| (entry_id, entry))
-                .collect::<Vec<(EntryID, Arc<Mutex<CacheEntry>>)>>();
+    pub async fn clear_memory_cache(&self, flush: bool) -> FSResult<()> {
+        let drained_items = {
+            let mut lock = self.caches.lock().expect("Mutex is poisoned");
+            let drained = lock.drain();
 
-            drop(caches_lock);
-            for (entry_id, lock) in items {
-                self.ensure_manifest_persistent_lock(entry_id, lock)?;
+            if flush {
+                Some(drained.collect::<Vec<(EntryID, Arc<AsyncMutex<CacheEntry>>)>>())
+            } else {
+                None
+            }
+        };
+        if let Some(drained_items) = drained_items {
+            for (entry_id, lock) in drained_items {
+                self.ensure_manifest_persistent_lock(entry_id, lock).await?;
             }
         }
         Ok(())
@@ -228,8 +244,8 @@ impl ManifestStorage {
     // "Prevent sync" pattern operations
 
     #[cfg(test)]
-    pub fn get_prevent_sync_pattern(&self) -> FSResult<(Regex, bool)> {
-        let (re, fully_applied) = get_prevent_sync_pattern_raw(&mut self.conn.lock_connection())?;
+    pub async fn get_prevent_sync_pattern(&self) -> FSResult<(Regex, bool)> {
+        let (re, fully_applied) = get_prevent_sync_pattern_raw(&self.conn).await?;
 
         let re = Regex::from_regex_str(&re).map_err(|e| {
             FSError::QueryTable(format!("prevent_sync_pattern: corrupted pattern: {e}"))
@@ -241,13 +257,12 @@ impl ManifestStorage {
     /// Set the "prevent sync" pattern for the corresponding workspace
     /// This operation is idempotent,
     /// i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
-    pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<bool> {
+    pub async fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<bool> {
         let pattern = pattern.to_string();
-        let mut lock_conn = self.conn.lock_connection();
 
-        lock_conn
-            .exec_with_handler(
-                |conn| {
+        self.conn
+            .exec_with_error_handler(
+                move |conn| {
                     diesel::update(
                         prevent_sync_pattern::table.filter(
                             prevent_sync_pattern::_id
@@ -267,20 +282,20 @@ impl ManifestStorage {
                     ))
                 },
             )
-            .and_then(|_| Ok(get_prevent_sync_pattern_raw(&mut lock_conn)?.1))
+            .and_then(|_| async { Ok(get_prevent_sync_pattern_raw(&self.conn).await?.1) })
+            .await
     }
 
     /// Mark the provided pattern as fully applied.
     /// This is meant to be called after one made sure that all the manifests in the
     /// workspace are compliant with the new pattern. The applied pattern is provided
     /// as an argument in order to avoid concurrency issues.
-    pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<bool> {
+    pub async fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<bool> {
         let pattern = pattern.to_string();
-        let mut lock_conn = self.conn.lock_connection();
 
-        lock_conn
-            .exec_with_handler(
-                |conn| {
+        self.conn
+            .exec_with_error_handler(
+                move |conn| {
                     diesel::update(
                         prevent_sync_pattern::table.filter(
                             prevent_sync_pattern::_id
@@ -297,12 +312,13 @@ impl ManifestStorage {
                     ))
                 },
             )
-            .and_then(|_| Ok(get_prevent_sync_pattern_raw(&mut lock_conn)?.1))
+            .and_then(|_| async { Ok(get_prevent_sync_pattern_raw(&self.conn).await?.1) })
+            .await
     }
 
     // Checkpoint operations
 
-    pub fn get_realm_checkpoint(&self) -> i64 {
+    pub async fn get_realm_checkpoint(&self) -> i64 {
         self.conn
             .exec(|conn| {
                 realm_checkpoint::table
@@ -310,10 +326,11 @@ impl ManifestStorage {
                     .filter(realm_checkpoint::_id.eq(0))
                     .first(conn)
             })
+            .await
             .unwrap_or(0)
     }
 
-    pub fn update_realm_checkpoint(
+    pub async fn update_realm_checkpoint(
         &self,
         new_checkpoint: i64,
         changed_vlobs: &[(EntryID, i64)],
@@ -327,69 +344,77 @@ impl ManifestStorage {
         // TODO: How to improve ?
         // It is difficult to build a raw sql query with bind in a for loop
         // Another solution is to query all data then insert
-        let mut conn = self.conn.lock_connection();
 
-        for (id, version) in changed_vlobs {
-            conn.exec_with_handler(
-                |conn| {
-                    sql_query("UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?;")
-                        .bind::<diesel::sql_types::BigInt, _>(version)
-                        .bind::<diesel::sql_types::Binary, _>((**id).as_ref())
-                        .execute(conn)
-                },
-                |e| FSError::UpdateTable(format!("vlobs: update_realm_checkpoint {e}")),
-            )?;
+        for (id, version) in changed_vlobs.iter().copied() {
+            self.conn
+                .exec_with_error_handler(
+                    move |conn| {
+                        sql_query("UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?;")
+                            .bind::<diesel::sql_types::BigInt, _>(version)
+                            .bind::<diesel::sql_types::Binary, _>((*id).as_ref())
+                            .execute(conn)
+                    },
+                    |e| FSError::UpdateTable(format!("vlobs: update_realm_checkpoint {e}")),
+                )
+                .await?;
         }
 
-        conn.exec(|conn| {
-            diesel::insert_into(realm_checkpoint::table)
-                .values(&new_realm_checkpoint)
-                .on_conflict(realm_checkpoint::_id)
-                .do_update()
-                .set(&new_realm_checkpoint)
-                .execute(conn)
-        })?;
+        self.conn
+            .exec(move |conn| {
+                diesel::insert_into(realm_checkpoint::table)
+                    .values(&new_realm_checkpoint)
+                    .on_conflict(realm_checkpoint::_id)
+                    .do_update()
+                    .set(&new_realm_checkpoint)
+                    .execute(conn)
+            })
+            .await?;
 
         Ok(())
     }
 
-    pub fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
+    pub async fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
         let mut remote_changes = HashSet::new();
         let caches = self.caches.lock().expect("Mutex is poisoned").clone();
-        let mut local_changes =
-            HashSet::<_, RandomState>::from_iter(caches.iter().filter_map(|(id, cache)| {
-                if cache
-                    .lock()
-                    .expect("Mutex is poisoned")
-                    .manifest
-                    .as_ref()
-                    .map(|manifest| manifest.need_sync())
-                    .unwrap_or_default()
-                {
-                    Some(*id)
-                } else {
-                    None
-                }
-            }));
+        let iter = caches.iter().map(|(id, cache)| async {
+            if cache
+                .lock()
+                .await
+                .manifest
+                .as_ref()
+                .map(|manifest| manifest.need_sync())
+                .unwrap_or_default()
+            {
+                Some(*id)
+            } else {
+                None
+            }
+        });
+        let mut local_changes = HashSet::<_, RandomState>::from_iter(
+            future::join_all(iter).await.into_iter().flatten(),
+        );
 
-        let vlobs_that_need_sync = self.conn.exec_with_handler(
-            |conn| {
-                vlobs::table
-                    .select((
-                        vlobs::vlob_id,
-                        vlobs::need_sync,
-                        vlobs::base_version,
-                        vlobs::remote_version,
-                    ))
-                    .filter(
-                        vlobs::need_sync
-                            .eq(true)
-                            .or(vlobs::base_version.ne(vlobs::remote_version)),
-                    )
-                    .load::<(Vec<u8>, bool, i64, i64)>(conn)
-            },
-            |e| FSError::QueryTable(format!("vlobs: get_need_sync_entries {e}")),
-        )?;
+        let vlobs_that_need_sync = self
+            .conn
+            .exec_with_error_handler(
+                |conn| {
+                    vlobs::table
+                        .select((
+                            vlobs::vlob_id,
+                            vlobs::need_sync,
+                            vlobs::base_version,
+                            vlobs::remote_version,
+                        ))
+                        .filter(
+                            vlobs::need_sync
+                                .eq(true)
+                                .or(vlobs::base_version.ne(vlobs::remote_version)),
+                        )
+                        .load::<(Vec<u8>, bool, i64, i64)>(conn)
+                },
+                |e| FSError::QueryTable(format!("vlobs: get_need_sync_entries {e}")),
+            )
+            .await?;
 
         for (manifest_id, need_sync, bv, rv) in vlobs_that_need_sync {
             let manifest_id =
@@ -414,7 +439,7 @@ impl ManifestStorage {
     pub(crate) fn get_or_insert_default_cache_entry(
         &self,
         entry_id: EntryID,
-    ) -> Arc<Mutex<CacheEntry>> {
+    ) -> Arc<AsyncMutex<CacheEntry>> {
         self.caches
             .lock()
             .expect("Mutex is poisoned")
@@ -424,10 +449,10 @@ impl ManifestStorage {
     }
     // Manifest operations
 
-    pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
+    pub async fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         // Look in cache first
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        let mut cache_unlock = cache_entry.lock().expect("Mutex is poisoned");
+        let mut cache_unlock = cache_entry.lock().await;
         if let Some(manifest) = cache_unlock.manifest.clone() {
             return Ok(manifest);
         }
@@ -435,12 +460,13 @@ impl ManifestStorage {
         // Look into the database
         let manifest = self
             .conn
-            .exec(|conn| {
+            .exec(move |conn| {
                 vlobs::table
                     .select(vlobs::blob)
                     .filter(vlobs::vlob_id.eq((*entry_id).as_ref()))
                     .first::<Vec<u8>>(conn)
             })
+            .await
             .map_err(|_| FSError::LocalMiss(*entry_id))?;
 
         let manifest = LocalManifest::decrypt_and_load(&manifest, &self.local_symkey)
@@ -451,22 +477,7 @@ impl ManifestStorage {
         Ok(manifest)
     }
 
-    /// Get a cached manifest.
-    pub fn get_cached_manifest(&self, entry_id: EntryID) -> Option<LocalManifest> {
-        let cache_entry = {
-            self.caches
-                .lock()
-                .expect("Mutex is poisoned")
-                .get(&entry_id)
-                .cloned()
-        };
-        cache_entry.and_then(|entry| {
-            let unlock = entry.lock().expect("Mutex is poisoned");
-            unlock.manifest.clone()
-        })
-    }
-
-    pub fn set_manifest(
+    pub async fn set_manifest(
         &self,
         entry_id: EntryID,
         manifest: LocalManifest,
@@ -474,7 +485,7 @@ impl ManifestStorage {
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        let mut cache_unlock = cache_entry.lock().expect("Mutex is poisoned");
+        let mut cache_unlock = cache_entry.lock().await;
 
         cache_unlock.manifest = Some(manifest);
         let pending_chunk_ids = cache_unlock
@@ -485,56 +496,55 @@ impl ManifestStorage {
         }
         // Flush the cached value to the localdb
         if !cache_only {
-            self.ensure_manifest_persistent_unlock(entry_id, &mut cache_unlock)?;
+            self.ensure_manifest_persistent_unlock(entry_id, cache_unlock)
+                .await?;
         }
 
         Ok(())
     }
 
-    pub fn ensure_manifest_persistent(&self, entry_id: EntryID) -> FSResult<()> {
-        if let Some(cache_entry) = self
-            .caches
-            .lock()
-            .expect("Mutex is poisoned")
-            .get(&entry_id)
-            .cloned()
-        {
+    pub async fn ensure_manifest_persistent(&self, entry_id: EntryID) -> FSResult<()> {
+        let cache_entry = {
+            let cache_guard = self.caches.lock().expect("Mutex is poisoned");
+
+            cache_guard.get(&entry_id).cloned()
+        };
+
+        if let Some(cache_entry) = cache_entry {
             self.ensure_manifest_persistent_lock(entry_id, cache_entry)
+                .await
         } else {
             Ok(())
         }
     }
 
-    fn ensure_manifest_persistent_lock(
+    async fn ensure_manifest_persistent_lock(
         &self,
         entry_id: EntryID,
-        cache_lock: Arc<Mutex<CacheEntry>>,
+        cache_lock: Arc<AsyncMutex<CacheEntry>>,
     ) -> FSResult<()> {
-        self.ensure_manifest_persistent_unlock(
-            entry_id,
-            &mut cache_lock.lock().expect("Mutex is poisoned"),
-        )
+        self.ensure_manifest_persistent_unlock(entry_id, cache_lock.lock().await)
+            .await
     }
 
-    fn ensure_manifest_persistent_unlock(
+    async fn ensure_manifest_persistent_unlock(
         &self,
         entry_id: EntryID,
-        cache: &mut CacheEntry,
+        mut cache: AsyncMutexGuard<'_, CacheEntry>,
     ) -> FSResult<()> {
-        if let (Some(manifest), Some(ref pending_chunk_ids)) =
-            (&mut cache.manifest, &mut cache.pending_chunk_ids)
+        if let (Some(manifest), Some(pending_chunk_ids)) =
+            (cache.manifest.as_ref(), cache.pending_chunk_ids.clone())
         {
             let ciphered = manifest.dump_and_encrypt(&self.local_symkey);
-            let pending_chunk_ids = pending_chunk_ids
-                .iter()
-                .map(|chunk_id| chunk_id.as_ref())
-                .collect::<Vec<_>>();
+            let chunk_ids = pending_chunk_ids.into_iter().collect::<Vec<_>>();
 
-            let vlob_id = (*entry_id).as_ref();
+            let manifest_need_sync = manifest.need_sync();
+            let manifest_base_version = manifest.base_version() as i64;
 
-            let mut conn = self.conn.lock_connection();
+            self.conn.exec(move |conn| {
+                let vlob_id = (*entry_id).as_ref();
 
-            conn.exec(|conn| sql_query("INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
+                sql_query("INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
                         VALUES (
                         ?, ?, ?, ?,
                             max(
@@ -544,35 +554,43 @@ impl ManifestStorage {
                         )")
                         .bind::<diesel::sql_types::Binary, _>(vlob_id)
                         .bind::<diesel::sql_types::Binary, _>(ciphered)
-                        .bind::<diesel::sql_types::Bool, _>(manifest.need_sync())
-                        .bind::<diesel::sql_types::BigInt, _>(manifest.base_version() as i64)
-                        .bind::<diesel::sql_types::BigInt, _>(manifest.base_version() as i64)
+                        .bind::<diesel::sql_types::Bool, _>(manifest_need_sync)
+                        .bind::<diesel::sql_types::BigInt, _>(manifest_base_version)
+                        .bind::<diesel::sql_types::BigInt, _>(manifest_base_version)
                         .bind::<diesel::sql_types::Binary, _>(vlob_id)
-                        .execute(conn))?;
+                        .execute(conn)
+            }).await?;
 
-            for pending_chunk_ids_chunk in pending_chunk_ids.chunks(SQLITE_MAX_VARIABLE_NUMBER) {
-                conn.exec(|conn| {
-                    diesel::delete(
-                        chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
-                    )
-                    .execute(conn)
-                })?;
+            for pending_ids in chunk_ids
+                .chunks(LOCAL_DATABASE_MAX_VARIABLE_NUMBER)
+                .map(|chunk| chunk.to_vec())
+            {
+                self.conn
+                    .exec(move |conn| {
+                        let ids = pending_ids.iter().map(ChunkOrBlockID::as_ref);
+                        let query = chunks::table.filter(chunks::chunk_id.eq_any(ids));
+                        let res: diesel::result::QueryResult<usize> =
+                            diesel::delete(query).execute(conn);
+
+                        res
+                    })
+                    .await?;
             }
             cache.pending_chunk_ids = None;
         }
         Ok(())
     }
 
-    pub fn flush_cache_ahead_of_persistance(&self) -> FSResult<()> {
+    pub async fn flush_cache_ahead_of_persistance(&self) -> FSResult<()> {
         let items = self
             .caches
             .lock()
             .expect("Mutex is poisoned")
             .iter()
             .map(|(entry_id, entry)| (*entry_id, entry.clone()))
-            .collect::<Vec<(EntryID, Arc<Mutex<CacheEntry>>)>>();
+            .collect::<Vec<(EntryID, Arc<AsyncMutex<CacheEntry>>)>>();
         for (entry_id, lock) in items {
-            self.ensure_manifest_persistent_lock(entry_id, lock)?;
+            self.ensure_manifest_persistent_lock(entry_id, lock).await?;
         }
         Ok(())
     }
@@ -580,32 +598,36 @@ impl ManifestStorage {
     /// This method is not used in the code base but it is still tested
     /// as it might come handy in a cleanup routine later
     #[deprecated]
-    pub fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
+    pub async fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
         // Remove from cache
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        let mut cache_unlock = cache_entry.lock().expect("Mutex is poisoned");
+        let mut cache_unlock = cache_entry.lock().await;
 
         // Remove from local database
-        let mut conn = self.conn.lock_connection();
 
-        let deleted = conn.exec(|conn| {
-            diesel::delete(vlobs::table.filter(vlobs::vlob_id.eq((*entry_id).as_ref())))
-                .execute(conn)
-        })? > 0;
+        let deleted = self
+            .conn
+            .exec(move |conn| {
+                let vlob_id = (*entry_id).as_ref();
+                diesel::delete(vlobs::table.filter(vlobs::vlob_id.eq(vlob_id))).execute(conn)
+            })
+            .await?
+            > 0;
 
-        if let Some(pending_chunk_ids) = &cache_unlock.pending_chunk_ids {
-            let pending_chunk_ids = pending_chunk_ids
-                .iter()
-                .map(ChunkOrBlockID::as_ref)
-                .collect::<Vec<_>>();
+        if let Some(pending_chunk_ids) = cache_unlock.pending_chunk_ids.clone() {
+            let pending_chunk_ids = pending_chunk_ids.into_iter().collect::<Vec<_>>();
 
-            for pending_chunk_ids_chunk in pending_chunk_ids.chunks(SQLITE_MAX_VARIABLE_NUMBER) {
-                conn.exec(|conn| {
-                    diesel::delete(
-                        chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
-                    )
-                    .execute(conn)
-                })?;
+            for chunked_ids in pending_chunk_ids
+                .chunks(LOCAL_DATABASE_MAX_VARIABLE_NUMBER)
+                .map(|chunks| chunks.to_vec())
+            {
+                self.conn
+                    .exec(move |conn| {
+                        let ids = chunked_ids.iter().map(ChunkOrBlockID::as_ref);
+                        let query = chunks::table.filter(chunks::chunk_id.eq_any(ids));
+                        diesel::delete(query).execute(conn)
+                    })
+                    .await?;
             }
         }
         let is_manifest_cached = cache_unlock.manifest.is_some();
@@ -624,40 +646,44 @@ impl ManifestStorage {
     /// waiting to be written onto the database.
     ///
     /// For more information see [ManifestStorage::cache_ahead_of_localdb].
-    pub fn is_manifest_cache_ahead_of_persistance(&self, entry_id: &EntryID) -> bool {
-        self.caches
-            .lock()
-            .expect("Mutex is poisoned")
-            .get(entry_id)
-            .map(|entry| {
-                entry
-                    .lock()
-                    .expect("Mutex is poisoned")
-                    .has_chunk_to_be_flush()
-            })
-            .unwrap_or(false)
+    pub async fn is_manifest_cache_ahead_of_persistance(&self, entry_id: &EntryID) -> bool {
+        let cache_entry = {
+            let caches_guard = self.caches.lock().expect("Mutex is poisoned");
+            caches_guard.get(entry_id).cloned()
+        };
+        let result = cache_entry
+            .as_ref()
+            .map(|entry| async { entry.lock().await.has_chunk_to_be_flush() });
+
+        if let Some(fut) = result {
+            fut.await
+        } else {
+            false
+        }
     }
 }
 
-fn get_prevent_sync_pattern_raw(
-    connection: &mut LockedSqliteConnection,
+async fn get_prevent_sync_pattern_raw(
+    connection: &LocalDatabase,
 ) -> Result<(String, bool), FSError> {
-    connection.exec_with_handler(
-        |conn| {
-            prevent_sync_pattern::table
-                .select((
-                    prevent_sync_pattern::pattern,
-                    prevent_sync_pattern::fully_applied,
+    connection
+        .exec_with_error_handler(
+            |conn| {
+                prevent_sync_pattern::table
+                    .select((
+                        prevent_sync_pattern::pattern,
+                        prevent_sync_pattern::fully_applied,
+                    ))
+                    .filter(prevent_sync_pattern::_id.eq(0))
+                    .first::<(String, _)>(conn)
+            },
+            |e| {
+                FSError::QueryTable(format!(
+                    "prevent_sync_pattern: get_prevent_sync_pattern {e}"
                 ))
-                .filter(prevent_sync_pattern::_id.eq(0))
-                .first::<(String, _)>(conn)
-        },
-        |e| {
-            FSError::QueryTable(format!(
-                "prevent_sync_pattern: get_prevent_sync_pattern {e}"
-            ))
-        },
-    )
+            },
+        )
+        .await
 }
 
 #[cfg(test)]
@@ -670,40 +696,46 @@ mod tests {
     use tests_fixtures::{timestamp, tmp_path, TmpPath};
 
     use super::*;
-    use crate::storage::local_database::SqliteConn;
 
     #[rstest]
-    fn manifest_storage(tmp_path: TmpPath, timestamp: DateTime) {
+    #[tokio::test]
+    async fn manifest_storage(tmp_path: TmpPath, timestamp: DateTime) {
         let t1 = timestamp;
         let t2 = t1.add_us(1);
         let db_path = tmp_path.join("manifest_storage.sqlite");
-        let conn = SqliteConn::new(db_path.to_str().unwrap()).unwrap();
+        let conn = LocalDatabase::from_path(db_path.to_str().unwrap())
+            .await
+            .unwrap();
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
 
-        let manifest_storage = ManifestStorage::new(local_symkey, realm_id, conn).unwrap();
-        manifest_storage.drop_db().unwrap();
-        manifest_storage.create_db().unwrap();
+        let manifest_storage = ManifestStorage::new(local_symkey, realm_id, conn)
+            .await
+            .unwrap();
+        manifest_storage.drop_db().await.unwrap();
+        manifest_storage.create_db().await.unwrap();
 
-        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
+        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
         assert_eq!(re.to_string(), EMPTY_PATTERN);
         assert!(!fully_applied);
 
         manifest_storage
             .set_prevent_sync_pattern(&Regex::from_regex_str(r"\z").unwrap())
+            .await
             .unwrap();
 
-        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
+        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
         assert_eq!(re.to_string(), r"\z");
         assert!(!fully_applied);
 
         manifest_storage
             .mark_prevent_sync_pattern_fully_applied(&Regex::from_regex_str(EMPTY_PATTERN).unwrap())
+            .await
             .unwrap();
 
-        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
+        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
         assert_eq!(re.to_string(), r"\z");
         assert!(!fully_applied);
@@ -712,9 +744,10 @@ mod tests {
 
         manifest_storage
             .update_realm_checkpoint(64, &[(entry_id, 2)])
+            .await
             .unwrap();
 
-        assert_eq!(manifest_storage.get_realm_checkpoint(), 64);
+        assert_eq!(manifest_storage.get_realm_checkpoint().await, 64);
 
         let local_file_manifest = LocalManifest::File(LocalFileManifest {
             base: FileManifest {
@@ -751,14 +784,16 @@ mod tests {
 
         manifest_storage
             .set_manifest(entry_id, local_file_manifest.clone(), false, None)
+            .await
             .unwrap();
 
         assert_eq!(
-            manifest_storage.get_manifest(entry_id).unwrap(),
+            manifest_storage.get_manifest(entry_id).await.unwrap(),
             local_file_manifest
         );
 
-        let (local_changes, remote_changes) = manifest_storage.get_need_sync_entries().unwrap();
+        let (local_changes, remote_changes) =
+            manifest_storage.get_need_sync_entries().await.unwrap();
 
         assert_eq!(local_changes, HashSet::new());
         assert_eq!(remote_changes, HashSet::new());
