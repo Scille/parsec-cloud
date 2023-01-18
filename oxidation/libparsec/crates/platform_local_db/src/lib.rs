@@ -8,8 +8,12 @@ use tokio::sync::RwLock;
 
 mod error;
 mod executor;
+#[cfg(feature = "test-utils")]
+mod test_utils;
 
 pub use error::{DatabaseError, DatabaseResult};
+#[cfg(feature = "test-utils")]
+pub use test_utils::{clear_local_db_in_memory, toggle_local_db_in_memory};
 
 /// Maximum Number Of Host Parameters In A Single SQL Statement
 /// https://www.sqlite.org/limits.html#max_variable_number
@@ -17,11 +21,18 @@ pub const LOCAL_DATABASE_MAX_VARIABLE_NUMBER: usize = 999;
 
 #[derive(Clone)]
 pub struct LocalDatabase {
+    #[cfg(feature = "test-utils")]
+    executor: Arc<RwLock<Option<Arc<SqliteExecutor>>>>,
+    #[cfg(not(feature = "test-utils"))]
     executor: Arc<RwLock<Option<SqliteExecutor>>>,
 }
 
 impl LocalDatabase {
     pub async fn from_path(path: &str) -> DatabaseResult<Self> {
+        #[cfg(feature = "test-utils")]
+        if let Some(local_db) = test_utils::open_local_db_in_memory(path) {
+            return local_db;
+        }
 
         let connection = new_sqlite_connection_from_path(path).await?;
         Self::from_sqlite_connection(connection).await
@@ -35,6 +46,8 @@ impl LocalDatabase {
 
     pub async fn from_sqlite_connection(connection: SqliteConnection) -> DatabaseResult<Self> {
         let executor = SqliteExecutor::spawn(connection);
+        #[cfg(feature = "test-utils")]
+        let executor = Arc::new(executor);
         let executor = Arc::new(RwLock::new(Some(executor)));
 
         Ok(Self { executor })

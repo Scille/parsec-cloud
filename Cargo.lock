@@ -1954,6 +1954,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "diesel",
+ "lazy_static",
  "libparsec_platform_async",
  "thiserror",
  "tokio",
