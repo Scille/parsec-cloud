@@ -22,31 +22,8 @@ pub struct LocalDatabase {
 
 impl LocalDatabase {
     pub async fn from_path(path: &str) -> DatabaseResult<Self> {
-        if let Some(prefix) = PathBuf::from(path).parent() {
-            // TODO: Create path in async mode with tokio
-            // TODO: Is the default permission ok ?
-            std::fs::create_dir_all(prefix).map_err(|e| {
-                diesel::result::ConnectionError::BadConnection(format!(
-                    "Can't create sub-directory `{}`: {e}",
-                    prefix
-                        .to_str()
-                        .expect("We generate the Path from a `&str` so UTF-8 is already checked")
-                ))
-            })?;
-        }
 
-        let mut connection = SqliteConnection::establish(path)?;
-
-        // The combination of WAL journal mode and NORMAL synchronous mode
-        // is a great combination: it allows for fast commits (~10 us compare
-        // to 15 ms the default mode) but still protects the database against
-        // corruption in the case of OS crash or power failure.
-        connection.batch_execute(
-            "
-                    PRAGMA journal_mode = WAL; -- better write-concurrency
-                    PRAGMA synchronous = NORMAL; -- fsync only in critical moments
-                ",
-        )?;
+        let connection = new_sqlite_connection_from_path(path).await?;
         Self::from_sqlite_connection(connection).await
     }
 
@@ -62,6 +39,29 @@ impl LocalDatabase {
 
         Ok(Self { executor })
     }
+}
+
+async fn new_sqlite_connection_from_path(path: &str) -> Result<SqliteConnection, DatabaseError> {
+    if let Some(prefix) = PathBuf::from(path).parent() {
+        // TODO: Create path in async mode with tokio
+        // TODO: Is the default permission ok ?
+        std::fs::create_dir_all(prefix).map_err(|e| {
+            diesel::result::ConnectionError::BadConnection(format!(
+                "Can't create sub-directory `{}`: {e}",
+                prefix
+                    .to_str()
+                    .expect("We generate the Path from a `&str` so UTF-8 is already checked")
+            ))
+        })?;
+    }
+    let mut connection = SqliteConnection::establish(path)?;
+    connection.batch_execute(
+        "
+        PRAGMA journal_mode = WAL; -- better write-concurrency
+        PRAGMA synchronous = NORMAL; -- fsync only in critical moments
+    ",
+    )?;
+    Ok(connection)
 }
 
 impl LocalDatabase {
