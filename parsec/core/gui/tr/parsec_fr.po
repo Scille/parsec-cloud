@@ -1051,7 +1051,7 @@ msgid "ACTION_CANCEL_GREET_USER"
 msgstr "Annuler l'accueil"
 
 msgid "TEXT_GREET_USER_TITLE"
-msgstr "Enrôler un nouvel utilisateur"
+msgstr "Accueillir un nouvel utilisateur"
 
 msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
 msgstr "Dernière étape : Installer macFUSE"
