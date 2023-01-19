@@ -1,8 +1,12 @@
-import { mount } from '@vue/test-utils';
+import { mount, VueWrapper } from '@vue/test-utils';
 import HomePage from '@/views/HomePage.vue';
 import { createI18n } from 'vue-i18n';
 import frFR from '../../src/locales/fr-FR.json';
 import enUS from '../../src/locales/en-US.json';
+import { modalController } from '@ionic/vue';
+import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
+import CreateOrganization from '@/components/CreateOrganizationModal.vue';
+import { getSpyOnLastCallResult } from './utils';
 
 describe('HomePage.vue', () => {
   type MessageSchema = typeof frFR;
@@ -20,6 +24,38 @@ describe('HomePage.vue', () => {
     messages: {
       'fr-FR': frFR,
       'en-US': enUS
+    },
+    datetimeFormats: {
+      'en-US': {
+        short: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        },
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: 'numeric',
+          minute: 'numeric'
+        }
+      },
+      'fr-FR': {
+        short: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        },
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: 'numeric',
+          minute: 'numeric'
+        }
+      }
     }
   });
 
@@ -29,14 +65,41 @@ describe('HomePage.vue', () => {
     }
   });
 
+  let modalControllerCreateSpy:jest.SpyInstance;
+
+  beforeAll(() => {
+    modalControllerCreateSpy = jest.spyOn(modalController, 'create');
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders home vue', () => {
     expect(wrapper.text()).toMatch(new RegExp('^List of your organizations'));
   });
 
-  it('calls openCreateOrganizationModal when click on button', () => {
-    const button = wrapper.find('#create-organization-button');
-    const openCreateOrganizationModalSpy = jest.spyOn(wrapper.vm, 'openCreateOrganizationModal');
-    button.trigger('click');
-    expect(openCreateOrganizationModalSpy).toBeCalled();
+  it('calls openCreateOrganizationModal when click on create organization button', async () => {
+    const createOrganizationButton = wrapper.find('#create-organization-button');
+    await createOrganizationButton.trigger('click');
+    expect(modalControllerCreateSpy).toHaveBeenCalledTimes(1);
+    expect(modalControllerCreateSpy).toHaveBeenCalledWith({
+      component: CreateOrganization,
+      canDismiss: wrapper.vm.canDismissModal,
+      cssClass: 'create-organization-modal'
+    });
+    const modal = await getSpyOnLastCallResult(modalControllerCreateSpy) as HTMLIonModalElement;
+    await modal.present();
+    expect(modal.className).not.toContain('overlay-hidden');
+  });
+
+  it('calls openJoinByLinkModal when click on join by link button', async () => {
+    const joinByLinkButton = wrapper.find('#join-by-link-button');
+    await joinByLinkButton.trigger('click');
+    expect(modalControllerCreateSpy).toHaveBeenCalledTimes(1);
+    expect(modalControllerCreateSpy).toHaveBeenCalledWith({
+      component: JoinByLinkModal,
+      cssClass: 'join-by-link-modal'
+    });
   });
 });

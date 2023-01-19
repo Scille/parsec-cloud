@@ -65,6 +65,7 @@
                 @click="openJoinByLinkModal()"
                 fill="outline"
                 size="large"
+                id="join-by-link-button"
               >
                 <ion-icon
                   slot="start"
@@ -273,7 +274,7 @@ async function openJoinByLinkModal(): Promise<void> {
     component: JoinByLinkModal,
     cssClass: 'join-by-link-modal'
   });
-  modal.present();
+  await modal.present();
 
   const { data, role } = await modal.onWillDismiss();
 
@@ -285,16 +286,16 @@ async function openJoinByLinkModal(): Promise<void> {
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganization,
-    canDismiss: canDismissModal
+    canDismiss: canDismissModal,
+    cssClass: 'create-organization-modal'
   });
-  modal.present();
+  await modal.present();
 
   const { data, role } = await modal.onWillDismiss();
 
   if (role === 'confirm') {
     console.log(data);
   }
-
 }
 
 async function canDismissModal(): Promise<boolean> {

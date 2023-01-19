@@ -1,6 +1,10 @@
 import { mount, VueWrapper } from '@vue/test-utils';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { clearEmitted } from './utils';
+import {
+  eyeOutline,
+  eyeOffOutline
+} from 'ionicons/icons';
 
 describe('PasswordInput.vue', () => {
   const wrapper = mount(PasswordInput, {
@@ -9,9 +13,13 @@ describe('PasswordInput.vue', () => {
     }
   });
   let ionInput: VueWrapper;
+  let ionButton: VueWrapper;
+  let ionIcon: VueWrapper;
 
   beforeAll(() => {
     ionInput = wrapper.findComponent('ion-input') as VueWrapper;
+    ionButton = wrapper.findComponent('ion-button') as VueWrapper;
+    ionIcon = wrapper.findComponent('ion-icon') as VueWrapper;
   });
 
   beforeEach(() => {
@@ -23,6 +31,26 @@ describe('PasswordInput.vue', () => {
 
   it('renders password input', () => {
     expect(wrapper.find('ion-label').text()).toBe('TestLabel');
+  });
+
+  it('should toggle password visibility button icon and password input type on password visibility button click', async () => {
+    // check initial state with passwordVisible = false
+    expect(ionInput.props('type')).toEqual('password');
+    expect(ionIcon.props('icon')).toEqual(eyeOutline);
+    // check state when button should toggle passwordVisible to true
+    await ionButton.trigger('click');
+    expect(ionInput.props('type')).toEqual('text');
+    expect(ionIcon.props('icon')).toEqual(eyeOffOutline);
+  });
+
+  it('should restore password visibility button icon and password input type on password visibility button second click', async () => {
+    // check current state when previous click is still in memory
+    expect(ionInput.props('type')).toEqual('text');
+    expect(ionIcon.props('icon')).toEqual(eyeOffOutline);
+    // check state when button should toggle passwordVisible back to false
+    await ionButton.trigger('click');
+    expect(ionInput.props('type')).toEqual('password');
+    expect(ionIcon.props('icon')).toEqual(eyeOutline);
   });
 
   it('should emit "change" event with expected value on password input change', () => {

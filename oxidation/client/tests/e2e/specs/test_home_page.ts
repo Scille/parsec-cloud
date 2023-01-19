@@ -5,25 +5,8 @@ import { libparsec } from '../../../src/plugins/libparsec';
 describe('Check organization list', () => {
 
   it('Visit the app root url', () => {
-    cy.visit('/', {
-      /*
-      onBeforeLoad(win) {
-        cy.stub(win.libparsec, "listAvailableDevices").returns([{
-          keyFilePath: '/path',
-          organizationId: 'Planet Express',
-          deviceId: 'Trashcan',
-          humanHandle: 'John A. Zoidberg',
-          deviceLabel: 'label',
-          slug: 'brain_slug',
-          ty: {
-            type: 'Password'
-          }
-        }]);
-      }
-      */
-    });
+    cy.visit('/');
     cy.contains('List of your organizations');
-    //cy.contains('Dr. John A. Zoidberg');
   });
 
   it('Go to login page', () => {
@@ -48,7 +31,7 @@ describe('Check organization list', () => {
     cy.get('input').invoke('attr', 'type').should('eq', 'password');
     cy.get('#login-button-container > ion-button').should('not.have.class', 'button-disabled');
     cy.get('#login-button-container > ion-button').click();
-  })
+  });
 
   it('Open create organization dialog', () => {
     cy.visit('/');
