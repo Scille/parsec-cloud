@@ -14,7 +14,7 @@
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
             @ion-change="$emit('change', $event.detail.value)"
-            @keyup.enter="onEnterPress"
+            @keyup.enter="onEnterPress()"
           />
           <ion-button
             @click="passwordVisible = !passwordVisible"
