@@ -7,7 +7,7 @@ use pyo3::{
 };
 
 use libparsec::protocol::{
-    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds, Request,
 };
 
 use crate::protocol::{

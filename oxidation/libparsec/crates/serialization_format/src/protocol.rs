@@ -480,13 +480,16 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
                 pub mod #module_name {
                     use super::AnyCmdReq;
                     use super::UnknownStatus;
+                    use super::super::super::libparsec_protocol::Request;
 
                     #(#nested_types)*
 
                     #struct_req
 
-                    impl Req {
-                        pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                    impl<'de> Request<'de> for Req {
+                        type Response = Rep;
+
+                        fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                             AnyCmdReq::#variant_name(self).dump()
                         }
                     }

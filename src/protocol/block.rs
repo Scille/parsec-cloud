@@ -2,6 +2,11 @@
 
 use pyo3::{exceptions::PyNotImplementedError, prelude::*, types::PyBytes};
 
+use libparsec::protocol::{
+    authenticated_cmds::v2::{block_create, block_read},
+    Request,
+};
+
 use crate::{
     ids::{BlockID, RealmID},
     protocol::{
@@ -9,7 +14,6 @@ use crate::{
         gen_rep,
     },
 };
-use libparsec::protocol::authenticated_cmds::v2::{block_create, block_read};
 
 #[pyclass]
 #[derive(Clone)]

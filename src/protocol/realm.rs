@@ -7,9 +7,12 @@ use pyo3::{
 };
 use std::collections::HashMap;
 
-use libparsec::protocol::authenticated_cmds::v2::{
-    realm_create, realm_finish_reencryption_maintenance, realm_get_role_certificates,
-    realm_start_reencryption_maintenance, realm_stats, realm_status, realm_update_roles,
+use libparsec::protocol::{
+    authenticated_cmds::v2::{
+        realm_create, realm_finish_reencryption_maintenance, realm_get_role_certificates,
+        realm_start_reencryption_maintenance, realm_stats, realm_status, realm_update_roles,
+    },
+    Request,
 };
 
 use crate::{
