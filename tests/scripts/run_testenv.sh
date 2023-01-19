@@ -28,19 +28,33 @@ fi
 
 # Cross-shell script directory detection
 if [ -n "$BASH_SOURCE" ]; then
-    SCRIPT_DIR=$(dirname $(realpath -s $BASH_SOURCE))
+    PARSEC_TESTENV_SCRIPT_DIR=$(dirname $(realpath -s $BASH_SOURCE))
 elif [ -n "$ZSH_VERSION" ]; then
-    SCRIPT_DIR=$(dirname $(realpath -s $0))
+    PARSEC_TESTENV_SCRIPT_DIR=$(dirname $(realpath -s $0))
 fi
 
 # In Python we trust (aka shell's tempfile&mktemp doesn't work on all platforms)
-SOURCE_FILE=$(python -c "import tempfile; print(tempfile.mkstemp()[1])")
+PARSEC_TESTENV_SOURCE_FILE=$(python -c "import tempfile; print(tempfile.mkstemp()[1])")
 
 # Run python script and source
-$SCRIPT_DIR/run_testenv.py --source-file $SOURCE_FILE $@ || return $?
-source $SOURCE_FILE
+$PARSEC_TESTENV_SCRIPT_DIR/run_testenv.py --source-file $PARSEC_TESTENV_SOURCE_FILE $@ || return $?
+source $PARSEC_TESTENV_SOURCE_FILE
 
 # Clean up
-rm $SOURCE_FILE
-unset SOURCE_FILE
-unset SCRIPT_DIR
+
+function cleanup() {
+    echo "Running cleanup"
+    $PARSEC_TESTENV_SCRIPT_DIR/run_testenv.py --cleanup
+
+    echo "Removing generated env file"
+    rm -v $PARSEC_TESTENV_SOURCE_FILE
+
+    echo "Unsetting configured env variable"
+    unset XDG_CACHE_HOME
+    unset XDG_DATA_HOME
+    unset XDG_CONFIG_HOME
+    unset PARSEC_TESTENV_SOURCE_FILE
+    unset PARSEC_TESTENV_SCRIPT_DIR
+
+    echo "You can now close your current shell"
+}
