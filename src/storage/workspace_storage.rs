@@ -3,7 +3,7 @@
 use pyo3::{
     import_exception,
     prelude::{pyclass, pyfunction, pymethods, IntoPy, PyObject, PyResult, Python},
-    types::PyBytes,
+    types::{PyByteArray, PyBytes},
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -266,16 +266,24 @@ impl WorkspaceStorage {
         })
     }
 
-    // Pyo3 is inefficient with Vec<u8> but set_chunk must handle PyByteArray and PyBytes
-    // but can't safely call unsafe { block.as_bytes() } because it's called in multiple threads
-    fn set_chunk(&self, chunk_id: ChunkID, block: Vec<u8>) -> FutureIntoCoroutine {
+    fn set_chunk(
+        &self,
+        py: Python,
+        chunk_id: ChunkID,
+        block: PyObject,
+    ) -> PyResult<FutureIntoCoroutine> {
+        let block = match block.extract::<&PyByteArray>(py) {
+            Ok(x) => x.to_vec(),
+            Err(_) => block.extract::<&PyBytes>(py)?.as_bytes().to_vec(),
+        };
+
         let ws = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        Ok(FutureIntoCoroutine::from(async move {
             ws.set_chunk(chunk_id.0, &block)
                 .await
                 .map_err(fs_to_python_error)
-        })
+        }))
     }
 
     #[args(miss_ok = false)]
