@@ -22,8 +22,7 @@ pub struct DeviceFilePassword {
 
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
-    // Handle legacy device with option
-    pub slug: Option<String>,
+    pub slug: String,
 }
 
 #[serde_as]
@@ -84,7 +83,6 @@ impl DeviceFile {
 
 #[serde_as]
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
-#[cfg_attr(test, derive(Serialize))]
 pub struct LegacyDeviceFilePassword {
     #[serde_as(as = "Bytes")]
     pub salt: Vec<u8>,
@@ -98,7 +96,6 @@ pub struct LegacyDeviceFilePassword {
 /// files used to be serialized with a `type` field set to `password`. In order to
 /// enforce this property serde's `tag` attribute is set to `type` field here.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
-#[cfg_attr(test, derive(Serialize))]
 #[serde(rename_all = "lowercase")]
 #[serde(tag = "type")]
 pub enum LegacyDeviceFile {
@@ -109,13 +106,7 @@ impl LegacyDeviceFile {
     pub fn load(serialized: &[u8]) -> Result<Self, &'static str> {
         rmp_serde::from_slice(serialized).map_err(|_| "Invalid serialization")
     }
-
-    #[cfg(test)]
-    pub fn dump(&self) -> Vec<u8> {
-        rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!())
-    }
 }
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceFileType {

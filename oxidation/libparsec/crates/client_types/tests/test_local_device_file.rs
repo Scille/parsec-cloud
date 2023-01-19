@@ -67,7 +67,7 @@ fn password_protected_device_file(alice: &Device) {
         device_label: alice.device_label.to_owned(),
         device_id: alice.device_id.to_owned(),
         organization_id: alice.organization_id().to_owned(),
-        slug: Some(alice.local_device().slug()),
+        slug: alice.local_device().slug(),
         salt: hex!("2ae6167f0f7472b8565c390df3af4a8b").to_vec(),
     };
 

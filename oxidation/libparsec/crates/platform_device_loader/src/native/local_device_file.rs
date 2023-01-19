@@ -136,7 +136,7 @@ fn load_legacy_device_file(key_file: &Path, ciphertext: &[u8]) -> LocalDeviceRes
         device_label: legacy_device.device_label,
         device_id,
         organization_id,
-        slug: Some(slug.to_string()),
+        slug: slug.to_string(),
     }))
 }
 
@@ -151,7 +151,6 @@ pub fn load_device_file(key_file_path: &Path) -> LocalDeviceResult<DeviceFile> {
         .or_else(|_| load_legacy_device_file(key_file_path, &data))
 }
 
-/// For the legacy device files, the slug is contained in the device filename
 pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<AvailableDevice> {
     let (ty, organization_id, device_id, human_handle, device_label, slug) =
         match load_device_file(&key_file_path)? {
@@ -161,24 +160,7 @@ pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<Availa
                 device.device_id,
                 device.human_handle,
                 device.device_label,
-                // Handle legacy device
-                match device.slug {
-                    Some(slug) => slug,
-                    None => {
-                        let slug = key_file_path
-                            .file_stem()
-                            .expect("Unreachable because deserialization succeed")
-                            .to_str()
-                            .expect("It may be unreachable")
-                            .to_string();
-
-                        if LocalDevice::load_slug(&slug).is_err() {
-                            return Err(LocalDeviceError::InvalidSlug);
-                        }
-
-                        slug
-                    }
-                },
+                device.slug,
             ),
             DeviceFile::Recovery(device) => (
                 DeviceFileType::Recovery,
@@ -270,7 +252,7 @@ pub fn save_device_with_password(
         device_label: device.device_label.clone(),
         device_id: device.device_id.clone(),
         organization_id: device.organization_id().clone(),
-        slug: Some(device.slug()),
+        slug: device.slug(),
     });
     save_device_file(key_file, &key_file_content)?;
 

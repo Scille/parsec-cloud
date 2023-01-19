@@ -20,6 +20,7 @@ web-sys = { version = "0.3.60", features = ["Window", "Storage"] }
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 
+hex-literal = "0.3.3"
 tokio = "1.24.1"
 rstest = "0.16.0"
 
