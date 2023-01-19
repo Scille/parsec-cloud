@@ -133,25 +133,14 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
 }
 
 macro_rules! py_object {
-    ($_self: ident, $subclass: ident, $py: ident) => {{
-        let initializer = PyClassInitializer::from(($subclass, Self($_self)));
+    ($_self: ident, $class: ident, $subclass: ident, $py: ident) => {{
+        let initializer = PyClassInitializer::from(($subclass, $class($_self)));
         // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
         // or a sub-type of `T` (the type of `initializer` here).
         // Here `initializer` is created using the type `<$subclass>` and the same type of `<$subclass>`
         // will be used as the type of `subtype` in the call of `into_new_object`.
         unsafe {
             let ptr = initializer.into_new_object($py, $subclass::type_object_raw($py))?;
-            PyObject::from_owned_ptr($py, ptr)
-        }
-    }};
-    ($_self: ident, $subclass: ident, $py: ident, init_non_self) => {{
-        let initializer = PyClassInitializer::from($_self);
-        // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
-        // or a sub-type of `T` (the type of `initializer` here).
-        // Here `initializer` is created using the type `<$subclass>` and the same type of `<$subclass>`
-        // will be used as the type of `subtype` in the call of `into_new_object`.
-        unsafe {
-            let ptr = initializer.into_new_object($py, $subclass::type_object_raw($py)).unwrap();
             PyObject::from_owned_ptr($py, ptr)
         }
     }};

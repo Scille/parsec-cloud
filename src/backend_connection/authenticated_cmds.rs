@@ -42,27 +42,27 @@ impl AuthenticatedCmds {
             auth_cmds
                 .ping(ping)
                 .await
-                .map(AuthenticatedPingRep)
                 .map(|r| {
-                    Python::with_gil(|py| match &r.0 {
+                    Python::with_gil(|py| match r {
                         authenticated_cmds::v3::ping::Rep::Ok { .. } => {
-                            crate::binding_utils::py_object!(
+                            PyResult::<PyObject>::Ok(crate::binding_utils::py_object!(
                                 r,
+                                AuthenticatedPingRep,
                                 AuthenticatedPingRepOk,
-                                py,
-                                init_non_self
-                            )
+                                py
+                            ))
                         }
                         authenticated_cmds::v3::ping::Rep::UnknownStatus { .. } => {
-                            crate::binding_utils::py_object!(
+                            PyResult::<PyObject>::Ok(crate::binding_utils::py_object!(
                                 r,
+                                AuthenticatedPingRep,
                                 AuthenticatedPingRepUnknownStatus,
-                                py,
-                                init_non_self
-                            )
+                                py
+                            ))
                         }
                     })
                 })
+                .map(Result::unwrap)
                 .map_err(|e| Into::<PyErr>::into(Into::<CommandErrorExc>::into(e)))
         })
     }

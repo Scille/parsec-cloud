@@ -159,15 +159,15 @@ macro_rules! gen_rep {
 
                     let ret = match rep {
                         $mod::Rep::Ok $({ $($tt)+ })? => {
-                            crate::binding_utils::py_object!(rep, [<$base_class Ok>], py)
+                            crate::binding_utils::py_object!(rep, Self, [<$base_class Ok>], py)
                         }
                         $(
                             $mod::Rep::$variant $({ $($field: _,)+ })? => {
-                                crate::binding_utils::py_object!(rep, [<$base_class $variant>], py)
+                                crate::binding_utils::py_object!(rep, Self, [<$base_class $variant>], py)
                             }
                         )*
                         $mod::Rep::UnknownStatus { .. } => {
-                            crate::binding_utils::py_object!(rep, [<$base_class UnknownStatus>], py)
+                            crate::binding_utils::py_object!(rep, Self, [<$base_class UnknownStatus>], py)
                         },
                     };
 
