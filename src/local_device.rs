@@ -183,7 +183,7 @@ impl LocalDevice {
         key_file: PathBuf,
         password: &str,
     ) -> LocalDeviceResult<Self> {
-        platform_device_loader::load_device_with_password(&key_file, password)
+        platform_device_loader::load_device_with_password_from_path(&key_file, password)
             .map(LocalDevice)
             .map_err(|e| e.into())
     }

@@ -8,8 +8,6 @@ use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
 
 use crate::StrPath;
 
-pub(crate) const DEVICE_FILE_SUFFIX: &str = "keys";
-
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DeviceFilePassword {

@@ -179,6 +179,17 @@ fn variant_loggedcoreerror_js_to_rs(obj: JsValue) -> Result<libparsec::LoggedCor
             };
             Ok(libparsec::LoggedCoreError::InvalidHandle { handle })
         }
+        tag if tag == JsValue::from_str("LoginFailed") => {
+            let help = {
+                let js_val = Reflect::get(&obj, &"help".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::LoggedCoreError::LoginFailed { help })
+        }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a LoggedCoreError",
         ))),
@@ -198,6 +209,11 @@ fn variant_loggedcoreerror_rs_to_js(
             Reflect::set(&js_obj, &"tag".into(), &"InvalidHandle".into())?;
             let js_handle = JsValue::from(i32::from(handle));
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+        }
+        libparsec::LoggedCoreError::LoginFailed { help } => {
+            Reflect::set(&js_obj, &"tag".into(), &"LoginFailed".into())?;
+            let js_help = help.into();
+            Reflect::set(&js_obj, &"help".into(), &js_help)?;
         }
     }
     Ok(js_obj)
@@ -225,43 +241,71 @@ pub fn listAvailableDevices(path: String) -> Promise {
     })
 }
 
-// test_gen_default_devices
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn testGenDefaultDevices() -> Promise {
-    future_to_promise(async move {
-        libparsec::test_gen_default_devices().await;
-        Ok(JsValue::NULL)
-    })
-}
-
 // login
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn login(test_device_id: String) -> Promise {
+pub fn login(key: String, password: String) -> Promise {
     future_to_promise(async move {
-        let test_device_id = test_device_id
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceID")))?;
-
-        let ret = libparsec::login(test_device_id).await;
-        Ok(JsValue::from(i32::from(ret)))
+        let ret = libparsec::login(&key, &password).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(i32::from(value));
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_loggedcoreerror_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
     })
 }
 
-// logged_core_get_test_device_id
+// logged_core_get_device_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn loggedCoreGetTestDeviceId(handle: i32) -> Promise {
+pub fn loggedCoreGetDeviceId(handle: i32) -> Promise {
     future_to_promise(async move {
         let handle = handle.into();
 
-        let ret = libparsec::logged_core_get_test_device_id(handle).await;
+        let ret = libparsec::logged_core_get_device_id(handle).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = JsValue::from_str(value.as_ref());
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_loggedcoreerror_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// logged_core_get_device_display
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn loggedCoreGetDeviceDisplay(handle: i32) -> Promise {
+    future_to_promise(async move {
+        let handle = handle.into();
+
+        let ret = libparsec::logged_core_get_device_display(handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = value.into();
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }

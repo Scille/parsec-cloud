@@ -2,7 +2,9 @@
 
 use once_cell::sync::OnceCell;
 
+use libparsec_client_types::LocalDevice;
 use libparsec_platform_async::Mutex;
+use libparsec_platform_device_loader::load_device_with_password;
 use libparsec_types::DeviceID;
 
 use crate::{LoggedCoreError, LoggedCoreResult};
@@ -33,25 +35,26 @@ impl From<LoggedCoreHandle> for usize {
 
 #[derive(Debug, Clone)]
 struct LoggedCore {
-    // TODO: Remove me when LoggedCore is implemented
-    test_device_id: DeviceID,
+    device: LocalDevice,
 }
 
-pub async fn login(test_device_id: DeviceID) -> LoggedCoreHandle {
+pub async fn login(key: &str, password: &str) -> LoggedCoreResult<LoggedCoreHandle> {
     let mut core = CORE.get_or_init(|| Mutex::new(Vec::new())).lock().await;
 
     let index = core.len() as i32;
 
-    // Store in memory
-    core.push(Some(LoggedCore { test_device_id }));
+    let device =
+        load_device_with_password(key, password).map_err(|e| LoggedCoreError::LoginFailed {
+            help: e.to_string(),
+        })?;
 
-    LoggedCoreHandle(index)
+    // Store in memory
+    core.push(Some(LoggedCore { device }));
+
+    Ok(LoggedCoreHandle(index))
 }
 
-// TODO: Remove me when LoggedCore is implemented
-pub async fn logged_core_get_test_device_id(
-    handle: LoggedCoreHandle,
-) -> LoggedCoreResult<DeviceID> {
+pub async fn logged_core_get_device_id(handle: LoggedCoreHandle) -> LoggedCoreResult<DeviceID> {
     if let Some(logged_core) = CORE
         .get_or_init(|| Mutex::new(Vec::new()))
         .lock()
@@ -59,7 +62,24 @@ pub async fn logged_core_get_test_device_id(
         .get(usize::from(handle))
     {
         return if let Some(logged_core) = logged_core {
-            Ok(logged_core.test_device_id.clone())
+            Ok(logged_core.device.device_id.clone())
+        } else {
+            Err(LoggedCoreError::Disconnected)
+        };
+    }
+
+    Err(LoggedCoreError::InvalidHandle { handle })
+}
+
+pub async fn logged_core_get_device_display(handle: LoggedCoreHandle) -> LoggedCoreResult<String> {
+    if let Some(logged_core) = CORE
+        .get_or_init(|| Mutex::new(Vec::new()))
+        .lock()
+        .await
+        .get(usize::from(handle))
+    {
+        return if let Some(logged_core) = logged_core {
+            Ok(logged_core.device.device_display().into())
         } else {
             Err(LoggedCoreError::Disconnected)
         };

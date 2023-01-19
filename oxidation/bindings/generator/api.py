@@ -82,23 +82,28 @@ async def list_available_devices(path: StrPath) -> List[AvailableDevice]:
     ...
 
 
-async def test_gen_default_devices():
-    ...
-
-
-async def login(test_device_id: DeviceID) -> LoggedCoreHandle:
-    ...
-
-
 class LoggedCoreError(Variant):
-    class InvalidHandle:
-        handle: LoggedCoreHandle
-
     class Disconnected:
         pass
 
+    class InvalidHandle:
+        handle: LoggedCoreHandle
 
-async def logged_core_get_test_device_id(
+    class LoginFailed:
+        help: str
+
+
+async def login(key: Ref[str], password: Ref[str]) -> Result[LoggedCoreHandle, LoggedCoreError]:
+    ...
+
+
+async def logged_core_get_device_id(
     handle: LoggedCoreHandle,
 ) -> Result[DeviceID, LoggedCoreError]:
+    ...
+
+
+async def logged_core_get_device_display(
+    handle: LoggedCoreHandle,
+) -> Result[str, LoggedCoreError]:
     ...

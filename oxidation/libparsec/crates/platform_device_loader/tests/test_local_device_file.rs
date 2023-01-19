@@ -47,7 +47,7 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
     let bob_device = device_file_factory(bob.clone());
     let mallory_device = device_file_factory(mallory.clone());
 
-    let alice_file_path = LocalDevice::get_default_key_file(&tmp_path, &alice);
+    let alice_file_path = get_default_key_file(&tmp_path, &alice);
     // Device must have a .keys extension, but can be in nested directories with a random name
     let bob_file_path = tmp_path.join("devices/foo/whatever.keys");
     let mallory_file_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");

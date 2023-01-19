@@ -13,12 +13,9 @@ use libparsec_client_types::{
 };
 use libparsec_crypto::SecretKey;
 
-use crate::load_device_with_password;
+use crate::load_device_with_password_from_path;
 
-/// TODO: Remove me once wasm doesn't need to mock
-pub async fn test_gen_default_devices() {
-    panic!("This function shouldn't be called in native platform")
-}
+pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 
 pub fn list_available_devices_core(config_dir: &Path) -> LocalDeviceResult<Vec<AvailableDevice>> {
     let mut list = vec![];
@@ -98,14 +95,15 @@ pub async fn load_recovery_device(
 
     let device = match data {
         DeviceFile::Recovery(device) => device,
-        _ => return Err(LocalDeviceError::Validation(DeviceFileType::Recovery)),
+        _ => {
+            return Err(LocalDeviceError::Validation {
+                ty: DeviceFileType::Recovery,
+            })
+        }
     };
 
-    let key =
-        SecretKey::from_recovery_passphrase(passphrase).map_err(LocalDeviceError::CryptoError)?;
-    let plaintext = key
-        .decrypt(&device.ciphertext)
-        .map_err(LocalDeviceError::CryptoError)?;
+    let key = SecretKey::from_recovery_passphrase(passphrase)?;
+    let plaintext = key.decrypt(&device.ciphertext)?;
     LocalDevice::load(&plaintext)
         .map_err(|_| LocalDeviceError::Deserialization(key_file.to_path_buf()))
 }
@@ -216,9 +214,15 @@ pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<Availa
 /// Note that the filename does not carry any intrinsic meaning.
 /// Here, we simply use the slughash to avoid name collision.
 pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
-    let devices_dir = config_dir.join("devices");
-    let _ = std::fs::create_dir_all(&devices_dir);
-    devices_dir.join(device.slughash() + ".keys")
+    let mut device_path = config_dir.to_path_buf();
+
+    device_path.push("devices");
+
+    let _ = std::fs::create_dir_all(&device_path);
+
+    device_path.push(format!("{}.{DEVICE_FILE_EXT}", device.slughash()));
+
+    device_path
 }
 
 fn read_key_file_paths(path: PathBuf) -> LocalDeviceResult<Vec<PathBuf>> {
@@ -233,7 +237,7 @@ fn read_key_file_paths(path: PathBuf) -> LocalDeviceResult<Vec<PathBuf>> {
         .filter_map(|path| path.ok())
         .map(|entry| entry.path())
     {
-        if path.extension() == Some(OsStr::new("keys")) {
+        if path.extension() == Some(OsStr::new(DEVICE_FILE_EXT)) {
             key_file_paths.push(path)
         } else if path.is_dir() {
             key_file_paths.append(&mut read_key_file_paths(path)?)
@@ -278,7 +282,7 @@ pub fn save_device_with_password_in_config(
     device: &LocalDevice,
     password: &str,
 ) -> Result<PathBuf, LocalDeviceError> {
-    let key_file = LocalDevice::get_default_key_file(config_dir, device);
+    let key_file = get_default_key_file(config_dir, device);
 
     // Why do we use `force=True` here ?
     // Key file name is per-device unique (given it contains the device slughash),
@@ -300,7 +304,7 @@ pub fn change_device_password(
     old_password: &str,
     new_password: &str,
 ) -> Result<(), LocalDeviceError> {
-    let device = load_device_with_password(key_file, old_password)?;
+    let device = load_device_with_password_from_path(key_file, old_password)?;
     save_device_with_password(key_file, &device, new_password, true)
 }
 

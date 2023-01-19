@@ -324,7 +324,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let ret = libparsec::{{ meth.name }}(
 {% endif %}
 {% for param_name, param_type in meth.params.items() %}
-            {{ maybe_ref(param_name, param_type) }}
+            {{ maybe_ref(param_name, param_type) }},
 {% endfor %}
         ).await;
 
