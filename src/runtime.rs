@@ -1,3 +1,4 @@
+use futures::FutureExt;
 use pyo3::{
     import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, wrap_pyfunction,
     IntoPy, Py, PyAny, PyObject, PyResult, Python,
@@ -130,7 +131,17 @@ impl FutureIntoCoroutine {
             // Here we have left the trio thread and are inside a thread provided by the Tokio runtime
 
             // Actual run of the Tokio future
-            let ret = fut.await;
+            let ret = std::panic::AssertUnwindSafe(fut).catch_unwind().await;
+            let ret = ret.unwrap_or_else(|panic_err| {
+                let msg = match panic_err.downcast::<&str>() {
+                    Ok(msg) => (*msg).to_owned(),
+                    Err(panic_err) => match panic_err.downcast::<String>() {
+                        Ok(msg) => *msg,
+                        Err(_) => "Unknown error".to_owned(),
+                    }
+                };
+                Err(pyo3::panic::PanicException::new_err(msg))
+            });
 
             // Now that our job is done we have to call trio's reschedule function and
             // pass it the result as an outcome object
