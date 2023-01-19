@@ -4,7 +4,7 @@ use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
     path::Path,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
 };
 
 use libparsec_client_types::{
@@ -85,7 +85,7 @@ pub struct WorkspaceStorage {
     /// Connection to the Cache database.
     cache_conn: LocalDatabase,
 
-    workspace_storage_manifest_copy: Arc<Mutex<Option<LocalWorkspaceManifest>>>,
+    workspace_storage_manifest_copy: Arc<RwLock<Option<LocalWorkspaceManifest>>>,
 }
 
 impl WorkspaceStorage {
@@ -153,7 +153,7 @@ impl WorkspaceStorage {
             data_conn,
             cache_conn,
 
-            workspace_storage_manifest_copy: Arc::new(Mutex::new(None)),
+            workspace_storage_manifest_copy: Arc::new(RwLock::new(None)),
         };
 
         instance
@@ -314,8 +314,8 @@ impl WorkspaceStorage {
         match self.manifest_storage.get_manifest(self.workspace_id).await {
             Ok(LocalManifest::Workspace(manifest)) => {
                 self.workspace_storage_manifest_copy
-                    .lock()
-                    .expect("Mutex is poisoned")
+                    .write()
+                    .expect("RwLock is poisoned")
                     .replace(manifest);
                 Ok(())
             }
@@ -344,8 +344,8 @@ impl WorkspaceStorage {
 
     pub fn get_workspace_manifest(&self) -> FSResult<LocalWorkspaceManifest> {
         self.workspace_storage_manifest_copy
-            .lock()
-            .expect("Mutex is poisoned")
+            .read()
+            .expect("RwLock is poisoned")
             .as_ref()
             .cloned()
             .ok_or(FSError::LocalMiss(*self.workspace_id))
@@ -376,8 +376,8 @@ impl WorkspaceStorage {
                 panic!("We updated the workspace manifest with a manifest of the wrong type");
             };
             self.workspace_storage_manifest_copy
-                .lock()
-                .expect("Mutex is poisoned")
+                .write()
+                .expect("RwLock is poisoned")
                 .replace(manifest);
         }
         Ok(())

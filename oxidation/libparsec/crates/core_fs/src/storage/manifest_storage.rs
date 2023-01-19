@@ -6,7 +6,7 @@ use diesel::{
 };
 use std::{
     collections::{hash_map::RandomState, HashMap, HashSet},
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
 };
 
 use libparsec_client_types::LocalManifest;
@@ -15,7 +15,8 @@ use libparsec_types::{BlockID, ChunkID, EntryID, Regex};
 use platform_async::{
     future::{self, TryFutureExt},
     futures::executor::block_on,
-    Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard,
+    Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard, RwLock as AsyncRwLock,
+    RwLockWriteGuard as AsyncRwLockWriteGuard,
 };
 
 use crate::{
@@ -98,7 +99,7 @@ pub struct ManifestStorage {
     pub realm_id: EntryID,
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
-    caches: Arc<Mutex<HashMap<EntryID, Arc<AsyncMutex<CacheEntry>>>>>,
+    caches: Arc<Mutex<HashMap<EntryID, Arc<AsyncRwLock<CacheEntry>>>>>,
 }
 
 /// A cache entry that may contain a manifest and its pending chunk.
@@ -228,7 +229,7 @@ impl ManifestStorage {
             let drained = lock.drain();
 
             if flush {
-                Some(drained.collect::<Vec<(EntryID, Arc<AsyncMutex<CacheEntry>>)>>())
+                Some(drained.collect::<Vec<(EntryID, Arc<AsyncRwLock<CacheEntry>>)>>())
             } else {
                 None
             }
@@ -378,7 +379,7 @@ impl ManifestStorage {
         let caches = self.caches.lock().expect("Mutex is poisoned").clone();
         let iter = caches.iter().map(|(id, cache)| async {
             if cache
-                .lock()
+                .read()
                 .await
                 .manifest
                 .as_ref()
@@ -439,7 +440,7 @@ impl ManifestStorage {
     pub(crate) fn get_or_insert_default_cache_entry(
         &self,
         entry_id: EntryID,
-    ) -> Arc<AsyncMutex<CacheEntry>> {
+    ) -> Arc<AsyncRwLock<CacheEntry>> {
         self.caches
             .lock()
             .expect("Mutex is poisoned")
@@ -452,8 +453,7 @@ impl ManifestStorage {
     pub async fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         // Look in cache first
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        let mut cache_unlock = cache_entry.lock().await;
-        if let Some(manifest) = cache_unlock.manifest.clone() {
+        if let Some(manifest) = { cache_entry.read().await.manifest.clone() } {
             return Ok(manifest);
         }
 
@@ -472,6 +472,7 @@ impl ManifestStorage {
         let manifest = LocalManifest::decrypt_and_load(&manifest, &self.local_symkey)
             .map_err(|_| FSError::Crypto(CryptoError::Decryption))?;
 
+        let mut cache_unlock = cache_entry.write().await;
         cache_unlock.manifest = Some(manifest.clone());
 
         Ok(manifest)
@@ -485,7 +486,7 @@ impl ManifestStorage {
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        let mut cache_unlock = cache_entry.lock().await;
+        let mut cache_unlock = cache_entry.write().await;
 
         cache_unlock.manifest = Some(manifest);
         let pending_chunk_ids = cache_unlock
@@ -521,16 +522,16 @@ impl ManifestStorage {
     async fn ensure_manifest_persistent_lock(
         &self,
         entry_id: EntryID,
-        cache_lock: Arc<AsyncMutex<CacheEntry>>,
+        cache_lock: Arc<AsyncRwLock<CacheEntry>>,
     ) -> FSResult<()> {
-        self.ensure_manifest_persistent_unlock(entry_id, cache_lock.lock().await)
+        self.ensure_manifest_persistent_unlock(entry_id, cache_lock.write().await)
             .await
     }
 
     async fn ensure_manifest_persistent_unlock(
         &self,
         entry_id: EntryID,
-        mut cache: AsyncMutexGuard<'_, CacheEntry>,
+        mut cache: AsyncRwLockWriteGuard<'_, CacheEntry>,
     ) -> FSResult<()> {
         if let (Some(manifest), Some(pending_chunk_ids)) =
             (cache.manifest.as_ref(), cache.pending_chunk_ids.clone())
@@ -588,7 +589,7 @@ impl ManifestStorage {
             .expect("Mutex is poisoned")
             .iter()
             .map(|(entry_id, entry)| (*entry_id, entry.clone()))
-            .collect::<Vec<(EntryID, Arc<AsyncMutex<CacheEntry>>)>>();
+            .collect::<Vec<(EntryID, Arc<AsyncRwLock<CacheEntry>>)>>();
         for (entry_id, lock) in items {
             self.ensure_manifest_persistent_lock(entry_id, lock).await?;
         }
@@ -601,7 +602,7 @@ impl ManifestStorage {
     pub async fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
         // Remove from cache
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        let mut cache_unlock = cache_entry.lock().await;
+        let mut cache_unlock = cache_entry.write().await;
 
         // Remove from local database
 
@@ -653,7 +654,7 @@ impl ManifestStorage {
         };
         let result = cache_entry
             .as_ref()
-            .map(|entry| async { entry.lock().await.has_chunk_to_be_flush() });
+            .map(|entry| async { entry.read().await.has_chunk_to_be_flush() });
 
         if let Some(fut) = result {
             fut.await
