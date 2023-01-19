@@ -1336,6 +1336,7 @@ dependencies = [
 name = "libparsec_platform_device_loader"
 version = "0.0.0"
 dependencies = [
+ "hex-literal",
  "libparsec_client_types",
  "libparsec_crypto",
  "rstest",

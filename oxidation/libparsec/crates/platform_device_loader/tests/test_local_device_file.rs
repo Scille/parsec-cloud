@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use hex_literal::hex;
 use rstest::rstest;
 use std::collections::HashSet;
 
@@ -14,7 +15,7 @@ fn device_file_factory(device: LocalDevice) -> DeviceFile {
         salt: b"salt".to_vec(),
         ciphertext: b"ciphertext".to_vec(),
 
-        slug: Some(device.slug()),
+        slug: device.slug(),
         organization_id: device.organization_id().clone(),
         device_id: device.device_id,
 
@@ -108,29 +109,23 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
 
 #[rstest]
 #[tokio::test]
-async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath, alice: &Device) {
-    let device = alice.local_device();
-
-    let device = DeviceFile::Password(DeviceFilePassword {
-        salt: b"salt".to_vec(),
-        ciphertext: b"ciphertext".to_vec(),
-
-        slug: None,
-        organization_id: device.organization_id().clone(),
-        device_id: device.device_id,
-
-        human_handle: None,
-        device_label: None,
-    });
+async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
+    let legacy_device = hex!(
+        "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
+        "c40a63697068657274657874ac68756d616e5f68616e646c65c0ac6465766963655f6c6162"
+        "656cc0"
+    );
     let slug = "9d84fbd57a#Org#Zack@PC1".to_string();
     let key_file_path = tmp_path.join("devices").join(slug.clone() + ".keys");
-    save_device_file(&key_file_path, &device).unwrap();
+
+    std::fs::create_dir_all(tmp_path.join("devices")).unwrap();
+    std::fs::write(&key_file_path, legacy_device).unwrap();
 
     let devices = list_available_devices(&tmp_path).await;
     let expected_device = AvailableDevice {
         key_file_path: key_file_path.into(),
-        organization_id: alice.organization_id().clone(),
-        device_id: alice.device_id.clone(),
+        organization_id: "Org".parse().unwrap(),
+        device_id: "Zack@PC1".parse().unwrap(),
         human_handle: None,
         device_label: None,
         slug,
@@ -138,4 +133,34 @@ async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath,
     };
 
     assert_eq!(devices, [expected_device]);
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_renew_legacy_file(tmp_path: TmpPath) {
+    let legacy_device = hex!(
+        "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
+        "c40a63697068657274657874ac68756d616e5f68616e646c65c0ac6465766963655f6c6162"
+        "656cc0"
+    );
+    let slug = "9d84fbd57a#Org#Zack@PC1".to_string();
+    let key_file_path = tmp_path.join("devices").join(slug.clone() + ".keys");
+
+    std::fs::create_dir_all(tmp_path.join("devices")).unwrap();
+    std::fs::write(&key_file_path, legacy_device).unwrap();
+
+    let device = load_device_file(&key_file_path).unwrap();
+
+    assert_eq!(
+        device,
+        DeviceFile::Password(DeviceFilePassword {
+            ciphertext: hex!("63697068657274657874").to_vec(),
+            salt: hex!("73616c74").to_vec(),
+            organization_id: "Org".parse().unwrap(),
+            device_id: "Zack@PC1".parse().unwrap(),
+            human_handle: None,
+            device_label: None,
+            slug,
+        })
+    )
 }
