@@ -4,6 +4,7 @@ use libparsec::protocol::{
         v2::pki_enrollment_accept,
         v2::{pki_enrollment_list, pki_enrollment_reject},
     },
+    Request,
 };
 use pyo3::{
     exceptions::PyAttributeError,

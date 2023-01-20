@@ -8,7 +8,8 @@ on:
 
 env:
   python-version: "3.9"
-  node-version: "16"
+  rust-version: 1.66.1
+  node-version: 18.13.0
   poetry-version: 1.2.2
   # TODO: We stick to PostgreSQL 12 for the moment given later versions are
   # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
@@ -20,10 +21,9 @@ env:
     -vv
     -x
   cargo-exclude-unused-crates: >-
-    --exclude=libparsec_bindings_jni
+    --exclude=libparsec_bindings_android
     --exclude=libparsec_bindings_web
     --exclude=libparsec_bindings_electron
-    --exclude=libparsec_bindings_common
   # Temporary fix for macos tests:
   # See: https://github.com/python-poetry/poetry/issues/7161
   SYSTEM_VERSION_COMPAT: "0"
@@ -373,6 +373,10 @@ jobs:
         shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
 
+      - name: Additional Check (for packaging)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: cargo check --profile ci-rust --no-default-features --features use-sodiumoxide
+
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
         shell: bash
@@ -408,7 +412,6 @@ jobs:
         id: web-change
         if: >-
           steps.changes.outputs.client-web == 'true'
-          || steps.changes.outputs.client-common == 'true'
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash

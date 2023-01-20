@@ -8,19 +8,19 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from parsec._parsec import change_device_password, save_device_with_password_in_config
+from parsec._parsec import (
+    DeviceFileType,
+    LocalDeviceExc,
+    change_device_password,
+    list_available_devices,
+    save_device_with_password_in_config,
+)
 from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID
 from parsec.core.local_device import (
     AvailableDevice,
-    DeviceFileType,
-    LocalDeviceCryptoError,
-    LocalDeviceNotFoundError,
-    LocalDevicePackingError,
     get_default_key_file,
     get_devices_dir,
     get_key_file,
-    list_available_devices,
-    load_device_with_password,
 )
 from parsec.core.types import LocalDevice
 from parsec.crypto import SigningKey
@@ -76,7 +76,7 @@ def test_list_devices(organization_factory, local_device_factory, config_dir):
 
     expected_devices = {
         AvailableDevice(
-            key_file_path=get_key_file(config_dir, d),
+            key_file_path=get_key_file(config_dir, d.slug),
             organization_id=d.organization_id,
             device_id=d.device_id,
             human_handle=d.human_handle,
@@ -189,8 +189,8 @@ def test_available_devices_slughash_uniqueness(
 
     # Finally make sure slughash is stable through save/load
     save_device_with_password_in_config(config_dir, o1u1d1, "S3Cr37")
-    key_file = get_key_file(config_dir, o1u1d1)
-    o1u1d1_reloaded = load_device_with_password(key_file, "S3Cr37")
+    key_file = get_key_file(config_dir, o1u1d1.slug)
+    o1u1d1_reloaded = LocalDevice.load_device_with_password(key_file, "S3Cr37")
     available_device = _to_available(o1u1d1)
     available_device_reloaded = _to_available(o1u1d1_reloaded)
     assert available_device.slughash == available_device_reloaded.slughash
@@ -201,17 +201,20 @@ def test_password_save_and_load(path_exists, config_dir, alice):
     config_dir = config_dir if path_exists else config_dir / "dummy"
     save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
-    key_file = get_key_file(config_dir, alice)
-    alice_reloaded = load_device_with_password(key_file, "S3Cr37")
+    key_file = get_key_file(config_dir, alice.slug)
+    alice_reloaded = LocalDevice.load_device_with_password(key_file, "S3Cr37")
     assert alice == alice_reloaded
 
 
 def test_load_bad_password(config_dir, alice):
     save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
-    with pytest.raises(LocalDeviceCryptoError):
-        key_file = get_key_file(config_dir, alice)
-        load_device_with_password(key_file, "dummy")
+    key_file = get_key_file(config_dir, alice.slug)
+    try:
+        LocalDevice.load_device_with_password(key_file, "dummy")
+        assert False, "`load_device_with_password` must raise a decryption error"
+    except LocalDeviceExc as e:
+        assert str(e) == "Decryption error"
 
 
 def test_load_bad_data(config_dir, alice):
@@ -219,8 +222,11 @@ def test_load_bad_data(config_dir, alice):
     alice_key.parent.mkdir(parents=True)
     alice_key.write_bytes(b"dummy")
 
-    with pytest.raises(LocalDevicePackingError):
-        load_device_with_password(alice_key, "S3Cr37")
+    try:
+        LocalDevice.load_device_with_password(alice_key, "S3Cr37")
+        assert False, "Should raise a deserialization error"
+    except LocalDeviceExc as e:
+        assert str(e) == f"Deserialization error: {alice_key}"
 
 
 def test_password_save_already_existing(config_dir, alice, alice2, otheralice):
@@ -238,9 +244,12 @@ def test_password_save_already_existing(config_dir, alice, alice2, otheralice):
 
 
 def test_password_load_not_found(config_dir, alice):
-    with pytest.raises(LocalDeviceNotFoundError):
-        key_file = get_default_key_file(config_dir, alice)
-        load_device_with_password(key_file, "S3Cr37")
+    key_file = get_default_key_file(config_dir, alice)
+    try:
+        LocalDevice.load_device_with_password(key_file, "S3Cr37")
+        assert False, "Should raise an file access error"
+    except LocalDeviceExc as e:
+        assert str(e) == f"Could not access to the dir/file: {key_file}"
 
 
 def test_same_device_id_different_organizations(config_dir, alice, otheralice):
@@ -252,8 +261,8 @@ def test_same_device_id_different_organizations(config_dir, alice, otheralice):
         )
 
     for device in devices:
-        key_file = get_key_file(config_dir, device)
-        device_reloaded = load_device_with_password(
+        key_file = get_key_file(config_dir, device.slug)
+        device_reloaded = LocalDevice.load_device_with_password(
             key_file, f"S3Cr37-{device.organization_id.str}"
         )
         assert device == device_reloaded
@@ -264,15 +273,18 @@ def test_change_password(config_dir, alice):
     new_password = "N3wP@ss"
 
     save_device_with_password_in_config(config_dir, alice, old_password)
-    key_file = get_key_file(config_dir, alice)
+    key_file = get_key_file(config_dir, alice.slug)
 
     change_device_password(str(key_file), old_password, new_password)
 
-    alice_reloaded = load_device_with_password(key_file, new_password)
+    alice_reloaded = LocalDevice.load_device_with_password(key_file, new_password)
     assert alice == alice_reloaded
 
-    with pytest.raises(LocalDeviceCryptoError):
-        load_device_with_password(key_file, old_password)
+    try:
+        LocalDevice.load_device_with_password(key_file, old_password)
+        assert False, "Should raise a decryption error"
+    except LocalDeviceExc as e:
+        assert str(e) == "Decryption error"
 
 
 @customize_fixtures(alice_has_human_handle=False, alice_has_device_label=False)
@@ -348,7 +360,7 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
         type=DeviceFileType.PASSWORD,
     )
     assert devices == [expected_device]
-    assert get_key_file(config_dir, expected_device) == key_file_path
+    assert get_key_file(config_dir, expected_device.slug) == key_file_path
 
 
 @pytest.mark.parametrize("type", ("password", "smartcard"))
@@ -405,7 +417,7 @@ def test_list_devices_support_key_file(config_dir, type):
         **available_device_extra,
     )
     assert devices == [expected_device]
-    assert get_key_file(config_dir, expected_device) == key_file_path
+    assert get_key_file(config_dir, expected_device.slug) == key_file_path
 
 
 def test_multiple_files_same_device(config_dir, alice):

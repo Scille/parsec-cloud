@@ -11,7 +11,7 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 libparsec = { path = "../../libparsec" }
-wasm-bindgen = { version = "0.2.82" }
+wasm-bindgen = "0.2.83"
 wasm-bindgen-futures = "0.4.33"
 js-sys = "0.3.59"
 

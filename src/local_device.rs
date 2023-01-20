@@ -8,12 +8,15 @@ use pyo3::{
 use std::path::PathBuf;
 
 use libparsec::client_types;
+use libparsec::platform_device_loader;
 
 use crate::{
     addrs::BackendOrganizationAddr,
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
-    enumerate::UserProfile,
+    enumerate::{DeviceFileType, UserProfile},
     ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID},
+    local_device::client_types::StrPath,
+    runtime::FutureIntoCoroutine,
     time::{DateTime, TimeProvider},
 };
 
@@ -116,6 +119,37 @@ impl LocalDevice {
         Ok(Self(r))
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[classmethod]
+    #[args(
+        profil = "UserProfile::standard()",
+        device_id = "None",
+        human_handle = "None",
+        device_label = "None",
+        signing_key = "None",
+        private_key = "None"
+    )]
+    fn generate_new_device(
+        _cls: &PyType,
+        organization_addr: BackendOrganizationAddr,
+        profile: UserProfile,
+        device_id: Option<DeviceID>,
+        human_handle: Option<HumanHandle>,
+        device_label: Option<DeviceLabel>,
+        signing_key: Option<SigningKey>,
+        private_key: Option<PrivateKey>,
+    ) -> Self {
+        Self(client_types::LocalDevice::generate_new_device(
+            organization_addr.0,
+            device_id.map(|d| d.0),
+            profile.0,
+            human_handle.map(|h| h.0),
+            device_label.map(|d| d.0),
+            signing_key.map(|s| s.0),
+            private_key.map(|p| p.0),
+        ))
+    }
+
     #[getter]
     fn is_admin(&self) -> PyResult<bool> {
         Ok(self.0.profile == libparsec::types::UserProfile::Admin)
@@ -141,6 +175,17 @@ impl LocalDevice {
         libparsec::client_types::LocalDevice::load_slug(slug)
             .map(|(org_id, device_id)| (OrganizationID(org_id), DeviceID(device_id)))
             .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    #[classmethod]
+    fn load_device_with_password(
+        _cls: &PyType,
+        key_file: PathBuf,
+        password: &str,
+    ) -> LocalDeviceResult<Self> {
+        platform_device_loader::load_device_with_password_from_path(&key_file, password)
+            .map(LocalDevice)
+            .map_err(|e| e.into())
     }
 
     #[getter]
@@ -416,7 +461,7 @@ pub(crate) fn save_device_with_password(
     password: &str,
     force: bool,
 ) -> LocalDeviceResult<()> {
-    client_types::save_device_with_password(&key_file, &device.0, password, force)
+    platform_device_loader::save_device_with_password(&key_file, &device.0, password, force)
         .map_err(|e| e.into())
 }
 
@@ -426,7 +471,7 @@ pub(crate) fn save_device_with_password_in_config(
     device: &LocalDevice,
     password: &str,
 ) -> LocalDeviceResult<PathBuf> {
-    client_types::save_device_with_password_in_config(&config_dir, &device.0, password)
+    platform_device_loader::save_device_with_password_in_config(&config_dir, &device.0, password)
         .map_err(|e| e.into())
 }
 
@@ -436,6 +481,141 @@ pub(crate) fn change_device_password(
     old_password: &str,
     new_password: &str,
 ) -> LocalDeviceResult<()> {
-    client_types::change_device_password(&key_file, old_password, new_password)
+    platform_device_loader::change_device_password(&key_file, old_password, new_password)
         .map_err(|e| e.into())
+}
+
+#[pyclass]
+pub(crate) struct AvailableDevice(client_types::AvailableDevice);
+
+#[pymethods]
+impl AvailableDevice {
+    #[new]
+    fn new(
+        key_file_path: PathBuf,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+        human_handle: Option<HumanHandle>,
+        device_label: Option<DeviceLabel>,
+        slug: String,
+        r#type: DeviceFileType,
+    ) -> Self {
+        Self(client_types::AvailableDevice {
+            key_file_path: StrPath::from(key_file_path.to_str().unwrap()),
+            organization_id: organization_id.0,
+            device_id: device_id.0,
+            human_handle: human_handle.map(|h| h.0),
+            device_label: device_label.map(|l| l.0),
+            slug,
+            ty: r#type.0,
+        })
+    }
+
+    #[classmethod]
+    fn load(_cls: &PyType, key_file_path: PathBuf) -> LocalDeviceResult<Self> {
+        Ok(Self(
+            platform_device_loader::load_available_device(key_file_path)
+                .map_err(|e| LocalDeviceExc(Box::new(e)))?,
+        ))
+    }
+
+    #[getter]
+    fn key_file_path(&self) -> PathBuf {
+        self.0.key_file_path.to_path_buf()
+    }
+
+    #[getter]
+    fn organization_id(&self) -> OrganizationID {
+        OrganizationID(self.0.organization_id.clone())
+    }
+
+    #[getter]
+    fn device_id(&self) -> DeviceID {
+        DeviceID(self.0.device_id.clone())
+    }
+
+    #[getter]
+    fn human_handle(&self) -> Option<HumanHandle> {
+        self.0.human_handle.as_ref().map(|h| HumanHandle(h.clone()))
+    }
+
+    #[getter]
+    fn device_label(&self) -> Option<DeviceLabel> {
+        self.0.device_label.as_ref().map(|d| DeviceLabel(d.clone()))
+    }
+
+    #[getter]
+    fn slug(&self) -> &str {
+        &self.0.slug
+    }
+
+    #[getter]
+    fn r#type(&self) -> DeviceFileType {
+        DeviceFileType(self.0.ty)
+    }
+
+    #[getter]
+    fn user_display(&self) -> &str {
+        self.0.user_display()
+    }
+
+    #[getter]
+    fn short_user_display(&self) -> &str {
+        self.0.short_user_display()
+    }
+
+    #[getter]
+    fn device_display(&self) -> &str {
+        self.0.device_display()
+    }
+
+    #[getter]
+    fn slughash(&self) -> String {
+        self.0.slughash()
+    }
+}
+
+crate::binding_utils::gen_proto!(AvailableDevice, __richcmp__, eq);
+crate::binding_utils::gen_proto!(AvailableDevice, __hash__);
+
+#[pyfunction]
+pub(crate) fn list_available_devices(
+    config_dir: PathBuf,
+) -> LocalDeviceResult<Vec<AvailableDevice>> {
+    platform_device_loader::list_available_devices_core(&config_dir)
+        .map(|devices| devices.iter().map(|d| AvailableDevice(d.clone())).collect())
+        .map_err(|e| LocalDeviceExc(Box::new(e)))
+}
+
+#[pyfunction]
+pub(crate) fn get_available_device(
+    config_dir: PathBuf,
+    slug: &str,
+) -> LocalDeviceResult<AvailableDevice> {
+    platform_device_loader::get_available_device(&config_dir, slug)
+        .map(AvailableDevice)
+        .map_err(|e| LocalDeviceExc(Box::new(e)))
+}
+
+#[pyfunction]
+pub(crate) fn load_recovery_device(key_file: PathBuf, password: String) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::load_recovery_device(&key_file, &password)
+            .await
+            .map(LocalDevice)
+            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
+}
+
+#[pyfunction]
+pub(crate) fn save_recovery_device(
+    key_file: PathBuf,
+    device: LocalDevice,
+    force: bool,
+) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::save_recovery_device(&key_file, device.0, force)
+            .await
+            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
 }

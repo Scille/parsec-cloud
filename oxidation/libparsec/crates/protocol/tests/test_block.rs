@@ -3,7 +3,7 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_protocol::{authenticated_cmds::v2 as authenticated_cmds, Request};
 use libparsec_types::{BlockID, RealmID};
 
 #[rstest]

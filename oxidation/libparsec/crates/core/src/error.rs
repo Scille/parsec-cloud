@@ -4,6 +4,8 @@ use thiserror::Error;
 
 use libparsec_types::{DateTime, DeviceID, UserID};
 
+use crate::LoggedCoreHandle;
+
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum TrustchainError {
     #[error("{path}: Invalid certificate: {exc}")]
@@ -74,3 +76,15 @@ impl From<TrustchainError> for RemoteDevicesManagerError {
         Self::InvalidTrustchain { exc }
     }
 }
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum LoggedCoreError {
+    #[error("The device is disconnected")]
+    Disconnected,
+    #[error("The handle provided is invalid: {handle:?}")]
+    InvalidHandle { handle: LoggedCoreHandle },
+    #[error("The login has failed: {help}")]
+    LoginFailed { help: String },
+}
+
+pub type LoggedCoreResult<T> = Result<T, LoggedCoreError>;

@@ -6,9 +6,12 @@ use crate::{
         Reason,
     },
 };
-use libparsec::protocol::authenticated_cmds::v2::{
-    events_listen::{self, APIEvent},
-    events_subscribe,
+use libparsec::protocol::{
+    authenticated_cmds::v2::{
+        events_listen::{self, APIEvent},
+        events_subscribe,
+    },
+    Request,
 };
 use pyo3::{prelude::*, types::PyBytes, PyObject, PyResult, Python};
 

@@ -12,7 +12,6 @@ from parsec.api.data import DeviceCertificate, SequesterAuthorityCertificate, Us
 from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection import organization_bootstrap as cmd_organization_bootstrap
 from parsec.core.invite.exceptions import InviteAlreadyUsedError, InviteError, InviteNotFoundError
-from parsec.core.local_device import generate_new_device
 from parsec.core.types import BackendOrganizationAddr, BackendOrganizationBootstrapAddr, LocalDevice
 
 
@@ -31,7 +30,7 @@ async def bootstrap_organization(
         root_verify_key=root_verify_key,
     )
 
-    device = generate_new_device(
+    device = LocalDevice.generate_new_device(
         organization_addr=organization_addr,
         profile=UserProfile.ADMIN,
         human_handle=human_handle,

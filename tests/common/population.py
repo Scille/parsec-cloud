@@ -8,8 +8,8 @@ from typing import Optional, Union
 
 import pytest
 
+from parsec._parsec import LocalDevice
 from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserProfile
-from parsec.core.local_device import generate_new_device
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey
 from tests.common.binder import OrganizationFullData
@@ -125,7 +125,7 @@ def local_device_factory(coolorg):
         except StopIteration:
             profile = profile or UserProfile.STANDARD
 
-        device = generate_new_device(
+        device = LocalDevice.generate_new_device(
             organization_addr=org.addr,
             device_id=device_id,
             profile=profile,

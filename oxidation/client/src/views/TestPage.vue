@@ -22,7 +22,10 @@
       <div id="container">
         <strong>Ready to create Parsec?</strong>
         <div>
-          <ion-input v-model="name" placeholder="Your name"></ion-input>,
+          <ion-input
+            v-model="name"
+            placeholder="Your name"
+          />,
           <ion-button @click="onSubmit">
             Let's go!
           </ion-button>
@@ -50,27 +53,19 @@ import { ref } from 'vue';
 import { libparsec } from '../plugins/libparsec';
 
 const name = ref('Scruffy');
-const message = ref('bonyour!');
+
+const path = 'PATH/TO/.config/parsec/';
+const password = 'PASSWORD';
 
 async function onSubmit(): Promise<void> {
-  console.log(`calling helloWorld(${name.value})`);
-  const rep = await libparsec.helloWorld(name.value);
-  console.log('helloWorld returned', rep);
-  switch (rep.ok) {
-  case true:
-    message.value = rep.value;
-    break;
-  case false:
-    switch (rep.error.tag) {
-    case 'EmptySubject':
-      message.value = 'Where is your name ?';
-      break;
-    case 'YouAreADog':
-      message.value = `Who's a good boy ? ${rep.error.hello} ! You are !`;
-      break;
-    }
-    break;
-  }
+  console.log('Submitting');
+  const devices = await libparsec.listAvailableDevices(path);
+  console.log(devices);
+  const handle = await libparsec.login(devices[0].keyFilePath, password);
+  // const handle = await libparsec.login(devices[0].slug, password);
+  console.log(handle);
+  const deviceID = await libparsec.loggedCoreGetDeviceId(0);
+  console.log(deviceID);
 }
 </script>
 

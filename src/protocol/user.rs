@@ -10,7 +10,7 @@ use std::num::NonZeroU64;
 
 use libparsec::protocol::{
     authenticated_cmds::v2::{device_create, human_find, user_create, user_get, user_revoke},
-    IntegerBetween1And100,
+    IntegerBetween1And100, Request,
 };
 
 use crate::{

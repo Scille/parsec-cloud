@@ -15,10 +15,11 @@ BASEDIR = Path(__file__).parent
 
 
 # Meta-types are defined in the api module for simplicity, `generate_api_specs` will take care of retreiving them
-META_TYPES = ["Result", "Ref", "StrBasedType", "Variant", "Structure"]
+META_TYPES = ["Result", "Ref", "StrBasedType", "IntBasedType", "Variant", "Structure"]
 Result: Type = None
 Ref: Type = None
 StrBasedType: Type = None
+IntBasedType: Type = None
 Variant: Type = None
 Structure: Type = None
 
@@ -93,6 +94,9 @@ class BaseTypeInUse:
         elif issubclass(param, StrBasedType):
             return StrBasedTypeInUse(name=param.__name__)
 
+        elif issubclass(param, IntBasedType):
+            return IntBasedTypeInUse(name=param.__name__)
+
         else:
             typespec = TYPESDB.get(param)
             assert typespec is not None, f"Bad param `{param!r}`, not a scalar/variant/struct"
@@ -145,6 +149,12 @@ class StrBasedTypeInUse(BaseTypeInUse):
 
 
 @dataclass
+class IntBasedTypeInUse(BaseTypeInUse):
+    kind = "int_based"
+    name: str
+
+
+@dataclass
 class OpaqueSpec(BaseTypeInUse):
     kind: str
 
@@ -159,6 +169,8 @@ class MethSpec:
 
 @dataclass
 class ApiSpecs:
+    str_based_types: List[StrBasedType]
+    int_based_types: List[IntBasedType]
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
@@ -281,6 +293,16 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             )
 
     return ApiSpecs(
+        str_based_types=[
+            item.__name__
+            for item in api_items.values()
+            if isinstance(item, type) and issubclass(item, StrBasedType)
+        ],
+        int_based_types=[
+            item.__name__
+            for item in api_items.values()
+            if isinstance(item, type) and issubclass(item, IntBasedType)
+        ],
         variants=variants,
         structs=structs,
         meths=meths,
@@ -307,24 +329,25 @@ if __name__ == "__main__":
         template = env.get_template("client_plugin_definitions.d.ts.j2")
         output = (BASEDIR / "../../client/src/plugins/libparsec/definitions.d.ts").resolve()
         print(f"Generating {output}")
-        output.write_text(template.render(api=api_specs), encoding="utf8")
+        # Don't use `write_text` given it outputs \r\n for newlines on Windows
+        output.write_bytes(template.render(api=api_specs).encode("utf8"))
 
     if args.what in ("all", "electron"):
         template = env.get_template("binding_electron_index.d.ts.j2")
         output = (BASEDIR / "../electron/src/index.d.ts").resolve()
         print(f"Generating {output}")
-        output.write_text(template.render(api=api_specs), encoding="utf8")
+        output.write_bytes(template.render(api=api_specs).encode("utf8"))
 
         template = env.get_template("binding_electron_meths.rs.j2")
         output = (BASEDIR / "../electron/src/meths.rs").resolve()
         print(f"Generating {output}")
-        output.write_text(template.render(api=api_specs), encoding="utf8")
+        output.write_bytes(template.render(api=api_specs).encode("utf8"))
 
     if args.what in ("all", "web"):
         template = env.get_template("binding_web_meths.rs.j2")
         output = (BASEDIR / "../web/src/meths.rs").resolve()
         print(f"Generating {output}")
-        output.write_text(template.render(api=api_specs), encoding="utf8")
+        output.write_bytes(template.render(api=api_specs).encode("utf8"))
 
     if args.what in ("all", "android"):
         # TODO !

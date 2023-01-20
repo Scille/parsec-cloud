@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QKeyEvent, QMouseEvent
 from PyQt5.QtWidgets import QWidget
 
+from parsec._parsec import AvailableDevice, DeviceFileType, list_available_devices
 from parsec.core import CoreConfig
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.lang import translate as T
@@ -22,12 +23,7 @@ from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
 from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInputWidget
 from parsec.core.gui.ui.login_smartcard_input_widget import Ui_LoginSmartcardInputWidget
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
-from parsec.core.local_device import (
-    AvailableDevice,
-    DeviceFileType,
-    list_available_devices,
-    save_device_with_smartcard_in_config,
-)
+from parsec.core.local_device import save_device_with_smartcard_in_config
 from parsec.core.pki import (
     PkiEnrollmentFinalizedCtx,
     PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx,
@@ -464,10 +460,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.reload_devices()
 
     def try_login_with_password(self, device: AvailableDevice, password: str) -> None:
-        self.login_with_password_clicked.emit(device.key_file_path, password)
+        self.login_with_password_clicked.emit(Path(device.key_file_path), password)
 
     def try_login_with_smartcard(self, device: AvailableDevice) -> None:
-        self.login_with_smartcard_clicked.emit(device.key_file_path)
+        self.login_with_smartcard_clicked.emit(Path(device.key_file_path))
 
     def disconnect_all(self) -> None:
         pass

@@ -8,6 +8,8 @@ use std::num::NonZeroU8;
 
 use libparsec_serialization_format::parsec_protocol_cmds_familly;
 
+use crate as libparsec_protocol;
+
 pub use error::*;
 pub use handshake::*;
 
@@ -59,3 +61,13 @@ impl From<IntegerBetween1And100> for u64 {
 parsec_protocol_cmds_familly!("schema/invited_cmds");
 parsec_protocol_cmds_familly!("schema/authenticated_cmds");
 parsec_protocol_cmds_familly!("schema/anonymous_cmds");
+
+pub trait Request<'de> {
+    type Response: Deserialize<'de>;
+
+    fn dump(self) -> Result<Vec<u8>, rmp_serde::encode::Error>;
+
+    fn load_response(buf: &'de [u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
+        rmp_serde::from_slice(buf)
+    }
+}

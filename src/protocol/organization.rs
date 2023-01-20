@@ -10,6 +10,7 @@ use libparsec::{
     protocol::{
         anonymous_cmds::v2::organization_bootstrap,
         authenticated_cmds::v2::{organization_config, organization_stats},
+        Request,
     },
     types::{self, Maybe},
 };

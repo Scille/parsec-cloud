@@ -134,10 +134,9 @@ use std::str::FromStr;
     })
 )]
 fn serde_legacy_device_file(#[case] raw: &[u8], #[case] expected: LegacyDeviceFile) {
-    let decoded = LegacyDeviceFile::decode(raw).unwrap();
-    assert_eq!(decoded, expected);
+    let device = LegacyDeviceFile::load(raw).unwrap();
+    assert_eq!(device, expected);
 
-    // Roundtrip
-    let roundtrip_raw = decoded.dump();
-    assert_eq!(LegacyDeviceFile::decode(&roundtrip_raw).unwrap(), expected);
+    // We don't need to test roundtrip because we will never save this file again !
+    // It will be saved with the good one :)
 }

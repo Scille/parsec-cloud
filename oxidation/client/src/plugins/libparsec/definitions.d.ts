@@ -8,12 +8,19 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E };
 
+type OrganizationID = string;
+type DeviceLabel = string;
+type HumanHandle = string;
+type StrPath = string;
+type DeviceID = string;
+type LoggedCoreHandle = number;
+
 export interface AvailableDevice {
-    keyFilePath: string;
-    organizationId: string;
-    deviceId: string;
-    humanHandle: string | null;
-    deviceLabel: string | null;
+    keyFilePath: StrPath;
+    organizationId: OrganizationID;
+    deviceId: DeviceID;
+    humanHandle: HumanHandle | null;
+    deviceLabel: DeviceLabel | null;
     slug: string;
     ty: DeviceFileType;
 }
@@ -33,6 +40,26 @@ export type DeviceFileType =
   | DeviceFileTypeRecovery
   | DeviceFileTypeSmartcard
 
+// LoggedCoreError
+export interface LoggedCoreErrorDisconnected {
+    tag: 'Disconnected'
+}
+export interface LoggedCoreErrorInvalidHandle {
+    tag: 'InvalidHandle'
+    handle: number;
+}
+export interface LoggedCoreErrorLoginFailed {
+    tag: 'LoginFailed'
+    help: string;
+}
+export type LoggedCoreError =
+  | LoggedCoreErrorDisconnected
+  | LoggedCoreErrorInvalidHandle
+  | LoggedCoreErrorLoginFailed
+
 export interface LibParsecPlugin {
-    listAvailableDevices(path: string): Promise<Array<AvailableDevice>>;
+    listAvailableDevices(path: StrPath): Promise<Array<AvailableDevice>>;
+    login(key: string, password: string): Promise<Result<number, LoggedCoreError>>;
+    loggedCoreGetDeviceId(handle: number): Promise<Result<DeviceID, LoggedCoreError>>;
+    loggedCoreGetDeviceDisplay(handle: number): Promise<Result<string, LoggedCoreError>>;
 }

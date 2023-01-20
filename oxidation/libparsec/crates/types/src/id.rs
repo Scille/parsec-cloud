@@ -351,7 +351,7 @@ impl FromStr for HumanHandle {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let start = s.chars().position(|c| c == '<').ok_or("Email is missing")?;
         let stop = s.chars().position(|c| c == '>').ok_or("Email is missing")?;
-        Self::new(&s[..start - 1], &s[start + 1..stop])
+        Self::new(&s[start + 1..stop], &s[..start - 1])
     }
 }
 
@@ -474,12 +474,18 @@ mod tests {
     }
 
     #[rstest]
+    #[case::valid("john.doe@example.com", "John Doe", true)]
     #[case::invalid_email("test", "test", false)]
     #[case::invalid_email("a@b..c", "test", false)]
     #[case::invalid_email("@b.c", "test", false)]
     #[case::parenthesis_allowed("a@b.c", "()", true)]
     #[case::invalid_name_with_backslash("a@b", "hell\\o", false)]
+    #[case::switched("John Doe", "john.doe@example.com", false)]
     fn test_human_handle(#[case] email: &str, #[case] label: &str, #[case] is_ok: bool) {
-        assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok)
+        assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok);
+        assert_eq!(
+            HumanHandle::from_str(&format!("{label} <{email}>")).is_ok(),
+            is_ok
+        );
     }
 }

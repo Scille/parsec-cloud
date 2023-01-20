@@ -9,7 +9,11 @@ from typing import Any, Callable, List, TypeVar, cast
 import click
 import trio
 
-from parsec._parsec import save_device_with_password_in_config
+from parsec._parsec import (
+    DeviceFileType,
+    list_available_devices,
+    save_device_with_password_in_config,
+)
 from parsec.cli_utils import (
     async_prompt,
     debug_config_options,
@@ -20,11 +24,8 @@ from parsec.cli_utils import (
 from parsec.core.config import CoreConfig, get_default_config_dir, load_config
 from parsec.core.local_device import (
     AvailableDevice,
-    DeviceFileType,
     LocalDeviceError,
     is_smartcard_extension_available,
-    list_available_devices,
-    load_device_with_password,
     load_device_with_smartcard_sync,
     save_device_with_smartcard_in_config,
 )
@@ -187,7 +188,9 @@ def core_config_and_device_options(fn: Callable[..., R]) -> Callable[..., R]:
         try:
             if available_device.type == DeviceFileType.PASSWORD:
                 passwd: str = password or click.prompt("password", hide_input=True)
-                device = load_device_with_password(available_device.key_file_path, passwd)
+                device = LocalDevice.load_device_with_password(
+                    Path(available_device.key_file_path), passwd
+                )
             elif available_device.type == DeviceFileType.SMARTCARD:
                 # It's ok to be blocking here, we're not in async land yet
                 device = load_device_with_smartcard_sync(available_device.key_file_path)

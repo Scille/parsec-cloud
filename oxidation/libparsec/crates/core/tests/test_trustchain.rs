@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use chrono::{TimeZone, Utc};
 use rstest::rstest;
 
 use libparsec_core::{TrustchainContext, TrustchainError};
@@ -242,8 +241,8 @@ fn test_device_signature_while_revoked(
     alice_revoked_user_certif: &RevokedUserCertificate,
     coolorg: &Organization,
 ) {
-    let d1 = DateTime::from(Utc.ymd(2000, 1, 1).and_hms(0, 0, 0));
-    let d2 = DateTime::from(Utc.ymd(2000, 1, 2).and_hms(0, 0, 0));
+    let d1 = DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap();
+    let d2 = DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap();
     let mut ctx = TrustchainContext::new(
         mallory.root_verify_key().clone(),
         mallory.time_provider.clone(),
@@ -299,8 +298,8 @@ fn test_user_signature_while_revoked(
     alice_revoked_user_certif: &RevokedUserCertificate,
     coolorg: &Organization,
 ) {
-    let d1 = DateTime::from(Utc.ymd(2000, 1, 1).and_hms(0, 0, 0));
-    let d2 = DateTime::from(Utc.ymd(2000, 1, 2).and_hms(0, 0, 0));
+    let d1 = DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap();
+    let d2 = DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap();
     let mut ctx = TrustchainContext::new(
         mallory.root_verify_key().clone(),
         mallory.time_provider.clone(),
@@ -357,8 +356,8 @@ fn test_revoked_user_signature_while_revoked(
     mallory_revoked_user_certif: &RevokedUserCertificate,
     coolorg: &Organization,
 ) {
-    let d1 = DateTime::from(Utc.ymd(2000, 1, 1).and_hms(0, 0, 0));
-    let d2 = DateTime::from(Utc.ymd(2000, 1, 2).and_hms(0, 0, 0));
+    let d1 = DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap();
+    let d2 = DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap();
     let mut ctx = TrustchainContext::new(
         mallory.root_verify_key().clone(),
         mallory.time_provider.clone(),
