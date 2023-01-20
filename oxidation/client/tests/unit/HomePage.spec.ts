@@ -154,6 +154,8 @@ describe('HomePage.vue', () => {
     });
 
     it('should log in the console the expected message on login button click', async () => {
+      passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
+      passwordInput.vm.$emit('change', 'password');
       const expectedMessage = 'Log in to Eddy with password "password"';
       const loginButton = wrapper.findComponent('#login-button') as VueWrapper;
       loginButton.trigger('click');
@@ -162,6 +164,8 @@ describe('HomePage.vue', () => {
     });
 
     it('should log in the console the expected message on password input enter', async () => {
+      passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
+      passwordInput.vm.$emit('change', 'password');
       const expectedMessage = 'Log in to Eddy with password "password"';
       passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
       passwordInput.vm.$emit('enter');
