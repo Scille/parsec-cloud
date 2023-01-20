@@ -154,8 +154,7 @@ describe('HomePage.vue', () => {
     });
 
     it('should log in the console the expected message on login button click', async () => {
-      passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
-      passwordInput.vm.$emit('change', 'password');
+      wrapper.vm.password = 'password';
       const expectedMessage = 'Log in to Eddy with password "password"';
       const loginButton = wrapper.findComponent('#login-button') as VueWrapper;
       loginButton.trigger('click');
@@ -163,11 +162,19 @@ describe('HomePage.vue', () => {
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });
 
+    it('should disable the login button on passwordInput change with empty value', async () => {
+      passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
+      wrapper.vm.password = 'password';
+      const loginButton = wrapper.findComponent('#login-button') as VueWrapper;
+      expect(loginButton.props('disabled')).toBeFalsy();
+      await passwordInput.vm.$emit('change', '');
+      expect(loginButton.props('disabled')).toBeTruthy();
+    });
+
     it('should log in the console the expected message on password input enter', async () => {
       passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
-      passwordInput.vm.$emit('change', 'password');
+      wrapper.vm.password = 'password';
       const expectedMessage = 'Log in to Eddy with password "password"';
-      passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
       passwordInput.vm.$emit('enter');
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
