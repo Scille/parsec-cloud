@@ -1,5 +1,23 @@
 {
     "HomePage": {
+        "organizationList": {
+            "title": "List of your organizations",
+            "lastLogin": "Last login: {date}",
+            "lastLoginSeconds": "Last login: one second ago | Last login: {seconds} seconds ago",
+            "lastLoginMinutes": "Last login: one minute ago | Last login: {minutes} minutes ago",
+            "lastLoginHours": "Last login: one hour ago | Last login: {hours} hours ago"
+        },
+        "noExistingOrganization": {
+            "title": "Need to create or join an organization?",
+            "createOrganization": "Create an organization",
+            "joinOrganization": "Join an organization"
+        },
+        "organizationLogin": {
+            "backToList": "Return to organizations",
+            "forgottenPassword": "Forgot you password?",
+            "passwordLabel": "Password",
+            "login": "Log in"
+        },
         "mainMenu": {
             "changelog": "Changelog"
         },

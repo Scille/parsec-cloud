@@ -40,6 +40,6 @@ describe('HeaderPage.vue', () => {
   });
 
   it('renders header vue', () => {
-    expect(wrapper.text()).toMatch(new RegExp('Welcome. Please add an organization to start using Parsec.'));
+    expect(wrapper.text()).toMatch(new RegExp('^List of your organizations'));
   });
 });

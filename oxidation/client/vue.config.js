@@ -13,6 +13,7 @@ if (process.env.npm_lifecycle_event !== undefined && process.env.npm_lifecycle_e
   if (
     process.env.npm_lifecycle_event.startsWith('web:')
     || process.env.npm_lifecycle_event.startsWith('test:')
+    || process.env.npm_lifecycle_event === 'lint'
   ) {
     platform = 'web';
   } else if (process.env.npm_lifecycle_event.startsWith('native:')) {

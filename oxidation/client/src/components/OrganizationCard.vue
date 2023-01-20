@@ -6,15 +6,18 @@
       <ion-row class="ion-align-items-center">
         <ion-col size="auto">
           <ion-avatar>
-            <span>{{ device.organization_id?.substring(0, 2) }}</span>
+            <span>{{ device.organizationId?.substring(0, 2) }}</span>
           </ion-avatar>
         </ion-col>
-        <ion-col size="auto" class="organization-info">
+        <ion-col
+          size="auto"
+          class="organization-info"
+        >
           <p class="organization-label">
-            {{ device.organization_id }}
+            {{ device.organizationId }}
           </p>
           <p>
-            {{ device.human_handle }}
+            {{ device.humanHandle }}
           </p>
         </ion-col>
       </ion-row>
@@ -35,8 +38,8 @@ defineProps<{
 
 <style lang="scss" scoped>
 .organization-card {
-  background: #F9F9FB;
-  margin: 1em 1.5em;
+  user-select: none;
+
   ion-avatar {
     background: white;
     color: #0058cc;
@@ -60,11 +63,6 @@ defineProps<{
       font-size: 1.5em;
     }
   }
-}
-
-.organization-card-hover:hover {
-  background: #E5F1FF;
-  cursor: pointer;
 }
 
 </style>
