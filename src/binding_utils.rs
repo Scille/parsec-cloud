@@ -271,7 +271,7 @@ macro_rules! impl_enum_field {
             $(
                 #[classattr]
                 #[pyo3(name = $pyo3_name)]
-                fn $fn_name() -> &'static PyObject {
+                pub(crate) fn $fn_name() -> &'static PyObject {
                     lazy_static::lazy_static! {
                         static ref VALUE: PyObject = {
                             Python::with_gil(|py| {

@@ -1,6 +1,7 @@
 mod certif;
 mod error;
 mod invite;
+mod local_device_file;
 mod local_manifest;
 mod manifest;
 mod message;
@@ -11,6 +12,7 @@ mod user;
 pub(crate) use certif::*;
 pub(crate) use error::*;
 pub(crate) use invite::*;
+pub(crate) use local_device_file::*;
 pub(crate) use local_manifest::*;
 pub(crate) use manifest::*;
 pub(crate) use message::*;
@@ -62,6 +64,9 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<InviteUserConfirmation>()?;
     m.add_class::<InviteDeviceData>()?;
     m.add_class::<InviteDeviceConfirmation>()?;
+
+    // Local Device File
+    m.add_class::<DeviceFile>()?;
 
     // Local Manifest
     m.add_class::<Chunk>()?;
