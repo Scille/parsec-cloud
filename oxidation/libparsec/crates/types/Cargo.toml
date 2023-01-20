@@ -12,14 +12,12 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["use-rustcrypto"]
-use-rustcrypto = ["uuid/fast-rng", "libparsec_crypto/use-rustcrypto"]
-use-sodiumoxide = ["uuid/fast-rng", "libparsec_crypto/use-sodiumoxide"]
+# TODO: this feature is never referenced, is it useful ?
 js = ["uuid/js"]
-mock-time = []
+test-mock-time = []
 
 [dependencies]
-libparsec_crypto = { path = "../crypto", default-features = false }
+libparsec_crypto = { path = "../crypto" }
 libparsec_serialization_format = { path = "../serialization_format" }
 libparsec_platform_async = { path = "../platform_async" }
 

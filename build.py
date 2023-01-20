@@ -7,8 +7,8 @@ import sys
 import tempfile
 import zipfile
 
-# The default rust build profile to use when compiling the rust extension.
-DEFAULT_CARGO_PROFILE = "release"
+# The profile we pass to `make.py` to get the flags (cargo profile & features) for cargo build
+DEFAULT_BUILD_PROFILE = "release"
 
 
 def display(line: str):
@@ -24,7 +24,7 @@ PYTHON_EXECUTABLE_PATH = sys.executable
 display(f"PYTHON_EXECUTABLE_PATH={PYTHON_EXECUTABLE_PATH}")
 
 
-def run(cmd, **kwargs):
+def run(cmd: str, **kwargs) -> subprocess.CompletedProcess:
     display(f">>> {cmd}")
     ret = subprocess.run(cmd, shell=True, check=True, **kwargs)
     return ret
@@ -53,6 +53,17 @@ def build():
         )
         return
 
+    # Retrieve the options to use for Cargo Compilation.
+    # The idea here is to have the per-profile options centralized at the same place
+    # (i.e. within `make.py`) to have a readable single source of truth (including
+    # when compiling bindings unrelated to Python) on this sensible piece of configuration.
+    build_profile = os.environ.get("POETRY_LIBPARSEC_BUILD_PROFILE", DEFAULT_BUILD_PROFILE)
+    ret = run(
+        f"{PYTHON_EXECUTABLE_PATH} make.py --quiet python-{build_profile}-libparsec-cargo-flags",
+        stdout=subprocess.PIPE,
+    )
+    cargo_flags = ret.stdout.decode("ascii").strip()
+
     # Maturin provides two commands to compile the Rust code as a Python native module:
     # - `maturin develop` that only compile the native module
     # - `maturin build` that generates an entire wheel of the project
@@ -63,13 +74,8 @@ def build():
     # So we must ask maturin to build a wheel of the project, only to extract the
     # native module and discard the rest !
 
-    maturin_build_profile = "--profile=" + os.environ.get("CARGO_PROFILE", DEFAULT_CARGO_PROFILE)
-    maturin_build_extra_args = os.environ.get("CARGO_EXTRA_ARGS", "")
-
     with tempfile.TemporaryDirectory() as distdir:
-        run(
-            f"maturin build {maturin_build_profile} {maturin_build_extra_args} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
-        )
+        run(f"maturin build {cargo_flags} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}")
 
         outputs = list(pathlib.Path(distdir).iterdir())
         if len(outputs) != 1:

@@ -1152,7 +1152,7 @@ checksum = "348108ab3fba42ec82ff6e9564fc4ca0247bdccdc68dd8af9764bbc79c3c8ffb"
 
 [[package]]
 name = "libparsec"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "libparsec_client_types",
  "libparsec_core",
@@ -2595,16 +2595,6 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest 0.10.5",
- "sha2-asm",
-]
-
-[[package]]
-name = "sha2-asm"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf27176fb5d15398e3a479c652c20459d9dac830dedd1fa55b42a77dbcdbfcea"
-dependencies = [
- "cc",
 ]
 
 [[package]]

@@ -7,15 +7,10 @@ autotests = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-default = ["use-rustcrypto"]
-use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
-use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
-
 [dependencies]
-libparsec_crypto = { path = "../crypto", default-features = false }
-libparsec_types = { path = "../types", default-features = false }
-libparsec_client_types = { path = "../client_types", default-features = false }
+libparsec_crypto = { path = "../crypto" }
+libparsec_types = { path = "../types" }
+libparsec_client_types = { path = "../client_types" }
 
 # Disable Diesel's default feature to remove `32-column-tables` which slowdown compilation
 # quiet a lot (Diesel crate compilation on my machine: 19s with vs 8s without).
