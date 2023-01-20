@@ -64,7 +64,7 @@ def build():
     # native module and discard the rest !
 
     maturin_build_profile = "--profile=" + os.environ.get("CARGO_PROFILE", DEFAULT_CARGO_PROFILE)
-    maturin_build_features = os.environ.get("CARGO_FEATURES", "")
+    maturin_build_features = os.environ.get("CARGO_EXTRA_ARGS", "")
 
     with tempfile.TemporaryDirectory() as distdir:
         run(

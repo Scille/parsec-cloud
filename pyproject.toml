@@ -166,7 +166,7 @@ test-command = "parsec --version && parsec core list_devices"
 # non-existent and hence $PATH don't know about it (and maturin will fail when calling cargo).
 # For this reason we force $PATH to contain Rust bin dir.
 PATH = "$PATH:$HOME/.cargo/bin"
-CARGO_FEATURES = "--no-default-features --features use-sodiumoxide"
+CARGO_EXTRA_ARGS = "--no-default-features --features use-sodiumoxide"
 
 [tool.maturin]
 features = ["extension-module"]
