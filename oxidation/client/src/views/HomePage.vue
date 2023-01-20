@@ -11,7 +11,10 @@
           <img src="../assets/images/Logo/logo_blue.png">
         </div>
         <transition-group :name="showOrganizationList ? 'slide-left' : 'slide-right'">
-          <ion-card v-if="showOrganizationList">
+          <ion-card
+            v-if="showOrganizationList"
+            id="organization-list-container"
+          >
             <ion-card-content class="organization-list">
               <ion-card-title color="tertiary">
                 {{ $t('HomePage.organizationList.title') }}
@@ -65,6 +68,7 @@
                 @click="openJoinByLinkModal()"
                 fill="outline"
                 size="large"
+                id="join-by-link-button"
               >
                 <ion-icon
                   slot="start"
@@ -74,12 +78,16 @@
               </ion-button>
             </ion-card-content>
           </ion-card>
-          <ion-card v-if="!showOrganizationList">
+          <ion-card
+            v-if="!showOrganizationList"
+            id="login-popup-container"
+          >
             <ion-card-content class="organization-list">
               <ion-card-title color="tertiary">
                 <ion-button
                   fill="clear"
                   @click="showOrganizationList = !showOrganizationList"
+                  id="back-to-list-button"
                 >
                   <ion-icon
                     slot="start"
@@ -101,6 +109,7 @@
                       <ion-button
                         fill="clear"
                         @click="onForgottenPasswordClick"
+                        id="forgotten-password-button"
                       >
                         {{ $t('HomePage.organizationLogin.forgottenPassword') }}
                       </ion-button>
@@ -112,6 +121,7 @@
                     @click="login"
                     size="large"
                     :disabled="password.length == 0"
+                    id="login-button"
                   >
                     <ion-icon
                       slot="start"
@@ -156,6 +166,7 @@ import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { createAlert } from '@/components/AlertConfirmation';
+import { libparsec } from '../plugins/libparsec';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 
 export interface DeviceLocalStorageData {
@@ -164,6 +175,9 @@ export interface DeviceLocalStorageData {
 }
 
 const { t, d } = useI18n();
+
+// Not ready yet
+// const deviceList = libparsec.listAvailableDevices();
 const deviceList: AvailableDevice[] = [
   {
     organizationId: 'MegaShark',
@@ -269,7 +283,7 @@ async function openJoinByLinkModal(): Promise<void> {
     component: JoinByLinkModal,
     cssClass: 'join-by-link-modal'
   });
-  modal.present();
+  await modal.present();
 
   const { data, role } = await modal.onWillDismiss();
 
@@ -281,16 +295,16 @@ async function openJoinByLinkModal(): Promise<void> {
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganization,
-    canDismiss: canDismissModal
+    canDismiss: canDismissModal,
+    cssClass: 'create-organization-modal'
   });
-  modal.present();
+  await modal.present();
 
   const { data, role } = await modal.onWillDismiss();
 
   if (role === 'confirm') {
     console.log(data);
   }
-
 }
 
 async function canDismissModal(): Promise<boolean> {
