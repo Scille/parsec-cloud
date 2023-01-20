@@ -6,7 +6,6 @@ import enUS from '../../src/locales/en-US.json';
 import { modalController } from '@ionic/vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
-import { getSpyOnLastCallResult } from './utils';
 
 describe('HomePage.vue', () => {
   type MessageSchema = typeof frFR;
