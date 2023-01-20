@@ -462,7 +462,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         path = self.current_directory / files[0].name
         addr = self.workspace_fs.generate_file_link(path)
         desktop.copy_to_clipboard(addr.to_url())
-        SnackbarManager.inform(T("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
+        filetype = "FILE" if files[0].type == FileType.File else "FOLDER"
+        SnackbarManager.inform(T(f"TEXT_{filetype}_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_get_file_path_timestamp_clicked(self) -> None:
         assert self.workspace_fs is not None
@@ -472,7 +473,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         path = self.current_directory / files[0].name
         ts_addr = self.workspace_fs.generate_file_link(path, timestamp=DateTime.now())
         desktop.copy_to_clipboard(ts_addr.to_url())
-        SnackbarManager.inform(T("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
+        filetype = "FILE" if files[0].type == FileType.File else "FOLDER"
+        SnackbarManager.inform(T(f"TEXT_{filetype}_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_copy_clicked(self) -> None:
         files = self.table_files.selected_files()
@@ -624,14 +626,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         if len(files) == 1:
             selection_end = files[0].name.find(".")
+            filetype = "FILE" if files[0].type == FileType.File else "FOLDER"
             # If no "." or starts with a ".", we want to select the whole file name
             if selection_end in [-1, 0]:
                 selection_end = len(files[0].name)
             new_name = get_text_input(
                 self,
-                T("TEXT_FILE_RENAME_TITLE"),
-                T("TEXT_FILE_RENAME_INSTRUCTIONS"),
-                placeholder=T("TEXT_FILE_RENAME_PLACEHOLDER"),
+                T(f"TEXT_{filetype}_RENAME_TITLE"),
+                T(f"TEXT_{filetype}_RENAME_INSTRUCTIONS"),
+                placeholder=T(f"TEXT_{filetype}_RENAME_PLACEHOLDER"),
                 default_text=files[0].name,
                 validator=validators.FileNameValidator(),
                 button_text=T("ACTION_FILE_RENAME"),
@@ -684,11 +687,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         files = self.table_files.selected_files()
         assert self.workspace_fs is not None
         if len(files) == 1:
+            filetype = "FILE" if files[0].type == FileType.File else "FOLDER"
             result = ask_question(
                 self,
-                T("TEXT_FILE_DELETE_TITLE"),
-                T("TEXT_FILE_DELETE_INSTRUCTIONS_name").format(name=files[0].name),
-                [T("ACTION_FILE_DELETE"), T("ACTION_CANCEL")],
+                T(f"TEXT_{filetype}_DELETE_TITLE"),
+                T(f"TEXT_{filetype}_DELETE_INSTRUCTIONS_name").format(name=files[0].name),
+                [T(f"ACTION_FILE_DELETE"), T("ACTION_CANCEL")],
             )
         else:
             result = ask_question(
