@@ -14,6 +14,7 @@ use pyo3::{
 };
 
 use crate::{
+    binding_utils::BytesWrapper,
     ids::EnrollmentID,
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
@@ -33,15 +34,24 @@ impl PkiEnrollmentAcceptReq {
     #[new]
     #[allow(clippy::too_many_arguments)]
     fn new(
-        accept_payload: Vec<u8>,
-        accept_payload_signature: Vec<u8>,
-        accepter_der_x509_certificate: Vec<u8>,
+        accept_payload: BytesWrapper,
+        accept_payload_signature: BytesWrapper,
+        accepter_der_x509_certificate: BytesWrapper,
         enrollment_id: &EnrollmentID,
-        device_certificate: Vec<u8>,
-        user_certificate: Vec<u8>,
-        redacted_device_certificate: Vec<u8>,
-        redacted_user_certificate: Vec<u8>,
+        device_certificate: BytesWrapper,
+        user_certificate: BytesWrapper,
+        redacted_device_certificate: BytesWrapper,
+        redacted_user_certificate: BytesWrapper,
     ) -> Self {
+        crate::binding_utils::unwrap_bytes!(
+            accept_payload,
+            accept_payload_signature,
+            accepter_der_x509_certificate,
+            device_certificate,
+            user_certificate,
+            redacted_device_certificate,
+            redacted_user_certificate
+        );
         Self(pki_enrollment_accept::Req {
             accept_payload,
             accept_payload_signature,
@@ -177,10 +187,15 @@ impl PkiEnrollmentInfoStatus {
         _cls: &PyType,
         submitted_on: DateTime,
         accepted_on: DateTime,
-        accepter_der_x509_certificate: Vec<u8>,
-        accept_payload_signature: Vec<u8>,
-        accept_payload: Vec<u8>,
+        accepter_der_x509_certificate: BytesWrapper,
+        accept_payload_signature: BytesWrapper,
+        accept_payload: BytesWrapper,
     ) -> Self {
+        crate::binding_utils::unwrap_bytes!(
+            accepter_der_x509_certificate,
+            accept_payload_signature,
+            accept_payload
+        );
         Self(pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted {
             submitted_on: submitted_on.0,
             accepted_on: accepted_on.0,
@@ -258,11 +273,16 @@ impl PkiEnrollmentListItem {
     #[new]
     fn new(
         enrollment_id: EnrollmentID,
-        submit_payload: Vec<u8>,
-        submit_payload_signature: Vec<u8>,
+        submit_payload: BytesWrapper,
+        submit_payload_signature: BytesWrapper,
         submitted_on: DateTime,
-        submitter_der_x509_certificate: Vec<u8>,
+        submitter_der_x509_certificate: BytesWrapper,
     ) -> Self {
+        crate::binding_utils::unwrap_bytes!(
+            submit_payload,
+            submit_payload_signature,
+            submitter_der_x509_certificate
+        );
         Self(pki_enrollment_list::PkiEnrollmentListItem {
             enrollment_id: enrollment_id.0,
             submit_payload,
@@ -395,11 +415,16 @@ impl PkiEnrollmentSubmitReq {
     fn new(
         enrollment_id: EnrollmentID,
         force: bool,
-        submitter_der_x509_certificate: Vec<u8>,
-        submit_payload_signature: Vec<u8>,
-        submit_payload: Vec<u8>,
+        submitter_der_x509_certificate: BytesWrapper,
+        submit_payload_signature: BytesWrapper,
+        submit_payload: BytesWrapper,
         submitter_der_x509_certificate_email: Option<String>,
     ) -> Self {
+        crate::binding_utils::unwrap_bytes!(
+            submitter_der_x509_certificate,
+            submit_payload_signature,
+            submit_payload
+        );
         Self(pki_enrollment_submit::Req {
             enrollment_id: enrollment_id.0,
             force,

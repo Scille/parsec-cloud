@@ -8,12 +8,12 @@ use pyo3::{
 
 use libparsec::protocol::{authenticated_cmds::v2::message_get, Request};
 
-use crate::ids::DeviceID;
 use crate::protocol::{
     error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
     gen_rep,
 };
 use crate::time::DateTime;
+use crate::{binding_utils::BytesWrapper, ids::DeviceID};
 
 #[pyclass]
 #[derive(Clone)]
@@ -25,7 +25,13 @@ crate::binding_utils::gen_proto!(Message, __richcmp__, eq);
 #[pymethods]
 impl Message {
     #[new]
-    fn new(count: u64, sender: DeviceID, timestamp: DateTime, body: Vec<u8>) -> PyResult<Self> {
+    fn new(
+        count: u64,
+        sender: DeviceID,
+        timestamp: DateTime,
+        body: BytesWrapper,
+    ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(body);
         let sender = sender.0;
         let timestamp = timestamp.0;
         Ok(Self(message_get::Message {

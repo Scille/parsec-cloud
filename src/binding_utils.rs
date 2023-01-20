@@ -1,13 +1,79 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyNotImplementedError, pyclass::CompareOp, types::PyFrozenSet, FromPyObject, PyAny,
-    PyResult,
+    exceptions::PyNotImplementedError, pyclass::CompareOp, types::PyByteArray, types::PyBytes,
+    types::PyFrozenSet, FromPyObject, PyAny, PyResult,
 };
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
     hash::{Hash, Hasher},
 };
+
+#[derive(FromPyObject)]
+pub enum BytesWrapper<'py> {
+    Bytes(&'py PyBytes),
+    ByteArray(&'py PyByteArray),
+}
+
+impl From<BytesWrapper<'_>> for Vec<u8> {
+    fn from(wrapper: BytesWrapper) -> Self {
+        match wrapper {
+            BytesWrapper::Bytes(bytes) => bytes.as_bytes().to_vec(),
+            BytesWrapper::ByteArray(byte_array) => byte_array.to_vec(),
+        }
+    }
+}
+
+pub trait UnwrapBytesWrapper {
+    type ResultType;
+    fn unwrap_bytes(self) -> Self::ResultType;
+}
+
+impl UnwrapBytesWrapper for BytesWrapper<'_> {
+    type ResultType = Vec<u8>;
+    fn unwrap_bytes(self) -> Self::ResultType {
+        self.into()
+    }
+}
+
+impl<T> UnwrapBytesWrapper for Option<T>
+where
+    T: UnwrapBytesWrapper,
+{
+    type ResultType = Option<T::ResultType>;
+    fn unwrap_bytes(self) -> Self::ResultType {
+        self.map(|x| x.unwrap_bytes())
+    }
+}
+
+impl<T> UnwrapBytesWrapper for Vec<T>
+where
+    T: UnwrapBytesWrapper,
+{
+    type ResultType = Vec<T::ResultType>;
+    fn unwrap_bytes(self) -> Self::ResultType {
+        self.into_iter().map(|x| x.unwrap_bytes()).collect()
+    }
+}
+
+macro_rules! _unwrap_bytes {
+    ($name:ident) => {
+        let $name = $name.unwrap_bytes();
+    };
+    ($x:ident, $($y:ident),+) => {
+        crate::binding_utils::_unwrap_bytes!($x);
+        crate::binding_utils::_unwrap_bytes!($($y),+);
+
+    }
+}
+
+macro_rules! unwrap_bytes {
+    ($($name:ident),+) => {
+        use crate::binding_utils::UnwrapBytesWrapper;
+        crate::binding_utils::_unwrap_bytes!($($name),+);
+
+    }
+}
 
 pub fn comp_eq<T: std::cmp::PartialEq>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
     Ok(match op {
@@ -233,9 +299,11 @@ macro_rules! impl_enum_field {
     };
 }
 
+pub(crate) use _unwrap_bytes;
 pub(crate) use create_exception;
 pub(crate) use gen_proto;
 pub(crate) use impl_enum_field;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
 pub(crate) use py_object;
+pub(crate) use unwrap_bytes;
