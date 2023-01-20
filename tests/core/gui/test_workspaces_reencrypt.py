@@ -89,7 +89,6 @@ async def reencryption_needed_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_display(
     aqtbot,
@@ -133,7 +132,6 @@ async def test_workspace_reencryption_display(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=5)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption(
     aqtbot: AsyncQtBot,
@@ -162,7 +160,6 @@ async def test_workspace_reencryption(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_offline_backend(
     aqtbot,
@@ -192,7 +189,6 @@ async def test_workspace_reencryption_offline_backend(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_fs_error(
     aqtbot,
@@ -224,7 +220,6 @@ async def test_workspace_reencryption_fs_error(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_access_error(
     aqtbot,
@@ -276,7 +271,6 @@ async def test_workspace_reencryption_access_error(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_not_found_error(
     aqtbot,
@@ -313,7 +307,6 @@ async def test_workspace_reencryption_not_found_error(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize(
     "error_type",
     [FSBackendOfflineError, FSError, FSWorkspaceNoAccess, FSWorkspaceNotFoundError, Exception],
