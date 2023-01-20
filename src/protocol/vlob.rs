@@ -17,6 +17,7 @@ use libparsec::protocol::{
 };
 
 use crate::{
+    binding_utils::BytesWrapper,
     ids::{DeviceID, RealmID, SequesterServiceID, VlobID},
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
@@ -35,7 +36,8 @@ crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __richcmp__, eq);
 #[pymethods]
 impl ReencryptionBatchEntry {
     #[new]
-    fn new(vlob_id: VlobID, version: u64, blob: Vec<u8>) -> PyResult<Self> {
+    fn new(vlob_id: VlobID, version: u64, blob: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(blob);
         let vlob_id = vlob_id.0;
         Ok(Self(libparsec::types::ReencryptionBatchEntry {
             vlob_id,
@@ -75,14 +77,15 @@ impl VlobCreateReq {
         encryption_revision: u64,
         vlob_id: VlobID,
         timestamp: DateTime,
-        blob: Vec<u8>,
-        sequester_blob: Option<HashMap<SequesterServiceID, Vec<u8>>>,
+        blob: BytesWrapper,
+        sequester_blob: Option<HashMap<SequesterServiceID, BytesWrapper>>,
     ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(blob);
         let realm_id = realm_id.0;
         let vlob_id = vlob_id.0;
         let timestamp = timestamp.0;
         let sequester_blob = libparsec::types::Maybe::Present(
-            sequester_blob.map(|x| x.into_iter().map(|(k, v)| (k.0, v)).collect()),
+            sequester_blob.map(|x| x.into_iter().map(|(k, v)| (k.0, v.into())).collect()),
         );
         Ok(Self(vlob_create::Req {
             realm_id,
@@ -265,11 +268,12 @@ impl VlobReadRepOk {
     #[new]
     fn new(
         version: u32,
-        blob: Vec<u8>,
+        blob: BytesWrapper,
         author: DeviceID,
         timestamp: DateTime,
         author_last_role_granted_on: DateTime,
     ) -> PyResult<(Self, VlobReadRep)> {
+        crate::binding_utils::unwrap_bytes!(blob);
         Ok((
             Self,
             VlobReadRep(vlob_read::Rep::Ok {
@@ -346,13 +350,14 @@ impl VlobUpdateReq {
         vlob_id: VlobID,
         timestamp: DateTime,
         version: u32,
-        blob: Vec<u8>,
-        sequester_blob: Option<HashMap<SequesterServiceID, Vec<u8>>>,
+        blob: BytesWrapper,
+        sequester_blob: Option<HashMap<SequesterServiceID, BytesWrapper>>,
     ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(blob);
         let vlob_id = vlob_id.0;
         let timestamp = timestamp.0;
         let sequester_blob = libparsec::types::Maybe::Present(
-            sequester_blob.map(|x| x.into_iter().map(|(k, v)| (k.0, v)).collect()),
+            sequester_blob.map(|x| x.into_iter().map(|(k, v)| (k.0, v.into())).collect()),
         );
         Ok(Self(vlob_update::Req {
             encryption_revision,

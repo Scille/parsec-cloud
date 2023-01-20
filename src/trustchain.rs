@@ -2,7 +2,7 @@
 
 use crate::{
     api_crypto::VerifyKey,
-    binding_utils::gen_proto,
+    binding_utils::{gen_proto, BytesWrapper},
     data::{DeviceCertificate, RevokedUserCertificate, UserCertificate},
     ids::{DeviceID, UserID},
     protocol::Trustchain,
@@ -66,11 +66,12 @@ impl TrustchainContext {
 
     fn load_trustchain<'py>(
         &mut self,
-        users: Vec<Vec<u8>>,
-        revoked_users: Vec<Vec<u8>>,
-        devices: Vec<Vec<u8>>,
+        users: Vec<BytesWrapper>,
+        revoked_users: Vec<BytesWrapper>,
+        devices: Vec<BytesWrapper>,
         py: Python<'py>,
     ) -> Result<(&'py PyTuple, &'py PyTuple, &'py PyTuple), TrustchainError> {
+        crate::binding_utils::unwrap_bytes!(users, revoked_users, devices);
         let (users, revoked_users, devices) =
             self.0.load_trustchain(&users, &revoked_users, &devices)?;
 
@@ -92,9 +93,9 @@ impl TrustchainContext {
     fn load_user_and_devices<'py>(
         &mut self,
         trustchain: Trustchain,
-        user_certif: Vec<u8>,
-        revoked_user_certif: Option<Vec<u8>>,
-        devices_certifs: Vec<Vec<u8>>,
+        user_certif: BytesWrapper,
+        revoked_user_certif: Option<BytesWrapper>,
+        devices_certifs: Vec<BytesWrapper>,
         expected_user_id: Option<UserID>,
         py: Python<'py>,
     ) -> Result<
@@ -105,6 +106,7 @@ impl TrustchainContext {
         ),
         TrustchainError,
     > {
+        crate::binding_utils::unwrap_bytes!(user_certif, revoked_user_certif, devices_certifs);
         let (user, revoked_user, devices) = self.0.load_user_and_devices(
             trustchain.0,
             user_certif,

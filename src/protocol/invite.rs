@@ -24,6 +24,7 @@ use libparsec::protocol::{
 use crate::{
     api_crypto,
     api_crypto::{HashDigest, PublicKey},
+    binding_utils::BytesWrapper,
     enumerate::{
         InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InvitationType,
     },
@@ -677,7 +678,8 @@ pub(crate) struct Invite2aClaimerSendHashedNonceRepOk;
 #[pymethods]
 impl Invite2aClaimerSendHashedNonceRepOk {
     #[new]
-    fn new(greeter_nonce: Vec<u8>) -> PyResult<(Self, Invite2aClaimerSendHashedNonceRep)> {
+    fn new(greeter_nonce: BytesWrapper) -> PyResult<(Self, Invite2aClaimerSendHashedNonceRep)> {
+        crate::binding_utils::unwrap_bytes!(greeter_nonce);
         Ok((
             Self,
             Invite2aClaimerSendHashedNonceRep(invite_2a_claimer_send_hashed_nonce::Rep::Ok {
@@ -775,7 +777,8 @@ crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __richcmp__, eq);
 #[pymethods]
 impl Invite2bClaimerSendNonceReq {
     #[new]
-    fn new(claimer_nonce: Vec<u8>) -> PyResult<Self> {
+    fn new(claimer_nonce: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(claimer_nonce);
         Ok(Self(invite_2b_claimer_send_nonce::Req { claimer_nonce }))
     }
 
@@ -829,7 +832,8 @@ crate::binding_utils::gen_proto!(Invite2bGreeterSendNonceReq, __richcmp__, eq);
 #[pymethods]
 impl Invite2bGreeterSendNonceReq {
     #[new]
-    fn new(token: InvitationToken, greeter_nonce: Vec<u8>) -> PyResult<Self> {
+    fn new(token: InvitationToken, greeter_nonce: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(greeter_nonce);
         let token = token.0;
         Ok(Self(invite_2b_greeter_send_nonce::Req {
             token,
@@ -874,7 +878,8 @@ pub(crate) struct Invite2bGreeterSendNonceRepOk;
 #[pymethods]
 impl Invite2bGreeterSendNonceRepOk {
     #[new]
-    fn new(claimer_nonce: Vec<u8>) -> PyResult<(Self, Invite2bGreeterSendNonceRep)> {
+    fn new(claimer_nonce: BytesWrapper) -> PyResult<(Self, Invite2bGreeterSendNonceRep)> {
+        crate::binding_utils::unwrap_bytes!(claimer_nonce);
         Ok((
             Self,
             Invite2bGreeterSendNonceRep(invite_2b_greeter_send_nonce::Rep::Ok { claimer_nonce }),
@@ -1110,7 +1115,8 @@ crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __richcmp__, eq);
 #[pymethods]
 impl Invite4ClaimerCommunicateReq {
     #[new]
-    fn new(payload: Vec<u8>) -> PyResult<Self> {
+    fn new(payload: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(payload);
         Ok(Self(invite_4_claimer_communicate::Req { payload }))
     }
 
@@ -1146,7 +1152,8 @@ pub(crate) struct Invite4ClaimerCommunicateRepOk;
 #[pymethods]
 impl Invite4ClaimerCommunicateRepOk {
     #[new]
-    fn new(payload: Vec<u8>) -> PyResult<(Self, Invite4ClaimerCommunicateRep)> {
+    fn new(payload: BytesWrapper) -> PyResult<(Self, Invite4ClaimerCommunicateRep)> {
+        crate::binding_utils::unwrap_bytes!(payload);
         Ok((
             Self,
             Invite4ClaimerCommunicateRep(invite_4_claimer_communicate::Rep::Ok { payload }),
@@ -1174,7 +1181,8 @@ crate::binding_utils::gen_proto!(Invite4GreeterCommunicateReq, __richcmp__, eq);
 #[pymethods]
 impl Invite4GreeterCommunicateReq {
     #[new]
-    fn new(token: InvitationToken, payload: Vec<u8>) -> PyResult<Self> {
+    fn new(token: InvitationToken, payload: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(payload);
         let token = token.0;
         Ok(Self(invite_4_greeter_communicate::Req { token, payload }))
     }
@@ -1216,7 +1224,8 @@ pub(crate) struct Invite4GreeterCommunicateRepOk;
 #[pymethods]
 impl Invite4GreeterCommunicateRepOk {
     #[new]
-    fn new(payload: Vec<u8>) -> PyResult<(Self, Invite4GreeterCommunicateRep)> {
+    fn new(payload: BytesWrapper) -> PyResult<(Self, Invite4GreeterCommunicateRep)> {
+        crate::binding_utils::unwrap_bytes!(payload);
         Ok((
             Self,
             Invite4GreeterCommunicateRep(invite_4_greeter_communicate::Rep::Ok { payload }),

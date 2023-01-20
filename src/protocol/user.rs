@@ -14,6 +14,7 @@ use libparsec::protocol::{
 };
 
 use crate::{
+    binding_utils::BytesWrapper,
     ids::{HumanHandle, UserID},
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
@@ -34,10 +35,11 @@ crate::binding_utils::gen_proto!(Trustchain, __richcmp__, eq);
 impl Trustchain {
     #[new]
     fn new(
-        devices: Vec<Vec<u8>>,
-        users: Vec<Vec<u8>>,
-        revoked_users: Vec<Vec<u8>>,
+        devices: Vec<BytesWrapper>,
+        users: Vec<BytesWrapper>,
+        revoked_users: Vec<BytesWrapper>,
     ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(devices, users, revoked_users);
         Ok(Self(user_get::Trustchain {
             devices,
             users,
@@ -147,11 +149,16 @@ pub(crate) struct UserGetRepOk;
 impl UserGetRepOk {
     #[new]
     fn new(
-        user_certificate: Vec<u8>,
-        revoked_user_certificate: Option<Vec<u8>>,
-        device_certificates: Vec<Vec<u8>>,
+        user_certificate: BytesWrapper,
+        revoked_user_certificate: Option<BytesWrapper>,
+        device_certificates: Vec<BytesWrapper>,
         trustchain: Trustchain,
     ) -> PyResult<(Self, UserGetRep)> {
+        crate::binding_utils::unwrap_bytes!(
+            user_certificate,
+            revoked_user_certificate,
+            device_certificates
+        );
         Ok((
             Self,
             UserGetRep(user_get::Rep::Ok {
@@ -223,11 +230,17 @@ crate::binding_utils::gen_proto!(UserCreateReq, __richcmp__, eq);
 impl UserCreateReq {
     #[new]
     fn new(
-        user_certificate: Vec<u8>,
-        device_certificate: Vec<u8>,
-        redacted_user_certificate: Vec<u8>,
-        redacted_device_certificate: Vec<u8>,
+        user_certificate: BytesWrapper,
+        device_certificate: BytesWrapper,
+        redacted_user_certificate: BytesWrapper,
+        redacted_device_certificate: BytesWrapper,
     ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(
+            user_certificate,
+            device_certificate,
+            redacted_user_certificate,
+            redacted_device_certificate
+        );
         Ok(Self(user_create::Req {
             user_certificate,
             device_certificate,
@@ -299,7 +312,8 @@ crate::binding_utils::gen_proto!(UserRevokeReq, __richcmp__, eq);
 #[pymethods]
 impl UserRevokeReq {
     #[new]
-    fn new(revoked_user_certificate: Vec<u8>) -> PyResult<Self> {
+    fn new(revoked_user_certificate: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(revoked_user_certificate);
         Ok(Self(user_revoke::Req {
             revoked_user_certificate,
         }))
@@ -352,7 +366,11 @@ crate::binding_utils::gen_proto!(DeviceCreateReq, __richcmp__, eq);
 #[pymethods]
 impl DeviceCreateReq {
     #[new]
-    fn new(device_certificate: Vec<u8>, redacted_device_certificate: Vec<u8>) -> PyResult<Self> {
+    fn new(
+        device_certificate: BytesWrapper,
+        redacted_device_certificate: BytesWrapper,
+    ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(device_certificate, redacted_device_certificate);
         Ok(Self(device_create::Req {
             device_certificate,
             redacted_device_certificate,
