@@ -124,6 +124,13 @@ jobs:
         env:
           POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
 
+      - name: Additional Check
+        run: |
+          set -ex
+          rustup target add wasm32-unknown-unknown
+          cargo check --no-default-features --features use-sodiumoxide
+          cargo check --target wasm32-unknown-unknown
+
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
       - uses: ./.github/actions/use-pre-commit
@@ -408,7 +415,6 @@ jobs:
         id: web-change
         if: >-
           steps.changes.outputs.client-web == 'true'
-          || steps.changes.outputs.client-common == 'true'
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
