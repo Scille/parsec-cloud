@@ -12,7 +12,7 @@ from typing import Iterable, Optional, Tuple, Union
 import attr
 import pytest
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import DateTime, DeviceFile, DeviceFileType, EnrollmentID
 from parsec.api.data import (
     DataError,
     DeviceCertificate,
@@ -40,7 +40,6 @@ from parsec.backend.user import Device as BackendDevice
 from parsec.backend.user import User as BackendUser
 from parsec.core.fs.storage import UserStorage
 from parsec.core.local_device import (
-    DeviceFileType,
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
     LocalDevicePackingError,
@@ -911,19 +910,23 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             certificate_id: Optional[str] = None,
             certificate_sha1: Optional[bytes] = None,
         ) -> None:
-            def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict]:
-                extra_args = {
-                    "encrypted_key": b"123",
-                    "certificate_id": certificate_id,
-                    "certificate_sha1": certificate_sha1,
-                }
-                return DeviceFileType.SMARTCARD, cleartext, extra_args
+            def _encrypt_dump(
+                cleartext: bytes,
+            ) -> Tuple[DeviceFileType, bytes, bytes | None, bytes | None, str | None, bytes | None]:
+                return (
+                    DeviceFileType.SMARTCARD,
+                    cleartext,
+                    None,
+                    b"123",
+                    certificate_id,
+                    certificate_sha1,
+                )
 
             _save_device(key_file, device, force, _encrypt_dump)
 
         def load_device_with_smartcard(self, key_file: Path) -> LocalDevice:
-            def _decrypt_ciphertext(data: dict) -> bytes:
-                return data["ciphertext"]
+            def _decrypt_ciphertext(data: DeviceFile) -> bytes:
+                return data.ciphertext
 
             return _load_device(key_file, _decrypt_ciphertext)
 
