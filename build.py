@@ -64,11 +64,11 @@ def build():
     # native module and discard the rest !
 
     maturin_build_profile = "--profile=" + os.environ.get("CARGO_PROFILE", DEFAULT_CARGO_PROFILE)
-    maturin_build_features = os.environ.get("CARGO_EXTRA_ARGS", "")
+    maturin_build_extra_args = os.environ.get("CARGO_EXTRA_ARGS", "")
 
     with tempfile.TemporaryDirectory() as distdir:
         run(
-            f"maturin build {maturin_build_profile} {maturin_build_features} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
+            f"maturin build {maturin_build_profile} {maturin_build_extra_args} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
         )
 
         outputs = list(pathlib.Path(distdir).iterdir())

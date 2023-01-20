@@ -375,7 +375,7 @@ jobs:
 
       - name: Additional Check (for packaging)
         if: startsWith(matrix.os, 'ubuntu')
-        run: cargo check --no-default-features --features use-sodiumoxide
+        run: cargo check --profile ci-rust --no-default-features --features use-sodiumoxide
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
