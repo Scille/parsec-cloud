@@ -373,13 +373,9 @@ jobs:
         shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
 
-      - name: Additional Check
+      - name: Additional Check (for packaging)
         if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          set -ex
-          rustup target add wasm32-unknown-unknown
-          cargo check --no-default-features --features use-sodiumoxide
-          cargo check --target wasm32-unknown-unknown
+        run: cargo check --no-default-features --features use-sodiumoxide
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'

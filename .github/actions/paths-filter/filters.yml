@@ -9,6 +9,9 @@ rust:
   - Cargo.lock
   - rust-toolchain.toml
 
+rust-platform-web: &rust-platform-web
+  - oxidation/libparsec/crates/platform_*/src/web/**
+
 python:
   - *shared
   - parsec/**
@@ -33,11 +36,12 @@ client-common: &client-common
   - oxidation/client/capacitor.config.ts
   - oxidation/client/babel.config.js
   - oxidation/client/tsconfig.json
-  - oxidation/bindings/common/**
+  - oxidation/bindings/generator/**
 
 client-web:
   - *shared
   - *client-common
+  - *rust-platform-web
   - oxidation/bindings/web/**
   - oxidation/client/tests/**
   - oxidation/client/jest.config.js
