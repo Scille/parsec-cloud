@@ -19,8 +19,7 @@ pub async fn list_available_devices(_config_dir: &Path) -> Vec<AvailableDevice> 
                         device.device_id,
                         device.human_handle,
                         device.device_label,
-                        // There are no legacy device
-                        device.slug.unwrap(),
+                        device.slug,
                     ),
                     DeviceFile::Recovery(device) => (
                         DeviceFileType::Recovery,
