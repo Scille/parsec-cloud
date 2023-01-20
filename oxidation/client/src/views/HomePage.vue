@@ -11,7 +11,10 @@
           <img src="../assets/images/Logo/logo_blue.png">
         </div>
         <transition-group :name="showOrganizationList ? 'slide-left' : 'slide-right'">
-          <ion-card v-if="showOrganizationList">
+          <ion-card
+            v-if="showOrganizationList"
+            id="organization-list-container"
+          >
             <ion-card-content class="organization-list">
               <ion-card-title color="tertiary">
                 {{ $t('HomePage.organizationList.title') }}
@@ -75,12 +78,16 @@
               </ion-button>
             </ion-card-content>
           </ion-card>
-          <ion-card v-if="!showOrganizationList">
+          <ion-card
+            v-if="!showOrganizationList"
+            id="login-popup-container"
+          >
             <ion-card-content class="organization-list">
               <ion-card-title color="tertiary">
                 <ion-button
                   fill="clear"
                   @click="showOrganizationList = !showOrganizationList"
+                  id="back-to-list-button"
                 >
                   <ion-icon
                     slot="start"
@@ -102,6 +109,7 @@
                       <ion-button
                         fill="clear"
                         @click="onForgottenPasswordClick"
+                        id="forgotten-password-button"
                       >
                         {{ $t('HomePage.organizationLogin.forgottenPassword') }}
                       </ion-button>
@@ -113,6 +121,7 @@
                     @click="login"
                     size="large"
                     :disabled="password.length == 0"
+                    id="login-button"
                   >
                     <ion-icon
                       slot="start"
