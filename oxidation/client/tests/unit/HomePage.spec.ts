@@ -73,7 +73,6 @@ describe('HomePage.vue', () => {
     expect(wrapper.text()).toMatch(new RegExp('^List of your organizations'));
   });
 
-  // Organization list unit tests
   describe('Organization List tests', () => {
     let modalControllerCreateSpy:jest.SpyInstance;
 
@@ -122,7 +121,6 @@ describe('HomePage.vue', () => {
     });
   });
 
-  // Login popup unit tests
   describe('Login Popup tests', () => {
     let passwordInput: VueWrapper;
     let consoleLogSpyOn: jest.SpyInstance;
