@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use chrono::{Datelike, TimeZone, Timelike};
+use chrono::{Datelike, LocalResult, TimeZone, Timelike};
 use core::ops::Sub;
 
 pub use chrono::Duration; // Reexported
@@ -45,12 +45,11 @@ impl DateTime {
         minute: u32,
         second: u32,
         microsecond: u32,
-    ) -> Self {
-        Self(
-            chrono::Utc
-                .ymd(year, month, day)
-                .and_hms_micro(hour, minute, second, microsecond),
-        )
+    ) -> LocalResult<Self> {
+        chrono::Utc
+            .with_ymd_and_hms(year, month, day, hour, minute, second)
+            .map(|x| x + Duration::microseconds(microsecond as i64))
+            .map(Self)
     }
 
     // Don't implement this as `From<f64>` to prevent misunderstanding on precision
@@ -503,12 +502,11 @@ impl LocalDateTime {
         minute: u32,
         second: u32,
         microsecond: u32,
-    ) -> Self {
-        Self(
-            chrono::Local
-                .ymd(year, month, day)
-                .and_hms_micro(hour, minute, second, microsecond),
-        )
+    ) -> LocalResult<Self> {
+        chrono::Local
+            .with_ymd_and_hms(year, month, day, hour, minute, second)
+            .map(|x| x + Duration::microseconds(microsecond as i64))
+            .map(Self)
     }
 
     // Don't implement this as `From<f64>` to keep it private
@@ -665,7 +663,7 @@ mod tests {
         let dt = DateTime::from_rfc3339(raw);
         assert_eq!(
             dt,
-            Ok(DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, micro))
+            Ok(DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, micro).unwrap())
         );
 
         let dt = dt.unwrap();

@@ -11,8 +11,8 @@ import tempfile
 import psutil
 import pytest
 
+from parsec._parsec import list_available_devices
 from parsec.core.config import config_factory
-from parsec.core.local_device import list_available_devices
 
 
 def kill_local_backend(backend_port=6888):

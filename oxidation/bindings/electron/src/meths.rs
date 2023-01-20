@@ -150,6 +150,61 @@ fn variant_devicefiletype_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// LoggedCoreError
+
+#[allow(dead_code)]
+fn variant_loggedcoreerror_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::LoggedCoreError> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Disconnected" => Ok(libparsec::LoggedCoreError::Disconnected {}),
+        "InvalidHandle" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                (js_val.value(cx) as i32).into()
+            };
+            Ok(libparsec::LoggedCoreError::InvalidHandle { handle })
+        }
+        "LoginFailed" => {
+            let help = {
+                let js_val: Handle<JsString> = obj.get(cx, "help")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::LoggedCoreError::LoginFailed { help })
+        }
+        _ => cx.throw_type_error("Object is not a LoggedCoreError"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_loggedcoreerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::LoggedCoreError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::LoggedCoreError::Disconnected {} => {
+            let js_tag = JsString::try_new(cx, "Disconnected").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::LoggedCoreError::InvalidHandle { handle } => {
+            let js_tag = JsString::try_new(cx, "InvalidHandle").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, i32::from(handle) as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+        }
+        libparsec::LoggedCoreError::LoginFailed { help } => {
+            let js_tag = JsString::try_new(cx, "LoginFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_help = JsString::try_new(cx, help).or_throw(cx)?;
+            js_obj.set(cx, "help", js_help)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // list_available_devices
 fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
@@ -159,21 +214,171 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
             Err(err) => return cx.throw_type_error(err),
         }
     };
-    let ret = libparsec::list_available_devices(path);
-    let js_ret = {
-        let js_array = JsArray::new(&mut cx, ret.len() as u32);
-        for (i, elem) in ret.into_iter().enumerate() {
-            let js_elem = struct_availabledevice_rs_to_js(&mut cx, elem)?;
-            js_array.set(&mut cx, i as u32, js_elem)?;
-        }
-        js_array
-    };
+    let channel = cx.channel();
     let (deferred, promise) = cx.promise();
-    deferred.resolve(&mut cx, js_ret);
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::list_available_devices(path).await;
+
+            channel.send(move |mut cx| {
+                let js_ret = {
+                    // JsArray::new allocates with `undefined` value, that's why we `set` value
+                    let js_array = JsArray::new(&mut cx, ret.len() as u32);
+                    for (i, elem) in ret.into_iter().enumerate() {
+                        let js_elem = struct_availabledevice_rs_to_js(&mut cx, elem)?;
+                        js_array.set(&mut cx, i as u32, js_elem)?;
+                    }
+                    js_array
+                };
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
+    Ok(promise)
+}
+
+// login
+fn login(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let key = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let password = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::login(&key, &password).await;
+
+            channel.send(move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, i32::from(ok) as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_loggedcoreerror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
+    Ok(promise)
+}
+
+// logged_core_get_device_id
+fn logged_core_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        (js_val.value(&mut cx) as i32).into()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::logged_core_get_device_id(handle).await;
+
+            channel.send(move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsString::try_new(&mut cx, ok).or_throw(&mut cx)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_loggedcoreerror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
+    Ok(promise)
+}
+
+// logged_core_get_device_display
+fn logged_core_get_device_display(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        (js_val.value(&mut cx) as i32).into()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::logged_core_get_device_display(handle).await;
+
+            channel.send(move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsString::try_new(&mut cx, ok).or_throw(&mut cx)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_loggedcoreerror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
     Ok(promise)
 }
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("listAvailableDevices", list_available_devices)?;
+    cx.export_function("login", login)?;
+    cx.export_function("loggedCoreGetDeviceId", logged_core_get_device_id)?;
+    cx.export_function("loggedCoreGetDeviceDisplay", logged_core_get_device_display)?;
     Ok(())
 }

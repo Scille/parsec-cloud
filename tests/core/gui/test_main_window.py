@@ -8,6 +8,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from parsec._parsec import (
     DateTime,
+    DeviceFileType,
     InvitationType,
     save_device_with_password,
     save_device_with_password_in_config,
@@ -19,7 +20,7 @@ from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.gui.workspace_roles import get_role_translation as _
-from parsec.core.local_device import AvailableDevice, DeviceFileType
+from parsec.core.local_device import AvailableDevice
 from parsec.core.types import (
     BackendInvitationAddr,
     BackendOrganizationAddr,

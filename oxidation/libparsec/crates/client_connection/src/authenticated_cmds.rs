@@ -38,7 +38,7 @@ use libparsec_protocol::{
         self as authenticated_cmds, invite_delete::InvitationDeletedReason,
         invite_new::UserOrDevice,
     },
-    IntegerBetween1And100,
+    IntegerBetween1And100, Request,
 };
 use libparsec_types::{
     BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, Maybe, RealmID,

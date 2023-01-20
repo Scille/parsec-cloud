@@ -1,23 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from PyQt5.QtWidgets import QApplication, QWidget
 from structlog import get_logger
 
-from parsec._parsec import LocalDevice, save_device_with_password_in_config
+from parsec._parsec import (
+    DeviceFileType,
+    LocalDevice,
+    LocalDeviceExc,
+    get_available_device,
+    save_device_with_password_in_config,
+)
 from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_error, show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.ui.authentication_change_widget import Ui_AuthenticationChangeWidget
 from parsec.core.local_device import (
-    DeviceFileType,
     LocalDeviceCryptoError,
     LocalDeviceError,
     LocalDeviceNotFoundError,
-    get_available_device,
-    load_device_with_password,
     load_device_with_smartcard,
     save_device_with_smartcard_in_config,
 )
@@ -84,7 +88,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
         parent: QWidget,
         on_finished: None = None,
     ) -> AuthenticationChangeWidget | None:
-        available_device = get_available_device(core.config.config_dir, core.device)
+        available_device = get_available_device(core.config.config_dir, core.device.slug)
         loaded_device = None
 
         try:
@@ -102,10 +106,14 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 )
                 if not password:
                     return None
-                loaded_device = load_device_with_password(available_device.key_file_path, password)
+                loaded_device = LocalDevice.load_device_with_password(
+                    available_device.key_file_path, password
+                )
             else:
-                loaded_device = await load_device_with_smartcard(available_device.key_file_path)
-        except LocalDeviceError:
+                loaded_device = await load_device_with_smartcard(
+                    Path(available_device.key_file_path)
+                )
+        except LocalDeviceExc:
             show_error(parent, _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
             return None
 

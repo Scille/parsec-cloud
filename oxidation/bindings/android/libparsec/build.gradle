@@ -44,7 +44,7 @@ apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 cargo {
     module = "./rust"
     targets = ["arm", "x86", "x86_64", "arm64"]
-    libname = "libparsec_bindings_jni"
+    libname = "libparsec_bindings_android"
     targetDirectory = "../../../../target/"
 }
 

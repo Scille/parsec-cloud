@@ -10,6 +10,7 @@ from structlog import get_logger
 from parsec._parsec import (
     BackendAddr,
     BackendOrganizationBootstrapAddr,
+    DeviceFileType,
     DeviceLabel,
     HumanHandle,
     LocalDevice,
@@ -33,7 +34,6 @@ from parsec.core.gui.ui.create_org_user_info_widget import Ui_CreateOrgUserInfoW
 from parsec.core.gui.ui.create_org_widget import Ui_CreateOrgWidget
 from parsec.core.invite import InviteAlreadyUsedError, InviteNotFoundError, bootstrap_organization
 from parsec.core.local_device import (
-    DeviceFileType,
     LocalDeviceCryptoError,
     LocalDeviceError,
     LocalDeviceNotFoundError,

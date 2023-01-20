@@ -7,6 +7,12 @@ from typing import Sequence
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+from parsec._parsec import (
+    AvailableDevice,
+    DeviceFileType,
+    get_available_device,
+    save_recovery_device,
+)
 from parsec.core import CoreConfig
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.gui.custom_dialogs import (
@@ -27,14 +33,9 @@ from parsec.core.gui.ui.device_recovery_export_page2_widget import (
 from parsec.core.gui.ui.device_recovery_export_widget import Ui_DeviceRecoveryExportWidget
 from parsec.core.local_device import (
     RECOVERY_DEVICE_FILE_SUFFIX,
-    AvailableDevice,
-    DeviceFileType,
     LocalDeviceError,
-    get_available_device,
     get_recovery_device_file_name,
-    load_device_with_password,
     load_device_with_smartcard,
-    save_recovery_device,
 )
 from parsec.core.recovery import generate_recovery_device
 from parsec.core.types import LocalDevice
@@ -164,7 +165,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
     ) -> tuple[LocalDevice, PurePath, str]:
         try:
             recovery_device = await generate_recovery_device(device)
-            passphrase = await save_recovery_device(export_path, recovery_device, force=True)
+            passphrase = await save_recovery_device(Path(export_path), recovery_device, force=True)
             return recovery_device, export_path, passphrase
         except BackendNotAvailable as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_OFFLINE"), exception=exc)
@@ -202,7 +203,9 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     self.button_validate.setEnabled(True)
                     return
                 try:
-                    device = load_device_with_password(selected_device.key_file_path, password)
+                    device = LocalDevice.load_device_with_password(
+                        selected_device.key_file_path, password
+                    )
                 except LocalDeviceError:
                     show_error(self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
                     self.button_validate.setEnabled(True)

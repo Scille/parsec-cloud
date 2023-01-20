@@ -3,13 +3,10 @@
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use sha2::Digest;
-use std::path::{Path, PathBuf};
 
 use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
 use libparsec_types::*;
-
-use crate::{DeviceFile, DeviceFileType, LocalDeviceError};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
@@ -28,47 +25,27 @@ pub struct LocalDevice {
 }
 
 impl LocalDevice {
-    pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
-        let mut default_key_path = Self::get_devices_dir(config_dir);
-        default_key_path.push(format!(
-            "{}.{}",
-            device.slughash(),
-            crate::DEVICE_FILE_SUFFIX
-        ));
-        default_key_path
-    }
-
-    pub fn get_devices_dir(config_dir: &Path) -> PathBuf {
-        let mut device_path = config_dir.to_path_buf();
-        device_path.push("devices");
-
-        device_path
-    }
-
-    pub fn load_device_with_password(
-        key_file: &Path,
-        password: &str,
-    ) -> Result<Self, LocalDeviceError> {
-        let ciphertext = std::fs::read(key_file)
-            .map_err(|_| LocalDeviceError::Access(key_file.to_path_buf()))?;
-        let device_file: DeviceFile = match rmp_serde::from_slice(&ciphertext) {
-            Ok(result) => result,
-            Err(_) => todo!("Handle legacy device"),
-        };
-
-        match device_file {
-            DeviceFile::Password(p) => {
-                let key = SecretKey::from_password(password, &p.salt);
-                let data = key
-                    .decrypt(&p.ciphertext)
-                    .map_err(LocalDeviceError::CryptoError)?;
-
-                LocalDevice::load(&data)
-                    .map_err(|_| LocalDeviceError::Validation(DeviceFileType::Password))
-            }
-            _ => unreachable!(
-                "Tried to load recovery/smartcard device with `load_device_with_password`"
-            ),
+    pub fn generate_new_device(
+        organization_addr: BackendOrganizationAddr,
+        device_id: Option<DeviceID>,
+        profile: UserProfile,
+        human_handle: Option<HumanHandle>,
+        device_label: Option<DeviceLabel>,
+        signing_key: Option<SigningKey>,
+        private_key: Option<PrivateKey>,
+    ) -> Self {
+        Self {
+            organization_addr,
+            device_id: device_id.unwrap_or_default(),
+            device_label,
+            human_handle,
+            signing_key: signing_key.unwrap_or_else(SigningKey::generate),
+            private_key: private_key.unwrap_or_else(PrivateKey::generate),
+            profile,
+            user_manifest_id: EntryID::default(),
+            user_manifest_key: SecretKey::generate(),
+            local_symkey: SecretKey::generate(),
+            time_provider: TimeProvider::default(),
         }
     }
 

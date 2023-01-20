@@ -12,7 +12,7 @@ from async_exit_stack import AsyncExitStack
 from PyQt5 import QtCore, QtTest
 
 from parsec import __version__ as parsec_version
-from parsec._parsec import LocalDevice, save_device_with_password_in_config
+from parsec._parsec import DeviceFileType, LocalDevice, save_device_with_password_in_config
 from parsec.api.data import EntryName
 from parsec.core.config import CoreConfig
 from parsec.core.gui.central_widget import CentralWidget
@@ -29,7 +29,7 @@ from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.workspaces_widget import WorkspaceButton, WorkspacesWidget
-from parsec.core.local_device import DeviceFileType, LocalDeviceAlreadyExistsError
+from parsec.core.local_device import LocalDeviceAlreadyExistsError
 from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
 

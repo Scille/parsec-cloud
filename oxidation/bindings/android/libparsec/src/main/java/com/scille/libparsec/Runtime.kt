@@ -7,7 +7,7 @@ interface IJobCallback {
 
 class Runtime {
     init {
-        System.loadLibrary("libparsec_bindings_jni")
+        System.loadLibrary("libparsec_bindings_android")
         startRuntime()
     }
 

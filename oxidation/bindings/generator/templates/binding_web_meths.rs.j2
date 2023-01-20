@@ -17,8 +17,8 @@ Vec<{{ function_param_type(type.elem) }}>
 Option<{{ function_param_type(type.elem) }}>
 {%- elif type.kind == "bool" -%}
 bool
-{%- elif type.kind == "int" -%}
-i64
+{%- elif type.kind in ("int", "int_based") -%}
+i32
 {%- elif type.kind == "float" -%}
 f64
 {%- elif type.kind in ("str", "str_based") -%}
@@ -48,6 +48,8 @@ let {{ param_name }} = match {{ param_name }} {
     }
     None => None,
 };
+{% elif type.kind == "int_based" %}
+let {{ param_name }} = {{ param_name }}.into();
 {% elif type.kind == "str_based" %}
 let {{ param_name }} = {{ param_name }}.parse().map_err(|_| {
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
@@ -91,9 +93,11 @@ if {{ js_val }}.is_null() {
     Some({{ render_js_value_to_rs("js_val", type.elem) }})
 }
 {%- elif type.kind == "bool" -%}
-{{ js_val }}.dyn_into::<Boolean>().or(Err(TypeError::new("Not a boolean")))?.value_of()
+{{ js_val }}.dyn_into::<Boolean>().map_err(|_| TypeError::new("Not a boolean"))?.value_of()
 {%- elif type.kind == "int" -%}
-{{ js_val }}.dyn_into::<Number>().or(Err(TypeError::new("Not a number")))?.value_of() as i64
+{{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of() as i32
+{%- elif type.kind == "int_based" -%}
+({{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of() as i32).into()
 {%- elif type.kind == "float" -%}
 {{ js_val }}.dyn_into::<Number>()?.value_of()
 {%- elif type.kind == "str" -%}
@@ -101,7 +105,7 @@ js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| Typ
 {%- elif type.kind == "str_based" -%}
 js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?.parse().map_err(|_| TypeError::new("Not a valid {{ type.name }}"))?
 {%- elif type.kind == "bytes" -%}
-{{ js_val }}.dyn_into::<Uint8Array>().or(Err(TypeError::new("Not a Uint8Array")))?.to_vec()
+{{ js_val }}.dyn_into::<Uint8Array>().map_err(|_| TypeError::new("Not a Uint8Array"))?.to_vec()
 {%- elif type.kind == "struct" -%}
 {{ struct_js_to_rs_function_name(type) }}({{ js_val }})?
 {%- elif type.kind == "variant" -%}
@@ -131,16 +135,19 @@ match {{ rs_value }} {
     Some(val) => {{ render_rs_to_js_value("val", type.elem) }},
     None => JsValue::NULL,
 }
+{%- elif type.kind == "int_based" -%}
+JsValue::from(i32::from({{ rs_value }}))
 {%- elif type.kind == "str_based" -%}
 JsValue::from_str({{ rs_value }}.as_ref())
 {%- elif type.kind == "bytes" -%}
 JsValue::from(Uint8Array::from({{ rs_value }}.as_ref()))
 {%- elif type.kind == "list" -%}
 {
+    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
     let js_array = Array::new_with_length({{ rs_value }}.len() as u32);
-    for elem in {{ rs_value }} {
+    for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
         let js_elem = {{ render_rs_to_js_value("elem", type.elem) | indent(8) }};
-        js_array.push(&js_elem);
+        js_array.set(i as u32, js_elem);
     }
     js_array.into()
 }

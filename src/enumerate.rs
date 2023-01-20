@@ -1,12 +1,14 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{PyTuple, PyType},
+    types::{PyBytes, PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
 
 use libparsec::client_types;
 use libparsec::protocol::authenticated_cmds::v2::{invite_delete, invite_new};
+
+use crate::protocol::{ProtocolErrorFields, ProtocolResult};
 
 #[pyclass]
 #[derive(Clone)]
@@ -328,7 +330,8 @@ crate::binding_utils::gen_proto!(CoreEvent, __repr__);
 crate::binding_utils::gen_proto!(CoreEvent, __richcmp__, eq);
 
 #[pyclass]
-pub(crate) struct DeviceFileType(client_types::DeviceFileType);
+#[derive(Clone)]
+pub(crate) struct DeviceFileType(pub client_types::DeviceFileType);
 
 crate::binding_utils::impl_enum_field!(
     DeviceFileType,
@@ -340,6 +343,27 @@ crate::binding_utils::impl_enum_field!(
     ],
     ["RECOVERY", recovery, client_types::DeviceFileType::Recovery]
 );
+
+#[pymethods]
+impl DeviceFileType {
+    pub fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
+        ))
+    }
+
+    #[classmethod]
+    pub fn load(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+        Ok(Self(client_types::DeviceFileType::load(bytes).map_err(
+            |_| PyValueError::new_err("Failed to deserialize"),
+        )?))
+    }
+}
 
 crate::binding_utils::gen_proto!(DeviceFileType, __hash__);
 crate::binding_utils::gen_proto!(DeviceFileType, __repr__);

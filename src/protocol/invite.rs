@@ -6,15 +6,19 @@ use pyo3::{
     types::{PyBytes, PyType},
 };
 
-use libparsec::protocol::authenticated_cmds::v2::{
-    invite_1_greeter_wait_peer, invite_2a_greeter_get_hashed_nonce, invite_2b_greeter_send_nonce,
-    invite_3a_greeter_wait_peer_trust, invite_3b_greeter_signify_trust,
-    invite_4_greeter_communicate, invite_delete, invite_list, invite_new,
-};
-use libparsec::protocol::invited_cmds::v2::{
-    invite_1_claimer_wait_peer, invite_2a_claimer_send_hashed_nonce, invite_2b_claimer_send_nonce,
-    invite_3a_claimer_signify_trust, invite_3b_claimer_wait_peer_trust,
-    invite_4_claimer_communicate, invite_info,
+use libparsec::protocol::{
+    authenticated_cmds::v2::{
+        invite_1_greeter_wait_peer, invite_2a_greeter_get_hashed_nonce,
+        invite_2b_greeter_send_nonce, invite_3a_greeter_wait_peer_trust,
+        invite_3b_greeter_signify_trust, invite_4_greeter_communicate, invite_delete, invite_list,
+        invite_new,
+    },
+    invited_cmds::v2::{
+        invite_1_claimer_wait_peer, invite_2a_claimer_send_hashed_nonce,
+        invite_2b_claimer_send_nonce, invite_3a_claimer_signify_trust,
+        invite_3b_claimer_wait_peer_trust, invite_4_claimer_communicate, invite_info,
+    },
+    Request,
 };
 
 use crate::{

@@ -28,6 +28,15 @@ class StrBasedType:
     pass
 
 
+# A type that should be converted from/into int
+class IntBasedType:
+    pass
+
+
+class LoggedCoreHandle(IntBasedType):
+    pass
+
+
 class OrganizationID(StrBasedType):
     pass
 
@@ -69,5 +78,32 @@ class AvailableDevice(Structure):
     ty: DeviceFileType
 
 
-def list_available_devices(path: StrPath) -> List[AvailableDevice]:
+async def list_available_devices(path: StrPath) -> List[AvailableDevice]:
+    ...
+
+
+class LoggedCoreError(Variant):
+    class Disconnected:
+        pass
+
+    class InvalidHandle:
+        handle: LoggedCoreHandle
+
+    class LoginFailed:
+        help: str
+
+
+async def login(key: Ref[str], password: Ref[str]) -> Result[LoggedCoreHandle, LoggedCoreError]:
+    ...
+
+
+async def logged_core_get_device_id(
+    handle: LoggedCoreHandle,
+) -> Result[DeviceID, LoggedCoreError]:
+    ...
+
+
+async def logged_core_get_device_display(
+    handle: LoggedCoreHandle,
+) -> Result[str, LoggedCoreError]:
     ...

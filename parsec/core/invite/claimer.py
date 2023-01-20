@@ -81,7 +81,6 @@ from parsec.core.invite.exceptions import (
     InviteNotFoundError,
     InvitePeerResetError,
 )
-from parsec.core.local_device import generate_new_device
 from parsec.core.types import BackendOrganizationAddr, LocalDevice
 from parsec.crypto import HashDigest, PrivateKey, SecretKey, SigningKey
 
@@ -368,7 +367,7 @@ class UserClaimInProgress3Ctx:
             root_verify_key=confirmation.root_verify_key,
         )
 
-        new_device = generate_new_device(
+        new_device = LocalDevice.generate_new_device(
             organization_addr=organization_addr,
             device_id=confirmation.device_id,
             device_label=confirmation.device_label,
