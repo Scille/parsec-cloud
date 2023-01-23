@@ -19,7 +19,13 @@ crate::binding_utils::gen_proto!(DeviceFile, __richcmp__, eq);
 #[pymethods]
 impl DeviceFile {
     #[new]
-    #[args(py_kwargs = "**")]
+    #[args(
+        salt = "None",
+        encrypted_key = "None",
+        certificate_id = "None",
+        certificate_sha1 = "None",
+        py_kwargs = "**"
+    )]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,

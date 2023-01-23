@@ -4,67 +4,97 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use sha2::{Digest, Sha256};
 
-use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
+use libparsec_serialization_format::parsec_data;
+use libparsec_types::{
+    impl_transparent_data_format_conversion, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
+};
 
 use crate::StrPath;
 
-#[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceFilePasswordData", from = "DeviceFilePasswordData")]
 pub struct DeviceFilePassword {
-    #[serde_as(as = "Bytes")]
+    pub ciphertext: Vec<u8>,
+    pub human_handle: Option<HumanHandle>,
+    pub device_label: Option<DeviceLabel>,
+    pub device_id: DeviceID,
+    pub organization_id: OrganizationID,
+    pub slug: String,
+
     pub salt: Vec<u8>,
-
-    #[serde_as(as = "Bytes")]
-    pub ciphertext: Vec<u8>,
-
-    pub human_handle: Option<HumanHandle>,
-    pub device_label: Option<DeviceLabel>,
-
-    pub device_id: DeviceID,
-    pub organization_id: OrganizationID,
-    pub slug: String,
 }
 
-#[serde_as]
+parsec_data!("schema/device_file_password.json");
+
+impl_transparent_data_format_conversion!(
+    DeviceFilePassword,
+    DeviceFilePasswordData,
+    ciphertext,
+    human_handle,
+    device_label,
+    device_id,
+    organization_id,
+    slug,
+    salt,
+);
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceFileRecoveryData", from = "DeviceFileRecoveryData")]
 pub struct DeviceFileRecovery {
-    #[serde_as(as = "Bytes")]
     pub ciphertext: Vec<u8>,
-
     pub human_handle: Option<HumanHandle>,
     pub device_label: Option<DeviceLabel>,
-
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
 }
 
-#[serde_as]
+parsec_data!("schema/device_file_recovery.json");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileRecovery,
+    DeviceFileRecoveryData,
+    ciphertext,
+    human_handle,
+    device_label,
+    device_id,
+    organization_id,
+    slug,
+);
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceFileSmartcardData", from = "DeviceFileSmartcardData")]
 pub struct DeviceFileSmartcard {
-    #[serde_as(as = "Bytes")]
-    pub encrypted_key: Vec<u8>,
-
-    pub certificate_id: String,
-
-    #[serde_as(as = "Option<Bytes>")]
-    pub certificate_sha1: Option<Vec<u8>>,
-
-    #[serde_as(as = "Bytes")]
     pub ciphertext: Vec<u8>,
-
     pub human_handle: Option<HumanHandle>,
     pub device_label: Option<DeviceLabel>,
-
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
+
+    pub encrypted_key: Vec<u8>,
+    pub certificate_id: String,
+    pub certificate_sha1: Option<Vec<u8>>,
 }
 
-#[serde_as]
+parsec_data!("schema/device_file_smartcard.json");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileSmartcard,
+    DeviceFileSmartcardData,
+    ciphertext,
+    human_handle,
+    device_label,
+    device_id,
+    organization_id,
+    slug,
+    encrypted_key,
+    certificate_id,
+    certificate_sha1,
+);
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "type")]
-#[serde(rename_all = "lowercase")]
+#[serde(untagged)]
 pub enum DeviceFile {
     Password(DeviceFilePassword),
     Recovery(DeviceFileRecovery),
