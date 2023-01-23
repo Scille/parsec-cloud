@@ -36,9 +36,9 @@
                           <ion-row>
                             <ion-col
                               size="auto"
-                              v-if="deviceStoredDataList[device.slug]"
+                              v-if="deviceStoredDataDict[device.slug]"
                             >
-                              {{ formatLastLogin(deviceStoredDataList[device.slug].lastLogin) }}
+                              {{ formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) }}
                             </ion-col>
                           </ion-row>
                         </ion-grid>
@@ -167,7 +167,6 @@ import PasswordInput from '@/components/PasswordInput.vue';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
-import { libparsec } from '../plugins/libparsec';
 
 export interface DeviceStoredData {
     lastLogin: Date;
@@ -217,20 +216,11 @@ const password = ref('');
 const showOrganizationList = ref(true);
 const store = new Storage();
 
-const deviceStoredDataList = ref({});
+const deviceStoredDataDict = ref({});
 
 onMounted(async (): Promise<void> => {
   await store.create();
-  deviceStoredDataList.value = await store.get('devicesData') || {};
-  // temporary, delete this when true data will exists by bindings
-  if (Object.keys(deviceStoredDataList.value).length === 0) {
-    deviceStoredDataList.value = {
-      slug1: { lastLogin: new Date('01/11/2023') },
-      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
-      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
-    };
-    await store.set('devicesData', toRaw(deviceStoredDataList.value));
-  }
+  deviceStoredDataDict.value = await store.get('devicesData') || {};
 });
 
 function onPasswordChange(pwd: string): void {
@@ -244,15 +234,15 @@ function onOrganizationCardClick(device: AvailableDevice): void {
 
 async function login(): Promise<void> {
   await store.create();
-  if (!deviceStoredDataList.value[selectedDevice.slug]) {
-    deviceStoredDataList.value[selectedDevice.slug] = {
+  if (!deviceStoredDataDict.value[selectedDevice.slug]) {
+    deviceStoredDataDict.value[selectedDevice.slug] = {
       lastLogin: new Date()
     };
   } else {
-    deviceStoredDataList.value[selectedDevice.slug].lastLogin = new Date();
+    deviceStoredDataDict.value[selectedDevice.slug].lastLogin = new Date();
   }
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
-  await store.set('devicesData', toRaw(deviceStoredDataList.value));
+  await store.set('devicesData', toRaw(deviceStoredDataDict.value));
 }
 
 function formatLastLogin(lastLogin: Date | undefined) : string {

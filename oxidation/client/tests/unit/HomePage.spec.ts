@@ -10,6 +10,7 @@ import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 
 describe('HomePage.vue', () => {
   type MessageSchema = typeof frFR;
+  const store = new Storage();
   const defaultLocale = 'fr-FR';
   const supportedLocales:{[key: string]: string} = {
     fr: 'fr-FR',
@@ -59,6 +60,15 @@ describe('HomePage.vue', () => {
     }
   });
 
+  // temporary, delete this when true data will exists by bindings
+  store.create().then(() => {
+    store.set('devicesData', {
+      slug1: { lastLogin: new Date('01/11/2023') },
+      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
+      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
+    });
+  });
+
   const wrapper = mount(HomePage, {
     global: {
       plugins: [i18n]
@@ -71,6 +81,14 @@ describe('HomePage.vue', () => {
 
   it('renders home vue', () => {
     expect(wrapper.text()).toMatch(new RegExp('^List of your organizations'));
+  });
+
+  it('should get devices stored data on mount', () => {
+    expect(wrapper.vm.deviceStoredDataDict).toEqual({
+      slug1: { lastLogin: (new Date('01/11/2023')).toISOString() },
+      slug2: { lastLogin: (new Date('01/12/2023 12:03:05')).toISOString() },
+      slug3: { lastLogin: (new Date('01/12/2023 15:12:04')).toISOString() }
+    });
   });
 
   describe('Organization List tests', () => {
@@ -124,7 +142,6 @@ describe('HomePage.vue', () => {
   describe('Login Popup tests', () => {
     let passwordInput: VueWrapper;
     let consoleLogSpyOn: jest.SpyInstance;
-    const store = new Storage();
 
     beforeAll(async () => {
       wrapper.vm.selectedDevice = {
