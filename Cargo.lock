@@ -1163,6 +1163,7 @@ dependencies = [
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
  "libparsec_protocol",
+ "libparsec_testbed",
  "libparsec_types",
 ]
 
@@ -1212,6 +1213,8 @@ dependencies = [
  "hyper",
  "libparsec_crypto",
  "libparsec_protocol",
+ "libparsec_testbed",
+ "libparsec_tests_fixtures",
  "libparsec_types",
  "log",
  "reqwest",
@@ -1243,6 +1246,7 @@ dependencies = [
  "hex-literal",
  "libparsec_crypto",
  "libparsec_serialization_format",
+ "libparsec_tests_fixtures",
  "libparsec_types",
  "paste",
  "pretty_assertions",
@@ -1255,7 +1259,6 @@ dependencies = [
  "serde_test",
  "serde_with",
  "sha2 0.10.6",
- "tests_fixtures",
  "thiserror",
 ]
 
@@ -1269,12 +1272,12 @@ dependencies = [
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
  "libparsec_protocol",
+ "libparsec_tests_fixtures",
  "libparsec_types",
  "rmp-serde",
  "rstest",
  "serde",
  "serde_with",
- "tests_fixtures",
  "thiserror",
 ]
 
@@ -1285,11 +1288,11 @@ dependencies = [
  "diesel",
  "libparsec_client_types",
  "libparsec_crypto",
+ "libparsec_tests_fixtures",
  "libparsec_types",
  "libsqlite3-sys",
  "regex",
  "rstest",
- "tests_fixtures",
  "thiserror",
  "uuid",
 ]
@@ -1356,9 +1359,11 @@ dependencies = [
  "hex-literal",
  "libparsec_client_types",
  "libparsec_crypto",
+ "libparsec_testbed",
+ "libparsec_tests_fixtures",
+ "libparsec_types",
  "rstest",
  "serde_json",
- "tests_fixtures",
  "tokio",
  "web-sys",
 ]
@@ -1372,6 +1377,7 @@ dependencies = [
  "hex-literal",
  "libparsec_crypto",
  "libparsec_serialization_format",
+ "libparsec_tests_fixtures",
  "libparsec_types",
  "paste",
  "rand 0.8.5",
@@ -1380,7 +1386,6 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "tests_fixtures",
  "thiserror",
 ]
 
@@ -1404,6 +1409,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_testbed"
+version = "0.0.0"
+dependencies = [
+ "crc32fast",
+ "hex-literal",
+ "lazy_static",
+ "libparsec_client_types",
+ "libparsec_crypto",
+ "libparsec_types",
+ "reqwest",
+ "rmp-serde",
+ "serde",
+]
+
+[[package]]
+name = "libparsec_tests_fixtures"
+version = "0.0.0"
+dependencies = [
+ "hex-literal",
+ "lazy_static",
+ "libparsec_client_types",
+ "libparsec_crypto",
+ "libparsec_platform_device_loader",
+ "libparsec_testbed",
+ "libparsec_types",
+ "regex",
+ "rstest",
+ "uuid",
+]
+
+[[package]]
 name = "libparsec_types"
 version = "0.0.0"
 dependencies = [
@@ -1418,6 +1454,7 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_serialization_format",
+ "libparsec_tests_fixtures",
  "paste",
  "percent-encoding",
  "pretty_assertions",
@@ -1430,7 +1467,6 @@ dependencies = [
  "serde_bytes",
  "serde_test",
  "serde_with",
- "tests_fixtures",
  "thiserror",
  "unicode-normalization",
  "url",
@@ -2778,18 +2814,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bab24d30b911b2376f3a13cc2cd443142f0c81dda04c118693e35b3835757755"
 dependencies = [
  "winapi-util",
-]
-
-[[package]]
-name = "tests_fixtures"
-version = "0.0.0"
-dependencies = [
- "hex-literal",
- "libparsec_client_types",
- "libparsec_crypto",
- "libparsec_types",
- "rstest",
- "uuid",
 ]
 
 [[package]]

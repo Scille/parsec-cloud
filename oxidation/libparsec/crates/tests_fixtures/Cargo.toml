@@ -1,5 +1,5 @@
 [package]
-name = "tests_fixtures"
+name = "libparsec_tests_fixtures"
 version = "0.0.0"
 edition = "2021"
 
@@ -7,7 +7,14 @@ edition = "2021"
 libparsec_crypto = { path = "../crypto" }
 libparsec_types = { path = "../types" }
 libparsec_client_types = { path = "../client_types" }
+libparsec_testbed = { path = "../testbed" }
+# Enable testbed support in crates here
+libparsec_platform_device_loader = { path = "../platform_device_loader", features = [ "test-testbed-support" ] }
 
 rstest = "0.16.0"
 hex-literal = "0.3.3"
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
+lazy_static = "1.4.0"
+regex = "1.6.0"
+
+# No dev-dependencies: this crate is itself only used in other crates' own dev-dependencies

@@ -3,9 +3,16 @@ name = "libparsec_platform_device_loader"
 version = "0.0.0"
 edition = "2021"
 
+[features]
+test-testbed-support = [
+    "libparsec_testbed"
+]
+
 [dependencies]
+libparsec_types = { path = "../types" }
 libparsec_client_types = { path = "../client_types" }
 libparsec_crypto = { path = "../crypto" }
+libparsec_testbed = { path = "../testbed", optional = true }
 
 serde_json = "1.0.91"
 
@@ -13,7 +20,8 @@ serde_json = "1.0.91"
 web-sys = { version = "0.3.60", features = ["Window", "Storage"] }
 
 [dev-dependencies]
-tests_fixtures = { path = "../tests_fixtures" }
+# Note `libparsec_tests_fixtures` enables our `test-testbed-support` feature
+libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
 hex-literal = "0.3.3"
 tokio = "1.25.0"

@@ -30,6 +30,8 @@ use crate::{
 pub(crate) struct MaintenanceType(realm_status::MaintenanceType);
 
 crate::binding_utils::gen_proto!(MaintenanceType, __repr__);
+crate::binding_utils::gen_proto!(MaintenanceType, __copy__);
+crate::binding_utils::gen_proto!(MaintenanceType, __deepcopy__);
 crate::binding_utils::gen_proto!(MaintenanceType, __richcmp__, eq);
 
 crate::binding_utils::impl_enum_field!(
@@ -51,6 +53,8 @@ crate::binding_utils::impl_enum_field!(
 pub(crate) struct RealmCreateReq(pub realm_create::Req);
 
 crate::binding_utils::gen_proto!(RealmCreateReq, __repr__);
+crate::binding_utils::gen_proto!(RealmCreateReq, __copy__);
+crate::binding_utils::gen_proto!(RealmCreateReq, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmCreateReq, __richcmp__, eq);
 
 #[pymethods]
@@ -111,6 +115,8 @@ impl RealmCreateRepOk {
 pub(crate) struct RealmStatusReq(pub realm_status::Req);
 
 crate::binding_utils::gen_proto!(RealmStatusReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStatusReq, __copy__);
+crate::binding_utils::gen_proto!(RealmStatusReq, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmStatusReq, __richcmp__, eq);
 
 #[pymethods]
@@ -228,6 +234,8 @@ impl RealmStatusRepOk {
 pub(crate) struct RealmStatsReq(pub realm_stats::Req);
 
 crate::binding_utils::gen_proto!(RealmStatsReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStatsReq, __copy__);
+crate::binding_utils::gen_proto!(RealmStatsReq, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmStatsReq, __richcmp__, eq);
 
 #[pymethods]
@@ -301,6 +309,8 @@ impl RealmStatsRepOk {
 pub(crate) struct RealmGetRoleCertificatesReq(pub realm_get_role_certificates::Req);
 
 crate::binding_utils::gen_proto!(RealmGetRoleCertificatesReq, __repr__);
+crate::binding_utils::gen_proto!(RealmGetRoleCertificatesReq, __copy__);
+crate::binding_utils::gen_proto!(RealmGetRoleCertificatesReq, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmGetRoleCertificatesReq, __richcmp__, eq);
 
 #[pymethods]
@@ -366,6 +376,8 @@ impl RealmGetRoleCertificatesRepOk {
 pub(crate) struct RealmUpdateRolesReq(pub realm_update_roles::Req);
 
 crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __repr__);
+crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __copy__);
+crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __richcmp__, eq);
 
 #[pymethods]
@@ -444,6 +456,8 @@ pub(crate) struct RealmStartReencryptionMaintenanceReq(
 );
 
 crate::binding_utils::gen_proto!(RealmStartReencryptionMaintenanceReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStartReencryptionMaintenanceReq, __copy__);
+crate::binding_utils::gen_proto!(RealmStartReencryptionMaintenanceReq, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmStartReencryptionMaintenanceReq, __richcmp__, eq);
 
 #[pymethods]
@@ -549,6 +563,8 @@ pub(crate) struct RealmFinishReencryptionMaintenanceReq(
 );
 
 crate::binding_utils::gen_proto!(RealmFinishReencryptionMaintenanceReq, __repr__);
+crate::binding_utils::gen_proto!(RealmFinishReencryptionMaintenanceReq, __copy__);
+crate::binding_utils::gen_proto!(RealmFinishReencryptionMaintenanceReq, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmFinishReencryptionMaintenanceReq, __richcmp__, eq);
 
 #[pymethods]

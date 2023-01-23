@@ -22,6 +22,8 @@ use crate::{
 pub(crate) struct PkiEnrollmentAnswerPayload(pub libparsec::types::PkiEnrollmentAnswerPayload);
 
 crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __repr__);
+crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __copy__);
+crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __deepcopy__);
 crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __richcmp__, eq);
 
 #[pymethods]
@@ -83,6 +85,8 @@ impl PkiEnrollmentAnswerPayload {
 pub(crate) struct PkiEnrollmentSubmitPayload(pub libparsec::types::PkiEnrollmentSubmitPayload);
 
 crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __repr__);
+crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __copy__);
+crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __deepcopy__);
 crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __richcmp__, eq);
 
 #[pymethods]
@@ -130,6 +134,8 @@ impl PkiEnrollmentSubmitPayload {
 pub(crate) struct X509Certificate(pub libparsec::types::X509Certificate);
 
 crate::binding_utils::gen_proto!(X509Certificate, __repr__);
+crate::binding_utils::gen_proto!(X509Certificate, __copy__);
+crate::binding_utils::gen_proto!(X509Certificate, __deepcopy__);
 crate::binding_utils::gen_proto!(X509Certificate, __richcmp__, eq);
 
 #[pymethods]
@@ -235,6 +241,8 @@ impl X509Certificate {
 pub(crate) struct LocalPendingEnrollment(pub libparsec::types::LocalPendingEnrollment);
 
 crate::binding_utils::gen_proto!(LocalPendingEnrollment, __repr__);
+crate::binding_utils::gen_proto!(LocalPendingEnrollment, __copy__);
+crate::binding_utils::gen_proto!(LocalPendingEnrollment, __deepcopy__);
 crate::binding_utils::gen_proto!(LocalPendingEnrollment, __richcmp__, eq);
 
 #[pymethods]

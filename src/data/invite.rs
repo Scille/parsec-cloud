@@ -20,6 +20,8 @@ use crate::{
 pub(crate) struct SASCode(pub libparsec::types::SASCode);
 
 crate::binding_utils::gen_proto!(SASCode, __repr__);
+crate::binding_utils::gen_proto!(SASCode, __copy__);
+crate::binding_utils::gen_proto!(SASCode, __deepcopy__);
 crate::binding_utils::gen_proto!(SASCode, __str__);
 crate::binding_utils::gen_proto!(SASCode, __richcmp__, ord);
 crate::binding_utils::gen_proto!(SASCode, __hash__);
@@ -92,6 +94,8 @@ pub(crate) fn generate_sas_code_candidates<'p>(
 pub(crate) struct InviteUserData(pub libparsec::types::InviteUserData);
 
 crate::binding_utils::gen_proto!(InviteUserData, __repr__);
+crate::binding_utils::gen_proto!(InviteUserData, __copy__);
+crate::binding_utils::gen_proto!(InviteUserData, __deepcopy__);
 
 #[pymethods]
 impl InviteUserData {
@@ -167,6 +171,8 @@ impl InviteUserData {
 pub(crate) struct InviteUserConfirmation(pub libparsec::types::InviteUserConfirmation);
 
 crate::binding_utils::gen_proto!(InviteUserConfirmation, __repr__);
+crate::binding_utils::gen_proto!(InviteUserConfirmation, __copy__);
+crate::binding_utils::gen_proto!(InviteUserConfirmation, __deepcopy__);
 
 #[pymethods]
 impl InviteUserConfirmation {
@@ -248,6 +254,8 @@ impl InviteUserConfirmation {
 pub(crate) struct InviteDeviceData(pub libparsec::types::InviteDeviceData);
 
 crate::binding_utils::gen_proto!(InviteDeviceData, __repr__);
+crate::binding_utils::gen_proto!(InviteDeviceData, __copy__);
+crate::binding_utils::gen_proto!(InviteDeviceData, __deepcopy__);
 
 #[pymethods]
 impl InviteDeviceData {
@@ -303,6 +311,8 @@ impl InviteDeviceData {
 pub(crate) struct InviteDeviceConfirmation(pub libparsec::types::InviteDeviceConfirmation);
 
 crate::binding_utils::gen_proto!(InviteDeviceConfirmation, __repr__);
+crate::binding_utils::gen_proto!(InviteDeviceConfirmation, __copy__);
+crate::binding_utils::gen_proto!(InviteDeviceConfirmation, __deepcopy__);
 
 #[pymethods]
 impl InviteDeviceConfirmation {

@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 autotests = false
 
+[features]
+test-testbed-support = [
+    "libparsec_testbed"
+]
+
 [[test]]
 name = "auth_cmds"
 
@@ -15,6 +20,7 @@ libparsec_crypto = { path = "../crypto" }
 libparsec_types = { path = "../types" }
 # Provide possible command to send to the server
 libparsec_protocol = { path = "../protocol" }
+libparsec_testbed = { path = "../testbed", optional = true }
 
 # Used to send HTTP request to the server.
 reqwest = { version = "0.11.13", features = ["native-tls-vendored"] }
@@ -26,6 +32,9 @@ base64 = "0.21.0"
 chrono = "0.4.23"
 
 [dev-dependencies]
+# Note `libparsec_tests_fixtures` enables our `test-testbed-support` feature
+libparsec_tests_fixtures = { path = "../tests_fixtures" }
+
 anyhow = "1.0.68"
 env_logger = "0.10.0"
 http-body = "0.4.5"

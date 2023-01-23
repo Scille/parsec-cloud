@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use crate::{ApiVersion, HANDSHAKE_CHALLENGE_SIZE};
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, Clone, PartialEq)]
 pub enum HandshakeError {
     #[error("Handshake invalid answer (bad signature or challenge value)")]
     FailedChallenge,
@@ -30,7 +30,7 @@ pub enum HandshakeError {
     InvalidMessage(&'static str),
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum ProtocolError {
     #[error("Encoding error: {exc}")]
     EncodingError { exc: String },
@@ -48,7 +48,7 @@ pub enum ProtocolError {
     BadRequest { exc: String },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ChallengeDataReport {
     pub challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],
     pub supported_api_versions: Vec<ApiVersion>,

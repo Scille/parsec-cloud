@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterable, List, Tuple
 
 import attr
@@ -348,3 +349,9 @@ class MemoryUserComponent(BaseUserComponent):
         for user_devices in org.devices.values():
             devices += user_devices.values()
         return list(org.users.values()), devices
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._organizations[new_id] = deepcopy(self._organizations[id])
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._organizations.pop(id, None)

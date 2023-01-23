@@ -3,9 +3,9 @@
 use hex_literal::hex;
 use rstest::rstest;
 use std::{collections::HashMap, str::FromStr};
-use tests_fixtures::{alice, Device};
 
 use libparsec_crypto::{PublicKey, VerifyKey};
+use libparsec_tests_fixtures::{alice, Device};
 use libparsec_types::{
     BackendPkiEnrollmentAddr, DeviceID, DeviceLabel, EnrollmentID, LocalPendingEnrollment,
     PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, UserProfile, X509Certificate,

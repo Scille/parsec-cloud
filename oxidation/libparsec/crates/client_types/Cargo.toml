@@ -27,7 +27,7 @@ sha2 = "0.10.6"
 thiserror = "1.0.37"
 
 [dev-dependencies]
-tests_fixtures = { path = "../tests_fixtures" }
+libparsec_tests_fixtures = { path = "../tests_fixtures" }
 pretty_assertions = "1.3.0"
 serde_test = "1.0.145"
 hex-literal = "0.3.3"

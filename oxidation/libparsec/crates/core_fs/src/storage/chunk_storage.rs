@@ -368,8 +368,8 @@ mod tests {
     use std::collections::HashSet;
     use uuid::Uuid;
 
+    use libparsec_tests_fixtures::{tmp_path, TmpPath};
     use rstest::rstest;
-    use tests_fixtures::{tmp_path, TmpPath};
 
     use super::*;
     use crate::storage::local_database::SqlitePool;

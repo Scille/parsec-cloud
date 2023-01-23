@@ -11,7 +11,7 @@ use libparsec_client_types::*;
 use libparsec_crypto::prelude::*;
 use libparsec_types::*;
 
-use tests_fixtures::{alice, timestamp, Device};
+use libparsec_tests_fixtures::{alice, timestamp, Device};
 
 type AliceLocalFileManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFileManifest)>;
 type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest)>;

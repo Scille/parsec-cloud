@@ -56,6 +56,8 @@ macro_rules! gen_uuid {
 pub(crate) struct EntryID(pub libparsec::types::EntryID);
 
 crate::binding_utils::gen_proto!(EntryID, __repr__);
+crate::binding_utils::gen_proto!(EntryID, __copy__);
+crate::binding_utils::gen_proto!(EntryID, __deepcopy__);
 crate::binding_utils::gen_proto!(EntryID, __str__);
 crate::binding_utils::gen_proto!(EntryID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(EntryID, __hash__);
@@ -66,6 +68,8 @@ gen_uuid!(EntryID);
 pub(crate) struct BlockID(pub libparsec::types::BlockID);
 
 crate::binding_utils::gen_proto!(BlockID, __repr__);
+crate::binding_utils::gen_proto!(BlockID, __copy__);
+crate::binding_utils::gen_proto!(BlockID, __deepcopy__);
 crate::binding_utils::gen_proto!(BlockID, __str__);
 crate::binding_utils::gen_proto!(BlockID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(BlockID, __hash__);
@@ -76,6 +80,8 @@ gen_uuid!(BlockID);
 pub(crate) struct RealmID(pub libparsec::types::RealmID);
 
 crate::binding_utils::gen_proto!(RealmID, __repr__);
+crate::binding_utils::gen_proto!(RealmID, __copy__);
+crate::binding_utils::gen_proto!(RealmID, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(RealmID, __hash__);
 gen_uuid!(RealmID);
@@ -96,6 +102,8 @@ impl RealmID {
 pub(crate) struct VlobID(pub libparsec::types::VlobID);
 
 crate::binding_utils::gen_proto!(VlobID, __repr__);
+crate::binding_utils::gen_proto!(VlobID, __copy__);
+crate::binding_utils::gen_proto!(VlobID, __deepcopy__);
 crate::binding_utils::gen_proto!(VlobID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(VlobID, __hash__);
 gen_uuid!(VlobID);
@@ -116,6 +124,8 @@ impl VlobID {
 pub(crate) struct ChunkID(pub libparsec::types::ChunkID);
 
 crate::binding_utils::gen_proto!(ChunkID, __repr__);
+crate::binding_utils::gen_proto!(ChunkID, __copy__);
+crate::binding_utils::gen_proto!(ChunkID, __deepcopy__);
 crate::binding_utils::gen_proto!(ChunkID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(ChunkID, __hash__);
 gen_uuid!(ChunkID);
@@ -133,6 +143,8 @@ impl ChunkID {
 pub(crate) struct SequesterServiceID(pub libparsec::types::SequesterServiceID);
 
 crate::binding_utils::gen_proto!(SequesterServiceID, __repr__);
+crate::binding_utils::gen_proto!(SequesterServiceID, __copy__);
+crate::binding_utils::gen_proto!(SequesterServiceID, __deepcopy__);
 crate::binding_utils::gen_proto!(SequesterServiceID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(SequesterServiceID, __hash__);
 gen_uuid!(SequesterServiceID);
@@ -142,6 +154,8 @@ gen_uuid!(SequesterServiceID);
 pub(crate) struct InvitationToken(pub libparsec::types::InvitationToken);
 
 crate::binding_utils::gen_proto!(InvitationToken, __repr__);
+crate::binding_utils::gen_proto!(InvitationToken, __copy__);
+crate::binding_utils::gen_proto!(InvitationToken, __deepcopy__);
 crate::binding_utils::gen_proto!(InvitationToken, __richcmp__, eq);
 crate::binding_utils::gen_proto!(InvitationToken, __hash__);
 gen_uuid!(InvitationToken);
@@ -151,6 +165,8 @@ gen_uuid!(InvitationToken);
 pub(crate) struct EnrollmentID(pub libparsec::types::EnrollmentID);
 
 crate::binding_utils::gen_proto!(EnrollmentID, __repr__);
+crate::binding_utils::gen_proto!(EnrollmentID, __copy__);
+crate::binding_utils::gen_proto!(EnrollmentID, __deepcopy__);
 crate::binding_utils::gen_proto!(EnrollmentID, __richcmp__, eq);
 gen_uuid!(EnrollmentID);
 
@@ -161,6 +177,8 @@ gen_uuid!(EnrollmentID);
 pub(crate) struct OrganizationID(pub libparsec::types::OrganizationID);
 
 crate::binding_utils::gen_proto!(OrganizationID, __repr__);
+crate::binding_utils::gen_proto!(OrganizationID, __copy__);
+crate::binding_utils::gen_proto!(OrganizationID, __deepcopy__);
 crate::binding_utils::gen_proto!(OrganizationID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(OrganizationID, __hash__);
 
@@ -191,6 +209,8 @@ impl OrganizationID {
 pub(crate) struct UserID(pub libparsec::types::UserID);
 
 crate::binding_utils::gen_proto!(UserID, __repr__);
+crate::binding_utils::gen_proto!(UserID, __copy__);
+crate::binding_utils::gen_proto!(UserID, __deepcopy__);
 crate::binding_utils::gen_proto!(UserID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(UserID, __hash__);
 
@@ -229,6 +249,8 @@ impl UserID {
 pub(crate) struct DeviceName(pub libparsec::types::DeviceName);
 
 crate::binding_utils::gen_proto!(DeviceName, __repr__);
+crate::binding_utils::gen_proto!(DeviceName, __copy__);
+crate::binding_utils::gen_proto!(DeviceName, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceName, __richcmp__, ord);
 crate::binding_utils::gen_proto!(DeviceName, __hash__);
 
@@ -265,6 +287,8 @@ impl DeviceName {
 pub(crate) struct DeviceLabel(pub libparsec::types::DeviceLabel);
 
 crate::binding_utils::gen_proto!(DeviceLabel, __repr__);
+crate::binding_utils::gen_proto!(DeviceLabel, __copy__);
+crate::binding_utils::gen_proto!(DeviceLabel, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceLabel, __richcmp__, ord);
 crate::binding_utils::gen_proto!(DeviceLabel, __hash__);
 
@@ -295,6 +319,8 @@ impl DeviceLabel {
 pub(crate) struct DeviceID(pub libparsec::types::DeviceID);
 
 crate::binding_utils::gen_proto!(DeviceID, __repr__);
+crate::binding_utils::gen_proto!(DeviceID, __copy__);
+crate::binding_utils::gen_proto!(DeviceID, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceID, __richcmp__, ord);
 crate::binding_utils::gen_proto!(DeviceID, __hash__);
 
@@ -341,6 +367,8 @@ impl DeviceID {
 pub(crate) struct HumanHandle(pub libparsec::types::HumanHandle);
 
 crate::binding_utils::gen_proto!(HumanHandle, __repr__);
+crate::binding_utils::gen_proto!(HumanHandle, __copy__);
+crate::binding_utils::gen_proto!(HumanHandle, __deepcopy__);
 crate::binding_utils::gen_proto!(HumanHandle, __richcmp__, ord);
 crate::binding_utils::gen_proto!(HumanHandle, __hash__);
 

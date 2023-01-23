@@ -13,6 +13,8 @@ use crate::{
 pub(crate) struct OrganizationStats(pub libparsec::types::OrganizationStats);
 
 crate::binding_utils::gen_proto!(OrganizationStats, __repr__);
+crate::binding_utils::gen_proto!(OrganizationStats, __copy__);
+crate::binding_utils::gen_proto!(OrganizationStats, __deepcopy__);
 crate::binding_utils::gen_proto!(OrganizationStats, __richcmp__, eq);
 
 #[pymethods]
@@ -77,6 +79,8 @@ impl OrganizationStats {
 pub(crate) struct OrganizationConfig(libparsec::types::OrganizationConfig);
 
 crate::binding_utils::gen_proto!(OrganizationConfig, __repr__);
+crate::binding_utils::gen_proto!(OrganizationConfig, __copy__);
+crate::binding_utils::gen_proto!(OrganizationConfig, __deepcopy__);
 crate::binding_utils::gen_proto!(OrganizationConfig, __richcmp__, eq);
 
 #[pymethods]

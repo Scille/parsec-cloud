@@ -20,6 +20,8 @@ use crate::{binding_utils::BytesWrapper, ids::DeviceID};
 pub(crate) struct Message(pub message_get::Message);
 
 crate::binding_utils::gen_proto!(Message, __repr__);
+crate::binding_utils::gen_proto!(Message, __copy__);
+crate::binding_utils::gen_proto!(Message, __deepcopy__);
 crate::binding_utils::gen_proto!(Message, __richcmp__, eq);
 
 #[pymethods]
@@ -68,6 +70,8 @@ impl Message {
 pub(crate) struct MessageGetReq(pub message_get::Req);
 
 crate::binding_utils::gen_proto!(MessageGetReq, __repr__);
+crate::binding_utils::gen_proto!(MessageGetReq, __copy__);
+crate::binding_utils::gen_proto!(MessageGetReq, __deepcopy__);
 crate::binding_utils::gen_proto!(MessageGetReq, __richcmp__, eq);
 
 #[pymethods]

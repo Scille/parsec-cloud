@@ -7,7 +7,7 @@ use libparsec_client_types::*;
 use libparsec_crypto::*;
 use libparsec_types::*;
 
-use tests_fixtures::{alice, Device};
+use libparsec_tests_fixtures::{alice, Device};
 
 #[rstest]
 #[case::admin(

@@ -9,6 +9,8 @@ use crate::enumerate::UserProfile;
 pub(crate) struct UsersPerProfileDetailItem(pub libparsec::types::UsersPerProfileDetailItem);
 
 crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __repr__);
+crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __copy__);
+crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __deepcopy__);
 crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __richcmp__, eq);
 
 #[pymethods]

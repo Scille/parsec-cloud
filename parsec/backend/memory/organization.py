@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Union
 
 import trio
@@ -238,3 +239,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         if self._organizations[id].is_expired:
             await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._organizations[new_id] = deepcopy(self._organizations[id])
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._organizations.pop(id, None)

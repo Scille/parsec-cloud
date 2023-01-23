@@ -41,6 +41,8 @@ use crate::{
 pub(crate) struct InviteListItem(pub invite_list::InviteListItem);
 
 crate::binding_utils::gen_proto!(InviteListItem, __repr__);
+crate::binding_utils::gen_proto!(InviteListItem, __copy__);
+crate::binding_utils::gen_proto!(InviteListItem, __deepcopy__);
 crate::binding_utils::gen_proto!(InviteListItem, __richcmp__, eq);
 
 #[pymethods]
@@ -128,6 +130,8 @@ impl InviteListItem {
 pub(crate) struct InviteNewReq(pub invite_new::Req);
 
 crate::binding_utils::gen_proto!(InviteNewReq, __repr__);
+crate::binding_utils::gen_proto!(InviteNewReq, __copy__);
+crate::binding_utils::gen_proto!(InviteNewReq, __deepcopy__);
 crate::binding_utils::gen_proto!(InviteNewReq, __richcmp__, eq);
 
 #[pymethods]
@@ -267,6 +271,8 @@ impl InviteNewRepOk {
 pub(crate) struct InviteDeleteReq(pub invite_delete::Req);
 
 crate::binding_utils::gen_proto!(InviteDeleteReq, __repr__);
+crate::binding_utils::gen_proto!(InviteDeleteReq, __copy__);
+crate::binding_utils::gen_proto!(InviteDeleteReq, __deepcopy__);
 crate::binding_utils::gen_proto!(InviteDeleteReq, __richcmp__, eq);
 
 #[pymethods]
@@ -326,6 +332,8 @@ impl InviteDeleteRepOk {
 pub(crate) struct InviteListReq(pub invite_list::Req);
 
 crate::binding_utils::gen_proto!(InviteListReq, __repr__);
+crate::binding_utils::gen_proto!(InviteListReq, __copy__);
+crate::binding_utils::gen_proto!(InviteListReq, __deepcopy__);
 crate::binding_utils::gen_proto!(InviteListReq, __richcmp__, eq);
 
 #[pymethods]
@@ -377,6 +385,8 @@ impl InviteListRepOk {
 pub(crate) struct InviteInfoReq(pub invite_info::Req);
 
 crate::binding_utils::gen_proto!(InviteInfoReq, __repr__);
+crate::binding_utils::gen_proto!(InviteInfoReq, __copy__);
+crate::binding_utils::gen_proto!(InviteInfoReq, __deepcopy__);
 crate::binding_utils::gen_proto!(InviteInfoReq, __richcmp__, eq);
 
 #[pymethods]
@@ -493,6 +503,8 @@ impl InviteInfoRepOk {
 pub(crate) struct Invite1ClaimerWaitPeerReq(pub invite_1_claimer_wait_peer::Req);
 
 crate::binding_utils::gen_proto!(Invite1ClaimerWaitPeerReq, __repr__);
+crate::binding_utils::gen_proto!(Invite1ClaimerWaitPeerReq, __copy__);
+crate::binding_utils::gen_proto!(Invite1ClaimerWaitPeerReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite1ClaimerWaitPeerReq, __richcmp__, eq);
 
 #[pymethods]
@@ -559,6 +571,8 @@ impl Invite1ClaimerWaitPeerRepOk {
 pub(crate) struct Invite1GreeterWaitPeerReq(pub invite_1_greeter_wait_peer::Req);
 
 crate::binding_utils::gen_proto!(Invite1GreeterWaitPeerReq, __repr__);
+crate::binding_utils::gen_proto!(Invite1GreeterWaitPeerReq, __copy__);
+crate::binding_utils::gen_proto!(Invite1GreeterWaitPeerReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite1GreeterWaitPeerReq, __richcmp__, eq);
 
 #[pymethods]
@@ -634,6 +648,8 @@ impl Invite1GreeterWaitPeerRepOk {
 pub(crate) struct Invite2aClaimerSendHashedNonceReq(pub invite_2a_claimer_send_hashed_nonce::Req);
 
 crate::binding_utils::gen_proto!(Invite2aClaimerSendHashedNonceReq, __repr__);
+crate::binding_utils::gen_proto!(Invite2aClaimerSendHashedNonceReq, __copy__);
+crate::binding_utils::gen_proto!(Invite2aClaimerSendHashedNonceReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite2aClaimerSendHashedNonceReq, __richcmp__, eq);
 
 #[pymethods]
@@ -704,6 +720,8 @@ impl Invite2aClaimerSendHashedNonceRepOk {
 pub(crate) struct Invite2aGreeterGetHashedNonceReq(pub invite_2a_greeter_get_hashed_nonce::Req);
 
 crate::binding_utils::gen_proto!(Invite2aGreeterGetHashedNonceReq, __repr__);
+crate::binding_utils::gen_proto!(Invite2aGreeterGetHashedNonceReq, __copy__);
+crate::binding_utils::gen_proto!(Invite2aGreeterGetHashedNonceReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite2aGreeterGetHashedNonceReq, __richcmp__, eq);
 
 #[pymethods]
@@ -772,6 +790,8 @@ impl Invite2aGreeterGetHashedNonceRepOk {
 pub(crate) struct Invite2bClaimerSendNonceReq(pub invite_2b_claimer_send_nonce::Req);
 
 crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __repr__);
+crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __copy__);
+crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __richcmp__, eq);
 
 #[pymethods]
@@ -827,6 +847,8 @@ impl Invite2bClaimerSendNonceRepOk {
 pub(crate) struct Invite2bGreeterSendNonceReq(pub invite_2b_greeter_send_nonce::Req);
 
 crate::binding_utils::gen_proto!(Invite2bGreeterSendNonceReq, __repr__);
+crate::binding_utils::gen_proto!(Invite2bGreeterSendNonceReq, __copy__);
+crate::binding_utils::gen_proto!(Invite2bGreeterSendNonceReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite2bGreeterSendNonceReq, __richcmp__, eq);
 
 #[pymethods]
@@ -902,6 +924,8 @@ impl Invite2bGreeterSendNonceRepOk {
 pub(crate) struct Invite3aClaimerSignifyTrustReq(pub invite_3a_claimer_signify_trust::Req);
 
 crate::binding_utils::gen_proto!(Invite3aClaimerSignifyTrustReq, __repr__);
+crate::binding_utils::gen_proto!(Invite3aClaimerSignifyTrustReq, __copy__);
+crate::binding_utils::gen_proto!(Invite3aClaimerSignifyTrustReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite3aClaimerSignifyTrustReq, __richcmp__, eq);
 
 #[pymethods]
@@ -951,6 +975,8 @@ impl Invite3aClaimerSignifyTrustRepOk {
 pub(crate) struct Invite3aGreeterWaitPeerTrustReq(pub invite_3a_greeter_wait_peer_trust::Req);
 
 crate::binding_utils::gen_proto!(Invite3aGreeterWaitPeerTrustReq, __repr__);
+crate::binding_utils::gen_proto!(Invite3aGreeterWaitPeerTrustReq, __copy__);
+crate::binding_utils::gen_proto!(Invite3aGreeterWaitPeerTrustReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite3aGreeterWaitPeerTrustReq, __richcmp__, eq);
 
 #[pymethods]
@@ -1006,6 +1032,8 @@ impl Invite3aGreeterWaitPeerTrustRepOk {
 pub(crate) struct Invite3bClaimerWaitPeerTrustReq(pub invite_3b_claimer_wait_peer_trust::Req);
 
 crate::binding_utils::gen_proto!(Invite3bClaimerWaitPeerTrustReq, __repr__);
+crate::binding_utils::gen_proto!(Invite3bClaimerWaitPeerTrustReq, __copy__);
+crate::binding_utils::gen_proto!(Invite3bClaimerWaitPeerTrustReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite3bClaimerWaitPeerTrustReq, __richcmp__, eq);
 
 #[pymethods]
@@ -1055,6 +1083,8 @@ impl Invite3bClaimerWaitPeerTrustRepOk {
 pub(crate) struct Invite3bGreeterSignifyTrustReq(pub invite_3b_greeter_signify_trust::Req);
 
 crate::binding_utils::gen_proto!(Invite3bGreeterSignifyTrustReq, __repr__);
+crate::binding_utils::gen_proto!(Invite3bGreeterSignifyTrustReq, __copy__);
+crate::binding_utils::gen_proto!(Invite3bGreeterSignifyTrustReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite3bGreeterSignifyTrustReq, __richcmp__, eq);
 
 #[pymethods]
@@ -1110,6 +1140,8 @@ impl Invite3bGreeterSignifyTrustRepOk {
 pub(crate) struct Invite4ClaimerCommunicateReq(pub invite_4_claimer_communicate::Req);
 
 crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __repr__);
+crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __copy__);
+crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __richcmp__, eq);
 
 #[pymethods]
@@ -1176,6 +1208,8 @@ impl Invite4ClaimerCommunicateRepOk {
 pub(crate) struct Invite4GreeterCommunicateReq(pub invite_4_greeter_communicate::Req);
 
 crate::binding_utils::gen_proto!(Invite4GreeterCommunicateReq, __repr__);
+crate::binding_utils::gen_proto!(Invite4GreeterCommunicateReq, __copy__);
+crate::binding_utils::gen_proto!(Invite4GreeterCommunicateReq, __deepcopy__);
 crate::binding_utils::gen_proto!(Invite4GreeterCommunicateReq, __richcmp__, eq);
 
 #[pymethods]
