@@ -8,11 +8,19 @@ import random
 import subprocess
 import sys
 import textwrap
-from typing import Union
+from pathlib import Path
+from typing import Optional, Union
 
 PYTHON_RELEASE_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
+ELECTRON_RELEASE_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
+ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
+ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
+
+
+BASE_DIR = Path(__file__).parent.resolve()
+ELECTRON_DIR = BASE_DIR / "oxidation/bindings/electron"
 
 
 CIAN = "\x1b[36m"
@@ -33,31 +41,44 @@ CUTENESS = [
 
 
 class Cmd:
-    def __init__(self, cmd: Union[str, list[str]], extra_env: dict[str, str] = {}) -> None:
+    def __init__(
+        self,
+        cmd: Union[str, list[str]],
+        extra_env: dict[str, str] = {},
+        cwd: Optional[Path] = None,
+        is_script: bool = False,
+    ) -> None:
         self.cmds = cmd if isinstance(cmd, list) else [cmd]
         self.extra_env = extra_env
+        self.cwd = cwd
+        # On Windows only .exe/.bat can be directly executed, so scripts must be
+        # launched through a shell instead.
+        self.is_script = is_script
 
     def display(self, extra_cmd_args: list[str] = []) -> str:
         display_extra_env = " ".join(
             [f"{GREY}{k}={v}{NO_COLOR}" for k, v in self.extra_env.items()]
         )
         display_cmds = []
+        display_cwd = f"cd {GREY}{self.cwd.relative_to(BASE_DIR)}{NO_COLOR} && " if self.cwd else ""
         display_extra_cmds = f" {' '.join(extra_cmd_args)}" if extra_cmd_args else ""
         for cmd in self.cmds:
             display_cmds.append(f"{CIAN}{cmd}{display_extra_cmds}{NO_COLOR}")
-
-        return f"{display_extra_env} {' && '.join(display_cmds) }"
+        return f"{display_cwd}{display_extra_env} {' && '.join(display_cmds) }"
 
     def run(self, extra_cmd_args: list[str] = []) -> None:
+        shell = sys.platform == "win32" and self.is_script
         for cmd in self.cmds:
             args = cmd.split() + extra_cmd_args
-            subprocess.check_call(args, env={**os.environ, **self.extra_env})
+            subprocess.check_call(
+                args, env={**os.environ, **self.extra_env}, cwd=self.cwd, shell=shell
+            )
 
 
-PYTHON_DEV_REBUILD_CMD = Cmd(
-    cmd=f"maturin develop {PYTHON_DEV_CARGO_FLAGS}",
-)
 COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
+    #
+    # Python bindings
+    #
     ("python-dev-install", "i"): (
         # Don't build rust as part of poetry install step.
         # This is because poetry creates a temporary virtualenv to run the
@@ -70,9 +91,9 @@ COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
             cmd="poetry install -E backend -E core",
             extra_env={"POETRY_LIBPARSEC_BUILD_STRATEGY": "no_build"},
         ),
-        PYTHON_DEV_REBUILD_CMD,
+        Cmd(f"maturin develop {PYTHON_DEV_CARGO_FLAGS}"),
     ),
-    ("python-dev-rebuild", "r"): PYTHON_DEV_REBUILD_CMD,
+    ("python-dev-rebuild", "r"): Cmd(f"maturin develop {PYTHON_DEV_CARGO_FLAGS}"),
     ("python-ci-install",): Cmd(
         cmd="poetry install -E backend -E core",
         extra_env={"POETRY_LIBPARSEC_BUILD_PROFILE": "ci"},
@@ -88,6 +109,50 @@ COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
     # Flags used in poetry's `build.py` when generating the dev wheel
     ("python-dev-libparsec-cargo-flags",): Cmd(
         cmd=f"echo {PYTHON_DEV_CARGO_FLAGS}",
+    ),
+    #
+    # Electron bindings
+    #
+    ("electron-dev-install", "ei"): (
+        Cmd(
+            cmd="npm install",
+            cwd=ELECTRON_DIR,
+            is_script=True,
+        ),
+        Cmd(
+            cmd=f"npm run build:dev",
+            cwd=ELECTRON_DIR,
+            is_script=True,
+        ),
+    ),
+    ("electron-dev-rebuild", "er"): Cmd(
+        cmd=f"npm run build:dev",
+        cwd=ELECTRON_DIR,
+        is_script=True,
+    ),
+    ("electron-ci-install",): (
+        Cmd(
+            cmd="npm install",
+            cwd=ELECTRON_DIR,
+            is_script=True,
+        ),
+        Cmd(
+            cmd=f"npm run build:ci",
+            cwd=ELECTRON_DIR,
+            is_script=True,
+        ),
+    ),
+    # Flags used in `bindings/electron/scripts/build.js`
+    ("electron-ci-libparsec-cargo-flags",): Cmd(
+        cmd=f"echo {ELECTRON_CI_CARGO_FLAGS}",
+    ),
+    # Flags used in `bindings/electron/scripts/build.js`
+    ("electron-release-libparsec-cargo-flags",): Cmd(
+        cmd=f"echo {ELECTRON_RELEASE_CARGO_FLAGS}",
+    ),
+    # Flags used in `bindings/electron/scripts/build.js`
+    ("electron-dev-libparsec-cargo-flags",): Cmd(
+        cmd=f"echo {ELECTRON_DEV_CARGO_FLAGS}",
     ),
 }
 

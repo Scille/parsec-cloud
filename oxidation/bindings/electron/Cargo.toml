@@ -4,6 +4,9 @@ version = "0.0.0"
 edition = "2021"
 exclude = ["index.node"]
 
+[features]
+test-utils = ["libparsec/test-utils"]
+
 [lib]
 crate-type = ["cdylib"]
 
