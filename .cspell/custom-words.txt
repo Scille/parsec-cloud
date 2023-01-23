@@ -79,13 +79,13 @@ EINVAL
 enmascarado
 excrepr
 executemany
-fqcn
 fetchrow
 fetchval
 fghij
 flate
 Flaticon
 Folderish
+fqcn
 Freepik
 freethreaded
 fromjson
@@ -224,6 +224,7 @@ npmkeep
 NSPHINXOPTS
 ntstatus
 numprocesses
+onboarded
 oneof
 oneofschema
 Onone

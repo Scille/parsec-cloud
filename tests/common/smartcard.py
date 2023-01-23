@@ -6,7 +6,7 @@ import sys
 from collections import defaultdict
 from hashlib import sha1
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Iterable
 
 import pytest
 
@@ -131,7 +131,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             return sha1(payload + der_x509_certificate).digest()  # 100% secure crypto \o/
 
         def pki_enrollment_select_certificate(
-            self, owner_hint: Optional[LocalDevice] = None
+            self, owner_hint: LocalDevice | None = None
         ) -> X509Certificate:
             return self.default_x509_certificate
 
@@ -166,7 +166,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
 
         def pki_enrollment_load_local_pending_secret_part(
             self, config_dir: Path, enrollment_id: EnrollmentID
-        ) -> Tuple[SigningKey, PrivateKey]:
+        ) -> tuple[SigningKey, PrivateKey]:
             for (pending, secret_part) in self._pending_enrollments[config_dir]:
                 if pending.enrollment_id == enrollment_id:
                     return secret_part
@@ -212,12 +212,12 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             key_file: Path,
             device: LocalDevice,
             force: bool = False,
-            certificate_id: Optional[str] = None,
-            certificate_sha1: Optional[bytes] = None,
+            certificate_id: str | None = None,
+            certificate_sha1: bytes | None = None,
         ) -> None:
             def _encrypt_dump(
                 cleartext: bytes,
-            ) -> Tuple[DeviceFileType, bytes, bytes | None, bytes | None, str | None, bytes | None]:
+            ) -> tuple[DeviceFileType, bytes, bytes | None, bytes | None, str | None, bytes | None]:
                 return (
                     DeviceFileType.SMARTCARD,
                     cleartext,

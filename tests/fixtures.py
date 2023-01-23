@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 from __future__ import annotations
 
 import re
@@ -7,7 +8,7 @@ import sys
 from collections import defaultdict
 from hashlib import sha1
 from pathlib import Path
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable
 
 import attr
 import pytest
@@ -117,13 +118,13 @@ def local_device_factory(coolorg):
     count = 0
 
     def _local_device_factory(
-        base_device_id: Optional[Union[str, DeviceID]] = None,
+        base_device_id: str | DeviceID | None = None,
         org: OrganizationFullData = coolorg,
-        profile: Optional[UserProfile] = None,
+        profile: UserProfile | None = None,
         has_human_handle: bool = True,
-        base_human_handle: Optional[Union[str, HumanHandle]] = None,
+        base_human_handle: str | HumanHandle | None = None,
         has_device_label: bool = True,
-        base_device_label: Optional[Union[str, DeviceLabel]] = None,
+        base_device_label: str | DeviceLabel | None = None,
     ):
         nonlocal count
 
@@ -399,8 +400,8 @@ def initialize_local_user_manifest(initial_user_manifest_state):
 
 
 def local_device_to_backend_user(
-    device: LocalDevice, certifier: Union[LocalDevice, OrganizationFullData]
-) -> Tuple[BackendUser, BackendDevice]:
+    device: LocalDevice, certifier: LocalDevice | OrganizationFullData
+) -> tuple[BackendUser, BackendDevice]:
     if isinstance(certifier, OrganizationFullData):
         certifier_id = None
         certifier_signing_key = certifier.root_signing_key
@@ -640,8 +641,8 @@ def backend_data_binder_factory(initial_user_manifest_state):
         async def bind_device(
             self,
             device: LocalDevice,
-            certifier: Optional[LocalDevice] = None,
-            initial_user_manifest: Optional[str] = None,
+            certifier: LocalDevice | None = None,
+            initial_user_manifest: str | None = None,
         ):
             assert initial_user_manifest in (None, "v1", "not_synced")
 
@@ -826,7 +827,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             return sha1(payload + der_x509_certificate).digest()  # 100% secure crypto \o/
 
         def pki_enrollment_select_certificate(
-            self, owner_hint: Optional[LocalDevice] = None
+            self, owner_hint: LocalDevice | None = None
         ) -> X509Certificate:
             return self.default_x509_certificate
 
@@ -861,7 +862,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
 
         def pki_enrollment_load_local_pending_secret_part(
             self, config_dir: Path, enrollment_id: EnrollmentID
-        ) -> Tuple[SigningKey, PrivateKey]:
+        ) -> tuple[SigningKey, PrivateKey]:
             for (pending, secret_part) in self._pending_enrollments[config_dir]:
                 if pending.enrollment_id == enrollment_id:
                     return secret_part
@@ -907,12 +908,12 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             key_file: Path,
             device: LocalDevice,
             force: bool = False,
-            certificate_id: Optional[str] = None,
-            certificate_sha1: Optional[bytes] = None,
+            certificate_id: str | None = None,
+            certificate_sha1: bytes | None = None,
         ) -> None:
             def _encrypt_dump(
                 cleartext: bytes,
-            ) -> Tuple[DeviceFileType, bytes, bytes | None, bytes | None, str | None, bytes | None]:
+            ) -> tuple[DeviceFileType, bytes, bytes | None, bytes | None, str | None, bytes | None]:
                 return (
                     DeviceFileType.SMARTCARD,
                     cleartext,
