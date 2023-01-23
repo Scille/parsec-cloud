@@ -1,13 +1,35 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyNotImplementedError, pyclass::CompareOp, types::PyByteArray, types::PyBytes,
-    types::PyFrozenSet, FromPyObject, PyAny, PyResult,
+    exceptions::PyNotImplementedError,
+    pyclass::CompareOp,
+    types::{PyByteArray, PyBytes, PyFrozenSet, PyTuple},
+    FromPyObject, IntoPy, PyAny, PyObject, PyResult,
 };
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
     hash::{Hash, Hasher},
 };
+
+#[derive(FromPyObject)]
+pub(crate) struct PathWrapper(pub std::path::PathBuf);
+
+impl IntoPy<PyObject> for PathWrapper {
+    fn into_py(self, py: pyo3::Python<'_>) -> pyo3::PyObject {
+        // Pathlib is part of the standard library
+        let pathlib_module = py
+            .import("pathlib")
+            .expect("import `pathlib` module failed.");
+        let path_ctor = pathlib_module
+            .getattr("Path")
+            .expect("can't get `Path` from `pathlib`.");
+
+        path_ctor
+            .call1(PyTuple::new(py, [self.0]))
+            .expect("call to `Path` constructor failed.")
+            .into_py(py)
+    }
+}
 
 #[derive(FromPyObject)]
 pub enum BytesWrapper<'py> {

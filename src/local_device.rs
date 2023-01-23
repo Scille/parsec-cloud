@@ -13,6 +13,7 @@ use libparsec::platform_device_loader;
 use crate::{
     addrs::BackendOrganizationAddr,
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
+    binding_utils::PathWrapper,
     enumerate::{DeviceFileType, UserProfile},
     ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID},
     local_device::client_types::StrPath,
@@ -520,8 +521,8 @@ impl AvailableDevice {
     }
 
     #[getter]
-    fn key_file_path(&self) -> PathBuf {
-        self.0.key_file_path.to_path_buf()
+    fn key_file_path(&self) -> PathWrapper {
+        PathWrapper(self.0.key_file_path.to_path_buf())
     }
 
     #[getter]
