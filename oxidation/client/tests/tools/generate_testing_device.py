@@ -34,7 +34,7 @@ async def create_org_and_device(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(help="Generate a new ts file containing a usable device")
 
     parser.add_argument("--label", default="Hideout")
     parser.add_argument("--email", default="zana@wraeclast.nz")

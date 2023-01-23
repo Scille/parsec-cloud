@@ -26,4 +26,4 @@ fi
 # Generate files
 OUTPUT_FILE="common/generated.ts"
 
-python tools/new_device_to_local_storage.py --backend-addr "parsec://localhost:6886?no_ssl=true" -o $OUTPUT_FILE
+python tools/generate_testing_device.py --backend-addr "parsec://localhost:6886?no_ssl=true" -o $OUTPUT_FILE
