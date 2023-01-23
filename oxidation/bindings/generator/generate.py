@@ -19,7 +19,7 @@ META_TYPES = [
     "Result",
     "Ref",
     "StrBasedType",
-    "IntBasedType",
+    "I32BasedType",
     "Variant",
     "Structure",
     "OnClientEventCallback",
@@ -27,7 +27,7 @@ META_TYPES = [
 Result: Type = None
 Ref: Type = None
 StrBasedType: Type = None
-IntBasedType: Type = None
+I32BasedType: Type = None
 Variant: Type = None
 Structure: Type = None
 OnClientEventCallback: Type = None
@@ -115,8 +115,8 @@ class BaseTypeInUse:
                 custom_to_rs_string=getattr(param, "custom_to_rs_string", None),
             )
 
-        elif isinstance(param, type) and issubclass(param, IntBasedType):
-            return IntBasedTypeInUse(name=param.__name__)
+        elif isinstance(param, type) and issubclass(param, I32BasedType):
+            return I32BasedTypeInUse(name=param.__name__)
 
         else:
             typespec = TYPESDB.get(param)
@@ -176,8 +176,8 @@ class StrBasedTypeInUse(BaseTypeInUse):
 
 
 @dataclass
-class IntBasedTypeInUse(BaseTypeInUse):
-    kind = "int_based"
+class I32BasedTypeInUse(BaseTypeInUse):
+    kind = "i32_based"
     name: str
 
 
@@ -197,7 +197,7 @@ class MethSpec:
 @dataclass
 class ApiSpecs:
     str_based_types: List[StrBasedType]
-    int_based_types: List[IntBasedType]
+    i32_based_types: List[I32BasedType]
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
@@ -210,7 +210,6 @@ class ApiSpecs:
 # The `Bar` object is going to be a key in TYPESDB, and the value will be the `StructSpec` built by introspecting `Bar`
 TYPESDB: Dict[type, Union[OpaqueSpec, StructSpec, VariantSpec]] = {
     bool: OpaqueSpec(kind="bool"),
-    int: OpaqueSpec(kind="int"),
     float: OpaqueSpec(kind="float"),
     str: OpaqueSpec(kind="str"),
     bytes: OpaqueSpec(kind="bytes"),
@@ -325,10 +324,10 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, StrBasedType)
         ],
-        int_based_types=[
+        i32_based_types=[
             item.__name__
             for item in api_items.values()
-            if isinstance(item, type) and issubclass(item, IntBasedType)
+            if isinstance(item, type) and issubclass(item, I32BasedType)
         ],
         variants=variants,
         structs=structs,

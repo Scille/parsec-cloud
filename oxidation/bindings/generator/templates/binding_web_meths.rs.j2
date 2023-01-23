@@ -17,7 +17,7 @@ Vec<{{ function_param_type(type.elem) }}>
 Option<{{ function_param_type(type.elem) }}>
 {%- elif type.kind == "bool" -%}
 bool
-{%- elif type.kind in ("int", "int_based") -%}
+{%- elif type.kind == "i32_based" -%}
 i32
 {%- elif type.kind == "float" -%}
 f64
@@ -50,8 +50,6 @@ let {{ param_name }} = match {{ param_name }} {
     }
     None => None,
 };
-{% elif type.kind == "int_based" %}
-let {{ param_name }} = {{ param_name }}.into();
 {% elif type.kind == "str_based" %}
 let {{ param_name }} = {{ param_name }}.parse().map_err(|_| {
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
@@ -102,10 +100,8 @@ if {{ js_val }}.is_null() {
 }
 {%- elif type.kind == "bool" -%}
 {{ js_val }}.dyn_into::<Boolean>().map_err(|_| TypeError::new("Not a boolean"))?.value_of()
-{%- elif type.kind == "int" -%}
+{%- elif type.kind == "i32_based" -%}
 {{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of() as i32
-{%- elif type.kind == "int_based" -%}
-({{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of() as i32).into()
 {%- elif type.kind == "float" -%}
 {{ js_val }}.dyn_into::<Number>()?.value_of()
 {%- elif type.kind == "str" -%}
@@ -113,7 +109,10 @@ js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| Typ
 {%- elif type.kind == "str_based" -%}
 js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))
 {%- if type.custom_from_rs_string -%}
-.and_then(|x| { ({{ type.custom_from_rs_string }})(x).map_err(|e| TypeError::new(e)) })
+.and_then(|x| {
+    let custom_from_rs_string = {{ type.custom_from_rs_string }};
+    custom_from_rs_string(x)
+.map_err(|e| TypeError::new(e)) })
 {%- else -%}
 ?.parse()
 {%- endif %}
@@ -149,14 +148,17 @@ match {{ rs_value }} {
     Some(val) => {{ render_rs_to_js_value("val", type.elem) }},
     None => JsValue::NULL,
 }
-{%- elif type.kind == "int_based" -%}
-JsValue::from(i32::from({{ rs_value }}))
+{%- elif type.kind == "i32_based" -%}
+JsValue::from({{ rs_value }})
 {%- elif type.kind == "str_based" -%}
 JsValue::from_str({%- if type.custom_to_rs_string -%}
-match ({{ type.custom_to_rs_string }})({{ rs_value }}) {
-    Ok(ok) => ok,
-    Err(err) => return Err(JsValue::from(TypeError::new(err))),
-}.as_ref()
+{
+    let custom_to_rs_string = {{ type.custom_to_rs_string }};
+    match custom_to_rs_string({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
+    }.as_ref()
+}
 {%- else -%}
 {{ rs_value }}.as_ref()
 {%- endif -%}

@@ -16,36 +16,36 @@ fn struct_clientconfig_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ClientConfig> {
     let config_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "configDir")?;
-        match (|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) })(
-            js_val.value(cx),
-        ) {
+        let custom_from_rs_string =
+            |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+        match custom_from_rs_string(js_val.value(cx)) {
             Ok(val) => val,
             Err(err) => return cx.throw_type_error(err),
         }
     };
     let data_base_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "dataBaseDir")?;
-        match (|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) })(
-            js_val.value(cx),
-        ) {
+        let custom_from_rs_string =
+            |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+        match custom_from_rs_string(js_val.value(cx)) {
             Ok(val) => val,
             Err(err) => return cx.throw_type_error(err),
         }
     };
     let mountpoint_base_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "mountpointBaseDir")?;
-        match (|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) })(
-            js_val.value(cx),
-        ) {
+        let custom_from_rs_string =
+            |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+        match custom_from_rs_string(js_val.value(cx)) {
             Ok(val) => val,
             Err(err) => return cx.throw_type_error(err),
         }
     };
     let preferred_org_creation_backend_addr = {
         let js_val: Handle<JsString> = obj.get(cx, "preferredOrgCreationBackendAddr")?;
-        match (|s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) })(
-            js_val.value(cx),
-        ) {
+        let custom_from_rs_string =
+            |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
+        match custom_from_rs_string(js_val.value(cx)) {
             Ok(val) => val,
             Err(err) => return cx.throw_type_error(err),
         }
@@ -69,58 +69,54 @@ fn struct_clientconfig_rs_to_js<'a>(
     rs_obj: libparsec::ClientConfig,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_config_dir = JsString::try_new(
-        cx,
-        match (|path: std::path::PathBuf| -> Result<_, _> {
+    let js_config_dir = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
             path.into_os_string()
                 .into_string()
                 .map_err(|_| "Path contains non-utf8 characters")
-        })(rs_obj.config_dir)
-        {
+        };
+        match custom_to_rs_string(rs_obj.config_dir) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
-        },
-    )
+        }
+    })
     .or_throw(cx)?;
     js_obj.set(cx, "configDir", js_config_dir)?;
-    let js_data_base_dir = JsString::try_new(
-        cx,
-        match (|path: std::path::PathBuf| -> Result<_, _> {
+    let js_data_base_dir = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
             path.into_os_string()
                 .into_string()
                 .map_err(|_| "Path contains non-utf8 characters")
-        })(rs_obj.data_base_dir)
-        {
+        };
+        match custom_to_rs_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
-        },
-    )
+        }
+    })
     .or_throw(cx)?;
     js_obj.set(cx, "dataBaseDir", js_data_base_dir)?;
-    let js_mountpoint_base_dir = JsString::try_new(
-        cx,
-        match (|path: std::path::PathBuf| -> Result<_, _> {
+    let js_mountpoint_base_dir = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
             path.into_os_string()
                 .into_string()
                 .map_err(|_| "Path contains non-utf8 characters")
-        })(rs_obj.mountpoint_base_dir)
-        {
+        };
+        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
-        },
-    )
+        }
+    })
     .or_throw(cx)?;
     js_obj.set(cx, "mountpointBaseDir", js_mountpoint_base_dir)?;
-    let js_preferred_org_creation_backend_addr = JsString::try_new(
-        cx,
-        match (|addr: libparsec::BackendAddr| -> Result<String, &'static str> {
+    let js_preferred_org_creation_backend_addr = JsString::try_new(cx, {
+        let custom_to_rs_string = |addr: libparsec::BackendAddr| -> Result<String, &'static str> {
             Ok(addr.to_url().into())
-        })(rs_obj.preferred_org_creation_backend_addr)
-        {
+        };
+        match custom_to_rs_string(rs_obj.preferred_org_creation_backend_addr) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
-        },
-    )
+        }
+    })
     .or_throw(cx)?;
     js_obj.set(
         cx,
@@ -149,7 +145,7 @@ fn variant_clientevent_js_to_rs<'a>(
         "ClientConnectionChanged" => {
             let client = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "client")?;
-                (js_val.value(cx) as i32).into()
+                js_val.value(cx) as i32
             };
             Ok(libparsec::ClientEvent::ClientConnectionChanged { client })
         }
@@ -172,7 +168,7 @@ fn variant_clientevent_rs_to_js<'a>(
         libparsec::ClientEvent::ClientConnectionChanged { client } => {
             let js_tag = JsString::try_new(cx, "ClientConnectionChanged").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_client = JsNumber::new(cx, i32::from(client) as f64);
+            let js_client = JsNumber::new(cx, client as f64);
             js_obj.set(cx, "client", js_client)?;
         }
         libparsec::ClientEvent::WorkspaceReencryptionEnded {} => {
@@ -245,9 +241,9 @@ fn variant_deviceaccessparams_js_to_rs<'a>(
         "Password" => {
             let path = {
                 let js_val: Handle<JsString> = obj.get(cx, "path")?;
-                match (|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) })(
-                    js_val.value(cx),
-                ) {
+                let custom_from_rs_string =
+                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                match custom_from_rs_string(js_val.value(cx)) {
                     Ok(val) => val,
                     Err(err) => return cx.throw_type_error(err),
                 }
@@ -261,9 +257,9 @@ fn variant_deviceaccessparams_js_to_rs<'a>(
         "Smartcard" => {
             let path = {
                 let js_val: Handle<JsString> = obj.get(cx, "path")?;
-                match (|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) })(
-                    js_val.value(cx),
-                ) {
+                let custom_from_rs_string =
+                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                match custom_from_rs_string(js_val.value(cx)) {
                     Ok(val) => val,
                     Err(err) => return cx.throw_type_error(err),
                 }
@@ -284,18 +280,17 @@ fn variant_deviceaccessparams_rs_to_js<'a>(
         libparsec::DeviceAccessParams::Password { path, password } => {
             let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_path = JsString::try_new(
-                cx,
-                match (|path: std::path::PathBuf| -> Result<_, _> {
+            let js_path = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
                     path.into_os_string()
                         .into_string()
                         .map_err(|_| "Path contains non-utf8 characters")
-                })(path)
-                {
+                };
+                match custom_to_rs_string(path) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                },
-            )
+                }
+            })
             .or_throw(cx)?;
             js_obj.set(cx, "path", js_path)?;
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
@@ -304,18 +299,17 @@ fn variant_deviceaccessparams_rs_to_js<'a>(
         libparsec::DeviceAccessParams::Smartcard { path } => {
             let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_path = JsString::try_new(
-                cx,
-                match (|path: std::path::PathBuf| -> Result<_, _> {
+            let js_path = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
                     path.into_os_string()
                         .into_string()
                         .map_err(|_| "Path contains non-utf8 characters")
-                })(path)
-                {
+                };
+                match custom_to_rs_string(path) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                },
-            )
+                }
+            })
             .or_throw(cx)?;
             js_obj.set(cx, "path", js_path)?;
         }
@@ -415,7 +409,7 @@ fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 if let Some(ref js_fn) = callback2.js_fn {
                     js_fn
                         .to_inner(&mut cx)
-                        .call_with(&mut cx)
+                        .call_with(&cx)
                         .arg(js_event)
                         .apply::<JsNull, _>(&mut cx)?;
                 }
@@ -439,7 +433,7 @@ fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, i32::from(ok) as f64);
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }

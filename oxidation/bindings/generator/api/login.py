@@ -6,12 +6,16 @@ from .common import *
 from .events import ClientEvent
 
 
+class CacheSize(I32BasedType):
+    pass
+
+
 class WorkspaceStorageCacheSize(Variant):
     class Default:
         pass
 
     class Custom:
-        size: int
+        size: CacheSize
 
 
 class ClientConfig(Structure):

@@ -15,7 +15,7 @@ JsArray
 JsValue
 {%- elif type.kind == "bool" -%}
 JsBoolean
-{%- elif type.kind in ("int", "int_based") -%}
+{%- elif type.kind == "i32_based" -%}
 JsNumber
 {%- elif type.kind == "float" -%}
 JsNumber
@@ -84,17 +84,16 @@ JsFunction
         {{ render_downcasted_js_to_rs("js_val", type.err, mut_cx_ref) | indent(8) }}
     }
 }
-{%- elif type.kind == "int" -%}
+{%- elif type.kind == "i32_based" -%}
 {{ js_val }}.value({{ mut_cx_ref }}) as i32
-{%- elif type.kind == "int_based" -%}
-({{ js_val }}.value({{ mut_cx_ref }}) as i32).into()
 {%- elif type.kind == "str" -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- elif type.kind == "str_based" -%}
-match {% if type.custom_from_rs_string -%}
-({{ type.custom_from_rs_string }})({{ js_val }}.value({{ mut_cx_ref }}))
+{% if type.custom_from_rs_string -%}
+let custom_from_rs_string = {{ type.custom_from_rs_string }};
+match custom_from_rs_string({{ js_val }}.value({{ mut_cx_ref }}))
 {%- else -%}
-{{ js_val }}.value({{ mut_cx_ref }}).parse()
+match {{ js_val }}.value({{ mut_cx_ref }}).parse()
 {%- endif %} {
     Ok(val) => val,
     Err(err) => return cx.throw_type_error(err),
@@ -142,7 +141,7 @@ Box::new(
             let js_event = {{ variant_rs_to_js_function_name(type.event_type) }}({{ mut_cx_ref }}, event)?;
             if let Some(ref js_fn) = callback2.js_fn {
                 js_fn.to_inner(&mut cx)
-                .call_with(&mut cx)
+                .call_with(&cx)
                 .arg(js_event)
                 .apply::<JsNull, _>(&mut cx)?;
             }
@@ -197,10 +196,8 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
-{%- elif type.kind == "int" -%}
+{%- elif type.kind == "i32_based" -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }} as f64)
-{%- elif type.kind == "int_based" -%}
-JsNumber::new({{ mut_cx_ref }}, i32::from({{ rs_value }}) as f64)
 {%- elif type.kind == "float" -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
 {%- elif type.kind == "str" -%}
@@ -208,12 +205,15 @@ JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}).or_throw({{ mut_cx_ref }})?
 {%- elif type.kind == "str_based" -%}
 JsString::try_new({{ mut_cx_ref }},
 {%- if type.custom_to_rs_string -%}
-match ({{ type.custom_to_rs_string }})({{ rs_value }}) {
-    Ok(ok) => ok,
-    Err(err) => return cx.throw_type_error(err),
+{
+    let custom_to_rs_string = {{ type.custom_to_rs_string }};
+    match custom_to_rs_string({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
 }
 {%- else -%}
-{{ rs_value }}
+match {{ rs_value }}
 {%- endif -%}
 ).or_throw({{ mut_cx_ref }})?
 {%- elif type.kind == "bytes" -%}
