@@ -550,13 +550,13 @@ msgid "TEXT_FILE_HISTORY_TITLE_name"
 msgstr "File history of {name}"
 
 msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
-msgstr "The file will not be synced."
+msgstr "This file will not be synced."
 
 msgid "TEXT_FILE_ITEM_IS_SYNCED_TOOLTIP"
-msgstr "The file is synced."
+msgstr "This file is synced."
 
 msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
-msgstr "The file is not synced yet."
+msgstr "This file is not synced yet."
 
 msgid "TEXT_FILE_SIZE_B"
 msgstr "B"
@@ -642,8 +642,14 @@ msgstr "Show status"
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
 
+msgid "ACTION_FILE_MENU_GET_FOLDER_LINK"
+msgstr "Get a link to the folder"
+
 msgid "ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"
 msgstr "Get a link to this version of the file"
+
+msgid "ACTION_FILE_MENU_GET_FOLDER_LINK_TIMESTAMP"
+msgstr "Get a link to this version of the folder"
 
 msgid "TEXT_FILE_TREE_PARENT_FOLDER"
 msgstr "Parent folder"
@@ -663,15 +669,18 @@ msgstr "{count} elements in total"
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "A link to the file has been copied to your clipboard."
 
+msgid "TEXT_FOLDER_LINK_COPIED_TO_CLIPBOARD"
+msgstr "A link to the folder has been copied to your clipboard."
+
 msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
 msgstr "Cannot move a folder into itself."
 
 msgid "TEXT_FILE_PASTE_ERROR"
-msgstr "Cannot paste this file here."
+msgstr "Cannot paste this element here."
 
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Cannot show the history of multiple files at once. Please select a single"
+"Cannot show the history of multiple elements at once. Please select a single"
 " file."
 
 msgid "TEXT_FILE_STATUS_NO_FILE_SELECTED_ERROR"
@@ -679,8 +688,8 @@ msgstr "No file selected."
 
 msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Cannot show the status of multiple files at once. Please select a single "
-"file."
+"Cannot show the status of multiple elements at once. Please select a single "
+"file or folder."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Rename a file"
@@ -691,11 +700,20 @@ msgstr "Enter the new file name."
 msgid "TEXT_FILE_RENAME_PLACEHOLDER"
 msgstr "File name"
 
+msgid "TEXT_FOLDER_RENAME_TITLE"
+msgstr "Rename a folder"
+
+msgid "TEXT_FOLDER_RENAME_INSTRUCTIONS"
+msgstr "Enter the new folder name."
+
+msgid "TEXT_FOLDER_RENAME_PLACEHOLDER"
+msgstr "Folder name"
+
 msgid "ACTION_FILE_RENAME"
 msgstr "Rename"
 
 msgid "TEXT_FILE_RENAME_MULTIPLE_TITLE_count"
-msgstr "Rename {count} files"
+msgstr "Rename {count} elements"
 
 msgid "TEXT_FILE_RENAME_MULTIPLE_INSTRUCTIONS_count"
 msgstr ""
@@ -711,8 +729,14 @@ msgstr "Rename"
 msgid "TEXT_FILE_DELETE_TITLE"
 msgstr "Delete a file"
 
+msgid "TEXT_FOLDER_DELETE_TITLE"
+msgstr "Delete a folder"
+
 msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
 msgstr "Are you sure you want to delete the file <b>{name}</b>?"
+
+msgid "TEXT_FOLDER_DELETE_INSTRUCTIONS_name"
+msgstr "Are you sure you want to delete the folder <b>{name}</b>?"
 
 msgid "ACTION_FILE_DELETE"
 msgstr "Delete"
@@ -721,10 +745,10 @@ msgid "ACTION_CANCEL"
 msgstr "Cancel"
 
 msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
-msgstr "Delete {count} files"
+msgstr "Delete {count} elements"
 
 msgid "TEXT_FILE_DELETE_MULTIPLE_INSTRUCTIONS_count"
-msgstr "Are you sure you want to delete {count} files?"
+msgstr "Are you sure you want to delete {count} elements?"
 
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Delete"
@@ -2408,7 +2432,7 @@ msgid "TEXT_WORKSPACE_FILTERED_user"
 msgstr "Common workspaces with {user}"
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"
-msgstr "Access a file by its link"
+msgstr "Access a file or folder by its link"
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_INSTRUCTIONS"
 msgstr "Please provide the link to the file."

@@ -1,0 +1,1 @@
+Added better distinction between file and folder actions in contextual menus.
