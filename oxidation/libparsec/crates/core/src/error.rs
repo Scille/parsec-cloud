@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use libparsec_types::{DateTime, DeviceID, UserID};
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum TrustchainError {
     #[error("{path}: Invalid certificate: {exc}")]
     InvalidCertificate { path: String, exc: String },
@@ -46,7 +46,7 @@ pub(crate) fn build_signature_path(sign_chain: &[String]) -> String {
     sign_chain.join(" <-sign- ")
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum RemoteDevicesManagerError {
     #[error("User `{user_id}` is not in local cache and we are offline.")]
     BackendOffline { user_id: UserID },

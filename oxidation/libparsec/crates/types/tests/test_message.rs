@@ -6,7 +6,7 @@ use rstest::rstest;
 use libparsec_crypto::*;
 use libparsec_types::*;
 
-use tests_fixtures::{alice, bob, Device};
+use libparsec_tests_fixtures::{alice, bob, Device};
 
 #[rstest]
 fn serde_sharing_granted_message(alice: &Device, bob: &Device) {

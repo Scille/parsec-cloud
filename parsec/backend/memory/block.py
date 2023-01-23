@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, Tuple
 
 import attr
@@ -129,6 +130,22 @@ class MemoryBlockComponent(BaseBlockComponent):
 
         self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block), created_on)
 
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._blockmetas.update(
+            {
+                (new_id, block_id): deepcopy(block_meta)
+                for (candidate_org_id, block_id), block_meta in self._blockmetas.items()
+                if candidate_org_id == id
+            }
+        )
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._blockmetas = {
+            (candidate_org_id, block_id): block_meta
+            for (candidate_org_id, block_id), block_meta in self._blockmetas.items()
+            if candidate_org_id != id
+        }
+
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self) -> None:
@@ -146,3 +163,19 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
     ) -> None:
         key = (organization_id, block_id)
         self._blocks[key] = block
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._blocks.update(
+            {
+                (new_id, block_id): block
+                for (candidate_org_id, block_id), block in self._blocks.items()
+                if candidate_org_id == id
+            }
+        )
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._blocks = {
+            (candidate_org_id, block_id): block
+            for (candidate_org_id, block_id), block in self._blocks.items()
+            if candidate_org_id != id
+        }

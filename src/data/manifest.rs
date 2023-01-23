@@ -47,6 +47,8 @@ impl EntryName {
 pub(crate) struct WorkspaceEntry(pub libparsec::types::WorkspaceEntry);
 
 crate::binding_utils::gen_proto!(WorkspaceEntry, __repr__);
+crate::binding_utils::gen_proto!(WorkspaceEntry, __copy__);
+crate::binding_utils::gen_proto!(WorkspaceEntry, __deepcopy__);
 crate::binding_utils::gen_proto!(WorkspaceEntry, __richcmp__, eq);
 
 #[pymethods]
@@ -170,6 +172,8 @@ impl WorkspaceEntry {
 pub(crate) struct BlockAccess(pub libparsec::types::BlockAccess);
 
 crate::binding_utils::gen_proto!(BlockAccess, __repr__);
+crate::binding_utils::gen_proto!(BlockAccess, __copy__);
+crate::binding_utils::gen_proto!(BlockAccess, __deepcopy__);
 crate::binding_utils::gen_proto!(BlockAccess, __richcmp__, eq);
 
 #[pymethods]
@@ -259,6 +263,8 @@ impl BlockAccess {
 pub(crate) struct FileManifest(pub libparsec::types::FileManifest);
 
 crate::binding_utils::gen_proto!(FileManifest, __repr__);
+crate::binding_utils::gen_proto!(FileManifest, __copy__);
+crate::binding_utils::gen_proto!(FileManifest, __deepcopy__);
 crate::binding_utils::gen_proto!(FileManifest, __richcmp__, eq);
 
 #[pymethods]
@@ -454,6 +460,8 @@ impl FileManifest {
 pub(crate) struct FolderManifest(pub libparsec::types::FolderManifest);
 
 crate::binding_utils::gen_proto!(FolderManifest, __repr__);
+crate::binding_utils::gen_proto!(FolderManifest, __copy__);
+crate::binding_utils::gen_proto!(FolderManifest, __deepcopy__);
 crate::binding_utils::gen_proto!(FolderManifest, __richcmp__, eq);
 
 #[pymethods]
@@ -629,6 +637,8 @@ impl FolderManifest {
 pub(crate) struct WorkspaceManifest(pub libparsec::types::WorkspaceManifest);
 
 crate::binding_utils::gen_proto!(WorkspaceManifest, __repr__);
+crate::binding_utils::gen_proto!(WorkspaceManifest, __copy__);
+crate::binding_utils::gen_proto!(WorkspaceManifest, __deepcopy__);
 crate::binding_utils::gen_proto!(WorkspaceManifest, __richcmp__, eq);
 
 #[pymethods]
@@ -795,6 +805,8 @@ impl WorkspaceManifest {
 pub(crate) struct UserManifest(pub libparsec::types::UserManifest);
 
 crate::binding_utils::gen_proto!(UserManifest, __repr__);
+crate::binding_utils::gen_proto!(UserManifest, __copy__);
+crate::binding_utils::gen_proto!(UserManifest, __deepcopy__);
 crate::binding_utils::gen_proto!(UserManifest, __richcmp__, eq);
 
 #[pymethods]

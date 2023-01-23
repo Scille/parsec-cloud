@@ -21,6 +21,8 @@ use crate::{
 pub(crate) struct BlockCreateReq(pub block_create::Req);
 
 crate::binding_utils::gen_proto!(BlockCreateReq, __repr__);
+crate::binding_utils::gen_proto!(BlockCreateReq, __copy__);
+crate::binding_utils::gen_proto!(BlockCreateReq, __deepcopy__);
 crate::binding_utils::gen_proto!(BlockCreateReq, __richcmp__, eq);
 
 #[pymethods]
@@ -88,6 +90,8 @@ impl BlockCreateRepOk {
 pub(crate) struct BlockReadReq(pub block_read::Req);
 
 crate::binding_utils::gen_proto!(BlockReadReq, __repr__);
+crate::binding_utils::gen_proto!(BlockReadReq, __copy__);
+crate::binding_utils::gen_proto!(BlockReadReq, __deepcopy__);
 crate::binding_utils::gen_proto!(BlockReadReq, __richcmp__, eq);
 
 #[pymethods]

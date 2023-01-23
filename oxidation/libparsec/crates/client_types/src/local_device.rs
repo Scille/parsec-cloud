@@ -8,6 +8,19 @@ use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
 use libparsec_types::*;
 
+pub fn local_device_slug(
+    organization_id: &OrganizationID,
+    device_id: &DeviceID,
+    root_verify_key: &VerifyKey,
+) -> String {
+    // Add a hash to avoid clash when the backend is reseted and we recreate
+    // a device with same OrganizationID/DeviceID than a previous one
+    let mut hasher = sha2::Sha256::new();
+    hasher.update(root_verify_key.as_ref());
+    let hashed_rvk = format!("{:x}", hasher.finalize());
+    format!("{}#{}#{}", &hashed_rvk[..10], organization_id, device_id)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
 pub struct LocalDevice {
@@ -75,16 +88,10 @@ impl LocalDevice {
     /// The purpose of the slog is simply to tell whether `LocalDevice` and
     /// `AvailableDevice` objects corresponds to the same device.
     pub fn slug(&self) -> String {
-        // Add a hash to avoid clash when the backend is reseted and we recreate
-        // a device with same OrganizationID/DeviceID than a previous one
-        let mut hasher = sha2::Sha256::new();
-        hasher.update(self.root_verify_key().as_ref());
-        let hashed_rvk = format!("{:x}", hasher.finalize());
-        format!(
-            "{}#{}#{}",
-            &hashed_rvk[..10],
+        local_device_slug(
             self.organization_id(),
-            self.device_id
+            &self.device_id,
+            self.root_verify_key(),
         )
     }
 

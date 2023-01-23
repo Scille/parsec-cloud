@@ -7,11 +7,11 @@ use rstest::rstest;
 use libparsec_protocol::{
     anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
 };
-use libparsec_types::{ActiveUsersLimit, UsersPerProfileDetailItem};
-use tests_fixtures::{
+use libparsec_tests_fixtures::{
     alice, device_certificate, redacted_device_certificate, redacted_user_certificate,
     user_certificate, Device,
 };
+use libparsec_types::{ActiveUsersLimit, UsersPerProfileDetailItem};
 
 type OrganizationBootstrapGenerator =
     Box<dyn FnOnce(&Device, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) -> anonymous_cmds::AnyCmdReq>;

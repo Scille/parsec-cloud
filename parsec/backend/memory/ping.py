@@ -22,3 +22,9 @@ class MemoryPingComponent(BasePingComponent):
             await self._send_event(
                 BackendEvent.PINGED, organization_id=organization_id, author=author, ping=ping
             )
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        pass
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        pass

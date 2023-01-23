@@ -15,3 +15,5 @@ pub use libparsec_crypto as crypto;
 pub use libparsec_platform_device_loader as platform_device_loader;
 
 pub use libparsec_client_high_level_api::*;
+#[cfg(feature = "test-utils")]
+pub use libparsec_testbed::*;

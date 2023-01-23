@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import deepcopy
 from typing import Any, Callable, Coroutine, Dict, List
 
 import attr
@@ -232,3 +233,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
         else:
             raise PkiEnrollmentNotFoundError()
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._enrollments[new_id] = deepcopy(self._enrollments[id])
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._enrollments.pop(id, None)

@@ -100,8 +100,8 @@ mod tests {
     use libparsec_crypto::SecretKey;
     use libparsec_types::{DateTime, UserManifest};
 
+    use libparsec_tests_fixtures::{alice, timestamp, tmp_path, Device, TmpPath};
     use rstest::rstest;
-    use tests_fixtures::{alice, timestamp, tmp_path, Device, TmpPath};
 
     use super::super::local_database::SqlitePool;
     use super::*;

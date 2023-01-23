@@ -26,6 +26,6 @@ serde_with = "2.1.0"
 thiserror = "1.0.37"
 
 [dev-dependencies]
-tests_fixtures = { path = "../tests_fixtures" }
+libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
 rstest = "0.16.0"

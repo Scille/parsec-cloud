@@ -7,7 +7,7 @@ use rstest::rstest;
 use libparsec_crypto::{SequesterPublicKeyDer, SequesterVerifyKeyDer};
 use libparsec_types::*;
 
-use tests_fixtures::{alice, bob, Device};
+use libparsec_tests_fixtures::{alice, bob, Device};
 
 // TODO: check serde output to ensure handling of Option<T> depending of
 // default/missing policy

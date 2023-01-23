@@ -19,6 +19,8 @@ use crate::{
 pub(crate) struct UserCertificate(pub libparsec::types::UserCertificate);
 
 crate::binding_utils::gen_proto!(UserCertificate, __repr__);
+crate::binding_utils::gen_proto!(UserCertificate, __copy__);
+crate::binding_utils::gen_proto!(UserCertificate, __deepcopy__);
 crate::binding_utils::gen_proto!(UserCertificate, __richcmp__, eq);
 
 #[pymethods]
@@ -162,6 +164,8 @@ impl UserCertificate {
 pub(crate) struct DeviceCertificate(pub libparsec::types::DeviceCertificate);
 
 crate::binding_utils::gen_proto!(DeviceCertificate, __repr__);
+crate::binding_utils::gen_proto!(DeviceCertificate, __copy__);
+crate::binding_utils::gen_proto!(DeviceCertificate, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceCertificate, __richcmp__, eq);
 
 #[pymethods]
@@ -287,6 +291,8 @@ impl DeviceCertificate {
 pub(crate) struct RevokedUserCertificate(pub libparsec::types::RevokedUserCertificate);
 
 crate::binding_utils::gen_proto!(RevokedUserCertificate, __repr__);
+crate::binding_utils::gen_proto!(RevokedUserCertificate, __copy__);
+crate::binding_utils::gen_proto!(RevokedUserCertificate, __deepcopy__);
 crate::binding_utils::gen_proto!(RevokedUserCertificate, __richcmp__, eq);
 
 #[pymethods]
@@ -378,6 +384,8 @@ impl RevokedUserCertificate {
 pub(crate) struct RealmRoleCertificate(pub libparsec::types::RealmRoleCertificate);
 
 crate::binding_utils::gen_proto!(RealmRoleCertificate, __repr__);
+crate::binding_utils::gen_proto!(RealmRoleCertificate, __copy__);
+crate::binding_utils::gen_proto!(RealmRoleCertificate, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmRoleCertificate, __richcmp__, eq);
 
 #[pymethods]
@@ -523,6 +531,8 @@ pub(crate) struct SequesterAuthorityCertificate(
 );
 
 crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __repr__);
+crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __copy__);
+crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __deepcopy__);
 crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __richcmp__, eq);
 
 #[pymethods]
@@ -569,6 +579,8 @@ impl SequesterAuthorityCertificate {
 pub(crate) struct SequesterServiceCertificate(pub libparsec::types::SequesterServiceCertificate);
 
 crate::binding_utils::gen_proto!(SequesterServiceCertificate, __repr__);
+crate::binding_utils::gen_proto!(SequesterServiceCertificate, __copy__);
+crate::binding_utils::gen_proto!(SequesterServiceCertificate, __deepcopy__);
 crate::binding_utils::gen_proto!(SequesterServiceCertificate, __richcmp__, eq);
 
 #[pymethods]

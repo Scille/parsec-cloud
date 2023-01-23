@@ -7,7 +7,7 @@ from typing import AsyncGenerator, Awaitable, Callable, Dict
 import attr
 from structlog import get_logger
 
-from parsec._parsec import ClientType
+from parsec._parsec import ClientType, OrganizationID
 from parsec.backend.block import BaseBlockComponent
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.config import BackendConfig
@@ -97,3 +97,29 @@ class BackendApp:
             self.pki,
             self.events,
         )
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self.user.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.invite.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.organization.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.message.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.realm.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.vlob.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.ping.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.blockstore.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.block.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.pki.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.sequester.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self.user.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.invite.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.organization.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.message.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.realm.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.vlob.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.ping.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.blockstore.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.block.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.pki.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.sequester.test_drop_organization(id)  # type: ignore[attr-defined]

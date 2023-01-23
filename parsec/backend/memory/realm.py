@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, Tuple
 
 import attr
@@ -381,3 +382,19 @@ class MemoryRealmComponent(BaseRealmComponent):
             granted_roles += realm.granted_roles
 
         return granted_roles
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._realms.update(
+            {
+                (new_id, realm_id): deepcopy(realm)
+                for (candidate_org_id, realm_id), realm in self._realms.items()
+                if candidate_org_id == id
+            }
+        )
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._realms = {
+            (candidate_org_id, realm_id): realm
+            for (candidate_org_id, realm_id), realm in self._realms.items()
+            if candidate_org_id != id
+        }

@@ -17,7 +17,6 @@ use libparsec::{
 
 use crate::{
     api_crypto::VerifyKey,
-    binding_utils::gen_proto,
     binding_utils::BytesWrapper,
     data::UsersPerProfileDetailItem,
     protocol::{
@@ -31,6 +30,8 @@ use crate::{
 pub(crate) struct OrganizationStatsReq(pub organization_stats::Req);
 
 crate::binding_utils::gen_proto!(OrganizationStatsReq, __repr__);
+crate::binding_utils::gen_proto!(OrganizationStatsReq, __copy__);
+crate::binding_utils::gen_proto!(OrganizationStatsReq, __deepcopy__);
 crate::binding_utils::gen_proto!(OrganizationStatsReq, __richcmp__, eq);
 
 #[pymethods]
@@ -157,6 +158,8 @@ impl OrganizationStatsRepOk {
 pub(crate) struct OrganizationConfigReq(pub organization_config::Req);
 
 crate::binding_utils::gen_proto!(OrganizationConfigReq, __repr__);
+crate::binding_utils::gen_proto!(OrganizationConfigReq, __copy__);
+crate::binding_utils::gen_proto!(OrganizationConfigReq, __deepcopy__);
 crate::binding_utils::gen_proto!(OrganizationConfigReq, __richcmp__, eq);
 
 #[pymethods]
@@ -222,8 +225,10 @@ impl ActiveUsersLimit {
     }
 }
 
-gen_proto!(ActiveUsersLimit, __richcmp__, ord);
-gen_proto!(ActiveUsersLimit, __repr__);
+crate::binding_utils::gen_proto!(ActiveUsersLimit, __richcmp__, ord);
+crate::binding_utils::gen_proto!(ActiveUsersLimit, __repr__);
+crate::binding_utils::gen_proto!(ActiveUsersLimit, __copy__);
+crate::binding_utils::gen_proto!(ActiveUsersLimit, __deepcopy__);
 
 gen_rep!(
     organization_config,
@@ -326,6 +331,8 @@ impl OrganizationConfigRepOk {
 pub(crate) struct OrganizationBootstrapReq(pub organization_bootstrap::Req);
 
 crate::binding_utils::gen_proto!(OrganizationBootstrapReq, __repr__);
+crate::binding_utils::gen_proto!(OrganizationBootstrapReq, __copy__);
+crate::binding_utils::gen_proto!(OrganizationBootstrapReq, __deepcopy__);
 crate::binding_utils::gen_proto!(OrganizationBootstrapReq, __richcmp__, eq);
 
 #[pymethods]

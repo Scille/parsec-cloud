@@ -14,6 +14,8 @@ import_exception!(nacl.exceptions, CryptoError);
 pub(crate) struct HashDigest(pub libparsec::crypto::HashDigest);
 
 crate::binding_utils::gen_proto!(HashDigest, __repr__);
+crate::binding_utils::gen_proto!(HashDigest, __copy__);
+crate::binding_utils::gen_proto!(HashDigest, __deepcopy__);
 crate::binding_utils::gen_proto!(HashDigest, __richcmp__, eq);
 
 #[pymethods]
@@ -52,6 +54,8 @@ impl HashDigest {
 pub(crate) struct SigningKey(pub libparsec::crypto::SigningKey);
 
 crate::binding_utils::gen_proto!(SigningKey, __repr__);
+crate::binding_utils::gen_proto!(SigningKey, __copy__);
+crate::binding_utils::gen_proto!(SigningKey, __deepcopy__);
 crate::binding_utils::gen_proto!(SigningKey, __richcmp__, eq);
 
 #[pymethods]
@@ -93,6 +97,8 @@ impl SigningKey {
 pub(crate) struct VerifyKey(pub libparsec::crypto::VerifyKey);
 
 crate::binding_utils::gen_proto!(VerifyKey, __repr__);
+crate::binding_utils::gen_proto!(VerifyKey, __copy__);
+crate::binding_utils::gen_proto!(VerifyKey, __deepcopy__);
 crate::binding_utils::gen_proto!(VerifyKey, __richcmp__, eq);
 
 #[pymethods]
@@ -152,6 +158,8 @@ impl VerifyKey {
 pub(crate) struct SecretKey(pub libparsec::crypto::SecretKey);
 
 crate::binding_utils::gen_proto!(SecretKey, __repr__);
+crate::binding_utils::gen_proto!(SecretKey, __copy__);
+crate::binding_utils::gen_proto!(SecretKey, __deepcopy__);
 crate::binding_utils::gen_proto!(SecretKey, __richcmp__, eq);
 
 #[pymethods]
@@ -224,6 +232,8 @@ impl SecretKey {
 pub(crate) struct PrivateKey(pub libparsec::crypto::PrivateKey);
 
 crate::binding_utils::gen_proto!(PrivateKey, __repr__);
+crate::binding_utils::gen_proto!(PrivateKey, __copy__);
+crate::binding_utils::gen_proto!(PrivateKey, __deepcopy__);
 crate::binding_utils::gen_proto!(PrivateKey, __richcmp__, eq);
 
 #[pymethods]
@@ -266,6 +276,8 @@ impl PrivateKey {
 pub(crate) struct PublicKey(pub libparsec::crypto::PublicKey);
 
 crate::binding_utils::gen_proto!(PublicKey, __repr__);
+crate::binding_utils::gen_proto!(PublicKey, __copy__);
+crate::binding_utils::gen_proto!(PublicKey, __deepcopy__);
 crate::binding_utils::gen_proto!(PublicKey, __richcmp__, eq);
 
 #[pymethods]
@@ -298,6 +310,8 @@ impl PublicKey {
 pub(crate) struct SequesterPrivateKeyDer(pub libparsec::crypto::SequesterPrivateKeyDer);
 
 crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __repr__);
+crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __copy__);
+crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __deepcopy__);
 
 #[pymethods]
 impl SequesterPrivateKeyDer {
@@ -357,6 +371,8 @@ impl SequesterPrivateKeyDer {
 pub(crate) struct SequesterPublicKeyDer(pub libparsec::crypto::SequesterPublicKeyDer);
 
 crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __repr__);
+crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __copy__);
+crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __deepcopy__);
 crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __richcmp__, eq);
 
 #[pymethods]
@@ -393,6 +409,8 @@ impl SequesterPublicKeyDer {
 pub(crate) struct SequesterSigningKeyDer(pub libparsec::crypto::SequesterSigningKeyDer);
 
 crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __repr__);
+crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __copy__);
+crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __deepcopy__);
 
 #[pymethods]
 impl SequesterSigningKeyDer {
@@ -449,6 +467,8 @@ impl SequesterSigningKeyDer {
 pub(crate) struct SequesterVerifyKeyDer(pub libparsec::crypto::SequesterVerifyKeyDer);
 
 crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __repr__);
+crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __copy__);
+crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __deepcopy__);
 
 #[pymethods]
 impl SequesterVerifyKeyDer {

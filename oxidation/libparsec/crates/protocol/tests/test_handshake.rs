@@ -10,7 +10,7 @@ use rstest::rstest;
 use libparsec_protocol::*;
 use libparsec_types::{DateTime, InvitationToken, InvitationType, OrganizationID};
 
-use tests_fixtures::{alice, bob, timestamp, Device};
+use libparsec_tests_fixtures::{alice, bob, timestamp, Device};
 
 #[cfg(feature = "test")]
 #[rstest]

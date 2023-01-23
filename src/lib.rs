@@ -15,6 +15,7 @@ mod misc;
 mod protocol;
 mod regex;
 mod runtime;
+mod testbed;
 mod time;
 mod trustchain;
 
@@ -130,6 +131,14 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
 
     // Misc
     m.add_class::<misc::ApiVersion>()?;
+
+    // Testbed stuff
+    m.add_function(wrap_pyfunction!(testbed::test_new_testbed, m)?)?;
+    m.add_function(wrap_pyfunction!(testbed::test_drop_testbed, m)?)?;
+    m.add_function(wrap_pyfunction!(testbed::test_get_testbed_templates, m)?)?;
+    m.add_class::<testbed::TestbedDeviceData>()?;
+    m.add_class::<testbed::TestbedUserData>()?;
+    m.add_class::<testbed::TestbedTemplate>()?;
 
     Ok(())
 }

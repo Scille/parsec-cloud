@@ -36,6 +36,8 @@ use crate::{
 pub(crate) struct Chunk(pub libparsec::client_types::Chunk);
 
 crate::binding_utils::gen_proto!(Chunk, __repr__);
+crate::binding_utils::gen_proto!(Chunk, __copy__);
+crate::binding_utils::gen_proto!(Chunk, __deepcopy__);
 
 #[pymethods]
 impl Chunk {
@@ -214,6 +216,8 @@ impl Chunk {
 pub(crate) struct LocalFileManifest(pub libparsec::client_types::LocalFileManifest);
 
 crate::binding_utils::gen_proto!(LocalFileManifest, __repr__);
+crate::binding_utils::gen_proto!(LocalFileManifest, __copy__);
+crate::binding_utils::gen_proto!(LocalFileManifest, __deepcopy__);
 crate::binding_utils::gen_proto!(LocalFileManifest, __richcmp__, eq);
 
 #[pymethods]
@@ -518,6 +522,8 @@ impl LocalFileManifest {
 pub(crate) struct LocalFolderManifest(pub libparsec::client_types::LocalFolderManifest);
 
 crate::binding_utils::gen_proto!(LocalFolderManifest, __repr__);
+crate::binding_utils::gen_proto!(LocalFolderManifest, __copy__);
+crate::binding_utils::gen_proto!(LocalFolderManifest, __deepcopy__);
 crate::binding_utils::gen_proto!(LocalFolderManifest, __richcmp__, eq);
 
 #[pymethods]
@@ -860,6 +866,8 @@ impl LocalFolderManifest {
 pub(crate) struct LocalWorkspaceManifest(pub libparsec::client_types::LocalWorkspaceManifest);
 
 crate::binding_utils::gen_proto!(LocalWorkspaceManifest, __repr__);
+crate::binding_utils::gen_proto!(LocalWorkspaceManifest, __copy__);
+crate::binding_utils::gen_proto!(LocalWorkspaceManifest, __deepcopy__);
 crate::binding_utils::gen_proto!(LocalWorkspaceManifest, __richcmp__, eq);
 
 #[pymethods]
@@ -1210,6 +1218,8 @@ impl LocalWorkspaceManifest {
 pub(crate) struct LocalUserManifest(pub libparsec::client_types::LocalUserManifest);
 
 crate::binding_utils::gen_proto!(LocalUserManifest, __repr__);
+crate::binding_utils::gen_proto!(LocalUserManifest, __copy__);
+crate::binding_utils::gen_proto!(LocalUserManifest, __deepcopy__);
 crate::binding_utils::gen_proto!(LocalUserManifest, __richcmp__, eq);
 
 #[pymethods]

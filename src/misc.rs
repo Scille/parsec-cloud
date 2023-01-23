@@ -84,5 +84,7 @@ impl ApiVersion {
 }
 
 gen_proto!(ApiVersion, __str__);
+gen_proto!(ApiVersion, __copy__);
+gen_proto!(ApiVersion, __deepcopy__);
 gen_proto!(ApiVersion, __repr__);
 gen_proto!(ApiVersion, __richcmp__, ord);
