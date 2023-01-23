@@ -7,11 +7,3 @@ export function clearEmitted(wrapper: VueWrapper): void {
 export async function getSpyOnLastCallResult(spyOn: jest.SpyInstance): Promise<any> {
   return await spyOn.mock.results[0].value;
 }
-
-export class MockDate extends Date {
-  constructor(arg: any) {
-      super(arg || 1);
-  }
-}
-
-export const mockDateValue = '1970-01-01T00:00:00.001Z';

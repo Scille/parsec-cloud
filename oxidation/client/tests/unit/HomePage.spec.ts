@@ -7,8 +7,6 @@ import { modalController } from '@ionic/vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import { Storage } from '@ionic/storage';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
-import { MockDate, mockDateValue } from './utils';
-import { login } from '../../../bindings/web/pkg';
 
 describe('HomePage.vue', () => {
   type MessageSchema = typeof frFR;
@@ -139,12 +137,8 @@ describe('HomePage.vue', () => {
         ty: {tag: 'Password'}
       };
       wrapper.vm.showOrganizationList = false;
-      global.Date = MockDate as DateConstructor;
       consoleLogSpyOn = jest.spyOn(console, 'log');
-    });
-
-    afterAll(() => {
-      global.Date = Date;
+      jest.useFakeTimers();
     });
 
     it('should update password value on password input change', async () => {
@@ -166,10 +160,12 @@ describe('HomePage.vue', () => {
       wrapper.vm.password = 'password';
       const expectedMessage = 'Log in to Eddy with password "password"';
       const loginButton = wrapper.findComponent('#login-button') as VueWrapper;
+      const now = new Date();
+      jest.setSystemTime(now);
       await loginButton.trigger('click');
       await store.create();
       const deviceStoredDataList = await store.get('devicesData');
-      expect(deviceStoredDataList.slug4.lastLogin).toEqual(mockDateValue);
+      expect(deviceStoredDataList.slug4.lastLogin).toEqual(now.toISOString());
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });
@@ -187,10 +183,12 @@ describe('HomePage.vue', () => {
       passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
       wrapper.vm.password = 'password';
       const expectedMessage = 'Log in to Eddy with password "password"';
+      const now = new Date();
+      jest.setSystemTime(now);
       passwordInput.vm.$emit('enter');
       await store.create();
       const deviceStoredDataList = await store.get('devicesData');
-      expect(deviceStoredDataList.slug4.lastLogin).toEqual(mockDateValue);
+      expect(deviceStoredDataList.slug4.lastLogin).toEqual(now.toISOString());
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });
