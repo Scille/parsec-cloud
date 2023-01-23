@@ -117,14 +117,20 @@ impl WorkspaceStorage {
     fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
         let ws = self.0.clone();
 
-        FutureIntoCoroutine::from_raw(async move {
-            let manifest = ws
-                .get_manifest(entry_id.0)
-                .await
-                .map_err(|_| FSLocalMissError::new_err(entry_id))?;
+        if let Some(manifest) = ws.get_manifest_in_cache(&entry_id.0) {
             let manifest = manifest_into_py_object(manifest);
-            Ok(manifest)
-        })
+
+            FutureIntoCoroutine::ready(Ok(manifest))
+        } else {
+            FutureIntoCoroutine::from_raw(async move {
+                let manifest = ws
+                    .get_manifest(entry_id.0)
+                    .await
+                    .map_err(|_| FSLocalMissError::new_err(entry_id))?;
+                let manifest = manifest_into_py_object(manifest);
+                Ok(manifest)
+            })
+        }
     }
 
     #[args(cache_only = false, removed_ids = "None")]
@@ -455,16 +461,13 @@ impl WorkspaceStorageSnapshot {
     }
 
     fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
-        let ws = self.0.clone();
+        let manifest = self
+            .0
+            .get_manifest(entry_id.0)
+            .map_err(|_| FSLocalMissError::new_err(entry_id))
+            .map(manifest_into_py_object);
 
-        FutureIntoCoroutine::from_raw(async move {
-            let manifest = ws
-                .get_manifest(entry_id.0)
-                .await
-                .map_err(|_| FSLocalMissError::new_err(entry_id))?;
-            let manifest = manifest_into_py_object(manifest);
-            Ok(manifest)
-        })
+        FutureIntoCoroutine::ready(manifest)
     }
 
     fn set_manifest(

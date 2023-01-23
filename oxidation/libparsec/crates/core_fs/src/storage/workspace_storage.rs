@@ -396,7 +396,6 @@ impl WorkspaceStorage {
             .await
     }
 
-    #[allow(deprecated)]
     pub async fn clear_manifest(&self, entry_id: EntryID, check_lock_status: bool) -> FSResult<()> {
         if check_lock_status {
             self.check_lock_status(entry_id).await?;
@@ -459,6 +458,10 @@ impl WorkspaceStorage {
             .await
     }
 
+    pub fn get_manifest_in_cache(&self, entry_id: &EntryID) -> Option<LocalManifest> {
+        self.manifest_storage.get_manifest_in_cache(entry_id)
+    }
+
     /// Take a snapshot of the current [WorkspaceStorage]
     pub fn to_timestamp(self, _timestamp: DateTime) -> WorkspaceStorageSnapshot {
         WorkspaceStorageSnapshot::from(self)
@@ -468,7 +471,7 @@ impl WorkspaceStorage {
 /// Snapshot of a [WorkspaceStorage] at a given time.
 #[derive(Clone)]
 pub struct WorkspaceStorageSnapshot {
-    cache: Arc<AsyncMutex<HashMap<EntryID, LocalManifest>>>,
+    cache: Arc<RwLock<HashMap<EntryID, LocalManifest>>>,
     open_fds: Arc<Mutex<HashMap<FileDescriptor, EntryID>>>,
     fd_counter: Arc<Mutex<u32>>,
     pub workspace_storage: WorkspaceStorage,
@@ -477,7 +480,7 @@ pub struct WorkspaceStorageSnapshot {
 impl From<WorkspaceStorage> for WorkspaceStorageSnapshot {
     fn from(workspace_storage: WorkspaceStorage) -> Self {
         Self {
-            cache: Arc::new(AsyncMutex::new(HashMap::default())),
+            cache: Arc::new(RwLock::new(HashMap::default())),
             workspace_storage,
             fd_counter: Arc::new(Mutex::new(0)),
             open_fds: Arc::new(Mutex::new(HashMap::default())),
@@ -512,7 +515,7 @@ impl WorkspaceStorageSnapshot {
             .copied()
             .ok_or(FSError::InvalidFileDescriptor(fd))?;
 
-        match self.get_manifest(entry_id).await {
+        match self.get_manifest(entry_id) {
             Ok(LocalManifest::File(manifest)) => Ok(manifest),
             _ => Err(FSError::LocalMiss(*entry_id)),
         }
@@ -535,10 +538,10 @@ impl WorkspaceStorageSnapshot {
         self.workspace_storage.get_workspace_manifest()
     }
 
-    pub async fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
+    pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         self.cache
-            .lock()
-            .await
+            .read()
+            .expect("RwLock is poisoned")
             .get(&entry_id)
             .cloned()
             .ok_or(FSError::LocalMiss(*entry_id))
@@ -556,7 +559,10 @@ impl WorkspaceStorageSnapshot {
             if check_lock_status {
                 self.check_lock_status(entry_id).await?;
             }
-            self.cache.lock().await.insert(entry_id, manifest);
+            self.cache
+                .write()
+                .expect("RwLock is poisoned")
+                .insert(entry_id, manifest);
             Ok(())
         }
     }
@@ -606,8 +612,8 @@ impl WorkspaceStorageSnapshot {
     }
 
     /// Clear the local manifest cache
-    pub async fn clear_local_cache(&self) {
-        self.cache.lock().await.clear()
+    pub fn clear_local_cache(&self) {
+        self.cache.write().expect("RwLock is poisoned").clear()
     }
 
     /// Take a snapshot of the current `workspace storage`

@@ -12,12 +12,7 @@ use std::{
 use libparsec_client_types::LocalManifest;
 use libparsec_crypto::{CryptoError, SecretKey};
 use libparsec_types::{BlockID, ChunkID, EntryID, Regex};
-use platform_async::{
-    future::{self, TryFutureExt},
-    futures::executor::block_on,
-    Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard, RwLock as AsyncRwLock,
-    RwLockWriteGuard as AsyncRwLockWriteGuard,
-};
+use platform_async::{future::TryFutureExt, futures::executor::block_on};
 
 use crate::{
     error::{FSError, FSResult},
@@ -99,7 +94,7 @@ pub struct ManifestStorage {
     pub realm_id: EntryID,
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
-    caches: Arc<Mutex<HashMap<EntryID, Arc<AsyncRwLock<CacheEntry>>>>>,
+    caches: Arc<Mutex<HashMap<EntryID, Arc<RwLock<CacheEntry>>>>>,
 }
 
 /// A cache entry that may contain a manifest and its pending chunk.
@@ -229,7 +224,7 @@ impl ManifestStorage {
             let drained = lock.drain();
 
             if flush {
-                Some(drained.collect::<Vec<(EntryID, Arc<AsyncRwLock<CacheEntry>>)>>())
+                Some(drained.collect::<Vec<(EntryID, Arc<RwLock<CacheEntry>>)>>())
             } else {
                 None
             }
@@ -377,10 +372,10 @@ impl ManifestStorage {
     pub async fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
         let mut remote_changes = HashSet::new();
         let caches = self.caches.lock().expect("Mutex is poisoned").clone();
-        let iter = caches.iter().map(|(id, cache)| async {
+        let iter = caches.iter().filter_map(|(id, cache)| {
             if cache
                 .read()
-                .await
+                .expect("RwLock is poisoned")
                 .manifest
                 .as_ref()
                 .map(|manifest| manifest.need_sync())
@@ -391,9 +386,7 @@ impl ManifestStorage {
                 None
             }
         });
-        let mut local_changes = HashSet::<_, RandomState>::from_iter(
-            future::join_all(iter).await.into_iter().flatten(),
-        );
+        let mut local_changes = HashSet::<_, RandomState>::from_iter(iter);
 
         let vlobs_that_need_sync = self
             .conn
@@ -440,7 +433,7 @@ impl ManifestStorage {
     pub(crate) fn get_or_insert_default_cache_entry(
         &self,
         entry_id: EntryID,
-    ) -> Arc<AsyncRwLock<CacheEntry>> {
+    ) -> Arc<RwLock<CacheEntry>> {
         self.caches
             .lock()
             .expect("Mutex is poisoned")
@@ -450,10 +443,24 @@ impl ManifestStorage {
     }
     // Manifest operations
 
+    pub fn get_manifest_in_cache(&self, entry_id: &EntryID) -> Option<LocalManifest> {
+        let caches = self.caches.lock().expect("Mutex is poisoned");
+
+        caches
+            .get(entry_id)
+            .and_then(|entry| entry.read().expect("RwLock is poisoned").manifest.clone())
+    }
+
     pub async fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         // Look in cache first
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        if let Some(manifest) = { cache_entry.read().await.manifest.clone() } {
+        if let Some(manifest) = {
+            cache_entry
+                .read()
+                .expect("RwLock is poisoned")
+                .manifest
+                .clone()
+        } {
             return Ok(manifest);
         }
 
@@ -472,7 +479,7 @@ impl ManifestStorage {
         let manifest = LocalManifest::decrypt_and_load(&manifest, &self.local_symkey)
             .map_err(|_| FSError::Crypto(CryptoError::Decryption))?;
 
-        let mut cache_unlock = cache_entry.write().await;
+        let mut cache_unlock = cache_entry.write().expect("RwLock is poisoned");
         cache_unlock.manifest = Some(manifest.clone());
 
         Ok(manifest)
@@ -486,18 +493,22 @@ impl ManifestStorage {
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        let mut cache_unlock = cache_entry.write().await;
 
-        cache_unlock.manifest = Some(manifest);
-        let pending_chunk_ids = cache_unlock
-            .pending_chunk_ids
-            .get_or_insert(HashSet::default());
-        if let Some(removed_ids) = &removed_ids {
-            *pending_chunk_ids = (pending_chunk_ids as &HashSet<ChunkOrBlockID>) | removed_ids;
+        {
+            let mut cache_unlock = cache_entry.write().expect("RwLock is poisoned");
+
+            cache_unlock.manifest = Some(manifest);
+            let pending_chunk_ids = cache_unlock
+                .pending_chunk_ids
+                .get_or_insert(HashSet::default());
+            if let Some(removed_ids) = &removed_ids {
+                *pending_chunk_ids = (pending_chunk_ids as &HashSet<ChunkOrBlockID>) | removed_ids;
+            }
         }
+
         // Flush the cached value to the localdb
         if !cache_only {
-            self.ensure_manifest_persistent_unlock(entry_id, cache_unlock)
+            self.ensure_manifest_persistent_lock(entry_id, cache_entry)
                 .await?;
         }
 
@@ -522,26 +533,31 @@ impl ManifestStorage {
     async fn ensure_manifest_persistent_lock(
         &self,
         entry_id: EntryID,
-        cache_lock: Arc<AsyncRwLock<CacheEntry>>,
+        cache_lock: Arc<RwLock<CacheEntry>>,
     ) -> FSResult<()> {
-        self.ensure_manifest_persistent_unlock(entry_id, cache_lock.write().await)
-            .await
-    }
+        let stuff = {
+            let cache = cache_lock.read().unwrap();
 
-    async fn ensure_manifest_persistent_unlock(
-        &self,
-        entry_id: EntryID,
-        mut cache: AsyncRwLockWriteGuard<'_, CacheEntry>,
-    ) -> FSResult<()> {
-        if let (Some(manifest), Some(pending_chunk_ids)) =
-            (cache.manifest.as_ref(), cache.pending_chunk_ids.clone())
-        {
-            let ciphered = manifest.dump_and_encrypt(&self.local_symkey);
-            let chunk_ids = pending_chunk_ids.into_iter().collect::<Vec<_>>();
+            cache
+                .manifest
+                .as_ref()
+                .and_then(|manifest| {
+                    cache
+                        .pending_chunk_ids
+                        .clone()
+                        .map(|chunk_ids| (manifest, chunk_ids))
+                })
+                .map(|(manifest, chunk_ids)| {
+                    (
+                        manifest.dump_and_encrypt(&self.local_symkey),
+                        manifest.need_sync(),
+                        manifest.base_version() as i64,
+                        Vec::from_iter(chunk_ids.into_iter()),
+                    )
+                })
+        };
 
-            let manifest_need_sync = manifest.need_sync();
-            let manifest_base_version = manifest.base_version() as i64;
-
+        if let Some((ciphered, need_sync, base_version, chunk_ids)) = stuff {
             self.conn.exec(move |conn| {
                 let vlob_id = (*entry_id).as_ref();
 
@@ -555,9 +571,9 @@ impl ManifestStorage {
                         )")
                         .bind::<diesel::sql_types::Binary, _>(vlob_id)
                         .bind::<diesel::sql_types::Binary, _>(ciphered)
-                        .bind::<diesel::sql_types::Bool, _>(manifest_need_sync)
-                        .bind::<diesel::sql_types::BigInt, _>(manifest_base_version)
-                        .bind::<diesel::sql_types::BigInt, _>(manifest_base_version)
+                        .bind::<diesel::sql_types::Bool, _>(need_sync)
+                        .bind::<diesel::sql_types::BigInt, _>(base_version)
+                        .bind::<diesel::sql_types::BigInt, _>(base_version)
                         .bind::<diesel::sql_types::Binary, _>(vlob_id)
                         .execute(conn)
             }).await?;
@@ -577,7 +593,10 @@ impl ManifestStorage {
                     })
                     .await?;
             }
-            cache.pending_chunk_ids = None;
+            cache_lock
+                .write()
+                .expect("RwLock is poisoned")
+                .pending_chunk_ids = None;
         }
         Ok(())
     }
@@ -589,7 +608,7 @@ impl ManifestStorage {
             .expect("Mutex is poisoned")
             .iter()
             .map(|(entry_id, entry)| (*entry_id, entry.clone()))
-            .collect::<Vec<(EntryID, Arc<AsyncRwLock<CacheEntry>>)>>();
+            .collect::<Vec<(EntryID, Arc<RwLock<CacheEntry>>)>>();
         for (entry_id, lock) in items {
             self.ensure_manifest_persistent_lock(entry_id, lock).await?;
         }
@@ -598,46 +617,62 @@ impl ManifestStorage {
 
     /// This method is not used in the code base but it is still tested
     /// as it might come handy in a cleanup routine later
-    #[deprecated]
     pub async fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
         // Remove from cache
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        let mut cache_unlock = cache_entry.write().await;
+        let (previous_manifest, previous_pending_chunk_ids) = {
+            let mut cache_unlock = cache_entry.write().expect("RwLock is poisoned");
 
-        // Remove from local database
+            (
+                cache_unlock.manifest.take(),
+                cache_unlock.pending_chunk_ids.take(),
+            )
+        };
 
-        let deleted = self
-            .conn
-            .exec(move |conn| {
-                let vlob_id = (*entry_id).as_ref();
-                diesel::delete(vlobs::table.filter(vlobs::vlob_id.eq(vlob_id))).execute(conn)
-            })
-            .await?
-            > 0;
+        let res: FSResult<bool> = async {
+            // Remove from local database
 
-        if let Some(pending_chunk_ids) = cache_unlock.pending_chunk_ids.clone() {
-            let pending_chunk_ids = pending_chunk_ids.into_iter().collect::<Vec<_>>();
+            let deleted = self
+                .conn
+                .exec(move |conn| {
+                    let vlob_id = (*entry_id).as_ref();
+                    diesel::delete(vlobs::table.filter(vlobs::vlob_id.eq(vlob_id))).execute(conn)
+                })
+                .await?
+                > 0;
 
-            for chunked_ids in pending_chunk_ids
-                .chunks(LOCAL_DATABASE_MAX_VARIABLE_NUMBER)
-                .map(|chunks| chunks.to_vec())
-            {
-                self.conn
-                    .exec(move |conn| {
-                        let ids = chunked_ids.iter().map(ChunkOrBlockID::as_ref);
-                        let query = chunks::table.filter(chunks::chunk_id.eq_any(ids));
-                        diesel::delete(query).execute(conn)
-                    })
-                    .await?;
+            if let Some(pending_chunk_ids) = previous_pending_chunk_ids.clone() {
+                let pending_chunk_ids = pending_chunk_ids.into_iter().collect::<Vec<_>>();
+
+                for chunked_ids in pending_chunk_ids
+                    .chunks(LOCAL_DATABASE_MAX_VARIABLE_NUMBER)
+                    .map(|chunks| chunks.to_vec())
+                {
+                    self.conn
+                        .exec(move |conn| {
+                            let ids = chunked_ids.iter().map(ChunkOrBlockID::as_ref);
+                            let query = chunks::table.filter(chunks::chunk_id.eq_any(ids));
+                            diesel::delete(query).execute(conn)
+                        })
+                        .await?;
+                }
             }
+            Ok(deleted)
         }
-        let is_manifest_cached = cache_unlock.manifest.is_some();
+        .await;
 
-        cache_unlock.manifest = None;
-        cache_unlock.pending_chunk_ids = None;
+        if let Ok(deleted) = res {
+            let is_manifest_cached = previous_manifest.is_some();
 
-        if !deleted && !is_manifest_cached {
-            return Err(FSError::LocalMiss(*entry_id));
+            if !deleted && !is_manifest_cached {
+                return Err(FSError::LocalMiss(*entry_id));
+            }
+        } else {
+            // TODO: ANSWER WANTED: Do we want to rollback the cache entry when we fail to remove data from the database ?
+            let mut cache_unlock = cache_entry.write().expect("RwLock is poisoned");
+
+            cache_unlock.manifest = previous_manifest;
+            cache_unlock.pending_chunk_ids = previous_pending_chunk_ids;
         }
 
         Ok(())
@@ -652,9 +687,12 @@ impl ManifestStorage {
             let caches_guard = self.caches.lock().expect("Mutex is poisoned");
             caches_guard.get(entry_id).cloned()
         };
-        let result = cache_entry
-            .as_ref()
-            .map(|entry| async { entry.read().await.has_chunk_to_be_flush() });
+        let result = cache_entry.as_ref().map(|entry| async {
+            entry
+                .read()
+                .expect("RwLock is poisoned")
+                .has_chunk_to_be_flush()
+        });
 
         if let Some(fut) = result {
             fut.await
