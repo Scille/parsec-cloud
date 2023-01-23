@@ -8,6 +8,7 @@ use libparsec::protocol::{
 };
 
 use crate::{
+    binding_utils::BytesWrapper,
     ids::{BlockID, RealmID},
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
@@ -25,7 +26,8 @@ crate::binding_utils::gen_proto!(BlockCreateReq, __richcmp__, eq);
 #[pymethods]
 impl BlockCreateReq {
     #[new]
-    fn new(block_id: BlockID, realm_id: RealmID, block: Vec<u8>) -> PyResult<Self> {
+    fn new(block_id: BlockID, realm_id: RealmID, block: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(block);
         Ok(Self(block_create::Req {
             block_id: block_id.0,
             realm_id: realm_id.0,
@@ -130,7 +132,8 @@ pub(crate) struct BlockReadRepOk;
 #[pymethods]
 impl BlockReadRepOk {
     #[new]
-    fn new(block: Vec<u8>) -> PyResult<(Self, BlockReadRep)> {
+    fn new(block: BytesWrapper) -> PyResult<(Self, BlockReadRep)> {
+        crate::binding_utils::unwrap_bytes!(block);
         Ok((Self, BlockReadRep(block_read::Rep::Ok { block })))
     }
 

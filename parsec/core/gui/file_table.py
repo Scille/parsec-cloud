@@ -294,13 +294,14 @@ class FileTable(QTableWidget):
 
             # Show the option to create a timestamped share link to the user is
             # useless here because it has the same effect as creating a regular file link
+            filetype = "FILE" if selected[0].type == FileType.File else "FOLDER"
             if not self.is_timestamped_workspace:
-                action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
+                action = menu.addAction(_(f"ACTION_FILE_MENU_GET_{filetype}_LINK"))
                 action.triggered.connect(self.file_path_clicked.emit)
-                action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"))
+                action = menu.addAction(_(f"ACTION_FILE_MENU_GET_{filetype}_LINK_TIMESTAMP"))
                 action.triggered.connect(self.file_path_timestamp_clicked.emit)
             else:
-                action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
+                action = menu.addAction(_(f"ACTION_FILE_MENU_GET_{filetype}_LINK"))
                 action.triggered.connect(self.file_path_clicked.emit)
 
         menu.exec_(global_pos)

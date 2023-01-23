@@ -16,7 +16,8 @@
         "types": [
             "node",
             "webpack-env",
-            "jest"
+            "jest",
+            "cypress"
         ],
         "paths": {
             "@/*": [

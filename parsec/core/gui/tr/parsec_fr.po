@@ -573,16 +573,16 @@ msgstr ""
 "fichier."
 
 msgid "TEXT_FILE_HISTORY_TITLE_name"
-msgstr "Historique du fichier {name}"
+msgstr "Historique de l'élément {name}"
 
 msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
-msgstr "Ce fichier ne sera pas synchronisé."
+msgstr "Cet élément ne sera pas synchronisé."
 
 msgid "TEXT_FILE_ITEM_IS_SYNCED_TOOLTIP"
-msgstr "Ce fichier est synchronisé."
+msgstr "Cet élément est synchronisé."
 
 msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
-msgstr "Ce fichier n'est pas encore synchronisé."
+msgstr "Cet élément n'est pas encore synchronisé."
 
 msgid "TEXT_FILE_SIZE_B"
 msgstr "o"
@@ -668,8 +668,14 @@ msgstr "Détails"
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
 
+msgid "ACTION_FILE_MENU_GET_FOLDER_LINK"
+msgstr "Lien vers ce dossier"
+
 msgid "ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"
 msgstr "Lien vers ce fichier à cette version"
+
+msgid "ACTION_FILE_MENU_GET_FOLDER_LINK_TIMESTAMP"
+msgstr "Lien vers ce dossier à cette version"
 
 msgid "TEXT_FILE_TREE_PARENT_FOLDER"
 msgstr "Répertoire parent"
@@ -691,24 +697,27 @@ msgstr "{count} éléments au total"
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "Le lien vers le fichier a été copié dans le presse-papier."
 
+msgid "TEXT_FOLDER_LINK_COPIED_TO_CLIPBOARD"
+msgstr "Le lien vers le dossier a été copié dans le presse-papier."
+
 msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
 msgstr "Impossible de déplacer un répertoire dans lui-même."
 
 msgid "TEXT_FILE_PASTE_ERROR"
-msgstr "Impossible de coller ce fichier à cet endroit."
+msgstr "Impossible de coller cet élément à cet endroit."
 
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Impossible d'afficher l'historique de plusieurs fichiers en une fois. "
-"Veuillez ne sélectionner qu'un fichier."
+"Impossible d'afficher l'historique de plusieurs éléments en une fois. "
+"Veuillez ne sélectionner qu'un élément."
 
 msgid "TEXT_FILE_STATUS_NO_FILE_SELECTED_ERROR"
 msgstr "Aucun fichier sélectionné."
 
 msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Impossible d'afficher les détails de plusieurs fichiers en une fois. Veuillez "
-"ne sélectionner qu'un fichier."
+"Impossible d'afficher l'état de plusieurs éléments en une fois. Veuillez "
+"ne sélectionner qu'un fichier ou dossier."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Renommer un fichier"
@@ -719,19 +728,28 @@ msgstr "Entrez le nouveau nom du fichier."
 msgid "TEXT_FILE_RENAME_PLACEHOLDER"
 msgstr "Nom du fichier"
 
+msgid "TEXT_FOLDER_RENAME_TITLE"
+msgstr "Renommer un dossier"
+
+msgid "TEXT_FOLDER_RENAME_INSTRUCTIONS"
+msgstr "Entrez le nouveau nom du dossier."
+
+msgid "TEXT_FOLDER_RENAME_PLACEHOLDER"
+msgstr "Nom du dossier"
+
 msgid "ACTION_FILE_RENAME"
 msgstr "Renommer"
 
 msgid "TEXT_FILE_RENAME_MULTIPLE_TITLE_count"
-msgstr "Renommer {count} fichiers"
+msgstr "Renommer {count} éléments"
 
 msgid "TEXT_FILE_RENAME_MULTIPLE_INSTRUCTIONS_count"
 msgstr ""
-"Entrez le nouveau nom des fichiers. Ils seront renommés selon le format "
+"Entrez le nouveau nom des éléments. Ils seront renommés selon le format "
 "suivant : NOM_NUMERO.EXTENSION."
 
 msgid "TEXT_FILE_RENAME_MULTIPLE_PLACEHOLDER"
-msgstr "Nom des fichiers"
+msgstr "Nom des éléments"
 
 msgid "ACTION_FILE_RENAME_MULTIPLE"
 msgstr "Renommer"
@@ -739,8 +757,14 @@ msgstr "Renommer"
 msgid "TEXT_FILE_DELETE_TITLE"
 msgstr "Supprimer un fichier"
 
+msgid "TEXT_FOLDER_DELETE_TITLE"
+msgstr "Supprimer un dossier"
+
 msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
 msgstr "Êtes-vous sûr de vouloir supprimer le fichier <b>{name}</b> ?"
+
+msgid "TEXT_FOLDER_DELETE_INSTRUCTIONS_name"
+msgstr "Êtes-vous sûr de vouloir supprimer le dossier <b>{name}</b> ?"
 
 msgid "ACTION_FILE_DELETE"
 msgstr "Supprimer"
@@ -749,27 +773,27 @@ msgid "ACTION_CANCEL"
 msgstr "Annuler"
 
 msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
-msgstr "Supprimer plusieurs fichiers"
+msgstr "Supprimer plusieurs éléments"
 
 msgid "TEXT_FILE_DELETE_MULTIPLE_INSTRUCTIONS_count"
-msgstr "Êtes-vous sûr de vouloir supprimer les {count} fichiers ?"
+msgstr "Êtes-vous sûr de vouloir supprimer ces {count} éléments ?"
 
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Supprimer"
 
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
-msgstr "Ouvrir plusieurs fichiers"
+msgstr "Ouvrir plusieurs éléments"
 
 msgid "TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count"
 msgstr ""
-"Êtes-vous sûr de vouloir ouvrir les {count} fichiers ? Cela peut prendre "
+"Êtes-vous sûr de vouloir ouvrir ces {count} éléments ? Cela peut prendre "
 "du temps."
 
 msgid "ACTION_FILE_OPEN_MULTIPLE"
-msgstr "Ouvrir les fichiers"
+msgstr "Ouvrir les éléments"
 
 msgid "TEXT_FILE_OPEN_MULTIPLE_ERROR"
-msgstr "Certains fichiers n'ont pas pû être ouverts."
+msgstr "Certains éléments n'ont pas pû être ouverts."
 
 msgid "TEXT_FILE_OPEN_ERROR_file"
 msgstr "Le fichier <b>{file}</b> n'a pas pû être ouvert."
@@ -815,7 +839,7 @@ msgstr "Créer un nouveau répertoire"
 
 msgid "TEXT_FILE_RENAME_MULTIPLE_ERROR"
 msgstr ""
-"Un problème est survenu lors du renommage des fichiers. Certains fichiers"
+"Un problème est survenu lors du renommage des éléments. Certains éléments"
 " n'ont peut-être pas été renommés."
 
 msgid "TEXT_FILE_RENAME_ERROR"
@@ -823,8 +847,8 @@ msgstr "Le fichier n'a pas pu être renommé."
 
 msgid "TEXT_FILE_DELETE_MULTIPLE_ERROR"
 msgstr ""
-"Un problème est survenu lors de la suppression des fichiers. Certains "
-"fichiers n'ont peut-être pas été supprimés."
+"Un problème est survenu lors de la suppression des éléments. Certains "
+"éléments n'ont peut-être pas été supprimés."
 
 msgid "TEXT_FILE_DELETE_ERROR"
 msgstr "Ce fichier n'a pas pu être supprimé."
@@ -2476,23 +2500,23 @@ msgid "TEXT_WORKSPACE_FILTERED_user"
 msgstr "Espaces en commun avec {user}"
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"
-msgstr "Accéder à un fichier par son lien"
+msgstr "Accéder à un élément par son lien"
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_INSTRUCTIONS"
-msgstr "Veuillez fournir un lien vers le fichier."
+msgstr "Veuillez fournir un lien vers l'élément."
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_PLACEHOLDER"
 msgstr "parsec://parsec.example.com/my_org?action=file_link&workspace_id=xx&path=yy"
 
 msgid "ACTION_GOTO_FILE_LINK"
-msgstr "Accéder au fichier"
+msgstr "Accéder à l'élément"
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"
 msgstr "Le lien n'est pas valide."
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"
 msgstr ""
-"Impossible de trouver l'espace de travail de ce fichier. Peut-être qu'il "
+"Impossible de trouver l'espace de travail de cet élément. Peut-être qu'il "
 "n'a pas été partagé avec vous."
 
 msgid "TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME"
@@ -3071,7 +3095,7 @@ msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
 msgid "TEXT_SETTINGS_CHECK_SHOW_CONFINED_FILES"
-msgstr "Afficher les fichiers exclus de la synchronisation"
+msgstr "Afficher les éléments exclus de la synchronisation"
 
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"

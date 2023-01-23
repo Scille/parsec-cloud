@@ -18,6 +18,7 @@ use libparsec::{
 use crate::{
     api_crypto::VerifyKey,
     binding_utils::gen_proto,
+    binding_utils::BytesWrapper,
     data::UsersPerProfileDetailItem,
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
@@ -240,9 +241,13 @@ impl OrganizationConfigRepOk {
     fn new(
         user_profile_outsider_allowed: bool,
         active_users_limit: ActiveUsersLimit,
-        sequester_authority_certificate: Option<Vec<u8>>,
-        sequester_services_certificates: Option<Vec<Vec<u8>>>,
+        sequester_authority_certificate: Option<BytesWrapper>,
+        sequester_services_certificates: Option<Vec<BytesWrapper>>,
     ) -> PyResult<(Self, OrganizationConfigRep)> {
+        crate::binding_utils::unwrap_bytes!(
+            sequester_authority_certificate,
+            sequester_services_certificates
+        );
         Ok((
             Self,
             OrganizationConfigRep(organization_config::Rep::Ok {
@@ -330,18 +335,25 @@ impl OrganizationBootstrapReq {
     fn new(
         bootstrap_token: String,
         root_verify_key: VerifyKey,
-        user_certificate: Vec<u8>,
-        device_certificate: Vec<u8>,
-        redacted_user_certificate: Vec<u8>,
-        redacted_device_certificate: Vec<u8>,
+        user_certificate: BytesWrapper,
+        device_certificate: BytesWrapper,
+        redacted_user_certificate: BytesWrapper,
+        redacted_device_certificate: BytesWrapper,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [
-                sequester_authority_certificate: Option<Vec<u8>>,
+                sequester_authority_certificate: Option<BytesWrapper>,
                 "sequester_authority_certificate"
             ]
+        );
+        crate::binding_utils::unwrap_bytes!(
+            user_certificate,
+            device_certificate,
+            redacted_user_certificate,
+            redacted_device_certificate,
+            sequester_authority_certificate
         );
 
         let sequester_authority_certificate = match sequester_authority_certificate {

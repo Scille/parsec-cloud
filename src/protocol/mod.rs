@@ -148,8 +148,10 @@ macro_rules! gen_rep {
                 }
 
                 #[classmethod]
-                fn load<'py>(_cls: &::pyo3::types::PyType, buf: Vec<u8>, py: Python<'py>) -> PyResult<PyObject> {
+                fn load<'py>(_cls: &::pyo3::types::PyType, buf: crate::binding_utils::BytesWrapper, py: Python<'py>) -> PyResult<PyObject> {
                     use pyo3::{pyclass_init::PyObjectInit, PyTypeInfo};
+
+                    crate::binding_utils::unwrap_bytes!(buf);
 
                     let rep = $mod::Rep::load(&buf)
                         .map_err(|e| ProtocolErrorFields(libparsec::protocol::ProtocolError::DecodingError { exc: e.to_string() }))

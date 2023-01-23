@@ -10,6 +10,7 @@ use std::str::FromStr;
 
 use crate::{
     api_crypto::VerifyKey,
+    binding_utils::BytesWrapper,
     enumerate::InvitationType,
     ids::{EntryID, InvitationToken, OrganizationID},
 };
@@ -447,10 +448,11 @@ impl BackendOrganizationFileLinkAddr {
     fn new(
         organization_id: OrganizationID,
         workspace_id: EntryID,
-        encrypted_path: Vec<u8>,
-        encrypted_timestamp: Option<Vec<u8>>,
+        encrypted_path: BytesWrapper,
+        encrypted_timestamp: Option<BytesWrapper>,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(encrypted_path, encrypted_timestamp);
         let addr = match py_kwargs {
             Some(dict) => BackendAddr::new(
                 match dict.get_item("hostname") {
@@ -568,9 +570,10 @@ impl BackendOrganizationFileLinkAddr {
         _cls: &PyType,
         organization_addr: BackendOrganizationAddr,
         workspace_id: EntryID,
-        encrypted_path: Vec<u8>,
-        encrypted_timestamp: Option<Vec<u8>>,
+        encrypted_path: BytesWrapper,
+        encrypted_timestamp: Option<BytesWrapper>,
     ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(encrypted_path, encrypted_timestamp);
         Ok(Self(
             libparsec::types::BackendOrganizationFileLinkAddr::new(
                 organization_addr.get_backend_addr().0,

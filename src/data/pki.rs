@@ -8,6 +8,7 @@ use std::{collections::HashMap, path::Path};
 use crate::{
     addrs::BackendPkiEnrollmentAddr,
     api_crypto::{PublicKey, VerifyKey},
+    binding_utils::BytesWrapper,
     data::{DataResult, PkiEnrollmentLocalPendingResult},
     enumerate::UserProfile,
     ids::{DeviceID, DeviceLabel, EnrollmentID, HumanHandle},
@@ -135,10 +136,11 @@ impl X509Certificate {
     fn new(
         issuer: HashMap<String, String>,
         subject: HashMap<String, String>,
-        der_x509_certificate: Vec<u8>,
-        certificate_sha1: Vec<u8>,
+        der_x509_certificate: BytesWrapper,
+        certificate_sha1: BytesWrapper,
         certificate_id: Option<String>,
     ) -> Self {
+        crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha1);
         Self(libparsec::types::X509Certificate {
             issuer,
             subject,
@@ -154,10 +156,11 @@ impl X509Certificate {
             py_kwargs,
             [issuer: HashMap<String, String>, "issuer"],
             [subject: HashMap<String, String>, "subject"],
-            [der_x509_certificate: Vec<u8>, "der_x509_certificate"],
-            [certificate_sha1: Vec<u8>, "certificate_sha1"],
+            [der_x509_certificate: BytesWrapper, "der_x509_certificate"],
+            [certificate_sha1: BytesWrapper, "certificate_sha1"],
             [certificate_id: Option<String>, "certificate_id"],
         );
+        crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha1);
 
         let mut r = self.0.clone();
 
@@ -241,9 +244,10 @@ impl LocalPendingEnrollment {
         submitted_on: DateTime,
         enrollment_id: EnrollmentID,
         submit_payload: PkiEnrollmentSubmitPayload,
-        encrypted_key: Vec<u8>,
-        ciphertext: Vec<u8>,
+        encrypted_key: BytesWrapper,
+        ciphertext: BytesWrapper,
     ) -> Self {
+        crate::binding_utils::unwrap_bytes!(encrypted_key, ciphertext);
         Self(libparsec::types::LocalPendingEnrollment {
             x509_certificate: x509_certificate.0,
             addr: addr.0,

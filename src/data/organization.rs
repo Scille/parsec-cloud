@@ -3,7 +3,9 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use crate::{data::UsersPerProfileDetailItem, protocol::ActiveUsersLimit};
+use crate::{
+    binding_utils::BytesWrapper, data::UsersPerProfileDetailItem, protocol::ActiveUsersLimit,
+};
 
 #[pyclass]
 pub(crate) struct OrganizationStats(pub libparsec::types::OrganizationStats);
@@ -81,9 +83,10 @@ impl OrganizationConfig {
     fn new(
         user_profile_outsider_allowed: bool,
         active_users_limit: ActiveUsersLimit,
-        sequester_authority: Option<Vec<u8>>,
-        sequester_services: Option<Vec<Vec<u8>>>,
+        sequester_authority: Option<BytesWrapper>,
+        sequester_services: Option<Vec<BytesWrapper>>,
     ) -> Self {
+        crate::binding_utils::unwrap_bytes!(sequester_authority, sequester_services);
         Self(libparsec::types::OrganizationConfig {
             user_profile_outsider_allowed,
             active_users_limit: active_users_limit.0,

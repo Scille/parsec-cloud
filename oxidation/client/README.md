@@ -21,7 +21,7 @@ Follow this [bindings guide](../bindings/README.md)
 
 ```bash
 # In /oxidation/client
-npm run serve
+npm run web:open
 ```
 
 > LibParsec is not available on web platform so far :(

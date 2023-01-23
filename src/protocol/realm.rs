@@ -16,6 +16,7 @@ use libparsec::protocol::{
 };
 
 use crate::{
+    binding_utils::BytesWrapper,
     ids::{DeviceID, RealmID, UserID},
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
@@ -55,7 +56,8 @@ crate::binding_utils::gen_proto!(RealmCreateReq, __richcmp__, eq);
 #[pymethods]
 impl RealmCreateReq {
     #[new]
-    fn new(role_certificate: Vec<u8>) -> PyResult<Self> {
+    fn new(role_certificate: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(role_certificate);
         Ok(Self(realm_create::Req { role_certificate }))
     }
 
@@ -340,7 +342,8 @@ pub(crate) struct RealmGetRoleCertificatesRepOk;
 #[pymethods]
 impl RealmGetRoleCertificatesRepOk {
     #[new]
-    fn new(certificates: Vec<Vec<u8>>) -> PyResult<(Self, RealmGetRoleCertificatesRep)> {
+    fn new(certificates: Vec<BytesWrapper>) -> PyResult<(Self, RealmGetRoleCertificatesRep)> {
+        crate::binding_utils::unwrap_bytes!(certificates);
         Ok((
             Self,
             RealmGetRoleCertificatesRep(realm_get_role_certificates::Rep::Ok { certificates }),
@@ -368,7 +371,11 @@ crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __richcmp__, eq);
 #[pymethods]
 impl RealmUpdateRolesReq {
     #[new]
-    fn new(role_certificate: Vec<u8>, recipient_message: Option<Vec<u8>>) -> PyResult<Self> {
+    fn new(
+        role_certificate: BytesWrapper,
+        recipient_message: Option<BytesWrapper>,
+    ) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(role_certificate, recipient_message);
         Ok(Self(realm_update_roles::Req {
             role_certificate,
             recipient_message,
@@ -446,13 +453,13 @@ impl RealmStartReencryptionMaintenanceReq {
         realm_id: RealmID,
         encryption_revision: u64,
         timestamp: DateTime,
-        per_participant_message: HashMap<UserID, Vec<u8>>,
+        per_participant_message: HashMap<UserID, BytesWrapper>,
     ) -> PyResult<Self> {
         let realm_id = realm_id.0;
         let timestamp = timestamp.0;
         let per_participant_message = per_participant_message
             .into_iter()
-            .map(|(k, v)| (k.0, v))
+            .map(|(k, v)| (k.0, v.into()))
             .collect();
         Ok(Self(realm_start_reencryption_maintenance::Req {
             realm_id,
