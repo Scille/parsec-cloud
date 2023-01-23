@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::{PyAttributeError, PyTypeError, PyValueError},
+    exceptions::{PyAttributeError, PyValueError},
     prelude::*,
     types::PyType,
     PyAny, PyResult,
@@ -12,17 +12,28 @@ use crate::runtime::FutureIntoCoroutine;
 #[pyfunction]
 /// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
 pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
-    use libparsec::types::MockedTime;
-    libparsec::types::DateTime::mock_time(if let Ok(dt) = time.extract::<DateTime>() {
-        MockedTime::FrozenTime(dt.0)
-    } else if let Ok(us) = time.extract::<i64>() {
-        MockedTime::ShiftedTime { microseconds: us }
-    } else if time.is_none() {
-        MockedTime::RealTime
-    } else {
-        return Err(PyTypeError::new_err("Invalid field time"));
-    });
-    Ok(())
+    #[cfg(not(feature = "test-utils"))]
+    {
+        let _time = time;
+        Err(pyo3::exceptions::PyRuntimeError::new_err(
+            "Test features are disabled !",
+        ))
+    }
+
+    #[cfg(feature = "test-utils")]
+    {
+        use libparsec::types::MockedTime;
+        libparsec::types::DateTime::mock_time(if let Ok(dt) = time.extract::<DateTime>() {
+            MockedTime::FrozenTime(dt.0)
+        } else if let Ok(us) = time.extract::<i64>() {
+            MockedTime::ShiftedTime { microseconds: us }
+        } else if time.is_none() {
+            MockedTime::RealTime
+        } else {
+            return Err(pyo3::exceptions::PyTypeError::new_err("Invalid field time"));
+        });
+        Ok(())
+    }
 }
 
 #[pyclass]
@@ -41,7 +52,17 @@ impl TimeProvider {
     }
 
     pub fn sleeping_stats(&self) -> PyResult<u64> {
-        Ok(self.0.sleeping_stats())
+        #[cfg(not(feature = "test-utils"))]
+        {
+            Err(pyo3::exceptions::PyRuntimeError::new_err(
+                "Test features are disabled !",
+            ))
+        }
+
+        #[cfg(feature = "test-utils")]
+        {
+            Ok(self.0.sleeping_stats())
+        }
     }
 
     // Booyakasha !
@@ -58,7 +79,17 @@ impl TimeProvider {
     }
 
     pub fn new_child(&self) -> PyResult<TimeProvider> {
-        Ok(TimeProvider(self.0.new_child()))
+        #[cfg(not(feature = "test-utils"))]
+        {
+            Err(pyo3::exceptions::PyRuntimeError::new_err(
+                "Test features are disabled !",
+            ))
+        }
+
+        #[cfg(feature = "test-utils")]
+        {
+            Ok(TimeProvider(self.0.new_child()))
+        }
     }
 
     #[args(freeze = "None", shift = "None", speed = "None", realtime = "false")]
@@ -69,31 +100,45 @@ impl TimeProvider {
         speed: Option<f64>,
         realtime: bool,
     ) -> PyResult<()> {
-        use libparsec::types::MockedTime;
-        let mock_config = match (freeze, shift, speed, realtime) {
-            (None, None, None, true) => MockedTime::RealTime,
-            (Some(dt), None, None, false) => MockedTime::FrozenTime(dt.0),
-            (None, Some(shift_in_seconds), None, false) => MockedTime::ShiftedTime {
-                microseconds: (shift_in_seconds * 1e6) as i64,
-            },
-            (None, None, Some(speed_factor), false) => {
-                let reference = self.0.parent_now_or_realtime();
-                MockedTime::FasterTime {
-                    reference,
-                    microseconds: (self.0.now() - reference)
-                        .num_microseconds()
-                        .expect("No reason to overflow"),
-                    speed_factor,
+        #[cfg(not(feature = "test-utils"))]
+        {
+            let _freeze = freeze;
+            let _shift = shift;
+            let _speed = speed;
+            let _realtime = realtime;
+            Err(pyo3::exceptions::PyRuntimeError::new_err(
+                "Test features are disabled !",
+            ))
+        }
+
+        #[cfg(feature = "test-utils")]
+        {
+            use libparsec::types::MockedTime;
+            let mock_config = match (freeze, shift, speed, realtime) {
+                (None, None, None, true) => MockedTime::RealTime,
+                (Some(dt), None, None, false) => MockedTime::FrozenTime(dt.0),
+                (None, Some(shift_in_seconds), None, false) => MockedTime::ShiftedTime {
+                    microseconds: (shift_in_seconds * 1e6) as i64,
+                },
+                (None, None, Some(speed_factor), false) => {
+                    let reference = self.0.parent_now_or_realtime();
+                    MockedTime::FasterTime {
+                        reference,
+                        microseconds: (self.0.now() - reference)
+                            .num_microseconds()
+                            .expect("No reason to overflow"),
+                        speed_factor,
+                    }
                 }
-            }
-            _ => {
-                return Err(PyValueError::new_err(
-                    "Must only provide one of `freeze`, `shift`, `speed` and `realtime`",
-                ))
-            }
-        };
-        self.0.mock_time(mock_config);
-        Ok(())
+                _ => {
+                    return Err(PyValueError::new_err(
+                        "Must only provide one of `freeze`, `shift`, `speed` and `realtime`",
+                    ))
+                }
+            };
+            self.0.mock_time(mock_config);
+            Ok(())
+        }
     }
 }
 

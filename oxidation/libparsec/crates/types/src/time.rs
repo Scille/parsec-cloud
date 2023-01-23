@@ -110,7 +110,7 @@ impl DateTime {
     }
 
     // TODO: remove me and only rely on TimeProvider instead !
-    #[cfg(not(feature = "mock-time"))]
+    #[cfg(not(feature = "test-mock-time"))]
     #[inline]
     pub fn now_legacy() -> Self {
         let now = chrono::Utc::now();
@@ -205,7 +205,7 @@ pub enum MockedTime {
 }
 
 // TODO: remove me and only rely on TimeProvider instead !
-#[cfg(feature = "mock-time")]
+#[cfg(feature = "test-mock-time")]
 mod mock_time {
     use super::{DateTime, MockedTime};
     use std::cell::RefCell;
@@ -253,7 +253,7 @@ mod mock_time {
 // So the solution here is to force the current time to be taken from a non-global object
 // (typically each client/server should have it own) that can be independently mocked.
 
-#[cfg(not(feature = "mock-time"))]
+#[cfg(not(feature = "test-mock-time"))]
 mod time_provider {
 
     #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -265,13 +265,16 @@ mod time_provider {
             now.into()
         }
 
-        pub async fn sleep(&self, time: std::time::Duration) {
-            libparsec_platform_async::platform::sleep(time).await;
+        pub async fn sleep(&self, time: super::Duration) {
+            // Err in case time is negative, if such no need to sleep !
+            if let Ok(time) = time.to_std() {
+                libparsec_platform_async::platform::sleep(time).await;
+            }
         }
     }
 }
 
-#[cfg(feature = "mock-time")]
+#[cfg(feature = "test-mock-time")]
 mod time_provider {
     use std::sync::{Arc, Mutex};
 
