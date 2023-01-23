@@ -3,14 +3,9 @@ name = "libparsec_platform_device_loader"
 version = "0.0.0"
 edition = "2021"
 
-[features]
-default = ["use-rustcrypto"]
-use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
-use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
-
 [dependencies]
-libparsec_client_types = { path = "../client_types", default-features = false }
-libparsec_crypto = { path = "../crypto", default-features = false }
+libparsec_client_types = { path = "../client_types" }
+libparsec_crypto = { path = "../crypto" }
 
 serde_json = "1.0.91"
 
