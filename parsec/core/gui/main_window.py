@@ -581,9 +581,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_window(self, skip_dialogs: bool = False) -> None:
         try:
-            if self.config.gui_geometry is not None and not self.restoreGeometry(
-                self.config.gui_geometry
-            ):
+            if self.config.gui_geometry is not None:
+                self.restoreGeometry(self.config.gui_geometry)
+            else:
                 self.showMaximized()
         except TypeError:
             self.showMaximized()
