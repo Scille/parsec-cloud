@@ -220,6 +220,21 @@ impl WorkspaceStorage {
         fd
     }
 
+    pub fn load_file_descriptor_in_cache(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
+        let entry_id = self
+            .open_fds
+            .lock()
+            .expect("Mutex is poisoned")
+            .get(&fd)
+            .cloned()
+            .ok_or(FSError::InvalidFileDescriptor(fd))?;
+
+        match self.get_manifest_in_cache(&entry_id) {
+            Some(LocalManifest::File(manifest)) => Ok(manifest),
+            _ => Err(FSError::LocalMiss(*entry_id)),
+        }
+    }
+
     pub async fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
         let entry_id = self
             .open_fds
@@ -506,7 +521,7 @@ impl WorkspaceStorageSnapshot {
         fd
     }
 
-    pub async fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
+    pub fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
         let entry_id = self
             .open_fds
             .lock()

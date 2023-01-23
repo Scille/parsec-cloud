@@ -181,15 +181,25 @@ impl WorkspaceStorage {
         self.0.create_file_descriptor(manifest.0).0
     }
 
-    fn load_file_descriptor(&self, fd: u32) -> FutureIntoCoroutine {
-        let ws = self.0.clone();
+    fn load_file_descriptor(&self, py: Python<'_>, fd: u32) -> PyResult<FutureIntoCoroutine> {
+        let fd = libparsec::types::FileDescriptor(fd);
 
-        FutureIntoCoroutine::from(async move {
-            ws.load_file_descriptor(libparsec::types::FileDescriptor(fd))
-                .await
-                .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
-                .map(LocalFileManifest)
-        })
+        let fut = match self.0.load_file_descriptor_in_cache(fd) {
+            Ok(manifest) => FutureIntoCoroutine::ready(Ok(LocalFileManifest(manifest).into_py(py))),
+            Err(libparsec::core_fs::FSError::LocalMiss(_)) => {
+                let ws = self.0.clone();
+
+                FutureIntoCoroutine::from(async move {
+                    ws.load_file_descriptor(fd)
+                        .await
+                        .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
+                        .map(LocalFileManifest)
+                })
+            }
+            Err(e) => return Err(FSInvalidFileDescriptor::new_err(e.to_string())),
+        };
+
+        Ok(fut)
     }
 
     fn remove_file_descriptor(&self, fd: u32) -> PyResult<()> {
@@ -422,15 +432,14 @@ impl WorkspaceStorageSnapshot {
         self.0.create_file_descriptor(manifest.0).0
     }
 
-    fn load_file_descriptor(&self, fd: u32) -> FutureIntoCoroutine {
-        let ws = self.0.clone();
-
-        FutureIntoCoroutine::from(async move {
-            ws.load_file_descriptor(libparsec::types::FileDescriptor(fd))
-                .await
-                .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
-                .map(LocalFileManifest)
-        })
+    fn load_file_descriptor(&self, py: Python<'_>, fd: u32) -> FutureIntoCoroutine {
+        let manifest = self
+            .0
+            .load_file_descriptor(libparsec::types::FileDescriptor(fd))
+            .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
+            .map(LocalFileManifest)
+            .map(|manifest| manifest.into_py(py));
+        FutureIntoCoroutine::ready(manifest)
     }
 
     fn remove_file_descriptor(&self, fd: u32) -> PyResult<()> {
@@ -536,13 +545,10 @@ impl WorkspaceStorageSnapshot {
         Ok(Self(Arc::new(self.0.to_timestamp()), self.1.clone()))
     }
 
-    fn clear_local_cache(&self) -> FutureIntoCoroutine {
-        let ws = self.0.clone();
+    fn clear_local_cache(&self, py: Python<'_>) -> FutureIntoCoroutine {
+        self.0.clear_local_cache();
 
-        FutureIntoCoroutine::from(async move {
-            ws.clear_local_cache().await;
-            Ok(())
-        })
+        FutureIntoCoroutine::ready(Ok(py.None()))
     }
 
     #[getter]
