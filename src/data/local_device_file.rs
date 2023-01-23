@@ -142,6 +142,118 @@ impl DeviceFile {
         }
     }
 
+    #[getter]
+    fn ciphertext<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(
+            py,
+            match &self.0 {
+                libparsec::client_types::DeviceFile::Password(device) => &device.ciphertext,
+                libparsec::client_types::DeviceFile::Recovery(device) => &device.ciphertext,
+                libparsec::client_types::DeviceFile::Smartcard(device) => &device.ciphertext,
+            },
+        )
+    }
+
+    #[getter]
+    fn human_handle(&self) -> Option<HumanHandle> {
+        match &self.0 {
+            libparsec::client_types::DeviceFile::Password(device) => {
+                device.human_handle.clone().map(HumanHandle)
+            }
+            libparsec::client_types::DeviceFile::Recovery(device) => {
+                device.human_handle.clone().map(HumanHandle)
+            }
+            libparsec::client_types::DeviceFile::Smartcard(device) => {
+                device.human_handle.clone().map(HumanHandle)
+            }
+        }
+    }
+
+    #[getter]
+    fn device_label(&self) -> Option<DeviceLabel> {
+        match &self.0 {
+            libparsec::client_types::DeviceFile::Password(device) => {
+                device.device_label.clone().map(DeviceLabel)
+            }
+            libparsec::client_types::DeviceFile::Recovery(device) => {
+                device.device_label.clone().map(DeviceLabel)
+            }
+            libparsec::client_types::DeviceFile::Smartcard(device) => {
+                device.device_label.clone().map(DeviceLabel)
+            }
+        }
+    }
+
+    #[getter]
+    fn device_id(&self) -> DeviceID {
+        DeviceID(match &self.0 {
+            libparsec::client_types::DeviceFile::Password(device) => device.device_id.clone(),
+            libparsec::client_types::DeviceFile::Recovery(device) => device.device_id.clone(),
+            libparsec::client_types::DeviceFile::Smartcard(device) => device.device_id.clone(),
+        })
+    }
+
+    #[getter]
+    fn organization_id(&self) -> OrganizationID {
+        OrganizationID(match &self.0 {
+            libparsec::client_types::DeviceFile::Password(device) => device.organization_id.clone(),
+            libparsec::client_types::DeviceFile::Recovery(device) => device.organization_id.clone(),
+            libparsec::client_types::DeviceFile::Smartcard(device) => {
+                device.organization_id.clone()
+            }
+        })
+    }
+
+    #[getter]
+    fn slug(&self) -> &str {
+        match &self.0 {
+            libparsec::client_types::DeviceFile::Password(device) => &device.slug,
+            libparsec::client_types::DeviceFile::Recovery(device) => &device.slug,
+            libparsec::client_types::DeviceFile::Smartcard(device) => &device.slug,
+        }
+    }
+
+    #[getter]
+    fn salt<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            match &self.0 {
+                libparsec::client_types::DeviceFile::Password(device) => &device.salt,
+                _ => return Err(PyAttributeError::new_err("No such attribute")),
+            },
+        ))
+    }
+
+    #[getter]
+    fn encrypted_key<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            match &self.0 {
+                libparsec::client_types::DeviceFile::Smartcard(device) => &device.encrypted_key,
+                _ => return Err(PyAttributeError::new_err("No such attribute")),
+            },
+        ))
+    }
+
+    #[getter]
+    fn certificate_id(&self) -> PyResult<&str> {
+        Ok(match &self.0 {
+            libparsec::client_types::DeviceFile::Smartcard(device) => &device.certificate_id,
+            _ => return Err(PyAttributeError::new_err("No such attribute")),
+        })
+    }
+
+    #[getter]
+    fn certificate_sha1<'py>(&self, py: Python<'py>) -> PyResult<Option<&'py PyBytes>> {
+        Ok(match &self.0 {
+            libparsec::client_types::DeviceFile::Smartcard(device) => device
+                .certificate_sha1
+                .as_ref()
+                .map(|x| PyBytes::new(py, x)),
+            _ => return Err(PyAttributeError::new_err("No such attribute")),
+        })
+    }
+
     #[classmethod]
     fn load(_cls: &PyType, data: &[u8]) -> PyResult<Self> {
         libparsec::client_types::DeviceFile::load(data)
