@@ -251,8 +251,8 @@ async function login(): Promise<void> {
   } else {
     deviceStoredDataList.value[selectedDevice.slug].lastLogin = new Date();
   }
-  await store.set('devicesData', toRaw(deviceStoredDataList.value));
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
+  await store.set('devicesData', toRaw(deviceStoredDataList.value));
 }
 
 function formatLastLogin(lastLogin: Date | undefined) : string {

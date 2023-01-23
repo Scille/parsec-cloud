@@ -5,7 +5,10 @@ import frFR from '../../src/locales/fr-FR.json';
 import enUS from '../../src/locales/en-US.json';
 import { modalController } from '@ionic/vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
+import { Storage } from '@ionic/storage';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
+import { MockDate, mockDateValue } from './utils';
+import { login } from '../../../bindings/web/pkg';
 
 describe('HomePage.vue', () => {
   type MessageSchema = typeof frFR;
@@ -123,6 +126,7 @@ describe('HomePage.vue', () => {
   describe('Login Popup tests', () => {
     let passwordInput: VueWrapper;
     let consoleLogSpyOn: jest.SpyInstance;
+    const store = new Storage();
 
     beforeAll(async () => {
       wrapper.vm.selectedDevice = {
@@ -135,7 +139,12 @@ describe('HomePage.vue', () => {
         ty: {tag: 'Password'}
       };
       wrapper.vm.showOrganizationList = false;
+      global.Date = MockDate as DateConstructor;
       consoleLogSpyOn = jest.spyOn(console, 'log');
+    });
+
+    afterAll(() => {
+      global.Date = Date;
     });
 
     it('should update password value on password input change', async () => {
@@ -157,7 +166,10 @@ describe('HomePage.vue', () => {
       wrapper.vm.password = 'password';
       const expectedMessage = 'Log in to Eddy with password "password"';
       const loginButton = wrapper.findComponent('#login-button') as VueWrapper;
-      loginButton.trigger('click');
+      await loginButton.trigger('click');
+      await store.create();
+      const deviceStoredDataList = await store.get('devicesData');
+      expect(deviceStoredDataList.slug4.lastLogin).toEqual(mockDateValue);
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });
@@ -176,6 +188,9 @@ describe('HomePage.vue', () => {
       wrapper.vm.password = 'password';
       const expectedMessage = 'Log in to Eddy with password "password"';
       passwordInput.vm.$emit('enter');
+      await store.create();
+      const deviceStoredDataList = await store.get('devicesData');
+      expect(deviceStoredDataList.slug4.lastLogin).toEqual(mockDateValue);
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });
