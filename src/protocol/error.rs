@@ -59,6 +59,8 @@ impl ProtocolErrorFields {
 gen_proto!(ProtocolErrorFields, __richcmp__, eq);
 gen_proto!(ProtocolErrorFields, __str__); // Needed for python's exceptions
 gen_proto!(ProtocolErrorFields, __repr__);
+gen_proto!(ProtocolErrorFields, __copy__);
+gen_proto!(ProtocolErrorFields, __deepcopy__);
 
 impl From<ProtocolErrorFields> for PyErr {
     fn from(err: ProtocolErrorFields) -> Self {

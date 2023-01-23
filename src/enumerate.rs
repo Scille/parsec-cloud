@@ -19,6 +19,8 @@ use crate::protocol::{ProtocolErrorFields, ProtocolResult};
 pub(crate) struct ClientType(pub client_types::ClientType);
 
 crate::binding_utils::gen_proto!(ClientType, __repr__);
+crate::binding_utils::gen_proto!(ClientType, __copy__);
+crate::binding_utils::gen_proto!(ClientType, __deepcopy__);
 crate::binding_utils::gen_proto!(ClientType, __richcmp__, eq);
 crate::binding_utils::gen_proto!(ClientType, __hash__);
 
@@ -38,6 +40,8 @@ crate::binding_utils::impl_enum_field!(
 pub(crate) struct InvitationDeletedReason(pub invite_delete::InvitationDeletedReason);
 
 crate::binding_utils::gen_proto!(InvitationDeletedReason, __repr__);
+crate::binding_utils::gen_proto!(InvitationDeletedReason, __copy__);
+crate::binding_utils::gen_proto!(InvitationDeletedReason, __deepcopy__);
 crate::binding_utils::gen_proto!(InvitationDeletedReason, __richcmp__, eq);
 
 crate::binding_utils::impl_enum_field!(
@@ -64,6 +68,8 @@ crate::binding_utils::impl_enum_field!(
 pub(crate) struct InvitationEmailSentStatus(pub invite_new::InvitationEmailSentStatus);
 
 crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __repr__);
+crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __copy__);
+crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __deepcopy__);
 crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __richcmp__, eq);
 
 crate::binding_utils::impl_enum_field!(
@@ -90,6 +96,8 @@ crate::binding_utils::impl_enum_field!(
 pub(crate) struct InvitationStatus(pub libparsec::types::InvitationStatus);
 
 crate::binding_utils::gen_proto!(InvitationStatus, __repr__);
+crate::binding_utils::gen_proto!(InvitationStatus, __copy__);
+crate::binding_utils::gen_proto!(InvitationStatus, __deepcopy__);
 crate::binding_utils::gen_proto!(InvitationStatus, __richcmp__, eq);
 crate::binding_utils::gen_proto!(InvitationStatus, __hash__);
 
@@ -109,6 +117,8 @@ crate::binding_utils::impl_enum_field!(
 pub(crate) struct InvitationType(pub libparsec::types::InvitationType);
 
 crate::binding_utils::gen_proto!(InvitationType, __repr__);
+crate::binding_utils::gen_proto!(InvitationType, __copy__);
+crate::binding_utils::gen_proto!(InvitationType, __deepcopy__);
 crate::binding_utils::gen_proto!(InvitationType, __richcmp__, eq);
 crate::binding_utils::gen_proto!(InvitationType, __hash__);
 
@@ -123,6 +133,8 @@ crate::binding_utils::impl_enum_field!(
 pub(crate) struct RealmRole(pub libparsec::types::RealmRole);
 
 crate::binding_utils::gen_proto!(RealmRole, __repr__);
+crate::binding_utils::gen_proto!(RealmRole, __copy__);
+crate::binding_utils::gen_proto!(RealmRole, __deepcopy__);
 crate::binding_utils::gen_proto!(RealmRole, __richcmp__, eq);
 crate::binding_utils::gen_proto!(RealmRole, __hash__);
 
@@ -143,6 +155,8 @@ crate::binding_utils::impl_enum_field!(
 pub(crate) struct UserProfile(pub libparsec::types::UserProfile);
 
 crate::binding_utils::gen_proto!(UserProfile, __repr__);
+crate::binding_utils::gen_proto!(UserProfile, __copy__);
+crate::binding_utils::gen_proto!(UserProfile, __deepcopy__);
 crate::binding_utils::gen_proto!(UserProfile, __richcmp__, eq);
 crate::binding_utils::gen_proto!(UserProfile, __hash__);
 
@@ -341,6 +355,8 @@ crate::binding_utils::impl_enum_field!(
 
 crate::binding_utils::gen_proto!(CoreEvent, __hash__);
 crate::binding_utils::gen_proto!(CoreEvent, __repr__);
+crate::binding_utils::gen_proto!(CoreEvent, __copy__);
+crate::binding_utils::gen_proto!(CoreEvent, __deepcopy__);
 crate::binding_utils::gen_proto!(CoreEvent, __richcmp__, eq);
 
 #[pyclass]
@@ -381,4 +397,6 @@ impl DeviceFileType {
 
 crate::binding_utils::gen_proto!(DeviceFileType, __hash__);
 crate::binding_utils::gen_proto!(DeviceFileType, __repr__);
+crate::binding_utils::gen_proto!(DeviceFileType, __copy__);
+crate::binding_utils::gen_proto!(DeviceFileType, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceFileType, __richcmp__, eq);

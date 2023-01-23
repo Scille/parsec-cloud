@@ -8,7 +8,7 @@ use libparsec_client_types::{
     AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileRecovery, DeviceFileSmartcard,
     DeviceFileType,
 };
-use tests_fixtures::{alice, Device};
+use libparsec_tests_fixtures::{alice, Device};
 
 #[rstest]
 fn test_password_protected_device_file(alice: &Device) {

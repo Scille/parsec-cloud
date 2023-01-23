@@ -17,9 +17,11 @@ use crate::{
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct BackendAddr(libparsec::types::BackendAddr);
+pub(crate) struct BackendAddr(pub libparsec::types::BackendAddr);
 
 crate::binding_utils::gen_proto!(BackendAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendAddr, __copy__);
+crate::binding_utils::gen_proto!(BackendAddr, __deepcopy__);
 crate::binding_utils::gen_proto!(BackendAddr, __richcmp__, eq);
 crate::binding_utils::gen_proto!(BackendAddr, __hash__);
 
@@ -88,6 +90,8 @@ impl BackendAddr {
 pub(crate) struct BackendOrganizationAddr(pub libparsec::types::BackendOrganizationAddr);
 
 crate::binding_utils::gen_proto!(BackendOrganizationAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendOrganizationAddr, __copy__);
+crate::binding_utils::gen_proto!(BackendOrganizationAddr, __deepcopy__);
 crate::binding_utils::gen_proto!(BackendOrganizationAddr, __richcmp__, eq);
 
 #[pymethods]
@@ -269,6 +273,8 @@ pub(crate) struct BackendOrganizationBootstrapAddr(
 );
 
 crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __copy__);
+crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __deepcopy__);
 crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __richcmp__, eq);
 crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __hash__);
 
@@ -410,6 +416,8 @@ pub(crate) struct BackendOrganizationFileLinkAddr(
 );
 
 crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __copy__);
+crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __deepcopy__);
 crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __richcmp__, eq);
 crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __hash__);
 
@@ -560,6 +568,8 @@ impl BackendOrganizationFileLinkAddr {
 pub(crate) struct BackendInvitationAddr(libparsec::types::BackendInvitationAddr);
 
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendInvitationAddr, __copy__);
+crate::binding_utils::gen_proto!(BackendInvitationAddr, __deepcopy__);
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __richcmp__, eq);
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __hash__);
 
@@ -698,6 +708,8 @@ impl BackendInvitationAddr {
 pub(crate) struct BackendPkiEnrollmentAddr(pub libparsec::types::BackendPkiEnrollmentAddr);
 
 crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __copy__);
+crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __deepcopy__);
 crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __richcmp__, eq);
 crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __hash__);
 

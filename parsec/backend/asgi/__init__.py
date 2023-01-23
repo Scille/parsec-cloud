@@ -118,8 +118,9 @@ async def serve_backend_with_asgi(
     ssl_certfile: Path | None = None,
     ssl_keyfile: Path | None = None,
     task_status: trio_typing.TaskStatus[T] = trio.TASK_STATUS_IGNORED,
+    app: BackendQuartTrio | None = None,
 ) -> None:
-    app = app_factory(backend)
+    app = app or app_factory(backend)
     # Note: Hypercorn comes with default values for incoming data size to
     # avoid DoS abuse, so just trust them on that ;-)
     hyper_config = HyperConfig.from_mapping(

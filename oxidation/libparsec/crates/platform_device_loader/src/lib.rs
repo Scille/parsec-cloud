@@ -4,6 +4,9 @@
 mod native;
 #[cfg(target_arch = "wasm32")]
 mod web;
+// Testbed integration is tested in the `libarsec_tests_fixture` crate.
+#[cfg(feature = "test-testbed-support")]
+mod testbed;
 
 use libparsec_client_types::{
     DeviceFilePassword, DeviceFileType, LocalDevice, LocalDeviceError, LocalDeviceResult,

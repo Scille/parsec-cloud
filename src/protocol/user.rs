@@ -29,6 +29,8 @@ import_exception!(parsec.api.protocol, InvalidMessageError);
 pub(crate) struct Trustchain(pub user_get::Trustchain);
 
 crate::binding_utils::gen_proto!(Trustchain, __repr__);
+crate::binding_utils::gen_proto!(Trustchain, __copy__);
+crate::binding_utils::gen_proto!(Trustchain, __deepcopy__);
 crate::binding_utils::gen_proto!(Trustchain, __richcmp__, eq);
 
 #[pymethods]
@@ -77,6 +79,8 @@ impl Trustchain {
 pub(crate) struct HumanFindResultItem(pub human_find::HumanFindResultItem);
 
 crate::binding_utils::gen_proto!(HumanFindResultItem, __repr__);
+crate::binding_utils::gen_proto!(HumanFindResultItem, __copy__);
+crate::binding_utils::gen_proto!(HumanFindResultItem, __deepcopy__);
 crate::binding_utils::gen_proto!(HumanFindResultItem, __richcmp__, eq);
 
 #[pymethods]
@@ -113,6 +117,8 @@ impl HumanFindResultItem {
 pub(crate) struct UserGetReq(pub user_get::Req);
 
 crate::binding_utils::gen_proto!(UserGetReq, __repr__);
+crate::binding_utils::gen_proto!(UserGetReq, __copy__);
+crate::binding_utils::gen_proto!(UserGetReq, __deepcopy__);
 crate::binding_utils::gen_proto!(UserGetReq, __richcmp__, eq);
 
 #[pymethods]
@@ -224,6 +230,8 @@ impl UserGetRepOk {
 pub(crate) struct UserCreateReq(pub user_create::Req);
 
 crate::binding_utils::gen_proto!(UserCreateReq, __repr__);
+crate::binding_utils::gen_proto!(UserCreateReq, __copy__);
+crate::binding_utils::gen_proto!(UserCreateReq, __deepcopy__);
 crate::binding_utils::gen_proto!(UserCreateReq, __richcmp__, eq);
 
 #[pymethods]
@@ -307,6 +315,8 @@ impl UserCreateRepOk {
 pub(crate) struct UserRevokeReq(pub user_revoke::Req);
 
 crate::binding_utils::gen_proto!(UserRevokeReq, __repr__);
+crate::binding_utils::gen_proto!(UserRevokeReq, __copy__);
+crate::binding_utils::gen_proto!(UserRevokeReq, __deepcopy__);
 crate::binding_utils::gen_proto!(UserRevokeReq, __richcmp__, eq);
 
 #[pymethods]
@@ -361,6 +371,8 @@ impl UserRevokeRepOk {
 pub(crate) struct DeviceCreateReq(pub device_create::Req);
 
 crate::binding_utils::gen_proto!(DeviceCreateReq, __repr__);
+crate::binding_utils::gen_proto!(DeviceCreateReq, __copy__);
+crate::binding_utils::gen_proto!(DeviceCreateReq, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceCreateReq, __richcmp__, eq);
 
 #[pymethods]
@@ -424,6 +436,8 @@ impl DeviceCreateRepOk {
 pub(crate) struct HumanFindReq(pub human_find::Req);
 
 crate::binding_utils::gen_proto!(HumanFindReq, __repr__);
+crate::binding_utils::gen_proto!(HumanFindReq, __copy__);
+crate::binding_utils::gen_proto!(HumanFindReq, __deepcopy__);
 crate::binding_utils::gen_proto!(HumanFindReq, __richcmp__, eq);
 
 #[pymethods]

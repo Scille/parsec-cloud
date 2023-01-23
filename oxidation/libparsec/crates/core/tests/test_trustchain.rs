@@ -9,7 +9,7 @@ use libparsec_types::{
     UserCertificate, UserProfile,
 };
 
-use tests_fixtures::{
+use libparsec_tests_fixtures::{
     alice, alice_device_certif, alice_revoked_user_certif, alice_user_certif, bob,
     bob_device_certif, bob_user_certif, coolorg, mallory, mallory_device_certif,
     mallory_revoked_user_certif, mallory_user_certif, Device, Organization,

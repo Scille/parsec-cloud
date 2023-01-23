@@ -20,6 +20,8 @@ use crate::protocol::{
 pub(crate) struct InvitedPingReq(pub invited_cmds::ping::Req);
 
 crate::binding_utils::gen_proto!(InvitedPingReq, __repr__);
+crate::binding_utils::gen_proto!(InvitedPingReq, __copy__);
+crate::binding_utils::gen_proto!(InvitedPingReq, __deepcopy__);
 crate::binding_utils::gen_proto!(InvitedPingReq, __richcmp__, eq);
 
 #[pymethods]
@@ -72,6 +74,8 @@ impl InvitedPingRepOk {
 pub(crate) struct AuthenticatedPingReq(pub authenticated_cmds::ping::Req);
 
 crate::binding_utils::gen_proto!(AuthenticatedPingReq, __repr__);
+crate::binding_utils::gen_proto!(AuthenticatedPingReq, __copy__);
+crate::binding_utils::gen_proto!(AuthenticatedPingReq, __deepcopy__);
 crate::binding_utils::gen_proto!(AuthenticatedPingReq, __richcmp__, eq);
 
 #[pymethods]

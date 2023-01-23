@@ -381,10 +381,10 @@ impl WorkspaceStorage {
 mod tests {
     use crate::conftest::{alice_workspace_storage, TmpWorkspaceStorage};
     use libparsec_client_types::Chunk;
+    use libparsec_tests_fixtures::{alice, tmp_path, Device, TmpPath};
     use libparsec_types::{Blocksize, DEFAULT_BLOCK_SIZE};
     use rstest::rstest;
     use std::num::NonZeroU64;
-    use tests_fixtures::{alice, tmp_path, Device, TmpPath};
 
     use super::*;
 

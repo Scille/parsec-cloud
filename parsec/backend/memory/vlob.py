@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import deepcopy
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from typing import TYPE_CHECKING, AbstractSet, Any, Callable, Coroutine, Dict, List, Tuple
@@ -581,3 +582,31 @@ class MemoryVlobComponent(BaseVlobComponent):
         total, done = changes.reencryption.save_batch(batch)
 
         return total, done
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._vlobs.update(
+            {
+                (new_id, vlob_id): deepcopy(vlob)
+                for (candidate_org_id, vlob_id), vlob in self._vlobs.items()
+                if candidate_org_id == id
+            }
+        )
+        self._per_realm_changes.update(
+            {
+                (new_id, realm_id): deepcopy(changes)
+                for (candidate_org_id, realm_id), changes in self._per_realm_changes.items()
+                if candidate_org_id == id
+            }
+        )
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._vlobs = {
+            (candidate_org_id, vlob_id): vlob
+            for (candidate_org_id, vlob_id), vlob in self._vlobs.items()
+            if candidate_org_id != id
+        }
+        self._per_realm_changes = {
+            (candidate_org_id, realm_id): changes
+            for (candidate_org_id, realm_id), changes in self._per_realm_changes.items()
+            if candidate_org_id != id
+        }

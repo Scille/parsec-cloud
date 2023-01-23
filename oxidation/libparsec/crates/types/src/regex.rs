@@ -94,8 +94,8 @@ mod tests {
     use std::{fs, path::Path};
 
     use crate::regex::Regex;
+    use libparsec_tests_fixtures::{tmp_path, TmpPath};
     use rstest::rstest;
-    use tests_fixtures::{tmp_path, TmpPath};
 
     #[rstest]
     #[case::base("*.rs\n*.py", "base.tmp")]

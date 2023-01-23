@@ -5,6 +5,13 @@ use std::path::Path;
 use libparsec_client_types::{AvailableDevice, DeviceFile, DeviceFileType};
 
 pub async fn list_available_devices(_config_dir: &Path) -> Vec<AvailableDevice> {
+    #[cfg(feature = "test-testbed-support")]
+    {
+        if let Some(result) = crate::testbed::maybe_list_available_devices(config_dir) {
+            return result;
+        }
+    }
+
     let window = web_sys::window().unwrap();
     if let Ok(Some(storage)) = window.local_storage() {
         if let Ok(Some(devices)) = storage.get_item("devices") {

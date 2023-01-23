@@ -6,7 +6,7 @@ use rstest::rstest;
 use libparsec_crypto::*;
 use libparsec_types::*;
 
-use tests_fixtures::{bob, Device};
+use libparsec_tests_fixtures::{bob, Device};
 
 #[rstest]
 #[case::normal(

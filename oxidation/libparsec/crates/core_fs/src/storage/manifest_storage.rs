@@ -574,8 +574,8 @@ mod tests {
     use libparsec_crypto::{prelude::*, HashDigest};
     use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
 
+    use libparsec_tests_fixtures::{timestamp, tmp_path, TmpPath};
     use rstest::rstest;
-    use tests_fixtures::{timestamp, tmp_path, TmpPath};
 
     use super::*;
     use crate::storage::local_database::SqlitePool;

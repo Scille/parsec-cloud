@@ -25,7 +25,7 @@ thiserror = "1.0.37"
 futures = "0.3.24"
 
 [dev-dependencies]
-tests_fixtures = { path = "../tests_fixtures" }
+libparsec_tests_fixtures = { path = "../tests_fixtures" }
 hex-literal = "0.3.3"
 rstest = "0.16.0"
 serde_json = "1.0.91"

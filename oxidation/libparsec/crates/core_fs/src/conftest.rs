@@ -3,8 +3,8 @@
 use rstest::fixture;
 
 use crate::{WorkspaceStorage, DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE};
+use libparsec_tests_fixtures::{alice, tmp_path, Device, TmpPath};
 use libparsec_types::EntryID;
-use tests_fixtures::{alice, tmp_path, Device, TmpPath};
 
 pub struct TmpWorkspaceStorage {
     ws: WorkspaceStorage,

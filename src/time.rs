@@ -147,6 +147,8 @@ impl TimeProvider {
 pub(crate) struct DateTime(pub libparsec::types::DateTime);
 
 crate::binding_utils::gen_proto!(DateTime, __repr__);
+crate::binding_utils::gen_proto!(DateTime, __copy__);
+crate::binding_utils::gen_proto!(DateTime, __deepcopy__);
 crate::binding_utils::gen_proto!(DateTime, __str__);
 crate::binding_utils::gen_proto!(DateTime, __richcmp__, ord);
 crate::binding_utils::gen_proto!(DateTime, __hash__);
@@ -303,6 +305,8 @@ impl DateTime {
 pub(crate) struct LocalDateTime(pub libparsec::types::LocalDateTime);
 
 crate::binding_utils::gen_proto!(LocalDateTime, __repr__);
+crate::binding_utils::gen_proto!(LocalDateTime, __copy__);
+crate::binding_utils::gen_proto!(LocalDateTime, __deepcopy__);
 crate::binding_utils::gen_proto!(LocalDateTime, __str__);
 crate::binding_utils::gen_proto!(LocalDateTime, __richcmp__, ord);
 crate::binding_utils::gen_proto!(LocalDateTime, __hash__);

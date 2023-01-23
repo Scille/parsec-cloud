@@ -243,6 +243,8 @@ impl TrustchainError {
 gen_proto!(TrustchainError, __richcmp__, eq);
 gen_proto!(TrustchainError, __str__); // Needed for python's exceptions
 gen_proto!(TrustchainError, __repr__);
+gen_proto!(TrustchainError, __copy__);
+gen_proto!(TrustchainError, __deepcopy__);
 
 impl From<TrustchainError> for PyErr {
     fn from(err: TrustchainError) -> Self {

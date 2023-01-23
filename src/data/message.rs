@@ -21,6 +21,8 @@ use crate::{
 pub(crate) struct MessageContent(pub libparsec::types::MessageContent);
 
 crate::binding_utils::gen_proto!(MessageContent, __repr__);
+crate::binding_utils::gen_proto!(MessageContent, __copy__);
+crate::binding_utils::gen_proto!(MessageContent, __deepcopy__);
 crate::binding_utils::gen_proto!(MessageContent, __richcmp__, eq);
 
 #[pymethods]

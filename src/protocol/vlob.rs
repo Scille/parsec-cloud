@@ -31,6 +31,8 @@ use crate::{
 pub(crate) struct ReencryptionBatchEntry(pub libparsec::types::ReencryptionBatchEntry);
 
 crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __repr__);
+crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __copy__);
+crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __deepcopy__);
 crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __richcmp__, eq);
 
 #[pymethods]
@@ -67,6 +69,8 @@ impl ReencryptionBatchEntry {
 pub(crate) struct VlobCreateReq(pub vlob_create::Req);
 
 crate::binding_utils::gen_proto!(VlobCreateReq, __repr__);
+crate::binding_utils::gen_proto!(VlobCreateReq, __copy__);
+crate::binding_utils::gen_proto!(VlobCreateReq, __deepcopy__);
 crate::binding_utils::gen_proto!(VlobCreateReq, __richcmp__, eq);
 
 #[pymethods]
@@ -196,6 +200,8 @@ impl VlobCreateRepOk {
 pub(crate) struct VlobReadReq(pub vlob_read::Req);
 
 crate::binding_utils::gen_proto!(VlobReadReq, __repr__);
+crate::binding_utils::gen_proto!(VlobReadReq, __copy__);
+crate::binding_utils::gen_proto!(VlobReadReq, __deepcopy__);
 crate::binding_utils::gen_proto!(VlobReadReq, __richcmp__, eq);
 
 #[pymethods]
@@ -340,6 +346,8 @@ impl VlobReadRepOk {
 pub(crate) struct VlobUpdateReq(pub vlob_update::Req);
 
 crate::binding_utils::gen_proto!(VlobUpdateReq, __repr__);
+crate::binding_utils::gen_proto!(VlobUpdateReq, __copy__);
+crate::binding_utils::gen_proto!(VlobUpdateReq, __deepcopy__);
 crate::binding_utils::gen_proto!(VlobUpdateReq, __richcmp__, eq);
 
 #[pymethods]
@@ -469,6 +477,8 @@ impl VlobUpdateRepOk {
 pub(crate) struct VlobPollChangesReq(pub vlob_poll_changes::Req);
 
 crate::binding_utils::gen_proto!(VlobPollChangesReq, __repr__);
+crate::binding_utils::gen_proto!(VlobPollChangesReq, __copy__);
+crate::binding_utils::gen_proto!(VlobPollChangesReq, __deepcopy__);
 crate::binding_utils::gen_proto!(VlobPollChangesReq, __richcmp__, eq);
 
 #[pymethods]
@@ -559,6 +569,8 @@ impl VlobPollChangesRepOk {
 pub(crate) struct VlobListVersionsReq(pub vlob_list_versions::Req);
 
 crate::binding_utils::gen_proto!(VlobListVersionsReq, __repr__);
+crate::binding_utils::gen_proto!(VlobListVersionsReq, __copy__);
+crate::binding_utils::gen_proto!(VlobListVersionsReq, __deepcopy__);
 crate::binding_utils::gen_proto!(VlobListVersionsReq, __richcmp__, eq);
 
 #[pymethods]
@@ -631,6 +643,8 @@ pub(crate) struct VlobMaintenanceGetReencryptionBatchReq(
 );
 
 crate::binding_utils::gen_proto!(VlobMaintenanceGetReencryptionBatchReq, __repr__);
+crate::binding_utils::gen_proto!(VlobMaintenanceGetReencryptionBatchReq, __copy__);
+crate::binding_utils::gen_proto!(VlobMaintenanceGetReencryptionBatchReq, __deepcopy__);
 crate::binding_utils::gen_proto!(VlobMaintenanceGetReencryptionBatchReq, __richcmp__, eq);
 
 #[pymethods]
@@ -720,6 +734,8 @@ pub(crate) struct VlobMaintenanceSaveReencryptionBatchReq(
 );
 
 crate::binding_utils::gen_proto!(VlobMaintenanceSaveReencryptionBatchReq, __repr__);
+crate::binding_utils::gen_proto!(VlobMaintenanceSaveReencryptionBatchReq, __copy__);
+crate::binding_utils::gen_proto!(VlobMaintenanceSaveReencryptionBatchReq, __deepcopy__);
 crate::binding_utils::gen_proto!(VlobMaintenanceSaveReencryptionBatchReq, __richcmp__, eq);
 
 #[pymethods]

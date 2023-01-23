@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from parsec._parsec import DateTime
@@ -183,3 +184,9 @@ class MemorySequesterComponent(BaseSequesterComponent):
                 except KeyError:
                     pass
         return dump
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._services[new_id] = deepcopy(self._services[id])
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._services.pop(id, None)

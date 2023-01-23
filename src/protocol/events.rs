@@ -26,6 +26,8 @@ use super::gen_rep;
 pub(crate) struct EventsListenReq(pub events_listen::Req);
 
 crate::binding_utils::gen_proto!(EventsListenReq, __repr__);
+crate::binding_utils::gen_proto!(EventsListenReq, __copy__);
+crate::binding_utils::gen_proto!(EventsListenReq, __deepcopy__);
 crate::binding_utils::gen_proto!(EventsListenReq, __richcmp__, eq);
 
 #[pymethods]
@@ -381,6 +383,8 @@ impl EventsListenRepOkPkiEnrollmentUpdated {
 pub(crate) struct EventsSubscribeReq(pub events_subscribe::Req);
 
 crate::binding_utils::gen_proto!(EventsSubscribeReq, __repr__);
+crate::binding_utils::gen_proto!(EventsSubscribeReq, __copy__);
+crate::binding_utils::gen_proto!(EventsSubscribeReq, __deepcopy__);
 crate::binding_utils::gen_proto!(EventsSubscribeReq, __richcmp__, eq);
 
 #[pymethods]

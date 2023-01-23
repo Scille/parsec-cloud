@@ -7,7 +7,7 @@ use std::{collections::HashMap, num::NonZeroU64, str::FromStr};
 use libparsec_crypto::*;
 use libparsec_types::*;
 
-use tests_fixtures::{alice, Device};
+use libparsec_tests_fixtures::{alice, Device};
 
 #[rstest]
 fn serde_file_manifest(alice: &Device) {

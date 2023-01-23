@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import deepcopy
 from typing import Any, Callable, Coroutine, List, Tuple
 
 from parsec._parsec import DateTime
@@ -44,3 +45,9 @@ class MemoryMessageComponent(BaseMessageComponent):
     ) -> List[Tuple[DeviceID, DateTime, bytes]]:
         messages = self._organizations[organization_id]
         return messages[recipient][offset:]
+
+    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        self._organizations[new_id] = deepcopy(self._organizations[id])
+
+    def test_drop_organization(self, id: OrganizationID) -> None:
+        self._organizations.pop(id, None)

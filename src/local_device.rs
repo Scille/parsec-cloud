@@ -25,6 +25,8 @@ use crate::{
 pub(crate) struct LocalDevice(pub libparsec::client_types::LocalDevice);
 
 crate::binding_utils::gen_proto!(LocalDevice, __repr__);
+crate::binding_utils::gen_proto!(LocalDevice, __copy__);
+crate::binding_utils::gen_proto!(LocalDevice, __deepcopy__);
 crate::binding_utils::gen_proto!(LocalDevice, __richcmp__, eq);
 
 #[pymethods]
@@ -332,6 +334,8 @@ impl LocalDevice {
 pub(crate) struct UserInfo(pub libparsec::client_types::UserInfo);
 
 crate::binding_utils::gen_proto!(UserInfo, __repr__);
+crate::binding_utils::gen_proto!(UserInfo, __copy__);
+crate::binding_utils::gen_proto!(UserInfo, __deepcopy__);
 crate::binding_utils::gen_proto!(UserInfo, __richcmp__, ord);
 crate::binding_utils::gen_proto!(UserInfo, __hash__);
 
@@ -404,6 +408,8 @@ impl UserInfo {
 pub(crate) struct DeviceInfo(pub libparsec::client_types::DeviceInfo);
 
 crate::binding_utils::gen_proto!(DeviceInfo, __repr__);
+crate::binding_utils::gen_proto!(DeviceInfo, __copy__);
+crate::binding_utils::gen_proto!(DeviceInfo, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceInfo, __richcmp__, ord);
 crate::binding_utils::gen_proto!(DeviceInfo, __hash__);
 
