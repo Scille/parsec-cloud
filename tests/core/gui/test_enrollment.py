@@ -43,7 +43,7 @@ async def test_full_enrollment(
     )
     config_dir = gui.config.config_dir
     alice_password = "S3cr3t"
-    save_device_with_password_in_config(config_dir, alice, alice_password)
+    await save_device_with_password_in_config(config_dir, alice, alice_password)
 
     pki_org_addr = BackendPkiEnrollmentAddr.build(
         alice.organization_addr.get_backend_addr(), alice.organization_addr.organization_id

@@ -249,7 +249,7 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
     async def _on_finalize_clicked(self) -> None:
         try:
             if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
-                save_device_with_password_in_config(
+                await save_device_with_password_in_config(
                     config_dir=self.config.config_dir,
                     device=self.new_device,
                     password=self.widget_auth.get_auth(),

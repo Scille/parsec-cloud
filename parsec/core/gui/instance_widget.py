@@ -270,11 +270,11 @@ class InstanceWidget(QWidget):
     def logout(self) -> None:
         self.stop_core()
 
-    def login_with_password(self, key_file: Path, password: str) -> None:
+    async def login_with_password(self, key_file: Path, password: str) -> None:
         message = None
         exception: Exception | None = None
         try:
-            device = LocalDevice.load_device_with_password(key_file, password)
+            device = await LocalDevice.load_device_with_password(key_file, password)
             if ParsecApp.is_device_connected(
                 device.organization_addr.organization_id, device.device_id
             ):

@@ -188,8 +188,10 @@ def core_config_and_device_options(fn: Callable[..., R]) -> Callable[..., R]:
         try:
             if available_device.type == DeviceFileType.PASSWORD:
                 passwd: str = password or click.prompt("password", hide_input=True)
-                device = LocalDevice.load_device_with_password(
-                    Path(available_device.key_file_path), passwd
+                device = trio.run(
+                    LocalDevice.load_device_with_password,
+                    Path(available_device.key_file_path),
+                    passwd,
                 )
             elif available_device.type == DeviceFileType.SMARTCARD:
                 # It's ok to be blocking here, we're not in async land yet
@@ -238,13 +240,8 @@ def save_device_options(fn: Callable[..., R]) -> Callable[..., R]:
                             hide_input=True,
                         )
                         with operation(f"Saving device {device_display}"):
-                            return await trio.to_thread.run_sync(
-                                partial(
-                                    save_device_with_password_in_config,
-                                    config_dir=config_dir,
-                                    device=device,
-                                    password=password,
-                                )
+                            return await save_device_with_password_in_config(
+                                config_dir, device, password
                             )
 
                     else:  # smartcard

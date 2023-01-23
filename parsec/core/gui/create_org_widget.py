@@ -277,7 +277,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             try:
                 assert self.new_device is not None
                 if auth_method == DeviceFileType.PASSWORD:
-                    save_device_with_password_in_config(
+                    await save_device_with_password_in_config(
                         self.config.config_dir,
                         self.new_device,
                         self.current_widget.get_auth(),

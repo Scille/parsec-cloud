@@ -167,7 +167,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
                 auth_method = self.current_page.get_auth_method()
                 assert self.new_device is not None
                 if auth_method == DeviceFileType.PASSWORD:
-                    save_device_with_password_in_config(
+                    await save_device_with_password_in_config(
                         config_dir=self.config.config_dir,
                         device=self.new_device,
                         password=self.current_page.get_auth(),

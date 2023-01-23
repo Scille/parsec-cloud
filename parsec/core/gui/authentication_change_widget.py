@@ -52,7 +52,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
         auth_method = self.widget_auth.get_auth_method()
         try:
             if auth_method == DeviceFileType.PASSWORD:
-                save_device_with_password_in_config(
+                await save_device_with_password_in_config(
                     self.core.config.config_dir, self.loaded_device, self.widget_auth.get_auth()
                 )
             elif auth_method == DeviceFileType.SMARTCARD:
@@ -106,7 +106,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 )
                 if not password:
                     return None
-                loaded_device = LocalDevice.load_device_with_password(
+                loaded_device = await LocalDevice.load_device_with_password(
                     available_device.key_file_path, password
                 )
             else:

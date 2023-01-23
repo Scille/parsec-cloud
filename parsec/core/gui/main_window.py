@@ -546,7 +546,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             tab = self.tab_center.widget(idx)
         kf = get_key_file(self.config.config_dir, device.slug)
         if auth_method == DeviceFileType.PASSWORD:
-            tab.login_with_password(kf, password)
+            await tab.login_with_password(kf, password)
         elif auth_method == DeviceFileType.SMARTCARD:
             await tab.login_with_smartcard(kf)
 

@@ -203,7 +203,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     self.button_validate.setEnabled(True)
                     return
                 try:
-                    device = LocalDevice.load_device_with_password(
+                    device = await LocalDevice.load_device_with_password(
                         selected_device.key_file_path, password
                     )
                 except LocalDeviceError:

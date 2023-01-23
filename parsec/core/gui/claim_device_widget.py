@@ -687,7 +687,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
     ) -> None:
         try:
             if auth_method == DeviceFileType.PASSWORD:
-                save_device_with_password_in_config(
+                await save_device_with_password_in_config(
                     config_dir=self.config.config_dir, device=new_device, password=password
                 )
             elif auth_method == DeviceFileType.SMARTCARD:

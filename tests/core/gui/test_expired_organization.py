@@ -27,7 +27,7 @@ async def test_expired_notification_logging(
 ):
 
     # Log has alice on an expired organization
-    save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
+    await save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
@@ -68,7 +68,7 @@ async def test_expired_notification_from_connection(
     core_config,
     snackbar_catcher,
 ):
-    save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
+    await save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()

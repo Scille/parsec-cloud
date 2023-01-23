@@ -112,7 +112,7 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
         yield factory_mock(*args, **kwargs)
 
     password = "S3cr3t"
-    save_device_with_password_in_config(config_dir, bob, password)
+    trio.run(save_device_with_password_in_config, config_dir, bob, password)
     alice_info = [
         UserInfo(
             user_id=alice.user_id,
@@ -176,7 +176,7 @@ def test_reencrypt_workspace(tmp_path, monkeypatch, alice, bob):
         yield factory_mock(*args, **kwargs)
 
     password = "S3cr3t"
-    save_device_with_password_in_config(config_dir, bob, password)
+    trio.run(save_device_with_password_in_config, config_dir, bob, password)
 
     def _run_cli_reencrypt_workspace_test(args, expected_error_code, from_beginning):
         factory_mock.reset_mock()
@@ -810,7 +810,7 @@ def test_pki_enrollment_not_available(tmp_path, alice, no_parsec_extension):
     # First need to have alice device on the disk
     config_dir = tmp_path / "config"
     alice_password = "S3cr3t"
-    save_device_with_password_in_config(config_dir, alice, alice_password)
+    trio.run(save_device_with_password_in_config, config_dir, alice, alice_password)
 
     # Now Run the cli
     runner = CliRunner()
@@ -876,7 +876,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asg
         # First, save the local device needed for pki_enrollment_review_pendings command
         config_dir = tmp_path / "config"
         alice_password = "S3cr3t"
-        save_device_with_password_in_config(config_dir, alice, alice_password)
+        await save_device_with_password_in_config(config_dir, alice, alice_password)
 
         runner = CliRunner()
 

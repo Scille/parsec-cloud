@@ -49,7 +49,7 @@ async def test_export_recovery_device(
     kind,
 ):
     PASSWORD = "P@ssw0rd"
-    save_device_with_password_in_config(core_config.config_dir, alice, PASSWORD)
+    await save_device_with_password_in_config(core_config.config_dir, alice, PASSWORD)
 
     with monkeypatch.context() as m:
         m.setattr(
@@ -123,7 +123,7 @@ async def test_import_recovery_device(
 ):
     PASSWORD = "P@ssw0rd"
     NEW_DEVICE_LABEL = DeviceLabel("Alice_New_Device")
-    save_device_with_password_in_config(core_config.config_dir, alice, PASSWORD)
+    await save_device_with_password_in_config(core_config.config_dir, alice, PASSWORD)
 
     recovery_device = await generate_recovery_device(alice)
     file_name = get_recovery_device_file_name(recovery_device)

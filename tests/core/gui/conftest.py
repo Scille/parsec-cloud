@@ -341,7 +341,7 @@ async def logged_gui(
     else:
         device = bob
 
-    save_device_with_password_in_config(core_config.config_dir, device, DEFAULT_PASSWORD)
+    await save_device_with_password_in_config(core_config.config_dir, device, DEFAULT_PASSWORD)
 
     gui = await gui_factory()
     await gui.test_switch_to_logged_in(device)
@@ -553,7 +553,7 @@ def testing_main_window_cls(aqtbot) -> Type[MainWindow]:
 
         async def test_switch_to_logged_in(self, device, password=DEFAULT_PASSWORD):
             try:
-                save_device_with_password_in_config(self.config.config_dir, device, password)
+                await save_device_with_password_in_config(self.config.config_dir, device, password)
             except LocalDeviceAlreadyExistsError:
                 pass
 

@@ -165,7 +165,7 @@ async def test_share_workspace(
     # 3) Now loggin as Adam and check the workspaces view
 
     password = "P@ssw0rd"
-    save_device_with_password_in_config(core_config.config_dir, adam, password)
+    await save_device_with_password_in_config(core_config.config_dir, adam, password)
     await logged_gui.test_logout()
     await logged_gui.test_proceed_to_login(adam, password)
 

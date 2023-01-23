@@ -23,7 +23,7 @@ from parsec.core.local_device import load_device_file
 async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice, monkeypatch):
     # Create an existing device before starting the gui
     password = "P@ssw0rd"
-    save_device_with_password_in_config(core_config.config_dir, alice, password)
+    await save_device_with_password_in_config(core_config.config_dir, alice, password)
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
@@ -72,8 +72,8 @@ async def test_login_back_to_account_list(
 ):
     # Create an existing device before starting the gui
     password = "P@ssw0rd"
-    save_device_with_password_in_config(core_config.config_dir, alice, password)
-    save_device_with_password_in_config(core_config.config_dir, bob, password)
+    await save_device_with_password_in_config(core_config.config_dir, alice, password)
+    await save_device_with_password_in_config(core_config.config_dir, bob, password)
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
@@ -131,7 +131,7 @@ async def test_login_device_list(
     devices = []
 
     for d in local_devices:
-        path = save_device_with_password_in_config(core_config.config_dir, d, password)
+        path = await save_device_with_password_in_config(core_config.config_dir, d, password)
         devices.append(load_device_file(pathlib.Path(path)))
 
     # Settings the last device used
@@ -174,7 +174,7 @@ async def test_login_no_available_devices(
     aqtbot, gui_factory, autoclose_dialog, core_config, alice
 ):
     password = "P@ssw0rd"
-    save_device_with_password_in_config(core_config.config_dir, alice, password)
+    await save_device_with_password_in_config(core_config.config_dir, alice, password)
 
     device = list_available_devices(core_config.config_dir)[0]
 
@@ -206,8 +206,8 @@ async def test_login_logout_account_list_refresh(
 ):
     # Create two devices before starting the gui
     password = "P@ssw0rd"
-    save_device_with_password_in_config(core_config.config_dir, alice, password)
-    save_device_with_password_in_config(core_config.config_dir, bob, password)
+    await save_device_with_password_in_config(core_config.config_dir, alice, password)
+    await save_device_with_password_in_config(core_config.config_dir, bob, password)
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()

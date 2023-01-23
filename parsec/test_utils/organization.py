@@ -71,7 +71,7 @@ async def initialize_test_organization(
         device_label=DeviceLabel("laptop"),
     )
     await user_storage_non_speculative_init(data_base_dir=config.data_base_dir, device=alice_device)
-    save_device_with_password_in_config(
+    await save_device_with_password_in_config(
         config_dir=config_dir, device=alice_device, password=password
     )
 
@@ -87,7 +87,7 @@ async def initialize_test_organization(
             other_alice_device = await _register_new_device(
                 cmds=alice_cmds, author=alice_device, device_label=DeviceLabel("pc")
             )
-            save_device_with_password_in_config(
+            await save_device_with_password_in_config(
                 config_dir=config_dir, device=other_alice_device, password=password
             )
             # Invite Bob in organization
@@ -101,7 +101,7 @@ async def initialize_test_organization(
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=bob_device
             )
-            save_device_with_password_in_config(
+            await save_device_with_password_in_config(
                 config_dir=config_dir, device=bob_device, password=password
             )
 
@@ -116,7 +116,7 @@ async def initialize_test_organization(
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=toto_device
             )
-            save_device_with_password_in_config(
+            await save_device_with_password_in_config(
                 config_dir=config_dir, device=toto_device, password=password
             )
             # Create Alice workspace

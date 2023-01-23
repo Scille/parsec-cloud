@@ -46,7 +46,8 @@ def test_list_no_devices(path_exists, config_dir):
     assert not devices
 
 
-def test_list_devices(organization_factory, local_device_factory, config_dir):
+@pytest.mark.trio
+async def test_list_devices(organization_factory, local_device_factory, config_dir):
     org1 = organization_factory("org1")
     org2 = organization_factory("org2")
 
@@ -59,10 +60,10 @@ def test_list_devices(organization_factory, local_device_factory, config_dir):
     o2d21 = local_device_factory("d2@1", org2, has_human_handle=False, has_device_label=False)
 
     for device in [o1d11, o1d12, o1d21]:
-        save_device_with_password_in_config(config_dir, device, "S3Cr37")
+        await save_device_with_password_in_config(config_dir, device, "S3Cr37")
 
     for device in [o2d11, o2d12, o2d21]:
-        save_device_with_password_in_config(config_dir, device, "secret")
+        await save_device_with_password_in_config(config_dir, device, "secret")
 
     # Also add dummy stuff that should be ignored
     device_dir = config_dir / "devices"
@@ -138,7 +139,8 @@ def test_available_device_display(config_dir, alice):
     assert with_labels.user_display == alice.human_handle.str
 
 
-def test_available_devices_slughash_uniqueness(
+@pytest.mark.trio
+async def test_available_devices_slughash_uniqueness(
     organization_factory, local_device_factory, config_dir
 ):
     def _to_available(device):
@@ -188,100 +190,107 @@ def test_available_devices_slughash_uniqueness(
     _assert_different_as_available(o1u1d1, o1u1d1_bad_rvk)
 
     # Finally make sure slughash is stable through save/load
-    save_device_with_password_in_config(config_dir, o1u1d1, "S3Cr37")
+    await save_device_with_password_in_config(config_dir, o1u1d1, "S3Cr37")
     key_file = get_key_file(config_dir, o1u1d1.slug)
-    o1u1d1_reloaded = LocalDevice.load_device_with_password(key_file, "S3Cr37")
+    o1u1d1_reloaded = await LocalDevice.load_device_with_password(key_file, "S3Cr37")
     available_device = _to_available(o1u1d1)
     available_device_reloaded = _to_available(o1u1d1_reloaded)
     assert available_device.slughash == available_device_reloaded.slughash
 
 
 @pytest.mark.parametrize("path_exists", (True, False))
-def test_password_save_and_load(path_exists, config_dir, alice):
+@pytest.mark.trio
+async def test_password_save_and_load(path_exists, config_dir, alice):
     config_dir = config_dir if path_exists else config_dir / "dummy"
-    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
+    await save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     key_file = get_key_file(config_dir, alice.slug)
-    alice_reloaded = LocalDevice.load_device_with_password(key_file, "S3Cr37")
+    alice_reloaded = await LocalDevice.load_device_with_password(key_file, "S3Cr37")
     assert alice == alice_reloaded
 
 
-def test_load_bad_password(config_dir, alice):
-    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
+@pytest.mark.trio
+async def test_load_bad_password(config_dir, alice):
+    await save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     key_file = get_key_file(config_dir, alice.slug)
     try:
-        LocalDevice.load_device_with_password(key_file, "dummy")
+        await LocalDevice.load_device_with_password(key_file, "dummy")
         assert False, "`load_device_with_password` must raise a decryption error"
     except LocalDeviceExc as e:
         assert str(e) == "Decryption error"
 
 
-def test_load_bad_data(config_dir, alice):
+@pytest.mark.trio
+async def test_load_bad_data(config_dir, alice):
     alice_key = get_default_key_file(config_dir, alice)
     alice_key.parent.mkdir(parents=True)
     alice_key.write_bytes(b"dummy")
 
     try:
-        LocalDevice.load_device_with_password(alice_key, "S3Cr37")
+        await LocalDevice.load_device_with_password(alice_key, "S3Cr37")
         assert False, "Should raise a deserialization error"
     except LocalDeviceExc as e:
         assert str(e) == f"Deserialization error: {alice_key}"
 
 
-def test_password_save_already_existing(config_dir, alice, alice2, otheralice):
-    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
+@pytest.mark.trio
+async def test_password_save_already_existing(config_dir, alice, alice2, otheralice):
+    await save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     # Different devices should not overwrite each other
-    save_device_with_password_in_config(config_dir, otheralice, "S3Cr37")
-    save_device_with_password_in_config(config_dir, alice2, "S3Cr37")
+    await save_device_with_password_in_config(config_dir, otheralice, "S3Cr37")
+    await save_device_with_password_in_config(config_dir, alice2, "S3Cr37")
 
     # Overwritting self is allowed
-    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
+    await save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     devices = list_available_devices(config_dir)
     assert len(devices) == 3
 
 
-def test_password_load_not_found(config_dir, alice):
+@pytest.mark.trio
+async def test_password_load_not_found(config_dir, alice):
     key_file = get_default_key_file(config_dir, alice)
     try:
-        LocalDevice.load_device_with_password(key_file, "S3Cr37")
+        await LocalDevice.load_device_with_password(key_file, "S3Cr37")
         assert False, "Should raise an file access error"
     except LocalDeviceExc as e:
         assert str(e) == f"Could not access to the dir/file: {key_file}"
 
 
-def test_same_device_id_different_organizations(config_dir, alice, otheralice):
+@pytest.mark.trio
+async def test_same_device_id_different_organizations(config_dir, alice, otheralice):
     devices = (alice, otheralice)
 
     for device in devices:
-        save_device_with_password_in_config(
+        await save_device_with_password_in_config(
             config_dir, device, f"S3Cr37-{device.organization_id.str}"
         )
 
     for device in devices:
         key_file = get_key_file(config_dir, device.slug)
-        device_reloaded = LocalDevice.load_device_with_password(
+        device_reloaded = await LocalDevice.load_device_with_password(
             key_file, f"S3Cr37-{device.organization_id.str}"
         )
         assert device == device_reloaded
 
 
-def test_change_password(config_dir, alice):
+@pytest.mark.trio
+async def test_change_password(config_dir, alice):
     old_password = "0ldP@ss"
     new_password = "N3wP@ss"
 
-    save_device_with_password_in_config(config_dir, alice, old_password)
+    await save_device_with_password_in_config(config_dir, alice, old_password)
     key_file = get_key_file(config_dir, alice.slug)
 
-    change_device_password(str(key_file), old_password, new_password)
+    await change_device_password(key_file, old_password, new_password)
 
-    alice_reloaded = LocalDevice.load_device_with_password(key_file, new_password)
+    alice_reloaded = await LocalDevice.load_device_with_password(key_file, new_password)
     assert alice == alice_reloaded
 
     try:
-        LocalDevice.load_device_with_password(key_file, old_password)
+        await LocalDevice.load_device_with_password(key_file, old_password)
         assert False, "Should raise a decryption error"
     except LocalDeviceExc as e:
         assert str(e) == "Decryption error"
@@ -426,8 +435,8 @@ def test_list_devices_support_key_file(config_dir, type):
     assert get_key_file(config_dir, expected_device.slug) == key_file_path
 
 
-def test_multiple_files_same_device(config_dir, alice):
-    path = pathlib.Path(save_device_with_password_in_config(config_dir, alice, "test"))
+async def test_multiple_files_same_device(config_dir, alice):
+    path = pathlib.Path(await save_device_with_password_in_config(config_dir, alice, "test"))
 
     # File names contain the slughash
     assert path.stem == alice.slughash
