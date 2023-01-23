@@ -23,3 +23,14 @@
 //
 // -- This is will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
+
+import { DEFAULT_DEVICE } from '../../common/generated';
+
+Cypress.Commands.add('storeDefaultDevice', () => {
+  cy.window().then((win) => {
+    win.localStorage.setItem(
+      'devices',
+      DEFAULT_DEVICE
+    );
+  });
+});

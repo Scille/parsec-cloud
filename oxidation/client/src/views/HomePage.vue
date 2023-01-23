@@ -161,6 +161,7 @@ import {
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { ref } from 'vue';
+import type { Ref } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
@@ -176,46 +177,11 @@ export interface DeviceLocalStorageData {
 
 const { t, d } = useI18n();
 
-// Not ready yet
-// const deviceList = libparsec.listAvailableDevices();
-const deviceList: AvailableDevice[] = [
-  {
-    organizationId: 'MegaShark',
-    humanHandle: 'Maxime Grandcolas',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug1',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Resana',
-    humanHandle: 'Maxime Grandcolas',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug2',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Oxymore',
-    humanHandle: 'Maxime Grandcolas',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug3',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Eddy',
-    humanHandle: 'Maxime Grandcolas',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug4',
-    ty: {tag: 'Password'}
-  }
-];
+const deviceList: Ref<AvailableDevice[]> = ref([]);
+libparsec.listAvailableDevices('').then((l) => {
+  deviceList.value = l;
+});
+
 let selectedDevice: AvailableDevice;
 const password = ref('');
 const showOrganizationList = ref(true);
@@ -241,8 +207,15 @@ function onOrganizationCardClick(device: AvailableDevice): void {
   selectedDevice = device;
 }
 
-function login(): void {
-  console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
+async function login(): Promise<void> {
+  const result = await libparsec.login(selectedDevice.slug, password.value);
+  if (!result.ok) {
+    if (result.error.tag === 'LoginFailed') {
+      console.log('Wrong password');
+    }
+  } else {
+    console.log('Welcome!');
+  }
 }
 
 function formatLastLogin(lastLogin: Date | undefined) : string {

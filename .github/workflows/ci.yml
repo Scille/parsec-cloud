@@ -423,6 +423,10 @@ jobs:
         run: npm clean-install
         working-directory: oxidation/client
 
+      - name: Start backend and generate a device
+        run: sh tools/launch_e2e.sh
+        working-directory: oxidation/client/tests
+
       - name: E2E tests
         if: steps.web-change.outputs.run == 'true'
         # Without `VUE_CLI_TEST` set, the command hangs forever because

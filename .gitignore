@@ -112,5 +112,8 @@ target/
 # Cypress tests files, automatically generated
 /oxidation/client/tests/e2e/videos/
 
+# Generated file with a device used for testing
+/oxidation/client/tests/common/generated.ts
+
 # Cspell cache
 .cspellcache

@@ -18,3 +18,12 @@ import './commands';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Cypress {
+    interface Chainable {
+     storeDefaultDevice(): Chainable<null>;
+    }
+  }
+}
