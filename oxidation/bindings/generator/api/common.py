@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from typing import Generic, List, Optional, TypeVar, Callable
+from typing import Generic, TypeVar
 
 #
 # Meta-types
@@ -32,7 +32,7 @@ class StrBasedType:
 
 
 # A type that should be converted from/into int
-class IntBasedType:
+class I32BasedType:
     pass
 
 
@@ -45,7 +45,7 @@ class CustomConversionType:
 #
 
 
-class LoggedCoreHandle(IntBasedType):
+class LoggedCoreHandle(I32BasedType):
     pass
 
 
@@ -78,7 +78,7 @@ class DeviceID(StrBasedType):
     pass
 
 
-class ClientHandle(IntBasedType):
+class ClientHandle(I32BasedType):
     pass
 
 

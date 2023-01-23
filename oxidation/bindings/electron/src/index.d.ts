@@ -91,5 +91,5 @@ export type ClientLoginError =
 export function clientLogin(
     load_device_params: DeviceAccessParams,
     config: ClientConfig,
-    on_event_callback: (ClientEvent) => void
+    on_event_callback: (event: ClientEvent) => void
 ): Promise<Result<number, ClientLoginError>>;

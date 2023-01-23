@@ -17,6 +17,7 @@ type BackendAddr = string;
 type DeviceID = string;
 type LoggedCoreHandle = number;
 type ClientHandle = number;
+type CacheSize = number;
 
 export interface ClientConfig {
     configDir: Path;
@@ -95,6 +96,6 @@ export interface LibParsecPlugin {
     clientLogin(
         load_device_params: DeviceAccessParams,
         config: ClientConfig,
-        on_event_callback: (ClientEvent) => void
+        on_event_callback: (event: ClientEvent) => void
     ): Promise<Result<number, ClientLoginError>>;
 }
