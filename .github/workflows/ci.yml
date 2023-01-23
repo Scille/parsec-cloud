@@ -423,6 +423,14 @@ jobs:
         run: npm clean-install
         working-directory: oxidation/client
 
+      - name: Install python deps
+        run: |
+          if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
+          poetry install -E core -E backend
+        shell: bash
+        env:
+          CARGO_PROFILE: ci-python
+
       - name: Start backend and generate a device
         run: sh tools/launch_e2e.sh
         working-directory: oxidation/client/tests
