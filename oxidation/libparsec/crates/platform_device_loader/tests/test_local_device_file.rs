@@ -48,14 +48,18 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
     let bob_device = device_file_factory(bob.clone());
     let mallory_device = device_file_factory(mallory.clone());
 
-    let alice_file_path = get_default_key_file(&tmp_path, &alice);
+    let alice_file_path = get_default_key_file(&tmp_path, &alice).await;
     // Device must have a .keys extension, but can be in nested directories with a random name
     let bob_file_path = tmp_path.join("devices/foo/whatever.keys");
     let mallory_file_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
 
-    save_device_file(&alice_file_path, &alice_device).unwrap();
-    save_device_file(&bob_file_path, &bob_device).unwrap();
-    save_device_file(&mallory_file_path, &mallory_device).unwrap();
+    save_device_file(&alice_file_path, &alice_device)
+        .await
+        .unwrap();
+    save_device_file(&bob_file_path, &bob_device).await.unwrap();
+    save_device_file(&mallory_file_path, &mallory_device)
+        .await
+        .unwrap();
 
     // Also add dummy stuff that should be ignored
     let devices_dir = tmp_path.join("devices");

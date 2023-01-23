@@ -181,11 +181,14 @@ impl LocalDevice {
     fn load_device_with_password(
         _cls: &PyType,
         key_file: PathBuf,
-        password: &str,
-    ) -> LocalDeviceResult<Self> {
-        platform_device_loader::load_device_with_password_from_path(&key_file, password)
-            .map(LocalDevice)
-            .map_err(|e| e.into())
+        password: String,
+    ) -> FutureIntoCoroutine {
+        FutureIntoCoroutine::from(async move {
+            platform_device_loader::load_device_with_password_from_path(&key_file, &password)
+                .await
+                .map(LocalDevice)
+                .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+        })
     }
 
     #[getter]
@@ -457,32 +460,45 @@ crate::binding_utils::create_exception!(LocalDevice, PyException, client_types::
 #[pyfunction]
 pub(crate) fn save_device_with_password(
     key_file: PathBuf,
-    device: &LocalDevice,
-    password: &str,
+    device: LocalDevice,
+    password: String,
     force: bool,
-) -> LocalDeviceResult<()> {
-    platform_device_loader::save_device_with_password(&key_file, &device.0, password, force)
-        .map_err(|e| e.into())
+) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::save_device_with_password(&key_file, &device.0, &password, force)
+            .await
+            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
 }
 
 #[pyfunction]
 pub(crate) fn save_device_with_password_in_config(
     config_dir: PathBuf,
-    device: &LocalDevice,
-    password: &str,
-) -> LocalDeviceResult<PathBuf> {
-    platform_device_loader::save_device_with_password_in_config(&config_dir, &device.0, password)
-        .map_err(|e| e.into())
+    device: LocalDevice,
+    password: String,
+) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::save_device_with_password_in_config(
+            &config_dir,
+            &device.0,
+            &password,
+        )
+        .await
+        .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
 }
 
 #[pyfunction]
 pub(crate) fn change_device_password(
     key_file: PathBuf,
-    old_password: &str,
-    new_password: &str,
-) -> LocalDeviceResult<()> {
-    platform_device_loader::change_device_password(&key_file, old_password, new_password)
-        .map_err(|e| e.into())
+    old_password: String,
+    new_password: String,
+) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::change_device_password(&key_file, &old_password, &new_password)
+            .await
+            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
 }
 
 #[pyclass]
@@ -583,18 +599,23 @@ pub(crate) fn list_available_devices(
     config_dir: PathBuf,
 ) -> LocalDeviceResult<Vec<AvailableDevice>> {
     platform_device_loader::list_available_devices_core(&config_dir)
-        .map(|devices| devices.iter().map(|d| AvailableDevice(d.clone())).collect())
+        .map(|devices| {
+            devices
+                .iter()
+                .map(|d| AvailableDevice(d.clone()))
+                .collect::<Vec<AvailableDevice>>()
+        })
         .map_err(|e| LocalDeviceExc(Box::new(e)))
 }
 
 #[pyfunction]
 pub(crate) fn get_available_device(
     config_dir: PathBuf,
-    slug: &str,
+    slug: String,
 ) -> LocalDeviceResult<AvailableDevice> {
-    platform_device_loader::get_available_device(&config_dir, slug)
+    platform_device_loader::get_available_device(&config_dir, &slug)
         .map(AvailableDevice)
-        .map_err(|e| LocalDeviceExc(Box::new(e)))
+        .map_err(|e| e.into())
 }
 
 #[pyfunction]

@@ -86,6 +86,7 @@ pub async fn client_login(
             let index = core.len() as i32;
 
             let device = load_device_with_password(&path, &password)
+                .await
                 .map_err(|_| ClientLoginError::DeviceInvalidFormat)?;
 
             // Store in memory

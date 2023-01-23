@@ -234,7 +234,7 @@ macro_rules! gen_proto {
     };
 }
 
-macro_rules! create_exception_from {
+macro_rules! create_exception_conversions {
     ($name: ident, $py_exc: ident, $rs_err: path) => {
         ::paste::paste! {
             ::pyo3::create_exception!(_parsec, [<$name Error>], $py_exc);
@@ -265,13 +265,13 @@ macro_rules! create_exception_from {
 macro_rules! create_exception {
     ($name: ident, $py_exc: ident, $rs_err: path) => {
         ::paste::paste! {
-            crate::binding_utils::create_exception_from!($name, $py_exc, $rs_err);
+            crate::binding_utils::create_exception_conversions!($name, $py_exc, $rs_err);
             pub(crate) type [<$name Result>]<T> = Result<T, [<$name Exc>]>;
         }
     };
     ($name: ident, $py_exc: ident, $rs_err: path, no_result_type) => {
         ::paste::paste! {
-            crate::binding_utils::create_exception_from!($name, $py_exc, $rs_err);
+            crate::binding_utils::create_exception_conversions!($name, $py_exc, $rs_err);
         }
     };
 }
@@ -335,7 +335,7 @@ macro_rules! impl_enum_field {
 
 pub(crate) use _unwrap_bytes;
 pub(crate) use create_exception;
-pub(crate) use create_exception_from;
+pub(crate) use create_exception_conversions;
 pub(crate) use gen_proto;
 pub(crate) use impl_enum_field;
 pub(crate) use parse_kwargs;

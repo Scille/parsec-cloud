@@ -3,7 +3,6 @@
 use std::{
     collections::HashSet,
     ffi::OsStr,
-    fs::File,
     path::{Path, PathBuf},
 };
 
@@ -61,7 +60,7 @@ pub async fn save_recovery_device(
     device: LocalDevice,
     force: bool,
 ) -> LocalDeviceResult<String> {
-    if File::open(key_file).is_ok() && !force {
+    if tokio::fs::File::open(key_file).await.is_ok() && !force {
         return Err(LocalDeviceError::AlreadyExists(key_file.to_path_buf()));
     }
 
@@ -78,7 +77,7 @@ pub async fn save_recovery_device(
         device_id: device.device_id,
     });
 
-    save_device_file(key_file, &key_file_content)?;
+    save_device_file(key_file, &key_file_content).await?;
 
     Ok(passphrase)
 }
@@ -88,8 +87,9 @@ pub async fn load_recovery_device(
     key_file: &Path,
     passphrase: &str,
 ) -> LocalDeviceResult<LocalDevice> {
-    let ciphertext =
-        std::fs::read(key_file).map_err(|_| LocalDeviceError::Access(key_file.to_path_buf()))?;
+    let ciphertext = tokio::fs::read(key_file)
+        .await
+        .map_err(|_| LocalDeviceError::Access(key_file.to_path_buf()))?;
     let data = DeviceFile::load(&ciphertext)
         .map_err(|_| LocalDeviceError::Deserialization(key_file.to_path_buf()))?;
 
@@ -108,15 +108,20 @@ pub async fn load_recovery_device(
         .map_err(|_| LocalDeviceError::Deserialization(key_file.to_path_buf()))
 }
 
-pub fn save_device_file(key_file_path: &Path, device_file: &DeviceFile) -> LocalDeviceResult<()> {
+pub async fn save_device_file(
+    key_file_path: &Path,
+    device_file: &DeviceFile,
+) -> LocalDeviceResult<()> {
     if let Some(parent) = key_file_path.parent() {
-        std::fs::create_dir_all(parent)
+        tokio::fs::create_dir_all(parent)
+            .await
             .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))?;
     }
 
     let data = device_file.dump();
 
-    std::fs::write(key_file_path, data)
+    tokio::fs::write(key_file_path, data)
+        .await
         .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))
 }
 
@@ -146,9 +151,14 @@ pub fn load_device_file(key_file_path: &Path) -> LocalDeviceResult<DeviceFile> {
 
     // In case of failure try to load a legacy_device and convert it to a
     // regular device file
-    DeviceFile::load(&data)
-        .map_err(|_| LocalDeviceError::Deserialization(key_file_path.to_path_buf()))
-        .or_else(|_| load_legacy_device_file(key_file_path, &data))
+    let device_file = DeviceFile::load(&data)
+        .map_err(|_| LocalDeviceError::Deserialization(key_file_path.to_path_buf()));
+
+    if device_file.is_err() {
+        load_legacy_device_file(key_file_path, &data)
+    } else {
+        device_file
+    }
 }
 
 pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<AvailableDevice> {
@@ -195,12 +205,12 @@ pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<Availa
 ///
 /// Note that the filename does not carry any intrinsic meaning.
 /// Here, we simply use the slughash to avoid name collision.
-pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
+pub async fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
     let mut device_path = config_dir.to_path_buf();
 
     device_path.push("devices");
 
-    let _ = std::fs::create_dir_all(&device_path);
+    let _ = tokio::fs::create_dir_all(&device_path).await;
 
     device_path.push(format!("{}.{DEVICE_FILE_EXT}", device.slughash()));
 
@@ -229,7 +239,7 @@ fn read_key_file_paths(path: PathBuf) -> LocalDeviceResult<Vec<PathBuf>> {
     Ok(key_file_paths)
 }
 
-pub fn save_device_with_password(
+pub async fn save_device_with_password(
     key_file: &Path,
     device: &LocalDevice,
     password: &str,
@@ -254,17 +264,17 @@ pub fn save_device_with_password(
         organization_id: device.organization_id().clone(),
         slug: device.slug(),
     });
-    save_device_file(key_file, &key_file_content)?;
+    save_device_file(key_file, &key_file_content).await?;
 
     Ok(())
 }
 
-pub fn save_device_with_password_in_config(
+pub async fn save_device_with_password_in_config(
     config_dir: &Path,
     device: &LocalDevice,
     password: &str,
 ) -> Result<PathBuf, LocalDeviceError> {
-    let key_file = get_default_key_file(config_dir, device);
+    let key_file = get_default_key_file(config_dir, device).await;
 
     // Why do we use `force=True` here ?
     // Key file name is per-device unique (given it contains the device slughash),
@@ -276,18 +286,18 @@ pub fn save_device_with_password_in_config(
     //   not possible in theory, but could occur in case of a rollback in the
     //   Parsec server), in this case the old device object is now invalid
     //   and it's a good thing to replace it.
-    save_device_with_password(&key_file, device, password, true)?;
+    save_device_with_password(&key_file, device, password, true).await?;
 
     Ok(key_file)
 }
 
-pub fn change_device_password(
+pub async fn change_device_password(
     key_file: &Path,
     old_password: &str,
     new_password: &str,
 ) -> Result<(), LocalDeviceError> {
-    let device = load_device_with_password_from_path(key_file, old_password)?;
-    save_device_with_password(key_file, &device, new_password, true)
+    let device = load_device_with_password_from_path(key_file, old_password).await?;
+    save_device_with_password(key_file, &device, new_password, true).await
 }
 
 pub fn get_available_device(config_dir: &Path, slug: &str) -> LocalDeviceResult<AvailableDevice> {
