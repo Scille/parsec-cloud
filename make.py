@@ -71,7 +71,7 @@ class Cmd:
         for cmd in self.cmds:
             args = cmd.split() + extra_cmd_args
             subprocess.check_call(
-                args, env={**os.environ, **self.extra_env}, cwd=self.cwd, shell=shell
+                args, env={**os.environ, **self.extra_env}, cwd=self.cwd or BASE_DIR, shell=shell
             )
 
 
