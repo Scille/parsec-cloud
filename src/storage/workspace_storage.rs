@@ -168,7 +168,7 @@ impl WorkspaceStorage {
         let ws = self.0.clone();
 
         FutureIntoCoroutine::from(async move {
-            ws.clear_manifest(entry_id.0, false)
+            ws.clear_manifest(&entry_id.0, false)
                 .await
                 .map_err(|e| match e {
                     FSError::LocalMiss(_) => FSLocalMissError::new_err(entry_id),
