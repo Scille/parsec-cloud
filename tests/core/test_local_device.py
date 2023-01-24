@@ -317,6 +317,12 @@ def test_supports_legacy_is_admin_field(alice):
     }
 
 
+def test_key_file_path_are_proper_paths(config_dir):
+    devices = list_available_devices(config_dir)
+    for device in devices:
+        assert isinstance(device.key_file_path, pathlib.Path)
+
+
 def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
     # Legacy path might exceed the 256 characters limit in some cases (see issue #1356)
     # So we use the `\\?\` workaround: https://stackoverflow.com/a/57502760/2846140
