@@ -17,12 +17,33 @@
             <ion-card-content class="organization-list">
               <ion-card-title color="tertiary">
                 {{ $t('HomePage.organizationList.title') }}
+
+                <!-- No use in showing the sort/filter options for less than 2 devices -->
+                <div v-if="deviceList.length > 2">
+                  <ion-searchbar v-model="orgSearchString" />
+
+                  <ion-button @click="sortOrderAsc = !sortOrderAsc">
+                    {{ sortOrderAsc ? $t('HomePage.organizationList.sortOrderAsc') : $t('Homepage.organizationList.sortOrderDesc') }}
+                  </ion-button>
+
+                  <ion-select
+                    interface="action-sheet"
+                    v-model="sortBy"
+                  >
+                    <ion-select-option value="name">
+                      Nom
+                    </ion-select-option>
+                    <ion-select-option value="last_login">
+                      Dernière connexion
+                    </ion-select-option>
+                  </ion-select>
+                </div>
               </ion-card-title>
               <ion-grid>
                 <ion-row>
                   <ion-col
                     size="1"
-                    v-for="device in deviceList"
+                    v-for="device in filteredDevices"
                     :key="device.slug"
                   >
                     <ion-card
@@ -150,7 +171,10 @@ import {
   IonRow,
   IonCol,
   IonGrid,
-  modalController
+  modalController,
+  IonSearchbar,
+  IonSelect,
+  IonSelectOption
 } from '@ionic/vue';
 import {
   add,
@@ -159,7 +183,7 @@ import {
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
-import { onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref, toRaw, computed } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
@@ -209,12 +233,57 @@ const deviceList: AvailableDevice[] = [
     deviceId: 'device_id',
     slug: 'slug4',
     ty: {tag: 'Password'}
+  },
+  {
+    organizationId: 'Eddy',
+    humanHandle: 'Maxime Grandcolas',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug5',
+    ty: {tag: 'Password'}
+  },
+  {
+    organizationId: 'Eddy',
+    humanHandle: 'Maxime Grandcolas',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug6',
+    ty: {tag: 'Password'}
   }
 ];
 let selectedDevice: AvailableDevice;
 const password = ref('');
+const orgSearchString = ref('');
 const showOrganizationList = ref(true);
 const store = new Storage();
+const sortBy = ref('name');
+const sortOrderAsc = ref(true);
+
+const filteredDevices = computed(() => {
+  return deviceList.filter((item) => {
+    return item.deviceLabel?.includes(orgSearchString.value) || item.organizationId.includes(orgSearchString.value);
+  }).sort((a, b) => {
+    if (sortBy.value === 'name') {
+      if (sortOrderAsc.value) {
+        return a.organizationId.localeCompare(b.organizationId);
+      } else {
+        return b.organizationId.localeCompare(a.organizationId);
+      }
+    } else {
+      const aLastLogin = (a.slug in deviceStoredDataDict.value && deviceStoredDataDict[a.slug].lastLogin !== undefined) ?
+        deviceStoredDataDict[a.slug].lastLogin.valueOf() : 0;
+      const bLastLogin = (b.slug in deviceStoredDataDict.value && deviceStoredDataDict[b.slug].lastLogin !== undefined) ?
+        deviceStoredDataDict[b.slug].lastLogin.valueOf() : 0;
+      if (sortOrderAsc.value) {
+        return aLastLogin - bLastLogin;
+      } else {
+        return bLastLogin - aLastLogin;
+      }
+    }
+  });
+});
 
 const deviceStoredDataDict = ref({});
 
