@@ -5,6 +5,7 @@ import sys
 from distutils.version import LooseVersion
 from typing import Awaitable, Callable, cast
 
+import trio
 from PyQt5.QtCore import QCoreApplication, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QCloseEvent, QColor, QIcon, QKeySequence, QResizeEvent
 from PyQt5.QtWidgets import QMainWindow, QMenu, QMenuBar, QShortcut, QWidget
@@ -334,7 +335,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         d.exec_()
 
     def _on_manage_keys(self) -> None:
-        devices = list_available_devices(self.config.config_dir)
+        devices = trio.run(list_available_devices, self.config.config_dir)
         options = [_("ACTION_CANCEL"), _("ACTION_RECOVER_DEVICE")]
         if len(devices):
             options.append(_("ACTION_CREATE_RECOVERY_DEVICE"))
@@ -355,7 +356,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         desktop.open_feedback_link()
 
     def _on_add_instance_clicked(self) -> None:
-        self.add_instance()
+        trio.run(self.add_instance)
 
     def _bind_async_callback(
         self, callback: Callable[[], Awaitable[None]]
@@ -398,7 +399,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 DeviceRecoveryExportWidget.show_modal(
                     self.config,
                     self.jobs_ctx,
-                    [get_available_device(self.config.config_dir, device.slug)],
+                    [await get_available_device(self.config.config_dir, device.slug)],
                     parent=self,
                 )
 
@@ -501,7 +502,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 DeviceRecoveryExportWidget.show_modal(
                     self.config,
                     self.jobs_ctx,
-                    [get_available_device(self.config.config_dir, device.slug)],
+                    [await get_available_device(self.config.config_dir, device.slug)],
                     self,
                 )
 
@@ -544,7 +545,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             tab = self.add_new_tab()
         else:
             tab = self.tab_center.widget(idx)
-        kf = get_key_file(self.config.config_dir, device.slug)
+        kf = await get_key_file(self.config.config_dir, device.slug)
         if auth_method == DeviceFileType.PASSWORD:
             await tab.login_with_password(kf, password)
         elif auth_method == DeviceFileType.SMARTCARD:
@@ -570,8 +571,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_foreground_needed(self) -> None:
         self.show_top()
 
-    def _on_new_instance_needed(self, start_arg: str | None) -> None:
-        self.add_instance(start_arg)
+    async def _on_new_instance_needed(self, start_arg: str | None) -> None:
+        await self.add_instance(start_arg)
         self.show_top()
 
     def on_config_updated(self, event: CoreEvent, **kwargs: object) -> None:
@@ -640,7 +641,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.raise_()
         self.show()
 
-    def on_tab_state_changed(self, tab: InstanceWidget, state: str) -> None:
+    async def on_tab_state_changed(self, tab: InstanceWidget, state: str) -> None:
         idx = self.tab_center.indexOf(tab)
         if idx == -1:
             if state == "logout":
@@ -656,7 +657,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.removeTab(idx)
             idx = self._get_login_tab_index()
             if idx == -1:
-                self.add_instance()
+                await self.add_instance()
             else:
                 tab_widget = self.tab_center.widget(idx)
                 log_widget = None if not tab_widget else tab_widget.get_login_widget()
@@ -705,7 +706,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not ParsecApp.has_active_modal():
             self.tab_center.setCurrentIndex(idx)
 
-    def switch_to_login_tab(
+    async def switch_to_login_tab(
         self, file_link_addr: BackendOrganizationFileLinkAddr | None = None
     ) -> None:
         # Retrieve the login tab
@@ -716,7 +717,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # No login tab, create one
             tab = self.add_new_tab()
             tab.show_login_widget()
-            self.on_tab_state_changed(tab, "login")
+            await self.on_tab_state_changed(tab, "login")
             idx = self.tab_center.count() - 1
             self.switch_to_tab(idx)
 
@@ -725,7 +726,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         # Find the device corresponding to the organization in the link
-        for available_device in list_available_devices(self.config.config_dir):
+        for available_device in await list_available_devices(self.config.config_dir):
             if available_device.organization_id == file_link_addr.organization_id:
                 break
 
@@ -754,7 +755,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
         )
 
-    def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr) -> None:
+    async def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr) -> None:
         # Try to use the file link on the already logged in cores
         for idx in range(self.tab_center.count()):
             if self.tab_center.tabText(idx) == _("TEXT_TAB_TITLE_LOG_IN_SCREEN"):
@@ -798,25 +799,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # The file link is from an organization we'r not currently logged in
         # or we don't have any device related to
-        self.switch_to_login_tab(addr)
+        await self.switch_to_login_tab(addr)
 
-    def show_create_org_widget(self, action_addr: BackendOrganizationBootstrapAddr) -> None:
-        self.switch_to_login_tab()
+    async def show_create_org_widget(self, action_addr: BackendOrganizationBootstrapAddr) -> None:
+        await self.switch_to_login_tab()
         self._on_create_org_clicked(action_addr)
 
-    def show_claim_user_widget(self, action_addr: BackendInvitationAddr) -> None:
-        self.switch_to_login_tab()
+    async def show_claim_user_widget(self, action_addr: BackendInvitationAddr) -> None:
+        await self.switch_to_login_tab()
         self._on_claim_user_clicked(action_addr)
 
-    def show_claim_device_widget(self, action_addr: BackendInvitationAddr) -> None:
-        self.switch_to_login_tab()
+    async def show_claim_device_widget(self, action_addr: BackendInvitationAddr) -> None:
+        await self.switch_to_login_tab()
         self._on_claim_device_clicked(action_addr)
 
-    def show_claim_pki_widget(self, action_addr: BackendPkiEnrollmentAddr) -> None:
-        self.switch_to_login_tab()
+    async def show_claim_pki_widget(self, action_addr: BackendPkiEnrollmentAddr) -> None:
+        await self.switch_to_login_tab()
         self._on_claim_pki_clicked(action_addr)
 
-    def add_instance(self, start_arg: str | None = None) -> None:
+    async def add_instance(self, start_arg: str | None = None) -> None:
         action_addr = None
         if start_arg:
             try:
@@ -826,23 +827,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.show_top()
         if not action_addr:
-            self.switch_to_login_tab()
+            await self.switch_to_login_tab()
         elif isinstance(action_addr, BackendOrganizationFileLinkAddr):
-            self.go_to_file_link(action_addr)
+            await self.go_to_file_link(action_addr)
         elif isinstance(action_addr, BackendOrganizationBootstrapAddr):
-            self.show_create_org_widget(action_addr)
+            await self.show_create_org_widget(action_addr)
         elif (
             isinstance(action_addr, BackendInvitationAddr)
             and action_addr.invitation_type == InvitationType.USER
         ):
-            self.show_claim_user_widget(action_addr)
+            await self.show_claim_user_widget(action_addr)
         elif (
             isinstance(action_addr, BackendInvitationAddr)
             and action_addr.invitation_type == InvitationType.DEVICE
         ):
-            self.show_claim_device_widget(action_addr)
+            await self.show_claim_device_widget(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):
-            self.show_claim_pki_widget(action_addr)
+            await self.show_claim_pki_widget(action_addr)
         else:
             show_error(self, _("TEXT_INVALID_URL"))
 

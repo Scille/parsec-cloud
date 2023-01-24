@@ -323,7 +323,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_failed_sig = login_failed_sig
 
         login_failed_sig.connect(self.on_login_failed)
-        self.reload_devices()
+        trio.run(self.reload_devices)
 
     def on_login_failed(self) -> None:
         item = self.widget.layout().itemAt(0)
@@ -331,13 +331,13 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             lw = item.widget()
             lw.reset()
 
-    def list_devices_and_enrollments(self) -> None:
+    async def list_devices_and_enrollments(self) -> None:
         pendings = PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(
             config_dir=self.config.config_dir
         )
         devices = [
             device
-            for device in list_available_devices(self.config.config_dir)
+            for device in await list_available_devices(self.config.config_dir)
             if not ParsecApp.is_device_connected(device.organization_id, device.device_id)
         ]
         if not len(devices) and not len(pendings):
@@ -413,7 +413,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         except Exception as exc:
             show_error(self, T("TEXT_CANNOT_REMOVE_LOCAL_PENDING_ENROLLMENT"), exception=exc)
             return
-        self.reload_devices()
+        await self.reload_devices()
 
     def _on_pending_clear_clicked(
         self,
@@ -425,9 +425,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     ) -> None:
         _ = self.jobs_ctx.submit_job(None, None, self._remove_enrollment, context)
 
-    def reload_devices(self) -> None:
+    async def reload_devices(self) -> None:
         self._clear_widget()
-        self.list_devices_and_enrollments()
+        await self.list_devices_and_enrollments()
 
     def _clear_widget(self) -> None:
         while self.widget.layout().count() != 0:
@@ -455,9 +455,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             lw.log_in_clicked.connect(self.try_login_with_smartcard)
             self.widget.layout().addWidget(lw)
 
-    def _on_back_clicked(self) -> None:
+    async def _on_back_clicked(self) -> None:
         self.login_canceled.emit()
-        self.reload_devices()
+        await self.reload_devices()
 
     def try_login_with_password(self, device: AvailableDevice, password: str) -> None:
         self.login_with_password_clicked.emit(Path(device.key_file_path), password)

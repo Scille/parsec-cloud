@@ -39,10 +39,11 @@ def config_dir(tmpdir):
     return Path(tmpdir)
 
 
+@pytest.mark.trio
 @pytest.mark.parametrize("path_exists", (True, False))
-def test_list_no_devices(path_exists, config_dir):
+async def test_list_no_devices(path_exists, config_dir):
     config_dir = config_dir if path_exists else config_dir / "dummy"
-    devices = list_available_devices(config_dir)
+    devices = await list_available_devices(config_dir)
     assert not devices
 
 
@@ -73,11 +74,11 @@ async def test_list_devices(organization_factory, local_device_factory, config_d
     (device_dir / dummy_slug).mkdir()
     (device_dir / dummy_slug / f"{dummy_slug}.keys").write_bytes(b"dummy")
 
-    devices = list_available_devices(config_dir)
+    devices = await list_available_devices(config_dir)
 
     expected_devices = {
         AvailableDevice(
-            key_file_path=get_key_file(config_dir, d.slug),
+            key_file_path=await get_key_file(config_dir, d.slug),
             organization_id=d.organization_id,
             device_id=d.device_id,
             human_handle=d.human_handle,
@@ -90,7 +91,8 @@ async def test_list_devices(organization_factory, local_device_factory, config_d
     assert set(devices) == expected_devices
 
 
-def test_list_devices_support_legacy_file_without_labels(config_dir):
+@pytest.mark.trio
+async def test_list_devices_support_legacy_file_without_labels(config_dir):
     # Craft file data without the labels fields
     key_file_data = packb({"type": "password", "salt": b"12345", "ciphertext": b"whatever"})
     slug = "9d84fbd57a#Org#Zack@PC1"
@@ -98,7 +100,7 @@ def test_list_devices_support_legacy_file_without_labels(config_dir):
     key_file_path.parent.mkdir(parents=True)
     key_file_path.write_bytes(key_file_data)
 
-    devices = list_available_devices(config_dir)
+    devices = await list_available_devices(config_dir)
     expected_device = AvailableDevice(
         key_file_path=key_file_path,
         organization_id=OrganizationID("Org"),
@@ -191,7 +193,7 @@ async def test_available_devices_slughash_uniqueness(
 
     # Finally make sure slughash is stable through save/load
     await save_device_with_password_in_config(config_dir, o1u1d1, "S3Cr37")
-    key_file = get_key_file(config_dir, o1u1d1.slug)
+    key_file = await get_key_file(config_dir, o1u1d1.slug)
     o1u1d1_reloaded = await LocalDevice.load_device_with_password(key_file, "S3Cr37")
     available_device = _to_available(o1u1d1)
     available_device_reloaded = _to_available(o1u1d1_reloaded)
@@ -204,7 +206,7 @@ async def test_password_save_and_load(path_exists, config_dir, alice):
     config_dir = config_dir if path_exists else config_dir / "dummy"
     await save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
-    key_file = get_key_file(config_dir, alice.slug)
+    key_file = await get_key_file(config_dir, alice.slug)
     alice_reloaded = await LocalDevice.load_device_with_password(key_file, "S3Cr37")
     assert alice == alice_reloaded
 
@@ -213,7 +215,7 @@ async def test_password_save_and_load(path_exists, config_dir, alice):
 async def test_load_bad_password(config_dir, alice):
     await save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
-    key_file = get_key_file(config_dir, alice.slug)
+    key_file = await get_key_file(config_dir, alice.slug)
     try:
         await LocalDevice.load_device_with_password(key_file, "dummy")
         assert False, "`load_device_with_password` must raise a decryption error"
@@ -245,7 +247,7 @@ async def test_password_save_already_existing(config_dir, alice, alice2, otheral
     # Overwritting self is allowed
     await save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
-    devices = list_available_devices(config_dir)
+    devices = await list_available_devices(config_dir)
     assert len(devices) == 3
 
 
@@ -269,7 +271,7 @@ async def test_same_device_id_different_organizations(config_dir, alice, otheral
         )
 
     for device in devices:
-        key_file = get_key_file(config_dir, device.slug)
+        key_file = await get_key_file(config_dir, device.slug)
         device_reloaded = await LocalDevice.load_device_with_password(
             key_file, f"S3Cr37-{device.organization_id.str}"
         )
@@ -282,7 +284,7 @@ async def test_change_password(config_dir, alice):
     new_password = "N3wP@ss"
 
     await save_device_with_password_in_config(config_dir, alice, old_password)
-    key_file = get_key_file(config_dir, alice.slug)
+    key_file = await get_key_file(config_dir, alice.slug)
 
     await change_device_password(key_file, old_password, new_password)
 
@@ -326,13 +328,15 @@ def test_supports_legacy_is_admin_field(alice):
     }
 
 
-def test_key_file_path_are_proper_paths(config_dir):
-    devices = list_available_devices(config_dir)
+@pytest.mark.trio
+async def test_key_file_path_are_proper_paths(config_dir):
+    devices = await list_available_devices(config_dir)
     for device in devices:
         assert isinstance(device.key_file_path, pathlib.Path)
 
 
-def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
+@pytest.mark.trio
+async def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
     # Legacy path might exceed the 256 characters limit in some cases (see issue #1356)
     # So we use the `\\?\` workaround: https://stackoverflow.com/a/57502760/2846140
     if sys.platform == "win32":
@@ -364,7 +368,7 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
     key_file_path.parent.mkdir(parents=True)
     key_file_path.write_bytes(key_file_data)
 
-    devices = list_available_devices(config_dir)
+    devices = await list_available_devices(config_dir)
     expected_device = AvailableDevice(
         key_file_path=key_file_path,
         organization_id=OrganizationID(organization_id),
@@ -375,11 +379,12 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
         type=DeviceFileType.PASSWORD,
     )
     assert devices == [expected_device]
-    assert get_key_file(config_dir, expected_device.slug) == key_file_path
+    assert await get_key_file(config_dir, expected_device.slug) == key_file_path
 
 
+@pytest.mark.trio
 @pytest.mark.parametrize("type", ("password", "smartcard"))
-def test_list_devices_support_key_file(config_dir, type):
+async def test_list_devices_support_key_file(config_dir, type):
     if type == "password":
         data_extra = {"type": "password", "salt": b"12345"}
         available_device_extra = {"type": DeviceFileType.PASSWORD}
@@ -421,7 +426,7 @@ def test_list_devices_support_key_file(config_dir, type):
     key_file_path.parent.mkdir(parents=True)
     key_file_path.write_bytes(key_file_data)
 
-    devices = list_available_devices(config_dir)
+    devices = await list_available_devices(config_dir)
     expected_device = AvailableDevice(
         key_file_path=key_file_path,
         organization_id=OrganizationID(organization_id),
@@ -432,7 +437,7 @@ def test_list_devices_support_key_file(config_dir, type):
         **available_device_extra,
     )
     assert devices == [expected_device]
-    assert get_key_file(config_dir, expected_device.slug) == key_file_path
+    assert await get_key_file(config_dir, expected_device.slug) == key_file_path
 
 
 async def test_multiple_files_same_device(config_dir, alice):
@@ -445,12 +450,12 @@ async def test_multiple_files_same_device(config_dir, alice):
     (path.parent / "testing.keys").write_bytes(path.read_bytes())
 
     # Make sure we don't list duplicates
-    devices = list_available_devices(config_dir)
+    devices = await list_available_devices(config_dir)
     assert len(devices) == 1
     assert devices[0].device_id == alice.device_id
 
     # Remove orignal file
     path.unlink()
-    devices = list_available_devices(config_dir)
+    devices = await list_available_devices(config_dir)
     assert len(devices) == 1
     assert devices[0].device_id == alice.device_id

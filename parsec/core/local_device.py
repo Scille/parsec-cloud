@@ -55,8 +55,8 @@ class LocalDeviceCertificateNotFoundError(LocalDeviceError):
     """Used in parsec-extensions for smartcard devices."""
 
 
-def get_key_file(config_dir: Path, device: str) -> Path:
-    return Path(get_available_device(config_dir, device).key_file_path)
+async def get_key_file(config_dir: Path, device: str) -> Path:
+    return Path((await get_available_device(config_dir, device)).key_file_path)
 
 
 def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:
@@ -76,9 +76,9 @@ def get_devices_dir(config_dir: Path) -> Path:
     return config_dir / "devices"
 
 
-def load_device_file(key_file_path: Path) -> AvailableDevice | None:
+async def load_device_file(key_file_path: Path) -> AvailableDevice | None:
     try:
-        return AvailableDevice.load(key_file_path)
+        return await AvailableDevice.load(key_file_path)
     except LocalDeviceError:
         # Not a valid device file, ignore this
         return None

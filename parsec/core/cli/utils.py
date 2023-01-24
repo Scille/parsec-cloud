@@ -134,7 +134,7 @@ def core_config_and_available_device_options(fn: Callable[..., R]) -> Callable[.
         config = kwargs["config"]
         assert isinstance(config, CoreConfig)
 
-        all_available_devices = list_available_devices(config.config_dir)
+        all_available_devices = trio.run(list_available_devices, config.config_dir)
 
         if device_slughash is None:
             ctx = click.get_current_context()

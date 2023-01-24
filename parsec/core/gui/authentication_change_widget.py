@@ -88,7 +88,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
         parent: QWidget,
         on_finished: None = None,
     ) -> AuthenticationChangeWidget | None:
-        available_device = get_available_device(core.config.config_dir, core.device.slug)
+        available_device = await get_available_device(core.config.config_dir, core.device.slug)
         loaded_device = None
 
         try:

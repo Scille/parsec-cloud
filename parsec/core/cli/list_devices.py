@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import click
+import trio
 
 from parsec._parsec import AvailableDevice, list_available_devices
 from parsec.cli_utils import cli_exception_handler
@@ -27,7 +28,7 @@ def list_devices(
 ) -> None:
     with cli_exception_handler(debug):
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
-        devices = list_available_devices(config_dir)
+        devices = trio.run(list_available_devices, config_dir)
         num_devices_display = click.style(str(len(devices)), fg="green")
         config_dir_display = click.style(config_dir, fg="yellow")
         click.echo(f"Found {num_devices_display} device(s) in {config_dir_display}:")
