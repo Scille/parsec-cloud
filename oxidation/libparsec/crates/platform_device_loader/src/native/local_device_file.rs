@@ -16,7 +16,9 @@ use crate::load_device_with_password_from_path;
 
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 
-pub fn list_available_devices_core(config_dir: &Path) -> LocalDeviceResult<Vec<AvailableDevice>> {
+pub async fn list_available_devices_core(
+    config_dir: &Path,
+) -> LocalDeviceResult<Vec<AvailableDevice>> {
     let mut list = vec![];
     // Set of seen slugs
     let mut seen = HashSet::new();
@@ -31,7 +33,7 @@ pub fn list_available_devices_core(config_dir: &Path) -> LocalDeviceResult<Vec<A
     key_file_paths.sort();
 
     for key_file_path in key_file_paths {
-        let device = match load_available_device(key_file_path) {
+        let device = match load_available_device(key_file_path).await {
             // Load the device file
             Ok(device) => device,
             // Ignore invalid files
@@ -52,7 +54,9 @@ pub fn list_available_devices_core(config_dir: &Path) -> LocalDeviceResult<Vec<A
 }
 
 pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
-    list_available_devices_core(config_dir).unwrap_or_default()
+    list_available_devices_core(config_dir)
+        .await
+        .unwrap_or_default()
 }
 
 pub async fn save_recovery_device(
@@ -145,8 +149,9 @@ fn load_legacy_device_file(key_file: &Path, ciphertext: &[u8]) -> LocalDeviceRes
     }))
 }
 
-pub fn load_device_file(key_file_path: &Path) -> LocalDeviceResult<DeviceFile> {
-    let data = std::fs::read(key_file_path)
+pub async fn load_device_file(key_file_path: &Path) -> LocalDeviceResult<DeviceFile> {
+    let data = tokio::fs::read(key_file_path)
+        .await
         .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))?;
 
     // In case of failure try to load a legacy_device and convert it to a
@@ -161,9 +166,9 @@ pub fn load_device_file(key_file_path: &Path) -> LocalDeviceResult<DeviceFile> {
     }
 }
 
-pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<AvailableDevice> {
+pub async fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<AvailableDevice> {
     let (ty, organization_id, device_id, human_handle, device_label, slug) =
-        match load_device_file(&key_file_path)? {
+        match load_device_file(&key_file_path).await? {
             DeviceFile::Password(device) => (
                 DeviceFileType::Password,
                 device.organization_id,
@@ -300,8 +305,11 @@ pub async fn change_device_password(
     save_device_with_password(key_file, &device, new_password, true).await
 }
 
-pub fn get_available_device(config_dir: &Path, slug: &str) -> LocalDeviceResult<AvailableDevice> {
-    let devices = list_available_devices_core(config_dir)?;
+pub async fn get_available_device(
+    config_dir: &Path,
+    slug: &str,
+) -> LocalDeviceResult<AvailableDevice> {
+    let devices = list_available_devices_core(config_dir).await?;
 
     devices
         .iter()

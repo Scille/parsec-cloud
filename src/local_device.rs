@@ -455,7 +455,12 @@ impl DeviceInfo {
     }
 }
 
-crate::binding_utils::create_exception!(LocalDevice, PyException, client_types::LocalDeviceError);
+crate::binding_utils::create_exception!(
+    LocalDevice,
+    PyException,
+    client_types::LocalDeviceError,
+    no_result_type
+);
 
 #[pyfunction]
 pub(crate) fn save_device_with_password(
@@ -528,11 +533,14 @@ impl AvailableDevice {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, key_file_path: PathBuf) -> LocalDeviceResult<Self> {
-        Ok(Self(
-            platform_device_loader::load_available_device(key_file_path)
-                .map_err(|e| LocalDeviceExc(Box::new(e)))?,
-        ))
+    fn load(_cls: &PyType, key_file_path: PathBuf) -> FutureIntoCoroutine {
+        FutureIntoCoroutine::from(async move {
+            Ok(Self(
+                platform_device_loader::load_available_device(key_file_path)
+                    .await
+                    .map_err(|e| LocalDeviceExc(Box::new(e)))?,
+            ))
+        })
     }
 
     #[getter]
@@ -595,27 +603,28 @@ crate::binding_utils::gen_proto!(AvailableDevice, __richcmp__, eq);
 crate::binding_utils::gen_proto!(AvailableDevice, __hash__);
 
 #[pyfunction]
-pub(crate) fn list_available_devices(
-    config_dir: PathBuf,
-) -> LocalDeviceResult<Vec<AvailableDevice>> {
-    platform_device_loader::list_available_devices_core(&config_dir)
-        .map(|devices| {
-            devices
-                .iter()
-                .map(|d| AvailableDevice(d.clone()))
-                .collect::<Vec<AvailableDevice>>()
-        })
-        .map_err(|e| LocalDeviceExc(Box::new(e)))
+pub(crate) fn list_available_devices(config_dir: PathBuf) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::list_available_devices_core(&config_dir)
+            .await
+            .map(|devices| {
+                devices
+                    .iter()
+                    .map(|d| AvailableDevice(d.clone()))
+                    .collect::<Vec<AvailableDevice>>()
+            })
+            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
 }
 
 #[pyfunction]
-pub(crate) fn get_available_device(
-    config_dir: PathBuf,
-    slug: String,
-) -> LocalDeviceResult<AvailableDevice> {
-    platform_device_loader::get_available_device(&config_dir, &slug)
-        .map(AvailableDevice)
-        .map_err(|e| e.into())
+pub(crate) fn get_available_device(config_dir: PathBuf, slug: String) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        platform_device_loader::get_available_device(&config_dir, &slug)
+            .await
+            .map(AvailableDevice)
+            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+    })
 }
 
 #[pyfunction]

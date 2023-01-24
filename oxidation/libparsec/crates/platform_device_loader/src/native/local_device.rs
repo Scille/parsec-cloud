@@ -10,7 +10,7 @@ pub async fn load_device_with_password_from_path(
     key_file: &Path,
     password: &str,
 ) -> LocalDeviceResult<LocalDevice> {
-    let device_file = load_device_file(key_file)?;
+    let device_file = load_device_file(key_file).await?;
 
     match device_file {
         DeviceFile::Password(device_file) => load_device_with_password_core(&device_file, password),

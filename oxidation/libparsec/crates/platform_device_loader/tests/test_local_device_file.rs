@@ -153,7 +153,7 @@ async fn test_renew_legacy_file(tmp_path: TmpPath) {
     std::fs::create_dir_all(tmp_path.join("devices")).unwrap();
     std::fs::write(&key_file_path, legacy_device).unwrap();
 
-    let device = load_device_file(&key_file_path).unwrap();
+    let device = load_device_file(&key_file_path).await.unwrap();
 
     assert_eq!(
         device,
