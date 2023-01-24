@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.node",
     "scripts": {
-        "copy-typing": "mkdir -p dist/libparsec || md dist\\libparsec && cp src/index.d.ts dist/libparsec/ || copy src\\index.d.ts dist\\libparsec",
+        "copy-typing": "mkdir -p dist/libparsec || md dist\\libparsec && cp src/index.d.ts dist/libparsec/ || copy /Y src\\index.d.ts dist\\libparsec",
         "build": "npm run copy-typing && node scripts/build.js",
         "build:ci": "npm run build -- ci",
         "build:dev": "npm run build -- dev",
