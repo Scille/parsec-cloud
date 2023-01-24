@@ -485,6 +485,25 @@ impl ManifestStorage {
         Ok(manifest)
     }
 
+    pub fn set_manifest_cache_only(
+        &self,
+        entry_id: EntryID,
+        manifest: LocalManifest,
+        removed_ids: Option<HashSet<ChunkOrBlockID>>,
+    ) {
+        let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
+
+        let mut cache_unlock = cache_entry.write().expect("RwLock is poisoned");
+
+        cache_unlock.manifest = Some(manifest);
+        let pending_chunk_ids = cache_unlock
+            .pending_chunk_ids
+            .get_or_insert(HashSet::default());
+        if let Some(removed_ids) = &removed_ids {
+            *pending_chunk_ids = (pending_chunk_ids as &HashSet<ChunkOrBlockID>) | removed_ids;
+        }
+    }
+
     pub async fn set_manifest(
         &self,
         entry_id: EntryID,
@@ -492,24 +511,11 @@ impl ManifestStorage {
         cache_only: bool,
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
-        let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-
-        {
-            let mut cache_unlock = cache_entry.write().expect("RwLock is poisoned");
-
-            cache_unlock.manifest = Some(manifest);
-            let pending_chunk_ids = cache_unlock
-                .pending_chunk_ids
-                .get_or_insert(HashSet::default());
-            if let Some(removed_ids) = &removed_ids {
-                *pending_chunk_ids = (pending_chunk_ids as &HashSet<ChunkOrBlockID>) | removed_ids;
-            }
-        }
+        self.set_manifest_cache_only(entry_id, manifest, removed_ids);
 
         // Flush the cached value to the localdb
         if !cache_only {
-            self.ensure_manifest_persistent_lock(entry_id, cache_entry)
-                .await?;
+            self.ensure_manifest_persistent(entry_id).await?;
         }
 
         Ok(())

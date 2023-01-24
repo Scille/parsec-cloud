@@ -143,23 +143,28 @@ impl WorkspaceStorage {
         removed_ids: Option<HashSet<ChunkID>>,
     ) -> PyResult<FutureIntoCoroutine> {
         let manifest = manifest_from_py_object(py, manifest)?;
-        let ws = self.0.clone();
-
-        let fut = FutureIntoCoroutine::from(async move {
-            ws.set_manifest(
-                entry_id.0,
-                manifest,
-                cache_only,
-                false,
-                removed_ids.map(|x| {
-                    x.into_iter()
-                        .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
-                        .collect()
-                }),
-            )
-            .await
-            .map_err(fs_to_python_error)
+        let removed_ids = removed_ids.map(|x| {
+            x.into_iter()
+                .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
+                .collect()
         });
+
+        let fut = if cache_only {
+            FutureIntoCoroutine::ready(
+                self.0
+                    .set_manifest_in_cache(entry_id.0, manifest, false, removed_ids)
+                    .map_err(fs_to_python_error)
+                    .map(|_| py.None()),
+            )
+        } else {
+            let ws = self.0.clone();
+
+            FutureIntoCoroutine::from(async move {
+                ws.set_manifest(entry_id.0, manifest, cache_only, false, removed_ids)
+                    .await
+                    .map_err(fs_to_python_error)
+            })
+        };
 
         Ok(fut)
     }
@@ -486,13 +491,13 @@ impl WorkspaceStorageSnapshot {
         manifest: PyObject,
     ) -> PyResult<FutureIntoCoroutine> {
         let manifest = manifest_from_py_object(py, manifest)?;
-        let ws = self.0.clone();
 
-        let fut = FutureIntoCoroutine::from(async move {
-            ws.set_manifest(entry_id.0, manifest, false)
-                .await
+        let fut = FutureIntoCoroutine::ready(
+            self.0
+                .set_manifest(entry_id.0, manifest, false)
                 .map_err(fs_to_python_error)
-        });
+                .map(|_| py.None()),
+        );
 
         Ok(fut)
     }

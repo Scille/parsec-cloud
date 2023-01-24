@@ -370,6 +370,32 @@ impl WorkspaceStorage {
         self.manifest_storage.get_manifest(entry_id).await
     }
 
+    pub fn set_manifest_in_cache(
+        &self,
+        entry_id: EntryID,
+        manifest: LocalManifest,
+        check_lock_status: bool,
+        removed_ids: Option<HashSet<ChunkOrBlockID>>,
+    ) -> FSResult<()> {
+        if check_lock_status {
+            self.check_lock_status(&entry_id)?;
+        }
+        self.manifest_storage
+            .set_manifest_cache_only(entry_id, manifest.clone(), removed_ids);
+        if self.workspace_id == entry_id {
+            let manifest = if let LocalManifest::Workspace(manifest) = manifest {
+                manifest
+            } else {
+                panic!("We updated the workspace manifest with a manifest of the wrong type");
+            };
+            self.workspace_storage_manifest_copy
+                .write()
+                .expect("RwLock is poisoned")
+                .replace(manifest);
+        }
+        Ok(())
+    }
+
     pub async fn set_manifest(
         &self,
         entry_id: EntryID,
@@ -566,7 +592,7 @@ impl WorkspaceStorageSnapshot {
             .ok_or(FSError::LocalMiss(*entry_id))
     }
 
-    pub async fn set_manifest(
+    pub fn set_manifest(
         &self,
         entry_id: EntryID,
         manifest: LocalManifest,
