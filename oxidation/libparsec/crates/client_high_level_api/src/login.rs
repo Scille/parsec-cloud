@@ -28,12 +28,14 @@ pub enum DeviceAccessParams {
     // }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum WorkspaceStorageCacheSize {
     Default,
     // TODO: support arbitrary int size in bindings
     Custom { size: i32 },
 }
 
+#[derive(Debug, Clone)]
 pub struct ClientConfig {
     // On web, `config_dir`&`data_base_dir` are converted into String and
     // used as database name when using IndexedDB API

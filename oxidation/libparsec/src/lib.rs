@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::path::Path;
+
 pub use libparsec_client_high_level_api::*;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -16,13 +18,12 @@ pub use libparsec_crypto as crypto;
 pub use libparsec_platform_device_loader as platform_device_loader;
 
 // TODO: replace me by the high-level API here ;-)
-pub use libparsec_client_types::{AvailableDevice, DeviceFileType, StrPath};
+pub use libparsec_client_types::{AvailableDevice, DeviceFileType};
 pub use libparsec_core::{
     logged_core_get_device_display, logged_core_get_device_id, login, LoggedCoreError,
     LoggedCoreHandle, LoggedCoreResult,
 };
 
-pub async fn list_available_devices(config_dir: StrPath) -> Vec<AvailableDevice> {
-    libparsec_platform_device_loader::list_available_devices(&std::path::PathBuf::from(config_dir))
-        .await
+pub async fn client_list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
+    platform_device_loader::list_available_devices(config_dir).await
 }

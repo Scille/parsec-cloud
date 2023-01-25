@@ -15,7 +15,6 @@ use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
     enumerate::{DeviceFileType, UserProfile},
     ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID},
-    local_device::client_types::StrPath,
     runtime::FutureIntoCoroutine,
     time::{DateTime, TimeProvider},
 };
@@ -501,7 +500,7 @@ impl AvailableDevice {
         r#type: DeviceFileType,
     ) -> Self {
         Self(client_types::AvailableDevice {
-            key_file_path: StrPath::from(key_file_path.to_str().unwrap()),
+            key_file_path,
             organization_id: organization_id.0,
             device_id: device_id.0,
             human_handle: human_handle.map(|h| h.0),

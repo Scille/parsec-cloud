@@ -181,7 +181,7 @@ pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<Availa
         };
 
     Ok(AvailableDevice {
-        key_file_path: key_file_path.into(),
+        key_file_path,
         organization_id,
         device_id,
         human_handle,
