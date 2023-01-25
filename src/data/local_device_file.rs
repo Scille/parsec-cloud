@@ -7,6 +7,7 @@ use pyo3::{
 };
 
 use crate::{
+    binding_utils::BytesWrapper,
     enumerate::DeviceFileType,
     ids::{DeviceID, DeviceLabel, HumanHandle, OrganizationID},
 };
@@ -32,17 +33,18 @@ impl DeviceFile {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [ty: DeviceFileType, "type"],
-            [ciphertext: Vec<u8>, "ciphertext"],
+            [ciphertext: BytesWrapper, "ciphertext"],
             [human_handle: Option<HumanHandle>, "human_handle"],
             [device_label: Option<DeviceLabel>, "device_label"],
             [device_id: DeviceID, "device_id"],
             [organization_id: OrganizationID, "organization_id"],
             [slug: String, "slug"],
-            [salt: Option<Vec<u8>>, "salt"],
-            [encrypted_key: Option<Vec<u8>>, "encrypted_key"],
+            [salt: Option<BytesWrapper>, "salt"],
+            [encrypted_key: Option<BytesWrapper>, "encrypted_key"],
             [certificate_id: Option<String>, "certificate_id"],
-            [certificate_sha1: Option<Vec<u8>>, "certificate_sha1"],
+            [certificate_sha1: Option<BytesWrapper>, "certificate_sha1"],
         );
+        crate::binding_utils::unwrap_bytes!(ciphertext, salt, encrypted_key, certificate_sha1);
 
         let device = match ty {
             DeviceFileType(libparsec::client_types::DeviceFileType::Password) => {
