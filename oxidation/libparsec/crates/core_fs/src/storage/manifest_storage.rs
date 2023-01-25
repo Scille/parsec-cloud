@@ -118,8 +118,13 @@ impl CacheEntry {
 
 impl Drop for ManifestStorage {
     fn drop(&mut self) {
-        block_on(async { self.flush_cache_ahead_of_persistance().await })
-            .expect("Cannot flush cache when ManifestStorage dropped");
+        let res = block_on(async { self.flush_cache_ahead_of_persistance().await });
+
+        match res {
+            Ok(_) => (),
+            Err(FSError::DatabaseClosed(_)) => (),
+            Err(e) => panic!("When dropping ManifestStorage, got the following error: {e}"),
+        }
     }
 }
 
