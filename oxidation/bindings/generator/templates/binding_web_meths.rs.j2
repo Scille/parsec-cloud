@@ -51,9 +51,18 @@ let {{ param_name }} = match {{ param_name }} {
     None => None,
 };
 {% elif type.kind == "str_based" %}
-let {{ param_name }} = {{ param_name }}.parse().map_err(|_| {
+let {{ param_name }} =
+{% if type.custom_from_rs_string -%}
+{
+    let custom_from_rs_string = {{ type.custom_from_rs_string }};
+    custom_from_rs_string({{ param_name }})
+        .map_err(|e| TypeError::new(e))
+}?;
+{%- else -%}
+{{ param_name }}.parse().map_err(|_| {
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
 })?;
+{% endif %}
 {% elif type.kind in ("struct", "variant", "result") %}
 let {{ param_name }} = {{ param_name }}.into();
 let {{ param_name }} = {{ render_js_value_to_rs(param_name, type) }};

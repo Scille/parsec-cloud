@@ -10,6 +10,17 @@ export type Result<T, E = Error> =
   | { ok: false; error: E };
 
 
+export interface AvailableDevice {
+    keyFilePath: string;
+    organizationId: string;
+    deviceId: string;
+    humanHandle: string | null;
+    deviceLabel: string | null;
+    slug: string;
+    ty: DeviceFileType;
+}
+
+
 export interface ClientConfig {
     configDir: string;
     dataBaseDir: string;
@@ -38,6 +49,22 @@ export type ClientEvent =
   | ClientEventWorkspaceReencryptionEnded
   | ClientEventWorkspaceReencryptionNeeded
   | ClientEventWorkspaceReencryptionStarted
+
+
+// DeviceFileType
+export interface DeviceFileTypePassword {
+    tag: "Password"
+}
+export interface DeviceFileTypeRecovery {
+    tag: "Recovery"
+}
+export interface DeviceFileTypeSmartcard {
+    tag: "Smartcard"
+}
+export type DeviceFileType =
+  | DeviceFileTypePassword
+  | DeviceFileTypeRecovery
+  | DeviceFileTypeSmartcard
 
 
 // WorkspaceStorageCacheSize
@@ -88,6 +115,9 @@ export type ClientLoginError =
   | ClientLoginErrorDeviceInvalidFormat
 
 
+export function clientListAvailableDevices(
+    path: string
+): Promise<Array<AvailableDevice>>;
 export function clientLogin(
     load_device_params: DeviceAccessParams,
     config: ClientConfig,
