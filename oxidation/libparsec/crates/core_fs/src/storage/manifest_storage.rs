@@ -341,19 +341,18 @@ impl ManifestStorage {
         // It is difficult to build a raw sql query with bind in a for loop
         // Another solution is to query all data then insert
 
-        for (id, version) in changed_vlobs.iter().copied() {
-            self.conn
-                .exec_with_error_handler(
-                    move |conn| {
-                        sql_query("UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?;")
-                            .bind::<diesel::sql_types::BigInt, _>(version)
-                            .bind::<diesel::sql_types::Binary, _>((*id).as_ref())
-                            .execute(conn)
-                    },
-                    |e| FSError::UpdateTable(format!("vlobs: update_realm_checkpoint {e}")),
-                )
-                .await?;
-        }
+        let futures = changed_vlobs.iter().copied().map(|(id, version)| {
+            self.conn.exec_with_error_handler(
+                move |conn| {
+                    sql_query("UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?;")
+                        .bind::<diesel::sql_types::BigInt, _>(version)
+                        .bind::<diesel::sql_types::Binary, _>((*id).as_ref())
+                        .execute(conn)
+                },
+                |e| FSError::UpdateTable(format!("vlobs: update_realm_checkpoint {e}")),
+            )
+        });
+        platform_async::future::try_join_all(futures).await?;
 
         self.conn
             .exec(move |conn| {
@@ -584,21 +583,23 @@ impl ManifestStorage {
                         .execute(conn)
             }).await?;
 
-            for pending_ids in chunk_ids
+            let futures = chunk_ids
                 .chunks(LOCAL_DATABASE_MAX_VARIABLE_NUMBER)
-                .map(|chunk| chunk.to_vec())
-            {
-                self.conn
-                    .exec(move |conn| {
-                        let ids = pending_ids.iter().map(ChunkOrBlockID::as_ref);
+                .map(|chunk| {
+                    let chunk = chunk.to_vec();
+
+                    self.conn.exec(move |conn| {
+                        let ids = chunk.iter().map(ChunkOrBlockID::as_ref);
                         let query = chunks::table.filter(chunks::chunk_id.eq_any(ids));
                         let res: diesel::result::QueryResult<usize> =
                             diesel::delete(query).execute(conn);
 
                         res
                     })
-                    .await?;
-            }
+                });
+
+            platform_async::future::try_join_all(futures).await?;
+
             cache_lock
                 .write()
                 .expect("RwLock is poisoned")
@@ -650,18 +651,18 @@ impl ManifestStorage {
             if let Some(pending_chunk_ids) = previous_pending_chunk_ids.clone() {
                 let pending_chunk_ids = pending_chunk_ids.into_iter().collect::<Vec<_>>();
 
-                for chunked_ids in pending_chunk_ids
+                let futures = pending_chunk_ids
                     .chunks(LOCAL_DATABASE_MAX_VARIABLE_NUMBER)
-                    .map(|chunks| chunks.to_vec())
-                {
-                    self.conn
-                        .exec(move |conn| {
-                            let ids = chunked_ids.iter().map(ChunkOrBlockID::as_ref);
+                    .map(|chunks| {
+                        let chunks = chunks.to_vec();
+
+                        self.conn.exec(move |conn| {
+                            let ids = chunks.iter().map(ChunkOrBlockID::as_ref);
                             let query = chunks::table.filter(chunks::chunk_id.eq_any(ids));
                             diesel::delete(query).execute(conn)
                         })
-                        .await?;
-                }
+                    });
+                platform_async::future::try_join_all(futures).await?;
             }
             Ok(deleted)
         }

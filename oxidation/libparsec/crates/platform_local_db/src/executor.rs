@@ -22,7 +22,7 @@ enum ExecOrStop {
 impl SqliteExecutor {
     /// Spawn the executor in a thread.
     pub fn spawn(connection: SqliteConnection) -> Self {
-        let (job_sender, job_receiver) = channel::bounded(10);
+        let (job_sender, job_receiver) = channel::bounded(32);
         let background_executor = BackgroundSqliteExecutor {
             job_receiver,
             connection,
