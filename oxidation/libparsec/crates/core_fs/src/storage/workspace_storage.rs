@@ -4,7 +4,7 @@ use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
     path::Path,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard, RwLock},
 };
 
 use libparsec_client_types::{
@@ -12,7 +12,7 @@ use libparsec_client_types::{
 };
 use libparsec_types::{BlockID, ChunkID, DateTime, EntryID, FileDescriptor, Regex};
 use local_db::LocalDatabase;
-use platform_async::{future, Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard};
+use platform_async::future;
 
 use super::{
     chunk_storage::ChunkStorage,
@@ -35,7 +35,7 @@ lazy_static::lazy_static! {
 }
 
 #[derive(Default, Clone)]
-struct Locker<T: Eq + Hash>(Arc<AsyncMutex<HashMap<T, Arc<AsyncMutex<()>>>>>);
+struct Locker<T: Eq + Hash>(Arc<Mutex<HashMap<T, Arc<Mutex<()>>>>>);
 
 enum Status {
     Locked,
@@ -43,20 +43,20 @@ enum Status {
 }
 
 impl<T: Eq + Hash + Copy> Locker<T> {
-    async fn acquire(&self, id: T) -> Arc<AsyncMutex<()>> {
-        let mut map = self.0.lock().await;
+    fn acquire(&self, id: T) -> Arc<Mutex<()>> {
+        let mut map = self.0.lock().expect("Mutex is poisoned");
         map.entry(id)
-            .or_insert_with(|| Arc::new(AsyncMutex::new(())));
-        map.get(&id).unwrap_or_else(|| unreachable!()).clone()
+            .or_insert_with(|| Arc::new(Mutex::new(())))
+            .clone()
     }
 
-    async fn release(&self, id: T, guard: AsyncMutexGuard<'_, ()>) {
+    fn release(&self, id: &T, guard: MutexGuard<'_, ()>) {
         drop(guard);
-        self.0.lock().await.remove(&id);
+        self.0.lock().expect("Mutex is poisoned").remove(id);
     }
 
-    async fn check(&self, id: T) -> Status {
-        if let Some(mutex) = self.0.lock().await.get(&id) {
+    fn check(&self, id: &T) -> Status {
+        if let Some(mutex) = self.0.lock().expect("Mutex is poisoned").get(id) {
             if mutex.try_lock().is_err() {
                 return Status::Locked;
             }
@@ -85,7 +85,7 @@ pub struct WorkspaceStorage {
     /// Connection to the Cache database.
     cache_conn: LocalDatabase,
 
-    workspace_storage_manifest_copy: Arc<Mutex<Option<LocalWorkspaceManifest>>>,
+    workspace_storage_manifest_copy: Arc<RwLock<Option<LocalWorkspaceManifest>>>,
 }
 
 impl WorkspaceStorage {
@@ -153,7 +153,7 @@ impl WorkspaceStorage {
             data_conn,
             cache_conn,
 
-            workspace_storage_manifest_copy: Arc::new(Mutex::new(None)),
+            workspace_storage_manifest_copy: Arc::new(RwLock::new(None)),
         };
 
         instance
@@ -169,12 +169,12 @@ impl WorkspaceStorage {
         Ok(instance)
     }
 
-    pub async fn lock_entry_id(&self, entry_id: EntryID) -> Arc<AsyncMutex<()>> {
-        self.entry_locks.acquire(entry_id).await
+    pub fn lock_entry_id(&self, entry_id: EntryID) -> Arc<Mutex<()>> {
+        self.entry_locks.acquire(entry_id)
     }
 
-    pub async fn release_entry_id(&self, entry_id: EntryID, guard: AsyncMutexGuard<'_, ()>) {
-        self.entry_locks.release(entry_id, guard).await
+    pub fn release_entry_id(&self, entry_id: &EntryID, guard: MutexGuard<'_, ()>) {
+        self.entry_locks.release(entry_id, guard)
     }
 
     /// Check if an `entry_id` is locked.
@@ -182,9 +182,9 @@ impl WorkspaceStorage {
     /// # Errors
     ///
     /// Will return an error if the given `entry_id` is not locked.
-    async fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
-        if let Status::Released = self.entry_locks.check(entry_id).await {
-            return Err(FSError::Runtime(entry_id));
+    fn check_lock_status(&self, entry_id: &EntryID) -> FSResult<()> {
+        if let Status::Released = self.entry_locks.check(entry_id) {
+            return Err(FSError::Runtime(*entry_id));
         }
         Ok(())
     }
@@ -218,6 +218,21 @@ impl WorkspaceStorage {
             .expect("Mutex is poisoned")
             .insert(fd, manifest.base.id);
         fd
+    }
+
+    pub fn load_file_descriptor_in_cache(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
+        let entry_id = self
+            .open_fds
+            .lock()
+            .expect("Mutex is poisoned")
+            .get(&fd)
+            .cloned()
+            .ok_or(FSError::InvalidFileDescriptor(fd))?;
+
+        match self.get_manifest_in_cache(&entry_id) {
+            Some(LocalManifest::File(manifest)) => Ok(manifest),
+            _ => Err(FSError::LocalMiss(*entry_id)),
+        }
     }
 
     pub async fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
@@ -314,8 +329,8 @@ impl WorkspaceStorage {
         match self.manifest_storage.get_manifest(self.workspace_id).await {
             Ok(LocalManifest::Workspace(manifest)) => {
                 self.workspace_storage_manifest_copy
-                    .lock()
-                    .expect("Mutex is poisoned")
+                    .write()
+                    .expect("RwLock is poisoned")
                     .replace(manifest);
                 Ok(())
             }
@@ -344,8 +359,8 @@ impl WorkspaceStorage {
 
     pub fn get_workspace_manifest(&self) -> FSResult<LocalWorkspaceManifest> {
         self.workspace_storage_manifest_copy
-            .lock()
-            .expect("Mutex is poisoned")
+            .read()
+            .expect("RwLock is poisoned")
             .as_ref()
             .cloned()
             .ok_or(FSError::LocalMiss(*self.workspace_id))
@@ -353,6 +368,32 @@ impl WorkspaceStorage {
 
     pub async fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         self.manifest_storage.get_manifest(entry_id).await
+    }
+
+    pub fn set_manifest_in_cache(
+        &self,
+        entry_id: EntryID,
+        manifest: LocalManifest,
+        check_lock_status: bool,
+        removed_ids: Option<HashSet<ChunkOrBlockID>>,
+    ) -> FSResult<()> {
+        if check_lock_status {
+            self.check_lock_status(&entry_id)?;
+        }
+        self.manifest_storage
+            .set_manifest_cache_only(entry_id, manifest.clone(), removed_ids);
+        if self.workspace_id == entry_id {
+            let manifest = if let LocalManifest::Workspace(manifest) = manifest {
+                manifest
+            } else {
+                panic!("We updated the workspace manifest with a manifest of the wrong type");
+            };
+            self.workspace_storage_manifest_copy
+                .write()
+                .expect("RwLock is poisoned")
+                .replace(manifest);
+        }
+        Ok(())
     }
 
     pub async fn set_manifest(
@@ -364,7 +405,7 @@ impl WorkspaceStorage {
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
         if check_lock_status {
-            self.check_lock_status(entry_id).await?;
+            self.check_lock_status(&entry_id)?;
         }
         self.manifest_storage
             .set_manifest(entry_id, manifest.clone(), cache_only, removed_ids)
@@ -376,8 +417,8 @@ impl WorkspaceStorage {
                 panic!("We updated the workspace manifest with a manifest of the wrong type");
             };
             self.workspace_storage_manifest_copy
-                .lock()
-                .expect("Mutex is poisoned")
+                .write()
+                .expect("RwLock is poisoned")
                 .replace(manifest);
         }
         Ok(())
@@ -389,19 +430,22 @@ impl WorkspaceStorage {
         check_lock_status: bool,
     ) -> FSResult<()> {
         if check_lock_status {
-            self.check_lock_status(entry_id).await?;
+            self.check_lock_status(&entry_id)?;
         }
         self.manifest_storage
             .ensure_manifest_persistent(entry_id)
             .await
     }
 
-    #[allow(deprecated)]
-    pub async fn clear_manifest(&self, entry_id: EntryID, check_lock_status: bool) -> FSResult<()> {
+    pub async fn clear_manifest(
+        &self,
+        entry_id: &EntryID,
+        check_lock_status: bool,
+    ) -> FSResult<()> {
         if check_lock_status {
-            self.check_lock_status(entry_id).await?;
+            self.check_lock_status(entry_id)?;
         }
-        self.manifest_storage.clear_manifest(entry_id).await
+        self.manifest_storage.clear_manifest(*entry_id).await
     }
 
     /// Close the connections to the databases.
@@ -459,6 +503,10 @@ impl WorkspaceStorage {
             .await
     }
 
+    pub fn get_manifest_in_cache(&self, entry_id: &EntryID) -> Option<LocalManifest> {
+        self.manifest_storage.get_manifest_in_cache(entry_id)
+    }
+
     /// Take a snapshot of the current [WorkspaceStorage]
     pub fn to_timestamp(self, _timestamp: DateTime) -> WorkspaceStorageSnapshot {
         WorkspaceStorageSnapshot::from(self)
@@ -468,7 +516,7 @@ impl WorkspaceStorage {
 /// Snapshot of a [WorkspaceStorage] at a given time.
 #[derive(Clone)]
 pub struct WorkspaceStorageSnapshot {
-    cache: Arc<AsyncMutex<HashMap<EntryID, LocalManifest>>>,
+    cache: Arc<RwLock<HashMap<EntryID, LocalManifest>>>,
     open_fds: Arc<Mutex<HashMap<FileDescriptor, EntryID>>>,
     fd_counter: Arc<Mutex<u32>>,
     pub workspace_storage: WorkspaceStorage,
@@ -477,7 +525,7 @@ pub struct WorkspaceStorageSnapshot {
 impl From<WorkspaceStorage> for WorkspaceStorageSnapshot {
     fn from(workspace_storage: WorkspaceStorage) -> Self {
         Self {
-            cache: Arc::new(AsyncMutex::new(HashMap::default())),
+            cache: Arc::new(RwLock::new(HashMap::default())),
             workspace_storage,
             fd_counter: Arc::new(Mutex::new(0)),
             open_fds: Arc::new(Mutex::new(HashMap::default())),
@@ -503,7 +551,7 @@ impl WorkspaceStorageSnapshot {
         fd
     }
 
-    pub async fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
+    pub fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
         let entry_id = self
             .open_fds
             .lock()
@@ -512,7 +560,7 @@ impl WorkspaceStorageSnapshot {
             .copied()
             .ok_or(FSError::InvalidFileDescriptor(fd))?;
 
-        match self.get_manifest(entry_id).await {
+        match self.get_manifest(entry_id) {
             Ok(LocalManifest::File(manifest)) => Ok(manifest),
             _ => Err(FSError::LocalMiss(*entry_id)),
         }
@@ -535,16 +583,16 @@ impl WorkspaceStorageSnapshot {
         self.workspace_storage.get_workspace_manifest()
     }
 
-    pub async fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
+    pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         self.cache
-            .lock()
-            .await
+            .read()
+            .expect("RwLock is poisoned")
             .get(&entry_id)
             .cloned()
             .ok_or(FSError::LocalMiss(*entry_id))
     }
 
-    pub async fn set_manifest(
+    pub fn set_manifest(
         &self,
         entry_id: EntryID,
         manifest: LocalManifest,
@@ -554,9 +602,12 @@ impl WorkspaceStorageSnapshot {
             Err(FSError::WorkspaceStorageTimestamped)
         } else {
             if check_lock_status {
-                self.check_lock_status(entry_id).await?;
+                self.check_lock_status(&entry_id)?;
             }
-            self.cache.lock().await.insert(entry_id, manifest);
+            self.cache
+                .write()
+                .expect("RwLock is poisoned")
+                .insert(entry_id, manifest);
             Ok(())
         }
     }
@@ -566,8 +617,8 @@ impl WorkspaceStorageSnapshot {
     /// # Errors
     ///
     /// Will return an error if the given `entry_id` is not locked.
-    pub async fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
-        self.workspace_storage.check_lock_status(entry_id).await
+    pub fn check_lock_status(&self, entry_id: &EntryID) -> FSResult<()> {
+        self.workspace_storage.check_lock_status(entry_id)
     }
 
     pub fn get_prevent_sync_pattern(&self) -> libparsec_types::Regex {
@@ -595,19 +646,17 @@ impl WorkspaceStorageSnapshot {
         self.workspace_storage.get_dirty_block(block_id).await
     }
 
-    pub async fn lock_entry_id(&self, entry_id: EntryID) -> Arc<AsyncMutex<()>> {
-        self.workspace_storage.lock_entry_id(entry_id).await
+    pub fn lock_entry_id(&self, entry_id: EntryID) -> Arc<Mutex<()>> {
+        self.workspace_storage.lock_entry_id(entry_id)
     }
 
-    pub async fn release_entry_id(&self, entry_id: EntryID, guard: AsyncMutexGuard<'_, ()>) {
-        self.workspace_storage
-            .release_entry_id(entry_id, guard)
-            .await
+    pub async fn release_entry_id(&self, entry_id: &EntryID, guard: MutexGuard<'_, ()>) {
+        self.workspace_storage.release_entry_id(entry_id, guard)
     }
 
     /// Clear the local manifest cache
-    pub async fn clear_local_cache(&self) {
-        self.cache.lock().await.clear()
+    pub fn clear_local_cache(&self) {
+        self.cache.write().expect("RwLock is poisoned").clear()
     }
 
     /// Take a snapshot of the current `workspace storage`
@@ -646,6 +695,8 @@ pub async fn workspace_storage_non_speculative_init(
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::await_holding_lock)]
+
     use crate::conftest::{alice_workspace_storage, TmpWorkspaceStorage};
     use libparsec_client_types::Chunk;
     use libparsec_types::{Blocksize, Regex, DEFAULT_BLOCK_SIZE};
@@ -698,7 +749,7 @@ mod tests {
         );
 
         assert_eq!(
-            aws.clear_manifest(manifest_id, true).await.unwrap_err(),
+            aws.clear_manifest(&manifest_id, true).await.unwrap_err(),
             FSError::Runtime(manifest_id)
         );
     }
@@ -711,8 +762,8 @@ mod tests {
         let manifest = LocalManifest::Workspace(manifest);
         let manifest_id = manifest.id();
 
-        let mutex = aws.lock_entry_id(manifest_id).await;
-        let guard = mutex.lock().await;
+        let mutex = aws.lock_entry_id(manifest_id);
+        let guard = mutex.lock().unwrap();
 
         // 1) No data
         assert_eq!(
@@ -731,7 +782,7 @@ mod tests {
         assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), manifest);
 
         // 3) Clear data
-        aws.clear_manifest(manifest_id, true).await.unwrap();
+        aws.clear_manifest(&manifest_id, true).await.unwrap();
 
         assert_eq!(
             aws.get_manifest(manifest_id).await.unwrap_err(),
@@ -739,11 +790,11 @@ mod tests {
         );
 
         assert_eq!(
-            aws.clear_manifest(manifest_id, true).await.unwrap_err(),
+            aws.clear_manifest(&manifest_id, true).await.unwrap_err(),
             FSError::LocalMiss(*manifest_id)
         );
 
-        aws.release_entry_id(manifest_id, guard).await;
+        aws.release_entry_id(&manifest_id, guard);
     }
 
     #[rstest]
@@ -754,8 +805,8 @@ mod tests {
         let manifest = LocalManifest::Workspace(manifest);
         let manifest_id = manifest.id();
 
-        let mutex = aws.lock_entry_id(manifest_id).await;
-        let guard = mutex.lock().await;
+        let mutex = aws.lock_entry_id(manifest_id);
+        let guard = mutex.lock().unwrap();
 
         // 1) Set data
         aws.set_manifest(manifest_id, manifest.clone(), true, true, None)
@@ -776,7 +827,7 @@ mod tests {
             .unwrap();
 
         // 2) Clear should work as expected
-        aws.clear_manifest(manifest_id, true).await.unwrap();
+        aws.clear_manifest(&manifest_id, true).await.unwrap();
         assert_eq!(
             aws.get_manifest(manifest_id).await.unwrap_err(),
             FSError::LocalMiss(*manifest_id)
@@ -802,7 +853,7 @@ mod tests {
             .await
             .unwrap();
 
-        aws.release_entry_id(manifest_id, guard).await;
+        aws.release_entry_id(&manifest_id, guard);
     }
 
     #[rstest]
@@ -827,8 +878,8 @@ mod tests {
         let manifest = LocalManifest::File(_manifest.clone());
         let manifest_id = manifest.id();
 
-        let mutex = aws.lock_entry_id(manifest_id).await;
-        let guard = mutex.lock().await;
+        let mutex = aws.lock_entry_id(manifest_id);
+        let guard = mutex.lock().unwrap();
 
         // Set chunks and manifest
         aws.set_chunk(chunk1.id, data1).await.unwrap();
@@ -873,7 +924,7 @@ mod tests {
 
         // Now flush the manifest
         if clear_manifest {
-            aws.clear_manifest(manifest_id, true).await.unwrap();
+            aws.clear_manifest(&manifest_id, true).await.unwrap();
         } else {
             aws.ensure_manifest_persistent(manifest_id, true)
                 .await
@@ -895,7 +946,7 @@ mod tests {
             .await
             .unwrap();
 
-        aws.release_entry_id(manifest_id, guard).await;
+        aws.release_entry_id(&manifest_id, guard);
     }
 
     #[rstest]
@@ -917,14 +968,14 @@ mod tests {
         .await
         .unwrap();
 
-        let mutex = aws.lock_entry_id(manifest_id).await;
-        let guard = mutex.lock().await;
+        let mutex = aws.lock_entry_id(manifest_id);
+        let guard = mutex.lock().unwrap();
 
         aws.set_manifest(manifest_id, manifest.clone(), true, true, None)
             .await
             .unwrap();
 
-        aws.release_entry_id(manifest_id, guard).await;
+        aws.release_entry_id(&manifest_id, guard);
 
         drop(aws);
 
@@ -952,10 +1003,10 @@ mod tests {
         let manifest1_id = manifest1.id();
         let manifest2_id = manifest2.id();
 
-        let mutex1 = aws.lock_entry_id(manifest1_id).await;
-        let mutex2 = aws.lock_entry_id(manifest2_id).await;
-        let guard1 = mutex1.lock().await;
-        let guard2 = mutex2.lock().await;
+        let mutex1 = aws.lock_entry_id(manifest1_id);
+        let mutex2 = aws.lock_entry_id(manifest2_id);
+        let guard1 = mutex1.lock().unwrap();
+        let guard2 = mutex2.lock().unwrap();
 
         // Set manifest 1 and manifest 2, cache only
         aws.set_manifest(manifest1_id, manifest1.clone(), false, true, None)
@@ -984,8 +1035,8 @@ mod tests {
         aws.clear_memory_cache(true).await.unwrap();
         assert_eq!(aws.get_manifest(manifest2_id).await.unwrap(), manifest2);
 
-        aws.release_entry_id(manifest1_id, guard1).await;
-        aws.release_entry_id(manifest2_id, guard2).await;
+        aws.release_entry_id(&manifest1_id, guard1);
+        aws.release_entry_id(&manifest2_id, guard2);
     }
 
     #[rstest]
@@ -1008,15 +1059,15 @@ mod tests {
         let manifest = LocalManifest::File(manifest);
         let manifest_id = manifest.id();
 
-        let mutex = aws.lock_entry_id(manifest_id).await;
-        let guard = mutex.lock().await;
+        let mutex = aws.lock_entry_id(manifest_id);
+        let guard = mutex.lock().unwrap();
 
         aws.set_manifest(manifest_id, manifest.clone(), false, true, None)
             .await
             .unwrap();
         assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), manifest);
 
-        aws.release_entry_id(manifest_id, guard).await;
+        aws.release_entry_id(&manifest_id, guard);
     }
 
     #[rstest]

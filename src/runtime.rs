@@ -2,7 +2,7 @@
 
 use pyo3::{
     import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, wrap_pyfunction,
-    IntoPy, Py, PyAny, PyObject, PyResult, Python,
+    IntoPy, Py, PyAny, PyObject, PyRef, PyResult, Python,
 };
 use std::future::Future;
 use std::pin::Pin;
@@ -85,16 +85,19 @@ impl TokioTaskAborterFromTrio {
 
 #[pyclass]
 /// A wrapper for a rust `future` that will be polled in the trio context.
-pub(crate) struct FutureIntoCoroutine(
-    Option<Pin<Box<dyn Future<Output = PyResult<PyObject>> + Send + 'static>>>,
-);
+pub(crate) struct FutureIntoCoroutine(Option<FutureIntoCoroutineInternal>);
+
+enum FutureIntoCoroutineInternal {
+    Ready(PyResult<PyObject>),
+    ToPoll(Pin<Box<dyn Future<Output = PyResult<PyObject>> + Send + 'static>>),
+}
 
 impl FutureIntoCoroutine {
     pub fn from_raw<F>(fut: F) -> Self
     where
         F: Future<Output = PyResult<PyObject>> + Send + 'static,
     {
-        FutureIntoCoroutine(Some(Box::pin(fut)))
+        FutureIntoCoroutine(Some(FutureIntoCoroutineInternal::ToPoll(Box::pin(fut))))
     }
 
     pub fn from<F, R>(fut: F) -> Self
@@ -107,11 +110,38 @@ impl FutureIntoCoroutine {
             Python::with_gil(|py| Ok(res.into_py(py)))
         })
     }
+
+    pub fn ready(value: PyResult<PyObject>) -> Self {
+        FutureIntoCoroutine(Some(FutureIntoCoroutineInternal::Ready(value)))
+    }
+}
+
+#[pyclass]
+pub struct ReadyValue(Option<PyObject>);
+
+#[pymethods]
+impl ReadyValue {
+    fn __iter__(this: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        this
+    }
+
+    fn __next__(&mut self) -> pyclass::IterNextOutput<(), PyObject> {
+        pyclass::IterNextOutput::Return(self.0.take().unwrap())
+    }
 }
 
 #[pymethods]
 impl FutureIntoCoroutine {
-    fn __await__<'a>(&mut self, py: Python<'a>) -> PyResult<&'a PyAny> {
+    fn __await__(&mut self, py: Python<'_>) -> PyResult<PyObject> {
+        let fut = self.0.take().unwrap();
+        let fut = match fut {
+            FutureIntoCoroutineInternal::Ready(value) => {
+                let value = value?;
+                return Ok(ReadyValue(Some(value)).into_py(py));
+            }
+            FutureIntoCoroutineInternal::ToPoll(fut) => fut,
+        };
+
         let stuff = get_stuff(py)?;
         let trio_token = stuff.trio_current_trio_token_fn.call0(py)?;
         let trio_reschedule_fn: Py<PyAny> =
@@ -121,7 +151,6 @@ impl FutureIntoCoroutine {
 
         let trio_current_task = stuff.trio_current_task_fn.call0(py)?;
         let task = trio_current_task.clone();
-        let fut = self.0.take().unwrap();
 
         // Set `custom_sleep_data` to indicate the rescheduling is required.
         // This will be cleared if the task is rescheduled or cancelled.
@@ -141,28 +170,15 @@ impl FutureIntoCoroutine {
                 let trio_current_task = trio_current_task.as_ref(py);
 
                 // Create the outcome object
-                let outcome = match ret {
-                    Ok(val) => {
-                        outcome_value_fn.call1(py, (val, )).expect("Cannot create `outcome.Value(<result>)`")
-                    },
-                    Err(err) =>  {
-                        outcome_error_fn.call1(py, (err, )).expect("Cannot create `outcome.Error(<result>)`")
-                    },
-                };
+                let outcome = process_outcome_value(py, ret, outcome_value_fn, outcome_error_fn);
 
-                // Reschedule the coroutine, this must be done from within the trio thread so we have to use
-                // the trio token to schedule a synchronous function that will do the actual schedule call
-                match trio_token.call_method1(
-                    py, "run_sync_soon", (trio_reschedule_fn, trio_current_task, outcome)
-                ) {
-                    Ok(_) => (),
-                    // We can ignore the error if the trio loop has been closed...
-                    Err(err) if err.is_instance_of::<RunFinishedError>(py) => (),
-                    // ...but for any other exception there is not much we can do :'(
-                    Err(err) => {
-                        panic!("Cannot call `TrioToken.run_sync_soon(trio.lowlevel.reschedule, <outcome>)`: {:?}", err);
-                    }
-                }
+                notify_trio(
+                    py,
+                    trio_token,
+                    trio_reschedule_fn,
+                    trio_current_task,
+                    outcome,
+                );
             })
         });
 
@@ -177,5 +193,49 @@ impl FutureIntoCoroutine {
             .as_ref(py)
             .call1((aborter,))?
             .call_method0("__await__")
+            .map(|value| value.into_py(py))
+    }
+}
+
+fn process_outcome_value(
+    py: Python<'_>,
+    value: PyResult<PyObject>,
+    outcome_value_fn: PyObject,
+    outcome_error_fn: PyObject,
+) -> PyObject {
+    match value {
+        Ok(val) => outcome_value_fn
+            .call1(py, (val,))
+            .expect("Cannot create `outcome.Value(<result>)`"),
+        Err(err) => outcome_error_fn
+            .call1(py, (err,))
+            .expect("Cannot create `outcome.Error(<result>)`"),
+    }
+}
+
+fn notify_trio(
+    py: Python<'_>,
+    trio_token: PyObject,
+    trio_reschedule_fn: PyObject,
+    trio_current_task: &PyAny,
+    outcome: PyObject,
+) {
+    // Reschedule the coroutine, this must be done from within the trio thread so we have to use
+    // the trio token to schedule a synchronous function that will do the actual schedule call
+    match trio_token.call_method1(
+        py,
+        "run_sync_soon",
+        (trio_reschedule_fn, trio_current_task, outcome),
+    ) {
+        Ok(_) => (),
+        // We can ignore the error if the trio loop has been closed...
+        Err(err) if err.is_instance_of::<RunFinishedError>(py) => (),
+        // ...but for any other exception there is not much we can do :'(
+        Err(err) => {
+            panic!(
+                "Cannot call `TrioToken.run_sync_soon(trio.lowlevel.reschedule, <outcome>)`: {:?}",
+                err
+            );
+        }
     }
 }

@@ -12,6 +12,7 @@ use std::{
 };
 
 use crate::{
+    binding_utils::{BytesWrapper, UnwrapBytesWrapper},
     data::{LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest},
     ids::{BlockID, ChunkID, EntryID},
     local_device::LocalDevice,
@@ -117,29 +118,20 @@ impl WorkspaceStorage {
     fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
         let ws = self.0.clone();
 
-        FutureIntoCoroutine::from_raw(async move {
-            let manifest = ws
-                .get_manifest(entry_id.0)
-                .await
-                .map_err(|_| FSLocalMissError::new_err(entry_id))?;
-            Python::with_gil(|py| {
-                let object: PyObject = match manifest {
-                    libparsec::client_types::LocalManifest::File(manifest) => {
-                        LocalFileManifest(manifest).into_py(py)
-                    }
-                    libparsec::client_types::LocalManifest::Folder(manifest) => {
-                        LocalFolderManifest(manifest).into_py(py)
-                    }
-                    libparsec::client_types::LocalManifest::Workspace(manifest) => {
-                        LocalWorkspaceManifest(manifest).into_py(py)
-                    }
-                    libparsec::client_types::LocalManifest::User(manifest) => {
-                        LocalUserManifest(manifest).into_py(py)
-                    }
-                };
-                Ok(object)
+        if let Some(manifest) = ws.get_manifest_in_cache(&entry_id.0) {
+            let manifest = manifest_into_py_object(manifest);
+
+            FutureIntoCoroutine::ready(Ok(manifest))
+        } else {
+            FutureIntoCoroutine::from_raw(async move {
+                let manifest = ws
+                    .get_manifest(entry_id.0)
+                    .await
+                    .map_err(|_| FSLocalMissError::new_err(entry_id))?;
+                let manifest = manifest_into_py_object(manifest);
+                Ok(manifest)
             })
-        })
+        }
     }
 
     #[args(cache_only = false, removed_ids = "None")]
@@ -151,34 +143,29 @@ impl WorkspaceStorage {
         cache_only: bool,
         removed_ids: Option<HashSet<ChunkID>>,
     ) -> PyResult<FutureIntoCoroutine> {
-        let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
-            libparsec::client_types::LocalManifest::File(manifest.0)
-        } else if let Ok(manifest) = manifest.extract::<LocalFolderManifest>(py) {
-            libparsec::client_types::LocalManifest::Folder(manifest.0)
-        } else if let Ok(manifest) = manifest.extract::<LocalWorkspaceManifest>(py) {
-            libparsec::client_types::LocalManifest::Workspace(manifest.0)
-        } else {
-            libparsec::client_types::LocalManifest::User(
-                manifest.extract::<LocalUserManifest>(py)?.0,
-            )
-        };
-        let ws = self.0.clone();
-
-        let fut = FutureIntoCoroutine::from(async move {
-            ws.set_manifest(
-                entry_id.0,
-                manifest,
-                cache_only,
-                false,
-                removed_ids.map(|x| {
-                    x.into_iter()
-                        .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
-                        .collect()
-                }),
-            )
-            .await
-            .map_err(fs_to_python_error)
+        let manifest = manifest_from_py_object(py, manifest)?;
+        let removed_ids = removed_ids.map(|x| {
+            x.into_iter()
+                .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
+                .collect()
         });
+
+        let fut = if cache_only {
+            FutureIntoCoroutine::ready(
+                self.0
+                    .set_manifest_in_cache(entry_id.0, manifest, false, removed_ids)
+                    .map_err(fs_to_python_error)
+                    .map(|_| py.None()),
+            )
+        } else {
+            let ws = self.0.clone();
+
+            FutureIntoCoroutine::from(async move {
+                ws.set_manifest(entry_id.0, manifest, cache_only, false, removed_ids)
+                    .await
+                    .map_err(fs_to_python_error)
+            })
+        };
 
         Ok(fut)
     }
@@ -187,7 +174,7 @@ impl WorkspaceStorage {
         let ws = self.0.clone();
 
         FutureIntoCoroutine::from(async move {
-            ws.clear_manifest(entry_id.0, false)
+            ws.clear_manifest(&entry_id.0, false)
                 .await
                 .map_err(|e| match e {
                     FSError::LocalMiss(_) => FSLocalMissError::new_err(entry_id),
@@ -200,15 +187,25 @@ impl WorkspaceStorage {
         self.0.create_file_descriptor(manifest.0).0
     }
 
-    fn load_file_descriptor(&self, fd: u32) -> FutureIntoCoroutine {
-        let ws = self.0.clone();
+    fn load_file_descriptor(&self, py: Python<'_>, fd: u32) -> PyResult<FutureIntoCoroutine> {
+        let fd = libparsec::types::FileDescriptor(fd);
 
-        FutureIntoCoroutine::from(async move {
-            ws.load_file_descriptor(libparsec::types::FileDescriptor(fd))
-                .await
-                .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
-                .map(LocalFileManifest)
-        })
+        let fut = match self.0.load_file_descriptor_in_cache(fd) {
+            Ok(manifest) => FutureIntoCoroutine::ready(Ok(LocalFileManifest(manifest).into_py(py))),
+            Err(libparsec::core_fs::FSError::LocalMiss(_)) => {
+                let ws = self.0.clone();
+
+                FutureIntoCoroutine::from(async move {
+                    ws.load_file_descriptor(fd)
+                        .await
+                        .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
+                        .map(LocalFileManifest)
+                })
+            }
+            Err(e) => return Err(FSInvalidFileDescriptor::new_err(e.to_string())),
+        };
+
+        Ok(fut)
     }
 
     fn remove_file_descriptor(&self, fd: u32) -> PyResult<()> {
@@ -266,16 +263,16 @@ impl WorkspaceStorage {
         })
     }
 
-    // Pyo3 is inefficient with Vec<u8> but set_chunk must handle PyByteArray and PyBytes
-    // but can't safely call unsafe { block.as_bytes() } because it's called in multiple threads
-    fn set_chunk(&self, chunk_id: ChunkID, block: Vec<u8>) -> FutureIntoCoroutine {
+    fn set_chunk(&self, chunk_id: ChunkID, block: BytesWrapper) -> PyResult<FutureIntoCoroutine> {
+        let block = block.unwrap_bytes();
+
         let ws = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        Ok(FutureIntoCoroutine::from(async move {
             ws.set_chunk(chunk_id.0, &block)
                 .await
                 .map_err(fs_to_python_error)
-        })
+        }))
     }
 
     #[args(miss_ok = false)]
@@ -433,15 +430,14 @@ impl WorkspaceStorageSnapshot {
         self.0.create_file_descriptor(manifest.0).0
     }
 
-    fn load_file_descriptor(&self, fd: u32) -> FutureIntoCoroutine {
-        let ws = self.0.clone();
-
-        FutureIntoCoroutine::from(async move {
-            ws.load_file_descriptor(libparsec::types::FileDescriptor(fd))
-                .await
-                .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
-                .map(LocalFileManifest)
-        })
+    fn load_file_descriptor(&self, py: Python<'_>, fd: u32) -> FutureIntoCoroutine {
+        let manifest = self
+            .0
+            .load_file_descriptor(libparsec::types::FileDescriptor(fd))
+            .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))
+            .map(LocalFileManifest)
+            .map(|manifest| manifest.into_py(py));
+        FutureIntoCoroutine::ready(manifest)
     }
 
     fn remove_file_descriptor(&self, fd: u32) -> PyResult<()> {
@@ -472,30 +468,13 @@ impl WorkspaceStorageSnapshot {
     }
 
     fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
-        let ws = self.0.clone();
+        let manifest = self
+            .0
+            .get_manifest(entry_id.0)
+            .map_err(|_| FSLocalMissError::new_err(entry_id))
+            .map(manifest_into_py_object);
 
-        FutureIntoCoroutine::from_raw(async move {
-            let manifest = ws
-                .get_manifest(entry_id.0)
-                .await
-                .map_err(|_| FSLocalMissError::new_err(entry_id))?;
-            Python::with_gil(|py| {
-                Ok(match manifest {
-                    libparsec::client_types::LocalManifest::File(manifest) => {
-                        LocalFileManifest(manifest).into_py(py)
-                    }
-                    libparsec::client_types::LocalManifest::Folder(manifest) => {
-                        LocalFolderManifest(manifest).into_py(py)
-                    }
-                    libparsec::client_types::LocalManifest::Workspace(manifest) => {
-                        LocalWorkspaceManifest(manifest).into_py(py)
-                    }
-                    libparsec::client_types::LocalManifest::User(manifest) => {
-                        LocalUserManifest(manifest).into_py(py)
-                    }
-                })
-            })
-        })
+        FutureIntoCoroutine::ready(manifest)
     }
 
     fn set_manifest(
@@ -504,24 +483,14 @@ impl WorkspaceStorageSnapshot {
         entry_id: EntryID,
         manifest: PyObject,
     ) -> PyResult<FutureIntoCoroutine> {
-        let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
-            libparsec::client_types::LocalManifest::File(manifest.0)
-        } else if let Ok(manifest) = manifest.extract::<LocalFolderManifest>(py) {
-            libparsec::client_types::LocalManifest::Folder(manifest.0)
-        } else if let Ok(manifest) = manifest.extract::<LocalWorkspaceManifest>(py) {
-            libparsec::client_types::LocalManifest::Workspace(manifest.0)
-        } else {
-            libparsec::client_types::LocalManifest::User(
-                manifest.extract::<LocalUserManifest>(py)?.0,
-            )
-        };
-        let ws = self.0.clone();
+        let manifest = manifest_from_py_object(py, manifest)?;
 
-        let fut = FutureIntoCoroutine::from(async move {
-            ws.set_manifest(entry_id.0, manifest, false)
-                .await
+        let fut = FutureIntoCoroutine::ready(
+            self.0
+                .set_manifest(entry_id.0, manifest, false)
                 .map_err(fs_to_python_error)
-        });
+                .map(|_| py.None()),
+        );
 
         Ok(fut)
     }
@@ -574,13 +543,10 @@ impl WorkspaceStorageSnapshot {
         Ok(Self(Arc::new(self.0.to_timestamp()), self.1.clone()))
     }
 
-    fn clear_local_cache(&self) -> FutureIntoCoroutine {
-        let ws = self.0.clone();
+    fn clear_local_cache(&self, py: Python<'_>) -> FutureIntoCoroutine {
+        self.0.clear_local_cache();
 
-        FutureIntoCoroutine::from(async move {
-            ws.clear_local_cache().await;
-            Ok(())
-        })
+        FutureIntoCoroutine::ready(Ok(py.None()))
     }
 
     #[getter]
@@ -611,4 +577,43 @@ pub(crate) fn workspace_storage_non_speculative_init(
         .await
         .map_err(fs_to_python_error)
     })
+}
+
+fn manifest_into_py_object(manifest: libparsec::client_types::LocalManifest) -> PyObject {
+    Python::with_gil(|py| {
+        let object: PyObject = match manifest {
+            libparsec::client_types::LocalManifest::File(manifest) => {
+                LocalFileManifest(manifest).into_py(py)
+            }
+            libparsec::client_types::LocalManifest::Folder(manifest) => {
+                LocalFolderManifest(manifest).into_py(py)
+            }
+            libparsec::client_types::LocalManifest::Workspace(manifest) => {
+                LocalWorkspaceManifest(manifest).into_py(py)
+            }
+            libparsec::client_types::LocalManifest::User(manifest) => {
+                LocalUserManifest(manifest).into_py(py)
+            }
+        };
+        object
+    })
+}
+
+fn manifest_from_py_object(
+    py: Python<'_>,
+    py_manifest: PyObject,
+) -> PyResult<libparsec::client_types::LocalManifest> {
+    let manifest = if let Ok(manifest) = py_manifest.extract::<LocalFileManifest>(py) {
+        libparsec::client_types::LocalManifest::File(manifest.0)
+    } else if let Ok(manifest) = py_manifest.extract::<LocalFolderManifest>(py) {
+        libparsec::client_types::LocalManifest::Folder(manifest.0)
+    } else if let Ok(manifest) = py_manifest.extract::<LocalWorkspaceManifest>(py) {
+        libparsec::client_types::LocalManifest::Workspace(manifest.0)
+    } else {
+        libparsec::client_types::LocalManifest::User(
+            py_manifest.extract::<LocalUserManifest>(py)?.0,
+        )
+    };
+
+    Ok(manifest)
 }

@@ -3,7 +3,7 @@
 use std::{
     collections::HashSet,
     path::Path,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
 };
 
 use libparsec_client_types::{LocalDevice, LocalManifest, LocalUserManifest};
@@ -18,7 +18,7 @@ pub struct UserStorage {
     pub user_manifest_id: EntryID,
     manifest_storage: ManifestStorage,
     data_conn: LocalDatabase,
-    user_manifest_copy: Arc<Mutex<Option<LocalUserManifest>>>,
+    user_manifest_copy: Arc<RwLock<Option<LocalUserManifest>>>,
 }
 
 impl UserStorage {
@@ -42,7 +42,7 @@ impl UserStorage {
             user_manifest_id,
             manifest_storage,
             data_conn: conn,
-            user_manifest_copy: Arc::new(Mutex::new(None)),
+            user_manifest_copy: Arc::new(RwLock::new(None)),
         })
     }
 
@@ -77,8 +77,8 @@ impl UserStorage {
 
     pub fn get_user_manifest(&self) -> FSResult<LocalUserManifest> {
         self.user_manifest_copy
-            .lock()
-            .expect("Mutex is poisoned")
+            .read()
+            .expect("RwLock is poisoned")
             .as_ref()
             .cloned()
             .ok_or(FSError::UserManifestMissing)
@@ -92,8 +92,8 @@ impl UserStorage {
         {
             Ok(LocalManifest::User(manifest)) => {
                 self.user_manifest_copy
-                    .lock()
-                    .expect("Mutex is poisoned")
+                    .write()
+                    .expect("RwLock is poisoned")
                     .replace(manifest);
                 Ok(())
             }
@@ -125,8 +125,8 @@ impl UserStorage {
             )
             .await?;
         self.user_manifest_copy
-            .lock()
-            .expect("Mutex is poisoned")
+            .write()
+            .expect("RwLock is poisoned")
             .replace(user_manifest);
         Ok(())
     }
