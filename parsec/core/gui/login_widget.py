@@ -307,6 +307,19 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     recover_device_clicked = pyqtSignal()
     login_canceled = pyqtSignal()
 
+    @classmethod
+    async def create(
+        cls,
+        jobs_ctx: QtToTrioJobScheduler,
+        event_bus: EventBus,
+        config: CoreConfig,
+        login_failed_sig: Any,
+        parent: QWidget,
+   ) -> LoginWidget:
+        instance = LoginWidget(jobs_ctx, event_bus, config, login_failed_sig, parent)
+        await instance.reload_devices()
+        return instance
+
     def __init__(
         self,
         jobs_ctx: QtToTrioJobScheduler,
@@ -323,7 +336,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_failed_sig = login_failed_sig
 
         login_failed_sig.connect(self.on_login_failed)
-        trio.run(self.reload_devices)
 
     def on_login_failed(self) -> None:
         item = self.widget.layout().itemAt(0)

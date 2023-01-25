@@ -132,7 +132,7 @@ async def test_login_device_list(
 
     for d in local_devices:
         path = await save_device_with_password_in_config(core_config.config_dir, d, password)
-        devices.append(load_device_file(pathlib.Path(path)))
+        devices.append(await load_device_file(pathlib.Path(path)))
 
     # Settings the last device used
     core_config = core_config.evolve(gui_last_device=bob.device_id.str)
@@ -176,7 +176,7 @@ async def test_login_no_available_devices(
     password = "P@ssw0rd"
     await save_device_with_password_in_config(core_config.config_dir, alice, password)
 
-    device = list_available_devices(core_config.config_dir)[0]
+    device = (await list_available_devices(core_config.config_dir))[0]
 
     gui = await gui_factory()
 
@@ -184,7 +184,7 @@ async def test_login_no_available_devices(
 
     lw = gui.test_get_login_widget()
 
-    lw.reload_devices()
+    await lw.reload_devices()
 
     def _devices_listed():
         assert lw.widget.layout().count() > 0

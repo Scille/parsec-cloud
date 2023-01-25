@@ -294,7 +294,7 @@ def gui_factory(
         main_w.show_window(skip_dialogs=skip_dialogs)
         main_w.show_top()
         windows.append(main_w)
-        main_w.add_instance(start_arg)
+        await main_w.add_instance(start_arg)
 
         def right_main_window():
             assert ParsecApp.get_main_window() is main_w
@@ -558,7 +558,7 @@ def testing_main_window_cls(aqtbot) -> Type[MainWindow]:
                 pass
 
             # Reload to take into account the new saved device
-            self.test_get_login_widget().reload_devices()
+            await self.test_get_login_widget().reload_devices()
 
             await self.test_proceed_to_login(device, password)
 

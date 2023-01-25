@@ -259,9 +259,9 @@ class InstanceWidget(QWidget):
         if self.running_core_job:
             self.running_core_job.cancel()
 
-    def on_logged_out(self) -> None:
+    async def on_logged_out(self) -> None:
         self.state_changed.emit(self, "logout")
-        self.show_login_widget()
+        await self.show_login_widget()
 
     def on_logged_in(self) -> None:
         self.state_changed.emit(self, "connected")
@@ -350,9 +350,9 @@ class InstanceWidget(QWidget):
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()
 
-    def show_login_widget(self) -> None:
+    async def show_login_widget(self) -> None:
         self.clear_widgets()
-        login_widget = LoginWidget(
+        login_widget = await LoginWidget.create(
             self.jobs_ctx, self.event_bus, self.config, self.login_failed, parent=self
         )
         self.layout().addWidget(login_widget)

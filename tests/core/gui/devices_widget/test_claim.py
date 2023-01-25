@@ -94,7 +94,7 @@ def ClaimDeviceTestBed(
 
             # Switch to device claim page
 
-            gui.add_instance(invitation_addr.to_url())
+            await gui.add_instance(invitation_addr.to_url())
 
             cd_w = await catch_claim_device_widget()
             assert isinstance(cd_w, ClaimDeviceWidget)
@@ -602,7 +602,7 @@ async def test_claim_device_already_deleted(
         reason=InvitationDeletedReason.CANCELLED,
     )
 
-    gui.add_instance(invitation_addr.to_url())
+    await gui.add_instance(invitation_addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -627,7 +627,7 @@ async def test_claim_device_offline_backend(
         token=invitation.token,
     )
     with running_backend.offline():
-        gui.add_instance(invitation_addr.to_url())
+        await gui.add_instance(invitation_addr.to_url())
 
         def _assert_dialogs():
             assert len(autoclose_dialog.dialogs) == 1
@@ -651,7 +651,7 @@ async def test_claim_device_unknown_invitation(
         token=InvitationToken.new(),
     )
 
-    gui.add_instance(invitation_addr.to_url())
+    await gui.add_instance(invitation_addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -695,7 +695,7 @@ async def test_claim_device_backend_desync(
         token=InvitationToken.new(),
     )
 
-    gui.add_instance(invitation_addr.to_url())
+    await gui.add_instance(invitation_addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1

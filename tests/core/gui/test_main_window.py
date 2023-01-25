@@ -174,7 +174,7 @@ async def test_link_file(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
-    logged_gui.add_instance(url.to_url())
+    await logged_gui.add_instance(url.to_url())
 
     def _folder_ready():
         assert f_w.isVisible()
@@ -194,7 +194,7 @@ async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory, DateTime.now())
 
-    logged_gui.add_instance(url.to_url())
+    await logged_gui.add_instance(url.to_url())
 
     def _folder_ready():
         assert f_w.isVisible()
@@ -258,7 +258,7 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, aut
         await aqtbot.wait_until(lambda: _unmounted(None))
 
         # Add an instance with the file link
-        logged_gui.add_instance(url.to_url())
+        await logged_gui.add_instance(url.to_url())
 
         # Workspace should be mounted
         await aqtbot.wait_until(lambda: _mounted(timestamp))
@@ -282,7 +282,7 @@ async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_
             timestamp = None
         url = f_w.workspace_fs.generate_file_link("/unknown", timestamp)
 
-        logged_gui.add_instance(url.to_url())
+        await logged_gui.add_instance(url.to_url())
 
         def _assert_dialogs():
             assert len(autoclose_dialog.dialogs) == 1
@@ -310,7 +310,7 @@ async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_f
     else:
         assert False
 
-    logged_gui.add_instance(url)
+    await logged_gui.add_instance(url)
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -335,16 +335,19 @@ async def test_link_file_disconnected(
     gui, w_w, f_w = logged_gui_with_files
     addr = f_w.workspace_fs.generate_file_link("/dir1", timestamp)
 
+    async def _test_list_available_devices(*args, **kwargs) -> list[AvailableDevice]:
+        return [bob_available_device]
+
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
+        _test_list_available_devices
     )
 
     snackbar_catcher.reset()
 
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
-    gui.add_instance(addr.to_url())
+    await gui.add_instance(addr.to_url())
 
     def _assert_snackbars():
         assert len(snackbar_catcher.snackbars) == 1
@@ -415,16 +418,19 @@ async def test_link_file_disconnected_cancel_login(
     gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link("/dir1", timestamp)
 
+    async def _list_available_devices(*args, **kwargs) -> list[AvailableDevice]:
+        return [bob_available_device]
+
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
+        _list_available_devices
     )
 
     snackbar_catcher.reset()
 
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
-    gui.add_instance(url.to_url())
+    await gui.add_instance(url.to_url())
 
     def _assert_snackbars():
         assert len(snackbar_catcher.snackbars) == 1
@@ -515,7 +521,7 @@ async def test_link_file_unknown_workspace(
 async def test_link_organization(
     aqtbot, logged_gui, catch_create_org_widget, organization_bootstrap_addr
 ):
-    logged_gui.add_instance(organization_bootstrap_addr.to_url())
+    await logged_gui.add_instance(organization_bootstrap_addr.to_url())
     co_w = await catch_create_org_widget()
     assert co_w
     assert logged_gui.tab_center.count() == 2
@@ -527,7 +533,7 @@ async def test_link_organization_disconnected(
     aqtbot, logged_gui, catch_create_org_widget, organization_bootstrap_addr
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
-    logged_gui.add_instance(organization_bootstrap_addr.to_url())
+    await logged_gui.add_instance(organization_bootstrap_addr.to_url())
     co_w = await catch_create_org_widget()
     assert co_w
     assert logged_gui.tab_center.count() == 1
@@ -544,7 +550,7 @@ async def test_link_claim_device(
     else:
         url = device_invitation_addr.to_url()
 
-    logged_gui.add_instance(url)
+    await logged_gui.add_instance(url)
     cd_w = await catch_claim_device_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 2
@@ -556,7 +562,7 @@ async def test_link_claim_device_disconnected(
     aqtbot, logged_gui, catch_claim_device_widget, device_invitation_addr
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
-    logged_gui.add_instance(device_invitation_addr.to_url())
+    await logged_gui.add_instance(device_invitation_addr.to_url())
     cd_w = await catch_claim_device_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 1
@@ -576,7 +582,7 @@ async def test_link_claim_user(
     else:
         url = user_invitation_addr.to_url()
 
-    logged_gui.add_instance(url)
+    await logged_gui.add_instance(url)
     cd_w = await catch_claim_user_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 2
@@ -588,7 +594,7 @@ async def test_link_claim_user_disconnected(
     aqtbot, logged_gui, catch_claim_user_widget, user_invitation_addr
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
-    logged_gui.add_instance(user_invitation_addr.to_url())
+    await logged_gui.add_instance(user_invitation_addr.to_url())
     cd_w = await catch_claim_user_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 1

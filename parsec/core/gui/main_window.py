@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
+import inspect
 
 import sys
 from distutils.version import LooseVersion
@@ -49,7 +50,7 @@ from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 from parsec.core.local_device import get_key_file
 from parsec.core.pki import is_pki_enrollment_available
@@ -168,13 +169,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.PreviousChild), self)
         shortcut.activated.connect(self._shortcut_proxy(self._cycle_tabs(-1)))
 
-    def _shortcut_proxy(self, funct: Callable[[], None]) -> Callable[[], None]:
+    def _shortcut_proxy(self, funct: Callable[[], None] | Callable[[], Awaitable[None]]) -> Callable[[], None] | Callable[[], Awaitable[None]]:
+        async def _async_inner_proxy(self) -> None:
+            if ParsecApp.has_active_modal():
+                return
+            f = funct.__get__(self)
+            await f()
+
         def _inner_proxy() -> None:
             if ParsecApp.has_active_modal():
                 return
             funct()
 
-        return _inner_proxy
+        return _inner_proxy if not inspect.iscoroutinefunction(funct) else _async_inner_proxy.__get__(self)
 
     def _cycle_tabs(self, offset: int) -> Callable[[], None]:
         def _inner_cycle_tabs() -> None:
@@ -334,8 +341,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         d = GreyedDialog(w, title=_("TEXT_SETTINGS_TITLE"), parent=self, width=1000)
         d.exec_()
 
-    def _on_manage_keys(self) -> None:
-        devices = trio.run(list_available_devices, self.config.config_dir)
+    async def _on_manage_keys(self) -> None:
+        devices = await list_available_devices(self.config.config_dir)
         options = [_("ACTION_CANCEL"), _("ACTION_RECOVER_DEVICE")]
         if len(devices):
             options.append(_("ACTION_CREATE_RECOVERY_DEVICE"))
@@ -355,8 +362,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_send_feedback_clicked(self) -> None:
         desktop.open_feedback_link()
 
-    def _on_add_instance_clicked(self) -> None:
-        trio.run(self.add_instance)
+    async def _on_add_instance_clicked(self) -> None:
+        await self.add_instance()
 
     def _bind_async_callback(
         self, callback: Callable[[], Awaitable[None]]
@@ -383,7 +390,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # not do anything Qt related with this widget.
             if widget.status is None:
                 return
-            self.reload_login_devices()
+            await self.reload_login_devices()
             device, auth_method, password = widget.status
             await self.try_login(device, auth_method, password)
             answer = ask_question(
@@ -526,7 +533,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if not widget.status:
                 return
             device, auth_method, password = widget.status
-            self.reload_login_devices()
+            await self.reload_login_devices()
             await self.try_login(device, auth_method, password)
 
         widget = ClaimDeviceWidget.show_modal(
@@ -551,14 +558,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif auth_method == DeviceFileType.SMARTCARD:
             await tab.login_with_smartcard(kf)
 
-    def reload_login_devices(self) -> None:
+    async def reload_login_devices(self) -> None:
         idx = self._get_login_tab_index()
         if idx == -1:
             return
         w = self.tab_center.widget(idx)
         if not w:
             return
-        w.show_login_widget()
+        await w.show_login_widget()
 
     def on_current_tab_changed(self, index: int) -> None:
         for i in range(self.tab_center.tabBar().count()):
@@ -645,7 +652,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         idx = self.tab_center.indexOf(tab)
         if idx == -1:
             if state == "logout":
-                self.reload_login_devices()
+                await self.reload_login_devices()
             return
         if state == "login":
             if self._get_login_tab_index() != -1:
@@ -662,7 +669,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 tab_widget = self.tab_center.widget(idx)
                 log_widget = None if not tab_widget else tab_widget.get_login_widget()
                 if log_widget:
-                    log_widget.reload_devices()
+                    await log_widget.reload_devices()
         elif state == "connected":
             device = tab.current_device
             assert device is not None
@@ -716,7 +723,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             # No login tab, create one
             tab = self.add_new_tab()
-            tab.show_login_widget()
+            await tab.show_login_widget()
             await self.on_tab_state_changed(tab, "login")
             idx = self.tab_center.count() - 1
             self.switch_to_tab(idx)
@@ -726,7 +733,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         # Find the device corresponding to the organization in the link
-        for available_device in await list_available_devices(self.config.config_dir):
+        available_devices = await list_available_devices(self.config.config_dir)
+        for available_device in available_devices:
             if available_device.organization_id == file_link_addr.organization_id:
                 break
 
@@ -847,12 +855,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             show_error(self, _("TEXT_INVALID_URL"))
 
-    def close_current_tab(self, force: bool = False) -> None:
+    async def close_current_tab(self, force: bool = False) -> None:
         if self.tab_center.count() == 1:
             self.close_app()
         else:
             idx = self.tab_center.currentIndex()
-            self.close_tab(idx, force=force)
+            await self.close_tab(idx, force=force)
 
     def close_app(self, force: bool = False) -> None:
         self.show_top()
@@ -860,11 +868,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.force_close = force
         self.close()
 
-    def close_all_tabs(self) -> None:
+    async def close_all_tabs(self) -> None:
         for idx in range(self.tab_center.count()):
-            self.close_tab(idx, force=True)
+            await self.close_tab(idx, force=True)
 
-    def close_tab(self, index: int, force: bool = False) -> None:
+    async def close_tab(self, index: int, force: bool = False) -> None:
         tab = self.tab_center.widget(index)
         if not force:
             r: str | None = _("ACTION_TAB_CLOSE_CONFIRM")
@@ -883,7 +891,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not tab:
             return
         tab.logout()
-        self.reload_login_devices()
+        await self.reload_login_devices()
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
         self._toggle_add_tab_button()
