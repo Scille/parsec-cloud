@@ -213,7 +213,7 @@ JsString::try_new({{ mut_cx_ref }},
     }
 }
 {%- else -%}
-match {{ rs_value }}
+{{ rs_value }}
 {%- endif -%}
 ).or_throw({{ mut_cx_ref }})?
 {%- elif type.kind == "bytes" -%}

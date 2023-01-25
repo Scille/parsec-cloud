@@ -1,9 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from typing import Callable
+from typing import Callable, Optional
 
 from .common import *
 from .events import ClientEvent
+
+class DeviceFileType(Variant):
+    class Password:
+        pass
+
+    class Recovery:
+        pass
+
+    class Smartcard:
+        pass
+
+class AvailableDevice(Structure):
+    key_file_path: Path
+    organization_id: OrganizationID
+    device_id: DeviceID
+    human_handle: HumanHandle
+    device_label: Optional[DeviceLabel]
+    slug: str
+    ty: DeviceFileType
 
 
 class CacheSize(I32BasedType):
@@ -52,6 +71,8 @@ class ClientLoginError(Variant):
     class DeviceInvalidFormat:
         pass
 
+async def client_list_available_devices(path: Ref[Path]) -> list[AvailableDevice]:
+    ...
 
 async def client_login(
     load_device_params: DeviceAccessParams,

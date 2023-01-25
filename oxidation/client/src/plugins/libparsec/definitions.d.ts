@@ -10,14 +10,27 @@ export type Result<T, E = Error> =
 
 type OrganizationID = string;
 type DeviceLabel = string;
-type HumanHandle = string;
 type Path = string;
-type StrPath = string;
 type BackendAddr = string;
 type DeviceID = string;
 type LoggedCoreHandle = number;
 type ClientHandle = number;
 type CacheSize = number;
+
+export interface HumanHandle {
+    email: string;
+    label: string;
+}
+
+export interface AvailableDevice {
+    keyFilePath: Path;
+    organizationId: OrganizationID;
+    deviceId: DeviceID;
+    humanHandle: HumanHandle;
+    deviceLabel: DeviceLabel | null;
+    slug: string;
+    ty: DeviceFileType;
+}
 
 export interface ClientConfig {
     configDir: Path;
@@ -46,6 +59,21 @@ export type ClientEvent =
   | ClientEventWorkspaceReencryptionEnded
   | ClientEventWorkspaceReencryptionNeeded
   | ClientEventWorkspaceReencryptionStarted
+
+// DeviceFileType
+export interface DeviceFileTypePassword {
+    tag: 'Password'
+}
+export interface DeviceFileTypeRecovery {
+    tag: 'Recovery'
+}
+export interface DeviceFileTypeSmartcard {
+    tag: 'Smartcard'
+}
+export type DeviceFileType =
+  | DeviceFileTypePassword
+  | DeviceFileTypeRecovery
+  | DeviceFileTypeSmartcard
 
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
@@ -93,6 +121,9 @@ export type ClientLoginError =
   | ClientLoginErrorDeviceInvalidFormat
 
 export interface LibParsecPlugin {
+    clientListAvailableDevices(
+        path: Path
+    ): Promise<Array<AvailableDevice>>;
     clientLogin(
         load_device_params: DeviceAccessParams,
         config: ClientConfig,

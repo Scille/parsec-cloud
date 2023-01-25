@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+from __future__ import annotations
+
 from types import ModuleType
 from typing import Union, Dict, List, OrderedDict, Type, Optional
 from importlib import import_module
@@ -170,9 +172,9 @@ class StrBasedTypeInUse(BaseTypeInUse):
 
     # If set, custom_from_rs_string/custom_to_rs_string should inlined rust functions
     # `fn (String) -> Result<X, AsRef<str>>`
-    custom_from_rs_string: Union[str, None] = None
+    custom_from_rs_string: str | None = None
     # `fn (&X) -> Result<String, AsRef<str>>`
-    custom_to_rs_string: Union[str, None] = None
+    custom_to_rs_string: str | None = None
 
 
 @dataclass

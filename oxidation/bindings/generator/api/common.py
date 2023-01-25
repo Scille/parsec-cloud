@@ -57,15 +57,12 @@ class DeviceLabel(StrBasedType):
     pass
 
 
-class HumanHandle(StrBasedType):
-    pass
+class HumanHandle(Structure):
+    email: str
+    label: str
 
 
 class Path(StrBasedType):
-    pass
-
-
-class StrPath(StrBasedType):
     pass
 
 
@@ -83,7 +80,5 @@ class ClientHandle(I32BasedType):
 
 
 class Path(StrBasedType):
-    custom_from_rs_string = (
-        "|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) }"
-    )
+    custom_from_rs_string = "|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) }"
     custom_to_rs_string = '|path: std::path::PathBuf| -> Result<_, _> { path.into_os_string().into_string().map_err(|_| "Path contains non-utf8 characters") }'
