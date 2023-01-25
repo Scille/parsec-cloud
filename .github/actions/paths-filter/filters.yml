@@ -10,7 +10,8 @@ rust:
   - rust-toolchain.toml
 
 rust-platform-web: &rust-platform-web
-  - oxidation/libparsec/crates/platform_*/src/web/**
+  # change in src/ can break the build
+  - oxidation/libparsec/crates/platform_*/src/**
 
 python:
   - *shared

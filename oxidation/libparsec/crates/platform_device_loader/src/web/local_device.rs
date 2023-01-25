@@ -18,7 +18,7 @@ pub fn load_device_with_password(slug: &str, password: &str) -> LocalDeviceResul
                 .find(|x| x.slug.as_str() == slug)
                 .ok_or_else(|| LocalDeviceError::NotFound { slug: slug.into() })?;
 
-            return load_device_with_password_core(password, &device_file);
+            return load_device_with_password_core(&device_file, password);
         }
 
         return Err(LocalDeviceError::NotFound { slug: slug.into() });
