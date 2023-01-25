@@ -44,7 +44,7 @@ DEFAULT_BLOCKSTORE = "MOCKED"
 # Helpers
 
 
-async def new_environment(source_file=None):
+async def new_environment(source_file: str | None = None):
     export_lines = []
     tempdir = tempfile.mkdtemp(prefix="parsec-testenv-")
     if sys.platform == "win32":
@@ -87,7 +87,7 @@ Your environment will be configured with the following commands:
             await f.write(line + "\n")
 
 
-async def generate_gui_config(backend_address):
+async def generate_gui_config(backend_address: BackendAddr | None):
     config_dir = None
     if sys.platform == "win32":
         config_dir = trio.Path(os.environ["APPDATA"]) / "parsec/config"
@@ -140,8 +140,25 @@ MimeType=x-scheme-handler/parsec;
         pass
 
 
-async def restart_local_backend(administration_token, backend_port, email_host, db, blockstore):
+async def kill_parsec_backend(backend_port: int):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
+
+    def _windows_target():
+        for proc in psutil.process_iter():
+            if "python" in proc.name():
+                arguments = " ".join(proc.cmdline())
+                if re.search(pattern, arguments):
+                    proc.kill()
+
+    if sys.platform == "win32":
+        await trio.to_thread.run_sync(_windows_target)
+    else:
+        await trio.run_process(["pkill", "-f", pattern], check=False)
+
+
+async def restart_local_backend(
+    administration_token: str, backend_port: int, email_host: str, db: str, blockstore: str
+):
     command = (
         f"{sys.executable} -Wignore -m parsec.cli backend run --log-level=WARNING "
         f"-b {blockstore} --db {db} "
@@ -150,14 +167,11 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
         f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
     )
 
+    await kill_parsec_backend(backend_port)
+
     # Trio does not support subprocess in windows yet
 
     def _windows_target():
-        for proc in psutil.process_iter():
-            if "python" in proc.name():
-                arguments = " ".join(proc.cmdline())
-                if re.search(pattern, arguments):
-                    proc.kill()
         backend_process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         for data in backend_process.stdout:
             print(data.decode(), end="")
@@ -170,8 +184,6 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
 
     # Linux restart
     else:
-
-        await trio.run_process(["pkill", "-f", pattern], check=False)
         backend_process = await trio.lowlevel.open_process(command.split(), stdout=subprocess.PIPE)
         async with backend_process.stdout:
             async for data in backend_process.stdout:
@@ -198,6 +210,7 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
 @click.option("--add-random-devices", show_default=True, default=0)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
+@click.option("--cleanup", is_flag=True)
 @logging_config_options(default_log_level="WARNING")
 def main(log_level, log_file, log_format, **kwargs):
     """Create a temporary environment and initialize a test setup for parsec.
@@ -243,18 +256,22 @@ def main(log_level, log_file, log_format, **kwargs):
 
 
 async def amain(
-    backend_address,
-    backend_port,
-    db,
-    blockstore,
-    password,
-    administration_token,
-    email_host,
-    add_random_users,
-    add_random_devices,
-    empty,
-    source_file,
+    backend_address: BackendAddr | None,
+    backend_port: int,
+    db: str,
+    blockstore: str,
+    password: str,
+    administration_token: str,
+    email_host: str,
+    add_random_users: int,
+    add_random_devices: int,
+    empty: bool,
+    source_file: str,
+    cleanup: bool,
 ):
+    if cleanup:
+        await kill_parsec_backend(backend_port=backend_port)
+        return
     # Set up the temporary environment
     click.echo()
     await new_environment(source_file)

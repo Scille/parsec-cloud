@@ -80,6 +80,13 @@ macro_rules! new_uuid_type {
             }
         }
 
+        impl ::std::convert::AsRef<[u8]> for $name {
+            #[inline]
+            fn as_ref(&self) -> &[u8] {
+                self.0.as_ref()
+            }
+        }
+
         impl ::std::convert::From<::uuid::Uuid> for $name {
             #[inline]
             fn from(id: ::uuid::Uuid) -> Self {
