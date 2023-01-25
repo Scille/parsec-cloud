@@ -65,6 +65,12 @@ pub enum RemoteDevicesManagerError {
     #[error("{exc}")]
     InvalidTrustchain { exc: TrustchainError },
 
+    #[error("User `{user_id}` doesn't have a device `{device_id}`")]
+    DeviceNotFound {
+        user_id: UserID,
+        device_id: DeviceID,
+    },
+
     #[error("User `{user_id}` doesn't exist in backend")]
     UserNotFound { user_id: UserID },
 }

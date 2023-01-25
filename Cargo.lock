@@ -1246,6 +1246,7 @@ dependencies = [
 name = "libparsec_core"
 version = "0.0.0"
 dependencies = [
+ "libparsec_client_connection",
  "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_platform_async",

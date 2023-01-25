@@ -96,7 +96,7 @@ impl TrustchainContext {
         user_certif: BytesWrapper,
         revoked_user_certif: Option<BytesWrapper>,
         devices_certifs: Vec<BytesWrapper>,
-        expected_user_id: Option<UserID>,
+        expected_user_id: Option<&UserID>,
         py: Python<'py>,
     ) -> Result<
         (
@@ -112,7 +112,7 @@ impl TrustchainContext {
             user_certif,
             revoked_user_certif,
             devices_certifs,
-            expected_user_id.map(|user_id| user_id.0),
+            expected_user_id.map(|user_id| &user_id.0),
         )?;
 
         let devices = devices
