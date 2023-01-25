@@ -88,6 +88,13 @@ def build():
         with zipfile.ZipFile(wheel_path) as wheel:
             wheel.extract(libparsec_path, path=BASEDIR)
 
+            if build_profile == "ci" and sys.platform == "linux":
+                zipinfo = wheel.infolist()
+                for extra_lib in filter(
+                    lambda member: member.filename.startswith("parsec.libs/"), zipinfo
+                ):
+                    wheel.extract(extra_lib, path=BASEDIR)
+
 
 if __name__ == "__main__":
     display("Launching poetry build.py script")
