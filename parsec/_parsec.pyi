@@ -44,6 +44,7 @@ from parsec._parsec_pyi.crypto import (
     generate_nonce,
 )
 from parsec._parsec_pyi.device import DeviceFileType
+from parsec._parsec_pyi.device_file import DeviceFile
 from parsec._parsec_pyi.enumerate import (
     ClientType,
     InvitationDeletedReason,
@@ -577,6 +578,8 @@ __all__ = [
     "SequesterSigningKeyDer",
     "SequesterVerifyKeyDer",
     "generate_nonce",
+    # DeviceFile
+    "DeviceFile",
     # Enumerate
     "ClientType",
     "InvitationDeletedReason",

@@ -1,4 +1,5 @@
-use libparsec::protocol;
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 use pyo3::{
     create_exception,
     exceptions::{PyAttributeError, PyException},
@@ -6,6 +7,8 @@ use pyo3::{
     types::PyType,
     IntoPy, PyErr, PyObject, PyResult, Python,
 };
+
+use libparsec::protocol;
 
 use crate::binding_utils::gen_proto;
 

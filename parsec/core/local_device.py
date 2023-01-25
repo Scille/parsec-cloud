@@ -1,24 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from enum import Enum
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, Dict, Tuple
+from typing import Callable, Tuple
 
 import trio
 
-from parsec._parsec import AvailableDevice, get_available_device
+from parsec._parsec import AvailableDevice, DeviceFile, DeviceFileType, get_available_device
 from parsec.api.data import DataError
-from parsec.api.protocol import (
-    DeviceIDField,
-    DeviceLabelField,
-    HumanHandleField,
-    OrganizationIDField,
-)
 from parsec.core.types import LocalDevice
-from parsec.serde import BaseSchema, MsgpackSerializer, OneOfSchema, fields
 
 # .keys files are not supposed to leave the parsec configuration folder,
 # so it's ok to have such a common suffix
@@ -63,84 +55,6 @@ class LocalDeviceCertificateNotFoundError(LocalDeviceError):
     """Used in parsec-extensions for smartcard devices."""
 
 
-class DeviceFileType(Enum):
-    PASSWORD = "password"
-    SMARTCARD = "smartcard"
-    RECOVERY = "recovery"
-
-
-class LegacyDeviceFileSchema(BaseSchema):
-    """Schema for legacy device files where the filename contains complementary information."""
-
-    type = fields.EnumCheckedConstant(DeviceFileType.PASSWORD, required=True)
-    salt = fields.Bytes(required=True)
-    ciphertext = fields.Bytes(required=True)
-
-    # Since human_handle/device_label has been introduced, device_id is
-    # redacted (i.e. user_id and device_name are 2 random uuids), hence
-    # those fields have been added to the device file so the login page in
-    # the GUI can use them to provide useful information.
-    # Added in Parsec v1.14
-    human_handle = HumanHandleField(required=False, allow_none=True, missing=None)
-    # Added in Parsec v1.14
-    device_label = DeviceLabelField(required=False, allow_none=True, missing=None)
-
-
-class BaseDeviceFileSchema(BaseSchema):
-    """Schema for device files that does not rely on the filename for complementary information."""
-
-    ciphertext = fields.Bytes(required=True)
-
-    # Override those fields to make them required (although `None` is still valid)
-    human_handle = HumanHandleField(required=True, allow_none=True)
-    device_label = DeviceLabelField(required=True, allow_none=True)
-
-    # Store device ID, organization ID and slug in the device file
-    # For legacy versions, this information is available in the file name
-    device_id = DeviceIDField(required=True)
-    organization_id = OrganizationIDField(required=True)
-    slug = fields.String(required=True)
-
-
-class PasswordDeviceFileSchema(BaseDeviceFileSchema):
-    type = fields.EnumCheckedConstant(DeviceFileType.PASSWORD, required=True)
-    salt = fields.Bytes(required=True)
-
-
-class RecoveryDeviceFileSchema(BaseDeviceFileSchema):
-    type = fields.EnumCheckedConstant(DeviceFileType.RECOVERY, required=True)
-
-
-class SmartcardDeviceFileSchema(BaseDeviceFileSchema):
-    type = fields.EnumCheckedConstant(DeviceFileType.SMARTCARD, required=True)
-    encrypted_key = fields.Bytes(required=True)
-    certificate_id = fields.String(required=True)
-    certificate_sha1 = fields.Bytes(required=True, allow_none=True)
-
-
-class DeviceFileSchema(OneOfSchema):
-    type_field = "type"
-    type_schemas = {
-        DeviceFileType.PASSWORD: PasswordDeviceFileSchema(),
-        DeviceFileType.RECOVERY: RecoveryDeviceFileSchema(),
-        DeviceFileType.SMARTCARD: SmartcardDeviceFileSchema(),
-    }
-
-    def get_obj_type(self, obj: Dict[str, object]) -> object:
-        return obj["type"]
-
-
-legacy_key_file_serializer = MsgpackSerializer(
-    LegacyDeviceFileSchema,
-    validation_exc=LocalDeviceValidationError,
-    packing_exc=LocalDevicePackingError,
-)
-
-key_file_serializer = MsgpackSerializer(
-    DeviceFileSchema, validation_exc=LocalDeviceValidationError, packing_exc=LocalDevicePackingError
-)
-
-
 def get_key_file(config_dir: Path, device: str) -> Path:
     return Path(get_available_device(config_dir, device).key_file_path)
 
@@ -170,18 +84,13 @@ def load_device_file(key_file_path: Path) -> AvailableDevice | None:
         return None
 
 
-def _load_device(
-    key_file: Path, decrypt_ciphertext: Callable[[dict[str, object]], bytes]
-) -> LocalDevice:
+def _load_device(key_file: Path, decrypt_ciphertext: Callable[[DeviceFile], bytes]) -> LocalDevice:
     try:
         ciphertext = key_file.read_bytes()
     except OSError as exc:
         raise LocalDeviceNotFoundError(f"Config file `{key_file}` is missing") from exc
 
-    try:
-        data = key_file_serializer.loads(ciphertext)
-    except LocalDeviceError:
-        data = legacy_key_file_serializer.loads(ciphertext)
+    data = DeviceFile.load(ciphertext)
 
     plaintext = decrypt_ciphertext(data)
 
@@ -198,7 +107,9 @@ def _save_device(
     key_file: Path,
     device: LocalDevice,
     force: bool,
-    encrypt_dump: Callable[[bytes], Tuple[DeviceFileType, bytes, dict[str, bytes]]],
+    encrypt_dump: Callable[
+        [bytes], Tuple[DeviceFileType, bytes, bytes | None, bytes | None, str | None, bytes | None]
+    ],
 ) -> None:
     assert key_file.suffix == DEVICE_FILE_SUFFIX
 
@@ -206,19 +117,22 @@ def _save_device(
         raise LocalDeviceAlreadyExistsError(f"Device key file `{key_file}` already exists")
 
     cleartext = device.dump()
-    type, ciphertext, extra_args = encrypt_dump(cleartext)
-    key_file_content = key_file_serializer.dumps(
-        {
-            "type": type,
-            **extra_args,
-            "ciphertext": ciphertext,
-            "human_handle": device.human_handle,
-            "device_label": device.device_label,
-            "organization_id": device.organization_id,
-            "device_id": device.device_id,
-            "slug": device.slug,
-        }
+    type, ciphertext, salt, encrypted_key, certificate_id, certificate_sha1 = encrypt_dump(
+        cleartext
     )
+    key_file_content = DeviceFile(
+        type=type,
+        ciphertext=ciphertext,
+        human_handle=device.human_handle,
+        device_label=device.device_label,
+        device_id=device.device_id,
+        organization_id=device.organization_id,
+        slug=device.slug,
+        salt=salt,
+        encrypted_key=encrypted_key,
+        certificate_id=certificate_id,
+        certificate_sha1=certificate_sha1,
+    ).dump()
 
     try:
         key_file.parent.mkdir(mode=0o700, exist_ok=True, parents=True)

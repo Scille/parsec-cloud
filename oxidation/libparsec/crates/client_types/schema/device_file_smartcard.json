@@ -1,0 +1,42 @@
+{
+    "label": "DeviceFileSmartcard",
+    "type": "smartcard",
+    "other_fields": [
+        {
+            "name": "ciphertext",
+            "type": "Bytes"
+        },
+        {
+            "name": "human_handle",
+            "type": "Option<HumanHandle>"
+        },
+        {
+            "name": "device_label",
+            "type": "Option<DeviceLabel>"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "organization_id",
+            "type": "OrganizationID"
+        },
+        {
+            "name": "slug",
+            "type": "String"
+        },
+        {
+            "name": "encrypted_key",
+            "type": "Bytes"
+        },
+        {
+            "name": "certificate_id",
+            "type": "String"
+        },
+        {
+            "name": "certificate_sha1",
+            "type": "Option<Bytes>"
+        }
+    ]
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from parsec._parsec import (
     DataError,
+    # Certificate
     DeviceCertificate,
     # Entry
     EntryID,
@@ -20,7 +21,6 @@ from parsec._parsec import (
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
-    # Certificate
     UserCertificate,
 )
 from parsec.api.data.invite import (
@@ -45,7 +45,6 @@ from parsec.api.data.manifest import (
 __all__ = (
     # Base
     "DataError",
-    "BaseSchema",
     # Entry
     "EntryID",
     "EntryName",

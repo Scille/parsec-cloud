@@ -6,6 +6,7 @@ import trio
 import tempfile
 from protocol.utils import *
 
+from parsec._parsec import save_recovery_device, save_device_with_password
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -29,28 +30,18 @@ with tempfile.NamedTemporaryFile(suffix=".keys") as fp:
 content = display(f"device file (password: {password})", raw, [])
 key = SecretKey.from_password(password, salt=content["salt"])
 
-# Legacy device key file without `human_handle` and `device_label`
-raw = legacy_key_file_serializer.dumps(
-    {
-        "type": "password",
-        "salt": content["salt"],
-        "ciphertext": content["ciphertext"],
-    }
-)
+raw = DeviceFile(
+    type=DeviceFileType.SMARTCARD,
+    ciphertext=content["ciphertext"],
+    human_handle=ALICE.human_handle,
+    device_label=ALICE.device_label,
+    device_id=ALICE.device_id,
+    organization_id=ALICE.organization_id,
+    slug=ALICE.slug,
+    salt=None,
+    encrypted_key=b"foo",
+    certificate_id="foo",
+    certificate_sha1=b"foo",
+).dump()
 
-display("legacy device file without `human_handle` and `device_label`", raw, [])
-
-# With `human_handle` and `device_label`
-raw = legacy_key_file_serializer.dumps(
-    {
-        "type": "password",
-        "salt": content["salt"],
-        "ciphertext": content["ciphertext"],
-        "human_handle": ALICE.human_handle,
-        "device_label": ALICE.device_label,
-    }
-)
-
-display("legacy device file with `human_handle` and `device_label`", raw, [])
-
-content = display(f"device file (password: {password})", content["ciphertext"], [key])
+display("device smartcard", raw, [])

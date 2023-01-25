@@ -212,6 +212,7 @@ LICENSERS_MAP = {
     re.compile(r"^oxidation/.*\.rs$"): RustBuslLicenser,
     re.compile(r"^oxidation/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^oxidation/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^src/.*\.rs"): RustBuslLicenser,
     re.compile(r"^docs/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
     # Js project is a minefield full of node_modules/build/dist/assets etc.
