@@ -49,6 +49,7 @@ def transactions_factory(event_bus, remote_devices_manager_factory, core_config)
                 cmds,
                 remote_devices_manager,
                 local_storage,
+                event_bus,
             )
 
             yield cls(
