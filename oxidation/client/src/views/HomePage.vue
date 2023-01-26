@@ -20,14 +20,21 @@
 
                 <!-- No use in showing the sort/filter options for less than 2 devices -->
                 <div v-if="deviceList.length > 2">
-                  <ion-searchbar v-model="orgSearchString" />
+                  <ion-searchbar
+                    v-model="orgSearchString"
+                    id="search-bar"
+                  />
 
-                  <ion-button @click="sortOrderAsc = !sortOrderAsc">
-                    {{ sortOrderAsc ? $t('HomePage.organizationList.sortOrderAsc') : $t('Homepage.organizationList.sortOrderDesc') }}
+                  <ion-button
+                    @click="sortOrderAsc = !sortOrderAsc"
+                    id="sort-order-button"
+                  >
+                    {{ sortOrderAsc ? $t('HomePage.organizationList.sortOrderAsc') : $t('HomePage.organizationList.sortOrderDesc') }}
                   </ion-button>
 
                   <ion-select
                     interface="action-sheet"
+                    id="sort-select"
                     v-model="sortBy"
                   >
                     <ion-select-option value="name">
@@ -233,24 +240,6 @@ const deviceList: AvailableDevice[] = [
     deviceId: 'device_id',
     slug: 'slug4',
     ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Eddy',
-    humanHandle: 'Maxime Grandcolas',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug5',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Eddy',
-    humanHandle: 'Maxime Grandcolas',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug6',
-    ty: {tag: 'Password'}
   }
 ];
 let selectedDevice: AvailableDevice;
@@ -263,7 +252,9 @@ const sortOrderAsc = ref(true);
 
 const filteredDevices = computed(() => {
   return deviceList.filter((item) => {
-    return item.deviceLabel?.includes(orgSearchString.value) || item.organizationId.includes(orgSearchString.value);
+    const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
+    return (item.deviceLabel?.toLocaleLowerCase().includes(lowerSearchString) ||
+      item.organizationId?.toLocaleLowerCase().includes(lowerSearchString));
   }).sort((a, b) => {
     if (sortBy.value === 'name') {
       if (sortOrderAsc.value) {
@@ -271,25 +262,40 @@ const filteredDevices = computed(() => {
       } else {
         return b.organizationId.localeCompare(a.organizationId);
       }
-    } else {
-      const aLastLogin = (a.slug in deviceStoredDataDict.value && deviceStoredDataDict[a.slug].lastLogin !== undefined) ?
-        deviceStoredDataDict[a.slug].lastLogin.valueOf() : 0;
-      const bLastLogin = (b.slug in deviceStoredDataDict.value && deviceStoredDataDict[b.slug].lastLogin !== undefined) ?
-        deviceStoredDataDict[b.slug].lastLogin.valueOf() : 0;
+    } else if (sortBy.value === 'last_login') {
+      const aLastLogin = (a.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[a.slug].lastLogin !== undefined) ?
+        deviceStoredDataDict.value[a.slug].lastLogin.valueOf() : 0;
+      const bLastLogin = (b.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[b.slug].lastLogin !== undefined) ?
+        deviceStoredDataDict.value[b.slug].lastLogin.valueOf() : 0;
       if (sortOrderAsc.value) {
         return aLastLogin - bLastLogin;
       } else {
         return bLastLogin - aLastLogin;
       }
     }
+    return 0;
   });
 });
 
-const deviceStoredDataDict = ref({});
+const deviceStoredDataDict = ref<{[slug: string]: DeviceStoredData}>({});
 
 onMounted(async (): Promise<void> => {
   await store.create();
-  deviceStoredDataDict.value = await store.get('devicesData') || {};
+
+  store.get('devicesData').then((val) => {
+    // This is needed because for some weird reason,
+    // ionic-storage deserializes dates correctly in web
+    // but keep them as strings during tests.
+    Object.keys(val).forEach((slug, _) => {
+      const obj = val[slug];
+      if (obj && obj.lastLogin) {
+        if (typeof obj.lastLogin === 'string') {
+          obj.lastLogin = new Date(obj.lastLogin);
+        }
+      }
+    });
+    deviceStoredDataDict.value = val;
+  });
 });
 
 function onPasswordChange(pwd: string): void {

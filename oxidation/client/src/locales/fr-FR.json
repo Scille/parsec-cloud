@@ -5,7 +5,9 @@
             "lastLogin": "Dernière connexion : {date}",
             "lastLoginSeconds": "Dernière connexion : il y a une seconde | Dernière connexion : il y a {seconds} secondes",
             "lastLoginMinutes": "Dernière connexion : il y a une minute | Dernière connexion : il y a {minutes} minutes",
-            "lastLoginHours": "Dernière connexion : il y a une heure | Dernière connexion : il y a {hours} heures"
+            "lastLoginHours": "Dernière connexion : il y a une heure | Dernière connexion : il y a {hours} heures",
+            "sortOrderAsc": "Ascendant",
+            "sortOrderDesc": "Descendant"
         },
         "noExistingOrganization": {
             "title": "Besoin de créer ou rejoindre une organisation ?",

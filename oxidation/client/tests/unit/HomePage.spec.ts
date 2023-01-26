@@ -63,9 +63,9 @@ describe('HomePage.vue', () => {
   // temporary, delete this when true data will exists by bindings
   store.create().then(() => {
     store.set('devicesData', {
-      slug1: { lastLogin: new Date('01/11/2023') },
-      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
-      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
+      slug1: { lastLogin: new Date('01/11/2023') }, // MegaShark
+      slug2: { lastLogin: new Date('01/12/2023 12:03:05') }, // Resana
+      slug3: { lastLogin: new Date('01/12/2023 15:12:04') } // Oxymore
     });
   });
 
@@ -85,9 +85,9 @@ describe('HomePage.vue', () => {
 
   it('should get devices stored data on mount', () => {
     expect(wrapper.vm.deviceStoredDataDict).toEqual({
-      slug1: { lastLogin: (new Date('01/11/2023')).toISOString() },
-      slug2: { lastLogin: (new Date('01/12/2023 12:03:05')).toISOString() },
-      slug3: { lastLogin: (new Date('01/12/2023 15:12:04')).toISOString() }
+      slug1: { lastLogin: new Date('01/11/2023') },
+      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
+      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
     });
   });
 
@@ -128,6 +128,42 @@ describe('HomePage.vue', () => {
       expect(wrapper.findComponent('#organization-list-container').exists()).toBeFalsy();
       expect(wrapper.findComponent('#login-popup-container').exists()).toBeTruthy();
       expect(wrapper.vm.selectedDevice).toEqual({
+        organizationId: 'Eddy',
+        humanHandle: 'Maxime Grandcolas',
+        deviceLabel: 'device_label',
+        keyFilePath: 'key_file_path',
+        deviceId: 'device_id',
+        slug: 'slug4',
+        ty: {tag: 'Password'}
+      });
+    });
+  });
+
+  describe('Login filter orgs', () => {
+    const wrapper = mount(HomePage, {
+      global: {
+        plugins: [i18n]
+      }
+    });
+
+    it('should filter orgs', async () => {
+      expect(wrapper.vm.deviceList.length).toEqual(4);
+      expect(wrapper.vm.orgSearchString).toEqual('');
+      expect(wrapper.vm.sortBy).toEqual('name');
+      expect(wrapper.vm.sortOrderAsc).toEqual(true);
+      expect(wrapper.vm.filteredDevices.length).toEqual(wrapper.vm.deviceList.length);
+
+      // Should be ordered by ascending org name
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Eddy');
+      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Resana');
+
+      expect(wrapper.findComponent('ion-searchbar').exists()).toBeTruthy();
+      // Search for 'shark' with a lower case 'S', checking if lower case is handled
+      await wrapper.findComponent('ion-searchbar').setValue('shark');
+
+      expect(wrapper.vm.orgSearchString).toEqual('shark');
+      expect(wrapper.vm.filteredDevices.length).toEqual(1);
+      expect(wrapper.vm.filteredDevices).toEqual([{
         organizationId: 'MegaShark',
         humanHandle: 'Maxime Grandcolas',
         deviceLabel: 'device_label',
@@ -135,8 +171,34 @@ describe('HomePage.vue', () => {
         deviceId: 'device_id',
         slug: 'slug1',
         ty: {tag: 'Password'}
-      });
+      }]);
+
+      // Resetting the search string
+      await wrapper.findComponent('ion-searchbar').setValue('');
+      expect(wrapper.vm.orgSearchString).toEqual('');
+      expect(wrapper.vm.filteredDevices.length).toEqual(4);
+
+      // Inverting the sort order
+      expect(wrapper.vm.sortOrderAsc).toBeTruthy();
+      await wrapper.findComponent('#sort-order-button').trigger('click');
+      expect(wrapper.vm.sortOrderAsc).toBeFalsy();
+
+      // Should be ordered by descending org name
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Resana');
+      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Eddy');
+
+      wrapper.vm.sortBy = 'last_login';
+      // Should be order by last login date descending
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Oxymore');
+      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Eddy');
+
+      // Sort by last login date ascending
+      await wrapper.findComponent('#sort-order-button').trigger('click');
+      expect(wrapper.vm.sortOrderAsc).toBeTruthy();
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Eddy');
+      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Oxymore');
     });
+
   });
 
   describe('Login Popup tests', () => {
