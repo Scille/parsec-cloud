@@ -10,8 +10,9 @@ from PyQt5.QtCore import QDate, QEvent, QObject, Qt, QTime, QTimer, pyqtBoundSig
 from PyQt5.QtWidgets import QAbstractButton, QLabel, QWidget
 from structlog import get_logger
 
-from parsec._parsec import CoreEvent, DateTime, LocalDateTime
+from parsec._parsec import CoreEvent, DateTime, LocalDateTime, WorkspaceEntry
 from parsec.core.fs import (
+    ChangesAfterSync,
     FSBackendOfflineError,
     FSError,
     FsPath,
@@ -789,14 +790,20 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             core=self.core,
         )
 
-    def _on_sharing_updated(self, event: QEvent, new_entry: str, previous_entry: str) -> None:
+    def _on_sharing_updated(
+        self, event: QEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry
+    ) -> None:
         self.reset()
 
-    def _on_workspace_created(self, event: Enum, new_entry: str) -> None:
+    def _on_workspace_created(self, event: Enum, new_entry: WorkspaceEntry) -> None:
         self.reset()
 
     def _on_fs_entry_synced(
-        self, event: QEvent, id: str, workspace_id: EntryID | None = None
+        self,
+        event: QEvent,
+        id: str,
+        workspace_id: EntryID | None = None,
+        changes: ChangesAfterSync | None = None,
     ) -> None:
         self.reset()
 
@@ -808,7 +815,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.reset()
 
     def _on_entry_downsynced(
-        self, event: QEvent, workspace_id: EntryID | None = None, id: str | None = None
+        self,
+        event: QEvent,
+        workspace_id: EntryID | None = None,
+        id: str | None = None,
+        changes: ChangesAfterSync | None = None,
     ) -> None:
         self.reset()
 

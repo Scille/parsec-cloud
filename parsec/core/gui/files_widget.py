@@ -14,7 +14,7 @@ from structlog import get_logger
 
 from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryName
-from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
+from parsec.core.fs import ChangesAfterSync, FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSFileNotFoundError,
     FSInvalidArgumentError,
@@ -1268,7 +1268,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, T("TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"))
 
     def _on_fs_entry_downsynced(
-        self, event: CoreEvent, workspace_id: EntryID | None = None, id: EntryID | None = None
+        self,
+        event: CoreEvent,
+        workspace_id: EntryID | None = None,
+        id: EntryID | None = None,
+        changes: ChangesAfterSync | None = None,
     ) -> None:
         # No workspace FS
         if not self.workspace_fs:
@@ -1286,7 +1290,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
 
     def _on_fs_entry_synced(
-        self, event: CoreEvent, id: EntryID, workspace_id: EntryID | None = None
+        self,
+        event: CoreEvent,
+        id: EntryID,
+        workspace_id: EntryID | None = None,
+        changes: ChangesAfterSync | None = None,
     ) -> None:
         # Extract job information
         if not self.workspace_fs:
