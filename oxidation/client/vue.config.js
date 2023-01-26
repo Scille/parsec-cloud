@@ -58,6 +58,8 @@ if (platform === 'web') {
   // (e.g. js mode `production` -> Rust profile `release`)
   module.exports = {
     configureWebpack: {
+      // add source map, needs to be remove for production
+      devtool: 'cheap-source-map',
       experiments: {
         asyncWebAssembly: true
       },
