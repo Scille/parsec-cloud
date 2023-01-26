@@ -18,6 +18,7 @@ from parsec._parsec import (
     BlockReadRepNotAllowed,
     BlockReadRepNotFound,
     BlockReadRepOk,
+    CoreEvent,
     DateTime,
     RealmCreateRepAlreadyExists,
     RealmCreateRepOk,
@@ -97,6 +98,7 @@ from parsec.core.remote_devices_manager import (
 )
 from parsec.core.types import ChunkID, EntryID, LocalDevice, WorkspaceEntry
 from parsec.crypto import CryptoError, HashDigest, VerifyKey
+from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 
 if TYPE_CHECKING:
@@ -436,6 +438,7 @@ class RemoteLoader(UserRemoteLoader):
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: BaseWorkspaceStorage,
+        event_bus: EventBus,
     ):
         super().__init__(
             device,
@@ -446,6 +449,7 @@ class RemoteLoader(UserRemoteLoader):
             remote_devices_manager,
         )
         self.local_storage = local_storage
+        self.event_bus = event_bus
 
     async def load_blocks(self, accesses: List[BlockAccess]) -> None:
         async with open_service_nursery() as nursery:
@@ -520,7 +524,16 @@ class RemoteLoader(UserRemoteLoader):
 
         # TODO: let encryption manager do the digest check ?
         assert HashDigest.from_data(block) == access.digest, access
-        await self.local_storage.set_clean_block(access.id, block)
+        removed_block_ids = await self.local_storage.set_clean_block(access.id, block)
+        self.event_bus.send(
+            CoreEvent.FS_BLOCK_DOWNLOADED, workspace_id=self.workspace_id, block_access=access
+        )
+        if removed_block_ids:
+            self.event_bus.send(
+                CoreEvent.FS_BLOCK_REMOVED,
+                workspace_id=self.workspace_id,
+                block_ids=removed_block_ids,
+            )
 
     async def upload_blocks(self, blocks: List[BlockAccess]) -> None:
         blocks_iter = iter(blocks)
@@ -578,8 +591,14 @@ class RemoteLoader(UserRemoteLoader):
             raise FSError(f"Cannot upload block: {rep}")
 
         # Update local storage
-        await self.local_storage.set_clean_block(access.id, data)
+        removed_block_ids = await self.local_storage.set_clean_block(access.id, data)
         await self.local_storage.clear_chunk(ChunkID.from_block_id(access.id), miss_ok=True)
+        if removed_block_ids:
+            self.event_bus.send(
+                CoreEvent.FS_BLOCK_REMOVED,
+                workspace_id=self.workspace_id,
+                block_ids=removed_block_ids,
+            )
 
     async def load_manifest(
         self,
