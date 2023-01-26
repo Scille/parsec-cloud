@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+from __future__ import annotations
+
 from types import ModuleType
 from typing import Union, Dict, List, OrderedDict, Type, Optional
 from importlib import import_module
+from collections import namedtuple
 import argparse
-import inspect
 from dataclasses import dataclass
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from pathlib import Path
@@ -15,13 +17,22 @@ BASEDIR = Path(__file__).parent
 
 
 # Meta-types are defined in the api module for simplicity, `generate_api_specs` will take care of retreiving them
-META_TYPES = ["Result", "Ref", "StrBasedType", "IntBasedType", "Variant", "Structure"]
+META_TYPES = [
+    "Result",
+    "Ref",
+    "StrBasedType",
+    "I32BasedType",
+    "Variant",
+    "Structure",
+    "OnClientEventCallback",
+]
 Result: Type = None
 Ref: Type = None
 StrBasedType: Type = None
-IntBasedType: Type = None
+I32BasedType: Type = None
 Variant: Type = None
 Structure: Type = None
+OnClientEventCallback: Type = None
 
 
 env = Environment(
@@ -65,7 +76,7 @@ class BaseTypeInUse:
     kind: str
 
     @staticmethod
-    def parse(param) -> "BaseTypeInUse":
+    def parse(param: str) -> "BaseTypeInUse":
         assert not isinstance(
             param, str
         ), f"Bad param `{param!r}`, passing type as string is not supported"
@@ -91,11 +102,23 @@ class BaseTypeInUse:
             assert len(param.__args__) == 1
             return RefTypeInUse(elem=BaseTypeInUse.parse(param.__args__[0]))
 
-        elif issubclass(param, StrBasedType):
-            return StrBasedTypeInUse(name=param.__name__)
+        elif param is OnClientEventCallback:
+            spec = OpaqueSpec(kind="OnClientEventCallback")
+            # Ugly hack to make template rendering happy
+            spec.event_type = namedtuple("Type", "name")("ClientEvent")
 
-        elif issubclass(param, IntBasedType):
-            return IntBasedTypeInUse(name=param.__name__)
+            # spec.event_type = param.__orig_bases__[0].__args__[0]
+            return spec
+
+        elif isinstance(param, type) and issubclass(param, StrBasedType):
+            return StrBasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_string=getattr(param, "custom_from_rs_string", None),
+                custom_to_rs_string=getattr(param, "custom_to_rs_string", None),
+            )
+
+        elif isinstance(param, type) and issubclass(param, I32BasedType):
+            return I32BasedTypeInUse(name=param.__name__)
 
         else:
             typespec = TYPESDB.get(param)
@@ -147,10 +170,16 @@ class StrBasedTypeInUse(BaseTypeInUse):
     kind = "str_based"
     name: str
 
+    # If set, custom_from_rs_string/custom_to_rs_string should inlined rust functions
+    # `fn (String) -> Result<X, AsRef<str>>`
+    custom_from_rs_string: str | None = None
+    # `fn (&X) -> Result<String, AsRef<str>>`
+    custom_to_rs_string: str | None = None
+
 
 @dataclass
-class IntBasedTypeInUse(BaseTypeInUse):
-    kind = "int_based"
+class I32BasedTypeInUse(BaseTypeInUse):
+    kind = "i32_based"
     name: str
 
 
@@ -170,7 +199,7 @@ class MethSpec:
 @dataclass
 class ApiSpecs:
     str_based_types: List[StrBasedType]
-    int_based_types: List[IntBasedType]
+    i32_based_types: List[I32BasedType]
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
@@ -183,7 +212,6 @@ class ApiSpecs:
 # The `Bar` object is going to be a key in TYPESDB, and the value will be the `StructSpec` built by introspecting `Bar`
 TYPESDB: Dict[type, Union[OpaqueSpec, StructSpec, VariantSpec]] = {
     bool: OpaqueSpec(kind="bool"),
-    int: OpaqueSpec(kind="int"),
     float: OpaqueSpec(kind="float"),
     str: OpaqueSpec(kind="str"),
     bytes: OpaqueSpec(kind="bytes"),
@@ -202,7 +230,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             globals()[item_name] = getattr(api_module, item_name)
             continue
         # Ignore items that have been imported from another module
-        if getattr(item, "__module__", None) != api_module.__name__:
+        if not getattr(item, "__module__", "").startswith(api_module.__name__):
             continue
         api_items[item_name] = item
 
@@ -298,10 +326,10 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, StrBasedType)
         ],
-        int_based_types=[
+        i32_based_types=[
             item.__name__
             for item in api_items.values()
-            if isinstance(item, type) and issubclass(item, IntBasedType)
+            if isinstance(item, type) and issubclass(item, I32BasedType)
         ],
         variants=variants,
         structs=structs,

@@ -73,7 +73,7 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
 
     let expected_devices = HashSet::from([
         AvailableDevice {
-            key_file_path: alice_file_path.into(),
+            key_file_path: alice_file_path,
 
             organization_id: alice.organization_id().clone(),
             device_id: alice.device_id.clone(),
@@ -83,7 +83,7 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
             ty: DeviceFileType::Password,
         },
         AvailableDevice {
-            key_file_path: bob_file_path.into(),
+            key_file_path: bob_file_path,
 
             organization_id: bob.organization_id().clone(),
             device_id: bob.device_id.clone(),
@@ -93,7 +93,7 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
             ty: DeviceFileType::Password,
         },
         AvailableDevice {
-            key_file_path: mallory_file_path.into(),
+            key_file_path: mallory_file_path,
 
             organization_id: mallory.organization_id().clone(),
             device_id: mallory.device_id.clone(),
@@ -123,7 +123,7 @@ async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath)
 
     let devices = list_available_devices(&tmp_path).await;
     let expected_device = AvailableDevice {
-        key_file_path: key_file_path.into(),
+        key_file_path,
         organization_id: "Org".parse().unwrap(),
         device_id: "Zack@PC1".parse().unwrap(),
         human_handle: None,

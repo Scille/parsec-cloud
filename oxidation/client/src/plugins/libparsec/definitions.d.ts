@@ -11,12 +11,15 @@ export type Result<T, E = Error> =
 type OrganizationID = string;
 type DeviceLabel = string;
 type HumanHandle = string;
-type StrPath = string;
+type Path = string;
+type BackendAddr = string;
 type DeviceID = string;
 type LoggedCoreHandle = number;
+type ClientHandle = number;
+type CacheSize = number;
 
 export interface AvailableDevice {
-    keyFilePath: StrPath;
+    keyFilePath: Path;
     organizationId: OrganizationID;
     deviceId: DeviceID;
     humanHandle: HumanHandle | null;
@@ -24,6 +27,34 @@ export interface AvailableDevice {
     slug: string;
     ty: DeviceFileType;
 }
+
+export interface ClientConfig {
+    configDir: Path;
+    dataBaseDir: Path;
+    mountpointBaseDir: Path;
+    preferredOrgCreationBackendAddr: BackendAddr;
+    workspaceStorageCacheSize: WorkspaceStorageCacheSize;
+}
+
+// ClientEvent
+export interface ClientEventClientConnectionChanged {
+    tag: 'ClientConnectionChanged'
+    client: number;
+}
+export interface ClientEventWorkspaceReencryptionEnded {
+    tag: 'WorkspaceReencryptionEnded'
+}
+export interface ClientEventWorkspaceReencryptionNeeded {
+    tag: 'WorkspaceReencryptionNeeded'
+}
+export interface ClientEventWorkspaceReencryptionStarted {
+    tag: 'WorkspaceReencryptionStarted'
+}
+export type ClientEvent =
+  | ClientEventClientConnectionChanged
+  | ClientEventWorkspaceReencryptionEnded
+  | ClientEventWorkspaceReencryptionNeeded
+  | ClientEventWorkspaceReencryptionStarted
 
 // DeviceFileType
 export interface DeviceFileTypePassword {
@@ -40,26 +71,73 @@ export type DeviceFileType =
   | DeviceFileTypeRecovery
   | DeviceFileTypeSmartcard
 
-// LoggedCoreError
-export interface LoggedCoreErrorDisconnected {
+// WorkspaceStorageCacheSize
+export interface WorkspaceStorageCacheSizeCustom {
+    tag: 'Custom'
+    size: number;
+}
+export interface WorkspaceStorageCacheSizeDefault {
+    tag: 'Default'
+}
+export type WorkspaceStorageCacheSize =
+  | WorkspaceStorageCacheSizeCustom
+  | WorkspaceStorageCacheSizeDefault
+
+// DeviceAccessParams
+export interface DeviceAccessParamsPassword {
+    tag: 'Password'
+    path: Path;
+    password: string;
+}
+export interface DeviceAccessParamsSmartcard {
+    tag: 'Smartcard'
+    path: Path;
+}
+export type DeviceAccessParams =
+  | DeviceAccessParamsPassword
+  | DeviceAccessParamsSmartcard
+
+// ClientLoginError
+export interface ClientLoginErrorAccessMethodNotAvailable {
+    tag: 'AccessMethodNotAvailable'
+}
+export interface ClientLoginErrorDecryptionFailed {
+    tag: 'DecryptionFailed'
+}
+export interface ClientLoginErrorDeviceAlreadyLoggedIn {
+    tag: 'DeviceAlreadyLoggedIn'
+}
+export interface ClientLoginErrorDeviceInvalidFormat {
+    tag: 'DeviceInvalidFormat'
+}
+export type ClientLoginError =
+  | ClientLoginErrorAccessMethodNotAvailable
+  | ClientLoginErrorDecryptionFailed
+  | ClientLoginErrorDeviceAlreadyLoggedIn
+  | ClientLoginErrorDeviceInvalidFormat
+
+// ClientGetterError
+export interface ClientGetterErrorDisconnected {
     tag: 'Disconnected'
 }
-export interface LoggedCoreErrorInvalidHandle {
+export interface ClientGetterErrorInvalidHandle {
     tag: 'InvalidHandle'
     handle: number;
 }
-export interface LoggedCoreErrorLoginFailed {
-    tag: 'LoginFailed'
-    help: string;
-}
-export type LoggedCoreError =
-  | LoggedCoreErrorDisconnected
-  | LoggedCoreErrorInvalidHandle
-  | LoggedCoreErrorLoginFailed
+export type ClientGetterError =
+  | ClientGetterErrorDisconnected
+  | ClientGetterErrorInvalidHandle
 
 export interface LibParsecPlugin {
-    listAvailableDevices(path: StrPath): Promise<Array<AvailableDevice>>;
-    login(key: string, password: string): Promise<Result<number, LoggedCoreError>>;
-    loggedCoreGetDeviceId(handle: number): Promise<Result<DeviceID, LoggedCoreError>>;
-    loggedCoreGetDeviceDisplay(handle: number): Promise<Result<string, LoggedCoreError>>;
+    clientListAvailableDevices(
+        path: Path
+    ): Promise<Array<AvailableDevice>>;
+    clientLogin(
+        load_device_params: DeviceAccessParams,
+        config: ClientConfig,
+        on_event_callback: (event: ClientEvent) => void
+    ): Promise<Result<number, ClientLoginError>>;
+    clientGetDeviceId(
+        handle: number
+    ): Promise<Result<DeviceID, ClientGetterError>>;
 }

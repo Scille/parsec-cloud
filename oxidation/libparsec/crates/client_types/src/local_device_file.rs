@@ -3,13 +3,12 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use sha2::{Digest, Sha256};
+use std::path::PathBuf;
 
 use libparsec_serialization_format::parsec_data;
 use libparsec_types::{
     impl_transparent_data_format_conversion, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
 };
-
-use crate::StrPath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePasswordData", from = "DeviceFilePasswordData")]
@@ -157,7 +156,7 @@ impl DeviceFileType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct AvailableDevice {
-    pub key_file_path: StrPath,
+    pub key_file_path: PathBuf,
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
     pub human_handle: Option<HumanHandle>,

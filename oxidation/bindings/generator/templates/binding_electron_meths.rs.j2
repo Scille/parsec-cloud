@@ -15,7 +15,7 @@ JsArray
 JsValue
 {%- elif type.kind == "bool" -%}
 JsBoolean
-{%- elif type.kind in ("int", "int_based") -%}
+{%- elif type.kind == "i32_based" -%}
 JsNumber
 {%- elif type.kind == "float" -%}
 JsNumber
@@ -29,6 +29,8 @@ JsObject
 JsObject
 {%- elif type.kind == "result" -%}
 JsObject
+{%- elif type.kind == "OnClientEventCallback" -%}
+JsFunction
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
 {%- endif -%}
@@ -82,14 +84,17 @@ JsObject
         {{ render_downcasted_js_to_rs("js_val", type.err, mut_cx_ref) | indent(8) }}
     }
 }
-{%- elif type.kind == "int" -%}
+{%- elif type.kind == "i32_based" -%}
 {{ js_val }}.value({{ mut_cx_ref }}) as i32
-{%- elif type.kind == "int_based" -%}
-({{ js_val }}.value({{ mut_cx_ref }}) as i32).into()
 {%- elif type.kind == "str" -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- elif type.kind == "str_based" -%}
-match {{ js_val }}.value({{ mut_cx_ref }}).parse() {
+{% if type.custom_from_rs_string -%}
+let custom_from_rs_string = {{ type.custom_from_rs_string }};
+match custom_from_rs_string({{ js_val }}.value({{ mut_cx_ref }}))
+{%- else -%}
+match {{ js_val }}.value({{ mut_cx_ref }}).parse()
+{%- endif %} {
     Ok(val) => val,
     Err(err) => return cx.throw_type_error(err),
 }
@@ -99,6 +104,51 @@ match {{ js_val }}.value({{ mut_cx_ref }}).parse() {
 {{ struct_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, {{ js_val }})?
 {%- elif type.kind == "variant" -%}
 {{ variant_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, {{ js_val }})?
+{%- elif type.kind == "OnClientEventCallback" -%}
+// The Javascript function object is going to be shared between the closure
+// called by rust (that can be called multiple times) and the single-use
+// closure sent to the js runtime.
+// So we must use an Arc to ensure the resource is shared correctly, but
+// that's not all of it !
+// When the resource is no longer use, we must consume the reference we
+// had on the javascript function in a neon context so that it can itself
+// notify the js runtime's garbage collector.
+struct Callback {
+    js_fn: Option<neon::handle::Root<JsFunction>>,
+    channel: neon::event::Channel,
+}
+impl Drop for Callback {
+    fn drop(&mut self) {
+        if let Some(js_fn) = self.js_fn.take() {
+            // Return the js object to the js runtime to avoid memory leak
+            self.channel.send(move |mut cx| {
+                js_fn.to_inner(&mut cx);
+                Ok(())
+            });
+        }
+    }
+}
+let callback = std::sync::Arc::new(Callback{
+    js_fn: Some(js_val.root({{ mut_cx_ref }})),
+    channel: cx.channel(),
+});
+Box::new(
+    move |event: libparsec::ClientEvent| {
+        let callback2 = callback.clone();
+        callback.channel.send(move |mut cx| {
+            // TODO: log an error instead of panic ? (it is a bit harsh to crash
+            // the current task if an unrelated event handler has a bug...)
+            let js_event = {{ variant_rs_to_js_function_name(type.event_type) }}({{ mut_cx_ref }}, event)?;
+            if let Some(ref js_fn) = callback2.js_fn {
+                js_fn.to_inner(&mut cx)
+                .call_with(&cx)
+                .arg(js_event)
+                .apply::<JsNull, _>(&mut cx)?;
+            }
+            Ok(())
+        });
+    }
+) as Box<dyn FnMut(libparsec::ClientEvent) + Send>
 {%- else -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- endif %}
@@ -146,14 +196,26 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
-{%- elif type.kind == "int" -%}
+{%- elif type.kind == "i32_based" -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }} as f64)
-{%- elif type.kind == "int_based" -%}
-JsNumber::new({{ mut_cx_ref }}, i32::from({{ rs_value }}) as f64)
 {%- elif type.kind == "float" -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
-{%- elif type.kind in ("str", "str_based") -%}
+{%- elif type.kind == "str" -%}
 JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}).or_throw({{ mut_cx_ref }})?
+{%- elif type.kind == "str_based" -%}
+JsString::try_new({{ mut_cx_ref }},
+{%- if type.custom_to_rs_string -%}
+{
+    let custom_to_rs_string = {{ type.custom_to_rs_string }};
+    match custom_to_rs_string({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif -%}
+).or_throw({{ mut_cx_ref }})?
 {%- elif type.kind == "bytes" -%}
 {
     let mut js_buff = JsArrayBuffer::new({{ mut_cx_ref }}, {{ rs_value }}.len())?;

@@ -17,7 +17,7 @@ Vec<{{ function_param_type(type.elem) }}>
 Option<{{ function_param_type(type.elem) }}>
 {%- elif type.kind == "bool" -%}
 bool
-{%- elif type.kind in ("int", "int_based") -%}
+{%- elif type.kind == "i32_based" -%}
 i32
 {%- elif type.kind == "float" -%}
 f64
@@ -31,6 +31,8 @@ Object
 Object
 {%- elif type.kind == "result" -%}
 Object
+{%- elif type.kind == "OnClientEventCallback" -%}
+Function
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
 {%- endif -%}
@@ -48,12 +50,19 @@ let {{ param_name }} = match {{ param_name }} {
     }
     None => None,
 };
-{% elif type.kind == "int_based" %}
-let {{ param_name }} = {{ param_name }}.into();
 {% elif type.kind == "str_based" %}
-let {{ param_name }} = {{ param_name }}.parse().map_err(|_| {
+let {{ param_name }} =
+{% if type.custom_from_rs_string -%}
+{
+    let custom_from_rs_string = {{ type.custom_from_rs_string }};
+    custom_from_rs_string({{ param_name }})
+        .map_err(|e| TypeError::new(e))
+}?;
+{%- else -%}
+{{ param_name }}.parse().map_err(|_| {
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
 })?;
+{% endif %}
 {% elif type.kind in ("struct", "variant", "result") %}
 let {{ param_name }} = {{ param_name }}.into();
 let {{ param_name }} = {{ render_js_value_to_rs(param_name, type) }};
@@ -64,6 +73,12 @@ for x in {{ param_name }}.iter() {
     {{ param_name }}_converted.push(x);
 }
 let {{ param_name }} = {{ param_name }}_converted;
+{% elif type.kind == "OnClientEventCallback" %}
+let {{ param_name }} = Box::new(move |event: libparsec::ClientEvent| {
+    // TODO: Better error handling here (log error ?)
+    let js_event = {{ variant_rs_to_js_function_name(type.event_type) }}(event).expect("event type conversion error");
+    on_event_callback.call1(&JsValue::NULL, &js_event).expect("error in event callback");
+}) as Box<dyn FnMut(libparsec::ClientEvent)>;
 {% endif %}
 {%- endmacro -%}
 
@@ -94,16 +109,23 @@ if {{ js_val }}.is_null() {
 }
 {%- elif type.kind == "bool" -%}
 {{ js_val }}.dyn_into::<Boolean>().map_err(|_| TypeError::new("Not a boolean"))?.value_of()
-{%- elif type.kind == "int" -%}
+{%- elif type.kind == "i32_based" -%}
 {{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of() as i32
-{%- elif type.kind == "int_based" -%}
-({{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of() as i32).into()
 {%- elif type.kind == "float" -%}
 {{ js_val }}.dyn_into::<Number>()?.value_of()
 {%- elif type.kind == "str" -%}
 js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?
 {%- elif type.kind == "str_based" -%}
-js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?.parse().map_err(|_| TypeError::new("Not a valid {{ type.name }}"))?
+js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))
+{%- if type.custom_from_rs_string -%}
+.and_then(|x| {
+    let custom_from_rs_string = {{ type.custom_from_rs_string }};
+    custom_from_rs_string(x)
+.map_err(|e| TypeError::new(e)) })
+{%- else -%}
+?.parse()
+{%- endif %}
+.map_err(|_| TypeError::new("Not a valid {{ type.name }}"))?
 {%- elif type.kind == "bytes" -%}
 {{ js_val }}.dyn_into::<Uint8Array>().map_err(|_| TypeError::new("Not a Uint8Array"))?.to_vec()
 {%- elif type.kind == "struct" -%}
@@ -135,10 +157,21 @@ match {{ rs_value }} {
     Some(val) => {{ render_rs_to_js_value("val", type.elem) }},
     None => JsValue::NULL,
 }
-{%- elif type.kind == "int_based" -%}
-JsValue::from(i32::from({{ rs_value }}))
+{%- elif type.kind == "i32_based" -%}
+JsValue::from({{ rs_value }})
 {%- elif type.kind == "str_based" -%}
-JsValue::from_str({{ rs_value }}.as_ref())
+JsValue::from_str({%- if type.custom_to_rs_string -%}
+{
+    let custom_to_rs_string = {{ type.custom_to_rs_string }};
+    match custom_to_rs_string({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
+    }.as_ref()
+}
+{%- else -%}
+{{ rs_value }}.as_ref()
+{%- endif -%}
+)
 {%- elif type.kind == "bytes" -%}
 JsValue::from(Uint8Array::from({{ rs_value }}.as_ref()))
 {%- elif type.kind == "list" -%}
