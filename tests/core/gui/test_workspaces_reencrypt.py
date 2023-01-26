@@ -367,18 +367,13 @@ async def test_workspace_reencryption_do_one_batch_error(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=5)
-# We actually don't need to be admin, but we want to log as alice to have alice2 available
-@customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_continue(
     aqtbot,
     running_backend,
     gui_factory: GuiFactory,
-    autoclose_dialog,
     monkeypatch: pytest.MonkeyPatch,
-    alice2_user_fs: UserFS,
     bob_user_fs: UserFS,
-    adam: LocalDevice,
+    alice: LocalDevice,
 ):
     # Create a shared workspace
     wid = await bob_user_fs.workspace_create(EntryName("w1"))
@@ -386,13 +381,12 @@ async def test_workspace_reencryption_continue(
     await workspace.touch("/foo.txt")
     await workspace.sync()
     await bob_user_fs.sync()
-    await bob_user_fs.workspace_share(wid, adam.user_id, WorkspaceRole.OWNER)
-    await alice2_user_fs.process_last_messages()
+    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.OWNER)
 
     await bob_user_fs.workspace_start_reencryption(wid)
 
     gui = await gui_factory()
-    await gui.test_switch_to_logged_in(adam)
+    await gui.test_switch_to_logged_in(alice)
     w_w = gui.test_get_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
