@@ -58,7 +58,7 @@ def manage_operational_error(
         if not hasattr(self, "rs_instance"):
             raise FSLocalStorageClosedError("Service is closed")
         try:
-            return await func.__get__(self)(*args, **kwargs)
+            return await func(self, *args, **kwargs)
         except FSLocalStorageOperationalError as exc:
             print(
                 f"[{manage_operational_error.__name__}] local storage op error: `{exc}`({type(exc).__name__})"
