@@ -469,32 +469,21 @@ def data_base_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def clear_database_dir(
-    data_base_dir: Path, fixtures_customization: dict[str, Any]
-) -> Callable[[bool], None]:
+def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
     db_dir = data_base_dir
     proc = psutil.Process()
 
-    def _clear_database_dir(allow_missing_path: bool):
-        for open_file in proc.open_files():
-            assert not Path(open_file.path).is_relative_to(db_dir)
-        print(f"Clearing database dir at `{db_dir}`")
-        if not db_dir.exists():
-            if allow_missing_path:
-                print(f"    database path `{db_dir}` does not exist")
-                return
-            elif fixtures_customization.get("real_data_storage", False):
-                raise RuntimeError("Cannot clear database dir when the database is stored on RAM")
-            else:
-                raise RuntimeError(f"database path `{db_dir}` does not exist")
-        if db_dir.is_file():
-            os.remove(db_dir)
-        elif db_dir.is_dir():
+    def _clear_database_dir():
+        still_opened = [
+            opened for opened in proc.open_files() if Path(opened.path).is_relative_to(db_dir)
+        ]
+        if still_opened:
+            raise RuntimeError(f"Database dir contains still opened files: {still_opened}")
+
+        try:
             shutil.rmtree(db_dir)
-        else:
-            raise RuntimeError(
-                f"database path `{db_dir}` not a file nor a directory ({{}})".format(db_dir.stat())
-            )
+        except FileNotFoundError:
+            pass
 
     return _clear_database_dir
 
@@ -509,7 +498,7 @@ def reset_testbed(
     async def _reset_testbed(keep_logs=False):
         if request.config.getoption("--postgresql"):
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
-        clear_database_dir(allow_missing_path=True)
+        clear_database_dir()
         clear_persistent_mockup()
         if not keep_logs:
             caplog.clear()

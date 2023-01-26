@@ -178,7 +178,7 @@ def user_fs_offline_state_machine(
             await self.stop_user_fs()
             del self.user_fs_controller.user_fs
             del self.user_fs_controller
-            clear_database_dir(allow_missing_path=True)
+            clear_database_dir()
             clear_persistent_mockup()
             await self.start_user_fs(device)
 
