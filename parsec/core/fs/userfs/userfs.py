@@ -420,8 +420,8 @@ class UserFS:
 
         # Instantiate the local storage
 
-        async def workspace_storage_task(
-            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED,
+        async def workspace_task(
+            task_status: TaskStatus[WorkspaceFS] = trio.TASK_STATUS_IGNORED,
         ) -> None:
             async with WorkspaceStorage.run(
                 data_base_dir=self.data_base_dir,
@@ -430,28 +430,33 @@ class UserFS:
                 cache_size=self.workspace_storage_cache_size,
                 prevent_sync_pattern=self.prevent_sync_pattern,
             ) as workspace_storage:
-                task_status.started(workspace_storage)
-                await trio.sleep_forever()
 
-        local_storage = await self._workspace_storage_nursery.start(workspace_storage_task)
+                # Instantiate the workspace
+                workspace = WorkspaceFS(
+                    workspace_id=workspace_id,
+                    get_workspace_entry=get_workspace_entry,
+                    get_previous_workspace_entry=get_previous_workspace_entry,
+                    device=self.device,
+                    local_storage=workspace_storage,
+                    backend_cmds=self.backend_cmds,
+                    event_bus=self.event_bus,
+                    remote_devices_manager=self.remote_devices_manager,
+                    preferred_language=self.preferred_language,
+                )
 
-        # Instantiate the workspace
-        workspace = WorkspaceFS(
-            workspace_id=workspace_id,
-            get_workspace_entry=get_workspace_entry,
-            get_previous_workspace_entry=get_previous_workspace_entry,
-            device=self.device,
-            local_storage=local_storage,
-            backend_cmds=self.backend_cmds,
-            event_bus=self.event_bus,
-            remote_devices_manager=self.remote_devices_manager,
-            preferred_language=self.preferred_language,
-        )
+                # Connect remanence manager events
+                with workspace.remanence_manager.manage_events():
 
-        # Apply the current "prevent sync" pattern
-        await workspace.apply_prevent_sync_pattern()
+                    # Apply the current "prevent sync" pattern
+                    await workspace.apply_prevent_sync_pattern()
 
-        return workspace
+                    # Workspace is ready
+                    task_status.started(workspace)
+
+                    # Wait for cancellation
+                    await trio.sleep_forever()
+
+        return await self._workspace_storage_nursery.start(workspace_task)
 
     async def _load_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """

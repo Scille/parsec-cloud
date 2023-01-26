@@ -34,6 +34,7 @@ from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
+from parsec.core.fs.workspacefs.remanence_manager import RemanenceManager, RemanenceManagerInfo
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
@@ -105,6 +106,7 @@ class WorkspaceFS:
             self.backend_cmds,
             self.remote_devices_manager,
             self.local_storage,
+            self.event_bus,
         )
         self.transactions = SyncTransactions(
             self.workspace_id,
@@ -115,6 +117,13 @@ class WorkspaceFS:
             self.event_bus,
             self.preferred_language,
         )
+        self.remanence_manager = RemanenceManager(
+            self.local_storage,
+            self.remote_loader,
+            self.transactions,
+            self.workspace_id,
+            self.event_bus,
+        )
 
     def __repr__(self) -> str:
         try:
@@ -122,6 +131,28 @@ class WorkspaceFS:
         except Exception:
             name = EntryName("<could not retrieve name>")
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
+
+    # Remanence interface
+
+    def is_block_remanent(self) -> bool:
+        return self.remanence_manager.is_block_remanent()
+
+    async def enable_block_remanence(self) -> bool:
+        return await self.remanence_manager.enable_block_remanence()
+
+    async def disable_block_remanence(self) -> bool:
+        return await self.remanence_manager.disable_block_remanence()
+
+    async def run_remanence_manager(self, sleep_forever: Callable[[], Awaitable[None]]) -> None:
+        return await self.remanence_manager.run(sleep_forever)
+
+    async def wait_remanence_manager_prepared(self) -> None:
+        return await self.remanence_manager.wait_prepared()
+
+    def get_remanence_manager_info(self) -> RemanenceManagerInfo:
+        return self.remanence_manager.get_info()
+
+    # Block interface
 
     async def get_blocks_by_type(self, path: AnyPath, limit: int = 1000000000) -> BlockInfo:
         path = FsPath(path)
@@ -153,6 +184,8 @@ class WorkspaceFS:
         """
         return await self.remote_loader.receive_load_blocks(blocks, nursery)
 
+    # Information
+
     def get_workspace_name(self) -> EntryName:
         return self.get_workspace_entry().name
 
@@ -164,8 +197,6 @@ class WorkspaceFS:
 
     def is_revoked(self) -> bool:
         return self.get_workspace_entry().role is None
-
-    # Information
 
     async def path_info(self, path: AnyPath) -> Dict[str, object]:
         """

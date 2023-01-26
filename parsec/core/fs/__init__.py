@@ -43,12 +43,19 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.fs.userfs import UserFS
-from parsec.core.fs.workspacefs import WorkspaceFS, WorkspaceFSTimestamped
+from parsec.core.fs.workspacefs import (
+    ChangesAfterSync,
+    RemanenceManagerInfo,
+    WorkspaceFS,
+    WorkspaceFSTimestamped,
+)
 
 __all__ = (
     "UserFS",
     "WorkspaceFS",
     "WorkspaceFSTimestamped",
+    "ChangesAfterSync",
+    "RemanenceManagerInfo",
     # Path
     "FsPath",
     "AnyPath",
