@@ -145,7 +145,10 @@ async def test_autosync_placeholder_workspace_manifest(
             await spy.wait_multiple_with_timeout(
                 [
                     (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}),
-                    (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": w1id, "id": w1id}),
+                    (
+                        CoreEvent.FS_ENTRY_SYNCED,
+                        {"workspace_id": w1id, "id": w1id, "changes": spy.ANY},
+                    ),
                 ],
                 in_order=False,
             )
@@ -162,7 +165,10 @@ async def test_autosync_placeholder_workspace_manifest(
             await spy.wait_multiple_with_timeout(
                 [
                     (CoreEvent.FS_ENTRY_SYNCED, {"id": alice2.user_manifest_id}),
-                    (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": w2id, "id": w2id}),
+                    (
+                        CoreEvent.FS_ENTRY_SYNCED,
+                        {"workspace_id": w2id, "id": w2id, "changes": spy.ANY},
+                    ),
                 ],
                 in_order=False,
             )
@@ -182,7 +188,7 @@ async def test_autosync_on_modification(
         spy.assert_events_occurred(
             [
                 (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}),
-                (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}),
+                (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid, "changes": spy.ANY}),
             ],
             in_order=False,
         )
@@ -196,8 +202,11 @@ async def test_autosync_on_modification(
             await alice_core.wait_idle_monitors()
         spy.assert_events_occurred(
             [
-                (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": foo_id}),
-                (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}),
+                (
+                    CoreEvent.FS_ENTRY_SYNCED,
+                    {"workspace_id": wid, "id": foo_id, "changes": spy.ANY},
+                ),
+                (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid, "changes": spy.ANY}),
             ],
             in_order=False,
         )
@@ -364,8 +373,14 @@ async def test_reconnect_with_remote_changes(
                             CoreEvent.BACKEND_CONNECTION_CHANGED,
                             {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
                         ),
-                        (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": foo_id}),
-                        (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": bar_id}),
+                        (
+                            CoreEvent.FS_ENTRY_DOWNSYNCED,
+                            {"workspace_id": wid, "id": foo_id, "changes": spy.ANY},
+                        ),
+                        (
+                            CoreEvent.FS_ENTRY_DOWNSYNCED,
+                            {"workspace_id": wid, "id": bar_id, "changes": spy.ANY},
+                        ),
                     ],
                     in_order=False,
                 )
@@ -478,7 +493,8 @@ async def test_sync_monitor_while_changing_roles(
 
         # Ensure bob receive the change notification and process it
         await spy.wait_with_timeout(
-            CoreEvent.FS_ENTRY_DOWNSYNCED, kwargs={"workspace_id": wid, "id": wid}
+            CoreEvent.FS_ENTRY_DOWNSYNCED,
+            kwargs={"workspace_id": wid, "id": wid, "changes": spy.ANY},
         )
         await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
