@@ -486,7 +486,7 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
 
                     #struct_req
 
-                    impl<'de> Request<'de> for Req {
+                    impl Request for Req {
                         type Response = Rep;
 
                         fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {

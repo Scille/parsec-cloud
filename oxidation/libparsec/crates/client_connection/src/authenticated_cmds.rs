@@ -187,12 +187,12 @@ fn sign_request(
 }
 
 impl AuthenticatedCmds {
-    pub async fn send<'req, T>(
+    pub async fn send<T>(
         &self,
         request: T,
-    ) -> command_error::Result<<T as libparsec_protocol::Request<'req>>::Response>
+    ) -> command_error::Result<<T as libparsec_protocol::Request>::Response>
     where
-        T: Request<'req>,
+        T: Request,
     {
         let request_builder = self.client.post(self.url.clone());
 
