@@ -179,9 +179,12 @@ class BaseWorkspaceStorage:
 
     # Block interface
 
-    async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
+    async def set_clean_block(self, block_id: BlockID, block: bytes) -> set[BlockID]:
         assert isinstance(block_id, BlockID)
-        return await self.block_storage.set_chunk(ChunkID.from_block_id(block_id), block)
+        removed_chunk_ids = await self.block_storage.set_chunk(
+            ChunkID.from_block_id(block_id), block
+        )
+        return {BlockID.from_bytes(chunk_id.bytes) for chunk_id in removed_chunk_ids}
 
     async def clear_clean_block(self, block_id: BlockID) -> None:
         assert isinstance(block_id, BlockID)
@@ -207,7 +210,7 @@ class BaseWorkspaceStorage:
 
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
         assert isinstance(chunk_id, ChunkID)
-        return await self.chunk_storage.set_chunk(chunk_id, block)
+        await self.chunk_storage.set_chunk(chunk_id, block)
 
     async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
         assert isinstance(chunk_id, ChunkID)

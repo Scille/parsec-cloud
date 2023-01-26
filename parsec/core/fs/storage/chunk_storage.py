@@ -5,7 +5,7 @@ import secrets
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncContextManager, AsyncIterator, List, TypeVar
+from typing import AsyncContextManager, AsyncIterator, List, TypeVar, cast
 
 import trio
 
@@ -150,7 +150,7 @@ class ChunkStorage:
 
         return self.local_symkey.decrypt(ciphered)
 
-    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> list[ChunkID]:
         ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
@@ -164,6 +164,8 @@ class ChunkStorage:
                 VALUES (?, ?, ?, ?, ?)""",
                 (chunk_id.bytes, len(ciphered), False, time.time(), ciphered),
             )
+            # No chunks are removed in ChunkStorage implementation
+            return []
 
     async def clear_chunk(self, chunk_id: ChunkID) -> None:
         async with self._open_cursor() as cursor:
@@ -177,6 +179,17 @@ class ChunkStorage:
 
         if not changes:
             raise FSLocalMissError(chunk_id)
+
+    async def clear_chunks(self, chunk_ids: list[ChunkID]) -> None:
+        async with self._open_cursor() as cursor:
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            chunk_id_as_bytes = [chunk_id.bytes for chunk_id in chunk_ids]
+            await self.localdb.run_in_thread(
+                cursor.executemany,
+                "DELETE FROM chunks WHERE chunk_id = ?",
+                chunk_id_as_bytes,
+            )
 
 
 class BlockStorage(ChunkStorage):
@@ -221,7 +234,7 @@ class BlockStorage(ChunkStorage):
 
     # Upgraded set method
 
-    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> list[ChunkID]:
         ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
@@ -239,9 +252,9 @@ class BlockStorage(ChunkStorage):
             )
 
             # Perform cleanup if necessary
-            await self.cleanup(cursor)
+            return await self.cleanup(cursor)
 
-    async def cleanup(self, cursor: Cursor | None = None) -> None:
+    async def cleanup(self, cursor: Cursor | None = None) -> list[ChunkID]:
 
         # Update database
         async with self._reenter_cursor(cursor) as cursor:
@@ -253,18 +266,26 @@ class BlockStorage(ChunkStorage):
 
             # No clean up is needed
             if extra_blocks <= 0:
-                return
+                return []
 
             # Remove the extra block plus 10 % of the cache size, i.e about 100 blocks
             limit = extra_blocks + self.block_limit // 10
+
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
-            await self.localdb.run_in_thread(
-                cursor.execute,
-                """
-                DELETE FROM chunks WHERE chunk_id IN (
-                    SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
+            def _thread_target(cursor: Cursor) -> list[ChunkID]:
+                cursor.execute(
+                    """
+                    DELETE FROM chunks WHERE chunk_id IN (
+                        SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
+                    ) RETURNING chunk_id
+                    """,
+                    (limit,),
                 )
-                """,
-                (limit,),
-            )
+                rows = cursor.fetchall()
+                return [ChunkID.from_bytes(id_bytes) for (id_bytes,) in rows]
+
+            result = await self.localdb.run_in_thread(_thread_target, cursor)
+
+            # Type detection is broken here for some reason
+            return cast(list[ChunkID], result)
