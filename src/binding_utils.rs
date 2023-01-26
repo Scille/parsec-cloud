@@ -134,14 +134,15 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
 
 macro_rules! py_object {
     ($_self: ident, $class: ident, $subclass: ident, $py: ident) => {{
-        let initializer = PyClassInitializer::from(($subclass, $class($_self)));
+        let initializer = ::pyo3::PyClassInitializer::from(($subclass, $class($_self)));
         // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
         // or a sub-type of `T` (the type of `initializer` here).
         // Here `initializer` is created using the type `<$subclass>` and the same type of `<$subclass>`
         // will be used as the type of `subtype` in the call of `into_new_object`.
         unsafe {
+            use ::pyo3::{pyclass_init::PyObjectInit, PyTypeInfo};
             let ptr = initializer.into_new_object($py, $subclass::type_object_raw($py))?;
-            PyObject::from_owned_ptr($py, ptr)
+            ::pyo3::PyObject::from_owned_ptr($py, ptr)
         }
     }};
 }
@@ -356,10 +357,10 @@ macro_rules! send_command {
                 .send($req)
                 .await
                 .map(|r| {
-                    Python::with_gil(|py| match r {
+                    ::pyo3::Python::with_gil(|py| match r {
                         $(
                             authenticated_cmds::v2::$cmd_name::Rep::$kind_type { .. } => {
-                                PyResult::<PyObject>::Ok(crate::binding_utils::py_object!(
+                                PyResult::<::pyo3::PyObject>::Ok(crate::binding_utils::py_object!(
                                     r,
                                     $rep_type,
                                     [<$rep_type $kind_type>],
@@ -370,7 +371,7 @@ macro_rules! send_command {
                     })
                 })
                 .map(|e| e.expect("Failed to create a pyobject from server's response"))
-                .map_err(|e| Into::<PyErr>::into(Into::<CommandErrorExc>::into(e)))
+                .map_err(|e| Into::<::pyo3::PyErr>::into(Into::<crate::backend_connection::CommandErrorExc>::into(e)))
         }
     }
 }

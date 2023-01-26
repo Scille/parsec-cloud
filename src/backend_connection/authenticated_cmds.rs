@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 use pyo3::{
-    pyclass, pyclass_init::PyObjectInit, pymethods, types::PyType, PyClassInitializer, PyErr,
-    PyObject, PyResult, PyTypeInfo, Python,
+    pyclass, pymethods, types::PyType,
+    PyResult
 };
 
 use libparsec::{client_connection, protocol::authenticated_cmds};
@@ -14,11 +14,8 @@ use crate::{
     api_crypto::SigningKey,
     ids::DeviceID,
     protocol::*,
-    protocol::{AuthenticatedPingRep, BlockCreateReq},
     runtime::FutureIntoCoroutine,
 };
-
-use super::CommandErrorExc;
 
 #[pyclass]
 #[derive(Clone)]

@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::PyAttributeError,
     pyclass, pymethods,
     types::{PyBytes, PyType},
-    IntoPy, PyClassInitializer, PyObject, PyRef, PyResult, Python,
+    IntoPy, PyObject, PyRef, PyResult, Python,
 };
 
 use libparsec::protocol::{
