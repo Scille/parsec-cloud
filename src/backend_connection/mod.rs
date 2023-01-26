@@ -3,5 +3,5 @@
 mod authenticated_cmds;
 mod error;
 
-pub(crate) use authenticated_cmds::AuthenticatedCmds;
+pub(crate) use authenticated_cmds::{AuthenticatedCmds, AuthenticatedCmdsType};
 pub(crate) use error::*;

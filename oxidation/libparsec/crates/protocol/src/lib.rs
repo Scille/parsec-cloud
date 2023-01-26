@@ -3,7 +3,7 @@
 mod error;
 mod handshake;
 
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::num::NonZeroU8;
 
 use libparsec_serialization_format::parsec_protocol_cmds_familly;
@@ -63,11 +63,11 @@ parsec_protocol_cmds_familly!("schema/authenticated_cmds");
 parsec_protocol_cmds_familly!("schema/anonymous_cmds");
 
 pub trait Request<'de> {
-    type Response: Deserialize<'de>;
+    type Response: DeserializeOwned;
 
     fn dump(self) -> Result<Vec<u8>, rmp_serde::encode::Error>;
 
-    fn load_response(buf: &'de [u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
+    fn load_response(buf: &[u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
         rmp_serde::from_slice(buf)
     }
 }

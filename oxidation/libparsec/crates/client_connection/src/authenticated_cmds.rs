@@ -187,6 +187,32 @@ fn sign_request(
 }
 
 impl AuthenticatedCmds {
+    pub async fn send<'req, T>(
+        &self,
+        request: T,
+    ) -> command_error::Result<<T as libparsec_protocol::Request<'req>>::Response>
+    where
+        T: Request<'req>,
+    {
+        let request_builder = self.client.post(self.url.clone());
+
+        let data = request.dump().expect(concat!(
+            "failed to serialize the command ",
+            stringify!($name)
+        ));
+
+        let req = prepare_request(request_builder, &self.signing_key, &self.device_id, data).send();
+        let resp = dbg!(req.await)?;
+        if resp.status() != reqwest::StatusCode::OK {
+            return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
+        }
+
+        let response_body = resp.bytes().await?;
+
+        T::load_response(&response_body)
+            .map_err(command_error::CommandError::InvalidResponseContent)
+    }
+
     impl_auth_cmds!(
         /// Create a new block.
         block_create(block_id: BlockID, realm_id: RealmID, block: Vec<u8>)
