@@ -469,7 +469,9 @@ def data_base_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
+def clear_database_dir(
+    data_base_dir: Path, fixtures_customization: dict[str, Any]
+) -> Callable[[bool], None]:
     db_dir = data_base_dir
     proc = psutil.Process()
 
@@ -481,6 +483,8 @@ def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
             if allow_missing_path:
                 print(f"    database path `{db_dir}` does not exist")
                 return
+            elif fixtures_customization.get("real_data_storage", False):
+                raise RuntimeError("Cannot clear database dir when the database is stored on RAM")
             else:
                 raise RuntimeError(f"database path `{db_dir}` does not exist")
         if db_dir.is_file():
