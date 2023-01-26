@@ -59,6 +59,7 @@ from parsec.core.pki.accepter import (
     PkiEnrollmentAccepterInvalidSubmittedCtx,
     PkiEnrollmentAccepterValidSubmittedCtx,
 )
+from parsec.core.remanence_monitor import monitor_remanent_workspaces
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
     RemoteDevicesManagerBackendOfflineError,
@@ -396,6 +397,7 @@ async def logged_core_factory(
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))
         backend_conn.register_monitor(partial(monitor_sync, user_fs, event_bus))
+        backend_conn.register_monitor(partial(monitor_remanent_workspaces, user_fs, event_bus))
 
         async with backend_conn.run():
             async with mountpoint_manager_factory(
