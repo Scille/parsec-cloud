@@ -8,11 +8,14 @@ from parsec.api.data import EntryName
 from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID, UserProfile
 from parsec.core.invite import InviteAlreadyUsedError, InviteNotFoundError, bootstrap_organization
 from parsec.core.types import BackendOrganizationBootstrapAddr
+from tests.core.conftest import UserFsFactory
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
-async def test_good(running_backend, backend, user_fs_factory, with_labels, data_base_dir):
+async def test_good(
+    running_backend, backend, user_fs_factory: UserFsFactory, with_labels, data_base_dir
+):
 
     org_id = OrganizationID("NewOrg")
     org_token = "123456"

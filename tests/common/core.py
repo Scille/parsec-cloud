@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Callable
+from typing import AsyncContextManager, Callable
 
 import pytest
 
@@ -30,12 +30,13 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
     )
 
 
+CoreFactory = Callable[..., AsyncContextManager[LoggedCore]]
+
+
 @pytest.fixture
-def core_factory(
-    request, running_backend_ready, event_bus_factory, core_config
-) -> Callable[..., _AsyncGeneratorContextManager[LoggedCore]]:
+def core_factory(request, running_backend_ready, event_bus_factory, core_config) -> CoreFactory:
     @asynccontextmanager
-    async def _core_factory(device, event_bus=None) -> _AsyncGeneratorContextManager[LoggedCore]:
+    async def _core_factory(device, event_bus=None) -> AsyncContextManager[LoggedCore]:
         # Ensure test doesn't stay frozen if a bug in a fixture prevent the
         # backend from starting
         async with real_clock_timeout():
@@ -64,7 +65,7 @@ async def alice_core(
     core_config,
     fixtures_customization,
     initialize_local_user_manifest,
-    core_factory: Callable[..., _AsyncGeneratorContextManager[LoggedCore]],
+    core_factory: CoreFactory,
     alice: LocalDevice,
 ) -> LoggedCore:
     initial_user_manifest = fixtures_customization.get("alice_initial_local_user_manifest", "v1")
@@ -77,8 +78,12 @@ async def alice_core(
 
 @pytest.fixture
 async def alice2_core(
-    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, alice2
-):
+    core_config,
+    fixtures_customization,
+    initialize_local_user_manifest,
+    core_factory: CoreFactory,
+    alice2: LocalDevice,
+) -> LoggedCore:
     initial_user_manifest = fixtures_customization.get("alice2_initial_local_user_manifest", "v1")
     await initialize_local_user_manifest(
         core_config.data_base_dir, alice2, initial_user_manifest=initial_user_manifest
@@ -88,7 +93,9 @@ async def alice2_core(
 
 
 @pytest.fixture
-async def otheralice_core(core_config, initialize_local_user_manifest, core_factory, otheralice):
+async def otheralice_core(
+    core_config, initialize_local_user_manifest, core_factory: CoreFactory, otheralice: LocalDevice
+) -> LoggedCore:
     await initialize_local_user_manifest(
         core_config.data_base_dir, otheralice, initial_user_manifest="v1"
     )
@@ -98,8 +105,12 @@ async def otheralice_core(core_config, initialize_local_user_manifest, core_fact
 
 @pytest.fixture
 async def adam_core(
-    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, adam
-):
+    core_config,
+    fixtures_customization,
+    initialize_local_user_manifest,
+    core_factory: CoreFactory,
+    adam: LocalDevice,
+) -> LoggedCore:
     initial_user_manifest = fixtures_customization.get("adam_initial_local_user_manifest", "v1")
     await initialize_local_user_manifest(
         core_config.data_base_dir, adam, initial_user_manifest=initial_user_manifest
@@ -110,8 +121,12 @@ async def adam_core(
 
 @pytest.fixture
 async def bob_core(
-    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, bob
-):
+    core_config,
+    fixtures_customization,
+    initialize_local_user_manifest,
+    core_factory: CoreFactory,
+    bob: LocalDevice,
+) -> LoggedCore:
     initial_user_manifest = fixtures_customization.get("bob_initial_local_user_manifest", "v1")
     await initialize_local_user_manifest(
         core_config.data_base_dir, bob, initial_user_manifest=initial_user_manifest

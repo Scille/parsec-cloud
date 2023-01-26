@@ -8,6 +8,7 @@ from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryName, PingMessageContent
 from parsec.api.protocol import UserID
 from parsec.core.backend_connection import BackendConnStatus
+from parsec.core.logged_core import LoggedCore
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
 from parsec.crypto import SecretKey
 from tests.common import create_shared_workspace, freeze_time
@@ -83,7 +84,11 @@ async def test_process_while_offline(
 
 
 @pytest.mark.trio
-async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
+async def test_new_sharing_trigger_event(
+    alice_core: LoggedCore,
+    bob_core: LoggedCore,
+    running_backend,
+):
     KEY = SecretKey.generate()
     # First, create a folder and sync it on backend
     with freeze_time("2000-01-01"):

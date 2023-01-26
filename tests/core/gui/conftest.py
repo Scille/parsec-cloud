@@ -249,6 +249,9 @@ def throttled_job_fast_wait(monkeypatch):
     monkeypatch.setattr(QtToTrioJobScheduler, "submit_throttled_job", _patched_submit_throttled_job)
 
 
+GuiFactory = Callable[..., Awaitable[MainWindow]]
+
+
 @pytest.fixture
 def gui_factory(
     aqtbot,
@@ -257,7 +260,7 @@ def gui_factory(
     core_config,
     event_bus_factory,
     running_backend_ready,
-):
+) -> GuiFactory:
     windows = []
 
     async def _gui_factory(

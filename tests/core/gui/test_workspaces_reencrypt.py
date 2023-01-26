@@ -379,11 +379,11 @@ async def test_workspace_reencryption_do_one_batch_error(
 async def test_workspace_reencryption_continue(
     aqtbot,
     running_backend,
-    gui_factory,
+    gui_factory: GuiFactory,
     autoclose_dialog,
-    monkeypatch,
-    alice2_user_fs,
-    bob_user_fs,
+    monkeypatch: pytest.MonkeyPatch,
+    alice2_user_fs: UserFS,
+    bob_user_fs: UserFS,
     alice,
 ):
     # Create a shared workspace

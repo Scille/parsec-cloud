@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from functools import partial
 from inspect import iscoroutine
-from typing import Callable, Optional, Union
+from typing import AsyncContextManager, Callable, Optional, Union
 
 import pytest
 import trio
@@ -99,6 +99,9 @@ async def server_factory(handle_client: Callable):
         nursery.cancel_scope.cancel()
 
 
+BackendFactory = Callable[..., AsyncContextManager[BackendApp]]
+
+
 @pytest.fixture
 def backend_factory(
     asyncio_loop,
@@ -116,7 +119,7 @@ def backend_factory(
     blockstore,
     backend_store,
     fixtures_customization,
-):
+) -> BackendFactory:
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
@@ -124,7 +127,9 @@ def backend_factory(
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     @asynccontextmanager
-    async def _backend_factory(populated=True, config={}, event_bus=None):
+    async def _backend_factory(
+        populated=True, config={}, event_bus=None
+    ) -> AsyncContextManager[BackendApp]:
         nonlocal backend_store, blockstore
         if fixtures_customization.get("backend_force_mocked"):
             backend_store = "MOCKED"
@@ -556,7 +561,7 @@ class RunningBackend:
     def offline(self, port: Optional[int] = None):
         return self.asgi_app.offline(port or self.addr.port)
 
-    def correct_addr(self, addr: BackendAddr) -> BackendAddr:
+    def correct_addr(self, addr: BackendAddr | LocalDevice) -> BackendAddr:
         return correct_addr(addr, self.addr.port)
 
     async def connection_factory(self) -> trio.abc.Stream:
@@ -567,14 +572,19 @@ class RunningBackend:
         return self.asgi_app.test_client(use_cookies)
 
 
+RunningBackendFactory = Callable[..., AsyncContextManager[RunningBackend]]
+
+
 @pytest.fixture
-def running_backend_factory(asyncio_loop, hyper_config):
+def running_backend_factory(asyncio_loop, hyper_config) -> RunningBackendFactory:
     # `asyncio_loop` is already declared by `backend_factory` (since it's only the
     # backend that need an asyncio loop for postgresql stuff), however this is not
     # enough here given we create the server *before* `backend_factory` is required
 
     @asynccontextmanager
-    async def _running_backend_factory(backend, sockets=None):
+    async def _running_backend_factory(
+        backend, sockets=None
+    ) -> AsyncContextManager[RunningBackend]:
         asgi_app = AsgiOfflineMiddleware(app_factory(backend))
         async with trio.open_nursery() as nursery:
             binds = await nursery.start(
