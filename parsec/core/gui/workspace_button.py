@@ -48,6 +48,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     remount_ts_clicked = pyqtSignal(WorkspaceFS)
     open_clicked = pyqtSignal(WorkspaceFS)
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
+    manage_remanence_clicked = pyqtSignal(WorkspaceFS)
 
     def __init__(
         self,
@@ -238,6 +239,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             if self.reencryption_needs and self.reencryption_needs.need_reencryption:
                 action = menu.addAction(_("ACTION_WORKSPACE_REENCRYPT"))
                 action.triggered.connect(self.button_reencrypt_clicked)
+            action = menu.addAction(_("ACTION_WORKSPACE_MANAGE_REMANENCE"))
+            action.triggered.connect(lambda: self.manage_remanence_clicked.emit(self.workspace_fs))
         else:
             action = menu.addAction(_("ACTION_WORKSPACE_DELETE"))
             action.triggered.connect(self.button_delete_clicked)
