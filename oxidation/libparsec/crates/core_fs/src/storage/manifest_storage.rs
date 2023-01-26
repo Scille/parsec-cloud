@@ -12,7 +12,7 @@ use std::{
 use libparsec_client_types::LocalManifest;
 use libparsec_crypto::{CryptoError, SecretKey};
 use libparsec_types::{BlockID, ChunkID, EntryID, Regex};
-use platform_async::{future::TryFutureExt, futures::executor::block_on};
+use platform_async::future::TryFutureExt;
 
 use crate::{
     error::{FSError, FSResult},
@@ -116,18 +116,6 @@ impl CacheEntry {
     }
 }
 
-impl Drop for ManifestStorage {
-    fn drop(&mut self) {
-        let res = block_on(async { self.flush_cache_ahead_of_persistance().await });
-
-        match res {
-            Ok(_) => (),
-            Err(FSError::DatabaseClosed(_)) => (),
-            Err(e) => panic!("When dropping ManifestStorage, got the following error: {e}"),
-        }
-    }
-}
-
 impl ManifestStorage {
     pub async fn new(
         local_symkey: SecretKey,
@@ -142,6 +130,34 @@ impl ManifestStorage {
         };
         instance.create_db().await?;
         Ok(instance)
+    }
+
+    /// Close the connection to the database.
+    /// Before that it will try to flush data the are stored in cache
+    pub async fn close_connection(&self) -> FSResult<()> {
+        {
+            let cache_guard = self.caches.lock().expect("Mutex is poisoned");
+            cache_guard
+                .iter()
+                .try_for_each(|(id, lock)| {
+                    let id = *id;
+                    let has_pending_chunks = {
+                        lock.read()
+                            .expect("RwLock is poisoned")
+                            .pending_chunk_ids
+                            .is_some()
+                    };
+                    if has_pending_chunks {
+                        Err(format!("Manifest {id} has pending chunk not saved"))
+                    } else {
+                        Ok(())
+                    }
+                })
+                .expect("Invalid state when closing connection");
+        }
+        self.flush_cache_ahead_of_persistance().await?;
+        self.conn.close().await;
+        Ok(())
     }
 
     /// Database initialization

@@ -80,18 +80,13 @@ pub struct WorkspaceStorage {
     prevent_sync_pattern: Arc<Mutex<Regex>>,
     prevent_sync_pattern_fully_applied: Arc<Mutex<bool>>,
     entry_locks: Locker<EntryID>,
-    /// Connection to the Data database.
-    data_conn: LocalDatabase,
-    /// Connection to the Cache database.
-    cache_conn: LocalDatabase,
-
     workspace_storage_manifest_copy: Arc<RwLock<Option<LocalWorkspaceManifest>>>,
 }
 
 impl WorkspaceStorage {
     pub async fn new(
         // Allow different type as Path, PathBuf, String, &str
-        data_base_dir: impl AsRef<Path>,
+        data_base_dir: impl AsRef<Path> + Send,
         device: LocalDevice,
         workspace_id: EntryID,
         prevent_sync_pattern: Regex,
@@ -117,7 +112,7 @@ impl WorkspaceStorage {
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
-            cache_conn.clone(),
+            cache_conn,
             cache_size,
             device.time_provider.clone(),
         )
@@ -129,7 +124,7 @@ impl WorkspaceStorage {
 
         let chunk_storage = ChunkStorage::new(
             device.local_symkey.clone(),
-            data_conn.clone(),
+            data_conn,
             device.time_provider.clone(),
         )
         .await?;
@@ -150,8 +145,6 @@ impl WorkspaceStorage {
             prevent_sync_pattern_fully_applied: Arc::new(Mutex::new(false)),
             // Locking structure
             entry_locks: Locker::default(),
-            data_conn,
-            cache_conn,
 
             workspace_storage_manifest_copy: Arc::new(RwLock::new(None)),
         };
@@ -451,8 +444,15 @@ impl WorkspaceStorage {
     /// Close the connections to the databases.
     /// Provide a way to manually close those connections.
     /// Event tho they will be closes when [WorkspaceStorage] is dropped.
-    pub async fn close_connections(&self) {
-        future::join(self.data_conn.close(), self.cache_conn.close()).await;
+    pub async fn close_connections(&self) -> FSResult<()> {
+        let (r1, r2, r3) = future::join3(
+            self.manifest_storage.close_connection(),
+            self.chunk_storage.close_connection(),
+            self.block_storage.close_connection(),
+        )
+        .await;
+
+        r1.and(r2).and(r3)
     }
 
     // Prevent sync pattern interface
@@ -679,22 +679,23 @@ pub async fn workspace_storage_non_speculative_init(
     )
     .await?;
     let manifest_storage =
-        ManifestStorage::new(device.local_symkey.clone(), workspace_id, conn.clone()).await?;
+        ManifestStorage::new(device.local_symkey.clone(), workspace_id, conn).await?;
     let timestamp = timestamp.unwrap_or_else(|| device.now());
     let manifest =
         LocalWorkspaceManifest::new(device.device_id, timestamp, Some(workspace_id), false);
-    let res = manifest_storage
+
+    manifest_storage
         .set_manifest(
             workspace_id,
             LocalManifest::Workspace(manifest),
             false,
             None,
         )
-        .await;
+        .await?;
+    manifest_storage.clear_memory_cache(true).await?;
+    manifest_storage.close_connection().await?;
 
-    conn.close().await;
-
-    res
+    Ok(())
 }
 
 #[cfg(test)]
@@ -980,6 +981,8 @@ mod tests {
             .unwrap();
 
         aws.release_entry_id(&manifest_id, guard);
+        aws.clear_memory_cache(true).await.unwrap();
+        aws.close_connections().await.unwrap();
 
         drop(aws);
 

@@ -92,7 +92,7 @@ impl LocalDatabase {
 }
 
 impl LocalDatabase {
-    pub async fn exec<F, R>(&self, executor: F) -> DatabaseResult<R>
+    pub async fn exec<F, R>(&self, job: F) -> DatabaseResult<R>
     where
         F: (FnOnce(&mut SqliteConnection) -> diesel::result::QueryResult<R>) + Send + 'static,
         R: Send + 'static,
@@ -103,7 +103,7 @@ impl LocalDatabase {
             .await
             .as_ref()
             .ok_or(DatabaseError::Closed)?
-            .exec(executor)
+            .exec(job)
             .await?;
         match res {
             Err(diesel::result::Error::DatabaseError(kind, err)) => {
@@ -118,12 +118,12 @@ impl LocalDatabase {
                     // We want to remove the ability to send job when the error is `CloseConnection`
                     // (the database is close so no way we could execute those jobs).
                     diesel::result::DatabaseErrorKind::ClosedConnection => {
-                        self.executor.write().await.take();
+                        self.close().await;
                     }
                     // And on unknown error, we could be more picky and only close the connection on specific unknown error (for example only close the connection on `disk full`)
                     // But checking for those is hard and implementation specific (we need to check against a `&str` which formating could change).
                     _ => {
-                        self.executor.write().await.take();
+                        self.close().await;
                     }
                 }
                 Err(DatabaseError::DieselDatabaseError(kind, err))
@@ -140,7 +140,7 @@ impl LocalDatabase {
     ) -> Result<R, E>
     where
         F: (FnOnce(&mut SqliteConnection) -> diesel::result::QueryResult<R>) + Send + 'static,
-        HANDLER: FnOnce(diesel::result::Error) -> E,
+        HANDLER: FnOnce(diesel::result::Error) -> E + Send,
         R: Send + 'static,
         E: From<DatabaseError>,
     {

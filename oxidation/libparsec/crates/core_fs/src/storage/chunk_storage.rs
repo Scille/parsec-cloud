@@ -59,6 +59,11 @@ pub(crate) trait ChunkStorageTrait {
         Ok(())
     }
 
+    async fn close_connection(&self) -> FSResult<()> {
+        self.conn().close().await;
+        Ok(())
+    }
+
     #[cfg(test)]
     async fn drop_db(&self) -> FSResult<()> {
         self.conn()
