@@ -246,6 +246,7 @@ impl PkiEnrollmentInfoStatus {
 }
 
 #[pyclass]
+#[derive(Clone)]
 pub(crate) struct PkiEnrollmentListReq(pub pki_enrollment_list::Req);
 
 #[pymethods]

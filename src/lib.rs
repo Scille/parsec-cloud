@@ -49,6 +49,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
 
     m.add_class::<backend_connection::AuthenticatedCmds>()?;
+    m.add_class::<backend_connection::AuthenticatedCmdsType>()?;
     m.add(
         "CommandErrorExc",
         py.get_type::<backend_connection::CommandError>(),

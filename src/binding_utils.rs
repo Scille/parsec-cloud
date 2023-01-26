@@ -349,6 +349,32 @@ macro_rules! impl_enum_field {
     };
 }
 
+macro_rules! send_command {
+    ($client: ident, $req: ident, $cmd_name: ident, $rep_type: ident, $($kind_type: ty),*) => {
+        ::paste::paste! {
+            $client
+                .send($req)
+                .await
+                .map(|r| {
+                    Python::with_gil(|py| match r {
+                        $(
+                            authenticated_cmds::v2::$cmd_name::Rep::$kind_type { .. } => {
+                                PyResult::<PyObject>::Ok(crate::binding_utils::py_object!(
+                                    r,
+                                    $rep_type,
+                                    [<$rep_type $kind_type>],
+                                    py
+                                ))
+                            }
+                         )*
+                    })
+                })
+                .map(|e| e.expect("Failed to create a pyobject from server's response"))
+                .map_err(|e| Into::<PyErr>::into(Into::<CommandErrorExc>::into(e)))
+        }
+    }
+}
+
 pub(crate) use _unwrap_bytes;
 pub(crate) use create_exception;
 pub(crate) use create_exception_from;
@@ -357,4 +383,5 @@ pub(crate) use impl_enum_field;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
 pub(crate) use py_object;
+pub(crate) use send_command;
 pub(crate) use unwrap_bytes;
