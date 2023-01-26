@@ -906,6 +906,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     _("TEXT_PARSEC_QUIT_TITLE"),
                     _("TEXT_PARSEC_QUIT_INSTRUCTIONS"),
                     [_("ACTION_PARSEC_QUIT_CONFIRM"), _("ACTION_CANCEL")],
+                    oriented_question=True,
                 )
                 if result != _("ACTION_PARSEC_QUIT_CONFIRM"):
                     event.ignore()
