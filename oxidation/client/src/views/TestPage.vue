@@ -51,20 +51,37 @@ import {
 } from '@ionic/vue';
 import { ref } from 'vue';
 import { libparsec } from '../plugins/libparsec';
+import { ClientEvent, ClientConfig, DeviceAccessParamsPassword } from '../plugins/libparsec/definitions';
 
 const name = ref('Scruffy');
 
 const path = 'PATH/TO/.config/parsec/';
 const password = 'PASSWORD';
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-unused-vars
+const onEventCallback = (event: ClientEvent) =>  {
+  console.log('callback');
+};
+const config: ClientConfig = {
+  configDir: '',
+  dataBaseDir: '',
+  mountpointBaseDir: '',
+  preferredOrgCreationBackendAddr: 'parsec://alice_dev1.example.com:9999',
+  workspaceStorageCacheSize: { tag: 'Default' }
+};
 
 async function onSubmit(): Promise<void> {
   console.log('Submitting');
-  const devices = await libparsec.listAvailableDevices(path);
+  const devices = await libparsec.clientListAvailableDevices(path);
   console.log(devices);
-  const handle = await libparsec.login(devices[0].keyFilePath, password);
-  // const handle = await libparsec.login(devices[0].slug, password);
+  const param: DeviceAccessParamsPassword = {
+    tag: 'Password',
+    path: devices[0].keyFilePath,
+    // path: devices[0].slug,
+    password
+  };
+  const handle = await libparsec.clientLogin(param, config, onEventCallback).then((x) => x.ok ? x.value : -1);
   console.log(handle);
-  const deviceID = await libparsec.loggedCoreGetDeviceId(0);
+  const deviceID = await libparsec.clientGetDeviceId(handle).then((x) => x.ok ? x.value : -1);
   console.log(deviceID);
 }
 </script>

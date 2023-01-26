@@ -570,6 +570,51 @@ fn variant_clientloginerror_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientGetterError
+
+#[allow(dead_code)]
+fn variant_clientgettererror_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ClientGetterError, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Disconnected") => {
+            Ok(libparsec::ClientGetterError::Disconnected {})
+        }
+        tag if tag == JsValue::from_str("InvalidHandle") => {
+            let handle = {
+                let js_val = Reflect::get(&obj, &"handle".into())?;
+                js_val
+                    .dyn_into::<Number>()
+                    .map_err(|_| TypeError::new("Not a number"))?
+                    .value_of() as i32
+            };
+            Ok(libparsec::ClientGetterError::InvalidHandle { handle })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a ClientGetterError",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_clientgettererror_rs_to_js(
+    rs_obj: libparsec::ClientGetterError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::ClientGetterError::Disconnected {} => {
+            Reflect::set(&js_obj, &"tag".into(), &"Disconnected".into())?;
+        }
+        libparsec::ClientGetterError::InvalidHandle { handle } => {
+            Reflect::set(&js_obj, &"tag".into(), &"InvalidHandle".into())?;
+            let js_handle = JsValue::from(handle);
+            Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // client_list_available_devices
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -631,6 +676,31 @@ pub fn clientLogin(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_clientloginerror_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_get_device_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientGetDeviceId(handle: i32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_get_device_id(handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str(value.as_ref());
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_clientgettererror_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

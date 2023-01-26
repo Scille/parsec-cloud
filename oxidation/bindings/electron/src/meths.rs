@@ -517,6 +517,48 @@ fn variant_clientloginerror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientGetterError
+
+#[allow(dead_code)]
+fn variant_clientgettererror_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ClientGetterError> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Disconnected" => Ok(libparsec::ClientGetterError::Disconnected {}),
+        "InvalidHandle" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                js_val.value(cx) as i32
+            };
+            Ok(libparsec::ClientGetterError::InvalidHandle { handle })
+        }
+        _ => cx.throw_type_error("Object is not a ClientGetterError"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_clientgettererror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetterError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::ClientGetterError::Disconnected {} => {
+            let js_tag = JsString::try_new(cx, "Disconnected").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetterError::InvalidHandle { handle } => {
+            let js_tag = JsString::try_new(cx, "InvalidHandle").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, handle as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // client_list_available_devices
 fn client_list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
@@ -649,8 +691,52 @@ fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_get_device_id
+fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        js_val.value(&mut cx) as i32
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_get_device_id(handle).await;
+
+            channel.send(move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsString::try_new(&mut cx, ok).or_throw(&mut cx)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_clientgettererror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
+    Ok(promise)
+}
+
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientListAvailableDevices", client_list_available_devices)?;
     cx.export_function("clientLogin", client_login)?;
+    cx.export_function("clientGetDeviceId", client_get_device_id)?;
     Ok(())
 }

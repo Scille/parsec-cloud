@@ -115,6 +115,19 @@ export type ClientLoginError =
   | ClientLoginErrorDeviceInvalidFormat
 
 
+// ClientGetterError
+export interface ClientGetterErrorDisconnected {
+    tag: "Disconnected"
+}
+export interface ClientGetterErrorInvalidHandle {
+    tag: "InvalidHandle"
+    handle: number;
+}
+export type ClientGetterError =
+  | ClientGetterErrorDisconnected
+  | ClientGetterErrorInvalidHandle
+
+
 export function clientListAvailableDevices(
     path: string
 ): Promise<Array<AvailableDevice>>;
@@ -123,3 +136,6 @@ export function clientLogin(
     config: ClientConfig,
     on_event_callback: (event: ClientEvent) => void
 ): Promise<Result<number, ClientLoginError>>;
+export function clientGetDeviceId(
+    handle: number
+): Promise<Result<string, ClientGetterError>>;

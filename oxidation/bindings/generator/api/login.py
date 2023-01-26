@@ -60,6 +60,10 @@ class OnClientEventCallback(Callable[[ClientEvent], None]):
     event_type = ClientEvent
 
 
+async def client_list_available_devices(path: Ref[Path]) -> list[AvailableDevice]:
+    ...
+
+
 class ClientLoginError(Variant):
     class DeviceAlreadyLoggedIn:
         pass
@@ -74,13 +78,21 @@ class ClientLoginError(Variant):
         pass
 
 
-async def client_list_available_devices(path: Ref[Path]) -> list[AvailableDevice]:
-    ...
-
-
 async def client_login(
     load_device_params: DeviceAccessParams,
     config: ClientConfig,
     on_event_callback: OnClientEventCallback,
 ) -> Result[ClientHandle, ClientLoginError]:
+    ...
+
+
+class ClientGetterError(Variant):
+    class Disconnected:
+        pass
+
+    class InvalidHandle:
+        handle: ClientHandle
+
+
+async def client_get_device_id(handle: ClientHandle) -> Result[DeviceID, ClientGetterError]:
     ...

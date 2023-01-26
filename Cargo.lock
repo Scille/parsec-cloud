@@ -1224,9 +1224,14 @@ name = "libparsec_client_high_level_api"
 version = "0.0.0"
 dependencies = [
  "libparsec_client_types",
+ "libparsec_core",
  "libparsec_crypto",
+ "libparsec_platform_async",
+ "libparsec_platform_device_loader",
  "libparsec_protocol",
  "libparsec_types",
+ "once_cell",
+ "thiserror",
 ]
 
 [[package]]
@@ -1265,7 +1270,6 @@ dependencies = [
  "libparsec_platform_device_loader",
  "libparsec_protocol",
  "libparsec_types",
- "once_cell",
  "rmp-serde",
  "rstest",
  "serde",

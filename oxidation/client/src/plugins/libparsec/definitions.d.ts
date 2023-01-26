@@ -116,6 +116,18 @@ export type ClientLoginError =
   | ClientLoginErrorDeviceAlreadyLoggedIn
   | ClientLoginErrorDeviceInvalidFormat
 
+// ClientGetterError
+export interface ClientGetterErrorDisconnected {
+    tag: 'Disconnected'
+}
+export interface ClientGetterErrorInvalidHandle {
+    tag: 'InvalidHandle'
+    handle: number;
+}
+export type ClientGetterError =
+  | ClientGetterErrorDisconnected
+  | ClientGetterErrorInvalidHandle
+
 export interface LibParsecPlugin {
     clientListAvailableDevices(
         path: Path
@@ -125,4 +137,7 @@ export interface LibParsecPlugin {
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void
     ): Promise<Result<number, ClientLoginError>>;
+    clientGetDeviceId(
+        handle: number
+    ): Promise<Result<DeviceID, ClientGetterError>>;
 }
