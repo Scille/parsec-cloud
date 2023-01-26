@@ -43,6 +43,8 @@ def unused_tcp_port():
     if sys.platform == "darwin":
         sock.close()
     yield port
+    if sys.platform != "darwin":
+        sock.close()
 
 
 def correct_addr(
