@@ -49,6 +49,7 @@ pub(crate) fn maybe_open_sqlite_in_memory(path: &str) -> Option<SqliteExecutor> 
                             // benefit at connecting multiple times to a database).
                             // This is most likely in a bug (typically trying to start two
                             // client with the same device).
+                            drop(strategy);
                             panic!(
                                 "Trying to open already opened in memory database `{}`",
                                 path
@@ -82,8 +83,8 @@ pub(crate) fn maybe_open_sqlite_in_memory(path: &str) -> Option<SqliteExecutor> 
 }
 
 pub(crate) fn return_sqlite_in_memory_db(path: &str, db: SqliteExecutor) {
-    let mut strategy = TEST_DB_STRATEGY.lock().expect("Mutex is poisoned");
-    if let TestDBStrategy::InMemory(dbs) = &mut *strategy {
+    let mut strategy_guard = TEST_DB_STRATEGY.lock().expect("Mutex is poisoned");
+    if let TestDBStrategy::InMemory(dbs) = &mut *strategy_guard {
         if let Entry::Occupied(mut entry) = dbs.entry(path.to_string()) {
             if let ClosableInMemoryDB::Opened = entry.get() {
                 entry.insert(ClosableInMemoryDB::Closed(db));
@@ -91,9 +92,10 @@ pub(crate) fn return_sqlite_in_memory_db(path: &str, db: SqliteExecutor) {
             }
         }
     }
+    // Note: because we panic the mutex on `TEST_DB_STRATEGY` will be poisoned.
     panic!(
         "Inconsistent state with SQLite in-memory mock:\npath: {}\ndbs: {:?}",
-        path, *strategy
+        path, *strategy_guard
     )
 }
 
@@ -113,16 +115,23 @@ pub fn test_toggle_local_db_in_memory_mock(enabled: bool) {
 
 /// Will clear saved databases opened in memory.
 pub fn test_clear_local_db_in_memory_mock() {
-    let mut strategy = TEST_DB_STRATEGY.lock().expect("Mutex is poisoned");
-    if let TestDBStrategy::InMemory(dbs) = &mut *strategy {
-        for (path, closable) in dbs.iter() {
+    let mut strategy_guard = TEST_DB_STRATEGY.lock().expect("Mutex is poisoned");
+    if let TestDBStrategy::InMemory(ref mut dbs) = *strategy_guard {
+        let still_opened_path = dbs.iter().find_map(|(path, closable)| {
             if let ClosableInMemoryDB::Opened = closable {
-                panic!(
-                    "In-memory database `{}` is still opened, cannot clear the mock !",
-                    path
-                );
+                Some(path.clone())
+            } else {
+                None
             }
+        });
+        if let Some(path) = still_opened_path {
+            drop(strategy_guard);
+            panic!(
+                "In-memory database `{}` is still opened, cannot clear the mock !",
+                path
+            );
         }
+
         dbs.clear();
     }
 }
