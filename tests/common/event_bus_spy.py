@@ -10,7 +10,7 @@ import pytest
 import trio
 
 from parsec._parsec import CoreEvent, DateTime, EventsListenRep
-from parsec.event_bus import EventBus
+from parsec.event_bus import EventBus, MetaEvent
 from tests.common import real_clock_timeout
 
 
@@ -241,7 +241,8 @@ class EventBusSpy:
 
     def assert_events_exactly_occurred(self, events):
         events = self._cook_events_params(events)
-        assert events == self.events
+        filtered = [event for event in self.events if not isinstance(event.event, MetaEvent)]
+        assert events == filtered
 
 
 class SpiedEventBus(EventBus):
