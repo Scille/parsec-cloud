@@ -44,7 +44,9 @@ async function openPopover(ev: Event): Promise<void> {
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
-  labelRef.value = data.label;
+  if (data) {
+    labelRef.value = data.label;
+  }
 }
 
 </script>
