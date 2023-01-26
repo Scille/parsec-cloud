@@ -72,4 +72,7 @@ if (platform === 'web') {
     }
   };
 
+  if (process.env.NODE_ENV !== 'production') {
+    module.exports.configureWebpack.devtool = 'cheap-source-map';
+  }
 }
