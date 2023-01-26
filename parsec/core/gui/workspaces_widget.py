@@ -24,6 +24,7 @@ from parsec.core.gui import desktop, validators
 from parsec.core.gui.custom_dialogs import ask_question, get_text_input, show_error
 from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui.lang import translate as T
+from parsec.core.gui.remanence_management_widget import RemanenceManagementWidget
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
@@ -334,6 +335,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         else:
             show_error(self, T("TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"), exception=job.exc)
 
+    def _on_manage_remanence_clicked(self, workspace_fs: WorkspaceFS) -> None:
+        RemanenceManagementWidget.show_modal(self.jobs_ctx, self.core, workspace_fs, self)
+
     def on_list_success(self, job: QtToTrioJob[list[WorkspaceFS]]) -> None:
         # Hide the spinner in case it was visible
         self.spinner.hide()
@@ -363,6 +367,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 button.remount_ts_clicked.connect(self.remount_workspace_ts)
                 button.open_clicked.connect(self.open_workspace)
                 button.switch_clicked.connect(self._on_switch_clicked)
+                button.manage_remanence_clicked.connect(self._on_manage_remanence_clicked)
             button.refresh_status()
 
             # Add the button to the new mapping
