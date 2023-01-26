@@ -1,5 +1,8 @@
 {
     "HomePage": {
+        "topbar": {
+            "settings": "Settings"
+        },
         "organizationList": {
             "title": "List of your organizations",
             "lastLogin": "Last login: {date}",

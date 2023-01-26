@@ -5,162 +5,213 @@
       :fullscreen="true"
       color="secondary"
     >
-      <div id="container">
-        <div class="logo">
-          <img src="../assets/images/Logo/logo_blue.png">
-        </div>
-        <transition-group :name="showOrganizationList ? 'slide-left' : 'slide-right'">
-          <ion-card
-            v-if="showOrganizationList"
-            id="organization-list-container"
-          >
-            <ion-card-content class="organization-list">
-              <ion-card-title color="tertiary">
-                {{ $t('HomePage.organizationList.title') }}
-
-                <!-- No use in showing the sort/filter options for less than 2 devices -->
-                <div v-if="deviceList.length > 2">
-                  <ion-searchbar
-                    v-model="orgSearchString"
-                    id="search-bar"
-                  />
-
-                  <ion-button
-                    @click="sortOrderAsc = !sortOrderAsc"
-                    id="sort-order-button"
-                  >
-                    {{ sortOrderAsc ? $t('HomePage.organizationList.sortOrderAsc') : $t('HomePage.organizationList.sortOrderDesc') }}
-                  </ion-button>
-
-                  <ion-select
-                    interface="action-sheet"
-                    id="sort-select"
-                    v-model="sortBy"
-                  >
-                    <ion-select-option value="name">
-                      Nom
-                    </ion-select-option>
-                    <ion-select-option value="last_login">
-                      Dernière connexion
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-              </ion-card-title>
-              <ion-grid>
-                <ion-row>
-                  <ion-col
-                    size="1"
-                    v-for="device in filteredDevices"
-                    :key="device.slug"
-                  >
-                    <ion-card
-                      button
-                      class="organization-card-container"
-                      @click="onOrganizationCardClick(device)"
-                    >
-                      <ion-card-content>
-                        <ion-grid>
-                          <OrganizationCard :device="device" />
-                          <ion-row>
-                            <ion-col
-                              size="auto"
-                              v-if="deviceStoredDataDict[device.slug]"
-                            >
-                              {{ formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) }}
-                            </ion-col>
-                          </ion-row>
-                        </ion-grid>
-                      </ion-card-content>
-                    </ion-card>
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
-            </ion-card-content>
-            <ion-card-content class="no-existing-organization">
-              <ion-card-title color="tertiary">
-                {{ $t('HomePage.noExistingOrganization.title') }}
-              </ion-card-title>
-              <ion-button
-                @click="openCreateOrganizationModal()"
-                size="large"
-                id="create-organization-button"
+      <div id="page">
+        <div id="topbar">
+          <ion-grid>
+            <ion-row>
+              <ion-col
+                size="8"
+                offset="2"
               >
-                <ion-icon
-                  slot="start"
-                  :icon="add"
-                />
-                {{ $t('HomePage.noExistingOrganization.createOrganization') }}
-              </ion-button>
-              <ion-button
-                @click="openJoinByLinkModal()"
-                fill="outline"
-                size="large"
-                id="join-by-link-button"
-              >
-                <ion-icon
-                  slot="start"
-                  :icon="link"
-                />
-                {{ $t('HomePage.noExistingOrganization.joinOrganization') }}
-              </ion-button>
-            </ion-card-content>
-          </ion-card>
-          <ion-card
-            v-if="!showOrganizationList"
-            id="login-popup-container"
-          >
-            <ion-card-content class="organization-list">
-              <ion-card-title color="tertiary">
+                <img src="../assets/images/Logo/logo_inline_blue2.png">
+              </ion-col>
+              <ion-col size="2">
                 <ion-button
                   fill="clear"
-                  @click="showOrganizationList = !showOrganizationList"
-                  id="back-to-list-button"
+                  @click="$router.push('settings')"
+                  id="settings-button"
                 >
                   <ion-icon
                     slot="start"
-                    :icon="chevronBackOutline"
+                    :icon="cogOutline"
                   />
-                  {{ $t('HomePage.organizationLogin.backToList') }}
+                  {{ $t('HomePage.topbar.settings') }}
                 </ion-button>
-              </ion-card-title>
-              <div id="login-container">
-                <ion-card id="login-card-container">
-                  <ion-card-content>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </div>
+        <div id="container">
+          <transition-group
+            :name="showOrganizationList ? 'slide-left' : 'slide-right'"
+          >
+            <ion-card
+              v-if="showOrganizationList"
+              id="organization-list-container"
+            >
+              <ion-card-content class="organization-list">
+                <ion-card-title color="tertiary">
+                  {{ $t('HomePage.organizationList.title') }}
+
+                  <!-- No use in showing the sort/filter options for less than 2 devices -->
+                  <template v-if="deviceList.length > 2">
                     <ion-grid>
-                      <OrganizationCard :device="selectedDevice" />
-                      <PasswordInput
-                        :label="t('HomePage.organizationLogin.passwordLabel')"
-                        @change="onPasswordChange"
-                        @enter="login"
-                      />
-                      <ion-button
-                        fill="clear"
-                        @click="onForgottenPasswordClick"
-                        id="forgotten-password-button"
-                      >
-                        {{ $t('HomePage.organizationLogin.forgottenPassword') }}
-                      </ion-button>
+                      <ion-row class="ion-justify-content-between">
+                        <ion-col size="1">
+                          <ion-item fill="solid">
+                            <ion-label
+                              position="floating"
+                            >
+                              {{ 'Search' }}
+                            </ion-label>
+                            <ion-icon
+                              :icon="searchOutline"
+                              slot="start"
+                            />
+                            <ion-input
+                              v-model="orgSearchString"
+                              :clear-input="true"
+                            />
+                          </ion-item>
+                        </ion-col>
+                        <ion-col size="auto">
+                          <MsSelect
+                            label="Trier par"
+                            :options="msSelectOptions"
+                            default-option="name"
+                          />
+
+                          <!-- <ion-button
+                            @click="sortOrderAsc = !sortOrderAsc"
+                            id="sort-order-button"
+                          >
+                          {{ sortOrderAsc ? $t('HomePage.organizationList.sortOrderAsc') : $t('HomePage.organizationList.sortOrderDesc') }}
+                          </ion-button> -->
+
+                          <ion-select
+                            v-model="sortBy"
+                            id="sort-select"
+                            interface="popover"
+                            :interface-options="customPopoverOptions"
+                          >
+                            <ion-select-option value="name">
+                              Nom
+                            </ion-select-option>
+                            <ion-select-option value="last_login">
+                              Dernière connexion
+                            </ion-select-option>
+                          </ion-select>
+                        </ion-col>
+                      </ion-row>
                     </ion-grid>
-                  </ion-card-content>
-                </ion-card>
-                <div id="login-button-container">
+                  </template>
+                </ion-card-title>
+                <ion-grid>
+                  <ion-row>
+                    <ion-col
+                      size="1"
+                      v-for="device in filteredDevices"
+                      :key="device.slug"
+                    >
+                      <ion-card
+                        button
+                        class="organization-card-container"
+                        @click="onOrganizationCardClick(device)"
+                      >
+                        <ion-card-content>
+                          <ion-grid>
+                            <OrganizationCard :device="device" />
+                            <ion-row>
+                              <ion-col
+                                size="auto"
+                                v-if="deviceStoredDataDict[device.slug]"
+                              >
+                                {{ formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) }}
+                              </ion-col>
+                            </ion-row>
+                          </ion-grid>
+                        </ion-card-content>
+                      </ion-card>
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+              <ion-card-content class="no-existing-organization">
+                <ion-card-title color="tertiary">
+                  {{ $t('HomePage.noExistingOrganization.title') }}
+                </ion-card-title>
+                <ion-button
+                  @click="openCreateOrganizationModal()"
+                  size="large"
+                  id="create-organization-button"
+                >
+                  <ion-icon
+                    slot="start"
+                    :icon="add"
+                  />
+                  {{ $t('HomePage.noExistingOrganization.createOrganization') }}
+                </ion-button>
+                <ion-button
+                  @click="openJoinByLinkModal()"
+                  fill="outline"
+                  size="large"
+                  id="join-by-link-button"
+                >
+                  <ion-icon
+                    slot="start"
+                    :icon="link"
+                  />
+                  {{ $t('HomePage.noExistingOrganization.joinOrganization') }}
+                </ion-button>
+              </ion-card-content>
+            </ion-card>
+            <ion-card
+              v-if="!showOrganizationList"
+              id="login-popup-container"
+            >
+              <ion-card-content class="organization-list">
+                <ion-card-title color="tertiary">
                   <ion-button
-                    @click="login"
-                    size="large"
-                    :disabled="password.length == 0"
-                    id="login-button"
+                    fill="clear"
+                    @click="showOrganizationList = !showOrganizationList"
+                    id="back-to-list-button"
                   >
                     <ion-icon
                       slot="start"
-                      :icon="logIn"
+                      :icon="chevronBackOutline"
                     />
-                    {{ $t("HomePage.organizationLogin.login") }}
+                    {{ $t('HomePage.organizationLogin.backToList') }}
                   </ion-button>
+                </ion-card-title>
+                <div id="login-container">
+                  <ion-card id="login-card-container">
+                    <ion-card-content>
+                      <ion-grid>
+                        <OrganizationCard :device="selectedDevice" />
+                        <PasswordInput
+                          :label="t('HomePage.organizationLogin.passwordLabel')"
+                          @change="onPasswordChange"
+                          @enter="login"
+                        />
+                        <ion-button
+                          fill="clear"
+                          @click="onForgottenPasswordClick"
+                          id="forgotten-password-button"
+                        >
+                          {{ $t('HomePage.organizationLogin.forgottenPassword') }}
+                        </ion-button>
+                      </ion-grid>
+                    </ion-card-content>
+                  </ion-card>
+                  <div id="login-button-container">
+                    <ion-button
+                      @click="login"
+                      size="large"
+                      :disabled="password.length == 0"
+                      id="login-button"
+                    >
+                      <ion-icon
+                        slot="start"
+                        :icon="logIn"
+                      />
+                      {{ $t("HomePage.organizationLogin.login") }}
+                    </ion-button>
+                  </div>
                 </div>
-              </div>
-            </ion-card-content>
-          </ion-card>
-        </transition-group>
+              </ion-card-content>
+            </ion-card>
+          </transition-group>
+        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -169,17 +220,19 @@
 <script setup lang="ts">
 import {
   IonContent,
+  IonInput,
   IonPage,
   IonCard,
   IonCardContent,
   IonCardTitle,
   IonButton,
   IonIcon,
+  IonItem,
+  IonLabel,
   IonRow,
   IonCol,
   IonGrid,
   modalController,
-  IonSearchbar,
   IonSelect,
   IonSelectOption
 } from '@ionic/vue';
@@ -187,6 +240,8 @@ import {
   add,
   link,
   chevronBackOutline,
+  searchOutline,
+  cogOutline,
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
@@ -195,6 +250,7 @@ import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
+import MsSelect from '@/components/MsSelect.vue';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
@@ -250,6 +306,11 @@ const store = new Storage();
 const sortBy = ref('name');
 const sortOrderAsc = ref(true);
 
+const msSelectOptions = [
+  {label:'Nom', key:'name'},
+  {label:'Dernière connexion', key:'last_login'}
+];
+
 const filteredDevices = computed(() => {
   return deviceList.filter((item) => {
     const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
@@ -278,6 +339,10 @@ const filteredDevices = computed(() => {
 });
 
 const deviceStoredDataDict = ref<{[slug: string]: DeviceStoredData}>({});
+
+const customPopoverOptions = {
+  component: 'ion-input'
+};
 
 onMounted(async (): Promise<void> => {
   await store.create();
@@ -398,24 +463,46 @@ async function canDismissModal(): Promise<boolean> {
 </script>
 
 <style lang="scss" scoped>
-#container {
+#page {
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
-  max-width: 50vw;
   margin: 0 auto;
+  align-items: center;
 
-  .logo {
-    max-width: 10em;
-    align-self: center;
+  #topbar {
     display: flex;
-    align-items: end;
-    padding-bottom: 2em;
-    flex-basis: 25%;
+    align-items: center;
+    flex-basis: 5em;
     flex-grow: 0;
     flex-shrink: 0;
+    background: #fefefe;
+    width: 100vw;
+    justify-content: center;
+    margin-bottom: 5em;
+
+    ion-col {
+      display: flex;
+      align-items: center;
+    }
+
+    ion-col:first-child {
+      justify-content: center;
+    }
+
+    ion-col:last-child {
+      justify-content: end;
+      padding-right: 3em;
+    }
+
+    img {
+      max-height: 3em;
+    }
+  }
+
+  #container {
+    width: 70vw;
   }
 
   ion-card {
@@ -448,7 +535,17 @@ async function canDismissModal(): Promise<boolean> {
 
     ion-grid {
       --ion-grid-padding: 1em;
-      --ion-grid-columns: 2;
+      --ion-grid-columns: 3;
+    }
+
+    ion-item {
+      align-items: center;
+    }
+
+    ion-card-title {
+      ion-grid {
+        margin-top: 1em;
+      }
     }
 
     .organization-card-container {
