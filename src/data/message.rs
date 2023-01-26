@@ -3,10 +3,9 @@
 use pyo3::{
     exceptions::{PyNotImplementedError, PyValueError},
     pyclass,
-    pyclass_init::PyObjectInit,
     pymethods,
     types::{PyBytes, PyString, PyType},
-    PyClassInitializer, PyObject, PyRef, PyResult, PyTypeInfo, Python,
+    PyObject, PyRef, PyResult, Python,
 };
 
 use crate::{
