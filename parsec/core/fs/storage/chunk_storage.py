@@ -287,15 +287,26 @@ class BlockStorage(ChunkStorage):
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
             def _thread_target(cursor: Cursor) -> list[ChunkID]:
+
+                # Select before delete
                 cursor.execute(
                     """
-                    DELETE FROM chunks WHERE chunk_id IN (
-                        SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
-                    ) RETURNING chunk_id
+                    SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
                     """,
                     (limit,),
                 )
                 rows = cursor.fetchall()
+
+                # And then actual delete
+                cursor.execute(
+                    """
+                    DELETE FROM chunks WHERE chunk_id IN (
+                        SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
+                    )
+                    """,
+                    (limit,),
+                )
+
                 return [ChunkID.from_bytes(id_bytes) for (id_bytes,) in rows]
 
             result = await self.localdb.run_in_thread(_thread_target, cursor)
