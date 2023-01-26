@@ -228,6 +228,31 @@ class BaseWorkspaceStorage:
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
         return self._prevent_sync_pattern_fully_applied
 
+    # Block remanence interface
+
+    def is_block_remanent(self) -> bool:
+        return self.block_storage.is_block_remanent()
+
+    async def enable_block_remanence(self) -> bool:
+        has_changed = await self.block_storage.enable_block_remanence()
+        return has_changed
+
+    async def disable_block_remanence(self) -> set[BlockID] | None:
+        removed_chunk_ids = await self.block_storage.disable_block_remanence()
+        if removed_chunk_ids is None:
+            return None
+        return {BlockID.from_bytes(chunk_id.bytes) for chunk_id in removed_chunk_ids}
+
+    async def clear_unreferenced_blocks(
+        self, block_ids: list[BlockID], not_accessed_after: float
+    ) -> None:
+        chunk_ids = [ChunkID.from_block_id(block_id) for block_id in block_ids]
+        return await self.block_storage.clear_unreferenced_chunks(chunk_ids, not_accessed_after)
+
+    async def remove_clean_blocks(self, block_ids: list[BlockID]) -> None:
+        chunk_ids = [ChunkID.from_block_id(block_id) for block_id in block_ids]
+        return await self.block_storage.clear_chunks(chunk_ids)
+
     # Timestamped workspace
 
     def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
