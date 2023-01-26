@@ -107,7 +107,25 @@ impl LocalDatabase {
             .await?;
         match res {
             Err(diesel::result::Error::DatabaseError(kind, err)) => {
-                self.executor.write().await.take();
+                match kind {
+                    diesel::result::DatabaseErrorKind::UniqueViolation
+                    | diesel::result::DatabaseErrorKind::ForeignKeyViolation
+                    | diesel::result::DatabaseErrorKind::UnableToSendCommand
+                    | diesel::result::DatabaseErrorKind::SerializationFailure
+                    | diesel::result::DatabaseErrorKind::ReadOnlyTransaction
+                    | diesel::result::DatabaseErrorKind::NotNullViolation
+                    | diesel::result::DatabaseErrorKind::CheckViolation => (),
+                    // We want to remove the ability to send job when the error is `CloseConnection`
+                    // (the database is close so no way we could execute those jobs).
+                    diesel::result::DatabaseErrorKind::ClosedConnection => {
+                        self.executor.write().await.take();
+                    }
+                    // And on unknown error, we could be more picky and only close the connection on specific unknown error (for example only close the connection on `disk full`)
+                    // But checking for those is hard and implementation specific (we need to check against a `&str` which formating could change).
+                    _ => {
+                        self.executor.write().await.take();
+                    }
+                }
                 Err(DatabaseError::DieselDatabaseError(kind, err))
             }
             Err(e) => Err(DatabaseError::Diesel(e)),
