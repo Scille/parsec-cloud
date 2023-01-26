@@ -5,7 +5,7 @@ from typing import Union
 from parsec._parsec_pyi.ids import DeviceID
 from parsec._parsec_pyi.addrs import BackendOrganizationAddr
 from parsec._parsec_pyi.crypto import SigningKey
-from parsec._parsec_pyi.protocol import * # noqa
+from parsec._parsec_pyi.protocol import *  # noqa
 
 AllAuthenticatedCmds = Union[
     BlockCreateReq,
