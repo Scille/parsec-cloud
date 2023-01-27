@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 // dllmain.h : Declaration of module class.
 
 class CrefreshiconhandlerModule : public ATL::CAtlDllModuleT< CrefreshiconhandlerModule >
