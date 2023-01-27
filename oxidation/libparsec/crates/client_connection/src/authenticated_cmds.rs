@@ -111,21 +111,8 @@ macro_rules! impl_auth_cmds {
         $(
             $(#[$outer])*
             pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
-                let request_builder = self.client.post(self.url.clone());
-
-                let data = build_req!($($decorator)? $name, $($key),*)
-                    .dump()
-                    .expect(concat!("failed to serialize the command ", stringify!($name)));
-
-                let req = prepare_request(request_builder, &self.signing_key, &self.device_id, data).send();
-                let resp = dbg!(req.await)?;
-                if resp.status() != reqwest::StatusCode::OK {
-                    return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
-                }
-
-                let response_body = resp.bytes().await?;
-
-                authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::InvalidResponseContent)
+                let data = build_req!($($decorator)? $name, $($key),*);
+                self.send(data).await
             }
         )+
     };
