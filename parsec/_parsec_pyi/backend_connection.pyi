@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 from oxidation.bindings.generator.api import DeviceID
 from parsec._parsec_pyi.addrs import BackendOrganizationAddr
 from parsec._parsec_pyi.crypto import SigningKey
