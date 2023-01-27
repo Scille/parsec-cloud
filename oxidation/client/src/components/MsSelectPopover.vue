@@ -4,6 +4,18 @@
   <ion-list>
     <ion-item
       class="option"
+      button
+      detail="false"
+      @click="onOptionClick()"
+    >
+      {{ sortByAsc ? sortByLabels.asc : sortByLabels.desc }}
+      <ion-icon
+        :icon="sortByAsc ? arrowUp : arrowDown"
+        slot="end"
+      />
+    </ion-item>
+    <ion-item
+      class="option"
       :class="{selected: selectedOption?.key === option.key}"
       button
       lines="none"
@@ -18,38 +30,40 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, onMounted, ref, Ref } from 'vue';
+import { defineProps, ref, Ref } from 'vue';
 import {
   IonList,
   IonItem,
+  IonIcon,
   popoverController
 } from '@ionic/vue';
-import { MsSelectOption } from '@/components/MsSelectOption.ts';
+import {
+  arrowUp,
+  arrowDown
+} from 'ionicons/icons';
+import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/components/MsSelectOption.ts';
 
 const props = defineProps<{
+  defaultOption?: string,
   options: MsSelectOption[],
-  defaultOption?: string
+  sortByLabels: MsSelectSortByLabels,
+  sortByAsc: boolean
 }>();
 
-const selectedOption: Ref<MsSelectOption> = ref(props.options.find((option) => {
-  return option.key === props.defaultOption;
-}));
+const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
+const sortByLabels: Ref<MsSelectSortByLabels> = ref(props.sortByLabels);
+const selectedOption: Ref<MsSelectOption> = ref(getOptionByKey(props.options, props.defaultOption));
 
-onMounted((): void => {
-  console.log(selectedOption.value);
-  if (props.defaultOption) {
-    console.log(props.defaultOption);
-    selectedOption.value = props.options.find((option) => {
-      console.log(option);
-      return option.key === props.defaultOption;
-    });
-    console.log(selectedOption.value);
+function onOptionClick(option?: MsSelectOption): void {
+  if (option) {
+    selectedOption.value = option;
+  } else {
+    sortByAsc.value = !sortByAsc.value;
   }
-});
-
-function onOptionClick(option: MsSelectOption): void {
-  selectedOption.value = option;
-  popoverController.dismiss(option);
+  popoverController.dismiss({
+    option: selectedOption.value,
+    sortByAsc: sortByAsc.value
+  });
 }
 
 </script>

@@ -69,28 +69,9 @@
                             label="Trier par"
                             :options="msSelectOptions"
                             default-option="name"
+                            :sort-by-labels="msSelectSortByLabels"
+                            @change="onMsSelectChange($event)"
                           />
-
-                          <!-- <ion-button
-                            @click="sortOrderAsc = !sortOrderAsc"
-                            id="sort-order-button"
-                          >
-                          {{ sortOrderAsc ? $t('HomePage.organizationList.sortOrderAsc') : $t('HomePage.organizationList.sortOrderDesc') }}
-                          </ion-button> -->
-
-                          <ion-select
-                            v-model="sortBy"
-                            id="sort-select"
-                            interface="popover"
-                            :interface-options="customPopoverOptions"
-                          >
-                            <ion-select-option value="name">
-                              Nom
-                            </ion-select-option>
-                            <ion-select-option value="last_login">
-                              Dernière connexion
-                            </ion-select-option>
-                          </ion-select>
                         </ion-col>
                       </ion-row>
                     </ion-grid>
@@ -180,12 +161,12 @@
                         <OrganizationCard :device="selectedDevice" />
                         <PasswordInput
                           :label="t('HomePage.organizationLogin.passwordLabel')"
-                          @change="onPasswordChange"
-                          @enter="login"
+                          @change="onPasswordChange($event)"
+                          @enter="login()"
                         />
                         <ion-button
                           fill="clear"
-                          @click="onForgottenPasswordClick"
+                          @click="onForgottenPasswordClick()"
                           id="forgotten-password-button"
                         >
                           {{ $t('HomePage.organizationLogin.forgottenPassword') }}
@@ -195,7 +176,7 @@
                   </ion-card>
                   <div id="login-button-container">
                     <ion-button
-                      @click="login"
+                      @click="login()"
                       size="large"
                       :disabled="password.length == 0"
                       id="login-button"
@@ -251,6 +232,7 @@ import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import MsSelect from '@/components/MsSelect.vue';
+import { MsSelectChangeEvent } from '@/components/MsSelectOption.ts';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
@@ -304,12 +286,17 @@ const orgSearchString = ref('');
 const showOrganizationList = ref(true);
 const store = new Storage();
 const sortBy = ref('name');
-const sortOrderAsc = ref(true);
+const sortByAsc = ref(true);
 
 const msSelectOptions = [
   {label:'Nom', key:'name'},
   {label:'Dernière connexion', key:'last_login'}
 ];
+
+const msSelectSortByLabels = {
+  asc: t('HomePage.organizationList.sortOrderAsc'),
+  desc: t('HomePage.organizationList.sortOrderDesc')
+};
 
 const filteredDevices = computed(() => {
   return deviceList.filter((item) => {
@@ -318,7 +305,7 @@ const filteredDevices = computed(() => {
       item.organizationId?.toLocaleLowerCase().includes(lowerSearchString));
   }).sort((a, b) => {
     if (sortBy.value === 'name') {
-      if (sortOrderAsc.value) {
+      if (sortByAsc.value) {
         return a.organizationId.localeCompare(b.organizationId);
       } else {
         return b.organizationId.localeCompare(a.organizationId);
@@ -328,7 +315,7 @@ const filteredDevices = computed(() => {
         deviceStoredDataDict.value[a.slug].lastLogin.valueOf() : 0;
       const bLastLogin = (b.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[b.slug].lastLogin !== undefined) ?
         deviceStoredDataDict.value[b.slug].lastLogin.valueOf() : 0;
-      if (sortOrderAsc.value) {
+      if (sortByAsc.value) {
         return aLastLogin - bLastLogin;
       } else {
         return bLastLogin - aLastLogin;
@@ -339,10 +326,6 @@ const filteredDevices = computed(() => {
 });
 
 const deviceStoredDataDict = ref<{[slug: string]: DeviceStoredData}>({});
-
-const customPopoverOptions = {
-  component: 'ion-input'
-};
 
 onMounted(async (): Promise<void> => {
   await store.create();
@@ -365,6 +348,11 @@ onMounted(async (): Promise<void> => {
 
 function onPasswordChange(pwd: string): void {
   password.value = pwd;
+}
+
+function onMsSelectChange(event: MsSelectChangeEvent): void {
+  sortBy.value = event.option.key;
+  sortByAsc.value = event.sortByAsc;
 }
 
 function onOrganizationCardClick(device: AvailableDevice): void {

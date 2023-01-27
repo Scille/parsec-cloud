@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref } from 'vue';
+import { defineProps, defineEmits, Ref, ref } from 'vue';
 import {
   IonButton,
   IonIcon,
@@ -23,21 +23,30 @@ import {
 } from '@ionic/vue';
 import { chevronDownOutline } from 'ionicons/icons';
 import MsSelectPopover from '@/components/MsSelectPopover.vue';
-import { MsSelectOption } from '@/components/MsSelectOption.ts';
+import { MsSelectOption, MsSelectSortByLabels, getOptionByKey, MsSelectChangeEvent } from '@/components/MsSelectOption.ts';
 
 const props = defineProps<{
-  label: string
+  defaultOption?: string,
+  label?: string,
   options: MsSelectOption[],
-  defaultOption?: string
+  sortByLabels: MsSelectSortByLabels
 }>();
 
-const labelRef = ref(props.label);
+const emits = defineEmits<{
+  (e: 'change', value: MsSelectChangeEvent): void
+}>();
+
+const selectedOption: Ref<MsSelectOption> = ref(getOptionByKey(props.options, props.defaultOption));
+const sortByAsc: Ref<boolean> = ref(true);
+const labelRef = ref(selectedOption.value.label || props.label);
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: MsSelectPopover,
     componentProps: {
       options: props.options,
-      defaultOption: props.defaultOption
+      defaultOption: selectedOption.value.key,
+      sortByLabels: props.sortByLabels,
+      sortByAsc: sortByAsc.value
     },
     event: ev
   });
@@ -45,7 +54,13 @@ async function openPopover(ev: Event): Promise<void> {
 
   const { data } = await popover.onDidDismiss();
   if (data) {
-    labelRef.value = data.label;
+    labelRef.value = data.option.label;
+    selectedOption.value = data.option;
+    sortByAsc.value = data.sortByAsc;
+    emits('change', {
+      option: data.option,
+      sortByAsc: sortByAsc.value
+    });
   }
 }
 
