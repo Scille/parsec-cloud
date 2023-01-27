@@ -3208,10 +3208,10 @@ msgid "TEXT_WORKSPACE_SIZE_local_size_total_size"
 msgstr "{local_size} / {total_size} de données sont disponibles localement."
 
 msgid "TEXT_BLOCK_REMANENCE_WARNING_remote_size"
-msgstr "Conserver les données localement pour un accès hors-ligne nécéssiterait de télécharger {remote_size} de données."
+msgstr "Conserver les données localement pour un accès hors-ligne nécessiterait de télécharger {remote_size} de données."
 
 msgid "TEXT_GET_REMANENCE_STATUS_FAILED"
-msgstr "Les information liées à la gestion des données dans cet espace de travail sont actuallement indisponibles."
+msgstr "Les informations liées à la gestion des données dans cet espace de travail sont actuellement indisponibles."
 
 msgid "TEXT_DISABLE_BLOCK_REMANENCE_FAILED"
 msgstr "Une erreur s'est produite lors du changement de politique de gestion des données."
