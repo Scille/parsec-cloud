@@ -1,13 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use futures::FutureExt;
-
 use pyo3::{
-    import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, wrap_pyfunction,
-    IntoPy, Py, PyAny, PyObject, PyRef, PyResult, Python,
+    import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, types::PyString,
+    wrap_pyfunction, IntoPy, Py, PyAny, PyObject, PyRef, PyResult, Python,
 };
-use std::future::Future;
-use std::pin::Pin;
+use std::{future::Future, pin::Pin};
 use tokio::task::JoinHandle;
 
 import_exception!(trio, RunFinishedError);
@@ -57,15 +55,31 @@ fn get_stuff(py: Python<'_>) -> PyResult<&Stuff> {
 }
 
 #[pyfunction]
-fn safe_trio_reschedule_fn(py: Python, task: &PyAny, value: &PyAny) -> PyResult<()> {
+fn safe_trio_reschedule_fn(
+    py: Python,
+    task: &PyAny,
+    value: &PyAny,
+    future_id: &PyString,
+) -> PyResult<()> {
     // Check `task.custom_sleep_data` to know if scheduling is required or forbidden
-    let rescheduling_required = task.getattr("custom_sleep_data")?.is_true()?;
+    let rescheduling_required = rescheduling_required(task, future_id);
     if !rescheduling_required {
         return Ok(());
     }
     let stuff = get_stuff(py)?;
     stuff.trio_reschedule_fn.call1(py, (task, value))?;
     Ok(())
+}
+
+fn rescheduling_required(task: &PyAny, future_id: &PyString) -> bool {
+    if let Ok(current_future_id) = task
+        .getattr("custom_sleep_data")
+        .and_then(|v| v.extract::<&str>())
+    {
+        current_future_id == future_id.to_string()
+    } else {
+        false
+    }
 }
 
 #[pyclass]
@@ -153,10 +167,11 @@ impl FutureIntoCoroutine {
 
         let trio_current_task = stuff.trio_current_task_fn.call0(py)?;
         let task = trio_current_task.clone();
+        let future_id = uuid::Uuid::new_v4();
 
         // Set `custom_sleep_data` to indicate the rescheduling is required.
         // This will be cleared if the task is rescheduled or cancelled.
-        trio_current_task.setattr(py, "custom_sleep_data", true)?;
+        trio_current_task.setattr(py, "custom_sleep_data", future_id.to_string())?;
 
         // Schedule the Tokio future
         let handle = stuff.tokio_runtime.spawn(async move {
@@ -183,13 +198,13 @@ impl FutureIntoCoroutine {
 
                 // Create the outcome object
                 let outcome = process_outcome_value(py, ret, outcome_value_fn, outcome_error_fn);
-
                 notify_trio(
                     py,
                     trio_token,
                     trio_reschedule_fn,
                     trio_current_task,
                     outcome,
+                    future_id,
                 );
             })
         });
@@ -231,17 +246,23 @@ fn notify_trio(
     trio_reschedule_fn: PyObject,
     trio_current_task: &PyAny,
     outcome: PyObject,
+    future_id: uuid::Uuid,
 ) {
     // Reschedule the coroutine, this must be done from within the trio thread so we have to use
     // the trio token to schedule a synchronous function that will do the actual schedule call
     match trio_token.call_method1(
         py,
         "run_sync_soon",
-        (trio_reschedule_fn, trio_current_task, outcome),
+        (
+            trio_reschedule_fn,
+            trio_current_task,
+            outcome,
+            PyString::new(py, &future_id.to_string()),
+        ),
     ) {
         Ok(_) => (),
         // We can ignore the error if the trio loop has been closed...
-        Err(err) if err.is_instance_of::<RunFinishedError>(py) => (),
+        Err(err) if err.is_instance_of::<RunFinishedError>(py) => {}
         // ...but for any other exception there is not much we can do :'(
         Err(err) => {
             panic!(
