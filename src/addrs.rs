@@ -26,47 +26,45 @@ crate::binding_utils::gen_proto!(BackendAddr, __hash__);
 #[pymethods]
 impl BackendAddr {
     #[new]
-    fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> PyResult<Self> {
-        Ok(Self(libparsec::types::BackendAddr::new(
-            hostname, port, use_ssl,
-        )))
+    fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> Self {
+        Self(libparsec::types::BackendAddr::new(hostname, port, use_ssl))
     }
 
     #[getter]
-    fn hostname(&self) -> PyResult<&str> {
-        Ok(self.0.hostname())
+    fn hostname(&self) -> &str {
+        self.0.hostname()
     }
 
     #[getter]
-    fn port(&self) -> PyResult<u16> {
-        Ok(self.0.port())
+    fn port(&self) -> u16 {
+        self.0.port()
     }
 
     #[getter]
-    fn use_ssl(&self) -> PyResult<bool> {
-        Ok(self.0.use_ssl())
+    fn use_ssl(&self) -> bool {
+        self.0.use_ssl()
     }
 
     #[getter]
-    fn netloc(&self) -> PyResult<String> {
+    fn netloc(&self) -> String {
         if self.0.is_default_port() {
-            Ok(String::from(self.0.hostname()))
+            String::from(self.0.hostname())
         } else {
-            Ok(format!("{}:{}", self.0.hostname(), self.0.port()))
+            format!("{}:{}", self.0.hostname(), self.0.port())
         }
     }
 
-    fn to_url(&self) -> PyResult<String> {
-        Ok(self.0.to_url().to_string())
+    fn to_url(&self) -> String {
+        self.0.to_url().to_string()
     }
 
     #[args(path = "\"\"")]
-    fn to_http_domain_url(&self, path: &str) -> PyResult<String> {
-        Ok(self.0.to_http_url_with_path(Some(path)).to_string())
+    fn to_http_domain_url(&self, path: &str) -> String {
+        self.0.to_http_url_with_path(Some(path)).to_string()
     }
 
-    fn to_http_redirection_url(&self) -> PyResult<String> {
-        Ok(self.0.to_http_redirection_url().to_string())
+    fn to_http_redirection_url(&self) -> String {
+        self.0.to_http_redirection_url().to_string()
     }
 
     #[classmethod]
@@ -116,10 +114,10 @@ impl BackendOrganizationAddr {
                     None => true,
                 },
             ),
-            None => Err(PyValueError::new_err("Missing parameters")),
+            None => return Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(libparsec::types::BackendOrganizationAddr::new(
-            addr.unwrap().0,
+            addr.0,
             organization_id.0,
             root_verify_key.0,
         )))
@@ -135,50 +133,48 @@ impl BackendOrganizationAddr {
             },
             self.0.use_ssl(),
         )
-        .unwrap()
     }
 
     #[getter]
-    fn hostname(&self) -> PyResult<&str> {
-        Ok(self.0.hostname())
+    fn hostname(&self) -> &str {
+        self.0.hostname()
     }
 
     #[getter]
-    fn port(&self) -> PyResult<u16> {
-        Ok(self.0.port())
+    fn port(&self) -> u16 {
+        self.0.port()
     }
 
     #[getter]
-    fn use_ssl(&self) -> PyResult<bool> {
-        Ok(self.0.use_ssl())
+    fn use_ssl(&self) -> bool {
+        self.0.use_ssl()
     }
 
     #[getter]
-    fn netloc(&self) -> PyResult<String> {
+    fn netloc(&self) -> String {
         if self.0.is_default_port() {
-            Ok(String::from(self.0.hostname()))
+            String::from(self.0.hostname())
         } else {
-            Ok(format!("{}:{}", self.0.hostname(), self.0.port()))
+            format!("{}:{}", self.0.hostname(), self.0.port())
         }
     }
 
     #[getter]
-    fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID(self.0.organization_id().clone()))
+    fn organization_id(&self) -> OrganizationID {
+        OrganizationID(self.0.organization_id().clone())
     }
 
     #[getter]
-    fn root_verify_key(&self) -> PyResult<VerifyKey> {
-        let data = self.0.root_verify_key().as_ref();
-        Ok(VerifyKey::new(data).unwrap())
+    fn root_verify_key(&self) -> VerifyKey {
+        VerifyKey(self.0.root_verify_key().clone())
     }
 
-    fn to_url(&self) -> PyResult<String> {
-        Ok(self.0.to_url().to_string())
+    fn to_url(&self) -> String {
+        self.0.to_url().to_string()
     }
 
-    fn to_http_redirection_url(&self) -> PyResult<String> {
-        Ok(self.0.to_http_redirection_url().to_string())
+    fn to_http_redirection_url(&self) -> String {
+        self.0.to_http_redirection_url().to_string()
     }
 
     #[classmethod]
@@ -202,12 +198,12 @@ impl BackendOrganizationAddr {
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
-    ) -> PyResult<Self> {
-        Ok(Self(libparsec::types::BackendOrganizationAddr::new(
+    ) -> Self {
+        Self(libparsec::types::BackendOrganizationAddr::new(
             backend_addr.0,
             organization_id.0,
             root_verify_key.0,
-        )))
+        ))
     }
 }
 
@@ -300,11 +296,11 @@ impl BackendOrganizationBootstrapAddr {
                     None => true,
                 },
             ),
-            None => Err(PyValueError::new_err("Missing parameters")),
+            None => return Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(
             libparsec::types::BackendOrganizationBootstrapAddr::new(
-                addr.unwrap().0,
+                addr.0,
                 organization_id.0,
                 token,
             ),
@@ -312,44 +308,44 @@ impl BackendOrganizationBootstrapAddr {
     }
 
     #[getter]
-    fn hostname(&self) -> PyResult<&str> {
-        Ok(self.0.hostname())
+    fn hostname(&self) -> &str {
+        self.0.hostname()
     }
 
     #[getter]
-    fn port(&self) -> PyResult<u16> {
-        Ok(self.0.port())
+    fn port(&self) -> u16 {
+        self.0.port()
     }
 
     #[getter]
-    fn use_ssl(&self) -> PyResult<bool> {
-        Ok(self.0.use_ssl())
+    fn use_ssl(&self) -> bool {
+        self.0.use_ssl()
     }
 
     #[getter]
-    fn netloc(&self) -> PyResult<String> {
+    fn netloc(&self) -> String {
         if self.0.is_default_port() {
-            Ok(String::from(self.0.hostname()))
+            String::from(self.0.hostname())
         } else {
-            Ok(format!("{}:{}", self.0.hostname(), self.0.port()))
+            format!("{}:{}", self.0.hostname(), self.0.port())
         }
     }
 
     #[getter]
-    fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID(self.0.organization_id().clone()))
+    fn organization_id(&self) -> OrganizationID {
+        OrganizationID(self.0.organization_id().clone())
     }
 
     #[getter]
-    fn token(&self) -> PyResult<String> {
+    fn token(&self) -> &str {
         match self.0.token() {
-            Some(token) => Ok(token.to_string()),
-            None => Ok(String::from("")),
+            Some(token) => token,
+            None => "",
         }
     }
 
-    fn to_url(&self) -> PyResult<String> {
-        Ok(self.0.to_url().to_string())
+    fn to_url(&self) -> String {
+        self.0.to_url().to_string()
     }
 
     fn get_backend_addr(&self) -> BackendAddr {
@@ -362,41 +358,19 @@ impl BackendOrganizationBootstrapAddr {
             },
             self.0.use_ssl(),
         )
-        .unwrap()
     }
 
-    fn generate_organization_addr(
-        &self,
-        py: Python,
-        root_verify_key: VerifyKey,
-    ) -> PyResult<BackendOrganizationAddr> {
-        match BackendOrganizationAddr::build(
-            PyType::new::<BackendOrganizationAddr>(py),
-            BackendAddr::new(
-                String::from(self.0.hostname()),
-                if !self.0.is_default_port() {
-                    Some(self.0.port())
-                } else {
-                    None
-                },
-                self.0.use_ssl(),
-            )
-            .unwrap(),
-            self.organization_id().unwrap(),
-            root_verify_key,
-        ) {
-            Ok(org_addr) => Ok(org_addr),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
+    fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> BackendOrganizationAddr {
+        BackendOrganizationAddr(self.0.generate_organization_addr(root_verify_key.0))
     }
 
-    fn to_http_redirection_url(&self) -> PyResult<String> {
-        Ok(self.0.to_http_redirection_url().to_string())
+    fn to_http_redirection_url(&self) -> String {
+        self.0.to_http_redirection_url().to_string()
     }
 
     #[args(path = "\"\"")]
-    fn to_http_domain_url(&self, path: &str) -> PyResult<String> {
-        Ok(self.0.to_http_url_with_path(Some(path)).to_string())
+    fn to_http_domain_url(&self, path: &str) -> String {
+        self.0.to_http_url_with_path(Some(path)).to_string()
     }
 
     #[classmethod]
@@ -420,13 +394,11 @@ impl BackendOrganizationBootstrapAddr {
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
         token: Option<String>,
-    ) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::types::BackendOrganizationBootstrapAddr::new(
-                backend_addr.0,
-                organization_id.0,
-                token,
-            ),
+    ) -> Self {
+        Self(libparsec::types::BackendOrganizationBootstrapAddr::new(
+            backend_addr.0,
+            organization_id.0,
+            token,
         ))
     }
 }
@@ -468,11 +440,11 @@ impl BackendOrganizationFileLinkAddr {
                     None => true,
                 },
             ),
-            None => Err(PyValueError::new_err("Missing parameters")),
+            None => return Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(
             libparsec::types::BackendOrganizationFileLinkAddr::new(
-                addr.unwrap().0,
+                addr.0,
                 organization_id.0,
                 workspace_id.0,
                 encrypted_path,
@@ -490,32 +462,32 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[getter]
-    fn hostname(&self) -> PyResult<&str> {
-        Ok(self.0.hostname())
+    fn hostname(&self) -> &str {
+        self.0.hostname()
     }
 
     #[getter]
-    fn port(&self) -> PyResult<u16> {
-        Ok(self.0.port())
+    fn port(&self) -> u16 {
+        self.0.port()
     }
 
     #[getter]
-    fn use_ssl(&self) -> PyResult<bool> {
-        Ok(self.0.use_ssl())
+    fn use_ssl(&self) -> bool {
+        self.0.use_ssl()
     }
 
     #[getter]
-    fn netloc(&self) -> PyResult<String> {
+    fn netloc(&self) -> String {
         if self.0.is_default_port() {
-            Ok(String::from(self.0.hostname()))
+            String::from(self.0.hostname())
         } else {
-            Ok(format!("{}:{}", self.0.hostname(), self.0.port()))
+            format!("{}:{}", self.0.hostname(), self.0.port())
         }
     }
 
     #[getter]
-    fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID(self.0.organization_id().clone()))
+    fn organization_id(&self) -> OrganizationID {
+        OrganizationID(self.0.organization_id().clone())
     }
 
     #[getter]
@@ -524,8 +496,8 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[getter]
-    fn encrypted_path<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.encrypted_path().as_slice()))
+    fn encrypted_path<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, self.0.encrypted_path().as_slice())
     }
 
     fn get_backend_addr(&self) -> BackendAddr {
@@ -538,15 +510,14 @@ impl BackendOrganizationFileLinkAddr {
             },
             self.0.use_ssl(),
         )
-        .unwrap()
     }
 
-    fn to_url(&self) -> PyResult<String> {
-        Ok(self.0.to_url().to_string())
+    fn to_url(&self) -> String {
+        self.0.to_url().to_string()
     }
 
-    fn to_http_redirection_url(&self) -> PyResult<String> {
-        Ok(self.0.to_http_redirection_url().to_string())
+    fn to_http_redirection_url(&self) -> String {
+        self.0.to_http_redirection_url().to_string()
     }
 
     #[classmethod]
@@ -572,16 +543,14 @@ impl BackendOrganizationFileLinkAddr {
         workspace_id: EntryID,
         encrypted_path: BytesWrapper,
         encrypted_timestamp: Option<BytesWrapper>,
-    ) -> PyResult<Self> {
+    ) -> Self {
         crate::binding_utils::unwrap_bytes!(encrypted_path, encrypted_timestamp);
-        Ok(Self(
-            libparsec::types::BackendOrganizationFileLinkAddr::new(
-                organization_addr.get_backend_addr().0,
-                organization_addr.organization_id().unwrap().0,
-                workspace_id.0,
-                encrypted_path,
-                encrypted_timestamp,
-            ),
+        Self(libparsec::types::BackendOrganizationFileLinkAddr::new(
+            organization_addr.get_backend_addr().0,
+            organization_addr.organization_id().0,
+            workspace_id.0,
+            encrypted_path,
+            encrypted_timestamp,
         ))
     }
 }
@@ -619,10 +588,10 @@ impl BackendInvitationAddr {
                     None => true,
                 },
             ),
-            None => Err(PyValueError::new_err("Missing parameters")),
+            None => return Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(libparsec::types::BackendInvitationAddr::new(
-            addr.unwrap().0,
+            addr.0,
             organization_id.0,
             invitation_type.0,
             token.0,
@@ -630,32 +599,32 @@ impl BackendInvitationAddr {
     }
 
     #[getter]
-    fn hostname(&self) -> PyResult<&str> {
-        Ok(self.0.hostname())
+    fn hostname(&self) -> &str {
+        self.0.hostname()
     }
 
     #[getter]
-    fn port(&self) -> PyResult<u16> {
-        Ok(self.0.port())
+    fn port(&self) -> u16 {
+        self.0.port()
     }
 
     #[getter]
-    fn use_ssl(&self) -> PyResult<bool> {
-        Ok(self.0.use_ssl())
+    fn use_ssl(&self) -> bool {
+        self.0.use_ssl()
     }
 
     #[getter]
-    fn netloc(&self) -> PyResult<String> {
+    fn netloc(&self) -> String {
         if self.0.is_default_port() {
-            Ok(String::from(self.0.hostname()))
+            String::from(self.0.hostname())
         } else {
-            Ok(format!("{}:{}", self.0.hostname(), self.0.port()))
+            format!("{}:{}", self.0.hostname(), self.0.port())
         }
     }
 
     #[getter]
-    fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID(self.0.organization_id().clone()))
+    fn organization_id(&self) -> OrganizationID {
+        OrganizationID(self.0.organization_id().clone())
     }
 
     #[getter]
@@ -664,16 +633,16 @@ impl BackendInvitationAddr {
     }
 
     #[getter]
-    fn token(&self) -> PyResult<InvitationToken> {
-        Ok(InvitationToken(self.0.token()))
+    fn token(&self) -> InvitationToken {
+        InvitationToken(self.0.token())
     }
 
-    fn to_url(&self) -> PyResult<String> {
-        Ok(self.0.to_url().to_string())
+    fn to_url(&self) -> String {
+        self.0.to_url().to_string()
     }
 
-    fn to_http_redirection_url(&self) -> PyResult<String> {
-        Ok(self.0.to_http_redirection_url().to_string())
+    fn to_http_redirection_url(&self) -> String {
+        self.0.to_http_redirection_url().to_string()
     }
 
     fn get_backend_addr(&self) -> BackendAddr {
@@ -686,32 +655,10 @@ impl BackendInvitationAddr {
             },
             self.0.use_ssl(),
         )
-        .unwrap()
     }
 
-    fn generate_organization_addr(
-        &self,
-        py: Python,
-        root_verify_key: VerifyKey,
-    ) -> PyResult<BackendOrganizationAddr> {
-        match BackendOrganizationAddr::build(
-            PyType::new::<BackendOrganizationAddr>(py),
-            BackendAddr::new(
-                String::from(self.0.hostname()),
-                if !self.0.is_default_port() {
-                    Some(self.0.port())
-                } else {
-                    None
-                },
-                self.0.use_ssl(),
-            )
-            .unwrap(),
-            self.organization_id().unwrap(),
-            root_verify_key,
-        ) {
-            Ok(org_addr) => Ok(org_addr),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
+    fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> BackendOrganizationAddr {
+        BackendOrganizationAddr(self.0.generate_organization_addr(root_verify_key.0))
     }
 
     #[classmethod]
@@ -736,13 +683,13 @@ impl BackendInvitationAddr {
         organization_id: OrganizationID,
         invitation_type: InvitationType,
         token: InvitationToken,
-    ) -> PyResult<Self> {
-        Ok(Self(libparsec::types::BackendInvitationAddr::new(
+    ) -> Self {
+        Self(libparsec::types::BackendInvitationAddr::new(
             backend_addr.0,
             organization_id.0,
             invitation_type.0,
             token.0,
-        )))
+        ))
     }
 }
 
@@ -774,45 +721,45 @@ impl BackendPkiEnrollmentAddr {
                     None => true,
                 },
             ),
-            None => Err(PyValueError::new_err("Missing parameters")),
+            None => return Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(libparsec::types::BackendPkiEnrollmentAddr::new(
-            addr.unwrap().0,
+            addr.0,
             organization_id.0,
         )))
     }
 
     #[getter]
-    fn hostname(&self) -> PyResult<&str> {
-        Ok(self.0.hostname())
+    fn hostname(&self) -> &str {
+        self.0.hostname()
     }
 
     #[getter]
-    fn port(&self) -> PyResult<u16> {
-        Ok(self.0.port())
+    fn port(&self) -> u16 {
+        self.0.port()
     }
 
     #[getter]
-    fn use_ssl(&self) -> PyResult<bool> {
-        Ok(self.0.use_ssl())
+    fn use_ssl(&self) -> bool {
+        self.0.use_ssl()
     }
 
     #[getter]
-    fn netloc(&self) -> PyResult<String> {
+    fn netloc(&self) -> String {
         if self.0.is_default_port() {
-            Ok(String::from(self.0.hostname()))
+            String::from(self.0.hostname())
         } else {
-            Ok(format!("{}:{}", self.0.hostname(), self.0.port()))
+            format!("{}:{}", self.0.hostname(), self.0.port())
         }
     }
 
     #[getter]
-    fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID(self.0.organization_id().clone()))
+    fn organization_id(&self) -> OrganizationID {
+        OrganizationID(self.0.organization_id().clone())
     }
 
-    fn to_url(&self) -> PyResult<String> {
-        Ok(self.0.to_url().to_string())
+    fn to_url(&self) -> String {
+        self.0.to_url().to_string()
     }
 
     fn get_backend_addr(&self) -> BackendAddr {
@@ -825,41 +772,19 @@ impl BackendPkiEnrollmentAddr {
             },
             self.0.use_ssl(),
         )
-        .unwrap()
     }
 
-    fn generate_organization_addr(
-        &self,
-        py: Python,
-        root_verify_key: VerifyKey,
-    ) -> PyResult<BackendOrganizationAddr> {
-        match BackendOrganizationAddr::build(
-            PyType::new::<BackendOrganizationAddr>(py),
-            BackendAddr::new(
-                String::from(self.0.hostname()),
-                if !self.0.is_default_port() {
-                    Some(self.0.port())
-                } else {
-                    None
-                },
-                self.0.use_ssl(),
-            )
-            .unwrap(),
-            self.organization_id().unwrap(),
-            root_verify_key,
-        ) {
-            Ok(org_addr) => Ok(org_addr),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
+    fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> BackendOrganizationAddr {
+        BackendOrganizationAddr(self.0.generate_organization_addr(root_verify_key.0))
     }
 
-    fn to_http_redirection_url(&self) -> PyResult<String> {
-        Ok(self.0.to_http_redirection_url().to_string())
+    fn to_http_redirection_url(&self) -> String {
+        self.0.to_http_redirection_url().to_string()
     }
 
     #[args(path = "\"\"")]
-    fn to_http_domain_url(&self, path: &str) -> PyResult<String> {
-        Ok(self.0.to_http_url_with_path(Some(path)).to_string())
+    fn to_http_domain_url(&self, path: &str) -> String {
+        self.0.to_http_url_with_path(Some(path)).to_string()
     }
 
     #[classmethod]
@@ -878,15 +803,11 @@ impl BackendPkiEnrollmentAddr {
     }
 
     #[classmethod]
-    fn build(
-        _cls: &PyType,
-        backend_addr: BackendAddr,
-        organization_id: OrganizationID,
-    ) -> PyResult<Self> {
-        Ok(Self(libparsec::types::BackendPkiEnrollmentAddr::new(
+    fn build(_cls: &PyType, backend_addr: BackendAddr, organization_id: OrganizationID) -> Self {
+        Self(libparsec::types::BackendPkiEnrollmentAddr::new(
             backend_addr.0,
             organization_id.0,
-        )))
+        ))
     }
 }
 
