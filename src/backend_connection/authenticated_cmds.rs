@@ -2,18 +2,12 @@
 
 use std::sync::Arc;
 
-use pyo3::{
-    pyclass, pymethods, types::PyType,
-    PyResult
-};
+use pyo3::{pyclass, pymethods, types::PyType, PyResult};
 
 use libparsec::{client_connection, protocol::authenticated_cmds};
 
 use crate::{
-    addrs::BackendOrganizationAddr,
-    api_crypto::SigningKey,
-    ids::DeviceID,
-    protocol::*,
+    addrs::BackendOrganizationAddr, api_crypto::SigningKey, ids::DeviceID, protocol::*,
     runtime::FutureIntoCoroutine,
 };
 

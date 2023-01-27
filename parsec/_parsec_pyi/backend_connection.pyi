@@ -1,11 +1,53 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from __future__ import annotations
+
 from typing import Union
 
-from parsec._parsec_pyi.ids import DeviceID
 from parsec._parsec_pyi.addrs import BackendOrganizationAddr
 from parsec._parsec_pyi.crypto import SigningKey
-from parsec._parsec_pyi.protocol import *  # noqa
+from parsec._parsec_pyi.ids import DeviceID
+from parsec._parsec_pyi.protocol import (
+    AuthenticatedPingReq,
+    BlockCreateReq,
+    BlockReadReq,
+    DeviceCreateReq,
+    EventsListenReq,
+    EventsSubscribeReq,
+    HumanFindReq,
+    Invite1GreeterWaitPeerReq,
+    Invite2aGreeterGetHashedNonceReq,
+    Invite2bGreeterSendNonceReq,
+    Invite3aGreeterWaitPeerTrustReq,
+    Invite3bGreeterSignifyTrustReq,
+    Invite4GreeterCommunicateReq,
+    InviteDeleteReq,
+    InviteListReq,
+    InviteNewReq,
+    MessageGetReq,
+    OrganizationConfigReq,
+    OrganizationStatsReq,
+    PkiEnrollmentAcceptReq,
+    PkiEnrollmentListReq,
+    PkiEnrollmentRejectReq,
+    RealmCreateReq,
+    RealmFinishReencryptionMaintenanceReq,
+    RealmGetRoleCertificatesReq,
+    RealmStartReencryptionMaintenanceReq,
+    RealmStatsReq,
+    RealmStatusReq,
+    RealmUpdateRolesReq,
+    UserCreateReq,
+    UserGetReq,
+    UserRevokeReq,
+    VlobCreateReq,
+    VlobListVersionsReq,
+    VlobMaintenanceGetReencryptionBatchReq,
+    VlobMaintenanceSaveReencryptionBatchReq,
+    VlobPollChangesReq,
+    VlobReadReq,
+    VlobUpdateReq,
+)
 
 AllAuthenticatedCmds = Union[
     BlockCreateReq,

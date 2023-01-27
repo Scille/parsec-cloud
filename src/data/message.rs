@@ -2,8 +2,7 @@
 
 use pyo3::{
     exceptions::{PyNotImplementedError, PyValueError},
-    pyclass,
-    pymethods,
+    pyclass, pymethods,
     types::{PyBytes, PyString, PyType},
     PyObject, PyRef, PyResult, Python,
 };
