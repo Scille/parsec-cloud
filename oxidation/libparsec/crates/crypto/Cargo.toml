@@ -13,7 +13,7 @@ use-sodiumoxide = [
     "dep:openssl",
     "dep:zeroize",
 ]
-# In theory we should have this feature enabling optional depedencies,
+# In theory we should have this feature enabling optional dependencies,
 # but instead we consider use-rustcrypto as the default (see below)
 # use-rustcrypto = [
 #     "dep:argon2",
@@ -69,10 +69,10 @@ zeroize = { version = "1", optional = true, features = ["alloc"]}
 # `use-sodiumoxide` is not.
 # But then we have another problem: `use-rustcrypto` have itself dependencies.
 # The solution is simple: we always enable those dependencies.
-# (Hence in the end `use-rustcrypto` feature has no existance here as it is
+# (Hence in the end `use-rustcrypto` feature has no existence here as it is
 # just the negation of `use-sodiumoxide`)
 #
-# But what about the peeeeerf ??? Well compilation is a bit longer with `use-sodiumoxide`
+# But what about the perf ??? Well compilation is a bit longer with `use-sodiumoxide`
 # but at link time all the rustcrypto related code is discarded given it is never used.
 
 argon2 = { version = "0.4.1" }  # Optional ruscrypto dep

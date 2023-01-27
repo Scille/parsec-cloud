@@ -59,9 +59,9 @@ impl RemoteDevicesManager {
         if let Some(verified_user) = verified_user {
             Ok((verified_user.clone(), verified_revoked_user.cloned()))
         } else {
-            let (verified_user, verfied_revoked_user, _) =
+            let (verified_user, verified_revoked_user, _) =
                 self.get_user_and_devices(user_id).await?;
-            Ok((verified_user, verfied_revoked_user))
+            Ok((verified_user, verified_revoked_user))
         }
     }
 
