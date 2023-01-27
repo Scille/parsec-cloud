@@ -568,6 +568,25 @@ impl BackendOrganizationBootstrapAddr {
     pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
         self.base.to_http_url(path)
     }
+
+    pub fn generate_organization_addr(
+        &self,
+        root_verify_key: VerifyKey,
+    ) -> BackendOrganizationAddr {
+        BackendOrganizationAddr::new(
+            BackendAddr::new(
+                self.hostname().into(),
+                if !self.is_default_port() {
+                    Some(self.port())
+                } else {
+                    None
+                },
+                self.use_ssl(),
+            ),
+            self.organization_id().clone(),
+            root_verify_key,
+        )
+    }
 }
 
 /*
@@ -765,6 +784,25 @@ impl BackendInvitationAddr {
     pub fn token(&self) -> InvitationToken {
         self.token
     }
+
+    pub fn generate_organization_addr(
+        &self,
+        root_verify_key: VerifyKey,
+    ) -> BackendOrganizationAddr {
+        BackendOrganizationAddr::new(
+            BackendAddr::new(
+                self.hostname().into(),
+                if !self.is_default_port() {
+                    Some(self.port())
+                } else {
+                    None
+                },
+                self.use_ssl(),
+            ),
+            self.organization_id().clone(),
+            root_verify_key,
+        )
+    }
 }
 
 /*
@@ -820,6 +858,25 @@ impl BackendPkiEnrollmentAddr {
 
     pub fn organization_id(&self) -> &OrganizationID {
         &self.organization_id
+    }
+
+    pub fn generate_organization_addr(
+        &self,
+        root_verify_key: VerifyKey,
+    ) -> BackendOrganizationAddr {
+        BackendOrganizationAddr::new(
+            BackendAddr::new(
+                self.hostname().into(),
+                if !self.is_default_port() {
+                    Some(self.port())
+                } else {
+                    None
+                },
+                self.use_ssl(),
+            ),
+            self.organization_id().clone(),
+            root_verify_key,
+        )
     }
 }
 
