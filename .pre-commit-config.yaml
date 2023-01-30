@@ -146,9 +146,7 @@ repos:
             --exclude=libparsec_bindings_electron,
             --,
             --deny=warnings,
-            --deny=clippy::self_named_module_files,
             --deny=clippy::undocumented_unsafe_blocks,
-
           ]
 
   ####
