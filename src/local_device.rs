@@ -609,8 +609,8 @@ pub(crate) fn list_available_devices(config_dir: PathBuf) -> FutureIntoCoroutine
             .await
             .map(|devices| {
                 devices
-                    .iter()
-                    .map(|d| AvailableDevice(d.clone()))
+                    .into_iter()
+                    .map(AvailableDevice)
                     .collect::<Vec<AvailableDevice>>()
             })
             .map_err(|e| LocalDeviceExc(Box::new(e)).into())
