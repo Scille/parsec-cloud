@@ -64,7 +64,7 @@ pub async fn save_recovery_device(
     device: LocalDevice,
     force: bool,
 ) -> LocalDeviceResult<String> {
-    if tokio::fs::File::open(key_file).await.is_ok() && !force {
+    if !force && check_device_already_exist(key_file).await {
         return Err(LocalDeviceError::AlreadyExists(key_file.to_path_buf()));
     }
 
@@ -84,6 +84,15 @@ pub async fn save_recovery_device(
     save_device_file(key_file, &key_file_content).await?;
 
     Ok(passphrase)
+}
+
+/// Check if the provided [Path] don't correspond to an already exist file.
+async fn check_device_already_exist(key_file: &Path) -> bool {
+    if let Ok(metadata) = tokio::fs::metadata(key_file).await {
+        metadata.is_file()
+    } else {
+        false
+    }
 }
 
 /// TODO: need test (backend_cmds required)
