@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Callable
+from typing import Awaitable, Callable
 
 from PyQt5.QtWidgets import QWidget
 
@@ -149,7 +149,7 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         config: CoreConfig,
         addr: BackendPkiEnrollmentAddr,
         parent: QWidget | None,
-        on_finished: Callable[[], None],
+        on_finished: Callable[[], Awaitable[None]],
     ) -> EnrollmentQueryWidget:
         widget = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
         dialog = GreyedDialog(
@@ -157,8 +157,8 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         )
         widget.dialog = dialog
 
-        def _on_finished(result: bool) -> None:
-            return on_finished()
+        async def _on_finished(result: bool) -> None:
+            return await on_finished()
 
         dialog.finished.connect(_on_finished)
 

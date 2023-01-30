@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
-import inspect
 
+import inspect
 import sys
 from distutils.version import LooseVersion
 from typing import Awaitable, Callable, cast
 
-import trio
 from PyQt5.QtCore import QCoreApplication, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QCloseEvent, QColor, QIcon, QKeySequence, QResizeEvent
 from PyQt5.QtWidgets import QMainWindow, QMenu, QMenuBar, QShortcut, QWidget
@@ -50,7 +49,7 @@ from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 from parsec.core.local_device import get_key_file
 from parsec.core.pki import is_pki_enrollment_available
@@ -169,8 +168,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.PreviousChild), self)
         shortcut.activated.connect(self._shortcut_proxy(self._cycle_tabs(-1)))
 
-    def _shortcut_proxy(self, funct: Callable[[], None] | Callable[[], Awaitable[None]]) -> Callable[[], None] | Callable[[], Awaitable[None]]:
-        async def _async_inner_proxy(self) -> None:
+    def _shortcut_proxy(
+        self, funct: Callable[[], None] | Callable[[], Awaitable[None]]
+    ) -> Callable[[], None] | Callable[[], Awaitable[None]]:
+        async def _async_inner_proxy(self: MainWindow) -> None:
             if ParsecApp.has_active_modal():
                 return
             f = funct.__get__(self)
@@ -181,7 +182,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
             funct()
 
-        return _inner_proxy if not inspect.iscoroutinefunction(funct) else _async_inner_proxy.__get__(self)
+        return (
+            _inner_proxy
+            if not inspect.iscoroutinefunction(funct)
+            else _async_inner_proxy.__get__(self)
+        )
 
     def _cycle_tabs(self, offset: int) -> Callable[[], None]:
         def _inner_cycle_tabs() -> None:
@@ -466,7 +471,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_claim_pki_clicked(self, action_addr: BackendPkiEnrollmentAddr) -> None:
         widget: EnrollmentQueryWidget
 
-        def _on_finished() -> None:
+        async def _on_finished() -> None:
             nonlocal widget
             # It's safe to access the widget status here since this does not perform a Qt call.
             # But the underlying C++ widget might already be deleted so we should make sure not
@@ -474,7 +479,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if not widget.status:
                 return
             show_info(self, _("TEXT_ENROLLMENT_QUERY_SUCCEEDED"))
-            self.reload_login_devices()
+            await self.reload_login_devices()
 
         widget = EnrollmentQueryWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -496,7 +501,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if not widget.status:
                 return
             device, auth_method, password = widget.status
-            self.reload_login_devices()
+            await self.reload_login_devices()
             await self.try_login(device, auth_method, password)
             answer = ask_question(
                 self,
@@ -896,7 +901,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setTabsClosable(False)
         self._toggle_add_tab_button()
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    async def closeEvent(self, event: QCloseEvent) -> None:
         if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
@@ -924,6 +929,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             state = self.saveGeometry()
             self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_geometry=state)
-            self.close_all_tabs()
+            await self.close_all_tabs()
             self.quit_callback()
             event.ignore()
