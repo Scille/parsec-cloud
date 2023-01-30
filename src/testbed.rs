@@ -153,14 +153,16 @@ impl TestbedTemplate {
 
 #[pyfunction]
 pub(crate) fn test_new_testbed(
-    template: &str,
+    // params are moved into async coroutine, so ownership is needed.
+    template: String,
     test_server: Option<BackendAddr>,
 ) -> PyResult<FutureIntoCoroutine> {
-    if template != "empty" && template != "coolorg" {
+    if &template != "empty" && &template != "coolorg" {
         return Err(pyo3::exceptions::PyValueError::new_err(format!(
             "No template named `{template}`",
         )));
     }
+
     Ok(FutureIntoCoroutine::from(async move {
         let env =
             libparsec::test_new_testbed(&template, test_server.as_ref().map(|addr| &addr.0)).await;
