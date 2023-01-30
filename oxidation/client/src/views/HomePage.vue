@@ -312,9 +312,9 @@ const filteredDevices = computed(() => {
       }
     } else if (sortBy.value === 'user_name') {
       if (sortByAsc.value) {
-        return a.humanHandle?.localeCompare(b.humanHandle ? b.humanHandle : '');
+        return a.humanHandle?.localeCompare(b.humanHandle ?? '');
       } else {
-        return b.humanHandle?.localeCompare(a.humanHandle ? a.humanHandle : '');
+        return b.humanHandle?.localeCompare(a.humanHandle ?? '');
       }
     } else if (sortBy.value === 'last_login') {
       const aLastLogin = (a.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[a.slug].lastLogin !== undefined) ?
