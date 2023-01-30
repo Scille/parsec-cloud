@@ -3,6 +3,7 @@
 <template>
   <ion-list>
     <ion-item
+      id="sort-order-button"
       class="option"
       button
       detail="false"
@@ -41,10 +42,10 @@ import {
   arrowUp,
   arrowDown
 } from 'ionicons/icons';
-import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/components/MsSelectOption.ts';
+import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/components/MsSelectOption';
 
 const props = defineProps<{
-  defaultOption?: string,
+  defaultOption: string,
   options: MsSelectOption[],
   sortByLabels: MsSelectSortByLabels,
   sortByAsc: boolean
@@ -52,7 +53,7 @@ const props = defineProps<{
 
 const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
 const sortByLabels: Ref<MsSelectSortByLabels> = ref(props.sortByLabels);
-const selectedOption: Ref<MsSelectOption> = ref(getOptionByKey(props.options, props.defaultOption));
+const selectedOption: Ref<MsSelectOption> = ref(getOptionByKey(props.options, props.defaultOption) ?? props.options[0]);
 
 function onOptionClick(option?: MsSelectOption): void {
   if (option) {

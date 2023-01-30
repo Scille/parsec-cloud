@@ -52,7 +52,7 @@
                             <ion-label
                               position="floating"
                             >
-                              {{ 'Search' }}
+                              {{ $t('HomePage.organizationList.search') }}
                             </ion-label>
                             <ion-icon
                               :icon="searchOutline"
@@ -66,9 +66,10 @@
                         </ion-col>
                         <ion-col size="auto">
                           <MsSelect
-                            label="Trier par"
+                            id="filter-select"
+                            label="t('HomePage.organizationList.labelSortBy')"
                             :options="msSelectOptions"
-                            default-option="name"
+                            default-option="organization"
                             :sort-by-labels="msSelectSortByLabels"
                             @change="onMsSelectChange($event)"
                           />
@@ -213,9 +214,7 @@ import {
   IonRow,
   IonCol,
   IonGrid,
-  modalController,
-  IonSelect,
-  IonSelectOption
+  modalController
 } from '@ionic/vue';
 import {
   add,
@@ -232,7 +231,7 @@ import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import MsSelect from '@/components/MsSelect.vue';
-import { MsSelectChangeEvent } from '@/components/MsSelectOption.ts';
+import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
@@ -244,8 +243,8 @@ export interface DeviceStoredData {
 const { t, d } = useI18n();
 const deviceList: AvailableDevice[] = [
   {
-    organizationId: 'MegaShark',
-    humanHandle: 'Maxime Grandcolas',
+    organizationId: 'Planet Express',
+    humanHandle: 'Dr. John A. Zoidberg',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
@@ -253,8 +252,8 @@ const deviceList: AvailableDevice[] = [
     ty: {tag: 'Password'}
   },
   {
-    organizationId: 'Resana',
-    humanHandle: 'Maxime Grandcolas',
+    organizationId: 'PPTH',
+    humanHandle: 'Dr. Gregory House',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
@@ -262,8 +261,8 @@ const deviceList: AvailableDevice[] = [
     ty: {tag: 'Password'}
   },
   {
-    organizationId: 'Oxymore',
-    humanHandle: 'Maxime Grandcolas',
+    organizationId: 'Black Mesa',
+    humanHandle: 'Dr. Gordon Freeman',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
@@ -271,8 +270,8 @@ const deviceList: AvailableDevice[] = [
     ty: {tag: 'Password'}
   },
   {
-    organizationId: 'Eddy',
-    humanHandle: 'Maxime Grandcolas',
+    organizationId: 'OsCorp',
+    humanHandle: 'Dr. Otto G. Octavius',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
@@ -285,12 +284,13 @@ const password = ref('');
 const orgSearchString = ref('');
 const showOrganizationList = ref(true);
 const store = new Storage();
-const sortBy = ref('name');
+const sortBy = ref('organization');
 const sortByAsc = ref(true);
 
-const msSelectOptions = [
-  {label:'Nom', key:'name'},
-  {label:'Dernière connexion', key:'last_login'}
+const msSelectOptions: MsSelectOption[] = [
+  { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
+  { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
+  { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' }
 ];
 
 const msSelectSortByLabels = {
@@ -301,14 +301,20 @@ const msSelectSortByLabels = {
 const filteredDevices = computed(() => {
   return deviceList.filter((item) => {
     const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
-    return (item.deviceLabel?.toLocaleLowerCase().includes(lowerSearchString) ||
+    return (item.humanHandle?.toLocaleLowerCase().includes(lowerSearchString) ||
       item.organizationId?.toLocaleLowerCase().includes(lowerSearchString));
   }).sort((a, b) => {
-    if (sortBy.value === 'name') {
+    if (sortBy.value === 'organization') {
       if (sortByAsc.value) {
         return a.organizationId.localeCompare(b.organizationId);
       } else {
         return b.organizationId.localeCompare(a.organizationId);
+      }
+    } else if (sortBy.value === 'user_name') {
+      if (sortByAsc.value) {
+        return a.humanHandle?.localeCompare(b.humanHandle ? b.humanHandle : '');
+      } else {
+        return b.humanHandle?.localeCompare(a.humanHandle ? a.humanHandle : '');
       }
     } else if (sortBy.value === 'last_login') {
       const aLastLogin = (a.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[a.slug].lastLogin !== undefined) ?
@@ -316,9 +322,9 @@ const filteredDevices = computed(() => {
       const bLastLogin = (b.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[b.slug].lastLogin !== undefined) ?
         deviceStoredDataDict.value[b.slug].lastLogin.valueOf() : 0;
       if (sortByAsc.value) {
-        return aLastLogin - bLastLogin;
-      } else {
         return bLastLogin - aLastLogin;
+      } else {
+        return aLastLogin - bLastLogin;
       }
     }
     return 0;

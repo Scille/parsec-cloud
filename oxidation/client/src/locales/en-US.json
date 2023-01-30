@@ -10,7 +10,12 @@
             "lastLoginMinutes": "Last login: one minute ago | Last login: {minutes} minutes ago",
             "lastLoginHours": "Last login: one hour ago | Last login: {hours} hours ago",
             "sortOrderAsc": "Ascending sort",
-            "sortOrderDesc": "Descending sort"
+            "sortOrderDesc": "Descending sort",
+            "sortByOrganization": "Organization",
+            "sortByUserName": "User Name",
+            "sortByLastLogin": "Last login",
+            "labelSortBy": "Sort by",
+            "search": "Search"
         },
         "noExistingOrganization": {
             "title": "Need to create or join an organization?",

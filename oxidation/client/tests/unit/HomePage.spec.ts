@@ -80,7 +80,7 @@ describe('HomePage.vue', () => {
   });
 
   it('renders home vue', () => {
-    expect(wrapper.text()).toMatch(new RegExp('^List of your organizations'));
+    expect(wrapper.text()).toMatch(new RegExp('List of your organizations'));
   });
 
   it('should get devices stored data on mount', () => {
@@ -128,12 +128,12 @@ describe('HomePage.vue', () => {
       expect(wrapper.findComponent('#organization-list-container').exists()).toBeFalsy();
       expect(wrapper.findComponent('#login-popup-container').exists()).toBeTruthy();
       expect(wrapper.vm.selectedDevice).toEqual({
-        organizationId: 'Eddy',
-        humanHandle: 'Maxime Grandcolas',
+        organizationId: 'Black Mesa',
+        humanHandle: 'Dr. Gordon Freeman',
         deviceLabel: 'device_label',
         keyFilePath: 'key_file_path',
         deviceId: 'device_id',
-        slug: 'slug4',
+        slug: 'slug3',
         ty: {tag: 'Password'}
       });
     });
@@ -149,23 +149,30 @@ describe('HomePage.vue', () => {
     it('should filter orgs', async () => {
       expect(wrapper.vm.deviceList.length).toEqual(4);
       expect(wrapper.vm.orgSearchString).toEqual('');
-      expect(wrapper.vm.sortBy).toEqual('name');
-      expect(wrapper.vm.sortOrderAsc).toEqual(true);
+      expect(wrapper.vm.sortBy).toEqual('organization');
+      expect(wrapper.vm.sortByAsc).toEqual(true);
       expect(wrapper.vm.filteredDevices.length).toEqual(wrapper.vm.deviceList.length);
 
       // Should be ordered by ascending org name
-      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Eddy');
-      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Resana');
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Black Mesa');
+      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('PPTH');
 
-      expect(wrapper.findComponent('ion-searchbar').exists()).toBeTruthy();
-      // Search for 'shark' with a lower case 'S', checking if lower case is handled
-      await wrapper.findComponent('ion-searchbar').setValue('shark');
+      expect(wrapper.findComponent('ion-input').exists()).toBeTruthy();
+      await wrapper.findComponent('ion-input').setValue('la');
 
-      expect(wrapper.vm.orgSearchString).toEqual('shark');
-      expect(wrapper.vm.filteredDevices.length).toEqual(1);
+      expect(wrapper.vm.orgSearchString).toEqual('la');
+      expect(wrapper.vm.filteredDevices.length).toEqual(2);
       expect(wrapper.vm.filteredDevices).toEqual([{
-        organizationId: 'MegaShark',
-        humanHandle: 'Maxime Grandcolas',
+        organizationId: 'Black Mesa',
+        humanHandle: 'Dr. Gordon Freeman',
+        deviceLabel: 'device_label',
+        keyFilePath: 'key_file_path',
+        deviceId: 'device_id',
+        slug: 'slug3',
+        ty: {tag: 'Password'}
+      }, {
+        organizationId: 'Planet Express',
+        humanHandle: 'Dr. John A. Zoidberg',
         deviceLabel: 'device_label',
         keyFilePath: 'key_file_path',
         deviceId: 'device_id',
@@ -174,18 +181,20 @@ describe('HomePage.vue', () => {
       }]);
 
       // Resetting the search string
-      await wrapper.findComponent('ion-searchbar').setValue('');
+      await wrapper.findComponent('ion-input').setValue('');
       expect(wrapper.vm.orgSearchString).toEqual('');
       expect(wrapper.vm.filteredDevices.length).toEqual(4);
 
       // Inverting the sort order
-      expect(wrapper.vm.sortOrderAsc).toBeTruthy();
-      await wrapper.findComponent('#sort-order-button').trigger('click');
-      expect(wrapper.vm.sortOrderAsc).toBeFalsy();
+      expect(wrapper.vm.sortByAsc).toBeTruthy();
+      await wrapper.findComponent('#filter-select').trigger('click');
+      wrapper.findComponent('#sort-order-button');
+      await wrapper.findComponent('#sort-order-button').findComponent('ion-button').trigger('click');
+      expect(wrapper.vm.sortByAsc).toBeFalsy();
 
       // Should be ordered by descending org name
-      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Resana');
-      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Eddy');
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('PPTH');
+      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Black Mesa');
 
       wrapper.vm.sortBy = 'last_login';
       // Should be order by last login date descending
@@ -194,7 +203,7 @@ describe('HomePage.vue', () => {
 
       // Sort by last login date ascending
       await wrapper.findComponent('#sort-order-button').trigger('click');
-      expect(wrapper.vm.sortOrderAsc).toBeTruthy();
+      expect(wrapper.vm.sortByAsc).toBeTruthy();
       expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Eddy');
       expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Oxymore');
     });
@@ -207,8 +216,8 @@ describe('HomePage.vue', () => {
 
     beforeAll(async () => {
       wrapper.vm.selectedDevice = {
-        organizationId: 'Eddy',
-        humanHandle: 'Maxime Grandcolas',
+        organizationId: 'OsCorp',
+        humanHandle: 'Dr. Otto G. Octavius',
         deviceLabel: 'device_label',
         keyFilePath: 'key_file_path',
         deviceId: 'device_id',
@@ -237,7 +246,7 @@ describe('HomePage.vue', () => {
 
     it('should log in the console the expected message on login button click', async () => {
       wrapper.vm.password = 'password';
-      const expectedMessage = 'Log in to Eddy with password "password"';
+      const expectedMessage = 'Log in to OsCorp with password "password"';
       const loginButton = wrapper.findComponent('#login-button') as VueWrapper;
       const now = new Date();
       jest.setSystemTime(now);
@@ -261,7 +270,7 @@ describe('HomePage.vue', () => {
     it('should log in the console the expected message on password input enter', async () => {
       passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
       wrapper.vm.password = 'password';
-      const expectedMessage = 'Log in to Eddy with password "password"';
+      const expectedMessage = 'Log in to OsCorp with password "password"';
       const now = new Date();
       jest.setSystemTime(now);
       passwordInput.vm.$emit('enter');

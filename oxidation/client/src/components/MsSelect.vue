@@ -23,10 +23,10 @@ import {
 } from '@ionic/vue';
 import { chevronDownOutline } from 'ionicons/icons';
 import MsSelectPopover from '@/components/MsSelectPopover.vue';
-import { MsSelectOption, MsSelectSortByLabels, getOptionByKey, MsSelectChangeEvent } from '@/components/MsSelectOption.ts';
+import { MsSelectOption, MsSelectSortByLabels, getOptionByKey, MsSelectChangeEvent } from '@/components/MsSelectOption';
 
 const props = defineProps<{
-  defaultOption?: string,
+  defaultOption: string,
   label?: string,
   options: MsSelectOption[],
   sortByLabels: MsSelectSortByLabels
@@ -36,7 +36,7 @@ const emits = defineEmits<{
   (e: 'change', value: MsSelectChangeEvent): void
 }>();
 
-const selectedOption: Ref<MsSelectOption> = ref(getOptionByKey(props.options, props.defaultOption));
+const selectedOption: Ref<MsSelectOption> = ref(getOptionByKey(props.options, props.defaultOption) ?? props.options[0]);
 const sortByAsc: Ref<boolean> = ref(true);
 const labelRef = ref(selectedOption.value.label || props.label);
 async function openPopover(ev: Event): Promise<void> {

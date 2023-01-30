@@ -10,7 +10,12 @@
             "lastLoginMinutes": "Dernière connexion : il y a une minute | Dernière connexion : il y a {minutes} minutes",
             "lastLoginHours": "Dernière connexion : il y a une heure | Dernière connexion : il y a {hours} heures",
             "sortOrderAsc": "Tri ascendant",
-            "sortOrderDesc": "Tri descendant"
+            "sortOrderDesc": "Tri descendant",
+            "sortByOrganization": "Organisation",
+            "sortByUserName": "Nom d'utilisateur",
+            "sortByLastLogin": "Dernière connexion",
+            "labelSortBy": "Trier par",
+            "search": "Rechercher"
         },
         "noExistingOrganization": {
             "title": "Besoin de créer ou rejoindre une organisation ?",
