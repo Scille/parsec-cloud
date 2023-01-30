@@ -1,16 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from __future__ import annotations
+
 import argparse
 import sys
 import tempfile
 from functools import partial
-from typing import Optional
 
 import psutil
 import trio
 from quart import make_response
 
-from parsec._parsec import test_get_testbed_templates
+try:
+    from parsec._parsec import test_get_testbed_templates
+except ImportError as exc:
+    raise RuntimeError("Test features are disabled !") from exc
 from parsec.api.protocol import OrganizationID
 from parsec.backend import backend_app_factory
 from parsec.backend.asgi import app_factory as asgi_app_factory
@@ -24,10 +28,10 @@ DEFAULT_ORGANIZATION_LIFE_LIMIT = 10 * 60  # 10mn
 
 async def _run_server(
     host: str,
-    port: Optional[int],
+    port: int | None,
     backend_addr: str,
     orga_life_limit: float,
-    stop_after_process: Optional[int],
+    stop_after_process: int | None,
 ):
     # TODO: avoid tempdir for email ?
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")

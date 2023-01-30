@@ -14,8 +14,13 @@ use libparsec::{
 
 use crate::protocol::{ProtocolErrorFields, ProtocolResult};
 
+// #[non_exhaustive] macro must be set for every enum,
+// because we would like to call `is` in `python`, then
+// a static reference should be returned instead of a new object
+
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct ClientType(pub client_types::ClientType);
 
 crate::binding_utils::gen_proto!(ClientType, __repr__);
@@ -37,6 +42,7 @@ crate::binding_utils::impl_enum_field!(
 
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct InvitationDeletedReason(pub invite_delete::InvitationDeletedReason);
 
 crate::binding_utils::gen_proto!(InvitationDeletedReason, __repr__);
@@ -65,6 +71,7 @@ crate::binding_utils::impl_enum_field!(
 
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct InvitationEmailSentStatus(pub invite_new::InvitationEmailSentStatus);
 
 crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __repr__);
@@ -93,6 +100,7 @@ crate::binding_utils::impl_enum_field!(
 
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct InvitationStatus(pub libparsec::types::InvitationStatus);
 
 crate::binding_utils::gen_proto!(InvitationStatus, __repr__);
@@ -114,6 +122,7 @@ crate::binding_utils::impl_enum_field!(
 
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct InvitationType(pub libparsec::types::InvitationType);
 
 crate::binding_utils::gen_proto!(InvitationType, __repr__);
@@ -130,6 +139,7 @@ crate::binding_utils::impl_enum_field!(
 
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct RealmRole(pub libparsec::types::RealmRole);
 
 crate::binding_utils::gen_proto!(RealmRole, __repr__);
@@ -152,6 +162,7 @@ crate::binding_utils::impl_enum_field!(
 
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct UserProfile(pub libparsec::types::UserProfile);
 
 crate::binding_utils::gen_proto!(UserProfile, __repr__);
@@ -176,7 +187,7 @@ crate::binding_utils::impl_enum_field!(
 );
 
 impl UserProfile {
-    pub fn from_profile(profile: libparsec::types::UserProfile) -> &'static PyObject {
+    pub(crate) fn from_profile(profile: libparsec::types::UserProfile) -> &'static PyObject {
         match profile {
             libparsec::types::UserProfile::Admin => UserProfile::admin(),
             libparsec::types::UserProfile::Standard => UserProfile::standard(),
@@ -187,6 +198,7 @@ impl UserProfile {
 
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct CoreEvent(libparsec::core::CoreEvent);
 
 crate::binding_utils::impl_enum_field!(
@@ -361,6 +373,7 @@ crate::binding_utils::gen_proto!(CoreEvent, __richcmp__, eq);
 
 #[pyclass]
 #[derive(Clone)]
+#[non_exhaustive]
 pub(crate) struct DeviceFileType(pub client_types::DeviceFileType);
 
 crate::binding_utils::impl_enum_field!(

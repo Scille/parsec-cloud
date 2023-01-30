@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_client_types::*;
+use libparsec_client_types::{local_device_slug, AvailableDevice, DeviceFileType};
 use libparsec_testbed::{test_get_testbed, TestbedTemplate};
-use libparsec_types::*;
+use libparsec_types::BackendOrganizationAddr;
 use std::path::Path;
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
@@ -28,16 +28,8 @@ impl PseudoPersistentStorage {
             .device_files
             .iter()
             .map(|device_file| {
-                let device = template
-                    .devices
-                    .iter()
-                    .find(|d| d.device_id == device_file.device_id)
-                    .unwrap();
-                let user = template
-                    .users
-                    .iter()
-                    .find(|u| &u.user_id == device_file.device_id.user_id())
-                    .unwrap();
+                let device = template.device(&device_file.device_id);
+                let user = template.user(device_file.device_id.user_id());
 
                 AvailableDevice {
                     key_file_path: config_dir

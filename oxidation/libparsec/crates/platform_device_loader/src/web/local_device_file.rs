@@ -4,13 +4,13 @@ use std::path::Path;
 
 use libparsec_client_types::{AvailableDevice, DeviceFile, DeviceFileType};
 
-pub async fn list_available_devices(_config_dir: &Path) -> Vec<AvailableDevice> {
+pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
     #[cfg(feature = "test-testbed-support")]
-    {
-        if let Some(result) = crate::testbed::maybe_list_available_devices(config_dir) {
-            return result;
-        }
+    if let Some(result) = crate::testbed::maybe_list_available_devices(config_dir) {
+        return result;
     }
+    #[cfg(not(feature = "test-testbed-support"))]
+    let _config_dir = config_dir;
 
     let window = web_sys::window().unwrap();
     if let Ok(Some(storage)) = window.local_storage() {

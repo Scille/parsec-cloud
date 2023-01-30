@@ -19,10 +19,8 @@ pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 
 pub fn list_available_devices_core(config_dir: &Path) -> LocalDeviceResult<Vec<AvailableDevice>> {
     #[cfg(feature = "test-testbed-support")]
-    {
-        if let Some(result) = crate::testbed::maybe_list_available_devices(config_dir) {
-            return Ok(result);
-        }
+    if let Some(result) = crate::testbed::maybe_list_available_devices(config_dir) {
+        return Ok(result);
     }
 
     let mut list = vec![];

@@ -1,6 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use super::*;
+use lazy_static::lazy_static;
+use reqwest::StatusCode;
+use std::{
+    any::Any,
+    collections::HashMap,
+    path::{Path, PathBuf},
+    str::FromStr,
+    sync::{Arc, Mutex},
+};
+
+use libparsec_types::{BackendAddr, BackendOrganizationAddr, OrganizationID};
+
+use crate::{TestbedTemplate, TESTBED_TEMPLATES};
 
 // Testbed always works in memory, the path only acts as an identifier.
 const TESTBED_BASE_DUMMY_PATH: &str = "/parsec/testbed/";
@@ -14,8 +26,8 @@ pub enum TestbedKind {
 #[derive(Debug)]
 pub struct TestbedEnv {
     pub kind: TestbedKind,
-    // Config dir is used as the key identifying the testbed env
-    // note testbed is designed to always run mocked in memory
+    /// Config dir is used as the key identifying the testbed env.
+    /// Note: testbed is designed to always run mocked in memory.
     pub client_config_dir: PathBuf,
     pub organization_addr: BackendOrganizationAddr,
     pub template: Arc<TestbedTemplate>,
@@ -43,8 +55,8 @@ lazy_static! {
 
 /// `test_new_testbed` should be called when a test starts (and be followed
 /// by a `test_drop_testbed` call at it end)
-pub async fn test_new_testbed<'a>(
-    template: &'a str,
+pub async fn test_new_testbed(
+    template: &str,
     server_addr: Option<&BackendAddr>,
 ) -> Arc<TestbedEnv> {
     // 1) Retrieve the template
@@ -63,7 +75,7 @@ pub async fn test_new_testbed<'a>(
             .send()
             .await
             .expect("Cannot communicate with testbed server");
-        if response.status().as_u16() != 200 {
+        if response.status() != StatusCode::OK {
             panic!("Bad response status from testbed server: {:?}", response);
         }
         let (organization_id, server_template_crc) = {
@@ -128,7 +140,7 @@ pub async fn test_new_testbed<'a>(
 /// before actually doing FS access to see if they should instead switch to the in-memory
 /// mock behavior.
 /// If `None` is returned, that means the current config dir doesn't correspond to an
-/// in-memory mock and hence the normal FS acess should be done (for instance if the
+/// in-memory mock and hence the normal FS access should be done (for instance if the
 /// current test is actually testing the behavior of the on-disk storage !)
 pub fn test_get_testbed(client_config_dir: &Path) -> Option<Arc<TestbedEnv>> {
     let envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
@@ -138,7 +150,7 @@ pub fn test_get_testbed(client_config_dir: &Path) -> Option<Arc<TestbedEnv>> {
 }
 
 /// Nothing wrong will occur if `test_drop_testbed` is not called at the end of a test.
-/// Only resources won't be freed, which builds up ram consumtion (especially on the
+/// Only resources won't be freed, which builds up ram consumption (especially on the
 /// test server if it is shared between test runs !)
 pub async fn test_drop_testbed(client_config_dir: &Path) {
     // 1) Unregister the testbed env
@@ -164,7 +176,7 @@ pub async fn test_drop_testbed(client_config_dir: &Path) {
             .send()
             .await
             .expect("Cannot communicate with testbed server");
-        if response.status().as_u16() != 200 {
+        if response.status() != StatusCode::OK {
             panic!("Bad response status from testbed server: {:?}", response);
         }
     }
