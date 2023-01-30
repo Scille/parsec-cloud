@@ -126,7 +126,12 @@ class RemanenceManager:
         removed_block_ids = await self.local_storage.disable_block_remanence()
         # Register the cleared blocks
         if removed_block_ids is not None:
-            self._register_cleared_blocks(removed_block_ids)
+            self.event_bus.send(
+                CoreEvent.FS_BLOCK_REMOVED,
+                workspace_id=self.workspace_id,
+                block_ids=removed_block_ids,
+            )
+        # Return whether state has changed or not
         return removed_block_ids is not None
 
     async def wait_prepared(self) -> None:
