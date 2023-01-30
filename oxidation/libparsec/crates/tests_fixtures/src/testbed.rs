@@ -100,9 +100,9 @@ fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
 
     if testbed_server != "AUTOSTART" && testbed_server != "1" && !testbed_server.is_empty() {
         let testbed_server = if testbed_server.starts_with("http://") {
-            testbed_server.replace("http", "parsec") + "?no_ssl=true"
+            testbed_server.replacen("http", "parsec", 1) + "?no_ssl=true"
         } else if testbed_server.starts_with("https://") {
-            testbed_server.replace("https", "parsec")
+            testbed_server.replacen("https", "parsec", 1)
         } else if !testbed_server.starts_with("parsec://") {
             String::from("parsec://") + testbed_server
         } else {
