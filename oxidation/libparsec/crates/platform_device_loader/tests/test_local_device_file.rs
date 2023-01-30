@@ -8,7 +8,7 @@ use libparsec_client_types::{
     AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileType, LocalDevice,
 };
 use libparsec_platform_device_loader::*;
-use libparsec_tests_fixtures::{alice, bob, mallory, run_in_testbed, tmp_path, Device, TmpPath};
+use libparsec_tests_fixtures::{alice, bob, mallory, tmp_path, Device, TestbedScope, TmpPath};
 use libparsec_types::DeviceID;
 
 fn device_file_factory(device: LocalDevice) -> DeviceFile {
@@ -168,10 +168,13 @@ async fn test_renew_legacy_file(tmp_path: TmpPath) {
 
 #[tokio::test]
 async fn test_testbed() {
-    run_in_testbed!("coolorg", env => async move {
+    TestbedScope::run("coolorg", |env| async move {
         let devices = list_available_devices(&env.client_config_dir).await;
         assert_eq!(
-            devices.into_iter().map(|a| a.device_id).collect::<Vec<DeviceID>>(),
+            devices
+                .into_iter()
+                .map(|a| a.device_id)
+                .collect::<Vec<DeviceID>>(),
             [
                 "alice@dev1".parse().unwrap(),
                 "alice@dev2".parse().unwrap(),

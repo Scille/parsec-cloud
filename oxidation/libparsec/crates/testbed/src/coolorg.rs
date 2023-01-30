@@ -1,6 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use super::*;
+use hex_literal::hex;
+
+use libparsec_crypto::{PrivateKey, SecretKey, SigningKey};
+use libparsec_types::{
+    CertificateSignerOwned, DateTime, DeviceID, EntryID, HumanHandle, UserProfile,
+};
+
+use crate::{TestbedDeviceData, TestbedDeviceFileData, TestbedTemplate, TestbedUserData};
 
 pub(crate) fn generate() -> TestbedTemplate {
     let mut devices = vec![];
@@ -151,21 +158,21 @@ pub(crate) fn generate() -> TestbedTemplate {
     // Local devices
     let device_files = vec![
         TestbedDeviceFileData::new(
-            &alice1_id,
+            alice1_id,
             "P@ssw0rd.".to_owned(),
             SecretKey::from(hex!(
                 "323614fc6bd2d300f42d6731059f542f89534cdca11b2cb13d5a9a5a6b19b6ac"
             )),
         ),
         TestbedDeviceFileData::new(
-            &alice2_id,
+            alice2_id,
             "P@ssw0rd.".to_owned(),
             SecretKey::from(hex!(
                 "898e1f4e5825ff9c039603f53653caee0eb3ccf18f419b4cb4dafe5ab5bd590f"
             )),
         ),
         TestbedDeviceFileData::new(
-            &bob1_id,
+            bob1_id,
             "P@ssw0rd.".to_owned(),
             SecretKey::from(hex!(
                 "bab3f8ba8d5e3f313472208dad9bb41497116ef0e5a391a5fc659bf5eb7fdbda"
