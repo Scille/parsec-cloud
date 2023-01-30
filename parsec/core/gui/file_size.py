@@ -15,7 +15,7 @@ def size(bytes: int, system: list[Tuple[int, str]]) -> str:
     - `10 <= bytes < 100`:        2 significant figures:    `XY B`
     - `100 <= bytes < 1000`:      3 significant figures:   `XYZ B`
     - `1000 <= bytes < 1024`:     2 significant figures: `0.9X KB`
-    - `1 <= kilobytes < 10`:      2 significant figures:  `X.Y KB`
+    - `1 <= kilobytes < 10`:      3 significant figures: `X.YZ KB`
     - `10 <= kilobytes < 100`:    3 significant figures: `XY.Z KB`
     - `100 <= kilobytes < 1000`:  3 significant figures:  `XYZ KB`
     - `1000 <= kilobytes < 1024`: 2 significant figures: `0.9X MB`
@@ -36,7 +36,7 @@ def size(bytes: int, system: list[Tuple[int, str]]) -> str:
     if factor == 1:
         formatted_amount = f"{bytes:d}"
     # Amount is less than one, display either 0.97, 0.98 or 0.99
-    elif amount < 1.0:
+    elif amount < 10.0:
         formatted_amount = f"{amount:.2f}"
     # Amount is displayed with a one or two digits on the left side, add an extra significant digit
     elif amount < 99.95:
