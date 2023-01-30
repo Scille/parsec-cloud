@@ -49,14 +49,14 @@ class SwitchButton(QAbstractButton):
             self._thumb_text = {True: "✔", False: "✕"}
             self._track_opacity = 1
 
-        self.offset = pyqtProperty(int, fget=SwitchButton.getOffset, fset=SwitchButton.setOffset)
-
     def getOffset(self) -> int:
         return self._offset
 
     def setOffset(self, value: int) -> None:
         self._offset = value
         self.update()
+
+    offset = pyqtProperty(int, fget=getOffset, fset=setOffset)
 
     def sizeHint(self) -> QSize:
         return QSize(
