@@ -192,7 +192,7 @@ class ChunkStorage:
         async with self._open_cursor() as cursor:
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
-            chunk_id_as_bytes = [chunk_id.bytes for chunk_id in chunk_ids]
+            chunk_id_as_bytes = [(chunk_id.bytes,) for chunk_id in chunk_ids]
             await self.localdb.run_in_thread(
                 cursor.executemany,
                 "DELETE FROM chunks WHERE chunk_id = ?",
