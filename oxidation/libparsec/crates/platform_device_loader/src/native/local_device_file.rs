@@ -219,12 +219,10 @@ pub async fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<
 ///
 /// Note that the filename does not carry any intrinsic meaning.
 /// Here, we simply use the slughash to avoid name collision.
-pub async fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
+pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
     let mut device_path = config_dir.to_path_buf();
 
     device_path.push("devices");
-
-    let _ = tokio::fs::create_dir_all(&device_path).await;
 
     device_path.push(format!("{}.{DEVICE_FILE_EXT}", device.slughash()));
 
@@ -288,7 +286,9 @@ pub async fn save_device_with_password_in_config(
     device: &LocalDevice,
     password: &str,
 ) -> Result<PathBuf, LocalDeviceError> {
-    let key_file = get_default_key_file(config_dir, device).await;
+    let key_file = get_default_key_file(config_dir, device);
+
+    create_key_file_subdir(&key_file).await;
 
     // Why do we use `force=True` here ?
     // Key file name is per-device unique (given it contains the device slughash),
@@ -303,6 +303,13 @@ pub async fn save_device_with_password_in_config(
     save_device_with_password(&key_file, device, password, true).await?;
 
     Ok(key_file)
+}
+
+/// Create the sub-directories where the `key file` will be stored.
+async fn create_key_file_subdir(key_file: &Path) {
+    tokio::fs::create_dir_all(&key_file.parent().expect("`key_file` MUST have parent"))
+        .await
+        .expect("Failed to create some directory");
 }
 
 pub async fn change_device_password(
