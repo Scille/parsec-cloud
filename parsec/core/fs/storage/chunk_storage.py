@@ -320,7 +320,7 @@ class BlockStorage(ChunkStorage):
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT block_remanent FROM remanence")
             rep = cursor.fetchone()
-            self._block_remanent = rep and rep[0]
+            self._block_remanent = False if rep is None else bool(rep[0])
 
     def is_block_remanent(self) -> bool:
         return self._block_remanent
