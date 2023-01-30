@@ -20,7 +20,7 @@ pub enum Run {
 impl TestbedScope {
     pub async fn start(template: &str, with_server: Run) -> Option<Self> {
         let server_addr = match with_server {
-            Run::WithServer => match TESTBED_SERVER_ADDR.as_ref() {
+            Run::WithServer => match TESTBED_SERVER.0.as_ref() {
                 // Here we will skip if TESTBED_SERVER env is not set !
                 None => return None,
                 addr => addr,
@@ -80,7 +80,7 @@ impl TestbedScope {
 /// across all tests.
 /// Alternatively, `TESTBED_SERVER` environ variable can be passed to use an
 /// external server.
-fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
+fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::process::Child>) {
     // TESTBED_SERVER should have 3 possible values:
     // - not set, if so the test is skipped (don't forget to print something about it !)
     // - `AUTOSTART` or `1` or just defined to empty: auto start the serve
@@ -93,7 +93,7 @@ fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
     if let Err(e) = testbed_server {
         // That means the env variable isn't set
         println!("{e}, so the test is skipped !");
-        return None;
+        return (None, None);
     }
 
     let testbed_server = &testbed_server.unwrap();
@@ -112,7 +112,7 @@ fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
         let addr = BackendAddr::from_any(&testbed_server)
             .expect("Invalid value in `TESTBED_SERVER` environ variable");
         println!("Using already started testbed server at {}", &addr);
-        return Some(addr);
+        return (Some(addr), None);
     }
 
     println!("Starting testbed server...");
@@ -173,6 +173,8 @@ fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
                     .expect("testbed server process's stderr contains non-utf8");
                 match re.captures(strbuf) {
                     Some(cap) => {
+                        // Replace stderr pipe to avoid closing it on drop
+                        process.stderr.replace(stderr);
                         break cap
                             .get(1)
                             .expect("unreachable")
@@ -181,7 +183,7 @@ fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
                             .expect("Invalid testbed server port");
                     }
                     None => {
-                        // Not enough stuff on stdout, wait 100ms more
+                        // Not enough output from subprocess, wait 100ms more
                         std::thread::sleep(std::time::Duration::new(0, 100000));
                     }
                 }
@@ -195,7 +197,10 @@ fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
         .expect("unreachable");
 
     println!("Testbed server running on 127.0.0.1:{}", port);
-    Some(BackendAddr::new("127.0.0.1".to_owned(), Some(port), false))
+    (
+        Some(BackendAddr::new("127.0.0.1".to_owned(), Some(port), false)),
+        Some(process),
+    )
 }
 
 // Given static variable are never drop, we cannot handle started testbed server
@@ -204,6 +209,9 @@ fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
 // way to cleanly close the testbed server once all the tests are done...
 // So instead we pass the PID of our own process and ask the testbed server to
 // watch for it and close itself accordingly.
+// Note we still have to keep reference of the child handle, this is to avoid it
+// stderr pipe to be closed which would break subprocess logging.
 lazy_static! {
-    static ref TESTBED_SERVER_ADDR: Option<BackendAddr> = ensure_testbed_server_is_started();
+    static ref TESTBED_SERVER: (Option<BackendAddr>, Option<std::process::Child>) =
+        ensure_testbed_server_is_started();
 }
