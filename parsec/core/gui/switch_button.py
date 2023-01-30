@@ -78,15 +78,11 @@ class SwitchButton(QAbstractButton):
         track_opacity = self._track_opacity
         thumb_opacity = 1.0
         text_opacity = 1.0
-        if self.isEnabled():
-            track_brush = self._track_color[self.isChecked()]
-            thumb_brush = self._thumb_color[self.isChecked()]
-            text_color = self._text_color[self.isChecked()]
-        else:
-            track_opacity *= 0.8
-            track_brush = self.palette().shadow()
-            thumb_brush = self.palette().mid()
-            text_color = self.palette().shadow().color()
+        track_brush = self._track_color[self.isChecked()]
+        text_color = self._text_color[self.isChecked()]
+        thumb_brush = self._thumb_color[self.isChecked()]
+        if not self.isEnabled():
+            track_opacity *= 0.5
 
         p.setBrush(track_brush)
         p.setOpacity(track_opacity)
