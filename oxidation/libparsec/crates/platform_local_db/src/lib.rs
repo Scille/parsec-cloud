@@ -123,6 +123,7 @@ impl LocalDatabase {
                     // And on unknown error, we could be more picky and only close the connection on specific unknown error (for example only close the connection on `disk full`)
                     // But checking for those is hard and implementation specific (we need to check against a `&str` which formating could change).
                     _ => {
+                        eprintln!("Diesel unknown error: {kind:?}");
                         self.close().await;
                     }
                 }
