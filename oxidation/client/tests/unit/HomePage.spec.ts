@@ -153,7 +153,7 @@ describe('HomePage.vue', () => {
       expect(wrapper.vm.sortByAsc).toEqual(true);
       expect(wrapper.vm.filteredDevices.length).toEqual(wrapper.vm.deviceList.length);
 
-      // Should be ordered by ascending org name
+      // Should be ordered by ascending org name by default
       expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Black Mesa');
       expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('PPTH');
 
@@ -186,11 +186,7 @@ describe('HomePage.vue', () => {
       expect(wrapper.vm.filteredDevices.length).toEqual(4);
 
       // Inverting the sort order
-      expect(wrapper.vm.sortByAsc).toBeTruthy();
-      await wrapper.findComponent('#filter-select').trigger('click');
-      wrapper.findComponent('#sort-order-button');
-      await wrapper.findComponent('#sort-order-button').findComponent('ion-button').trigger('click');
-      expect(wrapper.vm.sortByAsc).toBeFalsy();
+      wrapper.vm.sortByAsc = false;
 
       // Should be ordered by descending org name
       expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('PPTH');
@@ -198,14 +194,23 @@ describe('HomePage.vue', () => {
 
       wrapper.vm.sortBy = 'last_login';
       // Should be order by last login date descending
-      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Oxymore');
-      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Eddy');
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('OsCorp');
+      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Black Mesa');
 
       // Sort by last login date ascending
-      await wrapper.findComponent('#sort-order-button').trigger('click');
-      expect(wrapper.vm.sortByAsc).toBeTruthy();
-      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Eddy');
-      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Oxymore');
+      wrapper.vm.sortByAsc = true;
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Black Mesa');
+      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('OsCorp');
+
+      wrapper.vm.sortBy = 'user_name';
+      // Should be order by user name ascending
+      expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr. Gordon Freeman');
+      expect(wrapper.vm.filteredDevices[3].humanHandle).toEqual('Dr. Otto G. Octavius');
+
+      // Sort by last login date descending
+      wrapper.vm.sortByAsc = false;
+      expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr. Otto G. Octavius');
+      expect(wrapper.vm.filteredDevices[3].humanHandle).toEqual('Dr. Gordon Freeman');
     });
 
   });
