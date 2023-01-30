@@ -1,6 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use super::*;
+use libparsec_crypto::{PrivateKey, SecretKey, SigningKey};
+use libparsec_types::{
+    CertificateSignerOwned, DateTime, DeviceCertificate, DeviceID, DeviceLabel, EntryID,
+    HumanHandle, UserCertificate, UserID, UserProfile,
+};
 
 #[derive(Debug, Clone, serde::Serialize)]
 #[non_exhaustive] // Force use of `new()` constructor to compute crc
@@ -189,7 +193,7 @@ pub struct TestbedDeviceFileData {
 }
 
 impl TestbedDeviceFileData {
-    pub(crate) fn new(device_id: &DeviceID, password: String, local_symkey: SecretKey) -> Self {
+    pub(crate) fn new(device_id: DeviceID, password: String, local_symkey: SecretKey) -> Self {
         // Remember that changing the order (or adding items) to the hasher change the result !
         let mut hasher = crc32fast::Hasher::new();
         hasher.update(device_id.as_ref().as_bytes());
@@ -197,7 +201,7 @@ impl TestbedDeviceFileData {
         hasher.update(local_symkey.as_ref());
 
         TestbedDeviceFileData {
-            device_id: device_id.to_owned(),
+            device_id,
             password,
             local_symkey,
             crc: hasher.finalize(),

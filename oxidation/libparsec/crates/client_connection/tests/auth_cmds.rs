@@ -10,7 +10,7 @@ use std::{
 use libparsec_client_connection::{client::generate_client, AuthenticatedCmds, CommandError};
 use libparsec_crypto::SigningKey;
 use libparsec_protocol::authenticated_cmds;
-use libparsec_tests_fixtures::*;
+use libparsec_tests_fixtures::TestbedScope;
 use libparsec_types::{BackendOrganizationAddr, DeviceID};
 use tokio::{
     sync::oneshot::{channel, Receiver, Sender},
@@ -191,8 +191,7 @@ async fn client(
 
 #[tokio::test]
 async fn with_testbed() {
-    run_in_testbed_with_server!("coolorg", env => async move {
-
+    TestbedScope::run_with_server("coolorg", |env| async move {
         let client = reqwest::ClientBuilder::new()
             .build()
             .expect("cannot build client");
@@ -203,12 +202,15 @@ async fn with_testbed() {
             env.organization_addr.clone(),
             device.device_id.to_owned(),
             device.signing_key.to_owned(),
-        ).unwrap();
+        )
+        .unwrap();
         let rep = cmds.ping("foo".to_owned()).await;
         assert_eq!(
             rep.unwrap(),
-            libparsec_protocol::authenticated_cmds::v3::ping::Rep::Ok { pong: "foo".to_owned() }
+            libparsec_protocol::authenticated_cmds::v3::ping::Rep::Ok {
+                pong: "foo".to_owned()
+            }
         );
     })
-    .await;
+    .await
 }

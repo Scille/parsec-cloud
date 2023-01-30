@@ -42,6 +42,17 @@ macro_rules! impl_common_stuff {
                 // For whatever reason, Url considers illegal changing scheme
                 // from http/https to a custom one, so we cannot just use
                 // `Url::set_scheme` and instead have to do this hack :(
+
+                let url = if url.starts_with("http://") {
+                    url.replace("http", "parsec") + "?no_ssl=true"
+                } else if url.starts_with("https://") {
+                    url.replace("https", "parsec")
+                } else if !url.starts_with("parsec://") {
+                    String::from("parsec://") + url
+                } else {
+                    url.into()
+                };
+
                 let url_with_forced_custom_scheme = format!("x{}", url);
                 let url = &url_with_forced_custom_scheme;
 

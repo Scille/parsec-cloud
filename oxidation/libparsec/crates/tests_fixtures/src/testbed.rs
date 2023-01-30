@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use lazy_static::lazy_static;
-use std::{io::Read, sync::Arc};
+use std::{future::Future, io::Read, sync::Arc};
 
-use libparsec_types::*;
+use libparsec_types::BackendAddr;
 // Re-expose
 pub use libparsec_testbed::*;
 
@@ -12,36 +12,38 @@ pub struct TestbedScope {
     pub env: Arc<TestbedEnv>,
 }
 
+pub enum Run {
+    WithServer,
+    WithoutServer,
+}
+
 impl TestbedScope {
-    pub async fn start(template: &str, with_server: bool) -> Self {
-        let server_addr = if with_server {
-            Some(&*TESTBED_SERVER_ADDR)
-        } else {
-            None
+    pub async fn start(template: &str, with_server: Run) -> Option<Self> {
+        let server_addr = match with_server {
+            Run::WithServer => match TESTBED_SERVER_ADDR.as_ref() {
+                // Here we will skip if TESTBED_SERVER env is not set !
+                None => return None,
+                addr => addr,
+            },
+            Run::WithoutServer => None,
         };
         let env = test_new_testbed(template, server_addr).await;
-        Self { env }
+        Some(Self { env })
     }
+
     pub async fn stop(self) {
         test_drop_testbed(&self.env.client_config_dir).await;
     }
-}
 
-// In theory we'd rather have a `TestbedScope::run(async |env| { ... })` method,
-// but async closure are currently unstable, hence we have to rely on this macro instead
-// TODO: it would be better to replace this by a `#[testbed("coolorg")]` proc macro
-// attribute on top of the async function.
-#[macro_export]
-macro_rules! run_in_testbed {
-    ($template:literal, $env:ident => $cb:expr) => {
-        run_in_testbed!($template, false, $env => $cb)
-    };
-    ($template:literal, $with_server:expr, $env:ident => $cb:expr) => {
-        async {
-            let scope = ::libparsec_tests_fixtures::TestbedScope::start($template, $with_server).await;
+    pub async fn run_with_server<F, Fut>(template: &str, cb: F)
+    where
+        F: FnOnce(Arc<TestbedEnv>) -> Fut,
+        Fut: Future<Output = ()>,
+    {
+        // Here we will skip if TESTBED_SERVER env is not set !
+        if let Some(scope) = Self::start(template, Run::WithServer).await {
             // TODO: handle async panic
-            let $env: &::libparsec_tests_fixtures::TestbedEnv = scope.env.as_ref();
-            $cb.await;
+            cb(scope.env.clone()).await;
             // Note in case `cb` panics we won't be able to cleanup the testbed env :'(
             // This is "ok enough" considering:
             // - Using `std::panic::{catch_unwind, resume_unwind}` is cumbersome with async closure
@@ -51,27 +53,56 @@ macro_rules! run_in_testbed {
             // leak until the 10mn auto-garbage collection otherwise.
             scope.stop().await;
         }
-    };
+    }
+
+    pub async fn run<F, Fut>(template: &str, cb: F)
+    where
+        F: FnOnce(Arc<TestbedEnv>) -> Fut,
+        Fut: Future<Output = ()>,
+    {
+        // Here we will skip if TESTBED_SERVER env is not set !
+        if let Some(scope) = Self::start(template, Run::WithoutServer).await {
+            // TODO: handle async panic
+            cb(scope.env.clone()).await;
+            // Note in case `cb` panics we won't be able to cleanup the testbed env :'(
+            // This is "ok enough" considering:
+            // - Using `std::panic::{catch_unwind, resume_unwind}` is cumbersome with async closure
+            // - Panic only occurs when a test fails, so at most once per run (unless
+            //   `--keep-going` is used, but that's a corner case ^^).
+            // Hence leak should be small: no leak if the testbed server has been started by us,
+            // leak until the 10mn auto-garbage collection otherwise.
+            scope.stop().await;
+        }
+    }
 }
-#[macro_export]
-macro_rules! run_in_testbed_with_server {
-    ($template:literal, $env:ident => $cb:expr) => {
-        run_in_testbed!($template, true, $env => $cb)
-    };
-}
-pub use run_in_testbed;
-pub use run_in_testbed_with_server;
 
 /// Testbed server is lazily started when it is first needed, and then shared
 /// across all tests.
 /// Alternatively, `TESTBED_SERVER` environ variable can be passed to use an
 /// external server.
-fn ensure_testbed_server_is_started() -> BackendAddr {
-    if let Ok(raw) = std::env::var("TESTBED_SERVER") {
-        let addr = BackendAddr::from_any(&raw)
+fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
+    // TESTBED_SERVER should have 3 possible values:
+    // - not set, if so the test is skipped (don't forget to print something about it !)
+    // - `AUTOSTART` or `1` or just defined to empty: auto start the serve
+    // - parsec://<domain>:<port>[?no_ssl=true],
+    //   <domain>:<port>,
+    //   http://<domain>:<port> or
+    //   https://<domain>:<port> consider the server is already started
+    let testbed_server = std::env::var("TESTBED_SERVER");
+
+    if let Err(e) = testbed_server {
+        // That means the env variable isn't set
+        println!("{e}, so the test is skipped !");
+        return None;
+    }
+
+    let testbed_server = &testbed_server.unwrap();
+
+    if testbed_server != "AUTOSTART" && testbed_server != "1" && !testbed_server.is_empty() {
+        let addr = BackendAddr::from_any(testbed_server)
             .expect("Invalid value in `TESTBED_SERVER` environ variable");
         println!("Using already started testbed server at {}", &addr);
-        return addr;
+        return Some(addr);
     }
 
     println!("Starting testbed server...");
@@ -105,7 +136,7 @@ fn ensure_testbed_server_is_started() -> BackendAddr {
             "--stop-after-process",
             &std::process::id().to_string(),
         ])
-        // We make the server quiet to avoid poluting test output, if you need
+        // We make the server quiet to avoid polluting test output, if you need
         // server log you should start your own server in another terminal and
         // provide it config with the `TESTBED_SERVER` environ variable.
         .stdin(std::process::Stdio::null())
@@ -154,7 +185,7 @@ fn ensure_testbed_server_is_started() -> BackendAddr {
         .expect("unreachable");
 
     println!("Testbed server running on 127.0.0.1:{}", port);
-    BackendAddr::new("127.0.0.1".to_owned(), Some(port), false)
+    Some(BackendAddr::new("127.0.0.1".to_owned(), Some(port), false))
 }
 
 // Given static variable are never drop, we cannot handle started testbed server
@@ -164,5 +195,5 @@ fn ensure_testbed_server_is_started() -> BackendAddr {
 // So instead we pass the PID of our own process and ask the testbed server to
 // watch for it and close itself accordingly.
 lazy_static! {
-    static ref TESTBED_SERVER_ADDR: BackendAddr = ensure_testbed_server_is_started();
+    static ref TESTBED_SERVER_ADDR: Option<BackendAddr> = ensure_testbed_server_is_started();
 }

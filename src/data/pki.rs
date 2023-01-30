@@ -3,7 +3,7 @@
 use pyo3::{
     pyclass, pymethods,
     types::{IntoPyDict, PyBytes, PyDict, PyType},
-    PyAny, PyResult, Python,
+    PyAny, PyObject, PyResult, Python,
 };
 use std::{collections::HashMap, path::Path};
 
@@ -61,8 +61,8 @@ impl PkiEnrollmentAnswerPayload {
     }
 
     #[getter]
-    fn profile(&self) -> UserProfile {
-        UserProfile(self.0.profile)
+    fn profile(&self) -> &'static PyObject {
+        UserProfile::from_profile(self.0.profile)
     }
 
     #[getter]
