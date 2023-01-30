@@ -543,14 +543,24 @@ QHeaderView::up-arrow {
 /* ProgressBar */
 
 QProgressBar {
-    border: 1px solid #99999980;
+    border: 1px solid #999999;
     text-align: center;
     border-radius: 4px;
+    color: #000000;
+}
+
+QProgressBar:disabled {
     color: #333333;
+    border: 1px solid #999999;
 }
 
 QProgressBar::chunk {
-    background-color: #0092FF;
+    background-color: #b3deff;
+    width: 20px;
+}
+
+QProgressBar::chunk:disabled {
+    background-color: #DDDDDD;
     width: 20px;
 }
 

@@ -3186,47 +3186,59 @@ msgstr "Masquer les espaces de travail désactivés"
 #~ msgid "TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"
 #~ msgstr "Un fichier de récupération existe déjà pour cet appareil à cet endroit."
 
-msgid "ACTION_ENABLE_BLOCK_REMANENCE"
-msgstr "Conserver l'ensemble des données localement"
-
-msgid "ACTION_DISABLE_BLOCK_REMANENCE"
-msgstr "Ne plus conserver l'ensemble des données localement"
-
 msgid "ACTION_WORKSPACE_MANAGE_REMANENCE"
-msgstr "Gestion de la disponibilité des données"
+msgstr "Gérer la disponibilité hors-connexion"
+
+msgid "ACTION_CONTINUE_IN_BACKGROUND"
+msgstr "Continuer en arrière-plan"
 
 msgid "TEXT_REMANENCE_WAITING"
 msgstr "Veuillez patienter..."
 
+msgid "TEXT_BLOCK_REMANENCE"
+msgstr "Disponibilité hors-connexion:"
+
 msgid "TEXT_BLOCK_REMANENCE_ENABLED"
-msgstr "Les données de cet espace de travail sont actuellement conservées localement pour un accès hors-ligne."
+msgstr "Les données de cet espace de travail sont actuellement conservées localement pour un accès hors-connexion."
 
 msgid "TEXT_BLOCK_REMANENCE_DISABLED_cache_size"
 msgstr "Un maximum de {cache_size} de données sont actuellement conservées localement pour cet espace de travail."
 
 msgid "TEXT_WORKSPACE_SIZE_local_size_total_size"
-msgstr "{local_size} / {total_size} de données sont disponibles localement."
+msgstr "Volume de données diponible localement: {local_size} / {total_size}"
 
 msgid "TEXT_BLOCK_REMANENCE_WARNING_remote_size"
-msgstr "Conserver les données localement pour un accès hors-ligne nécessiterait de télécharger {remote_size} de données."
+msgstr "<i>Conserver les données localement pour un accès hors-connexion nécessiterait de télécharger {remote_size} de données.</i>"
 
 msgid "TEXT_GET_REMANENCE_STATUS_FAILED"
-msgstr "Les informations liées à la gestion des données dans cet espace de travail sont actuellement indisponibles."
+msgstr "Les informations liées à la gestion du mode hors-connexion sont actuellement indisponibles."
 
 msgid "TEXT_DISABLE_BLOCK_REMANENCE_FAILED"
-msgstr "Une erreur s'est produite lors du changement de politique de gestion des données."
+msgstr "Une erreur s'est produite lors de la désactivation du mode hors-connexion"
 
 msgid "TEXT_ENABLE_BLOCK_REMANENCE_FAILED"
-msgstr "Une erreur s'est produite lors du changement de politique de gestion des données."
+msgstr "Une erreur s'est produite lors de l'activation du mode hors-connexion"
 
 msgid "TEXT_REMANENCE_DIALOG_TITLE_workspace_name"
-msgstr "Gestion de la disponibilité des données pour l'espace de travail {workspace_name}"
+msgstr "Disponibilité hors-connexion pour l'espace de travail {workspace_name}"
 
 msgid "TEXT_ENABLE_BLOCK_REMANENCE_SUCCESS"
-msgstr "Les données de cet espace de travail sont désormais conservées localement pour accès hors-ligne."
+msgstr "Les données de cet espace de travail sont désormais conservées localement pour accès hors-connexion."
 
 msgid "TEXT_BLOCK_DOWNLOADING_STARTED"
 msgstr "Les données manquantes vont maintenant être téléchargées."
 
 msgid "TEXT_BLOCK_DOWNLOADING_FINISHED"
 msgstr "Toutes les données ont été téléchargées."
+
+msgid "TEXT_DOWNLOAD_PROGRESS_BAR_TITLE"
+msgstr "Téléchargement en cours:"
+
+msgid "TEXT_REMANENCE_PROGRESS_BAR_TITLE_IDLE"
+msgstr "Données diponible localement"
+
+msgid "TEXT_REMANENCE_PROGRESS_BAR_TITLE_DOWNLOADING"
+msgstr "Téléchargement des données manquantes"
+
+msgid "TEXT_WORKSPACE_IS_EMPTY"
+msgstr "Cet espace de travail est vide."
