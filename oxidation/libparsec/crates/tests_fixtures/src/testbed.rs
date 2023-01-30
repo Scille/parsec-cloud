@@ -99,7 +99,17 @@ fn ensure_testbed_server_is_started() -> Option<BackendAddr> {
     let testbed_server = &testbed_server.unwrap();
 
     if testbed_server != "AUTOSTART" && testbed_server != "1" && !testbed_server.is_empty() {
-        let addr = BackendAddr::from_any(testbed_server)
+        let testbed_server = if testbed_server.starts_with("http://") {
+            testbed_server.replace("http", "parsec") + "?no_ssl=true"
+        } else if testbed_server.starts_with("https://") {
+            testbed_server.replace("https", "parsec")
+        } else if !testbed_server.starts_with("parsec://") {
+            String::from("parsec://") + testbed_server
+        } else {
+            testbed_server.into()
+        };
+
+        let addr = BackendAddr::from_any(&testbed_server)
             .expect("Invalid value in `TESTBED_SERVER` environ variable");
         println!("Using already started testbed server at {}", &addr);
         return Some(addr);
