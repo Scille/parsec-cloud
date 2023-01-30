@@ -36,15 +36,17 @@ const emits = defineEmits<{
   (e: 'change', value: MsSelectChangeEvent): void
 }>();
 
-const selectedOption: Ref<MsSelectOption> = ref(getOptionByKey(props.options, props.defaultOption) ?? props.options[0]);
+const selectedOption: Ref<MsSelectOption | undefined> = ref(
+  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : undefined
+);
 const sortByAsc: Ref<boolean> = ref(true);
-const labelRef = ref(selectedOption.value.label || props.label);
+const labelRef = ref(selectedOption.value?.label || props.label);
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: MsSelectPopover,
     componentProps: {
       options: props.options,
-      defaultOption: selectedOption.value.key,
+      defaultOption: selectedOption.value?.key,
       sortByLabels: props.sortByLabels,
       sortByAsc: sortByAsc.value
     },

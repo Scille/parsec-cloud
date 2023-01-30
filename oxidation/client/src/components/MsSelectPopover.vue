@@ -6,7 +6,6 @@
       id="sort-order-button"
       class="option"
       button
-      detail="false"
       @click="onOptionClick()"
     >
       {{ sortByAsc ? sortByLabels.asc : sortByLabels.desc }}
@@ -22,7 +21,6 @@
       lines="none"
       v-for="option in options"
       :key="option.key"
-      detail="false"
       @click="onOptionClick(option)"
     >
       {{ option.label }}
@@ -45,7 +43,7 @@ import {
 import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/components/MsSelectOption';
 
 const props = defineProps<{
-  defaultOption: string,
+  defaultOption?: string,
   options: MsSelectOption[],
   sortByLabels: MsSelectSortByLabels,
   sortByAsc: boolean
@@ -53,7 +51,9 @@ const props = defineProps<{
 
 const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
 const sortByLabels: Ref<MsSelectSortByLabels> = ref(props.sortByLabels);
-const selectedOption: Ref<MsSelectOption> = ref(getOptionByKey(props.options, props.defaultOption) ?? props.options[0]);
+const selectedOption: Ref<MsSelectOption | undefined> = ref(
+  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : undefined
+);
 
 function onOptionClick(option?: MsSelectOption): void {
   if (option) {

@@ -78,7 +78,7 @@
                     </ion-grid>
                   </template>
                 </ion-card-title>
-                <ion-grid>
+                <ion-grid class="organization-list-grid">
                   <ion-row>
                     <ion-col
                       size="1"
@@ -92,13 +92,17 @@
                       >
                         <ion-card-content>
                           <ion-grid>
-                            <OrganizationCard :device="device" />
-                            <ion-row>
+                            <OrganizationCard
+                              :device="device"
+                              class="organization-card"
+                            />
+                            <ion-row class="organization-card-footer">
                               <ion-col
                                 size="auto"
                                 v-if="deviceStoredDataDict[device.slug]"
                               >
-                                {{ formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) }}
+                                <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
+                                <p>{{ formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) }}</p>
                               </ion-col>
                             </ion-row>
                           </ion-grid>
@@ -405,7 +409,7 @@ function formatLastLogin(lastLogin: Date | undefined) : string {
   }
 
   // Too long, let's use the date as is
-  return t('HomePage.organizationList.lastLogin', {date: d(lastLogin, 'long')});
+  return d(lastLogin, 'long');
 }
 
 function onForgottenPasswordClick(): void {
@@ -532,6 +536,27 @@ async function canDismissModal(): Promise<boolean> {
       --ion-grid-columns: 3;
     }
 
+    .organization-list-grid {
+      max-height: 30em;
+      overflow-y: auto;
+      scrollbar-color: #0058CC #F9F9FB;
+      scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 1em;
+      border-radius: 1em;
+      background: #F9F9FB;
+      border: 1px solid #EAEAF1;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 1em;
+      background: #0058CC;
+      border: 0.25em solid transparent;
+      background-clip: content-box;
+    }
+    }
+
     ion-item {
       align-items: center;
     }
@@ -547,13 +572,34 @@ async function canDismissModal(): Promise<boolean> {
       margin: 1em 1.5em;
       user-select: none;
 
-      ion-row {
-        height: 2em;
+      ion-card-content {
+        padding: 0 !important;
+      }
+
+      .organization-card {
+        padding: 1em;
+      }
+
+      .organization-card-footer {
+        padding: 0.5em 1em;
+        background: #F3F3F7;
+        border-top: 1px solid #EAEAF1;
+        color: #8585AD;
+        height: 4.6em;
+
+        p {
+          font-size: 0.8em;
+        }
       }
 
       &:hover {
         background: #E5F1FF;
         cursor: pointer;
+
+        .organization-card-footer {
+          background: #E5F1FF;
+          border-top: 1px solid #CCE2FF;
+        }
       }
     }
   }
