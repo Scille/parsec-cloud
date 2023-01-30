@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Union, cast
+from typing import Union, cast
 
 import trio
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtBoundSignal, pyqtSignal
 from PyQt5.QtGui import QKeyEvent, QMouseEvent
 from PyQt5.QtWidgets import QWidget
 
@@ -308,14 +308,14 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     login_canceled = pyqtSignal()
 
     @classmethod
-    async def create(
+    async def new(
         cls,
         jobs_ctx: QtToTrioJobScheduler,
         event_bus: EventBus,
         config: CoreConfig,
-        login_failed_sig: Any,
+        login_failed_sig: pyqtBoundSignal,
         parent: QWidget,
-   ) -> LoginWidget:
+    ) -> LoginWidget:
         instance = LoginWidget(jobs_ctx, event_bus, config, login_failed_sig, parent)
         await instance.reload_devices()
         return instance
@@ -325,7 +325,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         jobs_ctx: QtToTrioJobScheduler,
         event_bus: EventBus,
         config: CoreConfig,
-        login_failed_sig: Any,
+        login_failed_sig: pyqtBoundSignal,
         parent: QWidget,
     ) -> None:
         super().__init__(parent=parent)

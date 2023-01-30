@@ -352,7 +352,7 @@ class InstanceWidget(QWidget):
 
     async def show_login_widget(self) -> None:
         self.clear_widgets()
-        login_widget = await LoginWidget.create(
+        login_widget = await LoginWidget.new(
             self.jobs_ctx, self.event_bus, self.config, self.login_failed, parent=self
         )
         self.layout().addWidget(login_widget)
