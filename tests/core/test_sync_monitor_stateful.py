@@ -122,8 +122,6 @@ def test_sync_monitor_stateful(
 
         @initialize()
         async def init(self):
-            await self.reset_all()
-
             await self.start_backend()
             assert isinstance(self.backend_controller.server, RunningBackend)
             self.alice = self.backend_controller.server.correct_addr(alice)
@@ -139,32 +137,16 @@ def test_sync_monitor_stateful(
             self.synced_files: tuple[EntryID, str] = set()
             self.alice_workspaces_role: dict[EntryID, WorkspaceRole] = {}
 
-        async def reset_all(self):
+        async def teardown(self):
             await self.stop_bob()
             await self.stop_alice()
             await reset_testbed()
 
         async def stop_bob(self):
-            bob_user_fs = self.user_fs_per_device.pop(bob.device_id, None)
-            del bob_user_fs
-
-            if hasattr(self, "bob_user_fs"):
-                del self.bob_user_fs
-
-            if hasattr(self, "bob_user_fs_controller"):
-                await self.bob_user_fs_controller.stop()
-                del self.bob_user_fs_controller
+            await self.bob_user_fs_controller.stop()
 
         async def stop_alice(self):
-            alice_user_fs = self.user_fs_per_device.pop(alice.device_id, None)
-            del alice_user_fs
-
-            if hasattr(self, "alice_core"):
-                del self.alice_core
-
-            if hasattr(self, "alice_core_controller"):
-                await self.alice_core_controller.stop()
-                del self.alice_core_controller
+            await self.alice_core_controller.stop()
 
         @rule(
             target=SharedWorkspaces,
