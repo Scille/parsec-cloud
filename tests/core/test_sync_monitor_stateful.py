@@ -93,6 +93,9 @@ def test_sync_monitor_stateful(
         async def start_alice_core(self) -> LoggedCore:
             async def _core_controlled_cb(started_cb):
                 async with core_factory(self.alice) as core:
+                    # # Freeze alice monitors to avoid concurrent operations
+                    # self.alice.time_provider.mock_time(freeze=self.alice.time_provider.now())
+                    self.alice.time_provider.mock_time(speed=0)
                     await started_cb(core=core)
 
             self.alice_core_controller: trio.Nursery = await self.get_root_nursery().start(
@@ -165,14 +168,14 @@ def test_sync_monitor_stateful(
                 st.just(WorkspaceRole.CONTRIBUTOR), st.just(WorkspaceRole.READER), st.just(None)
             ),
         )
-        async def update_sharing(self, wid, new_role):
+        async def update_sharing(self, wid: EntryID, new_role: WorkspaceRole):
             await self.bob_user_fs.workspace_share(wid, alice.user_id, new_role)
             self.alice_workspaces_role[wid] = new_role
 
         @rule(
             author=st.one_of(st.just(alice.device_id), st.just(bob.device_id)), wid=SharedWorkspaces
         )
-        async def create_file(self, author, wid):
+        async def create_file(self, author: DeviceID, wid: EntryID):
             file_path = self.get_next_file_path()
             if author == bob.device_id:
                 await self._bob_update_file(wid, file_path, create_file=True)
@@ -216,7 +219,7 @@ def test_sync_monitor_stateful(
 
         @rule(target=SyncedFiles)
         async def let_core_monitors_process_changes(self):
-            # Set a high clock speed
+            # Un-freeze alice monitors and set a high clock speed
             self.alice.time_provider.mock_time(speed=1000.0)
             try:
                 # Loop over 100 attemps (at least 100 seconds)
@@ -228,7 +231,7 @@ def test_sync_monitor_stateful(
                         bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
                         await bob_w.sync()
                     # Alice get back possible changes from bob's sync
-                    await self.alice.time_provider.sleep(1)
+                    await self.alice.time_provider.sleep(10)
                     # See if alice and bob are in sync
                     try:
                         new_synced_files = await self.assert_alice_and_bob_in_sync()
@@ -243,9 +246,10 @@ def test_sync_monitor_stateful(
                     else:
                         self.synced_files.update(new_synced_files)
                         return multiple(*(sorted(new_synced_files)))
-            # Reset clock speed
+            # Reset clock freeze
             finally:
-                self.alice.time_provider.mock_time(speed=1.0)
+                self.alice.time_provider.mock_time(speed=0)
+                # self.alice.time_provider.mock_time(freeze=self.alice.time_provider.now())
 
         async def assert_alice_and_bob_in_sync(self) -> list[tuple[EntryID, str]]:
             new_synced_files: list[tuple[EntryID, str]] = []
