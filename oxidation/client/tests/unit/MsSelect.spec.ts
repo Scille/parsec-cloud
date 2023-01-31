@@ -7,6 +7,7 @@ import {
   arrowUp,
   arrowDown
 } from 'ionicons/icons';
+import { popoverController } from '@ionic/vue';
 
 describe('MsSelectPopover.vue', () => {
   const options: MsSelectOption[] = [
@@ -62,21 +63,30 @@ describe('MsSelectPopover.vue', () => {
   });
 
   it('allows item selection', () => {
+    const popoverCtrlSpy = jest.spyOn(popoverController, 'dismiss').mockImplementation();
+
     expect(wrapper.vm.selectedOption).toBe(undefined);
     const item = findItemAt(wrapper, 2);
     expect(item).toBeDefined();
+
     item?.trigger('click');
-    expect(wrapper.vm.selectedOption).toBe(options[1]);
-    expect(item?.attributes('class')).toContain('selected');
+    expect(popoverCtrlSpy).toHaveBeenCalledWith({
+      option: options[1],
+      sortByAsc: true
+    });
   });
 
   it('inverts sort order', () => {
+    const popoverCtrlSpy = jest.spyOn(popoverController, 'dismiss').mockImplementation();
+
     expect(wrapper.vm.sortByAsc).toBe(true);
     const item = findItemAt(wrapper, 0);
     expect(item).toBeDefined();
     expect(sortIcon.props('icon')).toBe(arrowUp);
     item?.trigger('click');
-    expect(wrapper.vm.sortByAsc).toBe(false);
-    expect(sortIcon.props('icon')).toBe(arrowDown);
+    expect(popoverCtrlSpy).toHaveBeenCalledWith({
+      option: options[1],
+      sortByAsc: false
+    });
   });
 });
