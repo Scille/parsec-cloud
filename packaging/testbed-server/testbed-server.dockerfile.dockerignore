@@ -1,0 +1,39 @@
+# Rust code that isn't need for testbed
+oxidation/client
+oxidation/bindings
+oxidation/generate_test_data
+oxidation/libparsec_python
+target
+.cargo
+
+# Editor config folder
+
+.idea
+.vscode
+
+# Python test file & cache folder
+
+tests
+!tests/scripts/run_testbed_server.py
+__pycache__
+.hypothesis
+.mypy_cache
+.pytest_cache
+parsec/core
+parsec/*.so
+
+# Cov file
+htmlcov
+
+# Other files
+docs
+json_schema
+logs
+licenses
+newsfragment
+packaging
+!packaging/testbed-server/
+
+# Windows icon handler
+
+windows-icon-handler
