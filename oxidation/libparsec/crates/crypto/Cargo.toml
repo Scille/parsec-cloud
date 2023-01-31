@@ -76,7 +76,7 @@ zeroize = { version = "1", optional = true, features = ["alloc"]}
 # but at link time all the rustcrypto related code is discarded given it is never used.
 
 argon2 = { version = "0.4.1" }  # Optional ruscrypto dep
-blake2 = { version = "0.10.5" }  # Optional ruscrypto dep
+blake2 = { version = "0.10.6" }  # Optional ruscrypto dep
 crypto_box = { version = "0.8.2", features = ["std"] }  # Optional ruscrypto dep
 digest = { version = "0.10.5" }  # Optional ruscrypto dep
 ed25519-dalek = { version = "1.0.1" }  # Optional ruscrypto dep
