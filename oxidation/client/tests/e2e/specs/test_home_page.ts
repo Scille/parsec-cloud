@@ -59,7 +59,7 @@ describe('Check organization list', () => {
     cy.get('.organization-card-container').last().contains('Black Mesa');
     // Sort by user name
     cy.get('#filter-select').contains('Organization').click();
-    cy.get('.option').should('have.length', 7);
+    cy.get('.option').should('have.length', 4);
     cy.get('.option').eq(2).contains('User Name').click();
     // Now sorted by user name desc
     cy.get('#filter-select').contains('User Name').click();
