@@ -50,7 +50,6 @@ const props = defineProps<{
 }>();
 
 const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
-const sortByLabels: Ref<MsSelectSortByLabels> = ref(props.sortByLabels);
 const selectedOption: Ref<MsSelectOption | undefined> = ref(
   props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : undefined
 );
