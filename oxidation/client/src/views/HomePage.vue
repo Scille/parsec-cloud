@@ -59,6 +59,7 @@
                               slot="start"
                             />
                             <ion-input
+                              id="search-input"
                               v-model="orgSearchString"
                               :clear-input="true"
                             />
@@ -168,6 +169,7 @@
                           :label="t('HomePage.organizationLogin.passwordLabel')"
                           @change="onPasswordChange($event)"
                           @enter="login()"
+                          id="password-input"
                         />
                         <ion-button
                           fill="clear"
