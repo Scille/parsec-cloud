@@ -18,6 +18,7 @@ from parsec.core.backend_connection import BackendConnectionError, BackendNotAva
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSBackendOfflineError,
+    FSChangesNotAdmissibleError,
     FSError,
     FSFileConflictError,
     FSInvalidArgumentError,
@@ -732,6 +733,11 @@ class WorkspaceFS:
                 # The entry first requires reshaping
                 except FSReshapingRequiredError:
                     await self.transactions.file_reshape(entry_id)
+                    continue
+
+                # The entry first requires to download blocks
+                except FSChangesNotAdmissibleError as exc:
+                    await self.transactions.make_changes_admissible(exc.changes)
                     continue
 
             # The manifest doesn't exist locally
