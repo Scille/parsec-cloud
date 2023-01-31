@@ -249,7 +249,7 @@ export interface DeviceStoredData {
 const { t, d } = useI18n();
 const deviceList: AvailableDevice[] = [
   {
-    organizationId: 'Planet Express',
+    organizationId: 'Planet Express Is The Best Comp!',
     humanHandle: 'Dr. John A. Zoidberg',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
@@ -282,6 +282,33 @@ const deviceList: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug4',
+    ty: {tag: 'Password'}
+  },
+  {
+    organizationId: 'Sanctum Sanctorum',
+    humanHandle: 'Dr. Stephen Strange',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug5',
+    ty: {tag: 'Password'}
+  },
+  {
+    organizationId: 'Holmes Consulting',
+    humanHandle: 'Dr John H. Watson',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug6',
+    ty: {tag: 'Password'}
+  },
+  {
+    organizationId: 'Riviera M.D.',
+    humanHandle: 'Dr. Nicholas "Nick" Riviera',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug7',
     ty: {tag: 'Password'}
   }
 ];
