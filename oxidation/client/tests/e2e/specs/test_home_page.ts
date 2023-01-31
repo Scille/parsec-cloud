@@ -39,32 +39,32 @@ describe('Check organization list', () => {
 
   it('Go to login page and sort and filter orgs', () => {
     cy.visit('/');
-    cy.get('.organization-card-container').should('have.length', 4);
+    cy.get('.organization-card-container').should('have.length', 7);
     // Sorted by org name asc by default
     cy.get('.organization-card-container').first().contains('Black Mesa');
-    cy.get('.organization-card-container').last().contains('PPTH');
+    cy.get('.organization-card-container').last().contains('Sanctum Sanctorum');
     cy.get('#search-input > input').type('la');
-    cy.get('.organization-card-container').should('have.length', 2);
-    // Only two orgs shown
+    cy.get('.organization-card-container').should('have.length', 3);
+    // Only 3 orgs shown
     cy.get('.organization-card-container').first().contains('Black Mesa');
-    cy.get('.organization-card-container').last().contains('Planet Express');
+    cy.get('.organization-card-container').last().contains('Riviera M.D.');
     cy.get('#search-input > input').clear();
-    cy.get('.organization-card-container').should('have.length', 4);
+    cy.get('.organization-card-container').should('have.length', 7);
     // Change sort order
     cy.get('#filter-select').contains('Organization').click();
-    cy.get('.option').should('have.length', 4);
+    cy.get('.option').should('have.length', 7);
     cy.get('.option').first().contains('Ascending order').click();
     // Now sorted by org name desc
-    cy.get('.organization-card-container').first().contains('PPTH');
+    cy.get('.organization-card-container').first().contains('Sanctum Sanctorum');
     cy.get('.organization-card-container').last().contains('Black Mesa');
     // Sort by user name
     cy.get('#filter-select').contains('Organization').click();
-    cy.get('.option').should('have.length', 4);
+    cy.get('.option').should('have.length', 7);
     cy.get('.option').eq(2).contains('User Name').click();
     // Now sorted by user name desc
     cy.get('#filter-select').contains('User Name').click();
-    cy.get('.organization-card-container').first().contains('Octavius');
-    cy.get('.organization-card-container').last().contains('Freeman');
+    cy.get('.organization-card-container').first().contains('Strange');
+    cy.get('.organization-card-container').last().contains('Watson');
   });
 
   it('Open create organization dialog', () => {
