@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 import { mount, shallowMount } from '@vue/test-utils';
 import { createI18n } from 'vue-i18n';
 import HeaderPage from '@/views/HeaderPage.vue';
