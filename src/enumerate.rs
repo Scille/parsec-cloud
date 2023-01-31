@@ -14,7 +14,7 @@ use libparsec::{
 
 use crate::protocol::{ProtocolErrorFields, ProtocolResult};
 
-// #[non_exhaustive] macro must be set for every enum,
+// #[non_exhaustive] macro must be set for every enum like type,
 // because we would like to call `is` in `python`, then
 // a static reference should be returned instead of a new object
 
