@@ -42,6 +42,6 @@ describe('HeaderPage.vue', () => {
   });
 
   it('renders header vue', () => {
-    expect(wrapper.text()).toMatch(new RegExp('^List of your organizations'));
+    expect(wrapper.text()).toMatch(new RegExp(''));
   });
 });

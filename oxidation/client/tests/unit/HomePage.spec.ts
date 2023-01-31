@@ -149,7 +149,7 @@ describe('HomePage.vue', () => {
     });
 
     it('should filter orgs', async () => {
-      expect(wrapper.vm.deviceList.length).toEqual(4);
+      expect(wrapper.vm.deviceList.length).toEqual(7);
       expect(wrapper.vm.orgSearchString).toEqual('');
       expect(wrapper.vm.sortBy).toEqual('organization');
       expect(wrapper.vm.sortByAsc).toEqual(true);
@@ -157,13 +157,13 @@ describe('HomePage.vue', () => {
 
       // Should be ordered by ascending org name by default
       expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Black Mesa');
-      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('PPTH');
+      expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Sanctum Sanctorum');
 
       expect(wrapper.findComponent('ion-input').exists()).toBeTruthy();
       await wrapper.findComponent('ion-input').setValue('la');
 
       expect(wrapper.vm.orgSearchString).toEqual('la');
-      expect(wrapper.vm.filteredDevices.length).toEqual(2);
+      expect(wrapper.vm.filteredDevices.length).toEqual(3);
       expect(wrapper.vm.filteredDevices).toEqual([{
         organizationId: 'Black Mesa',
         humanHandle: 'Dr. Gordon Freeman',
@@ -173,46 +173,56 @@ describe('HomePage.vue', () => {
         slug: 'slug3',
         ty: {tag: 'Password'}
       }, {
-        organizationId: 'Planet Express',
+        organizationId: 'Planet Express Is The Best Comp!',
         humanHandle: 'Dr. John A. Zoidberg',
         deviceLabel: 'device_label',
         keyFilePath: 'key_file_path',
         deviceId: 'device_id',
         slug: 'slug1',
         ty: {tag: 'Password'}
+      },
+      {
+        organizationId: 'Riviera M.D.',
+        humanHandle: 'Dr. Nicholas "Nick" Riviera',
+        deviceLabel: 'device_label',
+        keyFilePath: 'key_file_path',
+        deviceId: 'device_id',
+        slug: 'slug7',
+        ty: {tag: 'Password'}
       }]);
 
       // Resetting the search string
       await wrapper.findComponent('ion-input').setValue('');
       expect(wrapper.vm.orgSearchString).toEqual('');
-      expect(wrapper.vm.filteredDevices.length).toEqual(4);
+      expect(wrapper.vm.filteredDevices.length).toEqual(7);
 
       // Inverting the sort order
       wrapper.vm.sortByAsc = false;
 
       // Should be ordered by descending org name
-      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('PPTH');
-      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Black Mesa');
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Sanctum Sanctorum');
+      expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Black Mesa');
 
       wrapper.vm.sortBy = 'last_login';
       // Should be order by last login date descending
       expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('OsCorp');
-      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('Black Mesa');
+      expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Black Mesa');
 
       // Sort by last login date ascending
       wrapper.vm.sortByAsc = true;
       expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Black Mesa');
-      expect(wrapper.vm.filteredDevices[3].organizationId).toEqual('OsCorp');
+      expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Riviera M.D.');
 
       wrapper.vm.sortBy = 'user_name';
       // Should be order by user name ascending
-      expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr. Gordon Freeman');
-      expect(wrapper.vm.filteredDevices[3].humanHandle).toEqual('Dr. Otto G. Octavius');
+      expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr John H. Watson');
+      expect(wrapper.vm.filteredDevices[6].humanHandle).toEqual('Dr. Stephen Strange');
 
       // Sort by last login date descending
       wrapper.vm.sortByAsc = false;
+      wrapper.vm.sortBy = 'last_login';
       expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr. Otto G. Octavius');
-      expect(wrapper.vm.filteredDevices[3].humanHandle).toEqual('Dr. Gordon Freeman');
+      expect(wrapper.vm.filteredDevices[6].humanHandle).toEqual('Dr. Gordon Freeman');
     });
 
   });

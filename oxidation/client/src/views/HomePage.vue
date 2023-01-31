@@ -373,15 +373,17 @@ onMounted(async (): Promise<void> => {
     // This is needed because for some weird reason,
     // ionic-storage deserializes dates correctly in web
     // but keep them as strings during tests.
-    Object.keys(val).forEach((slug, _) => {
-      const obj = val[slug];
-      if (obj && obj.lastLogin) {
-        if (typeof obj.lastLogin === 'string') {
-          obj.lastLogin = new Date(obj.lastLogin);
+    if (val) {
+      Object.keys(val).forEach((slug, _) => {
+        const obj = val[slug];
+        if (obj && obj.lastLogin) {
+          if (typeof obj.lastLogin === 'string') {
+            obj.lastLogin = new Date(obj.lastLogin);
+          }
         }
-      }
-    });
-    deviceStoredDataDict.value = val;
+      });
+      deviceStoredDataDict.value = val;
+    }
   });
 });
 
