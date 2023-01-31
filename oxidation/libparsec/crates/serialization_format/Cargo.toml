@@ -8,7 +8,7 @@ license = " BUSL-1.1"
 proc-macro = true
 
 [dependencies]
-anyhow = "1.0.66"
+anyhow = "1.0.68"
 itertools = "0.10.5"
 miniserde = "0.1.27"
 proc-macro2 = "1.0.47"
