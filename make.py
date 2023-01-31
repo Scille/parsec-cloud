@@ -70,9 +70,16 @@ class Cmd:
         shell = sys.platform == "win32" and self.is_script
         for cmd in self.cmds:
             args = cmd.split() + extra_cmd_args
-            subprocess.check_call(
-                args, env={**os.environ, **self.extra_env}, cwd=self.cwd or BASE_DIR, shell=shell
-            )
+            # `echo` is not available on Windows
+            if args[0] == "echo":
+                print(" ".join(args[1:]))
+            else:
+                subprocess.check_call(
+                    args,
+                    env={**os.environ, **self.extra_env},
+                    cwd=self.cwd or BASE_DIR,
+                    shell=shell,
+                )
 
 
 COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
