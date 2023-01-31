@@ -165,14 +165,9 @@ pub async fn load_device_file(key_file_path: &Path) -> LocalDeviceResult<DeviceF
 
     // In case of failure try to load a legacy_device and convert it to a
     // regular device file
-    let device_file = DeviceFile::load(&data)
-        .map_err(|_| LocalDeviceError::Deserialization(key_file_path.to_path_buf()));
-
-    if device_file.is_err() {
-        load_legacy_device_file(key_file_path, &data)
-    } else {
-        device_file
-    }
+    DeviceFile::load(&data)
+        .map_err(|_| LocalDeviceError::Deserialization(key_file_path.to_path_buf()))
+        .or_else(|_| load_legacy_device_file(key_file_path, &data))
 }
 
 pub async fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<AvailableDevice> {

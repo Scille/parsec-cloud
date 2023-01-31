@@ -339,8 +339,7 @@ async def test_link_file_disconnected(
         return [bob_available_device]
 
     monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        _test_list_available_devices
+        "parsec.core.gui.main_window.list_available_devices", _test_list_available_devices
     )
 
     snackbar_catcher.reset()
@@ -422,8 +421,7 @@ async def test_link_file_disconnected_cancel_login(
         return [bob_available_device]
 
     monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        _list_available_devices
+        "parsec.core.gui.main_window.list_available_devices", _list_available_devices
     )
 
     snackbar_catcher.reset()

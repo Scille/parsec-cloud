@@ -6,6 +6,7 @@ import sys
 from distutils.version import LooseVersion
 from typing import Awaitable, Callable, cast
 
+import trio
 from PyQt5.QtCore import QCoreApplication, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QCloseEvent, QColor, QIcon, QKeySequence, QResizeEvent
 from PyQt5.QtWidgets import QMainWindow, QMenu, QMenuBar, QShortcut, QWidget
@@ -901,7 +902,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setTabsClosable(False)
         self._toggle_add_tab_button()
 
-    async def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
@@ -929,6 +930,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             state = self.saveGeometry()
             self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_geometry=state)
-            await self.close_all_tabs()
+            trio.run(self.close_all_tabs)
             self.quit_callback()
             event.ignore()
