@@ -22,7 +22,7 @@ reqwest = { version = "0.11.13", features = ["native-tls-vendored"] }
 url = "2.3.1"
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.
-base64 = "0.20.0"
+base64 = "0.21.0"
 chrono = "0.4.23"
 
 [dev-dependencies]
