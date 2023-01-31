@@ -107,7 +107,7 @@ def ClaimUserTestBed(
 
             # Switch to users claim page
 
-            gui.add_instance(invitation_addr.to_url())
+            await gui.add_instance(invitation_addr.to_url())
 
             cu_w = await catch_claim_user_widget()
             assert isinstance(cu_w, ClaimUserWidget)
@@ -645,7 +645,7 @@ async def test_claim_user_already_deleted(
         reason=InvitationDeletedReason.CANCELLED,
     )
 
-    gui.add_instance(invitation_addr.to_url())
+    await gui.add_instance(invitation_addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -670,7 +670,7 @@ async def test_claim_user_offline_backend(
         token=invitation.token,
     )
     with running_backend.offline():
-        gui.add_instance(invitation_addr.to_url())
+        await gui.add_instance(invitation_addr.to_url())
 
         def _assert_dialogs():
             assert len(autoclose_dialog.dialogs) == 1
@@ -694,7 +694,7 @@ async def test_claim_user_unknown_invitation(
         token=InvitationToken.new(),
     )
 
-    gui.add_instance(invitation_addr.to_url())
+    await gui.add_instance(invitation_addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -736,7 +736,7 @@ async def test_claim_user_backend_desync(
         token=InvitationToken.new(),
     )
 
-    gui.add_instance(invitation_addr.to_url())
+    await gui.add_instance(invitation_addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1

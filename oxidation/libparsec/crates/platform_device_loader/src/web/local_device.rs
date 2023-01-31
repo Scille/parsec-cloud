@@ -4,7 +4,10 @@ use libparsec_client_types::{DeviceFile, LocalDevice, LocalDeviceError, LocalDev
 
 use crate::load_device_with_password_core;
 
-pub fn load_device_with_password(slug: &str, password: &str) -> LocalDeviceResult<LocalDevice> {
+pub async fn load_device_with_password(
+    slug: &str,
+    password: &str,
+) -> LocalDeviceResult<LocalDevice> {
     let window = web_sys::window().unwrap();
     if let Ok(Some(storage)) = window.local_storage() {
         if let Ok(Some(devices)) = storage.get_item("devices") {

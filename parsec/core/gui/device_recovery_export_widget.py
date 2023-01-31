@@ -185,7 +185,9 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             device = None
 
             if isinstance(selected_device, LocalDevice):
-                selected_device = get_available_device(self.config.config_dir, selected_device)
+                selected_device = await get_available_device(
+                    self.config.config_dir, selected_device
+                )
 
             if selected_device.type == DeviceFileType.PASSWORD:
                 password = get_text_input(

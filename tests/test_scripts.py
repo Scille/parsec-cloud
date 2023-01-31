@@ -65,13 +65,14 @@ def run_testenv():
         kill_local_backend()
 
 
+@pytest.mark.trio
 @pytest.mark.slow
 @pytest.mark.skipif(
     "linux" not in sys.platform,
     reason="causes a freeze in appveyor for some reasons, and raises a CalledProcessError on MacOS",
 )
-def test_run_testenv(run_testenv):
-    available_devices = list_available_devices(run_testenv.config_dir)
+async def test_run_testenv(run_testenv):
+    available_devices = await list_available_devices(run_testenv.config_dir)
     devices = [(d.human_handle.label, d.device_label.str) for d in available_devices]
     assert sorted(devices) == [
         ("Alice", "laptop"),
