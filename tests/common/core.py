@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import AsyncContextManager, Callable
 
 import pytest
+import trio
 
 from parsec._parsec import CoreEvent, LocalDevice
 from parsec.core.backend_connection import BackendConnStatus
@@ -133,3 +134,36 @@ async def bob_core(
     )
     async with core_factory(bob) as core:
         yield core
+
+
+@pytest.fixture
+def global_core_monitors_freeze(monkeypatch):
+    # In theory the `LoggedCore` (unlike `UserFS` alone) will run monitors in the
+    # background. However this an issue in some tests given it cause flakiness due
+    # to those concurrent operations (e.g. in `test_sync_monitor_stateful`, message
+    # monitor wakes up after every `create_sharing` rule to process the sharing message).
+    # So instead we use the mockpoints in the monitors to make sure they don't do
+    # actual work until we allow them to do so.
+
+    monitor_are_unfrozen = trio.Event()
+
+    async def _wait_for_monitor_unfrozen():
+        await monitor_are_unfrozen.wait()
+
+    monkeypatch.setattr(
+        "parsec.core.sync_monitor.freeze_sync_monitor_mockpoint", _wait_for_monitor_unfrozen
+    )
+    monkeypatch.setattr(
+        "parsec.core.messages_monitor.freeze_messages_monitor_mockpoint", _wait_for_monitor_unfrozen
+    )
+
+    def _global_core_monitors_freeze(frozen: bool):
+        nonlocal monitor_are_unfrozen
+        if frozen:
+            if monitor_are_unfrozen.is_set():
+                monitor_are_unfrozen = trio.Event()
+        else:
+            if not monitor_are_unfrozen.is_set():
+                monitor_are_unfrozen.set()
+
+    return _global_core_monitors_freeze
