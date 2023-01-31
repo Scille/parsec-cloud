@@ -14,7 +14,7 @@ describe('Check organization list', () => {
   it('Visit the app root url', () => {
     cy.visit('/');
     cy.contains('List of your organizations');
-    cy.get('.organization-card-container').should('have.length', 4);
+    cy.get('.organization-card-container').should('have.length', 7);
   });
 
   it('Go to login page and back to organizations', () => {
@@ -52,7 +52,7 @@ describe('Check organization list', () => {
     cy.get('.organization-card-container').should('have.length', 7);
     // Change sort order
     cy.get('#filter-select').contains('Organization').click();
-    cy.get('.option').should('have.length', 7);
+    cy.get('.option').should('have.length', 4);
     cy.get('.option').first().contains('Ascending order').click();
     // Now sorted by org name desc
     cy.get('.organization-card-container').first().contains('Sanctum Sanctorum');
