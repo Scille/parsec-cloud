@@ -13,5 +13,5 @@ crate-type = ["cdylib"]
 [dependencies]
 libparsec = { path = "../../libparsec" }
 lazy_static = "1.4.0"
-tokio = { version = "1.23", features = ["rt-multi-thread"] }
+tokio = { version = "1.25", features = ["rt-multi-thread"] }
 neon = { version = "0.10", default-features = false, features = ["napi-6", "channel-api", "promise-api"] }
