@@ -150,8 +150,8 @@ class WorkspaceFS:
     ) -> None:
         return await self.remanence_manager.run(idle, awake)
 
-    async def wait_remanence_manager_prepared(self) -> None:
-        return await self.remanence_manager.wait_prepared()
+    async def wait_remanence_manager_prepared(self, wait_for_connection: bool = False) -> None:
+        return await self.remanence_manager.wait_prepared(wait_for_connection=wait_for_connection)
 
     def get_remanence_manager_info(self) -> RemanenceManagerInfo:
         return self.remanence_manager.get_info()
