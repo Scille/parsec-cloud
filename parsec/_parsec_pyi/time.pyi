@@ -20,6 +20,7 @@ class TimeProvider:
         freeze: DateTime | None = None,
         shift: float | None = None,
         realtime: bool = False,
+        speed: float | None = None,
     ) -> None: ...
 
 class DateTime:
