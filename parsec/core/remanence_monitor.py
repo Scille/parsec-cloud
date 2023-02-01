@@ -26,7 +26,7 @@ async def freeze_remanence_monitor_mockpoint() -> None:
 async def monitor_remanent_workspaces(
     user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus
 ) -> None:
-    on_going_tasks: int = 0
+    on_going_tasks: set[tuple[EntryID, int]] = set()
 
     def start_downsync_manager(workspace_id: EntryID) -> None:
         # Make sure the workspace is available
@@ -35,32 +35,31 @@ async def monitor_remanent_workspaces(
         except FSWorkspaceNotFoundError:
             return
 
-        async def sleep_forever() -> None:
-            nonlocal on_going_tasks
-            on_going_tasks -= 1
-            if on_going_tasks == 0:
+        def idle(task_id: int) -> None:
+            assert task_id in (1, 2)
+            on_going_tasks.discard((workspace_id, task_id))
+            if not on_going_tasks:
                 task_status.idle()
-            try:
-                await trio.sleep_forever()
-            finally:
-                task_status.awake()
-                on_going_tasks += 1
+
+        def awake(task_id: int) -> None:
+            assert task_id in (1, 2)
+            on_going_tasks.add((workspace_id, task_id))
+            task_status.awake()
 
         async def remanent_task() -> None:
             nonlocal on_going_tasks
             # Possibly block new tasks while testing
             await freeze_remanence_monitor_mockpoint()
             # Register both tasks (the remanence manager has two tasks)
-            on_going_tasks += 2
-            task_status.awake()
+            awake(1)
+            awake(2)
             # Run task
             try:
-                await workspace_fs.run_remanence_manager(sleep_forever)
+                await workspace_fs.run_remanence_manager(idle, awake)
             # Cleanup task
             finally:
-                on_going_tasks -= 2
-                if on_going_tasks == 0:
-                    task_status.idle()
+                idle(1)
+                idle(2)
 
         # Schedule task
         nursery.start_soon(remanent_task)

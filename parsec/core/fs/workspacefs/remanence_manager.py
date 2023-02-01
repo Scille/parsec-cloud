@@ -5,7 +5,7 @@ import time
 from collections import deque
 from contextlib import contextmanager
 from enum import Enum
-from typing import Awaitable, Callable, Iterator, Set, Tuple, Union, cast
+from typing import Callable, Iterator, Set, Tuple, Union, cast
 
 import structlog
 import trio
@@ -99,6 +99,8 @@ class RemanenceManager:
         # State synchronization attributes
         self._events_connected = False
         self._prepared_event = trio.Event()
+        self._idle: Callable[[int], None] = lambda _: None
+        self._awake: Callable[[int], None] = lambda _: None
         self._main_task_state = RemanenceManagerState.STOPPED
         self._main_task_cancel_scope: trio.CancelScope | None = None
         self._downloader_task_cancel_scope: trio.CancelScope | None = None
@@ -170,13 +172,15 @@ class RemanenceManager:
         finally:
             self._events_connected = False
 
-    async def run(self, sleep_forever: Callable[[], Awaitable[None]]) -> None:
+    async def run(self, idle: Callable[[int], None], awake: Callable[[int], None]) -> None:
         if not self._events_connected:
             raise RuntimeError("The events are not connected")
         if self._main_task_state != RemanenceManagerState.STOPPED:
             logger.warning("Trying to run an already runnning downsync manager")
             return
         try:
+            self._idle = idle
+            self._awake = awake
             self._main_task_state = RemanenceManagerState.PREPARING
 
             # Perform a fullsweep is necessary
@@ -187,10 +191,13 @@ class RemanenceManager:
             # - processing the jobs
             # - optionally, downloading the missing blocks
             async with open_service_nursery() as nursery:
-                nursery.start_soon(self._downloader_task, sleep_forever)
+                nursery.start_soon(self._downloader_task)
 
                 # Loop over jobs
                 while True:
+
+                    # It's good practice to tick here to avoid busy loops
+                    await trio.sleep(0)
 
                     # Get the next downsync job and process it
                     if self._job_queue:
@@ -199,7 +206,8 @@ class RemanenceManager:
 
                     # Pause when nothing else to do
                     with trio.CancelScope() as self._main_task_cancel_scope:
-                        await sleep_forever()
+                        self._idle(1)
+                        await trio.sleep_forever()
 
         # Update state
         finally:
@@ -212,16 +220,26 @@ class RemanenceManager:
         if not self._job_queue:
             return
         # Wake-up the main task
-        if self._main_task_cancel_scope is not None:
+        if (
+            self._main_task_cancel_scope is not None
+            and not self._main_task_cancel_scope.cancel_called
+        ):
             self._main_task_cancel_scope.cancel()
+            # Tag the monitor as awaken as soon as this callback runs
+            self._awake(1)
 
     def _wake_up_downloader_task(self) -> None:
         # Nothing to download
         if not self.local_storage.is_block_remanent() or not self._remote_only_blocks:
             return
         # Wake-up the downloader task
-        if self._downloader_task_cancel_scope is not None:
+        if (
+            self._downloader_task_cancel_scope is not None
+            and not self._downloader_task_cancel_scope.cancel_called
+        ):
             self._downloader_task_cancel_scope.cancel()
+            # Tag the monitor as awaken as soon as this callback runs
+            self._awake(2)
 
     # Event management
 
@@ -420,13 +438,14 @@ class RemanenceManager:
         # Pop the job as it's been successfully processed
         self._job_queue.pop()
 
-    async def _downloader_task(self, sleep_forever: Callable[[], Awaitable[None]]) -> bool:
+    async def _downloader_task(self) -> bool:
         while True:
 
             # Not a block-remanent workspace or no block to download
             if not self.local_storage.is_block_remanent() or not self._remote_only_blocks:
                 with trio.CancelScope() as self._downloader_task_cancel_scope:
-                    await sleep_forever()
+                    self._idle(2)
+                    await trio.sleep_forever()
                     continue
 
             # Open a nursery for downloading in parrallel (4 tasks)
