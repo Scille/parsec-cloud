@@ -164,7 +164,8 @@ export class ElectronCapacitorApp {
     }
 
     // Setup the main manu bar at the top of our window.
-    Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
+    this.MainWindow.setMenu(null);
+    // Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
     /*
     ** If the splash screen is enabled, show it first while the main window loads, then dismiss it to display the main window.
@@ -177,7 +178,7 @@ export class ElectronCapacitorApp {
           'assets',
           this.CapacitorFileConfig.electron?.splashScreenImageName ?? 'splash.png'
         ),
-        windowWidth: 400,
+        windowWidth: 600,
         windowHeight: 400
       });
       this.SplashScreen.init(this.loadMainWindow, this);

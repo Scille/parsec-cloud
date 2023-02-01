@@ -1,6 +1,6 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorElectronConfig } from '@capacitor-community/electron';
 
-const config: CapacitorConfig = {
+const config: CapacitorElectronConfig = {
   appId: 'com.scille.parsec',
   appName: 'Parsec',
   webDir: 'dist',
@@ -11,8 +11,12 @@ const config: CapacitorConfig = {
       androidScaleType: 'CENTER_CROP',
       splashFullScreen: true,
       splashImmersive: false,
-      backgroundColor: '#121212' // YOUR SPLASH SCREEN MAIN COLOR
+      backgroundColor: '#121212'
     }
+  },
+  electron: {
+    trayIconAndMenuEnabled: true,
+    splashScreenEnabled: true
   }
 };
 
