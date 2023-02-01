@@ -19,6 +19,12 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
     if fixtures_customization.get("fake_preferred_org_creation_backend_addr", False):
         backend_addr = BackendAddr.from_url(f"parsec://127.0.0.1:{unused_tcp_port}")
 
+    workspace_storage_cache_size = fixtures_customization.get("workspace_storage_cache_size")
+    if workspace_storage_cache_size is None:
+        kwargs = {}
+    else:
+        kwargs = {"workspace_storage_cache_size": workspace_storage_cache_size}
+
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
@@ -26,6 +32,7 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
         mountpoint_base_dir=tmpdir / "mnt",
         preferred_org_creation_backend_addr=backend_addr,
         gui_language=fixtures_customization.get("gui_language"),
+        **kwargs,
     )
 
 

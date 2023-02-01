@@ -37,6 +37,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "blockstore_mode",
     "real_data_storage",
     "gui_language",
+    "workspace_storage_cache_size",
 }
 
 
