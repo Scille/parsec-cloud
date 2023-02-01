@@ -3,14 +3,21 @@
 use std::sync::Arc;
 
 use diesel::{ExpressionMethods, RunQueryDsl};
+use libparsec_platform_local_db::LocalDatabase;
 use platform_async::Notify;
-use platform_local_db::LocalDatabase;
+use rstest::rstest;
+
+use tests_fixtures::{tmp_path, TmpPath};
 
 mod book;
 
+#[rstest]
 #[tokio::test]
-async fn creation_deletion() {
-    let local_db = LocalDatabase::new_in_memory().await.unwrap();
+async fn creation_deletion(tmp_path: TmpPath) {
+    let db_path = tmp_path.as_path().join("db.sqlite");
+    let local_db = LocalDatabase::from_path(db_path.to_str().unwrap())
+        .await
+        .unwrap();
     let notify = Arc::new(Notify::new());
     let notify2 = notify.clone();
 
@@ -33,11 +40,15 @@ async fn creation_deletion() {
     drop(local_db)
 }
 
+#[rstest]
 #[tokio::test]
-async fn basic_test() {
+async fn basic_test(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
 
-    let local_db = LocalDatabase::new_in_memory().await.unwrap();
+    let db_path = tmp_path.as_path().join("db.sqlite");
+    let local_db = LocalDatabase::from_path(db_path.to_str().unwrap())
+        .await
+        .unwrap();
 
     create_table(&local_db).await;
 

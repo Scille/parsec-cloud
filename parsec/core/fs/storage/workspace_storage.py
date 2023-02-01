@@ -58,7 +58,7 @@ def manage_operational_error(
         if not hasattr(self, "rs_instance"):
             raise FSLocalStorageClosedError("Service is closed")
         try:
-            return await func.__get__(self)(*args, **kwargs)
+            return await func(self, *args, **kwargs)
         except FSLocalStorageOperationalError as exc:
             print(
                 f"[{manage_operational_error.__name__}] local storage op error: `{exc}`({type(exc).__name__})"
@@ -119,12 +119,17 @@ class WorkspaceStorage:
         prevent_sync_pattern: Regex = FAILSAFE_PATTERN_FILTER,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     ) -> AsyncIterator["WorkspaceStorage"]:
-        rs_instance = await _RsWorkspaceStorage.new(
-            data_base_dir, device, workspace_id, prevent_sync_pattern, cache_size
-        )
-        instance = cls(rs_instance)
+        # We shield the initialization of the rust instance.
+        # During the init phase we open the connections to the database in the tokio runner.
+        # If at that moment we were canceled by trio, we would leak those database connections.
+        with trio.CancelScope(shield=True):
+            rs_instance = await _RsWorkspaceStorage.new(
+                data_base_dir, device, workspace_id, prevent_sync_pattern, cache_size
+            )
 
         try:
+            instance = cls(rs_instance)
+
             async with instance._service_abort_context():
                 # Load "prevent sync" pattern
                 await instance.set_prevent_sync_pattern(prevent_sync_pattern)
@@ -132,10 +137,8 @@ class WorkspaceStorage:
                 yield instance
         finally:
             with trio.CancelScope(shield=True):
-                await instance.rs_instance.clear_memory_cache(flush=True)
-                await instance.rs_instance.close_connections()
-            # del instance.rs_instance
-            # gc.collect()
+                await rs_instance.clear_memory_cache(flush=True)
+                await rs_instance.close_connections()
 
     # Helpers
 

@@ -28,18 +28,23 @@ class UserStorage:
     @asynccontextmanager
     async def run(cls, data_base_dir: Path, device: LocalDevice) -> AsyncIterator["UserStorage"]:
         # Instantiate the user storage
-        rs_instance = await _RsUserStorage.new(device, device.user_manifest_id, data_base_dir)
-        self = cls(rs_instance)
-
-        # Populate the cache with the user manifest to be able to
-        # access it synchronously at all time
-        await self.rs_instance.load_user_manifest()
+        # We shield the initialization of the rust instance.
+        # During the init phase we open the connections to the database in the tokio runner.
+        # If at that moment we were canceled by trio, we would leak those database connections.
+        with trio.CancelScope(shield=True):
+            rs_instance = await _RsUserStorage.new(device, device.user_manifest_id, data_base_dir)
 
         try:
+            self = cls(rs_instance)
+
+            # Populate the cache with the user manifest to be able to
+            # access it synchronously at all time
+            await rs_instance.load_user_manifest()
+
             yield self
         finally:
             with trio.CancelScope(shield=True):
-                await self.rs_instance.close_connections()
+                await rs_instance.close_connections()
 
     # Checkpoint interface
 

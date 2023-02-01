@@ -8,16 +8,11 @@ use platform_async::channel;
 use crate::{DatabaseError, DatabaseResult};
 
 pub struct SqliteExecutor {
-    job_sender: channel::Sender<ExecOrStop>,
+    job_sender: Option<channel::Sender<JobFunc>>,
     handle: Option<JoinHandle<()>>,
 }
 
 type JobFunc = Box<dyn FnOnce(&mut SqliteConnection) + Send>;
-
-enum ExecOrStop {
-    Exec(JobFunc),
-    Stop,
-}
 
 impl SqliteExecutor {
     /// Spawn the executor in a thread.
@@ -27,10 +22,15 @@ impl SqliteExecutor {
             job_receiver,
             connection,
         };
-        let handle = std::thread::spawn(move || background_executor.serve());
+        // TODO: currently if the thread panic the error is printed to stderr,
+        // we should instead have a proper panic handler that log an error
+        let handle = std::thread::Builder::new()
+            .name("SqliteExecutor".to_string())
+            .spawn(move || background_executor.serve())
+            .expect("failed to spawn thread");
 
         Self {
-            job_sender,
+            job_sender: Some(job_sender),
             handle: Some(handle),
         }
     }
@@ -43,7 +43,14 @@ impl SqliteExecutor {
         let (tx, rx) = channel::bounded::<R>(1);
         let wrapped_job = move |conn: &mut SqliteConnection| {
             let res = job(conn);
-            tx.send(res).unwrap();
+            // If send fails it means the caller's future has been dropped
+            // (hence dropping `rx`). In theory there is nothing wrong about
+            // it, however we log it anyway given the caller's unexpected drop
+            // may also be the sign of a bug...
+            if tx.send(res).is_err() {
+                // TODO: replace this by a proper warning log !
+                eprintln!("Caller has left");
+            }
         };
         let wrapped_job = Box::new(wrapped_job);
         self.raw_exec(wrapped_job).await?;
@@ -52,7 +59,9 @@ impl SqliteExecutor {
 
     pub async fn raw_exec(&self, job: JobFunc) -> DatabaseResult<()> {
         self.job_sender
-            .send_async(ExecOrStop::Exec(job))
+            .as_ref()
+            .expect("Job sender cannot be none before calling `drop`")
+            .send_async(job)
             .await
             .map_err(|_| DatabaseError::Closed)
     }
@@ -60,27 +69,25 @@ impl SqliteExecutor {
 
 impl Drop for SqliteExecutor {
     fn drop(&mut self) {
-        if let Err(e) = self.job_sender.send(ExecOrStop::Stop) {
-            eprintln!("Cannot send message to the background executor (Could just mean the executor is closed): {e}")
-        }
-        if let Some(Err(e)) = self.handle.take().map(|handle| handle.join()) {
-            eprintln!("Cannot wait for the thread to finish: {e:?}");
+        drop(self.job_sender.take());
+        if let Some(handle) = self.handle.take() {
+            // An error is returned in case the joined thread has panicked
+            // We can ignore the error given it should have already been
+            // logged as part of the panic handling system.
+            let _ = handle.join();
         }
     }
 }
 
 struct BackgroundSqliteExecutor {
-    job_receiver: channel::Receiver<ExecOrStop>,
+    job_receiver: channel::Receiver<JobFunc>,
     connection: SqliteConnection,
 }
 
 impl BackgroundSqliteExecutor {
     fn serve(mut self) {
-        for msg in self.job_receiver.into_iter() {
-            match msg {
-                ExecOrStop::Exec(job) => job(&mut self.connection),
-                ExecOrStop::Stop => return,
-            }
+        for job in self.job_receiver.into_iter() {
+            job(&mut self.connection)
         }
     }
 }

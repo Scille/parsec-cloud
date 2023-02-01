@@ -67,8 +67,7 @@ impl WorkspaceStorage {
         let ws = self.0.clone();
 
         FutureIntoCoroutine::from(async move {
-            ws.close_connections().await;
-            Ok(())
+            ws.close_connections().await.map_err(fs_to_python_error)
         })
     }
 

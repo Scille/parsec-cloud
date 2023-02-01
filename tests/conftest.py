@@ -8,7 +8,7 @@ import shutil
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Generator
 from unittest.mock import patch
 
 import hypothesis
@@ -18,6 +18,7 @@ import structlog
 import trio
 import trio_asyncio
 
+from parsec._parsec import test_clear_local_db_in_memory_mock, test_toggle_local_db_in_memory_mock
 from parsec.backend.config import (
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
@@ -435,6 +436,33 @@ def blockstore(backend_store, fixtures_customization):
     return config
 
 
+@pytest.fixture(autouse=True)
+def persistent_mockup(
+    fixtures_customization: dict[str, Any]
+) -> Generator[None, None, Callable[[], None] | None]:
+    if fixtures_customization.get("real_data_storage", False) or fixtures_customization.get(
+        "alternate_workspace_storage", False
+    ):
+        test_toggle_local_db_in_memory_mock(False)
+        yield None
+
+    else:
+        test_toggle_local_db_in_memory_mock(True)
+        # No database should be in use while we clear the mock. Hence it's
+        # better to do the clear as part of the init given autouse fixtures
+        # run first.
+        test_clear_local_db_in_memory_mock()
+
+        yield test_clear_local_db_in_memory_mock
+
+
+# `persistent_mockup` is autouse, hence a test only have it explicitly has dependency to be
+# able to use it clear function. Here we just re-expose this function with a better name ;-)
+@pytest.fixture
+def clear_persistent_mockup(persistent_mockup):
+    return persistent_mockup or (lambda: None)
+
+
 @pytest.fixture
 def data_base_dir(tmp_path: Path) -> Path:
     return tmp_path / "data"
@@ -445,34 +473,33 @@ def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
     db_dir = data_base_dir
     proc = psutil.Process()
 
-    def _clear_database_dir(allow_missing_path: bool):
-        for open_file in proc.open_files():
-            assert not Path(open_file.path).is_relative_to(db_dir)
-        print(f"Clearing database dir at `{db_dir}`")
-        if not db_dir.exists():
-            if allow_missing_path:
-                print(f"    database path `{db_dir}` does not exist")
-                return
-            else:
-                raise RuntimeError(f"database path `{db_dir}` does not exist")
-        if db_dir.is_file():
-            os.remove(db_dir)
-        elif db_dir.is_dir():
+    def _clear_database_dir():
+        still_opened = [
+            opened for opened in proc.open_files() if Path(opened.path).is_relative_to(db_dir)
+        ]
+        if still_opened:
+            raise RuntimeError(f"Database dir contains still opened files: {still_opened}")
+
+        try:
             shutil.rmtree(db_dir)
-        else:
-            raise RuntimeError(
-                f"database path `{db_dir}` not a file nor a directory ({{}})".format(db_dir.stat())
-            )
+        except FileNotFoundError:
+            pass
 
     return _clear_database_dir
 
 
 @pytest.fixture
-def reset_testbed(request, caplog, clear_database_dir: Callable[[bool], None]):
+def reset_testbed(
+    request,
+    caplog,
+    clear_persistent_mockup: Callable[[], None],
+    clear_database_dir: Callable[[bool], None],
+):
     async def _reset_testbed(keep_logs=False):
         if request.config.getoption("--postgresql"):
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
-        clear_database_dir(True)
+        clear_database_dir()
+        clear_persistent_mockup()
         if not keep_logs:
             caplog.clear()
 

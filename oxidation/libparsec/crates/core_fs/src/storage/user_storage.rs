@@ -143,12 +143,8 @@ pub async fn user_storage_non_speculative_init(
             .expect("Non Utf-8 character found in data_path"),
     )
     .await?;
-    let manifest_storage = ManifestStorage::new(
-        device.local_symkey.clone(),
-        device.user_manifest_id,
-        conn.clone(),
-    )
-    .await?;
+    let manifest_storage =
+        ManifestStorage::new(device.local_symkey.clone(), device.user_manifest_id, conn).await?;
 
     let timestamp = device.now();
     let manifest = LocalUserManifest::new(
@@ -158,18 +154,18 @@ pub async fn user_storage_non_speculative_init(
         false,
     );
 
-    let res = manifest_storage
+    manifest_storage
         .set_manifest(
             device.user_manifest_id,
             LocalManifest::User(manifest),
             false,
             None,
         )
-        .await;
+        .await?;
+    manifest_storage.clear_memory_cache(true).await?;
+    manifest_storage.close_connection().await?;
 
-    conn.close().await;
-
-    res
+    Ok(())
 }
 
 #[cfg(test)]

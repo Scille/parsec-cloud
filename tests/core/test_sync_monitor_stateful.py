@@ -1,7 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import AsyncContextManager, Callable
+
 import pytest
+import trio
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     Bundle,
@@ -12,10 +15,12 @@ from hypothesis_trio.stateful import (
     run_state_machine_as_test,
 )
 
-from parsec.api.data import EntryName
-from parsec.core.fs import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
+from parsec._parsec import DeviceID, EntryID, EntryName, LocalDevice
+from parsec.core.fs import FSWorkspaceNoAccess, FSWorkspaceNotFoundError, UserFS
+from parsec.core.logged_core import LoggedCore
 from parsec.core.types import WorkspaceRole
-from tests.common import call_with_control
+from tests.common import BackendFactory, RunningBackend, RunningBackendFactory, call_with_control
+from tests.core.conftest import UserFsFactory
 
 MISSING = object()
 TO_COMPARE_FIELDS = ("id", "created", "updated", "need_sync", "base_version", "is_placeholder")
@@ -45,19 +50,22 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 
 
 @pytest.mark.slow
-@pytest.mark.flaky(reruns=2)
 def test_sync_monitor_stateful(
     hypothesis_settings,
     reset_testbed,
-    backend_factory,
-    running_backend_factory,
-    core_factory,
-    user_fs_factory,
-    alice,
-    bob,
-    monkeypatch,
+    backend_factory: BackendFactory,
+    running_backend_factory: RunningBackendFactory,
+    core_factory: Callable[..., AsyncContextManager[LoggedCore]],
+    user_fs_factory: UserFsFactory,
+    alice: LocalDevice,
+    bob: LocalDevice,
+    monkeypatch: pytest.MonkeyPatch,
+    global_core_monitors_freeze: Callable[[bool], None],
 ):
     monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
+    # Prevent monitors from doing concurrent operations to avoid flakiness
+    global_core_monitors_freeze(True)
 
     class SyncMonitorStateful(TrioAsyncioRuleBasedStateMachine):
         SharedWorkspaces = Bundle("shared_workspace")
@@ -68,6 +76,7 @@ def test_sync_monitor_stateful(
             self.file_count = 0
             self.data_count = 0
             self.workspace_count = 0
+            self.user_fs_per_device = {}
 
         def get_next_file_path(self):
             self.file_count = self.file_count + 1
@@ -81,25 +90,28 @@ def test_sync_monitor_stateful(
             self.workspace_count = self.workspace_count + 1
             return EntryName(f"w{self.workspace_count}")
 
-        def get_workspace(self, device_id, wid):
+        def get_workspace(self, device_id: DeviceID, wid: EntryID):
             return self.user_fs_per_device[device_id].get_workspace(wid)
 
-        async def start_alice_core(self):
+        async def start_alice_core(self) -> LoggedCore:
             async def _core_controlled_cb(started_cb):
                 async with core_factory(self.alice) as core:
+                    # # Freeze alice monitors to avoid concurrent operations
+                    # self.alice.time_provider.mock_time(freeze=self.alice.time_provider.now())
+                    self.alice.time_provider.mock_time(speed=0)
                     await started_cb(core=core)
 
-            self.alice_core_controller = await self.get_root_nursery().start(
+            self.alice_core_controller: trio.Nursery = await self.get_root_nursery().start(
                 call_with_control, _core_controlled_cb
             )
             return self.alice_core_controller.core
 
-        async def start_bob_user_fs(self):
+        async def start_bob_user_fs(self) -> UserFS:
             async def _user_fs_controlled_cb(started_cb):
                 async with user_fs_factory(device=self.bob) as user_fs:
                     await started_cb(user_fs=user_fs)
 
-            self.bob_user_fs_controller = await self.get_root_nursery().start(
+            self.bob_user_fs_controller: trio.Nursery = await self.get_root_nursery().start(
                 call_with_control, _user_fs_controlled_cb
             )
             return self.bob_user_fs_controller.user_fs
@@ -110,15 +122,14 @@ def test_sync_monitor_stateful(
                     async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
-            self.backend_controller = await self.get_root_nursery().start(
+            self.backend_controller: trio.Nursery = await self.get_root_nursery().start(
                 call_with_control, _backend_controlled_cb
             )
 
         @initialize()
         async def init(self):
-            await reset_testbed()
-
             await self.start_backend()
+            assert isinstance(self.backend_controller.server, RunningBackend)
             self.alice = self.backend_controller.server.correct_addr(alice)
             self.bob = self.backend_controller.server.correct_addr(bob)
             # Align alice and bob by using the same time provider
@@ -129,14 +140,25 @@ def test_sync_monitor_stateful(
                 alice.device_id: self.alice_core.user_fs,
                 bob.device_id: self.bob_user_fs,
             }
-            self.synced_files = set()
-            self.alice_workspaces_role = {}
+            self.synced_files: tuple[EntryID, str] = set()
+            self.alice_workspaces_role: dict[EntryID, WorkspaceRole] = {}
+
+        async def teardown(self):
+            await self.stop_bob()
+            await self.stop_alice()
+            await reset_testbed()
+
+        async def stop_bob(self):
+            await self.bob_user_fs_controller.stop()
+
+        async def stop_alice(self):
+            await self.alice_core_controller.stop()
 
         @rule(
             target=SharedWorkspaces,
             role=st.one_of(st.just(WorkspaceRole.CONTRIBUTOR), st.just(WorkspaceRole.READER)),
         )
-        async def create_sharing(self, role):
+        async def create_sharing(self, role: WorkspaceRole):
             w_name = self.get_next_workspace_name()
             wid = await self.bob_user_fs.workspace_create(w_name)
             await self.bob_user_fs.workspace_share(wid, alice.user_id, role)
@@ -149,14 +171,14 @@ def test_sync_monitor_stateful(
                 st.just(WorkspaceRole.CONTRIBUTOR), st.just(WorkspaceRole.READER), st.just(None)
             ),
         )
-        async def update_sharing(self, wid, new_role):
+        async def update_sharing(self, wid: EntryID, new_role: WorkspaceRole):
             await self.bob_user_fs.workspace_share(wid, alice.user_id, new_role)
             self.alice_workspaces_role[wid] = new_role
 
         @rule(
             author=st.one_of(st.just(alice.device_id), st.just(bob.device_id)), wid=SharedWorkspaces
         )
-        async def create_file(self, author, wid):
+        async def create_file(self, author: DeviceID, wid: EntryID):
             file_path = self.get_next_file_path()
             if author == bob.device_id:
                 await self._bob_update_file(wid, file_path, create_file=True)
@@ -200,7 +222,8 @@ def test_sync_monitor_stateful(
 
         @rule(target=SyncedFiles)
         async def let_core_monitors_process_changes(self):
-            # Set a high clock speed
+            # Un-freeze alice monitors and set a high clock speed
+            global_core_monitors_freeze(False)
             self.alice.time_provider.mock_time(speed=1000.0)
             try:
                 # Loop over 100 attemps (at least 100 seconds)
@@ -212,7 +235,7 @@ def test_sync_monitor_stateful(
                         bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
                         await bob_w.sync()
                     # Alice get back possible changes from bob's sync
-                    await self.alice.time_provider.sleep(1)
+                    await self.alice_core.wait_idle_monitors()
                     # See if alice and bob are in sync
                     try:
                         new_synced_files = await self.assert_alice_and_bob_in_sync()
@@ -227,12 +250,13 @@ def test_sync_monitor_stateful(
                     else:
                         self.synced_files.update(new_synced_files)
                         return multiple(*(sorted(new_synced_files)))
-            # Reset clock speed
+            # Reset clock freeze
             finally:
+                global_core_monitors_freeze(True)
                 self.alice.time_provider.mock_time(speed=1.0)
 
-        async def assert_alice_and_bob_in_sync(self):
-            new_synced_files = []
+        async def assert_alice_and_bob_in_sync(self) -> list[tuple[EntryID, str]]:
+            new_synced_files: list[tuple[EntryID, str]] = []
 
             # Now alice and bob should have agreed on the data
             for alice_workspace_entry in self.alice_core.user_fs.get_user_manifest().workspaces:

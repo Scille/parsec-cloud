@@ -219,21 +219,23 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
 @pytest.mark.gui
 @pytest.mark.trio
+# We actually don't need to be admin, but we want to log as alice to have alice2 available
+@customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_filter_user(
-    aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, bob_user_fs, alice
+    aqtbot, running_backend, logged_gui, autoclose_dialog, alice2_user_fs, bob, bob_user_fs, alice
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    wid_alice = await alice_user_fs.workspace_create(EntryName("Workspace1"))
-    wid_bob = await bob_user_fs.workspace_create(EntryName("Workspace2"))
-    await bob_user_fs.workspace_create(EntryName("Workspace3"))
+    wid_bob = await bob_user_fs.workspace_create(EntryName("Workspace1"))
+    wid_alice = await alice2_user_fs.workspace_create(EntryName("Workspace2"))
+    await alice2_user_fs.workspace_create(EntryName("Workspace3"))
 
-    await alice_user_fs.workspace_share(wid_alice, bob.user_id, WorkspaceRole.MANAGER)
-    await bob_user_fs.workspace_share(wid_bob, alice.user_id, WorkspaceRole.READER)
+    await bob_user_fs.workspace_share(wid_bob, alice.user_id, WorkspaceRole.MANAGER)
+    await alice2_user_fs.workspace_share(wid_alice, bob.user_id, WorkspaceRole.READER)
 
-    await alice_user_fs.process_last_messages()
-    await alice_user_fs.sync()
     await bob_user_fs.process_last_messages()
     await bob_user_fs.sync()
+    await alice2_user_fs.process_last_messages()
+    await alice2_user_fs.sync()
 
     def _workspace_listed():
         assert w_w.layout_workspaces.count() == 3
@@ -253,11 +255,11 @@ async def test_workspace_filter_user(
     assert u_w.layout_users.count() == 3
     for i in range(u_w.layout_users.count()):
         button = u_w.layout_users.itemAt(i).widget()
-        if not button.is_current_user and button.user_info.user_id == alice.user_id:
+        if not button.is_current_user and button.user_info.user_id == bob.user_id:
             button.filter_user_workspaces_clicked.emit(button.user_info)
             break
     else:
-        raise ValueError("Can not find Alice user")
+        raise ValueError("Can not find Bob user")
 
     def _workspace_filtered():
         assert w_w.isVisible()
@@ -269,9 +271,7 @@ async def test_workspace_filter_user(
         assert wk_button_1.name in [EntryName("Workspace1"), EntryName("Workspace2")]
         assert wk_button_2.name in [EntryName("Workspace1"), EntryName("Workspace2")]
         assert w_w.filter_remove_button.isVisible()
-        assert w_w.filter_label.text() == "Common workspaces with {}".format(
-            alice.short_user_display
-        )
+        assert w_w.filter_label.text() == "Common workspaces with {}".format(bob.short_user_display)
 
     await aqtbot.wait_until(_workspace_filtered)
 
@@ -291,7 +291,6 @@ async def test_workspace_filter_user_new_workspace(
     autoclose_dialog,
     alice_user_fs,
     bob,
-    bob_user_fs,
     alice,
     monkeypatch,
 ):
