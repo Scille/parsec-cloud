@@ -143,8 +143,12 @@ class WorkspaceFS:
     async def disable_block_remanence(self) -> bool:
         return await self.remanence_manager.disable_block_remanence()
 
-    async def run_remanence_manager(self, sleep_forever: Callable[[], Awaitable[None]]) -> None:
-        return await self.remanence_manager.run(sleep_forever)
+    async def run_remanence_manager(
+        self,
+        idle: Callable[[int], None],
+        awake: Callable[[int], None],
+    ) -> None:
+        return await self.remanence_manager.run(idle, awake)
 
     async def wait_remanence_manager_prepared(self) -> None:
         return await self.remanence_manager.wait_prepared()
