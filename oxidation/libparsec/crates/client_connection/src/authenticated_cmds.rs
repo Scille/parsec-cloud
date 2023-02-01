@@ -32,6 +32,7 @@
 
 use std::{collections::HashMap, num::NonZeroU64};
 
+use base64::prelude::{Engine, BASE64_STANDARD};
 use libparsec_crypto::{PublicKey, SigningKey};
 use libparsec_protocol::{
     authenticated_cmds::v3::{
@@ -77,7 +78,7 @@ impl AuthenticatedCmds {
     ) -> Result<Self, url::ParseError> {
         let url = server_url.to_authenticated_http_url();
 
-        let device_id = base64::encode(device_id.to_string().as_bytes());
+        let device_id = BASE64_STANDARD.encode(device_id.to_string().as_bytes());
 
         Ok(Self {
             client,
@@ -163,7 +164,7 @@ fn sign_request(
 ) -> RequestBuilder {
     let timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
     let signature = signing_key.sign_only_signature(body);
-    let signature = base64::encode(signature);
+    let signature = BASE64_STANDARD.encode(signature);
 
     let mut authorization_headers = HeaderMap::with_capacity(4);
 

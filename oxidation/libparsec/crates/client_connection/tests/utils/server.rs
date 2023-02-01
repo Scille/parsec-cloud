@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use base64::prelude::{Engine, BASE64_STANDARD};
 use chrono::{DateTime, FixedOffset};
 use http_body::Full;
 use hyper::{
@@ -45,7 +46,8 @@ impl SignatureVerifier {
 
     fn get_auth_request(&self, headers: &HeaderMap) -> Result<AuthRequest, anyhow::Error> {
         parse_headers(headers).and_then(|(raw_author, _timestamp, raw_signature)| {
-            let (_author, verify_key) = base64::decode(raw_author)
+            let (_author, verify_key) = BASE64_STANDARD
+                .decode(raw_author)
                 .map_err(anyhow::Error::from)
                 .and_then(|bytes| {
                     String::from_utf8(bytes)
@@ -99,7 +101,7 @@ impl Service<Request<Body>> for SignatureVerifier {
             let auth_req = res?;
             let body = body::to_bytes(req.into_body()).await?;
 
-            let signature = base64::decode(auth_req.signature_b64)?;
+            let signature = BASE64_STANDARD.decode(auth_req.signature_b64)?;
             let signed_message = rebuild_signed_message(signature, &body);
             if let Err(e) = auth_req.verify_key.verify(&signed_message) {
                 log::error!("invalid signed request: {e}");
