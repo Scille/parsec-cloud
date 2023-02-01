@@ -139,7 +139,7 @@ async def bob_core(
 @pytest.fixture
 def global_core_monitors_freeze(monkeypatch):
     # In theory the `LoggedCore` (unlike `UserFS` alone) will run monitors in the
-    # background. However this an issue in some tests given it cause flakiness due
+    # background. However this is an issue in some tests given it cause flakiness due
     # to those concurrent operations (e.g. in `test_sync_monitor_stateful`, message
     # monitor wakes up after every `create_sharing` rule to process the sharing message).
     # So instead we use the mockpoints in the monitors to make sure they don't do
