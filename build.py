@@ -32,7 +32,9 @@ def run(cmd: str, **kwargs) -> subprocess.CompletedProcess:
 
 def build():
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
+
     run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
+
     if sys.platform == "linux":
         run("patchelf --version")
 
