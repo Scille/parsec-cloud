@@ -52,7 +52,7 @@
         "@typescript-eslint/eslint-plugin": "^5.47.1",
         "@typescript-eslint/parser": "^5.27.0",
         "@vue/cli-plugin-babel": "~5.0.8",
-        "@vue/cli-plugin-e2e-cypress": "~5.0.4",
+        "@vue/cli-plugin-e2e-cypress": "~5.0.8",
         "@vue/cli-plugin-eslint": "~5.0.8",
         "@vue/cli-plugin-router": "~5.0.8",
         "@vue/cli-plugin-typescript": "~5.0.8",
