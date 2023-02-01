@@ -60,7 +60,7 @@ pub(crate) trait ChunkStorageTrait {
     }
 
     async fn close_connection(&self) -> FSResult<()> {
-        self.conn().close().await;
+        self.conn().close();
         Ok(())
     }
 

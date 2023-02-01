@@ -1,10 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 
 use diesel::{connection::SimpleConnection, sqlite::SqliteConnection, Connection};
 use executor::SqliteExecutor;
-use tokio::sync::RwLock;
 
 mod error;
 mod executor;
@@ -80,8 +82,8 @@ async fn new_sqlite_connection_from_path(path: &str) -> Result<SqliteConnection,
 
 impl LocalDatabase {
     /// Close the actual connection to the database.
-    pub async fn close(&self) {
-        let _executor = self.executor.write().await.take();
+    pub fn close(&self) {
+        let _executor = self.executor.write().expect("RwLock is poisoned").take();
         #[cfg(feature = "test-utils")]
         if let Some(executor) = _executor {
             if self.is_in_memory {
@@ -97,14 +99,14 @@ impl LocalDatabase {
         F: (FnOnce(&mut SqliteConnection) -> diesel::result::QueryResult<R>) + Send + 'static,
         R: Send + 'static,
     {
-        let res = self
-            .executor
-            .read()
-            .await
-            .as_ref()
-            .ok_or(DatabaseError::Closed)?
-            .exec(job)
-            .await?;
+        let job = {
+            let guard = self.executor.read().expect("RwLock is poisoned");
+            guard
+                .as_ref()
+                .map(|exec| exec.exec(job))
+                .ok_or(DatabaseError::Closed)
+        }?;
+        let res = job.send().await?;
         match res {
             Err(diesel::result::Error::DatabaseError(kind, err)) => {
                 match kind {
@@ -118,13 +120,13 @@ impl LocalDatabase {
                     // We want to remove the ability to send job when the error is `CloseConnection`
                     // (the database is close so no way we could execute those jobs).
                     diesel::result::DatabaseErrorKind::ClosedConnection => {
-                        self.close().await;
+                        self.close();
                     }
                     // And on unknown error, we could be more picky and only close the connection on specific unknown error (for example only close the connection on `disk full`)
                     // But checking for those is hard and implementation specific (we need to check against a `&str` which formating could change).
                     _ => {
                         eprintln!("Diesel unknown error: {kind:?}");
-                        self.close().await;
+                        self.close();
                     }
                 }
                 Err(DatabaseError::DieselDatabaseError(kind, err))

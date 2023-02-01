@@ -156,7 +156,7 @@ impl ManifestStorage {
                 .expect("Invalid state when closing connection");
         }
         self.flush_cache_ahead_of_persistance().await?;
-        self.conn.close().await;
+        self.conn.close();
         Ok(())
     }
 

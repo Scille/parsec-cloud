@@ -7,7 +7,7 @@ use platform_async::channel;
 
 use crate::{DatabaseError, DatabaseResult};
 
-pub struct SqliteExecutor {
+pub(crate) struct SqliteExecutor {
     job_sender: Option<channel::Sender<JobFunc>>,
     handle: Option<JoinHandle<()>>,
 }
@@ -35,7 +35,7 @@ impl SqliteExecutor {
         }
     }
 
-    pub async fn exec<'a, F, R>(&self, job: F) -> DatabaseResult<R>
+    pub fn exec<F, R>(&self, job: F) -> ExecJob<R>
     where
         F: (FnOnce(&mut SqliteConnection) -> R) + Send + 'static,
         R: Send + 'static,
@@ -53,15 +53,49 @@ impl SqliteExecutor {
             }
         };
         let wrapped_job = Box::new(wrapped_job);
-        self.raw_exec(wrapped_job).await?;
-        rx.recv_async().await.map_err(|_| DatabaseError::Closed)
-    }
 
-    pub async fn raw_exec(&self, job: JobFunc) -> DatabaseResult<()> {
-        self.job_sender
+        let sender = self
+            .job_sender
             .as_ref()
-            .expect("Job sender cannot be none before calling `drop`")
+            .expect("Job sender cannot be none before calling `drop`");
+
+        ExecJob {
+            job: wrapped_job,
+            sender: sender.clone(),
+            result_recv: rx,
+        }
+    }
+}
+
+#[must_use]
+pub(crate) struct ExecJob<R>
+where
+    R: Send + 'static,
+{
+    job: JobFunc,
+    sender: channel::Sender<JobFunc>,
+    result_recv: channel::Receiver<R>,
+}
+
+impl<R> ExecJob<R>
+where
+    R: Send + 'static,
+{
+    pub async fn send(self) -> DatabaseResult<R> {
+        let ExecJob {
+            job,
+            sender,
+            result_recv,
+        } = self;
+
+        sender
             .send_async(job)
+            .await
+            .map_err(|_| DatabaseError::Closed)?;
+        drop(sender);
+
+        result_recv
+            .recv_async()
             .await
             .map_err(|_| DatabaseError::Closed)
     }
