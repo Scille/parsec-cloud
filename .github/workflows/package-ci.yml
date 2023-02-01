@@ -38,7 +38,7 @@ jobs:
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: ./.github/actions/setup-python-poetry
         with:
@@ -128,7 +128,7 @@ jobs:
           set -e
           echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
 
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
@@ -240,7 +240,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
         with:
@@ -296,7 +296,7 @@ jobs:
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
         id: setup-python
@@ -360,7 +360,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package electron
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - name: Install dependencies
         run: |
@@ -388,7 +388,7 @@ jobs:
       NDK_VERSION: 22.1.7171670
       SDK_VERSION: 30.0.3
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - name: Install rust toolchain
         id: rust-toolchain
@@ -428,7 +428,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.0.2
 
       - name: Install dependencies
         run: npm clean-install
