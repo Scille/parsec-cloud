@@ -31,4 +31,4 @@ env_logger = "0.10.0"
 http-body = "0.4.5"
 hyper = { version = "0.14.22", features = ["server"] }
 log = "0.4.17"
-tokio = { version = "1.23", features = ["rt", "macros", "sync"] }
+tokio = { version = "1.25", features = ["rt", "macros", "sync"] }
