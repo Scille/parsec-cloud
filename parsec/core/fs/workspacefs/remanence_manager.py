@@ -136,15 +136,14 @@ class RemanenceManager:
         # Return whether state has changed or not
         return removed_block_ids is not None
 
-    async def wait_prepared(self) -> None:
-        if self._prepared_event.is_set():
-            return
-        while self._main_task_state == RemanenceManagerState.PREPARING:
+    async def wait_prepared(self, wait_for_connection: bool = False) -> None:
+        while True:
+            if self._main_task_state == RemanenceManagerState.STOPPED and not wait_for_connection:
+                raise RuntimeError("The remanence manager is currently stopped")
+            if self._main_task_state == RemanenceManagerState.RUNNING:
+                return
             with trio.move_on_after(0.1):
                 await self._prepared_event.wait()
-        if not self._prepared_event.is_set():
-            assert self._main_task_state == RemanenceManagerState.STOPPED
-            raise RuntimeError("The remanence manager is currently stopped")
 
     def get_info(self) -> RemanenceManagerInfo:
         return RemanenceManagerInfo(
