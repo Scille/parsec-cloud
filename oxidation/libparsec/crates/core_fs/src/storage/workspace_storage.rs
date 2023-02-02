@@ -446,7 +446,7 @@ impl WorkspaceStorage {
     /// Close the connections to the databases.
     /// Provide a way to manually close those connections.
     /// Event tho they will be closes when [WorkspaceStorage] is dropped.
-    pub async fn close_connections(&self) -> FSResult<()> {
+    pub async fn close_connections(self) -> FSResult<()> {
         let (r1, r2, r3) = future::join3(
             self.manifest_storage.close_connection(),
             self.chunk_storage.close_connection(),
@@ -986,8 +986,6 @@ mod tests {
         aws.release_entry_id(&manifest_id, guard);
         aws.clear_memory_cache(true).await.unwrap();
         aws.close_connections().await.unwrap();
-
-        drop(aws);
 
         let aws = WorkspaceStorage::new(
             Path::new(&db_path),
