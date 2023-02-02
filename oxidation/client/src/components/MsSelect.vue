@@ -54,7 +54,10 @@ async function openPopover(ev: Event): Promise<void> {
     event: ev
   });
   await popover.present();
+  onDidDismissPopover(popover);
+}
 
+async function onDidDismissPopover(popover: any): Promise<void> {
   const { data } = await popover.onDidDismiss();
   if (data) {
     labelRef.value = data.option.label;

@@ -2,14 +2,12 @@
 
 import { mount, VueWrapper } from '@vue/test-utils';
 import MsSelectPopover from '@/components/MsSelectPopover.vue';
+import MsSelect from '@/components/MsSelect.vue';
 import { MsSelectOption, MsSelectSortByLabels } from '@/components/MsSelectOption';
-import {
-  arrowUp,
-  arrowDown
-} from 'ionicons/icons';
 import { popoverController } from '@ionic/vue';
+import { clearEmitted } from './utils';
 
-describe('MsSelectPopover.vue', () => {
+describe('MsSelect.vue', () => {
   const options: MsSelectOption[] = [
     { label: 'Label A', key: '1' },
     { label: 'Label B', key: '2' },
@@ -21,72 +19,63 @@ describe('MsSelectPopover.vue', () => {
     desc: 'Desc'
   };
 
-  const wrapper = mount(MsSelectPopover, {
+  const label = 'Select label';
+
+  const wrapper = mount(MsSelect, {
     props: {
       options: options,
+      label: label,
       sortByLabels: sortLabels,
-      sortByAsc: true
+      defaultOption: '1'
     }
   });
 
-  let sortIcon: VueWrapper;
+  let selectButton: VueWrapper;
 
   beforeAll(() => {
-    sortIcon = wrapper.findComponent('ion-icon') as VueWrapper;
+    selectButton = wrapper.findComponent('ion-button') as VueWrapper;
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    clearEmitted(wrapper);
   });
 
-  function findItemAt(wrapper: VueWrapper, index: number): VueWrapper | undefined {
-    for (const [i, item] of wrapper.findAllComponents('ion-item').entries()) {
-      if (index === i) {
-        return item as VueWrapper;
-      }
-    }
-  }
-
-  it('renders select popover', () => {
+  it('renders select', () => {
     expect(wrapper.vm.sortByAsc).toBe(true);
-    expect(wrapper.vm.selectedOption).toBe(undefined);
+    expect(wrapper.vm.selectedOption).toEqual(options[0]);
+    expect(wrapper.vm.labelRef).toEqual('Label A');
+  });
 
-    wrapper.findAllComponents('ion-item').forEach((item, index) => {
-      if (index === 0) {
-        expect(item.text()).toBe('Asc');
-        expect(sortIcon.props('icon')).toBe(arrowUp);
-      } else {
-        expect(item.text()).toBe(options[index - 1].label);
-        expect(item.attributes('class')).not.toContain('selected');
-      }
+  it('should render select popover on select click', () => {
+    const popoverCtrlSpy = jest.spyOn(popoverController, 'create');
+    const openPopoverSpy = jest.spyOn(wrapper.vm, 'openPopover');
+    selectButton.trigger('click');
+    expect(popoverCtrlSpy).toHaveBeenCalledWith({
+      component: MsSelectPopover,
+      componentProps: {
+        options: wrapper.props('options'),
+        defaultOption: wrapper.vm.selectedOption.key,
+        sortByLabels: wrapper.props('sortByLabels'),
+        sortByAsc: wrapper.vm.sortByAsc
+      },
+      event: openPopoverSpy.mock.lastCall.at(0)
     });
   });
 
-  it('allows item selection', () => {
-    const popoverCtrlSpy = jest.spyOn(popoverController, 'dismiss').mockImplementation();
-
-    expect(wrapper.vm.selectedOption).toBe(undefined);
-    const item = findItemAt(wrapper, 2);
-    expect(item).toBeDefined();
-
-    item?.trigger('click');
-    expect(popoverCtrlSpy).toHaveBeenCalledWith({
-      option: options[1],
-      sortByAsc: true
-    });
-  });
-
-  it('inverts sort order', () => {
-    const popoverCtrlSpy = jest.spyOn(popoverController, 'dismiss').mockImplementation();
-
-    expect(wrapper.vm.sortByAsc).toBe(true);
-    const item = findItemAt(wrapper, 0);
-    expect(item).toBeDefined();
-    expect(sortIcon.props('icon')).toBe(arrowUp);
-    item?.trigger('click');
-    expect(popoverCtrlSpy).toHaveBeenCalledWith({
-      option: options[1],
+  it('should update select name, sort value and emit change on popover dismiss', async () => {
+    await wrapper.vm.openPopover();
+    await popoverController.dismiss({
+      option: options[2],
       sortByAsc: false
     });
+
+    expect(wrapper.vm.sortByAsc).toBe(false);
+    expect(wrapper.vm.selectedOption).toEqual(options[2]);
+    expect(wrapper.vm.labelRef).toEqual('Label C');
+    expect(wrapper.emitted('change')).toEqual([[{
+      option: options[2],
+      sortByAsc: false
+    }]]);
   });
 });
