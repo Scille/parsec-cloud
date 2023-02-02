@@ -340,7 +340,7 @@ class WorkspaceStorageSnapshot:
         assert isinstance(workspace_storage, (_RsWorkspaceStorage, _RsWorkspaceStorageSnapshot))
 
         if isinstance(workspace_storage, _RsWorkspaceStorage):
-            rs_instance = _RsWorkspaceStorageSnapshot(workspace_storage)
+            rs_instance = workspace_storage.to_timestamp()
         elif isinstance(workspace_storage, _RsWorkspaceStorageSnapshot):
             rs_instance = workspace_storage
 

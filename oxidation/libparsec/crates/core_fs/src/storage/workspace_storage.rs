@@ -510,7 +510,7 @@ impl WorkspaceStorage {
     }
 
     /// Take a snapshot of the current [WorkspaceStorage]
-    pub fn to_timestamp(self, _timestamp: DateTime) -> WorkspaceStorageSnapshot {
+    pub fn to_timestamp(self) -> WorkspaceStorageSnapshot {
         WorkspaceStorageSnapshot::from(self)
     }
 }

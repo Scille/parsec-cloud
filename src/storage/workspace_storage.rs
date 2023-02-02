@@ -384,7 +384,7 @@ impl WorkspaceStorage {
     }
 
     fn to_timestamp(&self) -> WorkspaceStorageSnapshot {
-        WorkspaceStorageSnapshot::new(self.clone())
+        WorkspaceStorageSnapshot::from(self.clone())
     }
 
     #[getter]
@@ -413,18 +413,17 @@ pub(crate) struct WorkspaceStorageSnapshot(
     pub Option<Regex>,
 );
 
-#[pymethods]
-impl WorkspaceStorageSnapshot {
-    #[new]
-    fn new(workspace_storage: WorkspaceStorage) -> Self {
+impl From<WorkspaceStorage> for WorkspaceStorageSnapshot {
+    fn from(workspace_storage: WorkspaceStorage) -> Self {
         Self(
-            Arc::new(libparsec::core_fs::WorkspaceStorageSnapshot::from(
-                workspace_storage.0.as_ref().clone(),
-            )),
+            Arc::new(workspace_storage.0.as_ref().clone().to_timestamp()),
             workspace_storage.1,
         )
     }
+}
 
+#[pymethods]
+impl WorkspaceStorageSnapshot {
     fn create_file_descriptor(&self, manifest: LocalFileManifest) -> u32 {
         self.0.create_file_descriptor(manifest.0).0
     }
