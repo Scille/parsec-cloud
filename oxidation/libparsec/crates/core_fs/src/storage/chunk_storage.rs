@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use diesel::{
     dsl::count_star, sql_query, table, AsChangeset, ExpressionMethods, Insertable, QueryDsl,
     RunQueryDsl,
@@ -341,7 +343,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 // Interface to access the local chunks of data
 #[derive(Clone)]
 pub(crate) struct ChunkStorage {
-    conn: LocalDatabase,
+    conn: Arc<LocalDatabase>,
     local_symkey: SecretKey,
     time_provider: TimeProvider,
 }
@@ -361,7 +363,7 @@ impl ChunkStorageTrait for ChunkStorage {
 impl ChunkStorage {
     pub async fn new(
         local_symkey: SecretKey,
-        conn: LocalDatabase,
+        conn: Arc<LocalDatabase>,
         time_provider: TimeProvider,
     ) -> FSResult<Self> {
         let instance = Self {
@@ -377,7 +379,7 @@ impl ChunkStorage {
 // Interface for caching the data blocks.
 #[derive(Clone)]
 pub(crate) struct BlockStorage {
-    conn: LocalDatabase,
+    conn: Arc<LocalDatabase>,
     local_symkey: SecretKey,
     cache_size: u64,
     time_provider: TimeProvider,
@@ -404,7 +406,7 @@ impl BlockStorageTrait for BlockStorage {
 impl BlockStorage {
     pub async fn new(
         local_symkey: SecretKey,
-        conn: LocalDatabase,
+        conn: Arc<LocalDatabase>,
         cache_size: u64,
         time_provider: TimeProvider,
     ) -> FSResult<Self> {
@@ -421,8 +423,7 @@ impl BlockStorage {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::hash_map::RandomState;
-    use std::collections::HashSet;
+    use std::{collections::HashSet, sync::Arc};
     use uuid::Uuid;
 
     use rstest::rstest;
@@ -437,9 +438,10 @@ mod tests {
         let conn = LocalDatabase::from_path(db_path.to_str().unwrap())
             .await
             .unwrap();
+        let conn = Arc::new(conn);
         let local_symkey = SecretKey::generate();
 
-        let chunk_storage = ChunkStorage::new(local_symkey, conn, TimeProvider::default())
+        let chunk_storage = ChunkStorage::new(local_symkey, conn.clone(), TimeProvider::default())
             .await
             .unwrap();
 
@@ -485,8 +487,8 @@ mod tests {
         );
 
         let local_chunk_ids = chunk_storage.get_local_chunk_ids(&chunk_ids).await.unwrap();
-        let set0: HashSet<_, RandomState> = HashSet::from_iter(local_chunk_ids.iter());
-        let set1: HashSet<_, RandomState> = HashSet::from_iter(chunk_ids.iter());
+        let set0 = local_chunk_ids.iter().collect::<HashSet<_>>();
+        let set1 = chunk_ids.iter().collect::<HashSet<_>>();
         assert_eq!(set0.len(), N);
         assert_eq!(set1.len(), N);
         assert_eq!(set0.intersection(&set1).count(), N);
@@ -496,14 +498,11 @@ mod tests {
         assert_eq!(chunk_storage.get_nb_blocks().await.unwrap(), N as i64);
         assert_eq!(chunk_storage.get_total_size().await.unwrap(), N as i64 * 44);
 
-        let new_conn = LocalDatabase::from_path(db_path.to_str().unwrap())
-            .await
-            .unwrap();
         let local_symkey = SecretKey::generate();
         let cache_size = *DEFAULT_BLOCK_SIZE * 1024;
 
         let block_storage =
-            BlockStorage::new(local_symkey, new_conn, cache_size, TimeProvider::default())
+            BlockStorage::new(local_symkey, conn, cache_size, TimeProvider::default())
                 .await
                 .unwrap();
 

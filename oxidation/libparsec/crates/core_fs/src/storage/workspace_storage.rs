@@ -103,12 +103,14 @@ impl WorkspaceStorage {
                 .expect("Non-Utf-8 character found in data_path"),
         )
         .await?;
+        let data_conn = Arc::new(data_conn);
         let cache_conn = LocalDatabase::from_path(
             cache_path
                 .to_str()
                 .expect("Non-Utf-8 character found in cache_path"),
         )
         .await?;
+        let cache_conn = Arc::new(cache_conn);
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
@@ -678,6 +680,7 @@ pub async fn workspace_storage_non_speculative_init(
             .expect("Non-Utf-8 character found in data_path"),
     )
     .await?;
+    let conn = Arc::new(conn);
     let manifest_storage =
         ManifestStorage::new(device.local_symkey.clone(), workspace_id, conn).await?;
     let timestamp = timestamp.unwrap_or_else(|| device.now());

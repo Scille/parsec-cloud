@@ -90,7 +90,7 @@ struct NewPreventSyncPattern<'a> {
 #[derive(Clone)]
 pub struct ManifestStorage {
     local_symkey: SecretKey,
-    conn: LocalDatabase,
+    conn: Arc<LocalDatabase>,
     pub realm_id: EntryID,
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
@@ -120,7 +120,7 @@ impl ManifestStorage {
     pub async fn new(
         local_symkey: SecretKey,
         realm_id: EntryID,
-        conn: LocalDatabase,
+        conn: Arc<LocalDatabase>,
     ) -> FSResult<Self> {
         let instance = Self {
             local_symkey,
@@ -755,6 +755,8 @@ async fn get_prevent_sync_pattern_raw(
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use libparsec_client_types::{Chunk, LocalFileManifest};
     use libparsec_crypto::{prelude::*, HashDigest};
     use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest, Regex};
@@ -773,6 +775,7 @@ mod tests {
         let conn = LocalDatabase::from_path(db_path.to_str().unwrap())
             .await
             .unwrap();
+        let conn = Arc::new(conn);
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
 

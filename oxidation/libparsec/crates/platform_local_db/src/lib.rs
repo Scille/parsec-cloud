@@ -1,9 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::{
-    path::PathBuf,
-    sync::{Arc, RwLock},
-};
+use std::{path::PathBuf, sync::RwLock};
 
 use diesel::{connection::SimpleConnection, sqlite::SqliteConnection, Connection};
 use executor::SqliteExecutor;
@@ -21,13 +18,12 @@ pub use test_utils::{test_clear_local_db_in_memory_mock, test_toggle_local_db_in
 /// https://www.sqlite.org/limits.html#max_variable_number
 pub const LOCAL_DATABASE_MAX_VARIABLE_NUMBER: usize = 999;
 
-#[derive(Clone)]
 pub struct LocalDatabase {
     #[cfg(feature = "test-utils")]
     path: String,
     #[cfg(feature = "test-utils")]
     is_in_memory: bool,
-    executor: Arc<RwLock<Option<SqliteExecutor>>>,
+    executor: RwLock<Option<SqliteExecutor>>,
 }
 
 impl LocalDatabase {
@@ -43,7 +39,7 @@ impl LocalDatabase {
         Ok(Self {
             path: path.to_string(),
             is_in_memory,
-            executor: Arc::new(RwLock::new(Some(executor))),
+            executor: RwLock::new(Some(executor)),
         })
     }
 
@@ -52,7 +48,7 @@ impl LocalDatabase {
         let conn = new_sqlite_connection_from_path(path).await?;
         let executor = SqliteExecutor::spawn(conn);
         Ok(Self {
-            executor: Arc::new(RwLock::new(Some(executor))),
+            executor: RwLock::new(Some(executor)),
         })
     }
 }
@@ -90,6 +86,12 @@ impl LocalDatabase {
                 test_utils::return_sqlite_in_memory_db(&self.path, executor);
             }
         }
+    }
+}
+
+impl Drop for LocalDatabase {
+    fn drop(&mut self) {
+        self.close()
     }
 }
 

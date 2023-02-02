@@ -17,7 +17,7 @@ pub struct UserStorage {
     pub device: LocalDevice,
     pub user_manifest_id: EntryID,
     manifest_storage: ManifestStorage,
-    data_conn: LocalDatabase,
+    data_conn: Arc<LocalDatabase>,
     user_manifest_copy: Arc<RwLock<Option<LocalUserManifest>>>,
 }
 
@@ -34,6 +34,7 @@ impl UserStorage {
                 .expect("Non-Utf-8 character found in data_path"),
         )
         .await?;
+        let conn = Arc::new(conn);
         let manifest_storage =
             ManifestStorage::new(device.local_symkey.clone(), user_manifest_id, conn.clone())
                 .await?;
@@ -143,6 +144,7 @@ pub async fn user_storage_non_speculative_init(
             .expect("Non Utf-8 character found in data_path"),
     )
     .await?;
+    let conn = Arc::new(conn);
     let manifest_storage =
         ManifestStorage::new(device.local_symkey.clone(), device.user_manifest_id, conn).await?;
 
