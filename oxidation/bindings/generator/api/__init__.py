@@ -3,3 +3,4 @@
 from .common import *
 from .events import *
 from .login import *
+from .testbed import *

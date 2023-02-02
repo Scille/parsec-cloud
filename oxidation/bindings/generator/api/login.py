@@ -27,7 +27,7 @@ class AvailableDevice(Structure):
     ty: DeviceFileType
 
 
-class CacheSize(I32BasedType):
+class CacheSize(U32BasedType):
     pass
 
 

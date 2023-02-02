@@ -15,9 +15,7 @@ JsArray
 JsValue
 {%- elif type.kind == "bool" -%}
 JsBoolean
-{%- elif type.kind == "i32_based" -%}
-JsNumber
-{%- elif type.kind == "float" -%}
+{%- elif type.kind in ("i32_based", "u32_based", "float") -%}
 JsNumber
 {%- elif type.kind in ("str", "str_based") -%}
 JsString
@@ -85,19 +83,33 @@ JsFunction
     }
 }
 {%- elif type.kind == "i32_based" -%}
-{{ js_val }}.value({{ mut_cx_ref }}) as i32
+{
+    let v = {{ js_val }}.value({{ mut_cx_ref }});
+    if v < I32_MIN || I32_MAX < v {
+        ({{mut_cx_ref}}).throw_type_error("Not an i32 number")?
+    }
+    v as i32
+}
+{%- elif type.kind == "u32_based" -%}
+{
+    let v = {{ js_val }}.value({{ mut_cx_ref }});
+    if v < U32_MIN || U32_MAX < v {
+        ({{mut_cx_ref}}).throw_type_error("Not an u32 number")?
+    }
+    v as u32
+}
 {%- elif type.kind == "str" -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- elif type.kind == "str_based" -%}
 {% if type.custom_from_rs_string -%}
-let custom_from_rs_string = {{ type.custom_from_rs_string }};
+{let custom_from_rs_string = {{ type.custom_from_rs_string }};
 match custom_from_rs_string({{ js_val }}.value({{ mut_cx_ref }}))
 {%- else -%}
-match {{ js_val }}.value({{ mut_cx_ref }}).parse()
+{match {{ js_val }}.value({{ mut_cx_ref }}).parse()
 {%- endif %} {
     Ok(val) => val,
     Err(err) => return cx.throw_type_error(err),
-}
+}}
 {%- elif type.kind == "bytes" -%}
 {{ js_val }}.as_slice({{ mut_cx_ref }}).to_vec()
 {%- elif type.kind == "struct" -%}
@@ -196,7 +208,7 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
-{%- elif type.kind == "i32_based" -%}
+{%- elif type.kind in ("i32_based", "u32_based") -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }} as f64)
 {%- elif type.kind == "float" -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
@@ -466,6 +478,12 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
+#[allow(dead_code)]
+const I32_MAX: f64 = i32::MAX as f64;
+#[allow(dead_code)]
+const I32_MIN: f64 = i32::MIN as f64;
+const U32_MAX: f64 = u32::MAX as f64;
+const U32_MIN: f64 = u32::MIN as f64;
 {# Structures #}
 {% for struct in api.structs %}
 

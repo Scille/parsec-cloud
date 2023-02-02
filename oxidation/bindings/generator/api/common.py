@@ -36,6 +36,10 @@ class I32BasedType:
     pass
 
 
+class U32BasedType:
+    pass
+
+
 class CustomConversionType:
     pass
 
@@ -74,7 +78,7 @@ class DeviceID(StrBasedType):
     pass
 
 
-class ClientHandle(I32BasedType):
+class ClientHandle(U32BasedType):
     pass
 
 

@@ -6,6 +6,12 @@
 
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
+#[allow(dead_code)]
+const I32_MAX: f64 = i32::MAX as f64;
+#[allow(dead_code)]
+const I32_MIN: f64 = i32::MIN as f64;
+const U32_MAX: f64 = u32::MAX as f64;
+const U32_MIN: f64 = u32::MIN as f64;
 
 // AvailableDevice
 
@@ -16,25 +22,31 @@ fn struct_availabledevice_js_to_rs<'a>(
 ) -> NeonResult<libparsec::AvailableDevice> {
     let key_file_path = {
         let js_val: Handle<JsString> = obj.get(cx, "keyFilePath")?;
-        let custom_from_rs_string =
-            |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-        match custom_from_rs_string(js_val.value(cx)) {
-            Ok(val) => val,
-            Err(err) => return cx.throw_type_error(err),
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
         }
     };
     let organization_id = {
         let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
-        match js_val.value(cx).parse() {
-            Ok(val) => val,
-            Err(err) => return cx.throw_type_error(err),
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
         }
     };
     let device_id = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
-        match js_val.value(cx).parse() {
-            Ok(val) => val,
-            Err(err) => return cx.throw_type_error(err),
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
         }
     };
     let human_handle = {
@@ -44,9 +56,11 @@ fn struct_availabledevice_js_to_rs<'a>(
                 None
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some(match js_val.value(cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
+                Some({
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
                 })
             }
         }
@@ -58,9 +72,11 @@ fn struct_availabledevice_js_to_rs<'a>(
                 None
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some(match js_val.value(cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
+                Some({
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
                 })
             }
         }
@@ -133,38 +149,46 @@ fn struct_clientconfig_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ClientConfig> {
     let config_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "configDir")?;
-        let custom_from_rs_string =
-            |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-        match custom_from_rs_string(js_val.value(cx)) {
-            Ok(val) => val,
-            Err(err) => return cx.throw_type_error(err),
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
         }
     };
     let data_base_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "dataBaseDir")?;
-        let custom_from_rs_string =
-            |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-        match custom_from_rs_string(js_val.value(cx)) {
-            Ok(val) => val,
-            Err(err) => return cx.throw_type_error(err),
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
         }
     };
     let mountpoint_base_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "mountpointBaseDir")?;
-        let custom_from_rs_string =
-            |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-        match custom_from_rs_string(js_val.value(cx)) {
-            Ok(val) => val,
-            Err(err) => return cx.throw_type_error(err),
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
         }
     };
     let preferred_org_creation_backend_addr = {
         let js_val: Handle<JsString> = obj.get(cx, "preferredOrgCreationBackendAddr")?;
-        let custom_from_rs_string =
-            |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
-        match custom_from_rs_string(js_val.value(cx)) {
-            Ok(val) => val,
-            Err(err) => return cx.throw_type_error(err),
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
         }
     };
     let workspace_storage_cache_size = {
@@ -262,7 +286,13 @@ fn variant_clientevent_js_to_rs<'a>(
         "ClientConnectionChanged" => {
             let client = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "client")?;
-                js_val.value(cx) as i32
+                {
+                    let v = js_val.value(cx);
+                    if v < U32_MIN || U32_MAX < v {
+                        (cx).throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
             };
             Ok(libparsec::ClientEvent::ClientConnectionChanged { client })
         }
@@ -355,7 +385,13 @@ fn variant_workspacestoragecachesize_js_to_rs<'a>(
         "Custom" => {
             let size = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
-                js_val.value(cx) as i32
+                {
+                    let v = js_val.value(cx);
+                    if v < U32_MIN || U32_MAX < v {
+                        (cx).throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
             };
             Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
         }
@@ -397,11 +433,13 @@ fn variant_deviceaccessparams_js_to_rs<'a>(
         "Password" => {
             let path = {
                 let js_val: Handle<JsString> = obj.get(cx, "path")?;
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                match custom_from_rs_string(js_val.value(cx)) {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
                 }
             };
             let password = {
@@ -413,11 +451,13 @@ fn variant_deviceaccessparams_js_to_rs<'a>(
         "Smartcard" => {
             let path = {
                 let js_val: Handle<JsString> = obj.get(cx, "path")?;
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                match custom_from_rs_string(js_val.value(cx)) {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
                 }
             };
             Ok(libparsec::DeviceAccessParams::Smartcard { path })
@@ -530,7 +570,13 @@ fn variant_clientgettererror_js_to_rs<'a>(
         "InvalidHandle" => {
             let handle = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
-                js_val.value(cx) as i32
+                {
+                    let v = js_val.value(cx);
+                    if v < U32_MIN || U32_MAX < v {
+                        (cx).throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
             };
             Ok(libparsec::ClientGetterError::InvalidHandle { handle })
         }
@@ -563,11 +609,13 @@ fn variant_clientgettererror_rs_to_js<'a>(
 fn client_list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
-        let custom_from_rs_string =
-            |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-        match custom_from_rs_string(js_val.value(&mut cx)) {
-            Ok(val) => val,
-            Err(err) => return cx.throw_type_error(err),
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
         }
     };
     let channel = cx.channel();
@@ -695,7 +743,13 @@ fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
 fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let handle = {
         let js_val = cx.argument::<JsNumber>(0)?;
-        js_val.value(&mut cx) as i32
+        {
+            let v = js_val.value(&mut cx);
+            if v < U32_MIN || U32_MAX < v {
+                (&mut cx).throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -734,9 +788,95 @@ fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// test_new_testbed
+fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let template = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let test_server = match cx.argument_opt(1) {
+        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
+            Ok(js_val) => Some({
+                let custom_from_rs_string =
+                    |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
+                match custom_from_rs_string(js_val.value(&mut cx)) {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            }),
+            Err(_) => None,
+        },
+        None => None,
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::test_new_testbed(&template, test_server.as_ref()).await;
+
+            channel.send(move |mut cx| {
+                let js_ret = JsString::try_new(&mut cx, {
+                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                        path.into_os_string()
+                            .into_string()
+                            .map_err(|_| "Path contains non-utf8 characters")
+                    };
+                    match custom_to_rs_string(ret) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+                .or_throw(&mut cx)?;
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
+    Ok(promise)
+}
+
+// test_drop_testbed
+fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let path = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            libparsec::test_drop_testbed(&path).await;
+
+            channel.send(move |mut cx| {
+                let js_ret = cx.null();
+                deferred.resolve(&mut cx, js_ret);
+                Ok(())
+            });
+        });
+
+    Ok(promise)
+}
+
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientListAvailableDevices", client_list_available_devices)?;
     cx.export_function("clientLogin", client_login)?;
     cx.export_function("clientGetDeviceId", client_get_device_id)?;
+    cx.export_function("testNewTestbed", test_new_testbed)?;
+    cx.export_function("testDropTestbed", test_drop_testbed)?;
     Ok(())
 }

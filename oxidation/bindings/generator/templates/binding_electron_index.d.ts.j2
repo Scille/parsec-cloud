@@ -14,9 +14,7 @@ Result<{{ render_type(t.ok) }}, {{ render_type(t.err) }}>
 Array<{{ render_type(t.elem) }}>
 {%- elif t.kind == "bool" -%}
 boolean
-{%- elif t.kind == "i32_based" -%}
-number
-{%- elif t.kind == "float" -%}
+{%- elif t.kind in ("i32_based", "u32_based", "float") -%}
 number
 {%- elif t.kind in ("str", "str_based") -%}
 string

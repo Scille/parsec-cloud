@@ -139,3 +139,10 @@ export function clientLogin(
 export function clientGetDeviceId(
     handle: number
 ): Promise<Result<string, ClientGetterError>>;
+export function testNewTestbed(
+    template: string,
+    test_server: string | null
+): Promise<string>;
+export function testDropTestbed(
+    path: string
+): Promise<null>;

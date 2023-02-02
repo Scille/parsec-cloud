@@ -19,6 +19,8 @@ Option<{{ function_param_type(type.elem) }}>
 bool
 {%- elif type.kind == "i32_based" -%}
 i32
+{%- elif type.kind == "u32_based" -%}
+u32
 {%- elif type.kind == "float" -%}
 f64
 {%- elif type.kind in ("str", "str_based") -%}
@@ -110,7 +112,21 @@ if {{ js_val }}.is_null() {
 {%- elif type.kind == "bool" -%}
 {{ js_val }}.dyn_into::<Boolean>().map_err(|_| TypeError::new("Not a boolean"))?.value_of()
 {%- elif type.kind == "i32_based" -%}
-{{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of() as i32
+{
+    let v = {{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of();
+    if v < I32_MIN || I32_MAX < v {
+        return Err(TypeError::new("Not an i32 number"));
+    }
+    v as i32
+}
+{%- elif type.kind == "u32_based" -%}
+{
+    let v = {{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of();
+    if v < U32_MIN || U32_MAX < v {
+        return Err(TypeError::new("Not an u32 number"));
+    }
+    v as u32
+}
 {%- elif type.kind == "float" -%}
 {{ js_val }}.dyn_into::<Number>()?.value_of()
 {%- elif type.kind == "str" -%}
@@ -157,7 +173,7 @@ match {{ rs_value }} {
     Some(val) => {{ render_rs_to_js_value("val", type.elem) }},
     None => JsValue::NULL,
 }
-{%- elif type.kind == "i32_based" -%}
+{%- elif type.kind in ("i32_based", "u32_based") -%}
 JsValue::from({{ rs_value }})
 {%- elif type.kind == "str_based" -%}
 JsValue::from_str({%- if type.custom_to_rs_string -%}
@@ -397,6 +413,12 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
+#[allow(dead_code)]
+pub const I32_MAX: f64 = i32::MAX as f64;
+#[allow(dead_code)]
+pub const I32_MIN: f64 = i32::MIN as f64;
+pub const U32_MAX: f64 = u32::MAX as f64;
+pub const U32_MIN: f64 = u32::MIN as f64;
 {# Structures #}
 {% for struct in api.structs %}
 
