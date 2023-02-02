@@ -510,8 +510,8 @@ impl WorkspaceStorage {
     }
 
     /// Take a snapshot of the current [WorkspaceStorage]
-    pub fn to_timestamp(self) -> WorkspaceStorageSnapshot {
-        WorkspaceStorageSnapshot::from(self)
+    pub fn to_timestamp(this: Arc<Self>) -> WorkspaceStorageSnapshot {
+        this.into()
     }
 }
 
@@ -521,11 +521,11 @@ pub struct WorkspaceStorageSnapshot {
     cache: Arc<RwLock<HashMap<EntryID, LocalManifest>>>,
     open_fds: Arc<Mutex<HashMap<FileDescriptor, EntryID>>>,
     fd_counter: Arc<Mutex<u32>>,
-    pub workspace_storage: WorkspaceStorage,
+    pub workspace_storage: Arc<WorkspaceStorage>,
 }
 
-impl From<WorkspaceStorage> for WorkspaceStorageSnapshot {
-    fn from(workspace_storage: WorkspaceStorage) -> Self {
+impl From<Arc<WorkspaceStorage>> for WorkspaceStorageSnapshot {
+    fn from(workspace_storage: Arc<WorkspaceStorage>) -> Self {
         Self {
             cache: Arc::new(RwLock::new(HashMap::default())),
             workspace_storage,

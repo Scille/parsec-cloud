@@ -416,7 +416,9 @@ pub(crate) struct WorkspaceStorageSnapshot(
 impl From<WorkspaceStorage> for WorkspaceStorageSnapshot {
     fn from(workspace_storage: WorkspaceStorage) -> Self {
         Self(
-            Arc::new(workspace_storage.0.as_ref().clone().to_timestamp()),
+            Arc::new(libparsec::core_fs::WorkspaceStorage::to_timestamp(
+                workspace_storage.0.clone(),
+            )),
             workspace_storage.1,
         )
     }
