@@ -57,6 +57,18 @@ async def _invite_user(
 
         await aqtbot.wait_until(_new_invitation_displayed)
 
+        # Check if invitation is included by the filter
+        def _filter_shows_invitation():
+            assert u_w.layout_users.count() == 1
+            assert isinstance(u_w.layout_users.itemAt(0).widget(), UserInvitationButton)
+
+        await aqtbot.key_clicks(u_w.line_edit_search, "farn")
+        await aqtbot.wait_until(_filter_shows_invitation)
+
+        # Remove the filter
+        aqtbot.mouse_click(u_w.line_edit_search.button_clear, QtCore.Qt.LeftButton)
+        await aqtbot.wait_until(_new_invitation_displayed)
+
         snackbar_catcher.reset()
 
         # Check if menu to copy addr or email works correctly

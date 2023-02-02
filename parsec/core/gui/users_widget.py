@@ -211,17 +211,20 @@ async def _do_list_users_and_invitations(
     omit_invitation: bool = False,
 ) -> tuple[int, list[UserInfo], list[InviteListItem]]:
     try:
-        if not pattern:
-            users, total = await core.find_humans(
-                page=page, per_page=USERS_PER_PAGE, omit_revoked=omit_revoked
-            )
-            invitations = [] if omit_invitation else await core.list_invitations()
-            return total, users, [inv for inv in invitations if inv.type == InvitationType.USER]
-        else:
-            users, total = await core.find_humans(
-                page=page, per_page=USERS_PER_PAGE, query=pattern, omit_revoked=omit_revoked
-            )
-            return total, users, []
+        invitations = [] if omit_invitation else await core.list_invitations()
+        users, total = await core.find_humans(
+            page=page, per_page=USERS_PER_PAGE, query=pattern, omit_revoked=omit_revoked
+        )
+        return (
+            total,
+            users,
+            [
+                inv
+                for inv in invitations
+                if inv.type == InvitationType.USER
+                and (pattern is not None and pattern in inv.claimer_email)
+            ],
+        )
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
 
