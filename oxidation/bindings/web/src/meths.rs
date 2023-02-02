@@ -307,7 +307,7 @@ fn variant_clientevent_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, 
                         .map_err(|_| TypeError::new("Not a number"))?
                         .value_of();
                     if v < U32_MIN || U32_MAX < v {
-                        return Err(TypeError::new("Not an u32 number"));
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
                     v as u32
                 }
@@ -406,7 +406,7 @@ fn variant_workspacestoragecachesize_js_to_rs(
                         .map_err(|_| TypeError::new("Not a number"))?
                         .value_of();
                     if v < U32_MIN || U32_MAX < v {
-                        return Err(TypeError::new("Not an u32 number"));
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
                     v as u32
                 }
@@ -608,7 +608,7 @@ fn variant_clientgettererror_js_to_rs(
                         .map_err(|_| TypeError::new("Not a number"))?
                         .value_of();
                     if v < U32_MIN || U32_MAX < v {
-                        return Err(TypeError::new("Not an u32 number"));
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
                     v as u32
                 }
