@@ -22,6 +22,7 @@ from parsec._parsec_pyi.addrs import (
     BackendPkiEnrollmentAddr,
     export_root_verify_key,
 )
+from parsec._parsec_pyi.backend_connection import AuthenticatedCmds
 from parsec._parsec_pyi.certif import (
     DeviceCertificate,
     RealmRoleCertificate,
@@ -44,6 +45,7 @@ from parsec._parsec_pyi.crypto import (
     generate_nonce,
 )
 from parsec._parsec_pyi.device import DeviceFileType
+from parsec._parsec_pyi.device_file import DeviceFile
 from parsec._parsec_pyi.enumerate import (
     ClientType,
     InvitationDeletedReason,
@@ -577,6 +579,8 @@ __all__ = [
     "SequesterSigningKeyDer",
     "SequesterVerifyKeyDer",
     "generate_nonce",
+    # DeviceFile
+    "DeviceFile",
     # Enumerate
     "ClientType",
     "InvitationDeletedReason",
@@ -618,6 +622,8 @@ __all__ = [
     "BackendOrganizationFileLinkAddr",
     "BackendPkiEnrollmentAddr",
     "export_root_verify_key",
+    # Backend connection
+    "AuthenticatedCmds",
     # Local Manifest
     "Chunk",
     "LocalFileManifest",

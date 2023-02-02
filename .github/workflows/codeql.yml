@@ -1,0 +1,88 @@
+# For most projects, this workflow file will not need changing; you simply need
+# to commit it to your repository.
+#
+# You may wish to alter this file to override the set of languages analyzed,
+# or to provide custom queries or build logic.
+#
+# ******** NOTE ********
+# We have attempted to detect the languages in your repository. Please check
+# the `language` matrix defined below to confirm you have the correct set of
+# supported CodeQL languages.
+#
+name: CodeQL
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches:
+      - master
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+      - '**/*.po'
+  schedule:
+    # Every Wednesday at 04:20
+    - cron: 20 4 * * 3
+
+env:
+  python-version: "3.9"
+  poetry-version: 1.2.2
+  rust-version: 1.65.0
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-20.04
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+        language:
+          - python
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
+
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@678fc3afe258fb2e0cdc165ccf77b85719de7b3c # pin v2.1.33
+        with:
+          languages: ${{ matrix.language }}
+          setup-python-dependencies: false
+          # If you wish to specify custom queries, you can do so here or in a config file.
+          # By default, queries listed here will override any specified in a config file.
+          # Prefix the list here with "+" to use these queries and those in the config file.
+
+          # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+          # queries: security-extended,security-and-quality
+
+      - uses: ./.github/actions/setup-python-poetry
+        if: matrix.language == 'python'
+        id: setup-python
+        with:
+          python-version: ${{ env.python-version }}
+          poetry-version: ${{ env.poetry-version }}
+
+      - name: Install python deps
+        if: matrix.language == 'python'
+        run: |
+          poetry install -E core -E backend
+          poetry run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
+        env:
+          POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@678fc3afe258fb2e0cdc165ccf77b85719de7b3c # pin v2.1.33
+        with:
+          category: /language:${{matrix.language}}

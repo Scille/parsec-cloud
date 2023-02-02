@@ -49,37 +49,63 @@ words:
   - htmlcov
   - Swatinem
 ignoreWords:
-  - ApiV
   - ABCDEFGHJKLMNPQRSTUVWXYZ
-  - ZGIQ
-  - WPFF
-  - QPIM
+  - Aaaaaand
+  - ApiV
+  - Assss
+  - Crefreshiconhandler
+  - Cwindowsiconhandler
   - DWXJ
-  - VFKA
-  - QPGW
-  - NNWQ
-  - KBWM
+  - EFGH
   - HRSW
-  - SPFYHIZLEL
+  - JKLM
+  - KBWM
+  - NNWQ
+  - NPQR
+  - PQRSTUVWXYZHIJKLMNO
+  - QPGW
+  - QPIM
   - QWIPQs
   - QYJW
-  - YVPZ
-  - XBAO
-  - Aaaaaand
-  - VQLP
-  - XPCMTSEN
-  - ZOXKGGIMTY
-  - Assss
-  - dksjdskdjs
+  - SPFYHIZLEL
   - SPIHB
-  - EFGH
-  - JKLM
-  - NPQR
-  - tqdm
-  - PQRSTUVWXYZHIJKLMNO
+  - SYMED
+  - VFKA
+  - VQLP
+  - WPFF
+  - XBAO
+  - XPCMTSEN
+  - YVPZ
+  - ZGIQ
+  - ZOXKGGIMTY
   - abcefg
+  - abcefg
+  - ackup
+  - csdef
+  - dbmdl
+  - dbproj
+  - dksjdskdjs
+  - ebug
+  - elease
+  - eleases
+  - esult
+  - iobj
+  - ipch
+  - ipdb
+  - jmconfig
   - mnpcod
+  - mnpcod
+  - ntvs
+  - nunit
+  - nupkg
+  - nvuser
+  - paket
+  - pidb
+  - psess
+  - rsuser
+  - snupkg
   - splitn
+  - tqdm
 cache:
   cacheFormat: universal
   cacheStrategy: metadata
@@ -90,6 +116,9 @@ ignorePaths:
   - ./oxidation/libparsec_python
   - '**/parsec/core/resources/default_*.ignore'
   - '**/*.svg'
+  - '**/docs/figures/*.svg'
+  - '**/windows-icon-handler/**/*.vcxproj'
+  - '**/windows-icon-handler/**/*.vcxproj.filters'
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"

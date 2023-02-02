@@ -1,3 +1,15 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
+use pyo3::{prelude::*, types::PyBytes, PyObject, PyResult, Python};
+
+use libparsec::protocol::{
+    authenticated_cmds::v2::{
+        events_listen::{self, APIEvent},
+        events_subscribe,
+    },
+    Request,
+};
+
 use crate::{
     enumerate::{InvitationStatus, RealmRole},
     ids::{InvitationToken, RealmID, VlobID},
@@ -6,14 +18,6 @@ use crate::{
         Reason,
     },
 };
-use libparsec::protocol::{
-    authenticated_cmds::v2::{
-        events_listen::{self, APIEvent},
-        events_subscribe,
-    },
-    Request,
-};
-use pyo3::{prelude::*, types::PyBytes, PyObject, PyResult, Python};
 
 use super::gen_rep;
 

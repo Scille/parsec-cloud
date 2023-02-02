@@ -60,6 +60,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "DateTime" => "libparsec_types::DateTime",
                 "BlockID" => "libparsec_types::BlockID",
                 "DeviceID" => "libparsec_types::DeviceID",
+                "OrganizationID" => "libparsec_types::OrganizationID",
                 "EntryID" => "libparsec_types::EntryID",
                 "UserID" => "libparsec_types::UserID",
                 "RealmID" => "libparsec_types::RealmID",

@@ -13,9 +13,9 @@ use libparsec::platform_device_loader;
 use crate::{
     addrs::BackendOrganizationAddr,
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
+    binding_utils::PathWrapper,
     enumerate::{DeviceFileType, UserProfile},
     ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID},
-    local_device::client_types::StrPath,
     runtime::FutureIntoCoroutine,
     time::{DateTime, TimeProvider},
 };
@@ -501,7 +501,7 @@ impl AvailableDevice {
         r#type: DeviceFileType,
     ) -> Self {
         Self(client_types::AvailableDevice {
-            key_file_path: StrPath::from(key_file_path.to_str().unwrap()),
+            key_file_path,
             organization_id: organization_id.0,
             device_id: device_id.0,
             human_handle: human_handle.map(|h| h.0),
@@ -520,8 +520,8 @@ impl AvailableDevice {
     }
 
     #[getter]
-    fn key_file_path(&self) -> PathBuf {
-        self.0.key_file_path.to_path_buf()
+    fn key_file_path(&self) -> PathWrapper {
+        PathWrapper(self.0.key_file_path.to_path_buf())
     }
 
     #[getter]

@@ -481,6 +481,10 @@ mod tests {
     #[case::parenthesis_allowed("a@b.c", "()", true)]
     #[case::invalid_name_with_backslash("a@b", "hell\\o", false)]
     #[case::switched("John Doe", "john.doe@example.com", false)]
+    #[case::empty_email("", "foo", false)]
+    #[case::too_long_email(&"x".repeat(256), "foo", false)]
+    #[case::empty_label("foo@example.com", "", false)]
+    #[case::too_long_label("foo@example.com", &"x".repeat(256), false)]
     fn test_human_handle(#[case] email: &str, #[case] label: &str, #[case] is_ok: bool) {
         assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok);
         assert_eq!(

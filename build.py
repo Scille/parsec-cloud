@@ -33,6 +33,8 @@ def run(cmd: str, **kwargs) -> subprocess.CompletedProcess:
 def build():
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
+    if sys.platform == "linux":
+        run("patchelf --version")
 
     if sys.platform == "win32":
         libparsec_path = "parsec/_parsec.cp39-win_amd64.pyd"

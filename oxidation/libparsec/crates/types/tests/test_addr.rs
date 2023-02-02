@@ -4,7 +4,9 @@ use pretty_assertions::assert_eq;
 use rstest::rstest;
 use rstest_reuse::*;
 use serde_test::{assert_tokens, Token};
+use std::str::FromStr;
 
+use libparsec_crypto::SigningKey;
 use libparsec_types::*;
 
 const ORG: &str = "MyOrg";
@@ -613,4 +615,174 @@ fn test_faulty_addr_redirection(#[case] raw_url: &str) {
     let res = dbg!(BackendAddr::from_http_redirection(raw_url));
 
     assert!(res.is_err());
+}
+
+#[rstest]
+#[case("parsec://foo", 443, true)]
+#[case("parsec://foo?no_ssl=false", 443, true)]
+#[case("parsec://foo?no_ssl=true", 80, false)]
+#[case("parsec://foo:42", 42, true)]
+#[case("parsec://foo:42?dummy=", 42, true)]
+#[case("parsec://foo:42?no_ssl=true", 42, false)]
+#[case("parsec://foo:42?no_ssl=false&dummy=foo", 42, true)]
+fn test_backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool) {
+    let addr = BackendAddr::from_str(url).unwrap();
+    assert_eq!(addr.hostname(), "foo");
+    assert_eq!(addr.port(), port);
+    assert_eq!(addr.use_ssl(), use_ssl);
+}
+
+#[rstest]
+#[case::empty("", "Invalid URL")]
+#[case::invalid_url("foo", "Invalid URL")]
+#[case::bad_scheme("xx://foo:42", "Must start with `parsec://`")]
+#[case::path_not_allowed("parsec://foo:42/dummy", "Cannot have path")]
+#[case::bad_parsing_in_valid_param(
+    "parsec://foo:42?no_ssl",
+    "Invalid `no_ssl` param value (must be true or false)"
+)]
+#[case::missing_value_for_param(
+    "parsec://foo:42?no_ssl=",
+    "Invalid `no_ssl` param value (must be true or false)"
+)]
+#[case::bad_value_for_param(
+    "parsec://foo:42?no_ssl=nop",
+    "Invalid `no_ssl` param value (must be true or false)"
+)]
+fn test_backend_addr_bad_value(#[case] url: &str, #[case] msg: &str) {
+    assert_eq!(BackendAddr::from_str(url).unwrap_err().to_string(), msg);
+}
+
+#[rstest]
+#[case("parsec://foo", 443, true)]
+#[case("parsec://foo?no_ssl=false", 443, true)]
+#[case("parsec://foo?no_ssl=true", 80, false)]
+#[case("parsec://foo:42", 42, true)]
+#[case("parsec://foo:42?dummy=", 42, true)]
+#[case("parsec://foo:42?no_ssl=true", 42, false)]
+#[case("parsec://foo:42?no_ssl=false", 42, true)]
+#[case("parsec://foo:42?no_ssl=false&dummy=foo", 42, true)]
+fn test_backend_organization_addr_good(
+    #[case] base_url: &str,
+    #[case] port: u16,
+    #[case] use_ssl: bool,
+) {
+    let verify_key = SigningKey::generate().verify_key();
+    let org = OrganizationID::from_str("org").unwrap();
+    let backend_addr = BackendAddr::from_str(base_url).unwrap();
+    let addr = BackendOrganizationAddr::new(backend_addr, org.clone(), verify_key.clone());
+
+    assert_eq!(addr.hostname(), "foo");
+    assert_eq!(addr.port(), port);
+    assert_eq!(addr.use_ssl(), use_ssl);
+    assert_eq!(addr.organization_id(), &org);
+    assert_eq!(addr.root_verify_key(), &verify_key);
+
+    let addr2 = BackendOrganizationAddr::from_str(addr.to_url().as_str()).unwrap();
+    assert_eq!(addr, addr2);
+}
+
+#[rstest]
+#[case::empty("", "Invalid URL")]
+#[case::invalid_url("foo", "Invalid URL")]
+#[case::missing_mandatory_rvk("parsec://foo:42/org", "Missing mandatory `rvk` param")]
+#[case::missing_value_for_param("parsec://foo:42/org?rvk=", "Invalid `rvk` param value")]
+#[case::bad_value_for_param("parsec://foo:42/org?rvk=nop", "Invalid `rvk` param value")]
+#[case::missing_org_name(
+    "parsec://foo:42?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    "Path doesn't form a valid organization id"
+)]
+#[case::missing_org_name(
+    "parsec://foo:42/?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    "Path doesn't form a valid organization id"
+)]
+#[case::bad_org_name(
+    "parsec://foo:42/bad/org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    "Path doesn't form a valid organization id"
+)]
+#[case::bad_org_name(
+    "parsec://foo:42/~org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    "Path doesn't form a valid organization id"
+)]
+fn test_backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: &str) {
+    assert_eq!(
+        BackendOrganizationAddr::from_str(url)
+            .unwrap_err()
+            .to_string(),
+        msg
+    );
+}
+
+#[rstest]
+#[case("parsec://foo", 443, true)]
+#[case("parsec://foo?no_ssl=false", 443, true)]
+#[case("parsec://foo?no_ssl=true", 80, false)]
+#[case("parsec://foo:42", 42, true)]
+#[case("parsec://foo:42?dummy=foo", 42, true)]
+#[case("parsec://foo:42?no_ssl=true", 42, false)]
+#[case("parsec://foo:42?no_ssl=true&dummy=", 42, false)]
+#[case("parsec://foo:42?no_ssl=false", 42, true)]
+fn test_backend_organization_bootstrap_addr_good(
+    #[case] base_url: &str,
+    #[case] port: u16,
+    #[case] use_ssl: bool,
+) {
+    let verify_key = SigningKey::generate().verify_key();
+    let org = OrganizationID::from_str("org").unwrap();
+    let backend_addr = BackendAddr::from_str(base_url).unwrap();
+    let addr =
+        BackendOrganizationBootstrapAddr::new(backend_addr, org.clone(), Some("token-123".into()));
+
+    assert_eq!(addr.hostname(), "foo");
+    assert_eq!(addr.port(), port);
+    assert_eq!(addr.use_ssl(), use_ssl);
+    assert_eq!(addr.organization_id(), &org);
+    assert_eq!(addr.token().unwrap(), "token-123");
+
+    let addr2 = BackendOrganizationBootstrapAddr::from_str(addr.to_url().as_str()).unwrap();
+    assert_eq!(addr, addr2);
+
+    let org_addr = addr.generate_organization_addr(verify_key.clone());
+    assert_eq!(org_addr.root_verify_key(), &verify_key);
+    assert_eq!(org_addr.hostname(), addr.hostname());
+    assert_eq!(org_addr.port(), addr.port());
+    assert_eq!(org_addr.use_ssl(), addr.use_ssl());
+    assert_eq!(org_addr.organization_id(), addr.organization_id());
+}
+
+#[rstest]
+#[case::empty("", "Invalid URL")]
+#[case::invalid_url("foo", "Invalid URL")]
+#[case::missing_action("parsec://foo:42/org?token=123", "Missing mandatory `action` param")]
+#[case::bad_action(
+    "parsec://foo:42/org?action=dummy&token=123",
+    "Expected `action=bootstrap_organization` param value"
+)]
+#[case::org_name(
+    "parsec://foo:42?action=bootstrap_organization&token=123",
+    "Path doesn't form a valid organization id"
+)]
+#[case::missing_org_name(
+    "parsec://foo:42?action=bootstrap_organization&token=123",
+    "Path doesn't form a valid organization id"
+)]
+#[case::missing_org_name(
+    "parsec://foo:42/?action=bootstrap_organization&token=123",
+    "Path doesn't form a valid organization id"
+)]
+#[case::bad_org_name(
+    "parsec://foo:42/bad/org?action=bootstrap_organization&token=123",
+    "Path doesn't form a valid organization id"
+)]
+#[case::bad_org_name(
+    "parsec://foo:42/~org?action=bootstrap_organization&token=123",
+    "Path doesn't form a valid organization id"
+)]
+fn test_backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: &str) {
+    assert_eq!(
+        BackendOrganizationBootstrapAddr::from_str(url)
+            .unwrap_err()
+            .to_string(),
+        msg
+    );
 }

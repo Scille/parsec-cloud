@@ -17,18 +17,18 @@ libparsec_types = { path = "../types" }
 libparsec_protocol = { path = "../protocol" }
 
 # Used to send HTTP request to the server.
-reqwest = "0.11.13"
+reqwest = { version = "0.11.13", features = ["native-tls-vendored"] }
 # Used to perform operation on URL.
 url = "2.3.1"
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.
-base64 = "0.20.0"
+base64 = "0.21.0"
 chrono = "0.4.23"
 
 [dev-dependencies]
-anyhow = "1.0.66"
+anyhow = "1.0.68"
 env_logger = "0.10.0"
 http-body = "0.4.5"
 hyper = { version = "0.14.22", features = ["server"] }
 log = "0.4.17"
-tokio = { version = "1.23", features = ["rt", "macros", "sync"] }
+tokio = { version = "1.25", features = ["rt", "macros", "sync"] }

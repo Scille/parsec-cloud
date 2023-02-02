@@ -1,9 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec::{
-    client_types::LocalManifest,
-    types::{Blocksize, DEFAULT_BLOCK_SIZE},
-};
 use pyo3::{
     basic::CompareOp,
     exceptions::{
@@ -16,6 +12,11 @@ use std::{
     collections::{HashMap, HashSet},
     num::NonZeroU64,
     panic,
+};
+
+use libparsec::{
+    client_types::LocalManifest,
+    types::{Blocksize, DEFAULT_BLOCK_SIZE},
 };
 
 use crate::{

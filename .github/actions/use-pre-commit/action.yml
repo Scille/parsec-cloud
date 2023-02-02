@@ -25,7 +25,7 @@ runs:
   steps:
     - name: Cache pre-commit install
       id: cache-pre-commit
-      uses: actions/cache@4723a57e26efda3a62cbde1812113b730952852d # pin v3.2.2
+      uses: actions/cache@627f0f41f6904a5b1efbaed9f96d9eb58e92e920 # pin v3.2.4
       with:
         key: pre-commit-${{ inputs.version }}-${{ hashFiles(inputs.config-file) }}
         path: |

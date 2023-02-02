@@ -4,7 +4,6 @@ mod error;
 mod local_device;
 mod local_device_file;
 mod local_manifest;
-mod path;
 #[cfg(test)]
 mod test;
 
@@ -12,7 +11,6 @@ pub use error::*;
 pub use local_device::*;
 pub use local_device_file::*;
 pub use local_manifest::*;
-pub use path::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ClientType {

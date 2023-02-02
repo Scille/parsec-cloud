@@ -19,7 +19,7 @@ diesel = { version = "2.0.2", features = ["sqlite", "r2d2", "with-deprecated"], 
 libsqlite3-sys = { version = "0.25.2", features = ["bundled"] }
 regex = "1.6.0"
 thiserror = "1.0.37"
-uuid = { version = "1.2.1", features = ["v4", "fast-rng"] }
+uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
 
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }

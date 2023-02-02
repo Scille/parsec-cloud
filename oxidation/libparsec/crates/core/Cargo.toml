@@ -13,13 +13,13 @@ path = "tests/mod.rs"
 
 [dependencies]
 libparsec_client_types = { path = "../client_types" }
+libparsec_client_connection = { path = "../client_connection" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_platform_async = { path = "../platform_async" }
 libparsec_platform_device_loader = { path = "../platform_device_loader" }
 libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
 
-once_cell = "1.17.0"
 rmp-serde = "1.1.1"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_with = "2.1.0"

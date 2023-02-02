@@ -1,13 +1,35 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyNotImplementedError, pyclass::CompareOp, types::PyByteArray, types::PyBytes,
-    types::PyFrozenSet, FromPyObject, PyAny, PyResult,
+    exceptions::PyNotImplementedError,
+    pyclass::CompareOp,
+    types::{PyByteArray, PyBytes, PyFrozenSet, PyTuple},
+    FromPyObject, IntoPy, PyAny, PyObject, PyResult,
 };
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
     hash::{Hash, Hasher},
 };
+
+#[derive(FromPyObject)]
+pub(crate) struct PathWrapper(pub std::path::PathBuf);
+
+impl IntoPy<PyObject> for PathWrapper {
+    fn into_py(self, py: pyo3::Python<'_>) -> pyo3::PyObject {
+        // Pathlib is part of the standard library
+        let pathlib_module = py
+            .import("pathlib")
+            .expect("import `pathlib` module failed.");
+        let path_ctor = pathlib_module
+            .getattr("Path")
+            .expect("can't get `Path` from `pathlib`.");
+
+        path_ctor
+            .call1(PyTuple::new(py, [self.0]))
+            .expect("call to `Path` constructor failed.")
+            .into_py(py)
+    }
+}
 
 #[derive(FromPyObject)]
 pub enum BytesWrapper<'py> {
@@ -111,8 +133,8 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
 }
 
 macro_rules! py_object {
-    ($_self: ident, $subclass: ident, $py: ident) => {{
-        let initializer = PyClassInitializer::from(($subclass, Self($_self)));
+    ($_self: ident, $class: ident, $subclass: ident, $py: ident) => {{
+        let initializer = PyClassInitializer::from(($subclass, $class($_self)));
         // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
         // or a sub-type of `T` (the type of `initializer` here).
         // Here `initializer` is created using the type `<$subclass>` and the same type of `<$subclass>`
@@ -212,7 +234,7 @@ macro_rules! gen_proto {
     };
 }
 
-macro_rules! create_exception {
+macro_rules! create_exception_from {
     ($name: ident, $py_exc: ident, $rs_err: path) => {
         ::paste::paste! {
             ::pyo3::create_exception!(_parsec, [<$name Error>], $py_exc);
@@ -236,8 +258,20 @@ macro_rules! create_exception {
                     Self(err)
                 }
             }
+        }
+    };
+}
 
+macro_rules! create_exception {
+    ($name: ident, $py_exc: ident, $rs_err: path) => {
+        ::paste::paste! {
+            crate::binding_utils::create_exception_from!($name, $py_exc, $rs_err);
             pub(crate) type [<$name Result>]<T> = Result<T, [<$name Exc>]>;
+        }
+    };
+    ($name: ident, $py_exc: ident, $rs_err: path, no_result_type) => {
+        ::paste::paste! {
+            crate::binding_utils::create_exception_from!($name, $py_exc, $rs_err);
         }
     };
 }
@@ -249,7 +283,7 @@ macro_rules! impl_enum_field {
             $(
                 #[classattr]
                 #[pyo3(name = $pyo3_name)]
-                fn $fn_name() -> &'static PyObject {
+                pub(crate) fn $fn_name() -> &'static PyObject {
                     lazy_static::lazy_static! {
                         static ref VALUE: PyObject = {
                             Python::with_gil(|py| {
@@ -301,6 +335,7 @@ macro_rules! impl_enum_field {
 
 pub(crate) use _unwrap_bytes;
 pub(crate) use create_exception;
+pub(crate) use create_exception_from;
 pub(crate) use gen_proto;
 pub(crate) use impl_enum_field;
 pub(crate) use parse_kwargs;

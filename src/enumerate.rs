@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
@@ -5,8 +7,10 @@ use pyo3::{
     IntoPy, PyObject, PyResult, Python,
 };
 
-use libparsec::client_types;
-use libparsec::protocol::authenticated_cmds::v2::{invite_delete, invite_new};
+use libparsec::{
+    client_types,
+    protocol::authenticated_cmds::v2::{invite_delete, invite_new},
+};
 
 use crate::protocol::{ProtocolErrorFields, ProtocolResult};
 

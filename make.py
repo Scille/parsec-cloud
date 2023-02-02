@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).parent.resolve()
 ELECTRON_DIR = BASE_DIR / "oxidation/bindings/electron"
 
 
-CIAN = "\x1b[36m"
+CYAN = "\x1b[36m"
 GREY = "\x1b[37m"
 PINK = "\x1b[35m"
 BOLD_YELLOW = "\x1b[1;33m"
@@ -63,16 +63,23 @@ class Cmd:
         display_cwd = f"cd {GREY}{self.cwd.relative_to(BASE_DIR)}{NO_COLOR} && " if self.cwd else ""
         display_extra_cmds = f" {' '.join(extra_cmd_args)}" if extra_cmd_args else ""
         for cmd in self.cmds:
-            display_cmds.append(f"{CIAN}{cmd}{display_extra_cmds}{NO_COLOR}")
+            display_cmds.append(f"{CYAN}{cmd}{display_extra_cmds}{NO_COLOR}")
         return f"{display_cwd}{display_extra_env} {' && '.join(display_cmds) }"
 
     def run(self, extra_cmd_args: list[str] = []) -> None:
         shell = sys.platform == "win32" and self.is_script
         for cmd in self.cmds:
             args = cmd.split() + extra_cmd_args
-            subprocess.check_call(
-                args, env={**os.environ, **self.extra_env}, cwd=self.cwd, shell=shell
-            )
+            # `echo` is not available on Windows
+            if args[0] == "echo":
+                print(" ".join(args[1:]))
+            else:
+                subprocess.check_call(
+                    args,
+                    env={**os.environ, **self.extra_env},
+                    cwd=self.cwd or BASE_DIR,
+                    shell=shell,
+                )
 
 
 COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
@@ -162,7 +169,7 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=textwrap.dedent(
             """\
-            Tired of remembering multiple sily commands ? Now here is a single sily command to remember !
+            Tired of remembering multiple silly commands ? Now here is a single silly command to remember !
 
             Examples:
             python make.py install  # Initial installation

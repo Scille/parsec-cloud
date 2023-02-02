@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 use pyo3::{
     exceptions::{PyNotImplementedError, PyValueError},
     pyclass,
@@ -76,16 +78,16 @@ impl MessageContent {
 
         Ok(match msg {
             libparsec::types::MessageContent::SharingGranted { .. } => {
-                crate::binding_utils::py_object!(msg, SharingGrantedMessageContent, py)
+                crate::binding_utils::py_object!(msg, Self, SharingGrantedMessageContent, py)
             }
             libparsec::types::MessageContent::SharingReencrypted { .. } => {
-                crate::binding_utils::py_object!(msg, SharingReencryptedMessageContent, py)
+                crate::binding_utils::py_object!(msg, Self, SharingReencryptedMessageContent, py)
             }
             libparsec::types::MessageContent::SharingRevoked { .. } => {
-                crate::binding_utils::py_object!(msg, SharingRevokedMessageContent, py)
+                crate::binding_utils::py_object!(msg, Self, SharingRevokedMessageContent, py)
             }
             libparsec::types::MessageContent::Ping { .. } => {
-                crate::binding_utils::py_object!(msg, PingMessageContent, py)
+                crate::binding_utils::py_object!(msg, Self, PingMessageContent, py)
             }
         })
     }

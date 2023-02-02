@@ -1,0 +1,38 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
+// windows-icon-handler.idl : IDL source for windows-icon-handler
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (windowsiconhandler.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+    object,
+    uuid(a75686be-c7e4-4b77-8550-c6e58af14bb4),
+    dual,
+    nonextensible,
+    pointer_default(unique)
+]
+interface ICheckIconHandler : IDispatch
+{
+};
+[
+    uuid(78c79238-9970-4445-8ac8-2b9a8b5de7d4),
+    version(1.0),
+]
+library windowsiconhandlerLib
+{
+    importlib("stdole2.tlb");
+    [
+        uuid(5449bc90-310b-40a8-9abf-c5cfcec7f430)
+    ]
+    coclass CheckIconHandler
+    {
+        [default] interface ICheckIconHandler;
+    };
+};
+
+import "shobjidl.idl";

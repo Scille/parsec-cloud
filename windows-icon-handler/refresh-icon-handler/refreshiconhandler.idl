@@ -1,0 +1,36 @@
+// refresh-icon-handler.idl : IDL source for refresh-icon-handler
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (refreshiconhandler.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(2d06d67e-c592-4b27-b9a3-4b8d354347fb),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IRefreshIconHandler : IDispatch
+{
+};
+[
+	uuid(fcc8a7b6-3b5b-4f5d-8dea-a95e3a9fce3d),
+	version(1.0),
+]
+library refreshiconhandlerLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(41e71dd9-368d-46b2-bb9d-4359599bbbc3)
+	]
+	coclass RefreshIconHandler
+	{
+		[default] interface IRefreshIconHandler;
+	};
+};
+
+import "shobjidl.idl";

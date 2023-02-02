@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 use pyo3::{
     import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, wrap_pyfunction,
     IntoPy, Py, PyAny, PyObject, PyResult, Python,

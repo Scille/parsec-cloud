@@ -1,0 +1,20 @@
+[package]
+name = "libparsec_client_high_level_api"
+version = "0.0.0"
+edition = "2021"
+license = " BUSL-1.1"
+
+[features]
+use-sodiumoxide = [ "libparsec_crypto/use-sodiumoxide" ]
+
+[dependencies]
+libparsec_client_types = { path = "../client_types" }
+libparsec_core = { path = "../core" }
+libparsec_crypto = { path = "../crypto" }
+libparsec_platform_async = { path = "../platform_async" }
+libparsec_platform_device_loader = { path = "../platform_device_loader" }
+libparsec_protocol = { path = "../protocol" }
+libparsec_types = { path = "../types" }
+
+once_cell = "1.17.0"
+thiserror = "1.0.37"

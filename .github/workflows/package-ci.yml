@@ -38,7 +38,7 @@ jobs:
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: ./.github/actions/setup-python-poetry
         with:
@@ -72,7 +72,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@27fc88e6385a995e61a87ee4b903bed263e6a6e2  # pin v2.11.4
+        uses: pypa/cibuildwheel@a808017c3962f4d678fe685239668aad8c150932  # pin v2.12.0
         with:
           output-dir: dist
         timeout-minutes: 30
@@ -128,9 +128,9 @@ jobs:
           set -e
           echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
 
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
-      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -172,7 +172,7 @@ jobs:
       matrix:
         os: [ ubuntu-20.04, ubuntu-22.04 ]
     steps:
-      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
@@ -198,7 +198,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
@@ -217,7 +217,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -240,12 +240,18 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
-      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
+
+      - uses: microsoft/setup-msbuild@d3ea839497466fb4c6b91ce85831f3a251a2fe3f # pin v1.3
+
+      - name: Build Icon overlays COM objects
+        run: msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\windows-icon-handler.sln
+        shell: cmd
 
       - name: Prepare build directory
         run: Copy-Item -Recurse -Path ${{ github.workspace }}\packaging\windows\* -Destination ${{ runner.temp }}
@@ -290,14 +296,14 @@ jobs:
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
@@ -336,7 +342,7 @@ jobs:
         macos-version: [ 11, 12 ]
 
     steps:
-      - uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # pin v3.0.1
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: dist
@@ -354,7 +360,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package electron
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - name: Install dependencies
         run: |
@@ -382,11 +388,11 @@ jobs:
       NDK_VERSION: 22.1.7171670
       SDK_VERSION: 30.0.3
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - name: Install rust toolchain
         id: rust-toolchain
-        uses: dtolnay/rust-toolchain@e645b0cf01249a964ec099494d38d2da0f0b349f
+        uses: dtolnay/rust-toolchain@c758e63728211bd4acda6501cfa2a16c5c751fc4
         with:
           toolchain: ${{ env.rust-version }}
           targets: armv7-linux-androideabi, i686-linux-android, aarch64-linux-android, x86_64-linux-android
@@ -422,7 +428,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.0.2
 
       - name: Install dependencies
         run: npm clean-install

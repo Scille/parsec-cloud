@@ -74,7 +74,7 @@ jobs:
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -153,7 +153,7 @@ jobs:
     name: '${{ matrix.name }}: 🐍 Python tests'
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -249,7 +249,7 @@ jobs:
             parsec/_parsec.*.so
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
+        uses: actions-rust-lang/setup-rust-toolchain@dfa8744db3c65831067d3386253fc8ec50fd8cfd # pin v1.3.7
         if: >-
           steps.python-changes.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
@@ -335,7 +335,7 @@ jobs:
     name: '${{ matrix.name }}: 🦀 Rust tests'
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -349,7 +349,7 @@ jobs:
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
-      - uses: actions-rust-lang/setup-rust-toolchain@685abf830623a8456904376fce2de24302d98a7f # pin v1.3.4
+      - uses: actions-rust-lang/setup-rust-toolchain@dfa8744db3c65831067d3386253fc8ec50fd8cfd # pin v1.3.7
         if: steps.rust-changes.outputs.run == 'true'
         with:
           # We setup the cache by hand, see below
@@ -399,7 +399,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: 🌐 Web tests
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # pin v3.2.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
       - uses: ./.github/actions/paths-filter
         id: changes

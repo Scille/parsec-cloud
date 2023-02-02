@@ -1,7 +1,10 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
 mod addrs;
 mod api_crypto;
+mod backend_connection;
 mod binding_utils;
 mod data;
 mod enumerate;
@@ -42,6 +45,12 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::SequesterSigningKeyDer>()?;
     m.add_class::<api_crypto::SequesterVerifyKeyDer>()?;
     m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
+
+    m.add_class::<backend_connection::AuthenticatedCmds>()?;
+    m.add(
+        "CommandErrorExc",
+        py.get_type::<backend_connection::CommandError>(),
+    )?;
 
     m.add_class::<enumerate::ClientType>()?;
     m.add_class::<enumerate::CoreEvent>()?;

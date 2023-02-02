@@ -1,3 +1,12 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
+use pyo3::{
+    exceptions::PyAttributeError,
+    pyclass, pymethods,
+    types::{PyBytes, PyType},
+    IntoPy, PyClassInitializer, PyObject, PyRef, PyResult, Python,
+};
+
 use libparsec::protocol::{
     anonymous_cmds::v2::{pki_enrollment_info, pki_enrollment_submit},
     authenticated_cmds::{
@@ -5,12 +14,6 @@ use libparsec::protocol::{
         v2::{pki_enrollment_list, pki_enrollment_reject},
     },
     Request,
-};
-use pyo3::{
-    exceptions::PyAttributeError,
-    pyclass, pymethods,
-    types::{PyBytes, PyType},
-    IntoPy, PyClassInitializer, PyObject, PyRef, PyResult, Python,
 };
 
 use crate::{
