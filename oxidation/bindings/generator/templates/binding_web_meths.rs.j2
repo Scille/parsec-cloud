@@ -115,7 +115,7 @@ if {{ js_val }}.is_null() {
 {
     let v = {{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of();
     if v < I32_MIN || I32_MAX < v {
-        return Err(TypeError::new("Not an i32 number"));
+        return Err(JsValue::from(TypeError::new("Not an i32 number")));
     }
     v as i32
 }
@@ -123,7 +123,7 @@ if {{ js_val }}.is_null() {
 {
     let v = {{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of();
     if v < U32_MIN || U32_MAX < v {
-        return Err(TypeError::new("Not an u32 number"));
+        return Err(JsValue::from(TypeError::new("Not an u32 number")));
     }
     v as u32
 }
