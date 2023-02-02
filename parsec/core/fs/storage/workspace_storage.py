@@ -15,6 +15,9 @@ from typing_extensions import Concatenate, ParamSpec
 from parsec._parsec import BlockID, ChunkID, DateTime, EntryID, Regex
 from parsec._parsec import WorkspaceStorage as _RsWorkspaceStorage
 from parsec._parsec import WorkspaceStorageSnapshot as _RsWorkspaceStorageSnapshot
+from parsec._parsec import (
+    workspace_storage_non_speculative_init as _rs_workspace_storage_non_speculative_init,
+)
 from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 from parsec.core.fs.exceptions import (
     FSError,
@@ -48,6 +51,24 @@ __all__ = [
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+
+async def workspace_storage_non_speculative_init(
+    data_base_dir: Path,
+    device: LocalDevice,
+    workspace_id: EntryID,
+    timestamp: DateTime | None,
+) -> None:
+    # We need to shield the call to the rust function because during the call,
+    # It will open a connection to the database and close it at the end.
+    # And if we were cancelled we would leak a database connection.
+    with trio.CancelScope(shield=True):
+        return await _rs_workspace_storage_non_speculative_init(
+            data_base_dir=data_base_dir,
+            device=device,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
 
 
 def manage_operational_error(

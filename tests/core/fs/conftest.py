@@ -201,10 +201,10 @@ def user_fs_offline_state_machine(
         pytest.skip()
 
     if param:
-        from parsec._parsec import user_storage_non_speculative_init as rs_user_storage_init
-        from parsec._parsec import workspace_storage_non_speculative_init as rs_wk_init
         from parsec.core.fs.storage import UserStorage as RSUserStorage
         from parsec.core.fs.storage import WorkspaceStorage as RSWorkspaceStorage
+        from parsec.core.fs.storage import user_storage_non_speculative_init as rs_user_storage_init
+        from parsec.core.fs.storage import workspace_storage_non_speculative_init as rs_wk_init
         from parsec.core.fs.storage.workspace_storage import (
             DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
             FAILSAFE_PATTERN_FILTER,

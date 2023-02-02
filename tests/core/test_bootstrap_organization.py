@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import SequesterSigningKeyDer, user_storage_non_speculative_init
+from parsec._parsec import SequesterSigningKeyDer
 from parsec.api.data import EntryName
 from parsec.api.protocol import DeviceLabel, HumanHandle, OrganizationID, UserProfile
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import InviteAlreadyUsedError, InviteNotFoundError, bootstrap_organization
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from tests.core.conftest import UserFsFactory

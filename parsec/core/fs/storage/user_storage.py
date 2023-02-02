@@ -8,7 +8,20 @@ from typing import AsyncIterator
 import trio
 
 from parsec._parsec import UserStorage as _RsUserStorage
+from parsec._parsec import (
+    user_storage_non_speculative_init as _rs_user_storage_non_speculative_init,
+)
 from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
+
+
+async def user_storage_non_speculative_init(data_base_dir: Path, device: LocalDevice) -> None:
+    # We need to shield the call to the rust function because during the call,
+    # It will open a connection to the database and close it at the end.
+    # And if we were cancelled we would leak a database connection.
+    with trio.CancelScope(shield=True):
+        return await _rs_user_storage_non_speculative_init(
+            data_base_dir=data_base_dir, device=device
+        )
 
 
 class UserStorage:

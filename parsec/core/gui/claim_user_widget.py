@@ -10,12 +10,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 from structlog import get_logger
 
-from parsec._parsec import (
-    DeviceFileType,
-    SASCode,
-    save_device_with_password_in_config,
-    user_storage_non_speculative_init,
-)
+from parsec._parsec import DeviceFileType, SASCode, save_device_with_password_in_config
 from parsec.api.protocol import DeviceLabel, HumanHandle
 from parsec.core import CoreConfig
 from parsec.core.backend_connection import (
@@ -25,6 +20,7 @@ from parsec.core.backend_connection import (
     BackendOutOfBallparkError,
     backend_invited_cmds_factory,
 )
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.gui import validators
 from parsec.core.gui.custom_dialogs import GreyedDialog, ask_question, show_error, show_info
 from parsec.core.gui.desktop import get_default_device
