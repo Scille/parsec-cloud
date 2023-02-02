@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use pyo3::{pyclass, pymethods, types::PyType, PyResult};
+use pyo3::{pyclass, pymethods, PyResult};
 
 use libparsec::{client_connection, protocol::authenticated_cmds};
 
@@ -17,265 +17,251 @@ pub(crate) struct AuthenticatedCmdsType(authenticated_cmds::v2::AnyCmdReq);
 
 #[pymethods]
 impl AuthenticatedCmdsType {
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "BLOCK_CREATE")]
-    fn block_create(_cls: &PyType, req: BlockCreateReq) -> Self {
+    fn block_create(req: BlockCreateReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::BlockCreate(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "BLOCK_READ")]
-    fn block_read(_cls: &PyType, req: BlockReadReq) -> Self {
+    fn block_read(req: BlockReadReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::BlockRead(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "DEVICE_CREATE")]
-    fn device_create(_cls: &PyType, req: DeviceCreateReq) -> Self {
+    fn device_create(req: DeviceCreateReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::DeviceCreate(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "EVENTS_LISTEN")]
-    fn events_listen(_cls: &PyType, req: EventsListenReq) -> Self {
+    fn events_listen(req: EventsListenReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::EventsListen(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "EVENTS_SUBSCRIBE")]
-    fn events_subscribe(_cls: &PyType, req: EventsSubscribeReq) -> Self {
+    fn events_subscribe(req: EventsSubscribeReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::EventsSubscribe(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "HUMAN_FIND")]
-    fn human_find(_cls: &PyType, req: HumanFindReq) -> Self {
+    fn human_find(req: HumanFindReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::HumanFind(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE1_GREETER_WAIT_PEER")]
-    fn invite1_greeter_wait_peer(_cls: &PyType, req: Invite1GreeterWaitPeerReq) -> Self {
+    fn invite1_greeter_wait_peer(req: Invite1GreeterWaitPeerReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::Invite1GreeterWaitPeer(
             req.0,
         ))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE2A_GREETER_GET_HASHED_NONCE")]
-    fn invite2a_greeter_get_hashed_nonce(
-        _cls: &PyType,
-        req: Invite2aGreeterGetHashedNonceReq,
-    ) -> Self {
+    fn invite2a_greeter_get_hashed_nonce(req: Invite2aGreeterGetHashedNonceReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::Invite2aGreeterGetHashedNonce(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE2B_GREETER_SEND_NONCE")]
-    fn invite2b_greeter_send_nonce(_cls: &PyType, req: Invite2bGreeterSendNonceReq) -> Self {
+    fn invite2b_greeter_send_nonce(req: Invite2bGreeterSendNonceReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::Invite2bGreeterSendNonce(
             req.0,
         ))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE3A_GREETER_WAIT_PEER_TRUST")]
-    fn invite3a_greeter_wait_peer_trust(
-        _cls: &PyType,
-        req: Invite3aGreeterWaitPeerTrustReq,
-    ) -> Self {
+    fn invite3a_greeter_wait_peer_trust(req: Invite3aGreeterWaitPeerTrustReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::Invite3aGreeterWaitPeerTrust(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE3B_GREETER_SIGNIFY_TRUST")]
-    fn invite3b_greeter_signify_trust(_cls: &PyType, req: Invite3bGreeterSignifyTrustReq) -> Self {
+    fn invite3b_greeter_signify_trust(req: Invite3bGreeterSignifyTrustReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::Invite3bGreeterSignifyTrust(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE4GREETER_COMMUNICATE")]
-    fn invite4greeter_communicate(_cls: &PyType, req: Invite4GreeterCommunicateReq) -> Self {
+    fn invite4greeter_communicate(req: Invite4GreeterCommunicateReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::Invite4GreeterCommunicate(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE_DELETE")]
-    fn invite_delete(_cls: &PyType, req: InviteDeleteReq) -> Self {
+    fn invite_delete(req: InviteDeleteReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::InviteDelete(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE_LIST")]
-    fn invite_list(_cls: &PyType, req: InviteListReq) -> Self {
+    fn invite_list(req: InviteListReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::InviteList(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "INVITE_NEW")]
-    fn invite_new(_cls: &PyType, req: InviteNewReq) -> Self {
+    fn invite_new(req: InviteNewReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::InviteNew(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "MESSAGE_GET")]
-    fn message_get(_cls: &PyType, req: MessageGetReq) -> Self {
+    fn message_get(req: MessageGetReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::MessageGet(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "ORGANIZATION_STATS")]
-    fn organization_stats(_cls: &PyType, req: OrganizationStatsReq) -> Self {
+    fn organization_stats(req: OrganizationStatsReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::OrganizationStats(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "PKI_ENROLLMENT_ACCEPT")]
-    fn pki_enrollment_accept(_cls: &PyType, req: PkiEnrollmentAcceptReq) -> Self {
+    fn pki_enrollment_accept(req: PkiEnrollmentAcceptReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentAccept(
             req.0,
         ))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "PKI_ENROLLMENT_LIST")]
-    fn pki_enrollment_list(_cls: &PyType, req: PkiEnrollmentListReq) -> Self {
+    fn pki_enrollment_list(req: PkiEnrollmentListReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentList(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "PKI_ENROLLMENT_REJECT")]
-    fn pki_enrollment_reject(_cls: &PyType, req: PkiEnrollmentRejectReq) -> Self {
+    fn pki_enrollment_reject(req: PkiEnrollmentRejectReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentReject(
             req.0,
         ))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "REALM_CREATE")]
-    fn realm_create(_cls: &PyType, req: RealmCreateReq) -> Self {
+    fn realm_create(req: RealmCreateReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::RealmCreate(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "REALM_FINISH_REENCRYPTION_MAINTENANCE")]
-    fn realm_finish_reencryption_maintenance(
-        _cls: &PyType,
-        req: RealmFinishReencryptionMaintenanceReq,
-    ) -> Self {
+    fn realm_finish_reencryption_maintenance(req: RealmFinishReencryptionMaintenanceReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::RealmFinishReencryptionMaintenance(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "REALM_GET_ROLE_CERTIFICATES")]
-    fn realm_get_role_certificates(_cls: &PyType, req: RealmGetRoleCertificatesReq) -> Self {
+    fn realm_get_role_certificates(req: RealmGetRoleCertificatesReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::RealmGetRoleCertificates(
             req.0,
         ))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "REALM_START_REENCRYPTION_MAINTENANCE")]
-    fn realm_start_reencryption_maintenance(
-        _cls: &PyType,
-        req: RealmStartReencryptionMaintenanceReq,
-    ) -> Self {
+    fn realm_start_reencryption_maintenance(req: RealmStartReencryptionMaintenanceReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::RealmStartReencryptionMaintenance(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "REALM_STATS")]
-    fn realm_stats(_cls: &PyType, req: RealmStatsReq) -> Self {
+    fn realm_stats(req: RealmStatsReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::RealmStats(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "REALM_STATUS")]
-    fn realm_status(_cls: &PyType, req: RealmStatusReq) -> Self {
+    fn realm_status(req: RealmStatusReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::RealmStatus(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "REALM_UPDATE_ROLES")]
-    fn realm_update_roles(_cls: &PyType, req: RealmUpdateRolesReq) -> Self {
+    fn realm_update_roles(req: RealmUpdateRolesReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::RealmUpdateRoles(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "USER_CREATE")]
-    fn user_create(_cls: &PyType, req: UserCreateReq) -> Self {
+    fn user_create(req: UserCreateReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::UserCreate(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "USER_GET")]
-    fn user_get(_cls: &PyType, req: UserGetReq) -> Self {
+    fn user_get(req: UserGetReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::UserGet(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "USER_REVOKE")]
-    fn user_revoke(_cls: &PyType, req: UserRevokeReq) -> Self {
+    fn user_revoke(req: UserRevokeReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::UserRevoke(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "VLOB_CREATE")]
-    fn vlob_create(_cls: &PyType, req: VlobCreateReq) -> Self {
+    fn vlob_create(req: VlobCreateReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::VlobCreate(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "VLOB_LIST_VERSIONS")]
-    fn vlob_list_versions(_cls: &PyType, req: VlobListVersionsReq) -> Self {
+    fn vlob_list_versions(req: VlobListVersionsReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::VlobListVersions(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "VLOB_MAINTENANCE_GET_REENCRYPTION_BATCH")]
     fn vlob_maintenance_get_reencryption_batch(
-        _cls: &PyType,
         req: VlobMaintenanceGetReencryptionBatchReq,
     ) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::VlobMaintenanceGetReencryptionBatch(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "VLOB_MAINTENANCE_SAVE_REENCRYPTION_BATCH")]
     fn vlob_maintenance_save_reencryption_batch(
-        _cls: &PyType,
         req: VlobMaintenanceSaveReencryptionBatchReq,
     ) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "VLOB_POLL_CHANGES")]
-    fn vlob_poll_changes(_cls: &PyType, req: VlobPollChangesReq) -> Self {
+    fn vlob_poll_changes(req: VlobPollChangesReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::VlobPollChanges(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "VLOB_READ")]
-    fn vlob_read(_cls: &PyType, req: VlobReadReq) -> Self {
+    fn vlob_read(req: VlobReadReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::VlobRead(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "VLOB_UPDATE")]
-    fn vlob_update(_cls: &PyType, req: VlobUpdateReq) -> Self {
+    fn vlob_update(req: VlobUpdateReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::VlobUpdate(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "ORGANIZATION_CONFIG")]
-    fn organization_config(_cls: &PyType, req: OrganizationConfigReq) -> Self {
+    fn organization_config(req: OrganizationConfigReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::OrganizationConfig(req.0))
     }
 
-    #[classmethod]
+    #[staticmethod]
     #[pyo3(name = "PING")]
-    fn ping(_cls: &PyType, req: AuthenticatedPingReq) -> Self {
+    fn ping(req: AuthenticatedPingReq) -> Self {
         Self(authenticated_cmds::v2::AnyCmdReq::Ping(req.0))
     }
 }

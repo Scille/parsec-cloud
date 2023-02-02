@@ -270,6 +270,7 @@ pylupdate
 PyMethods
 pymodule
 pynacl
+pyobject
 pypa
 pypac
 PYQT
