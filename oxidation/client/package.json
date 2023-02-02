@@ -1,5 +1,5 @@
 {
-    "name": "client",
+    "name": "parsec",
     "version": "0.0.1",
     "private": true,
     "scripts": {
@@ -20,6 +20,7 @@
         "electron:copy:release": "npm run native:build && npx cap copy @capacitor-community/electron",
         "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron",
         "electron:release": "npm run electron:copy:release && cd electron && npm run electron:release",
+        "electron:release:sodium": "npm run electron:copy:release && cd electron && npm run electron:release:sodium",
         "web:open": "vue-cli-service serve",
         "web:release": "vue-cli-service build",
         "web:only-libparsec-plugin": "cd ../bindings/web && wasm-pack build --out-name index --out-dir pkg"
