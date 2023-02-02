@@ -11,12 +11,6 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
-#[allow(dead_code)]
-pub const I32_MAX: f64 = i32::MAX as f64;
-#[allow(dead_code)]
-pub const I32_MIN: f64 = i32::MIN as f64;
-pub const U32_MAX: f64 = u32::MAX as f64;
-pub const U32_MIN: f64 = u32::MIN as f64;
 
 // AvailableDevice
 
@@ -306,7 +300,7 @@ fn variant_clientevent_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, 
                         .dyn_into::<Number>()
                         .map_err(|_| TypeError::new("Not a number"))?
                         .value_of();
-                    if v < U32_MIN || U32_MAX < v {
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
                     v as u32
@@ -405,7 +399,7 @@ fn variant_workspacestoragecachesize_js_to_rs(
                         .dyn_into::<Number>()
                         .map_err(|_| TypeError::new("Not a number"))?
                         .value_of();
-                    if v < U32_MIN || U32_MAX < v {
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
                     v as u32
@@ -607,7 +601,7 @@ fn variant_clientgettererror_js_to_rs(
                         .dyn_into::<Number>()
                         .map_err(|_| TypeError::new("Not a number"))?
                         .value_of();
-                    if v < U32_MIN || U32_MAX < v {
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
                     v as u32

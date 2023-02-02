@@ -6,12 +6,6 @@
 
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
-#[allow(dead_code)]
-const I32_MAX: f64 = i32::MAX as f64;
-#[allow(dead_code)]
-const I32_MIN: f64 = i32::MIN as f64;
-const U32_MAX: f64 = u32::MAX as f64;
-const U32_MIN: f64 = u32::MIN as f64;
 
 // AvailableDevice
 
@@ -288,7 +282,7 @@ fn variant_clientevent_js_to_rs<'a>(
                 let js_val: Handle<JsNumber> = obj.get(cx, "client")?;
                 {
                     let v = js_val.value(cx);
-                    if v < U32_MIN || U32_MAX < v {
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         (cx).throw_type_error("Not an u32 number")?
                     }
                     v as u32
@@ -387,7 +381,7 @@ fn variant_workspacestoragecachesize_js_to_rs<'a>(
                 let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
                 {
                     let v = js_val.value(cx);
-                    if v < U32_MIN || U32_MAX < v {
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         (cx).throw_type_error("Not an u32 number")?
                     }
                     v as u32
@@ -572,7 +566,7 @@ fn variant_clientgettererror_js_to_rs<'a>(
                 let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
                 {
                     let v = js_val.value(cx);
-                    if v < U32_MIN || U32_MAX < v {
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         (cx).throw_type_error("Not an u32 number")?
                     }
                     v as u32
@@ -745,7 +739,7 @@ fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
-            if v < U32_MIN || U32_MAX < v {
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 (&mut cx).throw_type_error("Not an u32 number")?
             }
             v as u32

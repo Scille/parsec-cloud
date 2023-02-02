@@ -85,7 +85,7 @@ JsFunction
 {%- elif type.kind == "i32_based" -%}
 {
     let v = {{ js_val }}.value({{ mut_cx_ref }});
-    if v < I32_MIN || I32_MAX < v {
+    if v < (i32::MIN as f64) || (i32::MAX as f64) < v {
         ({{mut_cx_ref}}).throw_type_error("Not an i32 number")?
     }
     v as i32
@@ -93,7 +93,7 @@ JsFunction
 {%- elif type.kind == "u32_based" -%}
 {
     let v = {{ js_val }}.value({{ mut_cx_ref }});
-    if v < U32_MIN || U32_MAX < v {
+    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
         ({{mut_cx_ref}}).throw_type_error("Not an u32 number")?
     }
     v as u32
@@ -478,12 +478,6 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
-#[allow(dead_code)]
-const I32_MAX: f64 = i32::MAX as f64;
-#[allow(dead_code)]
-const I32_MIN: f64 = i32::MIN as f64;
-const U32_MAX: f64 = u32::MAX as f64;
-const U32_MIN: f64 = u32::MIN as f64;
 {# Structures #}
 {% for struct in api.structs %}
 
