@@ -81,6 +81,7 @@ class CoreConfig:
     gui_allow_multiple_instances: bool = False
     gui_show_confined: bool = False
     gui_geometry: bytes | None = None
+    gui_hide_unmounted: bool = False
 
     ipc_win32_mutex_name: str = "parsec-cloud"
 
@@ -119,6 +120,7 @@ def config_factory(
     preferred_org_creation_backend_addr: BackendAddr | None = None,
     gui_show_confined: bool = False,
     gui_geometry: bytes | None = None,
+    gui_hide_unmounted: bool = False,
     ipc_win32_mutex_name: str = "parsec-cloud",
     environ: Mapping[str, str] = {},
     **_: object,
@@ -165,6 +167,7 @@ def config_factory(
         preferred_org_creation_backend_addr=preferred_org_creation_backend_addr,
         gui_show_confined=gui_show_confined,
         gui_geometry=gui_geometry,
+        gui_hide_unmounted=gui_hide_unmounted,
         ipc_win32_mutex_name=ipc_win32_mutex_name,
     )
 
@@ -275,6 +278,7 @@ def save_config(config: CoreConfig) -> None:
                 "gui_geometry": base64.b64encode(config.gui_geometry).decode("ascii")
                 if config.gui_geometry
                 else None,
+                "gui_hide_unmounted": config.gui_hide_unmounted,
                 "ipc_win32_mutex_name": config.ipc_win32_mutex_name,
             },
             indent=True,

@@ -16,6 +16,8 @@ from parsec._parsec import DeviceFileType, LocalDevice, save_device_with_passwor
 from parsec.api.data import EntryName
 from parsec.core.config import CoreConfig
 from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.enrollment_widget import EnrollmentWidget
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.lang import switch_language
 from parsec.core.gui.login_widget import (
@@ -26,10 +28,13 @@ from parsec.core.gui.login_widget import (
     LoginWidget,
 )
 from parsec.core.gui.main_window import MainWindow
+from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.workspaces_widget import WorkspaceButton, WorkspacesWidget
 from parsec.core.local_device import LocalDeviceAlreadyExistsError
+from parsec.core.logged_core import LoggedCore
 from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
 
@@ -257,7 +262,7 @@ def gui_factory(
     core_config,
     event_bus_factory,
     running_backend_ready,
-):
+) -> MainWindow:
     windows = []
 
     async def _gui_factory(
@@ -334,7 +339,7 @@ async def logged_gui(
     alice: LocalDevice,
     bob: LocalDevice,
     fixtures_customization,
-):
+) -> MainWindow:
     # Logged as bob (i.e. standard profile) by default
     if fixtures_customization.get("logged_gui_as_admin", False):
         device = alice
@@ -360,49 +365,49 @@ def testing_main_window_cls(aqtbot) -> Type[MainWindow]:
             w = self.tab_center.currentWidget()
             return w
 
-        def test_get_main_widget(self):
+        def test_get_main_widget(self) -> MainWindow:
             tabw = self.test_get_tab()
             item = tabw.layout().itemAt(0)
             return item.widget()
 
-        def test_get_central_widget(self):
+        def test_get_central_widget(self) -> CentralWidget:
             main_widget = self.test_get_main_widget()
             if not isinstance(main_widget, CentralWidget):
                 return None
             return main_widget
 
-        def test_get_login_widget(self):
+        def test_get_login_widget(self) -> LoginWidget:
             main_widget = self.test_get_main_widget()
             if not isinstance(main_widget, LoginWidget):
                 return None
             return main_widget
 
-        def test_get_users_widget(self):
+        def test_get_users_widget(self) -> UsersWidget:
             central_widget = self.test_get_central_widget()
             return central_widget.users_widget
 
-        def test_get_devices_widget(self):
+        def test_get_devices_widget(self) -> DevicesWidget:
             central_widget = self.test_get_central_widget()
             return central_widget.devices_widget
 
-        def test_get_enrollment_widget(self):
+        def test_get_enrollment_widget(self) -> EnrollmentWidget:
             central_widget = self.test_get_central_widget()
             return central_widget.enrollment_widget
 
-        def test_get_mount_widget(self):
+        def test_get_mount_widget(self) -> MountWidget:
             central_widget = self.test_get_central_widget()
             return central_widget.mount_widget
 
-        def test_get_workspaces_widget(self):
+        def test_get_workspaces_widget(self) -> WorkspacesWidget:
             mount_widget = self.test_get_mount_widget()
             mount_widget.workspaces_widget.check_hide_unmounted.setChecked(False)
             return mount_widget.workspaces_widget
 
-        def test_get_files_widget(self):
+        def test_get_files_widget(self) -> FilesWidget:
             mount_widget = self.test_get_mount_widget()
             return mount_widget.files_widget
 
-        def test_get_core(self):
+        def test_get_core(self) -> LoggedCore:
             return self.test_get_central_widget().core
 
         async def test_logout(self):
