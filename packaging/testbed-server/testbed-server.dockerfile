@@ -35,6 +35,9 @@ RUN bash build-testbed.sh
 
 FROM python:3.9-slim
 
+LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
+LABEL org.opencontainers.image.description="Run a testbed parsec server to simplify mockup of an existing organization."
+
 USER 1234:1234
 WORKDIR /testbed
 
