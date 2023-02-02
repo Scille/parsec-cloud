@@ -11,6 +11,7 @@ rust-version = "1.62.0"
 use-sodiumoxide = [ "libparsec_crypto/use-sodiumoxide" ]
 test-utils = [
     "libparsec_testbed",
+    "libparsec_client_high_level_api/test-utils",
     "libparsec_platform_device_loader/test-testbed-support",
     "libparsec_types/test-mock-time",
 ]
