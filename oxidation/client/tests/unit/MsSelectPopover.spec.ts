@@ -39,12 +39,13 @@ describe('MsSelectPopover.vue', () => {
     jest.clearAllMocks();
   });
 
-  function findItemAt(wrapper: VueWrapper, index: number): VueWrapper | undefined {
+  function findItemAt(wrapper: VueWrapper, index: number): VueWrapper {
     for (const [i, item] of wrapper.findAllComponents('ion-item').entries()) {
       if (index === i) {
         return item as VueWrapper;
       }
     }
+    return wrapper;
   }
 
   it('renders select popover', () => {
@@ -69,7 +70,7 @@ describe('MsSelectPopover.vue', () => {
     const item = findItemAt(wrapper, 2);
     expect(item).toBeDefined();
 
-    item?.trigger('click');
+    item.trigger('click');
     expect(popoverCtrlSpy).toHaveBeenCalledWith({
       option: options[1],
       sortByAsc: true
@@ -83,7 +84,7 @@ describe('MsSelectPopover.vue', () => {
     const item = findItemAt(wrapper, 0);
     expect(item).toBeDefined();
     expect(sortIcon.props('icon')).toBe(arrowUp);
-    await item?.trigger('click');
+    await item.trigger('click');
     expect(popoverCtrlSpy).toHaveBeenCalledWith({
       option: options[1],
       sortByAsc: false
