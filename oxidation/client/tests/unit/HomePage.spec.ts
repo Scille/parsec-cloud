@@ -65,9 +65,9 @@ describe('HomePage.vue', () => {
   // temporary, delete this when true data will exists by bindings
   store.create().then(() => {
     store.set('devicesData', {
-      slug1: { lastLogin: new Date('01/11/2023') }, // MegaShark
-      slug2: { lastLogin: new Date('01/12/2023 12:03:05') }, // Resana
-      slug3: { lastLogin: new Date('01/12/2023 15:12:04') } // Oxymore
+      slug1: { lastLogin: new Date('01/11/2023') },
+      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
+      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
     });
   });
 
@@ -205,24 +205,25 @@ describe('HomePage.vue', () => {
 
       wrapper.vm.sortBy = 'last_login';
       // Should be order by last login date descending
-      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('OsCorp');
-      expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Black Mesa');
+      expect(wrapper.vm.filteredDevices[0].slug).toEqual('slug4');
+      expect(wrapper.vm.filteredDevices[4].slug).toEqual('slug1');
+      expect(wrapper.vm.filteredDevices[6].slug).toEqual('slug3');
 
       // Sort by last login date ascending
       wrapper.vm.sortByAsc = true;
-      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Black Mesa');
-      expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Riviera M.D.');
+      expect(wrapper.vm.filteredDevices[0].slug).toEqual('slug3');
+      expect(wrapper.vm.filteredDevices[2].slug).toEqual('slug1');
+      expect(wrapper.vm.filteredDevices[6].slug).toEqual('slug7');
 
       wrapper.vm.sortBy = 'user_name';
       // Should be order by user name ascending
       expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr John H. Watson');
       expect(wrapper.vm.filteredDevices[6].humanHandle).toEqual('Dr. Stephen Strange');
 
-      // Sort by last login date descending
+      // Sort by user name descending
       wrapper.vm.sortByAsc = false;
-      wrapper.vm.sortBy = 'last_login';
-      expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr. Otto G. Octavius');
-      expect(wrapper.vm.filteredDevices[6].humanHandle).toEqual('Dr. Gordon Freeman');
+      expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr. Stephen Strange');
+      expect(wrapper.vm.filteredDevices[6].humanHandle).toEqual('Dr John H. Watson');
     });
 
   });

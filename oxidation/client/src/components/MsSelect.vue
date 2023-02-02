@@ -41,6 +41,7 @@ const selectedOption: Ref<MsSelectOption | undefined> = ref(
 );
 const sortByAsc: Ref<boolean> = ref(true);
 const labelRef = ref(selectedOption.value?.label || props.label);
+
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: MsSelectPopover,

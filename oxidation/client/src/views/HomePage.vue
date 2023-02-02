@@ -343,7 +343,7 @@ const filteredDevices = computed(() => {
       } else {
         return b.organizationId.localeCompare(a.organizationId);
       }
-    } else if (sortBy.value === 'user_name') {
+    } else if (sortBy.value === 'user_name' && a.humanHandle && b.humanHandle) {
       if (sortByAsc.value) {
         return a.humanHandle?.localeCompare(b.humanHandle ?? '');
       } else {
@@ -439,7 +439,7 @@ function formatLastLogin(lastLogin: Date | undefined) : string {
     return t('HomePage.organizationList.lastLoginHours', {hours: diff}, diff);
   }
 
-  // Too long, let's use the date as is
+  // Let's use the date as is
   return d(lastLogin, 'long');
 }
 
