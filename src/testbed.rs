@@ -14,7 +14,7 @@ use crate::{
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct TestbedEnv(pub std::sync::Arc<libparsec::TestbedEnv>);
+pub(crate) struct TestbedEnv(pub std::sync::Arc<libparsec::testbed::TestbedEnv>);
 
 crate::binding_utils::gen_proto!(TestbedEnv, __repr__);
 crate::binding_utils::gen_proto!(TestbedEnv, __copy__);
@@ -22,7 +22,7 @@ crate::binding_utils::gen_proto!(TestbedEnv, __deepcopy__);
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct TestbedDeviceData(pub libparsec::TestbedDeviceData);
+pub(crate) struct TestbedDeviceData(pub libparsec::testbed::TestbedDeviceData);
 
 crate::binding_utils::gen_proto!(TestbedDeviceData, __repr__);
 crate::binding_utils::gen_proto!(TestbedDeviceData, __copy__);
@@ -68,7 +68,7 @@ impl TestbedDeviceData {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct TestbedUserData(pub libparsec::TestbedUserData);
+pub(crate) struct TestbedUserData(pub libparsec::testbed::TestbedUserData);
 
 crate::binding_utils::gen_proto!(TestbedUserData, __repr__);
 crate::binding_utils::gen_proto!(TestbedUserData, __copy__);
@@ -127,7 +127,7 @@ impl TestbedUserData {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct TestbedTemplate(pub std::sync::Arc<libparsec::TestbedTemplate>);
+pub(crate) struct TestbedTemplate(pub std::sync::Arc<libparsec::testbed::TestbedTemplate>);
 
 crate::binding_utils::gen_proto!(TestbedTemplate, __repr__);
 crate::binding_utils::gen_proto!(TestbedTemplate, __copy__);
@@ -182,20 +182,23 @@ pub(crate) fn test_new_testbed(
     }
 
     Ok(FutureIntoCoroutine::from(async move {
-        let env =
-            libparsec::test_new_testbed(&template, test_server.as_ref().map(|addr| &addr.0)).await;
+        let env = libparsec::testbed::test_new_testbed(
+            &template,
+            test_server.as_ref().map(|addr| &addr.0),
+        )
+        .await;
         Ok(TestbedEnv(env))
     }))
 }
 
 #[pyfunction]
 pub(crate) fn test_drop_testbed(path: PathBuf) -> FutureIntoCoroutine {
-    FutureIntoCoroutine::from(async move { Ok(libparsec::test_drop_testbed(&path).await) })
+    FutureIntoCoroutine::from(async move { Ok(libparsec::testbed::test_drop_testbed(&path).await) })
 }
 
 #[pyfunction]
 pub(crate) fn test_get_testbed_templates() -> Vec<TestbedTemplate> {
-    libparsec::test_get_testbed_templates()
+    libparsec::testbed::test_get_testbed_templates()
         .into_iter()
         .map(|x| TestbedTemplate(x))
         .collect()
