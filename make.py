@@ -160,7 +160,7 @@ COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
     ),
     # Flags used in `bindings/electron/scripts/build.js`
     ("electron-release-sodium-libparsec-cargo-flags",): Cmd(
-        cmd=f"echo {ELECTRON_RELEASE_CI_CARGO_FLAGS}",
+        cmd=f"echo {ELECTRON_RELEASE_SODIUM_CARGO_FLAGS}",
     ),
     # Flags used in `bindings/electron/scripts/build.js`
     ("electron-dev-libparsec-cargo-flags",): Cmd(
