@@ -5,134 +5,201 @@
       :fullscreen="true"
       color="secondary"
     >
-      <div id="container">
-        <div class="logo">
-          <img src="../assets/images/Logo/logo_blue.png">
-        </div>
-        <transition-group :name="showOrganizationList ? 'slide-left' : 'slide-right'">
-          <ion-card
-            v-if="showOrganizationList"
-            id="organization-list-container"
-          >
-            <ion-card-content class="organization-list">
-              <ion-card-title color="tertiary">
-                {{ $t('HomePage.organizationList.title') }}
-              </ion-card-title>
-              <ion-grid>
-                <ion-row>
-                  <ion-col
-                    size="1"
-                    v-for="device in deviceList"
-                    :key="device.slug"
-                  >
-                    <ion-card
-                      button
-                      class="organization-card-container"
-                      @click="onOrganizationCardClick(device)"
-                    >
-                      <ion-card-content>
-                        <ion-grid>
-                          <OrganizationCard :device="device" />
-                          <ion-row>
-                            <ion-col
-                              size="auto"
-                              v-if="deviceStoredDataDict[device.slug]"
-                            >
-                              {{ formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) }}
-                            </ion-col>
-                          </ion-row>
-                        </ion-grid>
-                      </ion-card-content>
-                    </ion-card>
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
-            </ion-card-content>
-            <ion-card-content class="no-existing-organization">
-              <ion-card-title color="tertiary">
-                {{ $t('HomePage.noExistingOrganization.title') }}
-              </ion-card-title>
-              <ion-button
-                @click="openCreateOrganizationModal()"
-                size="large"
-                id="create-organization-button"
+      <div id="page">
+        <div id="topbar">
+          <ion-grid>
+            <ion-row>
+              <ion-col
+                size="8"
+                offset="2"
               >
-                <ion-icon
-                  slot="start"
-                  :icon="add"
-                />
-                {{ $t('HomePage.noExistingOrganization.createOrganization') }}
-              </ion-button>
-              <ion-button
-                @click="openJoinByLinkModal()"
-                fill="outline"
-                size="large"
-                id="join-by-link-button"
-              >
-                <ion-icon
-                  slot="start"
-                  :icon="link"
-                />
-                {{ $t('HomePage.noExistingOrganization.joinOrganization') }}
-              </ion-button>
-            </ion-card-content>
-          </ion-card>
-          <ion-card
-            v-if="!showOrganizationList"
-            id="login-popup-container"
-          >
-            <ion-card-content class="organization-list">
-              <ion-card-title color="tertiary">
+                <img src="../assets/images/Logo/logo_inline_blue2.png">
+              </ion-col>
+              <ion-col size="2">
                 <ion-button
                   fill="clear"
-                  @click="showOrganizationList = !showOrganizationList"
-                  id="back-to-list-button"
+                  @click="$router.push('settings')"
+                  id="settings-button"
                 >
                   <ion-icon
                     slot="start"
-                    :icon="chevronBackOutline"
+                    :icon="cogOutline"
                   />
-                  {{ $t('HomePage.organizationLogin.backToList') }}
+                  {{ $t('HomePage.topbar.settings') }}
                 </ion-button>
-              </ion-card-title>
-              <div id="login-container">
-                <ion-card id="login-card-container">
-                  <ion-card-content>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </div>
+        <div id="container">
+          <transition-group
+            :name="showOrganizationList ? 'slide-left' : 'slide-right'"
+          >
+            <ion-card
+              v-if="showOrganizationList"
+              id="organization-list-container"
+            >
+              <ion-card-content class="organization-list">
+                <ion-card-title color="tertiary">
+                  {{ $t('HomePage.organizationList.title') }}
+
+                  <!-- No use in showing the sort/filter options for less than 2 devices -->
+                  <template v-if="deviceList.length > 2">
                     <ion-grid>
-                      <OrganizationCard :device="selectedDevice" />
-                      <PasswordInput
-                        :label="t('HomePage.organizationLogin.passwordLabel')"
-                        @change="onPasswordChange"
-                        @enter="login"
-                      />
-                      <ion-button
-                        fill="clear"
-                        @click="onForgottenPasswordClick"
-                        id="forgotten-password-button"
-                      >
-                        {{ $t('HomePage.organizationLogin.forgottenPassword') }}
-                      </ion-button>
+                      <ion-row class="ion-justify-content-between">
+                        <ion-col size="1">
+                          <ion-item fill="solid">
+                            <ion-label
+                              position="floating"
+                            >
+                              {{ $t('HomePage.organizationList.search') }}
+                            </ion-label>
+                            <ion-icon
+                              :icon="searchOutline"
+                              slot="start"
+                            />
+                            <ion-input
+                              id="search-input"
+                              v-model="orgSearchString"
+                              :clear-input="true"
+                            />
+                          </ion-item>
+                        </ion-col>
+                        <ion-col size="auto">
+                          <MsSelect
+                            id="filter-select"
+                            label="t('HomePage.organizationList.labelSortBy')"
+                            :options="msSelectOptions"
+                            default-option="organization"
+                            :sort-by-labels="msSelectSortByLabels"
+                            @change="onMsSelectChange($event)"
+                          />
+                        </ion-col>
+                      </ion-row>
                     </ion-grid>
-                  </ion-card-content>
-                </ion-card>
-                <div id="login-button-container">
+                  </template>
+                </ion-card-title>
+                <ion-grid class="organization-list-grid">
+                  <ion-row>
+                    <ion-col
+                      size="1"
+                      v-for="device in filteredDevices"
+                      :key="device.slug"
+                    >
+                      <ion-card
+                        button
+                        class="organization-card-container"
+                        @click="onOrganizationCardClick(device)"
+                      >
+                        <ion-card-content>
+                          <ion-grid>
+                            <OrganizationCard
+                              :device="device"
+                              class="organization-card"
+                            />
+                            <ion-row class="organization-card-footer">
+                              <ion-col
+                                size="auto"
+                                v-if="deviceStoredDataDict[device.slug]"
+                              >
+                                <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
+                                <p>{{ formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) }}</p>
+                              </ion-col>
+                            </ion-row>
+                          </ion-grid>
+                        </ion-card-content>
+                      </ion-card>
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+              <ion-card-content class="no-existing-organization">
+                <ion-card-title color="tertiary">
+                  {{ $t('HomePage.noExistingOrganization.title') }}
+                </ion-card-title>
+                <ion-button
+                  @click="openCreateOrganizationModal()"
+                  size="large"
+                  id="create-organization-button"
+                >
+                  <ion-icon
+                    slot="start"
+                    :icon="add"
+                  />
+                  {{ $t('HomePage.noExistingOrganization.createOrganization') }}
+                </ion-button>
+                <ion-button
+                  @click="openJoinByLinkModal()"
+                  fill="outline"
+                  size="large"
+                  id="join-by-link-button"
+                >
+                  <ion-icon
+                    slot="start"
+                    :icon="link"
+                  />
+                  {{ $t('HomePage.noExistingOrganization.joinOrganization') }}
+                </ion-button>
+              </ion-card-content>
+            </ion-card>
+            <ion-card
+              v-if="!showOrganizationList"
+              id="login-popup-container"
+            >
+              <ion-card-content class="organization-list">
+                <ion-card-title color="tertiary">
                   <ion-button
-                    @click="login"
-                    size="large"
-                    :disabled="password.length == 0"
-                    id="login-button"
+                    fill="clear"
+                    @click="showOrganizationList = !showOrganizationList"
+                    id="back-to-list-button"
                   >
                     <ion-icon
                       slot="start"
-                      :icon="logIn"
+                      :icon="chevronBackOutline"
                     />
-                    {{ $t("HomePage.organizationLogin.login") }}
+                    {{ $t('HomePage.organizationLogin.backToList') }}
                   </ion-button>
+                </ion-card-title>
+                <div id="login-container">
+                  <ion-card id="login-card-container">
+                    <ion-card-content>
+                      <ion-grid>
+                        <OrganizationCard :device="selectedDevice" />
+                        <PasswordInput
+                          :label="t('HomePage.organizationLogin.passwordLabel')"
+                          @change="onPasswordChange($event)"
+                          @enter="login()"
+                          id="password-input"
+                        />
+                        <ion-button
+                          fill="clear"
+                          @click="onForgottenPasswordClick()"
+                          id="forgotten-password-button"
+                        >
+                          {{ $t('HomePage.organizationLogin.forgottenPassword') }}
+                        </ion-button>
+                      </ion-grid>
+                    </ion-card-content>
+                  </ion-card>
+                  <div id="login-button-container">
+                    <ion-button
+                      @click="login()"
+                      size="large"
+                      :disabled="password.length == 0"
+                      id="login-button"
+                    >
+                      <ion-icon
+                        slot="start"
+                        :icon="logIn"
+                      />
+                      {{ $t("HomePage.organizationLogin.login") }}
+                    </ion-button>
+                  </div>
                 </div>
-              </div>
-            </ion-card-content>
-          </ion-card>
-        </transition-group>
+              </ion-card-content>
+            </ion-card>
+          </transition-group>
+        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -141,12 +208,15 @@
 <script setup lang="ts">
 import {
   IonContent,
+  IonInput,
   IonPage,
   IonCard,
   IonCardContent,
   IonCardTitle,
   IonButton,
   IonIcon,
+  IonItem,
+  IonLabel,
   IonRow,
   IonCol,
   IonGrid,
@@ -156,14 +226,18 @@ import {
   add,
   link,
   chevronBackOutline,
+  searchOutline,
+  cogOutline,
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
-import { onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref, toRaw, computed } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
+import MsSelect from '@/components/MsSelect.vue';
+import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
@@ -175,8 +249,8 @@ export interface DeviceStoredData {
 const { t, d } = useI18n();
 const deviceList: AvailableDevice[] = [
   {
-    organizationId: 'MegaShark',
-    humanHandle: 'Maxime Grandcolas',
+    organizationId: 'Planet Express Is The Best Comp!',
+    humanHandle: 'Dr. John A. Zoidberg',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
@@ -184,8 +258,8 @@ const deviceList: AvailableDevice[] = [
     ty: {tag: 'Password'}
   },
   {
-    organizationId: 'Resana',
-    humanHandle: 'Maxime Grandcolas',
+    organizationId: 'PPTH',
+    humanHandle: 'Dr. Gregory House',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
@@ -193,8 +267,8 @@ const deviceList: AvailableDevice[] = [
     ty: {tag: 'Password'}
   },
   {
-    organizationId: 'Oxymore',
-    humanHandle: 'Maxime Grandcolas',
+    organizationId: 'Black Mesa',
+    humanHandle: 'Dr. Gordon Freeman',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
@@ -202,29 +276,124 @@ const deviceList: AvailableDevice[] = [
     ty: {tag: 'Password'}
   },
   {
-    organizationId: 'Eddy',
-    humanHandle: 'Maxime Grandcolas',
+    organizationId: 'OsCorp',
+    humanHandle: 'Dr. Otto G. Octavius',
     deviceLabel: 'device_label',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug4',
     ty: {tag: 'Password'}
+  },
+  {
+    organizationId: 'Sanctum Sanctorum',
+    humanHandle: 'Dr. Stephen Strange',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug5',
+    ty: {tag: 'Password'}
+  },
+  {
+    organizationId: 'Holmes Consulting',
+    humanHandle: 'Dr John H. Watson',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug6',
+    ty: {tag: 'Password'}
+  },
+  {
+    organizationId: 'Riviera M.D.',
+    humanHandle: 'Dr. Nicholas "Nick" Riviera',
+    deviceLabel: 'device_label',
+    keyFilePath: 'key_file_path',
+    deviceId: 'device_id',
+    slug: 'slug7',
+    ty: {tag: 'Password'}
   }
 ];
 let selectedDevice: AvailableDevice;
 const password = ref('');
+const orgSearchString = ref('');
 const showOrganizationList = ref(true);
 const store = new Storage();
+const sortBy = ref('organization');
+const sortByAsc = ref(true);
 
-const deviceStoredDataDict = ref({});
+const msSelectOptions: MsSelectOption[] = [
+  { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
+  { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
+  { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' }
+];
+
+const msSelectSortByLabels = {
+  asc: t('HomePage.organizationList.sortOrderAsc'),
+  desc: t('HomePage.organizationList.sortOrderDesc')
+};
+
+const filteredDevices = computed(() => {
+  return deviceList.filter((item) => {
+    const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
+    return (item.humanHandle?.toLocaleLowerCase().includes(lowerSearchString) ||
+      item.organizationId?.toLocaleLowerCase().includes(lowerSearchString));
+  }).sort((a, b) => {
+    if (sortBy.value === 'organization') {
+      if (sortByAsc.value) {
+        return a.organizationId.localeCompare(b.organizationId);
+      } else {
+        return b.organizationId.localeCompare(a.organizationId);
+      }
+    } else if (sortBy.value === 'user_name' && a.humanHandle && b.humanHandle) {
+      if (sortByAsc.value) {
+        return a.humanHandle?.localeCompare(b.humanHandle ?? '');
+      } else {
+        return b.humanHandle?.localeCompare(a.humanHandle ?? '');
+      }
+    } else if (sortBy.value === 'last_login') {
+      const aLastLogin = (a.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[a.slug].lastLogin !== undefined) ?
+        deviceStoredDataDict.value[a.slug].lastLogin.valueOf() : 0;
+      const bLastLogin = (b.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[b.slug].lastLogin !== undefined) ?
+        deviceStoredDataDict.value[b.slug].lastLogin.valueOf() : 0;
+      if (sortByAsc.value) {
+        return bLastLogin - aLastLogin;
+      } else {
+        return aLastLogin - bLastLogin;
+      }
+    }
+    return 0;
+  });
+});
+
+const deviceStoredDataDict = ref<{[slug: string]: DeviceStoredData}>({});
 
 onMounted(async (): Promise<void> => {
   await store.create();
-  deviceStoredDataDict.value = await store.get('devicesData') || {};
+
+  store.get('devicesData').then((val) => {
+    // This is needed because for some weird reason,
+    // ionic-storage deserializes dates correctly in web
+    // but keep them as strings during tests.
+    if (val) {
+      Object.keys(val).forEach((slug, _) => {
+        const obj = val[slug];
+        if (obj && obj.lastLogin) {
+          if (typeof obj.lastLogin === 'string') {
+            obj.lastLogin = new Date(obj.lastLogin);
+          }
+        }
+      });
+      deviceStoredDataDict.value = val;
+    }
+  });
 });
 
 function onPasswordChange(pwd: string): void {
   password.value = pwd;
+}
+
+function onMsSelectChange(event: MsSelectChangeEvent): void {
+  sortBy.value = event.option.key;
+  sortByAsc.value = event.sortByAsc;
 }
 
 function onOrganizationCardClick(device: AvailableDevice): void {
@@ -270,8 +439,8 @@ function formatLastLogin(lastLogin: Date | undefined) : string {
     return t('HomePage.organizationList.lastLoginHours', {hours: diff}, diff);
   }
 
-  // Too long, let's use the date as is
-  return t('HomePage.organizationList.lastLogin', {date: d(lastLogin, 'long')});
+  // Let's use the date as is
+  return d(lastLogin, 'long');
 }
 
 function onForgottenPasswordClick(): void {
@@ -323,24 +492,46 @@ async function canDismissModal(): Promise<boolean> {
 </script>
 
 <style lang="scss" scoped>
-#container {
+#page {
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
-  max-width: 50vw;
   margin: 0 auto;
+  align-items: center;
 
-  .logo {
-    max-width: 10em;
-    align-self: center;
+  #topbar {
     display: flex;
-    align-items: end;
-    padding-bottom: 2em;
-    flex-basis: 25%;
+    align-items: center;
+    flex-basis: 5em;
     flex-grow: 0;
     flex-shrink: 0;
+    background: #fefefe;
+    width: 100vw;
+    justify-content: center;
+    margin-bottom: 5em;
+
+    ion-col {
+      display: flex;
+      align-items: center;
+    }
+
+    ion-col:first-child {
+      justify-content: center;
+    }
+
+    ion-col:last-child {
+      justify-content: end;
+      padding-right: 3em;
+    }
+
+    img {
+      max-height: 3em;
+    }
+  }
+
+  #container {
+    width: 70vw;
   }
 
   ion-card {
@@ -373,7 +564,38 @@ async function canDismissModal(): Promise<boolean> {
 
     ion-grid {
       --ion-grid-padding: 1em;
-      --ion-grid-columns: 2;
+      --ion-grid-columns: 3;
+    }
+
+    .organization-list-grid {
+      max-height: 30em;
+      overflow-y: auto;
+      scrollbar-color: #0058CC #F9F9FB;
+      scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 1em;
+      border-radius: 1em;
+      background: #F9F9FB;
+      border: 1px solid #EAEAF1;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 1em;
+      background: #0058CC;
+      border: 0.25em solid transparent;
+      background-clip: content-box;
+    }
+    }
+
+    ion-item {
+      align-items: center;
+    }
+
+    ion-card-title {
+      ion-grid {
+        margin-top: 1em;
+      }
     }
 
     .organization-card-container {
@@ -381,13 +603,34 @@ async function canDismissModal(): Promise<boolean> {
       margin: 1em 1.5em;
       user-select: none;
 
-      ion-row {
-        height: 2em;
+      ion-card-content {
+        padding: 0 !important;
+      }
+
+      .organization-card {
+        padding: 1em;
+      }
+
+      .organization-card-footer {
+        padding: 0.5em 1em;
+        background: #F3F3F7;
+        border-top: 1px solid #EAEAF1;
+        color: #8585AD;
+        height: 4.6em;
+
+        p {
+          font-size: 0.8em;
+        }
       }
 
       &:hover {
         background: #E5F1FF;
         cursor: pointer;
+
+        .organization-card-footer {
+          background: #E5F1FF;
+          border-top: 1px solid #CCE2FF;
+        }
       }
     }
   }

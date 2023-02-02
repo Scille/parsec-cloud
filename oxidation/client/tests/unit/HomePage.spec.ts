@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 import { mount, VueWrapper } from '@vue/test-utils';
 import HomePage from '@/views/HomePage.vue';
 import { createI18n } from 'vue-i18n';
@@ -80,14 +82,14 @@ describe('HomePage.vue', () => {
   });
 
   it('renders home vue', () => {
-    expect(wrapper.text()).toMatch(new RegExp('^List of your organizations'));
+    expect(wrapper.text()).toMatch(new RegExp('List of your organizations'));
   });
 
   it('should get devices stored data on mount', () => {
     expect(wrapper.vm.deviceStoredDataDict).toEqual({
-      slug1: { lastLogin: (new Date('01/11/2023')).toISOString() },
-      slug2: { lastLogin: (new Date('01/12/2023 12:03:05')).toISOString() },
-      slug3: { lastLogin: (new Date('01/12/2023 15:12:04')).toISOString() }
+      slug1: { lastLogin: new Date('01/11/2023') },
+      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
+      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
     });
   });
 
@@ -128,15 +130,102 @@ describe('HomePage.vue', () => {
       expect(wrapper.findComponent('#organization-list-container').exists()).toBeFalsy();
       expect(wrapper.findComponent('#login-popup-container').exists()).toBeTruthy();
       expect(wrapper.vm.selectedDevice).toEqual({
-        organizationId: 'MegaShark',
-        humanHandle: 'Maxime Grandcolas',
+        organizationId: 'Black Mesa',
+        humanHandle: 'Dr. Gordon Freeman',
+        deviceLabel: 'device_label',
+        keyFilePath: 'key_file_path',
+        deviceId: 'device_id',
+        slug: 'slug3',
+        ty: {tag: 'Password'}
+      });
+    });
+  });
+
+  describe('Login filter orgs', () => {
+    const wrapper = mount(HomePage, {
+      global: {
+        plugins: [i18n]
+      }
+    });
+
+    it('should filter orgs', async () => {
+      expect(wrapper.vm.deviceList.length).toEqual(7);
+      expect(wrapper.vm.orgSearchString).toEqual('');
+      expect(wrapper.vm.sortBy).toEqual('organization');
+      expect(wrapper.vm.sortByAsc).toEqual(true);
+      expect(wrapper.vm.filteredDevices.length).toEqual(wrapper.vm.deviceList.length);
+
+      // Should be ordered by ascending org name by default
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Black Mesa');
+      expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Sanctum Sanctorum');
+
+      expect(wrapper.findComponent('ion-input').exists()).toBeTruthy();
+      await wrapper.findComponent('ion-input').setValue('la');
+
+      expect(wrapper.vm.orgSearchString).toEqual('la');
+      expect(wrapper.vm.filteredDevices.length).toEqual(3);
+      expect(wrapper.vm.filteredDevices).toEqual([{
+        organizationId: 'Black Mesa',
+        humanHandle: 'Dr. Gordon Freeman',
+        deviceLabel: 'device_label',
+        keyFilePath: 'key_file_path',
+        deviceId: 'device_id',
+        slug: 'slug3',
+        ty: {tag: 'Password'}
+      }, {
+        organizationId: 'Planet Express Is The Best Comp!',
+        humanHandle: 'Dr. John A. Zoidberg',
         deviceLabel: 'device_label',
         keyFilePath: 'key_file_path',
         deviceId: 'device_id',
         slug: 'slug1',
         ty: {tag: 'Password'}
-      });
+      },
+      {
+        organizationId: 'Riviera M.D.',
+        humanHandle: 'Dr. Nicholas "Nick" Riviera',
+        deviceLabel: 'device_label',
+        keyFilePath: 'key_file_path',
+        deviceId: 'device_id',
+        slug: 'slug7',
+        ty: {tag: 'Password'}
+      }]);
+
+      // Resetting the search string
+      await wrapper.findComponent('ion-input').setValue('');
+      expect(wrapper.vm.orgSearchString).toEqual('');
+      expect(wrapper.vm.filteredDevices.length).toEqual(7);
+
+      // Inverting the sort order
+      wrapper.vm.sortByAsc = false;
+
+      // Should be ordered by descending org name
+      expect(wrapper.vm.filteredDevices[0].organizationId).toEqual('Sanctum Sanctorum');
+      expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Black Mesa');
+
+      wrapper.vm.sortBy = 'last_login';
+      // Should be order by last login date descending
+      expect(wrapper.vm.filteredDevices[0].slug).toEqual('slug4');
+      expect(wrapper.vm.filteredDevices[4].slug).toEqual('slug1');
+      expect(wrapper.vm.filteredDevices[6].slug).toEqual('slug3');
+
+      // Sort by last login date ascending
+      wrapper.vm.sortByAsc = true;
+      expect(wrapper.vm.filteredDevices[0].slug).toEqual('slug3');
+      expect(wrapper.vm.filteredDevices[2].slug).toEqual('slug1');
+      expect(wrapper.vm.filteredDevices[6].slug).toEqual('slug7');
+
+      wrapper.vm.sortBy = 'user_name';
+      // Should be order by user name ascending
+      expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr John H. Watson');
+      expect(wrapper.vm.filteredDevices[6].humanHandle).toEqual('Dr. Stephen Strange');
+
+      // Sort by user name descending
+      wrapper.vm.sortByAsc = false;
+      expect(wrapper.vm.filteredDevices[0].humanHandle).toEqual('Dr. Stephen Strange');
+      expect(wrapper.vm.filteredDevices[6].humanHandle).toEqual('Dr John H. Watson');
     });
+
   });
 
   describe('Login Popup tests', () => {
@@ -145,8 +234,8 @@ describe('HomePage.vue', () => {
 
     beforeAll(async () => {
       wrapper.vm.selectedDevice = {
-        organizationId: 'Eddy',
-        humanHandle: 'Maxime Grandcolas',
+        organizationId: 'OsCorp',
+        humanHandle: 'Dr. Otto G. Octavius',
         deviceLabel: 'device_label',
         keyFilePath: 'key_file_path',
         deviceId: 'device_id',
@@ -175,7 +264,7 @@ describe('HomePage.vue', () => {
 
     it('should log in the console the expected message on login button click', async () => {
       wrapper.vm.password = 'password';
-      const expectedMessage = 'Log in to Eddy with password "password"';
+      const expectedMessage = 'Log in to OsCorp with password "password"';
       const loginButton = wrapper.findComponent('#login-button') as VueWrapper;
       const now = new Date();
       jest.setSystemTime(now);
@@ -199,7 +288,7 @@ describe('HomePage.vue', () => {
     it('should log in the console the expected message on password input enter', async () => {
       passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
       wrapper.vm.password = 'password';
-      const expectedMessage = 'Log in to Eddy with password "password"';
+      const expectedMessage = 'Log in to OsCorp with password "password"';
       const now = new Date();
       jest.setSystemTime(now);
       passwordInput.vm.$emit('enter');

@@ -31,3 +31,4 @@ npm-debug.log*
 /www
 # `trampoline.ts` is set during build depending on the target
 /src/plugins/libparsec/trampoline.ts
+/tests/e2e/screenshots

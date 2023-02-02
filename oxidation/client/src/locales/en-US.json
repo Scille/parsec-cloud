@@ -1,11 +1,21 @@
 {
     "HomePage": {
+        "topbar": {
+            "settings": "Settings"
+        },
         "organizationList": {
             "title": "List of your organizations",
-            "lastLogin": "Last login: {date}",
-            "lastLoginSeconds": "Last login: one second ago | Last login: {seconds} seconds ago",
-            "lastLoginMinutes": "Last login: one minute ago | Last login: {minutes} minutes ago",
-            "lastLoginHours": "Last login: one hour ago | Last login: {hours} hours ago"
+            "lastLogin": "Last login on this device:",
+            "lastLoginSeconds": "one second ago | {seconds} seconds ago",
+            "lastLoginMinutes": "one minute ago | {minutes} minutes ago",
+            "lastLoginHours": "one hour ago | {hours} hours ago",
+            "sortOrderAsc": "Ascending order",
+            "sortOrderDesc": "Descending order",
+            "sortByOrganization": "Organization",
+            "sortByUserName": "User Name",
+            "sortByLastLogin": "Last login",
+            "labelSortBy": "Sort by",
+            "search": "Search"
         },
         "noExistingOrganization": {
             "title": "Need to create or join an organization?",
