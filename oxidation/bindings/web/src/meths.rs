@@ -11,6 +11,12 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
+#[allow(dead_code)]
+pub const I32_MAX: f64 = i32::MAX as f64;
+#[allow(dead_code)]
+pub const I32_MIN: f64 = i32::MIN as f64;
+pub const U32_MAX: f64 = u32::MAX as f64;
+pub const U32_MIN: f64 = u32::MIN as f64;
 
 // AvailableDevice
 
@@ -295,10 +301,16 @@ fn variant_clientevent_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, 
         tag if tag == JsValue::from_str("ClientConnectionChanged") => {
             let client = {
                 let js_val = Reflect::get(&obj, &"client".into())?;
-                js_val
-                    .dyn_into::<Number>()
-                    .map_err(|_| TypeError::new("Not a number"))?
-                    .value_of() as i32
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < U32_MIN || U32_MAX < v {
+                        return Err(TypeError::new("Not an u32 number"));
+                    }
+                    v as u32
+                }
             };
             Ok(libparsec::ClientEvent::ClientConnectionChanged { client })
         }
@@ -388,10 +400,16 @@ fn variant_workspacestoragecachesize_js_to_rs(
         tag if tag == JsValue::from_str("Custom") => {
             let size = {
                 let js_val = Reflect::get(&obj, &"size".into())?;
-                js_val
-                    .dyn_into::<Number>()
-                    .map_err(|_| TypeError::new("Not a number"))?
-                    .value_of() as i32
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < U32_MIN || U32_MAX < v {
+                        return Err(TypeError::new("Not an u32 number"));
+                    }
+                    v as u32
+                }
             };
             Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
         }
@@ -584,10 +602,16 @@ fn variant_clientgettererror_js_to_rs(
         tag if tag == JsValue::from_str("InvalidHandle") => {
             let handle = {
                 let js_val = Reflect::get(&obj, &"handle".into())?;
-                js_val
-                    .dyn_into::<Number>()
-                    .map_err(|_| TypeError::new("Not a number"))?
-                    .value_of() as i32
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < U32_MIN || U32_MAX < v {
+                        return Err(TypeError::new("Not an u32 number"));
+                    }
+                    v as u32
+                }
             };
             Ok(libparsec::ClientGetterError::InvalidHandle { handle })
         }
@@ -686,7 +710,7 @@ pub fn clientLogin(
 // client_get_device_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientGetDeviceId(handle: i32) -> Promise {
+pub fn clientGetDeviceId(handle: u32) -> Promise {
     future_to_promise(async move {
         let ret = libparsec::client_get_device_id(handle).await;
         Ok(match ret {
@@ -705,5 +729,55 @@ pub fn clientGetDeviceId(handle: i32) -> Promise {
                 js_obj
             }
         })
+    })
+}
+
+// test_new_testbed
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise {
+    future_to_promise(async move {
+        let test_server = match test_server {
+            Some(test_server) => {
+                let test_server = {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
+                    custom_from_rs_string(test_server).map_err(|e| TypeError::new(e))
+                }?;
+
+                Some(test_server)
+            }
+            None => None,
+        };
+
+        let ret = libparsec::test_new_testbed(&template, test_server.as_ref()).await;
+        Ok(JsValue::from_str({
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(ret) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err))),
+            }
+            .as_ref()
+        }))
+    })
+}
+
+// test_drop_testbed
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testDropTestbed(path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e))
+        }?;
+
+        libparsec::test_drop_testbed(&path).await;
+        Ok(JsValue::NULL)
     })
 }

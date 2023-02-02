@@ -23,8 +23,7 @@ static CORE: OnceCell<Mutex<Vec<Option<LoggedCore>>>> = OnceCell::new();
 // Client login
 //
 
-// TODO: use u32 when binding support it
-pub type ClientHandle = i32;
+pub type ClientHandle = u32;
 
 pub enum DeviceAccessParams {
     Password { path: PathBuf, password: String },
@@ -41,7 +40,7 @@ pub enum DeviceAccessParams {
 pub enum WorkspaceStorageCacheSize {
     Default,
     // TODO: support arbitrary int size in bindings
-    Custom { size: i32 },
+    Custom { size: u32 },
 }
 
 #[derive(Debug, Clone)]
@@ -83,7 +82,7 @@ pub async fn client_login(
                 .map_err(|_| ClientLoginError::DeviceInvalidFormat)?;
             let mut core = CORE.get_or_init(Default::default).lock().await;
 
-            let index = core.len() as i32;
+            let index = core.len() as u32;
 
             let device = load_device_with_password(&path, &password)
                 .map_err(|_| ClientLoginError::DeviceInvalidFormat)?;

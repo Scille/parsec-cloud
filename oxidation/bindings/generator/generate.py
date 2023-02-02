@@ -22,6 +22,7 @@ META_TYPES = [
     "Ref",
     "StrBasedType",
     "I32BasedType",
+    "U32BasedType",
     "Variant",
     "Structure",
     "OnClientEventCallback",
@@ -30,6 +31,7 @@ Result: Type = None
 Ref: Type = None
 StrBasedType: Type = None
 I32BasedType: Type = None
+U32BasedType: Type = None
 Variant: Type = None
 Structure: Type = None
 OnClientEventCallback: Type = None
@@ -120,6 +122,9 @@ class BaseTypeInUse:
         elif isinstance(param, type) and issubclass(param, I32BasedType):
             return I32BasedTypeInUse(name=param.__name__)
 
+        elif isinstance(param, type) and issubclass(param, U32BasedType):
+            return U32BasedTypeInUse(name=param.__name__)
+
         else:
             typespec = TYPESDB.get(param)
             assert typespec is not None, f"Bad param `{param!r}`, not a scalar/variant/struct"
@@ -184,6 +189,12 @@ class I32BasedTypeInUse(BaseTypeInUse):
 
 
 @dataclass
+class U32BasedTypeInUse(BaseTypeInUse):
+    kind = "u32_based"
+    name: str
+
+
+@dataclass
 class OpaqueSpec(BaseTypeInUse):
     kind: str
 
@@ -200,6 +211,7 @@ class MethSpec:
 class ApiSpecs:
     str_based_types: List[StrBasedType]
     i32_based_types: List[I32BasedType]
+    u32_based_types: List[U32BasedType]
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
@@ -330,6 +342,11 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             item.__name__
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, I32BasedType)
+        ],
+        u32_based_types=[
+            item.__name__
+            for item in api_items.values()
+            if isinstance(item, type) and issubclass(item, U32BasedType)
         ],
         variants=variants,
         structs=structs,

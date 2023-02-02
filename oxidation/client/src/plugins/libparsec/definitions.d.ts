@@ -140,4 +140,11 @@ export interface LibParsecPlugin {
     clientGetDeviceId(
         handle: number
     ): Promise<Result<DeviceID, ClientGetterError>>;
+    testNewTestbed(
+        template: string,
+        test_server: BackendAddr | null
+    ): Promise<Path>;
+    testDropTestbed(
+        path: Path
+    ): Promise<null>;
 }

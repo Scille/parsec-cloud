@@ -1232,6 +1232,7 @@ dependencies = [
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
  "libparsec_protocol",
+ "libparsec_testbed",
  "libparsec_types",
  "once_cell",
  "thiserror",
