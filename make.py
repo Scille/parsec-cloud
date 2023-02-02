@@ -15,7 +15,7 @@ PYTHON_RELEASE_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumo
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
 ELECTRON_RELEASE_CARGO_FLAGS = "--profile=release"
-ELECTRON_RELEASE_CI_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
+ELECTRON_RELEASE_SODIUM_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
 
@@ -159,7 +159,7 @@ COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
         cmd=f"echo {ELECTRON_RELEASE_CARGO_FLAGS}",
     ),
     # Flags used in `bindings/electron/scripts/build.js`
-    ("electron-release-ci-libparsec-cargo-flags",): Cmd(
+    ("electron-release-sodium-libparsec-cargo-flags",): Cmd(
         cmd=f"echo {ELECTRON_RELEASE_CI_CARGO_FLAGS}",
     ),
     # Flags used in `bindings/electron/scripts/build.js`
