@@ -106,7 +106,7 @@ class RemanenceManager:
         self._downloader_task_cancel_scope: trio.CancelScope | None = None
 
         # Data attributes
-        self._all_blocks: set[BlockAccess] = set()
+        self._all_blocks: dict[BlockID, BlockAccess] = {}
         self._total_size: int = 0
         self._remote_only_blocks: set[BlockAccess] = set()
         self._remote_only_size: int = 0
@@ -296,8 +296,9 @@ class RemanenceManager:
 
     def _register_cleared_blocks(self, block_ids: set[BlockID]) -> None:
         # Convert IDs to accesses
-        mapping = {access.id: access for access in self._all_blocks}
-        removed_blocks = {mapping[block_id] for block_id in block_ids if block_id in mapping}
+        removed_blocks = {
+            self._all_blocks[block_id] for block_id in block_ids if block_id in self._all_blocks
+        }
         # Add blocks to remote-only sets
         self._remote_only_size += sum(
             access.size for access in removed_blocks - self._remote_only_blocks
@@ -314,8 +315,10 @@ class RemanenceManager:
         self, added_blocks: set[BlockAccess], are_present_locally: bool
     ) -> None:
         # Update total
-        self._total_size += sum(access.size for access in added_blocks - self._all_blocks)
-        self._all_blocks |= added_blocks
+        for access in added_blocks:
+            if access.id not in self._all_blocks:
+                self._all_blocks[access.id] = access
+                self._total_size += access.size
         # Update remote-only if necessary
         if not are_present_locally:
             self._remote_only_size += sum(
@@ -326,8 +329,9 @@ class RemanenceManager:
 
     def _register_removed_blocks(self, removed_blocks: set[BlockAccess]) -> None:
         # Update total
-        self._total_size -= sum(access.size for access in removed_blocks & self._all_blocks)
-        self._all_blocks -= removed_blocks
+        for access in removed_blocks:
+            if self._all_blocks.pop(access.id) is not None:
+                self._total_size -= access.size
         # Update remote-only
         self._remote_only_size -= sum(
             access.size for access in removed_blocks & self._remote_only_blocks
@@ -366,8 +370,10 @@ class RemanenceManager:
         # Set internal state
         self._remote_only_blocks = set(remote_only_blocks)
         self._remote_only_size = sum(access.size for access in self._remote_only_blocks)
-        self._all_blocks = self._remote_only_blocks | set(local_and_remote_blocks)
-        self._total_size = sum(access.size for access in self._all_blocks)
+        self._all_blocks = {
+            access.id: access for access in self._remote_only_blocks | set(local_and_remote_blocks)
+        }
+        self._total_size = sum(access.size for access in self._all_blocks.values())
         self._prepared_event.set()
 
     async def _list_blocks(self, job: set[EntryID]) -> set[BlockAccess]:
