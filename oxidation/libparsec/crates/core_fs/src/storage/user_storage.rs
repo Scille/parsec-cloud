@@ -17,7 +17,6 @@ pub struct UserStorage {
     pub device: LocalDevice,
     pub user_manifest_id: EntryID,
     manifest_storage: ManifestStorage,
-    data_conn: Arc<LocalDatabase>,
     user_manifest_copy: Arc<RwLock<Option<LocalUserManifest>>>,
 }
 
@@ -36,13 +35,11 @@ impl UserStorage {
         .await?;
         let conn = Arc::new(conn);
         let manifest_storage =
-            ManifestStorage::new(device.local_symkey.clone(), user_manifest_id, conn.clone())
-                .await?;
+            ManifestStorage::new(device.local_symkey.clone(), user_manifest_id, conn).await?;
         Ok(Self {
             device,
             user_manifest_id,
             manifest_storage,
-            data_conn: conn,
             user_manifest_copy: Arc::new(RwLock::new(None)),
         })
     }
@@ -50,8 +47,8 @@ impl UserStorage {
     /// Close the connections to the databases.
     /// Provide a way to manually close those connections.
     /// Event tho they will be closes when [UserStorage] is dropped.
-    pub async fn close_connections(&self) {
-        self.data_conn.close()
+    pub async fn close_connections(&self) -> FSResult<()> {
+        self.manifest_storage.close_connection().await
     }
 
     // Checkpoint Interface
