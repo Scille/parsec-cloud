@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import TYPE_CHECKING, AsyncIterator, Awaitable, Callable, Dict, List, Tuple, cast
 
 import attr
@@ -32,7 +34,7 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.fs.storage import BaseWorkspaceStorage, WorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.core.fs.workspacefs.remanence_manager import RemanenceManager, RemanenceManagerInfo
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
@@ -131,6 +133,54 @@ class WorkspaceFS:
         except Exception:
             name = EntryName("<could not retrieve name>")
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
+
+    # Run method
+
+    @classmethod
+    @asynccontextmanager
+    async def run(
+        cls,
+        data_base_dir: Path,
+        workspace_id: EntryID,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
+        device: LocalDevice,
+        backend_cmds: BackendAuthenticatedCmds,
+        event_bus: EventBus,
+        remote_devices_manager: RemoteDevicesManager,
+        workspace_storage_cache_size: int,
+        prevent_sync_pattern: Regex,
+        preferred_language: str = "en",
+    ) -> AsyncIterator[WorkspaceFS]:
+        async with WorkspaceStorage.run(
+            data_base_dir=data_base_dir,
+            device=device,
+            workspace_id=workspace_id,
+            cache_size=workspace_storage_cache_size,
+            prevent_sync_pattern=prevent_sync_pattern,
+        ) as workspace_storage:
+
+            # Instantiate the workspace
+            workspace = WorkspaceFS(
+                workspace_id=workspace_id,
+                get_workspace_entry=get_workspace_entry,
+                get_previous_workspace_entry=get_previous_workspace_entry,
+                device=device,
+                local_storage=workspace_storage,
+                backend_cmds=backend_cmds,
+                event_bus=event_bus,
+                remote_devices_manager=remote_devices_manager,
+                preferred_language=preferred_language,
+            )
+
+            # Connect the remanence manager
+            with workspace.remanence_manager.manage_events():
+
+                # Apply the current "prevent sync" pattern
+                await workspace.apply_prevent_sync_pattern()
+
+                # Workspace is ready
+                yield workspace
 
     # Remanence interface
 

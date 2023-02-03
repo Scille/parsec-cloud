@@ -104,11 +104,7 @@ from parsec.core.fs.remote_loader import (
     UserRemoteLoader,
     _validate_sequester_config,
 )
-from parsec.core.fs.storage import (
-    UserStorage,
-    WorkspaceStorage,
-    workspace_storage_non_speculative_init,
-)
+from parsec.core.fs.storage import UserStorage, workspace_storage_non_speculative_init
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.remote_devices_manager import RemoteDevicesManager
@@ -423,38 +419,24 @@ class UserFS:
         async def workspace_task(
             task_status: TaskStatus[WorkspaceFS] = trio.TASK_STATUS_IGNORED,
         ) -> None:
-            async with WorkspaceStorage.run(
+            async with WorkspaceFS.run(
                 data_base_dir=self.data_base_dir,
-                device=self.device,
                 workspace_id=workspace_id,
-                cache_size=self.workspace_storage_cache_size,
+                get_workspace_entry=get_workspace_entry,
+                get_previous_workspace_entry=get_previous_workspace_entry,
+                device=self.device,
+                backend_cmds=self.backend_cmds,
+                event_bus=self.event_bus,
+                remote_devices_manager=self.remote_devices_manager,
+                workspace_storage_cache_size=self.workspace_storage_cache_size,
                 prevent_sync_pattern=self.prevent_sync_pattern,
-            ) as workspace_storage:
+                preferred_language=self.preferred_language,
+            ) as workspace:
+                # Workspace is ready
+                task_status.started(workspace)
 
-                # Instantiate the workspace
-                workspace = WorkspaceFS(
-                    workspace_id=workspace_id,
-                    get_workspace_entry=get_workspace_entry,
-                    get_previous_workspace_entry=get_previous_workspace_entry,
-                    device=self.device,
-                    local_storage=workspace_storage,
-                    backend_cmds=self.backend_cmds,
-                    event_bus=self.event_bus,
-                    remote_devices_manager=self.remote_devices_manager,
-                    preferred_language=self.preferred_language,
-                )
-
-                # Connect remanence manager events
-                with workspace.remanence_manager.manage_events():
-
-                    # Apply the current "prevent sync" pattern
-                    await workspace.apply_prevent_sync_pattern()
-
-                    # Workspace is ready
-                    task_status.started(workspace)
-
-                    # Wait for cancellation
-                    await trio.sleep_forever()
+                # Wait for cancellation
+                await trio.sleep_forever()
 
         return await self._workspace_storage_nursery.start(workspace_task)
 
