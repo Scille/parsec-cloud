@@ -74,7 +74,7 @@ async function onDidDismissPopover(popover: any): Promise<void> {
 
 <style lang="scss" scoped>
 .option {
-  --background-hover: #E5F1FF;
+  --background-hover: var(--parsec-color-light-primary-50);
   --background-hover-opacity: 1;
   --color-hover: var(--ion-color-tertiary);
 
