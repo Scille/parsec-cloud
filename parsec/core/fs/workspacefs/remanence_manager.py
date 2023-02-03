@@ -61,6 +61,20 @@ logger = structlog.get_logger()
 # Note: we should try to avoid concurrency issue that would render the manager out of
 # sync with the actual state of the workspace, although this is not a huge deal either
 # as the workspace is going to be fully swept at the next loging.
+#
+# The remanence manager works with 2 separate tasks:
+# - the first one is dedicated to getting the manager prepared and then processing the recorded events
+# - the second one is dedicated to donwloading the blocks that might be missing locally, if necessary
+#
+# The first task is fired up by the remanence monitor which in turn fires up the second one, when the manager
+# is prepared. Note that the manager is prepared only once so no preparation is required after a loss of
+# connection.
+#
+# The ways events are dealt with is crucial to keep a consistent state in the manager:
+# - Events connection/deconnection corresponds to the lifetime of the workspace FS itself,
+#   so we don't miss events while the remanence monitor is off.
+# - Callbacks for events never affects the state of the manager itself but instead add them to a FIFO queue,
+#   in order to keep a consistent order for the processing of those events (which might require an async operation)
 
 
 RemanenceJob = Tuple[CoreEvent, Union[ChangesAfterSync, BlockAccess, Set[BlockID]]]
