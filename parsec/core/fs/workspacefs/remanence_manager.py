@@ -65,10 +65,19 @@ logger = structlog.get_logger()
 RemanenceJob = Tuple[CoreEvent, Union[ChangesAfterSync, BlockAccess, Set[BlockID]]]
 
 
+class RemanenceManagerTask(Enum):
+    JOBS = "JOBS"
+    DOWNLOADER = "DOWNLOADER"
+
+
 class RemanenceManagerState(Enum):
     STOPPED = "STOPPED"
     PREPARING = "PREPARING"
     RUNNING = "RUNNING"
+
+
+RemanenceManagerTaskID = Tuple[EntryID, RemanenceManagerTask]
+RemanenceManagerTaskCallback = Callable[[RemanenceManagerTaskID], None]
 
 
 @define(frozen=True, slots=True, auto_attribs=True)
@@ -96,13 +105,17 @@ class RemanenceManager:
         self.workspace_id = workspace_id
         self.event_bus = event_bus
 
+        # Tasks identifiers
+        self._jobs_task_id = (self.workspace_id, RemanenceManagerTask.JOBS)
+        self._downloader_task_id = (self.workspace_id, RemanenceManagerTask.DOWNLOADER)
+
         # State synchronization attributes
         self._events_connected = False
         self._prepared_event = trio.Event()
-        self._idle: Callable[[int], None] = lambda _: None
-        self._awake: Callable[[int], None] = lambda _: None
-        self._main_task_state = RemanenceManagerState.STOPPED
-        self._main_task_cancel_scope: trio.CancelScope | None = None
+        self._idle: RemanenceManagerTaskCallback = lambda _: None
+        self._awake: RemanenceManagerTaskCallback = lambda _: None
+        self._jobs_task_state = RemanenceManagerState.STOPPED
+        self._jobs_task_cancel_scope: trio.CancelScope | None = None
         self._downloader_task_cancel_scope: trio.CancelScope | None = None
 
         # Data attributes
@@ -138,16 +151,16 @@ class RemanenceManager:
 
     async def wait_prepared(self, wait_for_connection: bool = False) -> None:
         while True:
-            if self._main_task_state == RemanenceManagerState.STOPPED and not wait_for_connection:
+            if self._jobs_task_state == RemanenceManagerState.STOPPED and not wait_for_connection:
                 raise RuntimeError("The remanence manager is currently stopped")
-            if self._main_task_state == RemanenceManagerState.RUNNING:
+            if self._jobs_task_state == RemanenceManagerState.RUNNING:
                 return
             with trio.move_on_after(0.1):
                 await self._prepared_event.wait()
 
     def get_info(self) -> RemanenceManagerInfo:
         return RemanenceManagerInfo(
-            is_running=self._main_task_state != RemanenceManagerState.STOPPED,
+            is_running=self._jobs_task_state != RemanenceManagerState.STOPPED,
             is_prepared=self._prepared_event.is_set(),
             is_block_remanent=self.local_storage.is_block_remanent(),
             total_size=self._total_size,
@@ -171,21 +184,25 @@ class RemanenceManager:
         finally:
             self._events_connected = False
 
-    async def run(self, idle: Callable[[int], None], awake: Callable[[int], None]) -> None:
+    async def run(
+        self, idle: RemanenceManagerTaskCallback, awake: RemanenceManagerTaskCallback
+    ) -> None:
         if not self._events_connected:
             raise RuntimeError("The events are not connected")
-        if self._main_task_state != RemanenceManagerState.STOPPED:
+        if self._jobs_task_state != RemanenceManagerState.STOPPED:
             logger.warning("Trying to run an already runnning downsync manager")
             return
+        # Manage task idle/awake state
+        self._idle = idle
+        self._awake = awake
         try:
-            self._idle = idle
-            self._awake = awake
-            self._main_task_state = RemanenceManagerState.PREPARING
+            self._awake(self._jobs_task_id)
+            self._jobs_task_state = RemanenceManagerState.PREPARING
 
             # Perform a fullsweep is necessary
             if not self._prepared_event.is_set():
                 await self._prepare()
-            self._main_task_state = RemanenceManagerState.RUNNING
+            self._jobs_task_state = RemanenceManagerState.RUNNING
 
             # Here we're running two tasks:
             # - processing the jobs
@@ -205,25 +222,26 @@ class RemanenceManager:
                         continue
 
                     # Pause when nothing else to do
-                    with trio.CancelScope() as self._main_task_cancel_scope:
-                        self._idle(1)
+                    with trio.CancelScope() as self._jobs_task_cancel_scope:
+                        self._idle(self._jobs_task_id)
                         await trio.sleep_forever()
 
         # Update state
         finally:
-            self._main_task_state = RemanenceManagerState.STOPPED
+            self._jobs_task_state = RemanenceManagerState.STOPPED
+            self._idle(self._jobs_task_id)
 
     # Task management
 
-    def _wake_up_main_task(self) -> None:
+    def _wake_up_jobs_task(self) -> None:
         # Wake-up the main task
         if (
-            self._main_task_cancel_scope is not None
-            and not self._main_task_cancel_scope.cancel_called
+            self._jobs_task_cancel_scope is not None
+            and not self._jobs_task_cancel_scope.cancel_called
         ):
-            self._main_task_cancel_scope.cancel()
+            self._jobs_task_cancel_scope.cancel()
             # Tag the monitor as awaken as soon as this callback runs
-            self._awake(1)
+            self._awake(self._jobs_task_id)
 
     def _wake_up_downloader_task(self) -> None:
         # Wake-up the downloader task
@@ -233,14 +251,14 @@ class RemanenceManager:
         ):
             self._downloader_task_cancel_scope.cancel()
             # Tag the monitor as awaken as soon as this callback runs
-            self._awake(2)
+            self._awake(self._downloader_task_id)
 
     # Event management
 
     def _ready_for_job(self) -> bool:
         return (
             self._prepared_event.is_set()
-            or self._main_task_state == RemanenceManagerState.PREPARING
+            or self._jobs_task_state == RemanenceManagerState.PREPARING
         )
 
     def _on_entry_synced(
@@ -258,7 +276,7 @@ class RemanenceManager:
             return
         # Add this event to the queue
         self._job_queue.appendleft((event, changes))
-        self._wake_up_main_task()
+        self._wake_up_jobs_task()
 
     def _on_block_downloaded(
         self,
@@ -274,7 +292,7 @@ class RemanenceManager:
             return
         # Add this event to the queue
         self._job_queue.appendleft((event, block_access))
-        self._wake_up_main_task()
+        self._wake_up_jobs_task()
 
     def _on_block_removed(
         self,
@@ -290,7 +308,7 @@ class RemanenceManager:
             return
         # Add this event to the queue
         self._job_queue.appendleft((event, block_ids))
-        self._wake_up_main_task()
+        self._wake_up_jobs_task()
 
     # Internal helpers
 
@@ -437,28 +455,35 @@ class RemanenceManager:
         self._job_queue.pop()
 
     async def _downloader_task(self) -> bool:
-        while True:
+        try:
+            self._awake(self._downloader_task_id)
+            while True:
 
-            # Not a block-remanent workspace or no block to download
-            if not self.local_storage.is_block_remanent() or not self._remote_only_blocks:
-                with trio.CancelScope() as self._downloader_task_cancel_scope:
-                    self._idle(2)
-                    await trio.sleep_forever()
-                continue
+                # Not a block-remanent workspace or no block to download
+                if not self.local_storage.is_block_remanent() or not self._remote_only_blocks:
+                    with trio.CancelScope() as self._downloader_task_cancel_scope:
+                        self._idle(self._downloader_task_id)
+                        await trio.sleep_forever()
+                    continue
 
-            # Open a nursery for downloading in parrallel (4 tasks)
-            async with open_service_nursery() as nursery:
+                # Open a nursery for downloading in parrallel (4 tasks)
+                async with open_service_nursery() as nursery:
 
-                # Open channel and loop over downloaded blocks
-                blocks = list(self._remote_only_blocks)
-                channel = await self.remote_loader.receive_load_blocks(blocks, nursery)
-                async with channel:
-                    async for access in channel:
+                    # Open channel and loop over downloaded blocks
+                    blocks = list(self._remote_only_blocks)
+                    channel = await self.remote_loader.receive_load_blocks(blocks, nursery)
+                    async with channel:
+                        async for access in channel:
 
-                        # Update the internal sets
-                        self._register_downloaded_block(access)
+                            # Update the internal sets
+                            self._register_downloaded_block(access)
 
-                        # Maybe block remanence has changed in the meantime
-                        # No reason to download the other blocks
-                        if not self.local_storage.is_block_remanent():
-                            nursery.cancel_scope.cancel()
+                            # Maybe block remanence has changed in the meantime
+                            # No reason to download the other blocks
+                            if not self.local_storage.is_block_remanent():
+                                nursery.cancel_scope.cancel()
+        finally:
+            # Raising an exception here will wake up the jobs task so we make sure it's tagged as awaken,
+            # otherwise there will be a short time where the monitor is idled but the remanence monitor is not stopped
+            self._awake(self._jobs_task_id)
+            self._idle(self._downloader_task_id)

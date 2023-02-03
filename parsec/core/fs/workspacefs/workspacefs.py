@@ -145,8 +145,8 @@ class WorkspaceFS:
 
     async def run_remanence_manager(
         self,
-        idle: Callable[[int], None],
-        awake: Callable[[int], None],
+        idle: Callable[[object], None],
+        awake: Callable[[object], None],
     ) -> None:
         return await self.remanence_manager.run(idle, awake)
 

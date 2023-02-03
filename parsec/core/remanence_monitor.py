@@ -26,7 +26,7 @@ async def freeze_remanence_monitor_mockpoint() -> None:
 async def monitor_remanent_workspaces(
     user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus
 ) -> None:
-    on_going_tasks: set[tuple[EntryID, int]] = set()
+    on_going_tasks: set[object] = set()
 
     def start_downsync_manager(workspace_id: EntryID) -> None:
         # Make sure the workspace is available
@@ -35,31 +35,21 @@ async def monitor_remanent_workspaces(
         except FSWorkspaceNotFoundError:
             return
 
-        def idle(task_id: int) -> None:
-            assert task_id in (1, 2)
-            on_going_tasks.discard((workspace_id, task_id))
+        def idle(task_id: object) -> None:
+            on_going_tasks.discard(task_id)
             if not on_going_tasks:
                 task_status.idle()
 
-        def awake(task_id: int) -> None:
-            assert task_id in (1, 2)
-            on_going_tasks.add((workspace_id, task_id))
+        def awake(task_id: object) -> None:
+            on_going_tasks.add(task_id)
             task_status.awake()
 
         async def remanent_task() -> None:
             nonlocal on_going_tasks
             # Possibly block new tasks while testing
             await freeze_remanence_monitor_mockpoint()
-            # Register both tasks (the remanence manager has two tasks)
-            awake(1)
-            awake(2)
             # Run task
-            try:
-                await workspace_fs.run_remanence_manager(idle, awake)
-            # Cleanup task
-            finally:
-                idle(1)
-                idle(2)
+            await workspace_fs.run_remanence_manager(idle, awake)
 
         # Schedule task
         nursery.start_soon(remanent_task)
