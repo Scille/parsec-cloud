@@ -8,8 +8,9 @@ use pyo3::{
 
 use libparsec::core_fs::FSError;
 
-use crate::data::{
-    LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest,
+use crate::{
+    data::{LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest},
+    ids::EntryID,
 };
 
 pub(crate) mod user_storage;
@@ -35,6 +36,8 @@ pub(crate) fn add_mod(_py: Python, m: &PyModule) -> PyResult<()> {
 import_exception!(parsec.core.fs.exceptions, FSLocalStorageOperationalError);
 import_exception!(parsec.core.fs.exceptions, FSLocalStorageClosedError);
 import_exception!(parsec.core.fs.exceptions, FSInternalError);
+import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
+import_exception!(parsec.core.fs.exceptions, FSLocalMissError);
 
 pub(super) fn fs_to_python_error(e: FSError) -> PyErr {
     match e {
@@ -42,6 +45,12 @@ pub(super) fn fs_to_python_error(e: FSError) -> PyErr {
             FSLocalStorageOperationalError::new_err(e.to_string())
         }
         FSError::DatabaseClosed(_) => FSLocalStorageClosedError::new_err(e.to_string()),
+        FSError::InvalidFileDescriptor(fd) => {
+            FSInvalidFileDescriptor::new_err(format!("Invalid file descriptor {fd}"))
+        }
+        FSError::LocalMiss(entry_id) => {
+            FSLocalMissError::new_err(EntryID(libparsec::types::EntryID::from(entry_id)))
+        }
         _ => FSInternalError::new_err(e.to_string()),
     }
 }

@@ -1,8 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    import_exception,
-    prelude::{pyclass, pyfunction, pymethods, IntoPy, PyErr, PyObject, PyResult, Python},
+    prelude::{pyclass, pyfunction, pymethods, IntoPy, PyObject, PyResult, Python},
     types::PyBytes,
 };
 use std::{
@@ -23,11 +22,10 @@ use crate::{
 
 use super::{
     fs_to_python_error, manifest_from_py_object, manifest_into_py_object, FSInternalError,
+    FSInvalidFileDescriptor, FSLocalMissError,
 };
 
 use libparsec::core_fs::FSError;
-
-import_exception!(parsec.core.fs.exceptions, FSLocalMissError);
 
 /// WorkspaceStorage's binding is implemented with allow_threads because its
 /// methods are called in trio.to_thread to connect the sync and async world
