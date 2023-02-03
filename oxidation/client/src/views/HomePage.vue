@@ -572,22 +572,6 @@ async function canDismissModal(): Promise<boolean> {
     .organization-list-grid {
       max-height: 30em;
       overflow-y: auto;
-      scrollbar-color: #0058CC #F9F9FB;
-      scrollbar-width: thin;
-
-    &::-webkit-scrollbar {
-      width: 1em;
-      border-radius: 1em;
-      background: #F9F9FB;
-      border: 1px solid #EAEAF1;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      border-radius: 1em;
-      background: #0058CC;
-      border: 0.25em solid transparent;
-      background-clip: content-box;
-    }
     }
 
     ion-item {
