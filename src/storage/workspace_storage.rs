@@ -21,12 +21,13 @@ use crate::{
     time::DateTime,
 };
 
-use super::{fs_to_python_error, FSInternalError};
+use super::{
+    fs_to_python_error, manifest_from_py_object, manifest_into_py_object, FSInternalError,
+};
 
 use libparsec::core_fs::FSError;
 
 import_exception!(parsec.core.fs.exceptions, FSLocalMissError);
-import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 
 /// WorkspaceStorage's binding is implemented with allow_threads because its
 /// methods are called in trio.to_thread to connect the sync and async world
@@ -625,43 +626,4 @@ pub(crate) fn workspace_storage_non_speculative_init(
         .await
         .map_err(fs_to_python_error)
     })
-}
-
-fn manifest_into_py_object(manifest: libparsec::client_types::LocalManifest) -> PyObject {
-    Python::with_gil(|py| {
-        let object: PyObject = match manifest {
-            libparsec::client_types::LocalManifest::File(manifest) => {
-                LocalFileManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::Folder(manifest) => {
-                LocalFolderManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::Workspace(manifest) => {
-                LocalWorkspaceManifest(manifest).into_py(py)
-            }
-            libparsec::client_types::LocalManifest::User(manifest) => {
-                LocalUserManifest(manifest).into_py(py)
-            }
-        };
-        object
-    })
-}
-
-fn manifest_from_py_object(
-    py: Python<'_>,
-    py_manifest: PyObject,
-) -> PyResult<libparsec::client_types::LocalManifest> {
-    let manifest = if let Ok(manifest) = py_manifest.extract::<LocalFileManifest>(py) {
-        libparsec::client_types::LocalManifest::File(manifest.0)
-    } else if let Ok(manifest) = py_manifest.extract::<LocalFolderManifest>(py) {
-        libparsec::client_types::LocalManifest::Folder(manifest.0)
-    } else if let Ok(manifest) = py_manifest.extract::<LocalWorkspaceManifest>(py) {
-        libparsec::client_types::LocalManifest::Workspace(manifest.0)
-    } else {
-        libparsec::client_types::LocalManifest::User(
-            py_manifest.extract::<LocalUserManifest>(py)?.0,
-        )
-    };
-
-    Ok(manifest)
 }
