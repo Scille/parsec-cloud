@@ -530,7 +530,7 @@ class RemoteLoader(UserRemoteLoader):
         )
         if removed_block_ids:
             self.event_bus.send(
-                CoreEvent.FS_BLOCK_REMOVED,
+                CoreEvent.FS_BLOCK_PURGED,
                 workspace_id=self.workspace_id,
                 block_ids=removed_block_ids,
             )
@@ -595,7 +595,7 @@ class RemoteLoader(UserRemoteLoader):
         await self.local_storage.clear_chunk(ChunkID.from_block_id(access.id), miss_ok=True)
         if removed_block_ids:
             self.event_bus.send(
-                CoreEvent.FS_BLOCK_REMOVED,
+                CoreEvent.FS_BLOCK_PURGED,
                 workspace_id=self.workspace_id,
                 block_ids=removed_block_ids,
             )

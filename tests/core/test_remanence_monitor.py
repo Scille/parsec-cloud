@@ -7,6 +7,7 @@ import pytest
 import trio
 
 from parsec._parsec import EntryName, LocalDevice
+from parsec.core.fs.exceptions import FSRemanenceManagerStoppedError
 from parsec.core.logged_core import CoreConfig, LoggedCore
 from parsec.core.types import DEFAULT_BLOCK_SIZE
 from tests.common import RunningBackend, customize_fixtures
@@ -37,7 +38,7 @@ async def test_remanence_monitor_single_device(
     assert info.total_size == 0
     assert info.local_and_remote_size == 0
     assert info.remote_only_size == 0
-    with pytest.raises(RuntimeError):
+    with pytest.raises(FSRemanenceManagerStoppedError):
         await workspace.wait_remanence_manager_prepared()
 
     # Let remanence manager run

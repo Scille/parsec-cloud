@@ -22,7 +22,7 @@ pub enum CoreEvent {
     FsWorkspaceCreated,
     FsEntrySyncRejectedBySequesterService,
     FsBlockDownloaded,
-    FsBlockRemoved,
+    FsBlockPurged,
 
     // Gui
     GuiConfigChanged,
@@ -69,7 +69,7 @@ impl CoreEvent {
                 "fs.entry.sync_refused_by_sequester_service"
             }
             CoreEvent::FsBlockDownloaded => "fs.block.downloaded",
-            CoreEvent::FsBlockRemoved => "fs.block.removed",
+            CoreEvent::FsBlockPurged => "fs.block.purged",
             CoreEvent::GuiConfigChanged => "gui.config.changed",
             CoreEvent::MessagePinged => "message.pinged",
             CoreEvent::MountpointReadonly => "mountpoint.readonly",

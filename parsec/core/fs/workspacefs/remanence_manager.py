@@ -13,6 +13,7 @@ from attr import define
 
 from parsec._parsec import CoreEvent
 from parsec.api.data import BlockAccess
+from parsec.core.fs.exceptions import FSRemanenceManagerStoppedError
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.fs.workspacefs.sync_transactions import ChangesAfterSync, SyncTransactions
@@ -50,12 +51,12 @@ logger = structlog.get_logger()
 #      in the remanance manager in order to remove all the old blocks from both lists.
 # - A referenced block is downloaded:
 #    * When a read transaction require blocks that are missing.
-#      In this case we use a dedicated event.
+#      In this case we use the BLOCK_DOWNLOADED event.
 #    * When block remanence is enabled and the manager downloads the missing blocks.
 #      We can simply keep track of the downloaded blocks here
 # - Referenced blocks are discarded:
 #    * This happens when the local storage for blocks has reached its limit.
-#      We use a dedicated event to detect this case and remove those blocks from the remote only list.
+#      We use the BLOCK_PURGED event to detect this case and remove those blocks from the remote only list.
 #
 # Note: we should try to avoid concurrency issue that would render the manager out of
 # sync with the actual state of the workspace, although this is not a huge deal either
@@ -142,7 +143,7 @@ class RemanenceManager:
         # Register the cleared blocks
         if removed_block_ids is not None:
             self.event_bus.send(
-                CoreEvent.FS_BLOCK_REMOVED,
+                CoreEvent.FS_BLOCK_PURGED,
                 workspace_id=self.workspace_id,
                 block_ids=removed_block_ids,
             )
@@ -152,7 +153,7 @@ class RemanenceManager:
     async def wait_prepared(self, wait_for_connection: bool = False) -> None:
         while True:
             if self._jobs_task_state == RemanenceManagerState.STOPPED and not wait_for_connection:
-                raise RuntimeError("The remanence manager is currently stopped")
+                raise FSRemanenceManagerStoppedError()
             if self._jobs_task_state == RemanenceManagerState.RUNNING:
                 return
             with trio.move_on_after(0.1):
@@ -177,7 +178,7 @@ class RemanenceManager:
                 (CoreEvent.FS_ENTRY_DOWNSYNCED, cast(EventCallback, self._on_entry_synced)),
                 (CoreEvent.FS_ENTRY_SYNCED, cast(EventCallback, self._on_entry_synced)),
                 (CoreEvent.FS_BLOCK_DOWNLOADED, cast(EventCallback, self._on_block_downloaded)),
-                (CoreEvent.FS_BLOCK_REMOVED, cast(EventCallback, self._on_block_removed)),
+                (CoreEvent.FS_BLOCK_PURGED, cast(EventCallback, self._on_block_removed)),
             ):
                 self._events_connected = True
                 yield
@@ -420,7 +421,7 @@ class RemanenceManager:
             assert isinstance(data, BlockAccess)
             self._register_downloaded_block(data)
         # Block removed event
-        elif event == CoreEvent.FS_BLOCK_REMOVED:
+        elif event == CoreEvent.FS_BLOCK_PURGED:
             assert isinstance(data, set)
             self._register_cleared_blocks(data)
         else:

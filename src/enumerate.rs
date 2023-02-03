@@ -268,9 +268,9 @@ crate::binding_utils::impl_enum_field!(
         libparsec::core::CoreEvent::FsBlockDownloaded
     ],
     [
-        "FS_BLOCK_REMOVED",
-        fs_block_removed,
-        libparsec::core::CoreEvent::FsBlockRemoved
+        "FS_BLOCK_PURGED",
+        fs_block_purged,
+        libparsec::core::CoreEvent::FsBlockPurged
     ],
     [
         "USERFS_SYNC_REJECTED_BY_SEQUESTER_SERVICE",
