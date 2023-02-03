@@ -17,7 +17,7 @@ pub struct UserStorage {
     pub device: LocalDevice,
     pub user_manifest_id: EntryID,
     manifest_storage: ManifestStorage,
-    user_manifest_copy: Arc<RwLock<Option<LocalUserManifest>>>,
+    user_manifest_copy: RwLock<Option<LocalUserManifest>>,
 }
 
 impl UserStorage {
@@ -40,7 +40,7 @@ impl UserStorage {
             device,
             user_manifest_id,
             manifest_storage,
-            user_manifest_copy: Arc::new(RwLock::new(None)),
+            user_manifest_copy: RwLock::new(None),
         })
     }
 
