@@ -33,23 +33,31 @@ import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct WorkspaceStorage(
-    pub Arc<RwLock<Option<libparsec::core_fs::WorkspaceStorage>>>,
+    /// Hold the reference to an unique [libparsec::core_fs::WorkspaceStorage].
+    ///
+    /// # Why the imbricated `Arc<...Arc<...>>` ?
+    ///
+    /// The first one is to share a lock over the second one.
+    /// The lock is here when we do `close_connection` after that the WorkspaceStorage should not be accessible.
+    /// The second one is because of [FutureIntoCoroutine] that require to provide a `static` future.
+    /// To fullfish that requirement we have to clone the reference over [libparsec::core_fs::WorkspaceStorage].
+    pub Arc<RwLock<Option<Arc<libparsec::core_fs::WorkspaceStorage>>>>,
     pub Option<Regex>,
 );
 
 impl WorkspaceStorage {
-    fn get_storage(&self) -> PyResult<libparsec::core_fs::WorkspaceStorage> {
+    fn get_storage(&self) -> PyResult<Arc<libparsec::core_fs::WorkspaceStorage>> {
         self.0
             .read()
             .expect("RwLock is poisoned")
             .as_ref()
             .cloned()
             .ok_or_else(|| {
-                FSInternalError::new_err("Trying to use an already closed WorspaceStorage")
+                FSInternalError::new_err("Trying to use an already closed WorkspaceStorage")
             })
     }
 
-    fn drop_storage(&self) -> PyResult<libparsec::core_fs::WorkspaceStorage> {
+    fn drop_storage(&self) -> PyResult<Arc<libparsec::core_fs::WorkspaceStorage>> {
         self.0
             .write()
             .expect("RwLock is poisoned")
@@ -82,7 +90,7 @@ impl WorkspaceStorage {
             )
             .await
             .map_err(fs_to_python_error)
-            .map(|ws| Self(Arc::new(RwLock::new(Some(ws))), None))
+            .map(|ws| Self(Arc::new(RwLock::new(Some(Arc::new(ws)))), None))
         })
     }
 

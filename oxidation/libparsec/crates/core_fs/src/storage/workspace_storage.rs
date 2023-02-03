@@ -68,19 +68,18 @@ impl<T: Eq + Hash + Copy> Locker<T> {
 
 /// WorkspaceStorage is implemented with interior mutability because
 /// we want some parallelism between its fields (e.g entry_locks)
-#[derive(Clone)]
 pub struct WorkspaceStorage {
     pub device: LocalDevice,
     pub workspace_id: EntryID,
-    open_fds: Arc<Mutex<HashMap<FileDescriptor, EntryID>>>,
-    fd_counter: Arc<Mutex<u32>>,
+    open_fds: Mutex<HashMap<FileDescriptor, EntryID>>,
+    fd_counter: Mutex<u32>,
     block_storage: BlockStorage,
     chunk_storage: ChunkStorage,
     manifest_storage: ManifestStorage,
-    prevent_sync_pattern: Arc<Mutex<Regex>>,
-    prevent_sync_pattern_fully_applied: Arc<Mutex<bool>>,
+    prevent_sync_pattern: Mutex<Regex>,
+    prevent_sync_pattern_fully_applied: Mutex<bool>,
     entry_locks: Locker<EntryID>,
-    workspace_storage_manifest_copy: Arc<RwLock<Option<LocalWorkspaceManifest>>>,
+    workspace_storage_manifest_copy: RwLock<Option<LocalWorkspaceManifest>>,
 }
 
 impl WorkspaceStorage {
@@ -136,19 +135,19 @@ impl WorkspaceStorage {
             device,
             workspace_id,
             // File descriptors
-            open_fds: Arc::new(Mutex::new(HashMap::new())),
-            fd_counter: Arc::new(Mutex::new(0)),
+            open_fds: Mutex::new(HashMap::new()),
+            fd_counter: Mutex::new(0),
             // Manifest and block storage
             block_storage,
             chunk_storage,
             manifest_storage,
             // Pattern attributes
-            prevent_sync_pattern: Arc::new(Mutex::new(prevent_sync_pattern.clone())),
-            prevent_sync_pattern_fully_applied: Arc::new(Mutex::new(false)),
+            prevent_sync_pattern: Mutex::new(prevent_sync_pattern.clone()),
+            prevent_sync_pattern_fully_applied: Mutex::new(false),
             // Locking structure
             entry_locks: Locker::default(),
 
-            workspace_storage_manifest_copy: Arc::new(RwLock::new(None)),
+            workspace_storage_manifest_copy: RwLock::new(None),
         };
 
         instance
@@ -446,7 +445,7 @@ impl WorkspaceStorage {
     /// Close the connections to the databases.
     /// Provide a way to manually close those connections.
     /// Event tho they will be closes when [WorkspaceStorage] is dropped.
-    pub async fn close_connections(self) -> FSResult<()> {
+    pub async fn close_connections(&self) -> FSResult<()> {
         let (r1, r2, r3) = future::join3(
             self.manifest_storage.close_connection(),
             self.chunk_storage.close_connection(),
