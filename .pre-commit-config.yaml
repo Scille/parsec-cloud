@@ -28,6 +28,7 @@ repos:
       #   require_serial: true
       - id: license_headers
         name: license_headers
+        alias: headers
         entry: python ./misc/license_headers.py add
         language: python
         language_version: python3

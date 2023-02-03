@@ -15,10 +15,11 @@ use crate::{
 
 pub(crate) mod user_storage;
 pub(crate) mod workspace_storage;
+pub(crate) mod workspace_storage_snapshot;
 
 pub(crate) fn add_mod(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<workspace_storage::WorkspaceStorage>()?;
-    m.add_class::<workspace_storage::WorkspaceStorageSnapshot>()?;
+    m.add_class::<workspace_storage_snapshot::WorkspaceStorageSnapshot>()?;
     m.add_function(wrap_pyfunction!(
         workspace_storage::workspace_storage_non_speculative_init,
         m
@@ -46,7 +47,7 @@ pub(super) fn fs_to_python_error(e: FSError) -> PyErr {
         }
         FSError::DatabaseClosed(_) => FSLocalStorageClosedError::new_err(e.to_string()),
         FSError::InvalidFileDescriptor(fd) => {
-            FSInvalidFileDescriptor::new_err(format!("Invalid file descriptor {fd}"))
+            FSInvalidFileDescriptor::new_err(format!("Invalid file descriptor {}", fd.0))
         }
         FSError::LocalMiss(entry_id) => {
             FSLocalMissError::new_err(EntryID(libparsec::types::EntryID::from(entry_id)))
