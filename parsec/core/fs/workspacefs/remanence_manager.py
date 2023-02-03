@@ -53,7 +53,7 @@ logger = structlog.get_logger()
 #      In this case we use a dedicated event.
 #    * When block remanence is enabled and the manager downloads the missing blocks.
 #      We can simply keep track of the downloaded blocks here
-# - Refrenced blocks are discarded:
+# - Referenced blocks are discarded:
 #    * This happens when the local storage for blocks has reached its limit.
 #      We use a dedicated event to detect this case and remove those blocks from the remote only list.
 #
@@ -183,7 +183,8 @@ class RemanenceManager:
             self._main_task_state = RemanenceManagerState.PREPARING
 
             # Perform a fullsweep is necessary
-            await self._prepare()
+            if not self._prepared_event.is_set():
+                await self._prepare()
             self._main_task_state = RemanenceManagerState.RUNNING
 
             # Here we're running two tasks:
@@ -215,9 +216,6 @@ class RemanenceManager:
     # Task management
 
     def _wake_up_main_task(self) -> None:
-        # No job to process
-        if not self._job_queue:
-            return
         # Wake-up the main task
         if (
             self._main_task_cancel_scope is not None
@@ -228,9 +226,6 @@ class RemanenceManager:
             self._awake(1)
 
     def _wake_up_downloader_task(self) -> None:
-        # Nothing to download
-        if not self.local_storage.is_block_remanent() or not self._remote_only_blocks:
-            return
         # Wake-up the downloader task
         if (
             self._downloader_task_cancel_scope is not None
@@ -342,9 +337,8 @@ class RemanenceManager:
     # Task methods
 
     async def _prepare(self, with_cleanup: bool = True) -> None:
-        # No fullsweep required
-        if self._prepared_event.is_set():
-            return
+        # Sanity check
+        assert not self._prepared_event.is_set()
         # Clear job queue, just in case
         self._job_queue.clear()
         # Initialize state
@@ -395,8 +389,7 @@ class RemanenceManager:
 
     async def _process_next_job(self) -> None:
         # Sanity check
-        if not self._job_queue:
-            return
+        assert self._job_queue
         event, data = self._job_queue[-1]
         # Block downloaded event
         if event == CoreEvent.FS_BLOCK_DOWNLOADED:
@@ -445,7 +438,7 @@ class RemanenceManager:
                 with trio.CancelScope() as self._downloader_task_cancel_scope:
                     self._idle(2)
                     await trio.sleep_forever()
-                    continue
+                continue
 
             # Open a nursery for downloading in parrallel (4 tasks)
             async with open_service_nursery() as nursery:
