@@ -100,10 +100,12 @@
                             <ion-row class="organization-card-footer">
                               <ion-col
                                 size="auto"
-                                v-if="deviceStoredDataDict[device.slug]"
                               >
                                 <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
-                                <p>{{ formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) }}</p>
+                                <p>
+                                  {{ deviceStoredDataDict[device.slug] && 'lastLogin' in deviceStoredDataDict[device.slug] ?
+                                    formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) : '--' }}
+                                </p>
                               </ion-col>
                             </ion-row>
                           </ion-grid>
