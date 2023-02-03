@@ -57,6 +57,7 @@ class UserStorage:
             yield self
         finally:
             with trio.CancelScope(shield=True):
+                # We only need to close the connection as the only operation `set_user_manifest` directly flush the manifest to the database.
                 await rs_instance.close_connections()
 
     # Checkpoint interface
