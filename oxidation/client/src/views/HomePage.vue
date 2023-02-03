@@ -508,7 +508,7 @@ async function canDismissModal(): Promise<boolean> {
     flex-basis: 5em;
     flex-grow: 0;
     flex-shrink: 0;
-    background: #fefefe;
+    background: var(--parsec-color-light-secondary-inversed-contrast);
     width: 100vw;
     justify-content: center;
     margin-bottom: 5em;
@@ -585,7 +585,7 @@ async function canDismissModal(): Promise<boolean> {
     }
 
     .organization-card-container {
-      background: #F9F9FB;
+      background: var(--parsec-color-light-secondary-background);
       margin: 1em 1.5em;
       user-select: none;
 
@@ -599,9 +599,9 @@ async function canDismissModal(): Promise<boolean> {
 
       .organization-card-footer {
         padding: 0.5em 1em;
-        background: #F3F3F7;
-        border-top: 1px solid #EAEAF1;
-        color: #8585AD;
+        background: var(--parsec-color-light-secondary-medium);
+        border-top: 1px solid var(--parsec-color-light-secondary-disabled);
+        color: var(--parsec-color-light-secondary-grey);
         height: 4.6em;
 
         p {
@@ -610,20 +610,20 @@ async function canDismissModal(): Promise<boolean> {
       }
 
       &:hover {
-        background: #E5F1FF;
+        background: var(--parsec-color-light-primary-50);
         cursor: pointer;
 
         .organization-card-footer {
-          background: #E5F1FF;
-          border-top: 1px solid #CCE2FF;
+          background: var(--parsec-color-light-primary-50);
+          border-top: 1px solid var(--parsec-color-light-primary-100);
         }
       }
     }
   }
 
   .no-existing-organization {
-    border-top: 1px solid #cce2ff;
-    background: #fafafa;
+    border-top: 1px solid var(--parsec-color-light-primary-100);
+    background: var(--parsec-color-light-secondary-background);
     padding: 3em;
     padding-bottom: 4em;
   }
@@ -637,7 +637,7 @@ async function canDismissModal(): Promise<boolean> {
     margin-left: 3em;
 
     #login-card-container {
-      background: #f9f9fb;
+      background: var(--parsec-color-light-secondary-background);
       border-radius: 8px;
       padding: 2em;
 

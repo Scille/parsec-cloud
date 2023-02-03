@@ -42,7 +42,7 @@ defineProps<{
 
   ion-avatar {
     background: white;
-    color: #0058cc;
+    color: var(--parsec-color-light-primary-600);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -59,7 +59,7 @@ defineProps<{
     }
 
     .organization-label {
-      color: #004299;
+      color: var(--parsec-color-light-primary-700);
       font-size: 1.5em;
     }
   }
