@@ -158,7 +158,7 @@ class WorkspaceFS:
 
     # Block interface
 
-    async def get_blocks_by_type(self, path: AnyPath, limit: int = 1000000000) -> BlockInfo:
+    async def get_blocks_by_type(self, path: AnyPath, limit: int | None = None) -> BlockInfo:
         path = FsPath(path)
         return await self.transactions.entry_get_blocks_by_type(path, limit)
 

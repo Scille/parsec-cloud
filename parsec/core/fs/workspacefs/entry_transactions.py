@@ -189,18 +189,21 @@ class EntryTransactions(FileTransactions):
             await self._load_manifest(entry_id)
 
     # Transactions
-    async def entry_get_blocks_by_type(self, path: FsPath, limit: int) -> BlockInfo:
+    async def entry_get_blocks_by_type(self, path: FsPath, limit: int | None = None) -> BlockInfo:
         manifest, confinement_point = await self._get_manifest_from_path(path)
         if not isinstance(manifest, LocalFileManifest):
             raise FSIsADirectoryError
         return await self._get_blocks_by_type(manifest, limit)
 
-    async def _get_blocks_by_type(self, manifest: LocalFileManifest, limit: int) -> BlockInfo:
+    async def _get_blocks_by_type(
+        self, manifest: LocalFileManifest, limit: int | None = None
+    ) -> BlockInfo:
+        # TODO: this limit argument is most likely useless, remove it
         block_dict: dict[ChunkID, BlockAccess] = {}
         total_size = 0
         for manifest_blocks in manifest.blocks:
             for chunk in manifest_blocks:
-                if limit < (total_size + chunk.raw_size):
+                if limit is not None and limit < (total_size + chunk.raw_size):
                     break
                 if chunk.access is not None:
                     block_dict[chunk.id] = chunk.access

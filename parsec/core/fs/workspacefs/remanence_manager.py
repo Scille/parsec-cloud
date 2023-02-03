@@ -378,7 +378,7 @@ class RemanenceManager:
                 entry_ids.extend(manifest.children.values())
             # List blocks and missing blocks
             elif isinstance(manifest, LocalFileManifest):
-                info = await self.transactions._get_blocks_by_type(manifest, 1000000000)
+                info = await self.transactions._get_blocks_by_type(manifest)
                 remote_only_blocks.extend(info.remote_only_blocks)
                 local_and_remote_blocks.extend(info.local_and_remote_blocks)
         # Cleanup unreferenced blocks
