@@ -34,9 +34,14 @@ class LocalDatabase:
         self._conn: Connection
         self._abort_service_send_channel: trio.MemorySendChannel[Exception]
 
+        # At the moment the local database can run in two modes, either:
+        # - auto_vacuum is enabled, which means no explicit vacuum is required
+        # - vacuum_threshold is provided, and the vacuum is triggered explicitely when
+        #   the disk usage is getting too large.
+        if auto_vacuum and vacuum_threshold is not None:
+            raise ValueError("Cannot set both `auto_vacuum` and `vacuum_threshold`")
+
         # Set arguments
-        if auto_vacuum:
-            assert vacuum_threshold is None
         self.path = trio.Path(path)
         self.auto_vacuum = auto_vacuum
         self.vacuum_threshold = vacuum_threshold
@@ -175,9 +180,16 @@ class LocalDatabase:
             rep = cursor.fetchone()
             current_auto_vacuum = rep and rep[0]
 
+            # The database is currently not configured for the right auto_vacuum policy
             if self.auto_vacuum != current_auto_vacuum:
-                self._conn.execute(f"PRAGMA auto_vacuum={int(self.auto_vacuum)}")
-                self._conn.execute("VACUUM")
+
+                # Changing the auto_vaccuum policy requires a full vacuum in order to recreate the tables
+                def _thread_target() -> None:
+                    self._conn.execute(f"PRAGMA auto_vacuum={int(self.auto_vacuum)}")
+                    self._conn.execute("VACUUM")
+
+                # Vacuumin is very costly so run in a thread
+                await self.run_in_thread(_thread_target)
 
     async def _connect(self) -> None:
         # Lock the access to the connection object

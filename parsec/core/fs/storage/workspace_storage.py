@@ -234,10 +234,18 @@ class BaseWorkspaceStorage:
         return self.block_storage.is_block_remanent()
 
     async def enable_block_remanence(self) -> bool:
+        """
+        Returns whether the block remanance has changed or not
+        """
         has_changed = await self.block_storage.enable_block_remanence()
         return has_changed
 
     async def disable_block_remanence(self) -> set[BlockID] | None:
+        """
+        Returns:
+        - `None` if the block remanence was already enabled
+        - A list of `ChunkID` that have been purged if the block remanence has been successfully disabled
+        """
         removed_chunk_ids = await self.block_storage.disable_block_remanence()
         if removed_chunk_ids is None:
             return None
@@ -304,6 +312,8 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         ) as cache_localdb:
 
             # Local data storage service
+            # TODO: once the auto_vacuum approach has been validated for the cache storage,
+            # we should investigate whether it is a good fit for the data storage
             async with LocalDatabase.run(
                 data_path, vacuum_threshold=data_vacuum_threshold
             ) as data_localdb:

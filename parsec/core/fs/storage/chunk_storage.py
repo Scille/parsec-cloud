@@ -326,6 +326,9 @@ class BlockStorage(ChunkStorage):
         return self._block_remanent
 
     async def enable_block_remanence(self) -> bool:
+        """
+        Returns whether the block remanance has changed or not
+        """
         async with self._open_cursor() as cursor:
             # Check if remanence is already enabled
             if self._block_remanent:
@@ -347,6 +350,11 @@ class BlockStorage(ChunkStorage):
         return True
 
     async def disable_block_remanence(self) -> list[ChunkID] | None:
+        """
+        Returns:
+        - `None` if the block remanence was already enabled
+        - A list of `ChunkID` that have been purged if the block remanence has been successfully disabled
+        """
         async with self._open_cursor() as cursor:
             # Check if remanence is already disabled
             if not self._block_remanent:
@@ -370,6 +378,10 @@ class BlockStorage(ChunkStorage):
     async def clear_unreferenced_chunks(
         self, chunk_ids: list[ChunkID], not_accessed_after: float
     ) -> None:
+        """
+        The `not_accessed_after` argument is a float since the time reference used in `set/get_chunk`
+        is taken from `time.time()`. This might change with the oxidation.
+        """
         if not chunk_ids:
             return
 

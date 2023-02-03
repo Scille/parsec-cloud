@@ -28,7 +28,7 @@ async def monitor_remanent_workspaces(
 ) -> None:
     on_going_tasks: set[object] = set()
 
-    def start_downsync_manager(workspace_id: EntryID) -> None:
+    def start_remanence_manager(workspace_id: EntryID) -> None:
         # Make sure the workspace is available
         try:
             workspace_fs = user_fs.get_workspace(workspace_id)
@@ -62,13 +62,13 @@ async def monitor_remanent_workspaces(
         # Not a new workspace
         if previous_entry is not None:
             return
-        start_downsync_manager(new_entry.id)
+        start_remanence_manager(new_entry.id)
 
     def _fs_workspace_created(
         event: CoreEvent,
         new_entry: WorkspaceEntry,
     ) -> None:
-        start_downsync_manager(new_entry.id)
+        start_remanence_manager(new_entry.id)
 
     try:
         async with open_service_nursery() as nursery:
@@ -83,7 +83,7 @@ async def monitor_remanent_workspaces(
 
                 # All workspaces should be processed at startup
                 for entry in user_fs.get_user_manifest().workspaces:
-                    start_downsync_manager(entry.id)
+                    start_remanence_manager(entry.id)
 
                 await trio.sleep_forever()
 

@@ -169,9 +169,17 @@ async def test_remanence_monitor_multiple_device(
     await workspace1.wait_remanence_manager_prepared(wait_for_connection=True)
     await workspace2.wait_remanence_manager_prepared(wait_for_connection=True)
 
+    # Make sure everything is properly sync
+    async def _wait_sync():
+        await workspace1.sync()
+        await workspace2.sync()
+        await workspace1.sync()
+        await alice_core.wait_idle_monitors()
+        await alice2_core.wait_idle_monitors()
+
     # First device writes a file with a single block
     await workspace1.write_bytes("/test.txt", b"hello")
-    await workspace1.sync()
+    await _wait_sync()
     await alice_core.wait_idle_monitors()
     info = workspace1.get_remanence_manager_info()
     assert info.is_prepared
@@ -182,7 +190,6 @@ async def test_remanence_monitor_multiple_device(
     assert info.remote_only_size == 0
 
     # Second device is notified (but doesn't have the block locally)
-    await alice2_core.wait_idle_monitors()
     info = workspace2.get_remanence_manager_info()
     assert info.is_prepared
     assert info.is_running
@@ -193,7 +200,7 @@ async def test_remanence_monitor_multiple_device(
 
     # Second device enable block remanence
     await workspace2.enable_block_remanence()
-    await alice2_core.wait_idle_monitors()
+    await _wait_sync()
     info = workspace2.get_remanence_manager_info()
     assert info.is_prepared
     assert info.is_running
@@ -205,8 +212,7 @@ async def test_remanence_monitor_multiple_device(
     # First device writes another file
     await workspace1.mkdir("/more")
     await workspace1.write_bytes("/more/test2.txt", b"world!")
-    await workspace1.sync()
-    await alice_core.wait_idle_monitors()
+    await _wait_sync()
     info = workspace1.get_remanence_manager_info()
     assert info.is_prepared
     assert info.is_running
@@ -227,8 +233,7 @@ async def test_remanence_monitor_multiple_device(
 
     # First device removes one of the files
     await workspace1.unlink("/more/test2.txt")
-    await workspace1.sync()
-    await alice_core.wait_idle_monitors()
+    await _wait_sync()
     info = workspace1.get_remanence_manager_info()
     assert info.is_prepared
     assert info.is_running
@@ -238,7 +243,6 @@ async def test_remanence_monitor_multiple_device(
     assert info.remote_only_size == 5
 
     # Second device gets notified
-    await alice2_core.wait_idle_monitors()
     info = workspace2.get_remanence_manager_info()
     assert info.is_prepared
     assert info.is_running
@@ -249,8 +253,7 @@ async def test_remanence_monitor_multiple_device(
 
     # First device removes the last file
     await workspace1.unlink("/test.txt")
-    await workspace1.sync()
-    await alice_core.wait_idle_monitors()
+    await _wait_sync()
     info = workspace1.get_remanence_manager_info()
     assert info.is_prepared
     assert info.is_running
@@ -260,7 +263,6 @@ async def test_remanence_monitor_multiple_device(
     assert info.remote_only_size == 0
 
     # Second device gets notified
-    await alice2_core.wait_idle_monitors()
     info = workspace2.get_remanence_manager_info()
     assert info.is_prepared
     assert info.is_running

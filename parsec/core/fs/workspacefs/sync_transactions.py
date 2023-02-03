@@ -31,7 +31,7 @@ from parsec.core.types import (
     local_manifest_from_remote_with_local_context,
 )
 
-__all__ = "SyncTransactions"
+__all__ = ["SyncTransactions"]
 
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512Ko
 FILENAME_CONFLICT_KEY = "FILENAME_CONFLICT"
@@ -71,14 +71,17 @@ class ChangesAfterSync:
                 added_blocks=new_blocks - old_blocks,
                 removed_blocks=old_blocks - new_blocks,
             )
-        assert isinstance(old_manifest, (WorkspaceManifest, FolderManifest))
-        assert isinstance(new_manifest, (WorkspaceManifest, FolderManifest))
-        old_entries = set(old_manifest.children.values())
-        new_entries = set(new_manifest.children.values())
-        return cls(
-            added_entries=new_entries - old_entries,
-            removed_entries=old_entries - new_entries,
-        )
+        elif isinstance(old_manifest, (WorkspaceManifest, FolderManifest)):
+            assert isinstance(new_manifest, (WorkspaceManifest, FolderManifest))
+            old_entries = set(old_manifest.children.values())
+            new_entries = set(new_manifest.children.values())
+            return cls(
+                added_entries=new_entries - old_entries,
+                removed_entries=old_entries - new_entries,
+            )
+        else:
+            # A user manifest should never get there
+            assert False
 
 
 # Helpers
