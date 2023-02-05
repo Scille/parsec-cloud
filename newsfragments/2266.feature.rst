@@ -1,1 +1,1 @@
-Add a dialog to manage data availablity for workspaces (i.e a user can now choose keep all the data available locally for offline access)
+Add a dialog to manage offline availability for workspaces (i.e a user can now choose keep all the data available locally for offline access)
