@@ -263,6 +263,16 @@ crate::binding_utils::impl_enum_field!(
         libparsec::core::CoreEvent::FsWorkspaceCreated
     ],
     [
+        "FS_BLOCK_DOWNLOADED",
+        fs_block_downloaded,
+        libparsec::core::CoreEvent::FsBlockDownloaded
+    ],
+    [
+        "FS_BLOCK_PURGED",
+        fs_block_purged,
+        libparsec::core::CoreEvent::FsBlockPurged
+    ],
+    [
         "USERFS_SYNC_REJECTED_BY_SEQUESTER_SERVICE",
         userfs_sync_rejected_by_sequester_service,
         libparsec::core::CoreEvent::UserfsSyncRejectedBySequesterService

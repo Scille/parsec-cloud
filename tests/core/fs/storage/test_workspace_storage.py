@@ -1,6 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import time
+from pathlib import Path
+
 import pytest
 
 from parsec._parsec import DateTime
@@ -8,6 +11,7 @@ from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
 from parsec.core.fs import FSError, FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.fs.storage import WorkspaceStorage
+from parsec.core.local_device import LocalDevice
 from parsec.core.types import (
     DEFAULT_BLOCK_SIZE,
     Chunk,
@@ -589,3 +593,97 @@ async def test_storage_file_tree(data_base_dir, alice, workspace_id):
     assert manifest_sqlite_db.is_file()
     assert chunk_sqlite_db.is_file()
     assert block_sqlite_db.is_file()
+
+
+@pytest.mark.trio
+async def test_remanence_interface(data_base_dir: Path, alice: LocalDevice, workspace_id: EntryID):
+    # Limit cache size to 1 block
+    block_size = DEFAULT_BLOCK_SIZE
+    cache_size = 1 * block_size
+
+    # Create 3 blocks
+    data = b"\x00" * block_size
+    chunk1 = Chunk.new(0, block_size).evolve_as_block(data)
+    assert chunk1.access is not None
+    block1 = chunk1.access.id
+    chunk2 = Chunk.new(0, block_size).evolve_as_block(data)
+    assert chunk2.access is not None
+    block2 = chunk2.access.id
+    chunk3 = Chunk.new(0, block_size).evolve_as_block(data)
+    assert chunk3.access is not None
+    block3 = chunk3.access.id
+
+    # First run
+    async with WorkspaceStorage.run(
+        data_base_dir, alice, workspace_id, cache_size=cache_size
+    ) as aws:
+
+        # Enable remanence
+        assert not aws.is_block_remanent()
+
+        # Add first block
+        assert not await aws.is_clean_block(block1)
+        assert await aws.set_clean_block(block1, data) == set()
+        assert await aws.is_clean_block(block1)
+
+        # Add second block
+        assert not await aws.is_clean_block(block2)
+        assert await aws.set_clean_block(block2, data) == {block1}
+        assert await aws.is_clean_block(block2)
+        assert not await aws.is_clean_block(block1)
+
+        # Enable remanence
+        assert await aws.enable_block_remanence() is True
+        assert await aws.enable_block_remanence() is False
+        assert aws.is_block_remanent()
+
+        # Add first block again
+        assert await aws.set_clean_block(block1, data) == set()
+        assert await aws.is_clean_block(block1)
+        assert await aws.is_clean_block(block2)
+
+    # Second run
+    async with WorkspaceStorage.run(
+        data_base_dir, alice, workspace_id, cache_size=cache_size
+    ) as aws:
+
+        # Make sure remanence is kept
+        assert aws.is_block_remanent()
+
+        # Disable block remanence
+        assert await aws.disable_block_remanence() == {block2}
+        assert await aws.disable_block_remanence() is None
+        assert not aws.is_block_remanent()
+        assert await aws.is_clean_block(block1)
+        assert not await aws.is_clean_block(block2)
+
+        # Remove blocks (some are not present)
+        await aws.remove_clean_blocks([block1, block3])
+        assert not await aws.is_clean_block(block1)
+        assert not await aws.is_clean_block(block2)
+
+    # Third run
+    async with WorkspaceStorage.run(
+        data_base_dir, alice, workspace_id, cache_size=cache_size
+    ) as aws:
+        assert not aws.is_block_remanent()
+
+        # Enable remanence and add two blocks
+        assert await aws.enable_block_remanence() is True
+        assert await aws.set_clean_block(block1, data) == set()
+        reference = time.time()
+        assert await aws.set_clean_block(block2, data) == set()
+
+        # Remove unreferenced blocks
+        await aws.clear_unreferenced_blocks([block1, block3], reference)
+        # Block 1 still here, it's referenced
+        assert await aws.is_clean_block(block1)
+        # Block 2 still here, it's been added after timestamp
+        assert await aws.is_clean_block(block2)
+
+        # Remove unreferenced blocks
+        await aws.clear_unreferenced_blocks([block1, block3], time.time() + 1)
+        # Block 1 still here, it's referenced
+        assert await aws.is_clean_block(block1)
+        # Block 2 is now gone
+        assert not await aws.is_clean_block(block2)

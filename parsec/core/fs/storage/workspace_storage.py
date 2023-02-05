@@ -67,7 +67,7 @@ class BaseWorkspaceStorage:
         self,
         device: LocalDevice,
         workspace_id: EntryID,
-        block_storage: ChunkStorage,
+        block_storage: BlockStorage,
         chunk_storage: ChunkStorage,
     ):
         self.device = device
@@ -179,9 +179,12 @@ class BaseWorkspaceStorage:
 
     # Block interface
 
-    async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
+    async def set_clean_block(self, block_id: BlockID, block: bytes) -> set[BlockID]:
         assert isinstance(block_id, BlockID)
-        return await self.block_storage.set_chunk(ChunkID.from_block_id(block_id), block)
+        removed_chunk_ids = await self.block_storage.set_chunk(
+            ChunkID.from_block_id(block_id), block
+        )
+        return {BlockID.from_bytes(chunk_id.bytes) for chunk_id in removed_chunk_ids}
 
     async def clear_clean_block(self, block_id: BlockID) -> None:
         assert isinstance(block_id, BlockID)
@@ -192,6 +195,9 @@ class BaseWorkspaceStorage:
 
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
         return await self.chunk_storage.get_chunk(ChunkID.from_block_id(block_id))
+
+    async def is_clean_block(self, block_id: BlockID) -> bool:
+        return await self.block_storage.is_chunk(ChunkID.from_block_id(block_id))
 
     # Chunk interface
 
@@ -204,7 +210,7 @@ class BaseWorkspaceStorage:
 
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
         assert isinstance(chunk_id, ChunkID)
-        return await self.chunk_storage.set_chunk(chunk_id, block)
+        await self.chunk_storage.set_chunk(chunk_id, block)
 
     async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
         assert isinstance(chunk_id, ChunkID)
@@ -221,6 +227,39 @@ class BaseWorkspaceStorage:
 
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
         return self._prevent_sync_pattern_fully_applied
+
+    # Block remanence interface
+
+    def is_block_remanent(self) -> bool:
+        return self.block_storage.is_block_remanent()
+
+    async def enable_block_remanence(self) -> bool:
+        """
+        Returns whether the block remanance has changed or not
+        """
+        has_changed = await self.block_storage.enable_block_remanence()
+        return has_changed
+
+    async def disable_block_remanence(self) -> set[BlockID] | None:
+        """
+        Returns:
+        - `None` if the block remanence was already enabled
+        - A list of `ChunkID` that have been purged if the block remanence has been successfully disabled
+        """
+        removed_chunk_ids = await self.block_storage.disable_block_remanence()
+        if removed_chunk_ids is None:
+            return None
+        return {BlockID.from_bytes(chunk_id.bytes) for chunk_id in removed_chunk_ids}
+
+    async def clear_unreferenced_blocks(
+        self, block_ids: list[BlockID], not_accessed_after: float
+    ) -> None:
+        chunk_ids = [ChunkID.from_block_id(block_id) for block_id in block_ids]
+        return await self.block_storage.clear_unreferenced_chunks(chunk_ids, not_accessed_after)
+
+    async def remove_clean_blocks(self, block_ids: list[BlockID]) -> None:
+        chunk_ids = [ChunkID.from_block_id(block_id) for block_id in block_ids]
+        return await self.block_storage.clear_chunks(chunk_ids)
 
     # Timestamped workspace
 
@@ -243,7 +282,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         workspace_id: EntryID,
         data_localdb: LocalDatabase,
         cache_localdb: LocalDatabase,
-        block_storage: ChunkStorage,
+        block_storage: BlockStorage,
         chunk_storage: ChunkStorage,
         manifest_storage: ManifestStorage,
     ):
@@ -262,21 +301,19 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         prevent_sync_pattern: Regex = FAILSAFE_PATTERN_FILTER,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
         data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
-    ) -> AsyncIterator["WorkspaceStorage"]:
+    ) -> AsyncIterator[WorkspaceStorage]:
         data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
         cache_path = get_workspace_cache_storage_db_path(data_base_dir, device, workspace_id)
 
-        # The cache database usually doesn't require vacuuming as it already has a maximum size.
-        # However, vacuuming might still be necessary after a change in the configuration.
-        # The cache size plus 10% seems like a reasonable configuration to avoid false positive.
-        cache_localdb_vacuum_threshold = int(cache_size * 1.1)
-
         # Local cache storage service
         async with LocalDatabase.run(
-            cache_path, vacuum_threshold=cache_localdb_vacuum_threshold
+            cache_path,
+            auto_vacuum=True,
         ) as cache_localdb:
 
             # Local data storage service
+            # TODO: once the auto_vacuum approach has been validated for the cache storage,
+            # we should investigate whether it is a good fit for the data storage
             async with LocalDatabase.run(
                 data_path, vacuum_threshold=data_vacuum_threshold
             ) as data_localdb:
@@ -289,7 +326,6 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                     # Clean up block storage and run vacuum if necessary
                     # (e.g after changing the cache size)
                     await block_storage.cleanup()
-                    await cache_localdb.run_vacuum()
 
                     # Manifest storage service
                     async with ManifestStorage.run(

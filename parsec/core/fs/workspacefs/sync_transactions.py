@@ -4,8 +4,10 @@ from __future__ import annotations
 from itertools import count
 from typing import AsyncIterator, Dict, Iterable, Union
 
-from parsec._parsec import CoreEvent, DateTime, EntryNameError, Regex
-from parsec.api.data import AnyRemoteManifest
+import attr
+
+from parsec._parsec import BlockAccess, CoreEvent, DateTime, EntryNameError, Regex
+from parsec.api.data import AnyRemoteManifest, FileManifest, FolderManifest, WorkspaceManifest
 from parsec.api.protocol import DeviceID
 from parsec.core.fs.exceptions import (
     FSFileConflictError,
@@ -29,7 +31,7 @@ from parsec.core.types import (
     local_manifest_from_remote_with_local_context,
 )
 
-__all__ = "SyncTransactions"
+__all__ = ["SyncTransactions"]
 
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512Ko
 FILENAME_CONFLICT_KEY = "FILENAME_CONFLICT"
@@ -44,6 +46,42 @@ TRANSLATIONS = {
         "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
     },
 }
+
+# Data class for change info
+
+
+@attr.s(frozen=True, auto_attribs=True)
+class ChangesAfterSync:
+    added_blocks: set[BlockAccess] | None = None
+    removed_blocks: set[BlockAccess] | None = None
+    added_entries: set[EntryID] | None = None
+    removed_entries: set[EntryID] | None = None
+
+    @classmethod
+    def from_manifests(
+        cls,
+        old_manifest: AnyRemoteManifest,
+        new_manifest: AnyRemoteManifest,
+    ) -> "ChangesAfterSync":
+        if isinstance(old_manifest, FileManifest):
+            assert isinstance(new_manifest, FileManifest)
+            old_blocks = set(old_manifest.blocks)
+            new_blocks = set(new_manifest.blocks)
+            return cls(
+                added_blocks=new_blocks - old_blocks,
+                removed_blocks=old_blocks - new_blocks,
+            )
+        elif isinstance(old_manifest, (WorkspaceManifest, FolderManifest)):
+            assert isinstance(new_manifest, (WorkspaceManifest, FolderManifest))
+            old_entries = set(old_manifest.children.values())
+            new_entries = set(new_manifest.children.values())
+            return cls(
+                added_entries=new_entries - old_entries,
+                removed_entries=old_entries - new_entries,
+            )
+        else:
+            # A user manifest should never get there
+            assert False
 
 
 # Helpers
@@ -415,11 +453,25 @@ class SyncTransactions(EntryTransactions):
 
             # Send downsynced event
             if base_version != new_base_version and remote_author != self.local_author:
-                self._send_event(CoreEvent.FS_ENTRY_DOWNSYNCED, id=entry_id)
+                changes = ChangesAfterSync.from_manifests(
+                    local_manifest.base, new_local_manifest.base
+                )
+                self._send_event(
+                    CoreEvent.FS_ENTRY_DOWNSYNCED,
+                    id=entry_id,
+                    changes=changes,
+                )
 
             # Send synced event
             if local_manifest.need_sync and not new_local_manifest.need_sync:
-                self._send_event(CoreEvent.FS_ENTRY_SYNCED, id=entry_id)
+                changes = ChangesAfterSync.from_manifests(
+                    local_manifest.base, new_local_manifest.base
+                )
+                self._send_event(
+                    CoreEvent.FS_ENTRY_SYNCED,
+                    id=entry_id,
+                    changes=changes,
+                )
 
             # Nothing new to upload
             if final or not new_local_manifest.need_sync:

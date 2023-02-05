@@ -127,6 +127,10 @@ class FSWorkspaceTimestampedTooEarly(FSMiscError):
     pass
 
 
+class FSRemanenceManagerStoppedError(FSMiscError):
+    pass
+
+
 # Internal errors
 
 

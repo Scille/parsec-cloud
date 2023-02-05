@@ -46,45 +46,10 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
     async def get_status(self) -> None:
         path_info = await self.workspace_fs.path_info(self.path)
         block_info: BlockInfo | None = None
+
         if path_info["type"] == "file":
             block_info = await self.workspace_fs.get_blocks_by_type(self.path)
             self.label_size.setText(get_filesize(cast(int, path_info["size"])))
-
-        version_lister = self.workspace_fs.get_version_lister()
-        version_list = await version_lister.list(path=self.path)
-        try:
-            user_id = version_list[0][0].creator.user_id
-            created_time = version_list[0][0].updated
-            updated_time = cast(DateTime, path_info["updated"])
-
-            version_list = await version_lister.list(
-                path=self.path, starting_timestamp=cast(DateTime, updated_time)
-            )
-            user_id_last = version_list[0][-1].creator.user_id
-
-            creator = await self.core.get_user_info(user_id)
-            last_author = await self.core.get_user_info(user_id_last)
-            self.label_created_on.setText(format_datetime(created_time))
-            self.label_last_updated_on.setText(format_datetime(updated_time))
-            self.label_created_by.setText(creator.short_user_display)
-            self.label_last_updated_by.setText(last_author.short_user_display)
-        except IndexError:
-            # Just ignore the error, labels will just be "N/A" by default, displaying
-            # more to the user might be confusing.
-            pass
-
-        full_path = self.core.mountpoint_manager.get_path_in_mountpoint(
-            self.workspace_fs.workspace_id,
-            self.path,
-            self.workspace_fs.timestamp
-            if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
-            else None,
-        )
-
-        self.label_location.setText(str(full_path))
-        self.label_filetype.setText(str(path_info["type"]))
-
-        self.label_workspace.setText(self.workspace_fs.get_workspace_name().str)
 
         if block_info:
             local_blocks = len(block_info.local_only_blocks)
@@ -118,6 +83,44 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
                 f"{remote_block_count}/{total_blocks} ({remote_block_percentage}%)"
             )
             self.label_default_block_size.setText(get_filesize(DEFAULT_BLOCK_SIZE))
+
+        full_path = self.core.mountpoint_manager.get_path_in_mountpoint(
+            self.workspace_fs.workspace_id,
+            self.path,
+            self.workspace_fs.timestamp
+            if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
+            else None,
+        )
+
+        self.label_location.setText(str(full_path))
+        self.label_filetype.setText(str(path_info["type"]))
+
+        self.label_workspace.setText(self.workspace_fs.get_workspace_name().str)
+
+        # TODO: do better with exception handling here
+        # Also note that there is no error handler for this job
+        version_lister = self.workspace_fs.get_version_lister()
+        version_list = await version_lister.list(path=self.path)
+        try:
+            user_id = version_list[0][0].creator.user_id
+            created_time = version_list[0][0].updated
+            updated_time = cast(DateTime, path_info["updated"])
+
+            version_list = await version_lister.list(
+                path=self.path, starting_timestamp=cast(DateTime, updated_time)
+            )
+            user_id_last = version_list[0][-1].creator.user_id
+
+            creator = await self.core.get_user_info(user_id)
+            last_author = await self.core.get_user_info(user_id_last)
+            self.label_created_on.setText(format_datetime(created_time))
+            self.label_last_updated_on.setText(format_datetime(updated_time))
+            self.label_created_by.setText(creator.short_user_display)
+            self.label_last_updated_by.setText(last_author.short_user_display)
+        except IndexError:
+            # Just ignore the error, labels will just be "N/A" by default, displaying
+            # more to the user might be confusing.
+            pass
 
     @classmethod
     def show_modal(  # type: ignore[misc]

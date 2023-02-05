@@ -49,14 +49,14 @@ class SwitchButton(QAbstractButton):
             self._thumb_text = {True: "✔", False: "✕"}
             self._track_opacity = 1
 
-        self.offset = pyqtProperty(int, fget=SwitchButton.getOffset, fset=SwitchButton.setOffset)
-
     def getOffset(self) -> int:
         return self._offset
 
     def setOffset(self, value: int) -> None:
         self._offset = value
         self.update()
+
+    offset = pyqtProperty(int, fget=getOffset, fset=setOffset)
 
     def sizeHint(self) -> QSize:
         return QSize(
@@ -78,15 +78,11 @@ class SwitchButton(QAbstractButton):
         track_opacity = self._track_opacity
         thumb_opacity = 1.0
         text_opacity = 1.0
-        if self.isEnabled():
-            track_brush = self._track_color[self.isChecked()]
-            thumb_brush = self._thumb_color[self.isChecked()]
-            text_color = self._text_color[self.isChecked()]
-        else:
-            track_opacity *= 0.8
-            track_brush = self.palette().shadow()
-            thumb_brush = self.palette().mid()
-            text_color = self.palette().shadow().color()
+        track_brush = self._track_color[self.isChecked()]
+        text_color = self._text_color[self.isChecked()]
+        thumb_brush = self._thumb_color[self.isChecked()]
+        if not self.isEnabled():
+            track_opacity *= 0.5
 
         p.setBrush(track_brush)
         p.setOpacity(track_opacity)

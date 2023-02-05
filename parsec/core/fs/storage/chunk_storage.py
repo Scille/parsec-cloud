@@ -5,7 +5,7 @@ import secrets
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncContextManager, AsyncIterator, List, TypeVar
+from typing import AsyncContextManager, AsyncIterator, List, TypeVar, cast
 
 import trio
 
@@ -71,6 +71,14 @@ class ChunkStorage:
                      offline INTEGER NOT NULL,  -- Boolean
                      accessed_on REAL, -- Timestamp
                      data BLOB NOT NULL
+                );"""
+            )
+
+            # Singleton for storing remanence information
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS remanence
+                    (_id INTEGER PRIMARY KEY NOT NULL,
+                     block_remanent BOOL NOT NULL
                 );"""
             )
 
@@ -150,7 +158,7 @@ class ChunkStorage:
 
         return self.local_symkey.decrypt(ciphered)
 
-    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> list[ChunkID]:
         ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
@@ -164,6 +172,8 @@ class ChunkStorage:
                 VALUES (?, ?, ?, ?, ?)""",
                 (chunk_id.bytes, len(ciphered), False, time.time(), ciphered),
             )
+            # No chunks are removed in ChunkStorage implementation
+            return []
 
     async def clear_chunk(self, chunk_id: ChunkID) -> None:
         async with self._open_cursor() as cursor:
@@ -178,6 +188,17 @@ class ChunkStorage:
         if not changes:
             raise FSLocalMissError(chunk_id)
 
+    async def clear_chunks(self, chunk_ids: list[ChunkID]) -> None:
+        async with self._open_cursor() as cursor:
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            chunk_id_as_bytes = [(chunk_id.bytes,) for chunk_id in chunk_ids]
+            await self.localdb.run_in_thread(
+                cursor.executemany,
+                "DELETE FROM chunks WHERE chunk_id = ?",
+                chunk_id_as_bytes,
+            )
+
 
 class BlockStorage(ChunkStorage):
     """Interface for caching the data blocks."""
@@ -185,6 +206,7 @@ class BlockStorage(ChunkStorage):
     def __init__(self, device: LocalDevice, localdb: LocalDatabase, cache_size: int):
         super().__init__(device, localdb)
         self.cache_size = cache_size
+        self._block_remanent = False
 
     @classmethod
     @asynccontextmanager
@@ -192,6 +214,7 @@ class BlockStorage(ChunkStorage):
         cls, device: LocalDevice, localdb: LocalDatabase, cache_size: int
     ) -> AsyncIterator["BlockStorage"]:
         async with cls(device, localdb, cache_size)._run() as self:
+            await self._load_block_remanent()
             yield self
 
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
@@ -221,7 +244,7 @@ class BlockStorage(ChunkStorage):
 
     # Upgraded set method
 
-    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> list[ChunkID]:
         ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
@@ -239,9 +262,12 @@ class BlockStorage(ChunkStorage):
             )
 
             # Perform cleanup if necessary
-            await self.cleanup(cursor)
+            return await self.cleanup(cursor)
 
-    async def cleanup(self, cursor: Cursor | None = None) -> None:
+    async def cleanup(self, cursor: Cursor | None = None) -> list[ChunkID]:
+        # No cleanup for remanent storage
+        if self._block_remanent:
+            return []
 
         # Update database
         async with self._reenter_cursor(cursor) as cursor:
@@ -253,18 +279,142 @@ class BlockStorage(ChunkStorage):
 
             # No clean up is needed
             if extra_blocks <= 0:
-                return
+                return []
 
             # Remove the extra block plus 10 % of the cache size, i.e about 100 blocks
             limit = extra_blocks + self.block_limit // 10
+
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            def _thread_target(cursor: Cursor) -> list[ChunkID]:
+
+                # Select before delete
+                cursor.execute(
+                    """
+                    SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
+                    """,
+                    (limit,),
+                )
+                rows = cursor.fetchall()
+
+                # And then actual delete
+                cursor.execute(
+                    """
+                    DELETE FROM chunks WHERE chunk_id IN (
+                        SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
+                    )
+                    """,
+                    (limit,),
+                )
+
+                return [ChunkID.from_bytes(id_bytes) for (id_bytes,) in rows]
+
+            result = await self.localdb.run_in_thread(_thread_target, cursor)
+
+            # Type detection is broken here for some reason
+            return cast(list[ChunkID], result)
+
+    # Remanent interface
+
+    async def _load_block_remanent(self) -> None:
+        async with self._open_cursor() as cursor:
+            cursor.execute("SELECT block_remanent FROM remanence")
+            rep = cursor.fetchone()
+            self._block_remanent = False if rep is None else bool(rep[0])
+
+    def is_block_remanent(self) -> bool:
+        return self._block_remanent
+
+    async def enable_block_remanence(self) -> bool:
+        """
+        Returns whether the block remanance has changed or not
+        """
+        async with self._open_cursor() as cursor:
+            # Check if remanence is already enabled
+            if self._block_remanent:
+                return False
+
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
             await self.localdb.run_in_thread(
                 cursor.execute,
-                """
-                DELETE FROM chunks WHERE chunk_id IN (
-                    SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
-                )
-                """,
-                (limit,),
+                """INSERT OR REPLACE INTO
+                    remanence (_id, block_remanent)
+                    VALUES (0, 1)""",
             )
+
+            # Set remanent flag
+            self._block_remanent = True
+
+        # Indicate that the state has changed
+        return True
+
+    async def disable_block_remanence(self) -> list[ChunkID] | None:
+        """
+        Returns:
+        - `None` if the block remanence was already enabled
+        - A list of `ChunkID` that have been purged if the block remanence has been successfully disabled
+        """
+        async with self._open_cursor() as cursor:
+            # Check if remanence is already disabled
+            if not self._block_remanent:
+                return None
+
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await self.localdb.run_in_thread(
+                cursor.execute,
+                """INSERT OR REPLACE INTO
+                    remanence (_id, block_remanent)
+                    VALUES (0, 0)""",
+            )
+
+            # Set remanent flag
+            self._block_remanent = False
+
+            # Cleanup blocks and indicate that the state has changed
+            return await self.cleanup(cursor)
+
+    async def clear_unreferenced_chunks(
+        self, chunk_ids: list[ChunkID], not_accessed_after: float
+    ) -> None:
+        """
+        The `not_accessed_after` argument is a float since the time reference used in `set/get_chunk`
+        is taken from `time.time()`. This might change with the oxidation.
+        """
+        if not chunk_ids:
+            return
+
+        bytes_id_list = [(id.bytes,) for id in chunk_ids]
+
+        async with self._open_cursor() as cursor:
+
+            def _thread_target() -> None:
+                # Can't use execute many with SELECT so we have to make a temporary table filled with the needed chunk_id
+                # and intersect it with the normal table
+                # create random name for the temporary table to avoid asynchronous errors
+                table_name = "temp" + secrets.token_hex(12)
+                assert table_name.isalnum()
+
+                cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
+                cursor.execute(
+                    f"""CREATE TABLE IF NOT EXISTS {table_name}
+                        (chunk_id BLOB PRIMARY KEY NOT NULL -- UUID
+                    );"""
+                )
+
+                cursor.executemany(
+                    f"""INSERT OR REPLACE INTO
+                {table_name} (chunk_id)
+                VALUES (?)""",
+                    iter(bytes_id_list),
+                )
+
+                cursor.execute(
+                    f"""DELETE FROM chunks where chunk_id NOT IN (SELECT chunk_id FROM {table_name}) AND accessed_on < ?""",
+                    (not_accessed_after,),
+                )
+
+                cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
+
+            await self.localdb.run_in_thread(_thread_target)

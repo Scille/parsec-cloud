@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import TYPE_CHECKING, AsyncIterator, Awaitable, Callable, Dict, List, Tuple, cast
 
 import attr
@@ -32,8 +34,9 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.fs.storage import BaseWorkspaceStorage, WorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
+from parsec.core.fs.workspacefs.remanence_manager import RemanenceManager, RemanenceManagerInfo
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
@@ -105,6 +108,7 @@ class WorkspaceFS:
             self.backend_cmds,
             self.remote_devices_manager,
             self.local_storage,
+            self.event_bus,
         )
         self.transactions = SyncTransactions(
             self.workspace_id,
@@ -115,6 +119,13 @@ class WorkspaceFS:
             self.event_bus,
             self.preferred_language,
         )
+        self.remanence_manager = RemanenceManager(
+            self.local_storage,
+            self.remote_loader,
+            self.transactions,
+            self.workspace_id,
+            self.event_bus,
+        )
 
     def __repr__(self) -> str:
         try:
@@ -123,7 +134,81 @@ class WorkspaceFS:
             name = EntryName("<could not retrieve name>")
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    async def get_blocks_by_type(self, path: AnyPath, limit: int = 1000000000) -> BlockInfo:
+    # Run method
+
+    @classmethod
+    @asynccontextmanager
+    async def run(
+        cls,
+        data_base_dir: Path,
+        workspace_id: EntryID,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
+        device: LocalDevice,
+        backend_cmds: BackendAuthenticatedCmds,
+        event_bus: EventBus,
+        remote_devices_manager: RemoteDevicesManager,
+        workspace_storage_cache_size: int,
+        prevent_sync_pattern: Regex,
+        preferred_language: str = "en",
+    ) -> AsyncIterator[WorkspaceFS]:
+        async with WorkspaceStorage.run(
+            data_base_dir=data_base_dir,
+            device=device,
+            workspace_id=workspace_id,
+            cache_size=workspace_storage_cache_size,
+            prevent_sync_pattern=prevent_sync_pattern,
+        ) as workspace_storage:
+
+            # Instantiate the workspace
+            workspace = WorkspaceFS(
+                workspace_id=workspace_id,
+                get_workspace_entry=get_workspace_entry,
+                get_previous_workspace_entry=get_previous_workspace_entry,
+                device=device,
+                local_storage=workspace_storage,
+                backend_cmds=backend_cmds,
+                event_bus=event_bus,
+                remote_devices_manager=remote_devices_manager,
+                preferred_language=preferred_language,
+            )
+
+            # Connect the remanence manager
+            with workspace.remanence_manager.manage_events():
+
+                # Apply the current "prevent sync" pattern
+                await workspace.apply_prevent_sync_pattern()
+
+                # Workspace is ready
+                yield workspace
+
+    # Remanence interface
+
+    def is_block_remanent(self) -> bool:
+        return self.remanence_manager.is_block_remanent()
+
+    async def enable_block_remanence(self) -> bool:
+        return await self.remanence_manager.enable_block_remanence()
+
+    async def disable_block_remanence(self) -> bool:
+        return await self.remanence_manager.disable_block_remanence()
+
+    async def run_remanence_manager(
+        self,
+        idle: Callable[[object], None],
+        awake: Callable[[object], None],
+    ) -> None:
+        return await self.remanence_manager.run(idle, awake)
+
+    async def wait_remanence_manager_prepared(self, wait_for_connection: bool = False) -> None:
+        return await self.remanence_manager.wait_prepared(wait_for_connection=wait_for_connection)
+
+    def get_remanence_manager_info(self) -> RemanenceManagerInfo:
+        return self.remanence_manager.get_info()
+
+    # Block interface
+
+    async def get_blocks_by_type(self, path: AnyPath, limit: int | None = None) -> BlockInfo:
         path = FsPath(path)
         return await self.transactions.entry_get_blocks_by_type(path, limit)
 
@@ -153,6 +238,8 @@ class WorkspaceFS:
         """
         return await self.remote_loader.receive_load_blocks(blocks, nursery)
 
+    # Information
+
     def get_workspace_name(self) -> EntryName:
         return self.get_workspace_entry().name
 
@@ -164,8 +251,6 @@ class WorkspaceFS:
 
     def is_revoked(self) -> bool:
         return self.get_workspace_entry().role is None
-
-    # Information
 
     async def path_info(self, path: AnyPath) -> Dict[str, object]:
         """

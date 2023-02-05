@@ -3105,3 +3105,54 @@ msgstr "Hide deactivated workspaces"
 #~ msgstr ""
 #~ "A recovery file for this device "
 #~ "already exists in the selected location."
+
+msgid "ACTION_WORKSPACE_MANAGE_REMANENCE"
+msgstr "Manage offline availability"
+
+msgid "ACTION_CONTINUE_IN_BACKGROUND"
+msgstr "Continue in background"
+
+msgid "TEXT_REMANENCE_WAITING"
+msgstr "Please wait..."
+
+msgid "TEXT_BLOCK_REMANENCE"
+msgstr "Offline availability:"
+
+msgid "TEXT_BLOCK_REMANENCE_ENABLED"
+msgstr "The data in this workspace is currently kept locally for offline access."
+
+msgid "TEXT_BLOCK_REMANENCE_DISABLED_cache_size"
+msgstr "Only a maximum of {cache_size} of data is kept locally for this workspace."
+
+msgid "TEXT_BLOCK_REMANENCE_WARNING_remote_size"
+msgstr "<i>Keeping data locally for offline access would require to download {remote_size} of data.</i>"
+
+msgid "TEXT_GET_REMANENCE_STATUS_FAILED"
+msgstr "Workspace information is not available at the moment."
+
+msgid "TEXT_DISABLE_BLOCK_REMANENCE_FAILED"
+msgstr "An error occured while disabling offline mode."
+
+msgid "TEXT_ENABLE_BLOCK_REMANENCE_FAILED"
+msgstr "An error occured while enabling offline mode."
+
+msgid "TEXT_REMANENCE_DIALOG_TITLE_workspace_name"
+msgstr "Offline availability for workspace {workspace_name}"
+
+msgid "TEXT_ENABLE_BLOCK_REMANENCE_SUCCESS"
+msgstr "The data in this workspace will now be kept locally for offline access."
+
+msgid "TEXT_BLOCK_DOWNLOADING_STARTED"
+msgstr "The missing data will now be downloaded."
+
+msgid "TEXT_BLOCK_DOWNLOADING_FINISHED"
+msgstr "All data has been successfully downloaded."
+
+msgid "TEXT_REMANENCE_PROGRESS_BAR_TITLE_IDLE"
+msgstr "Data available locally"
+
+msgid "TEXT_REMANENCE_PROGRESS_BAR_TITLE_DOWNLOADING"
+msgstr "Downloading missing data"
+
+msgid "TEXT_WORKSPACE_IS_EMPTY"
+msgstr "This workspace is empty."

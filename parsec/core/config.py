@@ -179,7 +179,9 @@ def config_factory(
     return core_config
 
 
-def load_config(config_dir: Path, **extra_config: Any) -> CoreConfig:
+def load_config(config_dir: Path | None = None, **extra_config: Any) -> CoreConfig:
+    if config_dir is None:
+        config_dir = get_default_config_dir(os.environ)
 
     config_file = config_dir / "config.json"
     try:
