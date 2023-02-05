@@ -249,7 +249,7 @@ def no_logs_gte_error(caplog):
     def skip_hypercorn_buggy_log(record):
         try:
             _, exc, _ = record.exc_info
-        except ValueError:
+        except (ValueError, TypeError):
             exc = None
 
         if record.name == "asyncio" and isinstance(exc, ConnectionError):
