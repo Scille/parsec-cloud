@@ -13,7 +13,11 @@ from attr import define
 
 from parsec._parsec import CoreEvent
 from parsec.api.data import BlockAccess
-from parsec.core.fs.exceptions import FSRemanenceManagerStoppedError
+from parsec.core.fs.exceptions import (
+    FSRemanenceManagerStoppedError,
+    FSRemoteBlockNotFound,
+    FSRemoteManifestNotFound,
+)
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.fs.workspacefs.sync_transactions import ChangesAfterSync, SyncTransactions
@@ -363,7 +367,8 @@ class RemanenceManager:
     def _register_removed_blocks(self, removed_blocks: set[BlockAccess]) -> None:
         # Update total
         for access in removed_blocks:
-            if self._all_blocks.pop(access.id) is not None:
+            if access.id in self._all_blocks:
+                del self._all_blocks[access.id]
                 self._total_size -= access.size
         # Update remote-only
         self._remote_only_size -= sum(
@@ -387,7 +392,11 @@ class RemanenceManager:
         while entry_ids:
             entry_id = entry_ids.pop()
             # Load manifest
-            manifest = await self.transactions._load_manifest(entry_id)
+            try:
+                manifest = await self.transactions._load_manifest(entry_id)
+            # Ignore missing manifests (the workspace is inconsistent)
+            except FSRemoteManifestNotFound:
+                continue
             # Browse the directories
             if isinstance(manifest, (LocalWorkspaceManifest, LocalFolderManifest)):
                 entry_ids.extend(manifest.children.values())
@@ -416,7 +425,11 @@ class RemanenceManager:
         while entry_ids:
             entry_id = entry_ids.pop()
             # Download the manifest
-            manifest = await self.transactions._load_manifest(entry_id)
+            try:
+                manifest = await self.transactions._load_manifest(entry_id)
+            # Ignore missing manifests (the workspace is inconsistent)
+            except FSRemoteManifestNotFound:
+                continue
             # Browse the directories
             if isinstance(manifest, (LocalWorkspaceManifest, LocalFolderManifest)):
                 entry_ids.extend(manifest.children.values())
@@ -472,6 +485,11 @@ class RemanenceManager:
     async def _downloader_task(self) -> bool:
         try:
             self._awake(self._downloader_task_id)
+
+            # Maintain a set missing access (not found remotely)
+            missing: set[BlockAccess] = set()
+
+            # Loop over download batches
             while True:
 
                 # Not a block-remanent workspace or no block to download
@@ -482,21 +500,28 @@ class RemanenceManager:
                     continue
 
                 # Open a nursery for downloading in parrallel (4 tasks)
-                async with open_service_nursery() as nursery:
+                try:
+                    async with open_service_nursery() as nursery:
 
-                    # Open channel and loop over downloaded blocks
-                    blocks = list(self._remote_only_blocks)
-                    channel = await self.remote_loader.receive_load_blocks(blocks, nursery)
-                    async with channel:
-                        async for access in channel:
+                        # Open channel and loop over downloaded blocks
+                        blocks = list(self._remote_only_blocks - missing)
+                        channel = await self.remote_loader.receive_load_blocks(blocks, nursery)
+                        async with channel:
+                            async for access in channel:
 
-                            # Update the internal sets
-                            self._register_downloaded_block(access)
+                                # Update the internal sets
+                                self._register_downloaded_block(access)
 
-                            # Maybe block remanence has changed in the meantime
-                            # No reason to download the other blocks
-                            if not self.local_storage.is_block_remanent():
-                                nursery.cancel_scope.cancel()
+                                # Maybe block remanence has changed in the meantime
+                                # No reason to download the other blocks
+                                if not self.local_storage.is_block_remanent():
+                                    nursery.cancel_scope.cancel()
+
+                # Ignore missing blocks (the workspace is inconsistent)
+                except FSRemoteBlockNotFound as exc:
+                    (missing_access,) = exc.args
+                    assert isinstance(missing_access, BlockAccess)
+                    missing.add(missing_access)
         finally:
             # Raising an exception here will wake up the jobs task so we make sure it's tagged as awaken,
             # otherwise there will be a short time where the monitor is idled but the remanence monitor is not stopped
