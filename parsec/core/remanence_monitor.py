@@ -8,7 +8,7 @@ import trio
 from parsec._parsec import CoreEvent, EntryID, WorkspaceEntry
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import FSBackendOfflineError, UserFS
-from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
+from parsec.core.fs.exceptions import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
 from parsec.event_bus import EventBus, EventCallback
 from parsec.utils import open_service_nursery
 
@@ -27,6 +27,7 @@ async def monitor_remanent_workspaces(
     user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus
 ) -> None:
     on_going_tasks: set[object] = set()
+    cancel_scopes: dict[EntryID, trio.CancelScope] = {}
 
     def start_remanence_manager(workspace_id: EntryID) -> None:
         # Make sure the workspace is available
@@ -45,11 +46,22 @@ async def monitor_remanent_workspaces(
             task_status.awake()
 
         async def remanent_task() -> None:
-            nonlocal on_going_tasks
-            # Possibly block new tasks while testing
-            await freeze_remanence_monitor_mockpoint()
-            # Run task
-            await workspace_fs.run_remanence_manager(idle, awake)
+            # Already started
+            if workspace_id in cancel_scopes:
+                return
+            # Make it cancellable when reader rights are revoked
+            try:
+                with trio.CancelScope() as cancel_scopes[workspace_id]:
+                    # Possibly block new tasks while testing
+                    await freeze_remanence_monitor_mockpoint()
+                    # Run task
+                    await workspace_fs.run_remanence_manager(idle, awake)
+            # Our read rights have been revoked, no reason to collapse the monitor for that
+            except FSWorkspaceNoAccess:
+                pass
+            # Set workspace id as not running
+            finally:
+                del cancel_scopes[workspace_id]
 
         # Schedule task
         nursery.start_soon(remanent_task)
@@ -59,10 +71,13 @@ async def monitor_remanent_workspaces(
         new_entry: WorkspaceEntry,
         previous_entry: WorkspaceEntry | None,
     ) -> None:
-        # Not a new workspace
-        if previous_entry is not None:
-            return
-        start_remanence_manager(new_entry.id)
+        # No reader rights
+        if new_entry.role is None:
+            if new_entry.id in cancel_scopes:
+                cancel_scopes[new_entry.id].cancel()
+        # Reader rights have been granted
+        elif previous_entry is None or previous_entry.role is None:
+            start_remanence_manager(new_entry.id)
 
     def _fs_workspace_created(
         event: CoreEvent,
@@ -83,7 +98,8 @@ async def monitor_remanent_workspaces(
 
                 # All workspaces should be processed at startup
                 for entry in user_fs.get_user_manifest().workspaces:
-                    start_remanence_manager(entry.id)
+                    if entry.role is not None:
+                        start_remanence_manager(entry.id)
 
                 await trio.sleep_forever()
 
