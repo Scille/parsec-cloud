@@ -6,9 +6,9 @@ from typing import AsyncContextManager, Callable
 import pytest
 import trio
 
-from parsec._parsec import EntryName, LocalDevice
+from parsec._parsec import EntryName, LocalDevice, RealmRole
 from parsec.core.fs.exceptions import FSRemanenceManagerStoppedError
-from parsec.core.logged_core import CoreConfig, LoggedCore
+from parsec.core.logged_core import CoreConfig, LoggedCore, UserFS
 from parsec.core.types import DEFAULT_BLOCK_SIZE
 from tests.common import RunningBackend, customize_fixtures
 
@@ -274,6 +274,122 @@ async def test_remanence_monitor_multiple_device(
 
 @pytest.mark.trio
 @customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)
+async def test_remanence_monitor_sharing_updated(
+    running_backend,
+    alice_core: LoggedCore,
+    bob_user_fs: UserFS,
+    remanence_monitor_event: trio.Event,
+    monkeypatch,
+):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    bob_user_fs.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
+    # Create a workspace
+    wid = await bob_user_fs.workspace_create(EntryName("w"))
+    bob_workspace = bob_user_fs.get_workspace(wid)
+    await bob_user_fs.workspace_share(wid, alice_core.device.user_id, RealmRole.READER)
+    await bob_user_fs.sync()
+    await alice_core.user_fs.process_last_messages()
+    await alice_core.wait_idle_monitors()
+    alice_workspace = alice_core.user_fs.get_workspace(wid)
+
+    # Wait for the remanence manager to start
+    remanence_monitor_event.set()
+    await alice_workspace.wait_remanence_manager_prepared(wait_for_connection=True)
+
+    # Alice enable workspace remanence
+    await alice_workspace.enable_block_remanence()
+    assert alice_workspace.is_block_remanent()
+
+    # Bob add 3 files
+    await bob_workspace.mkdir("/test/")
+    await bob_workspace.write_bytes("/1.txt", b"a")
+    await bob_workspace.write_bytes("/test/2.txt", b"bc")
+    await bob_workspace.write_bytes("/test/3.txt", b"def")
+    await bob_workspace.sync()
+
+    # Wait for alice to synchronize
+    await alice_core.user_fs.process_last_messages()
+    await alice_core.wait_idle_monitors()
+
+    # Check alice info
+    info = alice_workspace.get_remanence_manager_info()
+    assert info.is_prepared
+    assert info.is_running
+    assert info.is_block_remanent
+    assert info.total_size == 6
+    assert info.local_and_remote_size == 6
+    assert info.remote_only_size == 0
+
+    # Alice rights are updated
+    await bob_user_fs.workspace_share(wid, alice_core.device.user_id, RealmRole.CONTRIBUTOR)
+    await bob_user_fs.sync()
+    await alice_core.user_fs.process_last_messages()
+    await alice_core.wait_idle_monitors()
+
+    # Check alice info
+    info = alice_workspace.get_remanence_manager_info()
+    assert info.is_prepared
+    assert info.is_running
+    assert info.is_block_remanent
+    assert info.total_size == 6
+    assert info.local_and_remote_size == 6
+    assert info.remote_only_size == 0
+
+    # Alice rights are revoked
+    await bob_user_fs.workspace_share(wid, alice_core.device.user_id, None)
+    await bob_user_fs.sync()
+    await alice_core.user_fs.process_last_messages()
+    await alice_core.wait_idle_monitors()
+
+    # Check alice info
+    info = alice_workspace.get_remanence_manager_info()
+    assert info.is_prepared
+    assert not info.is_running
+    assert info.is_block_remanent
+    assert info.total_size == 6
+    assert info.local_and_remote_size == 6
+    assert info.remote_only_size == 0
+
+    # A new file is added
+    await bob_workspace.write_bytes("/test/4.txt", b"ijkl")
+    await bob_workspace.sync()
+    await alice_core.user_fs.process_last_messages()
+    await alice_core.wait_idle_monitors()
+
+    # Check alice info
+    info = alice_workspace.get_remanence_manager_info()
+    assert info.is_prepared
+    assert not info.is_running
+    assert info.is_block_remanent
+    assert info.total_size == 6
+    assert info.local_and_remote_size == 6
+    assert info.remote_only_size == 0
+
+    # Alice rights are restored
+    await bob_user_fs.workspace_share(wid, alice_core.device.user_id, RealmRole.MANAGER)
+    await bob_user_fs.sync()
+    await alice_core.user_fs.process_last_messages()
+    await alice_core.wait_idle_monitors()
+
+    # The workspace object is still valid
+    alice_workspace2 = alice_core.user_fs.get_workspace(wid)
+    assert alice_workspace2 is alice_workspace
+
+    # Check alice info
+    info = alice_workspace.get_remanence_manager_info()
+    assert info.is_prepared
+    assert info.is_running
+    assert info.is_block_remanent
+    assert info.total_size == 10
+    assert info.local_and_remote_size == 10
+    assert info.remote_only_size == 0
+
+
+@pytest.mark.trio
+@customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)
 async def test_remanence_monitor_with_core_restart(
     core_config: CoreConfig,
     running_backend: RunningBackend,
@@ -308,10 +424,12 @@ async def test_remanence_monitor_with_core_restart(
         await workspace.wait_remanence_manager_prepared(wait_for_connection=True)
         await workspace.enable_block_remanence()
         await workspace.write_bytes("/test.txt", b"hello")
+        await workspace.sync()
         await alice_core.wait_idle_monitors()
         await workspace.mkdir("/more")
         await workspace.write_bytes("/more/test2.txt", b"world!")
         await workspace.sync()
+        await alice_core.wait_idle_monitors()
 
         # Fill up workspace
         await alice_core.wait_idle_monitors()
