@@ -46,6 +46,11 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 
 @pytest.mark.slow
 @pytest.mark.flaky(reruns=2)
+@pytest.mark.parametrize(
+    "with_remanence_monitor",
+    [False, True],
+    ids=["without_remanence_monitor", "with_remanence_monitor"],
+)
 def test_sync_monitor_stateful(
     hypothesis_settings,
     reset_testbed,
@@ -56,7 +61,12 @@ def test_sync_monitor_stateful(
     alice,
     bob,
     monkeypatch,
+    remanence_monitor_event,
+    with_remanence_monitor,
 ):
+    if with_remanence_monitor:
+        remanence_monitor_event.set()
+
     monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
 
     class SyncMonitorStateful(TrioAsyncioRuleBasedStateMachine):

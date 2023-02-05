@@ -19,7 +19,12 @@ def catch_workspace_remanence_widget(widget_catcher_factory) -> RemanenceManagem
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_remanence_dialog_monitor_disabled(
-    aqtbot, logged_gui, catch_workspace_remanence_widget, autoclose_dialog, running_backend
+    aqtbot,
+    logged_gui,
+    catch_workspace_remanence_widget,
+    autoclose_dialog,
+    running_backend,
+    remanence_monitor_event,  # Keep the remanence monitor disabled
 ):
     core = logged_gui.test_get_core()
     await core.user_fs.workspace_create(EntryName("MyWorkspace"))

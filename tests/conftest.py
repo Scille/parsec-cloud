@@ -501,22 +501,6 @@ def reset_testbed(request, caplog, persistent_mockup):
     return _reset_testbed
 
 
-# Pause the remanent monitor by default
-
-
-@pytest.fixture(autouse=True)
-def remanence_monitor_event(monkeypatch):
-    event = trio.Event()
-
-    async def mockpoint() -> None:
-        await event.wait()
-
-    monkeypatch.setattr(
-        "parsec.core.remanence_monitor.freeze_remanence_monitor_mockpoint", mockpoint
-    )
-    return event
-
-
 # Finally other fixtures
 
 

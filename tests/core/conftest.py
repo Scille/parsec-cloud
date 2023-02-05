@@ -4,6 +4,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 import pytest
+import trio
 
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.fs import UserFS
@@ -123,3 +124,16 @@ async def bob_user_fs(
     )
     async with user_fs_factory(bob) as user_fs:
         yield user_fs
+
+
+@pytest.fixture
+def remanence_monitor_event(monkeypatch):
+    event = trio.Event()
+
+    async def mockpoint() -> None:
+        await event.wait()
+
+    monkeypatch.setattr(
+        "parsec.core.remanence_monitor.freeze_remanence_monitor_mockpoint", mockpoint
+    )
+    return event
