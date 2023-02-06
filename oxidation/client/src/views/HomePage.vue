@@ -48,22 +48,11 @@
                     <ion-grid>
                       <ion-row class="ion-justify-content-between">
                         <ion-col size="1">
-                          <ion-item fill="solid">
-                            <ion-label
-                              position="floating"
-                            >
-                              {{ $t('HomePage.organizationList.search') }}
-                            </ion-label>
-                            <ion-icon
-                              :icon="searchOutline"
-                              slot="start"
-                            />
-                            <ion-input
-                              id="search-input"
-                              v-model="orgSearchString"
-                              :clear-input="true"
-                            />
-                          </ion-item>
+                          <search-input
+                            :label="t('HomePage.organizationList.search')"
+                            @change="onSearchChange($event)"
+                            id="search-input"
+                          />
                         </ion-col>
                         <ion-col size="auto">
                           <ms-select
@@ -238,6 +227,7 @@ import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
+import SearchInput from '@/components/SearchInput.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
 import { createAlert } from '@/components/AlertConfirmation';
@@ -392,6 +382,10 @@ onMounted(async (): Promise<void> => {
 
 function onPasswordChange(pwd: string): void {
   password.value = pwd;
+}
+
+function onSearchChange(search: string): void {
+  orgSearchString.value = search;
 }
 
 function onMsSelectChange(event: MsSelectChangeEvent): void {
