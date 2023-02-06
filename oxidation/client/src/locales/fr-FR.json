@@ -6,9 +6,6 @@
         "organizationList": {
             "title": "Liste de vos organisations",
             "lastLogin": "Dernière connexion sur cet appareil :",
-            "lastLoginSeconds": "il y a une seconde | il y a {seconds} secondes",
-            "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
-            "lastLoginHours": "il y a une heure | il y a {hours} heures",
             "sortOrderAsc": "Ordre croissant",
             "sortOrderDesc": "Ordre décroissant",
             "sortByOrganization": "Organisation",
@@ -156,6 +153,14 @@
                 "details": "Voir détails",
                 "revoke": "Révoquer"
             }
+        }
+    },
+    "common": {
+        "date": {
+            "lastLoginSeconds": "il y a une seconde | il y a {seconds} secondes",
+            "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
+            "lastLoginHours": "il y a une heure | il y a {hours} heures",
+            "lastLoginDays": "il y a un jour | il y a {days} jours"
         }
     }
 }

@@ -103,8 +103,8 @@
                               >
                                 <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
                                 <p>
-                                  {{ deviceStoredDataDict[device.slug] && 'lastLogin' in deviceStoredDataDict[device.slug] ?
-                                    formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) : '--' }}
+                                  {{ device.slug in deviceStoredDataDict ?
+                                    $filters.formatTimeSince(deviceStoredDataDict[device.slug].lastLogin, '--') : '--' }}
                                 </p>
                               </ion-col>
                             </ion-row>
@@ -248,7 +248,7 @@ export interface DeviceStoredData {
     lastLogin: Date;
 }
 
-const { t, d } = useI18n();
+const { t } = useI18n();
 const deviceList: AvailableDevice[] = [
   {
     organizationId: 'Planet Express Is The Best Comp!',
@@ -414,35 +414,6 @@ async function login(): Promise<void> {
   }
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
   await store.set('devicesData', toRaw(deviceStoredDataDict.value));
-}
-
-function formatLastLogin(lastLogin: Date | undefined) : string {
-  if (!lastLogin) {
-    return '';
-  }
-  // Get the difference in ms
-  let diff = Date.now().valueOf() - lastLogin.valueOf();
-
-  // To seconds
-  diff = Math.ceil(diff / 1000);
-  if (diff < 60) {
-    return t('HomePage.organizationList.lastLoginSeconds', {seconds: diff}, diff);
-  }
-
-  // To minutes
-  diff = Math.ceil(diff / 60);
-  if (diff < 60) {
-    return t('HomePage.organizationList.lastLoginMinutes', {minutes: diff}, diff);
-  }
-
-  // To hours
-  diff = Math.ceil(diff / 60);
-  if (diff < 24) {
-    return t('HomePage.organizationList.lastLoginHours', {hours: diff}, diff);
-  }
-
-  // Let's use the date as is
-  return d(lastLogin, 'long');
 }
 
 function onForgottenPasswordClick(): void {

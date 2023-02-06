@@ -6,7 +6,7 @@ import router from './router';
 
 import { Storage } from '@ionic/storage';
 import { IonicVue } from '@ionic/vue';
-import { createI18n } from 'vue-i18n';
+import { createI18n, useI18n } from 'vue-i18n';
 import frFR from './locales/fr-FR.json';
 import enUS from './locales/en-US.json';
 
@@ -25,6 +25,8 @@ import '@ionic/vue/css/text-alignment.css';
 import '@ionic/vue/css/text-transformation.css';
 import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
+
+import { formatTimeSince } from './common/date';
 
 /* Theme variables */
 import './theme/variables.css';
@@ -89,6 +91,13 @@ async function setupApp(): Promise<void> {
     .use(IonicVue)
     .use(router)
     .use(i18n);
+
+  app.config.globalProperties.$filters = {
+    formatTimeSince(date: Date, defaultValue=''): string {
+      const { t, d } = useI18n();
+      return formatTimeSince(date, t, d, defaultValue);
+    }
+  };
 
   router.isReady().then(() => {
     app.mount('#app');
