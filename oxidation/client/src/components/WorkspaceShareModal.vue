@@ -37,7 +37,7 @@
     />
   </ion-header>
   <ion-content class="ion-padding">
-    <WorkspaceShareModalUserItem
+    <workspace-share-modal-user-item
       v-for="user in filteredUsers"
       :name="user.name"
       :email="user.email"

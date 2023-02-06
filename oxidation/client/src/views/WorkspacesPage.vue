@@ -30,7 +30,7 @@
         </ion-button>
       </ion-item-divider>
       <div v-if="listView">
-        <MobileItemList
+        <mobile-item-list
           v-for="workspace in workspacesExampleData"
           :item-type="'workspace'"
           :primary-label="workspace.name"
@@ -46,7 +46,7 @@
         v-else
         class="workspaces-grid-container"
       >
-        <ItemGrid
+        <item-grid
           v-for="workspace in workspacesExampleData"
           :item-type="'workspace'"
           :primary-label="workspace.name"

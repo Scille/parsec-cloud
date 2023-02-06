@@ -14,7 +14,7 @@
       <ion-list class="ion-padding">
         <h5>{{ $t('SettingsPage.telemetry') }}</h5>
         <ion-item class="ion-margin-bottom">
-          <SettingsOption
+          <settings-option
             :title="$t('SettingsPage.enableTelemetry')"
             :description="$t('SettingsPage.enableTelemetryDescription')"
           />
@@ -27,7 +27,7 @@
           {{ $t('SettingsPage.behavior') }}
         </h5>
         <ion-item v-if="isPlatform('electron')">
-          <SettingsOption
+          <settings-option
             :title="$t('SettingsPage.minimizeToSystemTray')"
             :description="$t('SettingsPage.minimizeToSystemTrayDescription')"
           />

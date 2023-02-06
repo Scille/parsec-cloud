@@ -73,7 +73,7 @@
             </td>
           </tr>
         </table>
-        <MobileItemList
+        <mobile-item-list
           v-for="pendingUser in filteredPendingUsers"
           :key="pendingUser.id"
           item-type="pendingUser"
@@ -84,7 +84,7 @@
           @trigger-action-sheet="openPendingUserActionSheet()"
         />
         <ion-item-divider>7 utilisateurs : 2 administrateurs, 3 membres, 2 invités.</ion-item-divider>
-        <MobileItemList
+        <mobile-item-list
           v-for="user in filteredUsers"
           item-type="user"
           :primary-label="user.name"
@@ -146,7 +146,7 @@
           v-if="isPlatform('mobile')"
           class="users-grid-container"
         >
-          <ItemGrid
+          <item-grid
             v-for="pendingUser in filteredPendingUsers"
             item-type="pendingUser"
             :primary-label="pendingUser.email"
@@ -162,7 +162,7 @@
         <div
           class="users-grid-container"
         >
-          <ItemGrid
+          <item-grid
             v-for="user in filteredUsers"
             item-type="user"
             :primary-label="user.name"
