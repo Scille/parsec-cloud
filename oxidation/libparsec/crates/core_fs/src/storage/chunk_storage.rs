@@ -341,7 +341,6 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 }
 
 // Interface to access the local chunks of data
-#[derive(Clone)]
 pub(crate) struct ChunkStorage {
     conn: Arc<LocalDatabase>,
     local_symkey: SecretKey,
