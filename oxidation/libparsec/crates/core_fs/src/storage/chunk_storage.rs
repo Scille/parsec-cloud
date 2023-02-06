@@ -377,9 +377,8 @@ impl ChunkStorage {
 }
 
 // Interface for caching the data blocks.
-#[derive(Clone)]
 pub(crate) struct BlockStorage {
-    conn: Arc<LocalDatabase>,
+    conn: LocalDatabase,
     local_symkey: SecretKey,
     cache_size: u64,
     time_provider: TimeProvider,
@@ -406,7 +405,7 @@ impl BlockStorageTrait for BlockStorage {
 impl BlockStorage {
     pub async fn new(
         local_symkey: SecretKey,
-        conn: Arc<LocalDatabase>,
+        conn: LocalDatabase,
         cache_size: u64,
         time_provider: TimeProvider,
     ) -> FSResult<Self> {
@@ -434,14 +433,18 @@ mod tests {
     #[rstest]
     #[tokio::test]
     async fn chunk_storage(tmp_path: TmpPath) {
-        let db_path = tmp_path.join("chunk_storage.sqlite");
-        let conn = LocalDatabase::from_path(db_path.to_str().unwrap())
+        let chunk_db_path = tmp_path.join("chunk_storage.sqlite");
+        let chunk_conn = LocalDatabase::from_path(chunk_db_path.to_str().unwrap())
             .await
             .unwrap();
-        let conn = Arc::new(conn);
+        let block_db_path = tmp_path.join("chunk_storage.sqlite");
+        let block_conn = LocalDatabase::from_path(block_db_path.to_str().unwrap())
+            .await
+            .unwrap();
+        let chunk_conn = Arc::new(chunk_conn);
         let local_symkey = SecretKey::generate();
 
-        let chunk_storage = ChunkStorage::new(local_symkey, conn.clone(), TimeProvider::default())
+        let chunk_storage = ChunkStorage::new(local_symkey, chunk_conn, TimeProvider::default())
             .await
             .unwrap();
 
@@ -501,10 +504,14 @@ mod tests {
         let local_symkey = SecretKey::generate();
         let cache_size = *DEFAULT_BLOCK_SIZE * 1024;
 
-        let block_storage =
-            BlockStorage::new(local_symkey, conn, cache_size, TimeProvider::default())
-                .await
-                .unwrap();
+        let block_storage = BlockStorage::new(
+            local_symkey,
+            block_conn,
+            cache_size,
+            TimeProvider::default(),
+        )
+        .await
+        .unwrap();
 
         assert_eq!(block_storage.block_limit(), 1024);
 

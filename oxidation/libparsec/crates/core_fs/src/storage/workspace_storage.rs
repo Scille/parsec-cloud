@@ -109,7 +109,6 @@ impl WorkspaceStorage {
                 .expect("Non-Utf-8 character found in cache_path"),
         )
         .await?;
-        let cache_conn = Arc::new(cache_conn);
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
