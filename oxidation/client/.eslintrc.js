@@ -52,7 +52,10 @@ module.exports = {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     'vue/html-indent': ['error', 2],
-    'vue/no-deprecated-slot-attribute': 'off'
+    'vue/no-deprecated-slot-attribute': 'off',
+    'vue/component-name-in-template-casing': ['error', 'kebab-case', {
+      'registeredComponentsOnly': false
+    }]
   },
   overrides: [
     {

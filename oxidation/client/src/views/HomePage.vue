@@ -66,7 +66,7 @@
                           </ion-item>
                         </ion-col>
                         <ion-col size="auto">
-                          <MsSelect
+                          <ms-select
                             id="filter-select"
                             label="t('HomePage.organizationList.labelSortBy')"
                             :options="msSelectOptions"
@@ -93,7 +93,7 @@
                       >
                         <ion-card-content>
                           <ion-grid>
-                            <OrganizationCard
+                            <organization-card
                               :device="device"
                               class="organization-card"
                             />
@@ -166,8 +166,8 @@
                   <ion-card id="login-card-container">
                     <ion-card-content>
                       <ion-grid>
-                        <OrganizationCard :device="selectedDevice" />
-                        <PasswordInput
+                        <organization-card :device="selectedDevice" />
+                        <password-input
                           :label="t('HomePage.organizationLogin.passwordLabel')"
                           @change="onPasswordChange($event)"
                           @enter="login()"
