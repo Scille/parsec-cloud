@@ -32,8 +32,8 @@
           </ion-grid>
         </div>
         <div id="container">
-          <transition-group
-            :name="showOrganizationList ? 'slide-left' : 'slide-right'"
+          <slide-horizontal
+            :reverse-direction="!showOrganizationList"
           >
             <ion-card
               v-if="showOrganizationList"
@@ -200,7 +200,7 @@
                 </div>
               </ion-card-content>
             </ion-card>
-          </transition-group>
+          </slide-horizontal>
         </div>
       </div>
     </ion-content>
@@ -243,6 +243,7 @@ import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
+import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 
 export interface DeviceStoredData {
     lastLogin: Date;
@@ -539,25 +540,6 @@ async function canDismissModal(): Promise<boolean> {
   ion-card {
     flex-grow: 0;
     flex-shrink: 0;
-  }
-
-  .slide-left-enter-active, .slide-right-enter-active {
-    transition: 0.5s ease-in-out;
-    transition-delay: 0.5s;
-  }
-
-  .slide-left-leave-active, .slide-right-leave-active {
-    transition: 0.5s;
-  }
-
-  .slide-left-enter-from, .slide-right-leave-to {
-    opacity: 0;
-    transform: translate(-100%, 0);
-  }
-
-  .slide-left-leave-to, .slide-right-enter-from {
-    opacity: 0;
-    transform: translate(100%, 0);
   }
 
   .organization-list {
