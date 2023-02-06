@@ -534,7 +534,9 @@ async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
     w_w = logged_gui.test_get_workspaces_widget()
     core = logged_gui.test_get_core()
 
-    w_w.check_hide_unmounted.setChecked(False)
+    # Should be false by default
+    assert core.config.gui_hide_unmounted is False
+    assert w_w.check_hide_unmounted.isChecked() is False
 
     workspace_name = EntryName("wksp1")
 
@@ -567,6 +569,7 @@ async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
 
     # Hide unmounted True, workspace mounted False, workspace should not be visible
     w_w.check_hide_unmounted.setChecked(True)
+
     aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(lambda: _workspace_visible(False))
 

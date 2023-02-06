@@ -178,7 +178,7 @@
           <string>TEXT_WORKSPACES_HIDE_UNMOUNTED</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>

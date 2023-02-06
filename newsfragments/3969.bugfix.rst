@@ -1,0 +1,1 @@
+Unmounted workspaces are no longer hidden by default and the state is saved when the application exits

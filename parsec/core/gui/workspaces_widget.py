@@ -177,7 +177,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.unmount_error.connect(self.on_unmount_error)
         self.file_open_success.connect(self._on_file_open_success)
         self.file_open_error.connect(self._on_file_open_error)
-        self.check_hide_unmounted.stateChanged.connect(self._on_hide_unmounted_changed)
+        self.check_hide_unmounted.setChecked(self.core.config.gui_hide_unmounted)
+        self.check_hide_unmounted.toggled.connect(self._on_hide_unmounted_changed)
 
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
@@ -258,7 +259,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.layout_workspaces.itemAt(0).widget(), WorkspaceButton
         )
 
-    def _on_hide_unmounted_changed(self, state: object) -> None:
+    def _on_hide_unmounted_changed(self, checked: bool) -> None:
+        self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_hide_unmounted=checked)
         self.refresh_workspace_layout()
 
     def goto_file_clicked(self) -> None:
@@ -414,7 +416,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # Get info for both filters
         name_filter = self.line_edit_search.text().lower() or None
         user_filter = self.filter_user_info and self.filter_user_info.user_id
-        hide_unmounted_filter = self.check_hide_unmounted.checkState() == Qt.Checked
+        hide_unmounted_filter = self.check_hide_unmounted.isChecked()
 
         # Remove all widgets and add them back in order to make sure the order is always correct
         self.layout_workspaces.pop_all()
