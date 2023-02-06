@@ -93,7 +93,7 @@ async function setupApp(): Promise<void> {
     .use(i18n);
 
   app.config.globalProperties.$filters = {
-    formatTimeSince(date: Date, defaultValue=''): string {
+    formatTimeSince(date: Date | undefined, defaultValue=''): string {
       const { t, d } = useI18n();
       return formatTimeSince(date, t, d, defaultValue);
     }
