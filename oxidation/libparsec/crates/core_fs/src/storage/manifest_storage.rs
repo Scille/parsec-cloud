@@ -87,7 +87,6 @@ struct NewPreventSyncPattern<'a> {
     fully_applied: bool,
 }
 
-#[derive(Clone)]
 pub struct ManifestStorage {
     local_symkey: SecretKey,
     conn: Arc<LocalDatabase>,
