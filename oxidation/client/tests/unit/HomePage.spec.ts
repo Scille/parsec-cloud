@@ -148,7 +148,10 @@ describe('HomePage.vue', () => {
       }
     });
 
+    let searchInput: VueWrapper;
+
     it('should filter orgs', async () => {
+      searchInput = wrapper.findComponent({name: 'SearchInput'}) as VueWrapper;
       expect(wrapper.vm.deviceList.length).toEqual(7);
       expect(wrapper.vm.orgSearchString).toEqual('');
       expect(wrapper.vm.sortBy).toEqual('organization');
@@ -160,7 +163,7 @@ describe('HomePage.vue', () => {
       expect(wrapper.vm.filteredDevices[6].organizationId).toEqual('Sanctum Sanctorum');
 
       expect(wrapper.findComponent('ion-input').exists()).toBeTruthy();
-      await wrapper.findComponent('ion-input').setValue('la');
+      await searchInput.vm.$emit('change', 'la');
 
       expect(wrapper.vm.orgSearchString).toEqual('la');
       expect(wrapper.vm.filteredDevices.length).toEqual(3);
@@ -192,7 +195,7 @@ describe('HomePage.vue', () => {
       }]);
 
       // Resetting the search string
-      await wrapper.findComponent('ion-input').setValue('');
+      await searchInput.vm.$emit('change', '');
       expect(wrapper.vm.orgSearchString).toEqual('');
       expect(wrapper.vm.filteredDevices.length).toEqual(7);
 
