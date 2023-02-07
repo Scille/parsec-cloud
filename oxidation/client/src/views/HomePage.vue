@@ -32,8 +32,8 @@
           </ion-grid>
         </div>
         <div id="container">
-          <transition-group
-            :name="showOrganizationList ? 'slide-left' : 'slide-right'"
+          <slide-horizontal
+            :reverse-direction="!showOrganizationList"
           >
             <ion-card
               v-if="showOrganizationList"
@@ -48,25 +48,14 @@
                     <ion-grid>
                       <ion-row class="ion-justify-content-between">
                         <ion-col size="1">
-                          <ion-item fill="solid">
-                            <ion-label
-                              position="floating"
-                            >
-                              {{ $t('HomePage.organizationList.search') }}
-                            </ion-label>
-                            <ion-icon
-                              :icon="searchOutline"
-                              slot="start"
-                            />
-                            <ion-input
-                              id="search-input"
-                              v-model="orgSearchString"
-                              :clear-input="true"
-                            />
-                          </ion-item>
+                          <search-input
+                            :label="t('HomePage.organizationList.search')"
+                            @change="onSearchChange($event)"
+                            id="search-input"
+                          />
                         </ion-col>
                         <ion-col size="auto">
-                          <MsSelect
+                          <ms-select
                             id="filter-select"
                             label="t('HomePage.organizationList.labelSortBy')"
                             :options="msSelectOptions"
@@ -93,7 +82,7 @@
                       >
                         <ion-card-content>
                           <ion-grid>
-                            <OrganizationCard
+                            <organization-card
                               :device="device"
                               class="organization-card"
                             />
@@ -166,8 +155,8 @@
                   <ion-card id="login-card-container">
                     <ion-card-content>
                       <ion-grid>
-                        <OrganizationCard :device="selectedDevice" />
-                        <PasswordInput
+                        <organization-card :device="selectedDevice" />
+                        <password-input
                           :label="t('HomePage.organizationLogin.passwordLabel')"
                           @change="onPasswordChange($event)"
                           @enter="login()"
@@ -200,7 +189,7 @@
                 </div>
               </ion-card-content>
             </ion-card>
-          </transition-group>
+          </slide-horizontal>
         </div>
       </div>
     </ion-content>
@@ -238,82 +227,21 @@ import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
+import SearchInput from '@/components/SearchInput.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
+import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
+import { getMockDevices, mockLastLogin } from '../common/mocks';
 
 export interface DeviceStoredData {
     lastLogin: Date;
 }
 
-const { t } = useI18n();
-const deviceList: AvailableDevice[] = [
-  {
-    organizationId: 'Planet Express Is The Best Comp!',
-    humanHandle: 'Dr. John A. Zoidberg',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug1',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'PPTH',
-    humanHandle: 'Dr. Gregory House',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug2',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Black Mesa',
-    humanHandle: 'Dr. Gordon Freeman',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug3',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'OsCorp',
-    humanHandle: 'Dr. Otto G. Octavius',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug4',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Sanctum Sanctorum',
-    humanHandle: 'Dr. Stephen Strange',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug5',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Holmes Consulting',
-    humanHandle: 'Dr John H. Watson',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug6',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Riviera M.D.',
-    humanHandle: 'Dr. Nicholas "Nick" Riviera',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug7',
-    ty: {tag: 'Password'}
-  }
-];
+const { t, d } = useI18n();
+const deviceList: AvailableDevice[] = getMockDevices();
 let selectedDevice: AvailableDevice;
 const password = ref('');
 const orgSearchString = ref('');
@@ -370,8 +298,9 @@ const filteredDevices = computed(() => {
 const deviceStoredDataDict = ref<{[slug: string]: DeviceStoredData}>({});
 
 onMounted(async (): Promise<void> => {
-  await store.create();
+  await mockLastLogin();
 
+  await store.create();
   store.get('devicesData').then((val) => {
     // This is needed because for some weird reason,
     // ionic-storage deserializes dates correctly in web
@@ -392,6 +321,10 @@ onMounted(async (): Promise<void> => {
 
 function onPasswordChange(pwd: string): void {
   password.value = pwd;
+}
+
+function onSearchChange(search: string): void {
+  orgSearchString.value = search;
 }
 
 function onMsSelectChange(event: MsSelectChangeEvent): void {
@@ -480,7 +413,7 @@ async function canDismissModal(): Promise<boolean> {
     flex-basis: 5em;
     flex-grow: 0;
     flex-shrink: 0;
-    background: #fefefe;
+    background: var(--parsec-color-light-secondary-inversed-contrast);
     width: 100vw;
     justify-content: center;
     margin-bottom: 5em;
@@ -513,25 +446,6 @@ async function canDismissModal(): Promise<boolean> {
     flex-shrink: 0;
   }
 
-  .slide-left-enter-active, .slide-right-enter-active {
-    transition: 0.5s ease-in-out;
-    transition-delay: 0.5s;
-  }
-
-  .slide-left-leave-active, .slide-right-leave-active {
-    transition: 0.5s;
-  }
-
-  .slide-left-enter-from, .slide-right-leave-to {
-    opacity: 0;
-    transform: translate(-100%, 0);
-  }
-
-  .slide-left-leave-to, .slide-right-enter-from {
-    opacity: 0;
-    transform: translate(100%, 0);
-  }
-
   .organization-list {
     padding: 3em;
     padding-bottom: 4em;
@@ -544,22 +458,6 @@ async function canDismissModal(): Promise<boolean> {
     .organization-list-grid {
       max-height: 30em;
       overflow-y: auto;
-      scrollbar-color: #0058CC #F9F9FB;
-      scrollbar-width: thin;
-
-    &::-webkit-scrollbar {
-      width: 1em;
-      border-radius: 1em;
-      background: #F9F9FB;
-      border: 1px solid #EAEAF1;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      border-radius: 1em;
-      background: #0058CC;
-      border: 0.25em solid transparent;
-      background-clip: content-box;
-    }
     }
 
     ion-item {
@@ -573,7 +471,7 @@ async function canDismissModal(): Promise<boolean> {
     }
 
     .organization-card-container {
-      background: #F9F9FB;
+      background: var(--parsec-color-light-secondary-background);
       margin: 1em 1.5em;
       user-select: none;
 
@@ -587,9 +485,9 @@ async function canDismissModal(): Promise<boolean> {
 
       .organization-card-footer {
         padding: 0.5em 1em;
-        background: #F3F3F7;
-        border-top: 1px solid #EAEAF1;
-        color: #8585AD;
+        background: var(--parsec-color-light-secondary-medium);
+        border-top: 1px solid var(--parsec-color-light-secondary-disabled);
+        color: var(--parsec-color-light-secondary-grey);
         height: 4.6em;
 
         p {
@@ -598,20 +496,20 @@ async function canDismissModal(): Promise<boolean> {
       }
 
       &:hover {
-        background: #E5F1FF;
+        background: var(--parsec-color-light-primary-50);
         cursor: pointer;
 
         .organization-card-footer {
-          background: #E5F1FF;
-          border-top: 1px solid #CCE2FF;
+          background: var(--parsec-color-light-primary-50);
+          border-top: 1px solid var(--parsec-color-light-primary-100);
         }
       }
     }
   }
 
   .no-existing-organization {
-    border-top: 1px solid #cce2ff;
-    background: #fafafa;
+    border-top: 1px solid var(--parsec-color-light-primary-100);
+    background: var(--parsec-color-light-secondary-background);
     padding: 3em;
     padding-bottom: 4em;
   }
@@ -625,7 +523,7 @@ async function canDismissModal(): Promise<boolean> {
     margin-left: 3em;
 
     #login-card-container {
-      background: #f9f9fb;
+      background: var(--parsec-color-light-secondary-background);
       border-radius: 8px;
       padding: 2em;
 

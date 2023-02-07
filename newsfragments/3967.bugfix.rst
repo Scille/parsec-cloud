@@ -1,0 +1,1 @@
+No longer hides user invitations if they match the search string
