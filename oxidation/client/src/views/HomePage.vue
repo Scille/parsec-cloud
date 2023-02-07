@@ -235,76 +235,14 @@ import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 
+import { getMockDevices, mockLastLogin } from '../common/mocks';
+
 export interface DeviceStoredData {
     lastLogin: Date;
 }
 
 const { t, d } = useI18n();
-const deviceList: AvailableDevice[] = [
-  {
-    organizationId: 'Planet Express Is The Best Comp!',
-    humanHandle: 'Dr. John A. Zoidberg',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug1',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'PPTH',
-    humanHandle: 'Dr. Gregory House',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug2',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Black Mesa',
-    humanHandle: 'Dr. Gordon Freeman',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug3',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'OsCorp',
-    humanHandle: 'Dr. Otto G. Octavius',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug4',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Sanctum Sanctorum',
-    humanHandle: 'Dr. Stephen Strange',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug5',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Holmes Consulting',
-    humanHandle: 'Dr John H. Watson',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug6',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Riviera M.D.',
-    humanHandle: 'Dr. Nicholas "Nick" Riviera',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug7',
-    ty: {tag: 'Password'}
-  }
-];
+const deviceList: AvailableDevice[] = getMockDevices(-1);
 let selectedDevice: AvailableDevice;
 const password = ref('');
 const orgSearchString = ref('');
@@ -312,6 +250,8 @@ const showOrganizationList = ref(true);
 const store = new Storage();
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
+
+mockLastLogin();
 
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },

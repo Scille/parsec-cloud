@@ -44,7 +44,7 @@ describe('Check organization list', () => {
     cy.get('.organization-card-container').first().contains('Black Mesa');
     cy.get('.organization-card-container').last().contains('Sanctum Sanctorum');
     cy.get('#search-input > input').type('la');
-    cy.get('.organization-card-container').should('have.length', 3);
+    cy.get('.organization-card-container').should('have.length', 4);
     // Only 3 orgs shown
     cy.get('.organization-card-container').first().contains('Black Mesa');
     cy.get('.organization-card-container').last().contains('Riviera M.D.');
