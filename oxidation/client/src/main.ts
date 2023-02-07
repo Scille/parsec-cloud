@@ -92,12 +92,12 @@ async function setupApp(): Promise<void> {
     .use(router)
     .use(i18n);
 
-  app.config.globalProperties.$filters = {
-    formatTimeSince(date: Date | undefined, defaultValue=''): string {
+  app.provide('formatters', {
+    'timeSince': (date: Date | undefined, defaultValue=''): string => {
       const { t, d } = useI18n();
       return formatTimeSince(date, t, d, defaultValue);
     }
-  };
+  });
 
   router.isReady().then(() => {
     app.mount('#app');

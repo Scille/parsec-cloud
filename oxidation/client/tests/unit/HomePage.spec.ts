@@ -2,13 +2,14 @@
 
 import { mount, VueWrapper } from '@vue/test-utils';
 import HomePage from '@/views/HomePage.vue';
-import { createI18n } from 'vue-i18n';
+import { createI18n, useI18n } from 'vue-i18n';
 import frFR from '../../src/locales/fr-FR.json';
 import enUS from '../../src/locales/en-US.json';
 import { modalController } from '@ionic/vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import { Storage } from '@ionic/storage';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
+import { formatTimeSince } from '@/common/date';
 
 describe('HomePage.vue', () => {
   type MessageSchema = typeof frFR;
@@ -73,7 +74,15 @@ describe('HomePage.vue', () => {
 
   const wrapper = mount(HomePage, {
     global: {
-      plugins: [i18n]
+      plugins: [i18n],
+      provide: {
+        formatters: {
+          timeSince: (date: Date | undefined, defaultValue=''): string => {
+            const { t, d } = useI18n();
+            return formatTimeSince(date, t, d, defaultValue);
+          }
+        }
+      }
     }
   });
 
@@ -144,7 +153,15 @@ describe('HomePage.vue', () => {
   describe('Login filter orgs', () => {
     const wrapper = mount(HomePage, {
       global: {
-        plugins: [i18n]
+        plugins: [i18n],
+        provide: {
+          formatters: {
+            timeSince: (date: Date | undefined, defaultValue=''): string => {
+              const { t, d } = useI18n();
+              return formatTimeSince(date, t, d, defaultValue);
+            }
+          }
+        }
       }
     });
 

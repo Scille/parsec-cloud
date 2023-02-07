@@ -104,7 +104,7 @@
                                 <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
                                 <p>
                                   {{ device.slug in deviceStoredDataDict ?
-                                    $filters.formatTimeSince(deviceStoredDataDict[device.slug].lastLogin, '--') : '--' }}
+                                    formatters.timeSince(deviceStoredDataDict[device.slug].lastLogin, '--') : '--' }}
                                 </p>
                               </ion-col>
                             </ion-row>
@@ -233,7 +233,7 @@ import {
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
-import { onMounted, ref, toRaw, computed } from 'vue';
+import { onMounted, ref, toRaw, computed, inject } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
@@ -321,6 +321,7 @@ const showOrganizationList = ref(true);
 const store = new Storage();
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
+const formatters = inject('formatters');
 
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
