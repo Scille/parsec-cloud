@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import { mount, shallowMount } from '@vue/test-utils';
-import { createI18n } from 'vue-i18n';
+import { createI18n, useI18n } from 'vue-i18n';
 import HeaderPage from '@/views/HeaderPage.vue';
 import router from '../../src/router';
 import frFR from '../../src/locales/fr-FR.json';
 import enUS from '../../src/locales/en-US.json';
+import { formatTimeSince } from '@/common/date';
 
 describe('HeaderPage.vue', () => {
   type MessageSchema = typeof frFR;
@@ -32,10 +33,15 @@ describe('HeaderPage.vue', () => {
 
   const wrapper = mount(HeaderPage, {
     global: {
-      plugins: [i18n, router]
-      // mocks: {
-      //   $router: mockRouter
-      // }
+      plugins: [i18n, router],
+      provide: {
+        formatters: {
+          timeSince: (date: Date | undefined, defaultValue=''): string => {
+            const { t, d } = useI18n();
+            return formatTimeSince(date, t, d, defaultValue);
+          }
+        }
+      }
     },
     attachToDocument: true,
     sync: false

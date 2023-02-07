@@ -92,8 +92,8 @@
                               >
                                 <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
                                 <p>
-                                  {{ deviceStoredDataDict[device.slug] && 'lastLogin' in deviceStoredDataDict[device.slug] ?
-                                    formatLastLogin(deviceStoredDataDict[device.slug].lastLogin) : '--' }}
+                                  {{ device.slug in deviceStoredDataDict ?
+                                    timeSince(deviceStoredDataDict[device.slug].lastLogin, '--') : '--' }}
                                 </p>
                               </ion-col>
                             </ion-row>
@@ -222,7 +222,7 @@ import {
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
-import { onMounted, ref, toRaw, computed } from 'vue';
+import { onMounted, ref, toRaw, computed, inject } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
@@ -249,6 +249,7 @@ const showOrganizationList = ref(true);
 const store = new Storage();
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
+const { timeSince } = inject('formatters');
 
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
@@ -347,35 +348,6 @@ async function login(): Promise<void> {
   }
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
   await store.set('devicesData', toRaw(deviceStoredDataDict.value));
-}
-
-function formatLastLogin(lastLogin: Date | undefined) : string {
-  if (!lastLogin) {
-    return '';
-  }
-  // Get the difference in ms
-  let diff = Date.now().valueOf() - lastLogin.valueOf();
-
-  // To seconds
-  diff = Math.ceil(diff / 1000);
-  if (diff < 60) {
-    return t('HomePage.organizationList.lastLoginSeconds', {seconds: diff}, diff);
-  }
-
-  // To minutes
-  diff = Math.ceil(diff / 60);
-  if (diff < 60) {
-    return t('HomePage.organizationList.lastLoginMinutes', {minutes: diff}, diff);
-  }
-
-  // To hours
-  diff = Math.ceil(diff / 60);
-  if (diff < 24) {
-    return t('HomePage.organizationList.lastLoginHours', {hours: diff}, diff);
-  }
-
-  // Let's use the date as is
-  return d(lastLogin, 'long');
 }
 
 function onForgottenPasswordClick(): void {
