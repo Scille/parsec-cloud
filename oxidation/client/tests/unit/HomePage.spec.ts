@@ -62,14 +62,8 @@ describe('HomePage.vue', () => {
     }
   });
 
-  // temporary, delete this when true data will exists by bindings
-  store.create().then(() => {
-    store.set('devicesData', {
-      slug1: { lastLogin: new Date('01/11/2023') },
-      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
-      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
-    });
-  });
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date('04/28/1999 18:00:00'));
 
   const wrapper = mount(HomePage, {
     global: {
@@ -81,15 +75,19 @@ describe('HomePage.vue', () => {
     jest.clearAllMocks();
   });
 
-  it('renders home vue', () => {
+  it('renders home vue', async () => {
     expect(wrapper.text()).toMatch(new RegExp('List of your organizations'));
   });
 
   it('should get devices stored data on mount', () => {
     expect(wrapper.vm.deviceStoredDataDict).toEqual({
-      slug1: { lastLogin: new Date('01/11/2023') },
-      slug2: { lastLogin: new Date('01/12/2023 12:03:05') },
-      slug3: { lastLogin: new Date('01/12/2023 15:12:04') }
+      slug1: { lastLogin: new Date('04/28/1999 18:00:00') },
+      slug2: { lastLogin: new Date('04/28/1999 17:59:50') },
+      slug3: { lastLogin: new Date('04/28/1999 17:50:00') },
+      slug4: {},
+      slug5: { lastLogin: new Date('04/28/1999 13:00:00') },
+      slug6: { lastLogin: new Date('04/26/1999 18:00:00') },
+      slug7: { lastLogin: new Date('04/18/1999 18:00:00') }
     });
   });
 
@@ -166,7 +164,7 @@ describe('HomePage.vue', () => {
       await searchInput.vm.$emit('change', 'la');
 
       expect(wrapper.vm.orgSearchString).toEqual('la');
-      expect(wrapper.vm.filteredDevices.length).toEqual(3);
+      expect(wrapper.vm.filteredDevices.length).toEqual(4);
       expect(wrapper.vm.filteredDevices).toEqual([{
         organizationId: 'Black Mesa',
         humanHandle: 'Dr. Gordon Freeman',
@@ -176,12 +174,21 @@ describe('HomePage.vue', () => {
         slug: 'slug3',
         ty: {tag: 'Password'}
       }, {
-        organizationId: 'Planet Express Is The Best Comp!',
+        organizationId: 'Planet Express',
         humanHandle: 'Dr. John A. Zoidberg',
         deviceLabel: 'device_label',
         keyFilePath: 'key_file_path',
         deviceId: 'device_id',
         slug: 'slug1',
+        ty: {tag: 'Password'}
+      },
+      {
+        organizationId: 'Princeton–Plainsboro Hospital',
+        humanHandle: 'Dr. Gregory House',
+        deviceLabel: 'device_label',
+        keyFilePath: 'key_file_path',
+        deviceId: 'device_id',
+        slug: 'slug2',
         ty: {tag: 'Password'}
       },
       {
@@ -209,14 +216,14 @@ describe('HomePage.vue', () => {
       wrapper.vm.sortBy = 'last_login';
       // Should be order by last login date descending
       expect(wrapper.vm.filteredDevices[0].slug).toEqual('slug4');
-      expect(wrapper.vm.filteredDevices[4].slug).toEqual('slug1');
-      expect(wrapper.vm.filteredDevices[6].slug).toEqual('slug3');
+      expect(wrapper.vm.filteredDevices[4].slug).toEqual('slug3');
+      expect(wrapper.vm.filteredDevices[6].slug).toEqual('slug1');
 
       // Sort by last login date ascending
       wrapper.vm.sortByAsc = true;
-      expect(wrapper.vm.filteredDevices[0].slug).toEqual('slug3');
-      expect(wrapper.vm.filteredDevices[2].slug).toEqual('slug1');
-      expect(wrapper.vm.filteredDevices[6].slug).toEqual('slug7');
+      expect(wrapper.vm.filteredDevices[0].slug).toEqual('slug1');
+      expect(wrapper.vm.filteredDevices[2].slug).toEqual('slug3');
+      expect(wrapper.vm.filteredDevices[6].slug).toEqual('slug4');
 
       wrapper.vm.sortBy = 'user_name';
       // Should be order by user name ascending

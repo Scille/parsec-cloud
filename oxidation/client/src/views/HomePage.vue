@@ -234,77 +234,14 @@ import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
+import { getMockDevices, mockLastLogin } from '../common/mocks';
 
 export interface DeviceStoredData {
     lastLogin: Date;
 }
 
 const { t, d } = useI18n();
-const deviceList: AvailableDevice[] = [
-  {
-    organizationId: 'Planet Express Is The Best Comp!',
-    humanHandle: 'Dr. John A. Zoidberg',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug1',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'PPTH',
-    humanHandle: 'Dr. Gregory House',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug2',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Black Mesa',
-    humanHandle: 'Dr. Gordon Freeman',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug3',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'OsCorp',
-    humanHandle: 'Dr. Otto G. Octavius',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug4',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Sanctum Sanctorum',
-    humanHandle: 'Dr. Stephen Strange',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug5',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Holmes Consulting',
-    humanHandle: 'Dr John H. Watson',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug6',
-    ty: {tag: 'Password'}
-  },
-  {
-    organizationId: 'Riviera M.D.',
-    humanHandle: 'Dr. Nicholas "Nick" Riviera',
-    deviceLabel: 'device_label',
-    keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
-    slug: 'slug7',
-    ty: {tag: 'Password'}
-  }
-];
+const deviceList: AvailableDevice[] = getMockDevices();
 let selectedDevice: AvailableDevice;
 const password = ref('');
 const orgSearchString = ref('');
@@ -360,8 +297,9 @@ const filteredDevices = computed(() => {
 const deviceStoredDataDict = ref<{[slug: string]: DeviceStoredData}>({});
 
 onMounted(async (): Promise<void> => {
-  await store.create();
+  await mockLastLogin();
 
+  await store.create();
   store.get('devicesData').then((val) => {
     // This is needed because for some weird reason,
     // ionic-storage deserializes dates correctly in web
