@@ -93,7 +93,7 @@
                                 <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
                                 <p>
                                   {{ device.slug in deviceStoredDataDict ?
-                                    formatters.timeSince(deviceStoredDataDict[device.slug].lastLogin, '--') : '--' }}
+                                    timeSince(deviceStoredDataDict[device.slug].lastLogin, '--') : '--' }}
                                 </p>
                               </ion-col>
                             </ion-row>
@@ -249,7 +249,7 @@ const showOrganizationList = ref(true);
 const store = new Storage();
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
-const formatters = inject('formatters');
+const { timeSince } = inject('formatters');
 
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
