@@ -234,7 +234,6 @@ import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { Storage } from '@ionic/storage';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
-
 import { getMockDevices, mockLastLogin } from '../common/mocks';
 
 export interface DeviceStoredData {
@@ -242,7 +241,7 @@ export interface DeviceStoredData {
 }
 
 const { t, d } = useI18n();
-const deviceList: AvailableDevice[] = getMockDevices(-1);
+const deviceList: AvailableDevice[] = getMockDevices();
 let selectedDevice: AvailableDevice;
 const password = ref('');
 const orgSearchString = ref('');

@@ -75,7 +75,7 @@ describe('HomePage.vue', () => {
     jest.clearAllMocks();
   });
 
-  it('renders home vue', () => {
+  it('renders home vue', async () => {
     expect(wrapper.text()).toMatch(new RegExp('List of your organizations'));
   });
 

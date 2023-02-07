@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import { Storage } from '@ionic/storage';
-
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 
 const MOCK_DEVICES: AvailableDevice[] = [
@@ -70,14 +69,14 @@ const MOCK_DEVICES: AvailableDevice[] = [
   }
 ];
 
-export function getMockDevices(count = -1): AvailableDevice[] {
-  if (count === -1) {
+export function getMockDevices(count: number | undefined = undefined): AvailableDevice[] {
+  if (!count) {
     return MOCK_DEVICES;
   }
   return MOCK_DEVICES.slice(0, count);
 }
 
-export function mockLastLogin(): void {
+export async function mockLastLogin(): Promise<void> {
   const store = new Storage();
   const now = new Date();
 
@@ -88,21 +87,20 @@ export function mockLastLogin(): void {
     return x;
   }
 
-  store.create().then(() => {
-    store.set('devicesData', {
-      slug1: { lastLogin: now },
-      // 10 seconds ago
-      slug2: { lastLogin: newDateWithOffset(now, -1 * 10 * 1000) },
-      // 10 minutes ago
-      slug3: { lastLogin: newDateWithOffset(now, -1 * 10 * 60 * 1000) },
-      // Never logged
-      slug4: { },
-      // 5 hours ago
-      slug5: { lastLogin: newDateWithOffset(now, -1 * 5 * 60 * 60 * 1000) },
-      // 2 days ago
-      slug6: { lastLogin: newDateWithOffset(now, -1 * 2 * 24 * 60 * 60 * 1000) },
-      // 10 days ago
-      slug7: { lastLogin: newDateWithOffset(now, -1 * 10 * 24 * 60 * 60 * 1000) }
-    });
+  await store.create();
+  store.set('devicesData', {
+    slug1: { lastLogin: now },
+    // 10 seconds ago
+    slug2: { lastLogin: newDateWithOffset(now, -1 * 10 * 1000) },
+    // 10 minutes ago
+    slug3: { lastLogin: newDateWithOffset(now, -1 * 10 * 60 * 1000) },
+    // Never logged
+    slug4: { },
+    // 5 hours ago
+    slug5: { lastLogin: newDateWithOffset(now, -1 * 5 * 60 * 60 * 1000) },
+    // 2 days ago
+    slug6: { lastLogin: newDateWithOffset(now, -1 * 2 * 24 * 60 * 60 * 1000) },
+    // 10 days ago
+    slug7: { lastLogin: newDateWithOffset(now, -1 * 10 * 24 * 60 * 60 * 1000) }
   });
 }
