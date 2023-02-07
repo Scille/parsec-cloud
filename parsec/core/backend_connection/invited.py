@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator
 import trio
 
 from parsec.api.protocol import INVITED_CMDS
-from parsec.core.backend_connection import cmds
-from parsec.core.backend_connection.exceptions import BackendNotAvailable
+from parsec.core.backend_connection import BackendNotAvailable, cmds
 from parsec.core.backend_connection.expose_cmds import Transport, expose_cmds_with_retrier
 from parsec.core.backend_connection.transport import connect_as_invited
 from parsec.core.types import BackendAddrType, BackendInvitationAddr

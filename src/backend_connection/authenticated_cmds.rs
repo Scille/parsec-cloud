@@ -1,270 +1,27 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::sync::Arc;
-
 use pyo3::{pyclass, pymethods, PyResult};
+use std::{collections::HashMap, num::NonZeroU64, sync::Arc};
 
-use libparsec::{client_connection, protocol::authenticated_cmds};
-
-use crate::{
-    addrs::BackendOrganizationAddr, api_crypto::SigningKey, ids::DeviceID, protocol::*,
-    runtime::FutureIntoCoroutine,
+use libparsec::{
+    client_connection,
+    protocol::{authenticated_cmds, IntegerBetween1And100},
+    types::Maybe,
 };
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct AuthenticatedCmdsType(authenticated_cmds::v2::AnyCmdReq);
-
-#[pymethods]
-impl AuthenticatedCmdsType {
-    #[staticmethod]
-    #[pyo3(name = "BLOCK_CREATE")]
-    fn block_create(req: BlockCreateReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::BlockCreate(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "BLOCK_READ")]
-    fn block_read(req: BlockReadReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::BlockRead(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "DEVICE_CREATE")]
-    fn device_create(req: DeviceCreateReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::DeviceCreate(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "EVENTS_LISTEN")]
-    fn events_listen(req: EventsListenReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::EventsListen(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "EVENTS_SUBSCRIBE")]
-    fn events_subscribe(req: EventsSubscribeReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::EventsSubscribe(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "HUMAN_FIND")]
-    fn human_find(req: HumanFindReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::HumanFind(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE1_GREETER_WAIT_PEER")]
-    fn invite1_greeter_wait_peer(req: Invite1GreeterWaitPeerReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::Invite1GreeterWaitPeer(
-            req.0,
-        ))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE2A_GREETER_GET_HASHED_NONCE")]
-    fn invite2a_greeter_get_hashed_nonce(req: Invite2aGreeterGetHashedNonceReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::Invite2aGreeterGetHashedNonce(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE2B_GREETER_SEND_NONCE")]
-    fn invite2b_greeter_send_nonce(req: Invite2bGreeterSendNonceReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::Invite2bGreeterSendNonce(
-            req.0,
-        ))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE3A_GREETER_WAIT_PEER_TRUST")]
-    fn invite3a_greeter_wait_peer_trust(req: Invite3aGreeterWaitPeerTrustReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::Invite3aGreeterWaitPeerTrust(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE3B_GREETER_SIGNIFY_TRUST")]
-    fn invite3b_greeter_signify_trust(req: Invite3bGreeterSignifyTrustReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::Invite3bGreeterSignifyTrust(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE4GREETER_COMMUNICATE")]
-    fn invite4greeter_communicate(req: Invite4GreeterCommunicateReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::Invite4GreeterCommunicate(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE_DELETE")]
-    fn invite_delete(req: InviteDeleteReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::InviteDelete(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE_LIST")]
-    fn invite_list(req: InviteListReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::InviteList(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "INVITE_NEW")]
-    fn invite_new(req: InviteNewReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::InviteNew(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "MESSAGE_GET")]
-    fn message_get(req: MessageGetReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::MessageGet(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "ORGANIZATION_STATS")]
-    fn organization_stats(req: OrganizationStatsReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::OrganizationStats(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "PKI_ENROLLMENT_ACCEPT")]
-    fn pki_enrollment_accept(req: PkiEnrollmentAcceptReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentAccept(
-            req.0,
-        ))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "PKI_ENROLLMENT_LIST")]
-    fn pki_enrollment_list(req: PkiEnrollmentListReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentList(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "PKI_ENROLLMENT_REJECT")]
-    fn pki_enrollment_reject(req: PkiEnrollmentRejectReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentReject(
-            req.0,
-        ))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "REALM_CREATE")]
-    fn realm_create(req: RealmCreateReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::RealmCreate(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "REALM_FINISH_REENCRYPTION_MAINTENANCE")]
-    fn realm_finish_reencryption_maintenance(req: RealmFinishReencryptionMaintenanceReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::RealmFinishReencryptionMaintenance(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "REALM_GET_ROLE_CERTIFICATES")]
-    fn realm_get_role_certificates(req: RealmGetRoleCertificatesReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::RealmGetRoleCertificates(
-            req.0,
-        ))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "REALM_START_REENCRYPTION_MAINTENANCE")]
-    fn realm_start_reencryption_maintenance(req: RealmStartReencryptionMaintenanceReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::RealmStartReencryptionMaintenance(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "REALM_STATS")]
-    fn realm_stats(req: RealmStatsReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::RealmStats(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "REALM_STATUS")]
-    fn realm_status(req: RealmStatusReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::RealmStatus(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "REALM_UPDATE_ROLES")]
-    fn realm_update_roles(req: RealmUpdateRolesReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::RealmUpdateRoles(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "USER_CREATE")]
-    fn user_create(req: UserCreateReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::UserCreate(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "USER_GET")]
-    fn user_get(req: UserGetReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::UserGet(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "USER_REVOKE")]
-    fn user_revoke(req: UserRevokeReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::UserRevoke(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "VLOB_CREATE")]
-    fn vlob_create(req: VlobCreateReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::VlobCreate(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "VLOB_LIST_VERSIONS")]
-    fn vlob_list_versions(req: VlobListVersionsReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::VlobListVersions(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "VLOB_MAINTENANCE_GET_REENCRYPTION_BATCH")]
-    fn vlob_maintenance_get_reencryption_batch(
-        req: VlobMaintenanceGetReencryptionBatchReq,
-    ) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::VlobMaintenanceGetReencryptionBatch(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "VLOB_MAINTENANCE_SAVE_REENCRYPTION_BATCH")]
-    fn vlob_maintenance_save_reencryption_batch(
-        req: VlobMaintenanceSaveReencryptionBatchReq,
-    ) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "VLOB_POLL_CHANGES")]
-    fn vlob_poll_changes(req: VlobPollChangesReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::VlobPollChanges(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "VLOB_READ")]
-    fn vlob_read(req: VlobReadReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::VlobRead(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "VLOB_UPDATE")]
-    fn vlob_update(req: VlobUpdateReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::VlobUpdate(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "ORGANIZATION_CONFIG")]
-    fn organization_config(req: OrganizationConfigReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::OrganizationConfig(req.0))
-    }
-
-    #[staticmethod]
-    #[pyo3(name = "PING")]
-    fn ping(req: AuthenticatedPingReq) -> Self {
-        Self(authenticated_cmds::v2::AnyCmdReq::Ping(req.0))
-    }
-}
+use crate::{
+    addrs::BackendOrganizationAddr,
+    api_crypto::{PublicKey, SigningKey},
+    binding_utils::BytesWrapper,
+    enumerate::{InvitationDeletedReason, InvitationType},
+    ids::{
+        BlockID, DeviceID, EnrollmentID, InvitationToken, RealmID, SequesterServiceID, UserID,
+        VlobID,
+    },
+    protocol::*,
+    runtime::FutureIntoCoroutine,
+    time::DateTime,
+};
 
 #[pyclass]
 pub(crate) struct AuthenticatedCmds(Arc<client_connection::AuthenticatedCmds>);
@@ -273,550 +30,1148 @@ pub(crate) struct AuthenticatedCmds(Arc<client_connection::AuthenticatedCmds>);
 impl AuthenticatedCmds {
     #[new]
     fn new(
-        server_url: BackendOrganizationAddr,
+        addr: BackendOrganizationAddr,
         device_id: DeviceID,
         signing_key: SigningKey,
     ) -> PyResult<Self> {
         let auth_cmds =
-            client_connection::client::generate_client(signing_key.0, device_id.0, server_url.0);
+            client_connection::client::generate_client(signing_key.0, device_id.0, addr.0);
         Ok(Self(Arc::new(auth_cmds)))
     }
 
-    fn send_command(&self, cmd: AuthenticatedCmdsType) -> FutureIntoCoroutine {
+    #[getter]
+    fn addr(&self) -> BackendOrganizationAddr {
+        BackendOrganizationAddr(self.0.addr().clone())
+    }
+
+    fn block_create(
+        &self,
+        block_id: BlockID,
+        realm_id: RealmID,
+        block: BytesWrapper,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(block);
+
+        FutureIntoCoroutine::from(async move {
+            let block_id = block_id.0;
+            let realm_id = realm_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::block_create::Req {
+                block,
+                block_id,
+                realm_id,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                block_create,
+                BlockCreateRep,
+                Ok,
+                NotFound,
+                Timeout,
+                AlreadyExists,
+                InMaintenance,
+                NotAllowed,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn block_read(&self, block_id: BlockID) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from(async move {
-            match cmd.0 {
-                authenticated_cmds::v2::AnyCmdReq::BlockCreate(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        block_create,
-                        BlockCreateRep,
-                        Ok,
-                        NotFound,
-                        Timeout,
-                        AlreadyExists,
-                        InMaintenance,
-                        NotAllowed,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::BlockRead(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        block_read,
-                        BlockReadRep,
-                        Ok,
-                        NotFound,
-                        Timeout,
-                        InMaintenance,
-                        NotAllowed,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::DeviceCreate(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        device_create,
-                        DeviceCreateRep,
-                        Ok,
-                        BadUserId,
-                        InvalidCertification,
-                        InvalidData,
-                        AlreadyExists,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::EventsListen(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        events_listen,
-                        EventsListenRep,
-                        NoEvents,
-                        Ok,
-                        Cancelled,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::EventsSubscribe(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        events_subscribe,
-                        EventsSubscribeRep,
-                        Ok,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::HumanFind(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        human_find,
-                        HumanFindRep,
-                        Ok,
-                        NotAllowed,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::Invite1GreeterWaitPeer(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_1_greeter_wait_peer,
-                        Invite1GreeterWaitPeerRep,
-                        Ok,
-                        NotFound,
-                        InvalidState,
-                        UnknownStatus,
-                        AlreadyDeleted
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::Invite2aGreeterGetHashedNonce(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_2a_greeter_get_hashed_nonce,
-                        Invite2aGreeterGetHashedNonceRep,
-                        Ok,
-                        NotFound,
-                        InvalidState,
-                        UnknownStatus,
-                        AlreadyDeleted
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::Invite2bGreeterSendNonce(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_2b_greeter_send_nonce,
-                        Invite2bGreeterSendNonceRep,
-                        Ok,
-                        NotFound,
-                        InvalidState,
-                        UnknownStatus,
-                        AlreadyDeleted
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::Invite3aGreeterWaitPeerTrust(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_3a_greeter_wait_peer_trust,
-                        Invite3aGreeterWaitPeerTrustRep,
-                        Ok,
-                        NotFound,
-                        InvalidState,
-                        UnknownStatus,
-                        AlreadyDeleted
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::Invite3bGreeterSignifyTrust(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_3b_greeter_signify_trust,
-                        Invite3bGreeterSignifyTrustRep,
-                        Ok,
-                        NotFound,
-                        InvalidState,
-                        UnknownStatus,
-                        AlreadyDeleted
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::Invite4GreeterCommunicate(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_4_greeter_communicate,
-                        Invite4GreeterCommunicateRep,
-                        Ok,
-                        NotFound,
-                        InvalidState,
-                        UnknownStatus,
-                        AlreadyDeleted
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::InviteDelete(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_delete,
-                        InviteDeleteRep,
-                        Ok,
-                        NotFound,
-                        UnknownStatus,
-                        AlreadyDeleted
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::InviteList(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_list,
-                        InviteListRep,
-                        Ok,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::InviteNew(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        invite_new,
-                        InviteNewRep,
-                        NotAllowed,
-                        AlreadyMember,
-                        NotAvailable,
-                        Ok,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::MessageGet(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        message_get,
-                        MessageGetRep,
-                        Ok,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::OrganizationStats(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        organization_stats,
-                        OrganizationStatsRep,
-                        NotFound,
-                        NotAllowed,
-                        Ok,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::Ping(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        ping,
-                        AuthenticatedPingRep,
-                        Ok,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentAccept(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        pki_enrollment_accept,
-                        PkiEnrollmentAcceptRep,
-                        Ok,
-                        InvalidData,
-                        InvalidCertification,
-                        InvalidPayloadData,
-                        NotAllowed,
-                        NotFound,
-                        NoLongerAvailable,
-                        AlreadyExists,
-                        ActiveUsersLimitReached,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentList(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        pki_enrollment_list,
-                        PkiEnrollmentListRep,
-                        Ok,
-                        NotAllowed,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::PkiEnrollmentReject(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        pki_enrollment_reject,
-                        PkiEnrollmentRejectRep,
-                        Ok,
-                        NotFound,
-                        NoLongerAvailable,
-                        NotAllowed,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::RealmCreate(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        realm_create,
-                        RealmCreateRep,
-                        Ok,
-                        NotFound,
-                        BadTimestamp,
-                        InvalidCertification,
-                        InvalidData,
-                        AlreadyExists,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::RealmFinishReencryptionMaintenance(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        realm_finish_reencryption_maintenance,
-                        RealmFinishReencryptionMaintenanceRep,
-                        Ok,
-                        MaintenanceError,
-                        NotInMaintenance,
-                        NotAllowed,
-                        BadEncryptionRevision,
-                        NotFound,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::RealmGetRoleCertificates(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        realm_get_role_certificates,
-                        RealmGetRoleCertificatesRep,
-                        Ok,
-                        NotAllowed,
-                        NotFound,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::RealmStartReencryptionMaintenance(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        realm_start_reencryption_maintenance,
-                        RealmStartReencryptionMaintenanceRep,
-                        BadEncryptionRevision,
-                        BadTimestamp,
-                        InMaintenance,
-                        MaintenanceError,
-                        NotAllowed,
-                        NotFound,
-                        Ok,
-                        ParticipantMismatch,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::RealmStats(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        realm_stats,
-                        RealmStatsRep,
-                        Ok,
-                        NotAllowed,
-                        NotFound,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::RealmStatus(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        realm_status,
-                        RealmStatusRep,
-                        Ok,
-                        NotAllowed,
-                        NotFound,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::RealmUpdateRoles(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        realm_update_roles,
-                        RealmUpdateRolesRep,
-                        Ok,
-                        NotAllowed,
-                        NotFound,
-                        RequireGreaterTimestamp,
-                        BadTimestamp,
-                        InMaintenance,
-                        AlreadyGranted,
-                        UnknownStatus,
-                        InvalidCertification,
-                        InvalidData,
-                        UserRevoked,
-                        IncompatibleProfile
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::UserCreate(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        user_create,
-                        UserCreateRep,
-                        Ok,
-                        ActiveUsersLimitReached,
-                        AlreadyExists,
-                        InvalidCertification,
-                        InvalidData,
-                        NotAllowed,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::UserGet(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        user_get,
-                        UserGetRep,
-                        Ok,
-                        NotFound,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::UserRevoke(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        user_revoke,
-                        UserRevokeRep,
-                        Ok,
-                        InvalidCertification,
-                        UnknownStatus,
-                        NotAllowed,
-                        NotFound,
-                        AlreadyRevoked
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::VlobCreate(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        vlob_create,
-                        VlobCreateRep,
-                        Ok,
-                        UnknownStatus,
-                        AlreadyExists,
-                        BadTimestamp,
-                        BadEncryptionRevision,
-                        InMaintenance,
-                        NotAllowed,
-                        NotASequesteredOrganization,
-                        RejectedBySequesterService,
-                        RequireGreaterTimestamp,
-                        SequesterInconsistency,
-                        Timeout
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::VlobListVersions(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        vlob_list_versions,
-                        VlobListVersionsRep,
-                        Ok,
-                        NotAllowed,
-                        InMaintenance,
-                        UnknownStatus,
-                        NotFound
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::VlobMaintenanceGetReencryptionBatch(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        vlob_maintenance_get_reencryption_batch,
-                        VlobMaintenanceGetReencryptionBatchRep,
-                        Ok,
-                        BadEncryptionRevision,
-                        MaintenanceError,
-                        NotAllowed,
-                        NotFound,
-                        NotInMaintenance,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        vlob_maintenance_save_reencryption_batch,
-                        VlobMaintenanceSaveReencryptionBatchRep,
-                        Ok,
-                        BadEncryptionRevision,
-                        MaintenanceError,
-                        NotInMaintenance,
-                        NotAllowed,
-                        NotFound,
-                        UnknownStatus
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::VlobPollChanges(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        vlob_poll_changes,
-                        VlobPollChangesRep,
-                        Ok,
-                        UnknownStatus,
-                        InMaintenance,
-                        NotAllowed,
-                        NotFound
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::VlobRead(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        vlob_read,
-                        VlobReadRep,
-                        Ok,
-                        UnknownStatus,
-                        BadVersion,
-                        BadEncryptionRevision,
-                        InMaintenance,
-                        NotAllowed,
-                        NotFound
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::VlobUpdate(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        vlob_update,
-                        VlobUpdateRep,
-                        Ok,
-                        UnknownStatus,
-                        BadEncryptionRevision,
-                        BadTimestamp,
-                        BadVersion,
-                        InMaintenance,
-                        NotASequesteredOrganization,
-                        NotAllowed,
-                        NotFound,
-                        RejectedBySequesterService,
-                        RequireGreaterTimestamp,
-                        SequesterInconsistency,
-                        Timeout
-                    )
-                }
-                authenticated_cmds::v2::AnyCmdReq::OrganizationConfig(req) => {
-                    crate::binding_utils::send_command!(
-                        auth_cmds,
-                        req,
-                        organization_config,
-                        OrganizationConfigRep,
-                        Ok,
-                        UnknownStatus,
-                        NotFound
-                    )
-                }
-            }
+            let block_id = block_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::block_read::Req { block_id };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                block_read,
+                BlockReadRep,
+                Ok,
+                NotFound,
+                Timeout,
+                InMaintenance,
+                NotAllowed,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn device_create(
+        &self,
+        device_certificate: BytesWrapper,
+        redacted_device_certificate: BytesWrapper,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(device_certificate, redacted_device_certificate);
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::device_create::Req {
+                device_certificate,
+                redacted_device_certificate,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                device_create,
+                DeviceCreateRep,
+                Ok,
+                BadUserId,
+                InvalidCertification,
+                InvalidData,
+                AlreadyExists,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn events_listen(&self, wait: bool) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::events_listen::Req { wait };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                events_listen,
+                EventsListenRep,
+                NoEvents,
+                Ok,
+                Cancelled,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn events_subscribe(&self) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::events_subscribe::Req;
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                events_subscribe,
+                EventsSubscribeRep,
+                Ok,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn human_find(
+        &self,
+        query: Option<String>,
+        page: u64,
+        per_page: u64,
+        omit_revoked: bool,
+        omit_non_human: bool,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let page = NonZeroU64::try_from(page).map_err(InvalidMessageError::new_err)?;
+            let per_page =
+                IntegerBetween1And100::try_from(per_page).map_err(InvalidMessageError::new_err)?;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::human_find::Req {
+                omit_non_human,
+                omit_revoked,
+                page,
+                per_page,
+                query,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                human_find,
+                HumanFindRep,
+                Ok,
+                NotAllowed,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn invite_1_greeter_wait_peer(
+        &self,
+        token: InvitationToken,
+        greeter_public_key: PublicKey,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let greeter_public_key = greeter_public_key.0;
+            let token = token.0;
+
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::invite_1_greeter_wait_peer::Req {
+                    greeter_public_key,
+                    token,
+                };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_1_greeter_wait_peer,
+                Invite1GreeterWaitPeerRep,
+                Ok,
+                NotFound,
+                InvalidState,
+                UnknownStatus,
+                AlreadyDeleted
+            )
+        })
+    }
+
+    fn invite_2a_greeter_get_hashed_nonce(&self, token: InvitationToken) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let token = token.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::invite_2a_greeter_get_hashed_nonce::Req {
+                token
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_2a_greeter_get_hashed_nonce,
+                Invite2aGreeterGetHashedNonceRep,
+                Ok,
+                NotFound,
+                InvalidState,
+                UnknownStatus,
+                AlreadyDeleted
+            )
+        })
+    }
+
+    fn invite_2b_greeter_send_nonce(
+        &self,
+        token: InvitationToken,
+        greeter_nonce: BytesWrapper,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(greeter_nonce);
+
+        FutureIntoCoroutine::from(async move {
+            let token = token.0;
+
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::invite_2b_greeter_send_nonce::Req {
+                    greeter_nonce,
+                    token,
+                };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_2b_greeter_send_nonce,
+                Invite2bGreeterSendNonceRep,
+                Ok,
+                NotFound,
+                InvalidState,
+                UnknownStatus,
+                AlreadyDeleted
+            )
+        })
+    }
+
+    fn invite_3a_greeter_wait_peer_trust(&self, token: InvitationToken) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let token = token.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::invite_3a_greeter_wait_peer_trust::Req {
+                token,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_3a_greeter_wait_peer_trust,
+                Invite3aGreeterWaitPeerTrustRep,
+                Ok,
+                NotFound,
+                InvalidState,
+                UnknownStatus,
+                AlreadyDeleted
+            )
+        })
+    }
+
+    fn invite_3b_greeter_signify_trust(&self, token: InvitationToken) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let token = token.0;
+
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::invite_3b_greeter_signify_trust::Req {
+                    token,
+                };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_3b_greeter_signify_trust,
+                Invite3bGreeterSignifyTrustRep,
+                Ok,
+                NotFound,
+                InvalidState,
+                UnknownStatus,
+                AlreadyDeleted
+            )
+        })
+    }
+
+    fn invite_4_greeter_communicate(
+        &self,
+        token: InvitationToken,
+        payload: BytesWrapper,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(payload);
+
+        FutureIntoCoroutine::from(async move {
+            let token = token.0;
+
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::invite_4_greeter_communicate::Req {
+                    token,
+                    payload,
+                };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_4_greeter_communicate,
+                Invite4GreeterCommunicateRep,
+                Ok,
+                NotFound,
+                InvalidState,
+                UnknownStatus,
+                AlreadyDeleted
+            )
+        })
+    }
+
+    fn invite_delete(
+        &self,
+        token: InvitationToken,
+        reason: InvitationDeletedReason,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let token = token.0;
+            let reason = reason.0;
+
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::invite_delete::Req { token, reason };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_delete,
+                InviteDeleteRep,
+                Ok,
+                NotFound,
+                UnknownStatus,
+                AlreadyDeleted
+            )
+        })
+    }
+
+    fn invite_list(&self) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::invite_list::Req;
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_list,
+                InviteListRep,
+                Ok,
+                UnknownStatus
+            )
+        })
+    }
+
+    #[args(send_email = "false", claimer_email = "None")]
+    fn invite_new(
+        &self,
+        r#type: InvitationType,
+        send_email: bool,
+        claimer_email: Option<String>,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::invite_new::Req(match r#type.0 {
+                libparsec::types::InvitationType::Device => libparsec::protocol::authenticated_cmds::v2::invite_new::UserOrDevice::Device {
+                    send_email
+                },
+                libparsec::types::InvitationType::User => libparsec::protocol::authenticated_cmds::v2::invite_new::UserOrDevice::User {
+                    send_email,
+                    claimer_email: claimer_email.expect("Missing claimer_email_argument"),
+                },
+            });
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                invite_new,
+                InviteNewRep,
+                NotAllowed,
+                AlreadyMember,
+                NotAvailable,
+                Ok,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn message_get(&self, offset: u64) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::message_get::Req { offset };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                message_get,
+                MessageGetRep,
+                Ok,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn organization_config(&self) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::organization_config::Req;
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                organization_config,
+                OrganizationConfigRep,
+                Ok,
+                UnknownStatus,
+                NotFound
+            )
+        })
+    }
+
+    fn organization_stats(&self) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::organization_stats::Req;
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                organization_stats,
+                OrganizationStatsRep,
+                NotFound,
+                NotAllowed,
+                Ok,
+                UnknownStatus
+            )
+        })
+    }
+
+    #[args(ping = "String::new()")]
+    fn ping(&self, ping: String) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        let req = libparsec::protocol::authenticated_cmds::v2::ping::Req { ping };
+
+        FutureIntoCoroutine::from(async move {
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                ping,
+                AuthenticatedPingRep,
+                Ok,
+                UnknownStatus
+            )
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn pki_enrollment_accept(
+        &self,
+        enrollment_id: EnrollmentID,
+        accepter_der_x509_certificate: BytesWrapper,
+        accept_payload_signature: BytesWrapper,
+        accept_payload: BytesWrapper,
+        user_certificate: BytesWrapper,
+        device_certificate: BytesWrapper,
+        redacted_user_certificate: BytesWrapper,
+        redacted_device_certificate: BytesWrapper,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(
+            accepter_der_x509_certificate,
+            accept_payload_signature,
+            accept_payload,
+            user_certificate,
+            device_certificate,
+            redacted_user_certificate,
+            redacted_device_certificate
+        );
+
+        FutureIntoCoroutine::from(async move {
+            let enrollment_id = enrollment_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::pki_enrollment_accept::Req {
+                accept_payload,
+                accept_payload_signature,
+                accepter_der_x509_certificate,
+                device_certificate,
+                enrollment_id,
+                redacted_device_certificate,
+                redacted_user_certificate,
+                user_certificate,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                pki_enrollment_accept,
+                PkiEnrollmentAcceptRep,
+                Ok,
+                InvalidData,
+                InvalidCertification,
+                InvalidPayloadData,
+                NotAllowed,
+                NotFound,
+                NoLongerAvailable,
+                AlreadyExists,
+                ActiveUsersLimitReached,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn pki_enrollment_list(&self) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::pki_enrollment_list::Req;
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                pki_enrollment_list,
+                PkiEnrollmentListRep,
+                Ok,
+                NotAllowed,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn pki_enrollment_reject(&self, enrollment_id: EnrollmentID) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let enrollment_id = enrollment_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::pki_enrollment_reject::Req {
+                enrollment_id,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                pki_enrollment_reject,
+                PkiEnrollmentRejectRep,
+                Ok,
+                NotFound,
+                NoLongerAvailable,
+                NotAllowed,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn realm_create(&self, role_certificate: BytesWrapper) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(role_certificate);
+
+        FutureIntoCoroutine::from(async move {
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::realm_create::Req { role_certificate };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                realm_create,
+                RealmCreateRep,
+                Ok,
+                NotFound,
+                BadTimestamp,
+                InvalidCertification,
+                InvalidData,
+                AlreadyExists,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn realm_finish_reencryption_maintenance(
+        &self,
+        realm_id: RealmID,
+        encryption_revision: u64,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::realm_finish_reencryption_maintenance::Req {
+                encryption_revision,
+                realm_id,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                realm_finish_reencryption_maintenance,
+                RealmFinishReencryptionMaintenanceRep,
+                Ok,
+                MaintenanceError,
+                NotInMaintenance,
+                NotAllowed,
+                BadEncryptionRevision,
+                NotFound,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn realm_get_role_certificates(&self, realm_id: RealmID) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::realm_get_role_certificates::Req {
+                    realm_id,
+                };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                realm_get_role_certificates,
+                RealmGetRoleCertificatesRep,
+                Ok,
+                NotAllowed,
+                NotFound,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn realm_start_reencryption_maintenance(
+        &self,
+        realm_id: RealmID,
+        encryption_revision: u64,
+        timestamp: DateTime,
+        per_participant_message: HashMap<UserID, BytesWrapper>,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        let per_participant_message = per_participant_message
+            .into_iter()
+            .map(|(id, b)| {
+                crate::binding_utils::unwrap_bytes!(b);
+                (id.0, b)
+            })
+            .collect();
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+            let timestamp = timestamp.0;
+
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::realm_start_reencryption_maintenance::Req {
+                    encryption_revision,
+                    per_participant_message,
+                    realm_id,
+                    timestamp,
+                };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                realm_start_reencryption_maintenance,
+                RealmStartReencryptionMaintenanceRep,
+                BadEncryptionRevision,
+                BadTimestamp,
+                InMaintenance,
+                MaintenanceError,
+                NotAllowed,
+                NotFound,
+                Ok,
+                ParticipantMismatch,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn realm_stats(&self, realm_id: RealmID) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::realm_stats::Req { realm_id };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                realm_stats,
+                RealmStatsRep,
+                Ok,
+                NotAllowed,
+                NotFound,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn realm_status(&self, realm_id: RealmID) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::realm_status::Req { realm_id };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                realm_status,
+                RealmStatusRep,
+                Ok,
+                NotAllowed,
+                NotFound,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn realm_update_roles(
+        &self,
+        role_certificate: BytesWrapper,
+        recipient_message: Option<BytesWrapper>,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(recipient_message, role_certificate);
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::realm_update_roles::Req {
+                recipient_message,
+                role_certificate,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                realm_update_roles,
+                RealmUpdateRolesRep,
+                Ok,
+                NotAllowed,
+                NotFound,
+                RequireGreaterTimestamp,
+                BadTimestamp,
+                InMaintenance,
+                AlreadyGranted,
+                UnknownStatus,
+                InvalidCertification,
+                InvalidData,
+                UserRevoked,
+                IncompatibleProfile
+            )
+        })
+    }
+
+    fn user_create(
+        &self,
+        user_certificate: BytesWrapper,
+        device_certificate: BytesWrapper,
+        redacted_user_certificate: BytesWrapper,
+        redacted_device_certificate: BytesWrapper,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(
+            user_certificate,
+            device_certificate,
+            redacted_user_certificate,
+            redacted_device_certificate
+        );
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::user_create::Req {
+                device_certificate,
+                redacted_device_certificate,
+                redacted_user_certificate,
+                user_certificate,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                user_create,
+                UserCreateRep,
+                Ok,
+                ActiveUsersLimitReached,
+                AlreadyExists,
+                InvalidCertification,
+                InvalidData,
+                NotAllowed,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn user_get(&self, user_id: UserID) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let user_id = user_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::user_get::Req { user_id };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                user_get,
+                UserGetRep,
+                Ok,
+                NotFound,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn user_revoke(&self, revoked_user_certificate: BytesWrapper) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(revoked_user_certificate);
+
+        FutureIntoCoroutine::from(async move {
+            let req = libparsec::protocol::authenticated_cmds::v2::user_revoke::Req {
+                revoked_user_certificate,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                user_revoke,
+                UserRevokeRep,
+                Ok,
+                InvalidCertification,
+                UnknownStatus,
+                NotAllowed,
+                NotFound,
+                AlreadyRevoked
+            )
+        })
+    }
+
+    fn vlob_create(
+        &self,
+        realm_id: RealmID,
+        encryption_revision: u64,
+        vlob_id: VlobID,
+        timestamp: DateTime,
+        blob: BytesWrapper,
+        sequester_blob: Option<HashMap<SequesterServiceID, BytesWrapper>>,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(blob);
+        let sequester_blob = Maybe::Present(sequester_blob.map(|x| {
+            x.into_iter()
+                .map(|(id, b)| {
+                    crate::binding_utils::unwrap_bytes!(b);
+                    (id.0, b)
+                })
+                .collect()
+        }));
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+            let vlob_id = vlob_id.0;
+            let timestamp = timestamp.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::vlob_create::Req {
+                blob,
+                encryption_revision,
+                realm_id,
+                sequester_blob,
+                timestamp,
+                vlob_id,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                vlob_create,
+                VlobCreateRep,
+                Ok,
+                UnknownStatus,
+                AlreadyExists,
+                BadTimestamp,
+                BadEncryptionRevision,
+                InMaintenance,
+                NotAllowed,
+                NotASequesteredOrganization,
+                RejectedBySequesterService,
+                RequireGreaterTimestamp,
+                SequesterInconsistency,
+                Timeout
+            )
+        })
+    }
+
+    fn vlob_list_versions(&self, vlob_id: VlobID) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let vlob_id = vlob_id.0;
+
+            let req =
+                libparsec::protocol::authenticated_cmds::v2::vlob_list_versions::Req { vlob_id };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                vlob_list_versions,
+                VlobListVersionsRep,
+                Ok,
+                NotAllowed,
+                InMaintenance,
+                UnknownStatus,
+                NotFound
+            )
+        })
+    }
+
+    fn vlob_maintenance_get_reencryption_batch(
+        &self,
+        realm_id: RealmID,
+        encryption_revision: u64,
+        size: u64,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::vlob_maintenance_get_reencryption_batch::Req {
+                encryption_revision,
+                realm_id,
+                size,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                vlob_maintenance_get_reencryption_batch,
+                VlobMaintenanceGetReencryptionBatchRep,
+                Ok,
+                BadEncryptionRevision,
+                MaintenanceError,
+                NotAllowed,
+                NotFound,
+                NotInMaintenance,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn vlob_maintenance_save_reencryption_batch(
+        &self,
+        realm_id: RealmID,
+        encryption_revision: u64,
+        batch: Vec<ReencryptionBatchEntry>,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+            let batch = batch.into_iter().map(|x| x.0).collect();
+
+            let req = libparsec::protocol::authenticated_cmds::v2::vlob_maintenance_save_reencryption_batch::Req {
+                encryption_revision,
+                realm_id,
+                batch,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                vlob_maintenance_save_reencryption_batch,
+                VlobMaintenanceSaveReencryptionBatchRep,
+                Ok,
+                BadEncryptionRevision,
+                MaintenanceError,
+                NotInMaintenance,
+                NotAllowed,
+                NotFound,
+                UnknownStatus
+            )
+        })
+    }
+
+    fn vlob_poll_changes(&self, realm_id: RealmID, last_checkpoint: u64) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let realm_id = realm_id.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::vlob_poll_changes::Req {
+                last_checkpoint,
+                realm_id,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                vlob_poll_changes,
+                VlobPollChangesRep,
+                Ok,
+                UnknownStatus,
+                InMaintenance,
+                NotAllowed,
+                NotFound
+            )
+        })
+    }
+
+    #[args(version = "None", timestamp = "None")]
+    fn vlob_read(
+        &self,
+        encryption_revision: u64,
+        vlob_id: VlobID,
+        version: Option<u32>,
+        timestamp: Option<DateTime>,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from(async move {
+            let vlob_id = vlob_id.0;
+            let timestamp = timestamp.map(|x| x.0);
+
+            let req = libparsec::protocol::authenticated_cmds::v2::vlob_read::Req {
+                encryption_revision,
+                timestamp,
+                version,
+                vlob_id,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                vlob_read,
+                VlobReadRep,
+                Ok,
+                UnknownStatus,
+                BadVersion,
+                BadEncryptionRevision,
+                InMaintenance,
+                NotAllowed,
+                NotFound
+            )
+        })
+    }
+
+    fn vlob_update(
+        &self,
+        encryption_revision: u64,
+        vlob_id: VlobID,
+        version: u32,
+        timestamp: DateTime,
+        blob: BytesWrapper,
+        sequester_blob: Option<HashMap<SequesterServiceID, BytesWrapper>>,
+    ) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(blob);
+        let sequester_blob = Maybe::Present(sequester_blob.map(|x| {
+            x.into_iter()
+                .map(|(id, b)| {
+                    crate::binding_utils::unwrap_bytes!(b);
+                    (id.0, b)
+                })
+                .collect()
+        }));
+
+        FutureIntoCoroutine::from(async move {
+            let vlob_id = vlob_id.0;
+            let timestamp = timestamp.0;
+
+            let req = libparsec::protocol::authenticated_cmds::v2::vlob_update::Req {
+                blob,
+                sequester_blob,
+                encryption_revision,
+                timestamp,
+                version,
+                vlob_id,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                vlob_update,
+                VlobUpdateRep,
+                Ok,
+                UnknownStatus,
+                BadEncryptionRevision,
+                BadTimestamp,
+                BadVersion,
+                InMaintenance,
+                NotASequesteredOrganization,
+                NotAllowed,
+                NotFound,
+                RejectedBySequesterService,
+                RequireGreaterTimestamp,
+                SequesterInconsistency,
+                Timeout
+            )
         })
     }
 }

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Awaitable, Callable, TypeVar, Union
 from typing_extensions import Concatenate, ParamSpec
 
 from parsec.api.transport import Transport
-from parsec.core.backend_connection.exceptions import BackendNotAvailable
+from parsec.core.backend_connection import BackendNotAvailable
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds

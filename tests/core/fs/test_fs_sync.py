@@ -14,8 +14,7 @@ from parsec._parsec import (
     VlobUpdateRepBadTimestamp,
     WorkspaceEntry,
 )
-from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.backend_connection.exceptions import BackendOutOfBallparkError
+from parsec.core.backend_connection import BackendNotAvailable, BackendOutOfBallparkError
 from parsec.core.fs import UserFS
 from parsec.core.fs.exceptions import FSBackendOfflineError, FSRemoteOperationError
 from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US

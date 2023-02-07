@@ -15,10 +15,10 @@ from parsec.api.protocol import (
 )
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
+    BackendInvitationAlreadyUsed,
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
 )
-from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import (
     DeviceClaimInitialCtx,

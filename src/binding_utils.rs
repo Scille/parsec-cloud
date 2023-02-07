@@ -85,7 +85,6 @@ macro_rules! _unwrap_bytes {
     ($x:ident, $($y:ident),+) => {
         crate::binding_utils::_unwrap_bytes!($x);
         crate::binding_utils::_unwrap_bytes!($($y),+);
-
     }
 }
 
@@ -93,7 +92,6 @@ macro_rules! unwrap_bytes {
     ($($name:ident),+) => {
         use crate::binding_utils::UnwrapBytesWrapper;
         crate::binding_utils::_unwrap_bytes!($($name),+);
-
     }
 }
 
@@ -180,24 +178,24 @@ macro_rules! gen_proto {
     ($class: ident, __repr__) => {
         #[pymethods]
         impl $class {
-            fn __repr__(&self) -> ::pyo3::PyResult<String> {
-                Ok(format!("{:?}", self.0))
+            fn __repr__(&self) -> String {
+                format!("{:?}", self.0)
             }
         }
     };
     ($class: ident, __repr__, pyref) => {
         #[pymethods]
         impl $class {
-            fn __repr__(_self: PyRef<'_, Self>) -> ::pyo3::PyResult<String> {
-                Ok(format!("{:?}", _self.as_ref().0))
+            fn __repr__(_self: PyRef<'_, Self>) -> String {
+                format!("{:?}", _self.as_ref().0)
             }
         }
     };
     ($class: ident, __str__) => {
         #[pymethods]
         impl $class {
-            fn __str__(&self) -> ::pyo3::PyResult<String> {
-                Ok(self.0.to_string())
+            fn __str__(&self) -> String {
+                self.0.to_string()
             }
         }
     };
@@ -371,7 +369,7 @@ macro_rules! send_command {
                     })
                 })
                 .map(|e| e.expect("Failed to create a pyobject from server's response"))
-                .map_err(|e| Into::<::pyo3::PyErr>::into(Into::<crate::backend_connection::CommandErrorExc>::into(e)))
+                .map_err(|e| ::pyo3::PyErr::from(crate::backend_connection::CommandExc::from(e)))
         }
     }
 }
