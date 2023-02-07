@@ -3,6 +3,16 @@
 from __future__ import annotations
 
 from parsec._parsec_pyi import (
+    BackendConnectionError,
+    BackendConnectionRefused,
+    BackendInvitationAlreadyUsed,
+    BackendInvitationNotFound,
+    BackendInvitationOnExistingMember,
+    BackendNotAvailable,
+    BackendNotFoundError,
+    BackendOutOfBallparkError,
+    BackendProtocolError,
+    CommandError,
     DataError,
     EntryNameError,
     PkiEnrollmentError,
@@ -22,7 +32,7 @@ from parsec._parsec_pyi.addrs import (
     BackendPkiEnrollmentAddr,
     export_root_verify_key,
 )
-from parsec._parsec_pyi.backend_connection import AuthenticatedCmds, AuthenticatedCmdsType
+from parsec._parsec_pyi.backend_connection import AuthenticatedCmds
 from parsec._parsec_pyi.certif import (
     DeviceCertificate,
     RealmRoleCertificate,
@@ -549,6 +559,17 @@ from parsec._parsec_pyi.user import UsersPerProfileDetailItem
 
 __all__ = [
     "ApiVersion",
+    # Command Error
+    "BackendConnectionError",
+    "BackendProtocolError",
+    "BackendNotAvailable",
+    "BackendConnectionRefused",
+    "BackendInvitationAlreadyUsed",
+    "BackendInvitationNotFound",
+    "BackendNotFoundError",
+    "BackendInvitationOnExistingMember",
+    "BackendOutOfBallparkError",
+    "CommandError",
     # Data Error
     "DataError",
     "EntryNameError",
@@ -624,7 +645,6 @@ __all__ = [
     "export_root_verify_key",
     # Backend connection
     "AuthenticatedCmds",
-    "AuthenticatedCmdsType",
     # Local Manifest
     "Chunk",
     "LocalFileManifest",

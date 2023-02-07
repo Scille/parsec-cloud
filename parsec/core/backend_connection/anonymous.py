@@ -25,7 +25,7 @@ from parsec.api.protocol import (
     pki_enrollment_submit_serializer,
 )
 from parsec.api.protocol.base import ApiCommandSerializer
-from parsec.core.backend_connection.exceptions import (
+from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendOutOfBallparkError,
     BackendProtocolError,

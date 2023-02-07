@@ -37,11 +37,11 @@ from parsec._parsec import (
 )
 from parsec.api.protocol import AUTHENTICATED_CMDS, DeviceID
 from parsec.api.transport import Transport
-from parsec.core.backend_connection import cmds
-from parsec.core.backend_connection.exceptions import (
+from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendNotAvailable,
     BackendOutOfBallparkError,
+    cmds,
 )
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 from parsec.core.backend_connection.transport import TransportPool, connect_as_authenticated

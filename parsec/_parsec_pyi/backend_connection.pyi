@@ -2,191 +2,216 @@
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Iterable
 
 from parsec._parsec_pyi.addrs import BackendOrganizationAddr
-from parsec._parsec_pyi.crypto import SigningKey
-from parsec._parsec_pyi.ids import DeviceID
-from parsec._parsec_pyi.protocol import (
-    AuthenticatedPingReq,
-    BlockCreateReq,
-    BlockReadReq,
-    DeviceCreateReq,
-    EventsListenReq,
-    EventsSubscribeReq,
-    HumanFindReq,
-    Invite1GreeterWaitPeerReq,
-    Invite2aGreeterGetHashedNonceReq,
-    Invite2bGreeterSendNonceReq,
-    Invite3aGreeterWaitPeerTrustReq,
-    Invite3bGreeterSignifyTrustReq,
-    Invite4GreeterCommunicateReq,
-    InviteDeleteReq,
-    InviteListReq,
-    InviteNewReq,
-    MessageGetReq,
-    OrganizationConfigReq,
-    OrganizationStatsReq,
-    PkiEnrollmentAcceptReq,
-    PkiEnrollmentListReq,
-    PkiEnrollmentRejectReq,
-    RealmCreateReq,
-    RealmFinishReencryptionMaintenanceReq,
-    RealmGetRoleCertificatesReq,
-    RealmStartReencryptionMaintenanceReq,
-    RealmStatsReq,
-    RealmStatusReq,
-    RealmUpdateRolesReq,
-    UserCreateReq,
-    UserGetReq,
-    UserRevokeReq,
-    VlobCreateReq,
-    VlobListVersionsReq,
-    VlobMaintenanceGetReencryptionBatchReq,
-    VlobMaintenanceSaveReencryptionBatchReq,
-    VlobPollChangesReq,
-    VlobReadReq,
-    VlobUpdateReq,
+from parsec._parsec_pyi.crypto import PublicKey, SigningKey
+from parsec._parsec_pyi.enumerate import InvitationDeletedReason, InvitationType
+from parsec._parsec_pyi.ids import (
+    BlockID,
+    DeviceID,
+    EnrollmentID,
+    InvitationToken,
+    RealmID,
+    SequesterServiceID,
+    UserID,
+    VlobID,
 )
-
-AllAuthenticatedCmds = Union[
-    BlockCreateReq,
-    BlockReadReq,
-    DeviceCreateReq,
-    EventsListenReq,
-    EventsSubscribeReq,
-    HumanFindReq,
-    Invite1GreeterWaitPeerReq,
-    Invite2aGreeterGetHashedNonceReq,
-    Invite2bGreeterSendNonceReq,
-    Invite3aGreeterWaitPeerTrustReq,
-    Invite3bGreeterSignifyTrustReq,
-    Invite4GreeterCommunicateReq,
-    InviteDeleteReq,
-    InviteListReq,
-    InviteNewReq,
-    MessageGetReq,
-    OrganizationStatsReq,
-    PkiEnrollmentAcceptReq,
-    PkiEnrollmentListReq,
-    PkiEnrollmentRejectReq,
-    RealmCreateReq,
-    RealmFinishReencryptionMaintenanceReq,
-    RealmGetRoleCertificatesReq,
-    RealmStartReencryptionMaintenanceReq,
-    RealmStatsReq,
-    RealmStatusReq,
-    RealmUpdateRolesReq,
-    UserCreateReq,
-    UserGetReq,
-    UserRevokeReq,
-    VlobCreateReq,
-    VlobListVersionsReq,
-    VlobMaintenanceGetReencryptionBatchReq,
-    VlobMaintenanceSaveReencryptionBatchReq,
-    VlobPollChangesReq,
-    VlobReadReq,
-    VlobUpdateReq,
-    OrganizationConfigReq,
-    AuthenticatedPingReq,
-]
-
-class AuthenticatedCmdsType:
-    @staticmethod
-    def BLOCK_CREATE(req: BlockCreateReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def BLOCK_READ(req: BlockReadReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def DEVICE_CREATE(req: DeviceCreateReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def EVENTS_LISTEN(req: EventsListenReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def EVENTS_SUBSCRIBE(req: EventsSubscribeReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def HUMAN_FIND(req: HumanFindReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE1_GREETER_WAIT_PEER(req: Invite1GreeterWaitPeerReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE2A_GREETER_GET_HASHED_NONCE(
-        req: Invite2aGreeterGetHashedNonceReq,
-    ) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE2B_GREETER_SEND_NONCE(req: Invite2bGreeterSendNonceReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE3A_GREETER_WAIT_PEER_TRUST(
-        req: Invite3aGreeterWaitPeerTrustReq,
-    ) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE3B_GREETER_SIGNIFY_TRUST(
-        req: Invite3bGreeterSignifyTrustReq,
-    ) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE4GREETER_COMMUNICATE(req: Invite4GreeterCommunicateReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE_DELETE(req: InviteDeleteReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE_LIST(req: InviteListReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def INVITE_NEW(req: InviteNewReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def MESSAGE_GET(req: MessageGetReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def ORGANIZATION_STATS(req: OrganizationStatsReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def PKI_ENROLLMENT_ACCEPT(req: PkiEnrollmentAcceptReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def PKI_ENROLLMENT_LIST(req: PkiEnrollmentListReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def PKI_ENROLLMENT_REJECT(req: PkiEnrollmentRejectReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def REALM_CREATE(req: RealmCreateReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def REALM_FINISH_REENCRYPTION_MAINTENANCE(
-        req: RealmFinishReencryptionMaintenanceReq,
-    ) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def REALM_GET_ROLE_CERTIFICATES(req: RealmGetRoleCertificatesReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def REALM_START_REENCRYPTION_MAINTENANCE(
-        req: RealmStartReencryptionMaintenanceReq,
-    ) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def REALM_STATS(req: RealmStatsReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def REALM_STATUS(req: RealmStatusReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def REALM_UPDATE_ROLES(req: RealmUpdateRolesReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def USER_CREATE(req: UserCreateReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def USER_GET(req: UserGetReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def USER_REVOKE(req: UserRevokeReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def VLOB_CREATE(req: VlobCreateReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def VLOB_LIST_VERSIONS(req: VlobListVersionsReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def VLOB_MAINTENANCE_GET_REENCRYPTION_BATCH(
-        req: VlobMaintenanceGetReencryptionBatchReq,
-    ) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def VLOB_MAINTENANCE_SAVE_REENCRYPTION_BATCH(
-        req: VlobMaintenanceSaveReencryptionBatchReq,
-    ) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def VLOB_POLL_CHANGES(req: VlobPollChangesReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def VLOB_READ(req: VlobReadReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def VLOB_UPDATE(req: VlobUpdateReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def ORGANIZATION_CONFIG(req: OrganizationConfigReq) -> AuthenticatedCmdsType: ...
-    @staticmethod
-    def PING(req: AuthenticatedPingReq) -> AuthenticatedCmdsType: ...
+from parsec._parsec_pyi.protocol import (
+    AuthenticatedPingRep,
+    BlockCreateRep,
+    BlockReadRep,
+    DeviceCreateRep,
+    EventsListenRep,
+    EventsSubscribeRep,
+    HumanFindRep,
+    Invite1GreeterWaitPeerRep,
+    Invite2aGreeterGetHashedNonceRep,
+    Invite2bGreeterSendNonceRep,
+    Invite3aGreeterWaitPeerTrustRep,
+    Invite3bGreeterSignifyTrustRep,
+    Invite4GreeterCommunicateRep,
+    InviteDeleteRep,
+    InviteListRep,
+    InviteNewRep,
+    MessageGetRep,
+    OrganizationConfigRep,
+    OrganizationStatsRep,
+    PkiEnrollmentAcceptRep,
+    PkiEnrollmentListRep,
+    PkiEnrollmentRejectRep,
+    RealmCreateRep,
+    RealmFinishReencryptionMaintenanceRep,
+    RealmGetRoleCertificatesRep,
+    RealmStartReencryptionMaintenanceRep,
+    RealmStatsRep,
+    RealmStatusRep,
+    RealmUpdateRolesRep,
+    UserCreateRep,
+    UserGetRep,
+    UserRevokeRep,
+    VlobCreateRep,
+    VlobListVersionsRep,
+    VlobMaintenanceGetReencryptionBatchRep,
+    VlobMaintenanceSaveReencryptionBatchRep,
+    VlobPollChangesRep,
+    VlobReadRep,
+    VlobUpdateRep,
+)
+from parsec._parsec_pyi.protocol.vlob import ReencryptionBatchEntry
+from parsec._parsec_pyi.time import DateTime
 
 class AuthenticatedCmds:
     def __init__(
-        self, server_url: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey
+        self, addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey
     ) -> None: ...
-    async def send_command(self, cmd: AuthenticatedCmdsType) -> AllAuthenticatedCmds: ...
+    @property
+    def addr(self) -> BackendOrganizationAddr: ...
+    async def block_create(
+        self,
+        block_id: BlockID,
+        realm_id: RealmID,
+        block: bytes,
+    ) -> BlockCreateRep: ...
+    async def block_read(self, block_id: BlockID) -> BlockReadRep: ...
+    async def device_create(
+        self, device_certificate: bytes, redacted_device_certificate: bytes
+    ) -> DeviceCreateRep: ...
+    async def events_listen(self, wait: bool) -> EventsListenRep: ...
+    async def events_subscribe(self) -> EventsSubscribeRep: ...
+    async def human_find(
+        self,
+        query: str | None,
+        page: int,
+        per_page: int,
+        omit_revoked: bool,
+        omit_non_human: bool,
+    ) -> HumanFindRep: ...
+    async def invite_1_greeter_wait_peer(
+        self,
+        token: InvitationToken,
+        greeter_public_key: PublicKey,
+    ) -> Invite1GreeterWaitPeerRep: ...
+    async def invite_2a_greeter_get_hashed_nonce(
+        self, token: InvitationToken
+    ) -> Invite2aGreeterGetHashedNonceRep: ...
+    async def invite_2b_greeter_send_nonce(
+        self,
+        token: InvitationToken,
+        greeter_nonce: bytes,
+    ) -> Invite2bGreeterSendNonceRep: ...
+    async def invite_3a_greeter_wait_peer_trust(
+        self, token: InvitationToken
+    ) -> Invite3aGreeterWaitPeerTrustRep: ...
+    async def invite_3b_greeter_signify_trust(
+        self, token: InvitationToken
+    ) -> Invite3bGreeterSignifyTrustRep: ...
+    async def invite_4_greeter_communicate(
+        self,
+        token: InvitationToken,
+        payload: bytes,
+    ) -> Invite4GreeterCommunicateRep: ...
+    async def invite_delete(
+        self,
+        token: InvitationToken,
+        reason: InvitationDeletedReason,
+    ) -> InviteDeleteRep: ...
+    async def invite_list(self) -> InviteListRep: ...
+    async def invite_new(
+        self,
+        type: InvitationType,
+        send_email: bool = False,
+        claimer_email: str | None = None,
+    ) -> InviteNewRep: ...
+    async def message_get(self, offset: int) -> MessageGetRep: ...
+    async def organization_config(self) -> OrganizationConfigRep: ...
+    async def organization_stats(self) -> OrganizationStatsRep: ...
+    async def ping(self, ping: str) -> AuthenticatedPingRep: ...
+    async def pki_enrollment_accept(
+        self,
+        enrollment_id: EnrollmentID,
+        accepter_der_x509_certificate: bytes,
+        accept_payload_signature: bytes,
+        accept_payload: bytes,
+        user_certificate: bytes,
+        device_certificate: bytes,
+        redacted_user_certificate: bytes,
+        redacted_device_certificate: bytes,
+    ) -> PkiEnrollmentAcceptRep: ...
+    async def pki_enrollment_list(self) -> PkiEnrollmentListRep: ...
+    async def pki_enrollment_reject(
+        self, enrollment_id: EnrollmentID
+    ) -> PkiEnrollmentRejectRep: ...
+    async def realm_create(self, role_certificate: bytes) -> RealmCreateRep: ...
+    async def realm_finish_reencryption_maintenance(
+        self,
+        realm_id: RealmID,
+        encryption_revision: int,
+    ) -> RealmFinishReencryptionMaintenanceRep: ...
+    async def realm_get_role_certificates(
+        self, realm_id: RealmID
+    ) -> RealmGetRoleCertificatesRep: ...
+    async def realm_start_reencryption_maintenance(
+        self,
+        realm_id: RealmID,
+        encryption_revision: int,
+        timestamp: DateTime,
+        per_participant_message: dict[UserID, bytes],
+    ) -> RealmStartReencryptionMaintenanceRep: ...
+    async def realm_stats(self, realm_id: RealmID) -> RealmStatsRep: ...
+    async def realm_status(self, realm_id: RealmID) -> RealmStatusRep: ...
+    async def realm_update_roles(
+        self,
+        role_certificate: bytes,
+        recipient_message: bytes | None,
+    ) -> RealmUpdateRolesRep: ...
+    async def user_create(
+        self,
+        user_certificate: bytes,
+        device_certificate: bytes,
+        redacted_user_certificate: bytes,
+        redacted_device_certificate: bytes,
+    ) -> UserCreateRep: ...
+    async def user_get(self, user_id: UserID) -> UserGetRep: ...
+    async def user_revoke(self, revoked_user_certificate: bytes) -> UserRevokeRep: ...
+    async def vlob_create(
+        self,
+        realm_id: RealmID,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        timestamp: DateTime,
+        blob: bytes,
+        sequester_blob: dict[SequesterServiceID, bytes] | None,
+    ) -> VlobCreateRep: ...
+    async def vlob_list_versions(self, vlob_id: VlobID) -> VlobListVersionsRep: ...
+    async def vlob_maintenance_get_reencryption_batch(
+        self,
+        realm_id: RealmID,
+        encryption_revision: int,
+        size: int,
+    ) -> VlobMaintenanceGetReencryptionBatchRep: ...
+    async def vlob_maintenance_save_reencryption_batch(
+        self,
+        realm_id: RealmID,
+        encryption_revision: int,
+        batch: Iterable[ReencryptionBatchEntry],
+    ) -> VlobMaintenanceSaveReencryptionBatchRep: ...
+    async def vlob_poll_changes(
+        self, realm_id: RealmID, last_checkpoint: int
+    ) -> VlobPollChangesRep: ...
+    async def vlob_read(
+        self,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        version: int | None = None,
+        timestamp: DateTime | None = None,
+    ) -> VlobReadRep: ...
+    async def vlob_update(
+        self,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        version: int,
+        timestamp: DateTime,
+        blob: bytes,
+        sequester_blob: dict[SequesterServiceID, bytes] | None,
+    ) -> VlobUpdateRep: ...

@@ -26,6 +26,7 @@ mod trustchain;
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     crate::data::add_mod(py, m)?;
     crate::protocol::add_mod(py, m)?;
+    crate::backend_connection::add_mod(py, m)?;
 
     m.add_class::<addrs::BackendAddr>()?;
     m.add_class::<addrs::BackendOrganizationAddr>()?;
@@ -47,13 +48,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::SequesterSigningKeyDer>()?;
     m.add_class::<api_crypto::SequesterVerifyKeyDer>()?;
     m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
-
-    m.add_class::<backend_connection::AuthenticatedCmds>()?;
-    m.add_class::<backend_connection::AuthenticatedCmdsType>()?;
-    m.add(
-        "CommandErrorExc",
-        py.get_type::<backend_connection::CommandError>(),
-    )?;
 
     m.add_class::<enumerate::ClientType>()?;
     m.add_class::<enumerate::CoreEvent>()?;

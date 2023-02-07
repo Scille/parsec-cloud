@@ -63,6 +63,7 @@ pub const API_VERSION_HEADER_NAME: &str = "Api-Version";
 pub struct AuthenticatedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
+    addr: BackendOrganizationAddr,
     url: Url,
     device_id: String,
     signing_key: SigningKey,
@@ -72,20 +73,25 @@ impl AuthenticatedCmds {
     /// Create a new `AuthenticatedCmds`
     pub fn new(
         client: Client,
-        server_url: BackendOrganizationAddr,
+        addr: BackendOrganizationAddr,
         device_id: DeviceID,
         signing_key: SigningKey,
     ) -> Result<Self, url::ParseError> {
-        let url = server_url.to_authenticated_http_url();
+        let url = addr.to_authenticated_http_url();
 
         let device_id = BASE64_STANDARD.encode(device_id.to_string().as_bytes());
 
         Ok(Self {
             client,
+            addr,
             url,
             device_id,
             signing_key,
         })
+    }
+
+    pub fn addr(&self) -> &BackendOrganizationAddr {
+        &self.addr
     }
 }
 
@@ -189,7 +195,7 @@ impl AuthenticatedCmds {
         ));
 
         let req = prepare_request(request_builder, &self.signing_key, &self.device_id, data).send();
-        let resp = dbg!(req.await)?;
+        let resp = req.await?;
         if resp.status() != reqwest::StatusCode::OK {
             return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
         }

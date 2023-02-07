@@ -20,7 +20,7 @@ from parsec.api.protocol import (
     InvitedClientHandshake,
 )
 from parsec.api.transport import Transport, TransportClosedByPeer, TransportError
-from parsec.core.backend_connection.exceptions import (
+from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendInvitationNotFound,

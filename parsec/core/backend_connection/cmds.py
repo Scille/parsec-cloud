@@ -125,7 +125,7 @@ from parsec.api.protocol import (
 )
 from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.api.transport import Transport, TransportError
-from parsec.core.backend_connection.exceptions import (
+from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendOutOfBallparkError,
     BackendProtocolError,

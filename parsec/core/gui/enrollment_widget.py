@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec._parsec import CoreEvent
 from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
-from parsec.core.backend_connection.exceptions import BackendConnectionError
+from parsec.core.backend_connection import BackendConnectionError
 from parsec.core.gui import desktop, validators
 from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui.custom_widgets import Pixmap
