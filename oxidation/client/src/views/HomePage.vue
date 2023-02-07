@@ -250,8 +250,6 @@ const store = new Storage();
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
 
-mockLastLogin();
-
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
   { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
@@ -299,8 +297,9 @@ const filteredDevices = computed(() => {
 const deviceStoredDataDict = ref<{[slug: string]: DeviceStoredData}>({});
 
 onMounted(async (): Promise<void> => {
-  await store.create();
+  await mockLastLogin();
 
+  await store.create();
   store.get('devicesData').then((val) => {
     // This is needed because for some weird reason,
     // ionic-storage deserializes dates correctly in web
