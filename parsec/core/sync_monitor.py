@@ -9,6 +9,7 @@ import trio
 from structlog import get_logger
 
 from parsec._parsec import (
+    AuthenticatedCmds,
     CoreEvent,
     EntryID,
     VlobPollChangesRepInMaintenance,
@@ -98,7 +99,7 @@ class SyncContext:
     async def _sync(self, entry_id: EntryID) -> None:
         raise NotImplementedError
 
-    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds | AuthenticatedCmds:
         raise NotImplementedError
 
     def _get_local_storage(self) -> UserStorage | AnyWorkspaceStorage:
@@ -312,7 +313,7 @@ class WorkspaceSyncContext(SyncContext):
         # (remotely or locally) should get synchronized
         await self.workspace.sync_by_id(entry_id, recursive=False)
 
-    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds | AuthenticatedCmds:
         return self.workspace.backend_cmds
 
     def _get_local_storage(self) -> WorkspaceStorage:
@@ -325,7 +326,7 @@ class UserManifestSyncContext(SyncContext):
         assert entry_id == self.id
         await self.user_fs.sync()
 
-    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds | AuthenticatedCmds:
         return self.user_fs.backend_cmds
 
     def _get_local_storage(self) -> UserStorage:

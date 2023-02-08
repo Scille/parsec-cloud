@@ -21,6 +21,7 @@ from structlog import get_logger
 from trio_typing import TaskStatus
 
 from parsec._parsec import (
+    AuthenticatedCmds,
     CoreEvent,
     DateTime,
     MessageGetRepOk,
@@ -42,6 +43,7 @@ from parsec._parsec import (
     RealmUpdateRolesRepOk,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
+    ReencryptionBatchEntry,
     Regex,
     VlobCreateRep,
     VlobCreateRepAlreadyExists,
@@ -132,7 +134,7 @@ AnyEntryName = Union[EntryName, str]
 class ReencryptionJob:
     def __init__(
         self,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
         new_workspace_entry: WorkspaceEntry,
         old_workspace_entry: WorkspaceEntry,
     ) -> None:
@@ -178,7 +180,7 @@ class ReencryptionJob:
             for item in rep.batch:
                 clear_text = self.old_workspace_entry.key.decrypt(item.blob)
                 new_ciphered = self.new_workspace_entry.key.encrypt(clear_text)
-                done_batch.append((item.vlob_id, item.version, new_ciphered))
+                done_batch.append(ReencryptionBatchEntry(item.vlob_id, item.version, new_ciphered))
 
             rep_maintenance_save_reencryption = (
                 await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
@@ -264,7 +266,7 @@ class UserFS:
         self,
         data_base_dir: Path,
         device: LocalDevice,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Regex,
@@ -320,7 +322,7 @@ class UserFS:
         cls: Type[UserFSTypeVar],
         data_base_dir: Path,
         device: LocalDevice,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Regex,

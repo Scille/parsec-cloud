@@ -6,6 +6,7 @@ from typing import Any, List, Tuple, Type
 import attr
 
 from parsec._parsec import (
+    AuthenticatedCmds,
     DeviceCreateRepOk,
     InvitationDeletedReason,
     Invite1GreeterWaitPeerRepOk,
@@ -73,7 +74,7 @@ def _check_rep(rep: Any, step_name: str, ok_type: Type[T_OK_TYPES]) -> T_OK_TYPE
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInitialCtx:
     token: InvitationToken
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
 
     async def _do_wait_peer(self) -> Tuple[SASCode, SASCode, SecretKey]:
         greeter_private_key = PrivateKey.generate()
@@ -144,7 +145,7 @@ class BaseGreetInProgress1Ctx:
 
     _claimer_sas: SASCode
     _shared_secret_key: SecretKey
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
 
     async def _do_wait_peer_trust(self) -> None:
         rep = await self._cmds.invite_3a_greeter_wait_peer_trust(token=self.token)
@@ -183,7 +184,7 @@ class BaseGreetInProgress2Ctx:
     claimer_sas: SASCode
 
     _shared_secret_key: SecretKey
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
 
     def generate_claimer_sas_choices(self, size: int = 3) -> List[SASCode]:
         return generate_sas_code_candidates(self.claimer_sas, size=size)
@@ -218,7 +219,7 @@ class UserGreetInProgress3Ctx:
     token: InvitationToken
 
     _shared_secret_key: SecretKey
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
 
     async def do_get_claim_requests(self) -> "UserGreetInProgress4Ctx":
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=b"")
@@ -250,7 +251,7 @@ class DeviceGreetInProgress3Ctx:
     token: InvitationToken
 
     _shared_secret_key: SecretKey
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
 
     async def do_get_claim_requests(self) -> "DeviceGreetInProgress4Ctx":
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=b"")
@@ -345,7 +346,7 @@ class UserGreetInProgress4Ctx:
     _public_key: PublicKey
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
 
     async def do_create_new_user(
         self,
@@ -408,7 +409,7 @@ class DeviceGreetInProgress4Ctx:
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
 
     async def do_create_new_device(
         self, author: LocalDevice, device_label: DeviceLabel | None

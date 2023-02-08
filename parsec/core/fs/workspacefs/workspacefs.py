@@ -26,9 +26,17 @@ from parsec._parsec import (
     Regex,
     UserID,
     WorkspaceEntry,
+    AuthenticatedCmds,
+    CoreEvent,
+    DateTime,
+    RealmStatusRepOk,
+    Regex,
 )
 from parsec._parsec import FileManifest as RemoteFileManifest
 from parsec.api.data import AnyRemoteManifest
+from parsec.api.data import AnyRemoteManifest, BlockAccess
+from parsec.api.data import FileManifest as RemoteFileManifest
+from parsec.api.protocol import MaintenanceType, RealmID, UserID
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -93,7 +101,7 @@ class WorkspaceFS:
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         device: LocalDevice,
         local_storage: AnyWorkspaceStorage,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
         preferred_language: str = "en",

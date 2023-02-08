@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Tuple
 
 from parsec._parsec import (
+    AuthenticatedCmds,
     TimeProvider,
     TrustchainContext,
     TrustchainErrorException,
@@ -61,7 +62,7 @@ class RemoteDevicesManager:
 
     def __init__(
         self,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
         root_verify_key: VerifyKey,
         time_provider: TimeProvider,
         cache_validity: int = DEFAULT_CACHE_VALIDITY,

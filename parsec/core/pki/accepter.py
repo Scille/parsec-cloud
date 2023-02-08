@@ -8,6 +8,7 @@ from typing import Iterable, cast
 import attr
 
 from parsec._parsec import (
+    AuthenticatedCmds,
     DateTime,
     EnrollmentID,
     PkiEnrollmentAcceptRepActiveUsersLimitReached,
@@ -60,7 +61,7 @@ from parsec.core.types import LocalDevice
 
 
 async def accepter_list_submitted_from_backend(
-    cmds: BackendAuthenticatedCmds, extra_trust_roots: Iterable[Path] = ()
+    cmds: BackendAuthenticatedCmds | AuthenticatedCmds, extra_trust_roots: Iterable[Path] = ()
 ) -> list[PkiEnrollmentAccepterValidSubmittedCtx | PkiEnrollmentAccepterInvalidSubmittedCtx]:
     """
     Raises:
@@ -73,11 +74,9 @@ async def accepter_list_submitted_from_backend(
     rep = await cmds.pki_enrollment_list()
 
     if isinstance(rep, PkiEnrollmentListRepNotAllowed):
-        raise PkiEnrollmentListNotAllowedError(
-            f"Listing enrollments is not allowed: {rep['reason']}", rep
-        )
+        raise PkiEnrollmentListNotAllowedError(f"Listing enrollments is not allowed: {rep}")
     if not isinstance(rep, PkiEnrollmentListRepOk):
-        raise PkiEnrollmentListError(f"Backend refused to list enrollments: {rep['status']}", rep)
+        raise PkiEnrollmentListError(f"Backend refused to list enrollments: {rep}")
 
     pendings: list[
         PkiEnrollmentAccepterInvalidSubmittedCtx | PkiEnrollmentAccepterValidSubmittedCtx
@@ -154,7 +153,7 @@ async def accepter_list_submitted_from_backend(
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentAccepterValidSubmittedCtx:
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
     enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
@@ -304,7 +303,7 @@ class PkiEnrollmentAccepterInvalidSubmittedCtx:
     before the error or not.
     """
 
-    _cmds: BackendAuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
     enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
@@ -331,7 +330,9 @@ class PkiEnrollmentAccepterInvalidSubmittedCtx:
         await _reject(self._cmds, self.enrollment_id)
 
 
-async def _reject(cmds: BackendAuthenticatedCmds, enrollment_id: EnrollmentID) -> None:
+async def _reject(
+    cmds: BackendAuthenticatedCmds | AuthenticatedCmds, enrollment_id: EnrollmentID
+) -> None:
     """
     Raises:
         BackendNotAvailable
