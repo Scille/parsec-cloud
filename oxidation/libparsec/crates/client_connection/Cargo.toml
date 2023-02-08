@@ -5,7 +5,7 @@ edition = "2021"
 autotests = false
 
 [features]
-test-testbed-support = [
+test-with-testbed = [
     "libparsec_testbed"
 ]
 
@@ -32,7 +32,7 @@ base64 = "0.21.0"
 chrono = "0.4.23"
 
 [dev-dependencies]
-# Note `libparsec_tests_fixtures` enables our `test-testbed-support` feature
+# Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
 anyhow = "1.0.68"

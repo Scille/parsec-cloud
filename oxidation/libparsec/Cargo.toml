@@ -12,7 +12,7 @@ use-sodiumoxide = [ "libparsec_crypto/use-sodiumoxide" ]
 test-utils = [
     "libparsec_testbed",
     "libparsec_client_high_level_api/test-utils",
-    "libparsec_platform_device_loader/test-testbed-support",
+    "libparsec_platform_device_loader/test-with-testbed",
     "libparsec_types/test-mock-time",
 ]
 

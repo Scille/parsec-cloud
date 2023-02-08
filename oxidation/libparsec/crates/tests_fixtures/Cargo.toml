@@ -9,7 +9,7 @@ libparsec_types = { path = "../types" }
 libparsec_client_types = { path = "../client_types" }
 libparsec_testbed = { path = "../testbed" }
 # Enable testbed support in crates here
-libparsec_platform_device_loader = { path = "../platform_device_loader", features = [ "test-testbed-support" ] }
+libparsec_platform_device_loader = { path = "../platform_device_loader", features = [ "test-with-testbed" ] }
 
 rstest = "0.16.0"
 hex-literal = "0.3.3"
