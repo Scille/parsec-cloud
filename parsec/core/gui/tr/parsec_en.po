@@ -3156,3 +3156,15 @@ msgstr "Downloading missing data"
 
 msgid "TEXT_WORKSPACE_IS_EMPTY"
 msgstr "This workspace is empty."
+
+msgid "TEXT_FILTER_USERS_ROLE_NONE"
+msgstr "Show all profiles"
+
+msgid "TEXT_FILTER_USERS_ROLE_ADMIN"
+msgstr "Only Administrator profiles"
+
+msgid "TEXT_FILTER_USERS_ROLE_STANDARD"
+msgstr "Only Standard profiles"
+
+msgid "TEXT_FILTER_USERS_ROLE_OUTSIDER"
+msgstr "Only Outsider profiles"

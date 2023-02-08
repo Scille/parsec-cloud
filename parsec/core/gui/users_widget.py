@@ -209,6 +209,7 @@ async def _do_list_users_and_invitations(
     pattern: str | None = None,
     omit_revoked: bool = False,
     omit_invitation: bool = False,
+    role_filter: UserProfile | None = None,
 ) -> tuple[int, list[UserInfo], list[InviteListItem]]:
     try:
         invitations = [] if omit_invitation else await core.list_invitations()
@@ -221,6 +222,8 @@ async def _do_list_users_and_invitations(
         users, total = await core.find_humans(
             page=page, per_page=USERS_PER_PAGE, query=pattern, omit_revoked=omit_revoked
         )
+        if role_filter is not None:
+            users = [u for u in users if u.profile == role_filter]
         return (
             total,
             users,
@@ -286,6 +289,17 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.layout_users = FlowLayout(spacing=40)
         self.layout_content.addLayout(self.layout_users)
         self.button_add_user.apply_style()
+        self.combo_filter_role.addItem(T("TEXT_FILTER_USERS_ROLE_NONE"), None)
+        self.combo_filter_role.addItem(T("TEXT_FILTER_USERS_ROLE_ADMIN"), UserProfile.ADMIN)
+        self.combo_filter_role.addItem(T("TEXT_FILTER_USERS_ROLE_STANDARD"), UserProfile.STANDARD)
+        self.combo_filter_role.addItem(T("TEXT_FILTER_USERS_ROLE_OUTSIDER"), UserProfile.OUTSIDER)
+
+        if not self.core.get_organization_config().user_profile_outsider_allowed:
+            item = self.combo_filter_role.model().item(3)
+            item.setEnabled(False)
+            item.setToolTip(T("NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"))
+
+        self.combo_filter_role.currentIndexChanged.connect(self._on_filter_role_changed)
         if core.device.is_admin:
             self.button_add_user.clicked.connect(self.invite_user)
         else:
@@ -330,6 +344,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.search_timer.stop()
         if change_page is False:
             self._page = 1
+        self.reset()
+
+    def _on_filter_role_changed(self, _: int) -> None:
         self.reset()
 
     def invite_user(self) -> None:
@@ -607,4 +624,5 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             omit_revoked=self.checkbox_filter_revoked.isChecked(),
             omit_invitation=self.checkbox_filter_invitation.isChecked(),
             pattern=pattern,
+            role_filter=self.combo_filter_role.currentData(),
         )

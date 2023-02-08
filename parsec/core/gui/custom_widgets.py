@@ -385,7 +385,7 @@ class FilterLineEdit(QLineEdit):
     def _move_button(self) -> None:
         r = self.geometry()
         self.button_clear.setGeometry(
-            r.x() + r.width() - self.button_clear.width(), r.y(), r.height(), r.height()
+            r.x() + r.width() - self.button_clear.width(), 0, r.height(), r.height()
         )
 
 

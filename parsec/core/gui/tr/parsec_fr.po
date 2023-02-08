@@ -525,7 +525,7 @@ msgstr ""
 "standard."
 
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
-msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
+msgstr "La configuration de l'organisation n'autorise pas ce type de profil"
 
 msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
 msgstr ""
@@ -3242,3 +3242,15 @@ msgstr "Téléchargement des données manquantes"
 
 msgid "TEXT_WORKSPACE_IS_EMPTY"
 msgstr "Cet espace de travail est vide."
+
+msgid "TEXT_FILTER_USERS_ROLE_NONE"
+msgstr "Voir tous les profils"
+
+msgid "TEXT_FILTER_USERS_ROLE_ADMIN"
+msgstr "Profils Administrateur seulement"
+
+msgid "TEXT_FILTER_USERS_ROLE_STANDARD"
+msgstr "Profils Standard seulement"
+
+msgid "TEXT_FILTER_USERS_ROLE_OUTSIDER"
+msgstr "Profils Externe seulement"
