@@ -5,7 +5,7 @@ mod native;
 #[cfg(target_arch = "wasm32")]
 mod web;
 // Testbed integration is tested in the `libparsec_tests_fixture` crate.
-#[cfg(feature = "test-testbed-support")]
+#[cfg(feature = "test-with-testbed")]
 mod testbed;
 
 use libparsec_client_types::{
