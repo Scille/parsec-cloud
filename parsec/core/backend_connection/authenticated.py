@@ -20,6 +20,7 @@ from trio_typing import TaskStatus
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    AuthenticatedCmds,
     CoreEvent,
     EventsListenRep,
     EventsListenRepOk,
@@ -52,6 +53,8 @@ from parsec.core.types import BackendOrganizationAddr, LocalDevice
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
+
+OXIDIZED = False
 
 logger = get_logger()
 
@@ -285,7 +288,11 @@ class BackendAuthenticatedConn:
         self._status = BackendConnStatus.LOST
         self._status_exc: Exception | None = None
         self._status_event_sent = False
-        self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
+        self._cmds: AuthenticatedCmds | BackendAuthenticatedCmds = (
+            AuthenticatedCmds(addr, device.device_id, device.signing_key)
+            if OXIDIZED
+            else BackendAuthenticatedCmds(addr, self._acquire_transport)
+        )
         self._manager_connect_cancel_scope: trio.CancelScope | None = None
         self._monitors_task_statuses: List[MonitorTaskStatus] = []
         self._monitors_idle_event = trio.Event()
@@ -316,7 +323,7 @@ class BackendAuthenticatedConn:
         return self._status_exc
 
     @property
-    def cmds(self) -> BackendAuthenticatedCmds:
+    def cmds(self) -> BackendAuthenticatedCmds | AuthenticatedCmds:
         return self._cmds
 
     async def set_status(
@@ -541,7 +548,7 @@ async def backend_authenticated_cmds_factory(
     device_id: DeviceID,
     signing_key: SigningKey,
     keepalive: int | None = None,
-) -> AsyncGenerator[BackendAuthenticatedCmds, None]:
+) -> AsyncGenerator[BackendAuthenticatedCmds | AuthenticatedCmds, None]:
     """
     Raises:
         BackendConnectionError
@@ -581,7 +588,9 @@ async def backend_authenticated_cmds_factory(
                 raise
 
     try:
-        yield BackendAuthenticatedCmds(addr, _acquire_transport)
+        yield AuthenticatedCmds(
+            addr, device_id, signing_key
+        ) if OXIDIZED else BackendAuthenticatedCmds(addr, _acquire_transport)
 
     finally:
         async with transport_lock:

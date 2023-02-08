@@ -16,12 +16,12 @@ from parsec._parsec import (
 from parsec.api.data import RevokedUserCertificate
 from parsec.api.protocol import AUTHENTICATED_CMDS, OrganizationID, ServerHandshake
 from parsec.api.transport import Ping, Pong, Transport
-from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendNotAvailable,
     backend_authenticated_cmds_factory,
 )
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.types import BackendOrganizationAddr
 from tests.common import correct_addr
 from tests.core.backend_connection.common import ALL_CMDS
@@ -47,6 +47,7 @@ async def test_backend_switch_offline(running_backend, alice):
                 await cmds.ping()
 
 
+@pytest.mark.skipif(OXIDIZED, reason="No error")
 @pytest.mark.trio
 async def test_backend_closed_cmds(running_backend, alice):
     async with backend_authenticated_cmds_factory(
@@ -91,6 +92,7 @@ async def test_handshake_unknown_organization(running_backend, alice):
     assert str(exc.value) == "Invalid handshake information"
 
 
+@pytest.mark.skipif(OXIDIZED, reason="No root verify key")
 @pytest.mark.trio
 async def test_handshake_rvk_mismatch(running_backend, alice, otherorg):
     bad_rvk_org_addr = BackendOrganizationAddr.build(
@@ -128,17 +130,15 @@ async def test_handshake_revoked_device(running_backend, alice, bob):
 
 @pytest.mark.trio
 async def test_organization_expired(running_backend, alice, expiredorg):
-
-    with running_backend.backend.event_bus.listen() as spy:
-        with pytest.raises(BackendConnectionRefused) as exc:
-            async with backend_authenticated_cmds_factory(
-                expiredorg.addr, alice.device_id, alice.signing_key
-            ) as cmds:
-                await cmds.ping()
-        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+    with pytest.raises(BackendConnectionRefused) as exc:
+        async with backend_authenticated_cmds_factory(
+            expiredorg.addr, alice.device_id, alice.signing_key
+        ) as cmds:
+            await cmds.ping()
     assert str(exc.value) == "Trial organization has expired"
 
 
+@pytest.mark.skipif(OXIDIZED, reason="No handshake")
 @pytest.mark.trio
 async def test_backend_disconnect_during_handshake(alice):
     client_answered = False

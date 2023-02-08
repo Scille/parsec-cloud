@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Awaitable, Union, cast
+from typing import Any, Awaitable, Iterable, Union, cast
 
 from parsec._parsec import (
     AuthenticatedPingRep,
@@ -428,7 +428,7 @@ async def vlob_maintenance_save_reencryption_batch(
     transport: Transport,
     realm_id: RealmID,
     encryption_revision: int,
-    batch: list[tuple[VlobID, int, bytes]],
+    batch: Iterable[ReencryptionBatchEntry],
 ) -> VlobMaintenanceSaveReencryptionBatchRep:
     return cast(
         VlobMaintenanceSaveReencryptionBatchRep,
@@ -438,7 +438,10 @@ async def vlob_maintenance_save_reencryption_batch(
             cmd="vlob_maintenance_save_reencryption_batch",
             realm_id=realm_id,
             encryption_revision=encryption_revision,
-            batch=[ReencryptionBatchEntry(vlob_id=x[0], version=x[1], blob=x[2]) for x in batch],
+            batch=[
+                ReencryptionBatchEntry(vlob_id=x.vlob_id, version=x.version, blob=x.blob)
+                for x in batch
+            ],
         ),
     )
 

@@ -25,6 +25,7 @@ from parsec.core.backend_connection import (
     BackendConnStatus,
     BackendNotAvailable,
 )
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.fs.userfs.userfs import UserFS
 from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
@@ -168,6 +169,7 @@ async def test_init_with_backend_offline(event_bus, alice):
                 await conn.cmds.ping("foo")
 
 
+@pytest.mark.skipif(OXIDIZED, reason="No error")
 @pytest.mark.trio
 @pytest.mark.parametrize("during_bootstrap", (True, False))
 async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_bootstrap):

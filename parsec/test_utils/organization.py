@@ -8,6 +8,7 @@ from typing import Tuple, cast
 from uuid import uuid4
 
 from parsec._parsec import (
+    AuthenticatedCmds,
     DateTime,
     DeviceCreateRepOk,
     UserCreateRepOk,
@@ -159,7 +160,9 @@ async def initialize_test_organization(
 
 
 async def _add_random_device(
-    cmds: BackendAuthenticatedCmds, device: LocalDevice, additional_devices_number: int
+    cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+    device: LocalDevice,
+    additional_devices_number: int,
 ) -> None:
     for _ in range(additional_devices_number):
         device_label = DeviceLabel("device_" + str(uuid4())[:9])
@@ -167,7 +170,7 @@ async def _add_random_device(
 
 
 async def _add_random_users(
-    cmds: BackendAuthenticatedCmds,
+    cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
     author: LocalDevice,
     alice_core: LoggedCore,
     bob_core: LoggedCore,
@@ -207,7 +210,7 @@ async def _add_random_users(
 
 
 async def _register_new_user(
-    cmds: BackendAuthenticatedCmds,
+    cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
     author: LocalDevice,
     device_label: DeviceLabel | None,
     human_handle: HumanHandle | None,
@@ -258,7 +261,7 @@ async def _register_new_user(
 
 
 async def _register_new_device(
-    cmds: BackendAuthenticatedCmds,
+    cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
     author: LocalDevice,
     device_label: DeviceLabel | None,
 ) -> LocalDevice:
