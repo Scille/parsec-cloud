@@ -67,6 +67,53 @@
       <number>0</number>
      </property>
      <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="Button" name="button_add_user">
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="text">
+          <string>ACTION_USER_INVITE_USER</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../rc/resources.qrc">
+           <normaloff>:/icons/images/material/person_add.svg</normaloff>:/icons/images/material/person_add.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="color" stdset="0">
+          <color>
+           <red>0</red>
+           <green>146</green>
+           <blue>255</blue>
+          </color>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <property name="spacing">
         <number>10</number>
@@ -99,34 +146,7 @@
         </widget>
        </item>
        <item>
-        <widget class="Button" name="button_add_user">
-         <property name="cursor">
-          <cursorShape>PointingHandCursor</cursorShape>
-         </property>
-         <property name="text">
-          <string>ACTION_USER_INVITE_USER</string>
-         </property>
-         <property name="icon">
-          <iconset resource="../rc/resources.qrc">
-           <normaloff>:/icons/images/material/person_add.svg</normaloff>:/icons/images/material/person_add.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
-         </property>
-         <property name="flat">
-          <bool>true</bool>
-         </property>
-         <property name="color" stdset="0">
-          <color>
-           <red>0</red>
-           <green>146</green>
-           <blue>255</blue>
-          </color>
-         </property>
-        </widget>
+        <widget class="QComboBox" name="combo_filter_role"/>
        </item>
        <item>
         <spacer name="horizontalSpacer">
@@ -216,7 +236,7 @@
           <x>0</x>
           <y>0</y>
           <width>931</width>
-          <height>539</height>
+          <height>503</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">

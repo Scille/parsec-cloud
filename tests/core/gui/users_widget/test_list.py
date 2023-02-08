@@ -23,14 +23,17 @@ def _assert_all_users_visible(u_w, index=0):
     adam_w = u_w.layout_users.itemAt(index).widget()
     assert adam_w.label_username.text() == "Adamy McAdam..."
     assert adam_w.label_email.text() == "adam@example..."
+    assert adam_w.label_role.text() == translate("TEXT_USER_PROFILE_ADMIN")
 
     alice_w = u_w.layout_users.itemAt(index + 1).widget()
     assert alice_w.label_username.text() == "Alicey McAli..."
     assert alice_w.label_email.text() == "alice@exampl..."  # cspell: disable-line
+    assert alice_w.label_role.text() == translate("TEXT_USER_PROFILE_ADMIN")
 
     bob_w = u_w.layout_users.itemAt(index + 2).widget()
     assert bob_w.label_username.text() == "Boby McBobFa..."
     assert bob_w.label_email.text() == "bob@example...."
+    assert bob_w.label_role.text() == translate("TEXT_USER_PROFILE_STANDARD")
 
     assert alice_w.isVisible() is True
     assert bob_w.isVisible() is True
@@ -147,6 +150,20 @@ async def test_filter_users(aqtbot, running_backend, logged_gui, str_len_limiter
     assert alice_w.label_username.text() == "Alicey McAli..."
     assert alice_w.label_email.text() == "alice@exampl..."  # cspell: disable-line
     assert u_w.layout_users.count() == 2
+
+    async with aqtbot.wait_signal(u_w.list_success):
+        aqtbot.mouse_click(u_w.line_edit_search.button_clear, QtCore.Qt.LeftButton)
+    await aqtbot.wait_until(lambda: _assert_all_users_visible(u_w=u_w))
+
+    # Set to Standard
+    u_w.combo_filter_role.setCurrentIndex(2)
+    await aqtbot.wait_until(lambda: _users_shown(count=1))
+    bob_w = u_w.layout_users.itemAt(0).widget()
+
+    assert bob_w.isVisible() is True
+    assert bob_w.label_username.text() == "Boby McBobFa..."
+    assert bob_w.label_email.text() == "bob@example...."
+    assert u_w.layout_users.count() == 1
 
 
 @pytest.mark.gui
