@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import DateTime, VlobReadRepOk
+from parsec._parsec import DateTime
+from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.core.fs import FSError, FsPath
 
 
@@ -311,20 +312,28 @@ async def test_versions_not_enough_download_permited(alice_workspace, alice):
 
 
 @pytest.mark.trio
-async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
-    backend_cmds = alice_workspace.remote_loader.backend_cmds
-    original_vlob_read = backend_cmds.vlob_read
+async def test_versions_backend_timestamp_not_matching(alice_workspace, alice, monkeypatch):
+    original_vlob_read = MemoryVlobComponent.read
     vlob_id = []
 
     async def mocked_vlob_read(*args, **kwargs):
-        r = await original_vlob_read(*args, **kwargs)
-        r = VlobReadRepOk(
-            r.version, r.blob, r.author, r.timestamp.add(seconds=1), r.author_last_role_granted_on
+        (
+            version,
+            blob,
+            author,
+            created_on,
+            author_last_role_granted_on,
+        ) = await original_vlob_read(*args, **kwargs)
+        vlob_id.append(kwargs["vlob_id"])
+        return (
+            version,
+            blob,
+            author,
+            created_on.add(seconds=1),
+            author_last_role_granted_on,
         )
-        vlob_id.append(args[1])
-        return r
 
-    backend_cmds.vlob_read = mocked_vlob_read
+    monkeypatch.setattr(MemoryVlobComponent, "read", mocked_vlob_read)
 
     with pytest.raises(FSError) as exc:
         version_lister = alice_workspace.get_version_lister()

@@ -50,7 +50,7 @@ use reqwest::{
     Client, RequestBuilder, Url,
 };
 
-use crate::command_error::{self, CommandError};
+use crate::error::{CommandError, CommandResult};
 
 /// Method name that will be used for the header `Authorization` to indicate that will be using this method.
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
@@ -116,7 +116,7 @@ macro_rules! impl_auth_cmds {
     ) => {
         $(
             $(#[$outer])*
-            pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
+            pub async fn $name(&self, $($key: $type),*) -> CommandResult<authenticated_cmds::$name::Rep> {
                 let data = build_req!($($decorator)? $name, $($key),*);
                 self.send(data).await
             }
@@ -183,27 +183,34 @@ impl AuthenticatedCmds {
     pub async fn send<T>(
         &self,
         request: T,
-    ) -> command_error::Result<<T as libparsec_protocol::Request>::Response>
+    ) -> CommandResult<<T as libparsec_protocol::Request>::Response>
     where
         T: Request,
     {
         let request_builder = self.client.post(self.url.clone());
 
-        let data = request.dump().expect(concat!(
-            "failed to serialize the command ",
-            stringify!($name)
-        ));
+        let data = request.dump()?;
 
         let req = prepare_request(request_builder, &self.signing_key, &self.device_id, data).send();
         let resp = req.await?;
-        if resp.status() != reqwest::StatusCode::OK {
-            return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
+        match resp.status().as_u16() {
+            200 => {
+                let response_body = resp.bytes().await?;
+                Ok(T::load_response(&response_body)?)
+            }
+            415 => Err(CommandError::BadContent),
+            422 => {
+                let api_version = resp
+                    .headers()
+                    .get("Api-Version")
+                    .map(|x| x.to_str().unwrap_or_default().into())
+                    .unwrap_or_default();
+                Err(CommandError::UnsupportedApiVersion(api_version))
+            }
+            460 => Err(CommandError::ExpiredOrganization),
+            461 => Err(CommandError::RevokedUser),
+            _ => Err(CommandError::InvalidResponseStatus(resp.status(), resp)),
         }
-
-        let response_body = resp.bytes().await?;
-
-        T::load_response(&response_body)
-            .map_err(command_error::CommandError::InvalidResponseContent)
     }
 
     impl_auth_cmds!(

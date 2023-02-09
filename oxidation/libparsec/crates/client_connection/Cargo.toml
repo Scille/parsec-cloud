@@ -30,6 +30,7 @@ url = "2.3.1"
 # Used to encoded binary data.
 base64 = "0.21.0"
 chrono = "0.4.23"
+thiserror = "1.0.38"
 
 [dev-dependencies]
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature

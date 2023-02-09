@@ -158,7 +158,7 @@ def otherorg(organization_factory):
     return organization_factory("OtherOrg")
 
 
-# Expired in backend_authenticated_cmds_factory
+# The organization is expired in backend_authenticated_cmds_factory
 @pytest.fixture
 def expiredorg(organization_factory):
     expired_org = organization_factory("ExpiredOrg")

@@ -175,6 +175,8 @@ async def test_backend_disconnect_during_handshake(alice):
     assert client_answered
 
 
+# TODO: Add test for sse event
+@pytest.mark.skipif(OXIDIZED, reason="No ws event")
 @pytest.mark.trio
 async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, running_backend, alice):
     KEEPALIVE_TIME = 10

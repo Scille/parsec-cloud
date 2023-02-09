@@ -7,7 +7,9 @@ use std::{
     str::FromStr,
 };
 
-use libparsec_client_connection::{client::generate_client, AuthenticatedCmds, CommandError};
+use libparsec_client_connection::{
+    generate_client, AuthenticatedCmds, CommandError, CommandResult,
+};
 use libparsec_crypto::SigningKey;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::TestbedScope;
@@ -133,9 +135,7 @@ async fn send_ping(
     message: &str,
 ) -> (
     JoinHandle<anyhow::Result<()>>,
-    JoinHandle<
-        libparsec_client_connection::command_error::Result<authenticated_cmds::v3::ping::Rep>,
-    >,
+    JoinHandle<CommandResult<authenticated_cmds::v3::ping::Rep>>,
 ) {
     let (ready_send, ready_recv) = channel();
     let (stop_send, stop_recv) = channel();
@@ -179,7 +179,7 @@ async fn client(
     client: AuthenticatedCmds,
     notify_stop: Sender<()>,
     message: String,
-) -> libparsec_client_connection::command_error::Result<authenticated_cmds::v3::ping::Rep> {
+) -> CommandResult<authenticated_cmds::v3::ping::Rep> {
     let rep = client.ping(message).await;
     log::info!("[client] recv response: {rep:?}");
     log::debug!("[client] notify server to stop");

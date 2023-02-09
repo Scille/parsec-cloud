@@ -34,8 +34,7 @@ impl AuthenticatedCmds {
         device_id: DeviceID,
         signing_key: SigningKey,
     ) -> PyResult<Self> {
-        let auth_cmds =
-            client_connection::client::generate_client(signing_key.0, device_id.0, addr.0);
+        let auth_cmds = client_connection::generate_client(signing_key.0, device_id.0, addr.0);
         Ok(Self(Arc::new(auth_cmds)))
     }
 
@@ -54,7 +53,7 @@ impl AuthenticatedCmds {
 
         crate::binding_utils::unwrap_bytes!(block);
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let block_id = block_id.0;
             let realm_id = realm_id.0;
 
@@ -83,7 +82,7 @@ impl AuthenticatedCmds {
     fn block_read(&self, block_id: BlockID) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let block_id = block_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::block_read::Req { block_id };
@@ -112,7 +111,7 @@ impl AuthenticatedCmds {
 
         crate::binding_utils::unwrap_bytes!(device_certificate, redacted_device_certificate);
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::device_create::Req {
                 device_certificate,
                 redacted_device_certificate,
@@ -136,7 +135,7 @@ impl AuthenticatedCmds {
     fn events_listen(&self, wait: bool) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::events_listen::Req { wait };
 
             crate::binding_utils::send_command!(
@@ -155,7 +154,7 @@ impl AuthenticatedCmds {
     fn events_subscribe(&self) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::events_subscribe::Req;
 
             crate::binding_utils::send_command!(
@@ -179,7 +178,7 @@ impl AuthenticatedCmds {
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let page = NonZeroU64::try_from(page).map_err(InvalidMessageError::new_err)?;
             let per_page =
                 IntegerBetween1And100::try_from(per_page).map_err(InvalidMessageError::new_err)?;
@@ -211,7 +210,7 @@ impl AuthenticatedCmds {
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let greeter_public_key = greeter_public_key.0;
             let token = token.0;
 
@@ -238,7 +237,7 @@ impl AuthenticatedCmds {
     fn invite_2a_greeter_get_hashed_nonce(&self, token: InvitationToken) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::invite_2a_greeter_get_hashed_nonce::Req {
@@ -268,7 +267,7 @@ impl AuthenticatedCmds {
 
         crate::binding_utils::unwrap_bytes!(greeter_nonce);
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
             let req =
@@ -294,7 +293,7 @@ impl AuthenticatedCmds {
     fn invite_3a_greeter_wait_peer_trust(&self, token: InvitationToken) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::invite_3a_greeter_wait_peer_trust::Req {
@@ -318,7 +317,7 @@ impl AuthenticatedCmds {
     fn invite_3b_greeter_signify_trust(&self, token: InvitationToken) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
             let req =
@@ -349,7 +348,7 @@ impl AuthenticatedCmds {
 
         crate::binding_utils::unwrap_bytes!(payload);
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
             let req =
@@ -379,7 +378,7 @@ impl AuthenticatedCmds {
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
             let reason = reason.0;
 
@@ -402,7 +401,7 @@ impl AuthenticatedCmds {
     fn invite_list(&self) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::invite_list::Req;
 
             crate::binding_utils::send_command!(
@@ -425,7 +424,7 @@ impl AuthenticatedCmds {
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::invite_new::Req(match r#type.0 {
                 libparsec::types::InvitationType::Device => libparsec::protocol::authenticated_cmds::v2::invite_new::UserOrDevice::Device {
                     send_email
@@ -453,7 +452,7 @@ impl AuthenticatedCmds {
     fn message_get(&self, offset: u64) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::message_get::Req { offset };
 
             crate::binding_utils::send_command!(
@@ -470,7 +469,7 @@ impl AuthenticatedCmds {
     fn organization_config(&self) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::organization_config::Req;
 
             crate::binding_utils::send_command!(
@@ -488,7 +487,7 @@ impl AuthenticatedCmds {
     fn organization_stats(&self) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::organization_stats::Req;
 
             crate::binding_utils::send_command!(
@@ -510,7 +509,7 @@ impl AuthenticatedCmds {
 
         let req = libparsec::protocol::authenticated_cmds::v2::ping::Req { ping };
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
@@ -546,7 +545,7 @@ impl AuthenticatedCmds {
             redacted_device_certificate
         );
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let enrollment_id = enrollment_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::pki_enrollment_accept::Req {
@@ -582,7 +581,7 @@ impl AuthenticatedCmds {
     fn pki_enrollment_list(&self) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::pki_enrollment_list::Req;
 
             crate::binding_utils::send_command!(
@@ -600,7 +599,7 @@ impl AuthenticatedCmds {
     fn pki_enrollment_reject(&self, enrollment_id: EnrollmentID) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let enrollment_id = enrollment_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::pki_enrollment_reject::Req {
@@ -626,11 +625,11 @@ impl AuthenticatedCmds {
 
         crate::binding_utils::unwrap_bytes!(role_certificate);
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req =
                 libparsec::protocol::authenticated_cmds::v2::realm_create::Req { role_certificate };
 
-            crate::binding_utils::send_command!(
+            crate::binding_utils::send_command_and_handle_bad_timestamp!(
                 auth_cmds,
                 req,
                 realm_create,
@@ -653,7 +652,7 @@ impl AuthenticatedCmds {
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::realm_finish_reencryption_maintenance::Req {
@@ -680,7 +679,7 @@ impl AuthenticatedCmds {
     fn realm_get_role_certificates(&self, realm_id: RealmID) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
             let req =
@@ -718,7 +717,7 @@ impl AuthenticatedCmds {
             })
             .collect();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
             let timestamp = timestamp.0;
 
@@ -730,7 +729,7 @@ impl AuthenticatedCmds {
                     timestamp,
                 };
 
-            crate::binding_utils::send_command!(
+            crate::binding_utils::send_command_and_handle_bad_timestamp!(
                 auth_cmds,
                 req,
                 realm_start_reencryption_maintenance,
@@ -751,7 +750,7 @@ impl AuthenticatedCmds {
     fn realm_stats(&self, realm_id: RealmID) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::realm_stats::Req { realm_id };
@@ -772,7 +771,7 @@ impl AuthenticatedCmds {
     fn realm_status(&self, realm_id: RealmID) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::realm_status::Req { realm_id };
@@ -799,13 +798,13 @@ impl AuthenticatedCmds {
 
         crate::binding_utils::unwrap_bytes!(recipient_message, role_certificate);
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::realm_update_roles::Req {
                 recipient_message,
                 role_certificate,
             };
 
-            crate::binding_utils::send_command!(
+            crate::binding_utils::send_command_and_handle_bad_timestamp!(
                 auth_cmds,
                 req,
                 realm_update_roles,
@@ -842,7 +841,7 @@ impl AuthenticatedCmds {
             redacted_device_certificate
         );
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::user_create::Req {
                 device_certificate,
                 redacted_device_certificate,
@@ -869,7 +868,7 @@ impl AuthenticatedCmds {
     fn user_get(&self, user_id: UserID) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let user_id = user_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::user_get::Req { user_id };
@@ -891,7 +890,7 @@ impl AuthenticatedCmds {
 
         crate::binding_utils::unwrap_bytes!(revoked_user_certificate);
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let req = libparsec::protocol::authenticated_cmds::v2::user_revoke::Req {
                 revoked_user_certificate,
             };
@@ -932,7 +931,7 @@ impl AuthenticatedCmds {
                 .collect()
         }));
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
             let vlob_id = vlob_id.0;
             let timestamp = timestamp.0;
@@ -946,7 +945,7 @@ impl AuthenticatedCmds {
                 vlob_id,
             };
 
-            crate::binding_utils::send_command!(
+            crate::binding_utils::send_command_and_handle_bad_timestamp!(
                 auth_cmds,
                 req,
                 vlob_create,
@@ -970,7 +969,7 @@ impl AuthenticatedCmds {
     fn vlob_list_versions(&self, vlob_id: VlobID) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let vlob_id = vlob_id.0;
 
             let req =
@@ -998,7 +997,7 @@ impl AuthenticatedCmds {
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::vlob_maintenance_get_reencryption_batch::Req {
@@ -1031,7 +1030,7 @@ impl AuthenticatedCmds {
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
             let batch = batch.into_iter().map(|x| x.0).collect();
 
@@ -1060,7 +1059,7 @@ impl AuthenticatedCmds {
     fn vlob_poll_changes(&self, realm_id: RealmID, last_checkpoint: u64) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
             let req = libparsec::protocol::authenticated_cmds::v2::vlob_poll_changes::Req {
@@ -1092,7 +1091,7 @@ impl AuthenticatedCmds {
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let vlob_id = vlob_id.0;
             let timestamp = timestamp.map(|x| x.0);
 
@@ -1140,7 +1139,7 @@ impl AuthenticatedCmds {
                 .collect()
         }));
 
-        FutureIntoCoroutine::from(async move {
+        FutureIntoCoroutine::from_raw(async move {
             let vlob_id = vlob_id.0;
             let timestamp = timestamp.0;
 
@@ -1153,7 +1152,7 @@ impl AuthenticatedCmds {
                 vlob_id,
             };
 
-            crate::binding_utils::send_command!(
+            crate::binding_utils::send_command_and_handle_bad_timestamp!(
                 auth_cmds,
                 req,
                 vlob_update,

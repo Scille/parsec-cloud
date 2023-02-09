@@ -67,7 +67,5 @@ pub trait Request {
 
     fn dump(self) -> Result<Vec<u8>, rmp_serde::encode::Error>;
 
-    fn load_response(buf: &[u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
-        rmp_serde::from_slice(buf)
-    }
+    fn load_response(buf: &[u8]) -> Result<Self::Response, ::rmp_serde::decode::Error>;
 }

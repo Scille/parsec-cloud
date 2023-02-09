@@ -3,7 +3,7 @@
 mod authenticated_cmds;
 mod error;
 
-pub(crate) use authenticated_cmds::*;
+pub(crate) use authenticated_cmds::AuthenticatedCmds;
 pub(crate) use error::*;
 
 use pyo3::{types::PyModule, PyResult, Python};
@@ -47,7 +47,6 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
         "BackendOutOfBallparkError",
         py.get_type::<BackendOutOfBallparkError>(),
     )?;
-    m.add("CommandError", py.get_type::<CommandError>())?;
 
     // Cmds
     m.add_class::<AuthenticatedCmds>()?;
