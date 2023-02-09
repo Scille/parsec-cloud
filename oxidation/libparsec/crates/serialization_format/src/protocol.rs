@@ -9,7 +9,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::utils::inspect_type;
 
-use super::utils::{quote_serde_as, snake_to_camel_case};
+use super::utils::{quote_serde_as, snake_to_pascal_case};
 
 fn parse_api_version(raw: &str) -> Result<(u32, u32), &'static str> {
     let mut splitted = raw.splitn(2, '.');
@@ -447,7 +447,7 @@ fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> TokenStream {
 }
 
 fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
-    let camel_case_name = &snake_to_camel_case(&cmd.cmd);
+    let camel_case_name = &snake_to_pascal_case(&cmd.cmd);
     let snake_case_name = &cmd.cmd;
 
     let variant_name = format_ident!("{}", camel_case_name);
@@ -470,7 +470,7 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
             nested_types,
         } => {
             let struct_req = quote_cmd_req_struct(req);
-            let variants_rep = quote_cmd_rep_variants(reps);
+            let (variants_rep, status_match) = quote_cmd_rep_variants(reps);
             let nested_types = quote_cmd_nested_types(nested_types);
             let known_rep_statuses: Vec<String> =
                 reps.iter().map(|rep| rep.status.to_owned()).collect();
@@ -492,6 +492,10 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
                         fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                             AnyCmdReq::#variant_name(self).dump()
                         }
+
+                        fn load_response(buf: &[u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
+                            Rep::load(buf)
+                        }
                     }
 
                     // Can't derive Eq because some Rep have f64 field
@@ -504,6 +508,13 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
                     }
 
                     impl Rep {
+                        pub fn status(&self) -> &str {
+                            match self {
+                                #(#status_match)*
+                                _ => "unknown",
+                            }
+                        }
+
                         pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                             ::rmp_serde::to_vec_named(self)
                         }
@@ -650,42 +661,66 @@ fn quote_cmd_req_struct(req: &GenCmdReq) -> TokenStream {
     }
 }
 
-fn quote_cmd_rep_variant(rep: &GenCmdRep) -> TokenStream {
-    let variant_name = format_ident!("{}", &snake_to_camel_case(&rep.status));
+/// Output:
+/// - 0: Enum variant with his rename
+/// - 1: Status match branch
+fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream) {
+    let variant_name = format_ident!("{}", &snake_to_pascal_case(&rep.status));
     let status_name = &rep.status;
-    match &rep.kind {
-        GenCmdRepKind::Unit { nested_type_name } => {
-            let nested_type_name = format_ident!("{}", nested_type_name);
-            quote! {
-                #[serde(rename = #status_name)]
-                #variant_name(#nested_type_name)
-            }
-        }
-        GenCmdRepKind::Composed { fields } => {
-            if fields.is_empty() {
+    (
+        match &rep.kind {
+            GenCmdRepKind::Unit { nested_type_name } => {
+                let nested_type_name = format_ident!("{}", nested_type_name);
                 quote! {
                     #[serde(rename = #status_name)]
-                    #variant_name
+                    #variant_name(#nested_type_name)
                 }
-            } else {
-                let fields = quote_cmd_fields(fields, false);
-                quote! {
-                    #[serde(rename = #status_name)]
-                    #variant_name {
-                        #(#fields),*
+            }
+            GenCmdRepKind::Composed { fields } => {
+                if fields.is_empty() {
+                    quote! {
+                        #[serde(rename = #status_name)]
+                        #variant_name
+                    }
+                } else {
+                    let fields = quote_cmd_fields(fields, false);
+                    quote! {
+                        #[serde(rename = #status_name)]
+                        #variant_name {
+                            #(#fields),*
+                        }
                     }
                 }
             }
-        }
-    }
+        },
+        match &rep.kind {
+            GenCmdRepKind::Unit { .. } => quote! {
+                Self::#variant_name(..) => #status_name,
+            },
+            GenCmdRepKind::Composed { fields } => {
+                if fields.is_empty() {
+                    quote! {
+                        Self::#variant_name => #status_name,
+                    }
+                } else {
+                    quote! {
+                        Self::#variant_name { .. } => #status_name,
+                    }
+                }
+            }
+        },
+    )
 }
 
-fn quote_cmd_rep_variants(reps: &[GenCmdRep]) -> Vec<TokenStream> {
-    let mut variants: Vec<TokenStream> = reps
+/// Output:
+/// - 0: Enum variants with his rename + UnknownStatus
+/// - 1: Status match branches
+fn quote_cmd_rep_variants(reps: &[GenCmdRep]) -> (Vec<TokenStream>, Vec<TokenStream>) {
+    let (mut variants, status_match): (Vec<TokenStream>, Vec<TokenStream>) = reps
         .iter()
         .sorted_by(|a, b| a.status.cmp(&b.status))
         .map(quote_cmd_rep_variant)
-        .collect();
+        .unzip();
 
     // `UnknownStatus` covers the case the server returns a valid message but with an unknown
     // status value (given change in error status only cause a minor bump in API version)
@@ -698,7 +733,7 @@ fn quote_cmd_rep_variants(reps: &[GenCmdRep]) -> Vec<TokenStream> {
             reason: Option<String>
         }
     });
-    variants
+    (variants, status_match)
 }
 
 fn quote_cmd_fields(fields: &[GenCmdField], with_pub: bool) -> Vec<TokenStream> {

@@ -9,9 +9,7 @@ use hyper::{
     service::Service,
     Body, HeaderMap, Request, Response, StatusCode,
 };
-use libparsec_client_connection::authenticated_cmds::{
-    API_VERSION_HEADER_NAME, PARSEC_AUTH_METHOD,
-};
+use libparsec_client_connection::{API_VERSION_HEADER_NAME, PARSEC_AUTH_METHOD};
 use libparsec_crypto::VerifyKey;
 use libparsec_protocol::authenticated_cmds::v3::{self as authenticated_cmds, AnyCmdReq};
 use libparsec_types::DeviceID;
@@ -107,10 +105,7 @@ impl Service<Request<Body>> for SignatureVerifier {
                 log::error!("invalid signed request: {e}");
                 return Ok(Response::builder()
                     .status(StatusCode::UNAUTHORIZED)
-                    .header(
-                        WWW_AUTHENTICATE,
-                        libparsec_client_connection::authenticated_cmds::PARSEC_AUTH_METHOD,
-                    )
+                    .header(WWW_AUTHENTICATE, PARSEC_AUTH_METHOD)
                     .body(Full::from(Bytes::from_static(b"invalid signed request")))?);
             }
 

@@ -10,6 +10,7 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
 )
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.types import BackendInvitationAddr
 
 
@@ -59,6 +60,8 @@ async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
             nursery.cancel_scope.cancel()
 
 
+# TODO: Add test for sse event
+@pytest.mark.skipif(OXIDIZED, reason="No ws event")
 @pytest.mark.trio
 async def test_authenticated_cmd_keepalive(frozen_clock, monkeypatch, running_backend, alice):
     def _cmds_factory(keepalive):
@@ -69,6 +72,8 @@ async def test_authenticated_cmd_keepalive(frozen_clock, monkeypatch, running_ba
     await _test_keepalive(frozen_clock, monkeypatch, _cmds_factory)
 
 
+# TODO: Add test for sse event
+@pytest.mark.skipif(OXIDIZED, reason="No ws event")
 @pytest.mark.trio
 async def test_invited_cmd_keepalive(
     frozen_clock, monkeypatch, backend, running_backend, backend_addr, alice

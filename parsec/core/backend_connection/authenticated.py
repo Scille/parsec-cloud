@@ -54,6 +54,7 @@ from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 
+# This global variable activates AuthenticatedCmds binding
 OXIDIZED = False
 
 logger = get_logger()

@@ -161,7 +161,7 @@ class WorkspaceFS:
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         device: LocalDevice,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
         workspace_storage_cache_size: int,

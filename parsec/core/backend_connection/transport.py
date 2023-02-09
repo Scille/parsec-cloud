@@ -151,7 +151,7 @@ async def _do_handshake(transport: Transport, handshake: CLIENT_HANDSHAKE_TYPE) 
         raise BackendNotAvailable(exc) from exc
 
     except HandshakeOutOfBallparkError as exc:
-        raise BackendOutOfBallparkError(exc) from exc
+        raise BackendOutOfBallparkError(str(exc)) from exc
 
     except HandshakeError as exc:
         if str(exc) == "Invalid handshake: Invitation not found":

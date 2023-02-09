@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use std::collections::HashMap;
 use syn::{GenericArgument, PathArguments, Type};
 
-pub(crate) fn snake_to_camel_case(s: &str) -> String {
+pub(crate) fn snake_to_pascal_case(s: &str) -> String {
     let mut out = s[..1].to_uppercase();
     let mut chars = s.chars().skip(1);
     while let Some(c) = chars.next() {

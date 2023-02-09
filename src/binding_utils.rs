@@ -348,6 +348,36 @@ macro_rules! impl_enum_field {
     };
 }
 
+macro_rules! send_command_and_handle_bad_timestamp {
+    ($client: ident, $req: ident, $cmd_name: ident, $rep_type: ident, $($kind_type: ty),*) => {
+        ::paste::paste! {
+            {
+                let rep = $client
+                    .send($req)
+                    .await
+                    .map_err(|e| ::pyo3::PyErr::from(crate::backend_connection::CommandExc::from(e)))?;
+
+                if let authenticated_cmds::v2::$cmd_name::Rep::BadTimestamp { .. } = rep {
+                    return Err(crate::backend_connection::BackendOutOfBallparkError::new_err(format!("{rep:?}")));
+                }
+
+                Ok(::pyo3::Python::with_gil(|py| match rep {
+                    $(
+                        authenticated_cmds::v2::$cmd_name::Rep::$kind_type { .. } => {
+                            PyResult::<::pyo3::PyObject>::Ok(crate::binding_utils::py_object!(
+                                rep,
+                                $rep_type,
+                                [<$rep_type $kind_type>],
+                                py
+                            ))
+                        }
+                     )*
+                }).expect("Failed to create a pyobject from server's response"))
+            }
+        }
+    }
+}
+
 macro_rules! send_command {
     ($client: ident, $req: ident, $cmd_name: ident, $rep_type: ident, $($kind_type: ty),*) => {
         ::paste::paste! {
@@ -383,4 +413,5 @@ pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
 pub(crate) use py_object;
 pub(crate) use send_command;
+pub(crate) use send_command_and_handle_bad_timestamp;
 pub(crate) use unwrap_bytes;

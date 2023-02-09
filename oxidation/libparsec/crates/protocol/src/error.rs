@@ -60,3 +60,4 @@ pub struct ChallengeDataReport {
 
 /// Error while deserializing data.
 pub type DecodeError = rmp_serde::decode::Error;
+pub type EncodeError = rmp_serde::encode::Error;

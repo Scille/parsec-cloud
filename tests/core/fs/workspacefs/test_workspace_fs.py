@@ -6,6 +6,7 @@ from typing import Union
 from unittest.mock import ANY
 
 import pytest
+import trio
 from trio import open_nursery
 
 from parsec._parsec import (
@@ -15,10 +16,8 @@ from parsec._parsec import (
     FileManifest,
     FolderManifest,
     LocalDevice,
-    RealmID,
     RealmRole,
     UserManifest,
-    VlobReadRepOk,
     WorkspaceManifest,
 )
 from parsec.backend.block import BlockNotFoundError
@@ -409,12 +408,16 @@ async def test_path_info_remote_loader_exceptions(
     async with alice_workspace.local_storage.lock_entry_id(manifest.id):
         await alice_workspace.local_storage.clear_manifest(manifest.id)
 
-    from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
+    from parsec.backend.memory.vlob import MemoryVlobComponent
 
-    vanilla_vlob_read = BackendAuthenticatedCmds.vlob_read
+    vanilla_vlob_read = MemoryVlobComponent.read
 
-    async def _vlob_read_patched(transport, encryption_revision, vlob_id, version, timestamp):
-        ret = await vanilla_vlob_read(transport, encryption_revision, vlob_id, version, timestamp)
+    async def _vlob_read_patched(
+        component, organization_id, author, encryption_revision, vlob_id, version, timestamp
+    ):
+        ret = await vanilla_vlob_read(
+            component, organization_id, author, encryption_revision, vlob_id, version, timestamp
+        )
         if vlob_id.hex == manifest.id.hex:
             modified_remote_manifest: Union[
                 FileManifest, FolderManifest, UserManifest, WorkspaceManifest
@@ -423,17 +426,17 @@ async def test_path_info_remote_loader_exceptions(
             raw_modified_remote_manifest = modified_remote_manifest.dump_sign_and_encrypt(
                 author_signkey=alice.signing_key, key=workspace_entry.key
             )
-            ret = VlobReadRepOk(
-                ret.version,
+            ret = (
+                ret[0],
                 raw_modified_remote_manifest,
-                ret.author,
-                ret.timestamp,
-                ret.author_last_role_granted_on,
+                ret[2],
+                ret[3],
+                ret[4],
             )
         return ret
 
     monkeypatch.setattr(
-        "parsec.core.backend_connection.authenticated.BackendAuthenticatedCmds.vlob_read",
+        "parsec.backend.memory.vlob.MemoryVlobComponent.read",
         _vlob_read_patched,
     )
 
@@ -461,28 +464,45 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
     expected = ReencryptionNeed(user_revoked=(), role_revoked=())
     assert await alice_workspace.get_reencryption_need() == expected
 
-    with running_backend.offline():
-        with pytest.raises(FSBackendOfflineError):
-            await alice_workspace.get_reencryption_need()
-
-    # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
-    reply = await alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates(
-        RealmID.from_entry_id(alice_workspace.workspace_id)
-    )
-    original = alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates
-
-    async def mockup(*args):
-        if args == (alice_workspace.workspace_id,):
-            return reply
-        return await original(*args)
-
-    monkeypatch.setattr(
-        alice_workspace.remote_loader.backend_cmds, "realm_get_role_certificates", mockup
-    )
+    # First we try while server offline from the begining: hence
+    # `realm_get_role_certificates` command to server will fail
 
     with running_backend.offline():
         with pytest.raises(FSBackendOfflineError):
             await alice_workspace.get_reencryption_need()
+
+    # Now something more complex: we first let `realm_get_role_certificates` occurs,
+    # then switch the server offline, hence `user_get` command to server will fail
+
+    async with trio.open_nursery() as nursery:
+
+        async def _switch_offline_after_realm_get_role_certificate_occured(task_status):
+            realm_get_role_certificate_cmd_occured = trio.Event()
+            task_status.started(realm_get_role_certificate_cmd_occured)
+            await realm_get_role_certificate_cmd_occured.wait()
+            with running_backend.offline():
+                await trio.sleep_forever()
+
+        realm_get_role_certificate_cmd_occured = await nursery.start(
+            _switch_offline_after_realm_get_role_certificate_occured
+        )
+
+        vanilla_get_device = alice_workspace.remote_loader.remote_devices_manager.get_device
+
+        async def _switch_offline_and_get_device(*args, **kwargs):
+            realm_get_role_certificate_cmd_occured.set()
+            return await vanilla_get_device(*args, **kwargs)
+
+        monkeypatch.setattr(
+            alice_workspace.remote_loader.remote_devices_manager,
+            "get_device",
+            _switch_offline_and_get_device,
+        )
+
+        with pytest.raises(FSBackendOfflineError):
+            await alice_workspace.get_reencryption_need()
+
+        nursery.cancel_scope.cancel()
 
 
 @pytest.mark.trio

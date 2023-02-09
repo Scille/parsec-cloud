@@ -12,7 +12,6 @@ from parsec._parsec_pyi import (
     BackendNotFoundError,
     BackendOutOfBallparkError,
     BackendProtocolError,
-    CommandError,
     DataError,
     EntryNameError,
     PkiEnrollmentError,
@@ -569,7 +568,6 @@ __all__ = [
     "BackendNotFoundError",
     "BackendInvitationOnExistingMember",
     "BackendOutOfBallparkError",
-    "CommandError",
     # Data Error
     "DataError",
     "EntryNameError",
