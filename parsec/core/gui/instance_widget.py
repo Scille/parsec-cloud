@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from structlog import get_logger
 
 from packaging.version import Version
-from parsec._parsec import CoreEvent, LocalDeviceExc
+from parsec._parsec import CoreEvent, LocalDeviceError
 from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.core import logged_core_factory
 from parsec.core.config import CoreConfig
@@ -24,7 +24,6 @@ from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler, run_trio_job_scheduler
 from parsec.core.local_device import (
     LocalDeviceCertificatePinCodeUnavailableError,
-    LocalDeviceError,
     load_device_with_smartcard,
 )
 from parsec.core.logged_core import LoggedCore
@@ -281,7 +280,7 @@ class InstanceWidget(QWidget):
                 message = _("TEXT_LOGIN_ERROR_ALREADY_CONNECTED")
             else:
                 self.start_core(device)
-        except LocalDeviceExc as exc:
+        except LocalDeviceError as exc:
             message = _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED")
             exception = exc
 

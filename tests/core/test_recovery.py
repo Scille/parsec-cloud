@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
-from parsec._parsec import SecretKey, load_recovery_device, save_recovery_device
+from parsec._parsec import LocalDevice, SecretKey, load_recovery_device, save_recovery_device
 from parsec.api.protocol.types import DeviceLabel
 from parsec.core.backend_connection import BackendConnectionRefused, BackendNotAvailable
-from parsec.core.local_device import get_recovery_device_file_name
+from parsec.core.local_device import LocalDeviceError, get_recovery_device_file_name
 from parsec.core.recovery import generate_new_device_from_recovery, generate_recovery_device
 from parsec.crypto import CryptoError
 
@@ -93,6 +95,38 @@ async def test_recovery_ok(tmp_path, user_fs_factory, running_backend, bob):
         um = new_device_fs.get_user_manifest()
         assert not um.is_placeholder
         assert not um.speculative
+
+
+@pytest.mark.trio
+async def test_recovery_with_wrong_passphrase(
+    tmp_path: Path, user_fs_factory, running_backend, bob: LocalDevice
+):
+    # 1) Create recovery device and export it as file
+
+    recovery_device = await generate_recovery_device(bob)
+
+    assert recovery_device.organization_addr == bob.organization_addr
+    assert recovery_device.device_id != bob.device_id
+    assert recovery_device.device_label != bob.device_label
+    assert recovery_device.human_handle == bob.human_handle
+    assert recovery_device.signing_key != bob.signing_key
+    assert recovery_device.private_key == bob.private_key
+    assert recovery_device.profile == bob.profile
+    assert recovery_device.user_manifest_id == bob.user_manifest_id
+    assert recovery_device.user_manifest_key == bob.user_manifest_key
+    assert recovery_device.local_symkey != bob.local_symkey
+
+    file_name = get_recovery_device_file_name(recovery_device)
+
+    file_path = tmp_path / file_name
+    passphrase = await save_recovery_device(file_path, recovery_device, force=False)
+
+    # 2) Try to load the recovery device file with the wrong passphrase.
+    wrong_passphrase = "-".join([chunk[::-1] for chunk in passphrase.split("-")])
+    assert wrong_passphrase != passphrase
+
+    with pytest.raises(LocalDeviceError):
+        _recovery_device2 = await load_recovery_device(file_path, wrong_passphrase)
 
 
 @pytest.mark.trio

@@ -8,7 +8,13 @@ from typing import Callable, Tuple
 
 import trio
 
-from parsec._parsec import AvailableDevice, DeviceFile, DeviceFileType, get_available_device
+from parsec._parsec import (
+    AvailableDevice,
+    DeviceFile,
+    DeviceFileType,
+    LocalDeviceError,
+    get_available_device,
+)
 from parsec.api.data import DataError
 from parsec.core.types import LocalDevice
 
@@ -17,10 +23,6 @@ from parsec.core.types import LocalDevice
 DEVICE_FILE_SUFFIX = ".keys"
 # .psrk stands for ps(parsec)r(recovery)k(key)
 RECOVERY_DEVICE_FILE_SUFFIX = ".psrk"
-
-
-class LocalDeviceError(Exception):
-    pass
 
 
 class LocalDeviceCryptoError(LocalDeviceError):

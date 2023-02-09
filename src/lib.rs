@@ -99,7 +99,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(local_device::list_available_devices, m)?)?;
     m.add_function(wrap_pyfunction!(local_device::get_available_device, m)?)?;
     m.add(
-        "LocalDeviceExc",
+        "LocalDeviceError",
         py.get_type::<local_device::LocalDeviceError>(),
     )?;
     m.add_function(wrap_pyfunction!(local_device::load_recovery_device, m)?)?;

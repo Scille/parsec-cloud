@@ -10,7 +10,7 @@ import pytest
 
 from parsec._parsec import (
     DeviceFileType,
-    LocalDeviceExc,
+    LocalDeviceError,
     change_device_password,
     list_available_devices,
     save_device_with_password_in_config,
@@ -213,7 +213,7 @@ def test_load_bad_password(config_dir, alice):
     try:
         LocalDevice.load_device_with_password(key_file, "dummy")
         assert False, "`load_device_with_password` must raise a decryption error"
-    except LocalDeviceExc as e:
+    except LocalDeviceError as e:
         assert str(e) == "Decryption error"
 
 
@@ -225,7 +225,7 @@ def test_load_bad_data(config_dir, alice):
     try:
         LocalDevice.load_device_with_password(alice_key, "S3Cr37")
         assert False, "Should raise a deserialization error"
-    except LocalDeviceExc as e:
+    except LocalDeviceError as e:
         assert str(e) == f"Deserialization error: {alice_key}"
 
 
@@ -248,7 +248,7 @@ def test_password_load_not_found(config_dir, alice):
     try:
         LocalDevice.load_device_with_password(key_file, "S3Cr37")
         assert False, "Should raise an file access error"
-    except LocalDeviceExc as e:
+    except LocalDeviceError as e:
         assert str(e) == f"Could not access to the dir/file: {key_file}"
 
 
@@ -283,7 +283,7 @@ def test_change_password(config_dir, alice):
     try:
         LocalDevice.load_device_with_password(key_file, old_password)
         assert False, "Should raise a decryption error"
-    except LocalDeviceExc as e:
+    except LocalDeviceError as e:
         assert str(e) == "Decryption error"
 
 

@@ -10,7 +10,7 @@ from structlog import get_logger
 from parsec._parsec import (
     DeviceFileType,
     LocalDevice,
-    LocalDeviceExc,
+    LocalDeviceError,
     get_available_device,
     save_device_with_password_in_config,
 )
@@ -20,7 +20,6 @@ from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.ui.authentication_change_widget import Ui_AuthenticationChangeWidget
 from parsec.core.local_device import (
     LocalDeviceCryptoError,
-    LocalDeviceError,
     LocalDeviceNotFoundError,
     load_device_with_smartcard,
     save_device_with_smartcard_in_config,
@@ -113,7 +112,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 loaded_device = await load_device_with_smartcard(
                     Path(available_device.key_file_path)
                 )
-        except LocalDeviceExc:
+        except LocalDeviceError:
             show_error(parent, _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
             return None
 
