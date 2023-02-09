@@ -243,7 +243,7 @@ def pytest_collection_modifyitems(config, items):
 def no_logs_gte_error(caplog):
     yield
 
-    # TODO: Concurrency bug in Hypercorn when the server is torndown while a
+    # TODO: Concurrency bug in Hypercorn when the server is teardown while a
     # client websocket is currently disconnecting
     # see: https://github.com/Scille/parsec-cloud/issues/2716
     def skip_hypercorn_buggy_log(record):
