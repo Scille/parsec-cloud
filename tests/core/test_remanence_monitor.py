@@ -444,7 +444,7 @@ async def test_remanence_monitor_with_core_restart(
     # Second instanciation
     async with core_factory(alice) as alice_core:
 
-        # Check thate hasn't changed
+        # Check that hasn't changed
         workspace = alice_core.user_fs.get_workspace(wid)
         await workspace.wait_remanence_manager_prepared(wait_for_connection=True)
         await alice_core.wait_idle_monitors()

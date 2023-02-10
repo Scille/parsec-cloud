@@ -42,17 +42,17 @@ logger = structlog.get_logger()
 # - New blocks are referenced:
 #    * When a vlob is updated by someone else.
 #      We use the DOWNSYNCED event to detect this case and perform a recursive sweep
-#      in the remanance manager in order to list all newly referenced blocks as remote only.
+#      in the remanence manager in order to list all newly referenced blocks as remote only.
 #    * When a vlob is updated by our device.
 #      We use the SYNCED event to detect this case. We only need to consider the events
 #      corresponding to file manifests and list the newly referenced blocks as remote and local.
 # - Old blocks are no longer referenced:
 #    * When a vlob is updated by someone else.
 #      We use the DOWNSYNCED event to detect this case and perform a recursive sweep
-#      in the remanance manager in order to remove all the old blocks from both lists.
+#      in the remanence manager in order to remove all the old blocks from both lists.
 #    * When a vlob is updated by our device.
 #      We use the SYNCED event to detect this case and perform a recursive sweep
-#      in the remanance manager in order to remove all the old blocks from both lists.
+#      in the remanence manager in order to remove all the old blocks from both lists.
 # - A referenced block is downloaded:
 #    * When a read transaction require blocks that are missing.
 #      In this case we use the BLOCK_DOWNLOADED event.
@@ -68,14 +68,14 @@ logger = structlog.get_logger()
 #
 # The remanence manager works with 2 separate tasks:
 # - the first one is dedicated to getting the manager prepared and then processing the recorded events
-# - the second one is dedicated to donwloading the blocks that might be missing locally, if necessary
+# - the second one is dedicated to downloading the blocks that might be missing locally, if necessary
 #
 # The first task is fired up by the remanence monitor which in turn fires up the second one, when the manager
 # is prepared. Note that the manager is prepared only once so no preparation is required after a loss of
 # connection.
 #
 # The ways events are dealt with is crucial to keep a consistent state in the manager:
-# - Events connection/deconnection corresponds to the lifetime of the workspace FS itself,
+# - Events connection/disconnection corresponds to the lifetime of the workspace FS itself,
 #   so we don't miss events while the remanence monitor is off.
 # - Callbacks for events never affects the state of the manager itself but instead add them to a FIFO queue,
 #   in order to keep a consistent order for the processing of those events (which might require an async operation)
@@ -499,7 +499,7 @@ class RemanenceManager:
                         await trio.sleep_forever()
                     continue
 
-                # Open a nursery for downloading in parrallel (4 tasks)
+                # Open a nursery for downloading in parallel (4 tasks)
                 try:
                     async with open_service_nursery() as nursery:
 

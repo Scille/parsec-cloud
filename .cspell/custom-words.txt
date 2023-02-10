@@ -79,6 +79,7 @@ EINVAL
 enmascarado
 excrepr
 executemany
+farn
 fetchrow
 fetchval
 fghij
@@ -118,6 +119,7 @@ IDYES
 ifempty
 ifeq
 ifnewer
+ijkl
 ionicons
 iqmp
 itemsoverlay
@@ -319,6 +321,7 @@ salsabox
 SaltBytes
 saltlen
 Saltlen
+Sanctorum
 scalarmult
 sceneparsers
 sdkmanager
@@ -388,6 +391,8 @@ userguide
 userspace
 userto
 usertotal
+vacuum
+Vacuum
 verifykey
 Vlob
 Vlobs

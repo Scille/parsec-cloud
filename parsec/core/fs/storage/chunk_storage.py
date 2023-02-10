@@ -327,7 +327,7 @@ class BlockStorage(ChunkStorage):
 
     async def enable_block_remanence(self) -> bool:
         """
-        Returns whether the block remanance has changed or not
+        Returns whether the block remanence has changed or not
         """
         async with self._open_cursor() as cursor:
             # Check if remanence is already enabled
