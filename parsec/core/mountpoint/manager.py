@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import logging
 import sys
-from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
+from contextlib import asynccontextmanager
 from importlib import __import__ as import_function
 from pathlib import Path, PurePath
 from subprocess import CalledProcessError
-from typing import Any, AsyncGenerator, Callable, Sequence, Union, cast
+from typing import Any, AsyncContextManager, AsyncGenerator, Callable, Sequence, Union, cast
 
 import trio
 from structlog import get_logger
@@ -33,7 +33,7 @@ from parsec.utils import TaskStatus, open_service_nursery, start_task
 
 RunnerType = Callable[
     [UserFS, WorkspaceFS, Path, dict[Any, Any], EventBus],
-    _AsyncGeneratorContextManager[Union[Path, PurePath]],
+    AsyncContextManager[Union[Path, PurePath]],
 ]
 
 # Importing winfspy can take some time (about 0.4 seconds)

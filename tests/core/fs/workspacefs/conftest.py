@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.api.data import EntryName
+from parsec._parsec import EntryName
+from parsec.core.fs import UserFS, WorkspaceFS
 
 
 @pytest.fixture
 @pytest.mark.trio
-async def alice_workspace(alice_user_fs, running_backend):
+async def alice_workspace(alice_user_fs: UserFS, running_backend) -> WorkspaceFS:
     wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
 
@@ -23,7 +24,7 @@ async def alice_workspace(alice_user_fs, running_backend):
 
 @pytest.fixture
 @pytest.mark.trio
-async def bob_workspace(bob_user_fs, running_backend):
+async def bob_workspace(bob_user_fs: UserFS, running_backend) -> WorkspaceFS:
     wid = await bob_user_fs.workspace_create(EntryName("w"))
     workspace = bob_user_fs.get_workspace(wid)
 

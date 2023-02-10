@@ -3,8 +3,16 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import CoreEvent, Regex
-from parsec.api.protocol import DeviceID
+from parsec._parsec import (
+    Chunk,
+    CoreEvent,
+    DeviceID,
+    EntryID,
+    EntryName,
+    LocalFileManifest,
+    LocalFolderManifest,
+    Regex,
+)
 from parsec.core.fs import FsPath
 from parsec.core.fs.workspacefs.sync_transactions import (
     FSFileConflictError,
@@ -12,7 +20,6 @@ from parsec.core.fs.workspacefs.sync_transactions import (
     merge_folder_children,
     merge_manifests,
 )
-from parsec.core.types import Chunk, EntryID, EntryName, LocalFileManifest, LocalFolderManifest
 
 empty_pattern = Regex.from_regex_str(r"^\b$")
 

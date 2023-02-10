@@ -9,16 +9,16 @@ from parsec._parsec import DateTime, mock_time
 from parsec.api.protocol import DeviceID
 from parsec.core.types import LocalDevice
 
-__freeze_time_dict = {}
+__freeze_time_dict: dict[DeviceID, DateTime] = {}
 
 
-def _timestamp_mockup(device):
+def _timestamp_mockup(device: LocalDevice) -> DateTime:
     _, time = __freeze_time_dict.get(device.device_id, (None, None))
     return time or device.time_provider.now()
 
 
 @contextmanager
-def freeze_device_time(device, current_time):
+def freeze_device_time(device: LocalDevice | DeviceID, current_time: DateTime | str):
     # Parse time
     if isinstance(current_time, str):
         [y, m, d] = current_time.split("-")
@@ -60,7 +60,7 @@ __freeze_time_task = None
 
 
 @contextmanager
-def freeze_time(time=None, device=None):
+def freeze_time(time: DateTime | str = None, device: LocalDevice | DeviceID | None = None):
     mocks_stack = []
 
     # Get current time if not provided

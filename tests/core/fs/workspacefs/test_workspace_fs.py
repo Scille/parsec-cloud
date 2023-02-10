@@ -9,20 +9,23 @@ import pytest
 from trio import open_nursery
 
 from parsec._parsec import (
+    DeviceID,
+    EntryID,
+    EntryName,
     FileManifest,
     FolderManifest,
     LocalDevice,
+    RealmID,
+    RealmRole,
     UserManifest,
     VlobReadRepOk,
     WorkspaceManifest,
 )
-from parsec.api.data import EntryName
-from parsec.api.protocol import DeviceID, RealmID, RealmRole
 from parsec.backend.block import BlockNotFoundError
-from parsec.core.fs import FsPath
+from parsec.core.fs import FsPath, UserFS
 from parsec.core.fs.exceptions import FSBackendOfflineError, FSError, FSLocalMissError
 from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed, WorkspaceFS
-from parsec.core.types import DEFAULT_BLOCK_SIZE, EntryID
+from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
 @pytest.mark.trio
@@ -155,7 +158,7 @@ async def test_rename(alice_workspace):
 
 
 @pytest.mark.trio
-async def test_mkdir(alice_workspace):
+async def test_mkdir(alice_workspace: WorkspaceFS):
     await alice_workspace.mkdir("/foz")
     assert await alice_workspace.is_dir("/foz")
 
@@ -484,7 +487,7 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
 @pytest.mark.trio
 async def test_backend_block_data_online(
-    alice_user_fs, alice2_user_fs, running_backend, monkeypatch
+    alice_user_fs: UserFS, alice2_user_fs: UserFS, running_backend, monkeypatch
 ):
     def get_blocks_size(blocks):
         size = 0

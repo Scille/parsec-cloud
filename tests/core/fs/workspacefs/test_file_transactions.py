@@ -8,16 +8,16 @@ import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
 
-from parsec._parsec import DateTime
+from parsec._parsec import Chunk, DateTime, EntryID, LocalDevice, LocalFileManifest
 from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 from parsec.core.fs.storage import WorkspaceStorage
-from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
-from parsec.core.types import Chunk, EntryID, LocalFileManifest
+from parsec.core.fs.workspacefs.file_transactions import FileTransactions, FSInvalidFileDescriptor
+from parsec.core.types import AnyLocalManifest, FileDescriptor
 from tests.common import call_with_control, freeze_time
 
 
 class File:
-    def __init__(self, local_storage, manifest):
+    def __init__(self, local_storage: WorkspaceStorage, manifest):
         self.fresh_manifest = manifest
         self.entry_id = manifest.id
         self.local_storage = local_storage
@@ -27,22 +27,22 @@ class File:
         for k, v in kwargs.items():
             assert getattr(manifest, k) == v
 
-    def is_cache_ahead_of_persistance(self):
+    def is_cache_ahead_of_persistance(self) -> bool:
         return self.entry_id in self.local_storage.manifest_storage._cache_ahead_of_localdb
 
-    async def get_manifest(self):
+    async def get_manifest(self) -> AnyLocalManifest:
         return await self.local_storage.get_manifest(self.entry_id)
 
     async def set_manifest(self, manifest):
         async with self.local_storage.lock_manifest(self.entry_id):
             await self.local_storage.set_manifest(self.entry_id, manifest)
 
-    def open(self):
+    def open(self) -> FileDescriptor:
         return self.local_storage.create_file_descriptor(self.fresh_manifest)
 
 
 @pytest.fixture
-async def foo_txt(alice, alice_file_transactions):
+async def foo_txt(alice: LocalDevice, alice_file_transactions: FileTransactions) -> File:
     local_storage = alice_file_transactions.local_storage
     now = DateTime(2000, 1, 2)
     placeholder = LocalFileManifest.new_placeholder(
@@ -62,7 +62,7 @@ async def test_close_unknown_fd(alice_file_transactions):
 
 
 @pytest.mark.trio
-async def test_operations_on_file(alice_file_transactions, foo_txt):
+async def test_operations_on_file(alice_file_transactions: FileTransactions, foo_txt: File):
     file_transactions = alice_file_transactions
 
     fd = foo_txt.open()
@@ -116,7 +116,7 @@ async def test_operations_on_file(alice_file_transactions, foo_txt):
 
 
 @pytest.mark.trio
-async def test_flush_file(alice_file_transactions, foo_txt):
+async def test_flush_file(alice_file_transactions: FileTransactions, foo_txt: File):
     file_transactions = alice_file_transactions
 
     fd = foo_txt.open()

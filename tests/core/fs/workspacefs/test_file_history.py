@@ -5,12 +5,13 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec.core.fs import FsPath
+from parsec._parsec import LocalDevice
+from parsec.core.fs import FsPath, WorkspaceFS
 from parsec.core.fs.workspacefs.versioning_helpers import TimestampBoundedData, VersionLister
 
 
 @pytest.mark.trio
-async def test_file_history(alice, alice_workspace):
+async def test_file_history(alice: LocalDevice, alice_workspace: WorkspaceFS):
     sync_by_id = alice_workspace.sync_by_id
     entry = alice_workspace.get_workspace_entry()
     wid = entry.id
