@@ -20,26 +20,34 @@ from tests.common import create_shared_workspace, customize_fixtures, sequester_
 
 
 @pytest.mark.trio
-async def test_monitors_idle(frozen_clock, running_backend, alice_core, alice):
+async def test_monitors_idle(frozen_clock, running_backend, alice_core, alice, monkeypatch):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     assert alice_core.are_monitors_idle()
 
     # Force wakeup of the sync monitor
     alice_core.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=alice.user_manifest_id)
     assert not alice_core.are_monitors_idle()
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
     assert alice_core.are_monitors_idle()
 
 
 @pytest.mark.trio
-async def test_monitor_switch_offline(frozen_clock, running_backend, alice_core, alice):
+async def test_monitor_switch_offline(
+    frozen_clock, running_backend, alice_core, alice, monkeypatch
+):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     assert alice_core.are_monitors_idle()
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with alice_core.event_bus.listen() as spy:
         with running_backend.offline():
-            await frozen_clock.sleep_with_autojump(60)
             await spy.wait_with_timeout(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
@@ -49,7 +57,6 @@ async def test_monitor_switch_offline(frozen_clock, running_backend, alice_core,
 
         # Switch backend online
 
-        await frozen_clock.sleep_with_autojump(60)
         await spy.wait_with_timeout(
             CoreEvent.BACKEND_CONNECTION_CHANGED,
             {"status": BackendConnStatus.READY, "status_exc": None},
@@ -59,9 +66,11 @@ async def test_monitor_switch_offline(frozen_clock, running_backend, alice_core,
 
 
 @pytest.mark.trio
-async def test_process_while_offline(
-    frozen_clock, running_backend, alice_core, bob_user_fs, alice, bob
-):
+async def test_process_while_offline(frozen_clock, running_backend, alice_core, alice, monkeypatch):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
@@ -70,7 +79,6 @@ async def test_process_while_offline(
             alice_core.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=alice.user_manifest_id)
             assert not alice_core.are_monitors_idle()
 
-            await frozen_clock.sleep_with_autojump(60)
             async with frozen_clock.real_clock_timeout():
                 await spy.wait(
                     CoreEvent.BACKEND_CONNECTION_CHANGED,
@@ -80,13 +88,9 @@ async def test_process_while_offline(
             assert alice_core.backend_status == BackendConnStatus.LOST
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_user_manifest(
-    frozen_clock,
     running_backend,
     backend_data_binder,
     event_bus_factory,
@@ -94,7 +98,13 @@ async def test_autosync_placeholder_user_manifest(
     coolorg,
     alice,
     alice2,
+    monkeypatch,
 ):
+    # Go fast
+    alice.time_provider.mock_time(speed=1000.0)
+    alice2.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     # Sync with realm&vlob not creation on server side
     await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest="not_synced")
     # Don't use `core_factory` fixture given it whole point is to waits for
@@ -102,7 +112,6 @@ async def test_autosync_placeholder_user_manifest(
     async with logged_core_factory(core_config, alice, event_bus=event_bus_factory()) as alice_core:
         # Wait for the sync monitor to sync the new workspace
         with alice_core.event_bus.listen() as spy:
-            await frozen_clock.sleep_with_autojump(60)
             await spy.wait_with_timeout(CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id})
 
     # Sync with existing realm&vlob on server side
@@ -112,19 +121,14 @@ async def test_autosync_placeholder_user_manifest(
     ) as alice2_core:
         with alice2_core.event_bus.listen() as spy:
             # Wait for the sync monitor to sync the new workspace
-            await frozen_clock.sleep_with_autojump(60)
             await spy.wait_with_timeout(
                 CoreEvent.FS_ENTRY_REMOTE_CHANGED, {"id": alice2.user_manifest_id, "path": "/"}
             )
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_workspace_manifest(
-    frozen_clock,
     running_backend,
     backend_data_binder,
     event_bus_factory,
@@ -132,7 +136,13 @@ async def test_autosync_placeholder_workspace_manifest(
     coolorg,
     alice,
     alice2,
+    monkeypatch,
 ):
+    # Go fast
+    alice.time_provider.mock_time(speed=1000.0)
+    alice2.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     # Workspace created before user manifest placeholder sync
     await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest="not_synced")
     # Don't use `core_factory` fixture given it whole point is to waits for
@@ -141,7 +151,6 @@ async def test_autosync_placeholder_workspace_manifest(
         with alice_core.event_bus.listen() as spy:
             w1id = await alice_core.user_fs.workspace_create(EntryName("w1"))
             # Wait for the sync monitor to sync the new workspace
-            await frozen_clock.sleep_with_autojump(60)
             await spy.wait_multiple_with_timeout(
                 [
                     (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}),
@@ -161,7 +170,6 @@ async def test_autosync_placeholder_workspace_manifest(
         # Workspace created before user manifest placeholder sync
         with alice2_core.event_bus.listen() as spy:
             w2id = await alice2_core.user_fs.workspace_create(EntryName("w2"))
-            await frozen_clock.sleep_with_autojump(60)
             await spy.wait_multiple_with_timeout(
                 [
                     (CoreEvent.FS_ENTRY_SYNCED, {"id": alice2.user_manifest_id}),
@@ -176,13 +184,22 @@ async def test_autosync_placeholder_workspace_manifest(
 
 @pytest.mark.trio
 async def test_autosync_on_modification(
-    frozen_clock, running_backend, alice, alice_core, alice2_user_fs
+    frozen_clock,
+    running_backend,
+    alice,
+    alice_core,
+    alice2_user_fs,
+    monkeypatch,
 ):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    alice2_user_fs.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     with alice_core.event_bus.listen() as spy:
         wid = await alice_core.user_fs.workspace_create(EntryName("w"))
         workspace = alice_core.user_fs.get_workspace(wid)
         # Wait for the sync monitor to sync the new workspace
-        await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
         spy.assert_events_occurred(
@@ -197,7 +214,6 @@ async def test_autosync_on_modification(
         await workspace.mkdir("/foo")
         foo_id = await workspace.path_id("/foo")
         # Wait for the sync monitor to sync the new folder
-        await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
         spy.assert_events_occurred(
@@ -222,14 +238,23 @@ async def test_autosync_on_modification(
 
 @pytest.mark.trio
 async def test_autosync_on_remote_modifications(
-    frozen_clock, running_backend, alice, alice_core, alice2_user_fs
+    frozen_clock,
+    running_backend,
+    alice,
+    alice_core,
+    alice2_user_fs,
+    monkeypatch,
 ):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    alice2_user_fs.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     with alice_core.event_bus.listen() as spy:
         wid = await alice2_user_fs.workspace_create(EntryName("w"))
         await alice2_user_fs.sync()
 
         # Wait for event to come back to alice_core, then alice_core's sync
-        await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await spy.wait_multiple(
                 [
@@ -267,7 +292,6 @@ async def test_autosync_on_remote_modifications(
         await alice2_w.sync()
 
         # Wait for event to come back to alice_core
-        await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await spy.wait_multiple(
                 [
@@ -291,14 +315,24 @@ async def test_autosync_on_remote_modifications(
 
 @pytest.mark.trio
 async def test_reconnect_with_remote_changes(
-    frozen_clock, alice2, running_backend, running_backend_factory, alice_core, user_fs_factory
+    frozen_clock,
+    alice2,
+    running_backend,
+    running_backend_factory,
+    alice_core,
+    user_fs_factory,
+    monkeypatch,
 ):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    alice2.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     alice_w = alice_core.user_fs.get_workspace(wid)
     await alice_w.mkdir("/foo")
     await alice_w.touch("/bar.txt")
     # Wait for sync monitor to do it job
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
@@ -366,7 +400,6 @@ async def test_reconnect_with_remote_changes(
 
             with alice_core.event_bus.listen() as spy:
                 # Now alice should sync back the changes
-                await frozen_clock.sleep_with_autojump(60)
                 await spy.wait_multiple_with_timeout(
                     [
                         (
@@ -388,8 +421,15 @@ async def test_reconnect_with_remote_changes(
 
 @pytest.mark.trio
 async def test_sync_confined_children_after_rename(
-    frozen_clock, alice, running_backend, alice_core
+    frozen_clock,
+    running_backend,
+    alice_core,
+    monkeypatch,
 ):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     # Create a workspace
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     alice_w = alice_core.user_fs.get_workspace(wid)
@@ -402,7 +442,6 @@ async def test_sync_confined_children_after_rename(
     await alice_w.mkdir("/test.tmp/a/b/c", parents=True)
 
     # Wait for sync monitor to be idle
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
@@ -421,7 +460,6 @@ async def test_sync_confined_children_after_rename(
     await alice_w.rename("/test.tmp", "/test2.tmp")
 
     # Wait for sync monitor to be idle
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
@@ -440,7 +478,6 @@ async def test_sync_confined_children_after_rename(
     await alice_w.rename("/test2.tmp", "/test2")
 
     # Wait for sync monitor to be idle
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
@@ -459,7 +496,6 @@ async def test_sync_confined_children_after_rename(
     await alice_w.rename("/test2", "/test3.tmp")
 
     # Wait for sync monitor to be idle
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
@@ -477,8 +513,17 @@ async def test_sync_confined_children_after_rename(
 
 @pytest.mark.trio
 async def test_sync_monitor_while_changing_roles(
-    frozen_clock, running_backend, alice_core, bob_core
+    frozen_clock,
+    running_backend,
+    alice_core,
+    bob_core,
+    monkeypatch,
 ):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    bob_core.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     # Create a shared workspace
     wid = await create_shared_workspace(EntryName("w"), alice_core, bob_core)
     alice_workspace = alice_core.user_fs.get_workspace(wid)
@@ -487,7 +532,6 @@ async def test_sync_monitor_while_changing_roles(
     # Alice creates a files, let it sync
     with bob_core.event_bus.listen() as spy:
         await alice_workspace.write_bytes("/test.txt", b"test")
-        await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
 
@@ -496,7 +540,6 @@ async def test_sync_monitor_while_changing_roles(
             CoreEvent.FS_ENTRY_DOWNSYNCED,
             kwargs={"workspace_id": wid, "id": wid, "changes": spy.ANY},
         )
-        await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await bob_core.wait_idle_monitors()
 
@@ -507,7 +550,6 @@ async def test_sync_monitor_while_changing_roles(
     # But gets his role changed to READER
     with bob_core.event_bus.listen() as spy:
         await alice_core.user_fs.workspace_share(wid, bob_core.device.user_id, WorkspaceRole.READER)
-        await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await spy.wait(CoreEvent.SHARING_UPDATED)
             await bob_core.wait_idle_monitors()
@@ -525,7 +567,6 @@ async def test_sync_monitor_while_changing_roles(
         await alice_core.user_fs.workspace_share(
             wid, bob_core.device.user_id, WorkspaceRole.CONTRIBUTOR
         )
-        await frozen_clock.sleep_with_autojump(60)
         async with frozen_clock.real_clock_timeout():
             await spy.wait(CoreEvent.SHARING_UPDATED)
             await bob_core.wait_idle_monitors()
@@ -535,14 +576,12 @@ async def test_sync_monitor_while_changing_roles(
     assert not info["need_sync"]
 
     # So Alice can read it
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
     assert await alice_workspace.read_bytes("/test.txt") == b"test2"
 
     # The workspace can be written again
     await bob_workspace.write_bytes("/this-should-not-fail", b"abc")
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await bob_core.wait_idle_monitors()
     info = await bob_workspace.path_info("/this-should-not-fail")
@@ -551,8 +590,17 @@ async def test_sync_monitor_while_changing_roles(
 
 @pytest.mark.trio
 async def test_sync_with_concurrent_reencryption(
-    frozen_clock, running_backend, alice_core, bob_user_fs, monkeypatch
+    frozen_clock,
+    running_backend,
+    alice_core,
+    bob_user_fs,
+    monkeypatch,
 ):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    bob_user_fs.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     # Create a shared workspace
     wid = await create_shared_workspace(EntryName("w"), bob_user_fs, alice_core)
     alice_workspace = alice_core.user_fs.get_workspace(wid)
@@ -560,7 +608,6 @@ async def test_sync_with_concurrent_reencryption(
 
     # Alice creates a files, let it sync
     await alice_workspace.write_bytes("/test.txt", b"v1")
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
     await bob_user_fs.sync()
@@ -590,7 +637,6 @@ async def test_sync_with_concurrent_reencryption(
     # Now let Alice process the `sharing.reencrypted` messages, this should
     # allow to do the sync
     allow_message_processing.set()
-    await frozen_clock.sleep_with_autojump(60)
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
@@ -603,17 +649,21 @@ async def test_sync_with_concurrent_reencryption(
 
 
 @pytest.mark.trio
-@pytest.mark.xfail(reason="TODO: should work once TimeProvider is ready")
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 async def test_sync_timeout_and_rejected_by_sequester_service(
-    monkeypatch, caplog, frozen_clock, coolorg, alice, running_backend, alice_core, unused_tcp_port
+    monkeypatch, caplog, frozen_clock, coolorg, running_backend, alice_core, unused_tcp_port
 ):
+    # Go fast in a controlled way: sync monitor should be only running in `_wait_sync_is_done`,
+    # this is to avoid inconsistency when create a file then writting into it (as a very fast
+    # speedup may trigger the sync monitor between the create and update, resulting in one
+    # more version of the file's manifest than expected !)
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
     async def _wait_sync_is_done():
         assert not alice_core.are_monitors_idle()
-        await frozen_clock.sleep_with_autojump(40)
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
-        assert alice_core.are_monitors_idle()
 
     # Create a workspace & make sure everything is sync so far
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
@@ -645,8 +695,6 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     async def _mocked_http_request(**kwargs):
         nonlocal webhook_calls
         webhook_calls += 1
-        # if webhook_calls == 4:
-        #     breakpoint()
         if webhook_calls == 1:
             raise URLError("[Errno -2] Name or service not known")
         else:
@@ -655,17 +703,22 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
 
     # Do a change and way for the sync to be finished
-    await alice_workspace.write_bytes("/test.txt", b"v1")
+    # /!\ Here we triggered two concurrent sync: for the file and for the parent folder.
+    # The trick is the parent folder will force a minimal sync of the file, so we must
+    # make sure minimal sync and sync of the file lead to the same result.
+    # Otherwise (e.g. if we use `write_bytes` with non-empty content instead of `touch`)
+    # we will endup with 1 or 2 versions of the manifest synced depending of if a minimal
+    # sync was achieved before the actual sync.
+    await alice_workspace.touch("/test.txt")
     await _wait_sync_is_done()
 
-    # We called the webhook 4 times:
+    # We called the webhook 3 times:
     # - first time failed
-    # - second time for the file manifest minimal sync
+    # - second time for the file manifest sync
     # - third time for the parent folder manifest sync
-    # - fourth time for the actual file manifest sync
-    assert webhook_calls == 4
+    assert webhook_calls == 3
     caplog.assert_occurred_once(
-        f"[warning  ] Sync failure due to server upload temporarily unavailable [parsec.core.sync_monitor] workspace_id={wid.str}"
+        f"[warning  ] Sync failure due to server upload temporarily unavailable [parsec.core.sync_monitor] workspace_id={wid.hex}"
     )
     bad_file_info = await alice_workspace.path_info("/test.txt")
     assert bad_file_info["need_sync"] is False
@@ -689,7 +742,7 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     # just forget about it to avoid busy sync loops with the server...
     bad_file_info = await alice_workspace.path_info("/test.txt")
     assert bad_file_info["need_sync"] is True
-    assert bad_file_info["base_version"] == 2
+    assert bad_file_info["base_version"] == 1
 
     # ...so if we modify again the file everything should be synced fine
 
@@ -702,7 +755,7 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     await _wait_sync_is_done()
     bad_file_info = await alice_workspace.path_info("/test.txt")
     assert bad_file_info["need_sync"] is False
-    assert bad_file_info["base_version"] == 3
+    assert bad_file_info["base_version"] == 2
 
     ################################
     # 2) Now test userfs
@@ -715,9 +768,6 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     async def _mocked_http_request(**kwargs):
         nonlocal webhook_calls
         webhook_calls += 1
-        if webhook_calls == 4:
-            breakpoint()
-        # print(webhook_calls, kwargs)
         if webhook_calls == 1:
             raise URLError("[Errno -2] Name or service not known")
         else:
@@ -731,7 +781,7 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
 
     assert webhook_calls == 2
     caplog.assert_occurred_once(
-        f"[warning  ] Sync failure due to server upload temporarily unavailable [parsec.core.sync_monitor] workspace_id={alice_core.user_fs.user_manifest_id.str}"
+        f"[warning  ] Sync failure due to server upload temporarily unavailable [parsec.core.sync_monitor] workspace_id={alice_core.user_fs.user_manifest_id.hex}"
     )
 
     # 2.b) Test sequester service rejection
