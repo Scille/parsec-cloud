@@ -66,14 +66,20 @@ def _rpc_msgpack_rep(data: dict[str, object], api_version: ApiVersion) -> Respon
 # - 404: Organization non found or invalid organization ID
 # - 401: Bad authentication info (bad Author/Signature/Timestamp headers)
 # - 406: Bad accept type (for the SSE events route)
-# - 415: Bad content-type
+# - 415: Bad content-type, body is not a valid message or unknown command
 # - 422: Unsupported API version
+# - 460: Organization is expired
+# - 461: User is revoked
 
 
 def _handshake_abort(status_code: int, api_version: ApiVersion) -> NoReturn:
     current_app.aborter(
         Response(response="", status=status_code, headers={"Api-Version": str(api_version)})
     )
+
+
+def _handshake_abort_bad_content(api_version: ApiVersion) -> NoReturn:
+    _handshake_abort(415, api_version)
 
 
 async def _do_handshake(
@@ -128,11 +134,11 @@ async def _do_handshake(
             organization = None
     else:
         if organization.is_expired:
-            current_app.aborter(_rpc_msgpack_rep({"status": "expired_organization"}, api_version))
+            _handshake_abort(460, api_version=api_version)
 
     # 3) Check Content-Type & Accept
     if expected_content_type and request.headers.get("Content-Type") != expected_content_type:
-        _handshake_abort(415, api_version=api_version)
+        _handshake_abort_bad_content(api_version=api_version)
     if expected_accept_type and request.headers.get("Accept") != expected_accept_type:
         _handshake_abort(406, api_version=api_version)
 
@@ -169,7 +175,7 @@ async def _do_handshake(
             _handshake_abort(401, api_version=api_version)
         else:
             if user.revoked_on:
-                current_app.aborter(_rpc_msgpack_rep({"status": "revoked_user"}, api_version))
+                _handshake_abort(461, api_version=api_version)
 
         try:
             device.verify_key.verify_with_signature(
@@ -207,7 +213,7 @@ async def anonymous_api(raw_organization_id: str) -> Response:
     try:
         msg = unpackb(body)
     except SerdePackingError:
-        return _rpc_msgpack_rep({"status": "invalid_msg_format"}, api_version)
+        _handshake_abort_bad_content(api_version=api_version)
 
     # Lazy creation of the organization if necessary
     cmd = msg.get("cmd")
@@ -226,12 +232,12 @@ async def anonymous_api(raw_organization_id: str) -> Response:
         f"Anonymous client successfully connected (client/server API version: {client_api_version}/{api_version})"
     )
     if not isinstance(cmd, str):
-        return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
+        _handshake_abort_bad_content(api_version=api_version)
 
     try:
         cmd_func = backend.apis[ClientType.ANONYMOUS][cmd]
     except KeyError:
-        return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
+        _handshake_abort_bad_content(api_version=api_version)
 
     # Run command
     rep = await cmd_func(client_ctx, msg)
@@ -258,16 +264,16 @@ async def authenticated_api(raw_organization_id: str) -> Response:
     try:
         msg = unpackb(body)
     except SerdePackingError:
-        return _rpc_msgpack_rep({"status": "invalid_msg_format"}, api_version)
+        _handshake_abort_bad_content(api_version=api_version)
 
     cmd = msg.get("cmd")
     if not isinstance(cmd, str):
-        return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
+        _handshake_abort_bad_content(api_version=api_version)
 
     try:
         cmd_func = backend.apis[ClientType.AUTHENTICATED][cmd]
     except KeyError:
-        return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
+        _handshake_abort_bad_content(api_version=api_version)
 
     client_ctx = AuthenticatedClientContext(
         api_version=api_version,

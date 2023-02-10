@@ -22,6 +22,7 @@ class BasePingComponent:
         "ping",
         client_types=[
             ClientType.AUTHENTICATED,
+            ClientType.ANONYMOUS,
             ClientType.INVITED,
         ],
     )

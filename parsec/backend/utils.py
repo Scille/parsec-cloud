@@ -88,7 +88,9 @@ def api(
     return wrapper
 
 
-def collect_apis(*components: object) -> Dict[ClientType, Dict[str, Callable[..., Any]]]:
+def collect_apis(
+    *components: object, include_ping: bool
+) -> Dict[ClientType, Dict[str, Callable[..., Any]]]:
     apis: Dict[ClientType, Dict[str, Callable[..., Any]]] = {}
     for component in components:
         for methname in dir(component):
@@ -100,6 +102,11 @@ def collect_apis(*components: object) -> Dict[ClientType, Dict[str, Callable[...
             for client_type in info["client_types"]:
                 if client_type not in apis:
                     apis[client_type] = {}
+
+                # Ping command is only needed for tests, so skip provide a way
+                # to skip in when in production
+                if info["cmd"] == "ping" and not include_ping:
+                    continue
 
                 assert info["cmd"] not in apis[client_type]
                 apis[client_type][info["cmd"]] = meth
