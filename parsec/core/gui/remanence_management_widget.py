@@ -170,7 +170,7 @@ class RemanenceManagementWidget(QWidget, Ui_RemanenceManagementWidget):
         with self._handle_error(T("TEXT_DISABLE_BLOCK_REMANENCE_FAILED")):
             # Update widgets
             self.switch_button.setDisabled(True)
-            # Disable block remanance
+            # Disable block remanence
             await self.workspace_fs.disable_block_remanence()
             # Update content
             self._update_switch_button()

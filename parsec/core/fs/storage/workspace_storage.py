@@ -235,7 +235,7 @@ class BaseWorkspaceStorage:
 
     async def enable_block_remanence(self) -> bool:
         """
-        Returns whether the block remanance has changed or not
+        Returns whether the block remanence has changed or not
         """
         has_changed = await self.block_storage.enable_block_remanence()
         return has_changed

@@ -183,12 +183,12 @@ class LocalDatabase:
             # The database is currently not configured for the right auto_vacuum policy
             if self.auto_vacuum != current_auto_vacuum:
 
-                # Changing the auto_vaccuum policy requires a full vacuum in order to recreate the tables
+                # Changing the auto_vacuum policy requires a full vacuum in order to recreate the tables
                 def _thread_target() -> None:
                     self._conn.execute(f"PRAGMA auto_vacuum={int(self.auto_vacuum)}")
                     self._conn.execute("VACUUM")
 
-                # Vacuumin is very costly so run in a thread
+                # Vacuum is very costly so run in a thread
                 await self.run_in_thread(_thread_target)
 
     async def _connect(self) -> None:

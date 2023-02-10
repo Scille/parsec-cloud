@@ -245,7 +245,7 @@ body.dark {
   --parsec-color-light-primary-600: #0058CC;
   --parsec-color-light-primary-700: #004299;
   /* Secondary */
-  --parsec-color-light-secondary-inversed-contrast: #FEFEFE;
+  --parsec-color-light-secondary-inverted-contrast: #FEFEFE;
   --parsec-color-light-secondary-background: #F9F9FB;
   --parsec-color-light-secondary-medium: #F3F3F7;
   --parsec-color-light-secondary-disabled: #EAEAF1;

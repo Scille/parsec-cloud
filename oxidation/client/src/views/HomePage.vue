@@ -413,7 +413,7 @@ async function canDismissModal(): Promise<boolean> {
     flex-basis: 5em;
     flex-grow: 0;
     flex-shrink: 0;
-    background: var(--parsec-color-light-secondary-inversed-contrast);
+    background: var(--parsec-color-light-secondary-inverted-contrast);
     width: 100vw;
     justify-content: center;
     margin-bottom: 5em;
