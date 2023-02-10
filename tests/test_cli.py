@@ -866,11 +866,8 @@ async def cli_with_running_backend_testbed(backend_asgi_app, *devices):
         nursery.cancel_scope.cancel()
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
 @pytest.mark.real_tcp
-@pytest.mark.flaky(reruns=1)
 async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asgi_app, alice):
     async with cli_with_running_backend_testbed(backend_asgi_app, alice) as (backend_addr, alice):
         # First, save the local device needed for pki_enrollment_review_pendings command
