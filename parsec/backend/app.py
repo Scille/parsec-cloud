@@ -96,4 +96,6 @@ class BackendApp:
             self.block,
             self.pki,
             self.events,
+            # Ping command is only used in tests
+            include_ping=self.config.debug,
         )

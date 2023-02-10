@@ -10,7 +10,8 @@ import pytest
 
 from parsec._parsec import DateTime, DeviceID, LocalDevice
 from parsec.api.version import API_VERSION, ApiVersion
-from parsec.serde import unpackb
+from parsec.backend import BackendApp
+from parsec.serde import packb
 from tests.common import AnonymousRpcApiClient, AuthenticatedRpcApiClient
 
 
@@ -175,10 +176,29 @@ async def _test_handshake_body_not_msgpack(
         check_rep=False,
         now=now,
     )
-    assert rep.status_code == 200
+    assert rep.status_code == 415
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
-    body = await rep.get_data()
-    assert unpackb(body) == {"status": "invalid_msg_format"}
+
+
+async def _test_handshake_body_msgpack_bad_unknown_cmd(
+    client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient], alice: LocalDevice
+):
+    now = DateTime.now()
+
+    def _before_send_hook(args):
+        bad_body = packb({"cmd": "dummy"})
+        args["data"] = bad_body
+        if isinstance(client, AuthenticatedRpcApiClient):
+            signature = alice.signing_key.sign_only_signature(bad_body)
+            args["headers"]["signature"] = b64encode(signature).decode("ascii")
+
+    rep = await client.send_ping(
+        before_send_hook=_before_send_hook,
+        check_rep=False,
+        now=now,
+    )
+    assert rep.status_code == 415
+    assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
 
 
 async def _test_authenticated_handshake_author_not_found(
@@ -191,12 +211,29 @@ async def _test_authenticated_handshake_author_not_found(
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
 
 
+async def _test_handshake_organization_expired(
+    client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient],
+):
+    rep = await client.send_ping(check_rep=False)
+    assert rep.status_code == 460
+    assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
+
+
+async def _test_authenticated_handshake_user_revoked(
+    alice_http_client: AuthenticatedRpcApiClient,
+):
+    rep = await alice_http_client.send_ping(check_rep=False)
+    assert rep.status_code == 461
+    assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
+
+
 @pytest.mark.trio
 async def test_handshake(
     alice_rpc: AuthenticatedRpcApiClient,
     anonymous_rpc: AuthenticatedRpcApiClient,
     alice: LocalDevice,
     bob: LocalDevice,
+    backend: BackendApp,
 ):
     # Merging all those tests into a single one saves plenty of time given
     # we don't have to recreate the fixtures
@@ -218,7 +255,23 @@ async def test_handshake(
     await _test_handshake_body_not_msgpack(alice_rpc, alice)
     await _test_handshake_body_not_msgpack(anonymous_rpc, alice)
 
+    await _test_handshake_body_msgpack_bad_unknown_cmd(alice_rpc, alice)
+    await _test_handshake_body_msgpack_bad_unknown_cmd(anonymous_rpc, alice)
+
     await _test_authenticated_handshake_author_not_found(alice_rpc)
+
+    await backend.organization.update(id=alice.organization_id, is_expired=True)
+    await _test_handshake_organization_expired(alice_rpc)
+    await _test_handshake_organization_expired(anonymous_rpc)
+    await backend.organization.update(id=alice.organization_id, is_expired=False)
+
+    await backend.user.revoke_user(
+        organization_id=alice.organization_id,
+        user_id=alice.user_id,
+        revoked_user_certificate=b"dummy",
+        revoked_user_certifier=bob.device_id,
+    )
+    await _test_authenticated_handshake_user_revoked(alice_rpc)
 
 
 @pytest.mark.trio
