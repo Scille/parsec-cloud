@@ -6,6 +6,7 @@ import socket
 import ssl
 import sys
 import tempfile
+import threading
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from functools import partial
@@ -37,11 +38,23 @@ def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
+
+    # On macOS connecting to a bind-to-no-listening socket hangs.
+    # On Windows it doesn't hang but induce a couple of seconds long lag.
+    # So on those platforms we actually serve the port, only to right away close the
+    # client connection which is a "good enough" emulation of an unused port
+    if sys.platform in ("darwin", "win32"):
+
+        def _broken_server(sock):
+            while True:
+                sock.listen()
+                while True:
+                    client_sock, _ = sock.accept()
+                    client_sock.close()
+
+        threading.Thread(target=_broken_server, args=[sock], daemon=True).start()
+
     port = sock.getsockname()[1]
-    # On macOS connecting to a bind-to-no-listening socket hangs, so we have to
-    # close the socket and risk port recycling (which hopefully is not that common)
-    if sys.platform == "darwin":
-        sock.close()
     yield port
 
 
