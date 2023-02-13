@@ -432,6 +432,11 @@ async def test_sync_confined_children_after_rename(
 
     # Create a workspace
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
+
+    # Wait for the sync monitor to sync the new workspace
+    async with frozen_clock.real_clock_timeout():
+        await alice_core.wait_idle_monitors()
+
     alice_w = alice_core.user_fs.get_workspace(wid)
 
     # Set a filter
@@ -661,7 +666,12 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
 
     async def _wait_sync_is_done():
-        assert not alice_core.are_monitors_idle()
+        # In theory here we should have `alice_core.are_monitors_idle() is True`,
+        # however given monitors runs in concurrency (and time is mocked to runs very
+        # fast !), they could have already finished they work.
+        # Hence we rely on the fact we are guaranteed the monitors have switched their state
+        # to waked up synchronously with the change event, and so idle monitor here means
+        # "the change have been processed" and not "the change have not been seen yet".
         async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
 
@@ -707,7 +717,7 @@ async def test_sync_timeout_and_rejected_by_sequester_service(
     # The trick is the parent folder will force a minimal sync of the file, so we must
     # make sure minimal sync and sync of the file lead to the same result.
     # Otherwise (e.g. if we use `write_bytes` with non-empty content instead of `touch`)
-    # we will endup with 1 or 2 versions of the manifest synced depending of if a minimal
+    # we will end up with 1 or 2 versions of the manifest synced depending of if a minimal
     # sync was achieved before the actual sync.
     await alice_workspace.touch("/test.txt")
     await _wait_sync_is_done()
