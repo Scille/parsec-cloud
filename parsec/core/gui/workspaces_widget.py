@@ -793,7 +793,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def _on_sharing_updated(
-        self, event: QEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry
+        self, event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry
     ) -> None:
         self.reset()
 
@@ -802,7 +802,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def _on_fs_entry_synced(
         self,
-        event: QEvent,
+        event: CoreEvent,
         id: str,
         workspace_id: EntryID | None = None,
         changes: ChangesAfterSync | None = None,
@@ -810,7 +810,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset()
 
     def _on_fs_entry_updated(
-        self, event: QEvent, workspace_id: EntryID | None = None, id: EntryID | None = None
+        self, event: CoreEvent, workspace_id: EntryID | None = None, id: EntryID | None = None
     ) -> None:
         assert id is not None
         if workspace_id and id == workspace_id:
@@ -818,7 +818,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def _on_entry_downsynced(
         self,
-        event: QEvent,
+        event: CoreEvent,
         workspace_id: EntryID | None = None,
         id: str | None = None,
         changes: ChangesAfterSync | None = None,
@@ -836,7 +836,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def _on_mountpoint_started(
         self,
-        event: QEvent,
+        event: CoreEvent,
         mountpoint: object,
         workspace_id: EntryID,
         timestamp: DateTime | None,
@@ -845,7 +845,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def _on_mountpoint_stopped(
         self,
-        event: QEvent,
+        event: CoreEvent,
         mountpoint: object,
         workspace_id: EntryID,
         timestamp: DateTime | None,
