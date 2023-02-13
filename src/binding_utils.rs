@@ -348,8 +348,29 @@ macro_rules! impl_enum_field {
     };
 }
 
-macro_rules! send_command_and_handle_bad_timestamp {
-    ($client: ident, $req: ident, $cmd_name: ident, $rep_type: ident, $($kind_type: ty),*) => {
+macro_rules! _cmd_error_handler {
+    ("handle_bad_timestamp", $cmd_name: ident, $rep_type: ident, $rep: ident) => {
+        ::paste::paste! {
+            if let authenticated_cmds::v2::$cmd_name::Rep::BadTimestamp { .. } = $rep {
+                let rep = ::pyo3::Python::with_gil(|py| {
+                    let rep = crate::binding_utils::py_object!(
+                        $rep,
+                        $rep_type,
+                        [<$rep_type BadTimestamp>],
+                        py
+                    );
+                    // `py_object!` uses ? operator, so `with_gil` must return a `Result`
+                    PyResult::Ok(rep)
+                })?;
+                return Err(crate::backend_connection::BackendOutOfBallparkError::new_err(rep));
+            }
+        }
+    };
+}
+
+macro_rules! send_command {
+    ($client: ident, $req: ident, $cmd_name: ident, $rep_type: ident, $($kind_type: ty),* $(, $error_handler: literal)? $(,)?) => {
+        // We invoke gil because it will run in a coroutine
         ::paste::paste! {
             {
                 let rep = $client
@@ -357,53 +378,30 @@ macro_rules! send_command_and_handle_bad_timestamp {
                     .await
                     .map_err(|e| ::pyo3::PyErr::from(crate::backend_connection::CommandExc::from(e)))?;
 
-                if let authenticated_cmds::v2::$cmd_name::Rep::BadTimestamp { .. } = rep {
-                    return Err(crate::backend_connection::BackendOutOfBallparkError::new_err(format!("{rep:?}")));
-                }
+                $(crate::binding_utils::_cmd_error_handler!($error_handler, $cmd_name, $rep_type, rep);)?
 
-                Ok(::pyo3::Python::with_gil(|py| match rep {
+                Ok(match rep {
                     $(
                         authenticated_cmds::v2::$cmd_name::Rep::$kind_type { .. } => {
-                            PyResult::<::pyo3::PyObject>::Ok(crate::binding_utils::py_object!(
-                                rep,
-                                $rep_type,
-                                [<$rep_type $kind_type>],
-                                py
-                            ))
+                            ::pyo3::Python::with_gil(|py| {
+                                let rep = crate::binding_utils::py_object!(
+                                    rep,
+                                    $rep_type,
+                                    [<$rep_type $kind_type>],
+                                    py
+                                );
+                                // `py_object!` uses ? operator, so `with_gil` must return a `Result`
+                                PyResult::Ok(rep)
+                            })?
                         }
                      )*
-                }).expect("Failed to create a pyobject from server's response"))
+                })
             }
         }
     }
 }
 
-macro_rules! send_command {
-    ($client: ident, $req: ident, $cmd_name: ident, $rep_type: ident, $($kind_type: ty),*) => {
-        ::paste::paste! {
-            $client
-                .send($req)
-                .await
-                .map(|r| {
-                    ::pyo3::Python::with_gil(|py| match r {
-                        $(
-                            authenticated_cmds::v2::$cmd_name::Rep::$kind_type { .. } => {
-                                PyResult::<::pyo3::PyObject>::Ok(crate::binding_utils::py_object!(
-                                    r,
-                                    $rep_type,
-                                    [<$rep_type $kind_type>],
-                                    py
-                                ))
-                            }
-                         )*
-                    })
-                })
-                .map(|e| e.expect("Failed to create a pyobject from server's response"))
-                .map_err(|e| ::pyo3::PyErr::from(crate::backend_connection::CommandExc::from(e)))
-        }
-    }
-}
-
+pub(crate) use _cmd_error_handler;
 pub(crate) use _unwrap_bytes;
 pub(crate) use create_exception;
 pub(crate) use create_exception_from;
@@ -413,5 +411,4 @@ pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
 pub(crate) use py_object;
 pub(crate) use send_command;
-pub(crate) use send_command_and_handle_bad_timestamp;
 pub(crate) use unwrap_bytes;
