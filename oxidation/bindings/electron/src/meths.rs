@@ -283,7 +283,7 @@ fn variant_clientevent_js_to_rs<'a>(
                 {
                     let v = js_val.value(cx);
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        (cx).throw_type_error("Not an u32 number")?
+                        cx.throw_type_error("Not an u32 number")?
                     }
                     v as u32
                 }
@@ -382,7 +382,7 @@ fn variant_workspacestoragecachesize_js_to_rs<'a>(
                 {
                     let v = js_val.value(cx);
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        (cx).throw_type_error("Not an u32 number")?
+                        cx.throw_type_error("Not an u32 number")?
                     }
                     v as u32
                 }
@@ -567,7 +567,7 @@ fn variant_clientgettererror_js_to_rs<'a>(
                 {
                     let v = js_val.value(cx);
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        (cx).throw_type_error("Not an u32 number")?
+                        cx.throw_type_error("Not an u32 number")?
                     }
                     v as u32
                 }
@@ -740,7 +740,7 @@ fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
         {
             let v = js_val.value(&mut cx);
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                (&mut cx).throw_type_error("Not an u32 number")?
+                cx.throw_type_error("Not an u32 number")?
             }
             v as u32
         }

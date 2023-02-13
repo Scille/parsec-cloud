@@ -2,7 +2,7 @@
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_crypto::VerifyKey;
-use libparsec_protocol::authenticated_cmds::v3::user_get;
+use libparsec_protocol::authenticated_cmds::v2::user_get;
 use libparsec_types::{
     DeviceCertificate, DeviceID, RevokedUserCertificate, TimeProvider, UserCertificate, UserID,
 };
@@ -98,8 +98,13 @@ impl RemoteDevicesManager {
         Option<RevokedUserCertificate>,
         Vec<DeviceCertificate>,
     )> {
-        // TODO: backend_cmds is in v3 while load_user_and_devices is in v2
-        match self.backend_cmds.user_get(user_id.clone()).await {
+        match self
+            .backend_cmds
+            .send(user_get::Req {
+                user_id: user_id.clone(),
+            })
+            .await
+        {
             Ok(user_get::Rep::Ok {
                 device_certificates,
                 revoked_user_certificate,
@@ -108,7 +113,7 @@ impl RemoteDevicesManager {
             }) => self
                 .trustchain_ctx
                 .load_user_and_devices(
-                    libparsec_protocol::authenticated_cmds::v2::user_get::Trustchain {
+                    user_get::Trustchain {
                         devices: trustchain.devices,
                         revoked_users: trustchain.revoked_users,
                         users: trustchain.users,
