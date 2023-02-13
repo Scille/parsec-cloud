@@ -86,7 +86,7 @@ JsFunction
 {
     let v = {{ js_val }}.value({{ mut_cx_ref }});
     if v < (i32::MIN as f64) || (i32::MAX as f64) < v {
-        ({{mut_cx_ref}}).throw_type_error("Not an i32 number")?
+        cx.throw_type_error("Not an i32 number")?
     }
     v as i32
 }
@@ -94,7 +94,7 @@ JsFunction
 {
     let v = {{ js_val }}.value({{ mut_cx_ref }});
     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-        ({{mut_cx_ref}}).throw_type_error("Not an u32 number")?
+        cx.throw_type_error("Not an u32 number")?
     }
     v as u32
 }

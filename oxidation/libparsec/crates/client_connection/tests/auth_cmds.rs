@@ -180,7 +180,9 @@ async fn client(
     notify_stop: Sender<()>,
     message: String,
 ) -> CommandResult<authenticated_cmds::v3::ping::Rep> {
-    let rep = client.ping(message).await;
+    let rep = client
+        .send(authenticated_cmds::v3::ping::Req { ping: message })
+        .await;
     log::info!("[client] recv response: {rep:?}");
     log::debug!("[client] notify server to stop");
     notify_stop
@@ -204,7 +206,11 @@ async fn with_testbed() {
             device.signing_key.to_owned(),
         )
         .unwrap();
-        let rep = cmds.ping("foo".to_owned()).await;
+        let rep = cmds
+            .send(authenticated_cmds::v3::ping::Req {
+                ping: "foo".to_owned(),
+            })
+            .await;
         assert_eq!(
             rep.unwrap(),
             libparsec_protocol::authenticated_cmds::v3::ping::Rep::Ok {
