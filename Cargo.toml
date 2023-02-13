@@ -36,7 +36,6 @@ uuid = { version = "1.2.2", features = ["serde", "v4", "fast-rng"] }
 tokio = { version = "1.25", features = ["rt", "rt-multi-thread"] }
 lazy_static = "1.4.0"
 futures = "0.3.21"
-reqwest = "0.11.13"
 
 # Rust unoptimized code is so slow that we customize dev profile to enable some
 # optimizations, otherwise Python tests take forever.
