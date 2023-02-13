@@ -1874,7 +1874,6 @@ dependencies = [
  "paste",
  "pyo3",
  "regex",
- "reqwest",
  "tokio",
  "uuid",
 ]
