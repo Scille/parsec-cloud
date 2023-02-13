@@ -629,7 +629,7 @@ impl AuthenticatedCmds {
             let req =
                 libparsec::protocol::authenticated_cmds::v2::realm_create::Req { role_certificate };
 
-            crate::binding_utils::send_command_and_handle_bad_timestamp!(
+            crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
                 realm_create,
@@ -640,7 +640,8 @@ impl AuthenticatedCmds {
                 InvalidCertification,
                 InvalidData,
                 AlreadyExists,
-                UnknownStatus
+                UnknownStatus,
+                "handle_bad_timestamp"
             )
         })
     }
@@ -729,7 +730,7 @@ impl AuthenticatedCmds {
                     timestamp,
                 };
 
-            crate::binding_utils::send_command_and_handle_bad_timestamp!(
+            crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
                 realm_start_reencryption_maintenance,
@@ -742,7 +743,8 @@ impl AuthenticatedCmds {
                 NotFound,
                 Ok,
                 ParticipantMismatch,
-                UnknownStatus
+                UnknownStatus,
+                "handle_bad_timestamp"
             )
         })
     }
@@ -804,7 +806,7 @@ impl AuthenticatedCmds {
                 role_certificate,
             };
 
-            crate::binding_utils::send_command_and_handle_bad_timestamp!(
+            crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
                 realm_update_roles,
@@ -820,7 +822,8 @@ impl AuthenticatedCmds {
                 InvalidCertification,
                 InvalidData,
                 UserRevoked,
-                IncompatibleProfile
+                IncompatibleProfile,
+                "handle_bad_timestamp"
             )
         })
     }
@@ -945,7 +948,7 @@ impl AuthenticatedCmds {
                 vlob_id,
             };
 
-            crate::binding_utils::send_command_and_handle_bad_timestamp!(
+            crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
                 vlob_create,
@@ -961,7 +964,8 @@ impl AuthenticatedCmds {
                 RejectedBySequesterService,
                 RequireGreaterTimestamp,
                 SequesterInconsistency,
-                Timeout
+                Timeout,
+                "handle_bad_timestamp"
             )
         })
     }
@@ -1152,7 +1156,7 @@ impl AuthenticatedCmds {
                 vlob_id,
             };
 
-            crate::binding_utils::send_command_and_handle_bad_timestamp!(
+            crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
                 vlob_update,
@@ -1169,7 +1173,8 @@ impl AuthenticatedCmds {
                 RejectedBySequesterService,
                 RequireGreaterTimestamp,
                 SequesterInconsistency,
-                Timeout
+                Timeout,
+                "handle_bad_timestamp"
             )
         })
     }
