@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import { Storage } from '@ionic/storage';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
+import { StorageManager } from '@/composables/storageManager';
 
 const MOCK_DEVICES: AvailableDevice[] = [
   {
@@ -76,8 +76,7 @@ export function getMockDevices(count: number | undefined = undefined): Available
   return MOCK_DEVICES.slice(0, count);
 }
 
-export async function mockLastLogin(): Promise<void> {
-  const store = new Storage();
+export async function mockLastLogin(manager: StorageManager): Promise<void> {
   const now = new Date();
 
   // Since dates don't handle +/- operators properly
@@ -87,15 +86,12 @@ export async function mockLastLogin(): Promise<void> {
     return x;
   }
 
-  await store.create();
-  store.set('devicesData', {
+  await manager.storeDevicesData({
     slug1: { lastLogin: now },
     // 10 seconds ago
     slug2: { lastLogin: newDateWithOffset(now, -1 * 10 * 1000) },
     // 10 minutes ago
     slug3: { lastLogin: newDateWithOffset(now, -1 * 10 * 60 * 1000) },
-    // Never logged
-    slug4: { },
     // 5 hours ago
     slug5: { lastLogin: newDateWithOffset(now, -1 * 5 * 60 * 60 * 1000) },
     // 2 days ago

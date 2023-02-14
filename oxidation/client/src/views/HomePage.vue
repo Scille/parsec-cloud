@@ -232,13 +232,9 @@ import MsSelect from '@/components/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
 import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
-import { Storage } from '@ionic/storage';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { getMockDevices, mockLastLogin } from '../common/mocks';
-
-export interface DeviceStoredData {
-    lastLogin: Date;
-}
+import { StoredDeviceData, StorageManager } from '@/composables/storageManager';
 
 const { t, d } = useI18n();
 const deviceList: AvailableDevice[] = getMockDevices();
@@ -246,10 +242,10 @@ let selectedDevice: AvailableDevice;
 const password = ref('');
 const orgSearchString = ref('');
 const showOrganizationList = ref(true);
-const store = new Storage();
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
 const { timeSince } = inject('formatters');
+const storageManager: StorageManager = inject('storageManager')!;
 
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
@@ -295,28 +291,12 @@ const filteredDevices = computed(() => {
   });
 });
 
-const deviceStoredDataDict = ref<{[slug: string]: DeviceStoredData}>({});
+const deviceStoredDataDict = ref<{[slug: string]: StoredDeviceData}>({});
 
 onMounted(async (): Promise<void> => {
-  await mockLastLogin();
+  await mockLastLogin(storageManager);
 
-  await store.create();
-  store.get('devicesData').then((val) => {
-    // This is needed because for some weird reason,
-    // ionic-storage deserializes dates correctly in web
-    // but keep them as strings during tests.
-    if (val) {
-      Object.keys(val).forEach((slug, _) => {
-        const obj = val[slug];
-        if (obj && obj.lastLogin) {
-          if (typeof obj.lastLogin === 'string') {
-            obj.lastLogin = new Date(obj.lastLogin);
-          }
-        }
-      });
-      deviceStoredDataDict.value = val;
-    }
-  });
+  deviceStoredDataDict.value = await storageManager.retrieveDevicesData();
 });
 
 function onPasswordChange(pwd: string): void {
@@ -338,7 +318,6 @@ function onOrganizationCardClick(device: AvailableDevice): void {
 }
 
 async function login(): Promise<void> {
-  await store.create();
   if (!deviceStoredDataDict.value[selectedDevice.slug]) {
     deviceStoredDataDict.value[selectedDevice.slug] = {
       lastLogin: new Date()
@@ -347,7 +326,7 @@ async function login(): Promise<void> {
     deviceStoredDataDict.value[selectedDevice.slug].lastLogin = new Date();
   }
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
-  await store.set('devicesData', toRaw(deviceStoredDataDict.value));
+  await storageManager.storeDevicesData(toRaw(deviceStoredDataDict.value));
 }
 
 function onForgottenPasswordClick(): void {

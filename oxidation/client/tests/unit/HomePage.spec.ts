@@ -10,6 +10,10 @@ import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import { Storage } from '@ionic/storage';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import { formatTimeSince } from '@/common/date';
+import { StorageManager } from '@/composables/storageManager';
+
+const storageManager = new StorageManager();
+storageManager.create();
 
 describe('HomePage.vue', () => {
   type MessageSchema = typeof frFR;
@@ -75,7 +79,8 @@ describe('HomePage.vue', () => {
             const { t, d } = useI18n();
             return formatTimeSince(date, t, d, defaultValue);
           }
-        }
+        },
+        storageManager: storageManager
       }
     }
   });
@@ -93,7 +98,6 @@ describe('HomePage.vue', () => {
       slug1: { lastLogin: new Date('04/28/1999 18:00:00') },
       slug2: { lastLogin: new Date('04/28/1999 17:59:50') },
       slug3: { lastLogin: new Date('04/28/1999 17:50:00') },
-      slug4: {},
       slug5: { lastLogin: new Date('04/28/1999 13:00:00') },
       slug6: { lastLogin: new Date('04/26/1999 18:00:00') },
       slug7: { lastLogin: new Date('04/18/1999 18:00:00') }
@@ -158,7 +162,8 @@ describe('HomePage.vue', () => {
               const { t, d } = useI18n();
               return formatTimeSince(date, t, d, defaultValue);
             }
-          }
+          },
+          storageManager: storageManager
         }
       }
     });

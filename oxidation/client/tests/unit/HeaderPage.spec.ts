@@ -7,6 +7,10 @@ import router from '../../src/router';
 import frFR from '../../src/locales/fr-FR.json';
 import enUS from '../../src/locales/en-US.json';
 import { formatTimeSince } from '@/common/date';
+import { StorageManager } from '@/composables/storageManager';
+
+const storageManager = new StorageManager();
+storageManager.create();
 
 describe('HeaderPage.vue', () => {
   type MessageSchema = typeof frFR;
@@ -40,7 +44,8 @@ describe('HeaderPage.vue', () => {
             const { t, d } = useI18n();
             return formatTimeSince(date, t, d, defaultValue);
           }
-        }
+        },
+        storageManager: storageManager
       }
     },
     attachToDocument: true,

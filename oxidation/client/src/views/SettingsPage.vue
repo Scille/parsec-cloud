@@ -19,7 +19,7 @@
             :description="$t('SettingsPage.enableTelemetryDescription')"
           />
           <ion-toggle
-            v-model="enableTelemetry"
+            v-model="config.enableTelemetry"
             value="telemetry"
           />
         </ion-item>
@@ -32,7 +32,7 @@
             :description="$t('SettingsPage.minimizeToSystemTrayDescription')"
           />
           <ion-toggle
-            v-model="minimizeToSystemTray"
+            v-model="config.minimizeToTray"
             value="runbackground"
           />
         </ion-item>
@@ -61,7 +61,7 @@
           </ion-label>
           <ion-select
             interface="popover"
-            :value="theme"
+            :value="config.theme"
             @ion-change="changeTheme($event.detail.value)"
           >
             <ion-select-option value="dark">
@@ -99,34 +99,35 @@ import {
 } from '@ionic/vue';
 
 import SettingsOption from '@/components/SettingsOption.vue';
-import { ref } from 'vue';
+import { ref, inject, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Storage } from '@ionic/storage';
 import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
+import { Config, StorageManager } from '@/composables/storageManager';
 
 const { locale } = useI18n();
-const theme = ref('system');
-const enableTelemetry = ref(false);
-const minimizeToSystemTray = ref(false);
-const store = new Storage();
+const storageManager: StorageManager = inject('storageManager')!;
+const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 
 async function changeLang(selectedLang: string): Promise<void> {
+  config.value.locale = selectedLang;
   locale.value = selectedLang;
-  await store.create();
-  await store.set('userLocale', selectedLang);
+  await storageManager.storeConfig(toRaw(config.value));
 }
 
 async function changeTheme(selectedTheme: string): Promise<void> {
-  theme.value = selectedTheme;
+  config.value.theme = selectedTheme;
   toggleDarkMode(selectedTheme);
-  await store.create();
-  await store.set('userTheme', selectedTheme);
+  await storageManager.storeConfig(toRaw(config.value));
 }
 
 onMounted(async (): Promise<void> => {
-  await store.create();
-  theme.value = await store.get('userTheme') || 'system';
+  config.value = await storageManager.retrieveConfig();
+
+  if (!config.value.theme) {
+    config.value.theme = 'system';
+  }
+  locale.value = config.value.locale;
 });
 </script>
 
