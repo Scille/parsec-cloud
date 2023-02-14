@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import { Storage } from '@ionic/storage';
-import { StoredDeviceData, Config, StorageManager } from '@/composables/storageManager';
+import { StoredDeviceData, Config, StorageManager } from '@/services/storageManager';
 
 describe('Storage manager', () => {
   it('Stores and retrieves the config', async () => {

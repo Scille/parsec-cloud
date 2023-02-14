@@ -26,7 +26,7 @@ import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
 
 import { formatTimeSince } from './common/date';
-import { StorageManager } from './composables/storageManager';
+import { StorageManager } from './services/storageManager';
 
 /* Theme variables */
 import './theme/variables.css';

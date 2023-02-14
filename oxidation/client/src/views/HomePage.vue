@@ -92,8 +92,8 @@
                               >
                                 <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
                                 <p>
-                                  {{ device.slug in deviceStoredDataDict ?
-                                    timeSince(deviceStoredDataDict[device.slug].lastLogin, '--') : '--' }}
+                                  {{ device.slug in storedDeviceDataDict ?
+                                    timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--' }}
                                 </p>
                               </ion-col>
                             </ion-row>
@@ -234,7 +234,7 @@ import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { getMockDevices, mockLastLogin } from '../common/mocks';
-import { StoredDeviceData, StorageManager } from '@/composables/storageManager';
+import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 
 const { t, d } = useI18n();
 const deviceList: AvailableDevice[] = getMockDevices();
@@ -277,10 +277,10 @@ const filteredDevices = computed(() => {
         return b.humanHandle?.localeCompare(a.humanHandle ?? '');
       }
     } else if (sortBy.value === 'last_login') {
-      const aLastLogin = (a.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[a.slug].lastLogin !== undefined) ?
-        deviceStoredDataDict.value[a.slug].lastLogin.valueOf() : 0;
-      const bLastLogin = (b.slug in deviceStoredDataDict.value && deviceStoredDataDict.value[b.slug].lastLogin !== undefined) ?
-        deviceStoredDataDict.value[b.slug].lastLogin.valueOf() : 0;
+      const aLastLogin = (a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined) ?
+        storedDeviceDataDict.value[a.slug].lastLogin.valueOf() : 0;
+      const bLastLogin = (b.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[b.slug].lastLogin !== undefined) ?
+        storedDeviceDataDict.value[b.slug].lastLogin.valueOf() : 0;
       if (sortByAsc.value) {
         return bLastLogin - aLastLogin;
       } else {
@@ -291,12 +291,12 @@ const filteredDevices = computed(() => {
   });
 });
 
-const deviceStoredDataDict = ref<{[slug: string]: StoredDeviceData}>({});
+const storedDeviceDataDict = ref<{[slug: string]: StoredDeviceData}>({});
 
 onMounted(async (): Promise<void> => {
   await mockLastLogin(storageManager);
 
-  deviceStoredDataDict.value = await storageManager.retrieveDevicesData();
+  storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 });
 
 function onPasswordChange(pwd: string): void {
@@ -318,15 +318,15 @@ function onOrganizationCardClick(device: AvailableDevice): void {
 }
 
 async function login(): Promise<void> {
-  if (!deviceStoredDataDict.value[selectedDevice.slug]) {
-    deviceStoredDataDict.value[selectedDevice.slug] = {
+  if (!storedDeviceDataDict.value[selectedDevice.slug]) {
+    storedDeviceDataDict.value[selectedDevice.slug] = {
       lastLogin: new Date()
     };
   } else {
-    deviceStoredDataDict.value[selectedDevice.slug].lastLogin = new Date();
+    storedDeviceDataDict.value[selectedDevice.slug].lastLogin = new Date();
   }
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
-  await storageManager.storeDevicesData(toRaw(deviceStoredDataDict.value));
+  await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 }
 
 function onForgottenPasswordClick(): void {

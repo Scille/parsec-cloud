@@ -103,7 +103,7 @@ import { ref, inject, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
-import { Config, StorageManager } from '@/composables/storageManager';
+import { Config, StorageManager } from '@/services/storageManager';
 
 const { locale } = useI18n();
 const storageManager: StorageManager = inject('storageManager')!;
