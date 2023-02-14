@@ -11,6 +11,7 @@ Dalvik
 dorny
 dtolnay
 expiredorg
+farn
 fifi
 Fonzie
 foobarrrrr
@@ -26,6 +27,7 @@ Reynholm
 riri
 Roboto
 samuelmeuli
+Sanctorum
 Scille
 titeuf
 werkzeug
