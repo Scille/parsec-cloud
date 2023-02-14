@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import { AvailableDevice } from '../plugins/libparsec/definitions';
-import { StorageManager } from '@/composables/storageManager';
+import { StorageManager } from '@/services/storageManager';
 
 const MOCK_DEVICES: AvailableDevice[] = [
   {

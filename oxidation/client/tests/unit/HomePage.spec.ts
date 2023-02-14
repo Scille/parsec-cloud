@@ -10,7 +10,7 @@ import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import { Storage } from '@ionic/storage';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import { formatTimeSince } from '@/common/date';
-import { StorageManager } from '@/composables/storageManager';
+import { StorageManager } from '@/services/storageManager';
 
 const storageManager = new StorageManager();
 storageManager.create();
@@ -94,7 +94,7 @@ describe('HomePage.vue', () => {
   });
 
   it('should get devices stored data on mount', () => {
-    expect(wrapper.vm.deviceStoredDataDict).toEqual({
+    expect(wrapper.vm.storedDeviceDataDict).toEqual({
       slug1: { lastLogin: new Date('04/28/1999 18:00:00') },
       slug2: { lastLogin: new Date('04/28/1999 17:59:50') },
       slug3: { lastLogin: new Date('04/28/1999 17:50:00') },

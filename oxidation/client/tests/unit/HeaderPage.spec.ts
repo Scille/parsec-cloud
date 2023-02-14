@@ -7,7 +7,7 @@ import router from '../../src/router';
 import frFR from '../../src/locales/fr-FR.json';
 import enUS from '../../src/locales/en-US.json';
 import { formatTimeSince } from '@/common/date';
-import { StorageManager } from '@/composables/storageManager';
+import { StorageManager } from '@/services/storageManager';
 
 const storageManager = new StorageManager();
 storageManager.create();
