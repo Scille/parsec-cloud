@@ -28,11 +28,12 @@ repos:
       #   require_serial: true
       - id: license_headers
         name: license_headers
+        alias: headers
         entry: python ./misc/license_headers.py add
         language: python
         language_version: python3
         # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
-        types_or: [ python, sql, rust, vue, ts, tsx, javascript, jsx ]
+        types_or: [ python, pyi, sql, rust, vue, ts, tsx, javascript, jsx ]
 
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.28.0
