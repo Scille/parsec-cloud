@@ -4,7 +4,6 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 
-import { Storage } from '@ionic/storage';
 import { IonicVue } from '@ionic/vue';
 import { createI18n, useI18n } from 'vue-i18n';
 import frFR from './locales/fr-FR.json';
@@ -27,13 +26,17 @@ import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
 
 import { formatTimeSince } from './common/date';
+import { StorageManager } from './composables/storageManager';
 
 /* Theme variables */
 import './theme/variables.css';
 
 async function setupApp(): Promise<void> {
-  const store = new Storage();
-  await store.create();
+
+  const storageManager = new StorageManager();
+  await storageManager.create();
+
+  const config = await storageManager.retrieveConfig();
 
   /* I18n variables */
   // Type-define 'fr-FR' as the master schema for the resource
@@ -48,7 +51,7 @@ async function setupApp(): Promise<void> {
   const i18n = createI18n<[MessageSchema], 'fr-FR' | 'en-US'>({
     legacy: false,
     globalInjection: true,
-    locale: await store.get('userLocale') || supportedLocales[window.navigator.language] || defaultLocale,
+    locale: config.locale || supportedLocales[window.navigator.language] || defaultLocale,
     messages: {
       'fr-FR': frFR,
       'en-US': enUS
@@ -98,6 +101,8 @@ async function setupApp(): Promise<void> {
       return formatTimeSince(date, t, d, defaultValue);
     }
   });
+
+  app.provide('storageManager', storageManager);
 
   router.isReady().then(() => {
     app.mount('#app');
