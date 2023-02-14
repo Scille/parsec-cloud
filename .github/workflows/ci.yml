@@ -210,15 +210,23 @@ jobs:
         if: >-
           steps.python-changes.outputs.run == 'true'
           && startsWith(matrix.os, 'ubuntu-')
-        run: >
-          sudo apt-get -y install
-          libfuse2
-          fuse
-          desktop-file-utils
-          postgresql-${{ env.postgresql-version }}
-          libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0
-          libxcb-keysyms1 libxcb-randr0 libxcb-render-util0
-          libxcb-xinerama0 libxcb-xfixes0 x11-utils
+        run: |
+          # Retry the command until it succeed.
+          # We retry because sometime the APT repo configured
+          # by the runner seems drop the connection causing the command to fail.
+          until sudo apt-get -y install ${{ env.PACKAGE_TO_INSTALL }}; do
+            echo "Fail to install APT package retrying ...";
+          done
+        env:
+          PACKAGE_TO_INSTALL: >-
+            libfuse2
+            fuse
+            desktop-file-utils
+            postgresql-${{ env.postgresql-version }}
+            libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0
+            libxcb-keysyms1 libxcb-randr0 libxcb-render-util0
+            libxcb-xinerama0 libxcb-xfixes0 x11-utils
+        timeout-minutes: 5
 
       - name: (🍎 macOS) Install macfuse
         if: >-
