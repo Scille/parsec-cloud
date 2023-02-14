@@ -218,6 +218,7 @@ pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: Date
     .dump_and_sign(&alice.signing_key)
 }
 
+/// A temporary path that will be removed on drop.
 pub struct TmpPath(PathBuf);
 
 impl std::ops::Deref for TmpPath {
