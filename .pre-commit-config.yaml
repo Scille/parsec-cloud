@@ -52,6 +52,7 @@ repos:
           - --no-summary
           - --gitignore
         additional_dependencies:
+          - "@cspell/dict-en_us"
           - "@cspell/dict-fr-fr"
           - "@cspell/dict-fr-reforme"
           - "@cspell/dict-bash"

@@ -61,6 +61,7 @@ Dbus
 DDTHH
 dearmor
 debouncer
+deconnection
 Deeplink
 dehaze
 derandomize
@@ -120,6 +121,7 @@ ifempty
 ifeq
 ifnewer
 ijkl
+inversed
 ionicons
 iqmp
 itemsoverlay
