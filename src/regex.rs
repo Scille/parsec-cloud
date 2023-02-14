@@ -5,6 +5,7 @@ use std::path::Path;
 use pyo3::{exceptions::PyValueError, pyclass, pymethods, types::PyType, PyResult};
 
 #[pyclass]
+#[derive(Clone)]
 pub(crate) struct Regex(pub libparsec::types::Regex);
 
 crate::binding_utils::gen_proto!(Regex, __richcmp__, eq);

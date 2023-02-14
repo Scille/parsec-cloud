@@ -3,6 +3,7 @@
 use crate::{RegexError, RegexResult};
 use std::{collections::HashSet, fmt::Display, fs, path::Path};
 
+#[derive(Clone)]
 pub struct Regex(pub Vec<regex::Regex>);
 
 /// The fnmatch_regex crate does not escape the character '$'. It is a problem
