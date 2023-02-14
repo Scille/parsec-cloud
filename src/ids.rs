@@ -64,7 +64,7 @@ crate::binding_utils::gen_proto!(EntryID, __hash__);
 gen_uuid!(EntryID);
 
 #[pyclass]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) struct BlockID(pub libparsec::types::BlockID);
 
 crate::binding_utils::gen_proto!(BlockID, __repr__);
