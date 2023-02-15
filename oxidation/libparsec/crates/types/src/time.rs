@@ -449,21 +449,37 @@ mod time_provider {
             let mut remaining_time = time;
 
             // Err is `to_sleep` gets negative, if such we are done with sleeping !
-            while let Ok(mut to_sleep) = remaining_time.to_std() {
-                if let Some(speed_factor) =
+            while let Ok(to_sleep) = remaining_time.to_std() {
+                let to_sleep = if let Some(speed_factor) =
                     self.0.lock().expect("Mutex is poisoned").get_speed_factor()
                 {
-                    to_sleep = to_sleep.div_f64(speed_factor);
-                }
-                libparsec_platform_async::select!(
-                    _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
-                    _ = config.changed().fuse() => {
-                        // Recompute the time we still have to sleep
-                        let now = self.now();
-                        remaining_time = remaining_time - (now - sleep_started_at);
-                        sleep_started_at = now;
+                    if speed_factor > 0. {
+                        Some(to_sleep.div_f64(speed_factor))
+                    } else {
+                        None
                     }
-                );
+                } else {
+                    Some(to_sleep)
+                };
+
+                // Recompute the time we still have to sleep
+                let mut recompute_time_we_have_to_sleep = || {
+                    let now = self.now();
+                    remaining_time = remaining_time - (now - sleep_started_at);
+                    sleep_started_at = now;
+                };
+
+                if let Some(to_sleep) = to_sleep {
+                    libparsec_platform_async::select!(
+                        _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
+                        _ = config.changed().fuse() => {
+                            recompute_time_we_have_to_sleep();
+                        }
+                    );
+                } else {
+                    let _ = config.changed().await;
+                    recompute_time_we_have_to_sleep();
+                }
             }
         }
 
