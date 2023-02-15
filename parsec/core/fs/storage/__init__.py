@@ -6,7 +6,7 @@ from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.user_storage import UserStorage, user_storage_non_speculative_init
 from parsec.core.fs.storage.workspace_storage import (
-    BaseWorkspaceStorage,
+    AnyWorkspaceStorage,
     WorkspaceStorage,
     WorkspaceStorageTimestamped,
     workspace_storage_non_speculative_init,
@@ -20,7 +20,7 @@ __all__ = (
     "ChunkStorage",
     "BlockStorage",
     "workspace_storage_non_speculative_init",
-    "BaseWorkspaceStorage",
+    "AnyWorkspaceStorage",
     "WorkspaceStorage",
     "WorkspaceStorageTimestamped",
 )

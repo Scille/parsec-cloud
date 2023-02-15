@@ -455,7 +455,7 @@ class EntryTransactions(FileTransactions):
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
             await self.local_storage.set_manifest(parent.id, new_parent)
-            fd = self.local_storage.create_file_descriptor(child) if open else None
+            fd = FileDescriptor(self.local_storage.create_file_descriptor(child)) if open else None
 
         # Send events
         self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
@@ -479,7 +479,7 @@ class EntryTransactions(FileTransactions):
                 raise FSIsADirectoryError(filename=path)
 
             # Return the entry id of the open file and the file descriptor
-            return manifest.id, self.local_storage.create_file_descriptor(manifest)
+            return manifest.id, FileDescriptor(self.local_storage.create_file_descriptor(manifest))
 
     async def file_resize(self, path: FsPath, length: int) -> EntryID:
         # Check write rights
