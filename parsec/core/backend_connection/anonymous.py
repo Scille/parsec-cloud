@@ -180,6 +180,6 @@ async def organization_bootstrap(
         raise BackendProtocolError("Invalid request data according to backend")
 
     elif isinstance(rep, OrganizationBootstrapRepBadTimestamp):
-        raise BackendOutOfBallparkError(str(rep))
+        raise BackendOutOfBallparkError(rep)
 
     return rep
