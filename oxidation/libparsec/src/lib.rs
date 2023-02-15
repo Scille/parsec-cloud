@@ -4,6 +4,8 @@
 pub use libparsec_client_types as client_types;
 #[cfg(not(target_arch = "wasm32"))]
 pub use libparsec_core_fs as core_fs;
+#[cfg(all(not(target_arch = "wasm32"), feature = "test-utils"))]
+pub use libparsec_platform_local_db as local_db;
 #[cfg(not(target_arch = "wasm32"))]
 pub use libparsec_protocol as protocol;
 #[cfg(not(target_arch = "wasm32"))]

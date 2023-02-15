@@ -10,6 +10,8 @@ mod data;
 mod enumerate;
 mod file_operations;
 mod ids;
+#[cfg(feature = "test-utils")]
+mod local_db;
 mod local_device;
 mod misc;
 mod protocol;
@@ -26,6 +28,8 @@ mod trustchain;
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     crate::data::add_mod(py, m)?;
     crate::protocol::add_mod(py, m)?;
+    #[cfg(feature = "test-utils")]
+    crate::local_db::add_mod(py, m)?;
     crate::backend_connection::add_mod(py, m)?;
 
     m.add_class::<addrs::BackendAddr>()?;
