@@ -92,14 +92,18 @@ async def monitor_remanent_workspaces(
                 (CoreEvent.SHARING_UPDATED, cast(EventCallback, _on_sharing_updated)),
                 (CoreEvent.FS_WORKSPACE_CREATED, cast(EventCallback, _fs_workspace_created)),
             ):
-                # Set a brief idle state useful for testing
                 task_status.started()
-                task_status.idle()
 
                 # All workspaces should be processed at startup
-                for entry in user_fs.get_user_manifest().workspaces:
-                    if entry.role is not None:
-                        start_remanence_manager(entry.id)
+                workspaces = user_fs.get_user_manifest().workspaces
+                if workspaces:
+                    # Each workspace will have it own task that will start awake,
+                    # then switch to idle
+                    for entry in workspaces:
+                        if entry.role is not None:
+                            start_remanence_manager(entry.id)
+                else:
+                    task_status.idle()
 
                 await trio.sleep_forever()
 
