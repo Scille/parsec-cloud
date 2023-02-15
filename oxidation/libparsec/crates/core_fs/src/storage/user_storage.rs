@@ -1,128 +1,222 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 use libparsec_client_types::{LocalDevice, LocalManifest, LocalUserManifest};
+use libparsec_platform_local_db::{LocalDatabase, VacuumMode};
 use libparsec_types::EntryID;
 
-use super::manifest_storage::ManifestStorage;
-use crate::error::{FSError, FSResult};
+use super::{manifest_storage::ManifestStorage, version::get_user_data_storage_db_path};
+use crate::error::FSResult;
+use libparsec_platform_async::Mutex as AsyncMutex;
 
 pub struct UserStorage {
-    device: LocalDevice,
-    user_manifest_id: EntryID,
+    pub device: LocalDevice,
+    pub user_manifest_id: EntryID,
     manifest_storage: ManifestStorage,
+    /// A lock that will be used to prevent concurrent update in [UserStorage::set_user_manifest].
+    /// When updating the user manifest.
+    lock_update_manifest: AsyncMutex<()>,
+    /// Keep a copy of the user manifest to have it available at all time.
+    /// (We don't rely on [ManifestStorage]'s cache since it can be cleared).
+    user_manifest_copy: Mutex<LocalUserManifest>,
 }
 
 impl UserStorage {
-    pub fn new(
+    pub async fn from_db_dir(
         device: LocalDevice,
         user_manifest_id: EntryID,
-        manifest_storage: ManifestStorage,
-    ) -> Self {
-        Self {
+        data_base_dir: &Path,
+    ) -> FSResult<Self> {
+        let data_path = get_user_data_storage_db_path(data_base_dir, &device);
+        let conn = LocalDatabase::from_path(
+            data_path
+                .to_str()
+                .expect("Non-Utf-8 character found in data_path"),
+            VacuumMode::default(),
+        )
+        .await?;
+        let conn = Arc::new(conn);
+        let manifest_storage =
+            ManifestStorage::new(device.local_symkey.clone(), user_manifest_id, conn).await?;
+        let user_manifest =
+            UserStorage::load_user_manifest(&manifest_storage, user_manifest_id, &device).await?;
+        let user_storage = Self {
             device,
             user_manifest_id,
             manifest_storage,
-        }
+            lock_update_manifest: AsyncMutex::new(()),
+            user_manifest_copy: Mutex::new(user_manifest),
+        };
+        Ok(user_storage)
+    }
+
+    /// Close the connections to the databases.
+    /// Provide a way to manually close those connections.
+    /// In theory this is not needed given we always ask the manifest storage
+    /// to flush manifests on disk (i.e. we never rely on cache-ahead-of-db feature).
+    /// So it should be a noop compared to database close without cache flush that
+    /// is done when [UserStorage] is dropped.
+    pub fn close_connections(&self) {
+        self.manifest_storage.close_connection()
     }
 
     // Checkpoint Interface
 
-    pub fn get_realm_checkpoint(&self) -> i64 {
-        self.manifest_storage.get_realm_checkpoint()
+    pub async fn get_realm_checkpoint(&self) -> i64 {
+        self.manifest_storage.get_realm_checkpoint().await
     }
 
-    pub fn update_realm_checkpoint(
+    pub async fn update_realm_checkpoint(
         &self,
         new_checkpoint: i64,
         changed_vlobs: &[(EntryID, i64)],
     ) -> FSResult<()> {
         self.manifest_storage
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
+            .await
     }
 
-    pub fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
-        self.manifest_storage.get_need_sync_entries()
+    pub async fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
+        self.manifest_storage.get_need_sync_entries().await
     }
 
     // User manifest
 
-    pub fn get_user_manifest(&self) -> FSResult<LocalUserManifest> {
-        let cache = self
-            .manifest_storage
-            .cache
+    pub fn get_user_manifest(&self) -> LocalUserManifest {
+        self.user_manifest_copy
             .lock()
-            .expect("Mutex is poisoned");
-        match cache.get(&self.user_manifest_id) {
-            Some(LocalManifest::User(manifest)) => Ok(manifest.clone()),
-            _ => Err(FSError::UserManifestMissing),
+            .expect("Mutex is poisoned")
+            .clone()
+    }
+
+    async fn load_user_manifest(
+        manifest_storage: &ManifestStorage,
+        user_manifest_id: EntryID,
+        device: &LocalDevice,
+    ) -> FSResult<LocalUserManifest> {
+        match manifest_storage.get_manifest(user_manifest_id).await {
+            Ok(LocalManifest::User(manifest)) => Ok(manifest),
+            Ok(_) => panic!("User manifest id is used for something other than a user manifest"),
+            // It is possible to lack the user manifest in local if our
+            // device hasn't tried to access it yet (and we are not the
+            // initial device of our user, in which case the user local db is
+            // initialized with a non-speculative local manifest placeholder).
+            // In such case it is easy to fall back on an empty manifest
+            // which is a good enough approximation of the very first version
+            // of the manifest (field `created` is invalid, but it will be
+            // correction by the merge during sync).
+            Err(_) => {
+                let timestamp = device.now();
+                let manifest = LocalUserManifest::new(
+                    device.device_id.clone(),
+                    timestamp,
+                    Some(device.user_manifest_id),
+                    true,
+                );
+                manifest_storage
+                    .set_manifest(
+                        user_manifest_id,
+                        LocalManifest::User(manifest.clone()),
+                        false,
+                        None,
+                    )
+                    .await?;
+                Ok(manifest)
+            }
         }
     }
 
-    fn load_user_manifest(&self) -> FSResult<()> {
-        if self
-            .manifest_storage
-            .get_manifest(self.user_manifest_id)
-            .is_err()
-        {
-            let timestamp = self.device.now();
-            let manifest = LocalUserManifest::new(
-                self.device.device_id.clone(),
-                timestamp,
-                Some(self.device.user_manifest_id),
-                true,
-            );
-            self.manifest_storage.set_manifest(
+    pub async fn set_user_manifest(&self, user_manifest: LocalUserManifest) -> FSResult<()> {
+        assert_eq!(
+            self.user_manifest_id, user_manifest.base.id,
+            "UserManifest should have the same EntryID as registered in UserStorage"
+        );
+
+        // We must make sure `manifest_storage` and `user_manifest_copy` are modified
+        // atomically (given the copy is a basically a convenient shortcut on `manifest_storage`).
+        let update_guard = self.lock_update_manifest.lock().await;
+
+        self.manifest_storage
+            .set_manifest(
                 self.user_manifest_id,
-                LocalManifest::User(manifest),
+                LocalManifest::User(user_manifest.clone()),
                 false,
                 None,
-            )?;
-        }
+            )
+            .await?;
+        *self.user_manifest_copy.lock().expect("Mutex is poisoned") = user_manifest;
+
+        drop(update_guard);
         Ok(())
     }
+}
 
-    pub fn set_user_manifest(&self, user_manifest: LocalUserManifest) -> FSResult<()> {
-        self.manifest_storage.set_manifest(
-            self.user_manifest_id,
-            LocalManifest::User(user_manifest),
+pub async fn user_storage_non_speculative_init(
+    data_base_dir: &Path,
+    device: LocalDevice,
+) -> FSResult<()> {
+    let data_path = get_user_data_storage_db_path(data_base_dir, &device);
+    let conn = LocalDatabase::from_path(
+        data_path
+            .to_str()
+            .expect("Non Utf-8 character found in data_path"),
+        VacuumMode::default(),
+    )
+    .await?;
+    let conn = Arc::new(conn);
+    let manifest_storage =
+        ManifestStorage::new(device.local_symkey.clone(), device.user_manifest_id, conn).await?;
+
+    let timestamp = device.now();
+    let manifest = LocalUserManifest::new(
+        device.device_id,
+        timestamp,
+        Some(device.user_manifest_id),
+        false,
+    );
+
+    manifest_storage
+        .set_manifest(
+            device.user_manifest_id,
+            LocalManifest::User(manifest),
             false,
             None,
         )
-    }
+        .await?;
+    manifest_storage.clear_memory_cache(true).await?;
+    manifest_storage.close_connection();
+
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
-
-    use libparsec_crypto::SecretKey;
     use libparsec_types::{DateTime, UserManifest};
 
     use libparsec_tests_fixtures::{alice, timestamp, tmp_path, Device, TmpPath};
     use rstest::rstest;
 
-    use super::super::local_database::SqlitePool;
     use super::*;
 
     #[rstest]
-    fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
+    #[tokio::test]
+    async fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
         let db_path = tmp_path.join("user_storage.sqlite");
-        let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
-        let conn = Mutex::new(pool.conn().unwrap());
-        let local_symkey = SecretKey::generate();
-        let realm_id = EntryID::default();
         let user_manifest_id = alice.user_manifest_id;
 
-        let manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id).unwrap();
         let user_storage =
-            UserStorage::new(alice.local_device(), user_manifest_id, manifest_storage);
+            UserStorage::from_db_dir(alice.local_device(), user_manifest_id, &db_path)
+                .await
+                .unwrap();
 
-        user_storage.get_realm_checkpoint();
-        user_storage.update_realm_checkpoint(64, &[]).unwrap();
-        user_storage.get_need_sync_entries().unwrap();
-        user_storage.load_user_manifest().unwrap();
+        user_storage.get_realm_checkpoint().await;
+        user_storage.update_realm_checkpoint(64, &[]).await.unwrap();
+        user_storage.get_need_sync_entries().await.unwrap();
 
         let user_manifest = LocalUserManifest {
             base: UserManifest {
@@ -144,8 +238,9 @@ mod tests {
 
         user_storage
             .set_user_manifest(user_manifest.clone())
+            .await
             .unwrap();
 
-        assert_eq!(user_storage.get_user_manifest().unwrap(), user_manifest);
+        assert_eq!(user_storage.get_user_manifest(), user_manifest);
     }
 }

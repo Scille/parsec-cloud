@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use diesel::{
-    deserialize::FromSql,
+    deserialize::{FromSql, FromSqlRow},
+    expression::AsExpression,
     serialize::{Output, ToSql},
     sqlite::{Sqlite, SqliteValue},
-    AsExpression, FromSqlRow,
 };
 
-#[derive(Debug, AsExpression, FromSqlRow)]
+#[derive(Debug, AsExpression, FromSqlRow, Clone, Copy)]
 #[diesel(sql_type = diesel::sql_types::Double)]
 pub struct DateTime(pub f64);
 
