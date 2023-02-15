@@ -61,14 +61,14 @@ async def display_reencryption_button(
 
 @pytest.fixture
 async def shared_workspace(
-    running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS, bob: LocalDevice
+    running_backend, alice2_user_fs: UserFS, bob_user_fs: UserFS, bob: LocalDevice
 ) -> EntryID:
-    wid = await alice_user_fs.workspace_create(EntryName("w1"))
-    await alice_user_fs.sync()
-    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.READER)
-    await alice_user_fs.process_last_messages()
+    wid = await alice2_user_fs.workspace_create(EntryName("w1"))
+    await alice2_user_fs.sync()
+    await alice2_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.READER)
+    await alice2_user_fs.process_last_messages()
     await bob_user_fs.process_last_messages()
-    await alice_user_fs.sync()
+    await alice2_user_fs.sync()
     return wid
 
 
@@ -76,11 +76,11 @@ async def shared_workspace(
 async def reencryption_needed_workspace(
     running_backend,
     shared_workspace: EntryID,
-    alice_user_fs: UserFS,
+    alice2_user_fs: UserFS,
     bob_user_fs: UserFS,
     bob: LocalDevice,
 ) -> EntryID:
-    await revoke_user_workspace_right(shared_workspace, alice_user_fs, bob_user_fs, bob.user_id)
+    await revoke_user_workspace_right(shared_workspace, alice2_user_fs, bob_user_fs, bob.user_id)
     return shared_workspace
 
 
@@ -89,7 +89,6 @@ async def reencryption_needed_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_display(
     aqtbot,
@@ -98,7 +97,7 @@ async def test_workspace_reencryption_display(
     autoclose_dialog,
     shared_workspace,
     bob_user_fs,
-    alice_user_fs,
+    alice2_user_fs,
     bob,
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
@@ -118,7 +117,7 @@ async def test_workspace_reencryption_display(
 
     await aqtbot.wait_until(_reencrypt_button_not_displayed)
 
-    await revoke_user_workspace_right(shared_workspace, alice_user_fs, bob_user_fs, bob.user_id)
+    await revoke_user_workspace_right(shared_workspace, alice2_user_fs, bob_user_fs, bob.user_id)
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -196,7 +195,7 @@ async def test_workspace_reencryption_fs_error(
     running_backend,
     logged_gui,
     autoclose_dialog,
-    alice_user_fs,
+    alice2_user_fs,
     monkeypatch,
     reencryption_needed_workspace,
 ):
@@ -206,7 +205,7 @@ async def test_workspace_reencryption_fs_error(
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
-    await alice_user_fs.workspace_start_reencryption(wk_button.workspace_id)
+    await alice2_user_fs.workspace_start_reencryption(wk_button.workspace_id)
     aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
@@ -227,7 +226,7 @@ async def test_workspace_reencryption_access_error(
     running_backend,
     logged_gui,
     autoclose_dialog,
-    alice_user_fs,
+    alice2_user_fs,
     alice,
     user_fs_factory,
     adam,
@@ -241,7 +240,7 @@ async def test_workspace_reencryption_access_error(
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     # Make adam a workspace owner
-    await alice_user_fs.workspace_share(
+    await alice2_user_fs.workspace_share(
         reencryption_needed_workspace, adam.user_id, WorkspaceRole.OWNER
     )
 
