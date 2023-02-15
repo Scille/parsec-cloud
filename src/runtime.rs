@@ -102,6 +102,7 @@ impl TokioTaskAborterFromTrio {
 pub(crate) struct FutureIntoCoroutine(Option<FutureIntoCoroutineInternal>);
 
 enum FutureIntoCoroutineInternal {
+    Ready(PyResult<PyObject>),
     ToPoll(Pin<Box<dyn Future<Output = PyResult<PyObject>> + Send + 'static>>),
 }
 
@@ -123,6 +124,10 @@ impl FutureIntoCoroutine {
             Python::with_gil(|py| Ok(res.into_py(py)))
         })
     }
+
+    pub fn ready(value: PyResult<PyObject>) -> Self {
+        FutureIntoCoroutine(Some(FutureIntoCoroutineInternal::Ready(value)))
+    }
 }
 
 #[pyclass]
@@ -143,7 +148,13 @@ impl ReadyValue {
 impl FutureIntoCoroutine {
     fn __await__(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         let fut = self.0.take().unwrap();
-        let FutureIntoCoroutineInternal::ToPoll(fut) = fut;
+        let fut = match fut {
+            FutureIntoCoroutineInternal::Ready(value) => {
+                let value = value?;
+                return Ok(ReadyValue(Some(value)).into_py(py));
+            }
+            FutureIntoCoroutineInternal::ToPoll(fut) => fut,
+        };
 
         let stuff = get_stuff(py)?;
         let trio_token = stuff.trio_current_trio_token_fn.call0(py)?;
