@@ -18,7 +18,7 @@ from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-from tests.common import call_with_control, freeze_time
+from tests.common import call_with_control, customize_fixtures, freeze_time
 
 
 @pytest.mark.trio
@@ -244,6 +244,7 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
 def test_entry_transactions(
     tmpdir,
     hypothesis_settings,
