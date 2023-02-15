@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-import time
 from collections import deque
 from contextlib import contextmanager
 from enum import Enum
@@ -11,7 +10,7 @@ import structlog
 import trio
 from attr import define
 
-from parsec._parsec import CoreEvent
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import BlockAccess
 from parsec.core.fs.exceptions import (
     FSRemanenceManagerStoppedError,
@@ -384,7 +383,7 @@ class RemanenceManager:
         # Clear job queue, just in case
         self._job_queue.clear()
         # Initialize state
-        begining = time.time()
+        begining = DateTime.now()
         remote_only_blocks: list[BlockAccess] = []
         local_and_remote_blocks: list[BlockAccess] = []
         entry_ids: list[EntryID] = [self.workspace_id]
