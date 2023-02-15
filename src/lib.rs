@@ -17,6 +17,7 @@ mod misc;
 mod protocol;
 mod regex;
 mod runtime;
+mod storage;
 #[cfg(feature = "test-utils")]
 mod testbed;
 mod time;
@@ -30,6 +31,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     crate::protocol::add_mod(py, m)?;
     #[cfg(feature = "test-utils")]
     crate::local_db::add_mod(py, m)?;
+    crate::storage::add_mod(py, m)?;
     crate::backend_connection::add_mod(py, m)?;
 
     m.add_class::<addrs::BackendAddr>()?;
