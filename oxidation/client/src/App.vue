@@ -12,7 +12,7 @@ import { inject } from 'vue';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from './states/darkMode';
-import { StorageManager } from '@/composables/storageManager';
+import { StorageManager } from '@/services/storageManager';
 
 const storageManager: StorageManager = inject('storageManager')!;
 
