@@ -4,12 +4,13 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use libparsec_crypto::CryptoError;
+use libparsec_platform_local_db::DatabaseError;
 use libparsec_types::{EntryID, FileDescriptor};
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum FSError {
-    #[error("ConfigurationError")]
-    Configuration,
+    #[error("ConfigurationError: {0}")]
+    Configuration(String),
 
     #[error("ConnectionError: {0}")]
     Connection(String),
@@ -23,14 +24,14 @@ pub enum FSError {
     #[error("CryptoError: {0}")]
     Crypto(CryptoError),
 
-    #[error("DeleteTableError: {0}")]
-    DeleteTable(String),
+    #[error("Database query error: {0}")]
+    DatabaseQueryError(String),
 
-    #[error("DropTableError: {0}")]
-    DropTable(String),
+    #[error("Database is closed: {0}")]
+    DatabaseClosed(String),
 
-    #[error("InsertTableError: {0}")]
-    InsertTable(String),
+    #[error("Database operational error: {0}")]
+    DatabaseOperationalError(String),
 
     #[error("Invalid FileDescriptor {0:?}")]
     InvalidFileDescriptor(FileDescriptor),
@@ -54,7 +55,7 @@ pub enum FSError {
     #[error("PoolError")]
     Pool,
 
-    #[error("Entry `{0}` modified without beeing locked")]
+    #[error("Entry `{0}` modified without being locked")]
     Runtime(EntryID),
 
     #[error("UpdateTableError: {0}")]
@@ -65,6 +66,11 @@ pub enum FSError {
 
     #[error("VacuumError: {0}")]
     Vacuum(String),
+
+    /// Error returned by [crate::storage::WorkspaceStorageTimestamped]
+    /// when requiring more features than it's able to provide.
+    #[error("Not implemented: WorkspaceStorage is timestamped")]
+    WorkspaceStorageTimestamped,
 }
 
 pub type FSResult<T> = Result<T, FSError>;
@@ -72,5 +78,54 @@ pub type FSResult<T> = Result<T, FSError>;
 impl From<CryptoError> for FSError {
     fn from(e: CryptoError) -> Self {
         Self::Crypto(e)
+    }
+}
+
+impl From<diesel::result::Error> for FSError {
+    fn from(e: diesel::result::Error) -> Self {
+        use diesel::result::{DatabaseErrorKind, Error};
+
+        match e {
+            Error::DatabaseError(DatabaseErrorKind::ClosedConnection, e) => {
+                Self::DatabaseClosed(e.message().to_string())
+            }
+            Error::DatabaseError(_kind, msg) => {
+                Self::DatabaseOperationalError(msg.message().to_string())
+            }
+            _ => Self::DatabaseQueryError(e.to_string()),
+        }
+    }
+}
+
+impl From<diesel::result::ConnectionError> for FSError {
+    fn from(e: diesel::result::ConnectionError) -> Self {
+        match e {
+            diesel::ConnectionError::InvalidCString(e) => {
+                Self::Configuration(format!("Invalid c string: {e}"))
+            }
+            diesel::ConnectionError::BadConnection(e) => {
+                Self::Configuration(format!("Bad connection: {e}"))
+            }
+            diesel::ConnectionError::InvalidConnectionUrl(e) => {
+                Self::Configuration(format!("Invalid connection url: {e}"))
+            }
+            diesel::ConnectionError::CouldntSetupConfiguration(e) => {
+                Self::Configuration(format!("Couldnt setup configuration: {e}"))
+            }
+            _ => Self::Configuration("Unknown error".to_string()),
+        }
+    }
+}
+
+impl From<DatabaseError> for FSError {
+    fn from(e: DatabaseError) -> Self {
+        match e {
+            DatabaseError::Closed => Self::DatabaseClosed("Database is closed".to_string()),
+            DatabaseError::DieselDatabaseError(kind, err) => {
+                Self::from(diesel::result::Error::DatabaseError(kind, err))
+            }
+            DatabaseError::Diesel(e) => Self::from(e),
+            DatabaseError::DieselConnectionError(e) => Self::from(e),
+        }
     }
 }
