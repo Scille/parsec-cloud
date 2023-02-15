@@ -101,7 +101,7 @@ impl TestbedUserData {
 
     #[getter]
     fn user_manifest_id(&self) -> EntryID {
-        EntryID(self.0.user_manifest_id.clone())
+        EntryID(self.0.user_manifest_id)
     }
 
     #[getter]
@@ -193,13 +193,16 @@ pub(crate) fn test_new_testbed(
 
 #[pyfunction]
 pub(crate) fn test_drop_testbed(path: PathBuf) -> FutureIntoCoroutine {
-    FutureIntoCoroutine::from(async move { Ok(libparsec::testbed::test_drop_testbed(&path).await) })
+    FutureIntoCoroutine::from(async move {
+        libparsec::testbed::test_drop_testbed(&path).await;
+        Ok(())
+    })
 }
 
 #[pyfunction]
 pub(crate) fn test_get_testbed_templates() -> Vec<TestbedTemplate> {
     libparsec::testbed::test_get_testbed_templates()
         .into_iter()
-        .map(|x| TestbedTemplate(x))
+        .map(TestbedTemplate)
         .collect()
 }
