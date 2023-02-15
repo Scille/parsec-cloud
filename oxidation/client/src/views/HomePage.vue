@@ -235,6 +235,7 @@ import { AvailableDevice } from '../plugins/libparsec/definitions';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { getMockDevices, mockLastLogin } from '../common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
+import { DateTime } from 'luxon';
 
 const { t, d } = useI18n();
 const deviceList: AvailableDevice[] = getMockDevices();
@@ -278,13 +279,13 @@ const filteredDevices = computed(() => {
       }
     } else if (sortBy.value === 'last_login') {
       const aLastLogin = (a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined) ?
-        storedDeviceDataDict.value[a.slug].lastLogin.valueOf() : 0;
+        storedDeviceDataDict.value[a.slug].lastLogin : DateTime.fromMillis(0);
       const bLastLogin = (b.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[b.slug].lastLogin !== undefined) ?
-        storedDeviceDataDict.value[b.slug].lastLogin.valueOf() : 0;
+        storedDeviceDataDict.value[b.slug].lastLogin : DateTime.fromMillis(0);
       if (sortByAsc.value) {
-        return bLastLogin - aLastLogin;
+        return bLastLogin.diff(aLastLogin).toObject().milliseconds;
       } else {
-        return aLastLogin - bLastLogin;
+        return aLastLogin.diff(bLastLogin).toObject().milliseconds;
       }
     }
     return 0;
@@ -320,10 +321,10 @@ function onOrganizationCardClick(device: AvailableDevice): void {
 async function login(): Promise<void> {
   if (!storedDeviceDataDict.value[selectedDevice.slug]) {
     storedDeviceDataDict.value[selectedDevice.slug] = {
-      lastLogin: new Date()
+      lastLogin: DateTime.now()
     };
   } else {
-    storedDeviceDataDict.value[selectedDevice.slug].lastLogin = new Date();
+    storedDeviceDataDict.value[selectedDevice.slug].lastLogin = DateTime.now();
   }
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));

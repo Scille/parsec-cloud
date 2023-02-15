@@ -4,13 +4,10 @@ import { createI18n } from 'vue-i18n';
 import frFR from '../../../src/locales/fr-FR.json';
 import enUS from '../../../src/locales/en-US.json';
 import { formatTimeSince } from '@/common/date';
+import { DateTime } from 'luxon';
 
 describe('common.date.ts EN', () => {
   type MessageSchema = typeof enUS;
-  const supportedLocales:{[key: string]: string} = {
-    en: 'en-US',
-    'en-US': 'en-US'
-  };
   const i18n = createI18n<[MessageSchema], 'en-US'>({
     legacy: false,
     globalInjection: true,
@@ -41,7 +38,7 @@ describe('common.date.ts EN', () => {
   const d = i18n.global.d;
 
   it('formats date as time elapsed since date in English', () => {
-    const now = new Date('11/19/1998 08:00:00');
+    const now = DateTime.fromISO('1998-11-19T08:00:00');
 
     jest.useRealTimers();
     // Way way in the past, should display the full date
@@ -49,28 +46,28 @@ describe('common.date.ts EN', () => {
 
     jest.useFakeTimers();
     // 3 days before
-    jest.setSystemTime(new Date('11/22/1998 08:00:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-22T08:00:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('3 days ago');
     // 1 day before
-    jest.setSystemTime(new Date('11/20/1998 08:00:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-20T08:00:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('one day ago');
     // 5 hours before
-    jest.setSystemTime(new Date('11/19/1998 13:00:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T13:00:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('5 hours ago');
     // 1 hour before
-    jest.setSystemTime(new Date('11/19/1998 09:00:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T09:00:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('one hour ago');
     // 30 minutes before
-    jest.setSystemTime(new Date('11/19/1998 08:30:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T08:30:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('30 minutes ago');
     // 1 minutes before
-    jest.setSystemTime(new Date('11/19/1998 08:01:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T08:01:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('one minute ago');
     // 30 secondes before
-    jest.setSystemTime(new Date('11/19/1998 08:00:30'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T08:00:30').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('30 seconds ago');
     // 1 second before
-    jest.setSystemTime(new Date('11/19/1998 08:00:01'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T08:00:01').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('one second ago');
 
     expect(formatTimeSince(undefined, t, d, 'no_value')).toBe('no_value');
@@ -79,14 +76,10 @@ describe('common.date.ts EN', () => {
 
 describe('common.date.ts FR', () => {
   type MessageSchema = typeof frFR;
-  const supportedLocales:{[key: string]: string} = {
-    fr: 'fr-FR',
-    'fr-FR': 'fr-FR'
-  };
   const i18n = createI18n<[MessageSchema], 'fr-FR'>({
     legacy: false,
     globalInjection: true,
-    locale: supportedLocales['fr-FR'],
+    locale: 'fr-FR',
     messages: {
       'fr-FR': frFR
     },
@@ -113,7 +106,7 @@ describe('common.date.ts FR', () => {
   const d = i18n.global.d;
 
   it('formats date as time elapsed since date in French', () => {
-    const now = new Date('11/19/1998 08:00:00');
+    const now = DateTime.fromISO('1998-11-19T08:00:00');
 
     jest.useRealTimers();
     // Way way in the past, should display the full date
@@ -122,28 +115,28 @@ describe('common.date.ts FR', () => {
     jest.useFakeTimers();
 
     // 3 days before
-    jest.setSystemTime(new Date('11/22/1998 08:00:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-22T08:00:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('il y a 3 jours');
     // 1 day before
-    jest.setSystemTime(new Date('11/20/1998 08:00:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-20T08:00:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('il y a un jour');
     // 5 hours before
-    jest.setSystemTime(new Date('11/19/1998 13:00:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T13:00:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('il y a 5 heures');
     // 1 hour before
-    jest.setSystemTime(new Date('11/19/1998 09:00:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T09:00:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('il y a une heure');
     // 30 minutes before
-    jest.setSystemTime(new Date('11/19/1998 08:30:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T08:30:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('il y a 30 minutes');
     // 1 minutes before
-    jest.setSystemTime(new Date('11/19/1998 08:01:00'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T08:01:00').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('il y a une minute');
     // 30 secondes before
-    jest.setSystemTime(new Date('11/19/1998 08:00:30'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T08:00:30').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('il y a 30 secondes');
     // 1 second before
-    jest.setSystemTime(new Date('11/19/1998 08:00:01'));
+    jest.setSystemTime(DateTime.fromISO('1998-11-19T08:00:01').toJSDate());
     expect(formatTimeSince(now, t, d)).toBe('il y a une seconde');
 
     expect(formatTimeSince(undefined, t, d, 'aucune_value')).toBe('aucune_value');

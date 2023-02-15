@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import { Storage } from '@ionic/storage';
+import { DateTime } from 'luxon';
 
 export interface StoredDeviceData {
-  lastLogin: Date;
+  lastLogin: DateTime;
 }
 
 export interface Config {
@@ -40,7 +41,7 @@ export class StorageManager {
     Object.keys(data).forEach((slug: string, _) => {
       if (data[slug] && data[slug].lastLogin) {
         serialized[slug] = {
-          lastLogin: data[slug].lastLogin.toISOString()
+          lastLogin: data[slug].lastLogin.toISO()
         };
       }
     });
@@ -58,7 +59,9 @@ export class StorageManager {
     Object.keys(data).forEach((slug, _) => {
       if (data[slug] && data[slug].lastLogin) {
         deviceData[slug] = {
-          lastLogin: new Date(data[slug].lastLogin)
+          // Need to add setZone because Luxon (and JavaScript's date) ignore
+          // the timezone part otherwise
+          lastLogin: DateTime.fromISO(data[slug].lastLogin, {setZone: true})
         };
       }
     });

@@ -8,6 +8,7 @@ import frFR from '../../src/locales/fr-FR.json';
 import enUS from '../../src/locales/en-US.json';
 import { formatTimeSince } from '@/common/date';
 import { StorageManager } from '@/services/storageManager';
+import { DateTime } from 'luxon';
 
 const storageManager = new StorageManager();
 storageManager.create();
@@ -40,7 +41,7 @@ describe('HeaderPage.vue', () => {
       plugins: [i18n, router],
       provide: {
         formatters: {
-          timeSince: (date: Date | undefined, defaultValue=''): string => {
+          timeSince: (date: DateTime | undefined, defaultValue=''): string => {
             const { t, d } = useI18n();
             return formatTimeSince(date, t, d, defaultValue);
           }
