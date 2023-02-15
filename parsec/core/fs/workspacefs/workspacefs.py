@@ -841,6 +841,7 @@ class WorkspaceFS:
             local_manifest, remote_manifest = exc.args
             # Only file manifest have synchronization conflict
             assert isinstance(local_manifest, LocalFileManifest)
+            assert isinstance(remote_manifest, RemoteFileManifest)
             await self.transactions.file_conflict(entry_id, local_manifest, remote_manifest)
             return await self.sync_by_id(local_manifest.parent)
 

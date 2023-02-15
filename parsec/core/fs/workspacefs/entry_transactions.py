@@ -79,7 +79,12 @@ class EntryTransactions(FileTransactions):
                     remote_manifest,
                     prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
                 )
-                await self.local_storage.set_manifest(entry_id, local_manifest)
+                if isinstance(local_manifest, (LocalFileManifest, LocalFolderManifest)):
+                    await self.local_storage.set_manifest(entry_id, local_manifest)
+                elif isinstance(local_manifest, LocalWorkspaceManifest):
+                    await self.local_storage.set_workspace_manifest(local_manifest)
+                else:
+                    raise TypeError("Invalid manifest type")
             yield local_manifest
 
     async def _load_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
@@ -317,7 +322,12 @@ class EntryTransactions(FileTransactions):
             )
 
             # Atomic change
-            await self.local_storage.set_manifest(parent.id, new_parent)
+            if isinstance(new_parent, LocalFolderManifest):
+                await self.local_storage.set_manifest(parent.id, new_parent)
+            elif isinstance(new_parent, LocalWorkspaceManifest):
+                await self.local_storage.set_workspace_manifest(new_parent)
+            else:
+                raise TypeError("Invalid manifest type")
 
         # Send event
         self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
@@ -352,7 +362,12 @@ class EntryTransactions(FileTransactions):
             )
 
             # Atomic change
-            await self.local_storage.set_manifest(parent.id, new_parent)
+            if isinstance(new_parent, LocalFolderManifest):
+                await self.local_storage.set_manifest(parent.id, new_parent)
+            elif isinstance(new_parent, LocalWorkspaceManifest):
+                await self.local_storage.set_workspace_manifest(new_parent)
+            else:
+                raise TypeError("Invalid manifest type")
 
         # Send event
         self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
@@ -383,7 +398,12 @@ class EntryTransactions(FileTransactions):
             )
 
             # Atomic change
-            await self.local_storage.set_manifest(parent.id, new_parent)
+            if isinstance(new_parent, LocalFolderManifest):
+                await self.local_storage.set_manifest(parent.id, new_parent)
+            elif isinstance(new_parent, LocalWorkspaceManifest):
+                await self.local_storage.set_workspace_manifest(new_parent)
+            else:
+                raise TypeError("Invalid manifest type")
 
         # Send event
         self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
@@ -417,7 +437,12 @@ class EntryTransactions(FileTransactions):
 
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
-            await self.local_storage.set_manifest(parent.id, new_parent)
+            if isinstance(new_parent, LocalFolderManifest):
+                await self.local_storage.set_manifest(parent.id, new_parent)
+            elif isinstance(new_parent, LocalWorkspaceManifest):
+                await self.local_storage.set_workspace_manifest(new_parent)
+            else:
+                raise TypeError("Invalid manifest type")
 
         # Send events
         self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
@@ -454,7 +479,12 @@ class EntryTransactions(FileTransactions):
 
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
-            await self.local_storage.set_manifest(parent.id, new_parent)
+            if isinstance(new_parent, LocalFolderManifest):
+                await self.local_storage.set_manifest(parent.id, new_parent)
+            elif isinstance(new_parent, LocalWorkspaceManifest):
+                await self.local_storage.set_workspace_manifest(new_parent)
+            else:
+                raise TypeError("Invalid manifest type")
             fd = FileDescriptor(self.local_storage.create_file_descriptor(child)) if open else None
 
         # Send events

@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from itertools import count
-from typing import AsyncIterator, Dict, Iterable, Union
+from typing import AsyncIterator, Dict, Iterable
 
 import attr
 
 from parsec._parsec import BlockAccess, CoreEvent, DateTime, EntryNameError, Regex
+from parsec._parsec import FileManifest as RemoteFileManifest
 from parsec.api.data import AnyRemoteManifest, FileManifest, FolderManifest, WorkspaceManifest
 from parsec.api.protocol import DeviceID
 from parsec.core.fs.exceptions import (
@@ -374,7 +375,12 @@ class SyncTransactions(EntryTransactions):
 
             # Set the new base manifest
             if new_local_manifest != local_manifest:
-                await self.local_storage.set_manifest(entry_id, new_local_manifest)
+                if isinstance(new_local_manifest, LocalFolderManifest):
+                    await self.local_storage.set_manifest(entry_id, new_local_manifest)
+                elif isinstance(new_local_manifest, LocalWorkspaceManifest):
+                    await self.local_storage.set_workspace_manifest(new_local_manifest)
+                else:
+                    raise TypeError("Invalid manifest type")
 
     async def synchronization_step(
         self,
@@ -449,7 +455,12 @@ class SyncTransactions(EntryTransactions):
 
             # Set the new base manifest
             if new_local_manifest != local_manifest:
-                await self.local_storage.set_manifest(entry_id, new_local_manifest)
+                if isinstance(new_local_manifest, (LocalFileManifest, LocalFolderManifest)):
+                    await self.local_storage.set_manifest(entry_id, new_local_manifest)
+                elif isinstance(new_local_manifest, LocalWorkspaceManifest):
+                    await self.local_storage.set_workspace_manifest(new_local_manifest)
+                else:
+                    raise TypeError("Invalid manifest type")
 
             # Send downsynced event
             if base_version != new_base_version and remote_author != self.local_author:
@@ -506,8 +517,8 @@ class SyncTransactions(EntryTransactions):
     async def file_conflict(
         self,
         entry_id: EntryID,
-        local_manifest: Union[LocalFolderManifest, LocalFileManifest],
-        remote_manifest: AnyRemoteManifest,
+        local_manifest: LocalFileManifest,
+        remote_manifest: RemoteFileManifest,
     ) -> None:
         # This is the only transaction that affects more than one manifests
         # That's because the local version of the file has to be registered in the
@@ -567,12 +578,18 @@ class SyncTransactions(EntryTransactions):
                 other_manifest = local_manifest_from_remote(
                     remote_manifest, prevent_sync_pattern=prevent_sync_pattern
                 )
+                assert isinstance(other_manifest, LocalFileManifest)
 
                 # Set manifests
                 await self.local_storage.set_manifest(
                     new_manifest.id, new_manifest, check_lock_status=False
                 )
-                await self.local_storage.set_manifest(parent_id, new_parent_manifest)
+                if isinstance(new_parent_manifest, LocalFolderManifest):
+                    await self.local_storage.set_manifest(parent_id, new_parent_manifest)
+                elif isinstance(new_parent_manifest, LocalWorkspaceManifest):
+                    await self.local_storage.set_workspace_manifest(new_parent_manifest)
+                else:
+                    raise TypeError("Invalid manifest type")
                 await self.local_storage.set_manifest(entry_id, other_manifest)
 
                 self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=new_manifest.id)
