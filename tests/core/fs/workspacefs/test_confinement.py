@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import AsyncContextManager, Callable
+from pathlib import Path
 
 import pytest
 
 from parsec._parsec import EntryName, LocalDevice, Regex
 from parsec.core.fs import FsPath, UserFS, WorkspaceFS
-from parsec.core.logged_core import LoggedCore, get_prevent_sync_pattern
-from tests.common import create_shared_workspace
+from parsec.core.logged_core import get_prevent_sync_pattern
+from tests.common import CoreFactory, create_shared_workspace
 
 
 async def assert_path_info(workspace, path, **kwargs):
@@ -313,7 +313,9 @@ def test_stable_prevent_sync_pattern():
 
 @pytest.mark.trio
 async def test_database_with_invalid_pattern_resilience(
-    core_factory: Callable[..., AsyncContextManager[LoggedCore]], alice: LocalDevice
+    core_factory: CoreFactory,
+    alice: LocalDevice,
+    data_base_dir: Path,
 ):
     with pytest.raises(ValueError):
         Regex.from_regex_str("[")

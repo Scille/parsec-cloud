@@ -23,7 +23,7 @@ from parsec.test_utils import create_inconsistent_workspace
 
 
 def create_files_widget_testbed(
-    monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w: FilesWidget, c_w
+    monkeypatch: pytest.MonkeyPatch, aqtbot, logged_gui, user_fs, wfs, f_w: FilesWidget, c_w
 ):
     # === Testbed class is full of helpers ===
     class FilesWidgetTestbed:
@@ -231,7 +231,11 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui: MainWindow):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_file_browsing_and_edit(
-    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
+    monkeypatch: pytest.MonkeyPatch,
+    tmpdir: Path,
+    aqtbot,
+    autoclose_dialog,
+    files_widget_testbed,
 ):
     # cspell: ignore zdir
     tb = files_widget_testbed
@@ -905,10 +909,10 @@ async def test_show_file_status(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_import_file_disk_full(
-    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
+    monkeypatch: pytest.MonkeyPatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
     tb = files_widget_testbed
-    f_w = files_widget_testbed.files_widget
+    f_w: FilesWidget = files_widget_testbed.files_widget
 
     # Populate some files for import
     out_of_parsec_data = Path(tmpdir) / "out_of_parsec_data"

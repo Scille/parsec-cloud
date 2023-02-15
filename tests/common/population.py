@@ -177,7 +177,7 @@ def otheralice(fixtures_customization, local_device_factory, otherorg):
 
 
 @pytest.fixture
-def alice(fixtures_customization, local_device_factory, initial_user_manifest_state):
+def alice(fixtures_customization, local_device_factory, initial_user_manifest_state) -> LocalDevice:
     device = local_device_factory(
         "alice@dev1",
         profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),

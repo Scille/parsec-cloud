@@ -5,14 +5,19 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec._parsec import EntryName
-from parsec.core.fs import FsPath
+from parsec._parsec import DateTime, EntryName
+from parsec.core.fs import FsPath, WorkspaceFS
 from parsec.core.fs.exceptions import FSWorkspaceTimestampedTooEarly
 from parsec.core.fs.workspacefs.workspacefs_timestamped import WorkspaceFSTimestamped
 
 
 @pytest.mark.trio
-async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice_workspace_t2):
+async def test_path_info(
+    alice_workspace: WorkspaceFS,
+    timestamp_0: DateTime,
+    alice_workspace_t1: WorkspaceFSTimestamped,
+    alice_workspace_t2: WorkspaceFSTimestamped,
+):
     with pytest.raises(FSWorkspaceTimestampedTooEarly):
         await alice_workspace.to_timestamped(timestamp_0)
 
@@ -76,7 +81,11 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
 
 
 @pytest.mark.trio
-async def test_exists(alice_workspace_t1, alice_workspace_t2, alice_workspace_t3):
+async def test_exists(
+    alice_workspace_t1: WorkspaceFSTimestamped,
+    alice_workspace_t2: WorkspaceFSTimestamped,
+    alice_workspace_t3: WorkspaceFSTimestamped,
+):
     assert await alice_workspace_t1.exists("/") is True
     assert await alice_workspace_t1.exists("/foo") is True
 

@@ -18,7 +18,7 @@ from parsec.core.gui.lang import translate
 from parsec.core.gui.workspaces_widget import WorkspaceButton, WorkspacesWidget
 from parsec.core.types import WorkspaceRole
 from tests.common import customize_fixtures
-from tests.core.gui.conftest import AsyncQtBot
+from tests.core.gui.conftest import AsyncQtBot, GuiFactory
 
 
 # Helpers
@@ -374,7 +374,7 @@ async def test_workspace_reencryption_do_one_batch_error(
 async def test_workspace_reencryption_continue(
     aqtbot,
     running_backend,
-    gui_factory,
+    gui_factory: GuiFactory,
     autoclose_dialog,
     monkeypatch,
     alice_user_fs,

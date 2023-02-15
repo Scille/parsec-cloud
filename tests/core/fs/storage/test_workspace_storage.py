@@ -78,7 +78,7 @@ async def test_lock_required(alice_workspace_storage: WorkspaceStorage):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_basic_set_get_clear(data_base_dir, alice_workspace_storage):
+async def test_basic_set_get_clear(data_base_dir, alice_workspace_storage: WorkspaceStorage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device)
     async with aws.lock_entry_id(manifest.id):
@@ -587,7 +587,7 @@ async def test_garbage_collection(data_base_dir, alice, workspace_id):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_storage_file_tree(data_base_dir, alice, workspace_id):
+async def test_storage_file_tree(data_base_dir: Path, alice: LocalDevice, workspace_id: EntryID):
     manifest_sqlite_db = data_base_dir / alice.slug / workspace_id.hex / "workspace_data-v1.sqlite"
     chunk_sqlite_db = data_base_dir / alice.slug / workspace_id.hex / "workspace_data-v1.sqlite"
     block_sqlite_db = data_base_dir / alice.slug / workspace_id.hex / "workspace_cache-v1.sqlite"
