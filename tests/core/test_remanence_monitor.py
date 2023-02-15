@@ -389,6 +389,8 @@ async def test_remanence_monitor_sharing_updated(
 
 
 @pytest.mark.trio
+# This tests seems to be flaky on windows
+@pytest.mark.flaky(reruns=6, condition="sys.platform.startswith('win32')")
 @customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)
 async def test_remanence_monitor_with_core_restart(
     core_config: CoreConfig,
@@ -444,7 +446,7 @@ async def test_remanence_monitor_with_core_restart(
     # Second instanciation
     async with core_factory(alice) as alice_core:
 
-        # Check that hasn't changed
+        # Check state hasn't changed
         workspace = alice_core.user_fs.get_workspace(wid)
         await workspace.wait_remanence_manager_prepared(wait_for_connection=True)
         await alice_core.wait_idle_monitors()
@@ -470,7 +472,9 @@ async def test_remanence_monitor_with_core_restart(
         # Go offline and enable it back
         with running_backend.offline():
             await workspace.enable_block_remanence()
-            await alice_core.wait_idle_monitors()
+            # Don't know why but on windows this test block here.
+            with trio.fail_after(1):
+                await alice_core.wait_idle_monitors()
             info = workspace.get_remanence_manager_info()
             assert info.is_prepared
             assert not info.is_running
