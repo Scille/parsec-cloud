@@ -5,6 +5,7 @@ import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
+from parsec._parsec import LocalDevice
 from parsec.api.data import EntryName
 from tests.common import FileOracle
 
@@ -13,7 +14,7 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 
 @pytest.mark.slow
-def test_fs_online_rwfile_and_sync(user_fs_online_state_machine, alice):
+def fs_online_rw_file_and_sync(user_fs_online_state_machine, alice: LocalDevice):
     class FSOnlineRwFileAndSync(user_fs_online_state_machine):
         @initialize()
         async def init(self):

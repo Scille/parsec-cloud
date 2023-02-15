@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import DateTime, EntryName
-from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
+from parsec.core.fs import UserFS, WorkspaceFS, WorkspaceFSTimestamped
 from tests.common import freeze_time
 
 day0 = DateTime(1999, 12, 31)
@@ -26,7 +26,7 @@ day14 = DateTime(2000, 1, 14)
 
 @pytest.fixture
 @pytest.mark.trio
-async def alice_workspace(alice_user_fs, running_backend):
+async def alice_workspace(alice_user_fs: UserFS, running_backend):
     with freeze_time(day0):
         wid = await alice_user_fs.workspace_create(EntryName("w"))
         workspace = alice_user_fs.get_workspace(wid)

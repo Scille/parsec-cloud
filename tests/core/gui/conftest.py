@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from importlib import import_module
-from typing import Callable, Type
+from typing import Awaitable, Callable, Type
 
 import pytest
 import qtrio
@@ -254,6 +254,9 @@ def throttled_job_fast_wait(monkeypatch):
     monkeypatch.setattr(QtToTrioJobScheduler, "submit_throttled_job", _patched_submit_throttled_job)
 
 
+GuiFactory = Callable[..., Awaitable[MainWindow]]
+
+
 @pytest.fixture
 def gui_factory(
     aqtbot,
@@ -262,7 +265,7 @@ def gui_factory(
     core_config,
     event_bus_factory,
     running_backend_ready,
-) -> MainWindow:
+) -> GuiFactory:
     windows = []
 
     async def _gui_factory(
@@ -334,7 +337,7 @@ async def gui(
 @pytest.fixture
 async def logged_gui(
     aqtbot,
-    gui_factory: Callable[[], MainWindow],
+    gui_factory: GuiFactory,
     core_config: CoreConfig,
     alice: LocalDevice,
     bob: LocalDevice,
