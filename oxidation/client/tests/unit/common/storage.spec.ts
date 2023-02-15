@@ -2,6 +2,7 @@
 
 import { Storage } from '@ionic/storage';
 import { StoredDeviceData, Config, StorageManager } from '@/services/storageManager';
+import { DateTime } from 'luxon';
 
 describe('Storage manager', () => {
   it('Stores and retrieves the config', async () => {
@@ -47,8 +48,8 @@ describe('Storage manager', () => {
     await manager.create();
 
     const d: {[slug: string]: StoredDeviceData} = {
-      'abcd': {lastLogin: new Date('2022-02-02T00:00:00.000Z')},
-      'efgh': {lastLogin: new Date('2011-01-01T00:00:00.000Z')}
+      'abcd': {lastLogin: DateTime.fromISO('2022-02-02T00:00:00.000+00:00', {setZone: true})},
+      'efgh': {lastLogin: DateTime.fromISO('2011-01-01T00:00:00.000+00:00', {setZone: true})}
     };
 
     // Nothing is stored

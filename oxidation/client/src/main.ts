@@ -25,8 +25,9 @@ import '@ionic/vue/css/text-transformation.css';
 import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
 
-import { formatTimeSince } from './common/date';
-import { StorageManager } from './services/storageManager';
+import { formatTimeSince } from '@/common/date';
+import { StorageManager } from '@/services/storageManager';
+import { DateTime } from 'luxon';
 
 /* Theme variables */
 import './theme/variables.css';
@@ -96,7 +97,7 @@ async function setupApp(): Promise<void> {
     .use(i18n);
 
   app.provide('formatters', {
-    'timeSince': (date: Date | undefined, defaultValue=''): string => {
+    'timeSince': (date: DateTime | undefined, defaultValue=''): string => {
       const { t, d } = useI18n();
       return formatTimeSince(date, t, d, defaultValue);
     }

@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+import { DateTime } from 'luxon';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { StorageManager } from '@/services/storageManager';
 
@@ -77,26 +78,19 @@ export function getMockDevices(count: number | undefined = undefined): Available
 }
 
 export async function mockLastLogin(manager: StorageManager): Promise<void> {
-  const now = new Date();
-
-  // Since dates don't handle +/- operators properly
-  function newDateWithOffset(d: Date, n: number): Date {
-    const x = new Date();
-    x.setTime(d.getTime() + n);
-    return x;
-  }
+  const now = DateTime.now();
 
   await manager.storeDevicesData({
     slug1: { lastLogin: now },
     // 10 seconds ago
-    slug2: { lastLogin: newDateWithOffset(now, -1 * 10 * 1000) },
+    slug2: { lastLogin: now.minus({seconds: 10}) },
     // 10 minutes ago
-    slug3: { lastLogin: newDateWithOffset(now, -1 * 10 * 60 * 1000) },
+    slug3: { lastLogin: now.minus({minutes: 10}) },
     // 5 hours ago
-    slug5: { lastLogin: newDateWithOffset(now, -1 * 5 * 60 * 60 * 1000) },
+    slug5: { lastLogin: now.minus({hours: 5}) },
     // 2 days ago
-    slug6: { lastLogin: newDateWithOffset(now, -1 * 2 * 24 * 60 * 60 * 1000) },
+    slug6: { lastLogin: now.minus({days: 2}) },
     // 10 days ago
-    slug7: { lastLogin: newDateWithOffset(now, -1 * 10 * 24 * 60 * 60 * 1000) }
+    slug7: { lastLogin: now.minus({days: 10}) }
   });
 }

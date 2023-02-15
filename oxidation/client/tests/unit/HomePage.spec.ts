@@ -7,17 +7,16 @@ import frFR from '../../src/locales/fr-FR.json';
 import enUS from '../../src/locales/en-US.json';
 import { modalController } from '@ionic/vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
-import { Storage } from '@ionic/storage';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import { formatTimeSince } from '@/common/date';
 import { StorageManager } from '@/services/storageManager';
+import { DateTime } from 'luxon';
 
 const storageManager = new StorageManager();
 storageManager.create();
 
 describe('HomePage.vue', () => {
   type MessageSchema = typeof frFR;
-  const store = new Storage();
   const defaultLocale = 'fr-FR';
   const supportedLocales:{[key: string]: string} = {
     fr: 'fr-FR',
@@ -68,14 +67,14 @@ describe('HomePage.vue', () => {
   });
 
   jest.useFakeTimers();
-  jest.setSystemTime(new Date('04/28/1999 18:00:00'));
+  jest.setSystemTime(DateTime.fromISO('1999-04-28T18:00:00').toJSDate());
 
   const wrapper = mount(HomePage, {
     global: {
       plugins: [i18n],
       provide: {
         formatters: {
-          timeSince: (date: Date | undefined, defaultValue=''): string => {
+          timeSince: (date: DateTime | undefined, defaultValue=''): string => {
             const { t, d } = useI18n();
             return formatTimeSince(date, t, d, defaultValue);
           }
@@ -94,14 +93,25 @@ describe('HomePage.vue', () => {
   });
 
   it('should get devices stored data on mount', () => {
-    expect(wrapper.vm.storedDeviceDataDict).toEqual({
-      slug1: { lastLogin: new Date('04/28/1999 18:00:00') },
-      slug2: { lastLogin: new Date('04/28/1999 17:59:50') },
-      slug3: { lastLogin: new Date('04/28/1999 17:50:00') },
-      slug5: { lastLogin: new Date('04/28/1999 13:00:00') },
-      slug6: { lastLogin: new Date('04/26/1999 18:00:00') },
-      slug7: { lastLogin: new Date('04/18/1999 18:00:00') }
-    });
+
+    expect(wrapper.vm.storedDeviceDataDict.slug1.lastLogin.c).toEqual(
+      {year: 1999, month: 4, day: 28, hour: 18, minute: 0, second: 0, millisecond: 0}
+    );
+    expect(wrapper.vm.storedDeviceDataDict.slug2.lastLogin.c).toEqual(
+      {year: 1999, month: 4, day: 28, hour: 17, minute: 59, second: 50, millisecond: 0}
+    );
+    expect(wrapper.vm.storedDeviceDataDict.slug3.lastLogin.c).toEqual(
+      {year: 1999, month: 4, day: 28, hour: 17, minute: 50, second: 0, millisecond: 0}
+    );
+    expect(wrapper.vm.storedDeviceDataDict.slug5.lastLogin.c).toEqual(
+      {year: 1999, month: 4, day: 28, hour: 13, minute: 0, second: 0, millisecond: 0}
+    );
+    expect(wrapper.vm.storedDeviceDataDict.slug6.lastLogin.c).toEqual(
+      {year: 1999, month: 4, day: 26, hour: 18, minute: 0, second: 0, millisecond: 0}
+    );
+    expect(wrapper.vm.storedDeviceDataDict.slug7.lastLogin.c).toEqual(
+      {year: 1999, month: 4, day: 18, hour: 18, minute: 0, second: 0, millisecond: 0}
+    );
   });
 
   describe('Organization List tests', () => {
@@ -158,7 +168,7 @@ describe('HomePage.vue', () => {
         plugins: [i18n],
         provide: {
           formatters: {
-            timeSince: (date: Date | undefined, defaultValue=''): string => {
+            timeSince: (date: DateTime | undefined, defaultValue=''): string => {
               const { t, d } = useI18n();
               return formatTimeSince(date, t, d, defaultValue);
             }
@@ -282,7 +292,7 @@ describe('HomePage.vue', () => {
     it('should update password value on password input change', async () => {
       passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
       expect(wrapper.vm.password).toEqual('');
-      passwordInput.vm.$emit('change', 'password');
+      await passwordInput.vm.$emit('change', 'password');
       expect(wrapper.vm.password).toEqual('password');
     });
 
@@ -298,12 +308,11 @@ describe('HomePage.vue', () => {
       wrapper.vm.password = 'password';
       const expectedMessage = 'Log in to OsCorp with password "password"';
       const loginButton = wrapper.findComponent('#login-button') as VueWrapper;
-      const now = new Date();
-      jest.setSystemTime(now);
+      const now = DateTime.now();
+      jest.setSystemTime(now.toJSDate());
       await loginButton.trigger('click');
-      await store.create();
-      const deviceStoredDataList = await store.get('devicesData');
-      expect(deviceStoredDataList.slug4.lastLogin).toEqual(now.toISOString());
+      const deviceStoredDataList = await storageManager.retrieveDevicesData();
+      expect(deviceStoredDataList.slug4.lastLogin.toISO()).toBe(now.toISO());
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });
@@ -321,12 +330,11 @@ describe('HomePage.vue', () => {
       passwordInput = wrapper.findComponent({name: 'PasswordInput'}) as VueWrapper;
       wrapper.vm.password = 'password';
       const expectedMessage = 'Log in to OsCorp with password "password"';
-      const now = new Date();
-      jest.setSystemTime(now);
-      passwordInput.vm.$emit('enter');
-      await store.create();
-      const deviceStoredDataList = await store.get('devicesData');
-      expect(deviceStoredDataList.slug4.lastLogin).toEqual(now.toISOString());
+      const now = DateTime.now();
+      jest.setSystemTime(now.toJSDate());
+      await passwordInput.vm.$emit('enter');
+      const deviceStoredDataList = await storageManager.retrieveDevicesData();
+      expect(deviceStoredDataList.slug4.lastLogin.toISO()).toBe(now.toISO());
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });

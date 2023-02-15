@@ -40,6 +40,7 @@
         "@ionic/vue-router": "^6.5.2",
         "core-js": "^3.22.7",
         "ionicons": "^6.0.4",
+        "luxon": "^3.2.1",
         "vue": "^3.2.45",
         "vue-i18n": "^9.2.2",
         "vue-router": "^4.1.6"
@@ -49,6 +50,7 @@
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
         "@ionic/cli": "^6.20.6",
         "@types/jest": "^27.0.2",
+        "@types/luxon": "^3.2.0",
         "@types/node": "^18.0.1",
         "@typescript-eslint/eslint-plugin": "^5.47.1",
         "@typescript-eslint/parser": "^5.27.0",
