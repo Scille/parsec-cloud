@@ -6,13 +6,14 @@ from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
 from parsec.api.data import EntryName
-from tests.common import FileOracle
+from tests.common import FileOracle, customize_fixtures
 
 BLOCK_SIZE = 16
 PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 
 @pytest.mark.slow
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
 def test_fs_offline_restart_and_rwfile(user_fs_offline_state_machine, alice):
     class FSOfflineRestartAndRWFile(user_fs_offline_state_machine):
         @initialize()

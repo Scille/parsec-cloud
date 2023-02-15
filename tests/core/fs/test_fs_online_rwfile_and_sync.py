@@ -2,19 +2,24 @@
 from __future__ import annotations
 
 import pytest
+from hypothesis import settings
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
 from parsec._parsec import LocalDevice
 from parsec.api.data import EntryName
 from parsec.core.fs.userfs import UserFS
+from tests.common import FileOracle, customize_fixtures
 
 BLOCK_SIZE = 16
 PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 
-@pytest.mark.slow
+@pytest.fixture
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
 def fs_online_rw_file_and_sync(user_fs_online_state_machine, alice: LocalDevice):
+    # We reduce the hypothesis to 50 (from 100) because this test can be really slow :(
+    @settings(max_examples=50)
     class FSOnlineRwFileAndSync(user_fs_online_state_machine):
         user_fs: UserFS
 
@@ -88,4 +93,25 @@ def fs_online_rw_file_and_sync(user_fs_online_state_machine, alice: LocalDevice)
             assert path_info["need_sync"] == self.file_oracle.need_sync
             assert path_info["size"] == self.file_oracle.size
 
-    FSOnlineRwFileAndSync.run_as_test()
+    return FSOnlineRwFileAndSync
+
+
+@pytest.mark.slow
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
+def test_fs_online_rwfile_and_sync(fs_online_rw_file_and_sync):
+    fs_online_rw_file_and_sync.run_as_test()
+
+
+@pytest.mark.slow
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
+def test_fixture_working(fs_online_rw_file_and_sync):
+    state = fs_online_rw_file_and_sync()
+
+    async def steps():
+        for _ in range(5):
+            await state.init()
+            await state.atomic_write(content=b"\x00", offset=0)
+            await state.reset()
+            await state.stat()
+
+    state.trio_run(steps)
