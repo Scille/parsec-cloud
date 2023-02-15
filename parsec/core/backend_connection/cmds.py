@@ -240,7 +240,7 @@ async def _send_cmd(
             VlobUpdateRepBadTimestamp,
         ),
     ):
-        raise BackendOutOfBallparkError(str(rep))
+        raise BackendOutOfBallparkError(rep)
 
     return rep
 

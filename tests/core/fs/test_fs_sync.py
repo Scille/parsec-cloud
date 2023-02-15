@@ -528,14 +528,12 @@ async def test_update_invalid_timestamp(
         cause = context.value.__cause__
         assert isinstance(cause, BackendOutOfBallparkError)
         (rep,) = cause.args
-        assert rep == str(
-            VlobUpdateRepBadTimestamp(
-                reason=None,
-                client_timestamp=t3.add(microseconds=MANIFEST_STAMP_AHEAD_US),
-                backend_timestamp=t2,
-                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
-                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
-            )
+        assert rep == VlobUpdateRepBadTimestamp(
+            reason=None,
+            client_timestamp=t3.add(microseconds=MANIFEST_STAMP_AHEAD_US),
+            backend_timestamp=t2,
+            ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+            ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
         )
 
 
