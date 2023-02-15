@@ -895,6 +895,7 @@ class WorkspaceFS:
         await self.local_storage.mark_prevent_sync_pattern_fully_applied(pattern)
 
     async def set_and_apply_prevent_sync_pattern(self, pattern: Regex) -> None:
+        # TODO FIXME: lock-me to prevent concurrent access when multiple thread try to set & apply different pattern.
         await self.local_storage.set_prevent_sync_pattern(pattern)
         if self.local_storage.get_prevent_sync_pattern_fully_applied():
             return
