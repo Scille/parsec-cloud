@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncIterator
+from typing import AsyncContextManager, AsyncIterator, Callable
 
 import pytest
 from hypothesis_trio.stateful import TrioAsyncioRuleBasedStateMachine, run_state_machine_as_test
@@ -24,9 +24,13 @@ from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from tests.common import call_with_control
 
+TransactionsFactory = Callable[..., AsyncContextManager[SyncTransactions]]
+
 
 @pytest.fixture
-def transactions_factory(event_bus, remote_devices_manager_factory, core_config):
+def transactions_factory(
+    event_bus, remote_devices_manager_factory, core_config
+) -> TransactionsFactory:
     @asynccontextmanager
     async def _transactions_factory(
         device: LocalDevice, local_storage: WorkspaceStorage, cls=SyncTransactions
@@ -39,11 +43,12 @@ def transactions_factory(event_bus, remote_devices_manager_factory, core_config)
             assert False
 
         workspace_entry = WorkspaceEntry.new(EntryName("test"), device.timestamp())
-        workspace_manifest = LocalWorkspaceManifest.new_placeholder(
+        workspace_entry = workspace_entry.evolve(id=local_storage.workspace_id)
+        workspace_manifest: LocalWorkspaceManifest = LocalWorkspaceManifest.new_placeholder(
             device.device_id, id=workspace_entry.id, timestamp=DateTime(2000, 1, 1)
         )
         async with local_storage.lock_entry_id(workspace_entry.id):
-            await local_storage.set_manifest(workspace_entry.id, workspace_manifest)
+            await local_storage.set_workspace_manifest(workspace_manifest)
 
         async with backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
@@ -109,7 +114,7 @@ async def alice_file_transactions(
 
 
 @pytest.fixture
-def entry_transactions_factory(transactions_factory):
+def entry_transactions_factory(transactions_factory: TransactionsFactory) -> TransactionsFactory:
     @asynccontextmanager
     async def _entry_transactions_factory(device, local_storage):
         async with transactions_factory(
@@ -123,7 +128,7 @@ def entry_transactions_factory(transactions_factory):
 @pytest.fixture
 async def alice_entry_transactions(
     entry_transactions_factory, alice, alice_transaction_local_storage
-):
+) -> AsyncContextManager[SyncTransactions]:
     async with entry_transactions_factory(
         alice, local_storage=alice_transaction_local_storage
     ) as entry_transactions:
