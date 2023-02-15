@@ -127,7 +127,6 @@ onMounted(async (): Promise<void> => {
   if (!config.value.theme) {
     config.value.theme = 'system';
   }
-  locale.value = config.value.locale;
 });
 </script>
 
