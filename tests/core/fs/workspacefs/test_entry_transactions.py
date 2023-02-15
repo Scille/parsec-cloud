@@ -13,12 +13,11 @@ import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import Bundle, initialize, invariant, rule, run_state_machine_as_test
 
-from parsec._parsec import DateTime
-from parsec.api.data import EntryName
+from parsec._parsec import DateTime, EntryID, EntryName, LocalFolderManifest, LocalWorkspaceManifest
 from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 from parsec.core.fs.storage import WorkspaceStorage
-from parsec.core.types import EntryID, LocalFolderManifest
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from tests.common import call_with_control, freeze_time
 
 
@@ -172,11 +171,12 @@ async def test_cannot_replace_root(alice_entry_transactions):
 
 
 @pytest.mark.trio
-async def test_access_not_loaded_entry(running_backend, alice_entry_transactions):
+async def test_access_not_loaded_entry(running_backend, alice_entry_transactions: SyncTransactions):
     entry_transactions = alice_entry_transactions
 
     entry_id = entry_transactions.get_workspace_entry().id
     manifest = await entry_transactions.local_storage.get_manifest(entry_id)
+    assert isinstance(manifest, LocalWorkspaceManifest)
     async with entry_transactions.local_storage.lock_entry_id(entry_id):
         await entry_transactions.local_storage.clear_manifest(entry_id)
 
@@ -184,7 +184,7 @@ async def test_access_not_loaded_entry(running_backend, alice_entry_transactions
         await entry_transactions.entry_info(FsPath("/"))
 
     async with entry_transactions.local_storage.lock_entry_id(entry_id):
-        await entry_transactions.local_storage.set_manifest(entry_id, manifest)
+        await entry_transactions.local_storage.set_workspace_manifest(manifest)
     entry_info = await entry_transactions.entry_info(FsPath("/"))
     assert entry_info == {
         "type": "folder",

@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import sqlite3
+from pathlib import Path
 from typing import Literal
 
 import pytest
@@ -15,8 +17,6 @@ from parsec._parsec import (
     UserManifest,
     WorkspaceEntry,
 )
-from parsec.core.fs.storage.local_database import LocalDatabase
-from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.types import WorkspaceRole
 from tests.common import freeze_time
@@ -44,9 +44,9 @@ async def test_user_manifest_access_while_speculative(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_manifest_access_while_speculative(
-    user_fs_factory: UserFsFactory,
-    alice: LocalDevice,
+    user_fs_factory: UserFsFactory, alice: LocalDevice, tmp_path: Path
 ):
     # Speculative workspace occurs when workspace is shared to a new user, or
     # when a device gets it local data removed. We use the latter here (even if
@@ -57,14 +57,25 @@ async def test_workspace_manifest_access_while_speculative(
             wksp_id = await user_fs.workspace_create(EntryName("wksp"))
             # Retrieve where the database is stored
             wksp = user_fs.get_workspace(wksp_id)
-            wksp_manifest_storage_db_path = wksp.local_storage.manifest_storage.path
+
+    manifest_sqlite_db = tmp_path / "data" / alice.slug / wksp_id.hex / "workspace_data-v1.sqlite"
 
     # Manually drop the workspace manifest from database
-    async with LocalDatabase.run(path=wksp_manifest_storage_db_path) as localdb:
-        async with ManifestStorage.run(
-            device=alice, localdb=localdb, realm_id=wksp_id
-        ) as manifest_storage:
-            await manifest_storage.clear_manifest(wksp_id)
+    with sqlite3.connect(manifest_sqlite_db) as conn:
+        before_delete = next(
+            conn.execute("SELECT vlob_id FROM vlobs WHERE vlob_id = :id", {"id": wksp_id.bytes})
+        )
+        # Sanity check: workspace manifest should be present
+        assert before_delete is not None
+
+        conn.execute("DELETE FROM vlobs WHERE vlob_id = :id;", {"id": wksp_id.bytes})
+
+        after_delete = next(
+            conn.execute("SELECT vlob_id FROM vlobs WHERE vlob_id = :id", {"id": wksp_id.bytes}),
+            None,
+        )
+        # Sanity check: workspace manifest should be deleted
+        assert after_delete is None
 
     # Now re-start the userfs (the same local storage will be used)
     with freeze_time("2000-01-02", devices=[alice]):

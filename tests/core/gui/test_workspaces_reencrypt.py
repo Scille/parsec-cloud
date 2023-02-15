@@ -365,35 +365,37 @@ async def test_workspace_reencryption_do_one_batch_error(
         )
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=5)
 async def test_workspace_reencryption_continue(
     aqtbot,
     running_backend,
     gui_factory: GuiFactory,
-    autoclose_dialog,
-    monkeypatch,
-    alice_user_fs,
-    bob_user_fs,
-    bob,
-    alice,
+    monkeypatch: pytest.MonkeyPatch,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    user_fs_factory,
 ):
     # Create a shared workspace
-    wid = await alice_user_fs.workspace_create(EntryName("w1"))
-    workspace = alice_user_fs.get_workspace(wid)
+    wid = await bob_user_fs.workspace_create(EntryName("w1"))
+    workspace = bob_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
     await workspace.sync()
-    await alice_user_fs.sync()
-    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.OWNER)
-    await bob_user_fs.process_last_messages()
+    await bob_user_fs.sync()
+    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.OWNER)
 
-    await alice_user_fs.workspace_start_reencryption(wid)
+    # FIXME: see https://github.com/Scille/parsec-cloud/issues/4050
+    # Make sure the workspace sharing message is processed and part of a
+    # user manifest synced in server. This is to avoid concurrent operation
+    # when message monitor starts.
+    async with user_fs_factory(alice) as alice_user_fs:
+        await alice_user_fs.process_last_messages()
+        await alice_user_fs.sync()
+
+    await bob_user_fs.workspace_start_reencryption(wid)
 
     gui = await gui_factory()
-    await gui.test_switch_to_logged_in(bob)
+    await gui.test_switch_to_logged_in(alice)
     w_w = gui.test_get_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)

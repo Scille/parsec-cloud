@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Optional
 
 import pytest
 import trio
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QGuiApplication
 
-from parsec.api.data import EntryName
+from parsec._parsec import ChunkID, EntryID, EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.gui.file_items import TYPE_DATA_INDEX, FileType
@@ -18,7 +19,7 @@ from parsec.core.gui.file_table import Column
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.main_window import MainWindow
-from parsec.core.types import WorkspaceRole
+from parsec.core.types import AnyLocalManifest, WorkspaceRole
 from parsec.test_utils import create_inconsistent_workspace
 
 
@@ -923,16 +924,24 @@ async def test_import_file_disk_full(
     file2.touch()
 
     @staticmethod
-    async def run_in_thread_patched(fn, *args):
-        if fn.__name__ == "commit":
-            import sqlite3
+    def rust_impl_set_manifest_patched(
+        entry_id: EntryID,
+        manifest: AnyLocalManifest,
+        cache_only: bool = False,
+        removed_ids: Optional[set[ChunkID]] = None,
+    ):
+        import sqlite3
 
+        from parsec.core.fs.exceptions import FSLocalStorageOperationalError
+
+        try:
             raise sqlite3.OperationalError("database or disk is full")
-        return fn(*args)
+        except Exception as exc:
+            raise FSLocalStorageOperationalError from exc
 
     # Patch `run_in_thread` to raise an OperationError at the next commit
     monkeypatch.setattr(
-        "parsec.core.fs.storage.local_database.LocalDatabase.run_in_thread", run_in_thread_patched
+        "parsec._parsec.WorkspaceStorage.set_manifest", rust_impl_set_manifest_patched
     )
 
     monkeypatch.setattr(

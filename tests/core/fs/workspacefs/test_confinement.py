@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -8,7 +9,8 @@ import pytest
 from parsec._parsec import EntryName, LocalDevice, Regex
 from parsec.core.fs import FsPath, UserFS, WorkspaceFS
 from parsec.core.logged_core import get_prevent_sync_pattern
-from tests.common import CoreFactory, create_shared_workspace
+from tests.common import CoreFactory, create_shared_workspace, customize_fixtures
+from tests.core.fs.old_storage.version import get_workspace_data_storage_db_path
 
 
 async def assert_path_info(workspace, path, **kwargs):
@@ -312,6 +314,7 @@ def test_stable_prevent_sync_pattern():
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_database_with_invalid_pattern_resilience(
     core_factory: CoreFactory,
     alice: LocalDevice,
@@ -320,14 +323,24 @@ async def test_database_with_invalid_pattern_resilience(
     with pytest.raises(ValueError):
         Regex.from_regex_str("[")
 
-    class InvalidRegex:
-        pattern = "["
-
     # Set an invalid regex in the local database
     async with core_factory(alice) as core:
         wid = await core.user_fs.workspace_create(EntryName("w"))
         workspace = core.user_fs.get_workspace(wid)
-        await workspace.local_storage.set_prevent_sync_pattern(InvalidRegex())
+
+        db_path = get_workspace_data_storage_db_path(data_base_dir, alice, wid)
+        await workspace.local_storage.set_prevent_sync_pattern(Regex.from_regex_str("ok"))
+
+        with sqlite3.connect(db_path) as conn:
+            before_patch = next(conn.execute("SELECT pattern FROM prevent_sync_pattern"))[0]
+            conn.execute(
+                "UPDATE prevent_sync_pattern SET pattern = :invalid_pattern, fully_applied = 0 WHERE _id = 0 AND pattern != :invalid_pattern",
+                {"invalid_pattern": "["},
+            )
+            after_patch = next(conn.execute("SELECT pattern FROM prevent_sync_pattern"))[0]
+
+            assert before_patch != after_patch
+            assert after_patch == "["
 
     async with core_factory(alice) as core:
         workspace = core.user_fs.get_workspace(wid)

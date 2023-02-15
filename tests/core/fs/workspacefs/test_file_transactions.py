@@ -13,7 +13,7 @@ from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions, FSInvalidFileDescriptor
 from parsec.core.types import AnyLocalManifest, FileDescriptor
-from tests.common import call_with_control, freeze_time
+from tests.common import call_with_control, customize_fixtures, freeze_time
 
 
 class File:
@@ -22,13 +22,13 @@ class File:
         self.entry_id = manifest.id
         self.local_storage = local_storage
 
-    def ensure_manifest(self, **kwargs):
-        manifest = self.local_storage.manifest_storage._cache[self.entry_id]
+    async def ensure_manifest(self, **kwargs):
+        manifest = await self.local_storage.get_manifest(self.entry_id)
         for k, v in kwargs.items():
             assert getattr(manifest, k) == v
 
     def is_cache_ahead_of_persistance(self) -> bool:
-        return self.entry_id in self.local_storage.manifest_storage._cache_ahead_of_localdb
+        return self.local_storage.is_manifest_cache_ahead_of_persistance(self.entry_id)
 
     async def get_manifest(self) -> AnyLocalManifest:
         return await self.local_storage.get_manifest(self.entry_id)
@@ -82,7 +82,7 @@ async def test_operations_on_file(alice_file_transactions: FileTransactions, foo
         assert data == b"H"
 
         await file_transactions.fd_close(fd2)
-    foo_txt.ensure_manifest(
+    await foo_txt.ensure_manifest(
         size=16,
         is_placeholder=False,
         need_sync=True,
@@ -105,7 +105,7 @@ async def test_operations_on_file(alice_file_transactions: FileTransactions, foo
     await file_transactions.fd_close(fd2)
 
     assert not foo_txt.is_cache_ahead_of_persistance()
-    foo_txt.ensure_manifest(
+    await foo_txt.ensure_manifest(
         size=16,
         is_placeholder=False,
         need_sync=True,
@@ -121,7 +121,7 @@ async def test_flush_file(alice_file_transactions: FileTransactions, foo_txt: Fi
 
     fd = foo_txt.open()
 
-    foo_txt.ensure_manifest(
+    await foo_txt.ensure_manifest(
         size=0,
         is_placeholder=False,
         need_sync=False,
@@ -135,7 +135,7 @@ async def test_flush_file(alice_file_transactions: FileTransactions, foo_txt: Fi
         await file_transactions.fd_write(fd, b"world !", -1)
 
     assert foo_txt.is_cache_ahead_of_persistance()
-    foo_txt.ensure_manifest(
+    await foo_txt.ensure_manifest(
         size=13,
         is_placeholder=False,
         need_sync=True,
@@ -149,7 +149,7 @@ async def test_flush_file(alice_file_transactions: FileTransactions, foo_txt: Fi
 
     await file_transactions.fd_close(fd)
     assert not foo_txt.is_cache_ahead_of_persistance()
-    foo_txt.ensure_manifest(
+    await foo_txt.ensure_manifest(
         size=13,
         is_placeholder=False,
         need_sync=True,
@@ -214,6 +214,7 @@ size = st.integers(min_value=0, max_value=4 * 1024**2)  # Between 0 and 4MB
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
+@customize_fixtures(real_data_storage=True, alternate_workspace_storage=True)
 def test_file_operations(
     tmpdir,
     hypothesis_settings,
