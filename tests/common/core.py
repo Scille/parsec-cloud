@@ -60,6 +60,7 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
                         CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
                     )
+                await core.wait_idle_monitors()
                 assert core.are_monitors_idle()
 
                 yield core
