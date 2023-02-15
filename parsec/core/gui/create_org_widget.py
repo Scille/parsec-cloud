@@ -23,7 +23,7 @@ from parsec.core.backend_connection import (
     BackendOutOfBallparkError,
 )
 from parsec.core.config import CoreConfig
-from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.fs.storage import user_storage_non_speculative_init
 from parsec.core.gui import validators
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error

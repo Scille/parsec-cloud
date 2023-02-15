@@ -19,7 +19,7 @@ from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
 )
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.fs.storage import AnyWorkspaceStorage
 from parsec.core.fs.workspacefs.sync_transactions import ChangesAfterSync, SyncTransactions
 from parsec.core.types import (
     BlockID,
@@ -112,7 +112,7 @@ class RemanenceManagerInfo:
 class RemanenceManager:
     def __init__(
         self,
-        local_storage: BaseWorkspaceStorage,
+        local_storage: AnyWorkspaceStorage,
         remote_loader: RemoteLoader,
         transactions: SyncTransactions,
         workspace_id: EntryID,

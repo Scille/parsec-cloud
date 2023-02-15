@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, AsyncIterator, Dict, List, NoReturn, Set, Tuple, cast
+from typing import TYPE_CHECKING, AsyncIterator, Dict, List, NoReturn, Set, Tuple, Union, cast
 
 import trio
 from structlog import get_logger
@@ -33,18 +33,25 @@ from parsec.core.types.manifest import AnyLocalManifest
 
 logger = get_logger()
 
+
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
 
 FAILSAFE_PATTERN_FILTER = Regex.from_regex_str(
     r"^\b$"
 )  # Matches nothing (https://stackoverflow.com/a/2302992/2846140)
 
+AnyWorkspaceStorage = Union["WorkspaceStorage", "WorkspaceStorageTimestamped"]
+
+__all__ = [
+    "WorkspaceStorage",
+    "AnyWorkspaceStorage",
+]
+
 
 async def workspace_storage_non_speculative_init(
     data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
 ) -> None:
     db_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
-
     # Local data storage service
     async with LocalDatabase.run(db_path) as data_localdb:
 
