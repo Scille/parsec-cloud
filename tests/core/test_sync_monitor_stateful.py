@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Callable
 
 import pytest
 import trio
@@ -57,7 +58,6 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 
 
 @pytest.mark.slow
-@pytest.mark.flaky(reruns=2)
 @pytest.mark.parametrize(
     "with_remanence_monitor",
     [False, True],
@@ -73,6 +73,7 @@ def test_sync_monitor_stateful(
     alice: LocalDevice,
     bob: LocalDevice,
     monkeypatch: pytest.MonkeyPatch,
+    global_core_monitors_freeze: Callable[[bool], None],
     remanence_monitor_event,
     with_remanence_monitor: bool,
 ):
@@ -80,6 +81,9 @@ def test_sync_monitor_stateful(
         remanence_monitor_event.set()
 
     monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
+    # Prevent monitors from doing concurrent operations to avoid flakiness
+    global_core_monitors_freeze(True)
 
     class SyncMonitorStateful(TrioAsyncioRuleBasedStateMachine):
         SharedWorkspaces = Bundle("shared_workspace")
@@ -139,8 +143,6 @@ def test_sync_monitor_stateful(
 
         @initialize()
         async def init(self):
-            await reset_testbed()
-
             await self.start_backend()
             assert isinstance(self.backend_controller.server, RunningBackend)
             self.alice = self.backend_controller.server.correct_addr(alice)
@@ -155,6 +157,17 @@ def test_sync_monitor_stateful(
             }
             self.synced_files: set[EntryID, str] = set()
             self.alice_workspaces_role: dict[EntryID, WorkspaceRole] = {}
+
+        async def teardown(self):
+            await self.stop_bob()
+            await self.stop_alice()
+            await reset_testbed()
+
+        async def stop_bob(self):
+            await self.bob_user_fs_controller.stop()
+
+        async def stop_alice(self):
+            await self.alice_core_controller.stop()
 
         @rule(
             target=SharedWorkspaces,
@@ -226,7 +239,8 @@ def test_sync_monitor_stateful(
         async def let_core_monitors_process_changes(
             self,
         ) -> MultipleResults[tuple[EntryID, str]]:
-            # Set a high clock speed
+            # Un-freeze alice monitors and set a high clock speed
+            global_core_monitors_freeze(False)
             self.alice.time_provider.mock_time(speed=1000.0)
             try:
                 # Loop over 100 attemps (at least 100 seconds)
@@ -238,7 +252,7 @@ def test_sync_monitor_stateful(
                         bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
                         await bob_w.sync()
                     # Alice get back possible changes from bob's sync
-                    await self.alice.time_provider.sleep(1)
+                    await self.alice_core.wait_idle_monitors()
                     # See if alice and bob are in sync
                     try:
                         new_synced_files = await self.assert_alice_and_bob_in_sync()
@@ -253,8 +267,9 @@ def test_sync_monitor_stateful(
                     else:
                         self.synced_files.update(new_synced_files)
                         return multiple(*(sorted(new_synced_files)))
-            # Reset clock speed
+            # Reset clock freeze
             finally:
+                global_core_monitors_freeze(True)
                 self.alice.time_provider.mock_time(speed=1.0)
 
         async def assert_alice_and_bob_in_sync(self) -> list[tuple[EntryID, str]]:
