@@ -312,7 +312,7 @@ describe('HomePage.vue', () => {
       jest.setSystemTime(now.toJSDate());
       await loginButton.trigger('click');
       const deviceStoredDataList = await storageManager.retrieveDevicesData();
-      expect(deviceStoredDataList.slug4.lastLogin.toISO()).toBe(now.toISO());
+      expect(deviceStoredDataList.slug4.lastLogin.toSeconds()).toBe(now.toSeconds());
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });
@@ -334,7 +334,7 @@ describe('HomePage.vue', () => {
       jest.setSystemTime(now.toJSDate());
       await passwordInput.vm.$emit('enter');
       const deviceStoredDataList = await storageManager.retrieveDevicesData();
-      expect(deviceStoredDataList.slug4.lastLogin.toISO()).toBe(now.toISO());
+      expect(deviceStoredDataList.slug4.lastLogin.toSeconds()).toBe(now.toSeconds());
       expect(consoleLogSpyOn).toHaveBeenCalledTimes(1);
       expect(consoleLogSpyOn).toHaveBeenCalledWith(expectedMessage);
     });
