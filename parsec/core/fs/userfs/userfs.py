@@ -20,8 +20,8 @@ import trio
 from structlog import get_logger
 from trio_typing import TaskStatus
 
+from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
-    AuthenticatedCmds,
     CoreEvent,
     DateTime,
     MessageGetRepOk,
@@ -134,7 +134,7 @@ AnyEntryName = Union[EntryName, str]
 class ReencryptionJob:
     def __init__(
         self,
-        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         new_workspace_entry: WorkspaceEntry,
         old_workspace_entry: WorkspaceEntry,
     ) -> None:
@@ -266,7 +266,7 @@ class UserFS:
         self,
         data_base_dir: Path,
         device: LocalDevice,
-        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Regex,
@@ -322,7 +322,7 @@ class UserFS:
         cls: Type[UserFSTypeVar],
         data_base_dir: Path,
         device: LocalDevice,
-        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Regex,

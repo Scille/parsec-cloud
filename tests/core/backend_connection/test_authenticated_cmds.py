@@ -6,13 +6,8 @@ from functools import partial
 import pytest
 import trio
 
-from parsec._parsec import (
-    AuthenticatedCmds,
-    AuthenticatedPingRepOk,
-    ClientType,
-    DateTime,
-    EventsListenRepOkPinged,
-)
+from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
+from parsec._parsec import AuthenticatedPingRepOk, ClientType, DateTime, EventsListenRepOkPinged
 from parsec.api.data import RevokedUserCertificate
 from parsec.api.protocol import AUTHENTICATED_CMDS, OrganizationID, ServerHandshake
 from parsec.api.transport import Ping, Pong, Transport
@@ -265,7 +260,9 @@ async def test_authenticated_cmds_has_right_methods(running_backend, alice):
 
 @pytest.mark.trio
 async def test_rust_authenticated_ping(running_backend, alice):
-    auth_cmds = AuthenticatedCmds(alice.organization_addr, alice.device_id, alice.signing_key)
+    auth_cmds = RsBackendAuthenticatedCmds(
+        alice.organization_addr, alice.device_id, alice.signing_key
+    )
     cmd_result = await auth_cmds.ping("Hello from alice")
     assert isinstance(cmd_result, AuthenticatedPingRepOk)
     assert cmd_result.pong == "Hello from alice"
