@@ -55,7 +55,7 @@ from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 
 # This global variable activates RsBackendAuthenticatedCmds binding
-OXIDIZED = True
+OXIDIZED = False
 
 logger = get_logger()
 
