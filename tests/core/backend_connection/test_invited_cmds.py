@@ -79,7 +79,7 @@ async def test_handshake_organization_expired(running_backend, expiredorg, expir
             async with backend_invited_cmds_factory(invitation_addr) as cmds:
                 await cmds.ping()
         await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
-    assert str(exc.value) == "Trial organization has expired"
+    assert str(exc.value) == "The organization has expired"
 
 
 @pytest.mark.trio

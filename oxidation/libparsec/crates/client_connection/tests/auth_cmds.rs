@@ -102,7 +102,7 @@ async fn invalid_request() {
             client_response,
             CommandError::InvalidResponseStatus(reqwest::StatusCode::UNAUTHORIZED, _)
         ),
-        r#"expected "unexpected response status" with code 401, but got {client_response}"#
+        r#"expected "Unexpected response status" with code 401, but got {client_response}"#
     );
 }
 

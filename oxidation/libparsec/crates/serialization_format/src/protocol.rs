@@ -447,10 +447,10 @@ fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> TokenStream {
 }
 
 fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
-    let camel_case_name = &snake_to_pascal_case(&cmd.cmd);
+    let pascal_case_name = &snake_to_pascal_case(&cmd.cmd);
     let snake_case_name = &cmd.cmd;
 
-    let variant_name = format_ident!("{}", camel_case_name);
+    let variant_name = format_ident!("{}", pascal_case_name);
     let module_name = format_ident!("{}", snake_case_name);
     let command_name = snake_case_name;
 

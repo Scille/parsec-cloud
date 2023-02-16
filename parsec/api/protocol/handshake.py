@@ -270,7 +270,7 @@ class ServerHandshake:
         )
 
     def build_organization_expired_result_req(
-        self, help: str = "Trial organization has expired"
+        self, help: str = "The organization has expired"
     ) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")

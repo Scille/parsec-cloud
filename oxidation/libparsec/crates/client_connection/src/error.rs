@@ -14,15 +14,15 @@ pub enum CommandError {
     BadContent,
 
     /// The organization has expired
-    #[error("Trial organization has expired")]
+    #[error("The organization has expired")]
     ExpiredOrganization,
 
     /// We receive a response but with an unexpected status code.
-    #[error("unexpected response status {0}")]
+    #[error("Unexpected response status {0}")]
     InvalidResponseStatus(reqwest::StatusCode, reqwest::Response),
 
     /// We failed to deserialize the reply.
-    #[error("failed to deserialize the response: {0}")]
+    #[error("Failed to deserialize the response: {0}")]
     InvalidResponseContent(libparsec_protocol::DecodeError),
 
     /// We failed to retrieve the reply.
