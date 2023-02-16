@@ -130,7 +130,7 @@ async def test_organization_expired(running_backend, alice, expiredorg):
             expiredorg.addr, alice.device_id, alice.signing_key
         ) as cmds:
             await cmds.ping()
-    assert str(exc.value) == "Trial organization has expired"
+    assert str(exc.value) == "The organization has expired"
 
 
 @pytest.mark.skipif(OXIDIZED, reason="No handshake")
