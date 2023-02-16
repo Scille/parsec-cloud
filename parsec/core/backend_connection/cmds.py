@@ -438,10 +438,7 @@ async def vlob_maintenance_save_reencryption_batch(
             cmd="vlob_maintenance_save_reencryption_batch",
             realm_id=realm_id,
             encryption_revision=encryption_revision,
-            batch=[
-                ReencryptionBatchEntry(vlob_id=x.vlob_id, version=x.version, blob=x.blob)
-                for x in batch
-            ],
+            batch=list(batch),
         ),
     )
 
