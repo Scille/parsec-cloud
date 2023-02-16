@@ -7,8 +7,8 @@ from typing import Iterable, cast
 
 import attr
 
+from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
-    AuthenticatedCmds,
     DateTime,
     EnrollmentID,
     PkiEnrollmentAcceptRepActiveUsersLimitReached,
@@ -61,7 +61,8 @@ from parsec.core.types import LocalDevice
 
 
 async def accepter_list_submitted_from_backend(
-    cmds: BackendAuthenticatedCmds | AuthenticatedCmds, extra_trust_roots: Iterable[Path] = ()
+    cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
+    extra_trust_roots: Iterable[Path] = (),
 ) -> list[PkiEnrollmentAccepterValidSubmittedCtx | PkiEnrollmentAccepterInvalidSubmittedCtx]:
     """
     Raises:
@@ -153,7 +154,7 @@ async def accepter_list_submitted_from_backend(
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentAccepterValidSubmittedCtx:
-    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds
     enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
@@ -303,7 +304,7 @@ class PkiEnrollmentAccepterInvalidSubmittedCtx:
     before the error or not.
     """
 
-    _cmds: BackendAuthenticatedCmds | AuthenticatedCmds
+    _cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds
     enrollment_id: EnrollmentID
     submitted_on: DateTime
     submitter_der_x509_certificate: bytes
@@ -331,7 +332,7 @@ class PkiEnrollmentAccepterInvalidSubmittedCtx:
 
 
 async def _reject(
-    cmds: BackendAuthenticatedCmds | AuthenticatedCmds, enrollment_id: EnrollmentID
+    cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds, enrollment_id: EnrollmentID
 ) -> None:
     """
     Raises:

@@ -20,7 +20,6 @@ from trio_typing import TaskStatus
 
 from parsec._parsec import (
     ActiveUsersLimit,
-    AuthenticatedCmds,
     CoreEvent,
     EventsListenRep,
     EventsListenRepOk,
@@ -36,6 +35,7 @@ from parsec._parsec import (
     OrganizationConfigRepOk,
     OrganizationConfigRepUnknownStatus,
 )
+from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec.api.protocol import AUTHENTICATED_CMDS, DeviceID
 from parsec.api.transport import Transport
 from parsec.core.backend_connection import (
@@ -54,8 +54,8 @@ from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 
-# This global variable activates AuthenticatedCmds binding
-OXIDIZED = False
+# This global variable activates RsBackendAuthenticatedCmds binding
+OXIDIZED = True
 
 logger = get_logger()
 
@@ -289,8 +289,8 @@ class BackendAuthenticatedConn:
         self._status = BackendConnStatus.LOST
         self._status_exc: Exception | None = None
         self._status_event_sent = False
-        self._cmds: AuthenticatedCmds | BackendAuthenticatedCmds = (
-            AuthenticatedCmds(addr, device.device_id, device.signing_key)
+        self._cmds: RsBackendAuthenticatedCmds | BackendAuthenticatedCmds = (
+            RsBackendAuthenticatedCmds(addr, device.device_id, device.signing_key)
             if OXIDIZED
             else BackendAuthenticatedCmds(addr, self._acquire_transport)
         )
@@ -324,7 +324,7 @@ class BackendAuthenticatedConn:
         return self._status_exc
 
     @property
-    def cmds(self) -> BackendAuthenticatedCmds | AuthenticatedCmds:
+    def cmds(self) -> BackendAuthenticatedCmds | RsBackendAuthenticatedCmds:
         return self._cmds
 
     async def set_status(
@@ -549,7 +549,7 @@ async def backend_authenticated_cmds_factory(
     device_id: DeviceID,
     signing_key: SigningKey,
     keepalive: int | None = None,
-) -> AsyncGenerator[BackendAuthenticatedCmds | AuthenticatedCmds, None]:
+) -> AsyncGenerator[BackendAuthenticatedCmds | RsBackendAuthenticatedCmds, None]:
     """
     Raises:
         BackendConnectionError
@@ -589,7 +589,7 @@ async def backend_authenticated_cmds_factory(
                 raise
 
     try:
-        yield AuthenticatedCmds(
+        yield RsBackendAuthenticatedCmds(
             addr, device_id, signing_key
         ) if OXIDIZED else BackendAuthenticatedCmds(addr, _acquire_transport)
 

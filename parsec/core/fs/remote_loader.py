@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING, Awaitable, Callable, Dict, Iterable, Iterator,
 import trio
 from trio import MemoryReceiveChannel, MemorySendChannel, open_memory_channel
 
+from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
     BlockAccess,
-    AuthenticatedCmds,
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
@@ -211,7 +211,7 @@ class UserRemoteLoader:
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
-        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
     ):
         self.device = device
@@ -444,7 +444,7 @@ class RemoteLoader(UserRemoteLoader):
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
-        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: AnyWorkspaceStorage,
         event_bus: EventBus,

@@ -26,7 +26,6 @@ from parsec._parsec import (
     Regex,
     UserID,
     WorkspaceEntry,
-    AuthenticatedCmds,
     CoreEvent,
     DateTime,
     RealmStatusRepOk,
@@ -34,6 +33,7 @@ from parsec._parsec import (
 )
 from parsec._parsec import FileManifest as RemoteFileManifest
 from parsec.api.data import AnyRemoteManifest
+from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec.api.data import AnyRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import MaintenanceType, RealmID, UserID
@@ -101,7 +101,7 @@ class WorkspaceFS:
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         device: LocalDevice,
         local_storage: AnyWorkspaceStorage,
-        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
         preferred_language: str = "en",
@@ -161,7 +161,7 @@ class WorkspaceFS:
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         device: LocalDevice,
-        backend_cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
         workspace_storage_cache_size: int,
