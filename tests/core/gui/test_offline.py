@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 
 from parsec.api.data import EntryName
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.gui.lang import translate
 from tests.common import real_clock_timeout
 
@@ -35,6 +36,9 @@ async def test_offline_notification(aqtbot, running_backend, logged_gui):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.skipif(
+    OXIDIZED, reason="The connection manager doesn't provide the DISCONNECTED state"
+)
 async def test_backend_desync_notification(
     aqtbot,
     running_backend,
