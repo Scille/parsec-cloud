@@ -169,7 +169,10 @@ async def test_init_with_backend_offline(event_bus, alice):
                 await conn.cmds.ping("foo")
 
 
-@pytest.mark.skipif(OXIDIZED, reason="No error")
+@pytest.mark.skipif(
+    OXIDIZED,
+    reason="No error, because there aren't connection manager with the oxidized AuthenticatedCmds, so the monitor won't affect this one",
+)
 @pytest.mark.trio
 @pytest.mark.parametrize("during_bootstrap", (True, False))
 async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_bootstrap):
