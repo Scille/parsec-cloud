@@ -2,6 +2,8 @@
 
 use thiserror::Error;
 
+use libparsec_protocol::ApiVersion;
+
 pub type CommandResult<T> = core::result::Result<T, CommandError>;
 
 /// Sending a command isn't risk-free, we have multiple possible way to fail.
@@ -25,6 +27,14 @@ pub enum CommandError {
     #[error("Failed to deserialize the response: {0}")]
     InvalidResponseContent(libparsec_protocol::DecodeError),
 
+    /// We failed to retrieve Api-Version
+    #[error("Api-Version header is missing")]
+    MissingApiVersion,
+
+    /// We failed to retrieve Supported-Api-Versions
+    #[error("Supported-Api-Versions header is missing")]
+    MissingSupportedApiVersions,
+
     /// We failed to retrieve the reply.
     #[error("failed to retrieving the response: {0}")]
     NoResponse(reqwest::Error),
@@ -38,8 +48,15 @@ pub enum CommandError {
     Serialization(libparsec_protocol::EncodeError),
 
     /// The version is not supported
-    #[error("Unsupported API version: {0}")]
-    UnsupportedApiVersion(String),
+    #[error("Unsupported API version: {api_version}, supported versions are: {supported_api_versions:?}")]
+    UnsupportedApiVersion {
+        api_version: ApiVersion,
+        supported_api_versions: Vec<ApiVersion>,
+    },
+
+    /// We failed to deserialize ApiVersion
+    #[error("Wrong ApiVersion {0}")]
+    WrongApiVersion(String),
 }
 
 impl From<libparsec_protocol::DecodeError> for CommandError {
