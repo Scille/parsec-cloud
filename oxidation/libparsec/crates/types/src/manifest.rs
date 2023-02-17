@@ -290,6 +290,13 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Blocksize(u64);
 
+impl Blocksize {
+    /// Return the inner value of the [Blocksize].
+    pub const fn inner(&self) -> u64 {
+        self.0
+    }
+}
+
 impl TryFrom<u64> for Blocksize {
     type Error = &'static str;
     fn try_from(data: u64) -> Result<Self, Self::Error> {
