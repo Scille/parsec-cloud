@@ -66,7 +66,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                block_create,
+                authenticated_cmds::v2::block_create,
                 BlockCreateRep,
                 Ok,
                 NotFound,
@@ -90,7 +90,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                block_read,
+                authenticated_cmds::v2::block_read,
                 BlockReadRep,
                 Ok,
                 NotFound,
@@ -120,7 +120,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                device_create,
+                authenticated_cmds::v2::device_create,
                 DeviceCreateRep,
                 Ok,
                 BadUserId,
@@ -141,7 +141,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                events_listen,
+                authenticated_cmds::v2::events_listen,
                 EventsListenRep,
                 NoEvents,
                 Ok,
@@ -160,7 +160,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                events_subscribe,
+                authenticated_cmds::v2::events_subscribe,
                 EventsSubscribeRep,
                 Ok,
                 UnknownStatus
@@ -194,7 +194,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                human_find,
+                authenticated_cmds::v2::human_find,
                 HumanFindRep,
                 Ok,
                 NotAllowed,
@@ -223,7 +223,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_1_greeter_wait_peer,
+                authenticated_cmds::v2::invite_1_greeter_wait_peer,
                 Invite1GreeterWaitPeerRep,
                 Ok,
                 NotFound,
@@ -247,7 +247,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_2a_greeter_get_hashed_nonce,
+                authenticated_cmds::v2::invite_2a_greeter_get_hashed_nonce,
                 Invite2aGreeterGetHashedNonceRep,
                 Ok,
                 NotFound,
@@ -279,7 +279,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_2b_greeter_send_nonce,
+                authenticated_cmds::v2::invite_2b_greeter_send_nonce,
                 Invite2bGreeterSendNonceRep,
                 Ok,
                 NotFound,
@@ -303,7 +303,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_3a_greeter_wait_peer_trust,
+                authenticated_cmds::v2::invite_3a_greeter_wait_peer_trust,
                 Invite3aGreeterWaitPeerTrustRep,
                 Ok,
                 NotFound,
@@ -328,7 +328,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_3b_greeter_signify_trust,
+                authenticated_cmds::v2::invite_3b_greeter_signify_trust,
                 Invite3bGreeterSignifyTrustRep,
                 Ok,
                 NotFound,
@@ -360,7 +360,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_4_greeter_communicate,
+                authenticated_cmds::v2::invite_4_greeter_communicate,
                 Invite4GreeterCommunicateRep,
                 Ok,
                 NotFound,
@@ -388,7 +388,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_delete,
+                authenticated_cmds::v2::invite_delete,
                 InviteDeleteRep,
                 Ok,
                 NotFound,
@@ -407,7 +407,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_list,
+                authenticated_cmds::v2::invite_list,
                 InviteListRep,
                 Ok,
                 UnknownStatus
@@ -438,7 +438,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                invite_new,
+                authenticated_cmds::v2::invite_new,
                 InviteNewRep,
                 NotAllowed,
                 AlreadyMember,
@@ -458,7 +458,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                message_get,
+                authenticated_cmds::v2::message_get,
                 MessageGetRep,
                 Ok,
                 UnknownStatus
@@ -475,7 +475,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                organization_config,
+                authenticated_cmds::v2::organization_config,
                 OrganizationConfigRep,
                 Ok,
                 UnknownStatus,
@@ -493,7 +493,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                organization_stats,
+                authenticated_cmds::v2::organization_stats,
                 OrganizationStatsRep,
                 NotFound,
                 NotAllowed,
@@ -513,7 +513,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                ping,
+                authenticated_cmds::v2::ping,
                 AuthenticatedPingRep,
                 Ok,
                 UnknownStatus
@@ -562,7 +562,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                pki_enrollment_accept,
+                authenticated_cmds::v2::pki_enrollment_accept,
                 PkiEnrollmentAcceptRep,
                 Ok,
                 InvalidData,
@@ -587,7 +587,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                pki_enrollment_list,
+                authenticated_cmds::v2::pki_enrollment_list,
                 PkiEnrollmentListRep,
                 Ok,
                 NotAllowed,
@@ -609,7 +609,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                pki_enrollment_reject,
+                authenticated_cmds::v2::pki_enrollment_reject,
                 PkiEnrollmentRejectRep,
                 Ok,
                 NotFound,
@@ -632,7 +632,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                realm_create,
+                authenticated_cmds::v2::realm_create,
                 RealmCreateRep,
                 Ok,
                 NotFound,
@@ -664,7 +664,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                realm_finish_reencryption_maintenance,
+                authenticated_cmds::v2::realm_finish_reencryption_maintenance,
                 RealmFinishReencryptionMaintenanceRep,
                 Ok,
                 MaintenanceError,
@@ -691,7 +691,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                realm_get_role_certificates,
+                authenticated_cmds::v2::realm_get_role_certificates,
                 RealmGetRoleCertificatesRep,
                 Ok,
                 NotAllowed,
@@ -733,7 +733,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                realm_start_reencryption_maintenance,
+                authenticated_cmds::v2::realm_start_reencryption_maintenance,
                 RealmStartReencryptionMaintenanceRep,
                 BadEncryptionRevision,
                 BadTimestamp,
@@ -760,7 +760,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                realm_stats,
+                authenticated_cmds::v2::realm_stats,
                 RealmStatsRep,
                 Ok,
                 NotAllowed,
@@ -781,7 +781,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                realm_status,
+                authenticated_cmds::v2::realm_status,
                 RealmStatusRep,
                 Ok,
                 NotAllowed,
@@ -809,7 +809,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                realm_update_roles,
+                authenticated_cmds::v2::realm_update_roles,
                 RealmUpdateRolesRep,
                 Ok,
                 NotAllowed,
@@ -855,7 +855,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                user_create,
+                authenticated_cmds::v2::user_create,
                 UserCreateRep,
                 Ok,
                 ActiveUsersLimitReached,
@@ -879,7 +879,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                user_get,
+                authenticated_cmds::v2::user_get,
                 UserGetRep,
                 Ok,
                 NotFound,
@@ -901,7 +901,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                user_revoke,
+                authenticated_cmds::v2::user_revoke,
                 UserRevokeRep,
                 Ok,
                 InvalidCertification,
@@ -951,7 +951,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                vlob_create,
+                authenticated_cmds::v2::vlob_create,
                 VlobCreateRep,
                 Ok,
                 UnknownStatus,
@@ -982,7 +982,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                vlob_list_versions,
+                authenticated_cmds::v2::vlob_list_versions,
                 VlobListVersionsRep,
                 Ok,
                 NotAllowed,
@@ -1013,7 +1013,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                vlob_maintenance_get_reencryption_batch,
+                authenticated_cmds::v2::vlob_maintenance_get_reencryption_batch,
                 VlobMaintenanceGetReencryptionBatchRep,
                 Ok,
                 BadEncryptionRevision,
@@ -1047,7 +1047,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                vlob_maintenance_save_reencryption_batch,
+                authenticated_cmds::v2::vlob_maintenance_save_reencryption_batch,
                 VlobMaintenanceSaveReencryptionBatchRep,
                 Ok,
                 BadEncryptionRevision,
@@ -1074,7 +1074,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                vlob_poll_changes,
+                authenticated_cmds::v2::vlob_poll_changes,
                 VlobPollChangesRep,
                 Ok,
                 UnknownStatus,
@@ -1109,7 +1109,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                vlob_read,
+                authenticated_cmds::v2::vlob_read,
                 VlobReadRep,
                 Ok,
                 UnknownStatus,
@@ -1159,7 +1159,7 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                vlob_update,
+                authenticated_cmds::v2::vlob_update,
                 VlobUpdateRep,
                 Ok,
                 UnknownStatus,
