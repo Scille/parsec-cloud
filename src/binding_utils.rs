@@ -349,9 +349,9 @@ macro_rules! impl_enum_field {
 }
 
 macro_rules! _cmd_error_handler {
-    ("handle_bad_timestamp", $cmd_name: ident, $rep_type: ident, $rep: ident) => {
+    ("handle_bad_timestamp", $cmd_name: path, $rep_type: ident, $rep: ident) => {
         ::paste::paste! {
-            if let authenticated_cmds::v2::$cmd_name::Rep::BadTimestamp { .. } = $rep {
+            if let $cmd_name::Rep::BadTimestamp { .. } = $rep {
                 let rep = ::pyo3::Python::with_gil(|py| {
                     let rep = crate::binding_utils::py_object!(
                         $rep,
@@ -369,7 +369,7 @@ macro_rules! _cmd_error_handler {
 }
 
 macro_rules! send_command {
-    ($client: ident, $req: ident, $cmd_name: ident, $rep_type: ident, $($kind_type: ty),* $(, $error_handler: literal)? $(,)?) => {
+    ($client: ident, $req: ident, $cmd_name: path, $rep_type: ident, $($kind_type: ty),* $(, $error_handler: literal)? $(,)?) => {
         // We invoke gil because it will run in a coroutine
         ::paste::paste! {
             {
@@ -382,7 +382,7 @@ macro_rules! send_command {
 
                 Ok(match rep {
                     $(
-                        authenticated_cmds::v2::$cmd_name::Rep::$kind_type { .. } => {
+                        $cmd_name::Rep::$kind_type { .. } => {
                             ::pyo3::Python::with_gil(|py| {
                                 let rep = crate::binding_utils::py_object!(
                                     rep,
