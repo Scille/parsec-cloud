@@ -32,7 +32,7 @@
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use libparsec_crypto::SigningKey;
-use libparsec_protocol::Request;
+use libparsec_protocol::{ApiVersion, Request};
 use libparsec_types::{BackendOrganizationAddr, DeviceID};
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
@@ -160,12 +160,31 @@ impl AuthenticatedCmds {
             }
             415 => Err(CommandError::BadContent),
             422 => {
-                let api_version = resp
-                    .headers()
+                let headers = resp.headers();
+
+                let api_version = headers
                     .get("Api-Version")
-                    .map(|x| x.to_str().unwrap_or_default().into())
+                    .ok_or(CommandError::MissingApiVersion)?
+                    .to_str()
                     .unwrap_or_default();
-                Err(CommandError::UnsupportedApiVersion(api_version))
+                let api_version = api_version
+                    .try_into()
+                    .map_err(|_| CommandError::WrongApiVersion(api_version.into()))?;
+
+                let supported_api_versions = resp
+                    .headers()
+                    .get("Supported-Api-Versions")
+                    .ok_or(CommandError::MissingSupportedApiVersions)?
+                    .to_str()
+                    .unwrap_or_default()
+                    .split(';')
+                    .filter_map(|x| ApiVersion::try_from(x).ok())
+                    .collect();
+
+                Err(CommandError::UnsupportedApiVersion {
+                    api_version,
+                    supported_api_versions,
+                })
             }
             460 => Err(CommandError::ExpiredOrganization),
             461 => Err(CommandError::RevokedUser),
