@@ -437,8 +437,14 @@ jobs:
 
       - name: Install dependencies
         if: steps.web-change.outputs.run == 'true'
-        run: npm clean-install
+        run: |
+          # Execute 'npm clean-install' until success,
+          # This is done that way because sometime some CDN response with 503
+          until npm clean-install; do
+            echo "Failed clean-install, retrying ...";
+          done
         working-directory: oxidation/client
+        timeout-minutes: 5
 
       - name: E2E tests
         if: steps.web-change.outputs.run == 'true'
