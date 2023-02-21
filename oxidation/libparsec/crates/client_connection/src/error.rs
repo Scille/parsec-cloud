@@ -36,7 +36,7 @@ pub enum CommandError {
     MissingSupportedApiVersions,
 
     /// We failed to retrieve the reply.
-    #[error("failed to retrieving the response: {0}")]
+    #[error("Failed to retrieving the response: {0}")]
     NoResponse(reqwest::Error),
 
     /// The user has beed revoked
