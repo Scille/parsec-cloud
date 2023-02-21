@@ -565,7 +565,7 @@ impl BackendOrganizationFileLinkAddr {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct BackendInvitationAddr(libparsec::types::BackendInvitationAddr);
+pub(crate) struct BackendInvitationAddr(pub libparsec::types::BackendInvitationAddr);
 
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __copy__);
