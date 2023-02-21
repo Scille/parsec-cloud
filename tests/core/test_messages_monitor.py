@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import Callable
+
 import pytest
 import trio
 
@@ -180,7 +182,12 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
 
 
 @pytest.mark.trio
-async def test_new_reencryption_trigger_event(alice_core, bob_core, running_backend):
+async def test_new_reencryption_trigger_event(
+    alice_core: LoggedCore,
+    bob_core: LoggedCore,
+    running_backend,
+    global_core_monitors_freeze: Callable[[bool], None],
+):
     KEY = SecretKey.generate()
 
     def _update_event(event):
@@ -193,13 +200,16 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
             )
         return event
 
-    with freeze_time("2000-01-02"):
+    global_core_monitors_freeze(False)
+    with freeze_time("2000-01-02", devices=[alice_core.device], freeze_datetime=True):
         wid = await create_shared_workspace(EntryName("w"), alice_core, bob_core)
 
+    global_core_monitors_freeze(True)
     with alice_core.event_bus.listen() as a_spy, bob_core.event_bus.listen() as b_spy:
-        with freeze_time("2000-01-03"):
+        with freeze_time("2000-01-03", devices=[alice_core.device], freeze_datetime=True):
             await alice_core.user_fs.workspace_start_reencryption(wid)
 
+        global_core_monitors_freeze(False)
         # Each workspace participant should get the message
         await a_spy.wait_with_timeout(
             CoreEvent.SHARING_UPDATED,
