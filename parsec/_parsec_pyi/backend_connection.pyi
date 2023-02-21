@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from parsec._parsec_pyi.addrs import BackendOrganizationAddr
-from parsec._parsec_pyi.crypto import PublicKey, SigningKey
+from parsec._parsec_pyi.addrs import BackendInvitationAddr, BackendOrganizationAddr
+from parsec._parsec_pyi.crypto import HashDigest, PublicKey, SigningKey
 from parsec._parsec_pyi.enumerate import InvitationDeletedReason, InvitationType
 from parsec._parsec_pyi.ids import (
     BlockID,
@@ -58,6 +58,16 @@ from parsec._parsec_pyi.protocol import (
     VlobReadRep,
     VlobUpdateRep,
 )
+from parsec._parsec_pyi.protocol.invite import (
+    Invite1ClaimerWaitPeerRep,
+    Invite2aClaimerSendHashedNonceRep,
+    Invite2bClaimerSendNonceRep,
+    Invite3aClaimerSignifyTrustRep,
+    Invite3bClaimerWaitPeerTrustRep,
+    Invite4ClaimerCommunicateRep,
+    InviteInfoRep,
+)
+from parsec._parsec_pyi.protocol.ping import InvitedPingRep
 from parsec._parsec_pyi.protocol.vlob import ReencryptionBatchEntry
 from parsec._parsec_pyi.time import DateTime
 
@@ -215,3 +225,24 @@ class AuthenticatedCmds:
         blob: bytes,
         sequester_blob: dict[SequesterServiceID, bytes] | None,
     ) -> VlobUpdateRep: ...
+
+class InvitedCmds:
+    def __init__(self, addr: BackendInvitationAddr) -> None: ...
+    @property
+    def addr(self) -> BackendInvitationAddr: ...
+    async def invite_1_claimer_wait_peer(
+        self, claimer_public_key: PublicKey
+    ) -> Invite1ClaimerWaitPeerRep: ...
+    async def invite_2a_claimer_send_hashed_nonce(
+        self, claimer_hashed_nonce: HashDigest
+    ) -> Invite2aClaimerSendHashedNonceRep: ...
+    async def invite_2b_claimer_send_nonce(
+        self, claimer_nonce: bytes
+    ) -> Invite2bClaimerSendNonceRep: ...
+    async def invite_3a_claimer_signify_trust(self) -> Invite3aClaimerSignifyTrustRep: ...
+    async def invite_3b_claimer_wait_peer_trust(self) -> Invite3bClaimerWaitPeerTrustRep: ...
+    async def invite_4_claimer_communicate(
+        self, payload: bytes
+    ) -> Invite4ClaimerCommunicateRep: ...
+    async def invite_info(self) -> InviteInfoRep: ...
+    async def ping(self, ping: str = "") -> InvitedPingRep: ...
