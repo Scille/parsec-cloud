@@ -2,9 +2,11 @@
 
 mod authenticated_cmds;
 mod error;
+mod invited_cmds;
 
 pub(crate) use authenticated_cmds::AuthenticatedCmds;
 pub(crate) use error::*;
+pub(crate) use invited_cmds::InvitedCmds;
 
 use pyo3::{types::PyModule, PyResult, Python};
 
@@ -50,6 +52,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
     // Cmds
     m.add_class::<AuthenticatedCmds>()?;
+    m.add_class::<InvitedCmds>()?;
 
     Ok(())
 }

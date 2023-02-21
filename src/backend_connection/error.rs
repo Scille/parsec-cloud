@@ -46,6 +46,12 @@ impl From<CommandExc> for PyErr {
             | libparsec::client_connection::CommandError::ExpiredOrganization => {
                 BackendConnectionRefused::new_err(err.0.to_string())
             }
+            libparsec::client_connection::CommandError::InvitationNotFound => {
+                BackendInvitationNotFound::new_err(err.0.to_string())
+            }
+            libparsec::client_connection::CommandError::InvitationAlreadyDeleted => {
+                BackendInvitationAlreadyUsed::new_err(err.0.to_string())
+            }
             _ => BackendConnectionError::new_err(err.0.to_string()),
         }
     }
