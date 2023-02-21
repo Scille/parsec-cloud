@@ -63,7 +63,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         token: InvitationToken,
         expected_greeter: UserID | None = None,
-    ) -> Tuple[Invitation, Conduit]:
+    ) -> tuple[Invitation, Conduit]:
         org = self._organizations[organization_id]
         invitation = org.invitations.get(token)
         if not invitation or (expected_greeter and invitation.greeter_user_id != expected_greeter):
