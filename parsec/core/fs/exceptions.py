@@ -28,6 +28,7 @@ from parsec.core.types import ChunkID, EntryID
 # - `FsOperationError` initialization takes `AnyPath` arguments, defined as `Union[str, FsPath]`
 if TYPE_CHECKING:
     from parsec.core.fs.path import AnyPath
+    from parsec.core.fs.workspacefs.sync_transactions import ChangesAfterSync
 
 # Base classes for all file system errors
 
@@ -146,6 +147,12 @@ class FSFileConflictError(FSInternalError):
 
 class FSReshapingRequiredError(FSInternalError):
     pass
+
+
+class FSChangesNotAdmissibleError(FSInternalError):
+    def __init__(self, changes: ChangesAfterSync):
+        super().__init__(changes)
+        self.changes = changes
 
 
 class FSNoSynchronizationRequired(FSInternalError):

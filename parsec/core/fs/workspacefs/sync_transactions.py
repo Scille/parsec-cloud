@@ -6,10 +6,11 @@ from typing import AsyncIterator, Dict, Iterable, Union
 
 import attr
 
-from parsec._parsec import BlockAccess, CoreEvent, DateTime, EntryNameError, Regex
+from parsec._parsec import BlockAccess, ChunkID, CoreEvent, DateTime, EntryNameError, Regex
 from parsec.api.data import AnyRemoteManifest, FileManifest, FolderManifest, WorkspaceManifest
 from parsec.api.protocol import DeviceID
 from parsec.core.fs.exceptions import (
+    FSChangesNotAdmissibleError,
     FSFileConflictError,
     FSIsADirectoryError,
     FSLocalMissError,
@@ -54,8 +55,10 @@ TRANSLATIONS = {
 class ChangesAfterSync:
     added_blocks: set[BlockAccess] | None = None
     removed_blocks: set[BlockAccess] | None = None
+    required_blocks: set[BlockAccess] | None = None
     added_entries: set[EntryID] | None = None
     removed_entries: set[EntryID] | None = None
+    required_entries: set[EntryID] | None = None
 
     @classmethod
     def from_manifests(
@@ -63,21 +66,38 @@ class ChangesAfterSync:
         old_manifest: AnyRemoteManifest,
         new_manifest: AnyRemoteManifest,
     ) -> "ChangesAfterSync":
+        # Case of a file manifest
         if isinstance(old_manifest, FileManifest):
             assert isinstance(new_manifest, FileManifest)
+            # Compute added/removed blocks
             old_blocks = set(old_manifest.blocks)
             new_blocks = set(new_manifest.blocks)
+            added_blocks = new_blocks - old_blocks
+            removed_blocks = old_blocks - new_blocks
+            # Added blocks are required (when block remanence is enabled) if the manifest wasn't empty
+            required_blocks = added_blocks if old_blocks else set()
             return cls(
-                added_blocks=new_blocks - old_blocks,
-                removed_blocks=old_blocks - new_blocks,
+                added_blocks=added_blocks,
+                removed_blocks=removed_blocks,
+                required_blocks=required_blocks,
             )
         elif isinstance(old_manifest, (WorkspaceManifest, FolderManifest)):
             assert isinstance(new_manifest, (WorkspaceManifest, FolderManifest))
+            # Compute added/removed entries
             old_entries = set(old_manifest.children.values())
             new_entries = set(new_manifest.children.values())
+            added_entries = new_entries - old_entries
+            removed_entries = old_entries - new_entries
+            # Added entries are required if they took the place of another existing entry
+            required_entries = {
+                entry
+                for name, entry in new_manifest.children.items()
+                if name in old_manifest.children and old_manifest.children[name] in removed_entries
+            }
             return cls(
-                added_entries=new_entries - old_entries,
-                removed_entries=old_entries - new_entries,
+                added_entries=added_entries,
+                removed_entries=removed_entries,
+                required_entries=required_entries,
             )
         else:
             # A user manifest should never get there
@@ -447,15 +467,20 @@ class SyncTransactions(EntryTransactions):
             base_version = local_manifest.base_version
             new_base_version = new_local_manifest.base_version
 
+            # Extract changes
+            downsynced = base_version != new_base_version and remote_author != self.local_author
+            changes = ChangesAfterSync.from_manifests(local_manifest.base, new_local_manifest.base)
+
+            # Check if the changes are admissible
+            if downsynced and not await self.are_changes_admissible(changes):
+                raise FSChangesNotAdmissibleError(changes)
+
             # Set the new base manifest
             if new_local_manifest != local_manifest:
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
-            if base_version != new_base_version and remote_author != self.local_author:
-                changes = ChangesAfterSync.from_manifests(
-                    local_manifest.base, new_local_manifest.base
-                )
+            if downsynced:
                 self._send_event(
                     CoreEvent.FS_ENTRY_DOWNSYNCED,
                     id=entry_id,
@@ -464,9 +489,6 @@ class SyncTransactions(EntryTransactions):
 
             # Send synced event
             if local_manifest.need_sync and not new_local_manifest.need_sync:
-                changes = ChangesAfterSync.from_manifests(
-                    local_manifest.base, new_local_manifest.base
-                )
                 self._send_event(
                     CoreEvent.FS_ENTRY_SYNCED,
                     id=entry_id,
@@ -582,3 +604,45 @@ class SyncTransactions(EntryTransactions):
                     id=entry_id,
                     backup_id=new_manifest.id,
                 )
+
+    # Admissibility of sync changes
+
+    async def are_changes_admissible(self, changes: ChangesAfterSync) -> bool:
+        # No block remanence, any change is admissible
+        if not self.local_storage.is_block_remanent():
+            return True
+        critical_blocks: list[BlockAccess] = []
+        # Case of a non-empty file manifest with new blocks
+        if changes.required_blocks:
+            critical_blocks += changes.required_blocks
+        # Case of a folder manifest with updated entries
+        if changes.required_entries:
+            for entry in changes.required_entries:
+                try:
+                    manifest = await self.local_storage.get_manifest(entry)
+                except FSLocalMissError:
+                    return False
+                if isinstance(manifest, LocalFileManifest):
+                    critical_blocks += manifest.base.blocks
+        # Admissible if all critical blocks are present locally
+        chunk_ids = [ChunkID.from_block_id(access.id) for access in critical_blocks]
+        local_chunk_ids = await self.local_storage.get_local_block_ids(chunk_ids)
+        return len(chunk_ids) == len(local_chunk_ids)
+
+    async def make_changes_admissible(self, changes: ChangesAfterSync) -> None:
+        # No block remanence, any change is admissible
+        if not self.local_storage.is_block_remanent():
+            return
+        critical_blocks: list[BlockAccess] = []
+        # Case of a non-empty file manifest with new blocks
+        if changes.required_blocks:
+            critical_blocks += changes.required_blocks
+        # Case of a folder manifest with updated entries
+        if changes.required_entries:
+            for entry in changes.required_entries:
+                manifest = await self._load_manifest(entry)
+                if isinstance(manifest, LocalFileManifest):
+                    critical_blocks += manifest.base.blocks
+        # Admissible if all critical blocks are present locally
+        if critical_blocks:
+            await self.remote_loader.load_blocks(critical_blocks)
