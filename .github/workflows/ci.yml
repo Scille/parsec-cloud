@@ -313,11 +313,13 @@ jobs:
           && startsWith(matrix.os, 'ubuntu-')
         run: poetry run pip install pytest-xvfb
 
-      - name: (🐧🏁 Not macOS) GUI tests
+      - name: (🐧🏁 Not MacOS) GUI tests
         if: >-
           steps.python-changes.outputs.run == 'true'
           && startsWith(matrix.os, 'macos-') != true
-        run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow --rungui -m gui
+        # Note: using `--numprocesses 1` force pytest to print the test that it will be executing
+        # This is usefull to pinpoint exactly which test in blocking.
+        run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow --rungui -m gui --numprocesses 1
         timeout-minutes: 10
 
       - name: (🐧 Linux) PostgreSQL tests
