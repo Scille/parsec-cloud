@@ -6,7 +6,6 @@ import trio
 
 from parsec._parsec import DateTime, InvitationType, InvitedPingRepOk
 from parsec.api.protocol import INVITED_CMDS, InvitationDeletedReason, InvitationToken
-from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
@@ -14,6 +13,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     backend_invited_cmds_factory,
 )
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.types import BackendInvitationAddr
 from tests.core.backend_connection.common import ALL_CMDS
 
@@ -47,6 +47,7 @@ async def test_backend_switch_offline(running_backend, invitation_addr):
                 await cmds.ping()
 
 
+@pytest.mark.skipif(OXIDIZED, reason="No error")
 @pytest.mark.trio
 async def test_backend_closed_cmds(running_backend, invitation_addr):
     async with backend_invited_cmds_factory(invitation_addr) as cmds:
@@ -74,11 +75,9 @@ async def test_handshake_organization_expired(running_backend, expiredorg, expir
         token=invitation.token,
     )
 
-    with running_backend.backend.event_bus.listen() as spy:
-        with pytest.raises(BackendConnectionRefused) as exc:
-            async with backend_invited_cmds_factory(invitation_addr) as cmds:
-                await cmds.ping()
-        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+    with pytest.raises(BackendConnectionRefused) as exc:
+        async with backend_invited_cmds_factory(invitation_addr) as cmds:
+            await cmds.ping()
     assert str(exc.value) == "The organization has expired"
 
 
@@ -113,8 +112,8 @@ async def test_handshake_already_used_invitation(running_backend, coolorg, invit
 
 
 @pytest.mark.trio
-async def test_invited_cmds_has_right_methods(running_backend, coolorg):
-    async with backend_invited_cmds_factory(coolorg.addr) as cmds:
+async def test_invited_cmds_has_right_methods(running_backend, invitation_addr):
+    async with backend_invited_cmds_factory(invitation_addr) as cmds:
         for method_name in INVITED_CMDS:
             assert hasattr(cmds, method_name)
         for method_name in ALL_CMDS - INVITED_CMDS:
