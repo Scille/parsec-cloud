@@ -4,12 +4,14 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
+import trio
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from parsec._parsec import (
     DateTime,
     DeviceFileType,
     InvitationType,
+    LocalDevice,
     save_device_with_password,
     save_device_with_password_in_config,
 )
@@ -17,9 +19,12 @@ from parsec.api.data import EntryName
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
 from parsec.core.gui import desktop
+from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
+from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspace_roles import get_role_translation as _
+from parsec.core.gui.workspaces_widget import WorkspacesWidget
 from parsec.core.local_device import AvailableDevice
 from parsec.core.types import (
     BackendInvitationAddr,
@@ -29,7 +34,7 @@ from parsec.core.types import (
     EntryID,
     WorkspaceRole,
 )
-from tests.common import customize_fixtures, freeze_time
+from tests.common import customize_fixtures
 
 
 @pytest.fixture
@@ -108,11 +113,20 @@ def bob_available_device(bob, tmp_path):
     )
 
 
+LoggedGuiWithFiles = tuple[MainWindow, WorkspacesWidget, FilesWidget]
+
+
 @pytest.fixture
 async def logged_gui_with_files(
-    aqtbot, running_backend, backend, autoclose_dialog, logged_gui, bob, monkeypatch
-):
-    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    logged_gui: MainWindow,
+    bob: LocalDevice,
+    monkeypatch: pytest.MonkeyPatch,
+) -> LoggedGuiWithFiles:
+    w_w: WorkspacesWidget = await logged_gui.test_switch_to_workspaces_widget()
 
     assert logged_gui.tab_center.count() == 1
 
@@ -132,9 +146,10 @@ async def logged_gui_with_files(
         # Important: this is necessary for the incoming click to reliably work
         assert wk_button.switch_button.isChecked()
 
-    await aqtbot.wait_until(_workspace_button_ready)
+    with trio.fail_after(5):
+        await aqtbot.wait_until(_workspace_button_ready)
 
-    f_w = logged_gui.test_get_files_widget()
+    f_w: FilesWidget = logged_gui.test_get_files_widget()
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
@@ -144,7 +159,8 @@ async def logged_gui_with_files(
         assert f_w.workspace_fs.get_workspace_name() == EntryName("w1")
         assert f_w.table_files.rowCount() == 1
 
-    await aqtbot.wait_until(_entry_available)
+    with trio.fail_after(5):
+        await aqtbot.wait_until(_entry_available)
 
     def _folder_ready():
         assert f_w.isVisible()
@@ -155,21 +171,23 @@ async def logged_gui_with_files(
 
     aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(_folder_ready)
+    with trio.fail_after(5):
+        await aqtbot.wait_until(_folder_ready)
 
     d_w = await logged_gui.test_switch_to_devices_widget()
 
     def _device_widget_ready():
         assert d_w.isVisible()
 
-    await aqtbot.wait_until(_device_widget_ready)
+    with trio.fail_after(5):
+        await aqtbot.wait_until(_device_widget_ready)
 
     return logged_gui, w_w, f_w
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file(aqtbot, logged_gui_with_files):
+async def test_link_file(aqtbot, logged_gui_with_files: LoggedGuiWithFiles):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
@@ -189,7 +207,7 @@ async def test_link_file(aqtbot, logged_gui_with_files):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files):
+async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files: LoggedGuiWithFiles):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory, DateTime.now())
 
@@ -208,96 +226,103 @@ async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.parametrize("timestamp", [True, False])
-async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, autoclose_dialog):
+@pytest.mark.parametrize(
+    "toggle_timestamp", [True, False], ids=["With Timestamp", "Without Timestamp"]
+)
+async def test_link_file_unmounted(
+    aqtbot, logged_gui_with_files: LoggedGuiWithFiles, toggle_timestamp: bool, autoclose_dialog
+):
     logged_gui, w_w, f_w = logged_gui_with_files
     await f_w.workspace_fs.sync()
 
-    with freeze_time(DateTime.now().add(seconds=1)):
-        if timestamp:
-            timestamp = DateTime.now()
+    timestamp: DateTime | None = None
+    if toggle_timestamp:
+        timestamp = DateTime.now().subtract(microseconds=1)
+    core = logged_gui.test_get_core()
+
+    def _mounted(ts):
+        assert autoclose_dialog.dialogs == []
+        assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
+
+    # Workspace should be mounted
+    await aqtbot.wait_until(lambda: _mounted(None))
+
+    # Checking that it has files
+    def _folder_ready(is_timestamped):
+        if not is_timestamped:
+            assert f_w.table_files.rowCount() == 2
+            folder = f_w.table_files.item(1, 1)
+            assert folder
+            assert folder.text() == "dir1"
         else:
-            timestamp = None
-        core = logged_gui.test_get_core()
+            assert f_w.label_role.text() == _(WorkspaceRole.READER)
+            assert isinstance(f_w.workspace_fs, WorkspaceFSTimestamped)
 
-        def _mounted(ts):
-            assert autoclose_dialog.dialogs == []
-            assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
+    await aqtbot.wait_until(lambda: _folder_ready(False))
 
-        # Workspace should be mounted
-        await aqtbot.wait_until(lambda: _mounted(None))
+    assert logged_gui.tab_center.count() == 1
 
-        # Checking that it has files
-        def _folder_ready(is_timestamped):
-            if not is_timestamped:
-                assert f_w.table_files.rowCount() == 2
-                folder = f_w.table_files.item(1, 1)
-                assert folder
-                assert folder.text() == "dir1"
-            else:
-                assert f_w.label_role.text() == _(WorkspaceRole.READER)
-                assert isinstance(f_w.workspace_fs, WorkspaceFSTimestamped)
+    # Generate a file link
+    url = f_w.workspace_fs.generate_file_link(f_w.current_directory, timestamp)
 
-        await aqtbot.wait_until(lambda: _folder_ready(False))
+    # Unmount the original workspace
+    await core.mountpoint_manager.unmount_workspace(f_w.workspace_fs.workspace_id, None)
 
-        assert logged_gui.tab_center.count() == 1
+    def _unmounted(ts):
+        assert not core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
 
-        # Generate a file link
-        url = f_w.workspace_fs.generate_file_link(f_w.current_directory, timestamp)
+    # Making sure that it is unmounted
+    await aqtbot.wait_until(lambda: _unmounted(None))
 
-        # Unmount the original workspace
-        await core.mountpoint_manager.unmount_workspace(f_w.workspace_fs.workspace_id, None)
+    # Add an instance with the file link
+    logged_gui.add_instance(url.to_url())
 
-        def _unmounted(ts):
-            assert not core.mountpoint_manager.is_workspace_mounted(
-                f_w.workspace_fs.workspace_id, ts
-            )
+    # Workspace should be mounted
+    await aqtbot.wait_until(lambda: _mounted(timestamp))
 
-        # Making sure that it is unmounted
-        await aqtbot.wait_until(lambda: _unmounted(None))
-
-        # Add an instance with the file link
-        logged_gui.add_instance(url.to_url())
-
-        # Workspace should be mounted
-        await aqtbot.wait_until(lambda: _mounted(timestamp))
-
-        # If the link was created with a timestamp, the workspace should be a
-        # TimestampedWorkspace, otherwise it's just a normal workspace
-        await aqtbot.wait_until(lambda: _folder_ready(timestamp is not None))
+    # If the link was created with a timestamp, the workspace should be a
+    # TimestampedWorkspace, otherwise it's just a normal workspace
+    await aqtbot.wait_until(lambda: _folder_ready(timestamp is not None))
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.parametrize("timestamp", [True, False])
-async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files, timestamp):
+@pytest.mark.parametrize(
+    "toggle_timestamp", [True, False], ids=["With Timestamp", "Without Timestamp"]
+)
+async def test_link_file_invalid_path(
+    aqtbot,
+    autoclose_dialog,
+    logged_gui_with_files: LoggedGuiWithFiles,
+    toggle_timestamp: bool,
+):
     logged_gui, w_w, f_w = logged_gui_with_files
     await f_w.workspace_fs.sync()
 
-    with freeze_time(DateTime.now().add(seconds=1)):
-        if timestamp:
-            timestamp = DateTime.now()
-        else:
-            timestamp = None
-        url = f_w.workspace_fs.generate_file_link("/unknown", timestamp)
+    timestamp: DateTime | None = None
+    if toggle_timestamp:
+        timestamp = DateTime.now().subtract(microseconds=1)
+    url = f_w.workspace_fs.generate_file_link("/unknown", timestamp)
 
-        logged_gui.add_instance(url.to_url())
+    logged_gui.add_instance(url.to_url())
 
-        def _assert_dialogs():
-            assert len(autoclose_dialog.dialogs) == 1
-            assert autoclose_dialog.dialogs == [
-                ("Error", translate("TEXT_FILE_GOTO_LINK_NOT_FOUND_file").format(file="unknown"))
-            ]
+    def _assert_dialogs():
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs == [
+            ("Error", translate("TEXT_FILE_GOTO_LINK_NOT_FOUND_file").format(file="unknown"))
+        ]
 
-        await aqtbot.wait_until(_assert_dialogs)
+    await aqtbot.wait_until(_assert_dialogs)
 
-        assert logged_gui.tab_center.count() == 1
+    assert logged_gui.tab_center.count() == 1
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format", "bad_timestamp"])
-async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_files, kind):
+async def test_link_file_invalid_url(
+    aqtbot, autoclose_dialog, logged_gui_with_files: LoggedGuiWithFiles, kind
+):
     logged_gui, w_w, f_w = logged_gui_with_files
     org_addr = f_w.core.device.organization_addr
     if kind == "bad_workspace_id":
@@ -324,7 +349,7 @@ async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_f
 async def test_link_file_disconnected(
     aqtbot,
     autoclose_dialog,
-    logged_gui_with_files,
+    logged_gui_with_files: LoggedGuiWithFiles,
     bob,
     monkeypatch,
     bob_available_device,
@@ -404,7 +429,7 @@ async def test_link_file_disconnected(
 async def test_link_file_disconnected_cancel_login(
     aqtbot,
     autoclose_dialog,
-    logged_gui_with_files,
+    logged_gui_with_files: LoggedGuiWithFiles,
     bob,
     monkeypatch,
     bob_available_device,
