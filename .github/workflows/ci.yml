@@ -10,7 +10,9 @@ on:
 env:
   python-version: "3.9"
   rust-version: 1.66.1
-  node-version: 18.13.0
+  # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
+  # That would break our unit test if we don't update them.
+  node-version: 18.12.0
   poetry-version: 1.2.2
   # TODO: We stick to PostgreSQL 12 for the moment given later versions are
   # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
@@ -428,6 +430,9 @@ jobs:
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
+      - uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516  # pin v3.5.1
+        with:
+          node-version: ${{ env.node-version }}
       # TODO: cache libparsec and reuse it if Rust code hasn't changed !
 
       - name: Install dependencies

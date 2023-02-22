@@ -79,7 +79,9 @@
         "wasm-pack": "^0.10.3"
     },
     "engines": {
-        "node": ">=16.13.0 <19.0.0"
+        "//": "We don't want to use node >= 18.13 because they've made some breaking changes on the Date formating.",
+        "//": "And that break our unit test. We better correct them when we bump the version of node that is compatible on all platform (web included)",
+        "node": ">=16.13.0 <18.13.0"
     },
     "description": "An Ionic project"
 }
