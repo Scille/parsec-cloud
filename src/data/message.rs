@@ -78,16 +78,16 @@ impl MessageContent {
 
         Ok(match msg {
             libparsec::types::MessageContent::SharingGranted { .. } => {
-                crate::binding_utils::py_object!(msg, Self, SharingGrantedMessageContent, py)
+                crate::binding_utils::py_object!(msg, Self, SharingGrantedMessageContent, py)?
             }
             libparsec::types::MessageContent::SharingReencrypted { .. } => {
-                crate::binding_utils::py_object!(msg, Self, SharingReencryptedMessageContent, py)
+                crate::binding_utils::py_object!(msg, Self, SharingReencryptedMessageContent, py)?
             }
             libparsec::types::MessageContent::SharingRevoked { .. } => {
-                crate::binding_utils::py_object!(msg, Self, SharingRevokedMessageContent, py)
+                crate::binding_utils::py_object!(msg, Self, SharingRevokedMessageContent, py)?
             }
             libparsec::types::MessageContent::Ping { .. } => {
-                crate::binding_utils::py_object!(msg, Self, PingMessageContent, py)
+                crate::binding_utils::py_object!(msg, Self, PingMessageContent, py)?
             }
         })
     }
