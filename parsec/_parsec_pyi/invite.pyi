@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
+from parsec._parsec_pyi.backend_connection import AuthenticatedCmds
 from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, VerifyKey
 from parsec._parsec_pyi.enumerate import UserProfile
-from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, EntryID, HumanHandle
+from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, EntryID, HumanHandle, InvitationToken
+from parsec._parsec_pyi.local_device import LocalDevice
 
 class SASCode:
     def __init__(self, code: str) -> None: ...
@@ -113,3 +115,69 @@ class InviteDeviceConfirmation:
     def dump_and_encrypt(self, key: SecretKey) -> bytes: ...
     @classmethod
     def decrypt_and_load(cls, encrypted: bytes, key: SecretKey) -> InviteDeviceConfirmation: ...
+
+# Greeter
+
+class UserGreetInitialCtx:
+    def __init__(
+        self,
+        cmds: AuthenticatedCmds,
+        token: InvitationToken,
+    ) -> None: ...
+    async def do_wait_peer(self) -> UserGreetInProgress1Ctx: ...
+
+class DeviceGreetInitialCtx:
+    def __init__(
+        self,
+        cmds: AuthenticatedCmds,
+        token: InvitationToken,
+    ) -> None: ...
+    async def do_wait_peer(self) -> DeviceGreetInProgress1Ctx: ...
+
+class UserGreetInProgress1Ctx:
+    async def do_wait_peer_trust(self) -> UserGreetInProgress2Ctx: ...
+    @property
+    def greeter_sas(self) -> SASCode: ...
+
+class DeviceGreetInProgress1Ctx:
+    async def do_wait_peer_trust(self) -> DeviceGreetInProgress2Ctx: ...
+    @property
+    def greeter_sas(self) -> SASCode: ...
+
+class UserGreetInProgress2Ctx:
+    async def do_signify_trust(self) -> UserGreetInProgress3Ctx: ...
+    def generate_claimer_sas_choices(self, size: int) -> list[SASCode]: ...
+    @property
+    def claimer_sas(self) -> SASCode: ...
+
+class DeviceGreetInProgress2Ctx:
+    async def do_signify_trust(self) -> DeviceGreetInProgress3Ctx: ...
+    def generate_claimer_sas_choices(self, size: int) -> list[SASCode]: ...
+    @property
+    def claimer_sas(self) -> SASCode: ...
+
+class UserGreetInProgress3Ctx:
+    async def do_get_claim_requests(self) -> UserGreetInProgress4Ctx: ...
+
+class DeviceGreetInProgress3Ctx:
+    async def do_get_claim_requests(self) -> DeviceGreetInProgress4Ctx: ...
+
+class UserGreetInProgress4Ctx:
+    async def do_create_new_user(
+        self,
+        author: LocalDevice,
+        human_handle: HumanHandle | None,
+        device_label: DeviceLabel | None,
+        profile: UserProfile,
+    ) -> None: ...
+    @property
+    def requested_device_label(self) -> DeviceLabel: ...
+    @property
+    def requested_human_handle(self) -> HumanHandle: ...
+
+class DeviceGreetInProgress4Ctx:
+    async def do_create_new_device(
+        self, author: LocalDevice, device_label: DeviceLabel | None
+    ) -> None: ...
+    @property
+    def requested_device_label(self) -> DeviceLabel: ...
