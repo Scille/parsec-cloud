@@ -11,7 +11,7 @@ from parsec._parsec import (
 from parsec.api.data import DeviceCertificate, SequesterAuthorityCertificate, UserCertificate
 from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection import organization_bootstrap as cmd_organization_bootstrap
-from parsec.core.invite.exceptions import InviteAlreadyUsedError, InviteError, InviteNotFoundError
+from parsec.core.invite import InviteAlreadyUsedError, InviteError, InviteNotFoundError
 from parsec.core.types import BackendOrganizationAddr, BackendOrganizationBootstrapAddr, LocalDevice
 
 

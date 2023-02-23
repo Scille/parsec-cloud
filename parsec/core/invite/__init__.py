@@ -1,6 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from parsec._parsec import (
+    InviteActiveUsersLimitReachedError,
+    InviteAlreadyUsedError,
+    InviteError,
+    InviteNotFoundError,
+    InvitePeerResetError,
+)
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.invite.claimer import (
     BaseClaimInitialCtx,
     BaseClaimInProgress1Ctx,
@@ -15,28 +23,36 @@ from parsec.core.invite.claimer import (
     UserClaimInProgress3Ctx,
     claimer_retrieve_info,
 )
-from parsec.core.invite.exceptions import (
-    InviteActiveUsersLimitReachedError,
-    InviteAlreadyUsedError,
-    InviteError,
-    InviteNotFoundError,
-    InvitePeerResetError,
-)
-from parsec.core.invite.greeter import (
-    BaseGreetInitialCtx,
-    BaseGreetInProgress1Ctx,
-    BaseGreetInProgress2Ctx,
-    DeviceGreetInitialCtx,
-    DeviceGreetInProgress1Ctx,
-    DeviceGreetInProgress2Ctx,
-    DeviceGreetInProgress3Ctx,
-    DeviceGreetInProgress4Ctx,
-    UserGreetInitialCtx,
-    UserGreetInProgress1Ctx,
-    UserGreetInProgress2Ctx,
-    UserGreetInProgress3Ctx,
-    UserGreetInProgress4Ctx,
-)
+
+if OXIDIZED:
+    from parsec._parsec import (
+        DeviceGreetInitialCtx,
+        DeviceGreetInProgress1Ctx,
+        DeviceGreetInProgress2Ctx,
+        DeviceGreetInProgress3Ctx,
+        DeviceGreetInProgress4Ctx,
+        UserGreetInitialCtx,
+        UserGreetInProgress1Ctx,
+        UserGreetInProgress2Ctx,
+        UserGreetInProgress3Ctx,
+        UserGreetInProgress4Ctx,
+    )
+else:
+    from parsec.core.invite.greeter import (  # type: ignore[misc]
+        BaseGreetInitialCtx,
+        BaseGreetInProgress1Ctx,
+        BaseGreetInProgress2Ctx,
+        DeviceGreetInitialCtx,
+        DeviceGreetInProgress1Ctx,
+        DeviceGreetInProgress2Ctx,
+        DeviceGreetInProgress3Ctx,
+        DeviceGreetInProgress4Ctx,
+        UserGreetInitialCtx,
+        UserGreetInProgress1Ctx,
+        UserGreetInProgress2Ctx,
+        UserGreetInProgress3Ctx,
+        UserGreetInProgress4Ctx,
+    )
 from parsec.core.invite.organization import bootstrap_organization
 
 __all__ = (

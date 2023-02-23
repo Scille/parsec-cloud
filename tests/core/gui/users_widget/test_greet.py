@@ -11,6 +11,7 @@ from PyQt5 import QtCore
 from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationDeletedReason, UserProfile
 from parsec.core.backend_connection import backend_invited_cmds_factory
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.gui.greet_user_widget import (
     GreetUserCheckInfoWidget,
     GreetUserCodeExchangeWidget,
@@ -417,6 +418,7 @@ async def test_greet_user_modified_claim_info(GreetUserTestBed, backend, coolorg
     # TODO: BaseUserComponent should provide a way to check device label without device_id
 
 
+@pytest.mark.skipif(OXIDIZED, reason="Dialog length exceeded")
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize(
