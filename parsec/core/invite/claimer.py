@@ -76,7 +76,7 @@ from parsec.api.data import (
 )
 from parsec.api.protocol import DeviceLabel, HumanHandle, UserID
 from parsec.core.backend_connection import BackendInvitedCmds
-from parsec.core.invite.exceptions import (
+from parsec.core.invite import (
     InviteAlreadyUsedError,
     InviteError,
     InviteNotFoundError,

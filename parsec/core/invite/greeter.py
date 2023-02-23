@@ -39,19 +39,19 @@ from parsec.api.protocol import (
     UserProfile,
 )
 from parsec.core.backend_connection import BackendAuthenticatedCmds
+from parsec.core.invite import (
+    InviteActiveUsersLimitReachedError,
+    InviteAlreadyUsedError,
+    InviteError,
+    InviteNotFoundError,
+    InvitePeerResetError,
+)
 from parsec.core.invite.claimer import (
     ACTIVE_USERS_LIMIT_REACHED_TYPES,
     ALREADY_DELETED_TYPES,
     INVALID_STATE_TYPES,
     NOT_FOUND_TYPES,
     T_OK_TYPES,
-)
-from parsec.core.invite.exceptions import (
-    InviteActiveUsersLimitReachedError,
-    InviteAlreadyUsedError,
-    InviteError,
-    InviteNotFoundError,
-    InvitePeerResetError,
 )
 from parsec.core.types import LocalDevice
 from parsec.crypto import HashDigest, PrivateKey, PublicKey, SecretKey, VerifyKey
@@ -149,7 +149,7 @@ class BaseGreetInProgress1Ctx:
 
     async def _do_wait_peer_trust(self) -> None:
         rep = await self._cmds.invite_3a_greeter_wait_peer_trust(token=self.token)
-        _check_rep(rep, step_name="step 3b", ok_type=Invite3aGreeterWaitPeerTrustRepOk)
+        _check_rep(rep, step_name="step 3a", ok_type=Invite3aGreeterWaitPeerTrustRepOk)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -191,7 +191,7 @@ class BaseGreetInProgress2Ctx:
 
     async def _do_signify_trust(self) -> None:
         rep = await self._cmds.invite_3b_greeter_signify_trust(token=self.token)
-        _check_rep(rep, step_name="step 3a", ok_type=Invite3bGreeterSignifyTrustRepOk)
+        _check_rep(rep, step_name="step 3b", ok_type=Invite3bGreeterSignifyTrustRepOk)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

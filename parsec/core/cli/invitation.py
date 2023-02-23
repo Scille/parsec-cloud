@@ -280,11 +280,14 @@ async def _greet_invitation(
             raise RuntimeError(f"Invitation not found")
 
         if invitation.type == InvitationType.USER:
-            user_initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
+
+            # TODO: We ignore because mypy complains about BackendAuthenticatedCmds but binding doesn't work with
+            user_initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)  # type: ignore[arg-type]
             do_greet = partial(_do_greet_user, device, user_initial_ctx)
         else:
             assert invitation.type == InvitationType.DEVICE
-            device_initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
+            # TODO: We ignore because mypy complains about BackendAuthenticatedCmds but binding doesn't work with
+            device_initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)  # type: ignore[arg-type]
             do_greet = partial(_do_greet_device, device, device_initial_ctx)
 
         while True:

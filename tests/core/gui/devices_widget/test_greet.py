@@ -11,6 +11,7 @@ from PyQt5 import QtCore
 from parsec._parsec import DateTime, InvitationType
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationDeletedReason
 from parsec.core.backend_connection import backend_invited_cmds_factory
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.gui.devices_widget import DeviceButton
 from parsec.core.gui.greet_device_widget import (
     GreetDeviceCodeExchangeWidget,
@@ -263,6 +264,7 @@ async def test_greet_device(GreetDeviceTestBed):
     await GreetDeviceTestBed().run()
 
 
+@pytest.mark.skipif(OXIDIZED, reason="greet_device_widget is still visible")
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize(

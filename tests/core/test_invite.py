@@ -19,6 +19,7 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
 )
+from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import (
     DeviceClaimInitialCtx,
@@ -369,6 +370,11 @@ async def test_claimer_handle_reset(
                 with pytest.raises(InvitePeerResetError):
                     await greeter_in_progress_ctx.do_wait_peer_trust()
 
+                if OXIDIZED:
+                    # Reinitialize greeter_initial_ctx because it has beed consumed
+                    greeter_initial_ctx = UserGreetInitialCtx(
+                        cmds=alice_backend_cmds, token=invitation_addr.token
+                    )
                 # Greeter redo step 1
                 greeter_in_progress_ctx = await greeter_initial_ctx.do_wait_peer()
 
@@ -380,6 +386,11 @@ async def test_claimer_handle_reset(
                     nonlocal greeter_in_progress_ctx
                     greeter_in_progress_ctx = await greeter_initial_ctx.do_wait_peer()
 
+                if OXIDIZED:
+                    # Reinitialize greeter_initial_ctx because it has beed consumed
+                    greeter_initial_ctx = UserGreetInitialCtx(
+                        cmds=alice_backend_cmds, token=invitation_addr.token
+                    )
                 nursery.start_soon(_do_greeter)
                 with pytest.raises(InvitePeerResetError):
                     await claimer_in_progress_ctx.do_signify_trust()
