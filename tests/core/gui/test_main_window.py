@@ -17,9 +17,12 @@ from parsec.api.data import EntryName
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
 from parsec.core.gui import desktop
+from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
+from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspace_roles import get_role_translation as _
+from parsec.core.gui.workspaces_widget import WorkspacesWidget
 from parsec.core.local_device import AvailableDevice
 from parsec.core.types import (
     BackendInvitationAddr,
@@ -108,10 +111,13 @@ def bob_available_device(bob, tmp_path):
     )
 
 
+LoggedGuiWithFiles = tuple[MainWindow, WorkspacesWidget, FilesWidget]
+
+
 @pytest.fixture
 async def logged_gui_with_files(
     aqtbot, running_backend, backend, autoclose_dialog, logged_gui, bob, monkeypatch
-):
+) -> LoggedGuiWithFiles:
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     assert logged_gui.tab_center.count() == 1
@@ -269,16 +275,55 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, aut
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.parametrize("timestamp", [True, False])
-async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files, timestamp):
+@pytest.skip("TODO: @max plz finish me ;-)")
+async def test_link_file_too_far_in_the_past(
+    aqtbot, logged_gui_with_files: LoggedGuiWithFiles, toggle_timestamp: bool, autoclose_dialog
+):
+    logged_gui, w_w, f_w = logged_gui_with_files
+    await f_w.workspace_fs.sync()
+
+    timestamp: DateTime | None = None
+    if toggle_timestamp:
+        # Workspace wasn't created in those dark ages
+        timestamp = DateTime.from_rfc3339("2000-01-01T00:00:00Z")
+    core = logged_gui.test_get_core()
+
+    def _mounted(ts):
+        assert autoclose_dialog.dialogs == []
+        assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
+
+    # Workspace should be mounted
+    await aqtbot.wait_until(lambda: _mounted(None))
+
+    # Generate a file link
+    url = f_w.workspace_fs.generate_file_link(f_w.current_directory, timestamp)
+
+    # Add an instance with the file link
+    logged_gui.add_instance(url.to_url())
+
+    # Workspace cannot be mounted, but shouldn't crash the app !
+    # TODO: we should catch an error windows here !
+    await aqtbot.wait_until(lambda: _mounted(None))
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "toggle_timestamp", [True, False], ids=["With Timestamp", "Without Timestamp"]
+)
+async def test_link_file_invalid_path(
+    aqtbot,
+    autoclose_dialog,
+    logged_gui_with_files: LoggedGuiWithFiles,
+    toggle_timestamp: bool,
+):
     logged_gui, w_w, f_w = logged_gui_with_files
     await f_w.workspace_fs.sync()
 
     with freeze_time(DateTime.now().add(seconds=1)):
-        if timestamp:
+        timestamp: None | DateTime = None
+        if toggle_timestamp:
             timestamp = DateTime.now()
-        else:
-            timestamp = None
         url = f_w.workspace_fs.generate_file_link("/unknown", timestamp)
 
         logged_gui.add_instance(url.to_url())
