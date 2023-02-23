@@ -329,6 +329,10 @@ async def test_reconnect_with_remote_changes(
     monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
 
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
+    # Wait for the sync monitor to sync the new workspace
+    async with frozen_clock.real_clock_timeout():
+        await alice_core.wait_idle_monitors()
+
     alice_w = alice_core.user_fs.get_workspace(wid)
     await alice_w.mkdir("/foo")
     await alice_w.touch("/bar.txt")
