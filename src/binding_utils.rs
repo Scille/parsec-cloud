@@ -139,8 +139,8 @@ macro_rules! py_object {
         // will be used as the type of `subtype` in the call of `into_new_object`.
         unsafe {
             use ::pyo3::{pyclass_init::PyObjectInit, PyTypeInfo};
-            let ptr = initializer.into_new_object($py, $subclass::type_object_raw($py))?;
-            ::pyo3::PyObject::from_owned_ptr($py, ptr)
+            initializer.into_new_object($py, $subclass::type_object_raw($py))
+                .map(|ptr| ::pyo3::PyObject::from_owned_ptr($py, ptr))
         }
     }};
 }
@@ -353,14 +353,12 @@ macro_rules! _cmd_error_handler {
         ::paste::paste! {
             if let $cmd_name::Rep::BadTimestamp { .. } = $rep {
                 let rep = ::pyo3::Python::with_gil(|py| {
-                    let rep = crate::binding_utils::py_object!(
+                    crate::binding_utils::py_object!(
                         $rep,
                         $rep_type,
                         [<$rep_type BadTimestamp>],
                         py
-                    );
-                    // `py_object!` uses ? operator, so `with_gil` must return a `Result`
-                    PyResult::Ok(rep)
+                    )
                 })?;
                 return Err(crate::backend_connection::BackendOutOfBallparkError::new_err(rep));
             }
@@ -384,17 +382,15 @@ macro_rules! send_command {
                     $(
                         $cmd_name::Rep::$kind_type { .. } => {
                             ::pyo3::Python::with_gil(|py| {
-                                let rep = crate::binding_utils::py_object!(
+                                crate::binding_utils::py_object!(
                                     rep,
                                     $rep_type,
                                     [<$rep_type $kind_type>],
                                     py
-                                );
-                                // `py_object!` uses ? operator, so `with_gil` must return a `Result`
-                                PyResult::Ok(rep)
+                                )
                             })?
                         }
-                     )*
+                    )*
                 })
             }
         }
