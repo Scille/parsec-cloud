@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use libparsec_client_connection::CommandError;
 use thiserror::Error;
 
 use libparsec_types::{DateTime, DeviceID, UserID};
@@ -78,5 +79,31 @@ pub type RemoteDevicesManagerResult<T> = Result<T, RemoteDevicesManagerError>;
 impl From<TrustchainError> for RemoteDevicesManagerError {
     fn from(exc: TrustchainError) -> Self {
         Self::InvalidTrustchain { exc }
+    }
+}
+
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
+pub enum InviteError {
+    #[error("Invitation not found")]
+    NotFound,
+
+    #[error("Invitation already used")]
+    AlreadyUsed,
+
+    #[error("Claim operation reset by peer")]
+    PeerReset,
+
+    #[error("Active users limit reached")]
+    ActiveUsersLimitReached,
+
+    #[error("{0}")]
+    Custom(String),
+}
+
+pub type InviteResult<T> = Result<T, InviteError>;
+
+impl From<CommandError> for InviteError {
+    fn from(exc: CommandError) -> Self {
+        Self::Custom(exc.to_string())
     }
 }

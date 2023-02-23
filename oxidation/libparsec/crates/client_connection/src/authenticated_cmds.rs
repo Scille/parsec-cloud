@@ -48,6 +48,7 @@ use crate::{
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
 
 /// Factory that send commands in a authenticated context.
+#[derive(Debug, Clone)]
 pub struct AuthenticatedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
