@@ -1062,3 +1062,27 @@ impl LocalManifest {
         rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
     }
 }
+
+impl From<LocalFileManifest> for LocalManifest {
+    fn from(value: LocalFileManifest) -> Self {
+        Self::File(value)
+    }
+}
+
+impl From<LocalUserManifest> for LocalManifest {
+    fn from(value: LocalUserManifest) -> Self {
+        Self::User(value)
+    }
+}
+
+impl From<LocalFolderManifest> for LocalManifest {
+    fn from(value: LocalFolderManifest) -> Self {
+        Self::Folder(value)
+    }
+}
+
+impl From<LocalWorkspaceManifest> for LocalManifest {
+    fn from(value: LocalWorkspaceManifest) -> Self {
+        Self::Workspace(value)
+    }
+}
