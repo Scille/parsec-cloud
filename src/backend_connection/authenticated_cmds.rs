@@ -24,7 +24,8 @@ use crate::{
 };
 
 #[pyclass]
-pub(crate) struct AuthenticatedCmds(Arc<client_connection::AuthenticatedCmds>);
+#[derive(Clone)]
+pub(crate) struct AuthenticatedCmds(pub Arc<client_connection::AuthenticatedCmds>);
 
 #[pymethods]
 impl AuthenticatedCmds {

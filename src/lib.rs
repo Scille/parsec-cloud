@@ -10,6 +10,7 @@ mod data;
 mod enumerate;
 mod file_operations;
 mod ids;
+mod invite;
 #[cfg(feature = "test-utils")]
 mod local_db;
 mod local_device;
@@ -27,13 +28,14 @@ mod trustchain;
 #[pymodule]
 #[pyo3(name = "_parsec")]
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
+    crate::backend_connection::add_mod(py, m)?;
     crate::data::add_mod(py, m)?;
-    crate::protocol::add_mod(py, m)?;
+    crate::invite::add_mod(py, m)?;
     #[cfg(feature = "test-utils")]
     crate::local_db::add_mod(py, m)?;
-    crate::storage::add_mod(py, m)?;
-    crate::backend_connection::add_mod(py, m)?;
     crate::local_device::add_mod(py, m)?;
+    crate::protocol::add_mod(py, m)?;
+    crate::storage::add_mod(py, m)?;
 
     m.add_class::<addrs::BackendAddr>()?;
     m.add_class::<addrs::BackendOrganizationAddr>()?;
