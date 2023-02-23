@@ -13,9 +13,10 @@ pyo3::create_exception!(
 );
 pyo3::create_exception!(_parsec, BackendInvitationNotFound, BackendConnectionRefused);
 // TODO: `LoggedCore.get_user_info` raise `BackendNotFoundError`
-// It was convenient to have it inherit `BackendConnectionError` but it would be best to have a specific set of `exception` for it. 
+// It was convenient to have it inherit `BackendConnectionError` but it would be best to have a specific set of `exception` for it.
 pyo3::create_exception!(_parsec, BackendNotFoundError, BackendConnectionError);
-// TODO: hack needed by `LoggedCore.new_user_invitation`
+// TODO: `LoggedCore.new_user_invitation` raise `BackendInvitationOnExistingMember`
+// It was convenient to have it inherit `BackendConnectionError` but it would be best to have a specific set of `exception` for it.
 pyo3::create_exception!(
     _parsec,
     BackendInvitationOnExistingMember,
