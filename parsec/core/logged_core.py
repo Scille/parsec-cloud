@@ -342,7 +342,7 @@ class LoggedCore:
             BackendConnectionError
             InviteError
         """
-        # TODO: We ignore because mypy complains about BackendAuthenticatedCmds but binding doesn't work with
+        # TODO: We ignore because mypy complains, but binding doesn't work with BackendAuthenticatedCmds
         initial_ctx = UserGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)  # type: ignore[arg-type]
         return await initial_ctx.do_wait_peer()
 
@@ -352,7 +352,7 @@ class LoggedCore:
             BackendConnectionError
             InviteError
         """
-        # TODO: We ignore because mypy complains about BackendAuthenticatedCmds but binding doesn't work with
+        # TODO: We ignore because mypy complains, but binding doesn't work with BackendAuthenticatedCmds
         initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)  # type: ignore[arg-type]
         return await initial_ctx.do_wait_peer()
 
