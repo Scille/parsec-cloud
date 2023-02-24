@@ -75,7 +75,7 @@ jobs:
         uses: pypa/cibuildwheel@a808017c3962f4d678fe685239668aad8c150932  # pin v2.12.0
         with:
           output-dir: dist
-        timeout-minutes: 30
+        timeout-minutes: 50
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
