@@ -393,7 +393,7 @@ impl DeviceGreetInProgress3Ctx {
 }
 
 /// Helper to prepare the creation of a new user.
-fn create_new_user_certificates(
+fn create_new_signed_user_certificates(
     author: &LocalDevice,
     device_label: Option<DeviceLabel>,
     human_handle: Option<HumanHandle>,
@@ -462,6 +462,41 @@ fn create_new_user_certificates(
     )
 }
 
+fn create_new_signed_device_certificates(
+    author: &LocalDevice,
+    device_label: Option<DeviceLabel>,
+    verify_key: VerifyKey,
+) -> (Vec<u8>, Vec<u8>, DeviceID) {
+    let device_id = author.user_id().to_device_id(DeviceName::default());
+    let timestamp = author.now();
+
+    let device_certificate = DeviceCertificate {
+        author: CertificateSignerOwned::User(author.device_id.clone()),
+        timestamp,
+        device_id: device_id.clone(),
+        device_label,
+        verify_key: verify_key.clone(),
+    };
+
+    let redacted_device_certificate = DeviceCertificate {
+        author: CertificateSignerOwned::User(author.device_id.clone()),
+        timestamp,
+        device_id: device_id.clone(),
+        device_label: None,
+        verify_key,
+    };
+
+    let device_certificate_bytes = device_certificate.dump_and_sign(&author.signing_key);
+    let redacted_device_certificate_bytes =
+        redacted_device_certificate.dump_and_sign(&author.signing_key);
+
+    (
+        device_certificate_bytes,
+        redacted_device_certificate_bytes,
+        device_id,
+    )
+}
+
 // GreetInProgress4Ctx
 
 #[derive(Debug)]
@@ -489,7 +524,7 @@ impl UserGreetInProgress4Ctx {
             device_certificate,
             redacted_device_certificate,
             invite_user_confirmation,
-        ) = create_new_user_certificates(
+        ) = create_new_signed_user_certificates(
             author,
             device_label,
             human_handle,
@@ -582,28 +617,12 @@ impl DeviceGreetInProgress4Ctx {
         author: &LocalDevice,
         device_label: Option<DeviceLabel>,
     ) -> InviteResult<()> {
-        let device_id = author.user_id().to_device_id(DeviceName::default());
-        let timestamp = author.now();
-
-        let device_certificate = DeviceCertificate {
-            author: CertificateSignerOwned::User(author.device_id.clone()),
-            timestamp,
-            device_id: device_id.clone(),
-            device_label: device_label.clone(),
-            verify_key: self.verify_key.clone(),
-        };
-
-        let redacted_device_certificate = DeviceCertificate {
-            author: CertificateSignerOwned::User(author.device_id.clone()),
-            timestamp,
-            device_id: device_id.clone(),
-            device_label: None,
-            verify_key: self.verify_key.clone(),
-        };
-
-        let device_certificate_bytes = device_certificate.dump_and_sign(&author.signing_key);
-        let redacted_device_certificate_bytes =
-            redacted_device_certificate.dump_and_sign(&author.signing_key);
+        let (device_certificate_bytes, redacted_device_certificate_bytes, device_id) =
+            create_new_signed_device_certificates(
+                author,
+                device_label.clone(),
+                self.verify_key.clone(),
+            );
 
         let rep = self
             .cmds
