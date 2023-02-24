@@ -13,7 +13,9 @@ pub(crate) struct InviteExc(libparsec::core::InviteError);
 impl From<InviteExc> for PyErr {
     fn from(err: InviteExc) -> Self {
         match err.0 {
-            libparsec::core::InviteError::Custom(msg) => InviteError::new_err(msg),
+            libparsec::core::InviteError::Backend(..)
+            | libparsec::core::InviteError::Command(..)
+            | libparsec::core::InviteError::Custom(..) => InviteError::new_err(err.0.to_string()),
             libparsec::core::InviteError::PeerReset => {
                 InvitePeerResetError::new_err(err.0.to_string())
             }
