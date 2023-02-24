@@ -22,7 +22,7 @@ struct BaseGreetInitialCtx {
 }
 
 impl BaseGreetInitialCtx {
-    async fn do_wait_peer(&self) -> InviteResult<(SASCode, SASCode, SecretKey)> {
+    async fn do_wait_peer(self) -> InviteResult<BaseGreetInProgress1Ctx> {
         let greeter_private_key = PrivateKey::generate();
         let rep = self
             .cmds
@@ -103,7 +103,13 @@ impl BaseGreetInitialCtx {
         let (claimer_sas, greeter_sas) =
             SASCode::generate_sas_codes(&claimer_nonce, &greeter_nonce, &shared_secret_key);
 
-        Ok((claimer_sas, greeter_sas, shared_secret_key))
+        Ok(BaseGreetInProgress1Ctx {
+            token: self.token,
+            greeter_sas,
+            claimer_sas,
+            shared_secret_key,
+            cmds: self.cmds,
+        })
     }
 }
 
@@ -116,15 +122,7 @@ impl UserGreetInitialCtx {
     }
 
     pub async fn do_wait_peer(self) -> InviteResult<UserGreetInProgress1Ctx> {
-        let (claimer_sas, greeter_sas, shared_secret_key) = self.0.do_wait_peer().await?;
-
-        Ok(UserGreetInProgress1Ctx(BaseGreetInProgress1Ctx {
-            token: self.0.token,
-            greeter_sas,
-            claimer_sas,
-            shared_secret_key,
-            cmds: self.0.cmds,
-        }))
+        self.0.do_wait_peer().await.map(UserGreetInProgress1Ctx)
     }
 }
 
@@ -137,15 +135,7 @@ impl DeviceGreetInitialCtx {
     }
 
     pub async fn do_wait_peer(self) -> InviteResult<DeviceGreetInProgress1Ctx> {
-        let (claimer_sas, greeter_sas, shared_secret_key) = self.0.do_wait_peer().await?;
-
-        Ok(DeviceGreetInProgress1Ctx(BaseGreetInProgress1Ctx {
-            token: self.0.token,
-            greeter_sas,
-            claimer_sas,
-            shared_secret_key,
-            cmds: self.0.cmds,
-        }))
+        self.0.do_wait_peer().await.map(DeviceGreetInProgress1Ctx)
     }
 }
 
@@ -161,21 +151,34 @@ struct BaseGreetInProgress1Ctx {
 }
 
 impl BaseGreetInProgress1Ctx {
-    async fn do_wait_peer_trust(&self) -> InviteResult<()> {
+    async fn do_wait_peer_trust(self) -> InviteResult<BaseGreetInProgress2Ctx> {
         let rep = self
             .cmds
             .send(invite_3a_greeter_wait_peer_trust::Req { token: self.token })
             .await?;
 
         match rep {
-            invite_3a_greeter_wait_peer_trust::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
-            invite_3a_greeter_wait_peer_trust::Rep::InvalidState => Err(InviteError::PeerReset),
-            invite_3a_greeter_wait_peer_trust::Rep::NotFound => Err(InviteError::NotFound),
-            invite_3a_greeter_wait_peer_trust::Rep::Ok => Ok(()),
-            invite_3a_greeter_wait_peer_trust::Rep::UnknownStatus { unknown_status, .. } => Err(
-                InviteError::Custom(format!("Backend error during step 3a: {unknown_status}")),
-            ),
+            invite_3a_greeter_wait_peer_trust::Rep::AlreadyDeleted => {
+                return Err(InviteError::AlreadyUsed)
+            }
+            invite_3a_greeter_wait_peer_trust::Rep::InvalidState => {
+                return Err(InviteError::PeerReset)
+            }
+            invite_3a_greeter_wait_peer_trust::Rep::NotFound => return Err(InviteError::NotFound),
+            invite_3a_greeter_wait_peer_trust::Rep::Ok => (),
+            invite_3a_greeter_wait_peer_trust::Rep::UnknownStatus { unknown_status, .. } => {
+                return Err(InviteError::Custom(format!(
+                    "Backend error during step 3a: {unknown_status}"
+                )))
+            }
         }
+
+        Ok(BaseGreetInProgress2Ctx {
+            token: self.token,
+            claimer_sas: self.claimer_sas,
+            shared_secret_key: self.shared_secret_key,
+            cmds: self.cmds,
+        })
     }
 }
 
@@ -188,14 +191,10 @@ impl UserGreetInProgress1Ctx {
     }
 
     pub async fn do_wait_peer_trust(self) -> InviteResult<UserGreetInProgress2Ctx> {
-        self.0.do_wait_peer_trust().await?;
-
-        Ok(UserGreetInProgress2Ctx(BaseGreetInProgress2Ctx {
-            token: self.0.token,
-            claimer_sas: self.0.claimer_sas,
-            shared_secret_key: self.0.shared_secret_key,
-            cmds: self.0.cmds,
-        }))
+        self.0
+            .do_wait_peer_trust()
+            .await
+            .map(UserGreetInProgress2Ctx)
     }
 }
 
@@ -208,14 +207,10 @@ impl DeviceGreetInProgress1Ctx {
     }
 
     pub async fn do_wait_peer_trust(self) -> InviteResult<DeviceGreetInProgress2Ctx> {
-        self.0.do_wait_peer_trust().await?;
-
-        Ok(DeviceGreetInProgress2Ctx(BaseGreetInProgress2Ctx {
-            token: self.0.token,
-            claimer_sas: self.0.claimer_sas,
-            shared_secret_key: self.0.shared_secret_key,
-            cmds: self.0.cmds,
-        }))
+        self.0
+            .do_wait_peer_trust()
+            .await
+            .map(DeviceGreetInProgress2Ctx)
     }
 }
 
@@ -234,21 +229,33 @@ impl BaseGreetInProgress2Ctx {
         SASCode::generate_sas_code_candidates(&self.claimer_sas, size)
     }
 
-    async fn do_signify_trust(&self) -> InviteResult<()> {
+    async fn do_signify_trust(self) -> InviteResult<BaseGreetInProgress3Ctx> {
         let rep = self
             .cmds
             .send(invite_3b_greeter_signify_trust::Req { token: self.token })
             .await?;
 
         match rep {
-            invite_3b_greeter_signify_trust::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
-            invite_3b_greeter_signify_trust::Rep::InvalidState => Err(InviteError::PeerReset),
-            invite_3b_greeter_signify_trust::Rep::NotFound => Err(InviteError::NotFound),
-            invite_3b_greeter_signify_trust::Rep::Ok => Ok(()),
-            invite_3b_greeter_signify_trust::Rep::UnknownStatus { unknown_status, .. } => Err(
-                InviteError::Custom(format!("Backend error during step 3b: {unknown_status}")),
-            ),
+            invite_3b_greeter_signify_trust::Rep::AlreadyDeleted => {
+                return Err(InviteError::AlreadyUsed)
+            }
+            invite_3b_greeter_signify_trust::Rep::InvalidState => {
+                return Err(InviteError::PeerReset)
+            }
+            invite_3b_greeter_signify_trust::Rep::NotFound => return Err(InviteError::NotFound),
+            invite_3b_greeter_signify_trust::Rep::Ok => (),
+            invite_3b_greeter_signify_trust::Rep::UnknownStatus { unknown_status, .. } => {
+                return Err(InviteError::Custom(format!(
+                    "Backend error during step 3b: {unknown_status}"
+                )))
+            }
         }
+
+        Ok(BaseGreetInProgress3Ctx {
+            token: self.token,
+            shared_secret_key: self.shared_secret_key,
+            cmds: self.cmds,
+        })
     }
 }
 
@@ -265,13 +272,7 @@ impl UserGreetInProgress2Ctx {
     }
 
     pub async fn do_signify_trust(self) -> InviteResult<UserGreetInProgress3Ctx> {
-        self.0.do_signify_trust().await?;
-
-        Ok(UserGreetInProgress3Ctx(BaseGreetInProgress3Ctx {
-            token: self.0.token,
-            shared_secret_key: self.0.shared_secret_key,
-            cmds: self.0.cmds,
-        }))
+        self.0.do_signify_trust().await.map(UserGreetInProgress3Ctx)
     }
 }
 
@@ -288,13 +289,10 @@ impl DeviceGreetInProgress2Ctx {
     }
 
     pub async fn do_signify_trust(self) -> InviteResult<DeviceGreetInProgress3Ctx> {
-        self.0.do_signify_trust().await?;
-
-        Ok(DeviceGreetInProgress3Ctx(BaseGreetInProgress3Ctx {
-            token: self.0.token,
-            shared_secret_key: self.0.shared_secret_key,
-            cmds: self.0.cmds,
-        }))
+        self.0
+            .do_signify_trust()
+            .await
+            .map(DeviceGreetInProgress3Ctx)
     }
 }
 
@@ -307,8 +305,16 @@ struct BaseGreetInProgress3Ctx {
     cmds: AuthenticatedCmds,
 }
 
+#[derive(Debug)]
+struct BaseGreetInProgress3WithPayloadCtx {
+    token: InvitationToken,
+    shared_secret_key: SecretKey,
+    cmds: AuthenticatedCmds,
+    payload: Vec<u8>,
+}
+
 impl BaseGreetInProgress3Ctx {
-    async fn do_get_claim_requests(&self) -> InviteResult<Vec<u8>> {
+    async fn do_get_claim_requests(self) -> InviteResult<BaseGreetInProgress3WithPayloadCtx> {
         let rep = self
             .cmds
             .send(invite_4_greeter_communicate::Req {
@@ -335,7 +341,12 @@ impl BaseGreetInProgress3Ctx {
             return Err(InviteError::Custom("Missing InviteUserData payload".into()));
         }
 
-        Ok(payload)
+        Ok(BaseGreetInProgress3WithPayloadCtx {
+            token: self.token,
+            shared_secret_key: self.shared_secret_key,
+            cmds: self.cmds,
+            payload,
+        })
     }
 }
 
@@ -344,19 +355,19 @@ pub struct UserGreetInProgress3Ctx(BaseGreetInProgress3Ctx);
 
 impl UserGreetInProgress3Ctx {
     pub async fn do_get_claim_requests(self) -> InviteResult<UserGreetInProgress4Ctx> {
-        let payload = self.0.do_get_claim_requests().await?;
+        let ctx = self.0.do_get_claim_requests().await?;
 
-        let data = InviteUserData::decrypt_and_load(&payload, &self.0.shared_secret_key)
+        let data = InviteUserData::decrypt_and_load(&ctx.payload, &ctx.shared_secret_key)
             .map_err(|e| InviteError::Custom(e.to_string()))?;
 
         Ok(UserGreetInProgress4Ctx {
-            token: self.0.token,
+            token: ctx.token,
             requested_device_label: data.requested_device_label,
             requested_human_handle: data.requested_human_handle,
             public_key: data.public_key,
             verify_key: data.verify_key,
-            shared_secret_key: self.0.shared_secret_key,
-            cmds: self.0.cmds,
+            shared_secret_key: ctx.shared_secret_key,
+            cmds: ctx.cmds,
         })
     }
 }
@@ -366,17 +377,17 @@ pub struct DeviceGreetInProgress3Ctx(BaseGreetInProgress3Ctx);
 
 impl DeviceGreetInProgress3Ctx {
     pub async fn do_get_claim_requests(self) -> InviteResult<DeviceGreetInProgress4Ctx> {
-        let payload = self.0.do_get_claim_requests().await?;
+        let ctx = self.0.do_get_claim_requests().await?;
 
-        let data = InviteDeviceData::decrypt_and_load(&payload, &self.0.shared_secret_key)
+        let data = InviteDeviceData::decrypt_and_load(&ctx.payload, &ctx.shared_secret_key)
             .map_err(|e| InviteError::Custom(e.to_string()))?;
 
         Ok(DeviceGreetInProgress4Ctx {
-            token: self.0.token,
+            token: ctx.token,
             requested_device_label: data.requested_device_label,
             verify_key: data.verify_key,
-            shared_secret_key: self.0.shared_secret_key,
-            cmds: self.0.cmds,
+            shared_secret_key: ctx.shared_secret_key,
+            cmds: ctx.cmds,
         })
     }
 }
@@ -567,7 +578,7 @@ pub struct DeviceGreetInProgress4Ctx {
 
 impl DeviceGreetInProgress4Ctx {
     pub async fn do_create_new_device(
-        &self,
+        self,
         author: &LocalDevice,
         device_label: Option<DeviceLabel>,
     ) -> InviteResult<()> {
