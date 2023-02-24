@@ -357,6 +357,15 @@ jobs:
           open parsec.app --args --diagnose
 
   package-electron-app:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-22.04
+            generated-files: |
+              oxidation/client/electron/dist/parsec_*_*.snap
+              oxidation/client/electron/dist/parsec-*.AppImage
     runs-on: ubuntu-22.04
     name: ⚡ Package electron
     steps:
@@ -374,12 +383,20 @@ jobs:
           npm run electron:release:sodium
         working-directory: oxidation/client
 
+      - name: Check that the generated files exist
+        run: |
+          set -e
+          for file in ${{ join(matrix.generated-files.*, ' ') }}; do
+            ls -lh $file
+            test -f $file
+          done
+
       - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app
-          path: |
-            oxidation/client/electron/dist/client_*_*.snap
-            oxidation/client/electron/dist/client-*.AppImage
+          path: ${{ matrix.generated-files }}
+          if-no-file-found: error
+
 
   package-android-app:
     runs-on: ubuntu-22.04
