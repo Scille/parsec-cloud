@@ -80,3 +80,87 @@ jobs:
         uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           category: /language:python
+
+  java-analyze:
+    name: ☕ Java static code Analysis
+    runs-on: ubuntu-20.04
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    env:
+      NDK_VERSION: 22.1.7171670
+      SDK_VERSION: 30.0.3
+      rust-version: 1.66.1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
+
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          filters: .github/filters/codeql.yml
+
+      - name: Check modified path that require `java-analysis` to run
+        id: java-changes
+        if: >-
+          steps.changes.outputs.java-analyze == 'true'
+          || contains(github.ref, 'gh-readonly-queue')
+          || github.ref == 'refs/heads/master'
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # TODO: Skip the rust build, see #4211
+      # Currently we're required by the gradle configure to have rust toolchain installed
+      # Because it will build the libparsec for java when installing the dependencies.
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@e12eda571dc9a5ee5d58eecf4738ec291c66f295
+        if: steps.java-changes.outputs.run == 'true'
+        with:
+          toolchain: ${{ env.rust-version }}
+          targets: armv7-linux-androideabi, i686-linux-android, aarch64-linux-android, x86_64-linux-android
+        timeout-minutes: 5
+
+      - name: Add android cmdline tools to path
+        if: steps.java-changes.outputs.run == 'true'
+        run: echo "$ANDROID_HOME/cmdline-tools/latest/bin" > $GITHUB_PATH
+
+      - name: Install dependencies for Android
+        if: steps.java-changes.outputs.run == 'true'
+        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "build-tools;${{ env.SDK_VERSION }}"
+
+      - name: Install dependencies for ionic project
+        if: steps.java-changes.outputs.run == 'true'
+        run: npm clean-install
+        working-directory: oxidation/client
+
+      - name: Build ionic for Android
+        if: steps.java-changes.outputs.run == 'true'
+        run: |
+          npm run android:copy:release
+        working-directory: oxidation/client
+
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        if: steps.java-changes.outputs.run == 'true'
+        uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        with:
+          languages: java
+          # If you wish to specify custom queries, you can do so here or in a config file.
+          # By default, queries listed here will override any specified in a config file.
+          # Prefix the list here with "+" to use these queries and those in the config file.
+
+          # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+          # queries: security-extended,security-and-quality
+
+      - name: Autobuild android
+        if: steps.java-changes.outputs.run == 'true'
+        uses: github/codeql-action/autobuild@v2
+        with:
+          working-directory: oxidation/client/android
+
+      - name: Perform CodeQL Analysis
+        if: steps.java-changes.outputs.run == 'true'
+        uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        with:
+          category: /language:java

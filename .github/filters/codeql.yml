@@ -21,3 +21,12 @@ python-analyze:
   - *setup-python-action
   - *python
   - *python-dependencies-project
+
+rust-android-binding: &rust-android-binding oxidation/bindings/android/**
+
+android: &android oxidation/client/android/**
+
+java-analyze:
+  - *codeql-workflow
+  - *rust-android-binding
+  - *android
