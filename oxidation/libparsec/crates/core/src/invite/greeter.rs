@@ -40,9 +40,7 @@ impl BaseGreetInitialCtx {
             invite_1_greeter_wait_peer::Rep::NotFound => return Err(InviteError::NotFound),
             invite_1_greeter_wait_peer::Rep::Ok { claimer_public_key } => claimer_public_key,
             invite_1_greeter_wait_peer::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 1: {unknown_status}"
-                )))
+                return Err(InviteError::Backend(format!("step 1: {unknown_status}")))
             }
         };
 
@@ -66,9 +64,7 @@ impl BaseGreetInitialCtx {
                 claimer_hashed_nonce,
             } => claimer_hashed_nonce,
             invite_2a_greeter_get_hashed_nonce::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 2a: {unknown_status}"
-                )))
+                return Err(InviteError::Backend(format!("step 2a: {unknown_status}")))
             }
         };
 
@@ -88,9 +84,7 @@ impl BaseGreetInitialCtx {
             invite_2b_greeter_send_nonce::Rep::NotFound => return Err(InviteError::NotFound),
             invite_2b_greeter_send_nonce::Rep::Ok { claimer_nonce } => claimer_nonce,
             invite_2b_greeter_send_nonce::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 2b: {unknown_status}"
-                )))
+                return Err(InviteError::Backend(format!("step 2b: {unknown_status}")))
             }
         };
 
@@ -158,27 +152,19 @@ impl BaseGreetInProgress1Ctx {
             .await?;
 
         match rep {
-            invite_3a_greeter_wait_peer_trust::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_3a_greeter_wait_peer_trust::Rep::InvalidState => {
-                return Err(InviteError::PeerReset)
-            }
-            invite_3a_greeter_wait_peer_trust::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_3a_greeter_wait_peer_trust::Rep::Ok => (),
+            invite_3a_greeter_wait_peer_trust::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_3a_greeter_wait_peer_trust::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_3a_greeter_wait_peer_trust::Rep::NotFound => Err(InviteError::NotFound),
+            invite_3a_greeter_wait_peer_trust::Rep::Ok => Ok(BaseGreetInProgress2Ctx {
+                token: self.token,
+                claimer_sas: self.claimer_sas,
+                shared_secret_key: self.shared_secret_key,
+                cmds: self.cmds,
+            }),
             invite_3a_greeter_wait_peer_trust::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 3a: {unknown_status}"
-                )))
+                Err(InviteError::Backend(format!("step 3a: {unknown_status}")))
             }
         }
-
-        Ok(BaseGreetInProgress2Ctx {
-            token: self.token,
-            claimer_sas: self.claimer_sas,
-            shared_secret_key: self.shared_secret_key,
-            cmds: self.cmds,
-        })
     }
 }
 
@@ -236,26 +222,18 @@ impl BaseGreetInProgress2Ctx {
             .await?;
 
         match rep {
-            invite_3b_greeter_signify_trust::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_3b_greeter_signify_trust::Rep::InvalidState => {
-                return Err(InviteError::PeerReset)
-            }
-            invite_3b_greeter_signify_trust::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_3b_greeter_signify_trust::Rep::Ok => (),
+            invite_3b_greeter_signify_trust::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_3b_greeter_signify_trust::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_3b_greeter_signify_trust::Rep::NotFound => Err(InviteError::NotFound),
+            invite_3b_greeter_signify_trust::Rep::Ok => Ok(BaseGreetInProgress3Ctx {
+                token: self.token,
+                shared_secret_key: self.shared_secret_key,
+                cmds: self.cmds,
+            }),
             invite_3b_greeter_signify_trust::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 3b: {unknown_status}"
-                )))
+                Err(InviteError::Backend(format!("step 3b: {unknown_status}")))
             }
         }
-
-        Ok(BaseGreetInProgress3Ctx {
-            token: self.token,
-            shared_secret_key: self.shared_secret_key,
-            cmds: self.cmds,
-        })
     }
 }
 
@@ -331,8 +309,8 @@ impl BaseGreetInProgress3Ctx {
             invite_4_greeter_communicate::Rep::NotFound => return Err(InviteError::NotFound),
             invite_4_greeter_communicate::Rep::Ok { payload } => payload,
             invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 4 (data exchange): {unknown_status}"
+                return Err(InviteError::Backend(format!(
+                    "step 4 (data exchange): {unknown_status}"
                 )))
             }
         };
@@ -549,8 +527,8 @@ impl UserGreetInProgress4Ctx {
             }
             user_create::Rep::Ok => (),
             _ => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 4 (user certificates upload): {rep:?}"
+                return Err(InviteError::Backend(format!(
+                    "step 4 (user certificates upload): {rep:?}"
                 )))
             }
         }
@@ -580,8 +558,8 @@ impl UserGreetInProgress4Ctx {
             invite_4_greeter_communicate::Rep::NotFound => return Err(InviteError::NotFound),
             invite_4_greeter_communicate::Rep::Ok { .. } => (),
             invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 4 (confirmation exchange): {unknown_status}"
+                return Err(InviteError::Backend(format!(
+                    "step 4 (confirmation exchange): {unknown_status}"
                 )))
             }
         }
@@ -635,8 +613,8 @@ impl DeviceGreetInProgress4Ctx {
         match rep {
             device_create::Rep::Ok => (),
             _ => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 4 (device certificates upload): {rep:?}"
+                return Err(InviteError::Backend(format!(
+                    "step 4 (device certificates upload): {rep:?}"
                 )))
             }
         }
@@ -676,8 +654,8 @@ impl DeviceGreetInProgress4Ctx {
             invite_4_greeter_communicate::Rep::NotFound => return Err(InviteError::NotFound),
             invite_4_greeter_communicate::Rep::Ok { .. } => (),
             invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 4 (confirmation exchange): {unknown_status}"
+                return Err(InviteError::Backend(format!(
+                    "step 4 (confirmation exchange): {unknown_status}"
                 )))
             }
         }

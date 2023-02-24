@@ -82,7 +82,7 @@ impl From<TrustchainError> for RemoteDevicesManagerError {
     }
 }
 
-#[derive(Error, Debug, Clone, PartialEq, Eq)]
+#[derive(Error, Debug)]
 pub enum InviteError {
     #[error("Invitation not found")]
     NotFound,
@@ -96,6 +96,12 @@ pub enum InviteError {
     #[error("Active users limit reached")]
     ActiveUsersLimitReached,
 
+    #[error("Backend error during {0}")]
+    Backend(String),
+
+    #[error("{0}")]
+    Command(CommandError),
+
     #[error("{0}")]
     Custom(String),
 }
@@ -104,6 +110,6 @@ pub type InviteResult<T> = Result<T, InviteError>;
 
 impl From<CommandError> for InviteError {
     fn from(exc: CommandError) -> Self {
-        Self::Custom(exc.to_string())
+        Self::Command(exc)
     }
 }
