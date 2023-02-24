@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_protocol::{ApiVersion, Request};
+use libparsec_protocol::Request;
 use libparsec_types::BackendInvitationAddr;
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
@@ -76,33 +76,9 @@ impl InvitedCmds {
             404 => Err(CommandError::InvitationNotFound),
             410 => Err(CommandError::InvitationAlreadyDeleted),
             415 => Err(CommandError::BadContent),
-            422 => {
-                let headers = resp.headers();
-
-                let api_version = headers
-                    .get("Api-Version")
-                    .ok_or(CommandError::MissingApiVersion)?
-                    .to_str()
-                    .unwrap_or_default();
-                let api_version = api_version
-                    .try_into()
-                    .map_err(|_| CommandError::WrongApiVersion(api_version.into()))?;
-
-                let supported_api_versions = resp
-                    .headers()
-                    .get("Supported-Api-Versions")
-                    .ok_or(CommandError::MissingSupportedApiVersions)?
-                    .to_str()
-                    .unwrap_or_default()
-                    .split(';')
-                    .filter_map(|x| ApiVersion::try_from(x).ok())
-                    .collect();
-
-                Err(CommandError::UnsupportedApiVersion {
-                    api_version,
-                    supported_api_versions,
-                })
-            }
+            422 => Err(crate::error::unsupported_api_version_from_headers(
+                resp.headers(),
+            )),
             460 => Err(CommandError::ExpiredOrganization),
             461 => Err(CommandError::RevokedUser),
             _ => Err(CommandError::InvalidResponseStatus(resp.status(), resp)),
