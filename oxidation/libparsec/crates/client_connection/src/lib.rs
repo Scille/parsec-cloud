@@ -10,7 +10,8 @@ pub use client::{generate_client, generate_invited_client};
 pub use error::{CommandError, CommandResult};
 pub use invited_cmds::InvitedCmds;
 
-/// How we serialize the data before sending a request.
+/// We send the HTTP request with the body encoded in `msgpack` format.
+/// This is the corresponding mime type to convey that info.
 pub const PARSEC_CONTENT_TYPE: &str = "application/msgpack";
 
 pub const API_VERSION_HEADER_NAME: &str = "Api-Version";
