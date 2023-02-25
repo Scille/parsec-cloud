@@ -171,7 +171,7 @@ impl LocalDevice {
     }
 }
 
-parsec_data!("schema/local_device.json");
+parsec_data!("schema/local_device.json5");
 
 impl TryFrom<LocalDeviceData> for LocalDevice {
     type Error = &'static str;

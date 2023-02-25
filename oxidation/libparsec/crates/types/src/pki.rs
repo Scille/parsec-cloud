@@ -53,7 +53,7 @@ pub struct PkiEnrollmentAnswerPayload {
     pub root_verify_key: VerifyKey,
 }
 
-parsec_data!("schema/pki/pki_enrollment_answer_payload.json");
+parsec_data!("schema/pki/pki_enrollment_answer_payload.json5");
 
 impl_transparent_data_format_conversion!(
     PkiEnrollmentAnswerPayload,
@@ -89,7 +89,7 @@ pub struct PkiEnrollmentSubmitPayload {
     pub requested_device_label: DeviceLabel,
 }
 
-parsec_data!("schema/pki/pki_enrollment_submit_payload.json");
+parsec_data!("schema/pki/pki_enrollment_submit_payload.json5");
 
 impl_transparent_data_format_conversion!(
     PkiEnrollmentSubmitPayload,
@@ -137,7 +137,7 @@ impl X509Certificate {
     }
 }
 
-parsec_data!("schema/pki/x509_certificate.json");
+parsec_data!("schema/pki/x509_certificate.json5");
 
 impl_transparent_data_format_conversion!(
     X509Certificate,
@@ -244,7 +244,7 @@ impl LocalPendingEnrollment {
     }
 }
 
-parsec_data!("schema/pki/local_pending_enrollment.json");
+parsec_data!("schema/pki/local_pending_enrollment.json5");
 
 impl_transparent_data_format_conversion!(
     LocalPendingEnrollment,

@@ -23,7 +23,7 @@ pub struct DeviceFilePassword {
     pub salt: Vec<u8>,
 }
 
-parsec_data!("schema/device_file_password.json");
+parsec_data!("schema/device_file_password.json5");
 
 impl_transparent_data_format_conversion!(
     DeviceFilePassword,
@@ -48,7 +48,7 @@ pub struct DeviceFileRecovery {
     pub slug: String,
 }
 
-parsec_data!("schema/device_file_recovery.json");
+parsec_data!("schema/device_file_recovery.json5");
 
 impl_transparent_data_format_conversion!(
     DeviceFileRecovery,
@@ -76,7 +76,7 @@ pub struct DeviceFileSmartcard {
     pub certificate_sha1: Option<Vec<u8>>,
 }
 
-parsec_data!("schema/device_file_smartcard.json");
+parsec_data!("schema/device_file_smartcard.json5");
 
 impl_transparent_data_format_conversion!(
     DeviceFileSmartcard,

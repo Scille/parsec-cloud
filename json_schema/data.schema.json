@@ -1,0 +1,19 @@
+{
+    "type": "object",
+    "required": [
+        "label",
+        "other_fields"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "label": {
+            "type": "string"
+        },
+        "type": {
+            "type": "string"
+        },
+        "other_fields": {
+            "$ref": "./data/fields.schema.json"
+        }
+    }
+}
