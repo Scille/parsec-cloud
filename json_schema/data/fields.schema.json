@@ -1,0 +1,26 @@
+{
+    "title": "Fields schema",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+            "name",
+            "type"
+        ],
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "type": {
+                "type": "string"
+            },
+            "default": {
+                "type": "string"
+            },
+            "introduced_in_revision": {
+                "$ref": "./major-minor-parsec-number.schema.json"
+            }
+        }
+    }
+}

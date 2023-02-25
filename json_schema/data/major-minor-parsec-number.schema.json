@@ -1,0 +1,5 @@
+{
+    "title": "Major Minor Parsec number",
+    "type": "integer",
+    "description": "Hack to indicate in which Parsec version the field was added, given revision is meaningless for data"
+}

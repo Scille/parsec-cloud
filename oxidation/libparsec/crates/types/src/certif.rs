@@ -193,7 +193,7 @@ impl UserCertificate {
     }
 }
 
-parsec_data!("schema/certif/user_certificate.json");
+parsec_data!("schema/certif/user_certificate.json5");
 
 impl From<UserCertificateData> for UserCertificate {
     fn from(data: UserCertificateData) -> Self {
@@ -275,7 +275,7 @@ impl RevokedUserCertificate {
     }
 }
 
-parsec_data!("schema/certif/revoked_user_certificate.json");
+parsec_data!("schema/certif/revoked_user_certificate.json5");
 
 impl_transparent_data_format_conversion!(
     RevokedUserCertificate,
@@ -301,7 +301,7 @@ pub struct DeviceCertificate {
     pub verify_key: VerifyKey,
 }
 
-parsec_data!("schema/certif/device_certificate.json");
+parsec_data!("schema/certif/device_certificate.json5");
 
 impl_unsecure_load!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
@@ -391,7 +391,7 @@ impl RealmRoleCertificate {
     }
 }
 
-parsec_data!("schema/certif/realm_role_certificate.json");
+parsec_data!("schema/certif/realm_role_certificate.json5");
 
 impl_transparent_data_format_conversion!(
     RealmRoleCertificate,
@@ -426,7 +426,7 @@ impl SequesterAuthorityCertificate {
     }
 }
 
-parsec_data!("schema/certif/sequester_authority_certificate.json");
+parsec_data!("schema/certif/sequester_authority_certificate.json5");
 
 impl TryFrom<SequesterAuthorityCertificateData> for SequesterAuthorityCertificate {
     type Error = DataError;
@@ -486,7 +486,7 @@ impl SequesterServiceCertificate {
     }
 }
 
-parsec_data!("schema/certif/sequester_service_certificate.json");
+parsec_data!("schema/certif/sequester_service_certificate.json5");
 
 impl_transparent_data_format_conversion!(
     SequesterServiceCertificate,

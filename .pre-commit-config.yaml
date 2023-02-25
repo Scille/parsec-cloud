@@ -183,7 +183,19 @@ repos:
     hooks:
       - id: check-jsonschema
         name: Validate protocol files with jsonschema
-        files: ^oxidation/libparsec/crates/protocol/schema/
+        alias: check-protocol-schema
         types_or: [ json5 ]
+        files: ^oxidation/libparsec/crates/protocol/schema/
         args: [ --schemafile, json_schema/protocol.schema.json ]
         additional_dependencies: [ json5 ]
+
+      - id: check-jsonschema
+        name: Validate data files with jsonschema
+        alias: check-data-schema
+        types_or: [ json5 ]
+        files: ^oxidation/libparsec/crates/(types|client_types)/schema/
+        args: [ --schemafile, json_schema/data.schema.json ]
+        additional_dependencies: [ json5 ]
+
+      - id: check-metaschema
+        files: ^json_schema/
