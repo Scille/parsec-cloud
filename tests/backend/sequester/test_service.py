@@ -82,13 +82,13 @@ async def test_create_disable_services(
             organization_id=coolorg.organization_id, service=service.backend_service
         )
 
-    # Retreive service list
+    # Retrieve service list
     services = await backend.sequester.get_organization_services(
         organization_id=coolorg.organization_id
     )
     assert services == [service_very_old_timestamp.backend_service, service.backend_service]
 
-    # Cannot retreive service list on non sequestered organization
+    # Cannot retrieve service list on non sequestered organization
     with pytest.raises(SequesterDisabledError):
         services = await backend.sequester.get_organization_services(
             organization_id=otherorg.organization_id
@@ -136,7 +136,7 @@ async def test_create_disable_services(
             disabled_on=disabled_on,
         )
 
-    # Retreive service list
+    # Retrieve service list
     services = await backend.sequester.get_organization_services(
         organization_id=coolorg.organization_id
     )
@@ -161,7 +161,7 @@ async def test_create_disable_services(
 
     # 4) Bonus: list services
 
-    # Retreive service list
+    # Retrieve service list
     services = await backend.sequester.get_organization_services(
         organization_id=coolorg.organization_id
     )
@@ -172,19 +172,19 @@ async def test_create_disable_services(
         backend_service2,
     ]
 
-    # Retreive single service
+    # Retrieve single service
     retrieved_backend_service1 = await backend.sequester.get_service(
         organization_id=coolorg.organization_id, service_id=service.service_id
     )
     assert retrieved_backend_service1 == expected_backend_service1
 
-    # Retreive single service unknown organization ID
+    # Retrieve single service unknown organization ID
     with pytest.raises(SequesterOrganizationNotFoundError):
         await backend.sequester.get_service(
             organization_id=OrganizationID("DummyOrg"), service_id=service.service_id
         )
 
-    # Retreive service list unknown organization ID
+    # Retrieve service list unknown organization ID
     with pytest.raises(SequesterOrganizationNotFoundError):
         await backend.sequester.get_organization_services(
             organization_id=OrganizationID("DummyOrg")
@@ -196,11 +196,11 @@ async def test_create_disable_services(
             organization_id=coolorg.organization_id, service_id=SequesterServiceID.new()
         )
 
-    # Try retreive service list in a non sequestered organization
+    # Try retrieve service list in a non sequestered organization
     with pytest.raises(SequesterDisabledError):
         await backend.sequester.get_organization_services(organization_id=otherorg.organization_id)
 
-    # Try retreive single service in a non sequestered organization
+    # Try retrieve single service in a non sequestered organization
     with pytest.raises(SequesterDisabledError):
         await backend.sequester.get_service(
             organization_id=otherorg.organization_id, service_id=service.service_id
