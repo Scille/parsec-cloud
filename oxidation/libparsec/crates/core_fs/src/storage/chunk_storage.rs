@@ -633,7 +633,6 @@ impl Remanence for BlockStorage {
 mod tests {
     use libparsec_platform_local_db::VacuumMode;
     use std::{collections::HashSet, sync::Arc};
-    use uuid::Uuid;
 
     use libparsec_tests_fixtures::{tmp_path, TmpPath};
     use rstest::rstest;
@@ -697,7 +696,7 @@ mod tests {
         assert_eq!(storage.get_chunk(chunk_id).await.unwrap(), &RAW_CHUNK_DATA);
 
         // Retrieve missing chunks.
-        let random_chunk_id = ChunkID::from(Uuid::new_v4());
+        let random_chunk_id = ChunkID::default();
         assert!(
             !chunk_ids.iter().any(|id| id == &random_chunk_id),
             "The random generated chunk_id MUST not be already inserted in the storage by the previous step"
@@ -735,7 +734,7 @@ mod tests {
         let mut chunk_ids = Vec::with_capacity(CHUNK_TO_INSERT);
 
         for _ in 0..CHUNK_TO_INSERT {
-            let chunk_id = ChunkID::from(Uuid::new_v4());
+            let chunk_id = ChunkID::default();
             chunk_ids.push(chunk_id);
 
             storage.set_chunk(chunk_id, chunk_data).await.unwrap();
@@ -808,7 +807,7 @@ mod tests {
         let block_limit = storage.block_limit();
         assert_eq!(block_limit, (CACHE_SIZE / *DEFAULT_BLOCK_SIZE));
 
-        let block_id = BlockID::from(Uuid::new_v4());
+        let block_id = BlockID::default();
         const RAW_BLOCK_DATA: [u8; 4] = [5, 6, 7, 8];
         storage
             .set_clean_block(block_id, &RAW_BLOCK_DATA)
