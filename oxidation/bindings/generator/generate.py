@@ -237,7 +237,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
 
     # Use `module.__dict__` instead of `dir(module)` to preserve the definition order
     for item_name, item in api_module.__dict__.items():
-        # Special case to retreive the meta types
+        # Special case to retrieve the meta types
         if item_name in META_TYPES:
             globals()[item_name] = getattr(api_module, item_name)
             continue
@@ -315,7 +315,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             raise RuntimeError(f"Multiple types with same name `{name}`: `{setted}` vs `{v}`")
     del reserved
 
-    # Finally retreive the api functions, nothing fancy here
+    # Finally retrieve the api functions, nothing fancy here
     meths = []
     for item_name, item in api_items.items():
         if isfunction(item):

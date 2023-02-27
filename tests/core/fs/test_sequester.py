@@ -48,7 +48,7 @@ async def test_userfs_sequester_sync(
         )
         user_manifest_vlob_id = VlobID.from_entry_id(local_device.user_manifest_id)
 
-        # Simple check: make sure we retreive the expected items
+        # Simple check: make sure we retrieve the expected items
         items = {(vlob_id, version) for (vlob_id, version, _) in realm_dump}
         expected_items = {(user_manifest_vlob_id, v) for v in expected_versions}
         assert items == expected_items
@@ -124,7 +124,7 @@ async def test_workspacefs_sequester_sync(
             realm_id=realm_id,
         )
 
-        # Simple check: make sure we retreive the expected items
+        # Simple check: make sure we retrieve the expected items
         items = {(vlob_id, version) for (vlob_id, version, _) in realm_dump}
         expected_items = {
             (VlobID.from_entry_id(entry_id), version) for (entry_id, version) in expected_items
