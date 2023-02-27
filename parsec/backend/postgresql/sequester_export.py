@@ -343,7 +343,7 @@ class RealmExporter:
     # Vlobs export
 
     async def compute_vlobs_export_status(self) -> Tuple[int, BatchOffsetMarker]:
-        def _retreive_vlobs_export_status() -> int:
+        def _retrieve_vlobs_export_status() -> int:
             con = sqlite3.connect(self.output_db_path)
             try:
                 row = con.execute("SELECT max(_id) FROM vlob_atom").fetchone()
@@ -351,7 +351,7 @@ class RealmExporter:
                 con.close()
             return row[0] or 0
 
-        last_exported_index = await trio.to_thread.run_sync(_retreive_vlobs_export_status)
+        last_exported_index = await trio.to_thread.run_sync(_retrieve_vlobs_export_status)
 
         async with self.input_dbh.pool.acquire() as conn:
             rows = await conn.fetch(
@@ -459,7 +459,7 @@ ON CONFLICT DO NOTHING
     # Blocks export
 
     async def compute_blocks_export_status(self) -> Tuple[int, BatchOffsetMarker]:
-        def _retreive_vlobs_export_status() -> int:
+        def _retrieve_vlobs_export_status() -> int:
             con = sqlite3.connect(self.output_db_path)
             try:
                 row = con.execute("SELECT max(_id) FROM block").fetchone()
@@ -467,7 +467,7 @@ ON CONFLICT DO NOTHING
                 con.close()
             return row[0] or 0
 
-        last_exported_index = await trio.to_thread.run_sync(_retreive_vlobs_export_status)
+        last_exported_index = await trio.to_thread.run_sync(_retrieve_vlobs_export_status)
 
         async with self.input_dbh.pool.acquire() as conn:
             rows = await conn.fetch(

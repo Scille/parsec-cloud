@@ -280,7 +280,7 @@ jobs:
           # We setup the cache by hand, see below
           cache: false
 
-      - name: Retreive Rust cache
+      - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # pin v2.2.0
         if: >-
           steps.python-changes.outputs.run == 'true'
@@ -378,7 +378,7 @@ jobs:
           # We setup the cache by hand, see below
           cache: false
 
-      - name: Retreive Rust cache
+      - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # pin v2.2.0
         if: steps.rust-changes.outputs.run == 'true'
         with:
