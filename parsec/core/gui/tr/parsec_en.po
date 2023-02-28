@@ -976,8 +976,15 @@ msgstr "An error occurred while creating the user. Please restart the process."
 
 msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
 msgstr ""
-"Active users limit reached, increase the limit or revoke some users "
-"before trying again."
+"The limit of active users has been reached for this organization.<br />"
+"To be able to invite a new user, you need to revoke an existing one or ask the server's administrator "
+"to increase the maximum number of users for this organization."
+
+msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED_COMMERCIAL"
+msgstr ""
+"The limit of active users has been reached for this organization.<br />"
+"To be able to invite a new user, you need to revoke an existing one or update your subscription.<br /><br />"
+"More information on <a href=\"https://my-dev.parsec.cloud/help/update-user-limit\">My Parsec Cloud</a>."
 
 msgid "TEXT_GREET_USER_GET_REQUESTS_ERROR"
 msgstr "Internal error. Please restart the process."

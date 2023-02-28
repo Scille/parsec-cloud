@@ -1018,8 +1018,15 @@ msgstr ""
 
 msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
 msgstr ""
-"Limite d'utilisateurs actifs atteinte, augmentez cette limite ou bien "
-"révoquez des utilisateurs avant de réessayer."
+"La limite d'utilisateurs actifs a été atteinte pour cette organisation.<br />"
+"Pour pouvoir inviter un nouvel utilisateur, il vous faudra révoquer un utilisateur ou demander "
+"à l'administrateur du serveur d'augmenter le nombre maximum d'utilisateurs autorisés pour cette organisation."
+
+msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED_COMMERCIAL"
+msgstr ""
+"La limite d'utilisateurs actifs a été atteinte pour cette organisation.<br />"
+"Pour pouvoir inviter un nouvel utilisateur, il vous faudra révoquer un utilisateur ou modifier votre abonnement.<br /><br />"
+"Plus d'informations sur <a href=\"https://my-dev.parsec.cloud/help/update-user-limit\">My Parsec Cloud</a>."
 
 msgid "TEXT_GREET_USER_GET_REQUESTS_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer la procédure d'accueil."

@@ -666,8 +666,9 @@ async def test_greet_user_invitation_cancelled(
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
+@pytest.mark.parametrize("is_commercial_org", [True, False])
 async def test_greet_user_but_active_user_limit_reached(
-    aqtbot, autoclose_dialog, backend, alice, GreetUserTestBed
+    aqtbot, autoclose_dialog, backend, alice, GreetUserTestBed, monkeypatch, is_commercial_org: bool
 ):
     await backend.organization.update(
         alice.organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(1)
@@ -676,24 +677,39 @@ async def test_greet_user_but_active_user_limit_reached(
     class GreetUserButActiveUserLimitReachedTestBed(GreetUserTestBed):
         async def step_6_validate_claim_info(self):
             assert self.claimer_claim_task
-            # Start the greeting, however it won't be able to finish due to active user limit
-            aqtbot.mouse_click(
-                self.greet_user_check_informations_widget.button_create_user, QtCore.Qt.LeftButton
-            )
 
-            def _greet_failed():
-                assert len(autoclose_dialog.dialogs) == 1
-                assert autoclose_dialog.dialogs == [
-                    (
-                        "Error",
-                        "Active users limit reached, increase the limit or revoke some users before trying again.",
-                    )
-                ]
-                assert not self.greet_user_widget.isVisible()
-                assert not self.greet_user_information_widget.isVisible()
+            with monkeypatch.context() as monkey_ctx:
+                monkey_ctx.setattr(
+                    "parsec.core.gui.greet_user_widget.is_saas_addr", lambda _: is_commercial_org
+                )
 
-            await aqtbot.wait_until(_greet_failed)
+                # Start the greeting, however it won't be able to finish due to active user limit
+                aqtbot.mouse_click(
+                    self.greet_user_check_informations_widget.button_create_user,
+                    QtCore.Qt.LeftButton,
+                )
 
-            return None  # Test is done \o/
+                def _greet_failed():
+                    assert len(autoclose_dialog.dialogs) == 1
+                    if is_commercial_org:
+                        assert autoclose_dialog.dialogs == [
+                            (
+                                "Error",
+                                translate("TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED_COMMERCIAL"),
+                            )
+                        ]
+                    else:
+                        assert autoclose_dialog.dialogs == [
+                            (
+                                "Error",
+                                translate("TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"),
+                            )
+                        ]
+                    assert not self.greet_user_widget.isVisible()
+                    assert not self.greet_user_information_widget.isVisible()
+
+                await aqtbot.wait_until(_greet_failed)
+
+                return None  # Test is done \o/
 
     await GreetUserButActiveUserLimitReachedTestBed().run()

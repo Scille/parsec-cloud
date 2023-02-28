@@ -13,6 +13,7 @@ from parsec._parsec import SASCode
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationToken, UserProfile
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.gui import validators
+from parsec.core.gui.commercial import is_saas_addr
 from parsec.core.gui.custom_dialogs import GreyedDialog, ask_question, show_error, show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, QtToTrioJobScheduler
@@ -260,6 +261,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self,
         jobs_ctx: QtToTrioJobScheduler,
         greeter: Greeter,
+        core: LoggedCore,
         user_profile_outsider_allowed: bool = False,
     ) -> None:
         super().__init__()
@@ -268,6 +270,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.greeter = greeter
         self.get_requests_job: QtToTrioJob[tuple[HumanHandle, DeviceLabel]] | None = None
         self.create_user_job: QtToTrioJob[None] | None = None
+        self.core = core
 
         self.widget_info.hide()
         self.widget_waiting.show()
@@ -370,7 +373,12 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
                 elif isinstance(exc, InviteAlreadyUsedError):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
                 elif isinstance(exc, InviteActiveUsersLimitReachedError):
-                    msg = _("TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED")
+                    if is_saas_addr(self.core.device.organization_addr):
+                        msg = _("TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED_COMMERCIAL")
+                    else:
+                        msg = _("TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED")
+                    # Hide the details
+                    exc = None
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -720,7 +728,10 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         # so the GUI doesn't need to set the value in its own cache
         organization_config = self.core.get_organization_config()
         page = GreetUserCheckInfoWidget(
-            self.jobs_ctx, self.greeter, organization_config.user_profile_outsider_allowed
+            self.jobs_ctx,
+            self.greeter,
+            self.core,
+            organization_config.user_profile_outsider_allowed,
         )
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed)
