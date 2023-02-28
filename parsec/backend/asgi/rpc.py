@@ -74,9 +74,10 @@ def _rpc_msgpack_rep(data: dict[str, object], api_version: ApiVersion) -> Respon
 # we are not settled on what should be used yet (who knows ! maybe in the future
 # we will use another serialization format for the command processing).
 # Instead we rely on the following HTTP status code:
-# - 404: Organization non found or invalid organization ID
 # - 401: Bad authentication info (bad Author/Signature/Timestamp headers)
+# - 404: Organization / Invitation not found or invalid organization ID
 # - 406: Bad accept type (for the SSE events route)
+# - 410: Invitation already deleted / used
 # - 415: Bad content-type, body is not a valid message or unknown command
 # - 422: Unsupported API version
 # - 460: Organization is expired
@@ -98,9 +99,9 @@ async def _do_handshake(
     backend: BackendApp,
     allow_missing_organization: bool,
     check_authentication: bool,
+    check_invitation: bool,
     expected_content_type: str | None,
     expected_accept_type: str | None,
-    raw_invitation_token: str | None = None,
 ) -> tuple[
     ApiVersion,
     ApiVersion,
@@ -205,8 +206,16 @@ async def _do_handshake(
         except CryptoError:
             _handshake_abort(401, api_version=api_version)
 
-    if raw_invitation_token:
-        token = InvitationToken.from_hex(raw_invitation_token)
+    if not check_invitation:
+        invitation = None
+    else:
+        raw_invitation_token = request.headers.get("Invitation-Token", "")
+
+        try:
+            token = InvitationToken.from_hex(raw_invitation_token)
+        except ValueError:
+            _handshake_abort_bad_content(api_version=api_version)
+
         try:
             invitation = await backend.invite.info(organization_id=organization_id, token=token)
         except InvitationAlreadyDeletedError:
@@ -215,8 +224,6 @@ async def _do_handshake(
             _handshake_abort(404, api_version=api_version)
         except InvitationError:
             _handshake_abort(401, api_version=api_version)
-    else:
-        invitation = None
 
     return api_version, client_api_version, organization_id, organization, user, device, invitation
 
@@ -234,6 +241,7 @@ async def anonymous_api(raw_organization_id: str) -> Response:
         backend=backend,
         allow_missing_organization=allow_missing_organization,
         check_authentication=False,
+        check_invitation=False,
         expected_content_type=CONTENT_TYPE_MSGPACK,
         expected_accept_type=None,
     )
@@ -281,8 +289,8 @@ async def anonymous_api(raw_organization_id: str) -> Response:
     return _rpc_msgpack_rep(rep, api_version)
 
 
-@rpc_bp.route("/invited/<raw_organization_id>/<raw_invitation_token>", methods=["POST"])
-async def invited_api(raw_organization_id: str, raw_invitation_token: str) -> Response:
+@rpc_bp.route("/invited/<raw_organization_id>", methods=["POST"])
+async def invited_api(raw_organization_id: str) -> Response:
     backend: BackendApp = g.backend
 
     api_version, client_api_version, organization_id, _, _, _, invitation = await _do_handshake(
@@ -290,9 +298,9 @@ async def invited_api(raw_organization_id: str, raw_invitation_token: str) -> Re
         backend=backend,
         allow_missing_organization=False,
         check_authentication=False,
+        check_invitation=True,
         expected_content_type=CONTENT_TYPE_MSGPACK,
         expected_accept_type=None,
-        raw_invitation_token=raw_invitation_token,
     )
 
     # Unpack verified body
@@ -342,6 +350,7 @@ async def authenticated_api(raw_organization_id: str) -> Response:
         backend=backend,
         allow_missing_organization=False,
         check_authentication=True,
+        check_invitation=False,
         expected_content_type=CONTENT_TYPE_MSGPACK,
         expected_accept_type=None,
     )
@@ -511,6 +520,7 @@ async def authenticated_events_api(raw_organization_id: str) -> Response:
         backend=backend,
         allow_missing_organization=False,
         check_authentication=True,
+        check_invitation=False,
         # We don't care of Content-Type given the request has no body
         expected_content_type=None,
         expected_accept_type=ACCEPT_TYPE_SSE,
