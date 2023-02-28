@@ -291,7 +291,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@dfa8744db3c65831067d3386253fc8ec50fd8cfd # pin v1.3.7
+        uses: actions-rust-lang/setup-rust-toolchain@64fef3b54176f6c03745153e9aae267bf88cbc0f # pin v1.4.3
         if: >-
           steps.python-changes.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
@@ -408,7 +408,7 @@ jobs:
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
-      - uses: actions-rust-lang/setup-rust-toolchain@dfa8744db3c65831067d3386253fc8ec50fd8cfd # pin v1.3.7
+      - uses: actions-rust-lang/setup-rust-toolchain@64fef3b54176f6c03745153e9aae267bf88cbc0f # pin v1.4.3
         if: steps.rust-changes.outputs.run == 'true'
         with:
           # We setup the cache by hand, see below
