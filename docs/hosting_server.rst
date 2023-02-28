@@ -13,7 +13,7 @@ Requirements
 - Python 3.9
 - PostgreSQL >= 10
 
-On top of that, an object storage service should also be provided to store the encrypted data blocks.
+On top of that, an object storage service is required in order to store the encrypted data blocks.
 Both Amazon S3 or OpenStack Swift API are supported.
 
 
