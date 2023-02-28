@@ -3,157 +3,154 @@
 # This file is distributed under the same license as the Parsec package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-15 11:20+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2023-02-28 16:33+0100\n"
+"PO-Revision-Date: 2023-03-02 12:11+0100\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: \n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.12.1\n"
+"X-Generator: Poedit 3.2.2\n"
 
-#: ../../cryptography.rst:5
+#: ../../cryptography.rst:7
 msgid "Cryptography"
 msgstr "Cryptographie"
 
-#: ../../cryptography.rst:9
+#: ../../cryptography.rst:11
 msgid "Overview"
 msgstr "Aperçu"
 
-#: ../../cryptography.rst:10
-msgid ""
-"The Parsec solution implies numerous cryptography concepts in order to, "
-"for example, enable key exchanges between users of the same work-group, "
-"or the registration of a new user without implying other private keys "
-"than the ones that the new user is creating for himself and the ones of "
-"the administrator inviting him."
-msgstr ""
-"La solution Parsec implique de nombreux concepts cryptographiques afin "
-"par exemple de permettre les échanges de clés entre les utilisateurs d’un"
-" même work-group, ou l’ajout d’un nouvel utilisateur au système sans "
-"impliquer d’autres clés privées que celles que le nouvel utilisateur se "
-"crée ainsi que celles de l’administrateur l’invitant."
-
 #: ../../cryptography.rst:12
 msgid ""
-"An user can own one or more devices that he can use transparently, and he"
-" is able to add new devices from whichever of his already registered "
-"devices as soon as he wants it."
+"The Parsec solution involves many cryptographic concepts in order to "
+"allow, for example, key exchanges between users of the same work-group, "
+"or user registration without involving private keys other than those "
+"created by the new user for himself and those of the inviting "
+"administrator."
 msgstr ""
-"Un utilisateur (user) peut posséder un ou plusieurs appareils (devices) "
-"qu’il peut utiliser de manière transparente, et il est en capacité "
-"d’ajouter de nouveaux devices depuis n’importe lequel de ses devices dès "
-"qu’il le souhaite."
+"La solution Parsec implique de nombreux concepts cryptographiques afin "
+"par exemple de permettre les échanges de clés entre les utilisateurs "
+"d’un même espace de travail, ou l’ajout d’un nouvel utilisateur sans impliquer "
+"d’autres clés privées que celles que le nouvel utilisateur se crée ainsi "
+"que celles de l’administrateur l’invitant."
 
 #: ../../cryptography.rst:14
 msgid ""
-"An organization can be bootstrapped without the administrator of the "
-"back-end knowing the root key of the organization."
+"A user can own one or more devices that can be used transparently, and "
+"it is able to add new devices from already registered devices anytime."
+msgstr ""
+"Un utilisateur (user) peut posséder un ou plusieurs terminaux (devices) "
+"qu’il peut utiliser de manière transparente, et il est en capacité à "
+"tout moment d’ajouter de nouveaux terminaux depuis n’importe lequel de "
+"ses terminaux."
+
+#: ../../cryptography.rst:16
+msgid ""
+"An organization can be bootstrapped without the backend administrator "
+"knowing the root key of the organization."
 msgstr ""
 "Une organisation peut être mise en route sans que l'administrateur du "
 "serveur ne puisse prendre connaissance de sa clé root."
 
-#: ../../cryptography.rst:16
+#: ../../cryptography.rst:18
 msgid ""
-"In this section, the mechanisms enabling Parsec to reach that Zero-Trust "
-"level of confidentiality will quickly be explained (in that context, "
+"In this section, the mechanisms allowing Parsec to reach this Zero-Trust "
+"level of confidentiality will be briefly explained (in this context, "
 "Zero-Trust means that no trust has to be placed in the back-end for the "
 "solution to be secure)."
 msgstr ""
 "Dans cette section, les mécanismes permettant à Parsec d'atteindre ce "
-"niveau de confidentialité Zero-Trust seront rapidement expliqués (dans ce"
-" contexte, Zero-Trust signifie qu'aucune confiance n'a à être placée dans"
-" le backend pour que la solution soit sécurisée)."
+"niveau de confidentialité Zero-Trust seront rapidement expliqués (dans "
+"ce contexte, Zero-Trust signifie qu'aucune confiance n'a à être placée "
+"dans le backend pour que la solution soit sécurisée)."
 
-#: ../../cryptography.rst:20
+#: ../../cryptography.rst:22
 msgid "Creating an Organization"
 msgstr "Création d’une organisation"
 
-#: ../../cryptography.rst:22
+#: ../../cryptography.rst:24
 msgid ""
-"First, an administrator of the metadata server register the name of the "
-"organization and obtain an initialization token of the organization that "
-"he transmits to the person selected to be the first administrator of that"
-" organization."
+"The administrator of the metadata server registers the name of the "
+"organization and obtain an **initialization token** to be transmitted to "
+"the person selected to be the first administrator of the organization."
 msgstr ""
-"Dans un premier temps un administrateur du serveur de métadonnées "
-"enregistre le nom de l'organisation et obtient un jeton d'initialisation "
-"de l'organisation qu'il transmet à la personne désignée pour être le "
-"premier administrateur de l'organisation."
+"L'administrateur du serveur de métadonnées enregistre le nom de "
+"l'organisation et obtient un jeton d'initialisation de l'organisation "
+"qu'il transmet à la personne désignée pour être le premier "
+"administrateur de l'organisation."
 
-#: ../../cryptography.rst:23
+#: ../../cryptography.rst:25
 msgid ""
-"Second, the application creates on the device of that first administrator"
-" an organization key (ORG_ROOT_SIG_S_KEY, ORG_ROOT_SIG_P_KEY), a user key"
-" (USER_ENC_S_KEY, USER_ENC_P_KEY), and a device key (DEVICE_SIG_S_KEY, "
-"DEVICE_SIG_P_KEY). The application certifies public user and device keys "
-"with the signature key of the organization and upload them on the back-"
-"end. Moreover, only the public part of the organization root key "
+"The application creates on the administrator's device **an organization "
+"key** (ORG_ROOT_SIG_S_KEY, ORG_ROOT_SIG_P_KEY), **a user key** "
+"(USER_ENC_S_KEY, USER_ENC_P_KEY), and a **device key** "
+"(DEVICE_SIG_S_KEY, DEVICE_SIG_P_KEY). The application certifies user and "
+"device public keys with the organization's signature key and upload them "
+"on the back-end. Only the public part of the organization root key "
 "(ORG_ROOT_SIG_P_KEY) is uploaded to the metadata server, the secret part "
 "of the key is intentionally discarded, which makes it nonrecoverable."
 msgstr ""
-"Dans un second temps, l'application crée sur le poste de ce premier "
-"administrateur de l'organisation une clé d'organisation "
-"(ORG_ROOT_SIG_S_KEY, ORG_ROOT_SIG_P_KEY), une clé de compte d'utilisateur"
-" (USER_ENC_S_KEY, USER_ENC_P_KEY) et une clé de terminal "
-"(DEVICE_SIG_S_KEY, DEVICE_SIG_P_KEY). L'application certifie les clés "
-"publiques de l'utilisateur et de l'appareil avec la clé de signature de "
-"l'organisation et les télécharge sur le back-end. De plus, seule la "
+"L'application crée sur le poste de ce premier administrateur de "
+"l'organisation une **clé pour l'organisation** (ORG_ROOT_SIG_S_KEY, "
+"ORG_ROOT_SIG_P_KEY), une **clé d'utilisateur** (USER_ENC_S_KEY, "
+"USER_ENC_P_KEY) et une **clé de terminal** (DEVICE_SIG_S_KEY, "
+"DEVICE_SIG_P_KEY). L'application certifie les clés publiques de "
+"l'utilisateur et de l'appareil avec la clé de signature de "
+"l'organisation et les télécharge sur le backend. De plus, seule la "
 "partie publique de la clé racine de l'organisation (ORG_ROOT_SIG_P_KEY) "
 "est téléchargée dans le serveur de métadonnées, la partie secrète est "
-"intentionnellement oubliée, ce qui la rend irrécupérable.\""
+"intentionnellement oubliée, ce qui la rend irrécupérable."
 
-#: ../../cryptography.rst:27
+#: ../../cryptography.rst:29
 msgid "Adding a new User"
 msgstr "Création d’un nouvel utilisateur"
 
-#: ../../cryptography.rst:29
+#: ../../cryptography.rst:31
 msgid ""
 "The creation of a new user can only be done by an existing user, already "
 "registered in the organization and having the Administrator profile. "
 "Let's consider the case where Alice is Administrator and wants to "
-"register Bob :"
+"register Bob:"
 msgstr ""
 "La création d’un nouvel utilisateur ne peut se faire que par un "
 "utilisateur existant, déjà enregistré dans l’organisation et ayant le "
 "profil Administrateur. Considérons le cas où Alice est Administrateur et "
 "veut rajouter Bob :"
 
-#: ../../cryptography.rst:31
+#: ../../cryptography.rst:33
 msgid ""
-"Alice signals to the back-end that Bob is invited to the organization and"
-" transmits his email address."
+"Alice signals to the back-end that Bob is invited to the organization "
+"and transmits his email address."
 msgstr ""
-"Alice signale au back-end que Bob est invité au sein de l'organisation en"
-" transmettant son adresse e-mail."
+"Alice signale au back-end que Bob est invité au sein de l'organisation "
+"en transmettant son adresse e-mail."
 
-#: ../../cryptography.rst:32
+#: ../../cryptography.rst:35
 msgid ""
-"The metadata server sends to Bob an email with an invitation URL "
+"The metadata server sends an email to Bob with an invitation URL "
 "containing the organization ID and an unique identifier for the "
 "invitation canal."
 msgstr ""
 "Le serveur de métadonnées envoie un e-mail à Bob avec une URL "
-"d'invitation qui contient l'ID d'organisation et un identifiant unique du"
-" canal d'invitation."
+"d'invitation qui contient l'ID d'organisation et un identifiant unique "
+"du canal d'invitation."
 
-#: ../../cryptography.rst:33
-#, python-format
+#: ../../cryptography.rst:39
 msgid ""
 "Alice and Bob proceed to an `authenticated Diffie Hellman exchange "
-"<https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>`_ "
-"(DH) :"
+"<https://en.wikipedia.org/wiki/Diffie-Hellman_key_exchange>`_ (DH) :"
 msgstr ""
 "Alice et Bob effectuent un `échange de clé Diffie Hellman (DH) "
-"authentifié "
-"<https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>`_ :"
+"authentifié <https://fr.wikipedia.org/wiki/"
+"%C3%89change_de_cl%C3%A9s_Diffie-Hellman>`_ :"
 
-#: ../../cryptography.rst:35
+#: ../../cryptography.rst:38
 msgid ""
 "Alice and Bob create asymmetric ephemeral keys and exchange public parts "
 "of that keys using the metadata server as a transmission canal to deduce "
@@ -163,15 +160,14 @@ msgstr ""
 "parties publiques en utilisant le serveur de métadonnées comme canal de "
 "transmission pour déduire une clé secrète partagée dans le style de DH."
 
-#: ../../cryptography.rst:36
+#: ../../cryptography.rst:39
 msgid ""
 "To prevent a malicious metadata server to modify the DH canal (Man-in-"
 "the-middle attack), Alice and Bob authenticate their secrete key using "
-"the `Short Authentication String "
-"<https://www.iacr.org/archive/crypto2005/36210303/36210303.pdf>`_ (SAS) "
-"protocol. Each party share verbally a SAS token that his pair must "
-"validate from a set of tokens `(accordingly to the recommendations of the"
-" scientific community) "
+"the `Short Authentication String <https://www.iacr.org/archive/"
+"crypto2005/36210303/36210303.pdf>`_ (SAS) protocol. Each party share "
+"verbally a SAS token that his pair must validate from a set of tokens "
+"`(accordingly to the recommendations of the scientific community) "
 "<https://www.cs.columbia.edu/~nieh/pubs/eurosys2019_e3.pdf>`_ ."
 msgstr ""
 "Pour empêcher un serveur de métadonnées malveillant de modifier le canal "
@@ -179,168 +175,168 @@ msgstr ""
 "secrète partagée à l'aide du protocole `Short Authentication String "
 "<https://www.iacr.org/archive/crypto2005/36210303/36210303.pdf>`_ (SAS). "
 "Chaque partie communique verbalement un jeton SAS que son homologue doit "
-"valider parmi un ensemble de jetons (conformément aux `recommandations de"
-" la littérature scientifique "
-"<https://www.cs.columbia.edu/~nieh/pubs/eurosys2019_e3.pdf>`_ )."
+"valider parmi un ensemble de jetons (conformément aux `recommandations "
+"de la littérature scientifique <https://www.cs.columbia.edu/~nieh/pubs/"
+"eurosys2019_e3.pdf>`_ )."
 
-#: ../../cryptography.rst:38
+#: ../../cryptography.rst:41
 msgid ""
-"Bob generate his user (USER_ENC_P_KEY, USER_ENC_S_KEY) and device "
-"(DEVICE_SIG_P_KEY, DEVICE_SIG_S_KEY) keys and use the authenticated "
+"Bob generate his user keys (USER_ENC_P_KEY, USER_ENC_S_KEY), his device "
+"keys (DEVICE_SIG_P_KEY, DEVICE_SIG_S_KEY) and use the authenticated "
 "channel to share their public parts with Alice."
 msgstr ""
 "Bob génère ses clés d'utilisateur (USER_ENC_P_KEY, USER_ENC_S_KEY) et de "
 "terminal (DEVICE_SIG_P_KEY, DEVICE_SIG_S_KEY) et utilise le canal "
 "authentifié pour communiquer leurs parties publiques à Alice."
 
-#: ../../cryptography.rst:39
+#: ../../cryptography.rst:43
 msgid ""
-"Alice signs that two keys with the help of her private key "
+"Alice signs those two keys with the help of her private key "
 "(DEVICE_SIG_S_KEY) and upload those certified keys to the metadata "
-"server. As each user key is signed by a device registered in the "
+"server. Since each user key is signed by a device registered in the "
 "organization and the one of the first user is signed by the root key "
 "(ORG_ROOT_SIG_S_KEY), re-validating the signature trust-chain, a client "
-"is able to verify that a key has been added to PARSEC by a legitimate "
-"terminal and can be considered as valid. Each user is attributed an email"
-" address at its creation in order to reflect his correspondence to a "
-"natural person. For a given email address, it exists at least one non-"
+"is able to verify that a key has been added to Parsec by a legitimate "
+"terminal and can be considered as valid. Each user is attributed an "
+"email address at its creation in order to reflect his correspondence to "
+"a natural person. For a given email address, it exists at least one non-"
 "revoked user in the organization (i.e. revocation of the existing user "
 "then creation of a new user with the same email address), while enabling "
 "other users to find him with the same email address."
 msgstr ""
-"Alice signe ces deux clés à l'aide de sa clé privée (DEVICE_SIG_S_KEY) et"
-" télécharge ces clés certifiées sur le serveur de métadonnées. Comme "
+"Alice signe ces deux clés à l'aide de sa clé privée (DEVICE_SIG_S_KEY) "
+"et télécharge ces clés certifiées sur le serveur de métadonnées. Comme "
 "chaque clé d’utilisateur est signée par un terminal enregistré dans "
 "l’organisation et celle du premier utilisateur est signée par la clé "
 "racine (ORG_ROOT_SIG_S_KEY), en revalidant la chaîne de signatures, un "
-"client est en mesure de s’assurer qu’une clé a bien été ajoutée à PARSEC "
+"client est en mesure de s’assurer qu’une clé a bien été ajoutée à Parsec "
 "par un terminal légitime et peut donc être considérée comme valide. Un "
-"utilisateur se voit attribuer une adresse email à sa création afin de "
-"signifier sa correspondance à une personne physique. Pour une adresse "
-"email donnée, il existe au plus un utilisateur non révoqué dans une "
+"utilisateur se voit attribuer une adresse e-mail à sa création afin de "
+"signifier sa correspondance à une personne physique. Pour une adresse e-"
+"mail donnée, il existe au plus un utilisateur non révoqué dans une "
 "organisation. De cette façon un utilisateur compromis peut être remplacé "
-"au sein de l’organisation (i.e. révocation de l’utilisateur existant puis"
-" création d’un nouvel utilisateur avec la même adresse email), tout en "
-"permettant aux autres utilisateur de le retrouver via la même adresse "
-"email."
+"au sein de l’organisation (i.e. révocation de l’utilisateur existant "
+"puis création d’un nouvel utilisateur avec la même adresse e-mail), tout "
+"en permettant aux autres utilisateur de le retrouver via la même adresse "
+"e-mail."
 
-#: ../../cryptography.rst:43
+#: ../../cryptography.rst:47
 msgid "Adding a new Device"
 msgstr "Création d’un nouveau terminal"
 
-#: ../../cryptography.rst:45
+#: ../../cryptography.rst:49
 msgid ""
 "The creation of a new device works in a similar way to the creation of a "
-"new user, except that the new device doesn't have create a user key "
-"(USER_ENC_P_KEY, USER_ENC_S_KEY), but it is the role of the inviting "
-"device to transmit him that information in a secure way. The same "
-"authenticated DH mechanism is used as described in the previous section. "
-"The new device key is certified in the same way using the existing device"
-" signature key (DEVICE_SIG_S_KEY) before being uploaded to the metadata "
-"server."
+"new user, except that the new device doesn't have to create a user key "
+"(USER_ENC_P_KEY, USER_ENC_S_KEY). Instead it is the role of the inviting "
+"device to transmit that information in a secure way. The same "
+"authenticated DH mechanism described in the previous section is used. "
+"The new device key is certified in the same way using the existing "
+"device signature key (DEVICE_SIG_S_KEY) before being uploaded to the "
+"metadata server."
 msgstr ""
-"La création d’un nouveau terminal fonctionne de manière similaire à celle"
-" d’un nouvel utilisateur à ceci près que le nouveau terminal n’a pas à "
-"créer de clé d’utilisateur (USER_ENC_P_KEY, USER_ENC_S_KEY) mais c’est au"
-" terminal existant de lui transmettre cette information de manière "
-"sécurisée. Le même mécanisme DH authentifié par SAS est utilisé comme "
-"décrit dans la section précédente. La nouvelle clé de terminal est "
+"La création d’un nouveau terminal fonctionne de manière similaire à "
+"celle d’un nouvel utilisateur à ceci près que le nouveau terminal n’a "
+"pas à créer de clé d’utilisateur (USER_ENC_P_KEY, USER_ENC_S_KEY) mais "
+"c’est au terminal existant de lui transmettre cette information de "
+"manière sécurisée. Le même mécanisme DH authentifié décrit dans la "
+"section précédente est utilisé. La nouvelle clé de terminal est "
 "certifiée de manière identique en utilisant la clé de signature de "
-"terminal existante (DEVICE_SIG_S_KEY) avant d'être mise à jour vers le "
+"terminal existante (DEVICE_SIG_S_KEY) avant d'être envoyé vers le "
 "serveur de métadonnées."
 
-#: ../../cryptography.rst:49
+#: ../../cryptography.rst:53
 msgid "Management of file reads"
 msgstr "Gestion de la lecture d'un fichier"
 
-#: ../../cryptography.rst:51
+#: ../../cryptography.rst:55
 msgid ""
-"The PARSEC client tries to prioritize local access to data when reading a"
-" file. This isn't always possible and the consultation of the metadata "
+"The Parsec client tries to prioritize local access to data when reading "
+"a file. This isn't always possible and the consultation of the metadata "
 "server can be mandatory."
 msgstr ""
 "Le client PARSEC tente de privilégier l’accès local aux données lors de "
 "la lecture de fichier. Cela n’est pas toujours possible et la "
 "consultation du serveur de métadonnées peut s’avérer obligatoire."
 
-#: ../../cryptography.rst:53
-msgid "Reading of a file is described in the following figure :"
+#: ../../cryptography.rst:57
+msgid "Reading of a file is described in the following figure:"
 msgstr "La lecture d’un fichier est illustré dans la Figure suivante :"
 
+#: ../../cryptography.rst:-1
 msgid "Parsec file read figure"
-msgstr ""
+msgstr "Lecture de fichier avec Parsec"
 
-#: ../../cryptography.rst:59
+#: ../../cryptography.rst:63
 msgid ""
 "If the Parsec client doesn't locally possess the File Manifest, it "
-"authenticates itself to the metadata server to ask for it ;"
+"authenticates itself to the metadata server and ask for it ;"
 msgstr ""
 "Si le client Parsec ne possède pas le File Manifest en local, il "
 "s’authentifie auprès du serveur de métadonnées pour le lui demander ;"
 
-#: ../../cryptography.rst:60
+#: ../../cryptography.rst:64
 msgid ""
 "The metadata server ensures that the client has the right to access it "
-"and sends it to him in that case ;"
+"and then sends the File Manifest ;"
 msgstr ""
 "Le serveur de métadonnées s’assure que le client a le droit d’y accéder "
-"et le lui envoie le cas échéant ;"
+"et le lui envoie le cas échéant le File Manifest ;"
 
-#: ../../cryptography.rst:61
+#: ../../cryptography.rst:65
 msgid ""
 "The Parsec client decrypts the resulting manifest and verifies its "
-"signature (it is noticeable that the recuperation phase of the public key"
-" of the device that has signed the manifest is analogous to the mechanism"
-" presented in the chapter dedicated to the management of the "
-"users/devices) ;"
+"signature (notice that the retrieval phase of the public key of the "
+"device that has signed the manifest is analogous to the mechanism "
+"presented in the chapter dedicated to the management of the users/"
+"devices) ;"
 msgstr ""
 "Le client Parsec déchiffre le manifest résultant et en vérifie la "
 "signature (à noter que la phase de récupération de la clé publique du "
 "terminal ayant signé le manifest est analogue au mécanisme présenté dans "
 "le chapitre dédié à la gestion des utilisateurs/terminaux) ;"
 
-#: ../../cryptography.rst:62
+#: ../../cryptography.rst:66
 msgid ""
-"The Parsec client can the find all the blocks necessary to the reading of"
-" the file ;"
+"The Parsec client can then find all the blocks necessary to read the "
+"file ;"
 msgstr ""
 "Le client Parsec peut alors retrouver tous les blocs nécessaires à la "
 "lecture du fichier ;"
 
-#: ../../cryptography.rst:63
+#: ../../cryptography.rst:67
 msgid ""
-"In the case of blocks that aren't available locally, the Parsec client "
-"asks them to the metadata server. Once downloaded, the client decrypts "
+"Blocks that aren't available locally are requested by the Parsec client "
+"from the metadata server. Once downloaded, the Parsec client decrypts "
 "them and check their hashes ;"
 msgstr ""
 "Dans le cas des blocs non présents en local, le client Parsec les "
-"demandes au serveur de métadonnées. Une fois récupérés, le client les "
-"déchiffre et vérifie leur hash ;"
+"demandes au serveur de métadonnées. Une fois récupérés, le client Parsec "
+"les déchiffre et vérifie leur hash ;"
 
-#: ../../cryptography.rst:64
+#: ../../cryptography.rst:68
 msgid ""
-"Finally, the client can recombine the decrypted blocks to form the "
-"content of the asked file."
+"Finally, the Parsec client combine the decrypted blocks to form the "
+"content of the requested file."
 msgstr ""
-"Finalement le client peut recombiner les blocs déchiffrés pour former le "
+"Finalement le client recombine les blocs déchiffrés pour former le "
 "contenu du fichier demandé."
 
-#: ../../cryptography.rst:66
+#: ../../cryptography.rst:70
 msgid ""
 "The user interacts with files using his usual regular software. Data are "
-"in the first time stored on the local drive, for performance and "
-"resilience reasons, as to enable offline functioning of Parsec. In the "
-"second time, the Parsec client sends the modifications, if there are, to "
-"the metadata server."
+"first stored on the local drive for performance and resilience reasons "
+"(e.g. to enable Parsec working offline). Then, the Parsec client sends "
+"data modifications to the metadata server."
 msgstr ""
 "L’utilisateur interagit avec les fichiers en utilisant ses logiciels "
 "tiers classiques. Les données sont dans un premier temps stockées sur le "
 "disque dur de la machine, cela pour des questions de performance et de "
 "résilience ainsi que pour permettre de fonctionner en mode hors ligne. "
-"Dans un second temps, le client Parsec envoie les modifications, s’il y "
-"en a, au serveur de métadonnées."
+"Dans un second temps, le client Parsec envoie les modifications au "
+"serveur de métadonnées."
 
-#: ../../cryptography.rst:68
+#: ../../cryptography.rst:72
 msgid ""
 "The history enables the user to list all versions of a file, and to "
 "restore its content at one of those versions."
@@ -349,41 +345,40 @@ msgstr ""
 "tel fichier particulier, et de restaurer le contenu à une version "
 "précédente."
 
-#: ../../cryptography.rst:72
+#: ../../cryptography.rst:76
 msgid "Management of Workspaces and access control"
-msgstr "Gestion des workspaces et du contrôle d'accès"
+msgstr "Gestion des espaces de travail et du contrôle d'accès"
 
-#: ../../cryptography.rst:74
+#: ../../cryptography.rst:78
 msgid ""
 "In order to be able to store files, the user has to create a workspace "
 "and save the access information (unique identifier WS_ID and symmetric "
 "encryption key WS_ENC_KEY) in his User Manifest."
 msgstr ""
-"Afin de pouvoir stocker des fichiers, l’utilisateur doit d’abord créer un"
-" workspace en sauvegarder les informations d’accès (identifiant WS_ID et "
-"clé symétrique de chiffrement WS_ENC_KEY) dans son User Manifest."
+"Afin de pouvoir stocker des fichiers, l’utilisateur doit d’abord créer "
+"un espace de travail en sauvegarder les informations d’accès (identifiant WS_ID "
+"et clé symétrique de chiffrement WS_ENC_KEY) dans son User Manifest."
 
-#: ../../cryptography.rst:76
-msgid "The sharing of a workspace consists in two operations :"
-msgstr "Le partage d’un workspace consiste en deux opérations :"
+#: ../../cryptography.rst:80
+msgid "The sharing of a workspace consists in two operations:"
+msgstr "Le partage d’un espace de travail consiste en deux opérations :"
 
-#: ../../cryptography.rst:78
+#: ../../cryptography.rst:82
 msgid ""
 "Provide access data (WS_ID and WS_ENC_KEY) to the Workspace Manifest. "
-"That is done using a mechanism sending encrypted messages between users "
-"and handled automatically by the Parsec client. The new user then stores "
-"that information in its User Manifest ;"
+"This is done by sending encrypted messages between users and is handled "
+"automatically by the Parsec client. The new user then stores that "
+"information in its User Manifest ;"
 msgstr ""
-"Fournir les données d’accès (WS_ID et WS_ENC_KEY) au Workspace Manifest. "
+"Fournir les données d’accès (WS_ID et WS_ENC_KEY) au Manifest de l'espace de travail. "
 "Cela est réalisé au moyen d’un mécanisme d’envoi de messages chiffrés "
 "entre utilisateurs et traité automatiquement par le client Parsec. Le "
-"nouvel utilisateur stocke alors ces informations dans son User Manifeste "
-";"
+"nouvel utilisateur stocke alors ces informations dans son Manifest utilisateur ;"
 
-#: ../../cryptography.rst:79
+#: ../../cryptography.rst:83
 msgid ""
 "Inform the metadata server that a new user can read (and, where "
 "applicable, write) the elements linked to a given workspace."
 msgstr ""
-"Informer le serveur de métadonnées qu’un nouvel utilisateur peut lire (et"
-" le cas échéant modifier) les éléments reliés à le workspace donnée."
+"Informer le serveur de métadonnées qu’un nouvel utilisateur peut lire "
+"(et le cas échéant modifier) les éléments reliés à l'espace de travail donnée."

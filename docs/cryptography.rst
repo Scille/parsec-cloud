@@ -34,13 +34,13 @@ The creation of a new user can only be done by an existing user, already registe
 
 2. The metadata server sends an email to Bob with an invitation URL containing the organization ID and an unique identifier for the invitation canal.
 
-3. Alice and Bob proceed to an `authenticated Diffie Hellman exchange <https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>`_ (DH) :
+3. Alice and Bob proceed to an `authenticated Diffie Hellman exchange <https://en.wikipedia.org/wiki/Diffie-Hellman_key_exchange>`_ (DH) :
     a. Alice and Bob create asymmetric ephemeral keys and exchange public parts of that keys using the metadata server as a transmission canal to deduce a secrete key shared in the style of DH.
     b. To prevent a malicious metadata server to modify the DH canal (Man-in-the-middle attack), Alice and Bob authenticate their secrete key using the `Short Authentication String <https://www.iacr.org/archive/crypto2005/36210303/36210303.pdf>`_ (SAS) protocol. Each party share verbally a SAS token that his pair must validate from a set of tokens `(accordingly to the recommendations of the scientific community) <https://www.cs.columbia.edu/~nieh/pubs/eurosys2019_e3.pdf>`_ .
 
 4. Bob generate his user keys (USER_ENC_P_KEY, USER_ENC_S_KEY), his device keys (DEVICE_SIG_P_KEY, DEVICE_SIG_S_KEY) and use the authenticated channel to share their public parts with Alice.
 
-5. Alice signs those two keys with the help of her private key (DEVICE_SIG_S_KEY) and upload those certified keys to the metadata server. Since each user key is signed by a device registered in the organization and the one of the first user is signed by the root key (ORG_ROOT_SIG_S_KEY), re-validating the signature trust-chain, a client is able to verify that a key has been added to Parsec by a legitimate terminal and can be considered as valid. Each user is attributed an email address at its creation in order to reflect his correspondence to a natural person. For a given email address, it exists at least one non-revoked user in the organization (i.e. revocation of the existing user then creation of a new user with the same email address), while enabling other users to find him with the same email address.
+5. Alice signs those two keys with the help of her private key (DEVICE_SIG_S_KEY) and upload those certified keys to the metadata server. Since each user key is signed by a device registered in the organization and the one of the first user is signed by the root key (ORG_ROOT_SIG_S_KEY), re-validating the signature trust-chain, a client is able to verify that a key has been added to Parsec by a legitimate terminal and can be considered as valid. Each user is attributed an email address at its creation in order to reflect his correspondence to a natural person. For a given email address, it exists at least one non-revoked user in the organization. This way a compromised user can be replaced (i.e. revocation of the existing user then creation of a new user with the same email address), while enabling other users to find him with the same email address.
 
 
 Adding a new Device
