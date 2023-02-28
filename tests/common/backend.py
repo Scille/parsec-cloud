@@ -40,23 +40,27 @@ def unused_tcp_port():
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
 
-    # On macOS connecting to a bind-to-no-listening socket hangs.
+    # On macOS connecting to a bind-but-not-listening socket hangs.
     # On Windows it doesn't hang but induce a couple of seconds long lag.
     # So on those platforms we actually serve the port, only to right away close the
     # client connection which is a "good enough" emulation of an unused port
     if sys.platform in ("darwin", "win32"):
 
-        def _broken_server(sock):
-            while True:
+        def _broken_server(sock: socket.socket):
+            try:
                 sock.listen()
                 while True:
                     client_sock, _ = sock.accept()
                     client_sock.close()
+            except OSError:
+                # Sock has been closed, the tests are over
+                return
 
-        threading.Thread(target=_broken_server, args=[sock], daemon=True).start()
+        threading.Thread(target=_broken_server, args=[sock], daemon=False).start()
 
     port = sock.getsockname()[1]
     yield port
+    sock.close()
 
 
 def correct_addr(
