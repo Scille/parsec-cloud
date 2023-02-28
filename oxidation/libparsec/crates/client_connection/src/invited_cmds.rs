@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use libparsec_protocol::Request;
-use libparsec_types::BackendInvitationAddr;
+use libparsec_types::{BackendInvitationAddr, InvitationToken};
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
@@ -11,6 +11,8 @@ use crate::{
     error::{CommandError, CommandResult},
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
+
+const INVITATION_TOKEN: &str = "Invitation-Token";
 
 /// Factory that send commands in a authenticated context.
 pub struct InvitedCmds {
@@ -23,11 +25,7 @@ pub struct InvitedCmds {
 impl InvitedCmds {
     /// Create a new `AuthenticatedCmds`
     pub fn new(client: Client, addr: BackendInvitationAddr) -> Result<Self, url::ParseError> {
-        let url = addr.to_http_url(Some(&format!(
-            "/invited/{}/{}",
-            addr.organization_id(),
-            addr.token()
-        )));
+        let url = addr.to_http_url(Some(&format!("/invited/{}", addr.organization_id())));
 
         Ok(Self { client, addr, url })
     }
@@ -38,8 +36,12 @@ impl InvitedCmds {
 }
 
 /// Prepare a new request, the body will be added to the Request using [RequestBuilder::body]
-fn prepare_request(request_builder: RequestBuilder, body: Vec<u8>) -> RequestBuilder {
-    let mut content_headers = HeaderMap::with_capacity(2);
+fn prepare_request(
+    request_builder: RequestBuilder,
+    body: Vec<u8>,
+    token: InvitationToken,
+) -> RequestBuilder {
+    let mut content_headers = HeaderMap::with_capacity(4);
     content_headers.insert(
         API_VERSION_HEADER_NAME,
         HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
@@ -49,6 +51,11 @@ fn prepare_request(request_builder: RequestBuilder, body: Vec<u8>) -> RequestBui
     content_headers.insert(
         CONTENT_LENGTH,
         HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
+    );
+    content_headers.insert(
+        INVITATION_TOKEN,
+        HeaderValue::from_str(&token.hex())
+            .expect("Invitation Token is uuid, so a valid header value"),
     );
 
     request_builder.headers(content_headers).body(body)
@@ -66,7 +73,7 @@ impl InvitedCmds {
 
         let data = request.dump()?;
 
-        let req = prepare_request(request_builder, data).send();
+        let req = prepare_request(request_builder, data, self.addr().token()).send();
         let resp = req.await?;
         match resp.status().as_u16() {
             200 => {
