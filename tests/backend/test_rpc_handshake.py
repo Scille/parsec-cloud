@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 from base64 import b64encode
-from typing import Union
 from unittest.mock import patch
 
 import pytest
@@ -13,9 +12,12 @@ from parsec.api.version import API_VERSION, ApiVersion
 from parsec.backend import BackendApp
 from parsec.serde import packb
 from tests.common import AnonymousRpcApiClient, AuthenticatedRpcApiClient
+from tests.common.rpc_api import InvitedRpcApiClient
 
 
-async def _test_good_handshake(client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient]):
+async def _test_good_handshake(
+    client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
+):
     # Sanity check: make sure base query is valid
     rep = await client.send_ping(check_rep=False)
     assert rep.status_code == 200
@@ -23,7 +25,7 @@ async def _test_good_handshake(client: Union[AuthenticatedRpcApiClient, Anonymou
 
 
 async def _test_handshake_bad_organization(
-    client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient]
+    client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
     for badorg in [
         "dummy",  # Unknown organization
@@ -42,7 +44,7 @@ async def _test_handshake_bad_organization(
 
 
 async def _test_handshake_api_version_header(
-    client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient]
+    client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
     server_versions = [ApiVersion(2, 1), ApiVersion(3, 1), ApiVersion(4, 1)]
 
@@ -87,7 +89,7 @@ async def _test_handshake_api_version_header(
 
 
 async def _test_handshake_content_type_header(
-    client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient]
+    client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
     # Bad header value
     rep = await client.send_ping(
@@ -160,7 +162,8 @@ async def _test_authenticated_handshake_bad_signature_header(
 
 
 async def _test_handshake_body_not_msgpack(
-    client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient], alice: LocalDevice
+    client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
+    alice: LocalDevice,
 ):
     now = DateTime.now()
 
@@ -181,7 +184,8 @@ async def _test_handshake_body_not_msgpack(
 
 
 async def _test_handshake_body_msgpack_bad_unknown_cmd(
-    client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient], alice: LocalDevice
+    client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
+    alice: LocalDevice,
 ):
     now = DateTime.now()
 
@@ -212,7 +216,7 @@ async def _test_authenticated_handshake_author_not_found(
 
 
 async def _test_handshake_organization_expired(
-    client: Union[AuthenticatedRpcApiClient, AnonymousRpcApiClient],
+    client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
     rep = await client.send_ping(check_rep=False)
     assert rep.status_code == 460
@@ -227,10 +231,17 @@ async def _test_authenticated_handshake_user_revoked(
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
 
 
+async def _test_invited_handshake_invitation_token_not_found(client: InvitedRpcApiClient):
+    rep = await client.send_ping(check_rep=False, extra_headers={"Invitation-Token": None})
+    assert rep.status_code == 415
+    assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
+
+
 @pytest.mark.trio
 async def test_handshake(
     alice_rpc: AuthenticatedRpcApiClient,
     anonymous_rpc: AuthenticatedRpcApiClient,
+    invited_rpc: InvitedRpcApiClient,
     alice: LocalDevice,
     bob: LocalDevice,
     backend: BackendApp,
@@ -240,29 +251,36 @@ async def test_handshake(
 
     await _test_good_handshake(alice_rpc)
     await _test_good_handshake(anonymous_rpc)
+    await _test_good_handshake(invited_rpc)
 
     await _test_handshake_bad_organization(alice_rpc)
     await _test_handshake_bad_organization(anonymous_rpc)
+    await _test_handshake_bad_organization(invited_rpc)
 
     await _test_handshake_api_version_header(alice_rpc)
     await _test_handshake_api_version_header(anonymous_rpc)
+    await _test_handshake_api_version_header(invited_rpc)
 
     await _test_handshake_content_type_header(alice_rpc)
     await _test_handshake_content_type_header(anonymous_rpc)
+    await _test_handshake_content_type_header(invited_rpc)
 
     await _test_authenticated_handshake_bad_signature_header(alice_rpc, alice, bob)
 
     await _test_handshake_body_not_msgpack(alice_rpc, alice)
     await _test_handshake_body_not_msgpack(anonymous_rpc, alice)
+    await _test_handshake_body_not_msgpack(invited_rpc, alice)
 
     await _test_handshake_body_msgpack_bad_unknown_cmd(alice_rpc, alice)
     await _test_handshake_body_msgpack_bad_unknown_cmd(anonymous_rpc, alice)
+    await _test_handshake_body_msgpack_bad_unknown_cmd(invited_rpc, alice)
 
     await _test_authenticated_handshake_author_not_found(alice_rpc)
 
     await backend.organization.update(id=alice.organization_id, is_expired=True)
     await _test_handshake_organization_expired(alice_rpc)
     await _test_handshake_organization_expired(anonymous_rpc)
+    await _test_handshake_organization_expired(invited_rpc)
     await backend.organization.update(id=alice.organization_id, is_expired=False)
 
     await backend.user.revoke_user(
@@ -273,14 +291,20 @@ async def test_handshake(
     )
     await _test_authenticated_handshake_user_revoked(alice_rpc)
 
+    await _test_invited_handshake_invitation_token_not_found(invited_rpc)
+
 
 @pytest.mark.trio
 async def test_client_version_in_logs(
-    alice_rpc: AuthenticatedRpcApiClient, anonymous_rpc: AnonymousRpcApiClient, caplog
+    alice_rpc: AuthenticatedRpcApiClient,
+    anonymous_rpc: AnonymousRpcApiClient,
+    invited_rpc: InvitedRpcApiClient,
+    caplog,
 ):
     client_api_version = ApiVersion(3, 99)
     alice_rpc.API_VERSION = client_api_version
     anonymous_rpc.API_VERSION = client_api_version
+    invited_rpc.API_VERSION = client_api_version
     with caplog.at_level(logging.INFO):
         # Authenticated
         await _test_good_handshake(alice_rpc)
@@ -293,5 +317,12 @@ async def test_client_version_in_logs(
         await _test_good_handshake(anonymous_rpc)
         assert (
             f"Anonymous client successfully connected (client/server API version: {client_api_version}/{API_VERSION})"
+            in caplog.text
+        )
+
+        # Invited
+        await _test_good_handshake(invited_rpc)
+        assert (
+            f"Invited client successfully connected (client/server API version: {client_api_version}/{API_VERSION})"
             in caplog.text
         )

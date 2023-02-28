@@ -582,18 +582,8 @@ async def test_claim_device_invitation_cancelled(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_claim_device_already_deleted(
-    aqtbot, running_backend, backend, autoclose_dialog, alice, gui
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, invitation_addr
 ):
-
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
     await backend.invite.delete(
         organization_id=alice.organization_id,
         greeter=alice.user_id,
@@ -614,18 +604,8 @@ async def test_claim_device_already_deleted(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_claim_device_offline_backend(
-    aqtbot, running_backend, backend, autoclose_dialog, alice, gui
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, invitation_addr
 ):
-
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
     with running_backend.offline():
         gui.add_instance(invitation_addr.to_url())
 

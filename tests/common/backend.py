@@ -23,6 +23,7 @@ from hypercorn.trio.worker_context import WorkerContext
 from quart.typing import TestClientProtocol
 from quart_trio import QuartTrio
 
+from parsec._parsec import BackendInvitationAddr, InvitationType
 from parsec.backend import backend_app_factory
 from parsec.backend.app import BackendApp
 from parsec.backend.asgi import app_factory
@@ -632,3 +633,36 @@ async def running_backend(
     async with running_backend_factory(backend, sockets=running_backend_sockets) as rb:
         running_backend_ready._set_running_backend_ready()
         yield rb
+
+
+@pytest.fixture
+async def invitation_addr(backend, alice):
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
+    )
+    return BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr.get_backend_addr(),
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=invitation.token,
+    )
+
+
+@pytest.fixture
+def claimer_email() -> str:
+    return "zack@example.com"
+
+
+@pytest.fixture
+async def user_invitation_addr(backend, alice, claimer_email: str):
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email=claimer_email,
+    )
+    return BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr.get_backend_addr(),
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.USER,
+        token=invitation.token,
+    )

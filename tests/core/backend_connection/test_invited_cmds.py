@@ -18,19 +18,6 @@ from parsec.core.types import BackendInvitationAddr
 from tests.core.backend_connection.common import ALL_CMDS
 
 
-@pytest.fixture
-async def invitation_addr(backend, alice):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    return BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
-
-
 @pytest.mark.trio
 async def test_backend_offline(invitation_addr):
     with pytest.raises(BackendNotAvailable):

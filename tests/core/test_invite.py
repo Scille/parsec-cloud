@@ -36,18 +36,15 @@ from tests.common import real_clock_timeout
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_good_device_claim(
-    backend, running_backend, alice, bob, alice_backend_cmds, user_fs_factory, with_labels
+    backend,
+    running_backend,
+    alice,
+    bob,
+    alice_backend_cmds,
+    user_fs_factory,
+    with_labels,
+    invitation_addr,
 ):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
-
     if with_labels:
         requested_device_label = DeviceLabel("Foo's label")
         granted_device_label = DeviceLabel("Bar's label")
@@ -173,22 +170,16 @@ async def test_good_device_claim(
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_good_user_claim(
-    backend, running_backend, data_base_dir, alice, alice_backend_cmds, user_fs_factory, with_labels
+    backend,
+    running_backend,
+    data_base_dir,
+    alice,
+    alice_backend_cmds,
+    user_fs_factory,
+    with_labels,
+    claimer_email,
+    user_invitation_addr,
 ):
-    claimer_email = "zack@example.com"
-
-    invitation = await backend.invite.new_for_user(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        claimer_email=claimer_email,
-    )
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER,
-        token=invitation.token,
-    )
-
     if with_labels:
         # Let's pretent we invited a Fortnite player...
         requested_human_handle = HumanHandle(email="ZACK@example.com", label="xXx_Z4ck_xXx")
@@ -207,7 +198,7 @@ async def test_good_user_claim(
     oob_send, oob_recv = trio.open_memory_channel(0)
 
     async def _run_claimer():
-        async with backend_invited_cmds_factory(addr=invitation_addr) as cmds:
+        async with backend_invited_cmds_factory(addr=user_invitation_addr) as cmds:
             initial_ctx = await claimer_retrieve_info(cmds)
             assert isinstance(initial_ctx, UserClaimInitialCtx)
             assert initial_ctx.claimer_email == claimer_email
@@ -239,7 +230,7 @@ async def test_good_user_claim(
             await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=new_device)
 
     async def _run_greeter():
-        initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=invitation_addr.token)
+        initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=user_invitation_addr.token)
 
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -336,17 +327,9 @@ async def test_good_user_claim(
 
 
 @pytest.mark.trio
-async def test_claimer_handle_reset(backend, running_backend, alice, alice_backend_cmds):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
-
+async def test_claimer_handle_reset(
+    backend, running_backend, alice, alice_backend_cmds, invitation_addr
+):
     async with backend_invited_cmds_factory(addr=invitation_addr) as claimer_cmds:
         greeter_initial_ctx = UserGreetInitialCtx(
             cmds=alice_backend_cmds, token=invitation_addr.token
@@ -407,18 +390,8 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
     "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
 )
 async def test_claimer_handle_cancel_event(
-    backend, running_backend, alice, alice_backend_cmds, fail_on_step
+    backend, running_backend, alice, alice_backend_cmds, fail_on_step, invitation_addr
 ):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
-
     async def _cancel_invitation():
         await backend.invite.delete(
             organization_id=alice.organization_id,
@@ -514,18 +487,8 @@ async def test_claimer_handle_cancel_event(
     "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
 )
 async def test_claimer_handle_command_failure(
-    backend, running_backend, alice, alice_backend_cmds, monkeypatch, fail_on_step
+    backend, running_backend, alice, alice_backend_cmds, monkeypatch, fail_on_step, invitation_addr
 ):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
-
     async def _cancel_invitation():
         await backend.invite.delete(
             organization_id=alice.organization_id,
