@@ -25,7 +25,8 @@ Key features:
   from any point in time.
 - Client-side cryptographic security. Data and metadata are only visible by you
   and the ones you choose to share with.
-- Cryptographic signature. Each modification is signed by it author making trivial
-  to identify modifications.
-- Simplified enrollment. New user enrollment is simple as sharing a link and a token code.
-- Simple to host.
+- Cryptographic signature. Each modification is signed by its author making its
+  identification trivial.
+- Simplified enrollment. New user enrollment is as simple as sharing a link and
+  a token code.
+- Easy to self-host.

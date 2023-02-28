@@ -12,9 +12,9 @@ Revoking a user is the operation that aims at removing his access rights to the 
 
 .. note::
 
-    There is no way to revoke a single device instead of the entire user.
-    This is intended given the compromised device has the knowledge of some
-    cryptographic secrets shared among all the user's devices.
+    It is not possible to revoke a single device, only the entire user can be revoked.
+    This is intended because the compromised device has the knowledge of some
+    cryptographic secrets shared among all user's devices.
 
 
 Revocation
@@ -35,11 +35,11 @@ Workspace re-encryption
 -----------------------
 .. _doc_userguide_revoke_user_workspace_re_encryption:
 
-Once a user is revoked, it corresponding devices are no longer allowed to connect to the Parsec server hosting the organization. In practice this means the user won't be able to do any changes or to consult the data he used to have access to.
+Once a user is revoked, its devices are no longer allowed to connect to the Parsec server hosting the organization. In practice, this means the user won't be able to make any changes or consult the data he had access to.
 
-However from a cryptographic point of view this user still knows the encryption key of the workspaces that have been shared with them. For this reason, those workspaces must be re-encrypted to ensure security of the data.
+However, from a cryptographic point of view, the revoked user still knows the encryption keys of the workspaces that have been shared with them. For this reason, those workspaces must be re-encrypted to ensure data security.
 
-Concretely, once a user is revoked, each owner of a previously shared workspace will be notified a re-encryption operation is needed. Each owner can then choose to do the operation on the spot, or to wait until a better time to do it (for instance if multiple user are getting revoked in one batch).
+Once a user is revoked, each owner of a previously shared workspace will be notified that a re-encryption operation is required. Owners can then perform re-encryption right away or wait to do it later (for example if multiple user are getting revoked in one batch).
 
 .. image:: screens/reencrypt_workspace.png
     :align: center
@@ -47,5 +47,5 @@ Concretely, once a user is revoked, each owner of a previously shared workspace 
 
 .. note::
 
-    - During it re-encryption, a workspace cannot be synchronized
-    - Re-encryption is fairly quick given only metadata are re-encrypted
+    - During re-encryption, a workspace cannot be synchronized
+    - Re-encryption is fairly quick since only metadata are re-encrypted
