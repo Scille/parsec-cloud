@@ -4,14 +4,12 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import InvitationType
 from parsec.api.transport import BytesMessage, Ping, Pong, Transport
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
 )
 from parsec.core.backend_connection.authenticated import OXIDIZED
-from parsec.core.types import BackendInvitationAddr
 
 
 async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
@@ -76,18 +74,8 @@ async def test_authenticated_cmd_keepalive(frozen_clock, monkeypatch, running_ba
 @pytest.mark.skipif(OXIDIZED, reason="No ws event")
 @pytest.mark.trio
 async def test_invited_cmd_keepalive(
-    frozen_clock, monkeypatch, backend, running_backend, backend_addr, alice
+    frozen_clock, monkeypatch, backend, running_backend, backend_addr, alice, invitation_addr
 ):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
-
     def _cmds_factory(keepalive):
         return backend_invited_cmds_factory(invitation_addr, keepalive=keepalive)
 
