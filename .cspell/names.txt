@@ -1,5 +1,6 @@
 Adamy
 Alicey
+Alicy
 Arkin
 bierner
 Blacky
@@ -11,6 +12,7 @@ cunyet
 Dalvik
 dorny
 dtolnay
+Dupre
 expiredorg
 farn
 fifi
@@ -31,6 +33,7 @@ samuelmeuli
 Sanctorum
 Scille
 titeuf
+vxgmichel
 werkzeug
 yzhang
 zoidberg
