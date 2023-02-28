@@ -1,6 +1,7 @@
 Adamy
 Alicey
 Arkin
+bierner
 Blacky
 Blazkowicz
 Boby
@@ -31,4 +32,5 @@ Sanctorum
 Scille
 titeuf
 werkzeug
+yzhang
 zoidberg
