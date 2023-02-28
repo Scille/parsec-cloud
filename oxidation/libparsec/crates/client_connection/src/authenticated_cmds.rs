@@ -92,7 +92,7 @@ fn prepare_request(
 ) -> RequestBuilder {
     let request_builder = sign_request(request_builder, signing_key, device_id, &body);
 
-    let mut content_headers = HeaderMap::with_capacity(2);
+    let mut content_headers = HeaderMap::with_capacity(3);
     content_headers.insert(
         API_VERSION_HEADER_NAME,
         HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
