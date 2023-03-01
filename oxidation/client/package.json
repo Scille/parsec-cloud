@@ -32,7 +32,7 @@
         "@capacitor/core": "3.9.0",
         "@capacitor/haptics": "1.1.4",
         "@capacitor/ios": "3.9.0",
-        "@capacitor/keyboard": "1.2.2",
+        "@capacitor/keyboard": "1.2.3",
         "@capacitor/splash-screen": "^1.2.2",
         "@capacitor/status-bar": "1.0.8",
         "@ionic/storage": "^3.0.6",
