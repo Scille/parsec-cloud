@@ -306,6 +306,13 @@ jobs:
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
 
+      # TODO: remove me once client connection oxidation is done
+      - name: (🐧 Linux) Basic tests (with unstable Rust client connection)
+        if: steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        run: poetry run pytest ${{ env.pytest-base-args }} tests --enable-unstable-oxidized-client-connection
+        timeout-minutes: 10
+
       - name: (🐧🏁 Not macOS) Mountpoint tests
         if: >-
           steps.python-changes.outputs.run == 'true'

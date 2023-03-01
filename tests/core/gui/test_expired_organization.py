@@ -10,7 +10,6 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     backend_authenticated_cmds_factory,
 )
-from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from tests.common import customize_fixtures, freeze_time
 
@@ -60,7 +59,6 @@ async def test_expired_notification_logging(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.skipif(OXIDIZED, reason="There is no `acquire_transport`, neither `handshake`")
 async def test_expired_notification_from_connection(
     aqtbot,
     running_backend,

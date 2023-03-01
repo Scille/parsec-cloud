@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 import trio
 
+from parsec import FEATURE_FLAGS
 from parsec._parsec import DateTime, InvitationType, InvitedPingRepOk
 from parsec.api.protocol import INVITED_CMDS, InvitationDeletedReason, InvitationToken
 from parsec.core.backend_connection import (
@@ -13,7 +14,6 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     backend_invited_cmds_factory,
 )
-from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.types import BackendInvitationAddr
 from tests.core.backend_connection.common import ALL_CMDS
 
@@ -34,7 +34,7 @@ async def test_backend_switch_offline(running_backend, alice_new_device_invitati
                 await cmds.ping()
 
 
-@pytest.mark.skipif(OXIDIZED, reason="No error")
+@pytest.mark.skipif(FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No error")
 @pytest.mark.trio
 async def test_backend_closed_cmds(running_backend, alice_new_device_invitation):
     async with backend_invited_cmds_factory(alice_new_device_invitation) as cmds:
