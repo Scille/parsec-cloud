@@ -4,12 +4,12 @@ from __future__ import annotations
 import pytest
 import trio
 
+from parsec import FEATURE_FLAGS
 from parsec.api.transport import BytesMessage, Ping, Pong, Transport
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
 )
-from parsec.core.backend_connection.authenticated import OXIDIZED
 
 
 async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
@@ -59,7 +59,7 @@ async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
 
 
 # TODO: Add test for sse event
-@pytest.mark.skipif(OXIDIZED, reason="No ws event")
+@pytest.mark.skipif(FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No ws event")
 @pytest.mark.trio
 async def test_authenticated_cmd_keepalive(frozen_clock, monkeypatch, running_backend, alice):
     def _cmds_factory(keepalive):
@@ -71,7 +71,7 @@ async def test_authenticated_cmd_keepalive(frozen_clock, monkeypatch, running_ba
 
 
 # TODO: Add test for sse event
-@pytest.mark.skipif(OXIDIZED, reason="No ws event")
+@pytest.mark.skipif(FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No ws event")
 @pytest.mark.trio
 async def test_invited_cmd_keepalive(
     frozen_clock,

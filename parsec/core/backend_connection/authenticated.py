@@ -18,6 +18,7 @@ import trio
 from structlog import get_logger
 from trio_typing import TaskStatus
 
+import parsec
 from parsec._parsec import (
     ActiveUsersLimit,
     CoreEvent,
@@ -53,9 +54,6 @@ from parsec.core.types import BackendOrganizationAddr, LocalDevice
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
-
-# This global variable activates RsBackendAuthenticatedCmds binding
-OXIDIZED = False
 
 logger = get_logger()
 
@@ -291,7 +289,7 @@ class BackendAuthenticatedConn:
         self._status_event_sent = False
         self._cmds: RsBackendAuthenticatedCmds | BackendAuthenticatedCmds = (
             RsBackendAuthenticatedCmds(addr, device.device_id, device.signing_key)
-            if OXIDIZED
+            if parsec.FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]
             else BackendAuthenticatedCmds(addr, self._acquire_transport)
         )
         self._manager_connect_cancel_scope: trio.CancelScope | None = None
@@ -589,9 +587,9 @@ async def backend_authenticated_cmds_factory(
                 raise
 
     try:
-        yield RsBackendAuthenticatedCmds(
-            addr, device_id, signing_key
-        ) if OXIDIZED else BackendAuthenticatedCmds(addr, _acquire_transport)
+        yield RsBackendAuthenticatedCmds(addr, device_id, signing_key) if parsec.FEATURE_FLAGS[
+            "UNSTABLE_OXIDIZED_CLIENT_CONNECTION"
+        ] else BackendAuthenticatedCmds(addr, _acquire_transport)
 
     finally:
         async with transport_lock:

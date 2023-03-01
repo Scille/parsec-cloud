@@ -6,6 +6,7 @@ from functools import partial
 import pytest
 import trio
 
+from parsec import FEATURE_FLAGS
 from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import AuthenticatedPingRepOk, ClientType, DateTime, EventsListenRepOkPinged
 from parsec.api.data import RevokedUserCertificate
@@ -16,7 +17,6 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     backend_authenticated_cmds_factory,
 )
-from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.types import BackendOrganizationAddr
 from tests.common import correct_addr
 from tests.core.backend_connection.common import ALL_CMDS
@@ -42,7 +42,7 @@ async def test_backend_switch_offline(running_backend, alice):
                 await cmds.ping()
 
 
-@pytest.mark.skipif(OXIDIZED, reason="No error")
+@pytest.mark.skipif(FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No error")
 @pytest.mark.trio
 async def test_backend_closed_cmds(running_backend, alice):
     async with backend_authenticated_cmds_factory(
@@ -87,7 +87,9 @@ async def test_handshake_unknown_organization(running_backend, alice):
     assert str(exc.value) == "Invalid handshake information"
 
 
-@pytest.mark.skipif(OXIDIZED, reason="No root verify key")
+@pytest.mark.skipif(
+    FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No root verify key"
+)
 @pytest.mark.trio
 async def test_handshake_rvk_mismatch(running_backend, alice, otherorg):
     bad_rvk_org_addr = BackendOrganizationAddr.build(
@@ -133,7 +135,7 @@ async def test_organization_expired(running_backend, alice, expiredorg):
     assert str(exc.value) == "The organization has expired"
 
 
-@pytest.mark.skipif(OXIDIZED, reason="No handshake")
+@pytest.mark.skipif(FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No handshake")
 @pytest.mark.trio
 async def test_backend_disconnect_during_handshake(alice):
     client_answered = False
@@ -171,7 +173,7 @@ async def test_backend_disconnect_during_handshake(alice):
 
 
 # TODO: Add test for sse event
-@pytest.mark.skipif(OXIDIZED, reason="No ws event")
+@pytest.mark.skipif(FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No ws event")
 @pytest.mark.trio
 async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, running_backend, alice):
     KEEPALIVE_TIME = 10

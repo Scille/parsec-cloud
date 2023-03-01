@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator
 
 import trio
 
+import parsec
 from parsec._parsec import InvitedCmds as RsBackendInvitedCmds
 from parsec.api.protocol import INVITED_CMDS
 from parsec.core.backend_connection import BackendNotAvailable, cmds
-from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.backend_connection.expose_cmds import Transport, expose_cmds_with_retrier
 from parsec.core.backend_connection.transport import connect_as_invited
 from parsec.core.types import BackendAddrType, BackendInvitationAddr
@@ -88,9 +88,9 @@ async def backend_invited_cmds_factory(
                 raise
 
     try:
-        yield RsBackendInvitedCmds(addr) if OXIDIZED else BackendInvitedCmds(
-            addr, _acquire_transport
-        )
+        yield RsBackendInvitedCmds(addr) if parsec.FEATURE_FLAGS[
+            "UNSTABLE_OXIDIZED_CLIENT_CONNECTION"
+        ] else BackendInvitedCmds(addr, _acquire_transport)
 
     finally:
         async with transport_lock:
