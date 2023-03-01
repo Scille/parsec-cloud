@@ -636,7 +636,7 @@ async def running_backend(
 
 
 @pytest.fixture
-async def invitation_addr(backend, alice):
+async def alice_new_device_invitation(backend, alice):
     invitation = await backend.invite.new_for_device(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
@@ -649,16 +649,11 @@ async def invitation_addr(backend, alice):
 
 
 @pytest.fixture
-def claimer_email() -> str:
-    return "zack@example.com"
-
-
-@pytest.fixture
-async def user_invitation_addr(backend, alice, claimer_email: str):
+async def zack_new_user_invitation(backend, alice):
     invitation = await backend.invite.new_for_user(
         organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
-        claimer_email=claimer_email,
+        claimer_email="zack@example.com",
     )
     return BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
