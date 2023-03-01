@@ -3,6 +3,12 @@ from __future__ import annotations
 
 from parsec._version import __version__
 
+FEATURE_FLAGS = {
+    # TODO: remove me once client connection oxidation is done
+    # Activates RsBackendAuthenticatedCmds binding
+    "UNSTABLE_OXIDIZED_CLIENT_CONNECTION": False,
+}
+
 # The parsec.utils module includes a bit of patching, let's make sure it is imported
 __import__("parsec.utils")
 
