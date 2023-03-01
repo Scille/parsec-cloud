@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from parsec import FEATURE_FLAGS
 from parsec._parsec import (
     InviteActiveUsersLimitReachedError,
     InviteAlreadyUsedError,
@@ -8,7 +9,6 @@ from parsec._parsec import (
     InviteNotFoundError,
     InvitePeerResetError,
 )
-from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.invite.claimer import (
     BaseClaimInitialCtx,
     BaseClaimInProgress1Ctx,
@@ -24,7 +24,7 @@ from parsec.core.invite.claimer import (
     claimer_retrieve_info,
 )
 
-if OXIDIZED:
+if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
     from parsec._parsec import (
         DeviceGreetInitialCtx,
         DeviceGreetInProgress1Ctx,
