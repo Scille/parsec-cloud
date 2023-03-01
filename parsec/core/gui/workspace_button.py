@@ -174,6 +174,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         else:
             self.reencryption_needs = None
 
+        self.switch_button.setChecked(
+            self.core.mountpoint_manager.is_workspace_mounted(self.workspace_fs.workspace_id, None)
+        )
         self.set_mountpoint_state(self.is_mounted())
 
     def get_owner(self) -> UserInfo | None:
