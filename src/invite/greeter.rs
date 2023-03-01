@@ -12,6 +12,8 @@ use crate::{
     runtime::FutureIntoCoroutine,
 };
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_wait_peer`
 #[pyclass]
 pub(crate) struct UserGreetInitialCtx(pub Option<libparsec::core::UserGreetInitialCtx>);
 
@@ -43,6 +45,8 @@ impl UserGreetInitialCtx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_wait_peer`
 #[pyclass]
 pub(crate) struct DeviceGreetInitialCtx(pub Option<libparsec::core::DeviceGreetInitialCtx>);
 
@@ -74,6 +78,8 @@ impl DeviceGreetInitialCtx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_wait_peer_trust`
 #[pyclass]
 pub(crate) struct UserGreetInProgress1Ctx(pub Option<libparsec::core::UserGreetInProgress1Ctx>);
 
@@ -107,6 +113,8 @@ impl UserGreetInProgress1Ctx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_wait_peer_trust`
 #[pyclass]
 pub(crate) struct DeviceGreetInProgress1Ctx(pub Option<libparsec::core::DeviceGreetInProgress1Ctx>);
 
@@ -140,6 +148,8 @@ impl DeviceGreetInProgress1Ctx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_signify_trust`
 #[pyclass]
 pub(crate) struct UserGreetInProgress2Ctx(pub Option<libparsec::core::UserGreetInProgress2Ctx>);
 
@@ -185,6 +195,8 @@ impl UserGreetInProgress2Ctx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_signify_trust`
 #[pyclass]
 pub(crate) struct DeviceGreetInProgress2Ctx(pub Option<libparsec::core::DeviceGreetInProgress2Ctx>);
 
@@ -230,6 +242,8 @@ impl DeviceGreetInProgress2Ctx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_get_claim_requests`
 #[pyclass]
 pub(crate) struct UserGreetInProgress3Ctx(pub Option<libparsec::core::UserGreetInProgress3Ctx>);
 
@@ -254,6 +268,8 @@ impl UserGreetInProgress3Ctx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_get_claim_requests`
 #[pyclass]
 pub(crate) struct DeviceGreetInProgress3Ctx(pub Option<libparsec::core::DeviceGreetInProgress3Ctx>);
 
@@ -278,6 +294,8 @@ impl DeviceGreetInProgress3Ctx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_create_new_user`
 #[pyclass]
 pub(crate) struct UserGreetInProgress4Ctx(pub Option<libparsec::core::UserGreetInProgress4Ctx>);
 
@@ -327,6 +345,8 @@ impl UserGreetInProgress4Ctx {
     }
 }
 
+/// Because we can't consume `self` with pyo3, we use an Option instead to consume the Rust object.
+/// It will be consumed if we go to the next step: `do_create_new_device`
 #[pyclass]
 pub(crate) struct DeviceGreetInProgress4Ctx(pub Option<libparsec::core::DeviceGreetInProgress4Ctx>);
 
