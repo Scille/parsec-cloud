@@ -1,0 +1,7 @@
+{
+    "name": "Parsec",
+    "integrations": {
+        "capacitor": {}
+    },
+    "type": "vue"
+}

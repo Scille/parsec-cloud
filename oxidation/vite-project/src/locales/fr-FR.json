@@ -1,0 +1,166 @@
+{
+    "HomePage": {
+        "topbar": {
+            "settings": "Paramètres"
+        },
+        "organizationList": {
+            "title": "Liste de vos organisations",
+            "lastLogin": "Dernière connexion sur cet appareil :",
+            "sortOrderAsc": "Ordre croissant",
+            "sortOrderDesc": "Ordre décroissant",
+            "sortByOrganization": "Organisation",
+            "sortByUserName": "Nom d'utilisateur",
+            "sortByLastLogin": "Dernière connexion",
+            "labelSortBy": "Trier par",
+            "search": "Rechercher"
+        },
+        "noExistingOrganization": {
+            "title": "Besoin de créer ou rejoindre une organisation ?",
+            "createOrganization": "Créer une organisation",
+            "joinOrganization": "Rejoindre une organisation"
+        },
+        "organizationLogin": {
+            "backToList": "Retour aux organisations",
+            "forgottenPassword": "Mot de passe oublié ?",
+            "passwordLabel": "Mot de passe",
+            "login": "Se connecter"
+        },
+        "mainMenu": {
+            "changelog": "Journal des modifications"
+        },
+        "organizationActionSheet": {
+            "header": "Organisation",
+            "create": "Créer",
+            "joinByLink": "Rejoindre par lien",
+            "joinByQRcode": "Rejoindre par QR code"
+        },
+        "noDevices": "Vous n'avez pas d'appareils sur ce téléphone.",
+        "howToAddDevices": "Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation.",
+        "pleaseConnectToAnOrganization": "Bienvenue. Veuillez ajouter une organisation pour commencer à utiliser Parsec.",
+        "createOrganization": "Créer une organisation",
+        "joinByLink": "Rejoindre par lien",
+        "joinByQRcode": "Rejoindre par QR code"
+    },
+    "CreateOrganization": {
+        "pageTitle": "Créer une organisation",
+        "fullname": "Nom complet",
+        "fullnamePlaceholder": "Jean MARTIN",
+        "email": "Email",
+        "emailPlaceholder": "jean.martin{'@'}exemple.com",
+        "organizationName": "Nom de l'organisation",
+        "organizationNamePlaceholder": "MonOrganisation",
+        "useParsecServer": "Utiliser le serveur PARSEC principal",
+        "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
+        "acceptTOS": "J'accepte la Politique de Confidentialité et les Conditions Générales de Vente et d'Utilisation de PARSEC",
+        "parsecServerUrl": "URL de votre serveur PARSEC",
+        "parsecServerUrlPlaceholder": "parsec://hote:port",
+        "registeringDevice": "Enregistrement de votre appareil",
+        "deviceNameInputLabel": "Nom de l'appareil",
+        "deviceNamePlaceholder": "Desktop123",
+        "password": "Mot de passe",
+        "confirmPassword": "Confirmer le mot de passe",
+        "next": "Suivant",
+        "previous": "Précédent",
+        "done": "Terminer"
+    },
+    "JoinByLinkModal": {
+        "pageTitle": "Rejoindre par lien",
+        "pleaseEnterUrl": "Veuillez entrer l'URL de l'organisation",
+        "urlInputLabel": "URL de l'organisation",
+        "urlPlaceholder": "parsec://hote:port/organisation?action=action&...",
+        "join": "Rejoindre"
+    },
+    "AlertConfirmation": {
+        "areYouSure": "Êtes-vous sûr ?",
+        "infoNotSaved": "Si vous avez rempli des informations, elles ne seront pas sauvegardées.",
+        "ok": "OK",
+        "cancel": "Annuler",
+        "yes": "Oui",
+        "no": "Non"
+    },
+    "MenuPage": {
+        "documents": "Documents",
+        "myOrganization": "Mon organisation",
+        "settings": "Paramètres",
+        "about": "À propos",
+        "support": "Aide et commentaires"
+    },
+    "HeaderPage": {
+        "about": "À propos",
+        "support": "Aide et commentaires"
+    },
+    "SettingsPage": {
+        "pageTitle": "Paramètres",
+        "enableTelemetry": "Activer la télémétrie",
+        "enableTelemetryDescription": "Envoie automatiquement les rapports d’erreur",
+        "minimizeToSystemTray": "Réduire dans la barre d'état",
+        "minimizeToSystemTrayDescription": "Lorsque l'application est fermée, Parsec continuera à fonctionner en arrière-plan",
+        "language": "Langue",
+        "lang": {
+            "frFR": "Français",
+            "enUS": "English"
+        },
+        "telemetry": "Télémétrie",
+        "behavior": "Comportement",
+        "localization": "Localisation",
+        "preferences": "Préférences",
+        "theme": {
+            "label": "Thème",
+            "dark": "Sombre",
+            "light": "Clair",
+            "system": "Système"
+        }
+    },
+    "WorkspacesPage": {
+        "createWorkspace": "Créer un espace de travail",
+        "documents": "Documents",
+        "user": "utilisateur",
+        "workspaceContextMenu": {
+            "share": "Partager",
+            "history": "Historique",
+            "cancel": "Annuler"
+        },
+        "CreateWorkspaceModal": {
+            "pageTitle": "Créer un espace de travail",
+            "name": "Nom",
+            "namePlaceholder": "Espace de travail",
+            "cancel": "Annuler",
+            "create": "Créer"
+        },
+        "WorkspacesShareModal": {
+            "pageTitle": "Partager l'espace de travail",
+            "reader": "Lecteur",
+            "contributor": "Contributeur",
+            "manager": "Gérant",
+            "owner": "Propriétaire",
+            "notShared": "Non partagé",
+            "inviteNewUser": "Inviter un nouvel utilisateur"
+        }
+    },
+    "OrganizationPage": {
+        "pageTitle": "Mon organisation",
+        "users": "Utilisateurs",
+        "workspaces": "Espaces de travail",
+        "storage": "Stockage",
+        "OrganizationPageUsers": {
+            "inviteUser": "Inviter un utilisateur",
+            "pendingInvitations": "invitation(s) en cours",
+            "OrganizationPendingUserContextMenu": {
+                "greetUser": "Accueillir l'utilisateur",
+                "cancelInvitation": "Annuler l'invitation"
+            },
+            "OrganizationUserContextMenu": {
+                "details": "Voir détails",
+                "revoke": "Révoquer"
+            }
+        }
+    },
+    "common": {
+        "date": {
+            "lastLoginSeconds": "il y a une seconde | il y a {seconds} secondes",
+            "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
+            "lastLoginHours": "il y a une heure | il y a {hours} heures",
+            "lastLoginDays": "il y a un jour | il y a {days} jours"
+        }
+    }
+}
