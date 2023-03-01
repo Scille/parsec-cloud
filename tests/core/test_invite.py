@@ -34,7 +34,7 @@ from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("with_labels", [False, True])
+@pytest.mark.parametrize("with_labels", [False, True], ids=["WithoutLabels", "WithLabels"])
 async def test_good_device_claim(
     backend,
     running_backend,
@@ -168,7 +168,7 @@ async def test_good_device_claim(
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("with_labels", [False, True])
+@pytest.mark.parametrize("with_labels", [False, True], ids=["WithoutLabels", "WithLabels"])
 async def test_good_user_claim(
     backend,
     running_backend,
