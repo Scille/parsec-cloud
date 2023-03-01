@@ -66,7 +66,7 @@ async def organization_bootstrap_addr(running_backend):
 
 
 @pytest.fixture
-async def device_invitation_addr(backend, bob):
+async def bob_new_device_invitation(backend, bob):
     invitation = await backend.invite.new_for_device(
         organization_id=bob.organization_id, greeter_user_id=bob.user_id
     )
@@ -79,7 +79,7 @@ async def device_invitation_addr(backend, bob):
 
 
 @pytest.fixture
-async def user_invitation_addr(backend, bob):
+async def billy_new_user_invitation(backend, bob):
     invitation = await backend.invite.new_for_user(
         organization_id=bob.organization_id,
         greeter_user_id=bob.user_id,
@@ -536,12 +536,12 @@ async def test_link_organization_disconnected(
 @pytest.mark.trio
 @pytest.mark.parametrize("http_redirection_url", (True, False))
 async def test_link_claim_device(
-    aqtbot, logged_gui, catch_claim_device_widget, device_invitation_addr, http_redirection_url
+    aqtbot, logged_gui, catch_claim_device_widget, bob_new_device_invitation, http_redirection_url
 ):
     if http_redirection_url:
-        url = device_invitation_addr.to_http_redirection_url()
+        url = bob_new_device_invitation.to_http_redirection_url()
     else:
-        url = device_invitation_addr.to_url()
+        url = bob_new_device_invitation.to_url()
 
     logged_gui.add_instance(url)
     cd_w = await catch_claim_device_widget()
@@ -552,10 +552,10 @@ async def test_link_claim_device(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_claim_device_disconnected(
-    aqtbot, logged_gui, catch_claim_device_widget, device_invitation_addr
+    aqtbot, logged_gui, catch_claim_device_widget, bob_new_device_invitation
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
-    logged_gui.add_instance(device_invitation_addr.to_url())
+    logged_gui.add_instance(bob_new_device_invitation.to_url())
     cd_w = await catch_claim_device_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 1
@@ -568,12 +568,12 @@ async def test_link_claim_device_disconnected(
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize("http_redirection_url", (True, False))
 async def test_link_claim_user(
-    aqtbot, logged_gui, catch_claim_user_widget, user_invitation_addr, http_redirection_url
+    aqtbot, logged_gui, catch_claim_user_widget, billy_new_user_invitation, http_redirection_url
 ):
     if http_redirection_url:
-        url = user_invitation_addr.to_http_redirection_url()
+        url = billy_new_user_invitation.to_http_redirection_url()
     else:
-        url = user_invitation_addr.to_url()
+        url = billy_new_user_invitation.to_url()
 
     logged_gui.add_instance(url)
     cd_w = await catch_claim_user_widget()
@@ -584,10 +584,10 @@ async def test_link_claim_user(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_claim_user_disconnected(
-    aqtbot, logged_gui, catch_claim_user_widget, user_invitation_addr
+    aqtbot, logged_gui, catch_claim_user_widget, billy_new_user_invitation
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
-    logged_gui.add_instance(user_invitation_addr.to_url())
+    logged_gui.add_instance(billy_new_user_invitation.to_url())
     cd_w = await catch_claim_user_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 1
@@ -825,13 +825,13 @@ async def random_clipboard_data(running_backend):
 @pytest.fixture
 async def clipboard_text_provider(
     organization_bootstrap_addr,
-    device_invitation_addr,
-    user_invitation_addr,
+    bob_new_device_invitation,
+    billy_new_user_invitation,
 ):
     texts = [
         organization_bootstrap_addr.to_url(),
-        device_invitation_addr.to_url(),
-        user_invitation_addr.to_url(),
+        bob_new_device_invitation.to_url(),
+        billy_new_user_invitation.to_url(),
         "Still sane, Exile?",
     ]
 

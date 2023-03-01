@@ -624,17 +624,17 @@ async def test_claim_user_invitation_cancelled(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_claim_user_already_deleted(
-    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, user_invitation_addr
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, zack_new_user_invitation
 ):
     await backend.invite.delete(
         organization_id=alice.organization_id,
         greeter=alice.user_id,
-        token=user_invitation_addr.token,
+        token=zack_new_user_invitation.token,
         on=DateTime.now(),
         reason=InvitationDeletedReason.CANCELLED,
     )
 
-    gui.add_instance(user_invitation_addr.to_url())
+    gui.add_instance(zack_new_user_invitation.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -646,10 +646,10 @@ async def test_claim_user_already_deleted(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_claim_user_offline_backend(
-    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, user_invitation_addr
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, zack_new_user_invitation
 ):
     with running_backend.offline():
-        gui.add_instance(user_invitation_addr.to_url())
+        gui.add_instance(zack_new_user_invitation.to_url())
 
         def _assert_dialogs():
             assert len(autoclose_dialog.dialogs) == 1

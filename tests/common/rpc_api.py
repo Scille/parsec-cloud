@@ -313,7 +313,11 @@ def anonymous_rpc(
 
 @pytest.fixture
 def invited_rpc(
-    coolorg: OrganizationFullData, backend_asgi_app: Quart, invitation_addr: BackendInvitationAddr
+    coolorg: OrganizationFullData,
+    backend_asgi_app: Quart,
+    alice_new_device_invitation: BackendInvitationAddr,
 ) -> InvitedRpcApiClient:
     test_client = backend_asgi_app.test_client()
-    return InvitedRpcApiClient(coolorg.organization_id, test_client, invitation_addr.token)
+    return InvitedRpcApiClient(
+        coolorg.organization_id, test_client, alice_new_device_invitation.token
+    )

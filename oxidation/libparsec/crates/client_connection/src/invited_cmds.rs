@@ -12,7 +12,7 @@ use crate::{
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
-const INVITATION_TOKEN: &str = "Invitation-Token";
+const INVITATION_TOKEN_HEADER_NAME: &str = "Invitation-Token";
 
 /// Factory that send commands in a authenticated context.
 pub struct InvitedCmds {
@@ -53,9 +53,9 @@ fn prepare_request(
         HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
     );
     content_headers.insert(
-        INVITATION_TOKEN,
+        INVITATION_TOKEN_HEADER_NAME,
         HeaderValue::from_str(&token.hex())
-            .expect("Invitation Token is uuid, so a valid header value"),
+            .expect("Invitation Token is UUID, so made of ASCII characters"),
     );
 
     request_builder.headers(content_headers).body(body)

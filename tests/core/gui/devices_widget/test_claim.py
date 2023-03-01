@@ -582,17 +582,17 @@ async def test_claim_device_invitation_cancelled(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_claim_device_already_deleted(
-    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, invitation_addr
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, alice_new_device_invitation
 ):
     await backend.invite.delete(
         organization_id=alice.organization_id,
         greeter=alice.user_id,
-        token=invitation_addr.token,
+        token=alice_new_device_invitation.token,
         on=DateTime.now(),
         reason=InvitationDeletedReason.CANCELLED,
     )
 
-    gui.add_instance(invitation_addr.to_url())
+    gui.add_instance(alice_new_device_invitation.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -604,10 +604,10 @@ async def test_claim_device_already_deleted(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_claim_device_offline_backend(
-    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, invitation_addr
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, alice_new_device_invitation
 ):
     with running_backend.offline():
-        gui.add_instance(invitation_addr.to_url())
+        gui.add_instance(alice_new_device_invitation.to_url())
 
         def _assert_dialogs():
             assert len(autoclose_dialog.dialogs) == 1

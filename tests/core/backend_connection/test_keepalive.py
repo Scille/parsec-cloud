@@ -74,9 +74,15 @@ async def test_authenticated_cmd_keepalive(frozen_clock, monkeypatch, running_ba
 @pytest.mark.skipif(OXIDIZED, reason="No ws event")
 @pytest.mark.trio
 async def test_invited_cmd_keepalive(
-    frozen_clock, monkeypatch, backend, running_backend, backend_addr, alice, invitation_addr
+    frozen_clock,
+    monkeypatch,
+    backend,
+    running_backend,
+    backend_addr,
+    alice,
+    alice_new_device_invitation,
 ):
     def _cmds_factory(keepalive):
-        return backend_invited_cmds_factory(invitation_addr, keepalive=keepalive)
+        return backend_invited_cmds_factory(alice_new_device_invitation, keepalive=keepalive)
 
     await _test_keepalive(frozen_clock, monkeypatch, _cmds_factory)
