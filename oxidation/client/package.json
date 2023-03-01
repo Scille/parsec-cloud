@@ -52,7 +52,7 @@
         "@types/jest": "^27.0.2",
         "@types/luxon": "^3.2.0",
         "@types/node": "^18.0.1",
-        "@typescript-eslint/eslint-plugin": "^5.47.1",
+        "@typescript-eslint/eslint-plugin": "^5.54.0",
         "@typescript-eslint/parser": "^5.27.0",
         "@vue/cli-plugin-babel": "~5.0.8",
         "@vue/cli-plugin-e2e-cypress": "~5.0.8",
