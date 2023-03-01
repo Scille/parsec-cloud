@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator
 
 import trio
 
-import parsec
+from parsec import FEATURE_FLAGS
 from parsec._parsec import InvitedCmds as RsBackendInvitedCmds
 from parsec.api.protocol import INVITED_CMDS
 from parsec.core.backend_connection import BackendNotAvailable, cmds
@@ -88,7 +88,7 @@ async def backend_invited_cmds_factory(
                 raise
 
     try:
-        yield RsBackendInvitedCmds(addr) if parsec.FEATURE_FLAGS[
+        yield RsBackendInvitedCmds(addr) if FEATURE_FLAGS[
             "UNSTABLE_OXIDIZED_CLIENT_CONNECTION"
         ] else BackendInvitedCmds(addr, _acquire_transport)
 
