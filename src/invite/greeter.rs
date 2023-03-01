@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyRuntimeError, prelude::*};
 
 use crate::{
     backend_connection::AuthenticatedCmds,
@@ -30,12 +30,12 @@ impl UserGreetInitialCtx {
     }
 
     fn do_wait_peer(&mut self) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("UserGreetInitialCtx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async {
+            let ctx = ctx
+                .ok_or_else(|| PyRuntimeError::new_err("UserGreetInitialCtx has been consumed"))?;
+
             Ok(ctx
                 .do_wait_peer()
                 .await
@@ -63,12 +63,13 @@ impl DeviceGreetInitialCtx {
     }
 
     fn do_wait_peer(&mut self) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("DeviceGreetInitialCtx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("DeviceGreetInitialCtx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_wait_peer()
                 .await
@@ -88,12 +89,13 @@ crate::binding_utils::gen_proto!(UserGreetInProgress1Ctx, __repr__);
 #[pymethods]
 impl UserGreetInProgress1Ctx {
     fn do_wait_peer_trust(&mut self) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("UserGreetInProgress1Ctx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("UserGreetInProgress1Ctx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_wait_peer_trust()
                 .await
@@ -103,13 +105,13 @@ impl UserGreetInProgress1Ctx {
     }
 
     #[getter]
-    fn greeter_sas(&self) -> SASCode {
+    fn greeter_sas(&self) -> PyResult<SASCode> {
         self.0
             .as_ref()
             .map(|x| x.greeter_sas())
             .cloned()
             .map(SASCode)
-            .expect("UserGreetInProgress1Ctx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("UserGreetInProgress1Ctx has been consumed"))
     }
 }
 
@@ -123,12 +125,13 @@ crate::binding_utils::gen_proto!(DeviceGreetInProgress1Ctx, __repr__);
 #[pymethods]
 impl DeviceGreetInProgress1Ctx {
     fn do_wait_peer_trust(&mut self) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("DeviceGreetInProgress1Ctx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("DeviceGreetInProgress1Ctx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_wait_peer_trust()
                 .await
@@ -138,13 +141,13 @@ impl DeviceGreetInProgress1Ctx {
     }
 
     #[getter]
-    fn greeter_sas(&self) -> SASCode {
+    fn greeter_sas(&self) -> PyResult<SASCode> {
         self.0
             .as_ref()
             .map(|x| x.greeter_sas())
             .cloned()
             .map(SASCode)
-            .expect("DeviceGreetInProgress1Ctx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("DeviceGreetInProgress1Ctx has been consumed"))
     }
 }
 
@@ -158,12 +161,13 @@ crate::binding_utils::gen_proto!(UserGreetInProgress2Ctx, __repr__);
 #[pymethods]
 impl UserGreetInProgress2Ctx {
     fn do_signify_trust(&mut self) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("UserGreetInProgress2Ctx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("UserGreetInProgress2Ctx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_signify_trust()
                 .await
@@ -173,16 +177,16 @@ impl UserGreetInProgress2Ctx {
     }
 
     #[getter]
-    fn claimer_sas(&self) -> SASCode {
+    fn claimer_sas(&self) -> PyResult<SASCode> {
         self.0
             .as_ref()
             .map(|x| x.claimer_sas())
             .cloned()
             .map(SASCode)
-            .expect("UserGreetInProgress2sCtx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("UserGreetInProgress2Ctx has been consumed"))
     }
 
-    fn generate_claimer_sas_choices(&self, size: usize) -> Vec<SASCode> {
+    fn generate_claimer_sas_choices(&self, size: usize) -> PyResult<Vec<SASCode>> {
         self.0
             .as_ref()
             .map(|x| {
@@ -191,7 +195,7 @@ impl UserGreetInProgress2Ctx {
                     .map(SASCode)
                     .collect()
             })
-            .expect("UserGreetInProgress2Ctx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("UserGreetInProgress2Ctx has been consumed"))
     }
 }
 
@@ -205,12 +209,13 @@ crate::binding_utils::gen_proto!(DeviceGreetInProgress2Ctx, __repr__);
 #[pymethods]
 impl DeviceGreetInProgress2Ctx {
     fn do_signify_trust(&mut self) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("DeviceGreetInProgress2Ctx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("DeviceGreetInProgress2Ctx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_signify_trust()
                 .await
@@ -220,16 +225,16 @@ impl DeviceGreetInProgress2Ctx {
     }
 
     #[getter]
-    fn claimer_sas(&self) -> SASCode {
+    fn claimer_sas(&self) -> PyResult<SASCode> {
         self.0
             .as_ref()
             .map(|x| x.claimer_sas())
             .cloned()
             .map(SASCode)
-            .expect("DeviceGreetInProgress2Ctx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("DeviceGreetInProgress2Ctx has been consumed"))
     }
 
-    fn generate_claimer_sas_choices(&self, size: usize) -> Vec<SASCode> {
+    fn generate_claimer_sas_choices(&self, size: usize) -> PyResult<Vec<SASCode>> {
         self.0
             .as_ref()
             .map(|x| {
@@ -238,7 +243,7 @@ impl DeviceGreetInProgress2Ctx {
                     .map(SASCode)
                     .collect()
             })
-            .expect("DeviceGreetInProgress2Ctx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("DeviceGreetInProgress2Ctx has been consumed"))
     }
 }
 
@@ -252,12 +257,13 @@ crate::binding_utils::gen_proto!(UserGreetInProgress3Ctx, __repr__);
 #[pymethods]
 impl UserGreetInProgress3Ctx {
     fn do_get_claim_requests(&mut self) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("UserGreetInProgress3Ctx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("UserGreetInProgress3Ctx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_get_claim_requests()
                 .await
@@ -278,12 +284,13 @@ crate::binding_utils::gen_proto!(DeviceGreetInProgress3Ctx, __repr__);
 #[pymethods]
 impl DeviceGreetInProgress3Ctx {
     fn do_get_claim_requests(&mut self) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("DeviceGreetInProgress3Ctx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("DeviceGreetInProgress3Ctx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_get_claim_requests()
                 .await
@@ -310,12 +317,13 @@ impl UserGreetInProgress4Ctx {
         device_label: Option<DeviceLabel>,
         profile: UserProfile,
     ) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("UserGreetInProgress4Ctx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async move {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("UserGreetInProgress4Ctx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_create_new_user(
                     &author.0,
@@ -329,19 +337,19 @@ impl UserGreetInProgress4Ctx {
     }
 
     #[getter]
-    fn requested_human_handle(&self) -> Option<HumanHandle> {
+    fn requested_human_handle(&self) -> PyResult<Option<HumanHandle>> {
         self.0
             .as_ref()
             .map(|x| x.requested_human_handle.clone().map(HumanHandle))
-            .expect("UserGreetInProgress4Ctx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("UserGreetInProgress4Ctx has been consumed"))
     }
 
     #[getter]
-    fn requested_device_label(&self) -> Option<DeviceLabel> {
+    fn requested_device_label(&self) -> PyResult<Option<DeviceLabel>> {
         self.0
             .as_ref()
             .map(|x| x.requested_device_label.clone().map(DeviceLabel))
-            .expect("UserGreetInProgress4Ctx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("UserGreetInProgress4Ctx has been consumed"))
     }
 }
 
@@ -359,12 +367,13 @@ impl DeviceGreetInProgress4Ctx {
         author: LocalDevice,
         device_label: Option<DeviceLabel>,
     ) -> FutureIntoCoroutine {
-        let ctx = self
-            .0
-            .take()
-            .expect("DeviceGreetInProgress4Ctx has been consumed");
+        let ctx = self.0.take();
 
         FutureIntoCoroutine::from(async move {
+            let ctx = ctx.ok_or_else(|| {
+                PyRuntimeError::new_err("DeviceGreetInProgress4Ctx has been consumed")
+            })?;
+
             Ok(ctx
                 .do_create_new_device(&author.0, device_label.map(|x| x.0))
                 .await
@@ -373,10 +382,10 @@ impl DeviceGreetInProgress4Ctx {
     }
 
     #[getter]
-    fn requested_device_label(&self) -> Option<DeviceLabel> {
+    fn requested_device_label(&self) -> PyResult<Option<DeviceLabel>> {
         self.0
             .as_ref()
             .map(|x| x.requested_device_label.clone().map(DeviceLabel))
-            .expect("DeviceGreetInProgress4Ctx has been consumed")
+            .ok_or_else(|| PyRuntimeError::new_err("DeviceGreetInProgress4Ctx has been consumed"))
     }
 }
