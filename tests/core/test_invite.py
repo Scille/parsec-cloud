@@ -34,7 +34,7 @@ from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("with_labels", [False, True], ids=["WithoutLabels", "WithLabels"])
+@pytest.mark.parametrize("with_labels", [False, True], ids=["without_labels", "with_labels"])
 async def test_good_device_claim(
     backend,
     running_backend,
@@ -43,7 +43,7 @@ async def test_good_device_claim(
     alice_backend_cmds,
     user_fs_factory,
     with_labels,
-    invitation_addr,
+    alice_new_device_invitation,
 ):
     if with_labels:
         requested_device_label = DeviceLabel("Foo's label")
@@ -57,7 +57,7 @@ async def test_good_device_claim(
     oob_send, oob_recv = trio.open_memory_channel(0)
 
     async def _run_claimer():
-        async with backend_invited_cmds_factory(addr=invitation_addr) as cmds:
+        async with backend_invited_cmds_factory(addr=alice_new_device_invitation) as cmds:
             initial_ctx = await claimer_retrieve_info(cmds)
             assert isinstance(initial_ctx, DeviceClaimInitialCtx)
             assert initial_ctx.greeter_user_id == alice.user_id
@@ -84,7 +84,9 @@ async def test_good_device_claim(
             assert isinstance(new_device, LocalDevice)
 
     async def _run_greeter():
-        initial_ctx = DeviceGreetInitialCtx(cmds=alice_backend_cmds, token=invitation_addr.token)
+        initial_ctx = DeviceGreetInitialCtx(
+            cmds=alice_backend_cmds, token=alice_new_device_invitation.token
+        )
 
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -168,7 +170,7 @@ async def test_good_device_claim(
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("with_labels", [False, True], ids=["WithoutLabels", "WithLabels"])
+@pytest.mark.parametrize("with_labels", [False, True], ids=["without_labels", "with_labels"])
 async def test_good_user_claim(
     backend,
     running_backend,
@@ -177,8 +179,7 @@ async def test_good_user_claim(
     alice_backend_cmds,
     user_fs_factory,
     with_labels,
-    claimer_email,
-    user_invitation_addr,
+    zack_new_user_invitation,
 ):
     if with_labels:
         # Let's pretent we invited a Fortnite player...
@@ -198,10 +199,10 @@ async def test_good_user_claim(
     oob_send, oob_recv = trio.open_memory_channel(0)
 
     async def _run_claimer():
-        async with backend_invited_cmds_factory(addr=user_invitation_addr) as cmds:
+        async with backend_invited_cmds_factory(addr=zack_new_user_invitation) as cmds:
             initial_ctx = await claimer_retrieve_info(cmds)
             assert isinstance(initial_ctx, UserClaimInitialCtx)
-            assert initial_ctx.claimer_email == claimer_email
+            assert initial_ctx.claimer_email == "zack@example.com"
             assert initial_ctx.greeter_user_id == alice.user_id
             assert initial_ctx.greeter_human_handle == alice.human_handle
 
@@ -230,7 +231,9 @@ async def test_good_user_claim(
             await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=new_device)
 
     async def _run_greeter():
-        initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=user_invitation_addr.token)
+        initial_ctx = UserGreetInitialCtx(
+            cmds=alice_backend_cmds, token=zack_new_user_invitation.token
+        )
 
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -328,11 +331,11 @@ async def test_good_user_claim(
 
 @pytest.mark.trio
 async def test_claimer_handle_reset(
-    backend, running_backend, alice, alice_backend_cmds, invitation_addr
+    backend, running_backend, alice, alice_backend_cmds, alice_new_device_invitation
 ):
-    async with backend_invited_cmds_factory(addr=invitation_addr) as claimer_cmds:
+    async with backend_invited_cmds_factory(addr=alice_new_device_invitation) as claimer_cmds:
         greeter_initial_ctx = UserGreetInitialCtx(
-            cmds=alice_backend_cmds, token=invitation_addr.token
+            cmds=alice_backend_cmds, token=alice_new_device_invitation.token
         )
         claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
 
@@ -390,20 +393,20 @@ async def test_claimer_handle_reset(
     "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
 )
 async def test_claimer_handle_cancel_event(
-    backend, running_backend, alice, alice_backend_cmds, fail_on_step, invitation_addr
+    backend, running_backend, alice, alice_backend_cmds, fail_on_step, alice_new_device_invitation
 ):
     async def _cancel_invitation():
         await backend.invite.delete(
             organization_id=alice.organization_id,
             greeter=alice.user_id,
-            token=invitation_addr.token,
+            token=alice_new_device_invitation.token,
             on=DateTime.now(),
             reason=InvitationDeletedReason.CANCELLED,
         )
 
-    async with backend_invited_cmds_factory(addr=invitation_addr) as claimer_cmds:
+    async with backend_invited_cmds_factory(addr=alice_new_device_invitation) as claimer_cmds:
         greeter_initial_ctx = UserGreetInitialCtx(
-            cmds=alice_backend_cmds, token=invitation_addr.token
+            cmds=alice_backend_cmds, token=alice_new_device_invitation.token
         )
         claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
 
@@ -487,20 +490,26 @@ async def test_claimer_handle_cancel_event(
     "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
 )
 async def test_claimer_handle_command_failure(
-    backend, running_backend, alice, alice_backend_cmds, monkeypatch, fail_on_step, invitation_addr
+    backend,
+    running_backend,
+    alice,
+    alice_backend_cmds,
+    monkeypatch,
+    fail_on_step,
+    alice_new_device_invitation,
 ):
     async def _cancel_invitation():
         await backend.invite.delete(
             organization_id=alice.organization_id,
             greeter=alice.user_id,
-            token=invitation_addr.token,
+            token=alice_new_device_invitation.token,
             on=DateTime.now(),
             reason=InvitationDeletedReason.CANCELLED,
         )
 
-    async with backend_invited_cmds_factory(addr=invitation_addr) as claimer_cmds:
+    async with backend_invited_cmds_factory(addr=alice_new_device_invitation) as claimer_cmds:
         greeter_initial_ctx = UserGreetInitialCtx(
-            cmds=alice_backend_cmds, token=invitation_addr.token
+            cmds=alice_backend_cmds, token=alice_new_device_invitation.token
         )
         claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
 

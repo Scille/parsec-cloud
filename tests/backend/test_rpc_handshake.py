@@ -237,6 +237,12 @@ async def _test_invited_handshake_invitation_token_not_found(client: InvitedRpcA
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
 
 
+async def _test_invited_handshake_invitation_invalid_token(client):
+    rep = await client.send_ping(check_rep=False, extra_headers={"Invitation-Token": "a" * 100})
+    assert rep.status_code == 415
+    assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
+
+
 @pytest.mark.trio
 async def test_handshake(
     alice_rpc: AuthenticatedRpcApiClient,
@@ -292,6 +298,7 @@ async def test_handshake(
     await _test_authenticated_handshake_user_revoked(alice_rpc)
 
     await _test_invited_handshake_invitation_token_not_found(invited_rpc)
+    await _test_invited_handshake_invitation_invalid_token(invited_rpc)
 
 
 @pytest.mark.trio
