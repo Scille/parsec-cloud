@@ -1,56 +1,91 @@
 # Shamir API & types
 
+## Abstract
+
+This document describes design and implementation considerations to implement
+Shamir-based user account recovery in Parsec. This feature is based on
+[Shamir's secret sharing (SSS)](https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing)
+algorithm.
+
+Essentially, a User should be able to distribute the information required to
+recover its account (the "secret") among a group of User of the same
+Organization. The information is divided into parts (the "shares") from which
+the secret can be reassembled only when quorum is achieved, i.e. a sufficient
+number of shares (the "threshold") are combined, therefore enabling the
+recovery of the user account.
+
+The idea is that even if an attacker steals some shares, it is impossible for
+the attacker to reconstruct the secret unless they have stolen the quorum
+number of shares.
+
 ## 0 - Basic considerations
 
-Each user only has at most one Shamir recovery:
+### Number of Shamir recovery setup per User
 
-- a new user starts with no Shamir recovery
-- each Shamir recovery setup overwrite the previous one
-- it is possible to clear the Shamir recovery
+A User can have at most one Shamir recovery setup:
 
-Instead of storing all the Shamir recovery setups ever created, only the last one is available. This is because:
+- a new User starts with no Shamir recovery setup
+- a Shamir recovery setup always overwrites the previous one
+- an existing Shamir recovery setup can be cleared
 
-- Shamir recovery can achieve weight-based strategy (e.g. recovery can be achieve by 3 normal managers or by a single
-  top ranked one that got assigned 3 shares instead of 1). So a single configuration is enough even for advanced usecases.
-- Shamir recovery contains sensible -while encrypted- data, so it's better to make it possible to clear it as soon at it is no longer needed.
-- An attacker is unlikely to take advantage of this: to modify the Shamir recovery it must have got access to the user account. So
-  the attack is about denying somebody access of his account, provided that this user has forgotten his main password and must use
-  the Shamir recovery !
+This means that instead of storing all Shamir recovery setups for a given
+User, only the last setup is available. This is sufficient because:
 
-**Future evolution 1**: we could only allow organization admin to be able to clear other user's Shamir recovery. This would defeat the
-potentiel attack and also prevent regular user from changing their Shamir recovery without notifying the admin.
-This should be set by the organization config system, considering small organization most likely don't want or cannot (i.e.
-too few users in the organization) enforce this rule.
+- Shamir recovery can achieve weight-based strategy (e.g. recovery can be
+  achieved by 3 normal managers or by a single top ranked one that got
+  assigned 3 shares instead of 1). This is enough even for advanced use-cases.
+- Shamir recovery contains sensible (encrypted) data, so it should be possible
+  to clear it as soon as it is no longer needed.
+- An attacker is unlikely to take advantage of this: in order to modify the
+  Shamir recovery setup, it must have got access to the user account. So
+  the attack is about denying somebody access of its account, provided that
+  the user has forgotten his main password and must use the Shamir recovery!
 
-The basic mechanism is:
+> **_Future evolution 1:_** restrict clearing of Shamir recovery setup to an
+> organization Admin. This would prevent a potential attack and also prevent
+> a regular User from changing their Shamir recovery without notifying the
+> Admin. This should be set by the organization config system, considering
+> small organization most likely don't want or cannot (i.e. too few users
+> in the organization) enforce this rule.
+
+### How does it work ?
 
 To create the Shamir recovery:
 
-0) Alice wants to create a Shamir recovery with Bob and Adam
-1) Alice creates a new device `alice@shamir1`, and encrypt it related keys using a symmetric key `SK`: `SK(alice@shamir1)`.
-   `SK` is the secret in the Shamir algorithm.
-2) Alice create a `ShamirRecoveryShareCertificate` certificate for Bob and Adam: `SRSCBob` & `SRSCAdam`. Those certificates
-   each contain a part of the `SK` secret.
-3) Alice send a `shamir_recovery_setup` command to the Parsec server containing the `SK(alice@shamir1)`, `SRSCBob`, `SRSCAdam` and the `threshold` of the Shamir.
+1) Alice wants to create a Shamir recovery with Bob and Adam.
+2) Alice creates a new device `alice@shamir1`, and encrypt its related keys
+   using a symmetric key `SK`: `SK(alice@shamir1)`. `SK` is the secret in the
+   Shamir algorithm.
+3) Alice create a `ShamirRecoveryShareCertificate` certificate for Bob
+   (`SRSCBob`) and Adam (`SRSCAdam`). Each certificate contains a part of the
+   `SK` secret.
+4) Alice send a `shamir_recovery_setup` command to the Parsec server
+   containing the `SK(alice@shamir1)`, `SRSCBob`, `SRSCAdam` and the
+   Shamir `threshold`.
 
 To use the Shamir recovery:
 
-0) Alice has lost its account access.
-     1) She goes to an organization admin.
-     2) The admin uses the authenticated `invite_new` command to create a Shamir recovery invitation link (i.e. a special Parsec URL).
-1) Alice uses the URL to connect as invited to the Parsec server
-     1) She uses the `invite_info` command to retrieve informations
-        about the current Shamir recovery: `SK(alice@shamir1)`, `threshold`, UserID & human handle of recipients.
-     2) Each recipient can use the `invite_list` to see the current Shamir recovery he can take part in.
-2) Alice use the `invite_x_claimer_*` commands to create a secure conduit with a recipient. The recipient on it side use
-   the authenticated `invite_x_greeter_*` commands.
-3) The recipient use `invite_4_greeter_communicate` to send to Alice his secret share(s). Alice uses the
-   `invite_4_claimer_communicate` command (with an empty payload) to receive the secret share (i.e. `SRSCBob` and `SRSCAdam`).
-4) If Alice hasn't reach the quorum (i.e. the secret shares she has are < `threshold`) she go back to 2). Otherwise she
-   can compute the secret `SK` and decrypt `SK(alice@shamir1)`.
-5) Alice uses `alice@shamir1` to re-create a new device that will be her recovered device.
+1) Alice has lost its account access:
+   1) Alice asks an organization Admin for a recovery invitation link.
+   2) The organization Admin uses the authenticated `invite_new` command to
+      create a Shamir recovery invitation link (i.e. a special Parsec URL).
+2) Alice uses the link to connect as invited to the Parsec server:
+   1) Alice uses the `invite_info` command to retrieve informations about the
+      current Shamir recovery setup: `SK(alice@shamir1)`, `threshold`, User ID
+      and human handle of recipients.
+   2) Recipients can use the `invite_list` command to see the current Shamir
+      recovery they can take part in.
+3) Alice uses the `invite_x_claimer_*` commands to create a secure conduit with
+   a recipient. The recipient uses the authenticated `invite_x_greeter_*` commands.
+4) The recipient use `invite_4_greeter_communicate` to send to Alice its secret
+    share(s). Alice uses the `invite_4_claimer_communicate` command (with an
+    empty payload) to receive the secret share (i.e. `SRSCBob` and `SRSCAdam`).
+5) If Alice hasn't reach a quorum (i.e. the number of secret shares obtained are
+   less than `threshold`) she go back to 2). Otherwise she can compute the
+   secret `SK` and decrypt `SK(alice@shamir1)`.
+6) Alice uses `alice@shamir1` to re-create a new device (the recovered device).
 
-## 1 - Create&update the Shamir recovery
+## 1 - Create & update a Shamir recovery setup
 
 Authenticated API:
 
@@ -75,7 +110,7 @@ Authenticated API:
                 "status": "ok",
             },
             {
-                // Certificate is not signed by the authenticated user, or timestamp it invalid
+                // Certificate is not signed by the authenticated user, or timestamp is invalid
                 "status": "invalid_certification",
             },
             {
@@ -100,24 +135,24 @@ Authenticated API:
                         "type": "Bytes"
                     },
                     {
-                        // Token the claimer should provide to get access to `ciphered_data`.
-                        // This token is split in shares, hence it acts as a proof the claimer
+                        // The token the claimer should provide to get access to `ciphered_data`.
+                        // This token is split into shares, hence it acts as a proof the claimer
                         // asking for the `ciphered_data` had it identity confirmed by the recipients.
                         "name": "reveal_token",
                         "type": "Bytes"
                     },
                     {
-                        // Configuration is provide as a `ShamirRecoveryBriefCertificate`, it
-                        // contains the threshold for the quorum and for who each share is for
-                        // This field has a certain level of duplication with the shares one,
-                        // this is because they are used for different thing (we provide the
-                        // encrypted share data only when needed)
+                        // The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
+                        // It contains the threshold for the quorum and the shares recipients.
+                        // This field has a certain level of duplication with the "shares" below,
+                        // but they are used for different things (we provide the encrypted share
+                        // data only when needed)
                         "name": "brief",
                         "type": "Bytes"
                     },
                     {
-                        // Each share is aimed at a given recipient, hence the shares
-                        // are provided as a `ShamirRecoveryShareCertificate`
+                        // The shares provided as a `ShamirRecoveryShareCertificate` since
+                        // each share is aimed at a specific recipient.
                         "name": "shares",
                         "type": "Vec<Bytes>",
                     }
@@ -128,15 +163,16 @@ Authenticated API:
 ]
 ```
 
-Consistency between `brief` and `shares` must be checked by the parsec server:
+Consistency between `brief` and `shares` must be checked by the Parsec server:
 
-- the number of shares must be greater or equal to the threshold (and threshold must be >= 1)
-- the recipients and their shares must be the same
-- the certificates datetime & author must be the same
+- the number of shares must be greater or equal to the `threshold` and
+  `threshold` must be greater or equal to 1.
+- the recipients and their shares must be the same.
+- the certificates datetimes & authors must be the same.
 
-**Future evolution 2**: On top of that, we may want to check the Shamir configuration against some rules specific
-to the organization (e.g. number of shares, profile of recipients, max number of share per
-recipient), see bonus part.
+> **_Future evolution 2:_** Check the Shamir recovery setup against some
+> organization-specific rules (e.g. the number of shares, the recipient's
+> profiles, max number of share per recipient, etc.). See "Bonus" section below.
 
 And the related certificates:
 
@@ -213,14 +249,14 @@ And the related certificates:
 }
 ```
 
-## 2 - Get the Shamir recovery configuration
+## 2 - Get the Shamir recovery setup
 
-This has two purposes:
+This enables two use cases:
 
-- Retrieving its own Shamir recovery configuration.
-  This is useful to display it to the user and
-  ensure this configuration is still usable (i.e. no recipient has been revoked)
-- Retrieve all the Shamir recovery for admins.
+1) A User retrieving its own Shamir recovery setup. Useful for displaying it to
+   the user and to ensure the setup is still valid (i.e. no recipient has been
+   revoked)
+2) An Admin retrieving all the Shamir recovery setups.
 
 Authenticated API:
 
@@ -279,12 +315,12 @@ Authenticated API:
 ]
 ```
 
-**Future evolution 3**: We might also want to provide `shamir_recovery_others_list`
-for non-admin so that one could see the Shamir recovery he is recipient of.
-If so, this should be enabled in the organization configuration (similarly to what is
-done for the Shamir recovery setup config template).
-For the moment going KISS and only providing it to admins seems like the reasonable
-thing to do.
+> **_Future evolution 3:_** Allow a User (other than Admins) to be able to see
+> the Shamir recovery it is recipient of. This can be achieved by providing
+> `shamir_recovery_others_list` for non-admins. If so, this should be enabled in
+> the organization configuration (similarly to what is done for the Shamir
+> recovery setup config template). For the moment going KISS: only providing it
+> to admins seems a reasonable choice to start with.
 
 ## 3 - Use the Shamir recovery
 
@@ -422,21 +458,21 @@ Invited API, we reuse the `invite_info` command:
 ]
 ```
 
-We don't provide signed data here (such as `ShamirRecoveryBriefCertificate`) given the claimer
-has not way to verify the certificate (i.e. he doesn't know the root verify key yet).
+Signed data (such as `ShamirRecoveryBriefCertificate`) is not provided here
+because the claimer has no way to verify the certificate (i.e. it doesn't know
+the root verify key yet).
 
-We also don't provide `ciphered_data` right now, but wait for the claimer
-to have concluded it SAS code exchange with all the greeters (this would guarantee we
-only provide `ciphered_data` to the actual user, and not to an attacker that have
-eavesdropped the invitation link).
+Also, `ciphered_data` is not provided until the claimer to have concluded it SAS
+code exchange with all the greeters (this would guarantee `ciphered_data` is
+only provided to the actual User, and not to an attacker that have eavesdropped
+the invitation link).
 
 ### 3.3 - Claimer dance for SAS code exchange
 
 On claimer side, the `invite_x_claimer_*` API is reused.
 
-This required a single change: passing the `user_id` of the recipient as parameter (
-this is because the `invite_x_claimer_*` used to be used in one-to-one, so no parameter
-was requested)
+A single change is required: passing the recipient `user_id` as parameter
+(the `invite_x_claimer_*` was used in one-to-one and no parameter was requested)
 
 ```json5
 [
@@ -469,29 +505,32 @@ was requested)
 
 So `greeter_user_id` is always provided:
 
-- in the user/device invitation it only valid value is the `greeter_user_id` provided in `invite_info`.
-- in the Shamir recovery invitation, it is one of the `recipients` provided in `invite_info`
+- User/Device invitation: its only valid value is the `greeter_user_id` provided in `invite_info`.
+- Shamir recovery invitation: it is one of the `recipients` provided in `invite_info`.
 
-From an internal point of view, the invite API is implemented (both on claimer and greeter side)
+Internally, the invite API is implemented (both on claimer and greeter side)
 in the Parsec server with a generic `conduit_exchange` command.
-Currently `conduit_exchange` use the invitation token as identifier for communication: a greeter and an claimer
-communicate by doing `conduit_exchange` with the same invitation token.
-However this is no longer possible given in Shamir recovery the claimer will talk to multiple different greeters in parallel.
-The solution is hence to use the couple invitation token + greeter UserID as identifier.
+Currently `conduit_exchange` use the invitation token as identifier for
+communication: a greeter and an claimer communicate by doing `conduit_exchange`
+with the same invitation token.
+However this is no longer possible because in Shamir recovery the claimer will
+talk to multiple different greeters in parallel. The solution is then to use the
+pair "invitation token" + "greeter UserID" as identifier.
 
 ### 3.4 - Greeter dance for SAS code exchange
 
 On greeter side, the `invite_x_claimer_*` API is reused as-is.
 
-`invite_list` & `invite_delete` can also be used as-is to manage the Shamir recovery invitations.
+The `invite_list` and `invite_delete` commands can also be used as-is to manage the Shamir recovery invitations.
 
-### 3.6 - Greeter & claimer actual secret share exchange
+### 3.5 - Greeter & claimer actual secret share exchange
 
 This is done with the `invite_4_claimer/greeter_communicate` command.
-This command requires that both claimer and greeter provide a binary payload this is then
-passed to the peer.
+This command requires that both claimer and greeter provide a binary payload
+that is then passed to the peer.
 
 Claimer payload is empty.
+
 Greeter payload:
 
 ```json5
@@ -508,17 +547,19 @@ Greeter payload:
 }
 ```
 
-Note that the greeter doesn't send a way for the claimer to identify from which setup the share is from.
-In theory this means we could end up with recipients sending incompatible share to the claimer:
+Note that the claimer does not have a way to identify from which setup the share
+is from. This information is not sent by the greeter.
+In theory this means that a recipient could send an incompatible share to the claimer:
 
-- In case a new setup is done in the middle of the invitation recovery
-- In case a malicious Parsec server provide a previous setup to one (or multiple) recipient(s)
+- When a new setup is made in the middle of the invitation recovery
+- When a malicious Parsec server provide a previous setup to one (or multiple) recipient(s)
 
-This is not a big concern given in all those case the claimer will end up with an invalid
+This is not a big concern because in all those cases the claimer will end up with an invalid
 secret and won't be able to decrypt the recovery data.
 
 Once enough shares are collected, the secret can be computed.
-The claimer hence get access to `reveal_token` and `data_key`, it can then retrieve `ciphered_data`:
+
+The claimer gets access to `reveal_token` and `data_key`, it can then retrieve `ciphered_data`:
 
 ```json5
 [
@@ -556,9 +597,9 @@ just like the recovery device system (see `parsec core import_recovery_device` C
 
 ## Bonus
 
-### **Future evolution 1**: Only admin can clear Shamir recovery
+### **Future evolution 1**: Only Admin can clear Shamir recovery
 
-authenticated API, `organization_config`
+Authenticated API, `organization_config`:
 
 ```json5
 [
@@ -590,15 +631,15 @@ authenticated API, `organization_config`
 ]
 ```
 
-### **Future evolution 2**: Specify the Shamir recovery configuration template
+### **Future evolution 2**: Specify a Shamir recovery setup template
 
-Shamir recovery allows plenty of different configuration (single recipient, different
+Shamir recovery allows plenty of different configurations (single recipient, different
 weight per recipient etc.), but we want to be able to set some limits here using the
 organization config system.
 
-There is two approach for this:
+There are two approaches for this:
 
-1) User very specific configuration template
+1) Use a very specific configuration template
 2) Use limit-based rules
 
 Approach 2) is the simplest, for instance we could limit have something like:
@@ -654,7 +695,7 @@ requires Alice and Bob, or Adam alone". However given we cannot trust the server
 on such precise configuration, a new certificate type must be introduced which is cumbersome :(
 Also we should be able to provide approach 2) as part of approach 1).
 
-### **Future evolution 3**: Non-admin can do Shamir recovery invite
+### **Future evolution 3**: Non-admin can perform Shamir recovery invite
 
 authenticated API, `organization_config`
 
