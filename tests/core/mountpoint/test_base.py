@@ -10,7 +10,7 @@ from pathlib import Path, PurePath
 import pytest
 import trio
 
-from parsec._parsec import CoreEvent
+from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
 from parsec.core import logged_core_factory
 from parsec.core.fs import FsPath
@@ -29,8 +29,8 @@ from tests.common import create_shared_workspace, real_clock_timeout
 # Helper
 
 
-def get_path_in_mountpoint(manager, wid, path):
-    return trio.Path(manager.get_path_in_mountpoint(wid, FsPath(path)))
+def get_path_in_mountpoint(manager, wid, path, timestamp=None):
+    return trio.Path(manager.get_path_in_mountpoint(wid, FsPath(path), timestamp=timestamp))
 
 
 @pytest.mark.trio
@@ -122,9 +122,14 @@ async def test_mountpoint_path_already_in_use(
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.parametrize("manual_unmount", [True, False])
+@pytest.mark.parametrize(
+    "snapshot_workspace", [False, True], ids=["current_workspace", "snapshot_workspace"]
+)
+@pytest.mark.parametrize(
+    "manual_unmount", [False, True], ids=["automatic_unmount", "manual_unmount"]
+)
 async def test_mount_and_explore_workspace(
-    base_mountpoint, alice_user_fs, event_bus, manual_unmount
+    base_mountpoint, alice_user_fs, event_bus, running_backend, snapshot_workspace, manual_unmount
 ):
     # Populate a bit the fs first...
 
@@ -134,6 +139,14 @@ async def test_mount_and_explore_workspace(
     await workspace.touch("/bar.txt")
     await workspace.write_bytes("/bar.txt", b"Hello world !")
 
+    if snapshot_workspace:
+        await workspace.sync()
+        timestamp = DateTime.now()
+        await workspace.mkdir("/too_early")  # Should not be visible in the snapshot
+        await workspace.sync()
+    else:
+        timestamp = None
+
     # Now we can start fuse
 
     with event_bus.listen() as spy:
@@ -142,9 +155,9 @@ async def test_mount_and_explore_workspace(
             alice_user_fs, event_bus, base_mountpoint
         ) as mountpoint_manager:
 
-            await mountpoint_manager.mount_workspace(wid)
-            mountpoint_path = get_path_in_mountpoint(mountpoint_manager, wid, "/")
-            expected = {"mountpoint": mountpoint_path, "workspace_id": wid, "timestamp": None}
+            await mountpoint_manager.mount_workspace(wid, timestamp=timestamp)
+            mountpoint_path = get_path_in_mountpoint(mountpoint_manager, wid, "/", timestamp)
+            expected = {"mountpoint": mountpoint_path, "workspace_id": wid, "timestamp": timestamp}
 
             spy.assert_events_occurred(
                 [
@@ -171,7 +184,7 @@ async def test_mount_and_explore_workspace(
             await trio.to_thread.run_sync(inspect_mountpoint)
 
             if manual_unmount:
-                await mountpoint_manager.unmount_workspace(wid)
+                await mountpoint_manager.unmount_workspace(wid, timestamp=timestamp)
                 # Mountpoint should be stopped by now
                 spy.assert_events_occurred([(CoreEvent.MOUNTPOINT_STOPPED, expected)])
 
@@ -182,13 +195,28 @@ async def test_mount_and_explore_workspace(
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.parametrize("manual_unmount", [True, False])
-async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manual_unmount):
+@pytest.mark.parametrize(
+    "snapshot_workspace", [False, True], ids=["current_workspace", "snapshot_workspace"]
+)
+@pytest.mark.parametrize(
+    "manual_unmount", [False, True], ids=["automatic_unmount", "manual_unmount"]
+)
+async def test_idempotent_mount(
+    base_mountpoint, alice_user_fs, event_bus, running_backend, snapshot_workspace, manual_unmount
+):
     # Populate a bit the fs first...
 
     wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
+
+    if snapshot_workspace:
+        await workspace.sync()
+        timestamp = DateTime.now()
+        await workspace.mkdir("/too_early")  # Should not be visible in the snapshot
+        await workspace.sync()
+    else:
+        timestamp = None
 
     # Now we can start fuse
 
@@ -196,29 +224,29 @@ async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manua
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
 
-        await mountpoint_manager.mount_workspace(wid)
-        bar_txt = get_path_in_mountpoint(mountpoint_manager, wid, "/bar.txt")
+        await mountpoint_manager.mount_workspace(wid, timestamp=timestamp)
+        bar_txt = get_path_in_mountpoint(mountpoint_manager, wid, "/bar.txt", timestamp)
 
         assert await bar_txt.exists()
 
         with pytest.raises(MountpointAlreadyMounted):
-            await mountpoint_manager.mount_workspace(wid)
+            await mountpoint_manager.mount_workspace(wid, timestamp=timestamp)
         assert await bar_txt.exists()
 
-        await mountpoint_manager.unmount_workspace(wid)
+        await mountpoint_manager.unmount_workspace(wid, timestamp=timestamp)
         assert not await bar_txt.exists()
 
         with pytest.raises(MountpointNotMounted):
-            await mountpoint_manager.unmount_workspace(wid)
+            await mountpoint_manager.unmount_workspace(wid, timestamp=timestamp)
         assert not await bar_txt.exists()
 
-        await mountpoint_manager.mount_workspace(wid)
+        await mountpoint_manager.mount_workspace(wid, timestamp=timestamp)
         assert await bar_txt.exists()
 
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpdir):
+async def test_work_within_logged_core(base_mountpoint, core_config, alice):
     core_config = core_config.evolve(mountpoint_base_dir=base_mountpoint)
 
     async with logged_core_factory(core_config, alice) as alice_core:
