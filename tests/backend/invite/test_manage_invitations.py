@@ -183,11 +183,11 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
     )
     # Check urls in the email
     assert (
-        f'<a href="{base_url}/redirect/CoolOrg?action=claim_user&token={token.hex}" target="_blank">Claim invitation</a>'
+        f'<a href="{base_url}/redirect/CoolOrg?action=claim_user&token={token.hex}" rel="noopener noreferrer" target="_blank">Claim invitation</a>'
         in body
     )
     assert (
-        f'<img src="{base_url}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
+        f'<img src="{base_url}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100" />'
         in body
     )
 
@@ -215,11 +215,11 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
     )
     # Check urls in the email
     assert (
-        f'<a href="{base_url}/redirect/CoolOrg?action=claim_device&token={token.hex}" target="_blank">Claim invitation</a>'
+        f'<a href="{base_url}/redirect/CoolOrg?action=claim_device&token={token.hex}" rel="noopener noreferrer" target="_blank">Claim invitation</a>'
         in body
     )
     assert (
-        f'<img src="{base_url}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
+        f'<img src="{base_url}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100" />'
         in body
     )
 
