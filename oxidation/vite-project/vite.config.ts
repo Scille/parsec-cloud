@@ -20,6 +20,10 @@ let config: UserConfigExport = {
     alias: {
       "@": path.resolve(__dirname, "./src")
     },
+  },
+  // Fixed import problem on Windows, see https://github.com/Menci/vite-plugin-wasm/issues/26 and remove when this has been patched
+  optimizeDeps: {
+    disabled: true
   }
 };
 
