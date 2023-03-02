@@ -384,8 +384,10 @@
 
           <!-- PARSEC LOGO -->
           <p class="align-center">
-            <a href="https://parsec.cloud/">
-              <img src="{{ backend_url }}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>
+            <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+              origin page using window.opener unless link type noopener or noreferrer is specified. -->
+            <a href="https://parsec.cloud/" rel="noopener noreferrer" target="_blank">
+              <img src="{{ backend_url }}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100" />
             </a>
           </p>
 
@@ -420,7 +422,10 @@
                               <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                                 <tbody>
                                   <tr>
-                                    <td> <a href="https://parsec.cloud/get-parsec" target="_blank">Download Parsec</a>
+                                    <td>
+                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
+                                      <a href="https://parsec.cloud/get-parsec" rel="noopener noreferrer" target="_blank">Download Parsec</a>
                                     </td>
                                   </tr>
                                 </tbody>
@@ -437,7 +442,11 @@
                               <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                                 <tbody>
                                   <tr>
-                                    <td> <a href="{{ invitation_url }}" target="_blank">Claim invitation</a> </td>
+                                    <td>
+                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
+                                      <a href="{{ invitation_url }}" rel="noopener noreferrer" target="_blank">Claim invitation</a>
+                                    </td>
                                   </tr>
                                 </tbody>
                               </table>
@@ -456,8 +465,10 @@
                         {% endif %}
                         <br>
                         <br>
+                        <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+                          origin page using window.opener unless link type noopener or noreferrer is specified. -->
                         For more information you can consult the <a href="https://docs.parsec.cloud"
-                          target="_blank">Parsec documentation</a>
+                          rel="noopener noreferrer" target="_blank">Parsec documentation</a>
 
                       </p>
                     </td>
@@ -475,7 +486,9 @@
             <table role="presentation" border="0" cellpadding="0" cellspacing="0">
               <tr>
                 <td class="content-block">
-                  <br>Parsec by <a href="http://scille.eu">Scille</a>.
+                  <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+                    origin page using window.opener unless link type noopener or noreferrer is specified. -->
+                  <br>Parsec by <a href="http://scille.eu" rel="noopener noreferrer" target="_blank">Scille</a>.
                   <span class="apple-link">&copy;2020</span>
                 </td>
               </tr>

@@ -11,8 +11,12 @@
       Now you should :
     </p>
     <ul class="text-left text-muted">
-      <li><a href="https://www.parsec.cloud/get-parsec" target="_blank">Install the Parsec client</a></li>
-      <li><a href="https://docs.parsec.cloud" target="_blank">Have a look at the documentation</a></li>
+      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+        origin page using window.opener unless link type noopener or noreferrer is specified. -->
+      <li><a href="https://www.parsec.cloud/get-parsec" rel="noopener noreferrer" target="_blank">Install the Parsec
+          client</a></li>
+      <li><a href="https://docs.parsec.cloud" rel="noopener noreferrer" target="_blank">Have a look at the
+          documentation</a></li>
     </ul>
   </div>
   <div class="main-title-spacer bg-primary"></div>

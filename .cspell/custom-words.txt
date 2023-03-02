@@ -222,6 +222,8 @@ newsfragments
 Niño
 nmspc
 NONCEBYTES
+noopener
+noreferrer
 notbase
 notr
 nplurals
