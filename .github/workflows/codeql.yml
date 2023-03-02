@@ -164,3 +164,50 @@ jobs:
         uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           category: /language:java
+
+  javascript-analyze:
+    name: 🌐 Javascript static code Analysis
+    runs-on: ubuntu-20.04
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
+
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          filters: .github/filters/codeql.yml
+
+      - name: Check modified path that require `javascript-analysis` to run
+        id: js-changes
+        if: >-
+          steps.changes.outputs.js-analyze == 'true'
+          || contains(github.ref, 'gh-readonly-queue')
+          || github.ref == 'refs/heads/master'
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        if: steps.js-changes.outputs.run == 'true'
+        uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        with:
+          languages: typescript
+
+      - name: Install dependencies for ionic project
+        if: steps.js-changes.outputs.run == 'true'
+        run: npm clean-install
+        working-directory: oxidation/client
+
+      - name: Autobuild for typescript
+        uses: github/codeql-action/autobuild@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        with:
+          working-directory: oxidation/client
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        with:
+          category: /language:typescript
