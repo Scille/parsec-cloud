@@ -30,3 +30,21 @@ java-analyze:
   - *codeql-workflow
   - *rust-android-binding
   - *android
+
+electron: &electron
+  - oxidation/client/electron/**
+
+web: &web
+  - oxidation/client/src/**
+  - oxidation/client/tests/**
+
+ionic-dependencies-project: &ionic-dependencies-project
+  - oxidation/client/*.js
+  - oxidation/client/*.ts
+  - oxidation/client/*.json
+
+js-analyze:
+  - *codeql-workflow
+  - *electron
+  - *web
+  - *ionic-dependencies-project
