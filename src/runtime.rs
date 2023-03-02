@@ -5,7 +5,7 @@ use pyo3::{
     import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, types::PyString,
     wrap_pyfunction, IntoPy, Py, PyAny, PyObject, PyRef, PyResult, Python,
 };
-use std::{future::Future, pin::Pin};
+use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::task::JoinHandle;
 
 import_exception!(trio, RunFinishedError);
@@ -24,6 +24,7 @@ struct Stuff {
     trio_abort_succeeded: PyObject,
     outcome_value_fn: PyObject,
     outcome_error_fn: PyObject,
+    run_sync_soon_label: Arc<Py<PyString>>,
 }
 
 static STUFF: GILOnceCell<PyResult<Stuff>> = GILOnceCell::new();
@@ -44,6 +45,7 @@ fn get_stuff(py: Python<'_>) -> PyResult<&Stuff> {
                 .into_py(py),
             outcome_value_fn: outcome.getattr("Value")?.into_py(py),
             outcome_error_fn: outcome.getattr("Error")?.into_py(py),
+            run_sync_soon_label: Arc::new(PyString::new(py, "run_sync_soon").into_py(py)),
         })
     });
     match res {
@@ -172,6 +174,7 @@ impl FutureIntoCoroutine {
         trio_current_task.setattr(py, "custom_sleep_data", future_id.to_string())?;
 
         // Schedule the Tokio future
+        let run_sync_soon = stuff.run_sync_soon_label.clone();
         let handle = stuff.tokio_runtime.spawn(async move {
             // Here we have left the trio thread and are inside a thread provided by the Tokio runtime
 
@@ -192,6 +195,7 @@ impl FutureIntoCoroutine {
             // pass it the result as an outcome object
             Python::with_gil(|py| {
                 let trio_current_task = trio_current_task.as_ref(py);
+                let run_sync_soon = run_sync_soon.as_ref().as_ref(py);
 
                 // Create the outcome object
                 let outcome = process_outcome_value(py, ret, outcome_value_fn, outcome_error_fn);
@@ -202,6 +206,7 @@ impl FutureIntoCoroutine {
                     trio_current_task,
                     outcome,
                     future_id,
+                    run_sync_soon,
                 );
             })
         });
@@ -243,12 +248,13 @@ fn notify_trio(
     trio_current_task: &PyAny,
     outcome: PyObject,
     future_id: uuid::Uuid,
+    run_sync_soon: &PyString,
 ) {
     // Reschedule the coroutine, this must be done from within the trio thread so we have to use
     // the trio token to schedule a synchronous function that will do the actual schedule call
     match trio_token.call_method1(
         py,
-        "run_sync_soon",
+        run_sync_soon,
         (
             trio_reschedule_fn,
             trio_current_task,
