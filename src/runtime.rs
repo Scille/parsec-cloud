@@ -57,7 +57,7 @@ fn safe_trio_reschedule_fn(
     py: Python,
     task: &PyAny,
     value: &PyAny,
-    future_id: &PyString,
+    future_id: &str,
 ) -> PyResult<()> {
     // Check `task.custom_sleep_data` to know if scheduling is required or forbidden
     let rescheduling_required = rescheduling_required(task, future_id);
@@ -69,15 +69,11 @@ fn safe_trio_reschedule_fn(
     Ok(())
 }
 
-fn rescheduling_required(task: &PyAny, future_id: &PyString) -> bool {
-    if let Ok(current_future_id) = task
-        .getattr("custom_sleep_data")
+fn rescheduling_required(task: &PyAny, future_id: &str) -> bool {
+    task.getattr("custom_sleep_data")
         .and_then(|v| v.extract::<&str>())
-    {
-        current_future_id == future_id.to_string()
-    } else {
-        false
-    }
+        .map(|x| x == future_id)
+        .unwrap_or_default()
 }
 
 #[pyclass]
@@ -165,11 +161,11 @@ impl FutureIntoCoroutine {
 
         let trio_current_task = stuff.trio_current_task_fn.call0(py)?;
         let task = trio_current_task.clone();
-        let future_id = uuid::Uuid::new_v4();
+        let future_id = uuid::Uuid::new_v4().to_string();
 
         // Set `custom_sleep_data` to indicate the rescheduling is required.
         // This will be cleared if the task is rescheduled or cancelled.
-        trio_current_task.setattr(py, "custom_sleep_data", future_id.to_string())?;
+        trio_current_task.setattr(py, "custom_sleep_data", &future_id)?;
 
         // Schedule the Tokio future
         let handle = stuff.tokio_runtime.spawn(async move {
@@ -201,7 +197,7 @@ impl FutureIntoCoroutine {
                     trio_reschedule_fn,
                     trio_current_task,
                     outcome,
-                    future_id,
+                    &future_id,
                 );
             })
         });
@@ -242,7 +238,7 @@ fn notify_trio(
     trio_reschedule_fn: PyObject,
     trio_current_task: &PyAny,
     outcome: PyObject,
-    future_id: uuid::Uuid,
+    future_id: &str,
 ) {
     // Reschedule the coroutine, this must be done from within the trio thread so we have to use
     // the trio token to schedule a synchronous function that will do the actual schedule call
@@ -253,12 +249,12 @@ fn notify_trio(
             trio_reschedule_fn,
             trio_current_task,
             outcome,
-            PyString::new(py, &future_id.to_string()),
+            PyString::new(py, future_id),
         ),
     ) {
         Ok(_) => (),
         // We can ignore the error if the trio loop has been closed...
-        Err(err) if err.is_instance_of::<RunFinishedError>(py) => {}
+        Err(err) if err.is_instance_of::<RunFinishedError>(py) => (),
         // ...but for any other exception there is not much we can do :'(
         Err(err) => {
             panic!(
