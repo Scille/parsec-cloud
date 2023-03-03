@@ -288,7 +288,7 @@ async def test_link_file_unmounted(
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize(
-    "toggle_timestamp", [True, False], ids=["With Timestamp", "Without Timestamp"]
+    "toggle_timestamp", [False, True], ids=["without_timestamp", "with_timestamp"]
 )
 async def test_link_file_invalid_path(
     aqtbot,
