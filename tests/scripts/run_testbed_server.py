@@ -129,6 +129,14 @@ async def _run_server(
 
             asgi = asgi_app_factory(backend)
 
+            # Add CORS handling
+            @asgi.after_request
+            def _add_cors(response):
+                response.headers["ACCESS-CONTROL-ALLOW-ORIGIN"] = "*"
+                response.headers["ACCESS-CONTROL-ALLOW-METHODS"] = "*"
+                response.headers["ACCESS-CONTROL-ALLOW-HEADERS"] = "*"
+                return response
+
             # We don't use json in the /testbed/... routes, this is to simplify
             # as much as possible implementation on the client side
 
