@@ -136,14 +136,14 @@ impl ReadyValue {
     }
 
     fn __next__(&mut self) -> pyclass::IterNextOutput<(), PyObject> {
-        pyclass::IterNextOutput::Return(self.0.take().unwrap())
+        pyclass::IterNextOutput::Return(self.0.take().expect("Already awaited coroutine"))
     }
 }
 
 #[pymethods]
 impl FutureIntoCoroutine {
     fn __await__(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        let fut = self.0.take().unwrap();
+        let fut = self.0.take().expect("Already awaited coroutine");
         let fut = match fut {
             FutureIntoCoroutineInternal::Ready(value) => {
                 let value = value?;
