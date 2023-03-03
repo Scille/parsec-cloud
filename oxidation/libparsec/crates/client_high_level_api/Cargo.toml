@@ -19,5 +19,5 @@ libparsec_types = { path = "../types" }
 
 libparsec_testbed = { path = "../testbed", optional = true }
 
-once_cell = "1.17.0"
+once_cell = "1.17.1"
 thiserror = "1.0.37"
