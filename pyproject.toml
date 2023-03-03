@@ -128,7 +128,7 @@ trustme = "^0.9"
 winfspy = { version="^0.8", extras=["test"], markers="platform_system=='Windows'" }
 psutil = "^5.9"
 poetry-lock-package = "^0.4.4"
-docutils = "^0.17"
+docutils = ">=0.17,<0.20"
 Babel = "^2.10"
 PyQt5_stubs = "^5.15"
 # PyInstaller is only needed for packaging, but it must be installed in the same
