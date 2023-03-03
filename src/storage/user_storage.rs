@@ -75,37 +75,35 @@ impl UserStorage {
         Ok(())
     }
 
-    fn get_realm_checkpoint(&self) -> PyResult<FutureIntoCoroutine> {
-        let us = self.get_storage()?;
+    fn get_realm_checkpoint(&self) -> FutureIntoCoroutine {
+        let us = self.get_storage();
 
-        Ok(FutureIntoCoroutine::from(async move {
-            Ok(us.get_realm_checkpoint().await)
-        }))
+        FutureIntoCoroutine::from(async move { Ok(us?.get_realm_checkpoint().await) })
     }
 
     fn update_realm_checkpoint(
         &self,
         new_checkpoint: i64,
         changed_vlobs: HashMap<EntryID, i64>,
-    ) -> PyResult<FutureIntoCoroutine> {
-        let us = self.get_storage()?;
-        let changed_vlobs = changed_vlobs
-            .into_iter()
-            .map(|(entry, version)| (entry.0, version))
-            .collect::<Vec<_>>();
+    ) -> FutureIntoCoroutine {
+        let us = self.get_storage();
 
-        Ok(FutureIntoCoroutine::from(async move {
-            us.update_realm_checkpoint(new_checkpoint, &changed_vlobs)
+        FutureIntoCoroutine::from(async move {
+            let changed_vlobs = changed_vlobs
+                .into_iter()
+                .map(|(entry, version)| (entry.0, version))
+                .collect::<Vec<_>>();
+            us?.update_realm_checkpoint(new_checkpoint, &changed_vlobs)
                 .await
                 .map_err(fs_to_python_error)
-        }))
+        })
     }
 
-    fn get_need_sync_entries(&self) -> PyResult<FutureIntoCoroutine> {
-        let us = self.get_storage()?;
+    fn get_need_sync_entries(&self) -> FutureIntoCoroutine {
+        let us = self.get_storage();
 
-        Ok(FutureIntoCoroutine::from(async move {
-            us.get_need_sync_entries()
+        FutureIntoCoroutine::from(async move {
+            us?.get_need_sync_entries()
                 .await
                 .map_err(fs_to_python_error)
                 .map(|(local_changes, remote_changes)| {
@@ -116,7 +114,7 @@ impl UserStorage {
 
                     (local_changes, remote_changes)
                 })
-        }))
+        })
     }
 
     fn get_user_manifest(&self) -> PyResult<LocalUserManifest> {
@@ -124,14 +122,14 @@ impl UserStorage {
             .map(|ws| LocalUserManifest(ws.get_user_manifest()))
     }
 
-    fn set_user_manifest(&self, user_manifest: LocalUserManifest) -> PyResult<FutureIntoCoroutine> {
-        let us = self.get_storage()?;
+    fn set_user_manifest(&self, user_manifest: LocalUserManifest) -> FutureIntoCoroutine {
+        let us = self.get_storage();
 
-        Ok(FutureIntoCoroutine::from(async move {
-            us.set_user_manifest(user_manifest.0)
+        FutureIntoCoroutine::from(async move {
+            us?.set_user_manifest(user_manifest.0)
                 .await
                 .map_err(fs_to_python_error)
-        }))
+        })
     }
 
     #[getter]

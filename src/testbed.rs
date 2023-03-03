@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{prelude::*, types::PyBytes, PyResult};
+use pyo3::{prelude::*, types::PyBytes};
 use std::path::PathBuf;
 
 use crate::{
@@ -174,21 +174,21 @@ pub(crate) fn test_new_testbed(
     // params are moved into async coroutine, so ownership is needed.
     template: String,
     test_server: Option<BackendAddr>,
-) -> PyResult<FutureIntoCoroutine> {
-    if &template != "empty" && &template != "coolorg" {
-        return Err(pyo3::exceptions::PyValueError::new_err(format!(
-            "No template named `{template}`",
-        )));
-    }
+) -> FutureIntoCoroutine {
+    FutureIntoCoroutine::from(async move {
+        if &template != "empty" && &template != "coolorg" {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "No template named `{template}`",
+            )));
+        }
 
-    Ok(FutureIntoCoroutine::from(async move {
         let env = libparsec::testbed::test_new_testbed(
             &template,
             test_server.as_ref().map(|addr| &addr.0),
         )
         .await;
         Ok(TestbedEnv(env))
-    }))
+    })
 }
 
 #[pyfunction]
