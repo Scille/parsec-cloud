@@ -234,7 +234,20 @@ async def fuse_mountpoint_runner(
             # the signals are correctly patched before that (`_path_signals` is idempotent)
             _patch_signals()
 
-            nursery.start_soon(lambda: trio.to_thread.run_sync(_run_fuse_thread, cancellable=True))
+            # By default, `trio.to_thread.run_sync` uses a limiter to execute tasks on
+            # a fixed number of threads.
+            # However this strategy breaks if some tasks are long running ones: the more
+            # long running tasks the less threads are available for the others tasks.
+            # Worst ! If there is too much long running tasks (e.g. the user mount a lot
+            # of mountpoints on a machine with few physical CPU cores) we end up with a
+            # deadlock: mountpoint tasks are waiting for a task to be schedule, but there
+            # is no threads available !
+            # So the fix is obvious here: we exclude the mountpoint tasks from the default
+            # limiter.
+            limiter = trio.CapacityLimiter(total_tokens=1)
+            nursery.start_soon(
+                lambda: trio.to_thread.run_sync(_run_fuse_thread, cancellable=True, limiter=limiter)
+            )
             await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
             # Indicate the mountpoint is now started
