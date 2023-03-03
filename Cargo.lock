@@ -1583,9 +1583,9 @@ checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
 
 [[package]]
 name = "mini-internal"
-version = "0.1.27"
+version = "0.1.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a63337614a1d280fdb2880599af563c99e9f388757f8d6515d785d85d14fb01"
+checksum = "72090eafe126931d9bc32c3f7d9f6027c1347b855e01bd00fb597087d12e135f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1594,9 +1594,9 @@ dependencies = [
 
 [[package]]
 name = "miniserde"
-version = "0.1.27"
+version = "0.1.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f4313e4a66a442473e181963daf8c1e9def85c2d9fb0bb2ae59444260b28285"
+checksum = "92159b01f0b65a5a7c38f1b70b29332117cc72785ac633f04704ef0bf24bec36"
 dependencies = [
  "itoa",
  "mini-internal",
