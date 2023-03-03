@@ -3,7 +3,7 @@
 use futures::FutureExt;
 use pyo3::{
     import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, types::PyString,
-    wrap_pyfunction, IntoPy, Py, PyAny, PyObject, PyRef, PyResult, Python,
+    wrap_pyfunction, IntoPy, Py, PyAny, PyObject, PyResult, Python,
 };
 use std::{future::Future, pin::Pin};
 use tokio::task::JoinHandle;
@@ -95,19 +95,16 @@ impl TokioTaskAborterFromTrio {
 
 #[pyclass]
 /// A wrapper for a rust `future` that will be polled in the trio context.
-pub(crate) struct FutureIntoCoroutine(Option<FutureIntoCoroutineInternal>);
-
-enum FutureIntoCoroutineInternal {
-    Ready(PyResult<PyObject>),
-    ToPoll(Pin<Box<dyn Future<Output = PyResult<PyObject>> + Send + 'static>>),
-}
+pub(crate) struct FutureIntoCoroutine(
+    Option<Pin<Box<dyn Future<Output = PyResult<PyObject>> + Send + 'static>>>,
+);
 
 impl FutureIntoCoroutine {
     pub fn from_raw<F>(fut: F) -> Self
     where
         F: Future<Output = PyResult<PyObject>> + Send + 'static,
     {
-        FutureIntoCoroutine(Some(FutureIntoCoroutineInternal::ToPoll(Box::pin(fut))))
+        FutureIntoCoroutine(Some(Box::pin(fut)))
     }
 
     pub fn from<F, R>(fut: F) -> Self
@@ -120,37 +117,12 @@ impl FutureIntoCoroutine {
             Python::with_gil(|py| Ok(res.into_py(py)))
         })
     }
-
-    pub fn ready(value: PyResult<PyObject>) -> Self {
-        FutureIntoCoroutine(Some(FutureIntoCoroutineInternal::Ready(value)))
-    }
-}
-
-#[pyclass]
-pub struct ReadyValue(Option<PyObject>);
-
-#[pymethods]
-impl ReadyValue {
-    fn __iter__(this: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        this
-    }
-
-    fn __next__(&mut self) -> pyclass::IterNextOutput<(), PyObject> {
-        pyclass::IterNextOutput::Return(self.0.take().expect("Already awaited coroutine"))
-    }
 }
 
 #[pymethods]
 impl FutureIntoCoroutine {
     fn __await__(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         let fut = self.0.take().expect("Already awaited coroutine");
-        let fut = match fut {
-            FutureIntoCoroutineInternal::Ready(value) => {
-                let value = value?;
-                return Ok(ReadyValue(Some(value)).into_py(py));
-            }
-            FutureIntoCoroutineInternal::ToPoll(fut) => fut,
-        };
 
         let stuff = get_stuff(py)?;
         let trio_token = stuff.trio_current_trio_token_fn.call0(py)?;

@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use libparsec::core_fs::{FSError, FSResult};
-use pyo3::prelude::{pyclass, pymethods, IntoPy, PyObject, PyResult, Python};
+use pyo3::prelude::{pyclass, pymethods, PyObject, PyResult, Python};
 
 use std::{
     collections::HashMap,
@@ -58,10 +58,14 @@ impl WorkspaceStorageSnapshot {
     }
 
     fn get_manifest_internal(
-        &self,
+        cache: Arc<
+            Mutex<
+                HashMap<libparsec::types::EntryID, libparsec::core_fs::LocalFileOrFolderManifest>,
+            >,
+        >,
         entry_id: &libparsec::types::EntryID,
     ) -> FSResult<libparsec::core_fs::LocalFileOrFolderManifest> {
-        self.cache
+        cache
             .lock()
             .expect("Mutex is poisoned")
             .get(entry_id)
@@ -83,28 +87,29 @@ impl WorkspaceStorageSnapshot {
         fd
     }
 
-    fn load_file_descriptor(&self, py: Python<'_>, fd: u32) -> FutureIntoCoroutine {
-        let manifest = self
-            .open_fds
-            .lock()
-            .expect("Mutex is poisoned")
-            .get(&fd)
-            .ok_or(FSError::InvalidFileDescriptor(
-                libparsec::types::FileDescriptor(fd),
-            ))
-            .and_then(|entry_id| {
-                self.get_manifest_internal(entry_id)
-                    .map(|manifest| (entry_id, manifest))
-            })
-            .and_then(|(entry_id, manifest)| match manifest {
-                libparsec::core_fs::LocalFileOrFolderManifest::File(manifest) => Ok(manifest),
-                _ => Err(FSError::LocalMiss(**entry_id)),
-            })
-            .map(LocalFileManifest)
-            .map(|manifest| manifest.into_py(py))
-            .map_err(fs_to_python_error);
+    fn load_file_descriptor(&self, fd: u32) -> FutureIntoCoroutine {
+        let open_fds = self.open_fds.clone();
+        let cache = self.cache.clone();
 
-        FutureIntoCoroutine::ready(manifest)
+        FutureIntoCoroutine::from(async move {
+            open_fds
+                .lock()
+                .expect("Mutex is poisoned")
+                .get(&fd)
+                .ok_or(FSError::InvalidFileDescriptor(
+                    libparsec::types::FileDescriptor(fd),
+                ))
+                .and_then(|entry_id| {
+                    Self::get_manifest_internal(cache, entry_id)
+                        .map(|manifest| (entry_id, manifest))
+                })
+                .and_then(|(entry_id, manifest)| match manifest {
+                    libparsec::core_fs::LocalFileOrFolderManifest::File(manifest) => Ok(manifest),
+                    _ => Err(FSError::LocalMiss(**entry_id)),
+                })
+                .map(LocalFileManifest)
+                .map_err(fs_to_python_error)
+        })
     }
 
     fn remove_file_descriptor(&self, fd: u32) -> PyResult<()> {
@@ -121,19 +126,19 @@ impl WorkspaceStorageSnapshot {
 
     /// Return a chunk identified by `chunk_id`.
     /// Will look for the chunk in the [libparsec::core_fs::storage::ChunkStorage] & [libparsec::core_fs::storage::BlockStorage].
-    fn get_chunk(&self, chunk_id: ChunkID) -> PyResult<FutureIntoCoroutine> {
+    fn get_chunk(&self, chunk_id: ChunkID) -> FutureIntoCoroutine {
         self.workspace_storage.get_chunk(chunk_id)
     }
 
     fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
-        let entry_id = entry_id.0;
+        let cache = self.cache.clone();
 
-        let res = self
-            .get_manifest_internal(&entry_id)
-            .map(file_or_folder_manifest_into_py_object)
-            .map_err(fs_to_python_error);
-
-        FutureIntoCoroutine::ready(res)
+        FutureIntoCoroutine::from_raw(async move {
+            let entry_id = entry_id.0;
+            Self::get_manifest_internal(cache, &entry_id)
+                .map(file_or_folder_manifest_into_py_object)
+                .map_err(fs_to_python_error)
+        })
     }
 
     fn set_manifest(
@@ -141,25 +146,27 @@ impl WorkspaceStorageSnapshot {
         py: Python,
         entry_id: EntryID,
         manifest: PyObject,
-    ) -> PyResult<FutureIntoCoroutine> {
-        let manifest = file_or_folder_manifest_from_py_object(py, &manifest)?;
-        let entry_id = entry_id.0;
+    ) -> FutureIntoCoroutine {
+        let manifest = file_or_folder_manifest_from_py_object(py, &manifest);
+        let cache = self.cache.clone();
 
-        let res = if manifest.need_sync() {
-            Err(fs_to_python_error(FSError::WorkspaceStorageTimestamped))
-        } else {
-            // Currently we don't check if a manifest is locked.
-            // Since we rely for the moment on the python locking system for the manifests.
-            self.cache
-                .lock()
-                .expect("Mutex is poisoned")
-                .insert(entry_id, manifest);
-            Ok(py.None())
-        };
+        FutureIntoCoroutine::from(async move {
+            let manifest = manifest?;
 
-        let fut = FutureIntoCoroutine::ready(res);
+            let entry_id = entry_id.0;
 
-        Ok(fut)
+            if manifest.need_sync() {
+                Err(fs_to_python_error(FSError::WorkspaceStorageTimestamped))
+            } else {
+                // Currently we don't check if a manifest is locked.
+                // Since we rely for the moment on the python locking system for the manifests.
+                cache
+                    .lock()
+                    .expect("Mutex is poisoned")
+                    .insert(entry_id, manifest);
+                Ok(())
+            }
+        })
     }
 
     fn get_prevent_sync_pattern(&self) -> PyResult<Regex> {
@@ -171,15 +178,15 @@ impl WorkspaceStorageSnapshot {
             .get_prevent_sync_pattern_fully_applied()
     }
 
-    fn set_clean_block(&self, block_id: BlockID, block: &[u8]) -> PyResult<FutureIntoCoroutine> {
+    fn set_clean_block(&self, block_id: BlockID, block: &[u8]) -> FutureIntoCoroutine {
         self.workspace_storage.set_clean_block(block_id, block)
     }
 
-    fn clear_clean_block(&self, block_id: BlockID) -> PyResult<FutureIntoCoroutine> {
+    fn clear_clean_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
         self.workspace_storage.clear_clean_block(block_id)
     }
 
-    fn get_dirty_block(&self, block_id: BlockID) -> PyResult<FutureIntoCoroutine> {
+    fn get_dirty_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
         self.workspace_storage.get_dirty_block(block_id)
     }
 
@@ -188,21 +195,20 @@ impl WorkspaceStorageSnapshot {
     }
 
     /// Clear the local manifest cache
-    fn clear_local_cache(&self, py: Python<'_>) -> FutureIntoCoroutine {
+    fn clear_local_cache(&self) -> FutureIntoCoroutine {
         self.cache.lock().expect("Mutex is poisoned").clear();
-
-        FutureIntoCoroutine::ready(Ok(py.None()))
+        FutureIntoCoroutine::from(async { Ok(()) })
     }
 
     fn is_block_remanent(&self) -> PyResult<bool> {
         self.workspace_storage.is_block_remanent()
     }
 
-    fn enable_block_remanence(&self) -> PyResult<FutureIntoCoroutine> {
+    fn enable_block_remanence(&self) -> FutureIntoCoroutine {
         self.workspace_storage.enable_block_remanence()
     }
 
-    fn disable_block_remanence(&self) -> PyResult<FutureIntoCoroutine> {
+    fn disable_block_remanence(&self) -> FutureIntoCoroutine {
         self.workspace_storage.disable_block_remanence()
     }
 
@@ -210,12 +216,12 @@ impl WorkspaceStorageSnapshot {
         &self,
         block_ids: Vec<BlockID>,
         not_accessed_after: DateTime,
-    ) -> PyResult<FutureIntoCoroutine> {
+    ) -> FutureIntoCoroutine {
         self.workspace_storage
             .clear_unreferenced_blocks(block_ids, not_accessed_after)
     }
 
-    fn remove_clean_blocks(&self, block_ids: Vec<BlockID>) -> PyResult<FutureIntoCoroutine> {
+    fn remove_clean_blocks(&self, block_ids: Vec<BlockID>) -> FutureIntoCoroutine {
         self.workspace_storage.remove_clean_blocks(block_ids)
     }
 
@@ -229,7 +235,7 @@ impl WorkspaceStorageSnapshot {
         self.workspace_storage.workspace_id()
     }
 
-    fn is_clean_block(&self, block_id: BlockID) -> PyResult<FutureIntoCoroutine> {
+    fn is_clean_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
         self.workspace_storage.is_clean_block(block_id)
     }
 }
