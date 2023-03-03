@@ -310,8 +310,7 @@ jobs:
       - name: (🐧 Linux) Basic tests (with unstable Rust client connection)
         if: steps.python-changes.outputs.run == 'true'
           && startsWith(matrix.os, 'ubuntu-')
-        # TODO: -n auto doesn't work see: https://github.com/Scille/parsec-cloud/issues/4145
-        run: poetry run pytest ${{ env.pytest-base-args }} tests --enable-unstable-oxidized-client-connection
+        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto --enable-unstable-oxidized-client-connection
         timeout-minutes: 10
 
       - name: (🐧🏁 Not macOS) Mountpoint tests
