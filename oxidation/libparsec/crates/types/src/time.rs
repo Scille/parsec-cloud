@@ -283,8 +283,6 @@ mod time_provider {
     use super::DateTime;
     use super::MockedTime;
 
-    // For simplicity we only keep as single global event that will be triggered for any
-    // instead of giving each
     // In theory each TimeProviderAgent should have it own event triggered when it
     // mock config has been changed.
     // However it is much simpler to have instead a single global event. This way any change
