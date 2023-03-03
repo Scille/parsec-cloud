@@ -10,10 +10,12 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-libparsec = { path = "../../libparsec" }
+libparsec = { path = "../../libparsec", features=["test-utils"] }
 wasm-bindgen = "0.2.83"
 wasm-bindgen-futures = "0.4.33"
 js-sys = "0.3.59"
+log = "0.4.17"
+console_log = "0.2.0"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
