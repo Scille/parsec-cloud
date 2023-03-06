@@ -12,7 +12,10 @@ from parsec._parsec import (
     AvailableDevice,
     DeviceFile,
     DeviceFileType,
+    LocalDeviceAlreadyExistsError,
     LocalDeviceError,
+    LocalDeviceNotFoundError,
+    LocalDeviceValidationError,
     get_available_device,
 )
 from parsec.api.data import DataError
@@ -25,34 +28,11 @@ DEVICE_FILE_SUFFIX = ".keys"
 RECOVERY_DEVICE_FILE_SUFFIX = ".psrk"
 
 
-class LocalDeviceCryptoError(LocalDeviceError):
-    pass
-
-
 class LocalDeviceCertificatePinCodeUnavailableError(LocalDeviceError):
-    pass
+    """Used in parsec-extensions and in the GUI for smartcard devices."""
 
 
-class LocalDeviceSignatureError(LocalDeviceError):
-    pass
-
-
-class LocalDeviceNotFoundError(LocalDeviceError):
-    pass
-
-
-class LocalDeviceAlreadyExistsError(LocalDeviceError):
-    pass
-
-
-class LocalDeviceValidationError(LocalDeviceError):
-    pass
-
-
-class LocalDevicePackingError(LocalDeviceError):
-    pass
-
-
+# TODO: Move me to `parsec-extensions`.
 class LocalDeviceCertificateNotFoundError(LocalDeviceError):
     """Used in parsec-extensions for smartcard devices."""
 

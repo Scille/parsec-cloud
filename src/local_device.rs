@@ -20,6 +20,45 @@ use crate::{
     time::{DateTime, TimeProvider},
 };
 
+pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<LocalDevice>()?;
+    m.add_class::<UserInfo>()?;
+    m.add_class::<DeviceInfo>()?;
+    m.add_class::<AvailableDevice>()?;
+
+    m.add_function(wrap_pyfunction!(save_device_with_password, m)?)?;
+    m.add_function(wrap_pyfunction!(save_device_with_password_in_config, m)?)?;
+    m.add_function(wrap_pyfunction!(change_device_password, m)?)?;
+    m.add_function(wrap_pyfunction!(list_available_devices, m)?)?;
+    m.add_function(wrap_pyfunction!(get_available_device, m)?)?;
+    m.add_function(wrap_pyfunction!(load_recovery_device, m)?)?;
+    m.add_function(wrap_pyfunction!(save_recovery_device, m)?)?;
+
+    m.add("LocalDeviceError", py.get_type::<LocalDeviceErrorExc>())?;
+    m.add(
+        "LocalDeviceCryptoError",
+        py.get_type::<LocalDeviceCryptoErrorExc>(),
+    )?;
+    m.add(
+        "LocalDeviceValidationError",
+        py.get_type::<LocalDeviceValidationErrorExc>(),
+    )?;
+    m.add(
+        "LocalDeviceAlreadyExistsError",
+        py.get_type::<LocalDeviceAlreadyExistsErrorExc>(),
+    )?;
+    m.add(
+        "LocalDevicePackingError",
+        py.get_type::<LocalDevicePackingErrorExc>(),
+    )?;
+    m.add(
+        "LocalDeviceNotFoundError",
+        py.get_type::<LocalDeviceNotFoundErrorExc>(),
+    )?;
+
+    Ok(())
+}
+
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct LocalDevice(pub libparsec::client_types::LocalDevice);
@@ -331,7 +370,7 @@ impl LocalDevice {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct UserInfo(pub libparsec::client_types::UserInfo);
+struct UserInfo(pub libparsec::client_types::UserInfo);
 
 crate::binding_utils::gen_proto!(UserInfo, __repr__);
 crate::binding_utils::gen_proto!(UserInfo, __copy__);
@@ -405,7 +444,7 @@ impl UserInfo {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct DeviceInfo(pub libparsec::client_types::DeviceInfo);
+struct DeviceInfo(pub libparsec::client_types::DeviceInfo);
 
 crate::binding_utils::gen_proto!(DeviceInfo, __repr__);
 crate::binding_utils::gen_proto!(DeviceInfo, __copy__);
@@ -458,10 +497,61 @@ impl DeviceInfo {
     }
 }
 
-crate::binding_utils::create_exception!(LocalDevice, PyException, client_types::LocalDeviceError);
+pyo3::create_exception!(_parsec, LocalDeviceErrorExc, PyException);
+pyo3::create_exception!(_parsec, LocalDeviceCryptoErrorExc, LocalDeviceErrorExc);
+pyo3::create_exception!(_parsec, LocalDeviceValidationErrorExc, LocalDeviceErrorExc);
+pyo3::create_exception!(
+    _parsec,
+    LocalDeviceAlreadyExistsErrorExc,
+    LocalDeviceErrorExc
+);
+pyo3::create_exception!(_parsec, LocalDevicePackingErrorExc, LocalDeviceErrorExc);
+pyo3::create_exception!(_parsec, LocalDeviceNotFoundErrorExc, LocalDeviceErrorExc);
+
+#[derive(Debug)]
+struct LocalDeviceError(client_types::LocalDeviceError);
+
+impl std::fmt::Display for LocalDeviceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl From<client_types::LocalDeviceError> for LocalDeviceError {
+    fn from(value: client_types::LocalDeviceError) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LocalDeviceError> for PyErr {
+    fn from(value: LocalDeviceError) -> Self {
+        let internal = value.0;
+        match internal {
+            client_types::LocalDeviceError::CryptoError { exc } => {
+                LocalDeviceCryptoErrorExc::new_err(exc.to_string())
+            }
+            client_types::LocalDeviceError::Validation { .. } => {
+                LocalDeviceValidationErrorExc::new_err(internal.to_string())
+            }
+            client_types::LocalDeviceError::AlreadyExists(_) => {
+                LocalDeviceAlreadyExistsErrorExc::new_err(internal.to_string())
+            }
+            client_types::LocalDeviceError::Deserialization(_) => {
+                LocalDevicePackingErrorExc::new_err(internal.to_string())
+            }
+            client_types::LocalDeviceError::Access(_)
+            | client_types::LocalDeviceError::InvalidSlug
+            | client_types::LocalDeviceError::Serialization(_) => {
+                LocalDeviceErrorExc::new_err(internal.to_string())
+            }
+        }
+    }
+}
+
+type LocalDeviceResult<T> = Result<T, LocalDeviceError>;
 
 #[pyfunction]
-pub(crate) fn save_device_with_password(
+fn save_device_with_password(
     key_file: PathBuf,
     device: &LocalDevice,
     password: &str,
@@ -472,7 +562,7 @@ pub(crate) fn save_device_with_password(
 }
 
 #[pyfunction]
-pub(crate) fn save_device_with_password_in_config(
+fn save_device_with_password_in_config(
     config_dir: PathBuf,
     device: &LocalDevice,
     password: &str,
@@ -482,7 +572,7 @@ pub(crate) fn save_device_with_password_in_config(
 }
 
 #[pyfunction]
-pub(crate) fn change_device_password(
+fn change_device_password(
     key_file: PathBuf,
     old_password: &str,
     new_password: &str,
@@ -492,7 +582,7 @@ pub(crate) fn change_device_password(
 }
 
 #[pyclass]
-pub(crate) struct AvailableDevice(client_types::AvailableDevice);
+struct AvailableDevice(client_types::AvailableDevice);
 
 #[pymethods]
 impl AvailableDevice {
@@ -519,10 +609,8 @@ impl AvailableDevice {
 
     #[classmethod]
     fn load(_cls: &PyType, key_file_path: PathBuf) -> LocalDeviceResult<Self> {
-        Ok(Self(
-            platform_device_loader::load_available_device(key_file_path)
-                .map_err(|e| LocalDeviceExc(Box::new(e)))?,
-        ))
+        let value = platform_device_loader::load_available_device(key_file_path)?;
+        Ok(Self(value))
     }
 
     #[getter]
@@ -585,36 +673,31 @@ crate::binding_utils::gen_proto!(AvailableDevice, __richcmp__, eq);
 crate::binding_utils::gen_proto!(AvailableDevice, __hash__);
 
 #[pyfunction]
-pub(crate) fn list_available_devices(
-    config_dir: PathBuf,
-) -> LocalDeviceResult<Vec<AvailableDevice>> {
+fn list_available_devices(config_dir: PathBuf) -> LocalDeviceResult<Vec<AvailableDevice>> {
     platform_device_loader::list_available_devices_core(&config_dir)
         .map(|devices| devices.iter().map(|d| AvailableDevice(d.clone())).collect())
-        .map_err(|e| LocalDeviceExc(Box::new(e)))
+        .map_err(LocalDeviceError::from)
 }
 
 #[pyfunction]
-pub(crate) fn get_available_device(
-    config_dir: PathBuf,
-    slug: &str,
-) -> LocalDeviceResult<AvailableDevice> {
+fn get_available_device(config_dir: PathBuf, slug: &str) -> LocalDeviceResult<AvailableDevice> {
     platform_device_loader::get_available_device(&config_dir, slug)
         .map(AvailableDevice)
-        .map_err(|e| LocalDeviceExc(Box::new(e)))
+        .map_err(LocalDeviceError::from)
 }
 
 #[pyfunction]
-pub(crate) fn load_recovery_device(key_file: PathBuf, password: String) -> FutureIntoCoroutine {
+fn load_recovery_device(key_file: PathBuf, password: String) -> FutureIntoCoroutine {
     FutureIntoCoroutine::from(async move {
         platform_device_loader::load_recovery_device(&key_file, &password)
             .await
             .map(LocalDevice)
-            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+            .map_err(|e| LocalDeviceError::from(e).into())
     })
 }
 
 #[pyfunction]
-pub(crate) fn save_recovery_device(
+fn save_recovery_device(
     key_file: PathBuf,
     device: LocalDevice,
     force: bool,
@@ -622,6 +705,6 @@ pub(crate) fn save_recovery_device(
     FutureIntoCoroutine::from(async move {
         platform_device_loader::save_recovery_device(&key_file, device.0, force)
             .await
-            .map_err(|e| LocalDeviceExc(Box::new(e)).into())
+            .map_err(|e| LocalDeviceError::from(e).into())
     })
 }

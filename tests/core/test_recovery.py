@@ -5,10 +5,16 @@ from pathlib import Path
 
 import pytest
 
-from parsec._parsec import LocalDevice, SecretKey, load_recovery_device, save_recovery_device
+from parsec._parsec import (
+    LocalDevice,
+    LocalDeviceCryptoError,
+    SecretKey,
+    load_recovery_device,
+    save_recovery_device,
+)
 from parsec.api.protocol.types import DeviceLabel
 from parsec.core.backend_connection import BackendConnectionRefused, BackendNotAvailable
-from parsec.core.local_device import LocalDeviceError, get_recovery_device_file_name
+from parsec.core.local_device import get_recovery_device_file_name
 from parsec.core.recovery import generate_new_device_from_recovery, generate_recovery_device
 from parsec.crypto import CryptoError
 
@@ -125,7 +131,7 @@ async def test_recovery_with_wrong_passphrase(
     wrong_passphrase = "-".join([chunk[::-1] for chunk in passphrase.split("-")])
     assert wrong_passphrase != passphrase
 
-    with pytest.raises(LocalDeviceError):
+    with pytest.raises(LocalDeviceCryptoError):
         _recovery_device2 = await load_recovery_device(file_path, wrong_passphrase)
 
 

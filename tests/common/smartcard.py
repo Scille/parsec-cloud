@@ -15,17 +15,14 @@ from parsec._parsec import (
     DeviceFile,
     DeviceFileType,
     EnrollmentID,
+    LocalDeviceCryptoError,
+    LocalDeviceNotFoundError,
+    LocalDevicePackingError,
     PrivateKey,
     SigningKey,
 )
 from parsec.api.data import DataError, PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
-from parsec.core.local_device import (
-    LocalDeviceCryptoError,
-    LocalDeviceNotFoundError,
-    LocalDevicePackingError,
-    _load_device,
-    _save_device,
-)
+from parsec.core.local_device import _load_device, _save_device
 from parsec.core.types import BackendPkiEnrollmentAddr, LocalDevice
 from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
 

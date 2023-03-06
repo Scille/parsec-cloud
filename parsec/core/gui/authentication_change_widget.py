@@ -10,7 +10,9 @@ from structlog import get_logger
 from parsec._parsec import (
     DeviceFileType,
     LocalDevice,
+    LocalDeviceCryptoError,
     LocalDeviceError,
+    LocalDeviceNotFoundError,
     get_available_device,
     save_device_with_password_in_config,
 )
@@ -19,8 +21,6 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.ui.authentication_change_widget import Ui_AuthenticationChangeWidget
 from parsec.core.local_device import (
-    LocalDeviceCryptoError,
-    LocalDeviceNotFoundError,
     load_device_with_smartcard,
     save_device_with_smartcard_in_config,
 )
