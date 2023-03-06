@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use futures::FutureExt;
+use futures::{future::BoxFuture, FutureExt};
 use pyo3::{
     import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, types::PyString,
     wrap_pyfunction, IntoPy, Py, PyAny, PyObject, PyResult, Python,
 };
-use std::{future::Future, pin::Pin};
+use std::future::Future;
 use tokio::task::JoinHandle;
 
 import_exception!(trio, RunFinishedError);
@@ -26,30 +26,35 @@ struct Stuff {
     outcome_error_fn: PyObject,
 }
 
-static STUFF: GILOnceCell<PyResult<Stuff>> = GILOnceCell::new();
+static STUFF: GILOnceCell<Stuff> = GILOnceCell::new();
 
-fn get_stuff(py: Python<'_>) -> PyResult<&Stuff> {
-    let res = STUFF.get_or_init(py, || {
-        let trio_lowlevel = py.import("trio")?.getattr("lowlevel")?;
-        let outcome = py.import("outcome")?;
-        Ok(Stuff {
-            tokio_runtime: tokio::runtime::Runtime::new()?,
-            trio_current_trio_token_fn: trio_lowlevel.getattr("current_trio_token")?.into_py(py),
-            trio_reschedule_fn: trio_lowlevel.getattr("reschedule")?.into_py(py),
-            trio_current_task_fn: trio_lowlevel.getattr("current_task")?.into_py(py),
-            trio_wait_task_rescheduled: trio_lowlevel.getattr("wait_task_rescheduled")?.into_py(py),
-            trio_abort_succeeded: trio_lowlevel
-                .getattr("Abort")?
-                .getattr("SUCCEEDED")?
+fn get_stuff(py: Python<'_>) -> &Stuff {
+    // We accept unwrap because it runs once and it avoids the Result everytime
+    STUFF.get_or_init(py, || {
+        let trio_lowlevel = py.import("trio").unwrap().getattr("lowlevel").unwrap();
+        let outcome = py.import("outcome").unwrap();
+        Stuff {
+            tokio_runtime: tokio::runtime::Runtime::new().unwrap(),
+            trio_current_trio_token_fn: trio_lowlevel
+                .getattr("current_trio_token")
+                .unwrap()
                 .into_py(py),
-            outcome_value_fn: outcome.getattr("Value")?.into_py(py),
-            outcome_error_fn: outcome.getattr("Error")?.into_py(py),
-        })
-    });
-    match res {
-        Ok(stuff) => Ok(stuff),
-        Err(err) => Err(err.clone_ref(py)),
-    }
+            trio_reschedule_fn: trio_lowlevel.getattr("reschedule").unwrap().into_py(py),
+            trio_current_task_fn: trio_lowlevel.getattr("current_task").unwrap().into_py(py),
+            trio_wait_task_rescheduled: trio_lowlevel
+                .getattr("wait_task_rescheduled")
+                .unwrap()
+                .into_py(py),
+            trio_abort_succeeded: trio_lowlevel
+                .getattr("Abort")
+                .unwrap()
+                .getattr("SUCCEEDED")
+                .unwrap()
+                .into_py(py),
+            outcome_value_fn: outcome.getattr("Value").unwrap().into_py(py),
+            outcome_error_fn: outcome.getattr("Error").unwrap().into_py(py),
+        }
+    })
 }
 
 #[pyfunction]
@@ -64,7 +69,7 @@ fn safe_trio_reschedule_fn(
     if !rescheduling_required {
         return Ok(());
     }
-    let stuff = get_stuff(py)?;
+    let stuff = get_stuff(py);
     stuff.trio_reschedule_fn.call1(py, (task, value))?;
     Ok(())
 }
@@ -89,22 +94,20 @@ impl TokioTaskAborterFromTrio {
         // So we clear the `task.custom_sleep_data` attribute to indicate the rescheduling is no longer required.
         self.task.setattr(py, "custom_sleep_data", py.None())?;
         self.handle.abort();
-        Ok(get_stuff(py)?.trio_abort_succeeded.clone())
+        Ok(get_stuff(py).trio_abort_succeeded.clone())
     }
 }
 
 #[pyclass]
 /// A wrapper for a rust `future` that will be polled in the trio context.
-pub(crate) struct FutureIntoCoroutine(
-    Option<Pin<Box<dyn Future<Output = PyResult<PyObject>> + Send + 'static>>>,
-);
+pub(crate) struct FutureIntoCoroutine(Option<BoxFuture<'static, PyResult<PyObject>>>);
 
 impl FutureIntoCoroutine {
     pub fn from_raw<F>(fut: F) -> Self
     where
         F: Future<Output = PyResult<PyObject>> + Send + 'static,
     {
-        FutureIntoCoroutine(Some(Box::pin(fut)))
+        FutureIntoCoroutine(Some(fut.boxed()))
     }
 
     pub fn from<F, R>(fut: F) -> Self
@@ -124,7 +127,7 @@ impl FutureIntoCoroutine {
     fn __await__(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         let fut = self.0.take().expect("Already awaited coroutine");
 
-        let stuff = get_stuff(py)?;
+        let stuff = get_stuff(py);
         let trio_token = stuff.trio_current_trio_token_fn.call0(py)?;
         let trio_reschedule_fn: Py<PyAny> =
             wrap_pyfunction!(safe_trio_reschedule_fn, py)?.into_py(py);
