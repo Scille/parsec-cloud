@@ -45,7 +45,7 @@ certifi = ">=2021,<2023"
 attrs = ">=21.4,<23.0"
 click = "^8.0"
 msgpack = "^1.0"
-wsproto = "^1.0"
+wsproto = "^1.2"
 h11 = ">=0.13,<0.15"
 # Can use marshmallow or the toasted flavour as you like ;-)
 # marshmallow = "2.14.0"
