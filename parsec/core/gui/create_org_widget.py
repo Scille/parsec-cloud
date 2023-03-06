@@ -14,6 +14,9 @@ from parsec._parsec import (
     DeviceLabel,
     HumanHandle,
     LocalDevice,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
     OrganizationID,
     save_device_with_password_in_config,
 )
@@ -33,12 +36,7 @@ from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.create_org_user_info_widget import Ui_CreateOrgUserInfoWidget
 from parsec.core.gui.ui.create_org_widget import Ui_CreateOrgWidget
 from parsec.core.invite import InviteAlreadyUsedError, InviteNotFoundError, bootstrap_organization
-from parsec.core.local_device import (
-    LocalDeviceCryptoError,
-    LocalDeviceError,
-    LocalDeviceNotFoundError,
-    save_device_with_smartcard_in_config,
-)
+from parsec.core.local_device import save_device_with_smartcard_in_config
 
 logger = get_logger()
 

@@ -9,6 +9,9 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec._parsec import (
     DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
     SecretKey,
     load_recovery_device,
     save_device_with_password_in_config,
@@ -26,12 +29,7 @@ from parsec.core.gui.ui.device_recovery_import_page1_widget import (
     Ui_DeviceRecoveryImportPage1Widget,
 )
 from parsec.core.gui.ui.device_recovery_import_widget import Ui_DeviceRecoveryImportWidget
-from parsec.core.local_device import (
-    LocalDeviceCryptoError,
-    LocalDeviceError,
-    LocalDeviceNotFoundError,
-    save_device_with_smartcard_in_config,
-)
+from parsec.core.local_device import save_device_with_smartcard_in_config
 from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.types import LocalDevice
 from parsec.crypto import CryptoError
