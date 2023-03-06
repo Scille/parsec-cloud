@@ -42,7 +42,6 @@ def expose_cmds_with_retrier(
                 return await cmd(transport, *args, **kwargs)
 
         except BackendNotAvailable:
-            async with self.acquire_transport(force_fresh=True) as transport:
-                return await cmd(transport, *args, **kwargs)
+            raise
 
     return wrapper
