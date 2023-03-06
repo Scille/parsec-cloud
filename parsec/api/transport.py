@@ -139,9 +139,8 @@ class Transport:
     ) -> "Transport":
         ws = WSConnection(ConnectionType.SERVER)
         if upgrade_request:
-            # TODO: remove type ignore comments once those issues have been treated
-            # https://github.com/python-hyper/wsproto/issues/173
-            # https://github.com/python-hyper/wsproto/issues/174
+            # TODO: Typing issue between h11 and wsproto headers
+            # (see: https://github.com/python-hyper/wsproto/issues/173)
             ws.initiate_upgrade_connection(
                 headers=upgrade_request.headers,  # type: ignore[arg-type]
                 path=upgrade_request.target,
