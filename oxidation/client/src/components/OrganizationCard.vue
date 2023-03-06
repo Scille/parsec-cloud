@@ -26,7 +26,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
 import { IonGrid, IonCol, IonRow, IonAvatar } from '@ionic/vue';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 

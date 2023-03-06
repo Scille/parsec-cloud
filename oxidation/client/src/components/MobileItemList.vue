@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, defineEmits } from 'vue';
+import { ref } from 'vue';
 import { IonIcon, IonItem, IonLabel, IonButton } from '@ionic/vue';
 import { folder, document, ellipsisVertical, briefcase, person, help, checkmarkCircle, shareSocial } from 'ionicons/icons';
 

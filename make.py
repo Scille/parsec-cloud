@@ -1,27 +1,36 @@
 #! /usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from __future__ import annotations
 
 import argparse
 import os
+import platform
 import random
+import shutil
 import subprocess
 import sys
 import textwrap
 from pathlib import Path
-from typing import Optional, Union
+from typing import Iterable, Union
 
 PYTHON_RELEASE_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
+
 ELECTRON_RELEASE_CARGO_FLAGS = "--profile=release"
 ELECTRON_RELEASE_SODIUM_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
 
+WEB_RELEASE_CARGO_FLAGS = "--profile=release"  # Note: on web we use RustCrypto for release
+WEB_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
+WEB_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
+
 
 BASE_DIR = Path(__file__).parent.resolve()
 ELECTRON_DIR = BASE_DIR / "oxidation/bindings/electron"
+WEB_DIR = BASE_DIR / "oxidation/bindings/web"
 
 
 CYAN = "\x1b[36m"
@@ -41,49 +50,79 @@ CUTENESS = [
 ]
 
 
-class Cmd:
+class Op:
+    def display(self, extra_cmd_args: Iterable[str]) -> str:
+        raise NotImplementedError
+
+    def run(self, cwd: Path, extra_cmd_args: Iterable[str]) -> None:
+        raise NotImplementedError
+
+
+class Cwd(Op):
+    def __init__(self, cwd: Path) -> None:
+        self.cwd = cwd
+
+    def display(self, extra_cmd_args: Iterable[str]) -> str:
+        return f"cd {GREY}{self.cwd.relative_to(BASE_DIR).as_posix()}{NO_COLOR}"
+
+
+class Rmdir(Op):
+    def __init__(self, target: Path) -> None:
+        self.target = target
+
+    def display(self, extra_cmd_args: Iterable[str]) -> str:
+        return f"{CYAN}rm -rf {self.target.relative_to(BASE_DIR).as_posix()}{NO_COLOR}"
+
+    def run(self, cwd: Path, extra_cmd_args: Iterable[str]) -> None:
+        target = self.target if self.target.is_absolute() else cwd / self.target
+        shutil.rmtree(target, ignore_errors=True)
+
+
+class Echo(Op):
+    def __init__(self, msg: str) -> None:
+        self.msg = msg
+
+    def display(self, extra_cmd_args: Iterable[str]) -> str:
+        return f"{CYAN}echo {self.msg!r}{NO_COLOR}"
+
+    def run(self, cwd: Path, extra_cmd_args: Iterable[str]) -> None:
+        print(self.msg, flush=True)
+
+
+class Cmd(Op):
     def __init__(
         self,
-        cmd: Union[str, list[str]],
+        cmd: str,
         extra_env: dict[str, str] = {},
-        cwd: Optional[Path] = None,
-        is_script: bool = False,
     ) -> None:
-        self.cmds = cmd if isinstance(cmd, list) else [cmd]
+        self.cmd = cmd
         self.extra_env = extra_env
-        self.cwd = cwd
-        # On Windows only .exe/.bat can be directly executed, so scripts must be
-        # launched through a shell instead.
-        self.is_script = is_script
 
-    def display(self, extra_cmd_args: list[str] = []) -> str:
+    def display(self, extra_cmd_args: Iterable[str]) -> str:
         display_extra_env = " ".join(
             [f"{GREY}{k}={v}{NO_COLOR}" for k, v in self.extra_env.items()]
         )
         display_cmds = []
-        display_cwd = f"cd {GREY}{self.cwd.relative_to(BASE_DIR)}{NO_COLOR} && " if self.cwd else ""
         display_extra_cmds = f" {' '.join(extra_cmd_args)}" if extra_cmd_args else ""
-        for cmd in self.cmds:
-            display_cmds.append(f"{CYAN}{cmd}{display_extra_cmds}{NO_COLOR}")
-        return f"{display_cwd}{display_extra_env} {' && '.join(display_cmds) }"
+        display_cmds.append(f"{CYAN}{self.cmd}{display_extra_cmds}{NO_COLOR}")
+        return f"{display_extra_env} {' && '.join(display_cmds) }"
 
-    def run(self, extra_cmd_args: list[str] = []) -> None:
-        shell = sys.platform == "win32" and self.is_script
-        for cmd in self.cmds:
-            args = cmd.split() + extra_cmd_args
-            # `echo` is not available on Windows
-            if args[0] == "echo":
-                print(" ".join(args[1:]))
-            else:
-                subprocess.check_call(
-                    args,
-                    env={**os.environ, **self.extra_env},
-                    cwd=self.cwd or BASE_DIR,
-                    shell=shell,
-                )
+    def run(self, cwd: Path, extra_cmd_args: Iterable[str]) -> None:
+        args = self.cmd.split() + list(extra_cmd_args)
+
+        # On Windows, only .exe/.bat can be directly executed,
+        # `npm.cmd` is a the .bat version of `npm`
+        if args[0] == "npm" and platform.system().lower() == "windows":
+            args[0] = "npm.cmd"
+
+        subprocess.check_call(
+            args,
+            env={**os.environ, **self.extra_env},
+            cwd=cwd,
+        )
 
 
-COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
+COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
     #
     # Python bindings
     #
@@ -107,65 +146,81 @@ COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
         extra_env={"POETRY_LIBPARSEC_BUILD_PROFILE": "ci"},
     ),
     # Flags used in poetry's `build.py` when command is `python-ci-build`
-    ("python-ci-libparsec-cargo-flags",): Cmd(
-        cmd=f"echo {PYTHON_CI_CARGO_FLAGS}",
-    ),
+    ("python-ci-libparsec-cargo-flags",): Echo(PYTHON_CI_CARGO_FLAGS),
     # Flags used in poetry's `build.py` when generating the release wheel
-    ("python-release-libparsec-cargo-flags",): Cmd(
-        cmd=f"echo {PYTHON_RELEASE_CARGO_FLAGS}",
-    ),
+    ("python-release-libparsec-cargo-flags",): Echo(PYTHON_RELEASE_CARGO_FLAGS),
     # Flags used in poetry's `build.py` when generating the dev wheel
-    ("python-dev-libparsec-cargo-flags",): Cmd(
-        cmd=f"echo {PYTHON_DEV_CARGO_FLAGS}",
-    ),
+    ("python-dev-libparsec-cargo-flags",): Echo(PYTHON_DEV_CARGO_FLAGS),
     #
     # Electron bindings
     #
     ("electron-dev-install", "ei"): (
+        Cwd(ELECTRON_DIR),
         Cmd(
             cmd="npm install",
-            cwd=ELECTRON_DIR,
-            is_script=True,
         ),
         Cmd(
             cmd=f"npm run build:dev",
-            cwd=ELECTRON_DIR,
-            is_script=True,
         ),
     ),
-    ("electron-dev-rebuild", "er"): Cmd(
-        cmd=f"npm run build:dev",
-        cwd=ELECTRON_DIR,
-        is_script=True,
+    ("electron-dev-rebuild", "er"): (
+        Cwd(ELECTRON_DIR),
+        Cmd(
+            cmd=f"npm run build:dev",
+        ),
     ),
     ("electron-ci-install",): (
+        Cwd(ELECTRON_DIR),
         Cmd(
             cmd="npm install",
-            cwd=ELECTRON_DIR,
-            is_script=True,
         ),
         Cmd(
             cmd=f"npm run build:ci",
-            cwd=ELECTRON_DIR,
-            is_script=True,
         ),
     ),
     # Flags used in `bindings/electron/scripts/build.js`
-    ("electron-ci-libparsec-cargo-flags",): Cmd(
-        cmd=f"echo {ELECTRON_CI_CARGO_FLAGS}",
-    ),
+    ("electron-ci-libparsec-cargo-flags",): Echo(ELECTRON_CI_CARGO_FLAGS),
     # Flags used in `bindings/electron/scripts/build.js`
-    ("electron-release-libparsec-cargo-flags",): Cmd(
-        cmd=f"echo {ELECTRON_RELEASE_CARGO_FLAGS}",
-    ),
+    ("electron-release-libparsec-cargo-flags",): Echo(ELECTRON_RELEASE_CARGO_FLAGS),
     # Flags used in `bindings/electron/scripts/build.js`
-    ("electron-release-sodium-libparsec-cargo-flags",): Cmd(
-        cmd=f"echo {ELECTRON_RELEASE_SODIUM_CARGO_FLAGS}",
-    ),
+    ("electron-release-sodium-libparsec-cargo-flags",): Echo(ELECTRON_RELEASE_SODIUM_CARGO_FLAGS),
     # Flags used in `bindings/electron/scripts/build.js`
-    ("electron-dev-libparsec-cargo-flags",): Cmd(
-        cmd=f"echo {ELECTRON_DEV_CARGO_FLAGS}",
+    ("electron-dev-libparsec-cargo-flags",): Echo(ELECTRON_DEV_CARGO_FLAGS),
+    #
+    # Web bindings
+    #
+    ("web-dev-install", "wi"): (
+        Cwd(WEB_DIR),
+        Cmd(
+            cmd="npm install",
+        ),
+        Rmdir(WEB_DIR / "pkg"),
+        Cmd(
+            cmd="npm run build:dev",
+        ),
     ),
+    ("web-dev-rebuild", "wr"): (
+        Cwd(WEB_DIR),
+        Rmdir(WEB_DIR / "pkg"),
+        Cmd(
+            cmd="npm run build:dev",
+        ),
+    ),
+    ("web-ci-install",): (
+        Rmdir(WEB_DIR / "pkg"),
+        Cmd(
+            cmd="npm install",
+        ),
+        Cmd(
+            cmd=f"npm run build:ci",
+        ),
+    ),
+    # Flags used in `bindings/web/scripts/build.js`
+    ("web-ci-libparsec-cargo-flags",): Echo(WEB_CI_CARGO_FLAGS),
+    # Flags used in `bindings/web/scripts/build.js`
+    ("web-release-libparsec-cargo-flags",): Echo(WEB_RELEASE_CARGO_FLAGS),
+    # Flags used in `bindings/web/scripts/build.js`
+    ("web-dev-libparsec-cargo-flags",): Echo(WEB_DEV_CARGO_FLAGS),
 }
 
 
@@ -203,33 +258,38 @@ if __name__ == "__main__":
         print("Available commands:\n")
         for aliases, cmds in COMMANDS.items():
             print(f"{BOLD_YELLOW}{', '.join(aliases)}{NO_COLOR}")
-            cmds = (cmds,) if isinstance(cmds, Cmd) else cmds
-            display_cmds = [cmd.display() for cmd in cmds]
+            cmds = (cmds,) if isinstance(cmds, Op) else cmds
+            display_cmds = [cmd.display(extra_cmd_args) for cmd in cmds]
             join = f"{GREY}; and {NO_COLOR}" if "fish" in os.environ.get("SHELL", "") else " && "
             print(f"\t{join.join(display_cmds)}\n")
 
     else:
         for aliases, cmds in COMMANDS.items():
             if args.command in aliases:
-                cmds = (cmds,) if isinstance(cmds, Cmd) else cmds
+                cmds = (cmds,) if isinstance(cmds, Op) else cmds
                 break
         else:
             raise SystemExit(f"Unknown command alias `{args.command}`")
 
+        cwd = BASE_DIR
         for cmd in cmds:
             if not args.quiet:
                 # Flush is required to prevent mixing with the output of sub-command
-                print(
-                    f"{cmd.display(extra_cmd_args)}\n",
-                    flush=True,
-                )
+                print(f"{cmd.display(extra_cmd_args)}\n", flush=True)
+                if not isinstance(cmd, Cwd):
+                    try:
+                        print(f"{PINK}{random.choice(CUTENESS)}{NO_COLOR}", flush=True)
+                    except UnicodeEncodeError:
+                        # Windows crappy term couldn't encode kitty unicode :'(
+                        pass
+
+            if args.dry:
+                continue
+
+            if isinstance(cmd, Cwd):
+                cwd = cmd.cwd
+            else:
                 try:
-                    print(f"{PINK}{random.choice(CUTENESS)}{NO_COLOR}", flush=True)
-                except UnicodeEncodeError:
-                    # Windows crappy term couldn't encode kitty unicode :'(
-                    pass
-            if not args.dry:
-                try:
-                    cmd.run(extra_cmd_args)
+                    cmd.run(cwd, extra_cmd_args)
                 except subprocess.CalledProcessError as err:
                     raise SystemExit(str(err)) from err

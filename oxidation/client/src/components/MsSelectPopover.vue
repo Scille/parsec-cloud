@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, Ref } from 'vue';
+import { ref, Ref } from 'vue';
 import {
   IonList,
   IonItem,

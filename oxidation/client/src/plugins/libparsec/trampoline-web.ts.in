@@ -1,5 +1,10 @@
+// @ts-ignore
+import init_module from 'libparsec_bindings_web';
+// @ts-ignore
+import * as module from 'libparsec_bindings_web';
+
 export async function LoadWebLibParsecPlugin(): Promise<any> {
-  const module = await import('../../../../bindings/web/pkg');
-  module.init_logger();
+  await init_module();
+  module.initLogger();
   return module;
 }

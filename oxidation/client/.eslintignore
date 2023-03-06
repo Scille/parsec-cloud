@@ -1,1 +1,7 @@
 pkg/
+src/plugins/libparsec/trampoline.d.ts
+src/plugins/libparsec/trampoline.ts
+dist
+node_modules
+electron/build
+electron/app

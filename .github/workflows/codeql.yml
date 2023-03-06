@@ -82,82 +82,84 @@ jobs:
         with:
           category: /language:python
 
-  java-analyze:
-    name: ☕ Java static code Analysis
-    runs-on: ubuntu-20.04
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    env:
-      NDK_VERSION: 23.2.8568313
-      SDK_VERSION: 30.0.3
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.1.0
-        timeout-minutes: 5
+  # Disabled till we fix Android with Vite
+  # see issue: #4395
+  # java-analyze:
+  #   name: ☕ Java static code Analysis
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #     security-events: write
+  #   env:
+  #     NDK_VERSION: 23.2.8568313
+  #     SDK_VERSION: 30.0.3
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.1.0
+  #       timeout-minutes: 5
 
-      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
-        id: changes
-        with:
-          filters: .github/filters/codeql.yml
+  #     - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+  #       id: changes
+  #       with:
+  #         filters: .github/filters/codeql.yml
 
-      - name: Check modified path that require `java-analysis` to run
-        id: should-run-java-analysis
-        if: >-
-          steps.changes.outputs.java-analyze == 'true'
-          || contains(github.ref, 'gh-readonly-queue')
-          || github.ref == 'refs/heads/master'
-        run: echo "run=true" >> $GITHUB_OUTPUT
-        shell: bash
+  #     - name: Check modified path that require `java-analysis` to run
+  #       id: should-run-java-analysis
+  #       if: >-
+  #         steps.changes.outputs.java-analyze == 'true'
+  #         || contains(github.ref, 'gh-readonly-queue')
+  #         || github.ref == 'refs/heads/master'
+  #       run: echo "run=true" >> $GITHUB_OUTPUT
+  #       shell: bash
 
-      - name: Add android cmdline tools to path
-        if: steps.should-run-java-analysis.outputs.run == 'true'
-        run: echo "$ANDROID_HOME/cmdline-tools/latest/bin" > $GITHUB_PATH
+  #     - name: Add android cmdline tools to path
+  #       if: steps.should-run-java-analysis.outputs.run == 'true'
+  #       run: echo "$ANDROID_HOME/cmdline-tools/latest/bin" > $GITHUB_PATH
 
-      - name: Install dependencies for Android
-        if: steps.should-run-java-analysis.outputs.run == 'true'
-        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "build-tools;${{ env.SDK_VERSION }}"
+  #     - name: Install dependencies for Android
+  #       if: steps.should-run-java-analysis.outputs.run == 'true'
+  #       run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "build-tools;${{ env.SDK_VERSION }}"
 
-      - name: Install dependencies for ionic project
-        if: steps.should-run-java-analysis.outputs.run == 'true'
-        run: npm clean-install
-        working-directory: oxidation/client
+  #     - name: Install dependencies for ionic project
+  #       if: steps.should-run-java-analysis.outputs.run == 'true'
+  #       run: npm clean-install
+  #       working-directory: oxidation/client
 
-      - name: Build ionic for Android
-        if: steps.should-run-java-analysis.outputs.run == 'true'
-        run: |
-          npm run android:copy:release
-        working-directory: oxidation/client
-        env:
-          GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
+  #     - name: Build ionic for Android
+  #       if: steps.should-run-java-analysis.outputs.run == 'true'
+  #       run: |
+  #         npm run android:copy:release
+  #       working-directory: oxidation/client
+  #       env:
+  #         GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
 
-      # Initializes the CodeQL tools for scanning.
-      - name: Initialize CodeQL
-        if: steps.should-run-java-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
-        with:
-          languages: java
-          # If you wish to specify custom queries, you can do so here or in a config file.
-          # By default, queries listed here will override any specified in a config file.
-          # Prefix the list here with "+" to use these queries and those in the config file.
+  #     # Initializes the CodeQL tools for scanning.
+  #     - name: Initialize CodeQL
+  #       if: steps.should-run-java-analysis.outputs.run == 'true'
+  #       uses: github/codeql-action/init@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
+  #       with:
+  #         languages: java
+  #         # If you wish to specify custom queries, you can do so here or in a config file.
+  #         # By default, queries listed here will override any specified in a config file.
+  #         # Prefix the list here with "+" to use these queries and those in the config file.
 
-          # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
-          # queries: security-extended,security-and-quality
+  #         # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+  #         # queries: security-extended,security-and-quality
 
-      - name: Autobuild android
-        if: steps.should-run-java-analysis.outputs.run == 'true'
-        uses: github/codeql-action/autobuild@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
-        with:
-          working-directory: oxidation/client/android
-        env:
-          GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
+  #     - name: Autobuild android
+  #       if: steps.should-run-java-analysis.outputs.run == 'true'
+  #       uses: github/codeql-action/autobuild@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
+  #       with:
+  #         working-directory: oxidation/client/android
+  #       env:
+  #         GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
 
-      - name: Perform CodeQL Analysis
-        if: steps.should-run-java-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
-        with:
-          category: /language:java
+  #     - name: Perform CodeQL Analysis
+  #       if: steps.should-run-java-analysis.outputs.run == 'true'
+  #       uses: github/codeql-action/analyze@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
+  #       with:
+  #         category: /language:java
 
   javascript-analyze:
     name: 🌐 Javascript static code Analysis

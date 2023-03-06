@@ -31,6 +31,7 @@ import { DateTime } from 'luxon';
 
 /* Theme variables */
 import './theme/variables.css';
+import { libparsec } from './plugins/libparsec';
 
 async function setupApp(): Promise<void> {
 
@@ -102,12 +103,53 @@ async function setupApp(): Promise<void> {
       return formatTimeSince(date, t, d, defaultValue);
     }
   });
-
   app.provide('storageManager', storageManager);
 
-  router.isReady().then(() => {
+  // We can start the app with different cases :
+  // - dev with a testbed Parsec server with the default devices
+  // - dev or prod where devices are fetched from the local storage
+  // - tests with Cypress where the testbed instantation is done by Cypress
+
+  // We get the app element and we set and attribute to indicate that we are waiting for
+  // the config path
+  const appElem = document.getElementById('app');
+  if (!appElem) {
+    throw Error('Cannot retrieve #app');
+  }
+  appElem.setAttribute('app-state', 'waiting-for-config-path');
+
+  // nextStage() finally mounts the app using the configPath provided
+  // Note this function cause a deadlock on `router.isReady` if it is awaited
+  // from within `setupApp`, so instead it should be called in fire-and-forget
+  // and only awaited when it is called from third party code (i.e. when
+  // obtained through `window.nextStageHook`, see below)
+  const nextStage = async (configPath: string): Promise<void> => {
+    await router.isReady();
+    // configPath is injected to components
+    app.provide('configPath', configPath);
     app.mount('#app');
-  });
+    appElem.setAttribute('app-state', 'ready');
+  };
+
+  if ('Cypress' in window) {
+    // Cypress handle the testbed and provides the configPath
+    window.nextStageHook = (): any => {
+      return [libparsec, nextStage];
+    };
+  } else if (import.meta.env.VITE_TESTBED_SERVER_URL) {
+    // Dev mode, provide a default testbed
+    const configPath = await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER_URL);
+    nextStage(configPath);  // Fire-and-forget call
+  } else {
+    // Prod or using devices in local storage
+    nextStage('/');  // Fire-and-forget call
+  }
 }
 
-setupApp();
+declare global {
+  interface Window {
+    nextStageHook: () => [any, (configPath: string) => Promise<void>]
+  }
+}
+
+await setupApp();

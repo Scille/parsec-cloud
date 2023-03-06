@@ -165,17 +165,22 @@ repos:
         files: ^oxidation/client/
         # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
         types_or: [ vue, ts, tsx, javascript, jsx ]
-        args: [ --config=oxidation/client/.eslintrc.js ]
+        args: [ --config=oxidation/client/.eslintrc.cjs ]
+        stages:
+          - manual
         # Deps should be kept updated with `oxidation/client/package-lock.json` !
         additional_dependencies:
-          - eslint@8.10.0
+          - "@intlify/eslint-plugin-vue-i18n@2.0.0"
+          - "@typescript-eslint/eslint-plugin@5.55.0"
+          - "@typescript-eslint/parser@5.55.0"
+          - "@vue/eslint-config-typescript@10.0.0"
+          - eslint@8.36.0
+          - eslint-config-standard-with-typescript@34.0.1
           - eslint-plugin-cypress@2.12.1
-          - eslint-plugin-vue@8.5.0
-          - "@typescript-eslint/eslint-plugin@5.14.0"
-          - "@typescript-eslint/parser@5.14.0"
-          - "@vue/cli-plugin-eslint@5.0.1"
-          - "@vue/eslint-config-typescript@9.1.0"
-          - "@intlify/eslint-plugin-vue-i18n@1.4.0"
+          - eslint-plugin-import@2.27.5
+          - eslint-plugin-n@15.6.1
+          - eslint-plugin-promise@6.1.1
+          - eslint-plugin-vue@8.7.1
 
   ######
   # JSON

@@ -13,20 +13,11 @@
     "license": "MIT",
     "main": "build/src/index.js",
     "scripts": {
-        "build:dev": "npm run libparsec:dev && tsc && electron-rebuild",
-        "build:release": "npm run libparsec:release && tsc && electron-rebuild",
-        "build:release:sodium": "npm run libparsec:release:sodium && tsc && electron-rebuild",
-        "libparsec:copy-lib": "mkdir -p build/src/libparsec || md build\\src\\libparsec && cp ../../bindings/electron/dist/libparsec/index.node build/src/libparsec || copy /Y ..\\..\\bindings\\electron\\dist\\libparsec\\index.node build\\src\\libparsec",
-        "libparsec:copy-typing": "mkdir -p build/generated-ts/src || md build\\generated-ts\\src && cp ../../bindings/electron/dist/libparsec/index.d.ts build/generated-ts/src/libparsec.d.ts || copy /Y ..\\..\\bindings\\electron\\dist\\libparsec\\index.d.ts build\\generated-ts\\src\\libparsec.d.ts",
-        "libparsec:copy": "npm run libparsec:copy-lib && npm run libparsec:copy-typing",
-        "libparsec:build": "cd ../../bindings/electron/ && npm run build",
-        "libparsec:dev": "npm run libparsec:build -- dev && npm run libparsec:copy",
-        "libparsec:release": "npm run libparsec:build -- release && npm run libparsec:copy",
-        "libparsec:release:sodium": "npm run libparsec:build -- release-sodium && npm run libparsec:copy",
-        "electron:start-live": "npm run libparsec:dev && node ./live-runner.js",
-        "electron:start": "npm run build:dev && electron --inspect=5858 ./",
-        "electron:release": "npm run build:release && electron-builder build --config ./electron-builder.config.json --publish never",
-        "electron:release:sodium": "npm run build:release:sodium && electron-builder build --config ./electron-builder.config.json --publish never"
+        "libparsec:copy": "node ./scripts/copy_bindings.js",
+        "build": "npm run libparsec:copy && tsc && electron-rebuild",
+        "electron:start-live": "npm run build && node ./live-runner.js",
+        "electron:start": "npm run build && electron --inspect=5858 ./",
+        "electron:release": "npm run build && electron-builder build --config ./electron-builder.config.json --publish never"
     },
     "dependencies": {
         "@capacitor-community/electron": "^4.1.2",
@@ -39,9 +30,9 @@
     },
     "devDependencies": {
         "@electron/rebuild": "^3.2.10",
-        "electron": "^23.2.1",
+        "electron": "^23.1.1",
         "electron-builder": "~23.6.0",
-        "typescript": "~5.0.3"
+        "typescript": "~4.9.5"
     },
     "overrides": {
         "@electron/universal": "~1.3.4"
