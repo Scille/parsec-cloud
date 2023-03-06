@@ -375,6 +375,11 @@ jobs:
             paths: |
               oxidation/client/electron/dist/parsec Setup *.exe
               oxidation/client/electron/dist/parsec Setup *.exe.blockmap
+          - name: 🍎 macOS
+            os: macos-12
+            paths: |
+              oxidation/client/electron/dist/parsec-*.dmg
+              oxidation/client/electron/dist/parsec-*.dmg.blockmap
     name: '${{matrix.name }}: ⚡ Package electron'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
