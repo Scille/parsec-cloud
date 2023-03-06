@@ -56,7 +56,7 @@ const routes: Array<RouteRecordRaw> = [
           {
             path: 'workspaces',
             name: 'OrganizationPageWorkspaces',
-            component: () => import('../views/OrganizationPageWorkspaces.vue')
+            component: () => import('@/views/OrganizationPageWorkspaces.vue')
           },
           {
             path: 'storage',
@@ -69,7 +69,7 @@ const routes: Array<RouteRecordRaw> = [
   }
 ];
 
-if (process.env.VUE_APP_TEST_MODE === 'True') {
+if (import.meta.env.VUE_APP_TEST_MODE === 'True') {
   routes.push(
     {
       path: '/test',
@@ -80,7 +80,7 @@ if (process.env.VUE_APP_TEST_MODE === 'True') {
 }
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 });
 

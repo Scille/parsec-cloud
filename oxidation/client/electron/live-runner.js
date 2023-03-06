@@ -41,7 +41,8 @@ async function spawnElectron() {
 
 function setupReloadWatcher() {
   reloadWatcher.watcher = chokidar
-    .watch('./src/**/*', {
+    .watch(['./src', './build'], {
+      // Ignore dotfiles
       ignored: /[/\\]\./,
       persistent: true
     })

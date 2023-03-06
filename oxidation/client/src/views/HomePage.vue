@@ -222,7 +222,7 @@ import {
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
-import { onMounted, ref, toRaw, computed, inject } from 'vue';
+import { onMounted, ref, toRaw, computed, inject, Ref } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
@@ -231,14 +231,15 @@ import SearchInput from '@/components/SearchInput.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
 import { createAlert } from '@/components/AlertConfirmation';
-import { AvailableDevice } from '../plugins/libparsec/definitions';
+import { AvailableDevice } from '@/plugins/libparsec/definitions';
+import { libparsec } from '@/plugins/libparsec';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { getMockDevices, mockLastLogin } from '../common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 
 const { t, d } = useI18n();
-const deviceList: AvailableDevice[] = getMockDevices();
+const deviceList: Ref<AvailableDevice[]> = ref([]);
 let selectedDevice: AvailableDevice;
 const password = ref('');
 const orgSearchString = ref('');
@@ -246,6 +247,7 @@ const showOrganizationList = ref(true);
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
 const { timeSince } = inject('formatters');
+const configPath = inject('configPath', '/');  // Must be a valid Unix path !
 const storageManager: StorageManager = inject('storageManager')!;
 
 const msSelectOptions: MsSelectOption[] = [
@@ -260,7 +262,7 @@ const msSelectSortByLabels = {
 };
 
 const filteredDevices = computed(() => {
-  return deviceList.filter((item) => {
+  return deviceList.value.filter((item) => {
     const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
     return (item.humanHandle?.toLocaleLowerCase().includes(lowerSearchString) ||
       item.organizationId?.toLocaleLowerCase().includes(lowerSearchString));
@@ -296,6 +298,8 @@ const storedDeviceDataDict = ref<{[slug: string]: StoredDeviceData}>({});
 
 onMounted(async (): Promise<void> => {
   await mockLastLogin(storageManager);
+
+  deviceList.value = await libparsec.clientListAvailableDevices(configPath);
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 });

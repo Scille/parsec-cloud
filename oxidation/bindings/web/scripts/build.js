@@ -2,7 +2,6 @@
 
 const { argv, exit, platform } = require('node:process');
 const { spawnSync } = require('node:child_process');
-const fs = require("fs")
 const path = require("path");
 
 const DEFAULT_PROFILE = "release";
@@ -27,7 +26,7 @@ switch (argv.length) {
 const cmd1_cmd = "python";
 const cmd1_args = [
     path.join(__dirname, "../../../../make.py"),
-    `electron-${profile}-libparsec-cargo-flags`,
+    `web-${profile}-libparsec-cargo-flags`,
     "--quiet",
 ]
 console.log(">>> ", cmd1_cmd, cmd1_args.join(" "));
@@ -51,14 +50,21 @@ const cargo_flags = ret1.stdout.toString(encoding="ascii").trim().split(" ");
 // On Windows only .exe/.bat can be directly executed, `npx.cmd` is the bat version of `npx`
 const cmd2_cmd = platform == "win32" ? "npx.cmd": "npx";
 const cmd2_args = [
-    "cargo-cp-artifact",
-    "--npm",
-    "cdylib",
-    "dist/libparsec/index.node",
-    "--",
-    "cargo",
+    "wasm-pack",
     "build",
-    "--message-format=json-render-diagnostics"
+    "--target",
+    "web",
+    // Small hack here: we always pass the `--dev` flag to wasm-pack given it
+    // considers there is no need to pass extra args to cargo (i.e. cargo build
+    // for dev by default). This way we can pass our own `--profile=foo` extra args
+    // without cargo complaining it is clashing with `--release` (provided by wasm-pack, and
+    // equivalent to `--profile=realese`).
+    // This should be safe given if anything change, cargo won't allow multiple profiles
+    // to be passed (hence this script will simply fail).
+    // cf. https://github.com/rustwasm/wasm-pack/blob/b4e619c8a13a8441b804895348afbfd4fb1a68a3/src/build/mod.rs#L91-L106
+    // and https://github.com/rustwasm/wasm-pack/blob/b4e619c8a13a8441b804895348afbfd4fb1a68a3/src/command/build.rs#L220
+    "--dev",
+    "--",
 ].concat(cargo_flags);
 console.log(">>> ", cmd2_cmd, cmd2_args.join(" "));
 const ret2 = spawnSync(
@@ -72,6 +78,3 @@ const ret2 = spawnSync(
 if (ret2.status != 0) {
     exit(ret2.status);
 }
-
-// Finally, copy the typing info
-fs.copyFileSync('src/index.d.ts', 'dist/libparsec/index.d.ts')

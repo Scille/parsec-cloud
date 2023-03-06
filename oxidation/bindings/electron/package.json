@@ -4,11 +4,9 @@
     "description": "",
     "main": "index.node",
     "scripts": {
-        "copy-typing": "mkdir -p dist/libparsec || md dist\\libparsec && cp src/index.d.ts dist/libparsec/ || copy /Y src\\index.d.ts dist\\libparsec",
-        "build": "npm run copy-typing && node scripts/build.js",
-        "build:ci": "npm run build -- ci",
-        "build:dev": "npm run build -- dev",
-        "build:release": "npm run build -- release",
+        "build:ci": "node scripts/build.js ci",
+        "build:dev": "node scripts/build.js dev",
+        "build:release": "node scripts/build.js release",
         "test": "cargo test"
     },
     "author": "",

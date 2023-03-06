@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, ref } from 'vue';
+import { ref } from 'vue';
 import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon, IonLabel } from '@ionic/vue';
 import {
   eyeOutline,

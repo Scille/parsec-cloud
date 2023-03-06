@@ -42,7 +42,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
 import { IonIcon, IonLabel, IonSelect, IonSelectOption, isPlatform } from '@ionic/vue';
 import { person } from 'ionicons/icons';
 
