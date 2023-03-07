@@ -1,21 +1,24 @@
-Documentation
-=============
+# How to generate the documentation website
 
+## Requirements
 
-see http://www.sphinx-doc.org/en/master/usage/advanced/intl.html
+Install dependencies with `poetry install --with docs`
 
-Update translation
-------------------
+## Update translation
 
-1) Extract text and create/update .po files
-```
-$ make gettext
-$ sphinx-intl update -p _build/locale -l fr
-```
+see <http://www.sphinx-doc.org/en/master/usage/advanced/intl.html>
 
-2) Translate .po files
+1. Extract text and create/update `.po` files
 
-3) Build .po -> .mo
-```
-$ make -e SPHINXOPTS="-D language='fr'" html
-```
+    ```shell
+    make gettext
+    sphinx-intl update -p _build/locale -l fr
+    ```
+
+2. Translate `.po` files
+
+3. Build `.po -> .mo`
+
+    ```shell
+    make -e SPHINXOPTS="-D language='fr'" html
+    ```
