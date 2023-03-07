@@ -48,7 +48,7 @@ fnmatch-regex = "0.2.0"
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
 pretty_assertions = "1.3.0"
-serde_test = "1.0.145"
+serde_test = "1.0.152"
 hex-literal = "0.3.3"
 rstest = "0.16.0"
 rstest_reuse = "0.4.0"
