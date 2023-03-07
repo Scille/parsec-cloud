@@ -11,12 +11,14 @@ from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from functools import partial
 from inspect import iscoroutine
+from itertools import chain
 from typing import AsyncContextManager, Callable, Optional, Union
 
 import pytest
 import trio
 import trustme
 from hypercorn.config import Config as HyperConfig
+from hypercorn.config import Sockets
 from hypercorn.trio.run import worker_serve
 from hypercorn.trio.tcp_server import TCPServer
 from hypercorn.trio.worker_context import WorkerContext
@@ -606,8 +608,15 @@ def running_backend_factory(asyncio_loop, hyper_config) -> RunningBackendFactory
 
     @asynccontextmanager
     async def _running_backend_factory(
-        backend, sockets=None
+        backend: BackendApp, sockets: Optional[Sockets] = None
     ) -> AsyncContextManager[RunningBackend]:
+        if not sockets:
+            sockets = hyper_config.create_sockets()
+            for sock in sockets.secure_sockets:
+                sock.listen(hyper_config.backlog)
+            for sock in sockets.insecure_sockets:
+                sock.listen(hyper_config.backlog)
+
         asgi_app = AsgiOfflineMiddleware(app_factory(backend))
         async with trio.open_nursery() as nursery:
             binds = await nursery.start(
@@ -621,6 +630,15 @@ def running_backend_factory(asyncio_loop, hyper_config) -> RunningBackendFactory
                 addr=BackendAddr(hostname="127.0.0.1", port=port, use_ssl=hyper_config.ssl_enabled),
             )
 
+            # TODO: remove me once https://github.com/pgjones/hypercorn/issues/106 is fixed
+            # tl;dr: Hypercorn doesn't call `socket.shutdown()` when cancelled which makes
+            # the socket wait for the incoming packets to be processed before closing it..
+            # which leads to a deadlock given the server supposed to do that has been cancelled !
+            for s in chain(sockets.insecure_sockets, sockets.secure_sockets):
+                try:
+                    s.shutdown(socket.SHUT_RDWR)  # I'm done asking nicely
+                except OSError:
+                    pass
             nursery.cancel_scope.cancel()
 
     return _running_backend_factory
