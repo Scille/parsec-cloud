@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use libparsec::core_fs::{FSError, FSResult};
-use pyo3::prelude::{pyclass, pymethods, IntoPy, PyObject, PyResult, Python};
+use pyo3::prelude::{pyclass, pymethods, PyObject, PyResult, Python};
 
 use std::{
     collections::HashMap,
@@ -58,10 +58,14 @@ impl WorkspaceStorageSnapshot {
     }
 
     fn get_manifest_internal(
-        &self,
+        cache: &Arc<
+            Mutex<
+                HashMap<libparsec::types::EntryID, libparsec::core_fs::LocalFileOrFolderManifest>,
+            >,
+        >,
         entry_id: &libparsec::types::EntryID,
     ) -> FSResult<libparsec::core_fs::LocalFileOrFolderManifest> {
-        self.cache
+        cache
             .lock()
             .expect("Mutex is poisoned")
             .get(entry_id)
@@ -83,28 +87,29 @@ impl WorkspaceStorageSnapshot {
         fd
     }
 
-    fn load_file_descriptor(&self, py: Python<'_>, fd: u32) -> FutureIntoCoroutine {
-        let manifest = self
-            .open_fds
-            .lock()
-            .expect("Mutex is poisoned")
-            .get(&fd)
-            .ok_or(FSError::InvalidFileDescriptor(
-                libparsec::types::FileDescriptor(fd),
-            ))
-            .and_then(|entry_id| {
-                self.get_manifest_internal(entry_id)
-                    .map(|manifest| (entry_id, manifest))
-            })
-            .and_then(|(entry_id, manifest)| match manifest {
-                libparsec::core_fs::LocalFileOrFolderManifest::File(manifest) => Ok(manifest),
-                _ => Err(FSError::LocalMiss(**entry_id)),
-            })
-            .map(LocalFileManifest)
-            .map(|manifest| manifest.into_py(py))
-            .map_err(fs_to_python_error);
+    fn load_file_descriptor(&self, fd: u32) -> FutureIntoCoroutine {
+        let open_fds = self.open_fds.clone();
+        let cache = self.cache.clone();
 
-        FutureIntoCoroutine::ready(manifest)
+        FutureIntoCoroutine::from(async move {
+            open_fds
+                .lock()
+                .expect("Mutex is poisoned")
+                .get(&fd)
+                .ok_or(FSError::InvalidFileDescriptor(
+                    libparsec::types::FileDescriptor(fd),
+                ))
+                .and_then(|entry_id| {
+                    Self::get_manifest_internal(&cache, entry_id)
+                        .map(|manifest| (entry_id, manifest))
+                })
+                .and_then(|(entry_id, manifest)| match manifest {
+                    libparsec::core_fs::LocalFileOrFolderManifest::File(manifest) => Ok(manifest),
+                    _ => Err(FSError::LocalMiss(**entry_id)),
+                })
+                .map(LocalFileManifest)
+                .map_err(fs_to_python_error)
+        })
     }
 
     fn remove_file_descriptor(&self, fd: u32) -> PyResult<()> {
@@ -126,14 +131,15 @@ impl WorkspaceStorageSnapshot {
     }
 
     fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
-        let entry_id = entry_id.0;
+        let cache = self.cache.clone();
 
-        let res = self
-            .get_manifest_internal(&entry_id)
-            .map(file_or_folder_manifest_into_py_object)
-            .map_err(fs_to_python_error);
+        FutureIntoCoroutine::from(async move {
+            let entry_id = entry_id.0;
 
-        FutureIntoCoroutine::ready(res)
+            Self::get_manifest_internal(&cache, &entry_id)
+                .map(file_or_folder_manifest_into_py_object)
+                .map_err(fs_to_python_error)
+        })
     }
 
     fn set_manifest(
@@ -141,25 +147,26 @@ impl WorkspaceStorageSnapshot {
         py: Python,
         entry_id: EntryID,
         manifest: PyObject,
-    ) -> PyResult<FutureIntoCoroutine> {
-        let manifest = file_or_folder_manifest_from_py_object(py, &manifest)?;
-        let entry_id = entry_id.0;
+    ) -> FutureIntoCoroutine {
+        let manifest = file_or_folder_manifest_from_py_object(py, &manifest);
+        let cache = self.cache.clone();
 
-        let res = if manifest.need_sync() {
-            Err(fs_to_python_error(FSError::WorkspaceStorageTimestamped))
-        } else {
-            // Currently we don't check if a manifest is locked.
-            // Since we rely for the moment on the python locking system for the manifests.
-            self.cache
-                .lock()
-                .expect("Mutex is poisoned")
-                .insert(entry_id, manifest);
-            Ok(py.None())
-        };
+        FutureIntoCoroutine::from(async move {
+            let manifest = manifest?;
+            let entry_id = entry_id.0;
 
-        let fut = FutureIntoCoroutine::ready(res);
-
-        Ok(fut)
+            if manifest.need_sync() {
+                Err(fs_to_python_error(FSError::WorkspaceStorageTimestamped))
+            } else {
+                // Currently we don't check if a manifest is locked.
+                // Since we rely for the moment on the python locking system for the manifests.
+                cache
+                    .lock()
+                    .expect("Mutex is poisoned")
+                    .insert(entry_id, manifest);
+                Ok(())
+            }
+        })
     }
 
     fn get_prevent_sync_pattern(&self) -> PyResult<Regex> {
@@ -188,10 +195,13 @@ impl WorkspaceStorageSnapshot {
     }
 
     /// Clear the local manifest cache
-    fn clear_local_cache(&self, py: Python<'_>) -> FutureIntoCoroutine {
-        self.cache.lock().expect("Mutex is poisoned").clear();
+    fn clear_local_cache(&self) -> FutureIntoCoroutine {
+        let cache = self.cache.clone();
 
-        FutureIntoCoroutine::ready(Ok(py.None()))
+        FutureIntoCoroutine::from(async move {
+            cache.lock().expect("Mutex is poisoned").clear();
+            Ok(())
+        })
     }
 
     fn is_block_remanent(&self) -> PyResult<bool> {
