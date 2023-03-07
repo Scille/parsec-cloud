@@ -24,7 +24,7 @@ Otherwise, you can click on `Create an organization` in the Menu of the login sc
 .. note::
 
     Another possibility (though more technical) is to host you own Parsec server and create the organization on it using the Parsec CLI. You can then join that organization using an organization bootstrap URL.
-    You can read about this in the :ref:`the Hosting server <doc_hosting_server>` part.
+    You can read about this in the `the Hosting server <https://github.com/Scille/parsec-cloud/blob/master/docs/HOSTING.md>`_ part.
 
 Once you start the process, you are asked for an Email and an Organization Name. This email address will be used to contact you later.
 
