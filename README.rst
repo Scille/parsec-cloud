@@ -74,3 +74,8 @@ Python PIP
 Parsec is also available directly through PIP for both Linux and Windows with Python > 3.9 with the command:
 ``pip install parsec-cloud``
 (or, if you need to specify Python 3 pip version, ``pip3 install parsec-cloud``)
+
+Self-hosted
+-----------
+
+If you want to self-host a Parsec server, take a look at `Hosting a Parsec server <https://github.com/Scille/parsec-cloud/blob/master/docs/HOSTING.md>`_

@@ -40,7 +40,6 @@ The main documentation for the site is organized into the following sections:
     architecture
     roles
     cryptography
-    hosting_server
 
 
 .. toctree::
