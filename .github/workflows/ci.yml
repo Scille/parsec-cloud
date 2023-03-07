@@ -80,7 +80,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
-        timeout-minutes: 1
+        timeout-minutes: 2
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -167,7 +167,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
-        timeout-minutes: 1
+        timeout-minutes: 2
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -394,7 +394,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
-        timeout-minutes: 1
+        timeout-minutes: 2
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -466,7 +466,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
-        timeout-minutes: 1
+        timeout-minutes: 2
 
       - uses: ./.github/actions/paths-filter
         id: changes
