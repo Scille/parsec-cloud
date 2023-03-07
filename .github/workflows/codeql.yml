@@ -110,17 +110,6 @@ jobs:
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
-      # TODO: Skip the rust build, see #4211
-      # Currently we're required by the gradle configure to have rust toolchain installed
-      # Because it will build the libparsec for java when installing the dependencies.
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@e12eda571dc9a5ee5d58eecf4738ec291c66f295
-        if: steps.java-changes.outputs.run == 'true'
-        with:
-          toolchain: ${{ env.rust-version }}
-          targets: armv7-linux-androideabi, i686-linux-android, aarch64-linux-android, x86_64-linux-android
-        timeout-minutes: 5
-
       - name: Add android cmdline tools to path
         if: steps.java-changes.outputs.run == 'true'
         run: echo "$ANDROID_HOME/cmdline-tools/latest/bin" > $GITHUB_PATH
@@ -139,6 +128,8 @@ jobs:
         run: |
           npm run android:copy:release
         working-directory: oxidation/client
+        env:
+          GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
@@ -158,6 +149,8 @@ jobs:
         uses: github/codeql-action/autobuild@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           working-directory: oxidation/client/android
+        env:
+          GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
 
       - name: Perform CodeQL Analysis
         if: steps.java-changes.outputs.run == 'true'

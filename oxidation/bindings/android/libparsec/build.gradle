@@ -49,6 +49,9 @@ cargo {
 }
 
 tasks.whenTaskAdded { task ->
+    if (System.getenv('GRADLE_LIBPARSEC_BUILD_STRATEGY') == 'no_build') {
+        return
+    }
     // See https://github.com/mozilla/rust-android-gradle/issues/85
     // if ((task.name == 'javaPreCompileDebug' || task.name == 'javaPreCompileRelease')) {
     if ((task.name == 'mergeDebugJniLibFolders' || task.name == 'mergeReleaseJniLibFolders')) {
