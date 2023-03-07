@@ -3,7 +3,7 @@
 use futures::{future::BoxFuture, FutureExt};
 use pyo3::{
     import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, types::PyString,
-    wrap_pyfunction, IntoPy, Py, PyAny, PyObject, PyResult, Python,
+    wrap_pyfunction, IntoPy, Py, PyAny, PyObject, PyRef, PyResult, Python,
 };
 use std::future::Future;
 use tokio::task::JoinHandle;
@@ -29,31 +29,30 @@ struct Stuff {
 static STUFF: GILOnceCell<Stuff> = GILOnceCell::new();
 
 fn get_stuff(py: Python<'_>) -> &Stuff {
-    // We accept unwrap because it runs once and it avoids the Result everytime
     STUFF.get_or_init(py, || {
-        let trio_lowlevel = py.import("trio").unwrap().getattr("lowlevel").unwrap();
-        let outcome = py.import("outcome").unwrap();
-        Stuff {
-            tokio_runtime: tokio::runtime::Runtime::new().unwrap(),
-            trio_current_trio_token_fn: trio_lowlevel
-                .getattr("current_trio_token")
-                .unwrap()
-                .into_py(py),
-            trio_reschedule_fn: trio_lowlevel.getattr("reschedule").unwrap().into_py(py),
-            trio_current_task_fn: trio_lowlevel.getattr("current_task").unwrap().into_py(py),
-            trio_wait_task_rescheduled: trio_lowlevel
-                .getattr("wait_task_rescheduled")
-                .unwrap()
-                .into_py(py),
-            trio_abort_succeeded: trio_lowlevel
-                .getattr("Abort")
-                .unwrap()
-                .getattr("SUCCEEDED")
-                .unwrap()
-                .into_py(py),
-            outcome_value_fn: outcome.getattr("Value").unwrap().into_py(py),
-            outcome_error_fn: outcome.getattr("Error").unwrap().into_py(py),
-        }
+        // We accept unwrap because it runs once and it avoids the Result everytime
+        let res = (|| -> PyResult<Stuff> {
+            let trio_lowlevel = py.import("trio")?.getattr("lowlevel")?;
+            let outcome = py.import("outcome")?;
+            Ok(Stuff {
+                tokio_runtime: tokio::runtime::Runtime::new()?,
+                trio_current_trio_token_fn: trio_lowlevel
+                    .getattr("current_trio_token")?
+                    .into_py(py),
+                trio_reschedule_fn: trio_lowlevel.getattr("reschedule")?.into_py(py),
+                trio_current_task_fn: trio_lowlevel.getattr("current_task")?.into_py(py),
+                trio_wait_task_rescheduled: trio_lowlevel
+                    .getattr("wait_task_rescheduled")?
+                    .into_py(py),
+                trio_abort_succeeded: trio_lowlevel
+                    .getattr("Abort")?
+                    .getattr("SUCCEEDED")?
+                    .into_py(py),
+                outcome_value_fn: outcome.getattr("Value")?.into_py(py),
+                outcome_error_fn: outcome.getattr("Error")?.into_py(py),
+            })
+        })();
+        res.expect("Cannot initialize Python binding base stuff !")
     })
 }
 
@@ -98,16 +97,21 @@ impl TokioTaskAborterFromTrio {
     }
 }
 
+enum FutureIntoCoroutineInternal {
+    Ready(PyResult<PyObject>),
+    ToPoll(BoxFuture<'static, PyResult<PyObject>>),
+}
+
 #[pyclass]
 /// A wrapper for a rust `future` that will be polled in the trio context.
-pub(crate) struct FutureIntoCoroutine(Option<BoxFuture<'static, PyResult<PyObject>>>);
+pub(crate) struct FutureIntoCoroutine(Option<FutureIntoCoroutineInternal>);
 
 impl FutureIntoCoroutine {
     pub fn from_raw<F>(fut: F) -> Self
     where
         F: Future<Output = PyResult<PyObject>> + Send + 'static,
     {
-        FutureIntoCoroutine(Some(fut.boxed()))
+        FutureIntoCoroutine(Some(FutureIntoCoroutineInternal::ToPoll(fut.boxed())))
     }
 
     pub fn from<F, R>(fut: F) -> Self
@@ -120,12 +124,36 @@ impl FutureIntoCoroutine {
             Python::with_gil(|py| Ok(res.into_py(py)))
         })
     }
+
+    pub fn ready(value: PyResult<PyObject>) -> Self {
+        FutureIntoCoroutine(Some(FutureIntoCoroutineInternal::Ready(value)))
+    }
+}
+
+#[pyclass]
+pub struct ReadyValue(Option<PyObject>);
+
+#[pymethods]
+impl ReadyValue {
+    fn __iter__(this: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        this
+    }
+
+    fn __next__(&mut self) -> pyclass::IterNextOutput<(), PyObject> {
+        pyclass::IterNextOutput::Return(self.0.take().expect("Already awaited coroutine"))
+    }
 }
 
 #[pymethods]
 impl FutureIntoCoroutine {
     fn __await__(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        let fut = self.0.take().expect("Already awaited coroutine");
+        let fut = match self.0.take().expect("Already awaited coroutine") {
+            FutureIntoCoroutineInternal::Ready(value) => {
+                let value = value?;
+                return Ok(ReadyValue(Some(value)).into_py(py));
+            }
+            FutureIntoCoroutineInternal::ToPoll(fut) => fut,
+        };
 
         let stuff = get_stuff(py);
         let trio_token = stuff.trio_current_trio_token_fn.call0(py)?;
