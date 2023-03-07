@@ -21,6 +21,16 @@ The flowchart is:
 In other words, the patch bump should only be used to cherry-pick a subset of
 changes present on the master on a previous version.
 
+Release Checklist
+-----------------
+
+For each release types, apply the following checklist:
+
+* The newsfragment were squashed to generate the block added to `HISTORY.rst`.
+* The updated `HISTORY.rst` is correctly formated (Some news fragment may introduce invalid syntax that can break the RST file).
+* The translations are up-to-date (check the translations in `docs/`, `parsec/core/gui/tr/`, `oxidation/client/src/locales/`).
+* The `releaser.py` correctly update the version in the expected files (`pyproject.toml`, `licenses/BUSL-Scille.txt`, `parsec/_version.py`).
+
 Release major/minor version
 ---------------------------
 
