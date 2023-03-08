@@ -249,7 +249,7 @@ jobs:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
 
-      - uses: microsoft/setup-msbuild@1ff57057b5cfdc39105cd07a01d78e9b0ea0c14c # pin v1.3
+      - uses: microsoft/setup-msbuild@1ff57057b5cfdc39105cd07a01d78e9b0ea0c14c # pin v1.3.1
 
       - name: Build Icon overlays COM objects
         run: msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\windows-icon-handler.sln
