@@ -388,7 +388,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@c758e63728211bd4acda6501cfa2a16c5c751fc4
+        uses: dtolnay/rust-toolchain@e12eda571dc9a5ee5d58eecf4738ec291c66f295
         with:
           toolchain: ${{ env.rust-version }}
         timeout-minutes: 10
@@ -425,7 +425,7 @@ jobs:
 
       - name: Install rust toolchain
         id: rust-toolchain
-        uses: dtolnay/rust-toolchain@c758e63728211bd4acda6501cfa2a16c5c751fc4
+        uses: dtolnay/rust-toolchain@e12eda571dc9a5ee5d58eecf4738ec291c66f295
         with:
           toolchain: ${{ env.rust-version }}
           targets: armv7-linux-androideabi, i686-linux-android, aarch64-linux-android, x86_64-linux-android
