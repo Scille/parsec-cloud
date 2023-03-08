@@ -177,31 +177,30 @@ impl WorkspaceStorage {
         cache_only: bool,
         removed_ids: Option<HashSet<ChunkID>>,
     ) -> FutureIntoCoroutine {
-        match self.get_storage() {
-            Ok(ws) => match file_or_folder_manifest_from_py_object(py, &manifest) {
-                Ok(manifest) => {
-                    let removed_ids = removed_ids.map(|x| {
-                        x.into_iter()
-                            .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
-                            .collect()
-                    });
+        match self.get_storage().and_then(|ws| {
+            file_or_folder_manifest_from_py_object(py, &manifest).map(|manifest| (ws, manifest))
+        }) {
+            Ok((ws, manifest)) => {
+                let removed_ids = removed_ids.map(|x| {
+                    x.into_iter()
+                        .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
+                        .collect()
+                });
 
-                    if cache_only {
-                        FutureIntoCoroutine::ready(Python::with_gil(|py| {
-                            ws.set_manifest_in_cache(entry_id.0, manifest, removed_ids)
-                                .map_err(fs_to_python_error)
-                                .map(|_| py.None())
-                        }))
-                    } else {
-                        FutureIntoCoroutine::from(async move {
-                            ws.set_manifest(entry_id.0, manifest, cache_only, removed_ids)
-                                .await
-                                .map_err(fs_to_python_error)
-                        })
-                    }
+                if cache_only {
+                    FutureIntoCoroutine::ready(Python::with_gil(|py| {
+                        ws.set_manifest_in_cache(entry_id.0, manifest, removed_ids)
+                            .map_err(fs_to_python_error)
+                            .map(|_| py.None())
+                    }))
+                } else {
+                    FutureIntoCoroutine::from(async move {
+                        ws.set_manifest(entry_id.0, manifest, cache_only, removed_ids)
+                            .await
+                            .map_err(fs_to_python_error)
+                    })
                 }
-                Err(e) => FutureIntoCoroutine::ready(Err(e)),
-            },
+            }
             Err(e) => FutureIntoCoroutine::ready(Err(e)),
         }
     }
