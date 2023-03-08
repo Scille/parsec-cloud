@@ -30,7 +30,6 @@ static STUFF: GILOnceCell<Stuff> = GILOnceCell::new();
 
 fn get_stuff(py: Python<'_>) -> &Stuff {
     STUFF.get_or_init(py, || {
-        // We accept unwrap because it runs once and it avoids the Result everytime
         let res = (|| -> PyResult<Stuff> {
             let trio_lowlevel = py.import("trio")?.getattr("lowlevel")?;
             let outcome = py.import("outcome")?;
@@ -52,6 +51,7 @@ fn get_stuff(py: Python<'_>) -> &Stuff {
                 outcome_error_fn: outcome.getattr("Error")?.into_py(py),
             })
         })();
+        // We accept unwrap because it runs once and it avoids the Result everytime
         res.expect("Cannot initialize Python binding base stuff !")
     })
 }
