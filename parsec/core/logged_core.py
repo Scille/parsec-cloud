@@ -342,8 +342,7 @@ class LoggedCore:
             BackendConnectionError
             InviteError
         """
-        # TODO: We ignore because mypy complains, but binding doesn't work with BackendAuthenticatedCmds
-        initial_ctx = UserGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)  # type: ignore[arg-type]
+        initial_ctx = UserGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
     async def start_greeting_device(self, token: InvitationToken) -> DeviceGreetInProgress1Ctx:
@@ -352,8 +351,7 @@ class LoggedCore:
             BackendConnectionError
             InviteError
         """
-        # TODO: We ignore because mypy complains, but binding doesn't work with BackendAuthenticatedCmds
-        initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)  # type: ignore[arg-type]
+        initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
     def get_organization_config(self) -> OrganizationConfig:

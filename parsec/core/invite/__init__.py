@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from parsec import FEATURE_FLAGS
 from parsec._parsec import (
     InviteActiveUsersLimitReachedError,
@@ -10,9 +12,6 @@ from parsec._parsec import (
     InvitePeerResetError,
 )
 from parsec.core.invite.claimer import (
-    BaseClaimInitialCtx,
-    BaseClaimInProgress1Ctx,
-    BaseClaimInProgress2Ctx,
     DeviceClaimInitialCtx,
     DeviceClaimInProgress1Ctx,
     DeviceClaimInProgress2Ctx,
@@ -24,7 +23,7 @@ from parsec.core.invite.claimer import (
     claimer_retrieve_info,
 )
 
-if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
     from parsec._parsec import (
         DeviceGreetInitialCtx,
         DeviceGreetInProgress1Ctx,
@@ -38,10 +37,7 @@ if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
         UserGreetInProgress4Ctx,
     )
 else:
-    from parsec.core.invite.greeter import (  # type: ignore[misc]
-        BaseGreetInitialCtx,
-        BaseGreetInProgress1Ctx,
-        BaseGreetInProgress2Ctx,
+    from parsec.core.invite.greeter import (
         DeviceGreetInitialCtx,
         DeviceGreetInProgress1Ctx,
         DeviceGreetInProgress2Ctx,
@@ -64,25 +60,19 @@ __all__ = (
     "InviteActiveUsersLimitReachedError",
     # Claimer
     "claimer_retrieve_info",
-    "BaseClaimInitialCtx",
     "UserClaimInitialCtx",
     "DeviceClaimInitialCtx",
-    "BaseClaimInProgress1Ctx",
     "UserClaimInProgress1Ctx",
     "DeviceClaimInProgress1Ctx",
-    "BaseClaimInProgress2Ctx",
     "UserClaimInProgress2Ctx",
     "DeviceClaimInProgress2Ctx",
     "UserClaimInProgress3Ctx",
     "DeviceClaimInProgress3Ctx",
     # Greeter
-    "BaseGreetInitialCtx",
     "UserGreetInitialCtx",
     "DeviceGreetInitialCtx",
-    "BaseGreetInProgress1Ctx",
     "UserGreetInProgress1Ctx",
     "DeviceGreetInProgress1Ctx",
-    "BaseGreetInProgress2Ctx",
     "UserGreetInProgress2Ctx",
     "DeviceGreetInProgress2Ctx",
     "UserGreetInProgress3Ctx",
