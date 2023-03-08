@@ -23,7 +23,7 @@ libparsec_platform_async = { path = "../platform_async" }
 
 lazy_static = "1.4.0"
 serde = { version = "1.0.147", features = ["derive"] }
-serde_with = "2.1.0"
+serde_with = "2.2.0"
 rmp-serde = "1.1.1"
 serde_bytes = "0.11.7"
 chrono = "0.4.23"
@@ -48,7 +48,7 @@ fnmatch-regex = "0.2.0"
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
 pretty_assertions = "1.3.0"
-serde_test = "1.0.145"
+serde_test = "1.0.152"
 hex-literal = "0.3.3"
 rstest = "0.16.0"
 rstest_reuse = "0.4.0"

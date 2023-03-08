@@ -3,188 +3,187 @@
 # This file is distributed under the same license as the Parsec package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-15 11:20+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2023-02-28 16:33+0100\n"
+"PO-Revision-Date: 2023-03-02 11:44+0100\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: \n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.12.1\n"
+"X-Generator: Poedit 3.2.2\n"
 
-#: ../../architecture.rst:5
+#: ../../architecture.rst:7
 msgid "Architecture"
 msgstr "Architecture"
 
-#: ../../architecture.rst:9
+#: ../../architecture.rst:11
 msgid "Overview"
 msgstr "Aperçu"
 
-#: ../../architecture.rst:11
+#: ../../architecture.rst:13
 msgid ""
-"Parsec is divided between a client (responsible for exposing data to the "
-"user and providing an encryption layer) and a server (storing the "
-"encrypted data and notifying clients about other users activity such as "
-"data modification or new sharing)."
+"Parsec is divided between a client (responsible for exposing data to the user "
+"and providing an encryption layer) and a server (storing the encrypted data "
+"and notifying clients about other users activity such as data modification or "
+"new sharing)."
 msgstr ""
 "Parsec est divisé en un client (responsable d'exposer les données à "
-"l'utilisateur ainsi que de gérer la couche cryptographique) et le serveur"
-" (servant à stocker les données chiffrées ainsi qu'à notifier les clients"
-" des actions des autres utilisateurs telles une modification d'un fichier"
-" ou un nouveau partage)."
+"l'utilisateur ainsi que de gérer la couche cryptographique) et le serveur "
+"(servant à stocker les données chiffrées ainsi qu'à notifier les clients des "
+"actions des autres utilisateurs telles une modification d'un fichier ou un "
+"nouveau partage)."
 
-#: ../../architecture.rst:17
+#: ../../architecture.rst:19
 msgid "Parsec single server, multi organizations showcase"
 msgstr "Démonstration de Parsec avec un seul serveur, plusieurs organisations"
 
-#: ../../architecture.rst:19
+#: ../../architecture.rst:21
 msgid ""
 "The Parsec server only requires a PostgreSQL DB for metadata (that is "
-"encrypted using devices keys for the most part) and an Amazon S3 or "
-"OpenStack Swift object storage for data blobs (that are all encrypted "
-"using Workspaces keys, that never left users’ devices). Redundancy using "
-"multiple cloud providers is possible."
+"encrypted using devices keys for the most part) and an Amazon S3 or OpenStack "
+"Swift object storage for data blobs (that are encrypted using Workspaces keys "
+"which never leave users’ devices). Redundancy using multiple cloud providers "
+"is possible."
 msgstr ""
 "Le serveur Parsec ne requiert qu'une base de données PostgreSQL pour les "
 "métadonnées (qui sont chiffrées par les clés des appareils dans leur "
-"majorité) et un stockage objet Amazon S3 ou OpenStack Swift pour les "
-"blobs binaires (qui sont tous chiffrés en utilisant des clés de "
-"Workspace, qui ne quittent pas les appareils des utilisateurs). Il est "
-"possible de mettre en place un système de redondance avec de multiples "
-"fournisseurs de cloud différents."
+"majorité) et un stockage objet Amazon S3 ou OpenStack Swift pour les blobs "
+"binaires (qui sont tous chiffrés en utilisant des clés de l'Espace de "
+"Travail, qui ne quittent pas les terminaux des utilisateurs). Il est possible "
+"de mettre en place un système de redondance avec de multiples fournisseurs de "
+"cloud différents."
 
-#: ../../architecture.rst:23
+#: ../../architecture.rst:25
 msgid "Parsec security model"
 msgstr "Modèle de sécurité Parsec"
 
-#: ../../architecture.rst:25
+#: ../../architecture.rst:27
 msgid ""
-"PARSEC secures sensitive data before they are stored on public clouds, "
+"Parsec secures sensitive data before they are stored on public clouds, "
 "proceeding in 3 steps :"
 msgstr ""
-"PARSEC sécurise les données sensibles avant qu’elles ne soient stockées "
-"sur les clouds publics, en procédant en trois étapes :"
+"Parsec sécurise les données sensibles avant qu’elles ne soient stockées sur "
+"les clouds publics, en procédant en trois étapes :"
 
-#: ../../architecture.rst:27
+#: ../../architecture.rst:29
 msgid "Splitting of files in blocks before encryption;"
 msgstr "Découpage en blocs des fichiers avant chiffrement;"
 
-#: ../../architecture.rst:28
+#: ../../architecture.rst:30
 msgid "Encryption of each block with a different symmetric key (BLOCK_ENC_KEY);"
 msgstr ""
-"Chiffrement de chaque bloc par une clé symétrique différente "
-"(BLOCK_ENC_KEY);"
+"Chiffrement de chaque bloc par une clé symétrique différente (BLOCK_ENC_KEY);"
 
-#: ../../architecture.rst:29
+#: ../../architecture.rst:31
 msgid ""
-"Encryption of the metadata (tree structure, composition of files, "
-"multiple BLOCK_ENC_KEY, sharing information) with the private key of the "
-"user (USER_ENC_S_KEY)."
+"Encryption of the metadata (tree structure, composition of files, multiple "
+"BLOCK_ENC_KEY, sharing information) with the private key of the user "
+"(USER_ENC_S_KEY)."
 msgstr ""
 "Chiffrement des métadonnées (arborescence, composition des fichiers, les "
-"BLOCK_ENC_KEY, information de partage) par la clé privée de l’utilisateur"
-" (USER_ENC_S_KEY)."
+"BLOCK_ENC_KEY, information de partage) par la clé privée de l’utilisateur "
+"(USER_ENC_S_KEY)."
 
-#: ../../architecture.rst:34
-msgid "Separation of the actors"
+#: ../../architecture.rst:35
+msgid "Separation of actors"
 msgstr "Séparation des acteurs"
 
-#: ../../architecture.rst:36
-msgid ""
-"User : represents a natural person in Parsec. An user owns an asymmetric "
-"key (USER_ENC_S_KEY / USER_ENC_P_KEY) that enables him to encrypt data "
-"for him alone, like his User Manifest (see below)."
-msgstr ""
-"Utilisateur : représente une personne physique dans Parsec. Un "
-"utilisateur dispose d’une clé asymétrique (USER_ENC_S_KEY / "
-"USER_ENC_P_KEY) lui permettant de chiffrer des données uniquement pour "
-"lui tel que son User Manifest (voir ci-dessous)."
-
 #: ../../architecture.rst:37
-msgid "The Workstation : the physical support -- desktop or mobile computer."
-msgstr "Le Poste de Travail : support physique -- ordinateur fixe ou portable."
+msgid ""
+"User: represents a natural person in Parsec. A user owns an asymmetric key "
+"(USER_ENC_S_KEY/USER_ENC_P_KEY) enabling the encryption of data intended only "
+"for the user, like its User Manifest (see below)."
+msgstr ""
+"Utilisateur : représente une personne physique dans Parsec. Un utilisateur "
+"dispose d’une clé asymétrique (USER_ENC_S_KEY / USER_ENC_P_KEY) lui "
+"permettant de chiffrer des données uniquement pour lui tel que son User "
+"Manifest (voir ci-dessous)."
 
 #: ../../architecture.rst:38
+msgid "The Workstation: the physical support -- desktop or mobile computer."
+msgstr "Le Poste de Travail : support physique -- ordinateur fixe ou portable."
+
+#: ../../architecture.rst:39
 msgid ""
-"Device : it is through a Device that the user accesses Parsec. Each user "
-"potentially has multiple devices (e.g. one for his desktop and one for "
-"his laptop). Each terminal owns it's own asymmetric signature key "
-"(DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) enabling him to sign the "
-"modification he has made."
+"Device: it is through a Device that the user accesses Parsec. A user can have "
+"multiple devices (e.g. a desktop and a laptop). Each device has its own "
+"asymmetric signature key (DEVICE_SIG_S_KEY/DEVICE_SIG_P_KEY) enabling signing "
+"modifications made by itself."
 msgstr ""
 "Terminal : c’est par l’intermédiaire d’un terminal (ou device) que "
-"l’utilisateur accède à Parsec. Chaque utilisateur a potentiellement "
-"plusieurs terminaux (ex: un pour son ordinateur fixe et un autre sur son "
-"portable). Chaque terminal possède sa propre clé asymétrique de signature"
-" (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) permettant de signer les "
-"modifications qu’il a réalisées."
+"l’utilisateur accède à Parsec. Chaque utilisateur a potentiellement plusieurs "
+"terminaux (ex: un pour son ordinateur fixe et un autre sur son portable). "
+"Chaque terminal possède sa propre clé asymétrique de signature "
+"(DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) permettant de signer les modifications "
+"qu’il a réalisées."
 
-#: ../../architecture.rst:42
+#: ../../architecture.rst:43
 msgid "Parsec data model"
 msgstr "Modèle de données Parsec"
 
-#: ../../architecture.rst:44
+#: ../../architecture.rst:45
 msgid ""
-"File Manifest : contains the name of the file, the list of block "
-"composing it and the associated BLOCK_ENC_KEY."
+"File Manifest: contains the file name, the list of block composing it and the "
+"associated BLOCK_ENC_KEY."
 msgstr ""
 "File Manifest : contient le nom du fichier, la liste des blocs qui le "
 "composent et les BLOCK_ENC_KEY associées."
 
-#: ../../architecture.rst:45
-msgid ""
-"Folder Manifest : index containing a set of entries, each entry being a "
-"File Manifest or another Folder Manifest."
-msgstr ""
-"Folder Manifest : index qui contient un ensemble d’entrées, chaque entrée"
-" étant un File Manifest ou un autre Folder Manifest."
-
 #: ../../architecture.rst:46
 msgid ""
-"Workspace Manifest : index similar to the Folder Manifest, but that can "
-"be shared between multiple users."
+"Folder Manifest: index containing a set of entries, each entry being either a "
+"File Manifest or another Folder Manifest."
 msgstr ""
-"Workspace Manifest : index similaire au Folder Manifest, mais pouvant "
-"être partagé entre plusieurs utilisateurs."
+"Folder Manifest : index qui contient un ensemble d’entrées, chaque entrée "
+"étant un File Manifest ou un autre Folder Manifest."
 
 #: ../../architecture.rst:47
 msgid ""
-"User Manifest : root index of each user containing the Workspaces "
-"Manifests shared with him."
+"Workspace Manifest: index similar to the Folder Manifest, that can also be "
+"shared between multiple users."
 msgstr ""
-"User Manifest : index racine propre à chaque utilisateur et contenant les"
-" Workspace Manifests partagés avec celui-ci."
+"Workspace Manifest : index similaire au Folder Manifest, mais pouvant être "
+"partagé entre plusieurs utilisateurs."
 
-#: ../../architecture.rst:51
+#: ../../architecture.rst:48
+msgid ""
+"User Manifest: root index of each user containing the Workspaces Manifests "
+"shared with the user."
+msgstr ""
+"User Manifest : index racine propre à chaque utilisateur et contenant les "
+"Workspace Manifests partagés avec celui-ci."
+
+#: ../../architecture.rst:52
 msgid "Data sharing model"
 msgstr "Modèle de partage de données"
 
-#: ../../architecture.rst:53
-msgid ""
-"Workspace : a set of users sharing a trust perimeter. Parsec do the "
-"sharing of sensitive data by encrypting the Workspace Key (WS_ENC_KEY) "
-"using the key of the receiver of that data (USER_ENC_P_KEY) -- that step "
-"is repeated for each receiver."
-msgstr ""
-"Workspace : un groupe d’utilisateurs partageant un même espace de "
-"confiance. PARSEC effectue le partage de données sensibles via le "
-"chiffrement de la clé de workspace (WS_ENC_KEY) par la clé du "
-"destinataire du partage (USER_ENC_P_KEY) -- cette étape de chiffrement "
-"est répétée autant de fois qu’il y a de destinataires."
-
 #: ../../architecture.rst:54
 msgid ""
-"Organization : a set of Workspaces and a set of Users members of that "
-"organization. The access to a workspace can only be awarded to members of"
-" the organization. Two distincts organizations can't share the same "
-"Workspace."
+"Workspace: a set of users sharing a trust perimeter. Parsec ensures sharing "
+"sensitive data by encrypting the Workspace Key (WS_ENC_KEY) using the key of "
+"the receiver of that data (USER_ENC_P_KEY) -- this step is repeated for each "
+"receiver."
 msgstr ""
-"Organisation : un ensemble des workspaces et un ensemble d'utilisateurs "
-"membres de l'organisation. L'accès à un workspace ne peut être accordé "
-"qu'aux membres de l'organisation. Deux organisations distinctes ne "
-"peuvent pas accéder au même workspace."
+"Espace de Travail : un groupe d’utilisateurs partageant un même espace de "
+"confiance. Parsec effectue le partage de données sensibles via le chiffrement "
+"de la clé de workspace (WS_ENC_KEY) par la clé du destinataire du partage "
+"(USER_ENC_P_KEY) -- cette étape de chiffrement est répétée autant de fois "
+"qu’il y a de destinataires."
+
+#: ../../architecture.rst:55
+msgid ""
+"Organization: a set of Workspaces and a set of Users members of the "
+"organization. Workspace access can only be granted to members of the "
+"organization. A single Workspace cannot be shared between two distincts "
+"organizations."
+msgstr ""
+"Organisation : un ensemble des espaces de travail et un ensemble "
+"d'utilisateurs membres de l'organisation. L'accès à un espace de travail ne "
+"peut être accordé qu'aux membres de l'organisation. Deux organisations "
+"distinctes ne peuvent pas accéder au même espace de travail."

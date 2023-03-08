@@ -7,6 +7,7 @@ androidx
 aqtbot
 armv
 arwx
+Asas
 asend
 asgi
 assetimporters
@@ -21,6 +22,7 @@ BlockStore
 Booyakasha
 boto
 botocore
+Bsas
 bxsalsa
 cachekey
 CAFILE
@@ -46,6 +48,7 @@ classpath
 clearkey
 CLSID
 Cmds
+complexify
 conftest
 Consts
 coro
@@ -74,6 +77,7 @@ directlink
 Dorg
 doseq
 dotenv
+drawio
 duckpy
 dvipdfmx
 EINVAL
@@ -121,7 +125,6 @@ ifempty
 ifeq
 ifnewer
 ijkl
-inversed
 ionicons
 iqmp
 itemsoverlay
@@ -221,6 +224,8 @@ newsfragments
 Niño
 nmspc
 NONCEBYTES
+noopener
+noreferrer
 notbase
 notr
 nplurals
@@ -327,6 +332,7 @@ Saltlen
 Sanctorum
 scalarmult
 sceneparsers
+scons
 sdkmanager
 sealedbox
 secho
@@ -355,6 +361,7 @@ spctl
 speechd
 splashscreen
 sqldrivers
+SRSC
 staticlib
 structlog
 stucking
@@ -373,6 +380,7 @@ ThisError
 Timelike
 TIMESTAMPZ
 toastedmarshmallow
+tpek
 triopg
 Trustchain
 trustme

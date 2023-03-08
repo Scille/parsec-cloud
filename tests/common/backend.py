@@ -11,18 +11,21 @@ from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from functools import partial
 from inspect import iscoroutine
+from itertools import chain
 from typing import AsyncContextManager, Callable, Optional, Union
 
 import pytest
 import trio
 import trustme
 from hypercorn.config import Config as HyperConfig
+from hypercorn.config import Sockets
 from hypercorn.trio.run import worker_serve
 from hypercorn.trio.tcp_server import TCPServer
 from hypercorn.trio.worker_context import WorkerContext
 from quart.typing import TestClientProtocol
 from quart_trio import QuartTrio
 
+from parsec._parsec import BackendInvitationAddr, InvitationType
 from parsec.backend import backend_app_factory
 from parsec.backend.app import BackendApp
 from parsec.backend.asgi import app_factory
@@ -40,25 +43,27 @@ def unused_tcp_port():
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
 
-    # On macOS connecting to a bind-to-no-listening socket hangs.
+    # On macOS connecting to a bind-but-not-listening socket hangs.
     # On Windows it doesn't hang but induce a couple of seconds long lag.
     # So on those platforms we actually serve the port, only to right away close the
     # client connection which is a "good enough" emulation of an unused port
     if sys.platform in ("darwin", "win32"):
 
-        def _broken_server(sock):
-            while True:
+        def _broken_server(sock: socket.socket):
+            try:
                 sock.listen()
                 while True:
                     client_sock, _ = sock.accept()
                     client_sock.close()
+            except OSError:
+                # Sock has been closed, the tests are over
+                return
 
-        threading.Thread(target=_broken_server, args=[sock], daemon=True).start()
+        threading.Thread(target=_broken_server, args=[sock], daemon=False).start()
 
     port = sock.getsockname()[1]
     yield port
-    if sys.platform != "darwin":
-        sock.close()
+    sock.close()
 
 
 def correct_addr(
@@ -603,8 +608,15 @@ def running_backend_factory(asyncio_loop, hyper_config) -> RunningBackendFactory
 
     @asynccontextmanager
     async def _running_backend_factory(
-        backend, sockets=None
+        backend: BackendApp, sockets: Optional[Sockets] = None
     ) -> AsyncContextManager[RunningBackend]:
+        if not sockets:
+            sockets = hyper_config.create_sockets()
+            for sock in sockets.secure_sockets:
+                sock.listen(hyper_config.backlog)
+            for sock in sockets.insecure_sockets:
+                sock.listen(hyper_config.backlog)
+
         asgi_app = AsgiOfflineMiddleware(app_factory(backend))
         async with trio.open_nursery() as nursery:
             binds = await nursery.start(
@@ -618,6 +630,15 @@ def running_backend_factory(asyncio_loop, hyper_config) -> RunningBackendFactory
                 addr=BackendAddr(hostname="127.0.0.1", port=port, use_ssl=hyper_config.ssl_enabled),
             )
 
+            # TODO: remove me once https://github.com/pgjones/hypercorn/issues/106 is fixed
+            # tl;dr: Hypercorn doesn't call `socket.shutdown()` when cancelled which makes
+            # the socket wait for the incoming packets to be processed before closing it..
+            # which leads to a deadlock given the server supposed to do that has been cancelled !
+            for s in chain(sockets.insecure_sockets, sockets.secure_sockets):
+                try:
+                    s.shutdown(socket.SHUT_RDWR)  # I'm done asking nicely
+                except OSError:
+                    pass
             nursery.cancel_scope.cancel()
 
     return _running_backend_factory
@@ -630,3 +651,31 @@ async def running_backend(
     async with running_backend_factory(backend, sockets=running_backend_sockets) as rb:
         running_backend_ready._set_running_backend_ready()
         yield rb
+
+
+@pytest.fixture
+async def alice_new_device_invitation(backend, alice):
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
+    )
+    return BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr.get_backend_addr(),
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=invitation.token,
+    )
+
+
+@pytest.fixture
+async def zack_new_user_invitation(backend, alice):
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="zack@example.com",
+    )
+    return BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr.get_backend_addr(),
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.USER,
+        token=invitation.token,
+    )

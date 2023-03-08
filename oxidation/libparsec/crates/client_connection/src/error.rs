@@ -27,6 +27,14 @@ pub enum CommandError {
     #[error("Failed to deserialize the response: {0}")]
     InvalidResponseContent(libparsec_protocol::DecodeError),
 
+    /// The invitation is already used/deleted
+    #[error("Invalid handshake: Invitation already deleted")]
+    InvitationAlreadyDeleted,
+
+    /// We failed to retrieve the invitation
+    #[error("Invalid handshake: Invitation not found")]
+    InvitationNotFound,
+
     /// We failed to retrieve Api-Version
     #[error("Api-Version header is missing")]
     MissingApiVersion,
@@ -74,5 +82,33 @@ impl From<reqwest::Error> for CommandError {
 impl From<libparsec_protocol::EncodeError> for CommandError {
     fn from(e: libparsec_protocol::EncodeError) -> Self {
         Self::Serialization(e)
+    }
+}
+
+pub(crate) fn unsupported_api_version_from_headers(
+    headers: &reqwest::header::HeaderMap,
+) -> CommandError {
+    let api_version = match headers.get("Api-Version") {
+        Some(api_version) => {
+            let api_version = api_version.to_str().unwrap_or_default();
+            match api_version.try_into() {
+                Ok(api_version) => api_version,
+                Err(_) => return CommandError::WrongApiVersion(api_version.into()),
+            }
+        }
+        None => return CommandError::MissingApiVersion,
+    };
+
+    match headers.get("Supported-Api-Versions") {
+        Some(supported_api_versions) => CommandError::UnsupportedApiVersion {
+            api_version,
+            supported_api_versions: supported_api_versions
+                .to_str()
+                .unwrap_or_default()
+                .split(';')
+                .filter_map(|x| ApiVersion::try_from(x).ok())
+                .collect(),
+        },
+        None => CommandError::MissingSupportedApiVersions,
     }
 }

@@ -60,6 +60,12 @@ def pytest_addoption(parser):
     parser.addoption("--runmountpoint", action="store_true", help="Don't skip FUSE/WinFSP tests")
     parser.addoption("--rungui", action="store_true", help="Don't skip GUI tests")
     parser.addoption("--rundiskfull", action="store_true", help="Don't skip the disk full tests")
+    # TODO: remove me once client connection oxidation is done
+    parser.addoption(
+        "--enable-unstable-oxidized-client-connection",
+        action="store_true",
+        help="Use the unstable Rust client connection",
+    )
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
@@ -127,6 +133,12 @@ def pytest_configure(config):
         tests.common.trio_clock._set_side_effects_timeout(
             float(config.getoption("--side-effects-timeout"))
         )
+
+    # TODO: remove me once client connection oxidation is done
+    if config.getoption("--enable-unstable-oxidized-client-connection"):
+        import parsec
+
+        parsec.FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"] = True
 
 
 def _is_xdist_master(config):

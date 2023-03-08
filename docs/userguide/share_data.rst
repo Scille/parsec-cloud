@@ -8,7 +8,7 @@ Share data
 Create & share workspace
 ------------------------
 
-In Parsec, data are stored into workspaces, each workspace having it own policy
+In Parsec, data are stored into workspaces, each workspace having its own policy
 for read and write access.
 
 So before adding data to Parsec we must create a workspace:
@@ -27,10 +27,10 @@ above, and can then share the workspace with other users.
 Regarding the different sharing roles:
 
 - Reader: has read-only access to the workspace
-- Contributor: has read&write access
-- Manager: same access as Contributor, but can give Reader and Contributor roles to other users.
-- Owner: same as Manager, but can also give Manager and Owner roles to other users.
-  On top of that, owners are responsible for maintenance tasks such as
+- Contributor: has read and write access
+- Manager: same as Contributor and can also Reader and Contributor roles to other users.
+- Owner: same as Manager and can also give Manager and Owner roles to other users.
+  In addition to this, Owners are responsible for maintenance tasks such as
   :ref:`workspace re-encryption <doc_userguide_revoke_user_workspace_re_encryption>`.
 
 .. warning::
@@ -58,10 +58,10 @@ Parsec also proposes its own file manager, accessible when clicking on a mounted
     :align: center
     :alt: Parsec in file explorer
 
-Data copied from file explorer also appear into the Parsec client. On top of that the Parsec client also displays the current synchronization state of each file (showing whether the modification are only present locally or if they have been synced with the server and hence are visible by everybody with access to the workspace).
+Data copied from file explorer also appear in the Parsec client. In addition, the Parsec client also displays the current synchronization state of each file (showing whether the modifications are only present locally or they have been synced with the server and hence are visible by everyone with access to the workspace).
 
 .. note::
 
-    Parsec client can work while offline (however only the data present locally
+    Parsec client can work while offline (however only data present locally
     are available), synchronization will occur automatically as soon as the
-    connection with the server is achieved.
+    connection with the server is established.

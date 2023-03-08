@@ -3,78 +3,143 @@
 # This file is distributed under the same license as the Parsec package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-26 20:04+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2023-02-28 16:33+0100\n"
+"PO-Revision-Date: 2023-03-02 12:00+0100\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: \n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+"X-Generator: Poedit 3.2.2\n"
 
+#: ../../roles.rst:7
 msgid "Profiles and Roles"
 msgstr "Profils et Rôles"
 
+#: ../../roles.rst:11
 msgid "User management"
 msgstr "Gestion des utilisateurs"
 
-msgid "There are two profiles for user management :"
+#: ../../roles.rst:13
+msgid "There are two profiles for user management:"
 msgstr "Il existe deux profils pour la gestion des utilisateurs :"
 
+#: ../../roles.rst:16
 msgid "The User profile enables"
-msgstr "Utilisateur permet"
+msgstr "Le profil Utilisateur permet"
 
-msgid "the creation of a Workspace;"
+#: ../../roles.rst:18
+msgid "the creation of Workspaces;"
 msgstr "la création d’un Espace de Travail;"
 
-msgid "the management of documentation (creation, modification, history, integrity information);"
-msgstr "la gestion de la documentation (création, modification, historique, informations sur l’intégrité);"
+#: ../../roles.rst:19
+msgid ""
+"the data management (creation, modification, history, integrity information);"
+msgstr ""
+"la gestion de données (création, modification, historique, informations sur "
+"l’intégrité);"
 
-msgid "the sharing of data inside a Workspace;"
+#: ../../roles.rst:20
+msgid "the data sharing inside a Workspace;"
 msgstr "le partage des données au sein d’un Espace de Travail;"
 
-msgid "the creation of its own devices."
-msgstr "la création de ses propres terminaux."
+#: ../../roles.rst:21
+msgid "the creation of its own Devices."
+msgstr "la création de ses propres Terminaux."
 
+#: ../../roles.rst:25
 msgid "The Administrator profile enables"
-msgstr "Administrateur permet"
+msgstr "Le profil Administrateur permet"
 
-msgid "every roles of the User profile;"
+#: ../../roles.rst:27
+msgid "the same roles of the User profile;"
 msgstr "tous les droits du profil Utilisateur;"
 
-msgid "the creation of other users (whether Administrator or User)"
-msgstr "la création d’autres utilisateurs (Administrateur ou Utilisateur);"
+#: ../../roles.rst:28
+msgid "the creation of Users (either with Administrator profile or User profile);"
+msgstr ""
+"la création d’autres utilisateurs (avec profil Administrateur ou Utilisateur);"
 
-msgid "the deletion of whichever User whatever his profile."
-msgstr "la suppression de n’importe quel Utilisateur quelque soit son profil."
+#: ../../roles.rst:29
+msgid "the deletion of Users regardless of their profile."
+msgstr "la suppression d'un Utilisateur quelque soit son profil."
 
-msgid "It isn't possible to modify a profile : an Administrator will stay an Administrator; an User will stay an User. In that case of modification, it is required, after deletion, to create a new user and allocate him the new role."
-msgstr "Le profil est défini à la création de l'utilisateur et n'est pas modifiable par la suite. Ainsi pour en changer il faut revoquer l'utilisateur en question puis le recréer en spécifiant le nouveau profil."
+#: ../../roles.rst:33
+msgid ""
+"It is not possible to modify the user's profile: an Administrator will remain "
+"an Administrator; a User will remain a User. Therefore, the user must be "
+"deleted and then re-created in order to allocate him the new profile."
+msgstr ""
+"Le profil est défini à la création de l'utilisateur et n'est pas modifiable par "
+"la suite: un Administrateur restera un Administrateur ; un Utilisateur restera "
+"un Utilisateur. Il faut donc supprimer l'utilisateur puis le recréer afin de "
+"lui attribuer le nouveau profil."
 
+#: ../../roles.rst:37
 msgid "Device management"
 msgstr "Gestion des terminaux"
 
-msgid "Only the user, whatever his profile, can create an undetermined number of devices for himself. Every devices are clones. The number of devices by user is usually small. The deletion of on device only is not possible. When a user is deleted, all his devices are deleted."
-msgstr "Seul l’utilisateur, quelque soit son profil, peut se créer un nombre quelconque de terminaux (ou device). Tous les terminaux sont des clones. Le nombre de terminaux par utilisateur est généralement faible. La suppression d’un seul terminal est impossible. Lorsqu'un utilisateur est supprimé, tous ses terminaux sont révoqués."
+#: ../../roles.rst:39
+msgid ""
+"Only the user, regardless the profile, can create devices for itself. Devices "
+"are clones. The number of devices created by a user is usually small."
+msgstr ""
+"Seul l'utilisateur, quel que soit son profil, peut créer des terminaux pour lui-"
+"même. Les terminaux sont des clones. Le nombre de terminaux créés par un "
+"utilisateur est généralement faible."
 
+#: ../../roles.rst:41
+msgid ""
+"When a user is deleted, all the associated devices are deleted. It is not "
+"possible to delete a single device."
+msgstr ""
+"Lorsqu'un utilisateur est supprimé, tous les terminaux associés sont supprimés. "
+"Il n'est pas possible de supprimer un seul terminal."
+
+#: ../../roles.rst:45
 msgid "Management of Workspaces and Documents"
-msgstr "Gestion des Espaces de Travail et des documents"
+msgstr "Gestion des Espaces de Travail et des Documents"
 
-msgid "There are four roles having different rights in a workspace :"
-msgstr "Il existe quatre rôles ayant des droits différents au sein d’un Espace de Travail :"
+#: ../../roles.rst:47
+msgid "There are four roles having different rights in a workspace:"
+msgstr ""
+"Il existe quatre rôles ayant des droits différents au sein d’un Espace de "
+"Travail :"
 
-msgid "Reader : he only has read access."
-msgstr "Lecteur : il ne dispose des accès qu’en lecture."
+#: ../../roles.rst:49
+msgid "Reader: it has **read** access."
+msgstr "Lecteur : ne dispose des accès qu’en **lecture**."
 
-msgid "Contributor : he only has read and write access."
-msgstr "Contributeur : il dispose des accès en écriture et en lecture."
+#: ../../roles.rst:50
+msgid "Contributor: it has **read** and **write** access."
+msgstr "Contributeur : dispose des accès en **lecture** et en **écriture**."
 
-msgid "Manager : he can give rights except the one of owner. He has read and write access."
-msgstr "Gérant : il peut donner les droits sauf celui de propriétaire. Il a accès en lecture et en écriture."
+#: ../../roles.rst:51
+msgid ""
+"Manager: it has **read** and **write** access and can also **grant roles** with "
+"the exception of the Owner role."
+msgstr ""
+"Gérant : dispose d'un accès en **lecture** et en **écriture** et peut également "
+"**accorder des rôles** à l'exception du rôle de Propriétaire."
 
-msgid "Owner : he can give rights including the one of Owner. There can be multiple owners. The Workspace creator is Owner by default. He has read and write access. Only an Owner can trigger a complete Workspace re-encryption in case of the prior deletion of an user (for example consecutive to the compromise of a device or an user)."
-msgstr "Propriétaire : il peut donner tous les droits y compris celui de propriétaire. Il peut y avoir plusieurs propriétaires. Le créateur de l'Espace de Travail est propriétaire par défaut. Il a accès en lecture et en écriture. Seul un Propriétaire peut enclencher un re-chiffrement intégral des métadonnées de l'Espace de Travail en cas de suppression préalable d’un utilisateur (consécutive par exemple à la compromission d’un terminal ou à la compromission d’un utilisateur)."
+#: ../../roles.rst:52
+msgid ""
+"Owner: it has **read** and **write** access and can also **grant roles** "
+"including the Owner role. It can also **trigger a complete Workspace re-"
+"encryption** in case of a prior user deletion (for example following the "
+"compromise of a user's device). A Workspace can have multiple Owners. The "
+"Workspace creator has the Owner role by default."
+msgstr ""
+"Propriétaire : dispose d'un accès en **lecture** et **écriture** et peut "
+"également **accorder des rôles**, y compris le rôle de Propriétaire. Il peut "
+"également **déclencher un ré-encryptage complet de l'Espace de Travail** en cas "
+"de suppression préalable d'un utilisateur (par exemple suite à la compromission "
+"du dispositif d'un utilisateur). Un Espace de Travail peut avoir plusieurs "
+"Propriétaires. Le créateur de l'espace de travail a le rôle de Propriétaire par "
+"défaut."

@@ -32,21 +32,20 @@
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use libparsec_crypto::SigningKey;
-use libparsec_protocol::{ApiVersion, Request};
+use libparsec_protocol::Request;
 use libparsec_types::{BackendOrganizationAddr, DeviceID};
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
 
-use crate::error::{CommandError, CommandResult};
+use crate::{
+    error::{CommandError, CommandResult},
+    API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+};
 
 /// Method name that will be used for the header `Authorization` to indicate that will be using this method.
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
-/// How we serialize the data before sending a request.
-pub const PARSEC_CONTENT_TYPE: &str = "application/msgpack";
-
-pub const API_VERSION_HEADER_NAME: &str = "Api-Version";
 
 /// Factory that send commands in a authenticated context.
 pub struct AuthenticatedCmds {
@@ -93,7 +92,7 @@ fn prepare_request(
 ) -> RequestBuilder {
     let request_builder = sign_request(request_builder, signing_key, device_id, &body);
 
-    let mut content_headers = HeaderMap::with_capacity(2);
+    let mut content_headers = HeaderMap::with_capacity(3);
     content_headers.insert(
         API_VERSION_HEADER_NAME,
         HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
@@ -159,33 +158,9 @@ impl AuthenticatedCmds {
                 Ok(T::load_response(&response_body)?)
             }
             415 => Err(CommandError::BadContent),
-            422 => {
-                let headers = resp.headers();
-
-                let api_version = headers
-                    .get("Api-Version")
-                    .ok_or(CommandError::MissingApiVersion)?
-                    .to_str()
-                    .unwrap_or_default();
-                let api_version = api_version
-                    .try_into()
-                    .map_err(|_| CommandError::WrongApiVersion(api_version.into()))?;
-
-                let supported_api_versions = resp
-                    .headers()
-                    .get("Supported-Api-Versions")
-                    .ok_or(CommandError::MissingSupportedApiVersions)?
-                    .to_str()
-                    .unwrap_or_default()
-                    .split(';')
-                    .filter_map(|x| ApiVersion::try_from(x).ok())
-                    .collect();
-
-                Err(CommandError::UnsupportedApiVersion {
-                    api_version,
-                    supported_api_versions,
-                })
-            }
+            422 => Err(crate::error::unsupported_api_version_from_headers(
+                resp.headers(),
+            )),
             460 => Err(CommandError::ExpiredOrganization),
             461 => Err(CommandError::RevokedUser),
             _ => Err(CommandError::InvalidResponseStatus(resp.status(), resp)),

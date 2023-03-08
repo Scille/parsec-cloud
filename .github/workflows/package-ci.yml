@@ -111,6 +111,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist/
+          if-no-file-found: error
         timeout-minutes: 5
 
   package-linux-build-snap:
@@ -162,6 +163,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: ${{ runner.temp }}/parsec*.snap
+          if-no-file-found: error
 
   package-linux-test-snap:
     name: '🐧 Linux: 📦 Packaging (test Snap on ${{ matrix.os }})'
@@ -288,6 +290,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer-content
           path: ${{ runner.temp }}/dist/
+          if-no-file-found: error
 
   package-macos-build-app:
     runs-on: macos-12
@@ -329,6 +332,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: ${{ runner.temp }}/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
+          if-no-file-found: error
 
   package-macos-test-app:
     runs-on: macos-${{ matrix.macos-version }}
@@ -357,29 +361,58 @@ jobs:
           open parsec.app --args --diagnose
 
   package-electron-app:
-    runs-on: ubuntu-22.04
-    name: ⚡ Package electron
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-22.04
+            paths: |
+              oxidation/client/electron/dist/parsec_*_*.snap
+              oxidation/client/electron/dist/parsec-*.AppImage
+          - name: 🏁 Windows
+            os: windows-2022
+            paths: |
+              oxidation/client/electron/dist/parsec Setup *.exe
+              oxidation/client/electron/dist/parsec Setup *.exe.blockmap
+    name: '${{matrix.name }}: ⚡ Package electron'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
 
+      - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
+        id: setup-python
+        with:
+          python-version: ${{ env.python-version }}
+        timeout-minutes: 10
+
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@c758e63728211bd4acda6501cfa2a16c5c751fc4
+        with:
+          toolchain: ${{ env.rust-version }}
+        timeout-minutes: 10
+
       - name: Install dependencies
+        shell: bash
         run: |
           npm clean-install
           (cd electron && npm clean-install)
           (cd ../bindings/electron && npm clean-install)
         working-directory: oxidation/client
+        timeout-minutes: 40
 
       - name: Build Electron App
-        run: |
-          npm run electron:release:sodium
+        run: npm run electron:release:sodium
         working-directory: oxidation/client
+        timeout-minutes: 40
 
       - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app
-          path: |
-            oxidation/client/electron/dist/client_*_*.snap
-            oxidation/client/electron/dist/client-*.AppImage
+          path: ${{ matrix.paths }}
+          if-no-file-found: error
+        timeout-minutes: 10
 
   package-android-app:
     runs-on: ubuntu-22.04
@@ -423,6 +456,7 @@ jobs:
           path: |
             oxidation/client/android/app/build/outputs/apk/release/app-release-unsigned.apk
             oxidation/client/android/app/build/outputs/apk/release/output-metadata.json
+          if-no-file-found: error
 
   package-web-app:
     runs-on: ubuntu-22.04
@@ -442,3 +476,4 @@ jobs:
         with:
           name: webapp
           path: oxidation/client/dist/
+          if-no-file-found: error

@@ -125,7 +125,7 @@ pub enum ClientWorkspaceFsListdirError {
 pub enum FsListDirItem {
     Available { info: FsEntryInfo },
     // This entry is not present on the local cache, `client_wfs_path_info`
-    // should be used to retreive it info.
+    // should be used to retrieve it info.
     // We don't try to fetch it info in listdir to return fast so that the GUI
     // can first display what is locally available, then load the rest and
     // update the GUI asynchronously.

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from base64 import b64decode, b64encode
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterable, AsyncIterator, NoReturn, Tuple
+from typing import Any, AsyncIterable, AsyncIterator, NoReturn
 
 import trio
 from nacl.exceptions import CryptoError
 from quart import Blueprint, Response, current_app, g, request
 from quart.wrappers.response import ResponseBody
 
-from parsec._parsec import ClientType, DateTime
+from parsec._parsec import ClientType, DateTime, InvitationToken
 from parsec.api.protocol import (
     DeviceID,
     IncompatibleAPIVersionsError,
@@ -20,7 +20,18 @@ from parsec.api.protocol import (
 )
 from parsec.api.version import API_V2_VERSION, API_V3_VERSION, ApiVersion
 from parsec.backend.app import BackendApp
-from parsec.backend.client_context import AnonymousClientContext, AuthenticatedClientContext
+from parsec.backend.client_context import (
+    AnonymousClientContext,
+    AuthenticatedClientContext,
+    InvitedClientContext,
+)
+from parsec.backend.invite import (
+    CloseInviteConnection,
+    Invitation,
+    InvitationAlreadyDeletedError,
+    InvitationError,
+    InvitationNotFoundError,
+)
 from parsec.backend.organization import (
     Organization,
     OrganizationAlreadyExistsError,
@@ -63,9 +74,10 @@ def _rpc_msgpack_rep(data: dict[str, object], api_version: ApiVersion) -> Respon
 # we are not settled on what should be used yet (who knows ! maybe in the future
 # we will use another serialization format for the command processing).
 # Instead we rely on the following HTTP status code:
-# - 404: Organization non found or invalid organization ID
 # - 401: Bad authentication info (bad Author/Signature/Timestamp headers)
+# - 404: Organization / Invitation not found or invalid organization ID
 # - 406: Bad accept type (for the SSE events route)
+# - 410: Invitation already deleted / used
 # - 415: Bad content-type, body is not a valid message or unknown command
 # - 422: Unsupported API version
 # - 460: Organization is expired
@@ -87,9 +99,18 @@ async def _do_handshake(
     backend: BackendApp,
     allow_missing_organization: bool,
     check_authentication: bool,
+    check_invitation: bool,
     expected_content_type: str | None,
     expected_accept_type: str | None,
-) -> Tuple[ApiVersion, ApiVersion, OrganizationID, Organization | None, User | None, Device | None]:
+) -> tuple[
+    ApiVersion,
+    ApiVersion,
+    OrganizationID,
+    Organization | None,
+    User | None,
+    Device | None,
+    Invitation | None,
+]:
     # The anonymous RPC API existed before the `Api-Version`/`Content-Type` fields
     # check where introduced, hence we have this workaround to provide backward compatibility
     # TODO: remove me once Parsec 2.11.1 is deprecated
@@ -185,7 +206,26 @@ async def _do_handshake(
         except CryptoError:
             _handshake_abort(401, api_version=api_version)
 
-    return api_version, client_api_version, organization_id, organization, user, device
+    if not check_invitation:
+        invitation = None
+    else:
+        raw_invitation_token = request.headers.get("Invitation-Token", "")
+
+        try:
+            token = InvitationToken.from_hex(raw_invitation_token)
+        except ValueError:
+            _handshake_abort_bad_content(api_version=api_version)
+
+        try:
+            invitation = await backend.invite.info(organization_id=organization_id, token=token)
+        except InvitationAlreadyDeletedError:
+            _handshake_abort(410, api_version=api_version)
+        except InvitationNotFoundError:
+            _handshake_abort(404, api_version=api_version)
+        except InvitationError:
+            _handshake_abort(401, api_version=api_version)
+
+    return api_version, client_api_version, organization_id, organization, user, device, invitation
 
 
 @rpc_bp.route("/anonymous/<raw_organization_id>", methods=["GET", "POST"])
@@ -196,11 +236,12 @@ async def anonymous_api(raw_organization_id: str) -> Response:
         request.method == "POST" and backend.config.organization_spontaneous_bootstrap
     )
 
-    api_version, client_api_version, organization_id, organization, _, _ = await _do_handshake(
+    api_version, client_api_version, organization_id, organization, _, _, _ = await _do_handshake(
         raw_organization_id=raw_organization_id,
         backend=backend,
         allow_missing_organization=allow_missing_organization,
         check_authentication=False,
+        check_invitation=False,
         expected_content_type=CONTENT_TYPE_MSGPACK,
         expected_accept_type=None,
     )
@@ -240,19 +281,76 @@ async def anonymous_api(raw_organization_id: str) -> Response:
         _handshake_abort_bad_content(api_version=api_version)
 
     # Run command
-    rep = await cmd_func(client_ctx, msg)
+    try:
+        rep = await cmd_func(client_ctx, msg)
+    except Exception as exc:
+        print("rpc didn't handle this exception:", type(exc))
+        raise exc
     return _rpc_msgpack_rep(rep, api_version)
+
+
+@rpc_bp.route("/invited/<raw_organization_id>", methods=["POST"])
+async def invited_api(raw_organization_id: str) -> Response:
+    backend: BackendApp = g.backend
+
+    api_version, client_api_version, organization_id, _, _, _, invitation = await _do_handshake(
+        raw_organization_id=raw_organization_id,
+        backend=backend,
+        allow_missing_organization=False,
+        check_authentication=False,
+        check_invitation=True,
+        expected_content_type=CONTENT_TYPE_MSGPACK,
+        expected_accept_type=None,
+    )
+
+    # Unpack verified body
+    body: bytes = await request.get_data(cache=False)
+    try:
+        msg = unpackb(body)
+    except SerdePackingError:
+        _handshake_abort_bad_content(api_version=api_version)
+
+    cmd = msg.get("cmd")
+    if not isinstance(cmd, str):
+        _handshake_abort_bad_content(api_version=api_version)
+
+    try:
+        cmd_func = backend.apis[ClientType.INVITED][cmd]
+    except KeyError:
+        _handshake_abort_bad_content(api_version=api_version)
+
+    assert invitation is not None
+    client_ctx = InvitedClientContext(
+        api_version=api_version,
+        client_api_version=client_api_version,
+        organization_id=organization_id,
+        invitation=invitation,
+    )
+    client_ctx.logger.info(
+        f"Invited client successfully connected (client/server API version: {client_api_version}/{api_version})"
+    )
+
+    try:
+        cmd_rep = await cmd_func(client_ctx, msg)
+    except CloseInviteConnection:
+        _handshake_abort(410, api_version=api_version)
+    except Exception as exc:
+        print("rpc didn't handle this exception:", type(exc))
+        raise exc
+
+    return _rpc_msgpack_rep(cmd_rep, api_version)
 
 
 @rpc_bp.route("/authenticated/<raw_organization_id>", methods=["POST"])
 async def authenticated_api(raw_organization_id: str) -> Response:
     backend: BackendApp = g.backend
 
-    api_version, client_api_version, organization_id, _, user, device = await _do_handshake(
+    api_version, client_api_version, organization_id, _, user, device, _ = await _do_handshake(
         raw_organization_id=raw_organization_id,
         backend=backend,
         allow_missing_organization=False,
         check_authentication=True,
+        check_invitation=False,
         expected_content_type=CONTENT_TYPE_MSGPACK,
         expected_accept_type=None,
     )
@@ -290,7 +388,12 @@ async def authenticated_api(raw_organization_id: str) -> Response:
         f"Authenticated client successfully connected (client/server API version: {client_api_version}/{api_version})"
     )
 
-    cmd_rep = await cmd_func(client_ctx, msg)
+    try:
+        cmd_rep = await cmd_func(client_ctx, msg)
+    except Exception as exc:
+        print("rpc didn't handle this exception:", type(exc))
+        raise exc
+
     return _rpc_msgpack_rep(cmd_rep, api_version)
 
 
@@ -412,11 +515,12 @@ class SSEResponseIterableBody(ResponseBody):
 async def authenticated_events_api(raw_organization_id: str) -> Response:
     backend: BackendApp = g.backend
 
-    api_version, client_api_version, organization_id, _, user, device = await _do_handshake(
+    api_version, client_api_version, organization_id, _, user, device, _ = await _do_handshake(
         raw_organization_id=raw_organization_id,
         backend=backend,
         allow_missing_organization=False,
         check_authentication=True,
+        check_invitation=False,
         # We don't care of Content-Type given the request has no body
         expected_content_type=None,
         expected_accept_type=ACCEPT_TYPE_SSE,

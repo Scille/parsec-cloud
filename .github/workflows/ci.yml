@@ -1,6 +1,7 @@
 name: ci
 
 on:
+  workflow_dispatch:
   merge_group:
   pull_request:
   push:
@@ -41,6 +42,8 @@ jobs:
       - test-web-app
     runs-on: ubuntu-latest
     if: always()
+    # Just a fail-safe timeout, see the fine grain per-task timeout instead
+    timeout-minutes: 2
     steps:
       # The Needs context value contains only:
       # - the final state a jobs (if it fails or not)
@@ -73,8 +76,11 @@ jobs:
     name: 📊 Q&A
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
     runs-on: ubuntu-20.04
+    # Just a fail-safe timeout, see the fine grain per-task timeout instead
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 2
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -84,15 +90,18 @@ jobs:
           set -ex
           rustup component add rustfmt
           cargo fmt --version
+        timeout-minutes: 2
 
       - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
+        timeout-minutes: 5
 
       - uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516  # pin v3.5.1
         with:
           node-version: ${{ env.node-version }}
+        timeout-minutes: 2
 
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
@@ -111,6 +120,7 @@ jobs:
           whereis git
           git fetch origin master
           python .github/scripts/check_newsfragments.py ${{ github.head_ref }}
+        timeout-minutes: 5
 
       - name: Patch pre-commit for line-ending
         run: |
@@ -124,6 +134,7 @@ jobs:
         # We skip _parsec.so compilation given Mypy only cares about _parsec.pyi
         env:
           POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
+        timeout-minutes: 10
 
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
@@ -151,9 +162,12 @@ jobs:
             os: windows-2022
             winfsp-version: 1.11.22176
     name: '${{ matrix.name }}: 🐍 Python tests'
+    # Just a fail-safe timeout, see the fine grain per-task timeout instead
+    timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 2
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -200,6 +214,7 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/postgre-sql.list
 
           sudo apt-get update
+        timeout-minutes: 5
 
         # Install required packages for ubuntu:
         # - LibFuse2 since only libfuse3 is available on ubuntu-20.04.
@@ -233,6 +248,7 @@ jobs:
           steps.python-changes.outputs.run == 'true'
           && startsWith(matrix.os, 'macos-')
         run: brew install --cask macfuse
+        timeout-minutes: 2
 
       - name: (🏁 Windows) Install WinFSP
         if: >-
@@ -246,6 +262,7 @@ jobs:
           unzip winfsp-test/winfsp-tests.zip -d winfsp-test
           pwd
           echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
+        timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
         if: steps.python-changes.outputs.run == 'true'
@@ -253,6 +270,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
+        timeout-minutes: 10
 
       # libparsec is slow to compile, so we save it in cache and skip the
       # compilation entirely if the Rust code hasn't changed !
@@ -270,17 +288,19 @@ jobs:
           path: |
             parsec/_parsec.*.pyd
             parsec/_parsec.*.so
+        timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@dfa8744db3c65831067d3386253fc8ec50fd8cfd # pin v1.3.7
+        uses: actions-rust-lang/setup-rust-toolchain@64fef3b54176f6c03745153e9aae267bf88cbc0f # pin v1.4.3
         if: >-
           steps.python-changes.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # We setup the cache by hand, see below
           cache: false
+        timeout-minutes: 5
 
-      - name: Retreive Rust cache
+      - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # pin v2.2.0
         if: >-
           steps.python-changes.outputs.run == 'true'
@@ -291,6 +311,7 @@ jobs:
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: github.ref == 'refs/heads/master'
+        timeout-minutes: 2
 
       - name: Install python deps
         if: steps.python-changes.outputs.run == 'true'
@@ -299,10 +320,19 @@ jobs:
           set -ex
           if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
+        timeout-minutes: 20
 
       - name: Basic tests
         if: steps.python-changes.outputs.run == 'true'
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
+        timeout-minutes: 10
+
+      # TODO: remove me once client connection oxidation is done
+      - name: (🐧 Linux) Basic tests (with unstable Rust client connection)
+        if: steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        # TODO: -n auto doesn't work see: https://github.com/Scille/parsec-cloud/issues/4145
+        run: poetry run pytest ${{ env.pytest-base-args }} tests --enable-unstable-oxidized-client-connection
         timeout-minutes: 10
 
       - name: (🐧🏁 Not macOS) Mountpoint tests
@@ -317,6 +347,7 @@ jobs:
           steps.python-changes.outputs.run == 'true'
           && startsWith(matrix.os, 'ubuntu-')
         run: poetry run pip install pytest-xvfb
+        timeout-minutes: 2
 
       - name: (🐧🏁 Not MacOS) GUI tests
         if: >-
@@ -358,9 +389,12 @@ jobs:
           - name: 🏁 Windows
             os: windows-2022
     name: '${{ matrix.name }}: 🦀 Rust tests'
+    # Just a fail-safe timeout, see the fine grain per-task timeout instead
+    timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 2
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -374,13 +408,14 @@ jobs:
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
-      - uses: actions-rust-lang/setup-rust-toolchain@dfa8744db3c65831067d3386253fc8ec50fd8cfd # pin v1.3.7
+      - uses: actions-rust-lang/setup-rust-toolchain@64fef3b54176f6c03745153e9aae267bf88cbc0f # pin v1.4.3
         if: steps.rust-changes.outputs.run == 'true'
         with:
           # We setup the cache by hand, see below
           cache: false
+        timeout-minutes: 10
 
-      - name: Retreive Rust cache
+      - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # pin v2.2.0
         if: steps.rust-changes.outputs.run == 'true'
         with:
@@ -389,6 +424,8 @@ jobs:
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: github.ref == 'refs/heads/master'
+        timeout-minutes: 5
+
 
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
@@ -397,6 +434,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
@@ -406,6 +444,7 @@ jobs:
           cargo test --profile ci-rust --workspace ${{ env.cargo-exclude-unused-crates }}
           # By default, `libparsec_crypto` uses Rust Crypto
           cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide
+        timeout-minutes: 30
 
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
@@ -423,8 +462,11 @@ jobs:
   test-web-app:
     runs-on: ubuntu-22.04
     name: 🌐 Web tests
+    # Just a fail-safe timeout, see the fine grain per-task timeout instead
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 2
 
       - uses: ./.github/actions/paths-filter
         id: changes
@@ -440,6 +482,8 @@ jobs:
       - uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516  # pin v3.5.1
         with:
           node-version: ${{ env.node-version }}
+        timeout-minutes: 2
+
       # TODO: cache libparsec and reuse it if Rust code hasn't changed !
 
       - name: Install dependencies

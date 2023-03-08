@@ -13,7 +13,13 @@ from quart import Quart
 from quart.typing import TestClientProtocol, TestHTTPConnectionProtocol
 from werkzeug.datastructures import Headers
 
-from parsec._parsec import DateTime, EventsListenRep, OrganizationID
+from parsec._parsec import (
+    BackendInvitationAddr,
+    DateTime,
+    EventsListenRep,
+    InvitationToken,
+    OrganizationID,
+)
 from parsec.api.protocol import authenticated_ping_serializer, invited_ping_serializer
 from parsec.api.version import API_VERSION
 from parsec.core.types import LocalDevice
@@ -217,6 +223,68 @@ class AnonymousRpcApiClient(BaseRpcApiClient):
             return rep
 
 
+class InvitedRpcApiClient(BaseRpcApiClient):
+    API_VERSION = API_VERSION
+
+    def __init__(
+        self,
+        organization_id: OrganizationID,
+        client: TestClientProtocol,
+        invitation_token: InvitationToken,
+    ):
+        self.organization_id = organization_id
+        self.client = client
+        self.invitation_token = invitation_token
+
+    @property
+    def base_headers(self):
+        return Headers(
+            {
+                "Content-Type": "application/msgpack",
+                "Api-Version": str(self.API_VERSION),
+                "Invitation-Token": self.invitation_token.hex,
+            }
+        )
+
+    async def send_ping(self, ping: str = "foo", **kwargs):
+        return await self.send({"cmd": "ping", "ping": ping}, invited_ping_serializer, **kwargs)
+
+    async def send(
+        self,
+        req,
+        serializer,
+        extra_headers: Dict[str, str] = {},
+        before_send_hook: Optional[Callable] = None,
+        now: Optional[DateTime] = None,
+        check_rep: bool = True,
+    ):
+        now = now or DateTime.now()
+        body = serializer.req_dumps(req)
+        headers = self.base_headers.copy()
+
+        # Customize headers
+        for k, v in extra_headers.items():
+            if v is None:
+                headers.pop(k, None)
+            else:
+                headers[k] = v
+
+        args = {"path": f"/invited/{self.organization_id.str}", "headers": headers, "data": body}
+        # Last chance to customize the request !
+        if before_send_hook:
+            # Passing as dict allow the hook to event modify the path param
+            before_send_hook(args)
+        rep = await self.client.post(**args)
+
+        if check_rep:
+            assert rep.status_code == 200
+            rep_body = await rep.get_data()
+            return serializer.rep_loads(rep_body)
+
+        else:
+            return rep
+
+
 @pytest.fixture
 def alice_rpc(alice: LocalDevice, backend_asgi_app: Quart) -> AuthenticatedRpcApiClient:
     test_client = backend_asgi_app.test_client()
@@ -241,3 +309,15 @@ def anonymous_rpc(
 ) -> AuthenticatedRpcApiClient:
     test_client = backend_asgi_app.test_client()
     return AnonymousRpcApiClient(coolorg.organization_id, test_client)
+
+
+@pytest.fixture
+def invited_rpc(
+    coolorg: OrganizationFullData,
+    backend_asgi_app: Quart,
+    alice_new_device_invitation: BackendInvitationAddr,
+) -> InvitedRpcApiClient:
+    test_client = backend_asgi_app.test_client()
+    return InvitedRpcApiClient(
+        coolorg.organization_id, test_client, alice_new_device_invitation.token
+    )

@@ -63,6 +63,7 @@ from parsec._parsec import (
     UserCreateRepOk,
     generate_nonce,
 )
+from parsec._parsec import InvitedCmds as RsBackendInvitedCmds
 from parsec.api.data import (
     DataError,
     InviteDeviceConfirmation,
@@ -164,7 +165,7 @@ def _check_rep(rep: Any, step_name: str, ok_type: Type[T_OK_TYPES]) -> T_OK_TYPE
 
 
 async def claimer_retrieve_info(
-    cmds: BackendInvitedCmds,
+    cmds: BackendInvitedCmds | RsBackendInvitedCmds,
 ) -> Union["UserClaimInitialCtx", "DeviceClaimInitialCtx"]:
     rep = await cmds.invite_info()
     rep_ok = _check_rep(rep, step_name="invitation retrieval", ok_type=InviteInfoRepOk)
@@ -189,7 +190,7 @@ class BaseClaimInitialCtx:
     greeter_user_id: UserID
     greeter_human_handle: HumanHandle | None
 
-    _cmds: BackendInvitedCmds
+    _cmds: BackendInvitedCmds | RsBackendInvitedCmds
 
     async def _do_wait_peer(self) -> Tuple[SASCode, SASCode, SecretKey]:
         claimer_private_key = PrivateKey.generate()
@@ -252,7 +253,7 @@ class BaseClaimInProgress1Ctx:
 
     _claimer_sas: SASCode
     _shared_secret_key: SecretKey
-    _cmds: BackendInvitedCmds
+    _cmds: BackendInvitedCmds | RsBackendInvitedCmds
 
     def generate_greeter_sas_choices(self, size: int = 3) -> List[SASCode]:
         return generate_sas_code_candidates(self.greeter_sas, size=size)
@@ -289,7 +290,7 @@ class BaseClaimInProgress2Ctx:
     claimer_sas: SASCode
 
     _shared_secret_key: SecretKey
-    _cmds: BackendInvitedCmds
+    _cmds: BackendInvitedCmds | RsBackendInvitedCmds
 
     async def _do_wait_peer_trust(self) -> None:
         rep = await self._cmds.invite_3b_claimer_wait_peer_trust()
@@ -313,7 +314,7 @@ class DeviceClaimInProgress2Ctx(BaseClaimInProgress2Ctx):
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserClaimInProgress3Ctx:
     _shared_secret_key: SecretKey
-    _cmds: BackendInvitedCmds
+    _cmds: BackendInvitedCmds | RsBackendInvitedCmds
 
     async def do_claim_user(
         self,
@@ -383,7 +384,7 @@ class UserClaimInProgress3Ctx:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceClaimInProgress3Ctx:
     _shared_secret_key: SecretKey
-    _cmds: BackendInvitedCmds
+    _cmds: BackendInvitedCmds | RsBackendInvitedCmds
 
     async def do_claim_device(self, requested_device_label: DeviceLabel | None) -> LocalDevice:
         # Device key is generated here and kept in memory until the end of

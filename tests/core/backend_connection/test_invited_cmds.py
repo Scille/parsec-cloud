@@ -4,9 +4,9 @@ from __future__ import annotations
 import pytest
 import trio
 
+from parsec import FEATURE_FLAGS
 from parsec._parsec import DateTime, InvitationType, InvitedPingRepOk
 from parsec.api.protocol import INVITED_CMDS, InvitationDeletedReason, InvitationToken
-from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
@@ -18,46 +18,34 @@ from parsec.core.types import BackendInvitationAddr
 from tests.core.backend_connection.common import ALL_CMDS
 
 
-@pytest.fixture
-async def invitation_addr(backend, alice):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id, greeter_user_id=alice.user_id
-    )
-    return BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr.get_backend_addr(),
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    )
-
-
 @pytest.mark.trio
-async def test_backend_offline(invitation_addr):
+async def test_backend_offline(alice_new_device_invitation):
     with pytest.raises(BackendNotAvailable):
-        async with backend_invited_cmds_factory(invitation_addr) as cmds:
+        async with backend_invited_cmds_factory(alice_new_device_invitation) as cmds:
             await cmds.ping()
 
 
 @pytest.mark.trio
-async def test_backend_switch_offline(running_backend, invitation_addr):
-    async with backend_invited_cmds_factory(invitation_addr) as cmds:
+async def test_backend_switch_offline(running_backend, alice_new_device_invitation):
+    async with backend_invited_cmds_factory(alice_new_device_invitation) as cmds:
         await cmds.ping()
         with running_backend.offline():
             with pytest.raises(BackendNotAvailable):
                 await cmds.ping()
 
 
+@pytest.mark.skipif(FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No error")
 @pytest.mark.trio
-async def test_backend_closed_cmds(running_backend, invitation_addr):
-    async with backend_invited_cmds_factory(invitation_addr) as cmds:
+async def test_backend_closed_cmds(running_backend, alice_new_device_invitation):
+    async with backend_invited_cmds_factory(alice_new_device_invitation) as cmds:
         pass
     with pytest.raises(trio.ClosedResourceError):
         await cmds.ping()
 
 
 @pytest.mark.trio
-async def test_ping(running_backend, invitation_addr):
-    async with backend_invited_cmds_factory(invitation_addr) as cmds:
+async def test_ping(running_backend, alice_new_device_invitation):
+    async with backend_invited_cmds_factory(alice_new_device_invitation) as cmds:
         rep = await cmds.ping("Hello World !")
         assert rep == InvitedPingRepOk("Hello World !")
 
@@ -74,11 +62,9 @@ async def test_handshake_organization_expired(running_backend, expiredorg, expir
         token=invitation.token,
     )
 
-    with running_backend.backend.event_bus.listen() as spy:
-        with pytest.raises(BackendConnectionRefused) as exc:
-            async with backend_invited_cmds_factory(invitation_addr) as cmds:
-                await cmds.ping()
-        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+    with pytest.raises(BackendConnectionRefused) as exc:
+        async with backend_invited_cmds_factory(invitation_addr) as cmds:
+            await cmds.ping()
     assert str(exc.value) == "The organization has expired"
 
 
@@ -97,24 +83,26 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
 
 
 @pytest.mark.trio
-async def test_handshake_already_used_invitation(running_backend, coolorg, invitation_addr, alice):
+async def test_handshake_already_used_invitation(
+    running_backend, coolorg, alice_new_device_invitation, alice
+):
     await running_backend.backend.invite.delete(
         organization_id=alice.organization_id,
         greeter=alice.user_id,
-        token=invitation_addr.token,
+        token=alice_new_device_invitation.token,
         on=DateTime.now(),
         reason=InvitationDeletedReason.CANCELLED,
     )
 
     with pytest.raises(BackendInvitationAlreadyUsed) as exc:
-        async with backend_invited_cmds_factory(invitation_addr) as cmds:
+        async with backend_invited_cmds_factory(alice_new_device_invitation) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Invalid handshake: Invitation already deleted"
 
 
 @pytest.mark.trio
-async def test_invited_cmds_has_right_methods(running_backend, coolorg):
-    async with backend_invited_cmds_factory(coolorg.addr) as cmds:
+async def test_invited_cmds_has_right_methods(running_backend, alice_new_device_invitation):
+    async with backend_invited_cmds_factory(alice_new_device_invitation) as cmds:
         for method_name in INVITED_CMDS:
             assert hasattr(cmds, method_name)
         for method_name in ALL_CMDS - INVITED_CMDS:

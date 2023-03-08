@@ -6,6 +6,7 @@ from typing import Optional
 import pytest
 import trio
 
+from parsec import FEATURE_FLAGS
 from parsec._parsec import (
     ActiveUsersLimit,
     AuthenticatedPingRepOk,
@@ -25,7 +26,6 @@ from parsec.core.backend_connection import (
     BackendConnStatus,
     BackendNotAvailable,
 )
-from parsec.core.backend_connection.authenticated import OXIDIZED
 from parsec.core.fs.userfs.userfs import UserFS
 from parsec.event_bus import EventBus
 from tests.common import real_clock_timeout
@@ -170,7 +170,7 @@ async def test_init_with_backend_offline(event_bus, alice):
 
 
 @pytest.mark.skipif(
-    OXIDIZED,
+    FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"],
     reason="No error, because there aren't connection manager with the oxidized AuthenticatedCmds, so the monitor won't affect this one",
 )
 @pytest.mark.trio
