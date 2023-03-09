@@ -1,12 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from os import environ
+
 from parsec._version import __version__
 
 FEATURE_FLAGS = {
     # TODO: remove me once client connection oxidation is done
     # Activates RsBackendAuthenticatedCmds binding
-    "UNSTABLE_OXIDIZED_CLIENT_CONNECTION": False,
+    "UNSTABLE_OXIDIZED_CLIENT_CONNECTION": environ.get("UNSTABLE_OXIDIZED_CLIENT_CONNECTION")
+    is not None,
 }
 
 # The parsec.utils module includes a bit of patching, let's make sure it is imported
