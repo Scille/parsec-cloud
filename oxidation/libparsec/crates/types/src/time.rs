@@ -208,15 +208,15 @@ pub enum MockedTime {
 #[cfg(feature = "test-mock-time")]
 mod mock_time {
     use super::{DateTime, MockedTime};
-    use std::cell::RefCell;
+    use std::sync::{Arc, Mutex};
 
-    thread_local! {
-        static MOCK_TIME: RefCell<MockedTime> = RefCell::new(MockedTime::RealTime);
+    lazy_static! {
+        static ref MOCK_TIME: Arc<Mutex<MockedTime>> = Arc::new(Mutex::new(MockedTime::RealTime));
     }
 
     impl DateTime {
         pub fn now_legacy() -> Self {
-            MOCK_TIME.with(|cell| match *cell.borrow() {
+            match *MOCK_TIME.lock().expect("Mutex is poisoned") {
                 MockedTime::RealTime => chrono::Utc::now().into(),
                 MockedTime::FrozenTime(dt) => dt,
                 MockedTime::ShiftedTime { microseconds: us } => {
@@ -234,11 +234,11 @@ mod mock_time {
                     let speed_shift = speed_factor * delta_us as f64;
                     reference.add_us(us + speed_shift as i64)
                 }
-            })
+            }
         }
 
         pub fn mock_time(time: MockedTime) {
-            MOCK_TIME.with(|cell| *cell.borrow_mut() = time)
+            *MOCK_TIME.lock().expect("Mutex is poisoned") = time;
         }
     }
 }
