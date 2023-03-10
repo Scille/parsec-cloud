@@ -31,10 +31,10 @@ async def freeze_remanence_monitor_mockpoint() -> None:
 async def monitor_remanent_workspaces(
     user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus
 ) -> None:
-    on_going_tasks: set[RemanenceManagerTaskID] = set()
+    awake_tasks: set[RemanenceManagerTaskID] = set()
     cancel_scopes: dict[EntryID, trio.CancelScope] = {}
 
-    def start_remanence_manager(workspace_id: EntryID) -> None:
+    def _start_remanence_manager(workspace_id: EntryID) -> None:
         # Make sure the workspace is available
         try:
             workspace_fs = user_fs.get_workspace(workspace_id)
@@ -45,15 +45,15 @@ async def monitor_remanent_workspaces(
             logger.info(
                 "Remanence monitor workspace idle", workspace_id=task_id[0], task=task_id[1].name
             )
-            on_going_tasks.discard(task_id)
-            if not on_going_tasks:
+            awake_tasks.discard(task_id)
+            if not awake_tasks:
                 task_status.idle()
 
         def awake(task_id: RemanenceManagerTaskID) -> None:
             logger.info(
                 "Remanence monitor workspace awake", workspace_id=task_id[0], task=task_id[1].name
             )
-            on_going_tasks.add(task_id)
+            awake_tasks.add(task_id)
             task_status.awake()
 
         async def remanent_task() -> None:
@@ -88,23 +88,22 @@ async def monitor_remanent_workspaces(
                 cancel_scopes[new_entry.id].cancel()
         # Reader rights have been granted
         elif previous_entry is None or previous_entry.role is None:
-            start_remanence_manager(new_entry.id)
+            _start_remanence_manager(new_entry.id)
 
     def _fs_workspace_created(
         event: CoreEvent,
         new_entry: WorkspaceEntry,
     ) -> None:
-        start_remanence_manager(new_entry.id)
+        _start_remanence_manager(new_entry.id)
 
     try:
+        # Nursery used by _start_remanence_manager/_on_sharing_updated/_fs_workspace_created closures
         async with open_service_nursery() as nursery:
 
             with event_bus.connect_in_context(
                 (CoreEvent.SHARING_UPDATED, cast(EventCallback, _on_sharing_updated)),
                 (CoreEvent.FS_WORKSPACE_CREATED, cast(EventCallback, _fs_workspace_created)),
             ):
-                task_status.started()
-
                 # All workspaces should be processed at startup
                 workspaces = user_fs.get_user_manifest().workspaces
                 if workspaces:
@@ -112,10 +111,11 @@ async def monitor_remanent_workspaces(
                     # then switch to idle
                     for entry in workspaces:
                         if entry.role is not None:
-                            start_remanence_manager(entry.id)
+                            _start_remanence_manager(entry.id)
                 else:
                     task_status.idle()
 
+                task_status.started()
                 await trio.sleep_forever()
 
     except FSBackendOfflineError as exc:
