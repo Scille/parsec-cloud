@@ -12,3 +12,4 @@ Hack on Parsec
 
     quickstart
     release
+    functional_architecture

@@ -47,7 +47,6 @@ The main documentation for the site is organized into the following sections:
     :caption: Development
     :name: sec-devel
 
-    development
     history
 
 .. Indices and tables
