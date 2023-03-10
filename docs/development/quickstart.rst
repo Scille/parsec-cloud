@@ -105,7 +105,7 @@ On linux:
 
 On Windows:
 
-.. code-block:: cmd
+.. code-block:: bat
 
     .\tests\scripts\run_testenv.bat
 
