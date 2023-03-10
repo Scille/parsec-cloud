@@ -5,6 +5,7 @@ from typing import cast
 
 from structlog import get_logger
 
+from parsec import FEATURE_FLAGS
 from parsec._parsec import (
     EnrollmentID,
     OrganizationBootstrapRep,
@@ -90,21 +91,34 @@ async def pki_enrollment_submit(
     submit_payload_signature: bytes,
     submit_payload: bytes,
 ) -> PkiEnrollmentSubmitRep:
-    rep = cast(
-        PkiEnrollmentSubmitRep,
-        await _anonymous_cmd(
-            serializer=pki_enrollment_submit_serializer,
-            cmd="pki_enrollment_submit",
-            addr=addr,
-            organization_id=addr.organization_id,
+    if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+        from parsec._parsec import AnonymousCmds
+
+        client = AnonymousCmds(addr)
+        rep = await client.pki_enrollment_submit(
             enrollment_id=enrollment_id,
             force=force,
             submitter_der_x509_certificate=submitter_der_x509_certificate,
             submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
             submit_payload_signature=submit_payload_signature,
             submit_payload=submit_payload,
-        ),
-    )
+        )
+    else:
+        rep = cast(
+            PkiEnrollmentSubmitRep,
+            await _anonymous_cmd(
+                serializer=pki_enrollment_submit_serializer,
+                cmd="pki_enrollment_submit",
+                addr=addr,
+                organization_id=addr.organization_id,
+                enrollment_id=enrollment_id,
+                force=force,
+                submitter_der_x509_certificate=submitter_der_x509_certificate,
+                submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
+                submit_payload_signature=submit_payload_signature,
+                submit_payload=submit_payload,
+            ),
+        )
 
     # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
     # not included among the protocol json schema's regular response statuses
@@ -120,16 +134,22 @@ async def pki_enrollment_submit(
 async def pki_enrollment_info(
     addr: BackendPkiEnrollmentAddr, enrollment_id: EnrollmentID
 ) -> PkiEnrollmentInfoRep:
-    rep = cast(
-        PkiEnrollmentInfoRep,
-        await _anonymous_cmd(
-            serializer=pki_enrollment_info_serializer,
-            cmd="pki_enrollment_info",
-            addr=addr,
-            organization_id=addr.organization_id,
-            enrollment_id=enrollment_id,
-        ),
-    )
+    if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+        from parsec._parsec import AnonymousCmds
+
+        client = AnonymousCmds(addr)
+        rep = await client.pki_enrollment_info(enrollment_id=enrollment_id)
+    else:
+        rep = cast(
+            PkiEnrollmentInfoRep,
+            await _anonymous_cmd(
+                serializer=pki_enrollment_info_serializer,
+                cmd="pki_enrollment_info",
+                addr=addr,
+                organization_id=addr.organization_id,
+                enrollment_id=enrollment_id,
+            ),
+        )
 
     # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
     # not included among the protocol json schema's regular response statuses
@@ -151,13 +171,11 @@ async def organization_bootstrap(
     redacted_device_certificate: bytes,
     sequester_authority_certificate: bytes | None,
 ) -> OrganizationBootstrapRep:
-    rep = cast(
-        OrganizationBootstrapRep,
-        await _anonymous_cmd(
-            organization_bootstrap_serializer,
-            cmd="organization_bootstrap",
-            addr=addr,
-            organization_id=addr.organization_id,
+    if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+        from parsec._parsec import AnonymousCmds
+
+        client = AnonymousCmds(addr)
+        rep = await client.organization_bootstrap(
             bootstrap_token=addr.token,
             root_verify_key=root_verify_key,
             user_certificate=user_certificate,
@@ -165,8 +183,24 @@ async def organization_bootstrap(
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
             sequester_authority_certificate=sequester_authority_certificate,
-        ),
-    )
+        )
+    else:
+        rep = cast(
+            OrganizationBootstrapRep,
+            await _anonymous_cmd(
+                organization_bootstrap_serializer,
+                cmd="organization_bootstrap",
+                addr=addr,
+                organization_id=addr.organization_id,
+                bootstrap_token=addr.token,
+                root_verify_key=root_verify_key,
+                user_certificate=user_certificate,
+                device_certificate=device_certificate,
+                redacted_user_certificate=redacted_user_certificate,
+                redacted_device_certificate=redacted_device_certificate,
+                sequester_authority_certificate=sequester_authority_certificate,
+            ),
+        )
 
     # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
     # not included among the protocol json schema's regular response statuses
