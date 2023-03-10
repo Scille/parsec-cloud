@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from parsec._parsec_pyi.addrs import BackendInvitationAddr, BackendOrganizationAddr
-from parsec._parsec_pyi.crypto import HashDigest, PublicKey, SigningKey
+from parsec._parsec_pyi.addrs import (
+    BackendInvitationAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+    BackendPkiEnrollmentAddr,
+)
+from parsec._parsec_pyi.crypto import HashDigest, PublicKey, SigningKey, VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationDeletedReason, InvitationType
 from parsec._parsec_pyi.ids import (
     BlockID,
@@ -35,11 +40,14 @@ from parsec._parsec_pyi.protocol import (
     InviteListRep,
     InviteNewRep,
     MessageGetRep,
+    OrganizationBootstrapRep,
     OrganizationConfigRep,
     OrganizationStatsRep,
     PkiEnrollmentAcceptRep,
+    PkiEnrollmentInfoRep,
     PkiEnrollmentListRep,
     PkiEnrollmentRejectRep,
+    PkiEnrollmentSubmitRep,
     RealmCreateRep,
     RealmFinishReencryptionMaintenanceRep,
     RealmGetRoleCertificatesRep,
@@ -246,3 +254,30 @@ class InvitedCmds:
     ) -> Invite4ClaimerCommunicateRep: ...
     async def invite_info(self) -> InviteInfoRep: ...
     async def ping(self, ping: str = "") -> InvitedPingRep: ...
+
+class AnonymousCmds:
+    def __init__(
+        self, addr: BackendOrganizationBootstrapAddr | BackendPkiEnrollmentAddr
+    ) -> None: ...
+    @property
+    def addr(self) -> BackendOrganizationBootstrapAddr | BackendPkiEnrollmentAddr: ...
+    async def organization_bootstrap(
+        self,
+        bootstrap_token: str,
+        device_certificate: bytes,
+        redacted_device_certificate: bytes,
+        redacted_user_certificate: bytes,
+        root_verify_key: VerifyKey,
+        sequester_authority_certificate: bytes | None,
+        user_certificate: bytes,
+    ) -> OrganizationBootstrapRep: ...
+    async def pki_enrollment_info(self, enrollment_id: EnrollmentID) -> PkiEnrollmentInfoRep: ...
+    async def pki_enrollment_submit(
+        self,
+        enrollment_id: EnrollmentID,
+        force: bool,
+        submit_payload: bytes,
+        submit_payload_signature: bytes,
+        submitter_der_x509_certificate: bytes,
+        submitter_der_x509_certificate_email: str | None,
+    ) -> PkiEnrollmentSubmitRep: ...
