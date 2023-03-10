@@ -408,7 +408,7 @@ async def test_sequester_export_full_run(
     with pytest.raises(RealmExporterInputError):
         async with RealmExporter.run(**{**default_args, "organization_id": dummy_org}):
             pass
-    # Not boostrapped organization
+    # Not bootstrapped organization
     await backend.organization.create(id=dummy_org, bootstrap_token="")
     with pytest.raises(RealmExporterInputError):
         async with RealmExporter.run(**{**default_args, "organization_id": dummy_org}):
