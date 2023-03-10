@@ -268,8 +268,9 @@ impl BackendActionAddr {
 }
 
 #[pyclass]
+#[derive(Clone)]
 pub(crate) struct BackendOrganizationBootstrapAddr(
-    libparsec::types::BackendOrganizationBootstrapAddr,
+    pub libparsec::types::BackendOrganizationBootstrapAddr,
 );
 
 crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __repr__);

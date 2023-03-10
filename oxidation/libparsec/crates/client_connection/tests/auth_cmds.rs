@@ -8,7 +8,7 @@ use std::{
 };
 
 use libparsec_client_connection::{
-    generate_client, AuthenticatedCmds, CommandError, CommandResult,
+    generate_authenticated_client, AuthenticatedCmds, CommandError, CommandResult,
 };
 use libparsec_crypto::SigningKey;
 use libparsec_protocol::authenticated_cmds;
@@ -38,7 +38,7 @@ async fn valid_request() {
     let kp = SigningKey::generate();
     let vk = kp.verify_key();
     let url = generate_backend_organization(IP, PORT, RVK);
-    let auth_cmds = generate_client(kp, device_id.clone(), url);
+    let auth_cmds = generate_authenticated_client(kp, device_id.clone(), url);
 
     let mut signature_verifier = MakeSignatureVerifier::default();
     signature_verifier.register_public_key(device_id, vk);
@@ -79,7 +79,7 @@ async fn invalid_request() {
     let client_kp = SigningKey::generate();
     let other_kp = SigningKey::generate();
     let url = generate_backend_organization(IP, PORT, RVK);
-    let auth_cmds = generate_client(client_kp, device_id.clone(), url);
+    let auth_cmds = generate_authenticated_client(client_kp, device_id.clone(), url);
 
     let mut signature_verifier = MakeSignatureVerifier::default();
     signature_verifier.register_public_key(device_id, other_kp.verify_key());

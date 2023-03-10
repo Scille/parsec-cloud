@@ -803,6 +803,10 @@ impl BackendInvitationAddr {
             root_verify_key,
         )
     }
+
+    pub fn to_invited_url(&self) -> Url {
+        self.to_http_url(Some(&format!("/invited/{}", self.organization_id())))
+    }
 }
 
 /*
@@ -877,6 +881,29 @@ impl BackendPkiEnrollmentAddr {
             self.organization_id().clone(),
             root_verify_key,
         )
+    }
+}
+
+pub enum BackendAnonymousAddr {
+    BackendOrganizationBootstrapAddr(BackendOrganizationBootstrapAddr),
+    BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr),
+}
+
+impl BackendAnonymousAddr {
+    /// Return an [Url] that point to the server endpoint for anonymous commands.
+    pub fn to_anonymous_http_url(&self) -> Url {
+        let (BackendAnonymousAddr::BackendOrganizationBootstrapAddr(
+            BackendOrganizationBootstrapAddr {
+                base,
+                organization_id,
+                ..
+            },
+        )
+        | BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr {
+            base,
+            organization_id,
+        })) = self;
+        base.to_http_url(Some(&format!("/anonymous/{}", organization_id)))
     }
 }
 
