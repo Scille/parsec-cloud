@@ -1,9 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+mod anonymous_cmds;
 mod authenticated_cmds;
 mod error;
 mod invited_cmds;
 
+pub(crate) use anonymous_cmds::AnonymousCmds;
 pub(crate) use authenticated_cmds::AuthenticatedCmds;
 pub(crate) use error::*;
 pub(crate) use invited_cmds::InvitedCmds;
@@ -53,6 +55,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Cmds
     m.add_class::<AuthenticatedCmds>()?;
     m.add_class::<InvitedCmds>()?;
+    m.add_class::<AnonymousCmds>()?;
 
     Ok(())
 }
