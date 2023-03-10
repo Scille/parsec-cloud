@@ -8,8 +8,10 @@ from parsec._version import __version__
 FEATURE_FLAGS = {
     # TODO: remove me once client connection oxidation is done
     # Activates RsBackendAuthenticatedCmds binding
-    "UNSTABLE_OXIDIZED_CLIENT_CONNECTION": environ.get("UNSTABLE_OXIDIZED_CLIENT_CONNECTION")
-    is not None,
+    "UNSTABLE_OXIDIZED_CLIENT_CONNECTION": environ.get(
+        "UNSTABLE_OXIDIZED_CLIENT_CONNECTION", "false"
+    ).lower()
+    == "true",
 }
 
 # The parsec.utils module includes a bit of patching, let's make sure it is imported
