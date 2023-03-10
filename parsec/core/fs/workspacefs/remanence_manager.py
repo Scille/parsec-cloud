@@ -130,8 +130,10 @@ class RemanenceManager:
         # State synchronization attributes
         self._events_connected = False
         self._prepared_event = trio.Event()
-        self._idle: RemanenceManagerTaskCallback = lambda: None
-        self._awake: RemanenceManagerTaskCallback = lambda: None
+        # idle/awake callback are always defined to simplify code, however they are meaningful
+        # only when `RemanenceManager.run` is running, the rest of the time this is a noop
+        self._idle: RemanenceManagerTaskCallback = lambda _: None
+        self._awake: RemanenceManagerTaskCallback = lambda _: None
         self._jobs_task_state = RemanenceManagerState.STOPPED
         self._jobs_task_cancel_scope: trio.CancelScope | None = None
         self._downloader_task_cancel_scope: trio.CancelScope | None = None
@@ -248,6 +250,11 @@ class RemanenceManager:
         finally:
             self._jobs_task_state = RemanenceManagerState.STOPPED
             self._idle(self._jobs_task_id)
+            # Don't forget to reset idle/awake callbacks, otherwise (and as long as
+            # `run` is no longer called) next awake would mark the remanence monitor
+            # as woken forever given nothing is running to do the work and call idle.
+            self._idle = lambda _: None
+            self._awake = lambda _: None
 
     # Task management
 
