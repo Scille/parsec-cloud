@@ -130,8 +130,8 @@ class RemanenceManager:
         # State synchronization attributes
         self._events_connected = False
         self._prepared_event = trio.Event()
-        self._idle: RemanenceManagerTaskCallback = lambda _: None
-        self._awake: RemanenceManagerTaskCallback = lambda _: None
+        self._idle: RemanenceManagerTaskCallback = lambda: None
+        self._awake: RemanenceManagerTaskCallback = lambda: None
         self._jobs_task_state = RemanenceManagerState.STOPPED
         self._jobs_task_cancel_scope: trio.CancelScope | None = None
         self._downloader_task_cancel_scope: trio.CancelScope | None = None

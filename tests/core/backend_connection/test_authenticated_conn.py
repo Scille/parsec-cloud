@@ -96,7 +96,7 @@ async def test_init_with_backend_online(
     )
     assert conn.get_organization_config() == default_organization_config
 
-    conn.register_monitor(_monitor)
+    conn.register_monitor("my monitor", _monitor)
     with event_bus.listen() as spy:
         async with conn.run():
             await spy.wait_multiple_with_timeout(
@@ -185,7 +185,7 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
 
     conn = BackendAuthenticatedConn(alice, event_bus)
     with event_bus.listen() as spy:
-        conn.register_monitor(_bad_monitor)
+        conn.register_monitor("bad monitor", _bad_monitor)
         async with conn.run():
             await spy.wait_with_timeout(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from enum import Enum
+from functools import partial
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
@@ -351,21 +352,24 @@ class BackendAuthenticatedConn:
     def get_organization_config(self) -> OrganizationConfig:
         return self._organization_config
 
-    def register_monitor(self, monitor_cb: MonitorCallback) -> None:
+    def register_monitor(self, monitor_id: str, monitor_cb: MonitorCallback) -> None:
         if self._started:
             raise RuntimeError("Cannot register monitor once started !")
         self._monitors_task_statuses.append(
-            MonitorTaskStatus(monitor_cb, self.on_monitor_state_changed)
+            MonitorTaskStatus(monitor_cb, partial(self.on_monitor_state_changed, monitor_id))
         )
 
-    def on_monitor_state_changed(self, state: MonitorTaskState) -> None:
+    def on_monitor_state_changed(self, monitor_id: str, state: MonitorTaskState) -> None:
+        logger.info("Monitor state changed", monitor=monitor_id, state=state.name)
         if state == MonitorTaskState.IDLE:
             if all(
                 status.state == MonitorTaskState.IDLE for status in self._monitors_task_statuses
             ):
+                logger.info("All monitors are idle")
                 self._monitors_idle_event.set()
         elif state == MonitorTaskState.AWAKE:
             if self._monitors_idle_event.is_set():
+                logger.info("All monitors were idle, this is no longer the case")
                 self._monitors_idle_event = trio.Event()
 
     def are_monitors_idle(self) -> bool:
