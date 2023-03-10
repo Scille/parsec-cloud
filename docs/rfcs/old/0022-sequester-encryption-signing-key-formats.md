@@ -4,7 +4,7 @@ From [ISSUE-2463](https://github.com/Scille/parsec-cloud/issues/2463)
 
 see [RFC-0023](0023-sequester-protocol-data-api-evolutions.md)
 
-Boostrap org: SequesterSigningKey verified on client or server side (or both ?)
+Bootstrap org: SequesterSigningKey verified on client or server side (or both ?)
 
 ## Key Algorithm, PKCS11 etc
 

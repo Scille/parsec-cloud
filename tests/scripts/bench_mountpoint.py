@@ -67,10 +67,10 @@ def main():
             f" --addr={backend_addr} --administration-token={TOKEN}"
         )
 
-        boostrap_addr = out.stdout.decode().split("Bootstrap organization url: ")[-1].strip()
+        bootstrap_addr = out.stdout.decode().split("Bootstrap organization url: ")[-1].strip()
         out = run_cmd(
             f"{PARSEC_CLI} core bootstrap_organization {DEVICE}"
-            f" --addr={boostrap_addr} --config-dir={confdir} --password={PASSWORD}"
+            f" --addr={bootstrap_addr} --config-dir={confdir} --password={PASSWORD}"
         )
 
         out = run_cmd(

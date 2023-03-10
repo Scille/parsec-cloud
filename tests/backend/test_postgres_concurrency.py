@@ -63,7 +63,7 @@ async def test_concurrency_bootstrap_organization(postgresql_url, backend_factor
 
     backend_user, backend_first_device = local_device_to_backend_user(alice, coolorg)
 
-    async def _concurrent_boostrap(backend):
+    async def _concurrent_bootstrap(backend):
         try:
             await backend.organization.bootstrap(
                 id=coolorg.organization_id,
@@ -89,7 +89,7 @@ async def test_concurrency_bootstrap_organization(postgresql_url, backend_factor
         with ensure_pg_transaction_concurrency_barrier(concurrency=10):
             async with trio.open_nursery() as nursery:
                 for _ in range(10):
-                    nursery.start_soon(_concurrent_boostrap, backend)
+                    nursery.start_soon(_concurrent_bootstrap, backend)
 
     assert len(results) == 10
     assert len([r for r in results if isinstance(r, OrganizationAlreadyBootstrappedError)]) == 9

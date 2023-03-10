@@ -56,7 +56,7 @@ This is used during API handshake:
 
 Currently there is three major versions of the Transport/Protocol API:
 
-- version 1 that is mostly deprecate (only used to boostrap organization since at least Parsec v2.0,  not used anymore since Parsec v2.9)
+- version 1 that is mostly deprecate (only used to bootstrap organization since at least Parsec v2.0,  not used anymore since Parsec v2.9)
 - version 2 which replaced the enrollment commands
 - version 3 that introduced an improve the handshake system
 
