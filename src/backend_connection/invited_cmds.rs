@@ -35,9 +35,7 @@ impl InvitedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let claimer_public_key = claimer_public_key.0;
 
-            let req = libparsec::protocol::invited_cmds::v2::invite_1_claimer_wait_peer::Req {
-                claimer_public_key,
-            };
+            let req = invited_cmds::v2::invite_1_claimer_wait_peer::Req { claimer_public_key };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
@@ -62,10 +60,9 @@ impl InvitedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let claimer_hashed_nonce = claimer_hashed_nonce.0;
 
-            let req =
-                libparsec::protocol::invited_cmds::v2::invite_2a_claimer_send_hashed_nonce::Req {
-                    claimer_hashed_nonce,
-                };
+            let req = invited_cmds::v2::invite_2a_claimer_send_hashed_nonce::Req {
+                claimer_hashed_nonce,
+            };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
@@ -87,9 +84,7 @@ impl InvitedCmds {
         crate::binding_utils::unwrap_bytes!(claimer_nonce);
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = libparsec::protocol::invited_cmds::v2::invite_2b_claimer_send_nonce::Req {
-                claimer_nonce,
-            };
+            let req = invited_cmds::v2::invite_2b_claimer_send_nonce::Req { claimer_nonce };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
@@ -109,7 +104,7 @@ impl InvitedCmds {
         let invited_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = libparsec::protocol::invited_cmds::v2::invite_3a_claimer_signify_trust::Req;
+            let req = invited_cmds::v2::invite_3a_claimer_signify_trust::Req;
 
             crate::binding_utils::send_command!(
                 invited_cmds,
@@ -129,7 +124,7 @@ impl InvitedCmds {
         let invited_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = libparsec::protocol::invited_cmds::v2::invite_3b_claimer_wait_peer_trust::Req;
+            let req = invited_cmds::v2::invite_3b_claimer_wait_peer_trust::Req;
 
             crate::binding_utils::send_command!(
                 invited_cmds,
@@ -151,9 +146,7 @@ impl InvitedCmds {
         crate::binding_utils::unwrap_bytes!(payload);
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = libparsec::protocol::invited_cmds::v2::invite_4_claimer_communicate::Req {
-                payload,
-            };
+            let req = invited_cmds::v2::invite_4_claimer_communicate::Req { payload };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
@@ -173,7 +166,7 @@ impl InvitedCmds {
         let invited_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = libparsec::protocol::invited_cmds::v2::invite_info::Req;
+            let req = invited_cmds::v2::invite_info::Req;
 
             crate::binding_utils::send_command!(
                 invited_cmds,
@@ -191,7 +184,7 @@ impl InvitedCmds {
         let invited_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = libparsec::protocol::invited_cmds::v2::ping::Req { ping };
+            let req = invited_cmds::v2::ping::Req { ping };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
