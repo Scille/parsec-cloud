@@ -395,9 +395,13 @@ async def logged_core_factory(
         workspace_storage_cache_size=config.workspace_storage_cache_size,
     ) as user_fs:
 
-        backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))
-        backend_conn.register_monitor(partial(monitor_sync, user_fs, event_bus))
-        backend_conn.register_monitor(partial(monitor_remanent_workspaces, user_fs, event_bus))
+        backend_conn.register_monitor(
+            "messages monitor", partial(monitor_messages, user_fs, event_bus)
+        )
+        backend_conn.register_monitor("sync monitor", partial(monitor_sync, user_fs, event_bus))
+        backend_conn.register_monitor(
+            "remanence monitor", partial(monitor_remanent_workspaces, user_fs, event_bus)
+        )
 
         async with backend_conn.run():
             async with mountpoint_manager_factory(

@@ -52,7 +52,11 @@ from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage, WorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
-from parsec.core.fs.workspacefs.remanence_manager import RemanenceManager, RemanenceManagerInfo
+from parsec.core.fs.workspacefs.remanence_manager import (
+    RemanenceManager,
+    RemanenceManagerInfo,
+    RemanenceManagerTaskCallback,
+)
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
@@ -204,8 +208,8 @@ class WorkspaceFS:
 
     async def run_remanence_manager(
         self,
-        idle: Callable[[object], None],
-        awake: Callable[[object], None],
+        idle: RemanenceManagerTaskCallback,
+        awake: RemanenceManagerTaskCallback,
     ) -> None:
         return await self.remanence_manager.run(idle, awake)
 

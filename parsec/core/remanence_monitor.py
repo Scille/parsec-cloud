@@ -3,17 +3,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+import structlog
 import trio
 
 from parsec._parsec import CoreEvent, EntryID, WorkspaceEntry
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import FSBackendOfflineError, UserFS
 from parsec.core.fs.exceptions import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
+from parsec.core.fs.workspacefs.remanence_manager import RemanenceManagerTaskID
 from parsec.event_bus import EventBus, EventCallback
 from parsec.utils import open_service_nursery
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection.authenticated import MonitorTaskStatus
+
+
+logger = structlog.get_logger()
 
 
 async def freeze_remanence_monitor_mockpoint() -> None:
@@ -26,7 +31,7 @@ async def freeze_remanence_monitor_mockpoint() -> None:
 async def monitor_remanent_workspaces(
     user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus
 ) -> None:
-    on_going_tasks: set[object] = set()
+    on_going_tasks: set[RemanenceManagerTaskID] = set()
     cancel_scopes: dict[EntryID, trio.CancelScope] = {}
 
     def start_remanence_manager(workspace_id: EntryID) -> None:
@@ -36,12 +41,18 @@ async def monitor_remanent_workspaces(
         except FSWorkspaceNotFoundError:
             return
 
-        def idle(task_id: object) -> None:
+        def idle(task_id: RemanenceManagerTaskID) -> None:
+            logger.info(
+                "Remanence monitor workspace idle", workspace_id=task_id[0], task=task_id[1].name
+            )
             on_going_tasks.discard(task_id)
             if not on_going_tasks:
                 task_status.idle()
 
-        def awake(task_id: object) -> None:
+        def awake(task_id: RemanenceManagerTaskID) -> None:
+            logger.info(
+                "Remanence monitor workspace awake", workspace_id=task_id[0], task=task_id[1].name
+            )
             on_going_tasks.add(task_id)
             task_status.awake()
 
