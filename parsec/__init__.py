@@ -11,7 +11,7 @@ FEATURE_FLAGS = {
     "UNSTABLE_OXIDIZED_CLIENT_CONNECTION": environ.get(
         "UNSTABLE_OXIDIZED_CLIENT_CONNECTION", "false"
     ).lower()
-    == "true",
+    == "true"
 }
 
 # The parsec.utils module includes a bit of patching, let's make sure it is imported
