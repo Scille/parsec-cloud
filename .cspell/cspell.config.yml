@@ -118,6 +118,9 @@ ignorePaths:
   - '**/docs/figures/*.svg'
   - '**/windows-icon-handler/**/*.vcxproj'
   - '**/windows-icon-handler/**/*.vcxproj.filters'
+  - '**/gradle.lockfile'
+  - '**/buildscript-gradle.lockfile'
+  - '**/gradle/verification-metadata.xml'
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"
