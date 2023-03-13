@@ -111,7 +111,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist/
-          if-no-file-found: error
+          if-no-files-found: error
         timeout-minutes: 5
 
   package-linux-build-snap:
@@ -163,7 +163,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: ${{ runner.temp }}/parsec*.snap
-          if-no-file-found: error
+          if-no-files-found: error
 
   package-linux-test-snap:
     name: '🐧 Linux: 📦 Packaging (test Snap on ${{ matrix.os }})'
@@ -290,7 +290,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer-content
           path: ${{ runner.temp }}/dist/
-          if-no-file-found: error
+          if-no-files-found: error
 
   package-macos-build-app:
     runs-on: macos-12
@@ -332,7 +332,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: ${{ runner.temp }}/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
-          if-no-file-found: error
+          if-no-files-found: error
 
   package-macos-test-app:
     runs-on: macos-${{ matrix.macos-version }}
@@ -416,7 +416,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app
           path: ${{ matrix.paths }}
-          if-no-file-found: error
+          if-no-files-found: error
         timeout-minutes: 10
 
   package-android-app:
@@ -461,7 +461,7 @@ jobs:
           path: |
             oxidation/client/android/app/build/outputs/apk/release/app-release-unsigned.apk
             oxidation/client/android/app/build/outputs/apk/release/output-metadata.json
-          if-no-file-found: error
+          if-no-files-found: error
 
   package-web-app:
     runs-on: ubuntu-22.04
@@ -481,4 +481,4 @@ jobs:
         with:
           name: webapp
           path: oxidation/client/dist/
-          if-no-file-found: error
+          if-no-files-found: error
