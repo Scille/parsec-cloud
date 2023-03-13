@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import secrets
 
-from parsec._parsec import DateTime, DeviceCreateRepOk
+from parsec._parsec import DateTime, DeviceCreateRepOk, SecretKey, SigningKey
 from parsec.api.data import DeviceCertificate
 from parsec.api.protocol import DeviceID, DeviceLabel, DeviceName
 from parsec.core.backend_connection import (
@@ -11,7 +11,6 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
 )
 from parsec.core.types import LocalDevice
-from parsec.crypto import SecretKey, SigningKey
 
 
 async def _create_new_device_for_self(

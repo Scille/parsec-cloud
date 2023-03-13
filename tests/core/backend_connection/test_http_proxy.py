@@ -8,6 +8,7 @@ from functools import partial
 import pytest
 import trio
 
+from parsec._parsec import SigningKey
 from parsec.api.protocol import DeviceID
 from parsec.core.backend_connection.transport import (
     BackendNotAvailable,
@@ -16,7 +17,6 @@ from parsec.core.backend_connection.transport import (
     http_request,
 )
 from parsec.core.types import BackendInvitationAddr, BackendOrganizationAddr
-from parsec.crypto import SigningKey
 from tests.common import real_clock_timeout
 
 

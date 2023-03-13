@@ -9,6 +9,7 @@ from pathlib import Path, PurePath
 from typing import Dict, Iterator, List, Mapping, Tuple
 
 from parsec._parsec import (
+    CryptoError,
     DataError,
     DateTime,
     DeviceCertificate,
@@ -27,7 +28,6 @@ from parsec._parsec import (
     manifest_verify_and_load,
 )
 from parsec.api.data.manifest import AnyRemoteManifest
-from parsec.crypto import CryptoError
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
 REALM_EXPORT_DB_VERSION = 1  # Only supported version so far

@@ -10,11 +10,11 @@ from parsec._parsec import (
     TrustchainErrorException,
     UserGetRepNotFound,
     UserGetRepOk,
+    VerifyKey,
 )
 from parsec.api.data import DeviceCertificate, RevokedUserCertificate, UserCertificate
 from parsec.api.protocol import DeviceID, UserID
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
-from parsec.crypto import VerifyKey
 
 if TYPE_CHECKING:
     from parsec.core.backend_connection import BackendAuthenticatedCmds

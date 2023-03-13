@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
+    HashDigest,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1GreeterWaitPeerRepInvalidState,
     Invite2aClaimerSendHashedNonceRepInvalidState,
@@ -22,7 +23,6 @@ from parsec._parsec import (
     Invite4ClaimerCommunicateRepInvalidState,
     Invite4GreeterCommunicateRepInvalidState,
 )
-from parsec.crypto import HashDigest
 
 INVALID_STATES_TYPES = (
     Invite1ClaimerWaitPeerRepInvalidState,

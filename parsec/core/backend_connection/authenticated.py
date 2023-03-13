@@ -36,6 +36,7 @@ from parsec._parsec import (
     OrganizationConfig,
     OrganizationConfigRepOk,
     OrganizationConfigRepUnknownStatus,
+    SigningKey,
 )
 from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec.api.protocol import AUTHENTICATED_CMDS, DeviceID
@@ -52,7 +53,6 @@ from parsec.core.backend_connection.transport import TransportPool, connect_as_a
 if TYPE_CHECKING:
     from parsec.core.fs.userfs.userfs import UserFS
 from parsec.core.types import BackendOrganizationAddr, LocalDevice
-from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 

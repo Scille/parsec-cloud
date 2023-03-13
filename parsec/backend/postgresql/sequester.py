@@ -6,7 +6,7 @@ from typing import Any, List, Tuple
 
 import triopg
 
-from parsec._parsec import DateTime, SequesterVerifyKeyDer
+from parsec._parsec import CryptoError, DateTime, SequesterVerifyKeyDer
 from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.organization import SequesterAuthority
@@ -28,7 +28,6 @@ from parsec.backend.sequester import (
     StorageSequesterService,
     WebhookSequesterService,
 )
-from parsec.crypto import CryptoError
 
 # Sequester authority never gets modified past organization bootstrap, hence no need
 # to lock the row with a `FOR UPDATE` even if other queries depend of this result

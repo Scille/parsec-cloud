@@ -11,7 +11,7 @@ import certifi
 import trio
 from structlog import get_logger
 
-from parsec._parsec import ProtocolError
+from parsec._parsec import ProtocolError, SigningKey
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     DeviceID,
@@ -30,7 +30,6 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.backend_connection.proxy import blocking_io_get_proxy, maybe_connect_through_proxy
 from parsec.core.types import BackendInvitationAddr, BackendOrganizationAddr
-from parsec.crypto import SigningKey
 
 logger = get_logger()
 

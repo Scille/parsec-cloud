@@ -5,7 +5,7 @@ from enum import Enum
 from secrets import token_bytes
 from typing import Dict, Sequence, TypedDict, cast
 
-from parsec._parsec import DateTime, ProtocolError
+from parsec._parsec import CryptoError, DateTime, ProtocolError, SigningKey, VerifyKey
 from parsec.api.protocol.base import (
     InvalidMessageError,
     serializer_factory,
@@ -25,7 +25,6 @@ from parsec.api.protocol.types import (
     OrganizationIDField,
 )
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION, API_V3_VERSION, ApiVersion
-from parsec.crypto import CryptoError, SigningKey, VerifyKey
 from parsec.serde import BaseSchema, OneOfSchema, fields, post_load
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,

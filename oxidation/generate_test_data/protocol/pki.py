@@ -4,8 +4,7 @@
 
 from utils import *
 
-from parsec._parsec import DateTime
-from parsec.crypto import *
+from parsec._parsec import DateTime, EnrollmentID
 from parsec.api.protocol import *
 from parsec.api.data import *
 
@@ -92,7 +91,7 @@ display("pki enrollment info submitted rep", serialized, [])
 
 ################### Pki accept ##################
 serializer = pki_enrollment_accept_serializer
-uuid = uuid4()
+uuid = EnrollmentID.new()
 serialized = serializer.req_dumps(
     {
         "cmd": "pki_enrollment_accept",
@@ -114,7 +113,7 @@ display("pki enrollment accept rep", serialized, [])
 
 ################### Pki list ##################
 serializer = pki_enrollment_list_serializer
-uuid = uuid4()
+uuid = EnrollmentID.new()
 serialized = serializer.req_dumps({"cmd": "pki_enrollment_list"})
 serializer.req_loads(serialized)
 display("pki enrollment list req", serialized, [])
@@ -152,7 +151,7 @@ display("pki enrollment empty list ok rep", serialized, [])
 
 ################### Pki reject ##################
 serializer = pki_enrollment_reject_serializer
-uuid = uuid4()
+uuid = EnrollmentID.new()
 serialized = serializer.req_dumps({"cmd": "pki_enrollment_reject", "enrollment_id": uuid})
 serializer.req_loads(serialized)
 display("pki enrollment reject req", serialized, [])

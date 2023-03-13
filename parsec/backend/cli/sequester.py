@@ -11,6 +11,7 @@ import click
 from async_generator import asynccontextmanager
 
 from parsec._parsec import (
+    CryptoError,
     DateTime,
     SequesterPrivateKeyDer,
     SequesterPublicKeyDer,
@@ -37,7 +38,6 @@ from parsec.backend.sequester import (
 )
 from parsec.backend.user import User
 from parsec.cli_utils import cli_exception_handler, debug_config_options, operation
-from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 from parsec.sequester_export_reader import RealmExportProgress, extract_workspace
 from parsec.utils import open_service_nursery, trio_run

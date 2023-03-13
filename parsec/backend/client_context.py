@@ -7,7 +7,7 @@ from uuid import uuid4
 import trio
 from structlog import BoundLogger, get_logger
 
-from parsec._parsec import ClientType, EventsListenRep
+from parsec._parsec import ClientType, EventsListenRep, PublicKey, VerifyKey
 from parsec.api.protocol import (
     DeviceID,
     DeviceLabel,
@@ -20,7 +20,6 @@ from parsec.api.protocol import (
 )
 from parsec.api.version import ApiVersion
 from parsec.backend.invite import Invitation
-from parsec.crypto import PublicKey, VerifyKey
 from parsec.event_bus import EventBusConnectionContext
 
 logger = get_logger()

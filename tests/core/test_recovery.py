@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from parsec._parsec import (
+    CryptoError,
     LocalDevice,
     LocalDeviceCryptoError,
     SecretKey,
@@ -16,7 +17,6 @@ from parsec.api.protocol.types import DeviceLabel
 from parsec.core.backend_connection import BackendConnectionRefused, BackendNotAvailable
 from parsec.core.local_device import get_recovery_device_file_name
 from parsec.core.recovery import generate_new_device_from_recovery, generate_recovery_device
-from parsec.crypto import CryptoError
 
 
 def test_recovery_passphrase():

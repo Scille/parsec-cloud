@@ -21,6 +21,7 @@ from parsec._parsec import (
     BackendInvitationAddr,
     ClientType,
     DateTime,
+    HashDigest,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationType,
@@ -108,6 +109,7 @@ from parsec._parsec import (
     InviteNewRepNotAvailable,
     InviteNewRepOk,
     InviteNewReq,
+    PublicKey,
 )
 from parsec.api.protocol import (
     HumanHandle,
@@ -121,7 +123,6 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.backend.config import BackendConfig, EmailConfig, MockedEmailConfig, SmtpEmailConfig
 from parsec.backend.templates import get_template
 from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
-from parsec.crypto import HashDigest, PublicKey
 from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 
 if TYPE_CHECKING:

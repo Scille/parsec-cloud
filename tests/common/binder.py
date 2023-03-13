@@ -6,7 +6,7 @@ from functools import partial
 
 import pytest
 
-from parsec._parsec import DateTime, OrganizationID, RealmID, RealmRole, UserID, VlobID
+from parsec._parsec import DateTime, OrganizationID, RealmID, RealmRole, SigningKey, UserID, VlobID
 from parsec.api.data import (
     DeviceCertificate,
     RealmRoleCertificate,
@@ -27,7 +27,6 @@ from parsec.core.types import (
     LocalDevice,
     LocalUserManifest,
 )
-from parsec.crypto import SigningKey
 from tests.common.freeze_time import freeze_time
 from tests.common.sequester import SequesterAuthorityFullData
 

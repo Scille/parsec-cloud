@@ -1,13 +1,31 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyValueError,
-    import_exception,
+    create_exception,
+    exceptions::{PyException, PyValueError},
     prelude::*,
     types::{PyByteArray, PyBytes, PyType},
 };
 
-import_exception!(nacl.exceptions, CryptoError);
+create_exception!(_parsec, CryptoError, PyException);
+
+pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<HashDigest>()?;
+    m.add_class::<SigningKey>()?;
+    m.add_class::<VerifyKey>()?;
+    m.add_class::<SecretKey>()?;
+    m.add_class::<PrivateKey>()?;
+    m.add_class::<PublicKey>()?;
+    m.add_class::<SequesterPrivateKeyDer>()?;
+    m.add_class::<SequesterPublicKeyDer>()?;
+    m.add_class::<SequesterSigningKeyDer>()?;
+    m.add_class::<SequesterVerifyKeyDer>()?;
+    m.add_function(wrap_pyfunction!(generate_nonce, m)?)?;
+
+    m.add("CryptoError", py.get_type::<CryptoError>())?;
+
+    Ok(())
+}
 
 #[pyclass]
 #[derive(Clone)]

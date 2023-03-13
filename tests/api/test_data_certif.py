@@ -11,12 +11,6 @@ from parsec.api.protocol import UserProfile
 from parsec.serde import packb, unpackb
 
 
-@pytest.fixture(autouse=True, scope="module")
-def realcrypto(unmock_crypto):
-    with unmock_crypto():
-        yield
-
-
 def test_unsecure_read_device_certificate_bad_data():
     with pytest.raises(DataError):
         DeviceCertificate.unsecure_load(b"dummy")

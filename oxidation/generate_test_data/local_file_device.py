@@ -6,8 +6,7 @@ import trio
 import tempfile
 from protocol.utils import *
 
-from parsec._parsec import save_recovery_device, save_device_with_password
-from parsec.crypto import *
+from parsec._parsec import save_recovery_device, save_device_with_password, SecretKey
 from parsec.api.protocol import *
 from parsec.api.data import *
 from parsec.core.types import *

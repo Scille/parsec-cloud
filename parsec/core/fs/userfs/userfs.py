@@ -45,6 +45,7 @@ from parsec._parsec import (
     RealmUpdateRolesRepUserRevoked,
     ReencryptionBatchEntry,
     Regex,
+    SecretKey,
     VlobCreateRep,
     VlobCreateRepAlreadyExists,
     VlobCreateRepInMaintenance,
@@ -118,7 +119,6 @@ from parsec.core.types import (
     WorkspaceEntry,
     WorkspaceRole,
 )
-from parsec.crypto import SecretKey
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 

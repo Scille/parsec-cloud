@@ -43,6 +43,7 @@ from parsec._parsec import (
     PkiEnrollmentRejectRep,
     PkiEnrollmentSubmitRep,
     ProtocolError,
+    PublicKey,
     RealmCreateRep,
     RealmCreateRepBadTimestamp,
     RealmFinishReencryptionMaintenanceRep,
@@ -57,6 +58,7 @@ from parsec._parsec import (
     UserCreateRep,
     UserGetRep,
     UserRevokeRep,
+    VerifyKey,
     VlobCreateRep,
     VlobCreateRepBadTimestamp,
     VlobListVersionsRep,
@@ -130,7 +132,6 @@ from parsec.core.backend_connection import (
     BackendOutOfBallparkError,
     BackendProtocolError,
 )
-from parsec.crypto import PublicKey, VerifyKey
 
 COMMAND_RETURN_TYPE = Union[
     AuthenticatedPingRep,
