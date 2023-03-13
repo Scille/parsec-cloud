@@ -113,7 +113,6 @@ cache:
 useGitignore: true
 allowCompoundWords: true
 ignorePaths:
-  - ./oxidation/libparsec_python
   - '**/parsec/core/resources/default_*.ignore'
   - '**/*.svg'
   - '**/docs/figures/*.svg'
