@@ -35,7 +35,7 @@ impl AnonymousCmds {
 
 /// Prepare a new request, the body will be added to the Request using [RequestBuilder::body]
 fn prepare_request(request_builder: RequestBuilder, body: Vec<u8>) -> RequestBuilder {
-    let mut content_headers = HeaderMap::with_capacity(4);
+    let mut content_headers = HeaderMap::with_capacity(3);
     content_headers.insert(
         API_VERSION_HEADER_NAME,
         HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())

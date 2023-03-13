@@ -34,6 +34,10 @@ from parsec.core.backend_connection import (
 from parsec.core.backend_connection.transport import http_request
 from parsec.core.types import BackendOrganizationBootstrapAddr, BackendPkiEnrollmentAddr
 
+if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+    from parsec._parsec import AnonymousCmds
+
+
 logger = get_logger()
 
 
@@ -92,10 +96,7 @@ async def pki_enrollment_submit(
     submit_payload: bytes,
 ) -> PkiEnrollmentSubmitRep:
     if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
-        from parsec._parsec import AnonymousCmds
-
-        client = AnonymousCmds(addr)
-        rep = await client.pki_enrollment_submit(
+        rep = await AnonymousCmds(addr).pki_enrollment_submit(
             enrollment_id=enrollment_id,
             force=force,
             submitter_der_x509_certificate=submitter_der_x509_certificate,
@@ -135,10 +136,7 @@ async def pki_enrollment_info(
     addr: BackendPkiEnrollmentAddr, enrollment_id: EnrollmentID
 ) -> PkiEnrollmentInfoRep:
     if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
-        from parsec._parsec import AnonymousCmds
-
-        client = AnonymousCmds(addr)
-        rep = await client.pki_enrollment_info(enrollment_id=enrollment_id)
+        rep = await AnonymousCmds(addr).pki_enrollment_info(enrollment_id=enrollment_id)
     else:
         rep = cast(
             PkiEnrollmentInfoRep,
@@ -172,10 +170,7 @@ async def organization_bootstrap(
     sequester_authority_certificate: bytes | None,
 ) -> OrganizationBootstrapRep:
     if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
-        from parsec._parsec import AnonymousCmds
-
-        client = AnonymousCmds(addr)
-        rep = await client.organization_bootstrap(
+        rep = await AnonymousCmds(addr).organization_bootstrap(
             bootstrap_token=addr.token,
             root_verify_key=root_verify_key,
             user_certificate=user_certificate,
