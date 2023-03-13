@@ -82,8 +82,10 @@ jobs:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
         timeout-minutes: 2
 
-      - uses: ./.github/actions/paths-filter
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
+        with:
+          filters: .github/filters/ci.yml
 
       - name: Install Cargo fmt
         run: |
@@ -169,8 +171,10 @@ jobs:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
         timeout-minutes: 2
 
-      - uses: ./.github/actions/paths-filter
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
+        with:
+          filters: .github/filters/ci.yml
 
       - name: Check modified path that require python-ci run
         id: python-changes
@@ -398,8 +402,10 @@ jobs:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
         timeout-minutes: 2
 
-      - uses: ./.github/actions/paths-filter
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
+        with:
+          filters: .github/filters/ci.yml
 
       - name: Check modified path that require rust-ci run
         id: rust-changes
@@ -470,8 +476,10 @@ jobs:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
         timeout-minutes: 2
 
-      - uses: ./.github/actions/paths-filter
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
+        with:
+          filters: .github/filters/ci.yml
 
       - name: Check modified path that require `test-web` to run
         id: web-change
