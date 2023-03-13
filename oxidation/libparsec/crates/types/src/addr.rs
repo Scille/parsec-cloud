@@ -405,13 +405,13 @@ impl BackendOrganizationAddr {
         &self.root_verify_key
     }
 
-    /// Return an [Url] that point to the server endpoint for authenticated commands.
+    /// Return an [Url] that points to the server endpoint for authenticated commands.
     pub fn to_authenticated_http_url(&self) -> Url {
         self.base
             .to_http_url(Some(&format!("/authenticated/{}", self.organization_id)))
     }
 
-    /// Return an [Url] that point to the server endpoint for anonymous commands.
+    /// Return an [Url] that points to the server endpoint for anonymous commands.
     pub fn to_anonymous_http_url(&self) -> Url {
         self.base
             .to_http_url(Some(&format!("/anonymous/{}", self.organization_id)))
@@ -804,6 +804,7 @@ impl BackendInvitationAddr {
         )
     }
 
+    /// Return an [Url] that points to the server endpoint for invited commands.
     pub fn to_invited_url(&self) -> Url {
         self.to_http_url(Some(&format!("/invited/{}", self.organization_id())))
     }
@@ -890,7 +891,7 @@ pub enum BackendAnonymousAddr {
 }
 
 impl BackendAnonymousAddr {
-    /// Return an [Url] that point to the server endpoint for anonymous commands.
+    /// Return an [Url] that points to the server endpoint for anonymous commands.
     pub fn to_anonymous_http_url(&self) -> Url {
         let (BackendAnonymousAddr::BackendOrganizationBootstrapAddr(
             BackendOrganizationBootstrapAddr {
