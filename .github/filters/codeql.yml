@@ -26,10 +26,31 @@ rust-android-binding: &rust-android-binding oxidation/bindings/android/**
 
 android: &android oxidation/client/android/**
 
+android-dependencies-project: &android-dependencies-project
+  # Bindings configuration
+  - oxidation/bindings/android/gradle/verification-metadata.xml
+  - oxidation/bindings/android/*.gradle
+  - oxidation/bindings/android/*.lockfile
+  - oxidation/bindings/android/*.properties
+  # Client configuration
+  - oxidation/client/android/gradle/verification-metadata.xml
+  - oxidation/client/android/*.gradle
+  - oxidation/client/android/*.lockfile
+  - oxidation/client/android/*.properties
+  # App configuration
+  - oxidation/client/android/app/*.gradle
+  - oxidation/client/android/app/*.lockfile
+  - oxidation/client/android/app/*.properties
+  # Capacitor cordova plugins
+  - oxidation/client/android/capacitor-cordova-android-plugins/*.gradle
+  - oxidation/client/android/capacitor-cordova-android-plugins/*.lockfile
+  - oxidation/client/android/capacitor-cordova-android-plugins/*.properties
+
 java-analyze:
   - *codeql-workflow
   - *rust-android-binding
   - *android
+  - *android-dependencies-project
 
 electron: &electron
   - oxidation/client/electron/**

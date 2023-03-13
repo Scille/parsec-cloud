@@ -5,6 +5,22 @@ plugins {
     id 'org.jetbrains.kotlin.android' version '1.8.10' apply false
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+configurations {
+    compileClasspath {
+        resolutionStrategy.activateDependencyLocking()
+    }
+    runtimeClasspath {
+        resolutionStrategy.activateDependencyLocking()
+    }
+    annotationProcessor {
+        resolutionStrategy.activateDependencyLocking()
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
