@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from base64 import b64decode, b64encode
 from contextlib import asynccontextmanager
+from enum import Enum
 from typing import Any, AsyncIterable, AsyncIterator, NoReturn
 
 import trio
@@ -83,6 +84,17 @@ def _rpc_msgpack_rep(data: dict[str, object], api_version: ApiVersion) -> Respon
 # - 461: User is revoked
 
 
+class CustomHttpStatus(Enum):
+    BadAuthenticationInfo = 401
+    OrganizationOrInvitationInvalidOrNotFound = 404
+    BadAcceptType = 406
+    InvitationAlreadyUsedOrDeleted = 410
+    BadContentTypeOrInvalidBodyOrUnknownCommand = 415
+    UnsupportedApiVersion = 422
+    OrganizationExpired = 460
+    UserRevoked = 461
+
+
 def _handshake_abort(status_code: int, api_version: ApiVersion) -> NoReturn:
     current_app.aborter(
         Response(response="", status=status_code, headers={"Api-Version": str(api_version)})
@@ -90,7 +102,9 @@ def _handshake_abort(status_code: int, api_version: ApiVersion) -> NoReturn:
 
 
 def _handshake_abort_bad_content(api_version: ApiVersion) -> NoReturn:
-    _handshake_abort(415, api_version)
+    _handshake_abort(
+        CustomHttpStatus.BadContentTypeOrInvalidBodyOrUnknownCommand.value, api_version
+    )
 
 
 async def _do_handshake(
@@ -132,7 +146,9 @@ async def _do_handshake(
         )
         current_app.aborter(
             Response(
-                response="", status=422, headers={"Supported-Api-Versions": supported_api_versions}
+                response="",
+                status=CustomHttpStatus.UnsupportedApiVersion.value,
+                headers={"Supported-Api-Versions": supported_api_versions},
             )
         )
 
@@ -143,24 +159,30 @@ async def _do_handshake(
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
-        _handshake_abort(404, api_version=api_version)
+        _handshake_abort(
+            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+            api_version=api_version,
+        )
     organization: Organization | None
     try:
         organization = await backend.organization.get(organization_id)
     except OrganizationNotFoundError:
         if not allow_missing_organization:
-            _handshake_abort(404, api_version=api_version)
+            _handshake_abort(
+                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+                api_version=api_version,
+            )
         else:
             organization = None
     else:
         if organization.is_expired:
-            _handshake_abort(460, api_version=api_version)
+            _handshake_abort(CustomHttpStatus.OrganizationExpired.value, api_version=api_version)
 
     # 3) Check Content-Type & Accept
     if expected_content_type and request.headers.get("Content-Type") != expected_content_type:
         _handshake_abort_bad_content(api_version=api_version)
     if expected_accept_type and request.headers.get("Accept") != expected_accept_type:
-        _handshake_abort(406, api_version=api_version)
+        _handshake_abort(CustomHttpStatus.BadAcceptType.value, api_version=api_version)
 
     # 4) Check authentication
     if not check_authentication:
@@ -171,31 +193,31 @@ async def _do_handshake(
         try:
             authorization_method = request.headers["Authorization"]
         except KeyError:
-            _handshake_abort(401, api_version=api_version)
+            _handshake_abort(CustomHttpStatus.BadAuthenticationInfo.value, api_version=api_version)
 
         if authorization_method != AUTHORIZATION_PARSEC_ED25519:
-            _handshake_abort(401, api_version=api_version)
+            _handshake_abort(CustomHttpStatus.BadAuthenticationInfo.value, api_version=api_version)
 
         try:
             raw_device_id = request.headers["Author"]
             raw_signature_b64 = request.headers["Signature"]
         except KeyError:
-            _handshake_abort(401, api_version=api_version)
+            _handshake_abort(CustomHttpStatus.BadAuthenticationInfo.value, api_version=api_version)
 
         try:
             signature_bytes = b64decode(raw_signature_b64)
             device_id = DeviceID(b64decode(raw_device_id).decode())
         except ValueError:
-            _handshake_abort(401, api_version=api_version)
+            _handshake_abort(CustomHttpStatus.BadAuthenticationInfo.value, api_version=api_version)
 
         body: bytes = await request.get_data()
         try:
             user, device = await backend.user.get_user_with_device(organization_id, device_id)
         except UserNotFoundError:
-            _handshake_abort(401, api_version=api_version)
+            _handshake_abort(CustomHttpStatus.BadAuthenticationInfo.value, api_version=api_version)
         else:
             if user.revoked_on:
-                _handshake_abort(461, api_version=api_version)
+                _handshake_abort(CustomHttpStatus.UserRevoked.value, api_version=api_version)
 
         try:
             device.verify_key.verify_with_signature(
@@ -203,7 +225,7 @@ async def _do_handshake(
                 message=body,
             )
         except CryptoError:
-            _handshake_abort(401, api_version=api_version)
+            _handshake_abort(CustomHttpStatus.BadAuthenticationInfo.value, api_version=api_version)
 
     if not check_invitation:
         invitation = None
@@ -218,11 +240,13 @@ async def _do_handshake(
         try:
             invitation = await backend.invite.info(organization_id=organization_id, token=token)
         except InvitationAlreadyDeletedError:
-            _handshake_abort(410, api_version=api_version)
+            _handshake_abort(
+                CustomHttpStatus.InvitationAlreadyUsedOrDeleted.value, api_version=api_version
+            )
         except InvitationNotFoundError:
             _handshake_abort(404, api_version=api_version)
         except InvitationError:
-            _handshake_abort(401, api_version=api_version)
+            _handshake_abort(CustomHttpStatus.BadAuthenticationInfo.value, api_version=api_version)
 
     return api_version, client_api_version, organization_id, organization, user, device, invitation
 
@@ -332,7 +356,9 @@ async def invited_api(raw_organization_id: str) -> Response:
     try:
         cmd_rep = await cmd_func(client_ctx, msg)
     except CloseInviteConnection:
-        _handshake_abort(410, api_version=api_version)
+        _handshake_abort(
+            CustomHttpStatus.InvitationAlreadyUsedOrDeleted.value, api_version=api_version
+        )
     except Exception as exc:
         print("rpc didn't handle this exception:", type(exc))
         raise exc
