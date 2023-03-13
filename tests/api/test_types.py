@@ -6,7 +6,7 @@ from unicodedata import normalize
 
 import pytest
 
-from parsec._parsec import EntryNameError, LocalDevice
+from parsec._parsec import EntryNameError, LocalDevice, SecretKey
 from parsec.api.data import DataError, EntryName, SASCode
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
@@ -19,7 +19,6 @@ from parsec.core.types import (
     LocalUserManifest,
     LocalWorkspaceManifest,
 )
-from parsec.crypto import SecretKey
 from parsec.serde import packb
 
 

@@ -52,7 +52,6 @@ from parsec._parsec import (
     ReencryptionBatchEntry,
 )
 from utils import *
-from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
 

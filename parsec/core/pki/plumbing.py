@@ -8,12 +8,11 @@ from typing import Iterable, Tuple
 
 import trio
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import DateTime, EnrollmentID, PrivateKey, SigningKey
 from parsec.api.data import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
 from parsec.core.types import LocalDevice
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.core.types.pki import LocalPendingEnrollment, X509Certificate
-from parsec.crypto import PrivateKey, SigningKey
 
 
 def _load_smartcard_extension() -> ModuleType:

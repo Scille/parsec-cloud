@@ -6,7 +6,7 @@ from typing import Any, List, Tuple, Union
 import click
 import trio
 
-from parsec._parsec import EntryID, EntryName
+from parsec._parsec import EntryID, EntryName, HashDigest
 from parsec.api.data.manifest import FolderManifest, WorkspaceEntry, WorkspaceManifest
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
@@ -15,7 +15,6 @@ from parsec.core.config import CoreConfig
 from parsec.core.fs import FsPath, WorkspaceFS
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import DEFAULT_BLOCK_SIZE, LocalDevice
-from parsec.crypto import HashDigest
 from parsec.utils import trio_run
 
 

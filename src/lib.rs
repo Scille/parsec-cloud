@@ -28,6 +28,7 @@ mod trustchain;
 #[pymodule]
 #[pyo3(name = "_parsec")]
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
+    crate::api_crypto::add_mod(py, m)?;
     crate::backend_connection::add_mod(py, m)?;
     crate::data::add_mod(py, m)?;
     crate::invite::add_mod(py, m)?;
@@ -45,18 +46,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<addrs::BackendInvitationAddr>()?;
     m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
     m.add_function(wrap_pyfunction!(addrs::export_root_verify_key, m)?)?;
-
-    m.add_class::<api_crypto::HashDigest>()?;
-    m.add_class::<api_crypto::SigningKey>()?;
-    m.add_class::<api_crypto::VerifyKey>()?;
-    m.add_class::<api_crypto::SecretKey>()?;
-    m.add_class::<api_crypto::PrivateKey>()?;
-    m.add_class::<api_crypto::PublicKey>()?;
-    m.add_class::<api_crypto::SequesterPrivateKeyDer>()?;
-    m.add_class::<api_crypto::SequesterPublicKeyDer>()?;
-    m.add_class::<api_crypto::SequesterSigningKeyDer>()?;
-    m.add_class::<api_crypto::SequesterVerifyKeyDer>()?;
-    m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
 
     m.add_class::<enumerate::ClientType>()?;
     m.add_class::<enumerate::CoreEvent>()?;

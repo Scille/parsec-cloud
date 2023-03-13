@@ -22,9 +22,11 @@ from parsec._parsec import (
     BlockReadRepOk,
     ChunkID,
     CoreEvent,
+    CryptoError,
     DateTime,
     DeviceID,
     EntryID,
+    HashDigest,
     LocalDevice,
     RealmCreateRepAlreadyExists,
     RealmCreateRepOk,
@@ -34,6 +36,7 @@ from parsec._parsec import (
     RealmRole,
     SequesterServiceID,
     UserID,
+    VerifyKey,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
     VlobCreateRepInMaintenance,
@@ -106,7 +109,6 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerInvalidTrustchainError,
     RemoteDevicesManagerUserNotFoundError,
 )
-from parsec.crypto import CryptoError, HashDigest, VerifyKey
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 

@@ -5,7 +5,7 @@ import re
 
 import pytest
 
-from parsec._parsec import InvitationType
+from parsec._parsec import InvitationType, SigningKey
 from parsec.api.protocol import InvitationToken, OrganizationID
 from parsec.core.types import (
     BackendAddr,
@@ -15,7 +15,6 @@ from parsec.core.types import (
     BackendOrganizationFileLinkAddr,
     EntryID,
 )
-from parsec.crypto import SigningKey
 
 DEFAULT_ARGS = {
     "ORG": "MyOrg",

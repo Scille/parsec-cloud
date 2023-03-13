@@ -4,8 +4,8 @@
 
 from uuid import UUID
 
+from parsec._parsec import SecretKey, HashDigest
 from protocol.utils import *
-from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
 from parsec.core.types import *

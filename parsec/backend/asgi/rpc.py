@@ -7,11 +7,10 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncIterable, AsyncIterator, NoReturn
 
 import trio
-from nacl.exceptions import CryptoError
 from quart import Blueprint, Response, current_app, g, request
 from quart.wrappers.response import ResponseBody
 
-from parsec._parsec import ClientType, DateTime, InvitationToken
+from parsec._parsec import ClientType, CryptoError, DateTime, InvitationToken
 from parsec.api.protocol import (
     DeviceID,
     IncompatibleAPIVersionsError,

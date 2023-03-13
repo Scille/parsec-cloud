@@ -17,6 +17,8 @@ from parsec._parsec import (
     PkiEnrollmentSubmitRepEmailAlreadyUsed,
     PkiEnrollmentSubmitRepIdAlreadyUsed,
     PkiEnrollmentSubmitRepOk,
+    PrivateKey,
+    SigningKey,
 )
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.protocol import DeviceLabel
@@ -49,7 +51,6 @@ from parsec.core.types import (
     LocalDevice,
 )
 from parsec.core.types.pki import LocalPendingEnrollment
-from parsec.crypto import PrivateKey, SigningKey
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

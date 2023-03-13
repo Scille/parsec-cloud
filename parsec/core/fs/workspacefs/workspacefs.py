@@ -14,6 +14,7 @@ from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
     BlockAccess,
     CoreEvent,
+    CryptoError,
     DateTime,
     EntryID,
     EntryName,
@@ -69,7 +70,6 @@ from parsec.core.types import (
     RemoteWorkspaceManifest,
     WorkspaceRole,
 )
-from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 
 if TYPE_CHECKING:

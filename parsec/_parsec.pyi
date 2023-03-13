@@ -46,6 +46,7 @@ from parsec._parsec_pyi.certif import (
     UserCertificate,
 )
 from parsec._parsec_pyi.crypto import (
+    CryptoError,
     HashDigest,
     PrivateKey,
     PublicKey,
@@ -631,6 +632,7 @@ __all__ = [
     "SequesterSigningKeyDer",
     "SequesterVerifyKeyDer",
     "generate_nonce",
+    "CryptoError",
     # DeviceFile
     "DeviceFile",
     # Enumerate

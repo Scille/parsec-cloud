@@ -6,10 +6,8 @@ import os
 import re
 import shutil
 import sys
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Generator
-from unittest.mock import patch
 
 import hypothesis
 import psutil
@@ -65,9 +63,6 @@ def pytest_addoption(parser):
         "--enable-unstable-oxidized-client-connection",
         action="store_true",
         help="Use the unstable Rust client connection",
-    )
-    parser.addoption(
-        "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
     parser.addoption("--runrust", action="store_true", help="Don't skip rust tests")
     parser.addoption(
@@ -312,34 +307,6 @@ def hypothesis_settings(request):
     )
 
 
-@pytest.fixture(autouse=True, scope="session", name="unmock_crypto")
-def mock_crypto(request):
-    # Crypto is CPU hungry
-    if request.config.getoption("--realcrypto"):
-
-        @contextmanager
-        def unmock():
-            yield
-
-        yield unmock
-
-    else:
-
-        def unsecure_but_fast_argon2i_kdf(size, password, salt, *args, **kwargs):
-            data = password + salt
-            return data[:size] + b"\x00" * (size - len(data))
-
-        from parsec.crypto import argon2i
-
-        vanilla_kdf = argon2i.kdf
-
-        def unmock():
-            return patch("parsec.crypto.argon2i.kdf", new=vanilla_kdf)
-
-        with patch("parsec.crypto.argon2i.kdf", new=unsecure_but_fast_argon2i_kdf):
-            yield unmock
-
-
 # Other main fixtures
 
 
@@ -359,12 +326,6 @@ async def nursery():
     # fixtures (like nursery is) can be used inside the Hypothesis tests.
     # I know you love Hypothesis. Checkmate. You won't use this fixture ;-)
     raise RuntimeError("Bad kitty ! Bad !!!")
-
-
-@pytest.fixture
-def realcrypto(unmock_crypto):
-    with unmock_crypto():
-        yield
 
 
 @pytest.fixture

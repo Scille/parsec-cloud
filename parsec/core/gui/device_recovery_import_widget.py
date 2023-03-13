@@ -8,6 +8,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec._parsec import (
+    CryptoError,
     DeviceFileType,
     LocalDeviceCryptoError,
     LocalDeviceError,
@@ -32,7 +33,6 @@ from parsec.core.gui.ui.device_recovery_import_widget import Ui_DeviceRecoveryIm
 from parsec.core.local_device import save_device_with_smartcard_in_config
 from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.types import LocalDevice
-from parsec.crypto import CryptoError
 
 
 class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widget):

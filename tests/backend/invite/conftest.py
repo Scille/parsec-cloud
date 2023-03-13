@@ -6,6 +6,7 @@ import trio
 
 from parsec._parsec import (
     DateTime,
+    HashDigest,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
     Invite2aClaimerSendHashedNonceRepOk,
@@ -23,8 +24,8 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
+    PrivateKey,
 )
-from parsec.crypto import HashDigest, PrivateKey
 from tests.backend.common import (
     invite_1_claimer_wait_peer,
     invite_1_greeter_wait_peer,

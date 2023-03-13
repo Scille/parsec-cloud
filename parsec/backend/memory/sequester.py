@@ -5,7 +5,7 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-from parsec._parsec import DateTime
+from parsec._parsec import CryptoError, DateTime
 from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.sequester import (
@@ -21,7 +21,6 @@ from parsec.backend.sequester import (
     SequesterServiceType,
     SequesterWrongServiceTypeError,
 )
-from parsec.crypto import CryptoError
 
 if TYPE_CHECKING:
     from parsec.backend.memory.organization import MemoryOrganizationComponent

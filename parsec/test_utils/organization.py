@@ -11,6 +11,7 @@ from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
     DateTime,
     DeviceCreateRepOk,
+    SigningKey,
     UserCreateRepOk,
     save_device_with_password_in_config,
 )
@@ -39,7 +40,6 @@ from parsec.core.types import (
     LocalDevice,
     WorkspaceRole,
 )
-from parsec.crypto import SigningKey
 
 
 async def initialize_test_organization(

@@ -1,17 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import struct
 import math
+import struct
 import zlib
-import msgpack
 from binascii import unhexlify
 
-from parsec._parsec import DateTime, DeviceCertificate, UserCertificate
+import msgpack
+
+from parsec._parsec import (
+    BackendOrganizationAddr,
+    DateTime,
+    DeviceCertificate,
+    DeviceID,
+    DeviceLabel,
+    EntryID,
+    HumanHandle,
+    LocalDevice,
+    PrivateKey,
+    SecretKey,
+    SigningKey,
+    UserCertificate,
+    UserProfile,
+    VerifyKey,
+)
 from parsec._version import __version__
-from parsec.crypto import SigningKey, PrivateKey, SecretKey, VerifyKey
-from parsec.api.data import EntryID
-from parsec.api.protocol import HumanHandle, DeviceID, DeviceLabel, UserProfile
-from parsec.core.types import LocalDevice, BackendOrganizationAddr
 
 
 def generate_ALICE_local_device():

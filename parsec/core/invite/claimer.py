@@ -9,6 +9,7 @@ from parsec._parsec import (
     BackendActionAddr,
     BackendAddr,
     DeviceCreateRepOk,
+    HashDigest,
     InvitationType,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,
@@ -59,6 +60,9 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
+    PrivateKey,
+    SecretKey,
+    SigningKey,
     UserCreateRepActiveUsersLimitReached,
     UserCreateRepOk,
     generate_nonce,
@@ -83,7 +87,6 @@ from parsec.core.invite import (
     InvitePeerResetError,
 )
 from parsec.core.types import BackendOrganizationAddr, LocalDevice
-from parsec.crypto import HashDigest, PrivateKey, SecretKey, SigningKey
 
 NOT_FOUND_TYPES = (
     Invite1ClaimerWaitPeerRepNotFound,

@@ -101,9 +101,22 @@ impl SecretKey {
     pub fn from_password(password: &str, salt: &[u8]) -> Self {
         let mut key = [0; KEY_SIZE];
 
-        ARGON2
-            .hash_password_into(password.as_bytes(), salt, &mut key)
-            .expect("Invalid salt");
+        // During test we want to skip the `argon2` algorithm for hashing the password
+        // Because it takes some time.
+        // For that we replace argon with a very basic algorithm that copy the `password + salt` to the first key bytes.
+        if cfg!(feature = "test-unsecure-but-fast-secretkey-from-password") {
+            let password_end = KEY_SIZE.min(password.len());
+
+            key[..password_end].copy_from_slice(&password.as_bytes()[..password_end]);
+
+            let salt_end = (KEY_SIZE - password_end).min(salt.len());
+
+            key[password_end..password_end + salt_end].copy_from_slice(&salt[..salt_end]);
+        } else {
+            ARGON2
+                .hash_password_into(password.as_bytes(), salt, &mut key)
+                .expect("Invalid salt");
+        }
 
         Self::from(key)
     }

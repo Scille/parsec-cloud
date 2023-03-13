@@ -8,6 +8,7 @@ import attr
 from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
     DeviceCreateRepOk,
+    HashDigest,
     InvitationDeletedReason,
     Invite1GreeterWaitPeerRepOk,
     Invite2aGreeterGetHashedNonceRepOk,
@@ -15,7 +16,11 @@ from parsec._parsec import (
     Invite3aGreeterWaitPeerTrustRepOk,
     Invite3bGreeterSignifyTrustRepOk,
     Invite4GreeterCommunicateRepOk,
+    PrivateKey,
+    PublicKey,
+    SecretKey,
     UserCreateRepOk,
+    VerifyKey,
     generate_nonce,
 )
 from parsec.api.data import (
@@ -54,7 +59,6 @@ from parsec.core.invite.claimer import (
     T_OK_TYPES,
 )
 from parsec.core.types import LocalDevice
-from parsec.crypto import HashDigest, PrivateKey, PublicKey, SecretKey, VerifyKey
 
 
 def _check_rep(rep: Any, step_name: str, ok_type: Type[T_OK_TYPES]) -> T_OK_TYPES:

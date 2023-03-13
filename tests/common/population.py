@@ -8,10 +8,9 @@ from typing import Optional, Union
 
 import pytest
 
-from parsec._parsec import LocalDevice
+from parsec._parsec import LocalDevice, SigningKey
 from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserProfile
 from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.crypto import SigningKey
 from tests.common.binder import OrganizationFullData
 from tests.common.freeze_time import freeze_time
 from tests.common.sequester import sequester_authority_factory

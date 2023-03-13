@@ -4,7 +4,7 @@
 # cspell: ignore fdrm
 
 from protocol.utils import *
-from parsec.crypto import *
+from parsec._parsec import SecretKey, HashDigest
 from parsec.api.protocol import *
 from parsec.api.data import *
 

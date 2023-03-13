@@ -11,6 +11,7 @@ import pytest
 from parsec._parsec import (
     DeviceFileType,
     LocalDeviceError,
+    SigningKey,
     change_device_password,
     list_available_devices,
     save_device_with_password_in_config,
@@ -23,15 +24,8 @@ from parsec.core.local_device import (
     get_key_file,
 )
 from parsec.core.types import LocalDevice
-from parsec.crypto import SigningKey
 from parsec.serde import packb, unpackb
 from tests.common import customize_fixtures
-
-
-@pytest.fixture(autouse=True, scope="module")
-def realcrypto(unmock_crypto):
-    with unmock_crypto():
-        pass
 
 
 @pytest.fixture

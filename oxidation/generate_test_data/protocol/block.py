@@ -3,7 +3,7 @@
 # flake8: noqa
 
 from utils import *
-from parsec.crypto import *
+
 from parsec.api.protocol import *
 from parsec.api.data import *
 

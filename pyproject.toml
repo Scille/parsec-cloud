@@ -50,7 +50,6 @@ h11 = ">=0.13,<0.15"
 # Can use marshmallow or the toasted flavour as you like ;-)
 # marshmallow = "2.14.0"
 toastedmarshmallow = "0.2.6" # updating causes consistency problem in test
-PyNaCl = "^1.5"
 trio = "^0.22"
 trio_typing = "^0.7"
 sentry-sdk = "^1.5"

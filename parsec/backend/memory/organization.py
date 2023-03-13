@@ -7,7 +7,13 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Union
 
 import trio
 
-from parsec._parsec import ActiveUsersLimit, DateTime, OrganizationStats, UsersPerProfileDetailItem
+from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    OrganizationStats,
+    UsersPerProfileDetailItem,
+    VerifyKey,
+)
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.backend.events import BackendEvent
 from parsec.backend.organization import (
@@ -22,7 +28,6 @@ from parsec.backend.organization import (
 )
 from parsec.backend.user import Device, User, UserError
 from parsec.backend.utils import Unset, UnsetType
-from parsec.crypto import VerifyKey
 
 if TYPE_CHECKING:
     from parsec.backend.memory.block import MemoryBlockComponent
