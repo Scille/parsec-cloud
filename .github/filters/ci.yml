@@ -50,6 +50,17 @@ web: &web
   - oxidation/client/src/**
   - oxidation/client/tests/**
 
+python-changes: &python-changes
+  - *python-dependencies-project
+  - *python
+
+rust-changes: &rust-changes
+  - *rust-dependencies-workspace
+  - *rust-libparsec
+  - *rust-toolchain
+  - *rust-python-binding
+  - *rust-web-binding
+
 # The python jobs need to be run when:
 # - The ci workflow has changed
 # - The action `setup-python-poetry` has changed
@@ -59,28 +70,27 @@ web: &web
 # - The rust python binding has changed
 # - The python code (test & code) was modified
 # - We updated the python dependencies
+# > Note: We don't use `rust-changes` because it include all the change made to the rust code
+# > including change made to the ionic part.
 python-jobs:
   - *ci-workflow
   - .github/actions/setup-python-poetry/**
+  - *python-changes
   - *rust-dependencies-workspace
   - *rust-libparsec
   - *rust-toolchain
   - *rust-python-binding
-  - *python
-  - *python-dependencies-project
+
 
 # The rust jobs need to watch for:
 # - The change on the rust code.
 # - The change in the dependencies list.
 # - We change the toolchain
 # - We modify the Ci workflow
-#
-# We don't include the rust code on the binding because they're tested on different jobs.
 rust-jobs:
   - *ci-workflow
-  - *rust-dependencies-workspace
-  - *rust-libparsec
-  - *rust-toolchain
+  - *rust-changes
+
 
 # The web jobs need to be run when:
 # - The ci workflow has changed
@@ -90,6 +100,8 @@ rust-jobs:
 # - The rust web binding has changed
 # - The Web code / test has changed
 # - The web dependencies has changed
+# > Note: We don't use `rust-changes` because it include all the change made to the rust code
+# > including change made to the python part.
 web-jobs:
   - *ci-workflow
   - *rust-dependencies-workspace
