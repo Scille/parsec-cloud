@@ -184,11 +184,20 @@ async def _run_server(
             )
             port = int(binds[0].rsplit(":", 1)[-1])
 
+            PINK = "\x1b[35m"
+            BOLD_YELLOW = "\x1b[1;33m"
+            NO_COLOR = "\x1b[0;0m"
+            print(
+                f"{BOLD_YELLOW}All set !"
+                f"{NO_COLOR} Don't forget to export `TESTBED_SERVER_URL` environ variable:\n"
+                f"{PINK}export TESTBED_SERVER_URL='parsec://127.0.0.1:{port}?no_ssl=true'{NO_COLOR}"
+            )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", "-H", default="127.0.0.1")
-    parser.add_argument("--port", "-P", type=int, default=0)
+    parser.add_argument("--port", "-P", type=int, default=6770)
     parser.add_argument("--backend-addr")
     parser.add_argument("--orga-life-limit", type=float, default=DEFAULT_ORGANIZATION_LIFE_LIMIT)
     parser.add_argument("--stop-after-process", type=int, default=None)
