@@ -182,6 +182,7 @@ jobs:
         id: python-changes
         if: >-
           steps.changes.outputs.python-jobs == 'true'
+          || contains(github.ref, 'gh-readonly-queue')
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
@@ -412,6 +413,7 @@ jobs:
         id: rust-changes
         if: >-
           steps.changes.outputs.rust-jobs == 'true'
+          || contains(github.ref, 'gh-readonly-queue')
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
@@ -485,6 +487,7 @@ jobs:
         id: web-change
         if: >-
           steps.changes.outputs.web-jobs == 'true'
+          || contains(github.ref, 'gh-readonly-queue')
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
