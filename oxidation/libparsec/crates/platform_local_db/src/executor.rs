@@ -207,9 +207,14 @@ impl BackgroundSqliteExecutor {
 mod tests {
     use crate::DatabaseError;
     use diesel::{connection::SimpleConnection, Connection, SqliteConnection};
+    use rstest::rstest;
+    use std::time::Duration;
 
     use super::SqliteExecutor;
 
+    #[rstest]
+    // FIXME: We need a timeout because the test seems to block on the CI, see #4176 for more information
+    #[timeout(Duration::from_secs(30))]
     #[tokio::test]
     async fn fail_reopen_database() {
         let connection = SqliteConnection::establish(":memory:").unwrap();
