@@ -280,12 +280,10 @@ jobs:
       # libparsec is slow to compile, so we save it in cache and skip the
       # compilation entirely if the Rust code hasn't changed !
 
-      - name: Use cached libparsec if Rust hasn't been modified
+      - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        if: >-
-          steps.python-changes.outputs.run == 'true'
-          && steps.rust-changes.outputs.run != 'true'
-        uses: actions/cache@v3
+        if: steps.python-changes.outputs.run == 'true'
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
         with:
           # Key cache contains a hash of all the files that are used to produce _parsec.so
           # Hence if we have a cache hit we know that there is no need for a rebuild !
@@ -326,6 +324,26 @@ jobs:
           if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
         timeout-minutes: 20
+
+      # We only save the libparsec lib when:
+      # - We are not in a github queue branch (they're a one time use so caching won't help)
+      # - The rust code isn't modifed.
+      # - We haven't add a cache it.
+      - name: Save cached libparsec to be reused on later call
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && steps.changes.outputs.rust-changes != 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+          && contains(github.ref, 'gh-readonly-queue') != 'true'
+        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
+        with:
+          # Key cache contains a hash of all the files that are used to produce _parsec.so
+          # Hence if we have a cache hit we know that there is no need for a rebuild !
+          key: ${{ matrix.os }}-${{ hashFiles('src/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python
+          path: |
+            parsec/_parsec.*.pyd
+            parsec/_parsec.*.so
+        timeout-minutes: 2
 
       - name: Basic tests
         if: steps.python-changes.outputs.run == 'true'

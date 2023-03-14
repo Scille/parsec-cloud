@@ -26,12 +26,6 @@ rust-python-binding: &rust-python-binding src
 
 rust-web-binding: &rust-web-binding oxidation/bindings/web
 
-python: &python
-  - parsec
-  - tests
-  - make.py
-  - build.py
-
 python-dependencies-project: &python-dependencies-project
   - pyproject.toml
   - poetry.lock
@@ -50,6 +44,18 @@ web: &web
   - oxidation/client/*.js
   - oxidation/client/*.ts
 
+python-changes: &python-changes
+  - *python-dependencies-project
+  - parsec
+  - tests
+  - make.py
+  - build.py
+
+rust-changes: &rust-changes
+  - *rust-dependencies-workspace
+  - *rust-libparsec
+  - *rust-toolchain
+
 # The python jobs need to be run when:
 # - The ci workflow has changed
 # - The action `setup-python-poetry` has changed
@@ -62,12 +68,10 @@ web: &web
 python-jobs:
   - *ci-workflow
   - .github/actions/setup-python-poetry
-  - *rust-dependencies-workspace
-  - *rust-libparsec
-  - *rust-toolchain
+  - *python-changes
+  - *rust-changes
   - *rust-python-binding
-  - *python
-  - *python-dependencies-project
+
 
 # The rust jobs need to watch for:
 # - The change on the rust code.
@@ -78,9 +82,8 @@ python-jobs:
 # We don't include the rust code on the binding because they're tested on different jobs.
 rust-jobs:
   - *ci-workflow
-  - *rust-dependencies-workspace
-  - *rust-libparsec
-  - *rust-toolchain
+  - *rust-changes
+
 
 # The web jobs need to be run when:
 # - The ci workflow has changed
@@ -92,9 +95,7 @@ rust-jobs:
 # - The web dependencies has changed
 web-jobs:
   - *ci-workflow
-  - *rust-dependencies-workspace
-  - *rust-libparsec
-  - *rust-toolchain
+  - *rust-changes
   - *rust-web-binding
   - *new-client-dependencies-project
   - *web
