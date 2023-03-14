@@ -156,13 +156,16 @@ def test_addr_with_no_hostname(addr_testbed, with_port: bool):
         domain = ":4242"
     else:
         domain = ""
-    url = addr_testbed.generate_url(DOMAIN=domain)
+    url = addr_testbed.generate_url()
+    # `http:///foo` is a valid url, so we also have to remove the path
+    try:
+        _, extra = url.split("?", 1)
+        url = f"parsec://{domain}?{extra}"
+    except ValueError:
+        url = f"parsec://{domain}"
     with pytest.raises(ValueError) as exc:
         addr_testbed.cls.from_url(url)
-    if with_port:
-        assert f"Cannot parse raw url `{url}`: empty host" == str(exc.value)
-    else:
-        assert f"No hostname on url `{url}`" == str(exc.value)
+    assert f"Cannot parse raw url `{url}`: empty host" == str(exc.value)
 
 
 def test_good_addr_with_unknown_field(addr_testbed):
@@ -211,6 +214,11 @@ def test_bad_addr_with_http_redirection(addr_testbed):
 
     # Bad scheme
     bad_url = re.sub(r"^parsec://([^/]*)(.*)$", r"dummy://\1/redirect\2", addr_testbed.url)
+    with pytest.raises(ValueError):
+        addr_testbed.cls.from_url(bad_url)
+
+    # Not hostname
+    bad_url = re.sub(r"^parsec://([^/]*)(.*)$", r"parsec://:42/redirect\2", addr_testbed.url)
     with pytest.raises(ValueError):
         addr_testbed.cls.from_url(bad_url)
 

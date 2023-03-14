@@ -233,12 +233,32 @@ fn test_addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad
 
 #[apply(all_addr)]
 fn test_addr_with_no_hostname(testbed: &dyn Testbed, #[values("", ":4242")] bad_domain: &str) {
+    let (url, expected_error) = if bad_domain.is_empty() {
+        // `http:///foo` is a valid url, so we also have to remove the path
+        let url = match testbed.url().split('?').nth(1) {
+            Some(extra) => format!("parsec://?{}", extra),
+            None => "parsec://".to_string(),
+        };
+        let expected_error = AddrError::InvalidUrl(url.to_string(), url::ParseError::EmptyHost);
+        (url, expected_error)
+    } else {
+        let url = testbed.url().replace(DOMAIN, bad_domain);
+        let expected_error = AddrError::InvalidUrl(url.clone(), url::ParseError::EmptyHost);
+        (url, expected_error)
+    };
+    testbed.assert_addr_err(&url, expected_error);
+}
+
+// Based on a true debug story...
+#[apply(all_addr)]
+fn test_addr_with_bad_hostname(
+    testbed: &dyn Testbed,
+    #[values("1270.0.1", "1270.0.1:4242")] bad_domain: &str,
+) {
     let url = testbed.url().replace(DOMAIN, bad_domain);
     testbed.assert_addr_err(
         &url,
-        url.parse()
-            .map(AddrError::NoHostname)
-            .unwrap_or_else(|e| AddrError::InvalidUrl(url.clone(), e)),
+        AddrError::InvalidUrl(url.to_string(), url::ParseError::InvalidIpv4Address),
     );
 }
 
@@ -658,8 +678,10 @@ fn backend_addr_redirection() {
 #[case("https://foo.bar")]
 #[case("https://foo.bar/redirection")]
 #[case("https://foo.bar/not_valid")]
+#[case("http://1270.0.1/redirect")]
+#[case("http://foo:99999/redirect")]
 fn test_faulty_addr_redirection(#[case] raw_url: &str) {
-    let res = dbg!(BackendAddr::from_http_redirection(raw_url));
+    let res = BackendAddr::from_http_redirection(raw_url);
 
     assert!(res.is_err());
 }
@@ -683,13 +705,13 @@ fn test_backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl:
 #[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::bad_scheme("xx://foo:42", AddrError::InvalidUrlScheme { got: "xx".to_string(), expected: "parsec" })]
-#[case::path_not_allowed("parsec://foo:42/dummy", AddrError::ShouldNotHaveAPath("parsec://foo:42/dummy".parse().unwrap()))]
+#[case::path_not_allowed("parsec://foo:42/dummy", AddrError::ShouldNotHaveAPath("https://foo:42/dummy".parse().unwrap()))]
 #[case::bad_parsing_in_valid_param(
     "parsec://foo:42?no_ssl",
     AddrError::InvalidParamValue {
          param: "no_ssl",
          value: "".to_string(),
-         help: "Expected `no_ssl=false` or `no_ssl=true`".to_string(),
+         help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
     }
 )]
 #[case::missing_value_for_param(
@@ -697,7 +719,7 @@ fn test_backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl:
     AddrError::InvalidParamValue {
          param: "no_ssl",
          value: "".to_string(),
-         help: "Expected `no_ssl=false` or `no_ssl=true`".to_string(),
+         help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
     }
 )]
 #[case::bad_value_for_param(
@@ -705,7 +727,7 @@ fn test_backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl:
     AddrError::InvalidParamValue {
          param: "no_ssl",
          value: "nop".to_string(),
-         help: "Expected `no_ssl=false` or `no_ssl=true`".to_string(),
+         help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
     }
 )]
 fn test_backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
