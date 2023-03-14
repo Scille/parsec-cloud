@@ -1,0 +1,23 @@
+codeql-workflow: &codeql-workflow .github/workflows/codeql.yml
+
+setup-python-action: &setup-python-action .github/actions/setup-python-poetry
+
+python: &python
+  - parsec
+  - tests
+  - build.py
+  - make.py
+
+python-dependencies-project: &python-dependencies-project
+  - poetry.lock
+  - pyproject.toml
+
+# The python analyze job need to be run when:
+# - We modify python code
+# - We update our python dependencies
+# - The codeql workflow is changed
+python-analyze:
+  - *codeql-workflow
+  - *setup-python-action
+  - *python
+  - *python-dependencies-project

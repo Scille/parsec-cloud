@@ -1,14 +1,3 @@
-# For most projects, this workflow file will not need changing; you simply need
-# to commit it to your repository.
-#
-# You may wish to alter this file to override the set of languages analyzed,
-# or to provide custom queries or build logic.
-#
-# ******** NOTE ********
-# We have attempted to detect the languages in your repository. Please check
-# the `language` matrix defined below to confirm you have the correct set of
-# supported CodeQL languages.
-#
 name: CodeQL
 
 on:
@@ -20,45 +9,49 @@ on:
     # The branches below must be a subset of the branches above
     branches:
       - master
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.txt'
-      - '**/*.po'
   schedule:
     # Every Wednesday at 04:20
     - cron: 20 4 * * 3
 
-env:
-  python-version: "3.9"
-  poetry-version: 1.2.2
-  rust-version: 1.65.0
-
 jobs:
-  analyze:
-    name: Analyze
+  python-analyze:
+    name: 🐍 Python static code Analysis
     runs-on: ubuntu-20.04
     permissions:
       actions: read
       contents: read
       security-events: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
-        language:
-          - python
-
+    env:
+      python-version: "3.9"
+      poetry-version: 1.3.2
     steps:
       - name: Checkout repository
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin v3.1.0
 
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          filters: .github/filters/codeql.yml
+
+      - name: Check modified path that require `python-analysis` to run
+        id: python-changes
+        # We want the job to run when:
+        # - modifying python code
+        # - in the merge queue
+        # - on the main branch
+        if: >-
+          steps.changes.outputs.python-analyze == 'true'
+          || contains(github.ref, 'gh-readonly-queue')
+          || github.ref == 'refs/heads/master'
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
+        if: steps.python-changes.outputs.run == 'true'
         uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
-          languages: ${{ matrix.language }}
+          languages: python
           setup-python-dependencies: false
           # If you wish to specify custom queries, you can do so here or in a config file.
           # By default, queries listed here will override any specified in a config file.
@@ -68,14 +61,14 @@ jobs:
           # queries: security-extended,security-and-quality
 
       - uses: ./.github/actions/setup-python-poetry
-        if: matrix.language == 'python'
+        if: steps.python-changes.outputs.run == 'true'
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
       - name: Install python deps
-        if: matrix.language == 'python'
+        if: steps.python-changes.outputs.run == 'true'
         run: |
           poetry install -E core -E backend
           poetry run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
@@ -83,6 +76,7 @@ jobs:
           POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
 
       - name: Perform CodeQL Analysis
+        if: steps.python-changes.outputs.run == 'true'
         uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
-          category: /language:${{matrix.language}}
+          category: /language:python
