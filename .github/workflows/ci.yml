@@ -85,7 +85,9 @@ jobs:
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
         with:
-          filters: .github/filters/ci.yml
+          filters: |
+            newsfragments:
+              - newsfragments/**
 
       - name: Install Cargo fmt
         run: |
@@ -179,8 +181,7 @@ jobs:
       - name: Check modified path that require python-ci run
         id: python-changes
         if: >-
-          steps.changes.outputs.python == 'true'
-          || steps.changes.outputs.rust-ext == 'true'
+          steps.changes.outputs.python-jobs == 'true'
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
@@ -410,8 +411,7 @@ jobs:
       - name: Check modified path that require rust-ci run
         id: rust-changes
         if: >-
-          steps.changes.outputs.rust == 'true'
-          || steps.changes.outputs.rust-ext == 'true'
+          steps.changes.outputs.rust-jobs == 'true'
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
@@ -484,12 +484,13 @@ jobs:
       - name: Check modified path that require `test-web` to run
         id: web-change
         if: >-
-          steps.changes.outputs.client-web == 'true'
+          steps.changes.outputs.web-jobs == 'true'
           || github.ref == 'refs/heads/master'
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c  # pin v3.6.0
+        if: steps.web-change.outputs.run == 'true'
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2

@@ -1,51 +1,100 @@
-shared: &shared
-  - .github/**
+ci-workflow: &ci-workflow .github/workflows/ci.yml
 
-rust:
-  - *shared
-  - oxidation/**/*.rs
-  - oxidation/**/*.toml
+rust-libparsec: &rust-libparsec oxidation/libparsec
+
+rust-dependencies-workspace: &rust-dependencies-workspace
   - Cargo.toml
   - Cargo.lock
-  - rust-toolchain.toml
 
-rust-platform-web: &rust-platform-web
-  # change in src/ can break the build
-  - oxidation/libparsec/crates/platform_*/src/**
+rust-toolchain: &rust-toolchain rust-toolchain.toml
 
-python:
-  - *shared
-  - parsec/**
-  - tests/**
-  - pyproject.toml
-  - poetry.lock
+rust-python-binding: &rust-python-binding src
+
+# TODO: We currently don't test the electron application
+# So we don't have to watch the electron binding (likewise for the client code related to electron)
+# rust-electron-binding: &rust-electron-binding oxidation/bindings/electron
+# new-client-electron: &new-client-electron: oxidation/client/electron
+
+# TODO: We currently don't test the android application
+# So we don't have to watch the android binding (likewise for the client code related to android)
+# rust-android-binding: &rust-android-binding oxidation/bindings/android
+# new-client-android: &new-client-android: oxidation/client/android
+
+# TODO: We currently don't test the ios application
+# So we don't have to watch the client code related to the ios application
+# new-client-ios: &new-client-ios oxidation/client/ios
+
+rust-web-binding: &rust-web-binding oxidation/bindings/web
+
+python: &python
+  - parsec
+  - tests
+  - make.py
   - build.py
 
-rust-ext:
-  - *shared
-  - .github/**
-  - src/**/*.rs
-  - Cargo.toml
-  - Cargo.lock
+python-dependencies-project: &python-dependencies-project
+  - pyproject.toml
+  - poetry.lock
+  - setup.cfg
 
-client-common: &client-common
-  - oxidation/client/src/**
-  - oxidation/client/resources/**
-  - oxidation/client/public/**
-  - oxidation/client/package-lock.json
+new-client-dependencies-project: &new-client-dependencies-project
   - oxidation/client/package.json
-  - oxidation/client/capacitor.config.ts
-  - oxidation/client/babel.config.js
+  - oxidation/client/package-lock.json
   - oxidation/client/tsconfig.json
-  - oxidation/bindings/generator/**
 
-client-web:
-  - *shared
-  - *client-common
-  - *rust-platform-web
-  - oxidation/bindings/web/**
-  - oxidation/client/tests/**
-  - oxidation/client/jest.config.js
+web: &web
+  - oxidation/client/public
+  - oxidation/client/resources
+  - oxidation/client/src
+  - oxidation/client/tests
+  - oxidation/client/*.js
+  - oxidation/client/*.ts
 
-newsfragments:
-  - newsfragments/**
+# The python jobs need to be run when:
+# - The ci workflow has changed
+# - The action `setup-python-poetry` has changed
+# - The rust has changed
+#   - The dependencies
+#   - The pure code has changed
+# - The rust python binding has changed
+# - The python code (test & code) was modified
+# - We updated the python dependencies
+python-jobs:
+  - *ci-workflow
+  - .github/actions/setup-python-poetry
+  - *rust-dependencies-workspace
+  - *rust-libparsec
+  - *rust-toolchain
+  - *rust-python-binding
+  - *python
+  - *python-dependencies-project
+
+# The rust jobs need to watch for:
+# - The change on the rust code.
+# - The change in the dependencies list.
+# - We change the toolchain
+# - We modify the Ci workflow
+#
+# We don't include the rust code on the binding because they're tested on different jobs.
+rust-jobs:
+  - *ci-workflow
+  - *rust-dependencies-workspace
+  - *rust-libparsec
+  - *rust-toolchain
+
+# The web jobs need to be run when:
+# - The ci workflow has changed
+# - The rust has changed
+#   - The dependencies
+#   - The pure code has changed
+# - The rust web binding has changed
+# - The Web code / test has changed
+# - The web dependencies has changed
+web-jobs:
+  - *ci-workflow
+  - *rust-dependencies-workspace
+  - *rust-libparsec
+  - *rust-toolchain
+  - *rust-web-binding
+  - *new-client-dependencies-project
+  - *web
