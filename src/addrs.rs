@@ -75,11 +75,11 @@ impl BackendAddr {
         match allow_http_redirection {
             true => match libparsec::types::BackendAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
             false => match libparsec::types::BackendAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
         }
     }
@@ -187,11 +187,11 @@ impl BackendOrganizationAddr {
         match allow_http_redirection {
             true => match libparsec::types::BackendOrganizationAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
             false => match libparsec::types::BackendOrganizationAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
         }
     }
@@ -242,7 +242,7 @@ impl BackendActionAddr {
                         Ok(BackendPkiEnrollmentAddr(v).into_py(py).to_object(py))
                     }
                 },
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
             false => match url.parse::<libparsec::types::BackendActionAddr>() {
                 Ok(ba) => match ba {
@@ -261,7 +261,7 @@ impl BackendActionAddr {
                         Ok(BackendPkiEnrollmentAddr(v).into_py(py).to_object(py))
                     }
                 },
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
         }
     }
@@ -386,11 +386,11 @@ impl BackendOrganizationBootstrapAddr {
         match allow_http_redirection {
             true => match libparsec::types::BackendOrganizationBootstrapAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
             false => match libparsec::types::BackendOrganizationBootstrapAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
         }
     }
@@ -535,11 +535,11 @@ impl BackendOrganizationFileLinkAddr {
         match allow_http_redirection {
             true => match libparsec::types::BackendOrganizationFileLinkAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
             false => match libparsec::types::BackendOrganizationFileLinkAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
         }
     }
@@ -678,11 +678,11 @@ impl BackendInvitationAddr {
         match allow_http_redirection {
             true => match libparsec::types::BackendInvitationAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
             false => match libparsec::types::BackendInvitationAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
         }
     }
@@ -806,11 +806,11 @@ impl BackendPkiEnrollmentAddr {
         match allow_http_redirection {
             true => match libparsec::types::BackendPkiEnrollmentAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
             false => match libparsec::types::BackendPkiEnrollmentAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
         }
     }

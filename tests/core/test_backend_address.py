@@ -151,7 +151,7 @@ def test_addr_with_bad_port(addr_testbed, bad_port):
 
 
 @pytest.mark.parametrize("with_port", [False, True])
-def test_addr_with_no_hostname(addr_testbed, with_port):
+def test_addr_with_no_hostname(addr_testbed, with_port: bool):
     if with_port:
         domain = ":4242"
     else:
@@ -159,7 +159,10 @@ def test_addr_with_no_hostname(addr_testbed, with_port):
     url = addr_testbed.generate_url(DOMAIN=domain)
     with pytest.raises(ValueError) as exc:
         addr_testbed.cls.from_url(url)
-    assert str(exc.value) in ["Missing mandatory hostname", "Invalid URL"]
+    if with_port:
+        assert f"Cannot parse raw url `{url}`: empty host" == str(exc.value)
+    else:
+        assert f"No hostname on url `{url}`" == str(exc.value)
 
 
 def test_good_addr_with_unknown_field(addr_testbed):
