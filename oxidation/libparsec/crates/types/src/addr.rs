@@ -46,7 +46,8 @@ macro_rules! impl_common_stuff {
                 let url = &url_with_forced_custom_scheme;
 
                 // Note `Url::parse` takes care of percent-encoding for query params
-                let mut parsed = Url::parse(url).map_err(|_| "Invalid URL")?;
+                let mut parsed =
+                    Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
 
                 // `no_ssl` is defined by http/https scheme and shouldn't be
                 // overwritten by the query part of the url
@@ -58,7 +59,8 @@ macro_rules! impl_common_stuff {
                     }
                     "xhttps" => (),
                     _ => {
-                        return Err("Not a redirection URL");
+                        // TODO: Should this be a `InvalidHttpSchema` ?
+                        return Err(AddrError::NotARedirection(parsed));
                     }
                 };
                 parsed.set_query(Some(&cleaned_query.finish()));
@@ -69,9 +71,9 @@ macro_rules! impl_common_stuff {
                 // Remove the `/redirect/` path prefix
                 let mut path_segments = parsed
                     .path_segments()
-                    .ok_or_else(|| "Not a redirection URL")?;
+                    .ok_or_else(|| AddrError::NotARedirection(parsed.clone()))?;
                 if path_segments.next() != Some("redirect") {
-                    return Err("Redirection URL must have a `/redirect/...` path");
+                    return Err(AddrError::MissingRedirectionFragment(parsed));
                 }
                 let path = &path_segments.collect::<Vec<&str>>().join("/");
                 parsed.set_path(path);
@@ -96,11 +98,12 @@ macro_rules! impl_common_stuff {
         }
 
         impl FromStr for $name {
-            type Err = &'static str;
+            type Err = AddrError;
 
             fn from_str(url: &str) -> Result<Self, Self::Err> {
                 // Note `Url::parse` takes care of percent-encoding for query params
-                let parsed = Url::parse(url).map_err(|_| "Invalid URL")?;
+                let parsed =
+                    Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
                 let pairs = parsed.query_pairs();
 
                 Self::_from_url(&parsed, &pairs)
@@ -147,7 +150,38 @@ macro_rules! impl_common_stuff {
     };
 }
 
-type AddrError = &'static str;
+/// The enum constains the list of possible errors when working with url / addr.
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum AddrError {
+    /// We failed to parse the url
+    #[error("Cannot parse raw url `{0}`: {1}")]
+    InvalidUrl(String, url::ParseError),
+    /// The provided url isn't one that is a redirection.
+    #[error("Not a redirection URL (url: {0})")]
+    NotARedirection(url::Url),
+    #[error("Redirection URL must have a `/redirect/...` path (url: {0})")]
+    MissingRedirectionFragment(url::Url),
+    #[error("Invalid url scheme, got {got} but expected {expected}")]
+    InvalidUrlScheme { got: String, expected: &'static str },
+    #[error("No hostname on url `{0}`")]
+    NoHostname(url::Url),
+    #[error("Invalid value `{value}` for {param} ({help})")]
+    InvalidParamValue {
+        param: &'static str,
+        value: String,
+        help: String,
+    },
+    #[error("Multiple values for param `{0}` only one should be provided")]
+    DuplicateParam(String),
+    #[error("Missing mandatory `{0}` param")]
+    MissingParam(&'static str),
+    #[error("The provided url (`{0}`) should not have a path")]
+    ShouldNotHaveAPath(url::Url),
+    #[error("Invalid base32 data: {0}")]
+    InvalidBase32Data(data_encoding::DecodeError),
+    #[error("Path does not form a valid organization id")]
+    InvalidOrganizationID,
+}
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 struct BaseBackendAddr {
@@ -159,17 +193,18 @@ struct BaseBackendAddr {
 impl BaseBackendAddr {
     fn from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
         if parsed.scheme() != PARSEC_SCHEME {
-            lazy_static! {
-                static ref SCHEME_ERROR_MSG: String =
-                    format!("Must start with `{}://`", PARSEC_SCHEME);
-            }
-            return Err(&SCHEME_ERROR_MSG);
+            return Err(AddrError::InvalidUrlScheme {
+                got: parsed.scheme().to_string(),
+                expected: PARSEC_SCHEME,
+            });
         }
 
         // Use the same error message than for `Url::parse` because
         // `Url::parse` considers port with no hostname (e.g. `http://:8080`)
         // invalid and we want to stay consistent to simplify testing
-        let hostname = parsed.host_str().ok_or("Invalid URL")?;
+        let hostname = parsed
+            .host_str()
+            .ok_or_else(|| AddrError::NoHostname(parsed.clone()))?;
 
         let mut no_ssl_queries = pairs.filter(|(k, _)| k == "no_ssl");
         let use_ssl = match no_ssl_queries.next() {
@@ -179,12 +214,16 @@ impl BaseBackendAddr {
                 "false" => true,
                 "true" => false,
                 _ => {
-                    return Err("Invalid `no_ssl` param value (must be true or false)");
+                    return Err(AddrError::InvalidParamValue {
+                        param: "no_ssl",
+                        value: value.to_string(),
+                        help: "Expected `no_ssl=false` or `no_ssl=true`".to_string(),
+                    })
                 }
             },
         };
         if no_ssl_queries.next().is_some() {
-            return Err("Multiple values for param `no_ssl`");
+            return Err(AddrError::DuplicateParam("no_ssl".to_string()));
         }
 
         let default_port = if use_ssl {
@@ -269,17 +308,17 @@ fn extract_action<'a>(
 ) -> Result<std::borrow::Cow<'a, str>, AddrError> {
     let mut action_queries = pairs.filter(|(k, _)| k == "action");
     let action = match action_queries.next() {
-        None => return Err("Missing mandatory `action` param"),
+        None => return Err(AddrError::MissingParam("action")),
         Some((_, value)) => value,
     };
     if action_queries.next().is_some() {
-        return Err("Multiple values for param `action`");
+        return Err(AddrError::DuplicateParam("action".to_string()));
     }
     Ok(action)
 }
 
 fn extract_organization_id(parsed: &Url) -> Result<OrganizationID, AddrError> {
-    const ERR_MSG: &str = "Path doesn't form a valid organization id";
+    const ERR_MSG: AddrError = AddrError::InvalidOrganizationID;
     // Strip the initial `/`
     let raw = &parsed.path().get(1..).ok_or(ERR_MSG)?;
     // Handle percent-encoding
@@ -323,7 +362,7 @@ impl BackendAddr {
         let base = BaseBackendAddr::from_url(parsed, pairs)?;
 
         if parsed.path() != "" && parsed.path() != "/" {
-            return Err("Cannot have path");
+            return Err(AddrError::ShouldNotHaveAPath(parsed.clone()));
         }
 
         Ok(Self { base })
@@ -370,13 +409,17 @@ impl BackendOrganizationAddr {
 
         let mut rvk_queries = pairs.filter(|(k, _)| k == "rvk");
         let root_verify_key = match rvk_queries.next() {
-            None => return Err("Missing mandatory `rvk` param"),
+            None => return Err(AddrError::MissingParam("rvk")),
             Some((_, value)) => {
-                import_root_verify_key(&value).or(Err("Invalid `rvk` param value"))?
+                import_root_verify_key(&value).map_err(|e| AddrError::InvalidParamValue {
+                    param: "rvk",
+                    value: value.to_string(),
+                    help: e.to_string(),
+                })?
             }
         };
         if rvk_queries.next().is_some() {
-            return Err("Multiple values for param `rvk`");
+            return Err(AddrError::DuplicateParam("rvk".to_string()));
         }
 
         Ok(Self {
@@ -432,55 +475,45 @@ pub enum BackendActionAddr {
 impl BackendActionAddr {
     pub fn from_any(url: &str) -> Result<Self, AddrError> {
         if let Ok(addr) = BackendOrganizationBootstrapAddr::from_any(url) {
-            return Ok(BackendActionAddr::OrganizationBootstrap(addr));
+            Ok(BackendActionAddr::OrganizationBootstrap(addr))
+        } else if let Ok(addr) = BackendOrganizationFileLinkAddr::from_any(url) {
+            Ok(BackendActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = BackendInvitationAddr::from_any(url) {
+            Ok(BackendActionAddr::Invitation(addr))
+        } else {
+            BackendPkiEnrollmentAddr::from_any(url).map(BackendActionAddr::PkiEnrollment)
         }
-        if let Ok(addr) = BackendOrganizationFileLinkAddr::from_any(url) {
-            return Ok(BackendActionAddr::OrganizationFileLink(addr));
-        }
-        if let Ok(addr) = BackendInvitationAddr::from_any(url) {
-            return Ok(BackendActionAddr::Invitation(addr));
-        }
-        if let Ok(addr) = BackendPkiEnrollmentAddr::from_any(url) {
-            return Ok(BackendActionAddr::PkiEnrollment(addr));
-        }
-        Err("Invalid URL format")
     }
 
     pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
         if let Ok(addr) = BackendOrganizationBootstrapAddr::from_http_redirection(url) {
-            return Ok(BackendActionAddr::OrganizationBootstrap(addr));
+            Ok(BackendActionAddr::OrganizationBootstrap(addr))
+        } else if let Ok(addr) = BackendOrganizationFileLinkAddr::from_http_redirection(url) {
+            Ok(BackendActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = BackendInvitationAddr::from_http_redirection(url) {
+            Ok(BackendActionAddr::Invitation(addr))
+        } else {
+            BackendPkiEnrollmentAddr::from_http_redirection(url)
+                .map(BackendActionAddr::PkiEnrollment)
         }
-        if let Ok(addr) = BackendOrganizationFileLinkAddr::from_http_redirection(url) {
-            return Ok(BackendActionAddr::OrganizationFileLink(addr));
-        }
-        if let Ok(addr) = BackendInvitationAddr::from_http_redirection(url) {
-            return Ok(BackendActionAddr::Invitation(addr));
-        }
-        if let Ok(addr) = BackendPkiEnrollmentAddr::from_http_redirection(url) {
-            return Ok(BackendActionAddr::PkiEnrollment(addr));
-        }
-        Err("Invalid URL format")
     }
 }
 
 impl std::str::FromStr for BackendActionAddr {
-    type Err = &'static str;
+    type Err = AddrError;
 
     #[inline]
     fn from_str(url: &str) -> Result<Self, Self::Err> {
         if let Ok(addr) = url.parse::<BackendOrganizationBootstrapAddr>() {
-            return Ok(BackendActionAddr::OrganizationBootstrap(addr));
+            Ok(BackendActionAddr::OrganizationBootstrap(addr))
+        } else if let Ok(addr) = url.parse::<BackendOrganizationFileLinkAddr>() {
+            Ok(BackendActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = url.parse::<BackendInvitationAddr>() {
+            Ok(BackendActionAddr::Invitation(addr))
+        } else {
+            url.parse::<BackendPkiEnrollmentAddr>()
+                .map(BackendActionAddr::PkiEnrollment)
         }
-        if let Ok(addr) = url.parse::<BackendOrganizationFileLinkAddr>() {
-            return Ok(BackendActionAddr::OrganizationFileLink(addr));
-        }
-        if let Ok(addr) = url.parse::<BackendInvitationAddr>() {
-            return Ok(BackendActionAddr::Invitation(addr));
-        }
-        if let Ok(addr) = url.parse::<BackendPkiEnrollmentAddr>() {
-            return Ok(BackendActionAddr::PkiEnrollment(addr));
-        }
-        Err("Invalid URL format")
     }
 }
 
@@ -515,7 +548,11 @@ impl BackendOrganizationBootstrapAddr {
         let organization_id = extract_organization_id(parsed)?;
         let action = extract_action(pairs)?;
         if action != "bootstrap_organization" {
-            return Err("Expected `action=bootstrap_organization` param value");
+            return Err(AddrError::InvalidParamValue {
+                param: "action",
+                value: action.to_string(),
+                help: "Expected `action=bootstrap_organization`".to_string(),
+            });
         }
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
@@ -524,7 +561,7 @@ impl BackendOrganizationBootstrapAddr {
         // the replacement character EF BF BD is used instead. This should be
         // ok for our use case (but it differs from Python implementation).
         if token_queries.next().is_some() {
-            return Err("Multiple values for param `token`");
+            return Err(AddrError::DuplicateParam("token".to_string()));
         }
         // Consider empty token as no token
         // It's important to do this cooking eagerly (instead of e.g. doing it in
@@ -628,13 +665,22 @@ impl BackendOrganizationFileLinkAddr {
         let organization_id = extract_organization_id(parsed)?;
         let action = extract_action(pairs)?;
         if action != "file_link" {
-            return Err("Expected `action=file_link` param value");
+            return Err(AddrError::InvalidParamValue {
+                param: "action",
+                value: action.to_string(),
+                help: "Expected `action=file_link`".to_string(),
+            });
         }
 
         let mut query_str_map = HashMap::new();
         for (key, value) in *pairs {
-            if query_str_map.insert(key, value).is_some() {
-                return Err("Duplicated key in query string");
+            match query_str_map.entry(key) {
+                std::collections::hash_map::Entry::Occupied(occupied) => {
+                    return Err(AddrError::DuplicateParam(occupied.key().to_string()))
+                }
+                std::collections::hash_map::Entry::Vacant(vacant) => {
+                    vacant.insert(value);
+                }
             }
         }
 
@@ -649,14 +695,24 @@ impl BackendOrganizationFileLinkAddr {
             organization_id,
             workspace_id: query_str_map
                 .get("workspace_id")
-                .map(|v| EntryID::from_hex(v))
-                .ok_or("Missing mandatory `workspace_id` param")?
-                .map_err(|_| "Invalid `workspace_id` param value")?,
+                .ok_or(AddrError::MissingParam("workspace_id"))
+                .and_then(|v| {
+                    EntryID::from_hex(v).map_err(|e| AddrError::InvalidParamValue {
+                        param: "workspace_id",
+                        value: v.to_string(),
+                        help: e.to_string(),
+                    })
+                })?,
             encrypted_path: query_str_map
                 .get("path")
-                .ok_or("Missing mandatory `path` param")
-                .map(|v| binary_urlsafe_decode(v))
-                .map(|v| v.map_err(|_| "Invalid `path` param value"))??,
+                .ok_or(AddrError::MissingParam("path"))
+                .and_then(|v| {
+                    binary_urlsafe_decode(v).map_err(|e| AddrError::InvalidParamValue {
+                        param: "path",
+                        value: v.to_string(),
+                        help: e.to_string(),
+                    })
+                })?,
             encrypted_timestamp,
         })
     }
@@ -733,18 +789,28 @@ impl BackendInvitationAddr {
         let invitation_type = match extract_action(pairs)? {
             x if x == "claim_user" => InvitationType::User,
             x if x == "claim_device" => InvitationType::Device,
-            _ => return Err("Expected `action=claim_user` or `action=claim_device` param value"),
+            value => {
+                return Err(AddrError::InvalidParamValue {
+                    param: "action",
+                    value: value.to_string(),
+                    help: "Expected `action=claim_user` or `action=claim_device`".to_string(),
+                })
+            }
         };
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
         let token = match token_queries.next() {
-            None => return Err("Missing mandatory `token` param"),
+            None => return Err(AddrError::MissingParam("token")),
             Some((_, value)) => {
-                InvitationToken::from_hex(&value).or(Err("Invalid `token` param value"))?
+                InvitationToken::from_hex(&value).map_err(|e| AddrError::InvalidParamValue {
+                    param: "token",
+                    value: value.to_string(),
+                    help: e.to_string(),
+                })?
             }
         };
         if token_queries.next().is_some() {
-            return Err("Multiple values for param `token`");
+            return Err(AddrError::DuplicateParam("token".to_string()));
         }
 
         Ok(Self {
@@ -837,7 +903,11 @@ impl BackendPkiEnrollmentAddr {
         let organization_id = extract_organization_id(parsed)?;
         let action = extract_action(pairs)?;
         if action != "pki_enrollment" {
-            return Err("Expected `action=pki_enrollment` param value");
+            return Err(AddrError::InvalidParamValue {
+                param: "action",
+                value: action.to_string(),
+                help: "Expected `action=pki_enrollment".to_string(),
+            });
         }
 
         Ok(Self {
@@ -924,9 +994,10 @@ pub fn binary_urlsafe_encode(data: &[u8]) -> String {
     BASE32.encode(data).replace('=', "s")
 }
 
-pub fn binary_urlsafe_decode(data: &str) -> Result<Vec<u8>, &'static str> {
-    let err = Err("Invalid base32 data");
-    BASE32.decode(data.replace('s', "=").as_bytes()).or(err)
+pub fn binary_urlsafe_decode(data: &str) -> Result<Vec<u8>, AddrError> {
+    BASE32
+        .decode(data.replace('s', "=").as_bytes())
+        .map_err(AddrError::InvalidBase32Data)
 }
 
 pub fn export_root_verify_key(key: &VerifyKey) -> String {
