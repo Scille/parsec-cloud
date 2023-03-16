@@ -461,7 +461,7 @@ async def test_path_info_remote_loader_exceptions(
 
 
 @pytest.mark.trio
-async def test_get_reencryption_need(alice_workspace: WorkspaceFS, running_backend, monkeypatch):
+async def test_get_reencryption_need(alice_workspace: WorkspaceFS, running_backend):
     expected = ReencryptionNeed(user_revoked=(), role_revoked=())
     assert await alice_workspace.get_reencryption_need() == expected
 
@@ -488,17 +488,16 @@ async def test_get_reencryption_need(alice_workspace: WorkspaceFS, running_backe
             _switch_offline_after_realm_get_role_certificate_occured
         )
 
-        from parsec.backend.memory.realm import MemoryRealmComponent
-
-        vanilla_get_role_certificates = MemoryRealmComponent.get_role_certificates
-
-        async def mocked_realm_get_role_certificates(*args, **kwargs):
-            rep = await vanilla_get_role_certificates(*args, **kwargs)
+        # `get_user_with_devices_and_trustchain` is called by `api_user_get`
+        # (more complicated to directly mock `api_user_get` given it is already loaded
+        # in `backend.apis` commands dict)
+        async def _mocked_get_user_with_devices_and_trustchain(*args, **kwargs):
             realm_get_role_certificate_cmd_occured.set()
-            return rep
+            # Wait for the offline switch
+            await trio.sleep_forever()
 
-        monkeypatch.setattr(
-            MemoryRealmComponent, "get_role_certificates", mocked_realm_get_role_certificates
+        running_backend.backend.user.get_user_with_devices_and_trustchain = (
+            _mocked_get_user_with_devices_and_trustchain
         )
 
         with pytest.raises(FSBackendOfflineError):
