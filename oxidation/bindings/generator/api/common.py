@@ -54,6 +54,7 @@ class LoggedCoreHandle(I32BasedType):
 
 
 class OrganizationID(StrBasedType):
+    namespace = "libparsec::types"
     pass
 
 
@@ -65,16 +66,13 @@ class HumanHandle(StrBasedType):
     pass
 
 
-class Path(StrBasedType):
-    pass
-
-
 class BackendAddr(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) }"
     custom_to_rs_string = "|addr: libparsec::BackendAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class DeviceID(StrBasedType):
+    namespace = "libparsec::types"
     pass
 
 
@@ -83,6 +81,8 @@ class ClientHandle(U32BasedType):
 
 
 class Path(StrBasedType):
+    type = "PathBuf"
+    namespace = "std::path"
     custom_from_rs_string = (
         "|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) }"
     )

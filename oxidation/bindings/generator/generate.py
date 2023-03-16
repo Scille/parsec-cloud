@@ -77,6 +77,7 @@ env.globals["raise"] = _raise_helper
 class BaseTypeInUse:
     # Name of the type familly (e.g. `bytes`, `struct`, `variant`), to be defined in subclass
     kind: str
+    namespace: str = "libparsec"
 
     @staticmethod
     def parse(param: str) -> "BaseTypeInUse":
@@ -116,6 +117,9 @@ class BaseTypeInUse:
         elif isinstance(param, type) and issubclass(param, StrBasedType):
             return StrBasedTypeInUse(
                 name=param.__name__,
+                type=getattr(param, "type", param.__name__),
+                namespace=getattr(param, "namespace", "libparsec"),
+                from_str_error=getattr(param, "from_str_error", "_"),
                 custom_from_rs_string=getattr(param, "custom_from_rs_string", None),
                 custom_to_rs_string=getattr(param, "custom_to_rs_string", None),
             )
@@ -175,7 +179,11 @@ class RefTypeInUse(BaseTypeInUse):
 class StrBasedTypeInUse(BaseTypeInUse):
     kind = "str_based"
     name: str
+    type: str
+    namespace: str
 
+    # The error returned when trying to parse the value from a string.
+    from_str_error: str
     # If set, custom_from_rs_string/custom_to_rs_string should inlined rust functions
     # `fn (String) -> Result<X, AsRef<str>>`
     custom_from_rs_string: str | None = None

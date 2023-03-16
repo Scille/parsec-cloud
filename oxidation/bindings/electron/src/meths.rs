@@ -19,27 +19,30 @@ fn struct_availabledevice_js_to_rs<'a>(
         {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            let value: Result<std::path::PathBuf, _> = custom_from_rs_string(js_val.value(cx));
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };
     let organization_id = {
         let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
         {
-            match js_val.value(cx).parse() {
+            let value: Result<libparsec::types::OrganizationID, _> = js_val.value(cx).parse();
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };
     let device_id = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
         {
-            match js_val.value(cx).parse() {
+            let value: Result<libparsec::types::DeviceID, _> = js_val.value(cx).parse();
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };
@@ -51,9 +54,10 @@ fn struct_availabledevice_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
                 Some({
-                    match js_val.value(cx).parse() {
+                    let value: Result<libparsec::HumanHandle, _> = js_val.value(cx).parse();
+                    match value {
                         Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 })
             }
@@ -67,9 +71,10 @@ fn struct_availabledevice_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
                 Some({
-                    match js_val.value(cx).parse() {
+                    let value: Result<libparsec::DeviceLabel, _> = js_val.value(cx).parse();
+                    match value {
                         Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 })
             }
@@ -108,7 +113,7 @@ fn struct_availabledevice_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.key_file_path) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -146,9 +151,10 @@ fn struct_clientconfig_js_to_rs<'a>(
         {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            let value: Result<std::path::PathBuf, _> = custom_from_rs_string(js_val.value(cx));
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };
@@ -157,9 +163,10 @@ fn struct_clientconfig_js_to_rs<'a>(
         {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            let value: Result<std::path::PathBuf, _> = custom_from_rs_string(js_val.value(cx));
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };
@@ -168,9 +175,10 @@ fn struct_clientconfig_js_to_rs<'a>(
         {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            let value: Result<std::path::PathBuf, _> = custom_from_rs_string(js_val.value(cx));
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };
@@ -179,9 +187,10 @@ fn struct_clientconfig_js_to_rs<'a>(
         {
             let custom_from_rs_string =
                 |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            let value: Result<libparsec::BackendAddr, _> = custom_from_rs_string(js_val.value(cx));
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };
@@ -212,7 +221,7 @@ fn struct_clientconfig_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.config_dir) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -225,7 +234,7 @@ fn struct_clientconfig_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -238,7 +247,7 @@ fn struct_clientconfig_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -249,7 +258,7 @@ fn struct_clientconfig_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.preferred_org_creation_backend_addr) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -430,9 +439,11 @@ fn variant_deviceaccessparams_js_to_rs<'a>(
                 {
                     let custom_from_rs_string =
                         |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    let value: Result<std::path::PathBuf, _> =
+                        custom_from_rs_string(js_val.value(cx));
+                    match value {
                         Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 }
             };
@@ -448,9 +459,11 @@ fn variant_deviceaccessparams_js_to_rs<'a>(
                 {
                     let custom_from_rs_string =
                         |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    let value: Result<std::path::PathBuf, _> =
+                        custom_from_rs_string(js_val.value(cx));
+                    match value {
                         Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 }
             };
@@ -478,7 +491,7 @@ fn variant_deviceaccessparams_rs_to_js<'a>(
                 };
                 match custom_to_rs_string(path) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -497,7 +510,7 @@ fn variant_deviceaccessparams_rs_to_js<'a>(
                 };
                 match custom_to_rs_string(path) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -606,9 +619,10 @@ fn client_list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise>
         {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            let value: Result<std::path::PathBuf, _> = custom_from_rs_string(js_val.value(&mut cx));
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };
@@ -793,9 +807,11 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
             Ok(js_val) => Some({
                 let custom_from_rs_string =
                     |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
-                match custom_from_rs_string(js_val.value(&mut cx)) {
+                let value: Result<libparsec::BackendAddr, _> =
+                    custom_from_rs_string(js_val.value(&mut cx));
+                match value {
                     Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             }),
             Err(_) => None,
@@ -821,7 +837,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                     };
                     match custom_to_rs_string(ret) {
                         Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 })
                 .or_throw(&mut cx)?;
@@ -840,9 +856,10 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            let value: Result<std::path::PathBuf, _> = custom_from_rs_string(js_val.value(&mut cx));
+            match value {
                 Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         }
     };

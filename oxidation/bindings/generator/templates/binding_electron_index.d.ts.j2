@@ -80,7 +80,7 @@ export type {{ variant.name }} =
 {% for meth in api.meths %}
 export function {{ meth.name | snake2camel }}(
 {% for arg_name, arg_type in meth.params.items() %}
-    {{ arg_name }}: {{ render_type(arg_type) }}{{ ", " if not loop.last else "" }}
+    {{ arg_name }}: {{ render_type(arg_type) }}{{ "," if not loop.last else "" }}
 {% endfor %}
 ): Promise<{{ render_type(meth.return_type) if meth.return_type else "null" }}>;
 {% endfor %}
