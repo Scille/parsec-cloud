@@ -92,7 +92,7 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
 
     if let Err(e) = testbed_server {
         // That means the env variable isn't set
-        println!("{e}, so the test is skipped !");
+        log::info!("{e}, so the test is skipped !");
         return (None, None);
     }
 
@@ -111,11 +111,11 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
 
         let addr = BackendAddr::from_any(&testbed_server)
             .expect("Invalid value in `TESTBED_SERVER` environ variable");
-        println!("Using already started testbed server at {}", &addr);
+        log::info!("Using already started testbed server at {}", &addr);
         return (Some(addr), None);
     }
 
-    println!("Starting testbed server...");
+    log::info!("Starting testbed server...");
     // We don't really know where we are executed from given it depend on what is
     // the currently tested crate. Hence we only make the assumption we are within
     // the project repository and will eventually reach the project root by testing
@@ -196,7 +196,7 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
         })
         .expect("unreachable");
 
-    println!("Testbed server running on 127.0.0.1:{}", port);
+    log::info!("Testbed server running on 127.0.0.1:{}", port);
     (
         Some(BackendAddr::new("127.0.0.1".to_owned(), Some(port), false)),
         Some(process),

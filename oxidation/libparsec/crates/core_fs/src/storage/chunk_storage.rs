@@ -640,7 +640,7 @@ mod tests {
     use super::*;
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn chunk_storage(tmp_path: TmpPath) {
         let chunk_db_path = tmp_path.join("chunk_storage.sqlite");
         let chunk_conn =
@@ -768,7 +768,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_block_storage(tmp_path: TmpPath) {
         let block_db_path = tmp_path.join("block_storage.sqlite");
         let block_conn =

@@ -224,6 +224,7 @@ newsfragment
 newsfragments
 Niño
 nmspc
+nocapture
 NONCEBYTES
 noopener
 noreferrer

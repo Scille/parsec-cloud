@@ -67,8 +67,7 @@ impl SqliteExecutor {
             // it, however we log it anyway given the caller's unexpected drop
             // may also be the sign of a bug...
             if tx.send(res).is_err() {
-                // TODO: replace this by a proper warning log !
-                eprintln!("Caller has left");
+                log::warn!("Caller has left");
             }
         };
         let wrapped_job = Box::new(wrapped_job);
@@ -200,6 +199,7 @@ impl BackgroundSqliteExecutor {
                 Operation::Job(job) => job(&mut connection),
             }
         }
+        log::info!("BackgroundSqliteExecutor finished all his jobs");
     }
 }
 
@@ -215,7 +215,7 @@ mod tests {
     #[rstest]
     // FIXME: We need a timeout because the test seems to block on the CI, see #4176 for more information
     #[timeout(Duration::from_secs(30))]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn fail_reopen_database() {
         let connection = SqliteConnection::establish(":memory:").unwrap();
         let executor = SqliteExecutor::spawn(connection, |_conn| Err(crate::DatabaseError::Closed));

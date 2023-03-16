@@ -11,6 +11,7 @@ libparsec_testbed = { path = "../testbed" }
 # Enable testbed support in crates here
 libparsec_platform_device_loader = { path = "../platform_device_loader", features = [ "test-with-testbed" ] }
 
+log = "0.4.17"
 rstest = "0.16.0"
 hex-literal = "0.3.3"
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }

@@ -83,17 +83,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "atty"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8"
-dependencies = [
- "hermit-abi 0.1.19",
- "libc",
- "winapi",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -268,17 +257,6 @@ dependencies = [
  "crypto-common",
  "inout",
  "zeroize",
-]
-
-[[package]]
-name = "colored"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3616f750b84d8f0de8a58bda93e08e2a81ad3f523089b05f1dffecab48c6cbd"
-dependencies = [
- "atty",
- "lazy_static",
- "winapi",
 ]
 
 [[package]]
@@ -1231,6 +1209,7 @@ dependencies = [
  "libparsec_types",
  "log",
  "reqwest",
+ "test-log",
  "thiserror",
  "tokio",
  "url",
@@ -1302,6 +1281,7 @@ version = "0.0.0"
 dependencies = [
  "async-trait",
  "diesel",
+ "env_logger",
  "lazy_static",
  "libparsec_client_types",
  "libparsec_crypto",
@@ -1309,8 +1289,10 @@ dependencies = [
  "libparsec_platform_local_db",
  "libparsec_tests_fixtures",
  "libparsec_types",
+ "log",
  "regex",
  "rstest",
+ "test-log",
  "thiserror",
  "tokio",
  "uuid",
@@ -1357,13 +1339,14 @@ name = "libparsec_platform_async"
 version = "0.1.0"
 dependencies = [
  "console_log",
+ "env_logger",
  "flume",
  "futures",
  "futures-lite",
  "instant",
  "js-sys",
  "log",
- "simple_logger",
+ "test-log",
  "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1375,6 +1358,7 @@ dependencies = [
 name = "libparsec_platform_device_loader"
 version = "0.0.0"
 dependencies = [
+ "env_logger",
  "hex-literal",
  "libparsec_client_types",
  "libparsec_crypto",
@@ -1383,6 +1367,7 @@ dependencies = [
  "libparsec_types",
  "rstest",
  "serde_json",
+ "test-log",
  "tokio",
  "web-sys",
 ]
@@ -1393,12 +1378,15 @@ version = "0.0.0"
 dependencies = [
  "async-trait",
  "diesel",
+ "env_logger",
  "lazy_static",
  "libparsec_platform_async",
  "libparsec_tests_fixtures",
  "libsqlite3-sys",
+ "log",
  "pretty_assertions",
  "rstest",
+ "test-log",
  "thiserror",
  "tokio",
 ]
@@ -1448,6 +1436,7 @@ name = "libparsec_testbed"
 version = "0.0.0"
 dependencies = [
  "crc32fast",
+ "env_logger",
  "hex-literal",
  "lazy_static",
  "libparsec_client_types",
@@ -1456,6 +1445,7 @@ dependencies = [
  "reqwest",
  "rmp-serde",
  "serde",
+ "test-log",
 ]
 
 [[package]]
@@ -1469,6 +1459,7 @@ dependencies = [
  "libparsec_platform_device_loader",
  "libparsec_testbed",
  "libparsec_types",
+ "log",
  "regex",
  "rstest",
  "uuid",
@@ -2660,19 +2651,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple_logger"
-version = "2.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48047e77b528151aaf841a10a9025f9459da80ba820e425ff7eb005708a76dc7"
-dependencies = [
- "atty",
- "colored",
- "log",
- "time 0.3.14",
- "winapi",
-]
-
-[[package]]
 name = "slab"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2807,6 +2785,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "test-log"
+version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38f0c854faeb68a048f0f2dc410c5ddae3bf83854ef0e4977d58306a5edef50e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2847,14 +2836,7 @@ dependencies = [
  "libc",
  "num_threads",
  "serde",
- "time-macros",
 ]
-
-[[package]]
-name = "time-macros"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
 
 [[package]]
 name = "tinyvec"

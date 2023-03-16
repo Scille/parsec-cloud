@@ -24,10 +24,8 @@ use hyper::server::Server;
 
 const RVK: &str = "7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
 
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn valid_request() {
-    setup_logger();
-
     const PING_MESSAGE: &str = "hello from the client side!";
     const IP: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
     const PORT: u16 = 14689;
@@ -65,10 +63,8 @@ async fn valid_request() {
     );
 }
 
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn invalid_request() {
-    setup_logger();
-
     const PING_MESSAGE: &str = "hello from the client side!";
     const IP: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
     const PORT: u16 = 14690;
@@ -115,17 +111,6 @@ fn generate_backend_organization(ip: Ipv4Addr, port: u16, rvk: &str) -> BackendO
     );
 
     server_url
-}
-
-fn setup_logger() {
-    if let Err(e) = env_logger::builder()
-        .filter_level(log::LevelFilter::Debug)
-        .parse_write_style("auto")
-        .is_test(true)
-        .try_init()
-    {
-        log::warn!("failed to initialize logger, reason: {e}");
-    }
 }
 
 async fn send_ping(
@@ -191,7 +176,7 @@ async fn client(
     rep
 }
 
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn with_testbed() {
     TestbedScope::run_with_server("coolorg", |env| async move {
         let client = reqwest::ClientBuilder::new()

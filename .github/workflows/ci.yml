@@ -453,6 +453,8 @@ jobs:
           # By default, `libparsec_crypto` uses Rust Crypto
           cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide
         timeout-minutes: 30
+        env:
+          RUST_LOG: debug
 
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
