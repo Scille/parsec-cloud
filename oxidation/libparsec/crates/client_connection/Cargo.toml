@@ -36,9 +36,10 @@ thiserror = "1.0.38"
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
-anyhow = "1.0.68"
+log = "0.4.17"
+test-log = "0.2.11"
 env_logger = "0.10.0"
+anyhow = "1.0.68"
 http-body = "0.4.5"
 hyper = { version = "0.14.22", features = ["server"] }
-log = "0.4.17"
 tokio = { version = "1.25", features = ["rt", "macros", "sync"] }

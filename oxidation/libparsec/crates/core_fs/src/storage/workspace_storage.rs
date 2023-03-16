@@ -626,7 +626,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_basic_set_get_clear(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage.await;
         let manifest = create_file_manifest(&aws.device);
@@ -665,7 +665,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_cache_set_get(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage.await;
         let manifest = create_file_manifest(&aws.device);
@@ -720,7 +720,7 @@ mod tests {
     #[case(false, true)]
     #[case(true, false)]
     #[case(true, true)]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_chunk_clearing(
         #[future] alice_workspace_storage: TmpWorkspaceStorage,
         #[case] cache_only: bool,
@@ -794,7 +794,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_cache_flushed_on_exit(alice: &Device, tmp_path: TmpPath) {
         let db_path = tmp_path.join("workspace_storage.sqlite");
         let manifest = create_file_manifest(&alice.local_device());
@@ -838,7 +838,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_clear_cache(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage.await;
         let manifest1 = create_file_manifest(&aws.device);
@@ -879,7 +879,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_serialize_non_empty_local_file_manifest(
         #[future] alice_workspace_storage: TmpWorkspaceStorage,
     ) {
@@ -906,7 +906,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_realm_checkpoint(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage.await;
         let mut manifest = create_file_manifest(&aws.device);
@@ -986,7 +986,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_block_interface(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage.await;
         let data = b"0123456";
@@ -1022,7 +1022,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_chunk_interface(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage.await;
         let data = b"0123456";
@@ -1060,7 +1060,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_chunk_many(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage.await;
         let data = b"0123456";
@@ -1081,7 +1081,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_file_descriptor(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage.await;
         let manifest = create_file_manifest(&aws.device);
@@ -1109,13 +1109,13 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_run_vacuum(#[future] alice_workspace_storage: TmpWorkspaceStorage) {
         alice_workspace_storage.await.run_vacuum().await.unwrap();
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_garbage_collection(alice: &Device, tmp_path: TmpPath) {
         let db_path = tmp_path.join("workspace_storage.sqlite");
         let aws = WorkspaceStorage::new(
@@ -1153,7 +1153,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_invalid_regex(tmp_path: TmpPath, alice: &Device) {
         use crate::storage::manifest_storage::prevent_sync_pattern::dsl::*;
         use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
@@ -1211,7 +1211,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     #[should_panic]
     async fn inserting_different_workspace_manifest(
         #[future] alice_workspace_storage: TmpWorkspaceStorage,

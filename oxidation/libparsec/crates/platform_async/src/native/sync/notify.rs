@@ -63,7 +63,7 @@ impl<'a> Future for Notified<'a> {
     }
 }
 
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn notify_before() {
     let notify = Notify::default();
 
@@ -71,7 +71,7 @@ async fn notify_before() {
     notify.notified().await;
 }
 
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn notify_after() {
     use crate::spawn;
     use std::sync::Arc;

@@ -227,9 +227,8 @@ mod web {
 mod native {
     #![cfg(not(target_arch = "wasm32"))]
 
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn test_eyeballs() -> Result<(), ()> {
-        simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
         super::test_eyeballs().await
     }
 }

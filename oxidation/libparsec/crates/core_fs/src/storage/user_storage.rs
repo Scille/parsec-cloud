@@ -204,7 +204,7 @@ mod tests {
     use super::*;
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
         let db_path = tmp_path.join("user_storage.sqlite");
         let user_manifest_id = alice.user_manifest_id;

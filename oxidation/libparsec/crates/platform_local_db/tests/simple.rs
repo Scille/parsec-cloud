@@ -13,7 +13,7 @@ use rstest::rstest;
 mod book;
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn creation_deletion(tmp_path: TmpPath) {
     let db_path = tmp_path.as_path().join("db.sqlite");
     let local_db = LocalDatabase::from_path(db_path.to_str().unwrap(), VacuumMode::default())
@@ -26,7 +26,7 @@ async fn creation_deletion(tmp_path: TmpPath) {
 
     let res = local_db
         .exec(move |_conn| {
-            println!("We got executed !");
+            log::debug!("We got executed !");
             notify2.notify_waiters();
             Ok(42)
         })
@@ -36,13 +36,13 @@ async fn creation_deletion(tmp_path: TmpPath) {
     assert_eq!(res, 42);
 
     notified.await;
-    println!("We've got notified");
+    log::debug!("We've got notified");
 
     drop(local_db)
 }
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn basic_test(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
 
@@ -89,7 +89,7 @@ async fn basic_test(tmp_path: TmpPath) {
 }
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_set_auto_vacuum(
     tmp_path: TmpPath,
     #[values(AutoVacuum::None, AutoVacuum::Incremental, AutoVacuum::Full)] auto_vacuum: AutoVacuum,
@@ -118,7 +118,7 @@ async fn test_set_auto_vacuum(
 }
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_get_disk_usage(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
 
@@ -161,7 +161,7 @@ async fn test_get_disk_usage(tmp_path: TmpPath) {
 }
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_cannot_open_database(tmp_path: TmpPath) {
     let db_path = tmp_path.as_path().join("db.sqlite");
 
@@ -181,7 +181,7 @@ async fn test_cannot_open_database(tmp_path: TmpPath) {
 }
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_full_vacuum(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
     let db_path = tmp_path.as_path().join("db.sqlite");

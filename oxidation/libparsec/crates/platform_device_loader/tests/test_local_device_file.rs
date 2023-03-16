@@ -28,7 +28,7 @@ fn device_file_factory(device: LocalDevice) -> DeviceFile {
 #[rstest]
 #[case(false)]
 #[case(true)]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
     if path_exists {
         std::fs::create_dir(tmp_path.join("devices")).unwrap();
@@ -39,7 +39,7 @@ async fn test_list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
 }
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &Device) {
     let alice = alice.local_device();
     let bob = bob.local_device();
@@ -109,7 +109,7 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
 }
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
     let legacy_device = hex!(
         "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
@@ -137,7 +137,7 @@ async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath)
 }
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_renew_legacy_file(tmp_path: TmpPath) {
     let legacy_device = hex!(
         "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
@@ -166,7 +166,7 @@ async fn test_renew_legacy_file(tmp_path: TmpPath) {
     )
 }
 
-#[tokio::test]
+#[test_log::test(tokio::test)]
 async fn test_testbed() {
     TestbedScope::run("coolorg", |env| async move {
         let devices = list_available_devices(&env.client_config_dir).await;

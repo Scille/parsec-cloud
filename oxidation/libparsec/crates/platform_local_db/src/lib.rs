@@ -322,15 +322,13 @@ impl LocalDatabase {
                 // We want to remove the ability to send job when the error is `CloseConnection`
                 // (the database is close so no way we could execute those jobs).
                 diesel::result::DatabaseErrorKind::ClosedConnection => {
-                    // TODO: improve logging with tracing or log see: #3930
-                    eprintln!("The sqlite connection shouldn't be close at that step");
+                    log::warn!("The sqlite connection shouldn't be close at that step");
                     self.close();
                 }
                 // And on unknown error, we could be more picky and only close the connection on specific unknown error (for example only close the connection on `disk full`)
                 // But checking for those is hard and implementation specific (we need to check against a `&str` which formatting could change).
                 _ => {
-                    // TODO: improve logging with tracing or log see: #3930
-                    eprintln!("Diesel unknown error: {kind:?}");
+                    log::warn!("Diesel unknown error: {kind:?}");
                     self.close();
                 }
             }

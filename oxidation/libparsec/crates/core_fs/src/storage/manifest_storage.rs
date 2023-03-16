@@ -156,8 +156,7 @@ impl ManifestStorage {
             }
         });
         if let Err(e) = res {
-            // TODO: replace that by an error log
-            eprintln!("Invalid state when closing the connection {e}")
+            log::warn!("Invalid state when closing the connection {e}")
         }
         self.conn.close();
     }
@@ -766,7 +765,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn prevent_sync_pattern(#[future] manifest_storage: ManifestStorageFixture) {
         let manifest_storage = manifest_storage.await;
 
@@ -812,7 +811,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn realm_checkpoint(#[future] manifest_storage: ManifestStorageFixture) {
         let manifest_storage = manifest_storage.await;
 
@@ -827,7 +826,7 @@ mod tests {
     }
 
     #[rstest]
-    #[tokio::test]
+    #[test_log::test(tokio::test)]
     async fn set_manifest(#[future] manifest_storage: ManifestStorageFixture, timestamp: DateTime) {
         let manifest_storage = manifest_storage.await;
         let t1 = timestamp;

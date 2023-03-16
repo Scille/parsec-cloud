@@ -525,7 +525,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[test_log::test]
     fn full_scenario() {
         // Initialize storage and manifest
         let mut storage = Storage::default();
