@@ -22,6 +22,7 @@ BlockStore
 Booyakasha
 boto
 botocore
+browserslistrc
 Bsas
 bxsalsa
 cachekey
