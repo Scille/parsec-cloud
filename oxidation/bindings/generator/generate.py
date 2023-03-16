@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-from types import ModuleType
-from typing import Union, Dict, List, OrderedDict, Type, Optional
-from importlib import import_module
-from collections import namedtuple
 import argparse
+import subprocess
+from collections import namedtuple
 from dataclasses import dataclass
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
+from importlib import import_module
+from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
-from inspect import isfunction, isclass, iscoroutinefunction, signature
+from types import ModuleType
+from typing import Dict, List, Optional, OrderedDict, Type, Union
 
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 BASEDIR = Path(__file__).parent
 
@@ -370,6 +371,8 @@ if __name__ == "__main__":
         api_module = import_module("api")
     api_specs = generate_api_specs(api_module)
 
+    rust_modified_packages = []
+
     if args.what in ("all", "client"):
         template = env.get_template("client_plugin_definitions.d.ts.j2")
         output = (BASEDIR / "../../client/src/plugins/libparsec/definitions.d.ts").resolve()
@@ -385,15 +388,22 @@ if __name__ == "__main__":
 
         template = env.get_template("binding_electron_meths.rs.j2")
         output = (BASEDIR / "../electron/src/meths.rs").resolve()
+        rust_modified_packages.append("libparsec_bindings_electron")
         print(f"Generating {output}")
         output.write_bytes(template.render(api=api_specs).encode("utf8"))
 
     if args.what in ("all", "web"):
         template = env.get_template("binding_web_meths.rs.j2")
         output = (BASEDIR / "../web/src/meths.rs").resolve()
+        rust_modified_packages.append("libparsec_bindings_web")
         print(f"Generating {output}")
         output.write_bytes(template.render(api=api_specs).encode("utf8"))
 
     if args.what in ("all", "android"):
         # TODO !
         pass
+
+    subprocess.check_call(
+        args=["cargo", "fmt"] + [f"--package={package}" for package in rust_modified_packages],
+        cwd=BASEDIR / "../../..",
+    )
