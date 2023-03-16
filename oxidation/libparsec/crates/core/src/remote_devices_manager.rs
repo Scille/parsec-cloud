@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_client_connection::{AuthenticatedCmds, CommandError};
 use libparsec_crypto::VerifyKey;
 use libparsec_protocol::authenticated_cmds::v2::user_get;
 use libparsec_types::{
@@ -9,7 +9,7 @@ use libparsec_types::{
 
 use crate::{RemoteDevicesManagerError, RemoteDevicesManagerResult, TrustchainContext};
 
-const DEFAULT_CACHE_VALIDITY: i64 = 60 * 60; // 3600 seconds, 1 hour;
+const REMOTE_DEVICE_MANAGER_CACHE_VALIDITY: i64 = 60 * 60; // 3600 seconds, 1 hour;
 
 pub struct RemoteDevicesManager {
     backend_cmds: AuthenticatedCmds,
@@ -27,13 +27,13 @@ impl RemoteDevicesManager {
             trustchain_ctx: TrustchainContext::new(
                 root_verify_key,
                 time_provider,
-                DEFAULT_CACHE_VALIDITY,
+                REMOTE_DEVICE_MANAGER_CACHE_VALIDITY,
             ),
         }
     }
 
-    pub fn cache_validity(&self) -> i64 {
-        self.trustchain_ctx.cache_validity()
+    pub const fn cache_validity() -> i64 {
+        REMOTE_DEVICE_MANAGER_CACHE_VALIDITY
     }
 
     pub fn invalidate_user_cache(&mut self, user_id: &UserID) {
@@ -133,7 +133,20 @@ impl RemoteDevicesManager {
                     reason: reason.unwrap_or_default(),
                 })
             }
-            Err(_) => todo!(),
+            Err(CommandError::NoResponse { .. }) => {
+                Err(RemoteDevicesManagerError::BackendOffline {
+                    user_id: user_id.clone(),
+                })
+            }
+            Err(CommandError::InvalidResponseStatus(status, ..)) if status == 500 => {
+                Err(RemoteDevicesManagerError::BackendOffline {
+                    user_id: user_id.clone(),
+                })
+            }
+            Err(e) => Err(RemoteDevicesManagerError::FailedFetchUser {
+                user_id: user_id.clone(),
+                reason: e.to_string(),
+            }),
         }
     }
 }

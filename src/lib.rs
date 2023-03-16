@@ -17,6 +17,7 @@ mod local_device;
 mod misc;
 mod protocol;
 mod regex;
+mod remote_devices_manager;
 mod runtime;
 mod storage;
 #[cfg(feature = "test-utils")]
@@ -36,6 +37,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     crate::local_db::add_mod(py, m)?;
     crate::local_device::add_mod(py, m)?;
     crate::protocol::add_mod(py, m)?;
+    crate::remote_devices_manager::add_mod(py, m)?;
     crate::storage::add_mod(py, m)?;
 
     m.add_class::<addrs::BackendAddr>()?;
