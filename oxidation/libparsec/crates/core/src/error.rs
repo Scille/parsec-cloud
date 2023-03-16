@@ -82,7 +82,7 @@ impl From<TrustchainError> for RemoteDevicesManagerError {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum InviteError {
     #[error("Invitation not found")]
     NotFound,
