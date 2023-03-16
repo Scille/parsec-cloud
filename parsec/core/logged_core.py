@@ -26,6 +26,9 @@ from parsec._parsec import (
     OrganizationStats,
     OrganizationStatsRepOk,
     Regex,
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerError,
+    RemoteDevicesManagerNotFoundError,
     UserRevokeRepOk,
     WorkspaceEntry,
 )
@@ -60,12 +63,7 @@ from parsec.core.pki.accepter import (
     PkiEnrollmentAccepterValidSubmittedCtx,
 )
 from parsec.core.remanence_monitor import monitor_remanent_workspaces
-from parsec.core.remote_devices_manager import (
-    RemoteDevicesManager,
-    RemoteDevicesManagerBackendOfflineError,
-    RemoteDevicesManagerError,
-    RemoteDevicesManagerNotFoundError,
-)
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.types import BackendInvitationAddr, DeviceInfo, LocalDevice, UserInfo
 from parsec.event_bus import EventBus
@@ -211,7 +209,7 @@ class LoggedCore:
                 user_certif,
                 revoked_user_certif,
                 device_certifs,
-            ) = await self._remote_devices_manager.get_user_and_devices(user_id, no_cache=True)
+            ) = await self._remote_devices_manager.get_user_and_devices(user_id)
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise BackendNotAvailable(str(exc)) from exc
         except RemoteDevicesManagerNotFoundError as exc:
@@ -249,7 +247,7 @@ class LoggedCore:
             raise BackendConnectionError(f"Error while trying to revoke user {user_id}: {rep}")
 
         # Invalidate potential cache to avoid displaying the user as not-revoked
-        self._remote_devices_manager.invalidate_user_cache(user_id)
+        await self._remote_devices_manager.invalidate_user_cache(user_id)
 
     async def new_user_invitation(
         self, email: str, send_email: bool

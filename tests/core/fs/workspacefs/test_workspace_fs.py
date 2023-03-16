@@ -461,7 +461,7 @@ async def test_path_info_remote_loader_exceptions(
 
 
 @pytest.mark.trio
-async def test_get_reencryption_need(alice_workspace, running_backend, monkeypatch):
+async def test_get_reencryption_need(alice_workspace: WorkspaceFS, running_backend, monkeypatch):
     expected = ReencryptionNeed(user_revoked=(), role_revoked=())
     assert await alice_workspace.get_reencryption_need() == expected
 
@@ -488,16 +488,17 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
             _switch_offline_after_realm_get_role_certificate_occured
         )
 
-        vanilla_get_device = alice_workspace.remote_loader.remote_devices_manager.get_device
+        from parsec.backend.memory.realm import MemoryRealmComponent
 
-        async def _switch_offline_and_get_device(*args, **kwargs):
+        vanilla_get_role_certificates = MemoryRealmComponent.get_role_certificates
+
+        async def mocked_realm_get_role_certificates(*args, **kwargs):
+            rep = await vanilla_get_role_certificates(*args, **kwargs)
             realm_get_role_certificate_cmd_occured.set()
-            return await vanilla_get_device(*args, **kwargs)
+            return rep
 
         monkeypatch.setattr(
-            alice_workspace.remote_loader.remote_devices_manager,
-            "get_device",
-            _switch_offline_and_get_device,
+            MemoryRealmComponent, "get_role_certificates", mocked_realm_get_role_certificates
         )
 
         with pytest.raises(FSBackendOfflineError):

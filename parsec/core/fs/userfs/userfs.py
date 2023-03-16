@@ -953,7 +953,7 @@ class UserFS:
             )
         elif isinstance(rep, RealmUpdateRolesRepUserRevoked):
             # That cache is probably not up-to-date if we get this error code
-            self.remote_devices_manager.invalidate_user_cache(recipient)
+            await self.remote_devices_manager.invalidate_user_cache(recipient)
             raise FSSharingNotAllowedError(f"The user `{recipient.str}` is revoked: {rep}")
         elif isinstance(rep, RealmUpdateRolesRepRequireGreaterTimestamp):
             return await self.workspace_share(

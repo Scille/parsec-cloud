@@ -129,12 +129,6 @@ def pytest_configure(config):
             float(config.getoption("--side-effects-timeout"))
         )
 
-    # TODO: remove me once client connection oxidation is done
-    if config.getoption("--enable-unstable-oxidized-client-connection"):
-        import parsec
-
-        parsec.FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"] = True
-
 
 def _is_xdist_master(config):
     return config.getoption("dist") != "no" and not os.environ.get("PYTEST_XDIST_WORKER")

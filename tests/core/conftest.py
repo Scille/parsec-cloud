@@ -20,7 +20,7 @@ from tests.common.event_bus_spy import SpiedEventBus
 @pytest.fixture
 def remote_devices_manager_factory():
     @asynccontextmanager
-    async def _remote_devices_manager_factory(device):
+    async def _remote_devices_manager_factory(device: LocalDevice):
         async with backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:

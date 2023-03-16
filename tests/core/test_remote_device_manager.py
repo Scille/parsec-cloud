@@ -3,16 +3,21 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import DateTime
-from parsec.core.remote_devices_manager import RemoteDevicesManagerBackendOfflineError
+from parsec._parsec import DateTime, LocalDevice, RemoteDevicesManagerBackendOfflineError
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 from tests.common import freeze_time
 
 
 @pytest.mark.trio
-async def test_retrieve_device(running_backend, alice_remote_devices_manager, bob):
+async def test_retrieve_device(
+    running_backend,
+    alice_remote_devices_manager: RemoteDevicesManager,
+    alice: LocalDevice,
+    bob: LocalDevice,
+):
     remote_devices_manager = alice_remote_devices_manager
     d1 = DateTime(2000, 1, 1)
-    with freeze_time(d1):
+    with freeze_time(d1, devices=[alice]):
         # Offline with no cache
         with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():
@@ -29,7 +34,7 @@ async def test_retrieve_device(running_backend, alice_remote_devices_manager, bo
             assert device2 == device
 
     d2 = d1.add(seconds=remote_devices_manager.cache_validity + 1)
-    with freeze_time(d2):
+    with freeze_time(d2, devices=[alice]):
         # Offline with cache expired
         with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():
@@ -42,10 +47,16 @@ async def test_retrieve_device(running_backend, alice_remote_devices_manager, bo
 
 
 @pytest.mark.trio
-async def test_retrieve_user(running_backend, alice_remote_devices_manager, bob):
+async def test_retrieve_user(
+    running_backend,
+    alice_remote_devices_manager: RemoteDevicesManager,
+    alice: LocalDevice,
+    bob: LocalDevice,
+):
     remote_devices_manager = alice_remote_devices_manager
     d1 = DateTime(2000, 1, 1)
-    with freeze_time(d1):
+
+    with freeze_time(d1, devices=[alice]):
         # Offline with no cache
         with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():
@@ -64,7 +75,7 @@ async def test_retrieve_user(running_backend, alice_remote_devices_manager, bob)
             assert revoked_user2 is None
 
     d2 = d1.add(seconds=remote_devices_manager.cache_validity + 1)
-    with freeze_time(d2):
+    with freeze_time(d2, devices=[alice]):
         # Offline with cache expired
         with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():
@@ -79,11 +90,14 @@ async def test_retrieve_user(running_backend, alice_remote_devices_manager, bob)
 
 @pytest.mark.trio
 async def test_retrieve_user_and_devices(
-    running_backend, alice_remote_devices_manager, alice, alice2
+    running_backend,
+    alice_remote_devices_manager: RemoteDevicesManager,
+    alice: LocalDevice,
+    alice2: LocalDevice,
 ):
     remote_devices_manager = alice_remote_devices_manager
     d1 = DateTime(2000, 1, 1)
-    with freeze_time(d1):
+    with freeze_time(d1, devices=[alice]):
         # Offline
         with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():

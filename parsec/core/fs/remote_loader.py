@@ -34,6 +34,11 @@ from parsec._parsec import (
     RealmGetRoleCertificatesRepOk,
     RealmID,
     RealmRole,
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerDeviceNotFoundError,
+    RemoteDevicesManagerError,
+    RemoteDevicesManagerInvalidTrustchainError,
+    RemoteDevicesManagerUserNotFoundError,
     SequesterServiceID,
     UserID,
     VerifyKey,
@@ -101,14 +106,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoWriteAccess,
 )
 from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage
-from parsec.core.remote_devices_manager import (
-    RemoteDevicesManager,
-    RemoteDevicesManagerBackendOfflineError,
-    RemoteDevicesManagerDeviceNotFoundError,
-    RemoteDevicesManagerError,
-    RemoteDevicesManagerInvalidTrustchainError,
-    RemoteDevicesManagerUserNotFoundError,
-)
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 

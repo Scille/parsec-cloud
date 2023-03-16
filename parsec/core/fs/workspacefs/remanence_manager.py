@@ -10,7 +10,7 @@ import structlog
 import trio
 from attr import define
 
-from parsec._parsec import CoreEvent, DateTime
+from parsec._parsec import CoreEvent
 from parsec.api.data import BlockAccess
 from parsec.core.fs.exceptions import (
     FSRemanenceManagerStoppedError,
@@ -390,7 +390,7 @@ class RemanenceManager:
         # Clear job queue, just in case
         self._job_queue.clear()
         # Initialize state
-        begining = DateTime.now()
+        begining = self.local_storage.device.time_provider.now()
         remote_only_blocks: list[BlockAccess] = []
         local_and_remote_blocks: list[BlockAccess] = []
         entry_ids: list[EntryID] = [self.workspace_id]
