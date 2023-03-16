@@ -1,6 +1,6 @@
 ci-workflow: &ci-workflow .github/workflows/ci.yml
 
-rust-libparsec: &rust-libparsec oxidation/libparsec
+rust-libparsec: &rust-libparsec oxidation/libparsec/**
 
 rust-dependencies-workspace: &rust-dependencies-workspace
   - Cargo.toml
@@ -8,7 +8,7 @@ rust-dependencies-workspace: &rust-dependencies-workspace
 
 rust-toolchain: &rust-toolchain rust-toolchain.toml
 
-rust-python-binding: &rust-python-binding src
+rust-python-binding: &rust-python-binding src/**
 
 # TODO: We currently don't test the electron application
 # So we don't have to watch the electron binding (likewise for the client code related to electron)
@@ -24,11 +24,11 @@ rust-python-binding: &rust-python-binding src
 # So we don't have to watch the client code related to the ios application
 # new-client-ios: &new-client-ios oxidation/client/ios
 
-rust-web-binding: &rust-web-binding oxidation/bindings/web
+rust-web-binding: &rust-web-binding oxidation/bindings/web/**
 
 python: &python
-  - parsec
-  - tests
+  - parsec/**
+  - tests/**
   - make.py
   - build.py
 
@@ -38,17 +38,17 @@ python-dependencies-project: &python-dependencies-project
   - setup.cfg
 
 new-client-dependencies-project: &new-client-dependencies-project
-  - oxidation/client/package.json
-  - oxidation/client/package-lock.json
-  - oxidation/client/tsconfig.json
+  - oxidation/client/*.ts
+  - oxidation/client/*.json
+  - oxidation/client/*.js
+  - oxidation/client/.browserslistrc
+  - oxidation/client/.env
 
 web: &web
-  - oxidation/client/public
-  - oxidation/client/resources
-  - oxidation/client/src
-  - oxidation/client/tests
-  - oxidation/client/*.js
-  - oxidation/client/*.ts
+  - oxidation/client/public/**
+  - oxidation/client/resources/**
+  - oxidation/client/src/**
+  - oxidation/client/tests/**
 
 # The python jobs need to be run when:
 # - The ci workflow has changed
@@ -61,7 +61,7 @@ web: &web
 # - We updated the python dependencies
 python-jobs:
   - *ci-workflow
-  - .github/actions/setup-python-poetry
+  - .github/actions/setup-python-poetry/**
   - *rust-dependencies-workspace
   - *rust-libparsec
   - *rust-toolchain
