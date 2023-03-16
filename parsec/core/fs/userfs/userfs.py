@@ -293,25 +293,9 @@ class UserFS:
 
         self._sequester_services_cache: List[SequesterServiceCertificate] | None = None
 
-        timestamp = self.device.timestamp()
-        wentry = WorkspaceEntry(
-            name=EntryName("<user manifest>"),
-            id=device.user_manifest_id,
-            key=device.user_manifest_key,
-            encryption_revision=1,
-            encrypted_on=timestamp,
-            role_cached_on=timestamp,
-            role=WorkspaceRole.OWNER,
-        )
-
-        async def _get_previous_entry() -> WorkspaceEntry:
-            raise NotImplementedError
-
         self.remote_loader = UserRemoteLoader(
             self.device,
             self.device.user_manifest_id,
-            lambda: wentry,
-            _get_previous_entry,
             self.backend_cmds,
             self.remote_devices_manager,
         )

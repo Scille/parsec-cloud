@@ -211,50 +211,17 @@ class UserRemoteLoader:
         self,
         device: LocalDevice,
         workspace_id: EntryID,
-        get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
     ):
         self.device = device
         self.workspace_id = workspace_id
-        self.get_workspace_entry = get_workspace_entry
-        self.get_previous_workspace_entry = get_previous_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self._realm_role_certificates_cache: List[RealmRoleCertificate] | None = None
-        self._sequester_services_cache: List[SequesterServiceCertificate] | None = None
 
     def clear_realm_role_certificate_cache(self) -> None:
         self._realm_role_certificates_cache = None
-
-    async def _get_user_realm_role_at(
-        self, user_id: UserID, timestamp: DateTime, author_last_role_granted_on: DateTime
-    ) -> RealmRole | None:
-
-        # Lazily iterate over user certificates from newest to oldest
-        def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificate]:
-            if self._realm_role_certificates_cache is None:
-                return
-            for certif in reversed(self._realm_role_certificates_cache):
-                if certif.user_id == user_id:
-                    yield certif
-
-        # Reload cache certificates if necessary
-        last_certif = next(_get_user_certificates_from_cache(), None)
-        if last_certif is None or (
-            last_certif.timestamp < timestamp
-            and last_certif.timestamp < author_last_role_granted_on
-        ):
-            self._realm_role_certificates_cache, _ = await self._load_realm_role_certificates()
-
-        # Find the corresponding role
-        assert self._realm_role_certificates_cache is not None
-        for certif in _get_user_certificates_from_cache():
-            if certif.timestamp <= timestamp:
-                return certif.role
-        else:
-            return None
 
     async def _load_realm_role_certificates(
         self, realm_id: EntryID | None = None
@@ -454,13 +421,42 @@ class RemoteLoader(UserRemoteLoader):
         super().__init__(
             device,
             workspace_id,
-            get_workspace_entry,
-            get_previous_workspace_entry,
             backend_cmds,
             remote_devices_manager,
         )
+        self.get_workspace_entry = get_workspace_entry
+        self.get_previous_workspace_entry = get_previous_workspace_entry
         self.local_storage = local_storage
         self.event_bus = event_bus
+        self._sequester_services_cache: List[SequesterServiceCertificate] | None = None
+
+    async def _get_user_realm_role_at(
+        self, user_id: UserID, timestamp: DateTime, author_last_role_granted_on: DateTime
+    ) -> RealmRole | None:
+
+        # Lazily iterate over user certificates from newest to oldest
+        def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificate]:
+            if self._realm_role_certificates_cache is None:
+                return
+            for certif in reversed(self._realm_role_certificates_cache):
+                if certif.user_id == user_id:
+                    yield certif
+
+        # Reload cache certificates if necessary
+        last_certif = next(_get_user_certificates_from_cache(), None)
+        if last_certif is None or (
+            last_certif.timestamp < timestamp
+            and last_certif.timestamp < author_last_role_granted_on
+        ):
+            self._realm_role_certificates_cache, _ = await self._load_realm_role_certificates()
+
+        # Find the corresponding role
+        assert self._realm_role_certificates_cache is not None
+        for certif in _get_user_certificates_from_cache():
+            if certif.timestamp <= timestamp:
+                return certif.role
+        else:
+            return None
 
     async def load_blocks(self, accesses: List[BlockAccess]) -> None:
         async with open_service_nursery() as nursery:
