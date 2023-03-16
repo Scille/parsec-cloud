@@ -569,6 +569,15 @@ from parsec._parsec_pyi.protocol import (
     VlobUpdateReq,
 )
 from parsec._parsec_pyi.regex import Regex
+from parsec._parsec_pyi.remote_devices_manager import (
+    RemoteDevicesManager,
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerDeviceNotFoundError,
+    RemoteDevicesManagerError,
+    RemoteDevicesManagerInvalidTrustchainError,
+    RemoteDevicesManagerNotFoundError,
+    RemoteDevicesManagerUserNotFoundError,
+)
 from parsec._parsec_pyi.storage.user_storage import UserStorage, user_storage_non_speculative_init
 from parsec._parsec_pyi.storage.workspace_storage import (
     PseudoFileDescriptor,
@@ -1166,6 +1175,14 @@ __all__ = [
     "VlobMaintenanceSaveReencryptionBatchRepMaintenanceError",
     "VlobMaintenanceSaveReencryptionBatchRepUnknownStatus",
     "ReencryptionBatchEntry",
+    # RemoteDevicesManager
+    "RemoteDevicesManager",
+    "RemoteDevicesManagerBackendOfflineError",
+    "RemoteDevicesManagerDeviceNotFoundError",
+    "RemoteDevicesManagerError",
+    "RemoteDevicesManagerInvalidTrustchainError",
+    "RemoteDevicesManagerNotFoundError",
+    "RemoteDevicesManagerUserNotFoundError",
     # Regex
     "Regex",
 ]
