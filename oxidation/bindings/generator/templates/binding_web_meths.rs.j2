@@ -58,7 +58,7 @@ let {{ param_name }} =
 {
     let custom_from_rs_string = {{ type.custom_from_rs_string }};
     custom_from_rs_string({{ param_name }})
-        .map_err(|e| TypeError::new(e))
+        .map_err(|e| TypeError::new(&e.to_string()))
 }?;
 {%- else -%}
 {{ param_name }}.parse().map_err(|_| {
@@ -137,7 +137,7 @@ js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| Typ
 .and_then(|x| {
     let custom_from_rs_string = {{ type.custom_from_rs_string }};
     custom_from_rs_string(x)
-.map_err(|e| TypeError::new(e)) })
+.map_err(|e| TypeError::new(&e.to_string())) })
 {%- else -%}
 ?.parse()
 {%- endif %}

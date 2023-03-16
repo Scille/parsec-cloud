@@ -26,7 +26,7 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -156,7 +156,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -170,7 +170,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -184,7 +184,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -198,7 +198,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
             })
             .map_err(|_| TypeError::new("Not a valid BackendAddr"))?
     };
@@ -454,7 +454,7 @@ fn variant_deviceaccessparams_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
                             Ok(std::path::PathBuf::from(s))
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e))
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
@@ -480,7 +480,7 @@ fn variant_deviceaccessparams_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
                             Ok(std::path::PathBuf::from(s))
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e))
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
@@ -641,7 +641,7 @@ pub fn clientListAvailableDevices(path: String) -> Promise {
         let path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e))
+            custom_from_rs_string(path).map_err(|e| TypeError::new(&e.to_string()))
         }?;
 
         let ret = libparsec::client_list_available_devices(&path).await;
@@ -736,7 +736,7 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
                 let test_server = {
                     let custom_from_rs_string =
                         |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
-                    custom_from_rs_string(test_server).map_err(|e| TypeError::new(e))
+                    custom_from_rs_string(test_server).map_err(|e| TypeError::new(&e.to_string()))
                 }?;
 
                 Some(test_server)
@@ -768,7 +768,7 @@ pub fn testDropTestbed(path: String) -> Promise {
         let path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e))
+            custom_from_rs_string(path).map_err(|e| TypeError::new(&e.to_string()))
         }?;
 
         libparsec::test_drop_testbed(&path).await;
