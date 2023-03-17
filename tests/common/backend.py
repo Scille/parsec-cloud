@@ -447,6 +447,13 @@ class AsgiOfflineMiddleware:
         port = scope["server"][1]
 
         if port in self._offline_ports:
+            # In case of http, hypercorn won't let us close the connection (i.e. it will
+            # answer an HTTP 500 for us) without returning a valid http response :'(
+            # So we return a 503 which is the closest thing to offline we can do and
+            # rely on ad-hoc code in the client implementation
+            if scope["type"] == "http":
+                await send({"type": "http.response.start", "status": 503})
+                await send({"type": "http.response.body"})
             return
 
         else:
@@ -458,10 +465,19 @@ class AsgiOfflineMiddleware:
                         break
                 cancel_scope.cancel()
 
+            response_sent = False
             async with trio.open_nursery() as nursery:
                 nursery.start_soon(_offline_watchdog, nursery.cancel_scope)
                 await self.asgi_app(scope, receive, send)
+                response_sent = True
                 nursery.cancel_scope.cancel()
+            if not response_sent and scope["type"] == "http":
+                # Must send an HTTP response, see comment in the offline part.
+                # (note Hypercorn accepts that we send multiple `http.response.start`
+                # so concurrency issue with what occured in `self.asgi_app` don't
+                # cause any issue)
+                await send({"type": "http.response.start", "status": 503})
+                await send({"type": "http.response.body"})
 
     @contextmanager
     def offline(self, port: int):

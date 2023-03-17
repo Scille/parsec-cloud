@@ -138,11 +138,6 @@ impl RemoteDevicesManager {
                     user_id: user_id.clone(),
                 })
             }
-            Err(CommandError::InvalidResponseStatus(status, ..)) if status == 500 => {
-                Err(RemoteDevicesManagerError::BackendOffline {
-                    user_id: user_id.clone(),
-                })
-            }
             Err(e) => Err(RemoteDevicesManagerError::FailedFetchUser {
                 user_id: user_id.clone(),
                 reason: e.to_string(),
