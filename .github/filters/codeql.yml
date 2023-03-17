@@ -1,10 +1,10 @@
 codeql-workflow: &codeql-workflow .github/workflows/codeql.yml
 
-setup-python-action: &setup-python-action .github/actions/setup-python-poetry
+setup-python-action: &setup-python-action .github/actions/setup-python-poetry/**
 
 python: &python
-  - parsec
-  - tests
+  - parsec/**
+  - tests/**
   - build.py
   - make.py
 
