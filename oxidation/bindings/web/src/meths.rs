@@ -26,7 +26,7 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -116,7 +116,7 @@ fn struct_availabledevice_rs_to_js(rs_obj: libparsec::AvailableDevice) -> Result
         };
         match custom_to_rs_string(rs_obj.key_file_path) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
         .as_ref()
     });
@@ -156,7 +156,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -170,7 +170,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -184,7 +184,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -196,9 +196,10 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid BackendAddr"))?
     };
@@ -226,7 +227,7 @@ fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVal
         };
         match custom_to_rs_string(rs_obj.config_dir) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
         .as_ref()
     });
@@ -239,7 +240,7 @@ fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVal
         };
         match custom_to_rs_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
         .as_ref()
     });
@@ -252,7 +253,7 @@ fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVal
         };
         match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
         .as_ref()
     });
@@ -267,7 +268,7 @@ fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVal
         };
         match custom_to_rs_string(rs_obj.preferred_org_creation_backend_addr) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
         .as_ref()
     });
@@ -454,7 +455,7 @@ fn variant_deviceaccessparams_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
                             Ok(std::path::PathBuf::from(s))
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
@@ -480,7 +481,7 @@ fn variant_deviceaccessparams_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
                             Ok(std::path::PathBuf::from(s))
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(&e.to_string()))
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
@@ -508,7 +509,7 @@ fn variant_deviceaccessparams_rs_to_js(
                 };
                 match custom_to_rs_string(path) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
                 .as_ref()
             });
@@ -526,7 +527,7 @@ fn variant_deviceaccessparams_rs_to_js(
                 };
                 match custom_to_rs_string(path) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
                 .as_ref()
             });
@@ -641,7 +642,7 @@ pub fn clientListAvailableDevices(path: String) -> Promise {
         let path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(&e.to_string()))
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::client_list_available_devices(&path).await;
@@ -734,9 +735,10 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
         let test_server = match test_server {
             Some(test_server) => {
                 let test_server = {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
-                    custom_from_rs_string(test_server).map_err(|e| TypeError::new(&e.to_string()))
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+                    };
+                    custom_from_rs_string(test_server).map_err(|e| TypeError::new(e.as_ref()))
                 }?;
 
                 Some(test_server)
@@ -753,7 +755,7 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
             }
             .as_ref()
         }))
@@ -768,7 +770,7 @@ pub fn testDropTestbed(path: String) -> Promise {
         let path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(&e.to_string()))
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         libparsec::test_drop_testbed(&path).await;

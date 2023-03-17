@@ -101,15 +101,18 @@ JsFunction
 {%- elif type.kind == "str" -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- elif type.kind == "str_based" -%}
-{% if type.custom_from_rs_string -%}
-{let custom_from_rs_string = {{ type.custom_from_rs_string }};
-match custom_from_rs_string({{ js_val }}.value({{ mut_cx_ref }}))
-{%- else -%}
-{match {{ js_val }}.value({{ mut_cx_ref }}).parse()
-{%- endif %} {
-    Ok(val) => val,
-    Err(err) => return cx.throw_type_error(err),
-}}
+{
+    {% if type.custom_from_rs_string -%}
+    let custom_from_rs_string = {{ type.custom_from_rs_string }};
+    match custom_from_rs_string({{ js_val }}.value({{ mut_cx_ref }}))
+    {%- else -%}
+    match {{ js_val }}.value({{ mut_cx_ref }}).parse()
+    {%- endif %}
+    {
+        Ok(val) => val,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
 {%- elif type.kind == "bytes" -%}
 {{ js_val }}.as_slice({{ mut_cx_ref }}).to_vec()
 {%- elif type.kind == "struct" -%}

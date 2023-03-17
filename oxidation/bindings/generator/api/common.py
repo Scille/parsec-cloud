@@ -65,12 +65,8 @@ class HumanHandle(StrBasedType):
     pass
 
 
-class Path(StrBasedType):
-    pass
-
-
 class BackendAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) }"
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string()) }"
     custom_to_rs_string = "|addr: libparsec::BackendAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 

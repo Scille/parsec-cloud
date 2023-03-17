@@ -177,8 +177,9 @@ fn struct_clientconfig_js_to_rs<'a>(
     let preferred_org_creation_backend_addr = {
         let js_val: Handle<JsString> = obj.get(cx, "preferredOrgCreationBackendAddr")?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+            };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
@@ -791,8 +792,9 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let test_server = match cx.argument_opt(1) {
         Some(v) => match v.downcast::<JsString, _>(&mut cx) {
             Ok(js_val) => Some({
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, _> { libparsec::BackendAddr::from_any(&s) };
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+                };
                 match custom_from_rs_string(js_val.value(&mut cx)) {
                     Ok(val) => val,
                     Err(err) => return cx.throw_type_error(err),
