@@ -155,7 +155,7 @@ jobs:
 
       - name: Autobuild android
         if: steps.java-changes.outputs.run == 'true'
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           working-directory: oxidation/client/android
 
