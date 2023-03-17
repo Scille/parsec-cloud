@@ -75,6 +75,9 @@ impl AnonymousCmds {
             )),
             460 => Err(CommandError::ExpiredOrganization),
             461 => Err(CommandError::RevokedUser),
+            // We typically use HTTP 503 in the tests to simulate server offline,
+            // so it should behave just like if we were not able to connect
+            503 => Err(CommandError::NoResponse(None)),
             _ => Err(CommandError::InvalidResponseStatus(resp.status(), resp)),
         }
     }

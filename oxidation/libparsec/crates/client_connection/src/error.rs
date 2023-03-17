@@ -44,8 +44,8 @@ pub enum CommandError {
     MissingSupportedApiVersions,
 
     /// We failed to retrieve the reply.
-    #[error("Failed to retrieving the response: {0}")]
-    NoResponse(reqwest::Error),
+    #[error("Failed to retrieving the response: {}", .0.as_ref().map(reqwest::Error::to_string).unwrap_or_else(|| "Server unavailable".into()))]
+    NoResponse(Option<reqwest::Error>),
 
     /// The user has beed revoked
     #[error("Device has been revoked")]
@@ -75,7 +75,7 @@ impl From<libparsec_protocol::DecodeError> for CommandError {
 
 impl From<reqwest::Error> for CommandError {
     fn from(e: reqwest::Error) -> Self {
-        Self::NoResponse(e)
+        Self::NoResponse(Some(e))
     }
 }
 

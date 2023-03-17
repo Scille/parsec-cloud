@@ -33,11 +33,6 @@ impl From<CommandExc> for PyErr {
                 BackendNotAvailable::new_err(err.0.to_string())
             }
             libparsec::client_connection::CommandError::InvalidResponseStatus(status, ..)
-                if status == 500 =>
-            {
-                BackendNotAvailable::new_err(err.0.to_string())
-            }
-            libparsec::client_connection::CommandError::InvalidResponseStatus(status, ..)
                 if (status == 401 || status == 404) =>
             {
                 BackendConnectionRefused::new_err("Invalid handshake information")
