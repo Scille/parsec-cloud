@@ -987,8 +987,8 @@ impl UserManifest {
 }
 
 #[pyfunction]
-pub(crate) fn manifest_decrypt_and_load<'py>(
-    py: Python<'py>,
+pub(crate) fn manifest_decrypt_and_load(
+    py: Python<'_>,
     encrypted: &[u8],
     key: &SecretKey,
 ) -> DataResult<PyObject> {
@@ -997,8 +997,8 @@ pub(crate) fn manifest_decrypt_and_load<'py>(
 
 #[pyfunction]
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn manifest_decrypt_verify_and_load<'py>(
-    py: Python<'py>,
+pub(crate) fn manifest_decrypt_verify_and_load(
+    py: Python<'_>,
     encrypted: &[u8],
     key: &SecretKey,
     author_verify_key: &VerifyKey,
@@ -1020,8 +1020,8 @@ pub(crate) fn manifest_decrypt_verify_and_load<'py>(
 }
 
 #[pyfunction]
-pub(crate) fn manifest_verify_and_load<'py>(
-    py: Python<'py>,
+pub(crate) fn manifest_verify_and_load(
+    py: Python<'_>,
     signed: &[u8],
     author_verify_key: &VerifyKey,
     expected_author: &DeviceID,

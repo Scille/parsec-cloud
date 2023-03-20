@@ -1485,8 +1485,8 @@ impl LocalUserManifest {
 }
 
 #[pyfunction]
-pub(crate) fn local_manifest_decrypt_and_load<'py>(
-    py: Python<'py>,
+pub(crate) fn local_manifest_decrypt_and_load(
+    py: Python<'_>,
     encrypted: &[u8],
     key: &SecretKey,
 ) -> DataResult<PyObject> {

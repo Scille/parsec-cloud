@@ -10,7 +10,6 @@ on:
 
 env:
   python-version: "3.9"
-  rust-version: 1.66.1
   # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
   # That would break our unit test if we don't update them.
   node-version: 18.12.0
