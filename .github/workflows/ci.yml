@@ -28,6 +28,10 @@ env:
     --exclude=libparsec_bindings_android
     --exclude=libparsec_bindings_web
     --exclude=libparsec_bindings_electron
+  # Cargo will be faster with this configuration.
+  # It will only update it's index for the dependencies that we use.
+  # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 jobs:
 

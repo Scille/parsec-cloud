@@ -20,6 +20,10 @@ env:
   node-version: 18.13.0
   python-version: 3.9
   poetry-version: 1.3.2
+  # Cargo will be faster with this configuration.
+  # It will only update it's index for the dependencies that we use.
+  # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 jobs:
   package-wheel:
