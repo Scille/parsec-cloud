@@ -89,7 +89,7 @@ jobs:
       contents: read
       security-events: write
     env:
-      NDK_VERSION: 22.1.7171670
+      NDK_VERSION: 23.2.8568313
       SDK_VERSION: 30.0.3
     steps:
       - name: Checkout repository
