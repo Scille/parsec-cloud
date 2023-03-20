@@ -425,7 +425,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: 🤖 Package Android app
     env:
-      NDK_VERSION: 22.1.7171670
+      NDK_VERSION: 23.2.8568313
       SDK_VERSION: 30.0.3
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0

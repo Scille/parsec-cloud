@@ -2,7 +2,7 @@ ext {
     minSdkVersion = 21
     compileSdkVersion = 30
     targetSdkVersion = 30
-    ndkVersion = '22.1.7171670'
+    ndkVersion = '23.2.8568313'
     androidxActivityVersion = '1.2.0'
     androidxAppCompatVersion = '1.2.0'
     androidxCoordinatorLayoutVersion = '1.1.0'
