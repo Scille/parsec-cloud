@@ -180,6 +180,7 @@ impl BackgroundSqliteExecutor {
     where
         F: Fn(SqliteConnection) -> DatabaseResult<SqliteConnection>,
     {
+        log::debug!("BackgroundSqliteExecutor will soon process messages");
         let BackgroundSqliteExecutor {
             job_receiver,
             mut connection,
@@ -207,6 +208,7 @@ impl BackgroundSqliteExecutor {
                             res_tx
                                 .send(Err(err))
                                 .expect("Failed to send the result of the full vacuum operation");
+                            log::warn!("BackgroundSqliteExecutor failed to run a full vacuum");
                             return;
                         }
                     }
@@ -214,7 +216,7 @@ impl BackgroundSqliteExecutor {
                 Operation::Job(job) => job(&mut connection),
             }
         }
-        log::info!("BackgroundSqliteExecutor finished all his jobs");
+        log::debug!("BackgroundSqliteExecutor finished all his jobs");
     }
 }
 
@@ -233,6 +235,7 @@ mod tests {
         let executor = SqliteExecutor::spawn(connection, |_conn| Err(crate::DatabaseError::Closed));
 
         // Basic SQL query to see if the Executor is working properly.
+        log::info!("Executing a basic SQL query to see if the Executor is working properly");
         executor
             .exec(|conn| conn.batch_execute("SELECT 1"))
             .send()
@@ -240,12 +243,14 @@ mod tests {
             .unwrap()
             .unwrap();
 
+        log::info!("Executing `full_vacuum`");
         let err = executor.full_vacuum().send().await.unwrap().unwrap_err();
 
         // TODO: Check that we've outputted a log warning saying we failed to reopen the database connection.
         assert_eq!(err, DatabaseError::Closed);
 
         // Because `full_vacuum` failed, the executor should be closed.
+        log::info!("Executing another SQL query, but because `full_vacuum` failed, the executor should be closed");
         let err = executor
             .exec(|conn| conn.batch_execute("SELECT 1"))
             .send()
