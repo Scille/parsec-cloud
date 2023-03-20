@@ -110,6 +110,10 @@ pub type InviteResult<T> = Result<T, InviteError>;
 
 impl From<CommandError> for InviteError {
     fn from(exc: CommandError) -> Self {
-        Self::Command(exc)
+        match exc {
+            CommandError::InvitationAlreadyDeleted => Self::AlreadyUsed,
+            CommandError::InvitationNotFound => Self::NotFound,
+            _ => Self::Command(exc),
+        }
     }
 }
