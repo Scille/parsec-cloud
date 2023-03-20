@@ -15,6 +15,7 @@ use crate::{
 const INVITATION_TOKEN_HEADER_NAME: &str = "Invitation-Token";
 
 /// Factory that send commands in a invited context.
+#[derive(Debug, Clone)]
 pub struct InvitedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,

@@ -17,7 +17,18 @@ const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
 const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
 
 macro_rules! impl_common_stuff {
+    (BackendAddr) => {
+        impl_common_stuff!(BackendAddr, _internal_);
+    };
     ($name:ty) => {
+        impl From<$name> for BackendAddr {
+            fn from(value: $name) -> Self {
+                BackendAddr { base: value.base }
+            }
+        }
+        impl_common_stuff!($name, _internal_);
+    };
+    ($name:ty, _internal_) => {
         impl $name {
             pub fn to_url(&self) -> Url {
                 self._to_url(self.base.to_url())
@@ -392,12 +403,12 @@ impl_common_stuff!(BackendOrganizationAddr);
 
 impl BackendOrganizationAddr {
     pub fn new(
-        backend_addr: BackendAddr,
+        backend_addr: impl Into<BackendAddr>,
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
     ) -> Self {
         Self {
-            base: backend_addr.base,
+            base: backend_addr.into().base,
             organization_id,
             root_verify_key,
         }
@@ -532,12 +543,12 @@ pub struct BackendOrganizationBootstrapAddr {
 impl_common_stuff!(BackendOrganizationBootstrapAddr);
 impl BackendOrganizationBootstrapAddr {
     pub fn new(
-        backend_addr: BackendAddr,
+        backend_addr: impl Into<BackendAddr>,
         organization_id: OrganizationID,
         token: Option<String>,
     ) -> Self {
         Self {
-            base: backend_addr.base,
+            base: backend_addr.into().base,
             organization_id,
             token,
         }
@@ -645,14 +656,14 @@ impl_common_stuff!(BackendOrganizationFileLinkAddr);
 
 impl BackendOrganizationFileLinkAddr {
     pub fn new(
-        backend_addr: BackendAddr,
+        backend_addr: impl Into<BackendAddr>,
         organization_id: OrganizationID,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
         encrypted_timestamp: Option<Vec<u8>>,
     ) -> Self {
         Self {
-            base: backend_addr.base,
+            base: backend_addr.into().base,
             organization_id,
             workspace_id,
             encrypted_path,
@@ -770,13 +781,13 @@ impl_common_stuff!(BackendInvitationAddr);
 
 impl BackendInvitationAddr {
     pub fn new(
-        backend_addr: BackendAddr,
+        backend_addr: impl Into<BackendAddr>,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
         token: InvitationToken,
     ) -> Self {
         Self {
-            base: backend_addr.base,
+            base: backend_addr.into().base,
             organization_id,
             invitation_type,
             token,
@@ -891,9 +902,9 @@ pub struct BackendPkiEnrollmentAddr {
 impl_common_stuff!(BackendPkiEnrollmentAddr);
 
 impl BackendPkiEnrollmentAddr {
-    pub fn new(backend_addr: BackendAddr, organization_id: OrganizationID) -> Self {
+    pub fn new(backend_addr: impl Into<BackendAddr>, organization_id: OrganizationID) -> Self {
         Self {
-            base: backend_addr.base,
+            base: backend_addr.into().base,
             organization_id,
         }
     }
