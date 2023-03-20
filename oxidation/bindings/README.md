@@ -45,7 +45,7 @@ You can either install `Android Studio` or `Android tools`
 3. In `File > Settings > Appearance & Behavior > System Settings > Android SDK > SDK Platform > Show Package Details` :
 
     - Install Android SDK `30.0.3`
-    - Install Android NDK `22.1.7171670`
+    - Install Android NDK `23.2.8568313` (see [variable.gradle](../client/android/variables.gradle) for the up to date version to use)
     - Android SDK Command-line Tools
 
 4. Python command should be available in PATH environment variable (used by `rust-android-gradle` plugin)
@@ -107,7 +107,7 @@ You can either install `Android Studio` or `Android tools`
    > Note: the path is `latest/bin` because we install `cmdline-tools` a the tag `latest`.
    > For `9.0`, it will be `9.0/bin` for example.
 
-8. Install Android `SDK-30.0.3` and `NDK-22.1.7171670` by running
+8. Install Android `SDK-30.0.3` and `NDK-23.2.8568313` (see [variable.gradle](../client/android/variables.gradle) for the up to date version to use) by running
 
     ```shell
     sdkmanager --install "ndk;<ndk version>" "build-tools;<build tool version>"
