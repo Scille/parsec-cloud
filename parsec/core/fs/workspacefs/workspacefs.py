@@ -110,7 +110,6 @@ class WorkspaceFS:
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
-        self.remote_devices_manager = remote_devices_manager
         self.preferred_language = preferred_language
         self.sync_locks: dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
         self.remote_loader = RemoteLoader(
@@ -119,7 +118,7 @@ class WorkspaceFS:
             self.get_workspace_entry,
             self.get_previous_workspace_entry,
             self.backend_cmds,
-            self.remote_devices_manager,
+            remote_devices_manager,
             self.local_storage,
             self.event_bus,
         )
