@@ -1,10 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from contextlib import contextmanager
+
 import pytest
 import trio
 
-from parsec._parsec import ActiveUsersLimit, DateTime, InvitationType, InviteListRepOk
+from parsec import FEATURE_FLAGS
+from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    InvitationType,
+    InviteAlreadyUsedError,
+    InviteListRepOk,
+)
 from parsec.api.data import EntryName
 from parsec.api.protocol import (
     DeviceLabel,
@@ -334,8 +343,6 @@ async def test_claimer_handle_reset(
     backend, running_backend, alice, alice_backend_cmds, alice_new_device_invitation
 ):
     async with backend_invited_cmds_factory(addr=alice_new_device_invitation) as claimer_cmds:
-        claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
-
         claimer_in_progress_ctx = None
         greeter_in_progress_ctx = None
 
@@ -354,6 +361,7 @@ async def test_claimer_handle_reset(
                 greeter_initial_ctx = UserGreetInitialCtx(
                     cmds=alice_backend_cmds, token=alice_new_device_invitation.token
                 )
+                claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
 
                 nursery.start_soon(_do_claimer)
                 nursery.start_soon(_do_greeter)
@@ -365,6 +373,9 @@ async def test_claimer_handle_reset(
                 async def _do_claimer():
                     nonlocal claimer_in_progress_ctx
                     claimer_in_progress_ctx = await claimer_initial_ctx.do_wait_peer()
+
+                # Reinitialize claimer_initial_ctx because it has been consumed
+                claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
 
                 nursery.start_soon(_do_claimer)
                 with pytest.raises(InvitePeerResetError):
@@ -395,8 +406,34 @@ async def test_claimer_handle_reset(
                 with pytest.raises(InvitePeerResetError):
                     await claimer_in_progress_ctx.do_signify_trust()
 
+                # Reinitialize claimer_initial_ctx because it has been consumed
+                claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
+
                 # Claimer redo step 1
                 claimer_in_progress_ctx = await claimer_initial_ctx.do_wait_peer()
+
+
+@contextmanager
+def patch_rs_invitation_already_used_error_usage():
+    # For sad legacy reasons, we use both `BackendInvitationAlreadyUsed` and `InviteAlreadyUsedError`
+    # in the Python codebase (typically `BackendInvitationAlreadyUsed` is raised during
+    # server connection handshake and bubbles up, while `InviteAlreadyUsedError` is raised
+    # if the server answered a specific status to our command)
+    # Long story short we should in theory fix this by catching `BackendInvitationAlreadyUsed`
+    # (all `BackendConnectionError` in fact) and wrap them with invite-specific exception.
+    # However this is cumbersome to do, so we are changing this in the new Rust codebase.
+    # Hence this patch function that on the fly catch the new but correct use of
+    # `InviteAlreadyUsedError` to convert it into the legacy `BackendInvitationAlreadyUsed`
+    if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+        try:
+            yield
+        except InviteAlreadyUsedError as exc:
+            assert str(exc) == "Invitation already used"
+            raise BackendInvitationAlreadyUsed(
+                "Invalid handshake: Invitation already deleted"
+            ) from exc
+    else:
+        yield
 
 
 @pytest.mark.trio
@@ -460,24 +497,28 @@ async def test_claimer_handle_cancel_event(
 
                 async def _do_claimer_wait_peer():
                     with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
-                        await claimer_initial_ctx.do_wait_peer()
+                        with patch_rs_invitation_already_used_error_usage():
+                            await claimer_initial_ctx.do_wait_peer()
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_signify_trust():
                     with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
-                        await claimer_in_progress_ctx.do_signify_trust()
+                        with patch_rs_invitation_already_used_error_usage():
+                            await claimer_in_progress_ctx.do_signify_trust()
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_wait_peer_trust():
                     with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
-                        await claimer_in_progress_ctx.do_wait_peer_trust()
+                        with patch_rs_invitation_already_used_error_usage():
+                            await claimer_in_progress_ctx.do_wait_peer_trust()
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_claim_device():
                     with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
-                        await claimer_in_progress_ctx.do_claim_device(
-                            requested_device_label=DeviceLabel("TheSecretDevice")
-                        )
+                        with patch_rs_invitation_already_used_error_usage():
+                            await claimer_in_progress_ctx.do_claim_device(
+                                requested_device_label=DeviceLabel("TheSecretDevice")
+                            )
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 steps = {
@@ -572,7 +613,7 @@ async def test_claimer_handle_command_failure(
         async with real_clock_timeout():
             await _cancel_invitation()
             await deleted_event.wait()
-            with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
+            with pytest.raises((BackendInvitationAlreadyUsed, InviteAlreadyUsedError)) as exc_info:
                 if fail_on_step == "wait_peer":
                     await claimer_initial_ctx.do_wait_peer()
                 elif fail_on_step == "signify_trust":
@@ -585,7 +626,10 @@ async def test_claimer_handle_command_failure(
                     )
                 else:
                     raise AssertionError(f"Unknown step {fail_on_step}")
-            assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
+            if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+                assert str(exc_info.value) == "Invitation already used"
+            else:  # Legacy, Backend Error found instead of Invite Error
+                assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
 
 @pytest.mark.trio
