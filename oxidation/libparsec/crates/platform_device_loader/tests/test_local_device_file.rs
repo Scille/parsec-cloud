@@ -169,7 +169,7 @@ async fn test_renew_legacy_file(tmp_path: TmpPath) {
 #[test_log::test(tokio::test)]
 async fn test_testbed() {
     TestbedScope::run("coolorg", |env| async move {
-        let devices = list_available_devices(&env.client_config_dir).await;
+        let devices = list_available_devices(&env.discriminant_dir).await;
         assert_eq!(
             devices
                 .into_iter()

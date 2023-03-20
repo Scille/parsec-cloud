@@ -42,6 +42,9 @@ pub struct JoinSet<T> {
 }
 
 impl<T> JoinSet<T> {
+    pub fn new() -> Self {
+        Self { tasks: vec![] }
+    }
     /// Spawn the provided task on the `JoinSet`.
     pub fn spawn<F>(&mut self, future: F)
     where

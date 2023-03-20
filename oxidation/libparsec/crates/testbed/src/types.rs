@@ -30,6 +30,7 @@ impl TestbedTemplate {
             .find(|x| x.device_id == *device_id)
             .unwrap()
     }
+
     pub fn user(&self, user_id: &UserID) -> &TestbedUserData {
         self.users.iter().find(|x| x.user_id == *user_id).unwrap()
     }

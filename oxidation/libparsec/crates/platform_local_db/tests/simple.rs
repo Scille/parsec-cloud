@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use diesel::{dsl::sql, sql_types, ExpressionMethods, RunQueryDsl};
@@ -15,10 +16,13 @@ mod book;
 #[rstest]
 #[test_log::test(tokio::test)]
 async fn creation_deletion(tmp_path: TmpPath) {
-    let db_path = tmp_path.as_path().join("db.sqlite");
-    let local_db = LocalDatabase::from_path(db_path.to_str().unwrap(), VacuumMode::default())
-        .await
-        .unwrap();
+    let local_db = LocalDatabase::from_path(
+        &tmp_path,
+        &PathBuf::from("db.sqlite"),
+        VacuumMode::default(),
+    )
+    .await
+    .unwrap();
     let notify = Arc::new(Notify::new());
     let notify2 = notify.clone();
 
@@ -38,7 +42,7 @@ async fn creation_deletion(tmp_path: TmpPath) {
     notified.await;
     log::debug!("We've got notified");
 
-    drop(local_db)
+    local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }
 
 #[rstest]
@@ -46,10 +50,13 @@ async fn creation_deletion(tmp_path: TmpPath) {
 async fn basic_test(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
 
-    let db_path = tmp_path.as_path().join("db.sqlite");
-    let local_db = LocalDatabase::from_path(db_path.to_str().unwrap(), VacuumMode::default())
-        .await
-        .unwrap();
+    let local_db = LocalDatabase::from_path(
+        &tmp_path,
+        &PathBuf::from("db.sqlite"),
+        VacuumMode::default(),
+    )
+    .await
+    .unwrap();
 
     create_table(&local_db).await;
 
@@ -85,7 +92,9 @@ async fn basic_test(tmp_path: TmpPath) {
                 liked: None
             }
         ])
-    )
+    );
+
+    local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }
 
 #[rstest]
@@ -94,9 +103,9 @@ async fn test_set_auto_vacuum(
     tmp_path: TmpPath,
     #[values(AutoVacuum::None, AutoVacuum::Incremental, AutoVacuum::Full)] auto_vacuum: AutoVacuum,
 ) {
-    let db_path = tmp_path.as_path().join("db.sqlite");
     let local_db = LocalDatabase::from_path(
-        db_path.to_str().unwrap(),
+        &tmp_path,
+        &PathBuf::from("db.sqlite"),
         VacuumMode::Automatic(auto_vacuum),
     )
     .await;
@@ -114,7 +123,9 @@ async fn test_set_auto_vacuum(
         .await
         .unwrap();
 
-    assert_eq!(res, auto_vacuum)
+    assert_eq!(res, auto_vacuum);
+
+    local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }
 
 #[rstest]
@@ -122,10 +133,13 @@ async fn test_set_auto_vacuum(
 async fn test_get_disk_usage(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
 
-    let db_path = tmp_path.as_path().join("db.sqlite");
-    let local_db = LocalDatabase::from_path(db_path.to_str().unwrap(), VacuumMode::default())
-        .await
-        .expect("Failed to open local db");
+    let local_db = LocalDatabase::from_path(
+        &tmp_path,
+        &PathBuf::from("db.sqlite"),
+        VacuumMode::default(),
+    )
+    .await
+    .expect("Failed to open local db");
 
     let starting_size = local_db.get_disk_usage().await;
 
@@ -158,6 +172,8 @@ async fn test_get_disk_usage(tmp_path: TmpPath) {
 
     assert!(starting_size < intermediate_size);
     assert!(ONE_MEGA_BYTES < intermediate_size);
+
+    local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }
 
 #[rstest]
@@ -168,9 +184,13 @@ async fn test_cannot_open_database(tmp_path: TmpPath) {
     // We create a folder with at the path that `LocalDatabase` will try to open as a file.
     tokio::fs::create_dir(db_path.as_path()).await.unwrap();
 
-    let local_db_err = LocalDatabase::from_path(db_path.to_str().unwrap(), VacuumMode::default())
-        .await
-        .expect_err("We should failed because we can't read the directory as a file");
+    let local_db_err = LocalDatabase::from_path(
+        &tmp_path,
+        &PathBuf::from("db.sqlite"),
+        VacuumMode::default(),
+    )
+    .await
+    .expect_err("We should failed because we can't read the directory as a file");
 
     let expected_error =
         DatabaseError::DieselConnectionError(diesel::result::ConnectionError::BadConnection(
@@ -182,14 +202,56 @@ async fn test_cannot_open_database(tmp_path: TmpPath) {
 
 #[rstest]
 #[test_log::test(tokio::test)]
+async fn test_non_utf8_db_path(tmp_path: TmpPath) {
+    let non_utf8_name = {
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStringExt;
+            // Here, the values 0x66 and 0x6f correspond to 'f' and 'o'
+            // respectively. The value 0x80 is a lone continuation byte, invalid
+            // in a UTF-8 sequence.
+            let source = vec![0x66, 0x6f, 0x80, 0x6f];
+            std::ffi::OsString::from_vec(source)
+        }
+        #[cfg(windows)]
+        {
+            use std::os::windows::ffi::OsStringExt;
+            // Here the values 0x0066 and 0x006f correspond to 'f' and 'o'
+            // respectively. The value 0xD800 is a lone surrogate half, invalid
+            // in a UTF-16 sequence.
+            let source = [0x0066, 0x006f, 0xD800, 0x006f];
+            std::ffi::OsString::from_wide(&source[..])
+        }
+    };
+    let local_db_err = LocalDatabase::from_path(
+        &tmp_path,
+        &PathBuf::from(non_utf8_name),
+        VacuumMode::default(),
+    )
+    .await
+    .unwrap_err();
+
+    let expected_error = DatabaseError::DieselConnectionError(
+        diesel::result::ConnectionError::InvalidConnectionUrl(
+            "Non-Utf-8 character found in db path".to_owned(),
+        ),
+    );
+
+    assert_eq!(local_db_err, expected_error);
+}
+
+#[rstest]
+#[test_log::test(tokio::test)]
 async fn test_full_vacuum(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
-    let db_path = tmp_path.as_path().join("db.sqlite");
 
-    let local_db =
-        LocalDatabase::from_path(db_path.to_str().unwrap(), VacuumMode::WithThreshold(0))
-            .await
-            .expect("Cannot open the database");
+    let local_db = LocalDatabase::from_path(
+        &tmp_path,
+        &PathBuf::from("db.sqlite"),
+        VacuumMode::WithThreshold(0),
+    )
+    .await
+    .expect("Cannot open the database");
 
     let starting_size = local_db.get_disk_usage().await;
     create_table(&local_db).await;
@@ -233,4 +295,6 @@ async fn test_full_vacuum(tmp_path: TmpPath) {
     let final_size = local_db.get_disk_usage().await;
 
     assert!(final_size < intermediate_size);
+
+    local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }

@@ -6,6 +6,7 @@ use std::sync::Arc;
 mod coolorg;
 mod empty;
 mod env;
+mod minimal;
 mod types;
 
 pub use env::*;
@@ -13,8 +14,11 @@ pub use types::*;
 
 // Templates are generated only once, then copied for fast initialization of testbed envs
 lazy_static! {
-    static ref TESTBED_TEMPLATES: Vec<Arc<TestbedTemplate>> =
-        vec![Arc::new(empty::generate()), Arc::new(coolorg::generate()),];
+    static ref TESTBED_TEMPLATES: Vec<Arc<TestbedTemplate>> = vec![
+        Arc::new(empty::generate()),
+        Arc::new(minimal::generate()),
+        Arc::new(coolorg::generate())
+    ];
 }
 
 /// Only used to expose templates to the test server through Python bindings

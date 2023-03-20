@@ -179,7 +179,7 @@ class WorkspaceStorage:
 
             with trio.CancelScope(shield=True):
                 await rs_instance.clear_memory_cache(flush=True)
-                rs_instance.close_connections()
+                await rs_instance.close_connections()
 
     # Helpers
 

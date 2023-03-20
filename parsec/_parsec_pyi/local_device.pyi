@@ -46,6 +46,7 @@ class LocalDevice:
         user_manifest_id: EntryID | None,
         user_manifest_key: SecretKey | None,
         local_symkey: SecretKey | None,
+        time_provider: TimeProvider | None,
     ) -> LocalDevice: ...
     @property
     def is_admin(self) -> bool: ...

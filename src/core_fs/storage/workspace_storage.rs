@@ -85,8 +85,8 @@ impl WorkspaceStorage {
     ) -> FutureIntoCoroutine {
         FutureIntoCoroutine::from(async move {
             libparsec::core_fs::WorkspaceStorage::new(
-                data_base_dir,
-                device.0,
+                &data_base_dir,
+                device.0.clone(),
                 workspace_id.0,
                 prevent_sync_pattern.0,
                 data_vacuum_threshold.unwrap_or(DEFAULT_CHUNK_VACUUM_THRESHOLD),
@@ -98,10 +98,13 @@ impl WorkspaceStorage {
         })
     }
 
-    fn close_connections(&self) -> PyResult<()> {
-        let ws = self.drop_storage()?;
-        ws.close_connections();
-        Ok(())
+    fn close_connections(&self) -> FutureIntoCoroutine {
+        let res = self.drop_storage();
+        FutureIntoCoroutine::from(async move {
+            let ws = res?;
+            ws.close_connections().await;
+            Ok(())
+        })
     }
 
     fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> FutureIntoCoroutine {
@@ -525,7 +528,7 @@ pub(crate) fn workspace_storage_non_speculative_init(
     FutureIntoCoroutine::from(async move {
         libparsec::core_fs::workspace_storage_non_speculative_init(
             &data_base_dir,
-            device.0,
+            device.0.clone(),
             workspace_id.0,
         )
         .await

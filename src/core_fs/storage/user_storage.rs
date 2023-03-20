@@ -55,15 +55,15 @@ impl UserStorage {
     #[staticmethod]
     #[pyo3(name = "new")]
     fn new_async(
+        data_base_dir: PathBuf,
         device: LocalDevice,
         user_manifest_id: EntryID,
-        data_base_dir: PathBuf,
     ) -> FutureIntoCoroutine {
         FutureIntoCoroutine::from(async move {
-            libparsec::core_fs::UserStorage::from_db_dir(
-                device.0,
-                user_manifest_id.0,
+            libparsec::core_fs::UserStorage::new(
                 &data_base_dir,
+                device.0.clone(),
+                user_manifest_id.0,
             )
             .await
             .map_err(to_py_err)
@@ -71,10 +71,13 @@ impl UserStorage {
         })
     }
 
-    fn close_connections(&self) -> PyResult<()> {
-        let us = self.drop_storage()?;
-        us.close_connections();
-        Ok(())
+    fn close_connections(&self) -> FutureIntoCoroutine {
+        let res = self.drop_storage();
+        FutureIntoCoroutine::from(async move {
+            let us = res?;
+            us.close_connections().await;
+            Ok(())
+        })
     }
 
     fn get_realm_checkpoint(&self) -> FutureIntoCoroutine {

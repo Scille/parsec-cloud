@@ -157,9 +157,7 @@ impl AutoVacuum {
 
         let res = conn
             .exec(|conn| sql::<Text>("PRAGMA auto_vacuum").get_result::<AutoVacuum>(conn))
-            .send()
             .await??;
-
         if &res == self {
             return Ok(());
         }
@@ -168,9 +166,7 @@ impl AutoVacuum {
             .auto_vacuum(*self)
             .to_sql_batch_query()
             + "VACUUM;";
-        conn.exec(move |conn| conn.batch_execute(&opt))
-            .send()
-            .await??;
+        conn.exec(move |conn| conn.batch_execute(&opt)).await??;
         Ok(())
     }
 }

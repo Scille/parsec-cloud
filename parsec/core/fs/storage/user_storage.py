@@ -45,7 +45,7 @@ class UserStorage:
         # During the init phase we open the connections to the database in the tokio runner.
         # If at that moment we were canceled by trio, we would leak those database connections.
         with trio.CancelScope(shield=True):
-            rs_instance = await _RsUserStorage.new(device, device.user_manifest_id, data_base_dir)
+            rs_instance = await _RsUserStorage.new(data_base_dir, device, device.user_manifest_id)
 
         try:
             self = cls(rs_instance)
@@ -53,7 +53,8 @@ class UserStorage:
             yield self
         finally:
             # We only need to close the connection as the only operation `set_user_manifest` directly flush the manifest to the database.
-            rs_instance.close_connections()
+            with trio.CancelScope(shield=True):
+                await rs_instance.close_connections()
 
     # Checkpoint interface
 

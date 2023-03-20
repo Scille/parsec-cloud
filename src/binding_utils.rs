@@ -157,10 +157,16 @@ macro_rules! parse_kwargs_optional {
                         $(let temp = $function(&temp)?;)?
                         Some(temp)
                     },)*
-                    _ => unreachable!(),
+                    name => panic!("unexpected param `{}`", name),
                 }
             }
         }
+    };
+}
+
+macro_rules! check_mandatory_kwargs {
+    ($([$var: ident, $name: literal]),* $(,)?) => {
+        $(let $var = $var.expect(concat!("Missing `", stringify!($name), "` argument"));)*
     };
 }
 
@@ -170,7 +176,7 @@ macro_rules! parse_kwargs {
             $kwargs,
             $([$var $(:$ty)?, $name $(,$function)?],)*
         );
-        $(let $var = $var.expect(concat!("Missing `", stringify!($name), "` argument"));)*
+        crate::binding_utils::check_mandatory_kwargs!($([$var, $name],)*);
     };
 }
 
@@ -399,6 +405,7 @@ macro_rules! send_command {
 
 pub(crate) use _cmd_error_handler;
 pub(crate) use _unwrap_bytes;
+pub(crate) use check_mandatory_kwargs;
 pub(crate) use create_exception;
 pub(crate) use create_exception_from;
 pub(crate) use gen_proto;

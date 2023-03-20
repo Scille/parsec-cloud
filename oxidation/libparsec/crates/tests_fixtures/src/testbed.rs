@@ -32,7 +32,7 @@ impl TestbedScope {
     }
 
     pub async fn stop(self) {
-        test_drop_testbed(&self.env.client_config_dir).await;
+        test_drop_testbed(&self.env.discriminant_dir).await;
     }
 
     pub async fn run_with_server<F, Fut>(template: &str, cb: F)
@@ -40,7 +40,7 @@ impl TestbedScope {
         F: FnOnce(Arc<TestbedEnv>) -> Fut,
         Fut: Future<Output = ()>,
     {
-        // Here we will skip if TESTBED_SERVER env is not set !
+        // Here we will skip if the server is not configured
         if let Some(scope) = Self::start(template, Run::WithServer).await {
             // TODO: handle async panic
             cb(scope.env.clone()).await;
@@ -60,19 +60,19 @@ impl TestbedScope {
         F: FnOnce(Arc<TestbedEnv>) -> Fut,
         Fut: Future<Output = ()>,
     {
-        // Here we will skip if TESTBED_SERVER env is not set !
-        if let Some(scope) = Self::start(template, Run::WithoutServer).await {
-            // TODO: handle async panic
-            cb(scope.env.clone()).await;
-            // Note in case `cb` panics we won't be able to cleanup the testbed env :'(
-            // This is "ok enough" considering:
-            // - Using `std::panic::{catch_unwind, resume_unwind}` is cumbersome with async closure
-            // - Panic only occurs when a test fails, so at most once per run (unless
-            //   `--keep-going` is used, but that's a corner case ^^).
-            // Hence leak should be small: no leak if the testbed server has been started by us,
-            // leak until the 10mn auto-garbage collection otherwise.
-            scope.stop().await;
-        }
+        let scope = Self::start(template, Run::WithoutServer)
+            .await
+            .expect("run without server is never skipped");
+        // TODO: handle async panic
+        cb(scope.env.clone()).await;
+        // Note in case `cb` panics we won't be able to cleanup the testbed env :'(
+        // This is "ok enough" considering:
+        // - Using `std::panic::{catch_unwind, resume_unwind}` is cumbersome with async closure
+        // - Panic only occurs when a test fails, so at most once per run (unless
+        //   `--keep-going` is used, but that's a corner case ^^).
+        // Hence leak should be small: no leak if the testbed server has been started by us,
+        // leak until the 10mn auto-garbage collection otherwise.
+        scope.stop().await;
     }
 }
 
@@ -83,11 +83,11 @@ impl TestbedScope {
 fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::process::Child>) {
     // TESTBED_SERVER should have 3 possible values:
     // - not set, if so the test is skipped (don't forget to print something about it !)
-    // - `AUTOSTART` or `1` or just defined to empty: auto start the serve
-    // - parsec://<domain>:<port>[?no_ssl=true],
-    //   <domain>:<port>,
-    //   http://<domain>:<port> or
-    //   https://<domain>:<port> consider the server is already started
+    // - `AUTOSTART` or `1` or just defined to empty: auto start the server
+    // - `parsec://<domain>:<port>[?no_ssl=true]`,
+    //   `<domain>:<port>`,
+    //   `http://<domain>:<port>` or
+    //   `https://<domain>:<port>` consider the server is already started
     let testbed_server = std::env::var("TESTBED_SERVER");
 
     if let Err(e) = testbed_server {

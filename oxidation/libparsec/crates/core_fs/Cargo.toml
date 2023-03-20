@@ -17,6 +17,8 @@ libparsec_core = { path = "../core" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
+libparsec_platform_local_db = { path = "../platform_local_db" }
+libparsec_platform_async = { path = "../platform_async" }
 
 # Disable Diesel's default feature to remove `32-column-tables` which slowdown compilation
 # quiet a lot (Diesel crate compilation on my machine: 19s with vs 8s without).
@@ -27,9 +29,7 @@ regex = "1.7.2"
 thiserror = "1.0.37"
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
 lazy_static = "1.4.0"
-libparsec_platform_local_db = { path = "../platform_local_db" }
 async-trait = "0.1.61"
-libparsec_platform_async = { path = "../platform_async" }
 
 [dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
