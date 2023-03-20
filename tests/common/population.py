@@ -264,16 +264,16 @@ def ws_from_other_organization_factory(
     @asynccontextmanager
     async def _ws_from_other_organization_factory(
         backend_asgi_app,
-        mimick: Optional[str] = None,
+        mimic: Optional[str] = None,
         anonymous: bool = False,
         profile: UserProfile = UserProfile.STANDARD,
     ):
         binder = backend_data_binder_factory(backend_asgi_app.backend)
 
         other_org = organization_factory()
-        if mimick:
+        if mimic:
             other_device = local_device_factory(
-                base_device_id=mimick, org=other_org, profile=profile
+                base_device_id=mimic, org=other_org, profile=profile
             )
         else:
             other_device = local_device_factory(org=other_org, profile=profile)
