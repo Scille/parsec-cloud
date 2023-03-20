@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[pyclass]
-pub(crate) struct InvitedCmds(Arc<client_connection::InvitedCmds>);
+pub(crate) struct InvitedCmds(pub Arc<client_connection::InvitedCmds>);
 
 #[pymethods]
 impl InvitedCmds {
