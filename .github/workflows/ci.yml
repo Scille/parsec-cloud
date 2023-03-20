@@ -283,6 +283,7 @@ jobs:
       # Key cache contains a hash of all the files that are used to produce _parsec.so
       # Hence if we have a cache hit we know that there is no need for a rebuild !
       - name: Setup cache-key
+        if: steps.python-changes.outputs.run == 'true'
         id: cache-key
         run: echo "key=${{ matrix.os }}-${{ hashFiles('src/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python" >> $GITHUB_OUTPUT
         shell: bash
