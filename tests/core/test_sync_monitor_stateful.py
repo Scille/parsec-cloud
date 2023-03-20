@@ -148,7 +148,7 @@ def test_sync_monitor_stateful(
             self.alice = self.backend_controller.server.correct_addr(alice)
             self.bob = self.backend_controller.server.correct_addr(bob)
             # Align alice and bob by using the same time provider
-            self.bob.time_provider = self.alice.time_provider
+            self.bob = self.bob.evolve(time_provider=self.alice.time_provider)
             self.bob_user_fs = await self.start_bob_user_fs()
             self.alice_core = await self.start_alice_core()
             self.user_fs_per_device = {

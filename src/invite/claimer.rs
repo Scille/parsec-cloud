@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use pyo3::{exceptions::PyRuntimeError, prelude::*};
 
 use libparsec::protocol::invited_cmds::v2::invite_info::UserOrDevice;
@@ -366,7 +368,7 @@ impl UserClaimInProgress3Ctx {
                     requested_human_handle.map(|x| x.0),
                 )
                 .await
-                .map(LocalDevice)
+                .map(|local_device| LocalDevice(Arc::new(local_device)))
                 .map_err(InviteExc::from)?)
         })
     }
@@ -395,7 +397,7 @@ impl DeviceClaimInProgress3Ctx {
             Ok(ctx
                 .do_claim_device(requested_device_label.map(|x| x.0))
                 .await
-                .map(LocalDevice)
+                .map(|local_device| LocalDevice(Arc::new(local_device)))
                 .map_err(InviteExc::from)?)
         })
     }

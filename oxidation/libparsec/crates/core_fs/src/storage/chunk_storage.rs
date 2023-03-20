@@ -14,6 +14,7 @@ use diesel::{
     OptionalExtension, QueryDsl, RunQueryDsl,
 };
 
+use libparsec_client_types::LocalDevice;
 use libparsec_crypto::SecretKey;
 use libparsec_platform_async::future;
 use libparsec_platform_local_db::{LocalDatabase, LOCAL_DATABASE_MAX_VARIABLE_NUMBER};
@@ -69,19 +70,8 @@ pub(crate) trait ChunkStorageTrait {
         Ok(())
     }
 
-    fn close_connection(&self) {
-        self.conn().close();
-    }
-
-    #[cfg(test)]
-    async fn drop_db(&self) -> FSResult<()> {
-        self.conn()
-            .exec(|conn| {
-                sql_query("DROP TABLE IF EXISTS chunks;").execute(conn)?;
-                sql_query("DROP TABLE IF EXISTS remanence;").execute(conn)
-            })
-            .await?;
-        Ok(())
+    async fn close_connection(&self) {
+        self.conn().close().await;
     }
 
     // Size and chunks
@@ -396,8 +386,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait + Remanence {
 // i.e. We want to only commit chunks that are referenced by a manifest, so until they're referenced they may be not needed or changed.
 pub(crate) struct ChunkStorage {
     conn: Arc<LocalDatabase>,
-    local_symkey: SecretKey,
-    time_provider: TimeProvider,
+    device: Arc<LocalDevice>,
 }
 
 impl ChunkStorageTrait for ChunkStorage {
@@ -405,24 +394,16 @@ impl ChunkStorageTrait for ChunkStorage {
         &self.conn
     }
     fn local_symkey(&self) -> &SecretKey {
-        &self.local_symkey
+        &self.device.local_symkey
     }
     fn time_provider(&self) -> &TimeProvider {
-        &self.time_provider
+        &self.device.time_provider
     }
 }
 
 impl ChunkStorage {
-    pub async fn new(
-        local_symkey: SecretKey,
-        conn: Arc<LocalDatabase>,
-        time_provider: TimeProvider,
-    ) -> FSResult<Self> {
-        let instance = Self {
-            conn,
-            local_symkey,
-            time_provider,
-        };
+    pub async fn new(conn: Arc<LocalDatabase>, device: Arc<LocalDevice>) -> FSResult<Self> {
+        let instance = Self { device, conn };
         instance.create_db().await?;
         Ok(instance)
     }
@@ -431,9 +412,8 @@ impl ChunkStorage {
 // Interface for caching the data blocks.
 pub(crate) struct BlockStorage {
     conn: LocalDatabase,
-    local_symkey: SecretKey,
+    device: Arc<LocalDevice>,
     cache_size: u64,
-    time_provider: TimeProvider,
     /// Flag that enable/disable the block remanence.
     block_remanent_enabled: AtomicBool,
 }
@@ -443,10 +423,10 @@ impl ChunkStorageTrait for BlockStorage {
         &self.conn
     }
     fn local_symkey(&self) -> &SecretKey {
-        &self.local_symkey
+        &self.device.local_symkey
     }
     fn time_provider(&self) -> &TimeProvider {
-        &self.time_provider
+        &self.device.time_provider
     }
 }
 
@@ -458,16 +438,14 @@ impl BlockStorageTrait for BlockStorage {
 
 impl BlockStorage {
     pub async fn new(
-        local_symkey: SecretKey,
         conn: LocalDatabase,
+        device: Arc<LocalDevice>,
         cache_size: u64,
-        time_provider: TimeProvider,
     ) -> FSResult<Self> {
         let instance = Self {
             conn,
-            local_symkey,
+            device,
             cache_size,
-            time_provider,
             block_remanent_enabled: AtomicBool::new(false),
         };
         instance.create_db().await?;
@@ -631,36 +609,57 @@ impl Remanence for BlockStorage {
 
 #[cfg(test)]
 mod tests {
+    use libparsec_client_types::LocalDevice;
     use libparsec_platform_local_db::VacuumMode;
-    use std::{collections::HashSet, sync::Arc};
+    use libparsec_tests_fixtures::TestbedScope;
+    use std::{
+        collections::HashSet,
+        path::{Path, PathBuf},
+        sync::Arc,
+    };
 
-    use libparsec_tests_fixtures::{tmp_path, TmpPath};
     use rstest::rstest;
 
     use super::*;
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn chunk_storage(tmp_path: TmpPath) {
-        let chunk_db_path = tmp_path.join("chunk_storage.sqlite");
-        let chunk_conn =
-            LocalDatabase::from_path(chunk_db_path.to_str().unwrap(), VacuumMode::default())
+    async fn chunk_storage_with_defaults(
+        discriminant_dir: &Path,
+        device: Arc<LocalDevice>,
+    ) -> ChunkStorage {
+        let db_relative_path = PathBuf::from("chunk_storage.sqlite");
+        let conn =
+            LocalDatabase::from_path(discriminant_dir, &db_relative_path, VacuumMode::default())
                 .await
                 .unwrap();
+        let conn = Arc::new(conn);
+        ChunkStorage::new(conn, device).await.unwrap()
+    }
 
-        let chunk_conn = Arc::new(chunk_conn);
-        let local_symkey = SecretKey::generate();
+    async fn block_storage_with_defaults(
+        discriminant_dir: &Path,
+        device: Arc<LocalDevice>,
+    ) -> BlockStorage {
+        let db_relative_path = PathBuf::from("block_storage.sqlite");
+        let conn =
+            LocalDatabase::from_path(discriminant_dir, &db_relative_path, VacuumMode::default())
+                .await
+                .unwrap();
+        const CACHE_SIZE: u64 = DEFAULT_BLOCK_SIZE.inner() * 1024;
+        BlockStorage::new(conn, device, CACHE_SIZE).await.unwrap()
+    }
 
-        let chunk_storage = ChunkStorage::new(local_symkey, chunk_conn, TimeProvider::default())
-            .await
-            .unwrap();
+    #[rstest]
+    #[test_log::test(tokio::test)]
+    async fn chunk_storage() {
+        TestbedScope::run("minimal", |env| async move {
+            let alice = env.local_device("alice@dev1".parse().unwrap());
+            let chunk_storage =
+                chunk_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-        // Initialization
-        chunk_storage.drop_db().await.unwrap();
-        chunk_storage.create_db().await.unwrap();
-
-        const CHUNK_TO_INSERT: usize = 2000;
-        test_chunk_interface::<ChunkStorage, CHUNK_TO_INSERT>(&chunk_storage).await;
+            const CHUNK_TO_INSERT: usize = 2000;
+            test_chunk_interface::<ChunkStorage, CHUNK_TO_INSERT>(&chunk_storage).await;
+        })
+        .await;
     }
 
     async fn test_chunk_interface<
@@ -769,31 +768,18 @@ mod tests {
 
     #[rstest]
     #[test_log::test(tokio::test)]
-    async fn test_block_storage(tmp_path: TmpPath) {
-        let block_db_path = tmp_path.join("block_storage.sqlite");
-        let block_conn =
-            LocalDatabase::from_path(block_db_path.to_str().unwrap(), VacuumMode::default())
-                .await
-                .unwrap();
+    async fn test_block_storage() {
+        TestbedScope::run("minimal", |env| async move {
+            let alice = env.local_device("alice@dev1".parse().unwrap());
+            let block_storage =
+                block_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-        let local_symkey = SecretKey::generate();
-        const CACHE_SIZE: u64 = DEFAULT_BLOCK_SIZE.inner() * 1024;
+            const CACHE_SIZE: u64 = DEFAULT_BLOCK_SIZE.inner() * 1024;
+            const CHUNK_TO_INSERT: usize = 2000;
 
-        let block_storage = BlockStorage::new(
-            local_symkey,
-            block_conn,
-            CACHE_SIZE,
-            TimeProvider::default(),
-        )
+            test_block_interface::<BlockStorage, CACHE_SIZE, CHUNK_TO_INSERT>(block_storage).await;
+        })
         .await
-        .unwrap();
-
-        block_storage.drop_db().await.unwrap();
-        block_storage.create_db().await.unwrap();
-
-        const CHUNK_TO_INSERT: usize = 2000;
-
-        test_block_interface::<BlockStorage, CACHE_SIZE, CHUNK_TO_INSERT>(block_storage).await;
     }
 
     async fn test_block_interface<

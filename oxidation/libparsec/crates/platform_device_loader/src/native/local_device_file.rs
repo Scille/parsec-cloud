@@ -63,7 +63,7 @@ pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
 
 pub async fn save_recovery_device(
     key_file: &Path,
-    device: LocalDevice,
+    device: &LocalDevice,
     force: bool,
 ) -> LocalDeviceResult<String> {
     if File::open(key_file).is_ok() && !force {
@@ -78,9 +78,9 @@ pub async fn save_recovery_device(
         ciphertext,
         organization_id: device.organization_id().clone(),
         slug: device.slug(),
-        human_handle: device.human_handle,
-        device_label: device.device_label,
-        device_id: device.device_id,
+        human_handle: device.human_handle.clone(),
+        device_label: device.device_label.clone(),
+        device_id: device.device_id.clone(),
     });
 
     save_device_file(key_file, &key_file_content)?;

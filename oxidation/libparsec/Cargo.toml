@@ -13,9 +13,10 @@ test-utils = [
     "dep:libparsec_testbed",
     "libparsec_client_high_level_api/test-utils",
     "libparsec_platform_device_loader/test-with-testbed",
+    "libparsec_platform_local_db/test-with-testbed",
+    "libparsec_platform_local_db/test-in-memory-mock",
     "libparsec_types/test-mock-time",
     "libparsec_core_fs/test-utils",
-    "dep:libparsec_platform_local_db",
     "libparsec_crypto/test-unsecure-but-fast-secretkey-from-password"
 ]
 
@@ -29,8 +30,10 @@ libparsec_platform_async = { path = "crates/platform_async" }
 libparsec_platform_device_loader = { path = "crates/platform_device_loader" }
 libparsec_testbed = { path = "crates/testbed", optional = true }
 
+# TODO: merge with regular dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libparsec_protocol = { path = "crates/protocol" }
 libparsec_core_fs = { path = "crates/core_fs" }
 libparsec_types = { path = "crates/types" }
-libparsec_platform_local_db = { path = "crates/platform_local_db", features = ["test-utils"], optional = true }
+# TODO: should not be an optional
+libparsec_platform_local_db = { path = "crates/platform_local_db", optional = true }

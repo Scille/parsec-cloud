@@ -9,7 +9,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_client_types::LocalManifest;
+use libparsec_client_types::{LocalDevice, LocalManifest};
 use libparsec_crypto::{CryptoError, SecretKey};
 use libparsec_platform_async::future::TryFutureExt;
 use libparsec_types::{BlockID, ChunkID, EntryID, Regex};
@@ -88,8 +88,8 @@ struct NewPreventSyncPattern<'a> {
 }
 
 pub struct ManifestStorage {
-    local_symkey: SecretKey,
     conn: Arc<LocalDatabase>,
+    device: Arc<LocalDevice>,
     pub realm_id: EntryID,
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
@@ -118,18 +118,22 @@ impl CacheEntry {
 
 impl ManifestStorage {
     pub async fn new(
-        local_symkey: SecretKey,
-        realm_id: EntryID,
         conn: Arc<LocalDatabase>,
+        device: Arc<LocalDevice>,
+        realm_id: EntryID,
     ) -> FSResult<Self> {
         let instance = Self {
-            local_symkey,
             conn,
+            device,
             realm_id,
             caches: Mutex::new(HashMap::default()),
         };
         instance.create_db().await?;
         Ok(instance)
+    }
+
+    fn local_symkey(&self) -> &SecretKey {
+        &self.device.local_symkey
     }
 
     /// Close the connection to the database.
@@ -139,26 +143,28 @@ impl ManifestStorage {
     // routine that has been carefully crafted to ensure `clear_memory_cache`
     // and `close_connection` are done without concurrency call of other manifest
     // storage methods.
-    pub fn close_connection(&self) {
-        let cache_guard = self.caches.lock().expect("Mutex is poisoned");
-        let res = cache_guard.iter().try_for_each(|(id, lock)| {
-            let id = *id;
-            let has_pending_chunks = {
-                lock.lock()
-                    .expect("Mutex is poisoned")
-                    .pending_chunk_ids
-                    .is_some()
-            };
-            if has_pending_chunks {
-                Err(format!("Manifest {id} has pending chunk not saved"))
-            } else {
-                Ok(())
-            }
-        });
+    pub async fn close_connection(&self) {
+        let res = {
+            let cache_guard = self.caches.lock().expect("Mutex is poisoned");
+            cache_guard.iter().try_for_each(|(id, lock)| {
+                let id = *id;
+                let has_pending_chunks = {
+                    lock.lock()
+                        .expect("Mutex is poisoned")
+                        .pending_chunk_ids
+                        .is_some()
+                };
+                if has_pending_chunks {
+                    Err(format!("Manifest {id} has pending chunk not saved"))
+                } else {
+                    Ok(())
+                }
+            })
+        };
         if let Err(e) = res {
             log::warn!("Invalid state when closing the connection {e}")
         }
-        self.conn.close();
+        self.conn.close().await;
     }
 
     /// Database initialization
@@ -199,19 +205,6 @@ impl ManifestStorage {
             })
         })
         .await?;
-
-        Ok(())
-    }
-
-    #[cfg(test)]
-    async fn drop_db(&self) -> FSResult<()> {
-        self.conn
-            .exec(|conn| {
-                sql_query("DROP TABLE IF EXISTS vlobs;").execute(conn)?;
-                sql_query("DROP TABLE IF EXISTS realm_checkpoints;").execute(conn)?;
-                sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;").execute(conn)
-            })
-            .await?;
 
         Ok(())
     }
@@ -493,7 +486,7 @@ impl ManifestStorage {
             .await
             .map_err(|_| FSError::LocalMiss(*entry_id))?;
 
-        let manifest = LocalManifest::decrypt_and_load(&manifest, &self.local_symkey)
+        let manifest = LocalManifest::decrypt_and_load(&manifest, self.local_symkey())
             .map_err(|_| FSError::Crypto(CryptoError::Decryption))?;
 
         cache_entry.lock().expect("Mutex is poisoned").manifest = Some(manifest.clone());
@@ -572,7 +565,7 @@ impl ManifestStorage {
                 })
                 .map(|(manifest, chunk_ids)| {
                     (
-                        manifest.dump_and_encrypt(&self.local_symkey),
+                        manifest.dump_and_encrypt(self.local_symkey()),
                         manifest.need_sync(),
                         manifest.base_version() as i64,
                         Vec::from_iter(chunk_ids.into_iter()),
@@ -717,176 +710,176 @@ async fn get_prevent_sync_pattern_raw(
 
 #[cfg(test)]
 mod tests {
-    use std::{ops::Deref, sync::Arc};
+    use std::{
+        path::{Path, PathBuf},
+        sync::Arc,
+    };
 
     use libparsec_client_types::{Chunk, LocalFileManifest};
     use libparsec_crypto::{prelude::*, HashDigest};
     use libparsec_platform_local_db::VacuumMode;
     use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest, Regex};
 
-    use libparsec_tests_fixtures::{timestamp, tmp_path, TmpPath};
-    use rstest::{fixture, rstest};
+    use libparsec_tests_fixtures::{timestamp, TestbedScope};
+    use rstest::rstest;
 
     use super::*;
 
-    struct ManifestStorageFixture {
-        storage: ManifestStorage,
-        _tmp_path: TmpPath,
-    }
-
-    impl Deref for ManifestStorageFixture {
-        type Target = ManifestStorage;
-
-        fn deref(&self) -> &Self::Target {
-            &self.storage
-        }
-    }
-
-    #[fixture]
-    async fn manifest_storage(tmp_path: TmpPath) -> ManifestStorageFixture {
-        let db_path = tmp_path.join("manifest_storage.sqlite");
-        let conn = LocalDatabase::from_path(db_path.to_str().unwrap(), VacuumMode::default())
-            .await
-            .unwrap();
+    async fn manifest_storage_with_defaults(
+        discriminant_dir: &Path,
+        device: Arc<LocalDevice>,
+    ) -> ManifestStorage {
+        let db_relative_path = PathBuf::from("manifest_storage.sqlite");
+        let conn =
+            LocalDatabase::from_path(discriminant_dir, &db_relative_path, VacuumMode::default())
+                .await
+                .unwrap();
         let conn = Arc::new(conn);
-        let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
-
-        let manifest_storage = ManifestStorage::new(local_symkey, realm_id, conn)
-            .await
-            .unwrap();
-        manifest_storage.drop_db().await.unwrap();
-        manifest_storage.create_db().await.unwrap();
-
-        ManifestStorageFixture {
-            storage: manifest_storage,
-            _tmp_path: tmp_path,
-        }
+        ManifestStorage::new(conn, device, realm_id).await.unwrap()
     }
 
     #[rstest]
     #[test_log::test(tokio::test)]
-    async fn prevent_sync_pattern(#[future] manifest_storage: ManifestStorageFixture) {
-        let manifest_storage = manifest_storage.await;
+    async fn prevent_sync_pattern() {
+        TestbedScope::run("minimal", |env| async move {
+            let alice = env.local_device("alice@dev1".parse().unwrap());
+            let manifest_storage =
+                manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
+            let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
-        assert_eq!(re.to_string(), EMPTY_PATTERN);
-        assert!(!fully_applied);
+            assert_eq!(re.to_string(), EMPTY_PATTERN);
+            assert!(!fully_applied);
 
-        let regex = Regex::from_regex_str(r"\z").unwrap();
-        manifest_storage
-            .set_prevent_sync_pattern(&regex)
-            .await
-            .unwrap();
+            let regex = Regex::from_regex_str(r"\z").unwrap();
+            manifest_storage
+                .set_prevent_sync_pattern(&regex)
+                .await
+                .unwrap();
 
-        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
+            let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
-        assert_eq!(re.to_string(), r"\z");
-        assert!(!fully_applied);
+            assert_eq!(re.to_string(), r"\z");
+            assert!(!fully_applied);
 
-        // Passing fully applied on a random pattern is a noop...
+            // Passing fully applied on a random pattern is a noop...
 
-        manifest_storage
-            .mark_prevent_sync_pattern_fully_applied(&Regex::from_regex_str(EMPTY_PATTERN).unwrap())
-            .await
-            .unwrap();
+            manifest_storage
+                .mark_prevent_sync_pattern_fully_applied(
+                    &Regex::from_regex_str(EMPTY_PATTERN).unwrap(),
+                )
+                .await
+                .unwrap();
 
-        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
+            let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
-        assert_eq!(re.to_string(), r"\z");
-        assert!(!fully_applied);
+            assert_eq!(re.to_string(), r"\z");
+            assert!(!fully_applied);
 
-        // ...unlike passing fully applied on the currently registered pattern
+            // ...unlike passing fully applied on the currently registered pattern
 
-        manifest_storage
-            .mark_prevent_sync_pattern_fully_applied(&regex)
-            .await
-            .unwrap();
+            manifest_storage
+                .mark_prevent_sync_pattern_fully_applied(&regex)
+                .await
+                .unwrap();
 
-        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
+            let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
-        assert_eq!(re.to_string(), r"\z");
-        assert!(fully_applied);
+            assert_eq!(re.to_string(), r"\z");
+            assert!(fully_applied);
+        })
+        .await
     }
 
     #[rstest]
     #[test_log::test(tokio::test)]
-    async fn realm_checkpoint(#[future] manifest_storage: ManifestStorageFixture) {
-        let manifest_storage = manifest_storage.await;
+    async fn realm_checkpoint() {
+        TestbedScope::run("minimal", |env| async move {
+            let alice = env.local_device("alice@dev1".parse().unwrap());
+            let manifest_storage =
+                manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-        let entry_id = EntryID::default();
+            let entry_id = EntryID::default();
 
-        manifest_storage
-            .update_realm_checkpoint(64, &[(entry_id, 2)])
-            .await
-            .unwrap();
+            manifest_storage
+                .update_realm_checkpoint(64, &[(entry_id, 2)])
+                .await
+                .unwrap();
 
-        assert_eq!(manifest_storage.get_realm_checkpoint().await, 64);
+            assert_eq!(manifest_storage.get_realm_checkpoint().await, 64);
+        })
+        .await
     }
 
     #[rstest]
     #[test_log::test(tokio::test)]
-    async fn set_manifest(#[future] manifest_storage: ManifestStorageFixture, timestamp: DateTime) {
-        let manifest_storage = manifest_storage.await;
-        let t1 = timestamp;
-        let t2 = t1.add_us(1);
+    async fn set_manifest(timestamp: DateTime) {
+        TestbedScope::run("minimal", |env| async move {
+            let alice = env.local_device("alice@dev1".parse().unwrap());
+            let manifest_storage =
+                manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-        let entry_id = EntryID::default();
+            let t1 = timestamp;
+            let t2 = t1.add_us(1);
 
-        let local_file_manifest = LocalManifest::File(LocalFileManifest {
-            base: FileManifest {
-                author: DeviceID::default(),
-                timestamp: t1,
-                id: EntryID::default(),
-                parent: EntryID::default(),
-                version: 1,
-                created: t1,
-                updated: t1,
+            let entry_id = EntryID::default();
+
+            let local_file_manifest = LocalManifest::File(LocalFileManifest {
+                base: FileManifest {
+                    author: DeviceID::default(),
+                    timestamp: t1,
+                    id: EntryID::default(),
+                    parent: EntryID::default(),
+                    version: 1,
+                    created: t1,
+                    updated: t1,
+                    size: 8,
+                    blocksize: Blocksize::try_from(8).unwrap(),
+                    blocks: vec![BlockAccess {
+                        id: BlockID::default(),
+                        key: SecretKey::generate(),
+                        offset: 0,
+                        size: std::num::NonZeroU64::try_from(8).unwrap(),
+                        digest: HashDigest::from_data(&[]),
+                    }],
+                },
+                need_sync: false,
+                updated: t2,
                 size: 8,
                 blocksize: Blocksize::try_from(8).unwrap(),
-                blocks: vec![BlockAccess {
-                    id: BlockID::default(),
-                    key: SecretKey::generate(),
-                    offset: 0,
-                    size: std::num::NonZeroU64::try_from(8).unwrap(),
-                    digest: HashDigest::from_data(&[]),
-                }],
-            },
-            need_sync: false,
-            updated: t2,
-            size: 8,
-            blocksize: Blocksize::try_from(8).unwrap(),
-            blocks: vec![vec![Chunk {
-                id: ChunkID::default(),
-                start: 0,
-                stop: std::num::NonZeroU64::try_from(8).unwrap(),
-                raw_offset: 0,
-                raw_size: std::num::NonZeroU64::try_from(8).unwrap(),
-                access: None,
-            }]],
-        });
+                blocks: vec![vec![Chunk {
+                    id: ChunkID::default(),
+                    start: 0,
+                    stop: std::num::NonZeroU64::try_from(8).unwrap(),
+                    raw_offset: 0,
+                    raw_size: std::num::NonZeroU64::try_from(8).unwrap(),
+                    access: None,
+                }]],
+            });
 
-        assert!(manifest_storage.get_manifest_in_cache(&entry_id).is_none());
-        assert_eq!(
-            manifest_storage.get_manifest(entry_id).await,
-            Err(FSError::LocalMiss(*entry_id))
-        );
+            assert!(manifest_storage.get_manifest_in_cache(&entry_id).is_none());
+            assert_eq!(
+                manifest_storage.get_manifest(entry_id).await,
+                Err(FSError::LocalMiss(*entry_id))
+            );
 
-        manifest_storage
-            .set_manifest(entry_id, local_file_manifest.clone(), false, None)
-            .await
-            .unwrap();
+            manifest_storage
+                .set_manifest(entry_id, local_file_manifest.clone(), false, None)
+                .await
+                .unwrap();
 
-        assert_eq!(
-            manifest_storage.get_manifest(entry_id).await.unwrap(),
-            local_file_manifest
-        );
+            assert_eq!(
+                manifest_storage.get_manifest(entry_id).await.unwrap(),
+                local_file_manifest
+            );
 
-        let (local_changes, remote_changes) =
-            manifest_storage.get_need_sync_entries().await.unwrap();
+            let (local_changes, remote_changes) =
+                manifest_storage.get_need_sync_entries().await.unwrap();
 
-        assert_eq!(local_changes, HashSet::new());
-        assert_eq!(remote_changes, HashSet::new());
+            assert_eq!(local_changes, HashSet::new());
+            assert_eq!(remote_changes, HashSet::new());
+        })
+        .await
     }
 }

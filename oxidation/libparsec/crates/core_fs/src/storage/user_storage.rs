@@ -10,12 +10,12 @@ use libparsec_client_types::{LocalDevice, LocalManifest, LocalUserManifest};
 use libparsec_platform_local_db::{LocalDatabase, VacuumMode};
 use libparsec_types::EntryID;
 
-use super::{manifest_storage::ManifestStorage, version::get_user_data_storage_db_path};
+use super::{manifest_storage::ManifestStorage, version::get_user_data_storage_db_relative_path};
 use crate::error::FSResult;
 use libparsec_platform_async::Mutex as AsyncMutex;
 
 pub struct UserStorage {
-    pub device: LocalDevice,
+    pub device: Arc<LocalDevice>,
     pub user_manifest_id: EntryID,
     manifest_storage: ManifestStorage,
     /// A lock that will be used to prevent concurrent update in [UserStorage::set_user_manifest].
@@ -27,22 +27,17 @@ pub struct UserStorage {
 }
 
 impl UserStorage {
-    pub async fn from_db_dir(
-        device: LocalDevice,
-        user_manifest_id: EntryID,
+    pub async fn new(
         data_base_dir: &Path,
+        device: Arc<LocalDevice>,
+        user_manifest_id: EntryID,
     ) -> FSResult<Self> {
-        let data_path = get_user_data_storage_db_path(data_base_dir, &device);
-        let conn = LocalDatabase::from_path(
-            data_path
-                .to_str()
-                .expect("Non-Utf-8 character found in data_path"),
-            VacuumMode::default(),
-        )
-        .await?;
+        let data_relative_path = get_user_data_storage_db_relative_path(&device);
+        let conn =
+            LocalDatabase::from_path(data_base_dir, &data_relative_path, VacuumMode::default())
+                .await?;
         let conn = Arc::new(conn);
-        let manifest_storage =
-            ManifestStorage::new(device.local_symkey.clone(), user_manifest_id, conn).await?;
+        let manifest_storage = ManifestStorage::new(conn, device.clone(), user_manifest_id).await?;
         let user_manifest =
             UserStorage::load_user_manifest(&manifest_storage, user_manifest_id, &device).await?;
         let user_storage = Self {
@@ -61,8 +56,8 @@ impl UserStorage {
     /// to flush manifests on disk (i.e. we never rely on cache-ahead-of-db feature).
     /// So it should be a noop compared to database close without cache flush that
     /// is done when [UserStorage] is dropped.
-    pub fn close_connections(&self) {
-        self.manifest_storage.close_connection()
+    pub async fn close_connections(&self) {
+        self.manifest_storage.close_connection().await
     }
 
     // Checkpoint Interface
@@ -158,23 +153,18 @@ impl UserStorage {
 
 pub async fn user_storage_non_speculative_init(
     data_base_dir: &Path,
-    device: LocalDevice,
+    device: Arc<LocalDevice>,
 ) -> FSResult<()> {
-    let data_path = get_user_data_storage_db_path(data_base_dir, &device);
-    let conn = LocalDatabase::from_path(
-        data_path
-            .to_str()
-            .expect("Non Utf-8 character found in data_path"),
-        VacuumMode::default(),
-    )
-    .await?;
+    let data_relative_path = get_user_data_storage_db_relative_path(&device);
+    let conn =
+        LocalDatabase::from_path(data_base_dir, &data_relative_path, VacuumMode::default()).await?;
     let conn = Arc::new(conn);
     let manifest_storage =
-        ManifestStorage::new(device.local_symkey.clone(), device.user_manifest_id, conn).await?;
+        ManifestStorage::new(conn, device.clone(), device.user_manifest_id).await?;
 
     let timestamp = device.now();
     let manifest = LocalUserManifest::new(
-        device.device_id,
+        device.device_id.clone(),
         timestamp,
         Some(device.user_manifest_id),
         false,
@@ -189,58 +179,62 @@ pub async fn user_storage_non_speculative_init(
         )
         .await?;
     manifest_storage.clear_memory_cache(true).await?;
-    manifest_storage.close_connection();
+    manifest_storage.close_connection().await;
 
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
+    use libparsec_tests_fixtures::{timestamp, TestbedScope};
     use libparsec_types::{DateTime, UserManifest};
-
-    use libparsec_tests_fixtures::{alice, timestamp, tmp_path, Device, TmpPath};
     use rstest::rstest;
 
     use super::*;
 
+    // TODO: add tests for `user_storage_non_speculative_init`
+
     #[rstest]
     #[test_log::test(tokio::test)]
-    async fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
-        let db_path = tmp_path.join("user_storage.sqlite");
-        let user_manifest_id = alice.user_manifest_id;
+    async fn user_storage(timestamp: DateTime) {
+        TestbedScope::run("minimal", |env| async move {
+            let alice = env.local_device("alice@dev1".parse().unwrap());
+            let user_manifest_id = alice.user_manifest_id;
 
-        let user_storage =
-            UserStorage::from_db_dir(alice.local_device(), user_manifest_id, &db_path)
-                .await
-                .unwrap();
+            let user_storage =
+                UserStorage::new(&env.discriminant_dir, alice.clone(), user_manifest_id)
+                    .await
+                    .unwrap();
 
-        user_storage.get_realm_checkpoint().await;
-        user_storage.update_realm_checkpoint(64, &[]).await.unwrap();
-        user_storage.get_need_sync_entries().await.unwrap();
+            user_storage.get_realm_checkpoint().await;
+            user_storage.update_realm_checkpoint(64, &[]).await.unwrap();
+            user_storage.get_need_sync_entries().await.unwrap();
 
-        let user_manifest = LocalUserManifest {
-            base: UserManifest {
-                author: alice.device_id.clone(),
-                timestamp,
-                id: user_manifest_id,
-                version: 0,
-                created: timestamp,
+            let user_manifest = LocalUserManifest {
+                base: UserManifest {
+                    author: alice.device_id.clone(),
+                    timestamp,
+                    id: user_manifest_id,
+                    version: 0,
+                    created: timestamp,
+                    updated: timestamp,
+                    last_processed_message: 0,
+                    workspaces: vec![],
+                },
+                need_sync: false,
                 updated: timestamp,
                 last_processed_message: 0,
                 workspaces: vec![],
-            },
-            need_sync: false,
-            updated: timestamp,
-            last_processed_message: 0,
-            workspaces: vec![],
-            speculative: false,
-        };
+                speculative: false,
+            };
 
-        user_storage
-            .set_user_manifest(user_manifest.clone())
-            .await
-            .unwrap();
+            user_storage
+                .set_user_manifest(user_manifest.clone())
+                .await
+                .unwrap();
 
-        assert_eq!(user_storage.get_user_manifest(), user_manifest);
+            assert_eq!(user_storage.get_user_manifest(), user_manifest);
+        })
+        .await;
     }
 }

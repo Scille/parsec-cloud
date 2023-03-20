@@ -18,7 +18,7 @@ use libparsec_types::{
 use crate::{FSError, FSResult};
 
 pub struct UserRemoteLoader {
-    device: LocalDevice,
+    device: Arc<LocalDevice>,
     workspace_id: EntryID,
     backend_cmds: AuthenticatedCmds,
     remote_devices_manager: Arc<Mutex<RemoteDevicesManager>>,
@@ -27,7 +27,7 @@ pub struct UserRemoteLoader {
 
 impl UserRemoteLoader {
     pub fn new(
-        device: LocalDevice,
+        device: Arc<LocalDevice>,
         workspace_id: EntryID,
         backend_cmds: AuthenticatedCmds,
         remote_devices_manager: Arc<Mutex<RemoteDevicesManager>>,

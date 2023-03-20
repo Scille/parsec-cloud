@@ -7,10 +7,16 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     str::FromStr,
-    sync::{Arc, Mutex},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, Mutex,
+    },
 };
 
-use libparsec_types::{BackendAddr, BackendOrganizationAddr, OrganizationID};
+use libparsec_client_types::LocalDevice;
+use libparsec_types::{
+    BackendAddr, BackendOrganizationAddr, DeviceID, OrganizationID, TimeProvider,
+};
 
 use crate::{TestbedTemplate, TESTBED_TEMPLATES};
 
@@ -26,9 +32,12 @@ pub enum TestbedKind {
 #[derive(Debug)]
 pub struct TestbedEnv {
     pub kind: TestbedKind,
-    /// Config dir is used as the key identifying the testbed env.
-    /// Note: testbed is designed to always run mocked in memory.
-    pub client_config_dir: PathBuf,
+    /// Fake path used used as the key identifying the testbed env.
+    /// In Parsec there is two base directory: `config_dir` and `data_base_dir`
+    /// when the testbed is used, both should be set to the discriminant value.
+    /// Note: testbed is designed to always run mocked in memory, so this path
+    /// will never exist on the file system.
+    pub discriminant_dir: PathBuf,
     pub organization_addr: BackendOrganizationAddr,
     pub template: Arc<TestbedTemplate>,
     // Testbed is designed to run entirely in memory (i.e. with no FS accesses)
@@ -42,6 +51,38 @@ pub struct TestbedEnv {
     // given config dir, at which point they should use `test_get_testbed` and
     // initialize `persistence_store` by using the data from `template`.
     pub persistence_store: Mutex<HashMap<&'static str, Box<dyn Any + Send>>>,
+    // Must keep track of the generated local devices to avoid nasty behavior
+    // if the test call generate the local device multiple times for the same device.
+    local_devices_cache: Mutex<Vec<Arc<LocalDevice>>>,
+}
+
+impl TestbedEnv {
+    pub fn local_device(&self, device_id: DeviceID) -> Arc<LocalDevice> {
+        let mut local_devices = self.local_devices_cache.lock().expect("Mutex is poisoned");
+        for item in local_devices.iter() {
+            if item.device_id == device_id {
+                return item.clone();
+            }
+        }
+        // Not found, must generate it
+        let device = self.template.device(&device_id);
+        let user = self.template.user(device_id.user_id());
+        let local_device = Arc::new(LocalDevice {
+            organization_addr: self.organization_addr.to_owned(),
+            device_id,
+            device_label: device.device_label.to_owned(),
+            human_handle: user.human_handle.to_owned(),
+            signing_key: device.signing_key.to_owned(),
+            private_key: user.private_key.to_owned(),
+            profile: user.profile.to_owned(),
+            user_manifest_id: user.user_manifest_id.to_owned(),
+            user_manifest_key: user.user_manifest_key.to_owned(),
+            local_symkey: device.local_symkey.to_owned(),
+            time_provider: TimeProvider::default(),
+        });
+        local_devices.push(local_device.clone());
+        local_device
+    }
 }
 
 // Currently in use testbeds
@@ -122,17 +163,23 @@ pub async fn test_new_testbed(
 
     // 3) Finally register the testbed env
     let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
-    let client_config_dir = {
+    // Config dir is used as discriminent by the testbed, hence we must make sure it
+    // is unique accross the process to avoid concurrency issues
+    static ENVS_COUNTER: AtomicUsize = AtomicUsize::new(0);
+    let current = ENVS_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let discriminant_dir = {
         let mut dir = PathBuf::from(TESTBED_BASE_DUMMY_PATH);
+        dir.push(current.to_string());
         dir.push(organization_addr.organization_id().as_ref());
         dir
     };
     let env = Arc::new(TestbedEnv {
         kind,
-        client_config_dir,
+        discriminant_dir,
         organization_addr,
         template: template.clone(),
         persistence_store: Mutex::default(),
+        local_devices_cache: Mutex::default(),
     });
     envs.push(env.clone());
     env
@@ -144,26 +191,26 @@ pub async fn test_new_testbed(
 /// If `None` is returned, that means the current config dir doesn't correspond to an
 /// in-memory mock and hence the normal FS access should be done (for instance if the
 /// current test is actually testing the behavior of the on-disk storage !)
-pub fn test_get_testbed(client_config_dir: &Path) -> Option<Arc<TestbedEnv>> {
+pub fn test_get_testbed(discriminant_dir: &Path) -> Option<Arc<TestbedEnv>> {
     let envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
     envs.iter()
-        .find(|x| x.client_config_dir == client_config_dir)
+        .find(|x| x.discriminant_dir == discriminant_dir)
         .cloned()
 }
 
 /// Nothing wrong will occur if `test_drop_testbed` is not called at the end of a test.
 /// Only resources won't be freed, which builds up ram consumption (especially on the
 /// test server if it is shared between test runs !)
-pub async fn test_drop_testbed(client_config_dir: &Path) {
+pub async fn test_drop_testbed(discriminant_dir: &Path) {
     // 1) Unregister the testbed env
     let env = {
         let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
         let index = envs
             .iter()
-            .position(|x| x.client_config_dir == client_config_dir);
+            .position(|x| x.discriminant_dir == discriminant_dir);
         match index {
             Some(index) => envs.swap_remove(index),
-            None => panic!("No testbed with path `{:?}`", client_config_dir),
+            None => panic!("No testbed with path `{:?}`", discriminant_dir),
         }
     };
 

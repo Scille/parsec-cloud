@@ -6,6 +6,7 @@ use pyo3::{
     types::{PyBytes, PyDict, PyType},
 };
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use libparsec::client_types;
 use libparsec::platform_device_loader;
@@ -61,7 +62,7 @@ pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct LocalDevice(pub libparsec::client_types::LocalDevice);
+pub(crate) struct LocalDevice(pub Arc<libparsec::client_types::LocalDevice>);
 
 crate::binding_utils::gen_proto!(LocalDevice, __repr__);
 crate::binding_utils::gen_proto!(LocalDevice, __copy__);
@@ -73,7 +74,7 @@ impl LocalDevice {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
+        crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [
                 organization_addr: BackendOrganizationAddr,
@@ -88,9 +89,24 @@ impl LocalDevice {
             [user_manifest_id: EntryID, "user_manifest_id"],
             [user_manifest_key: SecretKey, "user_manifest_key"],
             [local_symkey: SecretKey, "local_symkey"],
+            [time_provider: TimeProvider, "time_provider"],
+        );
+        crate::binding_utils::check_mandatory_kwargs!(
+            [organization_addr, "organization_addr"],
+            [device_id, "device_id"],
+            [device_label, "device_label"],
+            [human_handle, "human_handle"],
+            [signing_key, "signing_key"],
+            [private_key, "private_key"],
+            [profile, "profile"],
+            [user_manifest_id, "user_manifest_id"],
+            [user_manifest_key, "user_manifest_key"],
+            [local_symkey, "local_symkey"],
+            // time_provider is not mandatory
         );
 
-        Ok(Self(libparsec::client_types::LocalDevice {
+        let time_provider = time_provider.map(|tp| tp.0).unwrap_or_default();
+        let local_device = libparsec::client_types::LocalDevice {
             organization_addr: organization_addr.0,
             device_id: device_id.0,
             device_label: device_label.map(|x| x.0),
@@ -101,8 +117,9 @@ impl LocalDevice {
             user_manifest_id: user_manifest_id.0,
             user_manifest_key: user_manifest_key.0,
             local_symkey: local_symkey.0,
-            time_provider: libparsec::types::TimeProvider::default(),
-        }))
+            time_provider,
+        };
+        Ok(Self(Arc::new(local_device)))
     }
 
     #[args(py_kwargs = "**")]
@@ -122,9 +139,10 @@ impl LocalDevice {
             [user_manifest_id: EntryID, "user_manifest_id"],
             [user_manifest_key: SecretKey, "user_manifest_key"],
             [local_symkey: SecretKey, "local_symkey"],
+            [time_provider: TimeProvider, "time_provider"],
         );
 
-        let mut r = self.0.clone();
+        let mut r = (*self.0).clone();
 
         if let Some(v) = organization_addr {
             r.organization_addr = v.0;
@@ -156,8 +174,11 @@ impl LocalDevice {
         if let Some(v) = local_symkey {
             r.local_symkey = v.0;
         }
+        if let Some(v) = time_provider {
+            r.time_provider = v.0;
+        }
 
-        Ok(Self(r))
+        Ok(Self(Arc::new(r)))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -180,7 +201,7 @@ impl LocalDevice {
         signing_key: Option<SigningKey>,
         private_key: Option<PrivateKey>,
     ) -> Self {
-        Self(client_types::LocalDevice::generate_new_device(
+        let local_device = client_types::LocalDevice::generate_new_device(
             organization_addr.0,
             device_id.map(|d| d.0),
             profile.0,
@@ -188,7 +209,8 @@ impl LocalDevice {
             device_label.map(|d| d.0),
             signing_key.map(|s| s.0),
             private_key.map(|p| p.0),
-        ))
+        );
+        Self(Arc::new(local_device))
     }
 
     #[getter]
@@ -225,7 +247,7 @@ impl LocalDevice {
         password: &str,
     ) -> LocalDeviceResult<Self> {
         platform_device_loader::load_device_with_password_from_path(&key_file, password)
-            .map(LocalDevice)
+            .map(|local_device| LocalDevice(Arc::new(local_device)))
             .map_err(|e| e.into())
     }
 
@@ -344,12 +366,6 @@ impl LocalDevice {
         Ok(TimeProvider(self.0.time_provider.clone()))
     }
 
-    #[setter]
-    fn set_time_provider(&mut self, value: TimeProvider) -> PyResult<()> {
-        self.0.time_provider = value.0;
-        Ok(())
-    }
-
     // TODO: rename this into `now`
     fn timestamp(&self) -> PyResult<DateTime> {
         Ok(DateTime(self.0.now()))
@@ -361,10 +377,9 @@ impl LocalDevice {
 
     #[classmethod]
     fn load(_cls: &PyType, encrypted: &[u8]) -> PyResult<Self> {
-        match libparsec::client_types::LocalDevice::load(encrypted) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err)),
-        }
+        libparsec::client_types::LocalDevice::load(encrypted)
+            .map(|local_device| Self(Arc::new(local_device)))
+            .map_err(PyValueError::new_err)
     }
 }
 
@@ -691,7 +706,7 @@ fn load_recovery_device(key_file: PathBuf, password: String) -> FutureIntoCorout
     FutureIntoCoroutine::from(async move {
         platform_device_loader::load_recovery_device(&key_file, &password)
             .await
-            .map(LocalDevice)
+            .map(|local_device| LocalDevice(Arc::new(local_device)))
             .map_err(|e| LocalDeviceError::from(e).into())
     })
 }
@@ -703,7 +718,7 @@ fn save_recovery_device(
     force: bool,
 ) -> FutureIntoCoroutine {
     FutureIntoCoroutine::from(async move {
-        platform_device_loader::save_recovery_device(&key_file, device.0, force)
+        platform_device_loader::save_recovery_device(&key_file, &device.0, force)
             .await
             .map_err(|e| LocalDeviceError::from(e).into())
     })

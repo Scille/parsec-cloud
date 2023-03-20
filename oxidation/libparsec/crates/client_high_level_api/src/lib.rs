@@ -21,7 +21,7 @@ pub use libparsec_testbed::test_drop_testbed;
 pub async fn test_new_testbed(template: &str, server_addr: Option<&BackendAddr>) -> PathBuf {
     libparsec_testbed::test_new_testbed(template, server_addr)
         .await
-        .client_config_dir
+        .discriminant_dir
         .clone()
 }
 
