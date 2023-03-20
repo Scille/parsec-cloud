@@ -176,7 +176,7 @@ def test_backend_organization_bootstrap_addr_validator(qtbot, core_config):
 @pytest.mark.parametrize(
     "action_addr",
     [
-        "parsec://host:1337/org?action=file_link&workspace_id=80fd5ff399a3416282991bf3cc56d3f9&path=F5RGEsss",
+        "parsec://host:1337/org?action=file_link&workspace_id=80fd5ff399a3416282991bf3cc56d3f9&path=F5RGEsss",  # cspell:disable-line
         "parsec://host:1337/org?action=bootstrap_organization&token=1234ABC",
         "parsec://host:1337/org?action=claim_user&token=3a50b191122b480ebb113b10216ef343",
         "parsec://host:1337/org?action=pki_enrollment",

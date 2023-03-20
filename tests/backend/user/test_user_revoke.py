@@ -151,7 +151,7 @@ async def test_user_revoke_other_organization(
 ):
     # Organizations should be isolated even for organization admins
     async with ws_from_other_organization_factory(
-        backend_asgi_app, mimick=alice.device_id, profile=UserProfile.ADMIN
+        backend_asgi_app, mimic=alice.device_id, profile=UserProfile.ADMIN
     ) as sock:
 
         revocation = RevokedUserCertificate(

@@ -200,6 +200,7 @@ lproj
 lsregister
 MACBYTES
 MACFUSE
+makensis
 manylinux
 mapbox
 mapboxgl
@@ -232,6 +233,8 @@ notbase
 notr
 nplurals
 npmkeep
+NSIS
+NSISDIR
 NSPHINXOPTS
 ntstatus
 numprocesses
@@ -293,6 +296,7 @@ qhcp
 qlocale
 qproperty
 QrCode
+qresource
 qrichtext
 qtbot
 qthelp

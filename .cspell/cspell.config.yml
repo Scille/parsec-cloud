@@ -106,6 +106,7 @@ ignoreWords:
   - snupkg
   - splitn
   - tqdm
+  - Ssjfq
 cache:
   cacheFormat: universal
   cacheStrategy: metadata
