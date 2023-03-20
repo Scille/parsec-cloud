@@ -34,7 +34,14 @@ impl SqliteExecutor {
     where
         F: Send + (Fn(SqliteConnection) -> DatabaseResult<SqliteConnection>) + 'static,
     {
-        let (job_sender, job_receiver) = channel::bounded(32);
+        // Flume's channel doesn't drop the queue's content when the receiver is
+        // dropped. This has unexpected consequences if the queue contains a sender
+        // we are waiting on somewhere else (and yes, this is precisely what we have
+        // here !)
+        // So the solution is to have a zero-size-bonded queue, this way the queue is
+        // just a rendez-vous point and never contains anything.
+        // (see https://github.com/zesterer/flume/issues/89)
+        let (job_sender, job_receiver) = channel::bounded(0);
         let background_executor = BackgroundSqliteExecutor {
             job_receiver,
             connection,
@@ -59,6 +66,13 @@ impl SqliteExecutor {
         F: (FnOnce(&mut SqliteConnection) -> R) + Send + 'static,
         R: Send + 'static,
     {
+        // We use a bounded queue with a size of 1 to receive the result from
+        // the background executor.
+        // We don't use a rendez-vous point (i.e. size of 0) because the background
+        // executor doesn't care about us and just want to move on processing the next
+        // job. On top of that there is no risk of deadlock if the receiver gets dropped
+        // because the queue contains opaque data from the background executor point of
+        // view (i.e. it cannot have an await depending on data it doesn't understand !).
         let (tx, rx) = channel::bounded::<R>(1);
         let wrapped_job = move |conn: &mut SqliteConnection| {
             let res = job(conn);
@@ -189,6 +203,7 @@ impl BackgroundSqliteExecutor {
                         }
                         // Oh no, we have an error, the background executor will stop just after notifying the caller.
                         Err(err) => {
+                            log::warn!("Full vacuum has failed: {:?}", &err);
                             res_tx
                                 .send(Err(err))
                                 .expect("Failed to send the result of the full vacuum operation");
@@ -208,13 +223,10 @@ mod tests {
     use crate::DatabaseError;
     use diesel::{connection::SimpleConnection, Connection, SqliteConnection};
     use rstest::rstest;
-    use std::time::Duration;
 
     use super::SqliteExecutor;
 
     #[rstest]
-    // FIXME: We need a timeout because the test seems to block on the CI, see #4176 for more information
-    #[timeout(Duration::from_secs(30))]
     #[test_log::test(tokio::test)]
     async fn fail_reopen_database() {
         let connection = SqliteConnection::establish(":memory:").unwrap();
@@ -222,7 +234,7 @@ mod tests {
 
         // Basic SQL query to see if the Executor is working properly.
         executor
-            .exec(|conn| conn.batch_execute("VACUUM"))
+            .exec(|conn| conn.batch_execute("SELECT 1"))
             .send()
             .await
             .unwrap()
@@ -235,7 +247,7 @@ mod tests {
 
         // Because `full_vacuum` failed, the executor should be closed.
         let err = executor
-            .exec(|conn| conn.batch_execute("VACUUM"))
+            .exec(|conn| conn.batch_execute("SELECT 1"))
             .send()
             .await
             .unwrap_err();
