@@ -80,11 +80,7 @@ pub fn generate_protocol_cmds_familly_from_contents(json_contents: TokenStream) 
     let json_contents: Vec<String> = {
         let content = parse_macro_input!(json_contents as LitStr).value();
         // Consider empty line as a separator between json files
-        content
-            .split("\n\n")
-            .into_iter()
-            .map(String::from)
-            .collect()
+        content.split("\n\n").map(String::from).collect()
     };
     let familly_name = "protocol";
     let mut json_cmds = vec![];

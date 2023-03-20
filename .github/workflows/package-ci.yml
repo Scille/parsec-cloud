@@ -16,7 +16,7 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+*
 
 env:
-  rust-version: 1.66.1
+  rust-version: 1.68.0
   node-version: 18.13.0
   python-version: 3.9
   poetry-version: 1.3.2
@@ -76,6 +76,8 @@ jobs:
         with:
           output-dir: dist
         timeout-minutes: 50
+        env:
+          RUST_TOOLCHAIN: ${{ env.rust-version }}
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version

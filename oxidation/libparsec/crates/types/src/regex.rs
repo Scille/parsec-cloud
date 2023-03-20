@@ -25,7 +25,6 @@ impl Regex {
         Ok(Self(
             file_content
                 .lines()
-                .into_iter()
                 .map(str::trim)
                 .filter(|l| *l != "\n" && !l.starts_with('#'))
                 .map(|l| {

@@ -164,10 +164,10 @@ impl_unsecure_load!(UserCertificate);
 impl_dump_and_sign!(UserCertificate);
 
 impl UserCertificate {
-    pub fn verify_and_load<'a>(
+    pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef<'a>,
+        expected_author: CertificateSignerRef<'_>,
         expected_user_id: Option<&UserID>,
         expected_human_handle: Option<&HumanHandle>,
     ) -> DataResult<Self> {
@@ -307,10 +307,10 @@ impl_unsecure_load!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
 
 impl DeviceCertificate {
-    pub fn verify_and_load<'a>(
+    pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef<'a>,
+        expected_author: CertificateSignerRef<'_>,
         expected_device_id: Option<&DeviceID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
@@ -359,10 +359,10 @@ impl_unsecure_load!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 
 impl RealmRoleCertificate {
-    pub fn verify_and_load<'a>(
+    pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef<'a>,
+        expected_author: CertificateSignerRef<'_>,
         expected_realm_id: Option<RealmID>,
         expected_user_id: Option<&UserID>,
     ) -> DataResult<Self> {
