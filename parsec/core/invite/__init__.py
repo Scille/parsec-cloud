@@ -11,17 +11,6 @@ from parsec._parsec import (
     InviteNotFoundError,
     InvitePeerResetError,
 )
-from parsec.core.invite.claimer import (
-    DeviceClaimInitialCtx,
-    DeviceClaimInProgress1Ctx,
-    DeviceClaimInProgress2Ctx,
-    DeviceClaimInProgress3Ctx,
-    UserClaimInitialCtx,
-    UserClaimInProgress1Ctx,
-    UserClaimInProgress2Ctx,
-    UserClaimInProgress3Ctx,
-    claimer_retrieve_info,
-)
 
 if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
     from parsec._parsec import (
@@ -50,6 +39,31 @@ else:
         UserGreetInProgress4Ctx,
     )
 from parsec.core.invite.organization import bootstrap_organization
+
+if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+    from parsec._parsec import (
+        DeviceClaimInitialCtx,
+        DeviceClaimInProgress1Ctx,
+        DeviceClaimInProgress2Ctx,
+        DeviceClaimInProgress3Ctx,
+        UserClaimInitialCtx,
+        UserClaimInProgress1Ctx,
+        UserClaimInProgress2Ctx,
+        UserClaimInProgress3Ctx,
+        claimer_retrieve_info,
+    )
+else:
+    from parsec.core.invite.claimer import (
+        DeviceClaimInitialCtx,
+        DeviceClaimInProgress1Ctx,
+        DeviceClaimInProgress2Ctx,
+        DeviceClaimInProgress3Ctx,
+        UserClaimInitialCtx,
+        UserClaimInProgress1Ctx,
+        UserClaimInProgress2Ctx,
+        UserClaimInProgress3Ctx,
+        claimer_retrieve_info,
+    )
 
 __all__ = (
     # Exceptions
