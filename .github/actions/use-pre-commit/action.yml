@@ -5,7 +5,11 @@ inputs:
   extra-args:
     description: options to pass to pre-commit run-precommit
     required: false
-    default: --all-files
+    default: ''
+  changed-files:
+    description: List of changed files to run `pre-commit` on, if empty will run on all files
+    required: false
+    default: ''
   config-file:
     description: where is located the pre-commit config file
     required: false
@@ -45,6 +49,21 @@ runs:
         python ~/.cache/pre-commit/pre-commit.pyz --version
       shell: bash
 
+
     - name: Run pre-commit
-      run: python ~/.cache/pre-commit/pre-commit.pyz run --show-diff-on-failure --color=always ${{ inputs.extra-args }}
+      run: |
+        # Run pre-commit
+        set -x
+        python \
+          ~/.cache/pre-commit/pre-commit.pyz \
+          run \
+          --verbose \
+          --show-diff-on-failure \
+          --color=always \
+          $EXTRA_ARGS
+      env:
+        EXTRA_ARGS: >-
+          ${{ inputs.changed-files != '' && format('--files {0}', inputs.changed-files) || '--all-files '}}
+          ${{ inputs.config-file != '' && format('--config {0}', inputs.config-file) || '' }}
+          ${{ inputs.extra-args }}
       shell: bash

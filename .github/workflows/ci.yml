@@ -88,7 +88,10 @@ jobs:
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
         with:
+          list-files: shell
           filters: |
+            all:
+              - added|modified: '**'
             newsfragments:
               - newsfragments/**
 
@@ -130,9 +133,12 @@ jobs:
         timeout-minutes: 5
 
       - name: Patch pre-commit for line-ending
+        id: patched-pre-commit-config
         run: |
-          sed -i '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml
-          cat .pre-commit-config.yaml
+          TEMP_FILE=$(mktemp)
+          sed '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml > $TEMP_FILE
+          diff --unified .pre-commit-config.yaml $TEMP_FILE || true
+          echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
       - name: Install project (needed for mypy check)
         run: |
@@ -146,6 +152,15 @@ jobs:
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
       - uses: ./.github/actions/use-pre-commit
+        with:
+          # On main branch or in the merge queue we provide an empty string for the changes files,
+          # thus running pre-commit on all files
+          changed-files: >-
+            ${{
+              (github.ref == 'refs/heads/master'
+              || contains(github.ref, 'gh-readonly-queue')) && '' || steps.changes.outputs.all_files
+            }}
+          config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
           SKIP: clippy
         timeout-minutes: 30
