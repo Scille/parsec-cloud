@@ -35,7 +35,7 @@ jobs:
           filters: .github/filters/codeql.yml
 
       - name: Check modified path that require `python-analysis` to run
-        id: python-changes
+        id: should-run-python-analysis
         # We want the job to run when:
         # - modifying python code
         # - in the merge queue
@@ -49,7 +49,7 @@ jobs:
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        if: steps.python-changes.outputs.run == 'true'
+        if: steps.should-run-python-analysis.outputs.run == 'true'
         uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           languages: python
@@ -62,14 +62,14 @@ jobs:
           # queries: security-extended,security-and-quality
 
       - uses: ./.github/actions/setup-python-poetry
-        if: steps.python-changes.outputs.run == 'true'
+        if: steps.should-run-python-analysis.outputs.run == 'true'
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
       - name: Install python deps
-        if: steps.python-changes.outputs.run == 'true'
+        if: steps.should-run-python-analysis.outputs.run == 'true'
         run: |
           poetry install -E core -E backend
           poetry run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
@@ -77,7 +77,7 @@ jobs:
           POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
 
       - name: Perform CodeQL Analysis
-        if: steps.python-changes.outputs.run == 'true'
+        if: steps.should-run-python-analysis.outputs.run == 'true'
         uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           category: /language:python
@@ -103,7 +103,7 @@ jobs:
           filters: .github/filters/codeql.yml
 
       - name: Check modified path that require `java-analysis` to run
-        id: java-changes
+        id: should-run-java-analysis
         if: >-
           steps.changes.outputs.java-analyze == 'true'
           || contains(github.ref, 'gh-readonly-queue')
@@ -112,20 +112,20 @@ jobs:
         shell: bash
 
       - name: Add android cmdline tools to path
-        if: steps.java-changes.outputs.run == 'true'
+        if: steps.should-run-java-analysis.outputs.run == 'true'
         run: echo "$ANDROID_HOME/cmdline-tools/latest/bin" > $GITHUB_PATH
 
       - name: Install dependencies for Android
-        if: steps.java-changes.outputs.run == 'true'
+        if: steps.should-run-java-analysis.outputs.run == 'true'
         run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "build-tools;${{ env.SDK_VERSION }}"
 
       - name: Install dependencies for ionic project
-        if: steps.java-changes.outputs.run == 'true'
+        if: steps.should-run-java-analysis.outputs.run == 'true'
         run: npm clean-install
         working-directory: oxidation/client
 
       - name: Build ionic for Android
-        if: steps.java-changes.outputs.run == 'true'
+        if: steps.should-run-java-analysis.outputs.run == 'true'
         run: |
           npm run android:copy:release
         working-directory: oxidation/client
@@ -134,7 +134,7 @@ jobs:
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        if: steps.java-changes.outputs.run == 'true'
+        if: steps.should-run-java-analysis.outputs.run == 'true'
         uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           languages: java
@@ -146,7 +146,7 @@ jobs:
           # queries: security-extended,security-and-quality
 
       - name: Autobuild android
-        if: steps.java-changes.outputs.run == 'true'
+        if: steps.should-run-java-analysis.outputs.run == 'true'
         uses: github/codeql-action/autobuild@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           working-directory: oxidation/client/android
@@ -154,7 +154,7 @@ jobs:
           GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
 
       - name: Perform CodeQL Analysis
-        if: steps.java-changes.outputs.run == 'true'
+        if: steps.should-run-java-analysis.outputs.run == 'true'
         uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           category: /language:java
@@ -177,7 +177,7 @@ jobs:
           filters: .github/filters/codeql.yml
 
       - name: Check modified path that require `javascript-analysis` to run
-        id: js-changes
+        id: should-run-js-analysis
         if: >-
           steps.changes.outputs.js-analyze == 'true'
           || contains(github.ref, 'gh-readonly-queue')
@@ -187,24 +187,24 @@ jobs:
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        if: steps.js-changes.outputs.run == 'true'
+        if: steps.should-run-js-analysis.outputs.run == 'true'
         uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           languages: typescript
 
       - name: Install dependencies for ionic project
-        if: steps.js-changes.outputs.run == 'true'
+        if: steps.should-run-js-analysis.outputs.run == 'true'
         run: npm clean-install
         working-directory: oxidation/client
 
       - name: Autobuild for typescript
-        if: steps.js-changes.outputs.run == 'true'
+        if: steps.should-run-js-analysis.outputs.run == 'true'
         uses: github/codeql-action/autobuild@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           working-directory: oxidation/client
 
       - name: Perform CodeQL Analysis
-        if: steps.js-changes.outputs.run == 'true'
+        if: steps.should-run-js-analysis.outputs.run == 'true'
         uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
         with:
           category: /language:typescript
