@@ -49,11 +49,39 @@ runs:
         python ~/.cache/pre-commit/pre-commit.pyz --version
       shell: bash
 
+    - name: Retrieve the list of all changed files
+      uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+      if: ${{ inputs.check-all-files != 'true' }}
+      id: changes
+      with:
+        list-files: shell
+        filters: |
+          all:
+            - added|modified: '**'
+
+    - name: Build pre-commit args
+      id: pre-commit-args
+      run: |
+        # Build pre-commit args
+        if [ '${{ inputs.check-all-files }}' != 'true' ]; then
+          for file in $ALL_FILES; do
+            ARGS="--files=$file $ARGS"
+          done
+        else
+          ARGS="--all-files $ARGS"
+        fi
+        echo "args=$ARGS" >> $GITHUB_OUTPUT
+      env:
+        ALL_FILES: ${{ steps.changes.outputs.all_files }}
+        ARGS: ${{ inputs.extra-args }}
+      shell: bash
+
     - name: Run pre-commit
       run: >-
-        python ~/.cache/pre-commit/pre-commit.pyz
-        run --show-diff-on-failure
+        python
+        ~/.cache/pre-commit/pre-commit.pyz
+        run
+        --show-diff-on-failure
         --color=always
-        ${{ inputs.check-all-files == 'true' && '--all-files' || '' }}
-        ${{ inputs.extra-args }}
+        ${{ steps.pre-commit-args.outputs.args }}
       shell: bash
