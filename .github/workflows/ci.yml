@@ -146,6 +146,12 @@ jobs:
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
       - uses: ./.github/actions/use-pre-commit
+        with:
+          check-all-files: >-
+            ${{
+              github.ref == 'refs/heads/master'
+              || contains(github.ref, 'gh-readonly-queue')
+            }}
         env:
           SKIP: clippy
         timeout-minutes: 30
