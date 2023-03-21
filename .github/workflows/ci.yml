@@ -322,7 +322,7 @@ jobs:
           # cache is only shared between master and the PRs (and not accross PRs).
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
-          save-if: github.ref == 'refs/heads/master'
+          save-if: ${{ github.ref == 'refs/heads/master' }}
         timeout-minutes: 2
 
       - name: Install python deps
@@ -454,7 +454,7 @@ jobs:
           # cache is only shared between master and the PRs (and not accross PRs).
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
-          save-if: github.ref == 'refs/heads/master'
+          save-if: ${{ github.ref == 'refs/heads/master' }}
         timeout-minutes: 5
 
 
