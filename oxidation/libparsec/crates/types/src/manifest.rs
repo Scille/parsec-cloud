@@ -137,7 +137,7 @@ macro_rules! impl_manifest_dump_load {
  * BlockAccess
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct BlockAccess {
     pub id: BlockID,
     pub key: SecretKey,
