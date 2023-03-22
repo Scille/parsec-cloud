@@ -1,7 +1,11 @@
 version: 2
 updates:
+  #################
+  # Github Action #
+  #################
+
   - package-ecosystem: github-actions
-    directory: /.github/actions/paths-filter
+    directory: /
     pull-request-branch-name:
       separator: "-"
     schedule:
@@ -23,17 +27,6 @@ updates:
     rebase-strategy: disabled
 
   - package-ecosystem: github-actions
-    directory: /.github/actions/setup-rust
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: monthly
-      time: "00:30"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
-
-  - package-ecosystem: github-actions
     directory: /.github/actions/use-pre-commit
     pull-request-branch-name:
       separator: "-"
@@ -44,16 +37,10 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
-  - package-ecosystem: github-actions
-    directory: /
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: monthly
-      time: "00:30"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
+
+  ########
+  # Rust #
+  ########
 
   - package-ecosystem: cargo
     directory: /
@@ -65,6 +52,10 @@ updates:
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
+
+  ##########
+  # Python #
+  ##########
 
   - package-ecosystem: pip
     directory: /
@@ -80,6 +71,10 @@ updates:
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
+
+  ##############
+  # Javascript #
+  ##############
 
   - package-ecosystem: npm
     directory: /oxidation/client
@@ -103,30 +98,8 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
-  - package-ecosystem: gradle
-    directory: /oxidation/client/android
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: monthly
-      time: "23:30"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
-
   - package-ecosystem: npm
     directory: /oxidation/bindings/electron
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: monthly
-      time: "23:30"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
-
-  - package-ecosystem: gradle
-    directory: /oxidation/bindings/android
     pull-request-branch-name:
       separator: "-"
     schedule:
@@ -147,8 +120,23 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
-  - package-ecosystem: cargo
-    directory: /oxidation/bindings/common
+  ########
+  # Java #
+  ########
+
+  - package-ecosystem: gradle
+    directory: /oxidation/client/android
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: gradle
+    directory: /oxidation/bindings/android
     pull-request-branch-name:
       separator: "-"
     schedule:
