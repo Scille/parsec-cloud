@@ -168,7 +168,7 @@ impl WorkspaceEntry {
 }
 
 #[pyclass]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) struct BlockAccess(pub libparsec::types::BlockAccess);
 
 crate::binding_utils::gen_proto!(BlockAccess, __repr__);

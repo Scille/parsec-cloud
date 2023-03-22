@@ -6,6 +6,7 @@ mod addrs;
 mod api_crypto;
 mod backend_connection;
 mod binding_utils;
+mod core_fs;
 mod data;
 mod enumerate;
 mod file_operations;
@@ -31,6 +32,7 @@ mod trustchain;
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     crate::api_crypto::add_mod(py, m)?;
     crate::backend_connection::add_mod(py, m)?;
+    crate::core_fs::add_mod(py, m)?;
     crate::data::add_mod(py, m)?;
     crate::invite::add_mod(py, m)?;
     #[cfg(feature = "test-utils")]
