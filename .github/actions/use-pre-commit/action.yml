@@ -64,9 +64,7 @@ runs:
       run: |
         # Build pre-commit args
         if [ '${{ inputs.check-all-files }}' != 'true' ]; then
-          for file in $ALL_FILES; do
-            ARGS="--files=$file $ARGS"
-          done
+          ARGS="--files $ALL_FILES $ARGS"
         else
           ARGS="--all-files $ARGS"
         fi
@@ -81,6 +79,7 @@ runs:
         python
         ~/.cache/pre-commit/pre-commit.pyz
         run
+        --verbose
         --show-diff-on-failure
         --color=always
         ${{ steps.pre-commit-args.outputs.args }}

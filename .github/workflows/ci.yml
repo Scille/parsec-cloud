@@ -130,9 +130,12 @@ jobs:
         timeout-minutes: 5
 
       - name: Patch pre-commit for line-ending
+        id: patched-pre-commit-config
         run: |
-          sed -i '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml
-          cat .pre-commit-config.yaml
+          TEMP_FILE=$(mktemp)
+          sed '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml > $TEMP_FILE
+          diff --unified .pre-commit-config.yaml $TEMP_FILE || true
+          echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
       - name: Install project (needed for mypy check)
         run: |
@@ -152,6 +155,7 @@ jobs:
               github.ref == 'refs/heads/master'
               || contains(github.ref, 'gh-readonly-queue')
             }}
+          extra-args: --config=${{ steps.patched-pre-commit-config.outputs.path }}
         env:
           SKIP: clippy
         timeout-minutes: 30
