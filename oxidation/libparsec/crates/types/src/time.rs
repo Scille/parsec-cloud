@@ -33,7 +33,7 @@ pub use chrono::Duration; // Reexported
 //
 // Aaaaaand we've learn a lesson here, next time we will stick with good old integer
 // instead of playing smart with float !
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
 impl DateTime {
