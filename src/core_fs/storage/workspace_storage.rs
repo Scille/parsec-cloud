@@ -12,6 +12,7 @@ use std::{
 
 use crate::{
     binding_utils::{BytesWrapper, UnwrapBytesWrapper},
+    core_fs::error::{to_py_err, FSInternalError, FSInvalidFileDescriptor, FSLocalMissError},
     data::{LocalFileManifest, LocalWorkspaceManifest},
     ids::{BlockID, ChunkID, EntryID},
     local_device::LocalDevice,
@@ -21,9 +22,8 @@ use crate::{
 };
 
 use super::{
-    file_or_folder_manifest_from_py_object, fs_to_python_error, manifest_into_py_object,
-    workspace_storage_snapshot::WorkspaceStorageSnapshot, FSInternalError, FSInvalidFileDescriptor,
-    FSLocalMissError,
+    file_or_folder_manifest_from_py_object, manifest_into_py_object,
+    workspace_storage_snapshot::WorkspaceStorageSnapshot,
 };
 
 use libparsec::core_fs::{
@@ -93,7 +93,7 @@ impl WorkspaceStorage {
                 cache_size.unwrap_or(DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE),
             )
             .await
-            .map_err(fs_to_python_error)
+            .map_err(to_py_err)
             .map(|ws| Self(Arc::new(Mutex::new(Some(Arc::new(ws)))), None))
         })
     }
@@ -113,7 +113,7 @@ impl WorkspaceStorage {
             let pattern = &pattern.0;
             ws?.set_prevent_sync_pattern(pattern)
                 .await
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -125,7 +125,7 @@ impl WorkspaceStorage {
             let pattern = &pattern.0;
             ws?.mark_prevent_sync_pattern_fully_applied(pattern)
                 .await
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -190,14 +190,14 @@ impl WorkspaceStorage {
                 if cache_only {
                     FutureIntoCoroutine::ready(Python::with_gil(|py| {
                         ws.set_manifest_in_cache(entry_id.0, manifest, removed_ids)
-                            .map_err(fs_to_python_error)
+                            .map_err(to_py_err)
                             .map(|_| py.None())
                     }))
                 } else {
                     FutureIntoCoroutine::from(async move {
                         ws.set_manifest(entry_id.0, manifest, cache_only, removed_ids)
                             .await
-                            .map_err(fs_to_python_error)
+                            .map_err(to_py_err)
                     })
                 }
             }
@@ -211,7 +211,7 @@ impl WorkspaceStorage {
         FutureIntoCoroutine::from(async move {
             ws?.set_workspace_manifest(manifest.0)
                 .await
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -222,7 +222,7 @@ impl WorkspaceStorage {
         FutureIntoCoroutine::from(async move {
             ws?.clear_manifest(&entry_id.0).await.map_err(|e| match e {
                 FSError::LocalMiss(_) => FSLocalMissError::new_err(entry_id),
-                _ => fs_to_python_error(e),
+                _ => to_py_err(e),
             })
         })
     }
@@ -245,7 +245,7 @@ impl WorkspaceStorage {
                         FutureIntoCoroutine::from(async move {
                             ws.load_file_descriptor(fd)
                                 .await
-                                .map_err(fs_to_python_error)
+                                .map_err(to_py_err)
                                 .map(LocalFileManifest)
                         })
                     }
@@ -276,18 +276,16 @@ impl WorkspaceStorage {
             ws?.set_clean_block(block_id.0, &block)
                 .await
                 .map(|ids| ids.into_iter().map(BlockID).collect::<HashSet<_>>())
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
     pub(crate) fn is_clean_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
         let ws = self.get_storage();
 
-        FutureIntoCoroutine::from(async move {
-            ws?.is_clean_block(block_id.0)
-                .await
-                .map_err(fs_to_python_error)
-        })
+        FutureIntoCoroutine::from(
+            async move { ws?.is_clean_block(block_id.0).await.map_err(to_py_err) },
+        )
     }
 
     pub(crate) fn clear_clean_block(&self, block_id: BlockID) -> FutureIntoCoroutine {
@@ -305,7 +303,7 @@ impl WorkspaceStorage {
         FutureIntoCoroutine::from_raw(async move {
             let block = ws?.get_dirty_block(block_id.0).await.map_err(|e| match e {
                 FSError::LocalMiss(_) => FSLocalMissError::new_err(block_id),
-                _ => fs_to_python_error(e),
+                _ => to_py_err(e),
             })?;
 
             Ok(Python::with_gil(|py| PyBytes::new(py, &block).into_py(py)))
@@ -318,7 +316,7 @@ impl WorkspaceStorage {
         FutureIntoCoroutine::from_raw(async move {
             let chunk = ws?.get_chunk(chunk_id.0).await.map_err(|e| match e {
                 FSError::LocalMiss(_) => FSLocalMissError::new_err(chunk_id),
-                _ => fs_to_python_error(e),
+                _ => to_py_err(e),
             })?;
 
             Ok(Python::with_gil(|py| PyBytes::new(py, &chunk).into_py(py)))
@@ -331,9 +329,7 @@ impl WorkspaceStorage {
         let ws = self.get_storage();
 
         FutureIntoCoroutine::from(async move {
-            ws?.set_chunk(chunk_id.0, &block)
-                .await
-                .map_err(fs_to_python_error)
+            ws?.set_chunk(chunk_id.0, &block).await.map_err(to_py_err)
         })
     }
 
@@ -346,7 +342,7 @@ impl WorkspaceStorage {
                 .await
                 .map_err(|e| match e {
                     FSError::LocalMiss(_) => FSLocalMissError::new_err(chunk_id),
-                    _ => fs_to_python_error(e),
+                    _ => to_py_err(e),
                 })
         })
     }
@@ -373,7 +369,7 @@ impl WorkspaceStorage {
                     .collect::<Vec<_>>()[..],
             )
             .await
-            .map_err(fs_to_python_error)
+            .map_err(to_py_err)
         })
     }
 
@@ -389,7 +385,7 @@ impl WorkspaceStorage {
                         res1.into_iter().map(EntryID).collect::<HashSet<EntryID>>(),
                     )
                 })
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -399,7 +395,7 @@ impl WorkspaceStorage {
         FutureIntoCoroutine::from(async move {
             ws?.ensure_manifest_persistent(entry_id.0)
                 .await
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -407,11 +403,9 @@ impl WorkspaceStorage {
     fn clear_memory_cache(&self, flush: bool) -> FutureIntoCoroutine {
         let ws = self.get_storage();
 
-        FutureIntoCoroutine::from(async move {
-            ws?.clear_memory_cache(flush)
-                .await
-                .map_err(fs_to_python_error)
-        })
+        FutureIntoCoroutine::from(
+            async move { ws?.clear_memory_cache(flush).await.map_err(to_py_err) },
+        )
     }
 
     fn run_vacuum(&self) -> FutureIntoCoroutine {
@@ -431,7 +425,7 @@ impl WorkspaceStorage {
             ws?.get_local_block_ids(&chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>())
                 .await
                 .map(|chunk_ids| chunk_ids.into_iter().map(ChunkID).collect::<Vec<_>>())
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -442,7 +436,7 @@ impl WorkspaceStorage {
             ws?.get_local_chunk_ids(&chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>())
                 .await
                 .map(|chunk_ids| chunk_ids.into_iter().map(ChunkID).collect::<Vec<_>>())
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -473,11 +467,9 @@ impl WorkspaceStorage {
     pub(crate) fn enable_block_remanence(&self) -> FutureIntoCoroutine {
         let ws = self.get_storage();
 
-        FutureIntoCoroutine::from(async move {
-            ws?.enable_block_remanence()
-                .await
-                .map_err(fs_to_python_error)
-        })
+        FutureIntoCoroutine::from(
+            async move { ws?.enable_block_remanence().await.map_err(to_py_err) },
+        )
     }
 
     pub(crate) fn disable_block_remanence(&self) -> FutureIntoCoroutine {
@@ -487,7 +479,7 @@ impl WorkspaceStorage {
             ws?.disable_block_remanence()
                 .await
                 .map(|res| res.map(|ids| ids.into_iter().map(BlockID).collect::<HashSet<_>>()))
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -507,7 +499,7 @@ impl WorkspaceStorage {
 
             ws?.clear_unreferenced_chunks(chunk_ids.as_slice(), not_accessed_after)
                 .await
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -519,9 +511,7 @@ impl WorkspaceStorage {
                 .into_iter()
                 .map(|id| libparsec::types::BlockID::from(*id.0))
                 .collect::<Vec<_>>();
-            ws?.remove_clean_blocks(&block_ids)
-                .await
-                .map_err(fs_to_python_error)
+            ws?.remove_clean_blocks(&block_ids).await.map_err(to_py_err)
         })
     }
 }
@@ -539,6 +529,6 @@ pub(crate) fn workspace_storage_non_speculative_init(
             workspace_id.0,
         )
         .await
-        .map_err(fs_to_python_error)
+        .map_err(to_py_err)
     })
 }
