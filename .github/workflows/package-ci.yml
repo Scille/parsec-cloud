@@ -43,6 +43,7 @@ jobs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
         with:
@@ -136,6 +137,7 @@ jobs:
           echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
 
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 5
 
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
@@ -249,6 +251,7 @@ jobs:
           python-version: ${{ env.python-version }}
 
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 5
 
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
         with:
@@ -306,6 +309,7 @@ jobs:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 5
 
       - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
         id: setup-python
@@ -391,6 +395,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 5
 
       - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
         id: setup-python
@@ -433,6 +438,7 @@ jobs:
       SDK_VERSION: 30.0.3
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 5
 
       - name: Install rust toolchain
         id: rust-toolchain
@@ -474,6 +480,7 @@ jobs:
     name: ⚡ Package web app
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.0.2
+        timeout-minutes: 5
 
       - name: Install dependencies
         run: npm clean-install

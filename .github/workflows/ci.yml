@@ -83,7 +83,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
-        timeout-minutes: 2
+        timeout-minutes: 5
 
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
@@ -174,7 +174,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
-        timeout-minutes: 2
+        timeout-minutes: 5
 
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
@@ -424,7 +424,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
-        timeout-minutes: 2
+        timeout-minutes: 5
 
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
@@ -499,7 +499,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
-        timeout-minutes: 2
+        timeout-minutes: 5
 
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
