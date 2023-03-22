@@ -108,6 +108,7 @@ fn test_invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usi
     );
 }
 
+#[cfg_attr(feature = "test-unsecure-but-fast-secretkey-from-password", ignore)]
 #[test]
 fn test_from_password() {
     let password = "P@ssw0rd.";
