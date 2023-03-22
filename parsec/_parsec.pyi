@@ -45,7 +45,7 @@ from parsec._parsec_pyi.certif import (
     SequesterServiceCertificate,
     UserCertificate,
 )
-from parsec._parsec_pyi.core_fs import ChangesAfterSync, UserRemoteLoader
+from parsec._parsec_pyi.core_fs import ChangesAfterSync, FSBlockEventBus, UserRemoteLoader
 from parsec._parsec_pyi.crypto import (
     CryptoError,
     HashDigest,
@@ -641,6 +641,7 @@ __all__ = [
     "DeviceFileType",
     # CoreFs
     "ChangesAfterSync",
+    "FSBlockEventBus",
     "UserRemoteLoader",
     # Crypto
     "SecretKey",
