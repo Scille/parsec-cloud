@@ -1194,7 +1194,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_client_connection"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "anyhow",
  "base64 0.21.0",
@@ -1336,7 +1336,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_async"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "console_log",
  "env_logger",
