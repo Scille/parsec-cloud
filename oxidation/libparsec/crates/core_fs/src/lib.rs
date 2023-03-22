@@ -5,9 +5,11 @@ mod conftest;
 mod error;
 mod extensions;
 pub mod file_operations;
+mod remote_loader;
 mod storage;
 mod sync_transactions;
 
 pub use error::*;
+pub use remote_loader::UserRemoteLoader;
 pub use storage::*;
 pub use sync_transactions::ChangesAfterSync;

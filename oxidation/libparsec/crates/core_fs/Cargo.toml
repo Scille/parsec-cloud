@@ -11,9 +11,12 @@ autotests = false
 test-utils = []
 
 [dependencies]
-libparsec_crypto = { path = "../crypto" }
-libparsec_types = { path = "../types" }
+libparsec_client_connection = { path = "../client_connection" }
 libparsec_client_types = { path = "../client_types" }
+libparsec_core = { path = "../core" }
+libparsec_crypto = { path = "../crypto" }
+libparsec_protocol = { path = "../protocol" }
+libparsec_types = { path = "../types" }
 
 # Disable Diesel's default feature to remove `32-column-tables` which slowdown compilation
 # quiet a lot (Diesel crate compilation on my machine: 19s with vs 8s without).

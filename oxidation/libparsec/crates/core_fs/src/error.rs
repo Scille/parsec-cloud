@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use libparsec_client_connection::CommandError;
+use libparsec_core::RemoteDevicesManagerError;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -9,6 +11,9 @@ use libparsec_types::{EntryID, FileDescriptor};
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum FSError {
+    #[error("{0}")]
+    BackendOffline(String),
+
     #[error("ConfigurationError: {0}")]
     Configuration(String),
 
@@ -24,6 +29,9 @@ pub enum FSError {
     #[error("CryptoError: {0}")]
     Crypto(CryptoError),
 
+    #[error("{0}")]
+    Custom(String),
+
     #[error("Database query error: {0}")]
     DatabaseQueryError(String),
 
@@ -32,6 +40,9 @@ pub enum FSError {
 
     #[error("Database operational error: {0}")]
     DatabaseOperationalError(String),
+
+    #[error("{0}")]
+    DeviceNotFound(RemoteDevicesManagerError),
 
     #[error("Invalid FileDescriptor {0:?}")]
     InvalidFileDescriptor(FileDescriptor),
@@ -42,6 +53,12 @@ pub enum FSError {
         end: usize,
         len: usize,
     },
+
+    #[error("Invalid realm role certificates: {0}")]
+    InvalidRealmRoleCertificates(String),
+
+    #[error("{0}")]
+    InvalidTrustchain(RemoteDevicesManagerError),
 
     #[error("LocalMissError: {0}")]
     LocalMiss(Uuid),
@@ -55,6 +72,12 @@ pub enum FSError {
     #[error("PoolError")]
     Pool,
 
+    #[error("Remote manifest not found: {0}")]
+    RemoteManifestNotFound(EntryID),
+
+    #[error("{0}")]
+    RemoteOperation(String),
+
     #[error("Entry `{0}` modified without being locked")]
     Runtime(EntryID),
 
@@ -64,8 +87,17 @@ pub enum FSError {
     #[error("UserManifest is missing")]
     UserManifestMissing,
 
+    #[error("{0}")]
+    UserNotFound(RemoteDevicesManagerError),
+
     #[error("VacuumError: {0}")]
     Vacuum(String),
+
+    #[error("Cannot download vlob while the workspace is in maintenance")]
+    WorkspaceInMaintenance,
+
+    #[error("Cannot get workspace roles: no read access")]
+    WorkspaceNoReadAccess,
 
     /// Error returned by [crate::storage::WorkspaceStorageTimestamped]
     /// when requiring more features than it's able to provide.
@@ -126,6 +158,27 @@ impl From<DatabaseError> for FSError {
             }
             DatabaseError::Diesel(e) => Self::from(e),
             DatabaseError::DieselConnectionError(e) => Self::from(e),
+        }
+    }
+}
+
+impl From<CommandError> for FSError {
+    fn from(e: CommandError) -> Self {
+        match e {
+            CommandError::NoResponse(..) => Self::BackendOffline(e.to_string()),
+            _ => Self::RemoteOperation(e.to_string()),
+        }
+    }
+}
+
+impl From<RemoteDevicesManagerError> for FSError {
+    fn from(e: RemoteDevicesManagerError) -> Self {
+        match e {
+            RemoteDevicesManagerError::BackendOffline { .. } => Self::BackendOffline(e.to_string()),
+            RemoteDevicesManagerError::InvalidTrustchain { .. } => Self::InvalidTrustchain(e),
+            RemoteDevicesManagerError::DeviceNotFound { .. } => Self::DeviceNotFound(e),
+            RemoteDevicesManagerError::UserNotFound { .. } => Self::UserNotFound(e),
+            _ => Self::RemoteOperation(e.to_string()),
         }
     }
 }
