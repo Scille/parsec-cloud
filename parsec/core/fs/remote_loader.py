@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Awaitable, Callable, Dict, Iterable, Iterator,
 import trio
 from trio import MemoryReceiveChannel, MemorySendChannel, open_memory_channel
 
+from parsec import FEATURE_FLAGS
 from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
     BlockAccess,
@@ -74,6 +75,7 @@ from parsec._parsec import (
     VlobUpdateRepTimeout,
     WorkspaceEntry,
 )
+from parsec._parsec import UserRemoteLoader as RsUserRemoteLoader
 from parsec.api.data import (
     AnyRemoteManifest,
     DataError,
@@ -204,7 +206,7 @@ def translate_backend_cmds_errors() -> Iterator[None]:
         raise FSRemoteOperationError(str(exc)) from exc
 
 
-class UserRemoteLoader:
+class PyUserRemoteLoader:
     def __init__(
         self,
         device: LocalDevice,
@@ -404,7 +406,8 @@ class UserRemoteLoader:
             raise FSError(f"Cannot create realm {realm_id.hex}: {rep}")
 
 
-class RemoteLoader(UserRemoteLoader):
+# Binding are not accepted as BaseClass
+class RemoteLoader(PyUserRemoteLoader):
     def __init__(
         self,
         device: LocalDevice,
@@ -1048,3 +1051,9 @@ class RemoteLoaderTimestamped(RemoteLoader):
         sequester_blob: Dict[SequesterServiceID, bytes] | None,
     ) -> None:
         raise FSError("Cannot update vlob through a timestamped remote loader")
+
+
+if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
+    UserRemoteLoader = RsUserRemoteLoader
+else:
+    UserRemoteLoader = PyUserRemoteLoader
