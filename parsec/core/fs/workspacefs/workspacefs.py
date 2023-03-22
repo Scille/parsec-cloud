@@ -18,6 +18,7 @@ from parsec._parsec import (
     DateTime,
     EntryID,
     EntryName,
+    FSBlockEventBus,
     LocalDevice,
     LocalFileManifest,
     LocalFolderManifest,
@@ -112,6 +113,9 @@ class WorkspaceFS:
         self.event_bus = event_bus
         self.preferred_language = preferred_language
         self.sync_locks: dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
+
+        fs_block_event_bus = FSBlockEventBus()
+
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
@@ -120,7 +124,7 @@ class WorkspaceFS:
             self.backend_cmds,
             remote_devices_manager,
             self.local_storage,
-            self.event_bus,
+            fs_block_event_bus,
         )
         self.transactions = SyncTransactions(
             self.workspace_id,
@@ -137,6 +141,7 @@ class WorkspaceFS:
             self.transactions,
             self.workspace_id,
             self.event_bus,
+            fs_block_event_bus,
         )
 
     def __repr__(self) -> str:

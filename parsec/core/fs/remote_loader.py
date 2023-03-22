@@ -22,11 +22,11 @@ from parsec._parsec import (
     BlockReadRepNotFound,
     BlockReadRepOk,
     ChunkID,
-    CoreEvent,
     CryptoError,
     DateTime,
     DeviceID,
     EntryID,
+    FSBlockEventBus,
     HashDigest,
     LocalDevice,
     RealmCreateRepAlreadyExists,
@@ -109,7 +109,6 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage
 from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
 
 if TYPE_CHECKING:
@@ -417,7 +416,7 @@ class RemoteLoader(PyUserRemoteLoader):
         backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: AnyWorkspaceStorage,
-        event_bus: EventBus,
+        event_bus: FSBlockEventBus,
     ):
         super().__init__(
             device,
@@ -533,12 +532,9 @@ class RemoteLoader(PyUserRemoteLoader):
         # TODO: let encryption manager do the digest check ?
         assert HashDigest.from_data(block) == access.digest, access
         removed_block_ids = await self.local_storage.set_clean_block(access.id, block)
-        self.event_bus.send(
-            CoreEvent.FS_BLOCK_DOWNLOADED, workspace_id=self.workspace_id, block_access=access
-        )
+        self.event_bus.send_downloaded(workspace_id=self.workspace_id, block_access=access)
         if removed_block_ids:
-            self.event_bus.send(
-                CoreEvent.FS_BLOCK_PURGED,
+            self.event_bus.send_purged(
                 workspace_id=self.workspace_id,
                 block_ids=removed_block_ids,
             )
@@ -602,8 +598,7 @@ class RemoteLoader(PyUserRemoteLoader):
         removed_block_ids = await self.local_storage.set_clean_block(access.id, data)
         await self.local_storage.clear_chunk(ChunkID.from_block_id(access.id), miss_ok=True)
         if removed_block_ids:
-            self.event_bus.send(
-                CoreEvent.FS_BLOCK_PURGED,
+            self.event_bus.send_purged(
                 workspace_id=self.workspace_id,
                 block_ids=removed_block_ids,
             )

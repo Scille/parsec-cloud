@@ -13,6 +13,7 @@ from parsec._parsec import (
     DateTime,
     EntryID,
     EntryName,
+    FSBlockEventBus,
     LocalDevice,
     LocalWorkspaceManifest,
     Regex,
@@ -66,7 +67,7 @@ def transactions_factory(
                 cmds,
                 remote_devices_manager,
                 local_storage,
-                event_bus,
+                FSBlockEventBus(),
             )
 
             yield cls(

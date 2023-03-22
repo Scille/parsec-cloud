@@ -10,7 +10,7 @@ import structlog
 import trio
 from attr import define
 
-from parsec._parsec import CoreEvent
+from parsec._parsec import CoreEvent, FSBlockEventBus
 from parsec.api.data import BlockAccess
 from parsec.core.fs.exceptions import (
     FSRemanenceManagerStoppedError,
@@ -116,12 +116,14 @@ class RemanenceManager:
         transactions: SyncTransactions,
         workspace_id: EntryID,
         event_bus: EventBus,
+        fs_block_event_bus: FSBlockEventBus,
     ):
         self.transactions = transactions
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.workspace_id = workspace_id
         self.event_bus = event_bus
+        self.fs_block_event_bus = fs_block_event_bus
 
         # Tasks identifiers
         self._jobs_task_id = (self.workspace_id, RemanenceManagerTask.JOBS)
@@ -161,8 +163,7 @@ class RemanenceManager:
         removed_block_ids = await self.local_storage.disable_block_remanence()
         # Register the cleared blocks
         if removed_block_ids is not None:
-            self.event_bus.send(
-                CoreEvent.FS_BLOCK_PURGED,
+            self.fs_block_event_bus.send_purged(
                 workspace_id=self.workspace_id,
                 block_ids=removed_block_ids,
             )
@@ -196,12 +197,16 @@ class RemanenceManager:
             with self.event_bus.connect_in_context(
                 (CoreEvent.FS_ENTRY_DOWNSYNCED, cast(EventCallback, self._on_entry_synced)),
                 (CoreEvent.FS_ENTRY_SYNCED, cast(EventCallback, self._on_entry_synced)),
-                (CoreEvent.FS_BLOCK_DOWNLOADED, cast(EventCallback, self._on_block_downloaded)),
-                (CoreEvent.FS_BLOCK_PURGED, cast(EventCallback, self._on_block_removed)),
             ):
+                self.fs_block_event_bus.connect_downloaded(
+                    self.workspace_id, self._on_block_downloaded
+                )
+                self.fs_block_event_bus.connect_purged(self.workspace_id, self._on_block_removed)
                 self._events_connected = True
                 yield
         finally:
+            self.fs_block_event_bus.disconnect_downloaded(self.workspace_id)
+            self.fs_block_event_bus.disconnect_purged(self.workspace_id)
             self._events_connected = False
 
     async def run(
@@ -305,34 +310,24 @@ class RemanenceManager:
 
     def _on_block_downloaded(
         self,
-        event: CoreEvent,
         block_access: BlockAccess,
-        workspace_id: EntryID,
     ) -> None:
-        # Not our workspace
-        if workspace_id != self.workspace_id:
-            return
         # The manager is neither prepared or preparing
         if not self._ready_for_job():
             return
         # Add this event to the queue
-        self._job_queue.appendleft((event, block_access))
+        self._job_queue.appendleft((CoreEvent.FS_BLOCK_DOWNLOADED, block_access))
         self._wake_up_jobs_task()
 
     def _on_block_removed(
         self,
-        event: CoreEvent,
         block_ids: set[BlockID],
-        workspace_id: EntryID,
     ) -> None:
-        # Not our workspace
-        if workspace_id != self.workspace_id:
-            return
         # The manager is neither prepared or preparing
         if not self._ready_for_job():
             return
         # Add this event to the queue
-        self._job_queue.appendleft((event, block_ids))
+        self._job_queue.appendleft((CoreEvent.FS_BLOCK_PURGED, block_ids))
         self._wake_up_jobs_task()
 
     # Internal helpers
