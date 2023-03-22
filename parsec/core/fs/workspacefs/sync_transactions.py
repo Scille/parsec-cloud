@@ -4,11 +4,9 @@ from __future__ import annotations
 from itertools import count
 from typing import AsyncIterator, Dict, Iterable
 
-import attr
-
-from parsec._parsec import BlockAccess, CoreEvent, DateTime, EntryNameError, Regex
+from parsec._parsec import ChangesAfterSync, CoreEvent, DateTime, EntryNameError, Regex
 from parsec._parsec import FileManifest as RemoteFileManifest
-from parsec.api.data import AnyRemoteManifest, FileManifest, FolderManifest, WorkspaceManifest
+from parsec.api.data import AnyRemoteManifest
 from parsec.api.protocol import DeviceID
 from parsec.core.fs.exceptions import (
     FSFileConflictError,
@@ -47,43 +45,6 @@ TRANSLATIONS = {
         "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
     },
 }
-
-# Data class for change info
-
-
-@attr.s(frozen=True, auto_attribs=True)
-class ChangesAfterSync:
-    added_blocks: set[BlockAccess] | None = None
-    removed_blocks: set[BlockAccess] | None = None
-    added_entries: set[EntryID] | None = None
-    removed_entries: set[EntryID] | None = None
-
-    @classmethod
-    def from_manifests(
-        cls,
-        old_manifest: AnyRemoteManifest,
-        new_manifest: AnyRemoteManifest,
-    ) -> "ChangesAfterSync":
-        if isinstance(old_manifest, FileManifest):
-            assert isinstance(new_manifest, FileManifest)
-            old_blocks = set(old_manifest.blocks)
-            new_blocks = set(new_manifest.blocks)
-            return cls(
-                added_blocks=new_blocks - old_blocks,
-                removed_blocks=old_blocks - new_blocks,
-            )
-        elif isinstance(old_manifest, (WorkspaceManifest, FolderManifest)):
-            assert isinstance(new_manifest, (WorkspaceManifest, FolderManifest))
-            old_entries = set(old_manifest.children.values())
-            new_entries = set(new_manifest.children.values())
-            return cls(
-                added_entries=new_entries - old_entries,
-                removed_entries=old_entries - new_entries,
-            )
-        else:
-            # A user manifest should never get there
-            assert False
-
 
 # Helpers
 
