@@ -160,6 +160,17 @@ crate::binding_utils::impl_enum_field!(
     ["READER", reader, libparsec::types::RealmRole::Reader]
 );
 
+impl RealmRole {
+    pub(crate) fn from_role(profile: libparsec::types::RealmRole) -> &'static PyObject {
+        match profile {
+            libparsec::types::RealmRole::Owner => RealmRole::owner(),
+            libparsec::types::RealmRole::Manager => RealmRole::manager(),
+            libparsec::types::RealmRole::Contributor => RealmRole::contributor(),
+            libparsec::types::RealmRole::Reader => RealmRole::reader(),
+        }
+    }
+}
+
 #[pyclass]
 #[derive(Clone)]
 #[non_exhaustive]

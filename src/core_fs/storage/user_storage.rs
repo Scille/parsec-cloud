@@ -11,10 +11,12 @@ use std::{
 };
 
 use crate::{
-    data::LocalUserManifest, ids::EntryID, local_device::LocalDevice, runtime::FutureIntoCoroutine,
+    core_fs::error::{to_py_err, FSInternalError},
+    data::LocalUserManifest,
+    ids::EntryID,
+    local_device::LocalDevice,
+    runtime::FutureIntoCoroutine,
 };
-
-use super::{fs_to_python_error, FSInternalError};
 
 #[pyclass]
 pub(crate) struct UserStorage(
@@ -64,7 +66,7 @@ impl UserStorage {
                 &data_base_dir,
             )
             .await
-            .map_err(fs_to_python_error)
+            .map_err(to_py_err)
             .map(|us| Self(Arc::new(Mutex::new(Some(Arc::new(us))))))
         })
     }
@@ -95,7 +97,7 @@ impl UserStorage {
                 .collect::<Vec<_>>();
             us?.update_realm_checkpoint(new_checkpoint, &changed_vlobs)
                 .await
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -103,17 +105,16 @@ impl UserStorage {
         let us = self.get_storage();
 
         FutureIntoCoroutine::from(async move {
-            us?.get_need_sync_entries()
-                .await
-                .map_err(fs_to_python_error)
-                .map(|(local_changes, remote_changes)| {
+            us?.get_need_sync_entries().await.map_err(to_py_err).map(
+                |(local_changes, remote_changes)| {
                     let local_changes: HashSet<EntryID> =
                         local_changes.into_iter().map(EntryID).collect();
                     let remote_changes: HashSet<EntryID> =
                         remote_changes.into_iter().map(EntryID).collect();
 
                     (local_changes, remote_changes)
-                })
+                },
+            )
         })
     }
 
@@ -128,7 +129,7 @@ impl UserStorage {
         FutureIntoCoroutine::from(async move {
             us?.set_user_manifest(user_manifest.0)
                 .await
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -146,6 +147,6 @@ pub(crate) fn user_storage_non_speculative_init(
     FutureIntoCoroutine::from(async move {
         libparsec::core_fs::user_storage_non_speculative_init(&data_base_dir, device.0)
             .await
-            .map_err(fs_to_python_error)
+            .map_err(to_py_err)
     })
 }

@@ -16,9 +16,10 @@ use std::{
 
 use super::{
     file_or_folder_manifest_from_py_object, file_or_folder_manifest_into_py_object,
-    fs_to_python_error, workspace_storage::WorkspaceStorage,
+    WorkspaceStorage,
 };
 use crate::{
+    core_fs::error::to_py_err,
     data::LocalFileManifest,
     ids::{BlockID, ChunkID, EntryID},
     local_device::LocalDevice,
@@ -109,7 +110,7 @@ impl WorkspaceStorageSnapshot {
                 })
                 .map(LocalFileManifest)
                 .map(|x| x.into_py(py))
-                .map_err(fs_to_python_error),
+                .map_err(to_py_err),
         )
     }
 
@@ -122,7 +123,7 @@ impl WorkspaceStorageSnapshot {
                 libparsec::types::FileDescriptor(fd),
             ))
             .map(|_| ())
-            .map_err(fs_to_python_error)
+            .map_err(to_py_err)
     }
 
     /// Return a chunk identified by `chunk_id`.
@@ -136,7 +137,7 @@ impl WorkspaceStorageSnapshot {
             let entry_id = entry_id.0;
             Self::get_manifest_internal(&self.cache, &entry_id)
                 .map(file_or_folder_manifest_into_py_object)
-                .map_err(fs_to_python_error)
+                .map_err(to_py_err)
         })
     }
 
@@ -151,7 +152,7 @@ impl WorkspaceStorageSnapshot {
                 Ok(manifest) => {
                     let entry_id = entry_id.0;
                     if manifest.need_sync() {
-                        Err(fs_to_python_error(FSError::WorkspaceStorageTimestamped))
+                        Err(to_py_err(FSError::WorkspaceStorageTimestamped))
                     } else {
                         // Currently we don't check if a manifest is locked.
                         // Since we rely for the moment on the python locking system for the manifests.
