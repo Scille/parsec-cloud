@@ -45,6 +45,7 @@ from parsec._parsec_pyi.certif import (
     SequesterServiceCertificate,
     UserCertificate,
 )
+from parsec._parsec_pyi.core_fs import ChangesAfterSync
 from parsec._parsec_pyi.crypto import (
     CryptoError,
     HashDigest,
@@ -638,6 +639,8 @@ __all__ = [
     "SequesterServiceCertificate",
     # Device
     "DeviceFileType",
+    # CoreFs
+    "ChangesAfterSync",
     # Crypto
     "SecretKey",
     "HashDigest",
