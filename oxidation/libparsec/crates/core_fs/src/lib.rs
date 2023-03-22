@@ -11,7 +11,7 @@ mod storage;
 mod sync_transactions;
 
 pub use error::*;
-pub use remote_loader::UserRemoteLoader;
 pub use event_bus::FSBlockEventBus;
+pub use remote_loader::UserRemoteLoader;
 pub use storage::*;
 pub use sync_transactions::ChangesAfterSync;
