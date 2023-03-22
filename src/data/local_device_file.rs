@@ -49,18 +49,20 @@ impl DeviceFile {
         let device = match ty {
             DeviceFileType(libparsec::client_types::DeviceFileType::Password) => {
                 if encrypted_key.is_some() {
-                    return Err(PyAttributeError::new_err(
+                    Err(PyAttributeError::new_err(
                         "Found encrypted_key attribute for password",
-                    ));
+                    ))
                 } else if certificate_id.is_some() {
-                    return Err(PyAttributeError::new_err(
+                    Err(PyAttributeError::new_err(
                         "Found certificate_id attribute for password",
-                    ));
+                    ))
                 } else if certificate_sha1.is_some() {
-                    return Err(PyAttributeError::new_err(
+                    Err(PyAttributeError::new_err(
                         "Found certificate_sha1 attribute for password",
-                    ));
-                }
+                    ))
+                } else {
+                    Ok(())
+                }?;
 
                 libparsec::client_types::DeviceFile::Password(
                     libparsec::client_types::DeviceFilePassword {
@@ -77,22 +79,24 @@ impl DeviceFile {
             }
             DeviceFileType(libparsec::client_types::DeviceFileType::Recovery) => {
                 if salt.is_some() {
-                    return Err(PyAttributeError::new_err(
+                    Err(PyAttributeError::new_err(
                         "Found salt attribute for recovery",
-                    ));
+                    ))
                 } else if encrypted_key.is_some() {
-                    return Err(PyAttributeError::new_err(
+                    Err(PyAttributeError::new_err(
                         "Found encrypted_key attribute for recovery",
-                    ));
+                    ))
                 } else if certificate_id.is_some() {
-                    return Err(PyAttributeError::new_err(
+                    Err(PyAttributeError::new_err(
                         "Found certificate_id attribute for recovery",
-                    ));
+                    ))
                 } else if certificate_sha1.is_some() {
-                    return Err(PyAttributeError::new_err(
+                    Err(PyAttributeError::new_err(
                         "Found certificate_sha1 attribute for recovery",
-                    ));
-                }
+                    ))
+                } else {
+                    Ok(())
+                }?;
 
                 libparsec::client_types::DeviceFile::Recovery(
                     libparsec::client_types::DeviceFileRecovery {

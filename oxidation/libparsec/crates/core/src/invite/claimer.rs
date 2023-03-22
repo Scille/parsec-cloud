@@ -41,18 +41,14 @@ impl BaseClaimInitialCtx {
             .await?;
 
         let greeter_public_key = match rep {
-            invite_1_claimer_wait_peer::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_1_claimer_wait_peer::Rep::InvalidState => return Err(InviteError::PeerReset),
-            invite_1_claimer_wait_peer::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_1_claimer_wait_peer::Rep::Ok { greeter_public_key } => greeter_public_key,
-            invite_1_claimer_wait_peer::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 1: {unknown_status}"
-                )))
-            }
-        };
+            invite_1_claimer_wait_peer::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_1_claimer_wait_peer::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_1_claimer_wait_peer::Rep::NotFound => Err(InviteError::NotFound),
+            invite_1_claimer_wait_peer::Rep::Ok { greeter_public_key } => Ok(greeter_public_key),
+            invite_1_claimer_wait_peer::Rep::UnknownStatus { unknown_status, .. } => Err(
+                InviteError::Custom(format!("Backend error during step 1: {unknown_status}")),
+            ),
+        }?;
 
         let shared_secret_key = claimer_private_key.generate_shared_secret_key(&greeter_public_key);
         let claimer_nonce = generate_nonce();
@@ -66,21 +62,15 @@ impl BaseClaimInitialCtx {
 
         let greeter_nonce = match rep {
             invite_2a_claimer_send_hashed_nonce::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
+                Err(InviteError::AlreadyUsed)
             }
-            invite_2a_claimer_send_hashed_nonce::Rep::InvalidState => {
-                return Err(InviteError::PeerReset)
-            }
-            invite_2a_claimer_send_hashed_nonce::Rep::NotFound => {
-                return Err(InviteError::NotFound)
-            }
-            invite_2a_claimer_send_hashed_nonce::Rep::Ok { greeter_nonce } => greeter_nonce,
-            invite_2a_claimer_send_hashed_nonce::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 2a: {unknown_status}"
-                )))
-            }
-        };
+            invite_2a_claimer_send_hashed_nonce::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_2a_claimer_send_hashed_nonce::Rep::NotFound => Err(InviteError::NotFound),
+            invite_2a_claimer_send_hashed_nonce::Rep::Ok { greeter_nonce } => Ok(greeter_nonce),
+            invite_2a_claimer_send_hashed_nonce::Rep::UnknownStatus { unknown_status, .. } => Err(
+                InviteError::Custom(format!("Backend error during step 2a: {unknown_status}")),
+            ),
+        }?;
 
         let (claimer_sas, greeter_sas) =
             SASCode::generate_sas_codes(&claimer_nonce, &greeter_nonce, &shared_secret_key);
@@ -91,18 +81,14 @@ impl BaseClaimInitialCtx {
             .await?;
 
         match rep {
-            invite_2b_claimer_send_nonce::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_2b_claimer_send_nonce::Rep::InvalidState => return Err(InviteError::PeerReset),
-            invite_2b_claimer_send_nonce::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_2b_claimer_send_nonce::Rep::Ok => (),
-            invite_2b_claimer_send_nonce::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
-                    "Backend error during step 2b: {unknown_status}"
-                )))
-            }
-        };
+            invite_2b_claimer_send_nonce::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_2b_claimer_send_nonce::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_2b_claimer_send_nonce::Rep::NotFound => Err(InviteError::NotFound),
+            invite_2b_claimer_send_nonce::Rep::Ok => Ok(()),
+            invite_2b_claimer_send_nonce::Rep::UnknownStatus { unknown_status, .. } => Err(
+                InviteError::Custom(format!("Backend error during step 2b: {unknown_status}")),
+            ),
+        }?;
 
         Ok(BaseClaimInProgress1Ctx {
             greeter_sas,
@@ -322,18 +308,16 @@ impl BaseClaimInProgress3Ctx {
             .await?;
 
         match rep {
-            invite_4_claimer_communicate::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_4_claimer_communicate::Rep::InvalidState => return Err(InviteError::PeerReset),
-            invite_4_claimer_communicate::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_4_claimer_communicate::Rep::Ok { .. } => (),
+            invite_4_claimer_communicate::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_4_claimer_communicate::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_4_claimer_communicate::Rep::NotFound => Err(InviteError::NotFound),
+            invite_4_claimer_communicate::Rep::Ok { .. } => Ok(()),
             invite_4_claimer_communicate::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Custom(format!(
+                Err(InviteError::Custom(format!(
                     "Backend error during step 4 (data exchange): {unknown_status}"
                 )))
             }
-        }
+        }?;
 
         // Note the empty payload here, this is because we only want to receive our peer's
         // data, but for that we must send it something.

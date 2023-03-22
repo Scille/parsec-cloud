@@ -33,16 +33,14 @@ impl BaseGreetInitialCtx {
             .await?;
 
         let claimer_public_key = match rep {
-            invite_1_greeter_wait_peer::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_1_greeter_wait_peer::Rep::InvalidState => return Err(InviteError::PeerReset),
-            invite_1_greeter_wait_peer::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_1_greeter_wait_peer::Rep::Ok { claimer_public_key } => claimer_public_key,
+            invite_1_greeter_wait_peer::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_1_greeter_wait_peer::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_1_greeter_wait_peer::Rep::NotFound => Err(InviteError::NotFound),
+            invite_1_greeter_wait_peer::Rep::Ok { claimer_public_key } => Ok(claimer_public_key),
             invite_1_greeter_wait_peer::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Backend(format!("step 1: {unknown_status}")))
+                Err(InviteError::Backend(format!("step 1: {unknown_status}")))
             }
-        };
+        }?;
 
         let shared_secret_key = greeter_private_key.generate_shared_secret_key(&claimer_public_key);
         let greeter_nonce = generate_nonce();
@@ -54,19 +52,17 @@ impl BaseGreetInitialCtx {
 
         let claimer_hashed_nonce = match rep {
             invite_2a_greeter_get_hashed_nonce::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
+                Err(InviteError::AlreadyUsed)
             }
-            invite_2a_greeter_get_hashed_nonce::Rep::InvalidState => {
-                return Err(InviteError::PeerReset)
-            }
-            invite_2a_greeter_get_hashed_nonce::Rep::NotFound => return Err(InviteError::NotFound),
+            invite_2a_greeter_get_hashed_nonce::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_2a_greeter_get_hashed_nonce::Rep::NotFound => Err(InviteError::NotFound),
             invite_2a_greeter_get_hashed_nonce::Rep::Ok {
                 claimer_hashed_nonce,
-            } => claimer_hashed_nonce,
+            } => Ok(claimer_hashed_nonce),
             invite_2a_greeter_get_hashed_nonce::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Backend(format!("step 2a: {unknown_status}")))
+                Err(InviteError::Backend(format!("step 2a: {unknown_status}")))
             }
-        };
+        }?;
 
         let rep = self
             .cmds
@@ -77,16 +73,14 @@ impl BaseGreetInitialCtx {
             .await?;
 
         let claimer_nonce = match rep {
-            invite_2b_greeter_send_nonce::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_2b_greeter_send_nonce::Rep::InvalidState => return Err(InviteError::PeerReset),
-            invite_2b_greeter_send_nonce::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_2b_greeter_send_nonce::Rep::Ok { claimer_nonce } => claimer_nonce,
+            invite_2b_greeter_send_nonce::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_2b_greeter_send_nonce::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_2b_greeter_send_nonce::Rep::NotFound => Err(InviteError::NotFound),
+            invite_2b_greeter_send_nonce::Rep::Ok { claimer_nonce } => Ok(claimer_nonce),
             invite_2b_greeter_send_nonce::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Backend(format!("step 2b: {unknown_status}")))
+                Err(InviteError::Backend(format!("step 2b: {unknown_status}")))
             }
-        };
+        }?;
 
         if HashDigest::from_data(&claimer_nonce) != claimer_hashed_nonce {
             return Err(InviteError::Custom(
@@ -302,18 +296,14 @@ impl BaseGreetInProgress3Ctx {
             .await?;
 
         let payload = match rep {
-            invite_4_greeter_communicate::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_4_greeter_communicate::Rep::InvalidState => return Err(InviteError::PeerReset),
-            invite_4_greeter_communicate::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_4_greeter_communicate::Rep::Ok { payload } => payload,
-            invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Backend(format!(
-                    "step 4 (data exchange): {unknown_status}"
-                )))
-            }
-        };
+            invite_4_greeter_communicate::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_4_greeter_communicate::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_4_greeter_communicate::Rep::NotFound => Err(InviteError::NotFound),
+            invite_4_greeter_communicate::Rep::Ok { payload } => Ok(payload),
+            invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => Err(
+                InviteError::Backend(format!("step 4 (data exchange): {unknown_status}")),
+            ),
+        }?;
 
         if payload.is_empty() {
             return Err(InviteError::Custom("Missing InviteUserData payload".into()));
@@ -523,15 +513,13 @@ impl UserGreetInProgress4Ctx {
 
         match rep {
             user_create::Rep::ActiveUsersLimitReached { .. } => {
-                return Err(InviteError::ActiveUsersLimitReached)
+                Err(InviteError::ActiveUsersLimitReached)
             }
-            user_create::Rep::Ok => (),
-            _ => {
-                return Err(InviteError::Backend(format!(
-                    "step 4 (user certificates upload): {rep:?}"
-                )))
-            }
-        }
+            user_create::Rep::Ok => Ok(()),
+            _ => Err(InviteError::Backend(format!(
+                "step 4 (user certificates upload): {rep:?}"
+            ))),
+        }?;
 
         // From now on the user has been created on the server, but greeter
         // is not aware of it yet. If something goes wrong, we can end up with
@@ -551,18 +539,14 @@ impl UserGreetInProgress4Ctx {
             .await?;
 
         match rep {
-            invite_4_greeter_communicate::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_4_greeter_communicate::Rep::InvalidState => return Err(InviteError::PeerReset),
-            invite_4_greeter_communicate::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_4_greeter_communicate::Rep::Ok { .. } => (),
-            invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Backend(format!(
-                    "step 4 (confirmation exchange): {unknown_status}"
-                )))
-            }
-        }
+            invite_4_greeter_communicate::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_4_greeter_communicate::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_4_greeter_communicate::Rep::NotFound => Err(InviteError::NotFound),
+            invite_4_greeter_communicate::Rep::Ok { .. } => Ok(()),
+            invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => Err(
+                InviteError::Backend(format!("step 4 (confirmation exchange): {unknown_status}")),
+            ),
+        }?;
 
         // Invitation deletion is not strictly necessary (enrollment has succeeded
         // anyway) so it's no big deal if something goes wrong before it can be
@@ -647,18 +631,14 @@ impl DeviceGreetInProgress4Ctx {
             .await?;
 
         match rep {
-            invite_4_greeter_communicate::Rep::AlreadyDeleted => {
-                return Err(InviteError::AlreadyUsed)
-            }
-            invite_4_greeter_communicate::Rep::InvalidState => return Err(InviteError::PeerReset),
-            invite_4_greeter_communicate::Rep::NotFound => return Err(InviteError::NotFound),
-            invite_4_greeter_communicate::Rep::Ok { .. } => (),
-            invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => {
-                return Err(InviteError::Backend(format!(
-                    "step 4 (confirmation exchange): {unknown_status}"
-                )))
-            }
-        }
+            invite_4_greeter_communicate::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
+            invite_4_greeter_communicate::Rep::InvalidState => Err(InviteError::PeerReset),
+            invite_4_greeter_communicate::Rep::NotFound => Err(InviteError::NotFound),
+            invite_4_greeter_communicate::Rep::Ok { .. } => Ok(()),
+            invite_4_greeter_communicate::Rep::UnknownStatus { unknown_status, .. } => Err(
+                InviteError::Backend(format!("step 4 (confirmation exchange): {unknown_status}")),
+            ),
+        }?;
 
         // Invitation deletion is not strictly necessary (enrollment has succeeded
         // anyway) so it's no big deal if something goes wrong before it can be
