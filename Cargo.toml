@@ -37,11 +37,15 @@ tokio = { version = "1.25", features = ["rt", "rt-multi-thread"] }
 lazy_static = "1.4.0"
 futures = "0.3.21"
 
-# Rust unoptimized code is so slow that we customize dev profile to enable some
-# optimizations, otherwise Python tests take forever.
+# Rust unoptimized code is really slow with crypto algorithm and regex compilation,
+# hence we optimize our 3rd party dependencies.
+[profile.dev.package."*"]
+opt-level = 1
+
 [profile.dev-python]
 inherits = "dev"
-opt-level = 1
+# We don't optimize our own crates here given it comes with a high impact on
+# when doing single change recompilation.
 
 # Custom profiles for the CI. The idea here is to try to save compilation time
 # and artifacts size (to keep cache efficient).
