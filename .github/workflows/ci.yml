@@ -43,6 +43,7 @@ jobs:
       - test-python-matrix
       - test-rust-matrix
       - test-web-app
+      - check-spelling
     runs-on: ubuntu-latest
     if: always()
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
@@ -70,6 +71,9 @@ jobs:
 
       - name: It's showtime
         run: echo "My job here is done !"
+
+  check-spelling:
+    uses: ./.github/workflows/cspell.yml
 
   ##############################################################################
   #                                   📊 Q&A                                   #
@@ -162,7 +166,7 @@ jobs:
             }}
           config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
-          SKIP: clippy
+          SKIP: clippy,cspell
         timeout-minutes: 30
 
   ##############################################################################

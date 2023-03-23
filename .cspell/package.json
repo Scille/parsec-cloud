@@ -1,0 +1,19 @@
+{
+  "name": "cspell-cfg",
+  "version": "1.0.0",
+  "description": "Package that hold cspell configuration for parsec",
+  "scripts": {
+    "lint": "cspell lint --config=cspell.config.yml --no-progress --dot --gitignore",
+    "check": "cspell check --config=cspell.config.yml",
+    "trace": "cspell trace --config=cspell.config.yml",
+    "suggestions": "cspell suggestions --config=cspell.config.yml"
+  },
+  "dependencies": {
+    "@cspell/dict-bash": "^4.1.1",
+    "@cspell/dict-fr-fr": "^2.2.1",
+    "@cspell/dict-fr-reforme": "^2.2.1",
+    "@cspell/dict-shell": "^1.0.3",
+    "@cspell/dict-win32": "^2.0.1",
+    "cspell": "^6.30.2"
+  }
+}
