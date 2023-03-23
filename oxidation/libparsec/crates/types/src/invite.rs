@@ -63,15 +63,13 @@ impl ToString for InvitationType {
  */
 
 // SAS code is composed of 4 hexadecimal characters
-macro_rules! SAS_CODE_CHARS {
-    () => {
-        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    };
-}
-const SAS_CODE_CHARS: &str = SAS_CODE_CHARS!();
-const SAS_CODE_PATTERN: &str = concat!("^[", SAS_CODE_CHARS!(), "]{4}$");
+const SAS_CODE_CHARS: &[u8; 32] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const SAS_CODE_PATTERN: &str = "^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$";
 const SAS_CODE_LEN: usize = 4;
-const SAS_CODE_BITS: u32 = 20;
+const SAS_CODE_BITS: usize = 20;
+const SAS_CODE_MASK: usize = (1 << SAS_CODE_BITS) - 1;
+const SAS_SUBCODE_BITS: usize = 5;
+const SAS_SUBCODE_MASK: usize = (1 << SAS_SUBCODE_BITS) - 1;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
 pub struct SASCode(String);
@@ -100,23 +98,25 @@ impl FromStr for SASCode {
 
 impl TryFrom<u32> for SASCode {
     type Error = &'static str;
-    fn try_from(mut num: u32) -> Result<SASCode, Self::Error> {
+    fn try_from(num: u32) -> Result<SASCode, Self::Error> {
+        let mut num = num as usize;
+        if num >= 1 << SAS_CODE_BITS {
+            // The valid range number should not exceed 20 bit long
+            // because subcode is 5 bits long (remainder by SAS_CODE_CHARS.len() [32])
+            // and SAS_CODE_LEN is 4
+            return Err("Provided integer is too large");
+        }
+
         let mut str = String::with_capacity(SAS_CODE_LEN);
 
         for _ in 0..SAS_CODE_LEN {
-            let subcode = num % SAS_CODE_CHARS.len() as u32;
-            let char = SAS_CODE_CHARS
-                .chars()
-                .nth(subcode as usize)
-                .unwrap_or_else(|| unreachable!());
+            let subcode = num & SAS_SUBCODE_MASK;
+            let char = SAS_CODE_CHARS[subcode] as char;
             str.push(char);
-            num /= SAS_CODE_CHARS.len() as u32;
+            num >>= SAS_SUBCODE_BITS;
         }
-        if num != 0 {
-            Err("Provided integer is too large")
-        } else {
-            Ok(Self(str))
-        }
+
+        Ok(Self(str))
     }
 }
 
@@ -143,8 +143,8 @@ impl SASCode {
 
         sas_codes.push(SASCode(self.to_string()));
         while sas_codes.len() < size {
-            let num = rand::thread_rng().gen_range(0..(2u32.pow(SAS_CODE_BITS) - 1));
-            let candidate = SASCode::try_from(num).unwrap_or_else(|_| unreachable!());
+            let num = rand::thread_rng().gen_range(0..=SAS_CODE_MASK);
+            let candidate = SASCode::try_from(num as u32).unwrap_or_else(|_| unreachable!());
             if &candidate != self {
                 sas_codes.push(candidate);
             }
@@ -166,11 +166,11 @@ impl SASCode {
         // Digest size of 5 bytes so we can split it between two 20bits SAS
         // Note we have to store is as a 8bytes array to be able to convert it into u64
         let mut combined_hmac = [0; 8];
-        combined_hmac[3..8].clone_from_slice(&shared_secret_key.hmac(&combined_nonce, 5)[..]);
+        combined_hmac[3..8].copy_from_slice(&shared_secret_key.hmac(&combined_nonce, 5)[..]);
         let hmac_as_int = u64::from_be_bytes(combined_hmac);
 
-        let claimer_part_as_int = (hmac_as_int % 2u64.pow(SAS_CODE_BITS)) as u32;
-        let greeter_part_as_int = ((hmac_as_int >> SAS_CODE_BITS) % 2u64.pow(SAS_CODE_BITS)) as u32;
+        let claimer_part_as_int = (hmac_as_int & SAS_CODE_MASK as u64) as u32;
+        let greeter_part_as_int = ((hmac_as_int >> SAS_CODE_BITS) & SAS_CODE_MASK as u64) as u32;
 
         // Big endian number extracted from bits [0, 20[
         let claimer_sas = SASCode::try_from(claimer_part_as_int).unwrap_or_else(|_| unreachable!());
