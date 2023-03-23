@@ -86,7 +86,7 @@ impl WorkspaceStorage {
         FutureIntoCoroutine::from(async move {
             libparsec::core_fs::WorkspaceStorage::new(
                 &data_base_dir,
-                device.0.clone(),
+                device.0,
                 workspace_id.0,
                 prevent_sync_pattern.0,
                 data_vacuum_threshold.unwrap_or(DEFAULT_CHUNK_VACUUM_THRESHOLD),
@@ -528,7 +528,7 @@ pub(crate) fn workspace_storage_non_speculative_init(
     FutureIntoCoroutine::from(async move {
         libparsec::core_fs::workspace_storage_non_speculative_init(
             &data_base_dir,
-            device.0.clone(),
+            device.0,
             workspace_id.0,
         )
         .await

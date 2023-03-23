@@ -706,7 +706,8 @@ fn load_recovery_device(key_file: PathBuf, password: String) -> FutureIntoCorout
     FutureIntoCoroutine::from(async move {
         platform_device_loader::load_recovery_device(&key_file, &password)
             .await
-            .map(|local_device| LocalDevice(Arc::new(local_device)))
+            .map(Arc::new)
+            .map(LocalDevice)
             .map_err(|e| LocalDeviceError::from(e).into())
     })
 }

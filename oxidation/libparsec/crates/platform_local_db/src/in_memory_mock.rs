@@ -58,7 +58,7 @@ pub(crate) fn maybe_open_sqlite_in_memory(
     path_info: &super::DBPathInfo,
 ) -> Option<SqliteConnection> {
     let mut strategy = TEST_DB_STRATEGY.lock().expect("Mutex is poisoned");
-    match &mut *strategy {
+    match strategy.deref_mut() {
         TestDBStrategy::InMemory(dbs) => {
             for db in dbs.iter_mut() {
                 // This database has already been used in the past...
