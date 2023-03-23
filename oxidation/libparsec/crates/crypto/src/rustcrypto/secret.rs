@@ -78,9 +78,6 @@ impl SecretKey {
         if digest_size != 5 {
             panic!("Not implemented for this digest size");
         }
-        // TODO investigate why new() is not working
-        // let mut hasher = Blake2bMac40::new(&self.0);
-        // &self.0 always provide the correct key size
         let mut hasher = <Blake2bMac40 as KeyInit>::new_from_slice(self.0.as_ref())
             .unwrap_or_else(|_| unreachable!());
         hasher.update(data);
