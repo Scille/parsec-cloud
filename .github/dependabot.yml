@@ -120,6 +120,17 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
+  - package-ecosystem: npm
+    directory: /.cspell
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+      time: "23:30"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 1
+    rebase-strategy: disabled
+
   ########
   # Java #
   ########

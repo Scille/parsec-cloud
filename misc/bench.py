@@ -40,7 +40,7 @@ from multiprocessing import Process, Manager
 # https://github.com/jmoiron/humanize
 #
 # Copyright (c) 2010 Jason Moiron and Contributors
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
@@ -48,10 +48,10 @@ from multiprocessing import Process, Manager
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -65,7 +65,7 @@ from multiprocessing import Process, Manager
 suffixes = {
     'decimal': ('kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'),
     'binary': ('KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'),
-    'gnu': "KMGTPEZY",
+    'gnu': "KMGTPEZY", # spellchecker: ignore KMGTPEZY
 }
 
 
@@ -103,7 +103,7 @@ def naturalsize(value, binary=False, gnu=False, format='%.1f'):
 #
 # Global constants
 #
-kibybytes = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
+kibibytes = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
 kilobytes = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB']
 
 process_manager = Manager()
@@ -133,10 +133,10 @@ def get_random_file_size(filesize, dev):
     """
     Get randomized file size based on average 'filesize' and deviation range.
     """
-    
+
     min_range = (1.0-dev)*filesize
     max_range = (1.0+dev)*filesize
-    
+
     return int( (max_range-min_range)*random.random() + min_range )
 
 
@@ -149,7 +149,7 @@ def get_random_data(size):
 
 def parse_file_size(file_size_string):
     """
-    This function parses the file sizes supporting both conventions 
+    This function parses the file sizes supporting both conventions
     (i.e. KiB and KB)
     """
 
@@ -166,8 +166,8 @@ def parse_file_size(file_size_string):
         try:
             file_size = float(parse_result[1])
             file_size_suffix = -1
-            if parse_result[2] in kibybytes:
-                file_size *= math.pow(1024, (kibybytes.index(parse_result[2])+1))
+            if parse_result[2] in kibibytes:
+                file_size *= math.pow(1024, (kibibytes.index(parse_result[2])+1))
                 return file_size
             elif parse_result[2] in kilobytes:
                 file_size *= math.pow(1000, (kilobytes.index(parse_result[2])+1))
@@ -243,21 +243,21 @@ def run_benchmark(benchmark, \
     # Prepapre a list of arguments for each benchmark task
     #
     benchmark_args = []
-    for tidx in range(threadcount):
+    for thread_idx in range(threadcount):
 
         r = None
         if(filecount == threadcount):
-            r = [tidx]
+            r = [thread_idx]
         else:
-            low_range = int(tidx*(filecount/threadcount))
-            high_range = int((tidx+1)*(filecount/threadcount))
+            low_range = int(thread_idx*(filecount/threadcount))
+            high_range = int((thread_idx+1)*(filecount/threadcount))
             r = list(range(low_range, high_range))
 
         benchmark_args.append(\
-            (tidx, r, filesize, deviation, blocksize, __test_data_dir, \
+            (thread_idx, r, filesize, deviation, blocksize, __test_data_dir, \
                threads_results, threads_progress_messages, start_barrier))
-        threads_results[tidx] = 0
-        threads_progress_messages[tidx] = "Starting task "+str(tidx)
+        threads_results[thread_idx] = 0
+        threads_progress_messages[thread_idx] = "Starting task "+str(thread_idx)
 
     #
     # Create the process pool and run the benchmark
@@ -276,7 +276,7 @@ def run_benchmark(benchmark, \
 
     start_time = time.time()
     #
-    # Wait for the threads to complete and the progress every 
+    # Wait for the threads to complete and the progress every
     # 0.5 second
     #
     time.sleep(0.5)
@@ -501,7 +501,7 @@ def file_random_write_benchmark(task_id, file_ids, filesize, deviation, \
         #
         random_block_indexes = [i for i in range(0,int(rand_size/blocksize))]
         random.shuffle(random_block_indexes)
-        
+
         file_written_bytes = 0
         for block_index in random_block_indexes:
             outfile.seek(block_index*blocksize, 0)
@@ -551,7 +551,7 @@ def file_linear_read_benchmark(task_id, file_ids, filesize, deviation, \
                                thread_results, thread_progress_messages, \
                                start_barrier):
     """
-    Benchmark testing the time of linear reading from files 
+    Benchmark testing the time of linear reading from files
     """
 
     total_read_bytes = 0
@@ -587,7 +587,7 @@ def file_linear_read_benchmark(task_id, file_ids, filesize, deviation, \
         # Read the file in blocks
         #
         file_read_bytes = 0
-        
+
         while(file_read_bytes + blocksize < file_sizes[file_ids[i]]):
             block_read_bytes = outfile.write(infile.read(blocksize))
             file_read_bytes += block_read_bytes
@@ -670,13 +670,13 @@ def file_random_read_benchmark(task_id, file_ids, filesize, deviation, \
         # Read the file in blocks
         #
         file_read_bytes = 0
-        
+
         #
         # Prepare a shuffled list of block indexes to read in random order
         #
         random_block_indexes = [i for i in range(0,int(infile_size/blocksize))]
         random.shuffle(random_block_indexes)
-        
+
         for block_index in random_block_indexes:
             infile.seek(block_index*blocksize, 0)
             block_read_bytes = outfile.write(infile.read(blocksize))
@@ -791,7 +791,7 @@ size is too small.""",
         default=4)
 
     parser.add_option('-P', '--no-purge',
-        action="store_true", dest="nopurge",
+        action="store_true", dest="no_purge",
         help="""If specified, disables cache clearing between steps.""",
         default=False)
 
@@ -805,7 +805,7 @@ size is too small.""",
     blocksize = parse_file_size(options.blocksize)
     deviation = options.deviation
     threadcount = options.threadcount
-    dropcaches = not options.nopurge
+    dropcaches = not options.no_purge
 
     if math.isnan(filesize):
         print("Invalid filesize - exiting.", file=sys.stderr)
@@ -919,7 +919,7 @@ size is too small.""",
         threads_results = process_manager.dict()
         threads_progress_messages = process_manager.dict()
         print("\n--- INITIALIZING FILE CREATION BENCHMARK...\n", file=sys.stderr)
-        
+
         create_files_time = run_benchmark(file_create_benchmark, \
                                         filecount, threadcount, deviation, \
                                         blocksize, threads_results, \
@@ -953,7 +953,7 @@ size is too small.""",
         threads_results = process_manager.dict()
         threads_progress_messages = process_manager.dict()
         print("\n--- INITIALIZING FILE RANDOM WRITE BENCHMARK...\n", file=sys.stderr)
-        
+
         overwrite_files_time = run_benchmark(file_random_write_benchmark, \
                                             filecount, threadcount, deviation, \
                                             blocksize, threads_results, \
@@ -965,7 +965,7 @@ size is too small.""",
         overwrite_files_bytes_size = sum(s[0] for s in threads_results.values())
 
         print("", file=sys.stderr)
-        print("--- WRITTE " + str(filecount) + " FILES WITH TOTAL SIZE" \
+        print("--- WRITE " + str(filecount) + " FILES WITH TOTAL SIZE" \
             + str(naturalsize(overwrite_files_bytes_size)) + " IN " \
             + str(overwrite_files_time) + "s", file=sys.stderr)
         print("--- THROUGHPUT: " \
@@ -973,7 +973,7 @@ size is too small.""",
                                 overwrite_files_bytes_size/overwrite_files_time)) \
             + "/s", file=sys.stderr)
         print("", file=sys.stderr)
-        
+
         if dropcaches:
             print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
             drop_caches()
@@ -988,7 +988,7 @@ size is too small.""",
         threads_results = process_manager.dict()
         threads_progress_messages = process_manager.dict()
         print("\n--- INITIALIZING FILE WRITE BENCHMARK...\n", file=sys.stderr)
-        
+
         overwrite_files_time = run_benchmark(file_write_benchmark, \
                                             filecount, threadcount, deviation, \
                                             blocksize, threads_results, \
@@ -1008,7 +1008,7 @@ size is too small.""",
                                 overwrite_files_bytes_size/overwrite_files_time)) \
             + "/s", file=sys.stderr)
         print("", file=sys.stderr)
-        
+
         if dropcaches:
             print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
             drop_caches()
@@ -1025,7 +1025,7 @@ size is too small.""",
         threads_results = process_manager.dict()
         threads_progress_messages = process_manager.dict()
         print("\n--- INITIALIZING FILE LINEAR READ BENCHMARK...\n", file=sys.stderr)
-        
+
         linear_read_time = run_benchmark(file_linear_read_benchmark, \
                                              filecount, threadcount, deviation, \
                                              blocksize, threads_results, \
@@ -1044,7 +1044,7 @@ size is too small.""",
               + str(naturalsize(linear_read_bytes_size/linear_read_time)) \
               + "/s", file=sys.stderr)
         print("", file=sys.stderr)
-        
+
         if dropcaches:
             print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
             drop_caches()
@@ -1061,7 +1061,7 @@ size is too small.""",
         threads_results = process_manager.dict()
         threads_progress_messages = process_manager.dict()
         print("\n--- INITIALIZING FILE RANDOM READ BENCHMARK...\n", file=sys.stderr)
-        
+
         random_read_time = run_benchmark(file_random_read_benchmark, \
                                              filecount, threadcount, deviation, \
                                              blocksize, threads_results, \

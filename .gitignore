@@ -114,3 +114,5 @@ target/
 
 # Cspell cache
 .cspellcache
+
+node_modules

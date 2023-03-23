@@ -1,0 +1,88 @@
+name: cspell
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  cpsell:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+        timeout-minutes: 5
+
+      - name: Generate cspell cache key
+        id: cache-key
+        run: |
+          from datetime import datetime
+          import os
+
+          now = datetime.today()
+
+          version = 0
+          partial_key = f"cspell-v{version}"
+          restore_keys = [partial_key + "-"]
+          for chunk in [ os.environ["CSPELL_CFG_HASH"], *now.strftime('%Y-%m-%d-%H-%M').split('-') ]:
+              partial_key += "-" + chunk
+              restore_keys.append(partial_key)
+          key = partial_key
+          restore_keys.reverse()
+
+          print(f"key={key}")
+          print(f"restore_keys={restore_keys}")
+          with open(os.environ["GITHUB_OUTPUT"], 'a') as f:
+              # For multiple line in a github output variable
+              # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
+              f.write('restore-keys<<End_Of_Restore_Keys\n{}\nEnd_Of_Restore_Keys\n'.format('\n'.join(restore_keys)))
+              f.write(f'key={key}\n')
+        shell: python
+        env:
+          CSPELL_CFG_HASH: ${{ hashFiles('.cspell/**') }}
+
+      - name: Restore cspell cache
+        id: cache
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
+        with:
+          path: |
+            package-lock.json
+            package.json
+            .cspellcache
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: ${{ steps.cache-key.outputs.restore-keys }}
+
+      - name: Install required extra dictionaries
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: installation
+        run: |
+          cp .cspell/package{,-lock}.json .
+          npm clean-install
+          echo "previous-cache-hash=${{ hashFiles('.cspellcache') }}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Check spelling in the repository
+        id: cspell
+        uses: streetsidesoftware/cspell-action@c5e5f42f5bba8df1c0b7e74596c5600a3167efab # pin v2.25.0
+        with:
+          config: .cspell/cspell.config.yml
+          # Only check for changed files on a PR
+          # But check on all files on the main branch & the merge queue
+          incremental_files_only: ${{ github.ref != 'refs/heads/master' && contains(github.ref, 'gh-readonly-queue') != 'true' }}
+          check_dot_files: true
+
+      - name: Show result
+        run: printenv RESULT | jq -r .
+        env:
+          RESULT: ${{ toJSON(steps.cspell.outputs) }}
+
+      - name: Save cspell cache
+        if: >-
+          steps.installation.outputs.previous-cache-hash != hashFiles('.cspellcache')
+          && contains(github.ref, 'gh-readonly-queue') != 'true'
+        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
+        with:
+          key: ${{ steps.cache-key.outputs.key }}
+          path: |
+            package-lock.json
+            package.json
+            .cspellcache

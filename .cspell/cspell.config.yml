@@ -3,20 +3,20 @@ $schema: https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell
 version: "0.2"
 dictionaryDefinitions:
   - name: custom-words
-    path: ./.cspell/custom-words.txt
+    path: ./custom-words.txt
     scope: workspace
     addWords: true
   - name: names
-    path: ./.cspell/names.txt
+    path: ./names.txt
     scope: workspace
     addWords: true
   # Not all french word are present in the `fr-fr` dictionary.
   - name: french-words
-    path: ./.cspell/french-words.txt
+    path: ./french-words.txt
     addWords: true
   # `filetypes` is missing some file types
   - name: custom-ext
-    path: ./.cspell/custom-ext.txt
+    path: ./custom-ext.txt
     addWords: true
 dictionaries:
   - en_us
@@ -122,6 +122,8 @@ ignorePaths:
   - '**/gradle.lockfile'
   - '**/buildscript-gradle.lockfile'
   - '**/gradle/verification-metadata.xml'
+  - '**/*.icns'
+  - '**/.git'
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"
