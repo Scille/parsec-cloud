@@ -23,7 +23,7 @@ libparsec_types = { path = "../types" }
 # Note this is fine as long as we use tables with at most 16 columns.
 diesel = { version = "2.0.3", default-features = false }
 log = "0.4.17"
-regex = "1.6.0"
+regex = "1.7.2"
 thiserror = "1.0.37"
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
 lazy_static = "1.4.0"
