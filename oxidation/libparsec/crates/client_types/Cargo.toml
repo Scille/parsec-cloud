@@ -18,7 +18,7 @@ libparsec_serialization_format = { path = "../serialization_format" }
 
 flate2 = "1.0.25"
 paste = "1.0.12"
-regex = "1.6.0"
+regex = "1.7.2"
 rmp-serde = "1.1.1"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_bytes = "0.11.7"
