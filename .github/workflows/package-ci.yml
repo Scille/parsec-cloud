@@ -114,7 +114,7 @@ jobs:
       - name: Generate requirements & constraints infos
         run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
-      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist/
@@ -167,7 +167,7 @@ jobs:
         working-directory: ${{ runner.temp }}
         run: snapcraft --destructive-mode
 
-      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: ${{ runner.temp }}/parsec*.snap
@@ -295,7 +295,7 @@ jobs:
           Copy-Item -Path build\winfsp-* -Destination dist
         working-directory: ${{ runner.temp }}
 
-      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer-content
           path: ${{ runner.temp }}/dist/
@@ -338,7 +338,7 @@ jobs:
           --directory build/pyinstaller_dist parsec.app
         working-directory: ${{ runner.temp }}
 
-      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: ${{ runner.temp }}/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
@@ -423,7 +423,7 @@ jobs:
         working-directory: oxidation/client
         timeout-minutes: 40
 
-      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app
           path: ${{ matrix.paths }}
@@ -467,7 +467,7 @@ jobs:
         run: bash ./gradlew assembleRelease
         working-directory: oxidation/client/android
 
-      - uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # pin v3.1.1
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
           name: unsigned-android-app
           path: |
@@ -490,7 +490,7 @@ jobs:
         run: npm run web:release
         working-directory: oxidation/client
 
-      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.0
         with:
           name: webapp
           path: oxidation/client/dist/
