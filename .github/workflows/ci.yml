@@ -482,13 +482,16 @@ jobs:
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
+      # By default, `libparsec_crypto` uses Rust Crypto
+      # so if we modify `libparsec_crypto` which are not tested, it will pass the CI,
+      # that's why we add a check
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
+          cargo check --profile ci-rust --workspace --features use-sodiumoxide
           cargo test --profile ci-rust --workspace ${{ env.cargo-exclude-unused-crates }}
-          # By default, `libparsec_crypto` uses Rust Crypto
           cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide
         timeout-minutes: 30
         env:

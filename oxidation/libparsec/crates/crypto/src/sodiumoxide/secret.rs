@@ -22,6 +22,12 @@ use crate::CryptoError;
 #[serde(try_from = "&Bytes")]
 pub struct SecretKey(Key);
 
+impl std::hash::Hash for SecretKey {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0 .0.hash(state)
+    }
+}
+
 impl SecretKey {
     pub const ALGORITHM: &'static str = "xsalsa20poly1305";
     pub const SIZE: usize = KEYBYTES;
