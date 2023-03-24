@@ -36,7 +36,7 @@
         "@capacitor/splash-screen": "^1.2.2",
         "@capacitor/status-bar": "1.0.8",
         "@ionic/storage": "^3.0.6",
-        "@ionic/vue": "^6.2.0",
+        "@ionic/vue": "^6.7.0",
         "@ionic/vue-router": "^6.5.2",
         "core-js": "^3.22.7",
         "ionicons": "^6.1.3",
