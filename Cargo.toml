@@ -30,7 +30,7 @@ test-utils = ["libparsec/test-utils"]
 libparsec = { path = "oxidation/libparsec" }
 
 regex = "1.6.0"
-paste = "1.0.9"
+paste = "1.0.12"
 pyo3 = { version = "0.17.3", features = ["multiple-pymethods", "extension-module"] }
 uuid = { version = "1.2.2", features = ["serde", "v4", "fast-rng"] }
 tokio = { version = "1.25", features = ["rt", "rt-multi-thread"] }
