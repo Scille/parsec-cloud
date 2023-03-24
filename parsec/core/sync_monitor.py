@@ -24,6 +24,7 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
 )
+from parsec.core.backend_connection.authenticated import MonitorTaskState
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSBadEncryptionRevision,
@@ -470,21 +471,25 @@ async def monitor_sync(
         task_status.started()
         while True:
             next_due_time = min(due_times)
+            # We don't switch to idle if we know there is still something to do,
+            # in other word we can be considered awake while we are in fact sleeping.
             if next_due_time == math.inf:
                 task_status.idle()
             async with trio.open_nursery() as nursery:
 
                 async def wait_for_early_wakeup() -> None:
+                    # In case of early wakeup, `_trigger_early_wakeup` is responsible
+                    # for calling `task_status.awake()`
                     await early_wakeup.wait()
                     nursery.cancel_scope.cancel()
 
                 nursery.start_soon(wait_for_early_wakeup)
                 to_sleep = next_due_time - user_fs.device.time_provider.now().timestamp()
                 await user_fs.device.time_provider.sleep(to_sleep)
+                # If we are here, we were sleeping for a limited amount of time: which
+                # means we still have work to do and hence our state is awake
+                assert task_status.state == MonitorTaskState.AWAKE
                 nursery.cancel_scope.cancel()
-                # In case of early wakeup, `_trigger_early_wakeup` is responsible
-                # for calling `task_status.awake()`
-                task_status.awake()
             # Reset early wakeup event
             early_wakeup = trio.Event()
 
