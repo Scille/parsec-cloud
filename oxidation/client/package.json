@@ -66,7 +66,7 @@
         "@vue/vue3-jest": "^27.0.0-alpha.3",
         "@wasm-tool/wasm-pack-plugin": "^1.6.0",
         "babel-jest": "^27.3.1",
-        "cypress": "^12.5.0",
+        "cypress": "^12.8.1",
         "eslint": "^8.16.0",
         "eslint-plugin-cypress": "^2.12.1",
         "eslint-plugin-vue": "^8.2.0",
