@@ -31,8 +31,13 @@ impl AnonymousCmds {
             return Err(PyValueError::new_err("Invalid addr provided: accepted addr are BackendOrganizationAddr or BackendPkiEnrollmentAddr"));
         };
 
-        let anonymous_cmds = client_connection::generate_anonymous_client(addr);
-        Ok(Self(Arc::new(anonymous_cmds)))
+        let client_config = client_connection::ProxyConfig::new_from_env();
+
+        client_connection::generate_anonymous_client(addr, client_config)
+            .map_err(|e| {
+                PyValueError::new_err(format!("Failed to generate an anonymous client: {e}"))
+            })
+            .map(|client| Self(Arc::new(client)))
     }
 
     #[getter]

@@ -22,10 +22,10 @@ pub struct AnonymousCmds {
 
 impl AnonymousCmds {
     /// Create a new `AnonymousCmds`
-    pub fn new(client: Client, addr: BackendAnonymousAddr) -> Result<Self, url::ParseError> {
+    pub fn new(client: Client, addr: BackendAnonymousAddr) -> Self {
         let url = addr.to_anonymous_http_url();
 
-        Ok(Self { client, addr, url })
+        Self { client, addr, url }
     }
 
     pub fn addr(&self) -> &BackendAnonymousAddr {

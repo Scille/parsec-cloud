@@ -25,10 +25,10 @@ pub struct InvitedCmds {
 
 impl InvitedCmds {
     /// Create a new `InvitedCmds`
-    pub fn new(client: Client, addr: BackendInvitationAddr) -> Result<Self, url::ParseError> {
+    pub fn new(client: Client, addr: BackendInvitationAddr) -> Self {
         let url = addr.to_invited_url();
 
-        Ok(Self { client, addr, url })
+        Self { client, addr, url }
     }
 
     pub fn addr(&self) -> &BackendInvitationAddr {

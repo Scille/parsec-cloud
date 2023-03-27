@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{pyclass, pymethods, PyResult};
+use pyo3::{exceptions::PyValueError, pyclass, pymethods, PyResult};
 use std::sync::Arc;
 
 use libparsec::{client_connection, protocol::invited_cmds};
@@ -20,8 +20,11 @@ pub(crate) struct InvitedCmds(pub Arc<client_connection::InvitedCmds>);
 impl InvitedCmds {
     #[new]
     fn new(addr: BackendInvitationAddr) -> PyResult<Self> {
-        let invited_cmds = client_connection::generate_invited_client(addr.0);
-        Ok(Self(Arc::new(invited_cmds)))
+        let client_config = client_connection::ProxyConfig::new_from_env();
+
+        client_connection::generate_invited_client(addr.0, client_config)
+            .map_err(|e| PyValueError::new_err(format!("Fail to generate an invited client: {e}")))
+            .map(|client| Self(Arc::new(client)))
     }
 
     #[getter]
