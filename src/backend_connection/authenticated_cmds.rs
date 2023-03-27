@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{pyclass, pymethods, PyResult};
+use pyo3::{exceptions::PyValueError, pyclass, pymethods, PyResult};
 use std::{collections::HashMap, num::NonZeroU64, sync::Arc};
 
 use libparsec::{
@@ -34,9 +34,18 @@ impl AuthenticatedCmds {
         device_id: DeviceID,
         signing_key: SigningKey,
     ) -> PyResult<Self> {
-        let auth_cmds =
-            client_connection::generate_authenticated_client(signing_key.0, device_id.0, addr.0);
-        Ok(Self(Arc::new(auth_cmds)))
+        let client_config = client_connection::ProxyConfig::new_from_env();
+
+        client_connection::generate_authenticated_client(
+            signing_key.0,
+            device_id.0,
+            addr.0,
+            client_config,
+        )
+        .map_err(|e| {
+            PyValueError::new_err(format!("Fail to generate an authenticated client: {e}"))
+        })
+        .map(|client| Self(Arc::new(client)))
     }
 
     #[getter]

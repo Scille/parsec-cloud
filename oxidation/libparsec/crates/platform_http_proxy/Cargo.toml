@@ -1,0 +1,9 @@
+[package]
+name = "libparsec_platform_http_proxy"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.11.16", default-features = false }

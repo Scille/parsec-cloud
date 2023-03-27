@@ -1237,6 +1237,7 @@ dependencies = [
  "hyper",
  "libparsec_crypto",
  "libparsec_miniprotocol",
+ "libparsec_platform_http_proxy",
  "libparsec_protocol",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
@@ -1375,6 +1376,13 @@ dependencies = [
  "serde_json",
  "tokio",
  "web-sys",
+]
+
+[[package]]
+name = "libparsec_platform_http_proxy"
+version = "0.0.0"
+dependencies = [
+ "reqwest",
 ]
 
 [[package]]

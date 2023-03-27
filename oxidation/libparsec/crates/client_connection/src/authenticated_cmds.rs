@@ -65,18 +65,18 @@ impl AuthenticatedCmds {
         addr: BackendOrganizationAddr,
         device_id: DeviceID,
         signing_key: SigningKey,
-    ) -> Result<Self, url::ParseError> {
+    ) -> Self {
         let url = addr.to_authenticated_http_url();
 
         let device_id = BASE64_STANDARD.encode(device_id.to_string().as_bytes());
 
-        Ok(Self {
+        Self {
             client,
             addr,
             url,
             device_id,
             signing_key,
-        })
+        }
     }
 
     pub fn addr(&self) -> &BackendOrganizationAddr {

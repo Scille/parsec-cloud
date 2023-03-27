@@ -14,6 +14,8 @@ pub use client::{
 pub use error::{CommandError, CommandResult};
 pub use invited_cmds::InvitedCmds;
 
+pub use libparsec_platform_http_proxy::ProxyConfig;
+
 /// We send the HTTP request with the body encoded in `msgpack` format.
 /// This is the corresponding mime type to convey that info.
 pub const PARSEC_CONTENT_TYPE: &str = "application/msgpack";
