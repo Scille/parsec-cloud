@@ -467,6 +467,11 @@ mod time_provider {
                     sleep_started_at = now;
                 };
 
+                // Small weirdness here: given `config` has just been cloned, it is
+                // considered it has not acknowledged the data in the watch. Hence
+                // the first call to `config.changed()` will always finish right away.
+                // This is okay given the code is designed around the fact config can be
+                // fired randomly (we just recompute the remaining time and go back to sleep).
                 if let Some(to_sleep) = to_sleep {
                     libparsec_platform_async::select!(
                         _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
@@ -475,6 +480,7 @@ mod time_provider {
                         }
                     );
                 } else {
+                    // Time is frozen
                     let _ = config.changed().await;
                     recompute_time_we_have_to_sleep();
                 }
