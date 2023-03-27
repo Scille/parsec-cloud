@@ -224,15 +224,15 @@ class SyncContext:
         await self._load_changes()
         return self.due_time
 
-    async def tick(self) -> float:
+    async def tick(self) -> None:
         now = self.device.timestamp().timestamp()
         if self.due_time > now:
-            return self.due_time
+            return
 
         # Sync contexts created by `SyncContextStore.get` are bootstrapped
         # lazily on first tick
         if not await self._load_changes():
-            return self.due_time
+            return
 
         min_due_time = None
 
@@ -300,7 +300,6 @@ class SyncContext:
                     await self._get_local_storage().run_vacuum()
 
         self._compute_due_time(now=now, min_due_time=min_due_time)
-        return self.due_time
 
 
 class WorkspaceSyncContext(SyncContext):
@@ -422,6 +421,8 @@ async def monitor_sync(
         ctx = ctxs.get(workspace_id)
         if ctx is not None:
             ctx.set_confined_entry(entry_id, cause_id)
+            # No need to call `_trigger_early_wakeup` here given due time is not updated
+            # (by definition, a confined entry doesn't have to be synced)
 
     async def _ctx_action(ctx: SyncContext, meth: str) -> Any:
         try:
@@ -455,26 +456,38 @@ async def monitor_sync(
         (CoreEvent.SHARING_UPDATED, cast(EventCallback, _on_sharing_updated)),
         (CoreEvent.FS_ENTRY_CONFINED, cast(EventCallback, _on_entry_confined)),
     ):
-        due_times = []
         # Init userfs sync context
         ctx = ctxs.get(user_fs.user_manifest_id)
         assert ctx is not None
-        due_times.append(await _ctx_action(ctx, "bootstrap"))
+        await _ctx_action(ctx, "bootstrap")
         # Init workspaces sync context
         user_manifest = user_fs.get_user_manifest()
         for entry in user_manifest.workspaces:
             if entry.role is not None:
                 ctx = ctxs.get(entry.id)
                 if ctx:
-                    due_times.append(await _ctx_action(ctx, "bootstrap"))
+                    await _ctx_action(ctx, "bootstrap")
 
         task_status.started()
+
         while True:
-            next_due_time = min(due_times)
-            # We don't switch to idle if we know there is still something to do,
-            # in other word we can be considered awake while we are in fact sleeping.
+            # It's important to compute `next_due_time` just before calling sleep.
+            # Otherwise an await point could lead to an concurrent update that create
+            # a decorellation between due times and the task status state.
+            #
+            # On top of that `ctx.due_time` and `task_status.state` must be in sync:
+            # 1. If state is idle then all due times must be infinite
+            # 2. If state is not idle, then at least one due time is not infinite
+            next_due_time = min(ctx.due_time for ctx in ctxs.iter())
+
+            # Switch to idle only if there is no work remaining.
+            # So if some work requires to sleep before being due, we are
+            # considered awake in the meantime.
             if next_due_time == math.inf:
                 task_status.idle()
+            else:
+                assert task_status.state != MonitorTaskState.IDLE
+
             async with trio.open_nursery() as nursery:
 
                 async def wait_for_early_wakeup() -> None:
@@ -485,15 +498,25 @@ async def monitor_sync(
 
                 nursery.start_soon(wait_for_early_wakeup)
                 to_sleep = next_due_time - user_fs.device.time_provider.now().timestamp()
+
                 await user_fs.device.time_provider.sleep(to_sleep)
-                # If we are here, we were sleeping for a limited amount of time: which
-                # means we still have work to do and hence our state is awake
-                assert task_status.state == MonitorTaskState.AWAKE
+
                 nursery.cancel_scope.cancel()
+                # If we are here, we were sleeping for a limited amount of time: which
+                # means we were having work to do at the time we started sleeping.
+                # However this may no longer be the case ! Typically:
+                # 1. A file got modified locally. The sync monitor switches to awake
+                #    state and starts a 1s sleep after which it plans to sync the file.
+                # 2. The same file got modified remotely. This time the sync monitor
+                #    do the sync without, then switches back to idle state.
+                # 3. The 1s sleep ends, but there is nothing to do. Thus we must go
+                #    back to sleep.
+                if task_status.state == MonitorTaskState.IDLE:
+                    continue
+
             # Reset early wakeup event
             early_wakeup = trio.Event()
 
-            due_times.clear()
             await freeze_sync_monitor_mockpoint()
             for ctx in ctxs.iter():
-                due_times.append(await _ctx_action(ctx, "tick"))
+                await _ctx_action(ctx, "tick")
