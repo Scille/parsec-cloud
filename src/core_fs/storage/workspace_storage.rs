@@ -366,10 +366,10 @@ impl WorkspaceStorage {
         FutureIntoCoroutine::from(async move {
             ws?.update_realm_checkpoint(
                 new_checkpoint,
-                &changed_vlobs
+                changed_vlobs
                     .into_iter()
                     .map(|(id, x)| (id.0, x))
-                    .collect::<Vec<_>>()[..],
+                    .collect::<Vec<_>>(),
             )
             .await
             .map_err(to_py_err)

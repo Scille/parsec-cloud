@@ -328,7 +328,7 @@ impl WorkspaceStorage {
     pub async fn update_realm_checkpoint(
         &self,
         new_checkpoint: i64,
-        changed_vlobs: &[(EntryID, i64)],
+        changed_vlobs: Vec<(EntryID, i64)>,
     ) -> FSResult<()> {
         self.manifest_storage
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
@@ -946,7 +946,7 @@ mod tests {
                 (HashSet::new(), HashSet::new())
             );
 
-            aws.update_realm_checkpoint(11, &[(manifest_id, 22), (EntryID::default(), 33)])
+            aws.update_realm_checkpoint(11, vec![(manifest_id, 22), (EntryID::default(), 33)])
                 .await
                 .unwrap();
 
@@ -987,7 +987,7 @@ mod tests {
                 (HashSet::new(), HashSet::new())
             );
 
-            aws.update_realm_checkpoint(44, &[(manifest_id, 55), (EntryID::default(), 66)])
+            aws.update_realm_checkpoint(44, vec![(manifest_id, 55), (EntryID::default(), 66)])
                 .await
                 .unwrap();
 

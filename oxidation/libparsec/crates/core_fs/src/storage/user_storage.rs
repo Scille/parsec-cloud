@@ -69,7 +69,7 @@ impl UserStorage {
     pub async fn update_realm_checkpoint(
         &self,
         new_checkpoint: i64,
-        changed_vlobs: &[(EntryID, i64)],
+        changed_vlobs: Vec<(EntryID, i64)>,
     ) -> FSResult<()> {
         self.manifest_storage
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
@@ -207,7 +207,10 @@ mod tests {
                     .unwrap();
 
             user_storage.get_realm_checkpoint().await;
-            user_storage.update_realm_checkpoint(64, &[]).await.unwrap();
+            user_storage
+                .update_realm_checkpoint(64, vec![])
+                .await
+                .unwrap();
             user_storage.get_need_sync_entries().await.unwrap();
 
             let user_manifest = LocalUserManifest {
