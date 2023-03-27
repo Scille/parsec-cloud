@@ -3,7 +3,6 @@
 use android_logger::Config;
 use jni::objects::{JClass, JObject, JString};
 use jni::JNIEnv;
-use log::Level;
 use std::sync::Mutex;
 
 lazy_static::lazy_static! {
@@ -18,7 +17,7 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_startRuntime(
     _class: JClass,
 ) -> bool {
     // TODO: initialize the runtime from here ?
-    android_logger::init_once(Config::default().with_min_level(Level::Trace));
+    android_logger::init_once(Config::default().with_max_level(log::LevelFilter::Trace));
     log::info!("LibParsec runtime initialized !");
     true
 }
