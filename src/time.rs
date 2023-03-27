@@ -66,16 +66,29 @@ impl TimeProvider {
     }
 
     // Booyakasha !
-    pub fn sleep(&self, time: f64) -> FutureIntoCoroutine {
+    pub fn sleep(&self, py: Python<'_>, time: f64) -> PyResult<PyObject> {
+        // Unlike Trio, Tokio doesn't support sleeping forever.
+        // Instead it sleeps for a long, long time (~2.2 years according to doc). So in
+        // theory it should be fine for our needs, but better be extra-careful and do
+        // *real* forever sleep (we already got our share of weird stuff with time mocking).
+        if time == f64::INFINITY {
+            return Ok(py
+                .import("trio")?
+                .getattr("sleep_forever")?
+                .call0()?
+                .into_py(py));
+        }
+
         let time_provider = self.0.clone();
-        FutureIntoCoroutine::from(async move {
+        let coroutine = FutureIntoCoroutine::from(async move {
             time_provider
                 .sleep(libparsec::types::Duration::microseconds(
                     (time * 1e6) as i64,
                 ))
                 .await;
             Ok(())
-        })
+        });
+        Ok(coroutine.into_py(py))
     }
 
     pub fn new_child(&self) -> PyResult<TimeProvider> {
