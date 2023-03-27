@@ -5,7 +5,7 @@ use diesel::{
     RunQueryDsl,
 };
 use std::{
-    collections::{hash_map::RandomState, HashMap, HashSet},
+    collections::{HashMap, HashSet},
     sync::{Arc, Mutex},
 };
 
@@ -144,26 +144,20 @@ impl ManifestStorage {
     // and `close_connection` are done without concurrency call of other manifest
     // storage methods.
     pub async fn close_connection(&self) {
-        let res = {
-            let cache_guard = self.caches.lock().expect("Mutex is poisoned");
-            cache_guard.iter().try_for_each(|(id, lock)| {
-                let id = *id;
-                let has_pending_chunks = {
+        if let Some((id, _)) =
+            self.caches
+                .lock()
+                .expect("Mutex is poisoned")
+                .iter()
+                .find(|(_, lock)| {
                     lock.lock()
                         .expect("Mutex is poisoned")
-                        .pending_chunk_ids
-                        .is_some()
-                };
-                if has_pending_chunks {
-                    Err(format!("Manifest {id} has pending chunk not saved"))
-                } else {
-                    Ok(())
-                }
-            })
-        };
-        if let Err(e) = res {
-            log::warn!("Invalid state when closing the connection {e}")
+                        .has_chunk_to_be_flush()
+                })
+        {
+            log::warn!("Invalid state when closing the connection Manifest {id} has pending chunk not saved");
         }
+
         self.conn.close().await;
     }
 
@@ -337,7 +331,7 @@ impl ManifestStorage {
     pub async fn update_realm_checkpoint(
         &self,
         new_checkpoint: i64,
-        changed_vlobs: &[(EntryID, i64)],
+        changed_vlobs: Vec<(EntryID, i64)>,
     ) -> FSResult<()> {
         let new_realm_checkpoint = NewRealmCheckpoint {
             _id: 0,
@@ -349,7 +343,6 @@ impl ManifestStorage {
         // It is difficult to build a raw sql query with bind in a for loop
         // Another solution is to query all data then insert
 
-        let changed_vlobs = changed_vlobs.to_vec();
         self.conn
             .exec_with_error_handler(
                 move |conn| {
@@ -387,21 +380,23 @@ impl ManifestStorage {
     pub async fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
         let mut remote_changes = HashSet::new();
         let caches = self.caches.lock().expect("Mutex is poisoned").clone();
-        let iter = caches.iter().filter_map(|(id, cache)| {
-            if cache
-                .lock()
-                .expect("Mutex is poisoned")
-                .manifest
-                .as_ref()
-                .map(|manifest| manifest.need_sync())
-                .unwrap_or_default()
-            {
-                Some(*id)
-            } else {
-                None
-            }
-        });
-        let mut local_changes = HashSet::<_, RandomState>::from_iter(iter);
+        let mut local_changes = caches
+            .iter()
+            .filter_map(|(id, cache)| {
+                if cache
+                    .lock()
+                    .expect("Mutex is poisoned")
+                    .manifest
+                    .as_ref()
+                    .map(|manifest| manifest.need_sync())
+                    .unwrap_or_default()
+                {
+                    Some(*id)
+                } else {
+                    None
+                }
+            })
+            .collect::<HashSet<_>>();
 
         let vlobs_that_need_sync = self
             .conn
@@ -464,14 +459,8 @@ impl ManifestStorage {
     pub async fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         // Look in cache first
         let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
-        if let Some(manifest) = {
-            cache_entry
-                .lock()
-                .expect("Mutex is poisoned")
-                .manifest
-                .clone()
-        } {
-            return Ok(manifest);
+        if let Some(manifest) = &cache_entry.lock().expect("Mutex is poisoned").manifest {
+            return Ok(manifest.clone());
         }
 
         // Look into the database
@@ -508,8 +497,9 @@ impl ManifestStorage {
         let pending_chunk_ids = cache_unlock
             .pending_chunk_ids
             .get_or_insert(HashSet::default());
-        if let Some(removed_ids) = &removed_ids {
-            *pending_chunk_ids = (pending_chunk_ids as &HashSet<ChunkOrBlockID>) | removed_ids;
+
+        if let Some(removed_ids) = removed_ids {
+            pending_chunk_ids.extend(removed_ids);
         }
     }
 
@@ -803,7 +793,7 @@ mod tests {
             let entry_id = EntryID::default();
 
             manifest_storage
-                .update_realm_checkpoint(64, &[(entry_id, 2)])
+                .update_realm_checkpoint(64, vec![(entry_id, 2)])
                 .await
                 .unwrap();
 

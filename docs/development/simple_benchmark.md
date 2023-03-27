@@ -10,7 +10,7 @@
    2. Run
 
       ```shell
-      source tests/script/run_testenv.sh
+      source tests/scripts/run_testenv.sh
       ```
 
    3. Follow its indication to connect as `alice` with the CLI commands.

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
 
 import pytest
 import trio
@@ -928,7 +927,7 @@ async def test_import_file_disk_full(
         entry_id: EntryID,
         manifest: AnyLocalManifest,
         cache_only: bool = False,
-        removed_ids: Optional[set[ChunkID]] = None,
+        removed_ids: set[ChunkID] | None = None,
     ):
         import sqlite3
 

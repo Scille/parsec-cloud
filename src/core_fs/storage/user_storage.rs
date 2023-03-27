@@ -98,7 +98,7 @@ impl UserStorage {
                 .into_iter()
                 .map(|(entry, version)| (entry.0, version))
                 .collect::<Vec<_>>();
-            us?.update_realm_checkpoint(new_checkpoint, &changed_vlobs)
+            us?.update_realm_checkpoint(new_checkpoint, changed_vlobs)
                 .await
                 .map_err(to_py_err)
         })

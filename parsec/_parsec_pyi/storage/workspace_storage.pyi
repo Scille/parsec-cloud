@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Union
 
 from parsec._parsec_pyi.ids import BlockID, ChunkID, EntryID
 from parsec._parsec_pyi.local_device import LocalDevice
@@ -17,7 +16,7 @@ from parsec._parsec_pyi.regex import Regex
 from parsec._parsec_pyi.time import DateTime
 from parsec.core.types import FileDescriptor
 
-PseudoFileDescriptor = Union[int, FileDescriptor]
+PseudoFileDescriptor = int | FileDescriptor
 
 class WorkspaceStorage:
     @staticmethod
@@ -42,7 +41,7 @@ class WorkspaceStorage:
         entry_id: EntryID,
         manifest: LocalFileManifest | LocalFolderManifest,
         cache_only: bool = False,
-        removed_ids: Optional[set[ChunkID]] = None,
+        removed_ids: set[ChunkID] | None = None,
     ) -> None: ...
     async def clear_manifest(self, entry_id: EntryID) -> None: ...
     def create_file_descriptor(self, manifest: LocalFileManifest) -> PseudoFileDescriptor: ...
