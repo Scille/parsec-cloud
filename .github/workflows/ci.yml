@@ -356,7 +356,7 @@ jobs:
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
-          && contains(github.ref, 'gh-readonly-queue') != 'true'
+          && !contains(github.ref, 'gh-readonly-queue')
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
         with:
           key: ${{ steps.cache-key.outputs.key }}
