@@ -48,10 +48,16 @@ class UserStorage:
             rs_instance = await _RsUserStorage.new(data_base_dir, device, device.user_manifest_id)
 
         try:
-            self = cls(rs_instance)
+            instance = cls(rs_instance)
 
-            yield self
+            yield instance
         finally:
+            # Dirty canary to ensure no concurrent operation could be run by a rogue
+            # coroutine.
+            # In theory structured concurrency prevent us from failling into this trap
+            # however better be extra-careful !
+            instance.rs_instance = None  # type: ignore[assignment]
+
             # We only need to close the connection as the only operation `set_user_manifest` directly flush the manifest to the database.
             with trio.CancelScope(shield=True):
                 await rs_instance.close_connections()

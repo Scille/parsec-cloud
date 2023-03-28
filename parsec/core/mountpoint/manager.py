@@ -446,9 +446,13 @@ async def mountpoint_manager_factory(
                     # Cancel current mount_workspace tasks
                     mount_nursery.cancel_scope.cancel()
 
-        # Unmount all the workspaces (should this be shielded?)
+        # Unmount all the workspaces
         finally:
-            await mountpoint_manager.safe_unmount_all()
+            # We need a shield here to guarantee not mountpoints remain behind.
+            # Otherwise the mountpoint might be used after it related workspacesfs
+            # has been torndown.
+            with trio.CancelScope(shield=True):
+                await mountpoint_manager.safe_unmount_all()
 
         # Cancel the mountpoint tasks (although they should all be finished by now)
         nursery.cancel_scope.cancel()
