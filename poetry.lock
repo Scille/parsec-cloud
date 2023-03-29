@@ -1793,17 +1793,17 @@ socks = ["requests[socks] (>=2.10.0)"]
 
 [[package]]
 name = "pyqt5"
-version = "5.15.8"
+version = "5.15.9"
 description = "Python bindings for the Qt cross platform application toolkit"
 category = "main"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "PyQt5-5.15.8-cp37-abi3-macosx_10_13_x86_64.whl", hash = "sha256:c6ee352bef5ef6392039db2d09a376908ca6ed34d1892bfe8be08e28e1992a89"},
-    {file = "PyQt5-5.15.8-cp37-abi3-manylinux_2_17_x86_64.whl", hash = "sha256:85f72addcf430b958e156fe90b975aec5c2dfe0a53f5b13c69e072de989000f7"},
-    {file = "PyQt5-5.15.8-cp37-abi3-win32.whl", hash = "sha256:7daa668d2c36b62da8fb3b68670b70455dba659fe5006400222280d6153dc035"},
-    {file = "PyQt5-5.15.8-cp37-abi3-win_amd64.whl", hash = "sha256:e812ff1f9b994f592392f764246372d29dd3e8d800087064cab47109d9aad1f7"},
-    {file = "PyQt5-5.15.8.tar.gz", hash = "sha256:bc85e3efb9135c56c8b88157c8825005fb7cd0f14babd93976778aae82eda360"},
+    {file = "PyQt5-5.15.9-cp37-abi3-macosx_10_13_x86_64.whl", hash = "sha256:883ba5c8a348be78c8be6a3d3ba014c798e679503bce00d76c666c2dc6afe828"},
+    {file = "PyQt5-5.15.9-cp37-abi3-manylinux_2_17_x86_64.whl", hash = "sha256:dd5ce10e79fbf1df29507d2daf99270f2057cdd25e4de6fbf2052b46c652e3a5"},
+    {file = "PyQt5-5.15.9-cp37-abi3-win32.whl", hash = "sha256:e45c5cc15d4fd26ab5cb0e5cdba60691a3e9086411f8e3662db07a5a4222a696"},
+    {file = "PyQt5-5.15.9-cp37-abi3-win_amd64.whl", hash = "sha256:e030d795df4cbbfcf4f38b18e2e119bcc9e177ef658a5094b87bb16cac0ce4c5"},
+    {file = "PyQt5-5.15.9.tar.gz", hash = "sha256:dc41e8401a90dc3e2b692b411bd5492ab559ae27a27424eed4bd3915564ec4c0"},
 ]
 
 [package.dependencies]
