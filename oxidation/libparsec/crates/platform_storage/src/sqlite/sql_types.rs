@@ -1,10 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use diesel::{
+    backend::Backend,
     deserialize::{FromSql, FromSqlRow},
-    expression::AsExpression,
+    expression::{AsExpression, ValidGrouping},
+    impl_selectable_expression,
+    query_builder::{AstPass, QueryFragment, QueryId},
     serialize::{Output, ToSql},
+    sql_types::{BigInt, DieselNumericOps},
     sqlite::{Sqlite, SqliteValue},
+    Expression, QueryResult,
 };
 
 #[derive(Debug, AsExpression, FromSqlRow, Clone, Copy)]
@@ -40,3 +45,19 @@ impl From<DateTime> for libparsec_types::DateTime {
         Self::from_f64_with_us_precision(dt.0)
     }
 }
+
+#[derive(Default, Debug, Clone, Copy, QueryId, DieselNumericOps, ValidGrouping)]
+pub struct CoalesceTotalSize;
+
+impl Expression for CoalesceTotalSize {
+    type SqlType = BigInt;
+}
+
+impl<DB: Backend> QueryFragment<DB> for CoalesceTotalSize {
+    fn walk_ast(&self, mut out: AstPass<DB>) -> QueryResult<()> {
+        out.push_sql("COALESCE(SUM(size), 0)");
+        Ok(())
+    }
+}
+
+impl_selectable_expression!(CoalesceTotalSize);

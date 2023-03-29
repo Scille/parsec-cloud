@@ -4,7 +4,7 @@ use diesel::{Connection, SqliteConnection};
 use libparsec_testbed::test_get_testbed;
 use std::{cell::RefCell, path::Path};
 
-use crate::DBPathInfo;
+use super::DBPathInfo;
 
 const STORE_ENTRY_KEY: &str = "platform_local_db";
 

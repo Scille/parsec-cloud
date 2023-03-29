@@ -3,11 +3,9 @@
 use libparsec_client_connection::CommandError;
 use libparsec_core::RemoteDevicesManagerError;
 use thiserror::Error;
-use uuid::Uuid;
 
 use libparsec_crypto::CryptoError;
-use libparsec_platform_local_db::DatabaseError;
-use libparsec_types::{EntryID, FileDescriptor};
+use libparsec_types::{BlockID, ChunkID, EntryID, FileDescriptor};
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum FSError {
@@ -60,8 +58,14 @@ pub enum FSError {
     #[error("{0}")]
     InvalidTrustchain(RemoteDevicesManagerError),
 
-    #[error("LocalMissError: {0}")]
-    LocalMiss(Uuid),
+    #[error("{0}")]
+    LocalChunkIDMiss(ChunkID),
+
+    #[error("{0}")]
+    LocalBlockIDMiss(BlockID),
+
+    #[error("{0}")]
+    LocalEntryIDMiss(EntryID),
 
     #[error("QueryTableError: {0}")]
     QueryTable(String),
@@ -113,55 +117,6 @@ impl From<CryptoError> for FSError {
     }
 }
 
-impl From<diesel::result::Error> for FSError {
-    fn from(e: diesel::result::Error) -> Self {
-        use diesel::result::{DatabaseErrorKind, Error};
-
-        match e {
-            Error::DatabaseError(DatabaseErrorKind::ClosedConnection, e) => {
-                Self::DatabaseClosed(e.message().to_string())
-            }
-            Error::DatabaseError(_kind, msg) => {
-                Self::DatabaseOperationalError(msg.message().to_string())
-            }
-            _ => Self::DatabaseQueryError(e.to_string()),
-        }
-    }
-}
-
-impl From<diesel::result::ConnectionError> for FSError {
-    fn from(e: diesel::result::ConnectionError) -> Self {
-        match e {
-            diesel::ConnectionError::InvalidCString(e) => {
-                Self::Configuration(format!("Invalid c string: {e}"))
-            }
-            diesel::ConnectionError::BadConnection(e) => {
-                Self::Configuration(format!("Bad connection: {e}"))
-            }
-            diesel::ConnectionError::InvalidConnectionUrl(e) => {
-                Self::Configuration(format!("Invalid connection url: {e}"))
-            }
-            diesel::ConnectionError::CouldntSetupConfiguration(e) => {
-                Self::Configuration(format!("Couldnt setup configuration: {e}"))
-            }
-            _ => Self::Configuration("Unknown error".to_string()),
-        }
-    }
-}
-
-impl From<DatabaseError> for FSError {
-    fn from(e: DatabaseError) -> Self {
-        match e {
-            DatabaseError::Closed => Self::DatabaseClosed("Database is closed".to_string()),
-            DatabaseError::DieselDatabaseError(kind, err) => {
-                Self::from(diesel::result::Error::DatabaseError(kind, err))
-            }
-            DatabaseError::Diesel(e) => Self::from(e),
-            DatabaseError::DieselConnectionError(e) => Self::from(e),
-        }
-    }
-}
-
 impl From<CommandError> for FSError {
     fn from(e: CommandError) -> Self {
         match e {
@@ -179,6 +134,29 @@ impl From<RemoteDevicesManagerError> for FSError {
             RemoteDevicesManagerError::DeviceNotFound { .. } => Self::DeviceNotFound(e),
             RemoteDevicesManagerError::UserNotFound { .. } => Self::UserNotFound(e),
             _ => Self::RemoteOperation(e.to_string()),
+        }
+    }
+}
+
+impl From<libparsec_platform_storage::StorageError> for FSError {
+    fn from(value: libparsec_platform_storage::StorageError) -> Self {
+        match value {
+            libparsec_platform_storage::StorageError::Internal(_)
+            | libparsec_platform_storage::StorageError::InvalidEntryID { .. }
+            | libparsec_platform_storage::StorageError::InvalidRegexPattern(_, _) => {
+                Self::Custom(value.to_string())
+            }
+            libparsec_platform_storage::StorageError::LocalChunkIDMiss(id) => {
+                Self::LocalChunkIDMiss(id)
+            }
+            libparsec_platform_storage::StorageError::LocalBlockIDMiss(id) => {
+                Self::LocalBlockIDMiss(id)
+            }
+            libparsec_platform_storage::StorageError::LocalEntryIDMiss(id) => {
+                Self::LocalEntryIDMiss(id)
+            }
+            libparsec_platform_storage::StorageError::Crypto(e) => Self::Crypto(e),
+            libparsec_platform_storage::StorageError::Vacuum(e) => Self::Vacuum(e.to_string()),
         }
     }
 }

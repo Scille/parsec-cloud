@@ -9,7 +9,7 @@ use std::{
 
 use diesel::connection::SimpleConnection;
 
-use crate::{executor::SqliteExecutor, DatabaseResult};
+use super::{executor::SqliteExecutor, DatabaseResult};
 
 /// Represent the different Synchronous mode in Sqlite.
 /// see https://www.sqlite.org/pragma.html#pragma_synchronous for more information about the different mode.
@@ -96,6 +96,7 @@ impl FromStr for JournalMode {
         }
     }
 }
+
 /// Represent the option for auto vacuum mode.
 /// Note: If you change the auto vacuum mode you may need to manually execute `VACUUM` to be in a correct state for sqlite.
 /// see https://www.sqlite.org/pragma.html#pragma_auto_vacuum for more information.
@@ -152,7 +153,7 @@ impl AutoVacuum {
     /// Method to safely configure the [AutoVacuum] mode.
     /// If the current mode is different than the configured in the Sqlite database,
     /// It will set it and run `VACUUM` as indicated by the documentation
-    pub(crate) async fn safely_set_value(&self, conn: &SqliteExecutor) -> DatabaseResult<()> {
+    pub(super) async fn safely_set_value(&self, conn: &SqliteExecutor) -> DatabaseResult<()> {
         use diesel::{dsl::sql, prelude::*, sql_types::Text};
 
         let res = conn

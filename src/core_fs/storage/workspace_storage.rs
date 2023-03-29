@@ -27,8 +27,10 @@ use super::{
 };
 
 use libparsec::core_fs::{
-    FSError, Remanence, DEFAULT_CHUNK_VACUUM_THRESHOLD, DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+    FSError, DEFAULT_CHUNK_VACUUM_THRESHOLD, DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
 };
+
+pub type InternalWorkspaceStorage = Arc<libparsec::core_fs::WorkspaceStorageSpecialized>;
 
 /// WorkspaceStorage's binding is implemented with allow_threads because its
 /// methods are called in trio.to_thread to connect the sync and async world
@@ -43,12 +45,12 @@ pub(crate) struct WorkspaceStorage(
     /// The lock is here when we do `close_connection` after that the WorkspaceStorage should not be accessible.
     /// The second one is because of [FutureIntoCoroutine] that require to provide a `static` future.
     /// To fullfish that requirement we have to clone the reference over [libparsec::core_fs::WorkspaceStorage].
-    pub Arc<Mutex<Option<Arc<libparsec::core_fs::WorkspaceStorage>>>>,
+    pub Arc<Mutex<Option<InternalWorkspaceStorage>>>,
     pub Option<Regex>,
 );
 
 impl WorkspaceStorage {
-    pub(crate) fn get_storage(&self) -> PyResult<Arc<libparsec::core_fs::WorkspaceStorage>> {
+    pub(crate) fn get_storage(&self) -> PyResult<InternalWorkspaceStorage> {
         self.0
             .lock()
             .expect("Mutex is poisoned")
@@ -59,7 +61,7 @@ impl WorkspaceStorage {
             })
     }
 
-    fn drop_storage(&self) -> PyResult<Arc<libparsec::core_fs::WorkspaceStorage>> {
+    fn drop_storage(&self) -> PyResult<InternalWorkspaceStorage> {
         self.0
             .lock()
             .expect("Mutex is poisoned")
@@ -84,7 +86,7 @@ impl WorkspaceStorage {
         cache_size: Option<u64>,
     ) -> FutureIntoCoroutine {
         FutureIntoCoroutine::from(async move {
-            libparsec::core_fs::WorkspaceStorage::new(
+            libparsec::core_fs::WorkspaceStorageSpecialized::new(
                 &data_base_dir,
                 device.0,
                 workspace_id.0,
@@ -154,7 +156,7 @@ impl WorkspaceStorage {
     fn get_manifest(&self, entry_id: EntryID) -> FutureIntoCoroutine {
         match self.get_storage() {
             Ok(ws) => {
-                if let Some(manifest) = ws.get_manifest_in_cache(&entry_id.0) {
+                if let Some(manifest) = ws.get_manifest_in_cache(entry_id.0) {
                     FutureIntoCoroutine::ready(Ok(manifest_into_py_object(manifest)))
                 } else {
                     FutureIntoCoroutine::from_raw(async move {
@@ -184,11 +186,7 @@ impl WorkspaceStorage {
             file_or_folder_manifest_from_py_object(py, &manifest).map(|manifest| (ws, manifest))
         }) {
             Ok((ws, manifest)) => {
-                let removed_ids = removed_ids.map(|x| {
-                    x.into_iter()
-                        .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
-                        .collect()
-                });
+                let removed_ids = removed_ids.map(|x| x.into_iter().map(|v| v.0).collect());
 
                 if cache_only {
                     FutureIntoCoroutine::ready(Python::with_gil(|py| {
@@ -198,7 +196,7 @@ impl WorkspaceStorage {
                     }))
                 } else {
                     FutureIntoCoroutine::from(async move {
-                        ws.set_manifest(entry_id.0, manifest, cache_only, removed_ids)
+                        ws.set_manifest(entry_id.0, manifest, removed_ids)
                             .await
                             .map_err(to_py_err)
                     })
@@ -223,8 +221,8 @@ impl WorkspaceStorage {
         let ws = self.get_storage();
 
         FutureIntoCoroutine::from(async move {
-            ws?.clear_manifest(&entry_id.0).await.map_err(|e| match e {
-                FSError::LocalMiss(_) => FSLocalMissError::new_err(entry_id),
+            ws?.drop_manifest(&entry_id.0).await.map_err(|e| match e {
+                FSError::LocalEntryIDMiss(_) => FSLocalMissError::new_err(entry_id),
                 _ => to_py_err(e),
             })
         })
@@ -244,7 +242,7 @@ impl WorkspaceStorage {
                     Ok(manifest) => FutureIntoCoroutine::ready(Ok(Python::with_gil(|py| {
                         LocalFileManifest(manifest).into_py(py)
                     }))),
-                    Err(libparsec::core_fs::FSError::LocalMiss(_)) => {
+                    Err(libparsec::core_fs::FSError::LocalEntryIDMiss(_)) => {
                         FutureIntoCoroutine::from(async move {
                             ws.load_file_descriptor(fd)
                                 .await
@@ -295,8 +293,7 @@ impl WorkspaceStorage {
         let ws = self.get_storage();
 
         FutureIntoCoroutine::from(async move {
-            ws?.clear_clean_block(block_id.0).await;
-            Ok(())
+            ws?.clear_clean_block(block_id.0).await.map_err(to_py_err)
         })
     }
 
@@ -305,7 +302,7 @@ impl WorkspaceStorage {
 
         FutureIntoCoroutine::from_raw(async move {
             let block = ws?.get_dirty_block(block_id.0).await.map_err(|e| match e {
-                FSError::LocalMiss(_) => FSLocalMissError::new_err(block_id),
+                FSError::LocalChunkIDMiss(_) => FSLocalMissError::new_err(block_id),
                 _ => to_py_err(e),
             })?;
 
@@ -318,7 +315,7 @@ impl WorkspaceStorage {
 
         FutureIntoCoroutine::from_raw(async move {
             let chunk = ws?.get_chunk(chunk_id.0).await.map_err(|e| match e {
-                FSError::LocalMiss(_) => FSLocalMissError::new_err(chunk_id),
+                FSError::LocalChunkIDMiss(_) => FSLocalMissError::new_err(chunk_id),
                 _ => to_py_err(e),
             })?;
 
@@ -344,7 +341,7 @@ impl WorkspaceStorage {
             ws?.clear_chunk(chunk_id.0, miss_ok)
                 .await
                 .map_err(|e| match e {
-                    FSError::LocalMiss(_) => FSLocalMissError::new_err(chunk_id),
+                    FSError::LocalChunkIDMiss(_) => FSLocalMissError::new_err(chunk_id),
                     _ => to_py_err(e),
                 })
         })
@@ -382,10 +379,18 @@ impl WorkspaceStorage {
         FutureIntoCoroutine::from(async move {
             ws?.get_need_sync_entries()
                 .await
-                .map(|(res0, res1)| {
+                .map(|entries| {
                     (
-                        res0.into_iter().map(EntryID).collect::<HashSet<EntryID>>(),
-                        res1.into_iter().map(EntryID).collect::<HashSet<EntryID>>(),
+                        entries
+                            .local_changes
+                            .into_iter()
+                            .map(EntryID)
+                            .collect::<HashSet<EntryID>>(),
+                        entries
+                            .remote_changes
+                            .into_iter()
+                            .map(EntryID)
+                            .collect::<HashSet<EntryID>>(),
                     )
                 })
                 .map_err(to_py_err)
@@ -406,9 +411,17 @@ impl WorkspaceStorage {
     fn clear_memory_cache(&self, flush: bool) -> FutureIntoCoroutine {
         let ws = self.get_storage();
 
-        FutureIntoCoroutine::from(
-            async move { ws?.clear_memory_cache(flush).await.map_err(to_py_err) },
-        )
+        FutureIntoCoroutine::from(async move {
+            let ws = ws?;
+            #[cfg(feature = "test-utils")]
+            if !flush {
+                ws.drop_deferred_commit_manifest().await;
+                return Ok(());
+            }
+            let _ = flush;
+
+            ws.commit_deferred_manifest().await.map_err(to_py_err)
+        })
     }
 
     fn run_vacuum(&self) -> FutureIntoCoroutine {
@@ -457,10 +470,11 @@ impl WorkspaceStorage {
         self.get_storage().map(|ws| EntryID(ws.workspace_id))
     }
 
+    #[cfg(feature = "test-utils")]
     fn is_manifest_cache_ahead_of_persistance(&self, entry_id: EntryID) -> PyResult<bool> {
         let ws = self.get_storage()?;
 
-        Ok(ws.is_manifest_cache_ahead_of_persistance(&entry_id.0))
+        Ok(ws.is_manifest_cache_ahead_of_persistance(entry_id.0))
     }
 
     pub(crate) fn is_block_remanent(&self) -> PyResult<bool> {

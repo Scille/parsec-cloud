@@ -165,7 +165,7 @@ impl TestbedUserData {
         let mut hasher = crc32fast::Hasher::new();
         // Most data are contained in the certif (indirectly for the private key)
         hasher.update(&raw_certif);
-        hasher.update(user_manifest_id.as_ref().as_bytes());
+        hasher.update(user_manifest_id.as_bytes());
         hasher.update(user_manifest_key.as_ref());
 
         Self {

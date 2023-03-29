@@ -7,24 +7,18 @@ use std::{
 };
 
 use libparsec_platform_async::Mutex as AsyncMutex;
-use libparsec_platform_local_db::{AutoVacuum, LocalDatabase, VacuumMode};
+use libparsec_platform_storage::{
+    BlockStorage, ChunkStorage, Closable, ManifestStorage, NeedSyncEntries,
+};
 use libparsec_types::{
     BlockID, ChunkID, EntryID, FileDescriptor, LocalDevice, LocalFileManifest, LocalFolderManifest,
     LocalManifest, LocalUserManifest, LocalWorkspaceManifest, Regex,
 };
 
-use super::{
-    chunk_storage::{ChunkStorage, Remanence},
-    manifest_storage::{ChunkOrBlockID, ManifestStorage},
-};
 use crate::{
     error::{FSError, FSResult},
-    storage::{
-        chunk_storage::{BlockStorage, BlockStorageTrait, ChunkStorageTrait},
-        version::{
-            get_workspace_cache_storage_db_relative_path,
-            get_workspace_data_storage_db_relative_path,
-        },
+    storage::version::{
+        get_workspace_cache_storage_db_relative_path, get_workspace_data_storage_db_relative_path,
     },
 };
 
@@ -99,14 +93,17 @@ impl From<LocalWorkspaceManifest> for LocalUserOrWorkspaceManifest {
 /// WorkspaceStorage is implemented with interior mutability because
 /// we want some parallelism between its fields (e.g open_fds)
 // TODO: Currently we handle EntryID lock in Python, should be implemented here instead
-pub struct WorkspaceStorage {
+pub struct WorkspaceStorage<Data, Cache>
+where
+    Data: ChunkStorage + ManifestStorage + Send + Sync,
+    Cache: ChunkStorage + BlockStorage + Send + Sync,
+{
     pub device: Arc<LocalDevice>,
     pub workspace_id: EntryID,
     open_fds: Mutex<HashMap<FileDescriptor, EntryID>>,
     fd_counter: Mutex<u32>,
-    block_storage: BlockStorage,
-    chunk_storage: ChunkStorage,
-    manifest_storage: ManifestStorage,
+    data_storage: Data,
+    cache_storage: Cache,
     prevent_sync_pattern: Mutex<Regex>,
     prevent_sync_pattern_fully_applied: Mutex<bool>,
     lock_manifest_udpate: AsyncMutex<()>,
@@ -115,7 +112,19 @@ pub struct WorkspaceStorage {
     workspace_manifest_copy: Mutex<LocalWorkspaceManifest>,
 }
 
-impl WorkspaceStorage {
+#[cfg(not(target_arch = "wasm32"))]
+pub type WorkspaceStorageSpecialized = WorkspaceStorage<
+    libparsec_platform_storage::sqlite::SqliteDataStorage,
+    libparsec_platform_storage::sqlite::SqliteCacheStorage,
+>;
+
+#[cfg(not(target_arch = "wasm32"))]
+impl
+    WorkspaceStorage<
+        libparsec_platform_storage::sqlite::SqliteDataStorage,
+        libparsec_platform_storage::sqlite::SqliteCacheStorage,
+    >
+{
     pub async fn new(
         data_base_dir: &Path,
         device: Arc<LocalDevice>,
@@ -130,32 +139,31 @@ impl WorkspaceStorage {
 
         // TODO: once the auto_vacuum approach has been validated for the cache storage,
         // we should investigate whether it is a good fit for the data storage.
-        let data_conn = LocalDatabase::from_path(
-            data_base_dir,
-            &data_relative_path,
-            VacuumMode::WithThreshold(data_vacuum_threshold),
-        )
-        .await?;
-        let data_conn = Arc::new(data_conn);
-        let cache_conn = LocalDatabase::from_path(
+        let cache_storage = libparsec_platform_storage::sqlite::SqliteCacheStorage::from_path(
             data_base_dir,
             &cache_relative_path,
-            VacuumMode::Automatic(AutoVacuum::Full),
+            libparsec_platform_storage::sqlite::VacuumMode::Automatic(
+                libparsec_platform_storage::sqlite::AutoVacuum::Full,
+            ),
+            device.clone(),
+            cache_size,
         )
-        .await?;
+        .await
+        .map_err(libparsec_platform_storage::StorageError::from)?;
 
-        let block_storage = BlockStorage::new(cache_conn, device.clone(), cache_size).await?;
-
-        let manifest_storage =
-            ManifestStorage::new(data_conn.clone(), device.clone(), workspace_id).await?;
-
-        let chunk_storage = ChunkStorage::new(data_conn, device.clone()).await?;
+        let data_storage = libparsec_platform_storage::sqlite::SqliteDataStorage::from_path(
+            data_base_dir,
+            &data_relative_path,
+            libparsec_platform_storage::sqlite::VacuumMode::WithThreshold(data_vacuum_threshold),
+            device.clone(),
+        )
+        .await
+        .map_err(libparsec_platform_storage::StorageError::from)?;
 
         // Populate the cache with the workspace manifest to be able to
         // access it synchronously at all time
         let workspace_manifest =
-            WorkspaceStorage::load_workspace_manifest(&manifest_storage, workspace_id, &device)
-                .await?;
+            Self::load_workspace_manifest(&data_storage, workspace_id, &device).await?;
 
         // Instantiate workspace storage
         let instance = Self {
@@ -165,9 +173,8 @@ impl WorkspaceStorage {
             open_fds: Mutex::new(HashMap::new()),
             fd_counter: Mutex::new(0),
             // Manifest and block storage
-            block_storage,
-            chunk_storage,
-            manifest_storage,
+            cache_storage,
+            data_storage,
             // Pattern attributes
             prevent_sync_pattern: Mutex::new(prevent_sync_pattern.clone()),
             prevent_sync_pattern_fully_applied: Mutex::new(false),
@@ -180,10 +187,24 @@ impl WorkspaceStorage {
             .set_prevent_sync_pattern(&prevent_sync_pattern)
             .await?;
 
-        instance.block_storage.cleanup().await?;
-        instance.block_storage.run_vacuum().await?;
+        instance.cache_storage.cleanup().await?;
+        instance.cache_storage.vacuum().await?;
 
         Ok(instance)
+    }
+}
+
+impl<Data, Cache> WorkspaceStorage<Data, Cache>
+where
+    Data: ChunkStorage + ManifestStorage + Closable + Send + Sync,
+    Cache: ChunkStorage + BlockStorage + Closable + Send + Sync,
+{
+    /// Close the connections to the databases.
+    /// Provide a way to manually close those connections.
+    /// Event tho they will be closed when [WorkspaceStorage] is dropped.
+    pub async fn close_connections(&self) {
+        self.data_storage.close().await;
+        self.cache_storage.close().await;
     }
 
     pub fn get_prevent_sync_pattern(&self) -> libparsec_types::Regex {
@@ -226,9 +247,9 @@ impl WorkspaceStorage {
             .cloned()
             .ok_or(FSError::InvalidFileDescriptor(fd))?;
 
-        match self.get_manifest_in_cache(&entry_id) {
+        match self.get_manifest_in_cache(entry_id) {
             Some(LocalManifest::File(manifest)) => Ok(manifest),
-            _ => Err(FSError::LocalMiss(*entry_id)),
+            _ => Err(FSError::LocalEntryIDMiss(entry_id)),
         }
     }
 
@@ -243,7 +264,7 @@ impl WorkspaceStorage {
 
         match self.get_manifest(entry_id).await {
             Ok(LocalManifest::File(manifest)) => Ok(manifest),
-            _ => Err(FSError::LocalMiss(*entry_id)),
+            _ => Err(FSError::LocalEntryIDMiss(entry_id)),
         }
     }
 
@@ -258,70 +279,100 @@ impl WorkspaceStorage {
         block_id: BlockID,
         block: &[u8],
     ) -> FSResult<HashSet<BlockID>> {
-        self.block_storage.set_clean_block(block_id, block).await
+        self.cache_storage
+            .set_clean_block(block_id, block)
+            .await
+            .map_err(FSError::from)
     }
 
     pub async fn is_clean_block(&self, block_id: BlockID) -> FSResult<bool> {
-        self.block_storage.is_chunk(ChunkID::from(*block_id)).await
+        self.cache_storage
+            .is_chunk(ChunkID::from(*block_id))
+            .await
+            .map_err(FSError::from)
     }
 
-    pub async fn clear_clean_block(&self, block_id: BlockID) {
-        let _: FSResult<()> = self
-            .block_storage
+    pub async fn clear_clean_block(&self, block_id: BlockID) -> FSResult<()> {
+        match self
+            .cache_storage
             .clear_chunk(ChunkID::from(*block_id))
-            .await;
+            .await
+        {
+            Ok(_) => Ok(()),
+            Err(libparsec_platform_storage::StorageError::LocalChunkIDMiss(_)) => Ok(()),
+            Err(e) => Err(FSError::from(e)),
+        }
     }
 
     pub async fn get_dirty_block(&self, block_id: BlockID) -> FSResult<Vec<u8>> {
-        self.chunk_storage.get_chunk(ChunkID::from(*block_id)).await
+        self.data_storage
+            .get_chunk(ChunkID::from(*block_id))
+            .await
+            .map_err(FSError::from)
     }
 
     // Chunk interface
 
     pub async fn get_chunk(&self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
-        if let Ok(raw) = self.chunk_storage.get_chunk(chunk_id).await {
+        if let Ok(raw) = self.data_storage.get_chunk(chunk_id).await {
             Ok(raw)
-        } else if let Ok(raw) = self.block_storage.get_chunk(chunk_id).await {
+        } else if let Ok(raw) = self.cache_storage.get_chunk(chunk_id).await {
             Ok(raw)
         } else {
-            Err(FSError::LocalMiss(*chunk_id))
+            Err(FSError::LocalChunkIDMiss(chunk_id))
         }
     }
 
     pub async fn set_chunk(&self, chunk_id: ChunkID, block: &[u8]) -> FSResult<()> {
-        self.chunk_storage.set_chunk(chunk_id, block).await
+        self.data_storage
+            .set_chunk(chunk_id, block)
+            .await
+            .map_err(FSError::from)
     }
 
     pub async fn clear_chunk(&self, chunk_id: ChunkID, miss_ok: bool) -> FSResult<()> {
-        let res = self.chunk_storage.clear_chunk(chunk_id).await;
-        if !miss_ok || res != Err(FSError::LocalMiss(*chunk_id)) {
+        let res = self
+            .data_storage
+            .clear_chunk(chunk_id)
+            .await
+            .map_err(FSError::from);
+        if !miss_ok || res != Err(FSError::LocalChunkIDMiss(chunk_id)) {
             return res;
         }
         Ok(())
     }
 
     pub async fn clear_chunks(&self, chunk_ids: &[ChunkID]) -> FSResult<()> {
-        self.chunk_storage.clear_chunks(chunk_ids).await
+        self.data_storage
+            .clear_chunks(chunk_ids)
+            .await
+            .map_err(FSError::from)
     }
 
     pub async fn remove_clean_blocks(&self, block_ids: &[BlockID]) -> FSResult<()> {
         let chunk_ids = block_ids
             .iter()
-            .map(|id| ChunkID::from(*id.as_bytes()))
+            .map(|id| ChunkID::from(*id.as_ref().as_bytes()))
             .collect::<Vec<_>>();
-        self.block_storage.clear_chunks(&chunk_ids).await
+        self.cache_storage
+            .clear_chunks(&chunk_ids)
+            .await
+            .map_err(FSError::from)
     }
 
     // Helpers
 
-    pub async fn clear_memory_cache(&self, flush: bool) -> FSResult<()> {
-        self.manifest_storage.clear_memory_cache(flush).await
+    pub async fn commit_deferred_manifest(&self) -> FSResult<()> {
+        self.data_storage
+            .commit_deferred_manifest()
+            .await
+            .map_err(FSError::from)
     }
 
     // Checkpoint interface
 
     pub async fn get_realm_checkpoint(&self) -> i64 {
-        self.manifest_storage.get_realm_checkpoint().await
+        self.data_storage.get_realm_checkpoint().await
     }
 
     pub async fn update_realm_checkpoint(
@@ -329,19 +380,23 @@ impl WorkspaceStorage {
         new_checkpoint: i64,
         changed_vlobs: Vec<(EntryID, i64)>,
     ) -> FSResult<()> {
-        self.manifest_storage
+        self.data_storage
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
             .await
+            .map_err(FSError::from)
     }
 
-    pub async fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
-        self.manifest_storage.get_need_sync_entries().await
+    pub async fn get_need_sync_entries(&self) -> FSResult<NeedSyncEntries> {
+        self.data_storage
+            .get_need_sync_entries()
+            .await
+            .map_err(FSError::from)
     }
 
     // Manifest interface
 
     async fn load_workspace_manifest(
-        manifest_storage: &ManifestStorage,
+        manifest_storage: &Data,
         workspace_id: EntryID,
         device: &LocalDevice,
     ) -> FSResult<LocalWorkspaceManifest> {
@@ -377,11 +432,11 @@ impl WorkspaceStorage {
                     .set_manifest(
                         workspace_id,
                         LocalManifest::Workspace(manifest.clone()),
-                        false,
                         None,
                     )
                     .await
                     .and(Ok(manifest))
+                    .map_err(FSError::from)
             }
         }
     }
@@ -394,17 +449,20 @@ impl WorkspaceStorage {
     }
 
     pub async fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
-        self.manifest_storage.get_manifest(entry_id).await
+        self.data_storage
+            .get_manifest(entry_id)
+            .await
+            .map_err(FSError::from)
     }
 
     pub fn set_manifest_in_cache(
         &self,
         entry_id: EntryID,
         manifest: LocalFileOrFolderManifest,
-        removed_ids: Option<HashSet<ChunkOrBlockID>>,
+        removed_ids: Option<HashSet<ChunkID>>,
     ) -> FSResult<()> {
-        self.manifest_storage
-            .set_manifest_cache_only(entry_id, manifest.into(), removed_ids);
+        self.data_storage
+            .set_manifest_deferred_commit(entry_id, manifest.into(), removed_ids);
         Ok(())
     }
 
@@ -412,11 +470,10 @@ impl WorkspaceStorage {
         &self,
         entry_id: EntryID,
         manifest: LocalFileOrFolderManifest,
-        cache_only: bool,
-        removed_ids: Option<HashSet<ChunkOrBlockID>>,
+        removed_ids: Option<HashSet<ChunkID>>,
     ) -> FSResult<()> {
-        self.manifest_storage
-            .set_manifest(entry_id, manifest.into(), cache_only, removed_ids)
+        self.data_storage
+            .set_manifest(entry_id, manifest.into(), removed_ids)
             .await?;
         Ok(())
     }
@@ -427,8 +484,8 @@ impl WorkspaceStorage {
         }
         let guard = self.lock_manifest_udpate.lock().await;
 
-        self.manifest_storage
-            .set_manifest(self.workspace_id, manifest.clone().into(), false, None)
+        self.data_storage
+            .set_manifest(self.workspace_id, manifest.clone().into(), None)
             .await?;
 
         *self
@@ -441,23 +498,18 @@ impl WorkspaceStorage {
     }
 
     pub async fn ensure_manifest_persistent(&self, entry_id: EntryID) -> FSResult<()> {
-        self.manifest_storage
+        self.data_storage
             .ensure_manifest_persistent(entry_id)
             .await
+            .map_err(FSError::from)
     }
 
     #[cfg(any(test, feature = "test-utils"))]
-    pub async fn clear_manifest(&self, entry_id: &EntryID) -> FSResult<()> {
-        self.manifest_storage.clear_manifest(*entry_id).await
-    }
-
-    /// Close the connections to the databases.
-    /// Provide a way to manually close those connections.
-    /// Event tho they will be closed when [WorkspaceStorage] is dropped.
-    pub async fn close_connections(&self) {
-        self.manifest_storage.close_connection().await;
-        self.chunk_storage.close_connection().await;
-        self.block_storage.close_connection().await;
+    pub async fn drop_manifest(&self, entry_id: &EntryID) -> FSResult<()> {
+        self.data_storage
+            .clear_manifest(*entry_id)
+            .await
+            .map_err(FSError::from)
     }
 
     // Prevent sync pattern interface
@@ -471,17 +523,14 @@ impl WorkspaceStorage {
     }
 
     pub async fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<()> {
-        let fully_applied = self
-            .manifest_storage
-            .set_prevent_sync_pattern(pattern)
-            .await?;
+        let fully_applied = self.data_storage.set_prevent_sync_pattern(pattern).await?;
         self.load_prevent_sync_pattern(pattern, fully_applied);
         Ok(())
     }
 
     pub async fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<()> {
         let fully_applied = self
-            .manifest_storage
+            .data_storage
             .mark_prevent_sync_pattern_fully_applied(pattern)
             .await?;
         self.load_prevent_sync_pattern(pattern, fully_applied);
@@ -489,50 +538,69 @@ impl WorkspaceStorage {
     }
 
     pub async fn get_local_block_ids(&self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
-        self.block_storage.get_local_chunk_ids(chunk_ids).await
+        self.cache_storage
+            .get_local_chunk_ids(chunk_ids)
+            .await
+            .map_err(FSError::from)
     }
 
     pub async fn get_local_chunk_ids(&self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
-        self.chunk_storage.get_local_chunk_ids(chunk_ids).await
+        self.data_storage
+            .get_local_chunk_ids(chunk_ids)
+            .await
+            .map_err(FSError::from)
     }
 
     pub async fn run_vacuum(&self) -> FSResult<()> {
-        self.chunk_storage.run_vacuum().await
+        self.data_storage.vacuum().await.map_err(FSError::from)
     }
 
+    #[cfg(any(test, feature = "test-utils"))]
     /// Return `true` when the given manifest identified by `entry_id` is cached.
-    pub fn is_manifest_cache_ahead_of_persistance(&self, entry_id: &EntryID) -> bool {
-        self.manifest_storage
+    pub fn is_manifest_cache_ahead_of_persistance(&self, entry_id: EntryID) -> bool {
+        self.data_storage
             .is_manifest_cache_ahead_of_persistance(entry_id)
     }
 
-    pub fn get_manifest_in_cache(&self, entry_id: &EntryID) -> Option<LocalManifest> {
-        self.manifest_storage.get_manifest_in_cache(entry_id)
-    }
-}
-
-#[async_trait::async_trait]
-impl Remanence for WorkspaceStorage {
-    fn is_block_remanent(&self) -> bool {
-        self.block_storage.is_block_remanent()
+    pub fn get_manifest_in_cache(&self, entry_id: EntryID) -> Option<LocalManifest> {
+        self.data_storage.get_manifest_in_cache(entry_id)
     }
 
-    async fn enable_block_remanence(&self) -> FSResult<bool> {
-        self.block_storage.enable_block_remanence().await
+    #[cfg(any(test, feature = "test-utils"))]
+    pub async fn drop_deferred_commit_manifest(&self) {
+        self.data_storage
+            .drop_deferred_commit_manifest()
+            .await
+            .expect("Failed to flush cache");
     }
 
-    async fn disable_block_remanence(&self) -> FSResult<Option<HashSet<BlockID>>> {
-        self.block_storage.disable_block_remanence().await
+    pub fn is_block_remanent(&self) -> bool {
+        self.cache_storage.is_block_remanent()
     }
 
-    async fn clear_unreferenced_chunks(
+    pub async fn enable_block_remanence(&self) -> FSResult<bool> {
+        self.cache_storage
+            .enable_block_remanence()
+            .await
+            .map_err(FSError::from)
+    }
+
+    pub async fn disable_block_remanence(&self) -> FSResult<Option<HashSet<BlockID>>> {
+        self.cache_storage
+            .disable_block_remanence()
+            .await
+            .map_err(FSError::from)
+    }
+
+    pub async fn clear_unreferenced_chunks(
         &self,
         chunk_ids: &[ChunkID],
         not_accessed_after: libparsec_types::DateTime,
     ) -> FSResult<()> {
-        self.block_storage
+        self.cache_storage
             .clear_unreferenced_chunks(chunk_ids, not_accessed_after)
             .await
+            .map_err(FSError::from)
     }
 }
 
@@ -542,10 +610,14 @@ pub async fn workspace_storage_non_speculative_init(
     workspace_id: EntryID,
 ) -> FSResult<()> {
     let data_relative_path = get_workspace_data_storage_db_relative_path(&device, workspace_id);
-    let conn =
-        LocalDatabase::from_path(data_base_dir, &data_relative_path, VacuumMode::default()).await?;
-    let conn = Arc::new(conn);
-    let manifest_storage = ManifestStorage::new(conn, device.clone(), workspace_id).await?;
+    let data_storage = libparsec_platform_storage::sqlite::SqliteDataStorage::from_path(
+        data_base_dir,
+        &data_relative_path,
+        libparsec_platform_storage::sqlite::VacuumMode::default(),
+        device.clone(),
+    )
+    .await
+    .map_err(libparsec_platform_storage::StorageError::from)?;
     let timestamp = device.now();
     let manifest = LocalWorkspaceManifest::new(
         device.device_id.clone(),
@@ -554,16 +626,11 @@ pub async fn workspace_storage_non_speculative_init(
         false,
     );
 
-    manifest_storage
-        .set_manifest(
-            workspace_id,
-            LocalManifest::Workspace(manifest),
-            false,
-            None,
-        )
+    data_storage
+        .set_manifest(workspace_id, LocalManifest::Workspace(manifest), None)
         .await?;
-    manifest_storage.clear_memory_cache(true).await?;
-    manifest_storage.close_connection().await;
+    data_storage.commit_deferred_manifest().await?;
+    data_storage.close().await;
 
     Ok(())
 }
@@ -571,11 +638,12 @@ pub async fn workspace_storage_non_speculative_init(
 #[cfg(test)]
 mod tests {
     // TODO: add tests for `workspace_storage_non_speculative_init` !
+
     use std::num::NonZeroU64;
 
     use libparsec_testbed::TestbedEnv;
     use libparsec_tests_fixtures::parsec_test;
-    use libparsec_types::{Blocksize, Chunk, Regex, DEFAULT_BLOCK_SIZE};
+    use libparsec_types::{Blocksize, Chunk, DEFAULT_BLOCK_SIZE};
 
     use super::*;
 
@@ -583,8 +651,8 @@ mod tests {
         data_base_dir: &Path,
         device: Arc<LocalDevice>,
         workspace_id: Option<&EntryID>,
-    ) -> WorkspaceStorage {
-        WorkspaceStorage::new(
+    ) -> WorkspaceStorageSpecialized {
+        WorkspaceStorageSpecialized::new(
             data_base_dir,
             device,
             workspace_id.cloned().unwrap_or_default(),
@@ -611,14 +679,6 @@ mod tests {
         LocalFileManifest::new(author, EntryID::default(), timestamp, DEFAULT_BLOCK_SIZE)
     }
 
-    async fn clear_cache(storage: &WorkspaceStorage) {
-        storage
-            .manifest_storage
-            .clear_memory_cache(false)
-            .await
-            .expect("Failed to flush cache");
-    }
-
     #[parsec_test(testbed = "minimal")]
     async fn test_basic_set_get_clear(env: &TestbedEnv) {
         let alice = env.local_device("alice@dev1".parse().unwrap());
@@ -632,30 +692,30 @@ mod tests {
         // 1) No data
         assert_eq!(
             aws.get_manifest(manifest_id).await.unwrap_err(),
-            FSError::LocalMiss(*manifest_id)
+            FSError::LocalEntryIDMiss(manifest_id)
         );
 
         // 2) Set data
-        aws.set_manifest(manifest_id, manifest.clone(), false, None)
+        aws.set_manifest(manifest_id, manifest.clone(), None)
             .await
             .unwrap();
         assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
         // Make sure data are not only stored in cache
-        clear_cache(&aws).await;
+        aws.drop_deferred_commit_manifest().await;
         assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
         // 3) Clear data
-        aws.clear_manifest(&manifest_id).await.unwrap();
+        aws.drop_manifest(&manifest_id).await.unwrap();
 
         assert_eq!(
             aws.get_manifest(manifest_id).await.unwrap_err(),
-            FSError::LocalMiss(*manifest_id)
+            FSError::LocalEntryIDMiss(manifest_id)
         );
 
         assert_eq!(
-            aws.clear_manifest(&manifest_id).await.unwrap_err(),
-            FSError::LocalMiss(*manifest_id)
+            aws.drop_manifest(&manifest_id).await.unwrap_err(),
+            FSError::LocalEntryIDMiss(manifest_id)
         );
     }
 
@@ -670,33 +730,30 @@ mod tests {
         let gen_manifest = manifest.clone().into();
 
         // 1) Set data
-        aws.set_manifest(manifest_id, manifest.clone(), true, None)
-            .await
+        aws.set_manifest_in_cache(manifest_id, manifest.clone(), None)
             .unwrap();
         assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
         // Data should be set only in the cache
-        clear_cache(&aws).await;
+        aws.drop_deferred_commit_manifest().await;
         assert_eq!(
             aws.get_manifest(manifest_id).await.unwrap_err(),
-            FSError::LocalMiss(*manifest_id)
+            FSError::LocalEntryIDMiss(manifest_id)
         );
 
         // Re-set data
-        aws.set_manifest(manifest_id, manifest.clone(), true, None)
-            .await
+        aws.set_manifest_in_cache(manifest_id, manifest.clone(), None)
             .unwrap();
 
         // 2) Clear should work as expected
-        aws.clear_manifest(&manifest_id).await.unwrap();
+        aws.drop_manifest(&manifest_id).await.unwrap();
         assert_eq!(
             aws.get_manifest(manifest_id).await.unwrap_err(),
-            FSError::LocalMiss(*manifest_id)
+            FSError::LocalEntryIDMiss(manifest_id)
         );
 
         // Re-set data
-        aws.set_manifest(manifest_id, manifest, true, None)
-            .await
+        aws.set_manifest_in_cache(manifest_id, manifest, None)
             .unwrap();
 
         // 3) Flush data
@@ -704,7 +761,7 @@ mod tests {
         assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
         // Data should be persistent in real database
-        clear_cache(&aws).await;
+        aws.drop_deferred_commit_manifest().await;
         assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
         // 4) Idempotency
@@ -737,21 +794,21 @@ mod tests {
         // Set chunks and manifest
         aws.set_chunk(chunk1.id, data1).await.unwrap();
         aws.set_chunk(chunk2.id, data2).await.unwrap();
-        aws.set_manifest(manifest_id, manifest, false, None)
-            .await
-            .unwrap();
+        aws.set_manifest(manifest_id, manifest, None).await.unwrap();
 
         // Set a new version of the manifest without the chunks
-        let removed_ids = HashSet::from([
-            ChunkOrBlockID::ChunkID(chunk1.id),
-            ChunkOrBlockID::ChunkID(chunk2.id),
-        ]);
+        let removed_ids = HashSet::from([chunk1.id, chunk2.id]);
         file_manifest.blocks.clear();
         let new_manifest = LocalFileOrFolderManifest::File(file_manifest.clone());
 
-        aws.set_manifest(manifest_id, new_manifest, cache_only, Some(removed_ids))
-            .await
-            .unwrap();
+        if cache_only {
+            aws.set_manifest_in_cache(manifest_id, new_manifest, Some(removed_ids))
+                .unwrap();
+        } else {
+            aws.set_manifest(manifest_id, new_manifest, Some(removed_ids))
+                .await
+                .unwrap();
+        }
 
         if cache_only {
             // The chunks are still accessible
@@ -761,17 +818,17 @@ mod tests {
             // The chunks are gone
             assert_eq!(
                 aws.get_chunk(chunk1.id).await.unwrap_err(),
-                FSError::LocalMiss(*chunk1.id)
+                FSError::LocalChunkIDMiss(chunk1.id)
             );
             assert_eq!(
                 aws.get_chunk(chunk2.id).await.unwrap_err(),
-                FSError::LocalMiss(*chunk2.id)
+                FSError::LocalChunkIDMiss(chunk2.id)
             );
         }
 
         // Now flush the manifest
         if clear_manifest {
-            aws.clear_manifest(&manifest_id).await.unwrap();
+            aws.drop_manifest(&manifest_id).await.unwrap();
         } else {
             aws.ensure_manifest_persistent(manifest_id).await.unwrap();
         }
@@ -779,11 +836,11 @@ mod tests {
         // The chunks are gone
         assert_eq!(
             aws.get_chunk(chunk1.id).await.unwrap_err(),
-            FSError::LocalMiss(*chunk1.id)
+            FSError::LocalChunkIDMiss(chunk1.id)
         );
         assert_eq!(
             aws.get_chunk(chunk2.id).await.unwrap_err(),
-            FSError::LocalMiss(*chunk2.id)
+            FSError::LocalChunkIDMiss(chunk2.id)
         );
 
         // Idempotency
@@ -799,11 +856,11 @@ mod tests {
         let manifest_id = manifest.base.id;
         let manifest = LocalFileOrFolderManifest::File(manifest);
 
-        aws.set_manifest(manifest_id, manifest.clone(), true, None)
+        aws.set_manifest(manifest_id, manifest.clone(), None)
             .await
             .unwrap();
 
-        aws.clear_memory_cache(true).await.unwrap();
+        aws.commit_deferred_manifest().await.unwrap();
         aws.close_connections().await;
 
         let aws2 =
@@ -829,31 +886,28 @@ mod tests {
         let manifest2 = LocalFileOrFolderManifest::File(manifest2);
         let gen_manifest2 = manifest2.clone().into();
 
-        // Set manifest 1 and manifest 2, cache only
-        aws.set_manifest(manifest1_id, manifest1, false, None)
+        // Set `manifest1` and `manifest2` but `manifest2` cache only
+        aws.set_manifest(manifest1_id, manifest1, None)
             .await
             .unwrap();
-        aws.set_manifest(manifest2_id, manifest2.clone(), true, None)
-            .await
+        aws.set_manifest_in_cache(manifest2_id, manifest2.clone(), None)
             .unwrap();
 
         // Clear without flushing
-        aws.clear_memory_cache(false).await.unwrap();
+        aws.drop_deferred_commit_manifest().await;
 
         // Manifest 1 is present but manifest2 got lost
         assert_eq!(aws.get_manifest(manifest1_id).await.unwrap(), gen_manifest1);
         assert_eq!(
             aws.get_manifest(manifest2_id).await.unwrap_err(),
-            FSError::LocalMiss(*manifest2_id)
+            FSError::LocalEntryIDMiss(manifest2_id)
         );
 
         // Set Manifest 2, cache only
-        aws.set_manifest(manifest2_id, manifest2, true, None)
-            .await
+        aws.set_manifest_in_cache(manifest2_id, manifest2, None)
             .unwrap();
 
-        // Clear with flushing
-        aws.clear_memory_cache(true).await.unwrap();
+        aws.commit_deferred_manifest().await.unwrap();
         assert_eq!(aws.get_manifest(manifest2_id).await.unwrap(), gen_manifest2);
     }
 
@@ -877,9 +931,7 @@ mod tests {
         let manifest = LocalFileOrFolderManifest::File(file_manifest);
         let gen_manifest = manifest.clone().into();
 
-        aws.set_manifest(manifest_id, manifest, false, None)
-            .await
-            .unwrap();
+        aws.set_manifest(manifest_id, manifest, None).await.unwrap();
         assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
     }
 
@@ -895,7 +947,10 @@ mod tests {
         // Workspace storage starts with a speculative workspace manifest placeholder
         assert_eq!(
             aws.get_need_sync_entries().await.unwrap(),
-            (HashSet::from([aws.workspace_id]), HashSet::new())
+            NeedSyncEntries {
+                local_changes: HashSet::from([aws.workspace_id]),
+                remote_changes: HashSet::new()
+            }
         );
 
         let mut workspace_manifest = create_workspace_manifest(&aws.device, aws.workspace_id);
@@ -909,7 +964,7 @@ mod tests {
         assert_eq!(aws.get_realm_checkpoint().await, 0);
         assert_eq!(
             aws.get_need_sync_entries().await.unwrap(),
-            (HashSet::new(), HashSet::new())
+            NeedSyncEntries::default()
         );
 
         aws.update_realm_checkpoint(11, vec![(manifest_id, 22), (EntryID::default(), 33)])
@@ -919,13 +974,12 @@ mod tests {
         assert_eq!(aws.get_realm_checkpoint().await, 11);
         assert_eq!(
             aws.get_need_sync_entries().await.unwrap(),
-            (HashSet::new(), HashSet::new())
+            NeedSyncEntries::default()
         );
 
         aws.set_manifest(
             manifest_id,
             LocalFileOrFolderManifest::File(manifest.clone()),
-            false,
             None,
         )
         .await
@@ -934,23 +988,21 @@ mod tests {
         assert_eq!(aws.get_realm_checkpoint().await, 11);
         assert_eq!(
             aws.get_need_sync_entries().await.unwrap(),
-            (HashSet::from([manifest_id]), HashSet::new())
+            NeedSyncEntries {
+                local_changes: HashSet::from([manifest_id]),
+                remote_changes: HashSet::new()
+            }
         );
 
         manifest.need_sync = false;
-        aws.set_manifest(
-            manifest_id,
-            LocalFileOrFolderManifest::File(manifest),
-            false,
-            None,
-        )
-        .await
-        .unwrap();
+        aws.set_manifest(manifest_id, LocalFileOrFolderManifest::File(manifest), None)
+            .await
+            .unwrap();
 
         assert_eq!(aws.get_realm_checkpoint().await, 11);
         assert_eq!(
             aws.get_need_sync_entries().await.unwrap(),
-            (HashSet::new(), HashSet::new())
+            NeedSyncEntries::default(),
         );
 
         aws.update_realm_checkpoint(44, vec![(manifest_id, 55), (EntryID::default(), 66)])
@@ -960,7 +1012,10 @@ mod tests {
         assert_eq!(aws.get_realm_checkpoint().await, 44);
         assert_eq!(
             aws.get_need_sync_entries().await.unwrap(),
-            (HashSet::new(), HashSet::from([manifest_id]))
+            NeedSyncEntries {
+                local_changes: HashSet::new(),
+                remote_changes: HashSet::from([manifest_id])
+            }
         );
     }
 
@@ -975,27 +1030,27 @@ mod tests {
             .unwrap();
         let block_id = chunk.access.unwrap().id;
 
-        aws.clear_clean_block(block_id).await;
+        aws.clear_clean_block(block_id).await.unwrap();
 
         assert_eq!(
             aws.get_chunk(chunk.id).await.unwrap_err(),
-            FSError::LocalMiss(*chunk.id)
+            FSError::LocalChunkIDMiss(chunk.id)
         );
-        assert!(!aws.block_storage.is_chunk(chunk.id).await.unwrap());
-        assert_eq!(aws.block_storage.get_total_size().await.unwrap(), 0);
+        assert!(!aws.cache_storage.is_chunk(chunk.id).await.unwrap());
+        assert_eq!(aws.cache_storage.get_total_size().await.unwrap(), 0);
 
         aws.set_clean_block(block_id, data).await.unwrap();
         assert_eq!(aws.get_chunk(chunk.id).await.unwrap(), data);
-        assert!(aws.block_storage.is_chunk(chunk.id).await.unwrap());
-        assert!(aws.block_storage.get_total_size().await.unwrap() >= 7);
+        assert!(aws.cache_storage.is_chunk(chunk.id).await.unwrap());
+        assert!(aws.cache_storage.get_total_size().await.unwrap() >= 7);
 
-        aws.clear_clean_block(block_id).await;
+        aws.clear_clean_block(block_id).await.unwrap();
         assert_eq!(
             aws.get_chunk(chunk.id).await.unwrap_err(),
-            FSError::LocalMiss(*chunk.id)
+            FSError::LocalChunkIDMiss(chunk.id)
         );
-        assert!(!aws.block_storage.is_chunk(chunk.id).await.unwrap());
-        assert_eq!(aws.block_storage.get_total_size().await.unwrap(), 0);
+        assert!(!aws.cache_storage.is_chunk(chunk.id).await.unwrap());
+        assert_eq!(aws.cache_storage.get_total_size().await.unwrap(), 0);
 
         aws.set_chunk(chunk.id, data).await.unwrap();
         assert_eq!(aws.get_dirty_block(block_id).await.unwrap(), data);
@@ -1011,32 +1066,32 @@ mod tests {
 
         assert_eq!(
             aws.get_chunk(chunk.id).await.unwrap_err(),
-            FSError::LocalMiss(*chunk.id)
+            FSError::LocalChunkIDMiss(chunk.id)
         );
         assert_eq!(
             aws.clear_chunk(chunk.id, false).await.unwrap_err(),
-            FSError::LocalMiss(*chunk.id)
+            FSError::LocalChunkIDMiss(chunk.id)
         );
         aws.clear_chunk(chunk.id, true).await.unwrap();
-        assert!(!aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
-        assert_eq!(aws.chunk_storage.get_total_size().await.unwrap(), 0);
+        assert!(!aws.data_storage.is_chunk(chunk.id).await.unwrap());
+        assert_eq!(aws.data_storage.get_total_size().await.unwrap(), 0);
 
         aws.set_chunk(chunk.id, data).await.unwrap();
         assert_eq!(aws.get_chunk(chunk.id).await.unwrap(), data);
-        assert!(aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
-        assert!(aws.chunk_storage.get_total_size().await.unwrap() >= 7);
+        assert!(aws.data_storage.is_chunk(chunk.id).await.unwrap());
+        assert!(aws.data_storage.get_total_size().await.unwrap() >= 7);
 
         aws.clear_chunk(chunk.id, false).await.unwrap();
         assert_eq!(
             aws.get_chunk(chunk.id).await.unwrap_err(),
-            FSError::LocalMiss(*chunk.id)
+            FSError::LocalChunkIDMiss(chunk.id)
         );
         assert_eq!(
             aws.clear_chunk(chunk.id, false).await.unwrap_err(),
-            FSError::LocalMiss(*chunk.id)
+            FSError::LocalChunkIDMiss(chunk.id)
         );
-        assert!(!aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
-        assert_eq!(aws.chunk_storage.get_total_size().await.unwrap(), 0);
+        assert!(!aws.data_storage.is_chunk(chunk.id).await.unwrap());
+        assert_eq!(aws.data_storage.get_total_size().await.unwrap(), 0);
         aws.clear_chunk(chunk.id, true).await.unwrap();
     }
 
@@ -1054,7 +1109,7 @@ mod tests {
         for _ in 0..chunks_number {
             let c = Chunk::new(0, NonZeroU64::try_from(7).unwrap());
             chunks.push(c.id);
-            aws.chunk_storage.set_chunk(c.id, data).await.unwrap();
+            aws.data_storage.set_chunk(c.id, data).await.unwrap();
         }
 
         assert_eq!(chunks.len(), chunks_number);
@@ -1073,7 +1128,6 @@ mod tests {
         aws.set_manifest(
             manifest_id,
             LocalFileOrFolderManifest::File(manifest.clone()),
-            false,
             None,
         )
         .await
@@ -1120,76 +1174,24 @@ mod tests {
         let chunk3 = Chunk::new(0, block_size).evolve_as_block(&data).unwrap();
 
         // Store the first block
-        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 0);
+        assert_eq!(aws.cache_storage.get_nb_chunks().await.unwrap(), 0);
         aws.set_clean_block(chunk1.access.unwrap().id, &data)
             .await
             .unwrap();
-        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 1);
+        assert_eq!(aws.cache_storage.get_nb_chunks().await.unwrap(), 1);
         // Store the second block
         aws.set_clean_block(chunk2.access.unwrap().id, &data)
             .await
             .unwrap();
-        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 2);
+        assert_eq!(aws.cache_storage.get_nb_chunks().await.unwrap(), 2);
         // Store the third block, the first one gets cleared
         aws.set_clean_block(chunk3.access.unwrap().id, &data)
             .await
             .unwrap();
-        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 2);
+        assert_eq!(aws.cache_storage.get_nb_chunks().await.unwrap(), 2);
         // Force clear, everything gets cleared
-        aws.block_storage.clear_all_blocks().await.unwrap();
-        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 0);
-    }
-
-    #[parsec_test(testbed = "minimal")]
-    async fn test_invalid_regex(env: &TestbedEnv) {
-        use crate::storage::manifest_storage::prevent_sync_pattern::dsl::*;
-        use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
-
-        let alice = env.local_device("alice@dev1".parse().unwrap());
-        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
-
-        let initial_prevent_sync_pattern = aws.get_prevent_sync_pattern();
-
-        const INVALID_REGEX: &str = "[";
-        let valid_regex = Regex::from_regex_str("ok").unwrap();
-
-        // Ensure the entry is present.
-        aws.set_prevent_sync_pattern(&valid_regex).await.unwrap();
-
-        // Close the connection to avoid `OperationalError: database is locked`
-        // error due to concurrency operations on the SQLite database
-        aws.close_connections().await;
-
-        // Corrupt the db with an invalid regex
-        let db_relative_path =
-            get_workspace_data_storage_db_relative_path(&alice, aws.workspace_id);
-        let conn = LocalDatabase::from_path(
-            &env.discriminant_dir,
-            &db_relative_path,
-            VacuumMode::default(),
-        )
-        .await
-        .unwrap();
-        conn.exec(|conn| {
-            diesel::update(prevent_sync_pattern.filter(_id.eq(0).and(pattern.ne(INVALID_REGEX))))
-                .set((pattern.eq(INVALID_REGEX), fully_applied.eq(false)))
-                .execute(conn)
-        })
-        .await
-        .unwrap();
-        conn.close().await;
-
-        // Now re-open an see what happen !
-        let aws2 = workspace_storage_with_defaults(
-            &env.discriminant_dir,
-            alice.clone(),
-            Some(&aws.workspace_id),
-        )
-        .await;
-        assert_eq!(
-            aws2.get_prevent_sync_pattern(),
-            initial_prevent_sync_pattern
-        );
+        aws.cache_storage.clear_all_blocks().await.unwrap();
+        assert_eq!(aws.cache_storage.get_nb_chunks().await.unwrap(), 0);
     }
 
     #[parsec_test(testbed = "minimal")]

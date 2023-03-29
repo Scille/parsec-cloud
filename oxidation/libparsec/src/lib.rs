@@ -3,17 +3,21 @@
 #[cfg(not(target_arch = "wasm32"))]
 pub use libparsec_core_fs as core_fs;
 #[cfg(all(not(target_arch = "wasm32"), feature = "test-utils"))]
-pub use libparsec_platform_local_db as local_db;
+pub mod local_db {
+    pub use libparsec_platform_storage::sqlite::{
+        test_clear_local_db_in_memory_mock, test_toggle_local_db_in_memory_mock,
+    };
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 pub mod protocol {
     pub use libparsec_miniprotocol::{IntegerBetween1And100, Request};
     pub use libparsec_protocol::*;
 }
-#[cfg(not(target_arch = "wasm32"))]
-pub use libparsec_types as types;
-
 #[cfg(feature = "test-utils")]
 pub use libparsec_testbed as testbed;
+#[cfg(not(target_arch = "wasm32"))]
+pub use libparsec_types as types;
 
 pub use libparsec_client_connection as client_connection;
 pub use libparsec_core as core;
