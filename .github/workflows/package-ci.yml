@@ -42,7 +42,7 @@ jobs:
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
@@ -136,7 +136,7 @@ jobs:
           set -e
           echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
 
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
@@ -250,7 +250,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
@@ -308,7 +308,7 @@ jobs:
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
       - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
@@ -394,7 +394,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
       - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # pin v4.4.0
@@ -437,7 +437,7 @@ jobs:
       NDK_VERSION: 23.2.8568313
       SDK_VERSION: 30.0.3
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.3.0
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
       - name: Install rust toolchain
@@ -479,7 +479,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin v3.0.2
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.0.2
         timeout-minutes: 5
 
       - name: Install dependencies
