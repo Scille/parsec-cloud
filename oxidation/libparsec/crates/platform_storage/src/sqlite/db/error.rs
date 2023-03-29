@@ -21,6 +21,7 @@ pub enum DatabaseError {
     DieselConnectionError(diesel::result::ConnectionError),
 }
 
+#[cfg(any(test, feature = "test-utils"))]
 impl PartialEq for DatabaseError {
     fn eq(&self, other: &Self) -> bool {
         use DatabaseError::*;

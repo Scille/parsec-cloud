@@ -2,7 +2,7 @@
 
 use pyo3::PyErr;
 
-use crate::ids::EntryID;
+use crate::ids::{BlockID, ChunkID, EntryID};
 
 pyo3::import_exception!(parsec.core.fs.exceptions, FSError);
 pyo3::import_exception!(parsec.core.fs.exceptions, FSRemoteOperationError);
@@ -71,9 +71,9 @@ pub(crate) fn to_py_err(e: libparsec::core_fs::FSError) -> PyErr {
         libparsec::core_fs::FSError::InvalidFileDescriptor(fd) => {
             FSInvalidFileDescriptor::new_err(format!("Invalid file descriptor {}", fd.0))
         }
-        libparsec::core_fs::FSError::LocalMiss(entry_id) => {
-            FSLocalMissError::new_err(EntryID(libparsec::types::EntryID::from(entry_id)))
-        }
+        libparsec::core_fs::FSError::LocalEntryIDMiss(id) => FSLocalMissError::new_err(EntryID(id)),
+        libparsec::core_fs::FSError::LocalChunkIDMiss(id) => FSLocalMissError::new_err(ChunkID(id)),
+        libparsec::core_fs::FSError::LocalBlockIDMiss(id) => FSLocalMissError::new_err(BlockID(id)),
 
         libparsec::core_fs::FSError::Configuration(_) => FSInternalError::new_err(e.to_string()),
         libparsec::core_fs::FSError::Connection(_) => FSInternalError::new_err(e.to_string()),

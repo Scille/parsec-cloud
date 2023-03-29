@@ -8,7 +8,11 @@ autotests = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-test-utils = []
+# We depend on platform storage's `test-utils` to implement our own test utils
+# (e.g. `drop_deferred_commit_manifest`)
+test-utils = [
+    "libparsec_platform_storage/test-utils"
+]
 
 [dependencies]
 libparsec_client_connection = { path = "../client_connection" }
@@ -16,22 +20,18 @@ libparsec_core = { path = "../core" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
-libparsec_platform_local_db = { path = "../platform_local_db" }
 libparsec_platform_async = { path = "../platform_async" }
+libparsec_platform_storage = { path = "../platform_storage" }
 
-# Disable Diesel's default feature to remove `32-column-tables` which slowdown compilation
-# quiet a lot (Diesel crate compilation on my machine: 19s with vs 8s without).
-# Note this is fine as long as we use tables with at most 16 columns.
-diesel = { version = "2.0.3", default-features = false }
 log = "0.4.17"
 regex = "1.7.3"
 thiserror = "1.0.40"
-uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
 lazy_static = "1.4.0"
 async-trait = "0.1.61"
 
 [dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
 libparsec_testbed = { path = "../testbed" }
+libparsec_platform_storage = { path = "../platform_storage", features = ["test-utils"] }
 
 tokio = { version = "1.27.0", features = ["macros"]}

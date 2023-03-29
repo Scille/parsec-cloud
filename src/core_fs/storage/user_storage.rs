@@ -28,11 +28,11 @@ pub(crate) struct UserStorage(
     /// The lock is here when we do `close_connection` after that the UserStorage should not be accessible.
     /// The second one is because of [FutureIntoCoroutine] that require to provide a `static` future.
     /// To fullfish that requirement we have to clone the reference over [libparsec::core_fs::UserStorage].
-    pub Arc<Mutex<Option<Arc<libparsec::core_fs::UserStorage>>>>,
+    pub Arc<Mutex<Option<Arc<libparsec::core_fs::UserStorageSpecialized>>>>,
 );
 
 impl UserStorage {
-    fn get_storage(&self) -> PyResult<Arc<libparsec::core_fs::UserStorage>> {
+    fn get_storage(&self) -> PyResult<Arc<libparsec::core_fs::UserStorageSpecialized>> {
         let guard = self.0.lock().expect("Mutex is poisoned");
 
         guard
@@ -41,7 +41,7 @@ impl UserStorage {
             .ok_or_else(|| FSInternalError::new_err("Trying to use an already closed user storage"))
     }
 
-    fn drop_storage(&self) -> PyResult<Arc<libparsec::core_fs::UserStorage>> {
+    fn drop_storage(&self) -> PyResult<Arc<libparsec::core_fs::UserStorageSpecialized>> {
         self.0
             .lock()
             .expect("Mutex is poisoned")
@@ -60,7 +60,7 @@ impl UserStorage {
         user_manifest_id: EntryID,
     ) -> FutureIntoCoroutine {
         FutureIntoCoroutine::from(async move {
-            libparsec::core_fs::UserStorage::new(
+            libparsec::core_fs::UserStorageSpecialized::new(
                 &data_base_dir,
                 device.0.clone(),
                 user_manifest_id.0,
@@ -108,16 +108,17 @@ impl UserStorage {
         let us = self.get_storage();
 
         FutureIntoCoroutine::from(async move {
-            us?.get_need_sync_entries().await.map_err(to_py_err).map(
-                |(local_changes, remote_changes)| {
+            us?.get_need_sync_entries()
+                .await
+                .map_err(to_py_err)
+                .map(|entries| {
                     let local_changes: HashSet<EntryID> =
-                        local_changes.into_iter().map(EntryID).collect();
+                        entries.local_changes.into_iter().map(EntryID).collect();
                     let remote_changes: HashSet<EntryID> =
-                        remote_changes.into_iter().map(EntryID).collect();
+                        entries.remote_changes.into_iter().map(EntryID).collect();
 
                     (local_changes, remote_changes)
-                },
-            )
+                })
         })
     }
 

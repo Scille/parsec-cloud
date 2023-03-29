@@ -74,7 +74,7 @@ impl WorkspaceStorageSnapshot {
             .expect("Mutex is poisoned")
             .get(entry_id)
             .cloned()
-            .ok_or(FSError::LocalMiss(**entry_id))
+            .ok_or(FSError::LocalEntryIDMiss(*entry_id))
     }
 }
 
@@ -106,7 +106,7 @@ impl WorkspaceStorageSnapshot {
                 })
                 .and_then(|(entry_id, manifest)| match manifest {
                     libparsec::core_fs::LocalFileOrFolderManifest::File(manifest) => Ok(manifest),
-                    _ => Err(FSError::LocalMiss(**entry_id)),
+                    _ => Err(FSError::LocalEntryIDMiss(*entry_id)),
                 })
                 .map(LocalFileManifest)
                 .map(|x| x.into_py(py))

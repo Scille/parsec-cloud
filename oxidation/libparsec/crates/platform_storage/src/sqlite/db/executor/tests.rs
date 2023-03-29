@@ -5,8 +5,7 @@ use std::sync::Arc;
 
 use libparsec_tests_fixtures::parsec_test;
 
-use super::SqliteExecutor;
-use crate::DatabaseError;
+use super::{DatabaseError, SqliteExecutor};
 
 #[parsec_test]
 async fn stop_with_multiple_jobs() {
@@ -147,7 +146,7 @@ async fn panicking_job() {
 #[parsec_test]
 async fn fail_reopen_database() {
     let connection = SqliteConnection::establish(":memory:").unwrap();
-    let executor = SqliteExecutor::start(connection, |_conn| Err(crate::DatabaseError::Closed));
+    let executor = SqliteExecutor::start(connection, |_conn| Err(super::DatabaseError::Closed));
 
     let err = executor.full_vacuum().await.unwrap_err();
     assert_eq!(err, DatabaseError::Closed);

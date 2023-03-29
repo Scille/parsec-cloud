@@ -4,7 +4,7 @@
 use diesel::{Connection, SqliteConnection};
 use std::{ops::DerefMut, sync::Mutex};
 
-use crate::DBPathInfo;
+use super::DBPathInfo;
 
 /// A database associated to a path can be ether closed or opened.
 enum ClosableInMemoryDB {
@@ -54,7 +54,7 @@ static TEST_DB_STRATEGY: Mutex<TestDBStrategy> = Mutex::new(TestDBStrategy::OnDi
 /// # Panics
 ///
 /// This function will panic if we try to open a connection to an already opened file.
-pub(crate) fn maybe_open_sqlite_in_memory(
+pub(super) fn maybe_open_sqlite_in_memory(
     path_info: &super::DBPathInfo,
 ) -> Option<SqliteConnection> {
     let mut strategy = TEST_DB_STRATEGY.lock().expect("Mutex is poisoned");
@@ -114,7 +114,7 @@ pub(crate) fn maybe_open_sqlite_in_memory(
 /// - We haven't allow the connection to be openned in memory, see [test_toggle_local_db_in_memory_mock].
 /// - The entry specified by `path` is not found.
 /// - The entry specified by `path` is already closed.
-pub(crate) fn maybe_return_sqlite_in_memory_conn(
+pub(super) fn maybe_return_sqlite_in_memory_conn(
     path_info: &DBPathInfo,
     conn: SqliteConnection,
 ) -> Result<(), SqliteConnection> {

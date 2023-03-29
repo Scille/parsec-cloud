@@ -1,22 +1,25 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::{
-    collections::HashSet,
     path::Path,
     sync::{Arc, Mutex},
 };
 
 use libparsec_platform_async::Mutex as AsyncMutex;
-use libparsec_platform_local_db::{LocalDatabase, VacuumMode};
-use libparsec_types::{EntryID, LocalDevice, LocalManifest, LocalUserManifest};
+use libparsec_platform_storage::{Closable, ManifestStorage, NeedSyncEntries};
+use libparsec_types::EntryID;
+use libparsec_types::{LocalDevice, LocalManifest, LocalUserManifest};
 
-use super::{manifest_storage::ManifestStorage, version::get_user_data_storage_db_relative_path};
-use crate::error::FSResult;
+use super::version::get_user_data_storage_db_relative_path;
+use crate::{error::FSResult, FSError};
 
-pub struct UserStorage {
+pub struct UserStorage<Data>
+where
+    Data: ManifestStorage + Send + Sync + Closable,
+{
     pub device: Arc<LocalDevice>,
     pub user_manifest_id: EntryID,
-    manifest_storage: ManifestStorage,
+    data_storage: Data,
     /// A lock that will be used to prevent concurrent update in [UserStorage::set_user_manifest].
     /// When updating the user manifest.
     lock_update_manifest: AsyncMutex<()>,
@@ -25,30 +28,43 @@ pub struct UserStorage {
     user_manifest_copy: Mutex<LocalUserManifest>,
 }
 
-impl UserStorage {
+#[cfg(not(target_arch = "wasm32"))]
+pub type UserStorageSpecialized =
+    UserStorage<libparsec_platform_storage::sqlite::SqliteDataStorage>;
+
+#[cfg(not(target_arch = "wasm32"))]
+impl UserStorage<libparsec_platform_storage::sqlite::SqliteDataStorage> {
     pub async fn new(
         data_base_dir: &Path,
         device: Arc<LocalDevice>,
         user_manifest_id: EntryID,
     ) -> FSResult<Self> {
         let data_relative_path = get_user_data_storage_db_relative_path(&device);
-        let conn =
-            LocalDatabase::from_path(data_base_dir, &data_relative_path, VacuumMode::default())
-                .await?;
-        let conn = Arc::new(conn);
-        let manifest_storage = ManifestStorage::new(conn, device.clone(), user_manifest_id).await?;
+        let data_storage = libparsec_platform_storage::sqlite::SqliteDataStorage::from_path(
+            data_base_dir,
+            &data_relative_path,
+            libparsec_platform_storage::sqlite::VacuumMode::default(),
+            device.clone(),
+        )
+        .await
+        .map_err(libparsec_platform_storage::StorageError::from)?;
         let user_manifest =
-            UserStorage::load_user_manifest(&manifest_storage, user_manifest_id, &device).await?;
+            UserStorage::load_user_manifest(&data_storage, user_manifest_id, &device).await?;
         let user_storage = Self {
             device,
             user_manifest_id,
-            manifest_storage,
+            data_storage,
             lock_update_manifest: AsyncMutex::new(()),
             user_manifest_copy: Mutex::new(user_manifest),
         };
         Ok(user_storage)
     }
+}
 
+impl<Data> UserStorage<Data>
+where
+    Data: ManifestStorage + Closable + Send + Sync,
+{
     /// Close the connections to the databases.
     /// Provide a way to manually close those connections.
     /// In theory this is not needed given we always ask the manifest storage
@@ -56,13 +72,13 @@ impl UserStorage {
     /// So it should be a noop compared to database close without cache flush that
     /// is done when [UserStorage] is dropped.
     pub async fn close_connections(&self) {
-        self.manifest_storage.close_connection().await
+        self.data_storage.close().await
     }
 
     // Checkpoint Interface
 
     pub async fn get_realm_checkpoint(&self) -> i64 {
-        self.manifest_storage.get_realm_checkpoint().await
+        self.data_storage.get_realm_checkpoint().await
     }
 
     pub async fn update_realm_checkpoint(
@@ -70,13 +86,17 @@ impl UserStorage {
         new_checkpoint: i64,
         changed_vlobs: Vec<(EntryID, i64)>,
     ) -> FSResult<()> {
-        self.manifest_storage
+        self.data_storage
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
             .await
+            .map_err(FSError::from)
     }
 
-    pub async fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
-        self.manifest_storage.get_need_sync_entries().await
+    pub async fn get_need_sync_entries(&self) -> FSResult<NeedSyncEntries> {
+        self.data_storage
+            .get_need_sync_entries()
+            .await
+            .map_err(FSError::from)
     }
 
     // User manifest
@@ -89,7 +109,7 @@ impl UserStorage {
     }
 
     async fn load_user_manifest(
-        manifest_storage: &ManifestStorage,
+        manifest_storage: &Data,
         user_manifest_id: EntryID,
         device: &LocalDevice,
     ) -> FSResult<LocalUserManifest> {
@@ -116,7 +136,6 @@ impl UserStorage {
                     .set_manifest(
                         user_manifest_id,
                         LocalManifest::User(manifest.clone()),
-                        false,
                         None,
                     )
                     .await?;
@@ -135,11 +154,10 @@ impl UserStorage {
         // atomically (given the copy is a basically a convenient shortcut on `manifest_storage`).
         let update_guard = self.lock_update_manifest.lock().await;
 
-        self.manifest_storage
+        self.data_storage
             .set_manifest(
                 self.user_manifest_id,
                 LocalManifest::User(user_manifest.clone()),
-                false,
                 None,
             )
             .await?;
@@ -155,11 +173,14 @@ pub async fn user_storage_non_speculative_init(
     device: Arc<LocalDevice>,
 ) -> FSResult<()> {
     let data_relative_path = get_user_data_storage_db_relative_path(&device);
-    let conn =
-        LocalDatabase::from_path(data_base_dir, &data_relative_path, VacuumMode::default()).await?;
-    let conn = Arc::new(conn);
-    let manifest_storage =
-        ManifestStorage::new(conn, device.clone(), device.user_manifest_id).await?;
+    let manifest_storage = libparsec_platform_storage::sqlite::SqliteDataStorage::from_path(
+        data_base_dir,
+        &data_relative_path,
+        libparsec_platform_storage::sqlite::VacuumMode::default(),
+        device.clone(),
+    )
+    .await
+    .map_err(libparsec_platform_storage::StorageError::from)?;
 
     let timestamp = device.now();
     let manifest = LocalUserManifest::new(
@@ -170,15 +191,10 @@ pub async fn user_storage_non_speculative_init(
     );
 
     manifest_storage
-        .set_manifest(
-            device.user_manifest_id,
-            LocalManifest::User(manifest),
-            false,
-            None,
-        )
+        .set_manifest(device.user_manifest_id, LocalManifest::User(manifest), None)
         .await?;
-    manifest_storage.clear_memory_cache(true).await?;
-    manifest_storage.close_connection().await;
+    manifest_storage.commit_deferred_manifest().await?;
+    manifest_storage.close().await;
 
     Ok(())
 }

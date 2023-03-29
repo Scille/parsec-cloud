@@ -1184,7 +1184,7 @@ dependencies = [
  "libparsec_miniprotocol",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
- "libparsec_platform_local_db",
+ "libparsec_platform_storage",
  "libparsec_protocol",
  "libparsec_testbed",
  "libparsec_types",
@@ -1284,13 +1284,12 @@ name = "libparsec_core_fs"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "diesel",
  "lazy_static",
  "libparsec_client_connection",
  "libparsec_core",
  "libparsec_crypto",
  "libparsec_platform_async",
- "libparsec_platform_local_db",
+ "libparsec_platform_storage",
  "libparsec_protocol",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
@@ -1299,7 +1298,6 @@ dependencies = [
  "regex",
  "thiserror",
  "tokio",
- "uuid",
 ]
 
 [[package]]
@@ -1380,15 +1378,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "libparsec_platform_local_db"
+name = "libparsec_platform_storage"
 version = "0.0.0"
 dependencies = [
  "async-trait",
  "diesel",
+ "itertools",
  "lazy_static",
+ "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
+ "libparsec_types",
  "libsqlite3-sys",
  "log",
  "pretty_assertions",
@@ -1460,7 +1461,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "lazy_static",
  "libparsec_platform_device_loader",
- "libparsec_platform_local_db",
+ "libparsec_platform_storage",
  "libparsec_tests_macros",
  "libparsec_types",
  "log",

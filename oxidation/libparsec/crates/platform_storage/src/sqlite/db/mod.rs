@@ -1,12 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 //! Manage a local database connection.
 
-#![warn(clippy::missing_errors_doc)]
-#![warn(clippy::missing_panics_doc)]
-#![warn(clippy::missing_safety_doc)]
-#![deny(clippy::future_not_send)]
-#![deny(clippy::undocumented_unsafe_blocks)]
-
 use std::path::{Path, PathBuf};
 
 use diesel::{connection::SimpleConnection, sqlite::SqliteConnection, Connection};
@@ -15,6 +9,7 @@ use executor::SqliteExecutor;
 mod error;
 mod executor;
 mod option;
+
 // We have two ways of mocking database:
 // - `test-in-memory-mock`: the legacy global switch (should only be used with the Python tests)
 // - `test-with-testbed`: the faster and parallel system (which uses configuration dir as discriminant)

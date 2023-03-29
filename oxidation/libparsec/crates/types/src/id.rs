@@ -49,6 +49,10 @@ macro_rules! new_uuid_type {
             pub fn as_u128(&self) -> u128 {
                 self.0.as_u128()
             }
+
+            pub fn as_bytes(&self) -> &[u8] {
+                self.0.as_bytes()
+            }
         }
 
         impl ::std::fmt::Display for $name {

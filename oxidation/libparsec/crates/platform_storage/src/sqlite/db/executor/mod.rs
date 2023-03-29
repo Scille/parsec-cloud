@@ -1,14 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 //! Module that wrap an [diesel::SqliteConnection] behind a executor to allow to have an async manner to executor sql queries.
 
+#[cfg(test)]
+mod tests;
+
 use diesel::{connection::SimpleConnection, SqliteConnection};
 use std::sync::atomic::Ordering;
 use std::sync::Mutex;
 use std::sync::{atomic::AtomicBool, Arc};
 
-use crate::{DatabaseError, DatabaseResult};
+use super::{DatabaseError, DatabaseResult};
 
-pub(crate) struct SqliteExecutor {
+pub(super) struct SqliteExecutor {
     internal: Arc<Mutex<SqliteExecutorInternal>>,
     // Shared with [SqliteExecutorInternal::force_stop]
     force_stop: Arc<AtomicBool>,
@@ -115,7 +118,3 @@ impl SqliteExecutor {
         }).await.expect("blocking job task panicked")
     }
 }
-
-#[cfg(test)]
-#[path = "../tests/unit/executor.rs"]
-mod test;

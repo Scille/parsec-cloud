@@ -12,6 +12,7 @@ path = "tests/mod.rs"
 [features]
 # TODO: this feature is never referenced, is it useful ?
 js = ["uuid/js"]
+test-utils = []
 test-mock-time = []
 test-fixtures = ["dep:hex-literal", "dep:rstest"]
 
