@@ -1670,23 +1670,24 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyinstaller"
-version = "5.6.1"
+version = "5.9.0"
 description = "PyInstaller bundles a Python application and all its dependencies into a single package."
 category = "dev"
 optional = false
 python-versions = "<3.12,>=3.7"
 files = [
-    {file = "pyinstaller-5.6.1-py3-none-macosx_10_13_universal2.whl", hash = "sha256:0465edb7a5b2bc74ac983d419fd980fd2e4c7d49f4c013edd4befb6ca70d3c2b"},
-    {file = "pyinstaller-5.6.1-py3-none-manylinux2014_aarch64.whl", hash = "sha256:556750250bba85cf7ede168994fe70fcdeeba8d22f51eaedfd94b3efb6faa6ce"},
-    {file = "pyinstaller-5.6.1-py3-none-manylinux2014_i686.whl", hash = "sha256:2abb74b008f01a8d9b54c27ea51aa6d59ea6137d507de9d580f79b934e0ca7b8"},
-    {file = "pyinstaller-5.6.1-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:bb3faba1a29686e1c2d71a939bc6d1a57ca218d6968f43620591df42058635e0"},
-    {file = "pyinstaller-5.6.1-py3-none-manylinux2014_s390x.whl", hash = "sha256:b8dc59b00bc09053ed0476b47423373fafb8f4d57618e9eff7047cda8942e1c4"},
-    {file = "pyinstaller-5.6.1-py3-none-manylinux2014_x86_64.whl", hash = "sha256:14a0bb008966ba074e173f94b5bffd78a4d84e4a21fafc63c1b72851a40a918d"},
-    {file = "pyinstaller-5.6.1-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:8c423556f0aac7651cda813db0d215c36c51717c4079e407136a4d9f730d38b0"},
-    {file = "pyinstaller-5.6.1-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:a64a5472ee36f63e773be63535817b6d8aea1c1cf9acd18858c22c66fe575043"},
-    {file = "pyinstaller-5.6.1-py3-none-win32.whl", hash = "sha256:fc734eb91e08c75fc7505170d765a49d781dad9e49dd641ebe4f8a82782f0be2"},
-    {file = "pyinstaller-5.6.1-py3-none-win_amd64.whl", hash = "sha256:ec9d9491681ac55e369a5226833694bf299ddeaeab6df4ef9d44758d4342f10a"},
-    {file = "pyinstaller-5.6.1.tar.gz", hash = "sha256:a7fac3fa8f75bce2839e0ab910baf0e935ff2b5f327c32aedade563e1b610967"},
+    {file = "pyinstaller-5.9.0-py3-none-macosx_10_13_universal2.whl", hash = "sha256:93d7e8443a6b60745d42aa50f08730f6b419410832b4c616c4f1bb315f087661"},
+    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:3b2c34c3c3ddf38f68d9f5afbed82abe0f89d53014c56892326fef10172ee652"},
+    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_i686.whl", hash = "sha256:dcd348b174fd72c4df271790ac582969c9423cb099fe92db9ec131a8a9243d5a"},
+    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:4b21b0298db44f5f07fc04d8ff81ec31efa47b72798efaecc4e811c50a102111"},
+    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_s390x.whl", hash = "sha256:12ca6567be457826e14416637ea54485a185d0ce7a5a044df0d0daf588fff6d1"},
+    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:c7dd156c2438f197c168b990bbce03c97d3fb758dd9bbc3ca93626c2f4473a47"},
+    {file = "pyinstaller-5.9.0-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:2ba42038b3bd83e1fba7c8eb9e7cde43bd5938e37ca542c89e8779355d213f52"},
+    {file = "pyinstaller-5.9.0-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:d1ff94347183ae3755cfb8f02e64744eb7fe384469bd61e453c6ff59a81665d6"},
+    {file = "pyinstaller-5.9.0-py3-none-win32.whl", hash = "sha256:8476538aec8a0a3be4f74b93388bd6989b91cc437ff86d6f0d3a68961176dce6"},
+    {file = "pyinstaller-5.9.0-py3-none-win_amd64.whl", hash = "sha256:e7a4c292810285c2466f3bdcb1e03ba2170177ebe3d7054ff1af3bb348bf61a4"},
+    {file = "pyinstaller-5.9.0-py3-none-win_arm64.whl", hash = "sha256:6cf6c032c72ef78fd9aa5e47d8952e784db45b2c3f7862bd44a99df68c216f64"},
+    {file = "pyinstaller-5.9.0.tar.gz", hash = "sha256:2bde16a8d664e8eba9aa7b84f729f7ab005c1793be4fe1986b3c9cad6c486622"},
 ]
 
 [package.dependencies]
@@ -1695,7 +1696,7 @@ macholib = {version = ">=1.8", markers = "sys_platform == \"darwin\""}
 pefile = {version = ">=2022.5.30", markers = "sys_platform == \"win32\""}
 pyinstaller-hooks-contrib = ">=2021.4"
 pywin32-ctypes = {version = ">=0.2.0", markers = "sys_platform == \"win32\""}
-setuptools = "*"
+setuptools = ">=42.0.0"
 
 [package.extras]
 encryption = ["tinyaes (>=1.0.0)"]
