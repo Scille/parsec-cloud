@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 import trio
 
+from parsec._parsec import PanicException
 from parsec.utils import start_task
 
 
@@ -17,6 +18,20 @@ async def job(fail=0, task_status=trio.TASK_STATUS_IGNORED):
     if fail > 0:
         raise RuntimeError("Oops")
     success.add(1)
+
+
+def test_panic_exception_inherits_exception():
+    assert issubclass(PanicException, Exception)
+    assert issubclass(PanicException, BaseException)
+
+    assert isinstance(PanicException(), Exception)
+    assert isinstance(PanicException(), BaseException)
+
+    def do_raise():
+        raise PanicException("They see me recoverin', they hatin' ;-p")
+
+    with pytest.raises(PanicException):
+        do_raise()
 
 
 @pytest.mark.trio
