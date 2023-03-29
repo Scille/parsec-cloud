@@ -136,7 +136,7 @@ PyQt5_stubs = "^5.15"
 pyinstaller = "^5.3"
 
 ruff = "^0.0.171"
-black = "^22.6.0"
+black = ">=22.6,<24.0"
 mypy = "^0.982"
 
 setuptools = ">=63.1,<68.0"
