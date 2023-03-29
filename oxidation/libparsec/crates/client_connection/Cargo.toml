@@ -39,7 +39,7 @@ libparsec_tests_fixtures = { path = "../tests_fixtures" }
 log = "0.4.17"
 test-log = "0.2.11"
 env_logger = "0.10.0"
-anyhow = "1.0.68"
+anyhow = "1.0.70"
 http-body = "0.4.5"
 hyper = { version = "0.14.22", features = ["server"] }
 tokio = { version = "1.25", features = ["rt", "macros", "sync"] }
