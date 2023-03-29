@@ -81,7 +81,7 @@ blake2 = { version = "0.10.6" }  # Optional ruscrypto dep
 crypto_box = { version = "0.8.2", features = ["std"] }  # Optional ruscrypto dep
 digest = { version = "0.10.5" }  # Optional ruscrypto dep
 ed25519-dalek = { version = "1.0.1" }  # Optional ruscrypto dep
-generic-array = { version = "0.14.6", features = ["serde"] }  # Optional ruscrypto dep
+generic-array = { version = "0.14.7", features = ["serde"] }  # Optional ruscrypto dep
 lazy_static = { version = "1.4.0" }  # Optional ruscrypto dep
 rsa = { version = "0.7.2" }  # Optional ruscrypto dep
 sha1 = { version = "0.10.5" }  # Optional ruscrypto dep
