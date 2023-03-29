@@ -275,7 +275,7 @@ jobs:
           steps.should-run-python-jobs.outputs.run == 'true'
           && startsWith(matrix.os, 'macos-')
         run: brew install --cask macfuse
-        timeout-minutes: 2
+        timeout-minutes: 5
 
       - name: (🏁 Windows) Install WinFSP
         if: >-
