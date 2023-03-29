@@ -44,6 +44,8 @@ repos:
     rev: v6.30.1
     hooks:
       - id: cspell
+        stages:
+          - manual
         args:
           - --config=./.cspell/cspell.config.yml
           - --no-progress
