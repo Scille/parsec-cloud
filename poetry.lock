@@ -1075,14 +1075,14 @@ files = [
 
 [[package]]
 name = "hypercorn"
-version = "0.13.2"
+version = "0.14.3"
 description = "A ASGI Server based on Hyper libraries and inspired by Gunicorn"
 category = "main"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "Hypercorn-0.13.2-py3-none-any.whl", hash = "sha256:ca18f91ab3fa823cbe9e949738f9f2cc07027cd647c80d8f93e4b1a2a175f112"},
-    {file = "Hypercorn-0.13.2.tar.gz", hash = "sha256:6307be5cbdf6ba411967d4661202dc4f79bd511b5d318bc4eed88b09418427f8"},
+    {file = "Hypercorn-0.14.3-py3-none-any.whl", hash = "sha256:7c491d5184f28ee960dcdc14ab45d14633ca79d72ddd13cf4fcb4cb854d679ab"},
+    {file = "Hypercorn-0.14.3.tar.gz", hash = "sha256:4a87a0b7bbe9dc75fab06dbe4b301b9b90416e9866c23a377df21a969d6ab8dd"},
 ]
 
 [package.dependencies]
@@ -1094,6 +1094,7 @@ trio = {version = ">=0.11.0", optional = true, markers = "extra == \"trio\""}
 wsproto = ">=0.14.0"
 
 [package.extras]
+docs = ["pydata_sphinx_theme"]
 h3 = ["aioquic (>=0.9.0,<1.0)"]
 trio = ["trio (>=0.11.0)"]
 uvloop = ["uvloop"]
@@ -2911,4 +2912,4 @@ core = ["packaging", "PyQt5", "pyqt5-sip", "qtrio", "qrcode", "fusepy", "winfspy
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.0"
-content-hash = "c5a0b8a48c3f71166d7cb6575a5079bdfd043fdbbca5f0fda8392e38810819ce"
+content-hash = "7c1158fa6bc8e5fee21ba0932527f8eab7e0f3b361c18bbf2c564271502a2850"
