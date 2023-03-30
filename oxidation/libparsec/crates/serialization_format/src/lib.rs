@@ -39,7 +39,7 @@ fn content_from_file(path: &PathBuf) -> String {
 
 /// Procedural macro that takes a directory containing one JSON file per protocol command.
 #[proc_macro]
-pub fn parsec_protocol_cmds_familly(path: TokenStream) -> TokenStream {
+pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
     let pathname = parse_macro_input!(path as LitStr).value();
     let path = path_from_str(&pathname);
 
