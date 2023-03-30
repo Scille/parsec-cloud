@@ -12,7 +12,7 @@ use libparsec_client_connection::{
 };
 use libparsec_crypto::SigningKey;
 use libparsec_protocol::authenticated_cmds;
-use libparsec_tests_fixtures::TestbedScope;
+use libparsec_tests_fixtures::{parsec_test, TestbedEnv};
 use libparsec_types::{BackendOrganizationAddr, DeviceID};
 use tokio::{
     sync::oneshot::{channel, Receiver, Sender},
@@ -24,7 +24,7 @@ use hyper::server::Server;
 
 const RVK: &str = "7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
 
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn valid_request() {
     const PING_MESSAGE: &str = "hello from the client side!";
     const IP: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
@@ -63,7 +63,7 @@ async fn valid_request() {
     );
 }
 
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn invalid_request() {
     const PING_MESSAGE: &str = "hello from the client side!";
     const IP: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
@@ -176,32 +176,29 @@ async fn client(
     rep
 }
 
-#[test_log::test(tokio::test)]
-async fn with_testbed() {
-    TestbedScope::run_with_server("coolorg", |env| async move {
-        let client = reqwest::ClientBuilder::new()
-            .build()
-            .expect("cannot build client");
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn with_testbed(env: &TestbedEnv) {
+    let client = reqwest::ClientBuilder::new()
+        .build()
+        .expect("cannot build client");
 
-        let device = env.template.device(&"alice@dev1".parse().unwrap());
-        let cmds = AuthenticatedCmds::new(
-            client,
-            env.organization_addr.clone(),
-            device.device_id.to_owned(),
-            device.signing_key.to_owned(),
-        )
-        .unwrap();
-        let rep = cmds
-            .send(authenticated_cmds::v3::ping::Req {
-                ping: "foo".to_owned(),
-            })
-            .await;
-        assert_eq!(
-            rep.unwrap(),
-            libparsec_protocol::authenticated_cmds::v3::ping::Rep::Ok {
-                pong: "foo".to_owned()
-            }
-        );
-    })
-    .await
+    let device = env.template.device(&"alice@dev1".parse().unwrap());
+    let cmds = AuthenticatedCmds::new(
+        client,
+        env.organization_addr.clone(),
+        device.device_id.to_owned(),
+        device.signing_key.to_owned(),
+    )
+    .unwrap();
+    let rep = cmds
+        .send(authenticated_cmds::v3::ping::Req {
+            ping: "foo".to_owned(),
+        })
+        .await;
+    assert_eq!(
+        rep.unwrap(),
+        libparsec_protocol::authenticated_cmds::v3::ping::Rep::Ok {
+            pong: "foo".to_owned()
+        }
+    );
 }

@@ -398,6 +398,7 @@ pub fn prepare_reshape(
 mod tests {
     use crate::file_operations::{prepare_read, prepare_reshape, prepare_resize, prepare_write};
     use libparsec_client_types::{Chunk, LocalFileManifest};
+    use libparsec_tests_fixtures::parsec_test;
     use libparsec_types::{Blocksize, ChunkID, DateTime, DeviceID, EntryID};
     use std::{collections::HashMap, str::FromStr};
 
@@ -525,7 +526,7 @@ mod tests {
         }
     }
 
-    #[test_log::test]
+    #[parsec_test]
     fn full_scenario() {
         // Initialize storage and manifest
         let mut storage = Storage::default();

@@ -710,8 +710,7 @@ mod tests {
     use libparsec_platform_local_db::VacuumMode;
     use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest, Regex};
 
-    use libparsec_tests_fixtures::{timestamp, TestbedScope};
-    use rstest::rstest;
+    use libparsec_tests_fixtures::{parsec_test, timestamp, TestbedEnv};
 
     use super::*;
 
@@ -729,147 +728,133 @@ mod tests {
         ManifestStorage::new(conn, device, realm_id).await.unwrap()
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn prevent_sync_pattern() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let manifest_storage =
-                manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
+    #[parsec_test(testbed = "minimal")]
+    async fn prevent_sync_pattern(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let manifest_storage =
+            manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-            let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
+        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
-            assert_eq!(re.to_string(), EMPTY_PATTERN);
-            assert!(!fully_applied);
+        assert_eq!(re.to_string(), EMPTY_PATTERN);
+        assert!(!fully_applied);
 
-            let regex = Regex::from_regex_str(r"\z").unwrap();
-            manifest_storage
-                .set_prevent_sync_pattern(&regex)
-                .await
-                .unwrap();
+        let regex = Regex::from_regex_str(r"\z").unwrap();
+        manifest_storage
+            .set_prevent_sync_pattern(&regex)
+            .await
+            .unwrap();
 
-            let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
+        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
-            assert_eq!(re.to_string(), r"\z");
-            assert!(!fully_applied);
+        assert_eq!(re.to_string(), r"\z");
+        assert!(!fully_applied);
 
-            // Passing fully applied on a random pattern is a noop...
+        // Passing fully applied on a random pattern is a noop...
 
-            manifest_storage
-                .mark_prevent_sync_pattern_fully_applied(
-                    &Regex::from_regex_str(EMPTY_PATTERN).unwrap(),
-                )
-                .await
-                .unwrap();
+        manifest_storage
+            .mark_prevent_sync_pattern_fully_applied(&Regex::from_regex_str(EMPTY_PATTERN).unwrap())
+            .await
+            .unwrap();
 
-            let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
+        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
-            assert_eq!(re.to_string(), r"\z");
-            assert!(!fully_applied);
+        assert_eq!(re.to_string(), r"\z");
+        assert!(!fully_applied);
 
-            // ...unlike passing fully applied on the currently registered pattern
+        // ...unlike passing fully applied on the currently registered pattern
 
-            manifest_storage
-                .mark_prevent_sync_pattern_fully_applied(&regex)
-                .await
-                .unwrap();
+        manifest_storage
+            .mark_prevent_sync_pattern_fully_applied(&regex)
+            .await
+            .unwrap();
 
-            let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
+        let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().await.unwrap();
 
-            assert_eq!(re.to_string(), r"\z");
-            assert!(fully_applied);
-        })
-        .await
+        assert_eq!(re.to_string(), r"\z");
+        assert!(fully_applied);
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn realm_checkpoint() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let manifest_storage =
-                manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
+    #[parsec_test(testbed = "minimal")]
+    async fn realm_checkpoint(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let manifest_storage =
+            manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-            let entry_id = EntryID::default();
+        let entry_id = EntryID::default();
 
-            manifest_storage
-                .update_realm_checkpoint(64, vec![(entry_id, 2)])
-                .await
-                .unwrap();
+        manifest_storage
+            .update_realm_checkpoint(64, vec![(entry_id, 2)])
+            .await
+            .unwrap();
 
-            assert_eq!(manifest_storage.get_realm_checkpoint().await, 64);
-        })
-        .await
+        assert_eq!(manifest_storage.get_realm_checkpoint().await, 64);
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn set_manifest(timestamp: DateTime) {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let manifest_storage =
-                manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
+    #[parsec_test(testbed = "minimal")]
+    async fn set_manifest(timestamp: DateTime, env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let manifest_storage =
+            manifest_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-            let t1 = timestamp;
-            let t2 = t1.add_us(1);
+        let t1 = timestamp;
+        let t2 = t1.add_us(1);
 
-            let entry_id = EntryID::default();
+        let entry_id = EntryID::default();
 
-            let local_file_manifest = LocalManifest::File(LocalFileManifest {
-                base: FileManifest {
-                    author: DeviceID::default(),
-                    timestamp: t1,
-                    id: EntryID::default(),
-                    parent: EntryID::default(),
-                    version: 1,
-                    created: t1,
-                    updated: t1,
-                    size: 8,
-                    blocksize: Blocksize::try_from(8).unwrap(),
-                    blocks: vec![BlockAccess {
-                        id: BlockID::default(),
-                        key: SecretKey::generate(),
-                        offset: 0,
-                        size: std::num::NonZeroU64::try_from(8).unwrap(),
-                        digest: HashDigest::from_data(&[]),
-                    }],
-                },
-                need_sync: false,
-                updated: t2,
+        let local_file_manifest = LocalManifest::File(LocalFileManifest {
+            base: FileManifest {
+                author: DeviceID::default(),
+                timestamp: t1,
+                id: EntryID::default(),
+                parent: EntryID::default(),
+                version: 1,
+                created: t1,
+                updated: t1,
                 size: 8,
                 blocksize: Blocksize::try_from(8).unwrap(),
-                blocks: vec![vec![Chunk {
-                    id: ChunkID::default(),
-                    start: 0,
-                    stop: std::num::NonZeroU64::try_from(8).unwrap(),
-                    raw_offset: 0,
-                    raw_size: std::num::NonZeroU64::try_from(8).unwrap(),
-                    access: None,
-                }]],
-            });
+                blocks: vec![BlockAccess {
+                    id: BlockID::default(),
+                    key: SecretKey::generate(),
+                    offset: 0,
+                    size: std::num::NonZeroU64::try_from(8).unwrap(),
+                    digest: HashDigest::from_data(&[]),
+                }],
+            },
+            need_sync: false,
+            updated: t2,
+            size: 8,
+            blocksize: Blocksize::try_from(8).unwrap(),
+            blocks: vec![vec![Chunk {
+                id: ChunkID::default(),
+                start: 0,
+                stop: std::num::NonZeroU64::try_from(8).unwrap(),
+                raw_offset: 0,
+                raw_size: std::num::NonZeroU64::try_from(8).unwrap(),
+                access: None,
+            }]],
+        });
 
-            assert!(manifest_storage.get_manifest_in_cache(&entry_id).is_none());
-            assert_eq!(
-                manifest_storage.get_manifest(entry_id).await,
-                Err(FSError::LocalMiss(*entry_id))
-            );
+        assert!(manifest_storage.get_manifest_in_cache(&entry_id).is_none());
+        assert_eq!(
+            manifest_storage.get_manifest(entry_id).await,
+            Err(FSError::LocalMiss(*entry_id))
+        );
 
-            manifest_storage
-                .set_manifest(entry_id, local_file_manifest.clone(), false, None)
-                .await
-                .unwrap();
+        manifest_storage
+            .set_manifest(entry_id, local_file_manifest.clone(), false, None)
+            .await
+            .unwrap();
 
-            assert_eq!(
-                manifest_storage.get_manifest(entry_id).await.unwrap(),
-                local_file_manifest
-            );
+        assert_eq!(
+            manifest_storage.get_manifest(entry_id).await.unwrap(),
+            local_file_manifest
+        );
 
-            let (local_changes, remote_changes) =
-                manifest_storage.get_need_sync_entries().await.unwrap();
+        let (local_changes, remote_changes) =
+            manifest_storage.get_need_sync_entries().await.unwrap();
 
-            assert_eq!(local_changes, HashSet::new());
-            assert_eq!(remote_changes, HashSet::new());
-        })
-        .await
+        assert_eq!(local_changes, HashSet::new());
+        assert_eq!(remote_changes, HashSet::new());
     }
 }

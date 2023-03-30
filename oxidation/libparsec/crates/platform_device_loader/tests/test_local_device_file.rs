@@ -1,14 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 use std::collections::HashSet;
 
 use libparsec_client_types::{
     AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileType, LocalDevice,
 };
 use libparsec_platform_device_loader::*;
-use libparsec_tests_fixtures::{alice, bob, mallory, tmp_path, Device, TestbedScope, TmpPath};
+use libparsec_tests_fixtures::{
+    alice, bob, mallory, parsec_test, tmp_path, Device, TestbedEnv, TmpPath,
+};
 use libparsec_types::DeviceID;
 
 fn device_file_factory(device: LocalDevice) -> DeviceFile {
@@ -25,10 +26,9 @@ fn device_file_factory(device: LocalDevice) -> DeviceFile {
     })
 }
 
-#[rstest]
+#[parsec_test]
 #[case(false)]
 #[case(true)]
-#[test_log::test(tokio::test)]
 async fn test_list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
     if path_exists {
         std::fs::create_dir(tmp_path.join("devices")).unwrap();
@@ -38,8 +38,7 @@ async fn test_list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
     assert_eq!(devices, []);
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &Device) {
     let alice = alice.local_device();
     let bob = bob.local_device();
@@ -108,8 +107,7 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
     assert_eq!(HashSet::from_iter(devices), expected_devices);
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
     let legacy_device = hex!(
         "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
@@ -136,8 +134,7 @@ async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath)
     assert_eq!(devices, [expected_device]);
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn test_renew_legacy_file(tmp_path: TmpPath) {
     let legacy_device = hex!(
         "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
@@ -166,21 +163,18 @@ async fn test_renew_legacy_file(tmp_path: TmpPath) {
     )
 }
 
-#[test_log::test(tokio::test)]
-async fn test_testbed() {
-    TestbedScope::run("coolorg", |env| async move {
-        let devices = list_available_devices(&env.discriminant_dir).await;
-        assert_eq!(
-            devices
-                .into_iter()
-                .map(|a| a.device_id)
-                .collect::<Vec<DeviceID>>(),
-            [
-                "alice@dev1".parse().unwrap(),
-                "alice@dev2".parse().unwrap(),
-                "bob@dev1".parse().unwrap(),
-            ]
-        );
-    })
-    .await;
+#[parsec_test(testbed = "coolorg")]
+async fn test_testbed(env: &TestbedEnv) {
+    let devices = list_available_devices(&env.discriminant_dir).await;
+    assert_eq!(
+        devices
+            .into_iter()
+            .map(|a| a.device_id)
+            .collect::<Vec<DeviceID>>(),
+        [
+            "alice@dev1".parse().unwrap(),
+            "alice@dev2".parse().unwrap(),
+            "bob@dev1".parse().unwrap(),
+        ]
+    );
 }
