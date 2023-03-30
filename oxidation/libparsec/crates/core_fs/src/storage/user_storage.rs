@@ -186,58 +186,52 @@ pub async fn user_storage_non_speculative_init(
 
 #[cfg(test)]
 mod tests {
-    use libparsec_tests_fixtures::{timestamp, TestbedScope};
+    use libparsec_tests_fixtures::{parsec_test, timestamp, TestbedEnv};
     use libparsec_types::{DateTime, UserManifest};
-    use rstest::rstest;
 
     use super::*;
 
     // TODO: add tests for `user_storage_non_speculative_init`
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn user_storage(timestamp: DateTime) {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let user_manifest_id = alice.user_manifest_id;
+    #[parsec_test(testbed = "minimal")]
+    async fn user_storage(timestamp: DateTime, env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let user_manifest_id = alice.user_manifest_id;
 
-            let user_storage =
-                UserStorage::new(&env.discriminant_dir, alice.clone(), user_manifest_id)
-                    .await
-                    .unwrap();
+        let user_storage = UserStorage::new(&env.discriminant_dir, alice.clone(), user_manifest_id)
+            .await
+            .unwrap();
 
-            user_storage.get_realm_checkpoint().await;
-            user_storage
-                .update_realm_checkpoint(64, vec![])
-                .await
-                .unwrap();
-            user_storage.get_need_sync_entries().await.unwrap();
+        user_storage.get_realm_checkpoint().await;
+        user_storage
+            .update_realm_checkpoint(64, vec![])
+            .await
+            .unwrap();
+        user_storage.get_need_sync_entries().await.unwrap();
 
-            let user_manifest = LocalUserManifest {
-                base: UserManifest {
-                    author: alice.device_id.clone(),
-                    timestamp,
-                    id: user_manifest_id,
-                    version: 0,
-                    created: timestamp,
-                    updated: timestamp,
-                    last_processed_message: 0,
-                    workspaces: vec![],
-                },
-                need_sync: false,
+        let user_manifest = LocalUserManifest {
+            base: UserManifest {
+                author: alice.device_id.clone(),
+                timestamp,
+                id: user_manifest_id,
+                version: 0,
+                created: timestamp,
                 updated: timestamp,
                 last_processed_message: 0,
                 workspaces: vec![],
-                speculative: false,
-            };
+            },
+            need_sync: false,
+            updated: timestamp,
+            last_processed_message: 0,
+            workspaces: vec![],
+            speculative: false,
+        };
 
-            user_storage
-                .set_user_manifest(user_manifest.clone())
-                .await
-                .unwrap();
+        user_storage
+            .set_user_manifest(user_manifest.clone())
+            .await
+            .unwrap();
 
-            assert_eq!(user_storage.get_user_manifest(), user_manifest);
-        })
-        .await;
+        assert_eq!(user_storage.get_user_manifest(), user_manifest);
     }
 }

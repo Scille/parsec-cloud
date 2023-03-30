@@ -609,16 +609,15 @@ impl Remanence for BlockStorage {
 
 #[cfg(test)]
 mod tests {
-    use libparsec_client_types::LocalDevice;
-    use libparsec_platform_local_db::VacuumMode;
-    use libparsec_tests_fixtures::TestbedScope;
     use std::{
         collections::HashSet,
         path::{Path, PathBuf},
         sync::Arc,
     };
 
-    use rstest::rstest;
+    use libparsec_client_types::LocalDevice;
+    use libparsec_platform_local_db::VacuumMode;
+    use libparsec_tests_fixtures::{parsec_test, TestbedEnv};
 
     use super::*;
 
@@ -648,18 +647,13 @@ mod tests {
         BlockStorage::new(conn, device, CACHE_SIZE).await.unwrap()
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn chunk_storage() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let chunk_storage =
-                chunk_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
+    #[parsec_test(testbed = "minimal")]
+    async fn chunk_storage(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let chunk_storage = chunk_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-            const CHUNK_TO_INSERT: usize = 2000;
-            test_chunk_interface::<ChunkStorage, CHUNK_TO_INSERT>(&chunk_storage).await;
-        })
-        .await;
+        const CHUNK_TO_INSERT: usize = 2000;
+        test_chunk_interface::<ChunkStorage, CHUNK_TO_INSERT>(&chunk_storage).await;
     }
 
     async fn test_chunk_interface<
@@ -766,20 +760,15 @@ mod tests {
         );
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_block_storage() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let block_storage =
-                block_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
+    #[parsec_test(testbed = "minimal")]
+    async fn test_block_storage(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let block_storage = block_storage_with_defaults(&env.discriminant_dir, alice.clone()).await;
 
-            const CACHE_SIZE: u64 = DEFAULT_BLOCK_SIZE.inner() * 1024;
-            const CHUNK_TO_INSERT: usize = 2000;
+        const CACHE_SIZE: u64 = DEFAULT_BLOCK_SIZE.inner() * 1024;
+        const CHUNK_TO_INSERT: usize = 2000;
 
-            test_block_interface::<BlockStorage, CACHE_SIZE, CHUNK_TO_INSERT>(block_storage).await;
-        })
-        .await
+        test_block_interface::<BlockStorage, CACHE_SIZE, CHUNK_TO_INSERT>(block_storage).await;
     }
 
     async fn test_block_interface<

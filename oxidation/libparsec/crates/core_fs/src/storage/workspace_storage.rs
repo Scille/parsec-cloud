@@ -572,12 +572,11 @@ pub async fn workspace_storage_non_speculative_init(
 #[cfg(test)]
 mod tests {
     // TODO: add tests for `workspace_storage_non_speculative_init` !
+    use std::num::NonZeroU64;
 
     use libparsec_client_types::Chunk;
-    use libparsec_tests_fixtures::TestbedScope;
+    use libparsec_tests_fixtures::{parsec_test, TestbedEnv};
     use libparsec_types::{Blocksize, Regex, DEFAULT_BLOCK_SIZE};
-    use rstest::rstest;
-    use std::num::NonZeroU64;
 
     use super::*;
 
@@ -621,172 +620,145 @@ mod tests {
             .expect("Failed to flush cache");
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_basic_set_get_clear() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+    #[parsec_test(testbed = "minimal")]
+    async fn test_basic_set_get_clear(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
 
-            let manifest = create_file_manifest(&alice);
-            let manifest_id = manifest.base.id;
-            let manifest = LocalFileOrFolderManifest::File(manifest);
-            let gen_manifest = manifest.clone().into();
+        let manifest = create_file_manifest(&alice);
+        let manifest_id = manifest.base.id;
+        let manifest = LocalFileOrFolderManifest::File(manifest);
+        let gen_manifest = manifest.clone().into();
 
-            // 1) No data
-            assert_eq!(
-                aws.get_manifest(manifest_id).await.unwrap_err(),
-                FSError::LocalMiss(*manifest_id)
-            );
+        // 1) No data
+        assert_eq!(
+            aws.get_manifest(manifest_id).await.unwrap_err(),
+            FSError::LocalMiss(*manifest_id)
+        );
 
-            // 2) Set data
-            aws.set_manifest(manifest_id, manifest.clone(), false, None)
-                .await
-                .unwrap();
-            assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
+        // 2) Set data
+        aws.set_manifest(manifest_id, manifest.clone(), false, None)
+            .await
+            .unwrap();
+        assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
-            // Make sure data are not only stored in cache
-            clear_cache(&aws).await;
-            assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
+        // Make sure data are not only stored in cache
+        clear_cache(&aws).await;
+        assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
-            // 3) Clear data
-            aws.clear_manifest(&manifest_id).await.unwrap();
+        // 3) Clear data
+        aws.clear_manifest(&manifest_id).await.unwrap();
 
-            assert_eq!(
-                aws.get_manifest(manifest_id).await.unwrap_err(),
-                FSError::LocalMiss(*manifest_id)
-            );
+        assert_eq!(
+            aws.get_manifest(manifest_id).await.unwrap_err(),
+            FSError::LocalMiss(*manifest_id)
+        );
 
-            assert_eq!(
-                aws.clear_manifest(&manifest_id).await.unwrap_err(),
-                FSError::LocalMiss(*manifest_id)
-            );
-        })
-        .await
+        assert_eq!(
+            aws.clear_manifest(&manifest_id).await.unwrap_err(),
+            FSError::LocalMiss(*manifest_id)
+        );
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_cache_set_get() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+    #[parsec_test(testbed = "minimal")]
+    async fn test_cache_set_get(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
 
-            let manifest = create_file_manifest(&alice);
-            let manifest_id = manifest.base.id;
-            let manifest = LocalFileOrFolderManifest::File(manifest);
-            let gen_manifest = manifest.clone().into();
+        let manifest = create_file_manifest(&alice);
+        let manifest_id = manifest.base.id;
+        let manifest = LocalFileOrFolderManifest::File(manifest);
+        let gen_manifest = manifest.clone().into();
 
-            // 1) Set data
-            aws.set_manifest(manifest_id, manifest.clone(), true, None)
-                .await
-                .unwrap();
-            assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
+        // 1) Set data
+        aws.set_manifest(manifest_id, manifest.clone(), true, None)
+            .await
+            .unwrap();
+        assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
-            // Data should be set only in the cache
-            clear_cache(&aws).await;
-            assert_eq!(
-                aws.get_manifest(manifest_id).await.unwrap_err(),
-                FSError::LocalMiss(*manifest_id)
-            );
+        // Data should be set only in the cache
+        clear_cache(&aws).await;
+        assert_eq!(
+            aws.get_manifest(manifest_id).await.unwrap_err(),
+            FSError::LocalMiss(*manifest_id)
+        );
 
-            // Re-set data
-            aws.set_manifest(manifest_id, manifest.clone(), true, None)
-                .await
-                .unwrap();
+        // Re-set data
+        aws.set_manifest(manifest_id, manifest.clone(), true, None)
+            .await
+            .unwrap();
 
-            // 2) Clear should work as expected
-            aws.clear_manifest(&manifest_id).await.unwrap();
-            assert_eq!(
-                aws.get_manifest(manifest_id).await.unwrap_err(),
-                FSError::LocalMiss(*manifest_id)
-            );
+        // 2) Clear should work as expected
+        aws.clear_manifest(&manifest_id).await.unwrap();
+        assert_eq!(
+            aws.get_manifest(manifest_id).await.unwrap_err(),
+            FSError::LocalMiss(*manifest_id)
+        );
 
-            // Re-set data
-            aws.set_manifest(manifest_id, manifest, true, None)
-                .await
-                .unwrap();
+        // Re-set data
+        aws.set_manifest(manifest_id, manifest, true, None)
+            .await
+            .unwrap();
 
-            // 3) Flush data
-            aws.ensure_manifest_persistent(manifest_id).await.unwrap();
-            assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
+        // 3) Flush data
+        aws.ensure_manifest_persistent(manifest_id).await.unwrap();
+        assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
-            // Data should be persistent in real database
-            clear_cache(&aws).await;
-            assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
+        // Data should be persistent in real database
+        clear_cache(&aws).await;
+        assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
 
-            // 4) Idempotency
-            aws.ensure_manifest_persistent(manifest_id).await.unwrap();
-        })
-        .await
+        // 4) Idempotency
+        aws.ensure_manifest_persistent(manifest_id).await.unwrap();
     }
 
-    #[rstest]
+    #[parsec_test(testbed = "minimal")]
     #[case(false, false)]
     #[case(false, true)]
     #[case(true, false)]
     #[case(true, true)]
-    #[test_log::test(tokio::test)]
-    async fn test_chunk_clearing(#[case] cache_only: bool, #[case] clear_manifest: bool) {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+    async fn test_chunk_clearing(
+        #[case] cache_only: bool,
+        #[case] clear_manifest: bool,
+        env: &TestbedEnv,
+    ) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
 
-            let mut file_manifest = create_file_manifest(&alice);
-            let data1 = b"abc";
-            let chunk1 = Chunk::new(0, NonZeroU64::new(3).unwrap());
-            let data2 = b"def";
-            let chunk2 = Chunk::new(3, NonZeroU64::new(6).unwrap());
-            file_manifest.blocks = vec![vec![chunk1.clone(), chunk2.clone()]];
-            file_manifest.size = 6;
-            let manifest_id = file_manifest.base.id;
-            let manifest = LocalFileOrFolderManifest::File(file_manifest.clone());
+        let mut file_manifest = create_file_manifest(&alice);
+        let data1 = b"abc";
+        let chunk1 = Chunk::new(0, NonZeroU64::new(3).unwrap());
+        let data2 = b"def";
+        let chunk2 = Chunk::new(3, NonZeroU64::new(6).unwrap());
+        file_manifest.blocks = vec![vec![chunk1.clone(), chunk2.clone()]];
+        file_manifest.size = 6;
+        let manifest_id = file_manifest.base.id;
+        let manifest = LocalFileOrFolderManifest::File(file_manifest.clone());
 
-            // Set chunks and manifest
-            aws.set_chunk(chunk1.id, data1).await.unwrap();
-            aws.set_chunk(chunk2.id, data2).await.unwrap();
-            aws.set_manifest(manifest_id, manifest, false, None)
-                .await
-                .unwrap();
+        // Set chunks and manifest
+        aws.set_chunk(chunk1.id, data1).await.unwrap();
+        aws.set_chunk(chunk2.id, data2).await.unwrap();
+        aws.set_manifest(manifest_id, manifest, false, None)
+            .await
+            .unwrap();
 
-            // Set a new version of the manifest without the chunks
-            let removed_ids = HashSet::from([
-                ChunkOrBlockID::ChunkID(chunk1.id),
-                ChunkOrBlockID::ChunkID(chunk2.id),
-            ]);
-            file_manifest.blocks.clear();
-            let new_manifest = LocalFileOrFolderManifest::File(file_manifest.clone());
+        // Set a new version of the manifest without the chunks
+        let removed_ids = HashSet::from([
+            ChunkOrBlockID::ChunkID(chunk1.id),
+            ChunkOrBlockID::ChunkID(chunk2.id),
+        ]);
+        file_manifest.blocks.clear();
+        let new_manifest = LocalFileOrFolderManifest::File(file_manifest.clone());
 
-            aws.set_manifest(manifest_id, new_manifest, cache_only, Some(removed_ids))
-                .await
-                .unwrap();
+        aws.set_manifest(manifest_id, new_manifest, cache_only, Some(removed_ids))
+            .await
+            .unwrap();
 
-            if cache_only {
-                // The chunks are still accessible
-                assert_eq!(aws.get_chunk(chunk1.id).await.unwrap(), b"abc");
-                assert_eq!(aws.get_chunk(chunk2.id).await.unwrap(), b"def");
-            } else {
-                // The chunks are gone
-                assert_eq!(
-                    aws.get_chunk(chunk1.id).await.unwrap_err(),
-                    FSError::LocalMiss(*chunk1.id)
-                );
-                assert_eq!(
-                    aws.get_chunk(chunk2.id).await.unwrap_err(),
-                    FSError::LocalMiss(*chunk2.id)
-                );
-            }
-
-            // Now flush the manifest
-            if clear_manifest {
-                aws.clear_manifest(&manifest_id).await.unwrap();
-            } else {
-                aws.ensure_manifest_persistent(manifest_id).await.unwrap();
-            }
-
+        if cache_only {
+            // The chunks are still accessible
+            assert_eq!(aws.get_chunk(chunk1.id).await.unwrap(), b"abc");
+            assert_eq!(aws.get_chunk(chunk2.id).await.unwrap(), b"def");
+        } else {
             // The chunks are gone
             assert_eq!(
                 aws.get_chunk(chunk1.id).await.unwrap_err(),
@@ -796,483 +768,439 @@ mod tests {
                 aws.get_chunk(chunk2.id).await.unwrap_err(),
                 FSError::LocalMiss(*chunk2.id)
             );
+        }
 
-            // Idempotency
+        // Now flush the manifest
+        if clear_manifest {
+            aws.clear_manifest(&manifest_id).await.unwrap();
+        } else {
             aws.ensure_manifest_persistent(manifest_id).await.unwrap();
-        })
+        }
+
+        // The chunks are gone
+        assert_eq!(
+            aws.get_chunk(chunk1.id).await.unwrap_err(),
+            FSError::LocalMiss(*chunk1.id)
+        );
+        assert_eq!(
+            aws.get_chunk(chunk2.id).await.unwrap_err(),
+            FSError::LocalMiss(*chunk2.id)
+        );
+
+        // Idempotency
+        aws.ensure_manifest_persistent(manifest_id).await.unwrap();
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    async fn test_cache_flushed_on_exit(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+
+        let manifest = create_file_manifest(&alice);
+        let manifest_id = manifest.base.id;
+        let manifest = LocalFileOrFolderManifest::File(manifest);
+
+        aws.set_manifest(manifest_id, manifest.clone(), true, None)
+            .await
+            .unwrap();
+
+        aws.clear_memory_cache(true).await.unwrap();
+        aws.close_connections().await;
+
+        let aws2 =
+            workspace_storage_with_defaults(&env.discriminant_dir, alice, Some(&aws.workspace_id))
+                .await;
+        assert_eq!(
+            aws2.get_manifest(manifest_id).await.unwrap(),
+            manifest.into()
+        );
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    async fn test_clear_cache(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+
+        let manifest1 = create_file_manifest(&alice);
+        let manifest1_id = manifest1.base.id;
+        let manifest1 = LocalFileOrFolderManifest::File(manifest1);
+        let gen_manifest1 = manifest1.clone().into();
+        let manifest2 = create_file_manifest(&alice);
+        let manifest2_id = manifest2.base.id;
+        let manifest2 = LocalFileOrFolderManifest::File(manifest2);
+        let gen_manifest2 = manifest2.clone().into();
+
+        // Set manifest 1 and manifest 2, cache only
+        aws.set_manifest(manifest1_id, manifest1, false, None)
+            .await
+            .unwrap();
+        aws.set_manifest(manifest2_id, manifest2.clone(), true, None)
+            .await
+            .unwrap();
+
+        // Clear without flushing
+        aws.clear_memory_cache(false).await.unwrap();
+
+        // Manifest 1 is present but manifest2 got lost
+        assert_eq!(aws.get_manifest(manifest1_id).await.unwrap(), gen_manifest1);
+        assert_eq!(
+            aws.get_manifest(manifest2_id).await.unwrap_err(),
+            FSError::LocalMiss(*manifest2_id)
+        );
+
+        // Set Manifest 2, cache only
+        aws.set_manifest(manifest2_id, manifest2, true, None)
+            .await
+            .unwrap();
+
+        // Clear with flushing
+        aws.clear_memory_cache(true).await.unwrap();
+        assert_eq!(aws.get_manifest(manifest2_id).await.unwrap(), gen_manifest2);
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    async fn test_serialize_non_empty_local_file_manifest(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+
+        let mut file_manifest = create_file_manifest(&alice);
+        let chunk1 = Chunk::new(0, NonZeroU64::try_from(7).unwrap())
+            .evolve_as_block(b"0123456")
+            .unwrap();
+        let chunk2 = Chunk::new(7, NonZeroU64::try_from(8).unwrap());
+        let chunk3 = Chunk::new(8, NonZeroU64::try_from(10).unwrap());
+        let blocks = vec![vec![chunk1, chunk2], vec![chunk3]];
+        file_manifest.size = 10;
+        file_manifest.blocks = blocks;
+        file_manifest.blocksize = Blocksize::try_from(8).unwrap();
+        file_manifest.assert_integrity();
+        let manifest_id = file_manifest.base.id;
+        let manifest = LocalFileOrFolderManifest::File(file_manifest);
+        let gen_manifest = manifest.clone().into();
+
+        aws.set_manifest(manifest_id, manifest, false, None)
+            .await
+            .unwrap();
+        assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    async fn test_realm_checkpoint(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+
+        let mut manifest = create_file_manifest(&alice);
+        let manifest_id = manifest.base.id;
+
+        assert_eq!(aws.get_realm_checkpoint().await, 0);
+        // Workspace storage starts with a speculative workspace manifest placeholder
+        assert_eq!(
+            aws.get_need_sync_entries().await.unwrap(),
+            (HashSet::from([aws.workspace_id]), HashSet::new())
+        );
+
+        let mut workspace_manifest = create_workspace_manifest(&aws.device, aws.workspace_id);
+        let base = workspace_manifest.to_remote(aws.device.device_id.clone(), aws.device.now());
+        workspace_manifest.base = base;
+        workspace_manifest.need_sync = false;
+        aws.set_workspace_manifest(workspace_manifest)
+            .await
+            .unwrap();
+
+        assert_eq!(aws.get_realm_checkpoint().await, 0);
+        assert_eq!(
+            aws.get_need_sync_entries().await.unwrap(),
+            (HashSet::new(), HashSet::new())
+        );
+
+        aws.update_realm_checkpoint(11, vec![(manifest_id, 22), (EntryID::default(), 33)])
+            .await
+            .unwrap();
+
+        assert_eq!(aws.get_realm_checkpoint().await, 11);
+        assert_eq!(
+            aws.get_need_sync_entries().await.unwrap(),
+            (HashSet::new(), HashSet::new())
+        );
+
+        aws.set_manifest(
+            manifest_id,
+            LocalFileOrFolderManifest::File(manifest.clone()),
+            false,
+            None,
+        )
         .await
-    }
+        .unwrap();
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_cache_flushed_on_exit() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+        assert_eq!(aws.get_realm_checkpoint().await, 11);
+        assert_eq!(
+            aws.get_need_sync_entries().await.unwrap(),
+            (HashSet::from([manifest_id]), HashSet::new())
+        );
 
-            let manifest = create_file_manifest(&alice);
-            let manifest_id = manifest.base.id;
-            let manifest = LocalFileOrFolderManifest::File(manifest);
-
-            aws.set_manifest(manifest_id, manifest.clone(), true, None)
-                .await
-                .unwrap();
-
-            aws.clear_memory_cache(true).await.unwrap();
-            aws.close_connections().await;
-
-            let aws2 = workspace_storage_with_defaults(
-                &env.discriminant_dir,
-                alice,
-                Some(&aws.workspace_id),
-            )
-            .await;
-            assert_eq!(
-                aws2.get_manifest(manifest_id).await.unwrap(),
-                manifest.into()
-            );
-        })
+        manifest.need_sync = false;
+        aws.set_manifest(
+            manifest_id,
+            LocalFileOrFolderManifest::File(manifest),
+            false,
+            None,
+        )
         .await
+        .unwrap();
+
+        assert_eq!(aws.get_realm_checkpoint().await, 11);
+        assert_eq!(
+            aws.get_need_sync_entries().await.unwrap(),
+            (HashSet::new(), HashSet::new())
+        );
+
+        aws.update_realm_checkpoint(44, vec![(manifest_id, 55), (EntryID::default(), 66)])
+            .await
+            .unwrap();
+
+        assert_eq!(aws.get_realm_checkpoint().await, 44);
+        assert_eq!(
+            aws.get_need_sync_entries().await.unwrap(),
+            (HashSet::new(), HashSet::from([manifest_id]))
+        );
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_clear_cache() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+    #[parsec_test(testbed = "minimal")]
+    async fn test_block_interface(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice, None).await;
 
-            let manifest1 = create_file_manifest(&alice);
-            let manifest1_id = manifest1.base.id;
-            let manifest1 = LocalFileOrFolderManifest::File(manifest1);
-            let gen_manifest1 = manifest1.clone().into();
-            let manifest2 = create_file_manifest(&alice);
-            let manifest2_id = manifest2.base.id;
-            let manifest2 = LocalFileOrFolderManifest::File(manifest2);
-            let gen_manifest2 = manifest2.clone().into();
+        let data = b"0123456";
+        let chunk = Chunk::new(0, NonZeroU64::try_from(7).unwrap())
+            .evolve_as_block(data)
+            .unwrap();
+        let block_id = chunk.access.unwrap().id;
 
-            // Set manifest 1 and manifest 2, cache only
-            aws.set_manifest(manifest1_id, manifest1, false, None)
-                .await
-                .unwrap();
-            aws.set_manifest(manifest2_id, manifest2.clone(), true, None)
-                .await
-                .unwrap();
+        aws.clear_clean_block(block_id).await;
 
-            // Clear without flushing
-            aws.clear_memory_cache(false).await.unwrap();
+        assert_eq!(
+            aws.get_chunk(chunk.id).await.unwrap_err(),
+            FSError::LocalMiss(*chunk.id)
+        );
+        assert!(!aws.block_storage.is_chunk(chunk.id).await.unwrap());
+        assert_eq!(aws.block_storage.get_total_size().await.unwrap(), 0);
 
-            // Manifest 1 is present but manifest2 got lost
-            assert_eq!(aws.get_manifest(manifest1_id).await.unwrap(), gen_manifest1);
-            assert_eq!(
-                aws.get_manifest(manifest2_id).await.unwrap_err(),
-                FSError::LocalMiss(*manifest2_id)
-            );
+        aws.set_clean_block(block_id, data).await.unwrap();
+        assert_eq!(aws.get_chunk(chunk.id).await.unwrap(), data);
+        assert!(aws.block_storage.is_chunk(chunk.id).await.unwrap());
+        assert!(aws.block_storage.get_total_size().await.unwrap() >= 7);
 
-            // Set Manifest 2, cache only
-            aws.set_manifest(manifest2_id, manifest2, true, None)
-                .await
-                .unwrap();
+        aws.clear_clean_block(block_id).await;
+        assert_eq!(
+            aws.get_chunk(chunk.id).await.unwrap_err(),
+            FSError::LocalMiss(*chunk.id)
+        );
+        assert!(!aws.block_storage.is_chunk(chunk.id).await.unwrap());
+        assert_eq!(aws.block_storage.get_total_size().await.unwrap(), 0);
 
-            // Clear with flushing
-            aws.clear_memory_cache(true).await.unwrap();
-            assert_eq!(aws.get_manifest(manifest2_id).await.unwrap(), gen_manifest2);
-        })
+        aws.set_chunk(chunk.id, data).await.unwrap();
+        assert_eq!(aws.get_dirty_block(block_id).await.unwrap(), data);
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    async fn test_chunk_interface(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice, None).await;
+
+        let data = b"0123456";
+        let chunk = Chunk::new(0, NonZeroU64::try_from(7).unwrap());
+
+        assert_eq!(
+            aws.get_chunk(chunk.id).await.unwrap_err(),
+            FSError::LocalMiss(*chunk.id)
+        );
+        assert_eq!(
+            aws.clear_chunk(chunk.id, false).await.unwrap_err(),
+            FSError::LocalMiss(*chunk.id)
+        );
+        aws.clear_chunk(chunk.id, true).await.unwrap();
+        assert!(!aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
+        assert_eq!(aws.chunk_storage.get_total_size().await.unwrap(), 0);
+
+        aws.set_chunk(chunk.id, data).await.unwrap();
+        assert_eq!(aws.get_chunk(chunk.id).await.unwrap(), data);
+        assert!(aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
+        assert!(aws.chunk_storage.get_total_size().await.unwrap() >= 7);
+
+        aws.clear_chunk(chunk.id, false).await.unwrap();
+        assert_eq!(
+            aws.get_chunk(chunk.id).await.unwrap_err(),
+            FSError::LocalMiss(*chunk.id)
+        );
+        assert_eq!(
+            aws.clear_chunk(chunk.id, false).await.unwrap_err(),
+            FSError::LocalMiss(*chunk.id)
+        );
+        assert!(!aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
+        assert_eq!(aws.chunk_storage.get_total_size().await.unwrap(), 0);
+        aws.clear_chunk(chunk.id, true).await.unwrap();
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    async fn test_chunk_many(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice, None).await;
+
+        let data = b"0123456";
+
+        // More than the sqlite max argument limit to prevent regression
+        let chunks_number = 2000;
+        let mut chunks = Vec::with_capacity(chunks_number);
+
+        for _ in 0..chunks_number {
+            let c = Chunk::new(0, NonZeroU64::try_from(7).unwrap());
+            chunks.push(c.id);
+            aws.chunk_storage.set_chunk(c.id, data).await.unwrap();
+        }
+
+        assert_eq!(chunks.len(), chunks_number);
+        let ret = aws.get_local_chunk_ids(&chunks).await.unwrap();
+        assert_eq!(ret.len(), chunks_number);
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    async fn test_file_descriptor(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+
+        let manifest = create_file_manifest(&alice);
+        let manifest_id = manifest.base.id;
+
+        aws.set_manifest(
+            manifest_id,
+            LocalFileOrFolderManifest::File(manifest.clone()),
+            false,
+            None,
+        )
         .await
+        .unwrap();
+        let fd = aws.create_file_descriptor(manifest.clone());
+        assert_eq!(fd, FileDescriptor(1));
+
+        assert_eq!(aws.load_file_descriptor(fd).await.unwrap(), manifest);
+
+        aws.remove_file_descriptor(fd);
+        assert_eq!(
+            aws.load_file_descriptor(fd).await.unwrap_err(),
+            FSError::InvalidFileDescriptor(fd)
+        );
+        assert_eq!(aws.remove_file_descriptor(fd), None);
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_serialize_non_empty_local_file_manifest() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
-
-            let mut file_manifest = create_file_manifest(&alice);
-            let chunk1 = Chunk::new(0, NonZeroU64::try_from(7).unwrap())
-                .evolve_as_block(b"0123456")
-                .unwrap();
-            let chunk2 = Chunk::new(7, NonZeroU64::try_from(8).unwrap());
-            let chunk3 = Chunk::new(8, NonZeroU64::try_from(10).unwrap());
-            let blocks = vec![vec![chunk1, chunk2], vec![chunk3]];
-            file_manifest.size = 10;
-            file_manifest.blocks = blocks;
-            file_manifest.blocksize = Blocksize::try_from(8).unwrap();
-            file_manifest.assert_integrity();
-            let manifest_id = file_manifest.base.id;
-            let manifest = LocalFileOrFolderManifest::File(file_manifest);
-            let gen_manifest = manifest.clone().into();
-
-            aws.set_manifest(manifest_id, manifest, false, None)
-                .await
-                .unwrap();
-            assert_eq!(aws.get_manifest(manifest_id).await.unwrap(), gen_manifest);
-        })
-        .await;
+    #[parsec_test(testbed = "minimal")]
+    async fn test_run_vacuum(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice, None).await;
+        aws.run_vacuum().await.unwrap();
     }
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_realm_checkpoint() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
-
-            let mut manifest = create_file_manifest(&alice);
-            let manifest_id = manifest.base.id;
-
-            assert_eq!(aws.get_realm_checkpoint().await, 0);
-            // Workspace storage starts with a speculative workspace manifest placeholder
-            assert_eq!(
-                aws.get_need_sync_entries().await.unwrap(),
-                (HashSet::from([aws.workspace_id]), HashSet::new())
-            );
-
-            let mut workspace_manifest = create_workspace_manifest(&aws.device, aws.workspace_id);
-            let base = workspace_manifest.to_remote(aws.device.device_id.clone(), aws.device.now());
-            workspace_manifest.base = base;
-            workspace_manifest.need_sync = false;
-            aws.set_workspace_manifest(workspace_manifest)
-                .await
-                .unwrap();
-
-            assert_eq!(aws.get_realm_checkpoint().await, 0);
-            assert_eq!(
-                aws.get_need_sync_entries().await.unwrap(),
-                (HashSet::new(), HashSet::new())
-            );
-
-            aws.update_realm_checkpoint(11, vec![(manifest_id, 22), (EntryID::default(), 33)])
-                .await
-                .unwrap();
-
-            assert_eq!(aws.get_realm_checkpoint().await, 11);
-            assert_eq!(
-                aws.get_need_sync_entries().await.unwrap(),
-                (HashSet::new(), HashSet::new())
-            );
-
-            aws.set_manifest(
-                manifest_id,
-                LocalFileOrFolderManifest::File(manifest.clone()),
-                false,
-                None,
-            )
-            .await
-            .unwrap();
-
-            assert_eq!(aws.get_realm_checkpoint().await, 11);
-            assert_eq!(
-                aws.get_need_sync_entries().await.unwrap(),
-                (HashSet::from([manifest_id]), HashSet::new())
-            );
-
-            manifest.need_sync = false;
-            aws.set_manifest(
-                manifest_id,
-                LocalFileOrFolderManifest::File(manifest),
-                false,
-                None,
-            )
-            .await
-            .unwrap();
-
-            assert_eq!(aws.get_realm_checkpoint().await, 11);
-            assert_eq!(
-                aws.get_need_sync_entries().await.unwrap(),
-                (HashSet::new(), HashSet::new())
-            );
-
-            aws.update_realm_checkpoint(44, vec![(manifest_id, 55), (EntryID::default(), 66)])
-                .await
-                .unwrap();
-
-            assert_eq!(aws.get_realm_checkpoint().await, 44);
-            assert_eq!(
-                aws.get_need_sync_entries().await.unwrap(),
-                (HashSet::new(), HashSet::from([manifest_id]))
-            );
-        })
+    #[parsec_test(testbed = "minimal")]
+    async fn test_garbage_collection(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = WorkspaceStorage::new(
+            &env.discriminant_dir,
+            alice.clone(),
+            EntryID::default(),
+            FAILSAFE_PATTERN_FILTER.clone(),
+            DEFAULT_CHUNK_VACUUM_THRESHOLD,
+            // Here is the trick: We set the cache to contain at most 2 blocks
+            *DEFAULT_BLOCK_SIZE * 2,
+        )
         .await
-    }
+        .unwrap();
 
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_block_interface() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice, None).await;
+        let block_size = NonZeroU64::try_from(*DEFAULT_BLOCK_SIZE).unwrap();
+        let data = vec![0; *DEFAULT_BLOCK_SIZE as usize];
+        let chunk1 = Chunk::new(0, block_size).evolve_as_block(&data).unwrap();
+        let chunk2 = Chunk::new(0, block_size).evolve_as_block(&data).unwrap();
+        let chunk3 = Chunk::new(0, block_size).evolve_as_block(&data).unwrap();
 
-            let data = b"0123456";
-            let chunk = Chunk::new(0, NonZeroU64::try_from(7).unwrap())
-                .evolve_as_block(data)
-                .unwrap();
-            let block_id = chunk.access.unwrap().id;
-
-            aws.clear_clean_block(block_id).await;
-
-            assert_eq!(
-                aws.get_chunk(chunk.id).await.unwrap_err(),
-                FSError::LocalMiss(*chunk.id)
-            );
-            assert!(!aws.block_storage.is_chunk(chunk.id).await.unwrap());
-            assert_eq!(aws.block_storage.get_total_size().await.unwrap(), 0);
-
-            aws.set_clean_block(block_id, data).await.unwrap();
-            assert_eq!(aws.get_chunk(chunk.id).await.unwrap(), data);
-            assert!(aws.block_storage.is_chunk(chunk.id).await.unwrap());
-            assert!(aws.block_storage.get_total_size().await.unwrap() >= 7);
-
-            aws.clear_clean_block(block_id).await;
-            assert_eq!(
-                aws.get_chunk(chunk.id).await.unwrap_err(),
-                FSError::LocalMiss(*chunk.id)
-            );
-            assert!(!aws.block_storage.is_chunk(chunk.id).await.unwrap());
-            assert_eq!(aws.block_storage.get_total_size().await.unwrap(), 0);
-
-            aws.set_chunk(chunk.id, data).await.unwrap();
-            assert_eq!(aws.get_dirty_block(block_id).await.unwrap(), data);
-        })
-        .await;
-    }
-
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_chunk_interface() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice, None).await;
-
-            let data = b"0123456";
-            let chunk = Chunk::new(0, NonZeroU64::try_from(7).unwrap());
-
-            assert_eq!(
-                aws.get_chunk(chunk.id).await.unwrap_err(),
-                FSError::LocalMiss(*chunk.id)
-            );
-            assert_eq!(
-                aws.clear_chunk(chunk.id, false).await.unwrap_err(),
-                FSError::LocalMiss(*chunk.id)
-            );
-            aws.clear_chunk(chunk.id, true).await.unwrap();
-            assert!(!aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
-            assert_eq!(aws.chunk_storage.get_total_size().await.unwrap(), 0);
-
-            aws.set_chunk(chunk.id, data).await.unwrap();
-            assert_eq!(aws.get_chunk(chunk.id).await.unwrap(), data);
-            assert!(aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
-            assert!(aws.chunk_storage.get_total_size().await.unwrap() >= 7);
-
-            aws.clear_chunk(chunk.id, false).await.unwrap();
-            assert_eq!(
-                aws.get_chunk(chunk.id).await.unwrap_err(),
-                FSError::LocalMiss(*chunk.id)
-            );
-            assert_eq!(
-                aws.clear_chunk(chunk.id, false).await.unwrap_err(),
-                FSError::LocalMiss(*chunk.id)
-            );
-            assert!(!aws.chunk_storage.is_chunk(chunk.id).await.unwrap());
-            assert_eq!(aws.chunk_storage.get_total_size().await.unwrap(), 0);
-            aws.clear_chunk(chunk.id, true).await.unwrap();
-        })
-        .await;
-    }
-
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_chunk_many() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice, None).await;
-
-            let data = b"0123456";
-
-            // More than the sqlite max argument limit to prevent regression
-            let chunks_number = 2000;
-            let mut chunks = Vec::with_capacity(chunks_number);
-
-            for _ in 0..chunks_number {
-                let c = Chunk::new(0, NonZeroU64::try_from(7).unwrap());
-                chunks.push(c.id);
-                aws.chunk_storage.set_chunk(c.id, data).await.unwrap();
-            }
-
-            assert_eq!(chunks.len(), chunks_number);
-            let ret = aws.get_local_chunk_ids(&chunks).await.unwrap();
-            assert_eq!(ret.len(), chunks_number);
-        })
-        .await;
-    }
-
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_file_descriptor() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
-
-            let manifest = create_file_manifest(&alice);
-            let manifest_id = manifest.base.id;
-
-            aws.set_manifest(
-                manifest_id,
-                LocalFileOrFolderManifest::File(manifest.clone()),
-                false,
-                None,
-            )
+        // Store the first block
+        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 0);
+        aws.set_clean_block(chunk1.access.unwrap().id, &data)
             .await
             .unwrap();
-            let fd = aws.create_file_descriptor(manifest.clone());
-            assert_eq!(fd, FileDescriptor(1));
-
-            assert_eq!(aws.load_file_descriptor(fd).await.unwrap(), manifest);
-
-            aws.remove_file_descriptor(fd);
-            assert_eq!(
-                aws.load_file_descriptor(fd).await.unwrap_err(),
-                FSError::InvalidFileDescriptor(fd)
-            );
-            assert_eq!(aws.remove_file_descriptor(fd), None);
-        })
-        .await;
-    }
-
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_run_vacuum() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice, None).await;
-            aws.run_vacuum().await.unwrap();
-        })
-        .await;
-    }
-
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_garbage_collection() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws = WorkspaceStorage::new(
-                &env.discriminant_dir,
-                alice.clone(),
-                EntryID::default(),
-                FAILSAFE_PATTERN_FILTER.clone(),
-                DEFAULT_CHUNK_VACUUM_THRESHOLD,
-                // Here is the trick: We set the cache to contain at most 2 blocks
-                *DEFAULT_BLOCK_SIZE * 2,
-            )
+        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 1);
+        // Store the second block
+        aws.set_clean_block(chunk2.access.unwrap().id, &data)
             .await
             .unwrap();
-
-            let block_size = NonZeroU64::try_from(*DEFAULT_BLOCK_SIZE).unwrap();
-            let data = vec![0; *DEFAULT_BLOCK_SIZE as usize];
-            let chunk1 = Chunk::new(0, block_size).evolve_as_block(&data).unwrap();
-            let chunk2 = Chunk::new(0, block_size).evolve_as_block(&data).unwrap();
-            let chunk3 = Chunk::new(0, block_size).evolve_as_block(&data).unwrap();
-
-            // Store the first block
-            assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 0);
-            aws.set_clean_block(chunk1.access.unwrap().id, &data)
-                .await
-                .unwrap();
-            assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 1);
-            // Store the second block
-            aws.set_clean_block(chunk2.access.unwrap().id, &data)
-                .await
-                .unwrap();
-            assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 2);
-            // Store the third block, the first one gets cleared
-            aws.set_clean_block(chunk3.access.unwrap().id, &data)
-                .await
-                .unwrap();
-            assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 2);
-            // Force clear, everything gets cleared
-            aws.block_storage.clear_all_blocks().await.unwrap();
-            assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 0);
-        })
-        .await;
-    }
-
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    async fn test_invalid_regex() {
-        TestbedScope::run("minimal", |env| async move {
-            use crate::storage::manifest_storage::prevent_sync_pattern::dsl::*;
-            use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
-
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
-
-            let initial_prevent_sync_pattern = aws.get_prevent_sync_pattern();
-
-            const INVALID_REGEX: &str = "[";
-            let valid_regex = Regex::from_regex_str("ok").unwrap();
-
-            // Ensure the entry is present.
-            aws.set_prevent_sync_pattern(&valid_regex).await.unwrap();
-
-            // Close the connection to avoid `OperationalError: database is locked`
-            // error due to concurrency operations on the SQLite database
-            aws.close_connections().await;
-
-            // Corrupt the db with an invalid regex
-            let db_relative_path =
-                get_workspace_data_storage_db_relative_path(&alice, aws.workspace_id);
-            let conn = LocalDatabase::from_path(
-                &env.discriminant_dir,
-                &db_relative_path,
-                VacuumMode::default(),
-            )
+        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 2);
+        // Store the third block, the first one gets cleared
+        aws.set_clean_block(chunk3.access.unwrap().id, &data)
             .await
             .unwrap();
-            conn.exec(|conn| {
-                diesel::update(
-                    prevent_sync_pattern.filter(_id.eq(0).and(pattern.ne(INVALID_REGEX))),
-                )
+        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 2);
+        // Force clear, everything gets cleared
+        aws.block_storage.clear_all_blocks().await.unwrap();
+        assert_eq!(aws.block_storage.get_nb_blocks().await.unwrap(), 0);
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    async fn test_invalid_regex(env: &TestbedEnv) {
+        use crate::storage::manifest_storage::prevent_sync_pattern::dsl::*;
+        use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
+
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+
+        let initial_prevent_sync_pattern = aws.get_prevent_sync_pattern();
+
+        const INVALID_REGEX: &str = "[";
+        let valid_regex = Regex::from_regex_str("ok").unwrap();
+
+        // Ensure the entry is present.
+        aws.set_prevent_sync_pattern(&valid_regex).await.unwrap();
+
+        // Close the connection to avoid `OperationalError: database is locked`
+        // error due to concurrency operations on the SQLite database
+        aws.close_connections().await;
+
+        // Corrupt the db with an invalid regex
+        let db_relative_path =
+            get_workspace_data_storage_db_relative_path(&alice, aws.workspace_id);
+        let conn = LocalDatabase::from_path(
+            &env.discriminant_dir,
+            &db_relative_path,
+            VacuumMode::default(),
+        )
+        .await
+        .unwrap();
+        conn.exec(|conn| {
+            diesel::update(prevent_sync_pattern.filter(_id.eq(0).and(pattern.ne(INVALID_REGEX))))
                 .set((pattern.eq(INVALID_REGEX), fully_applied.eq(false)))
                 .execute(conn)
-            })
-            .await
-            .unwrap();
-            conn.close().await;
-
-            // Now re-open an see what happen !
-            let aws2 = workspace_storage_with_defaults(
-                &env.discriminant_dir,
-                alice.clone(),
-                Some(&aws.workspace_id),
-            )
-            .await;
-            assert_eq!(
-                aws2.get_prevent_sync_pattern(),
-                initial_prevent_sync_pattern
-            );
-        })
-        .await;
-    }
-
-    #[rstest]
-    #[test_log::test(tokio::test)]
-    #[should_panic]
-    async fn inserting_different_workspace_manifest() {
-        TestbedScope::run("minimal", |env| async move {
-            let alice = env.local_device("alice@dev1".parse().unwrap());
-            let aws =
-                workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
-            let workspace_manifest = create_workspace_manifest(&alice, EntryID::default());
-
-            // Should panic because we insert a workspace manifest which id is different than `aws.workspace_id`
-            let _ = aws.set_workspace_manifest(workspace_manifest).await;
         })
         .await
+        .unwrap();
+        conn.close().await;
+
+        // Now re-open an see what happen !
+        let aws2 = workspace_storage_with_defaults(
+            &env.discriminant_dir,
+            alice.clone(),
+            Some(&aws.workspace_id),
+        )
+        .await;
+        assert_eq!(
+            aws2.get_prevent_sync_pattern(),
+            initial_prevent_sync_pattern
+        );
+    }
+
+    #[parsec_test(testbed = "minimal")]
+    #[should_panic]
+    async fn inserting_different_workspace_manifest(env: &TestbedEnv) {
+        let alice = env.local_device("alice@dev1".parse().unwrap());
+        let aws = workspace_storage_with_defaults(&env.discriminant_dir, alice.clone(), None).await;
+        let workspace_manifest = create_workspace_manifest(&alice, EntryID::default());
+
+        // Should panic because we insert a workspace manifest which id is different than `aws.workspace_id`
+        let _ = aws.set_workspace_manifest(workspace_manifest).await;
     }
 }
