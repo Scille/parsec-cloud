@@ -6,7 +6,7 @@ mod handshake;
 use serde::{Deserialize, Serialize};
 use std::num::NonZeroU8;
 
-use libparsec_serialization_format::parsec_protocol_cmds_familly;
+use libparsec_serialization_format::parsec_protocol_cmds_family;
 
 use crate as libparsec_protocol;
 
@@ -58,9 +58,9 @@ impl From<IntegerBetween1And100> for u64 {
 // Client side
 // authenticated_cmds::v2::block_create::Req { .. }.dump()
 // authenticated_cmds::v2::block_create::Rep::load(..)
-parsec_protocol_cmds_familly!("schema/invited_cmds");
-parsec_protocol_cmds_familly!("schema/authenticated_cmds");
-parsec_protocol_cmds_familly!("schema/anonymous_cmds");
+parsec_protocol_cmds_family!("schema/invited_cmds");
+parsec_protocol_cmds_family!("schema/authenticated_cmds");
+parsec_protocol_cmds_family!("schema/anonymous_cmds");
 
 pub trait Request {
     type Response: for<'de> Deserialize<'de>;
