@@ -42,4 +42,4 @@ env_logger = "0.10.0"
 anyhow = "1.0.70"
 http-body = "0.4.5"
 hyper = { version = "0.14.22", features = ["server"] }
-tokio = { version = "1.25", features = ["rt", "macros", "sync"] }
+tokio = { version = "1.27", features = ["rt", "macros", "sync"] }

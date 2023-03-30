@@ -20,7 +20,7 @@ libparsec_testbed = { path = "../testbed", optional = true }
 
 async-trait = "0.1.61"
 log = "0.4.17"
-tokio = { version = "1.24.1", features = ["fs", "sync"] }
+tokio = { version = "1.27.0", features = ["fs", "sync"] }
 thiserror = "1.0.37"
 diesel = { version = "2.0.3", features = ["sqlite", "returning_clauses_for_sqlite_3_35"], default-features = false }
 # We add this dependency to have sqlite3 bundled into our code.

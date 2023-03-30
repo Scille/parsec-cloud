@@ -24,7 +24,7 @@ web-sys = { version = "0.3.60", features = ["Window", "Storage"] }
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
 hex-literal = "0.3.3"
-tokio = "1.25.0"
+tokio = "1.27.0"
 rstest = "0.16.0"
 test-log = "0.2.11"
 env_logger = "0.10.0"
