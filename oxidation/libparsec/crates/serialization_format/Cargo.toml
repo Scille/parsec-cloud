@@ -11,7 +11,7 @@ proc-macro = true
 anyhow = "1.0.70"
 itertools = "0.10.5"
 miniserde = "0.1.29"
-proc-macro2 = "1.0.51"
+proc-macro2 = "1.0.54"
 quote = "1.0.23"
 syn = { version = "1.0.109", features = ["extra-traits"] }
 
