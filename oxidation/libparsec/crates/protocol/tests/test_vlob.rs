@@ -1,14 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use hex_literal::hex;
 use std::collections::HashMap;
 
-use hex_literal::hex;
-use rstest::rstest;
-
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{Maybe, RealmID, ReencryptionBatchEntry, SequesterServiceID, VlobID};
 
-#[rstest]
+#[parsec_test]
 #[case::absent_sequester_blob(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -109,7 +108,7 @@ fn serde_vlob_create_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -255,7 +254,7 @@ fn serde_vlob_create_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_vlob_read_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -291,7 +290,7 @@ fn serde_vlob_read_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -375,7 +374,7 @@ fn serde_vlob_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds:
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::absent_sequester_blob(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -474,7 +473,7 @@ fn serde_vlob_update_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -629,7 +628,7 @@ fn serde_vlob_update_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_vlob_poll_changes_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -660,7 +659,7 @@ fn serde_vlob_poll_changes_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -722,7 +721,7 @@ fn serde_vlob_poll_changes_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_vlob_list_versions_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -751,7 +750,7 @@ fn serde_vlob_list_versions_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -817,7 +816,7 @@ fn serde_vlob_list_versions_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_vlob_maintenance_get_reencryption_batch_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -851,7 +850,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -948,7 +947,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_vlob_maintenance_save_reencryption_batch_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -994,7 +993,7 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:

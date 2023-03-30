@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 use std::num::NonZeroU64;
 
 use libparsec_protocol::{authenticated_cmds::v2 as authenticated_cmds, IntegerBetween1And100};
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::HumanHandle;
 
-#[rstest]
+#[parsec_test]
 fn serde_user_get_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -36,7 +36,7 @@ fn serde_user_get_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -120,7 +120,7 @@ fn serde_user_get_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds::
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_user_create_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -157,7 +157,7 @@ fn serde_user_create_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -245,7 +245,7 @@ fn serde_user_create_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::missing_redacted_device_certificate(
     // Generated from Python implementation (Parsec v2.11.1+dev)
     // Content:
@@ -280,7 +280,7 @@ fn serde_user_create_req_invalid(#[case] raw: &[u8]) {
     assert!(authenticated_cmds::AnyCmdReq::load(raw).is_err())
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_user_revoke_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -309,7 +309,7 @@ fn serde_user_revoke_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -382,7 +382,7 @@ fn serde_user_revoke_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_device_create_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -414,7 +414,7 @@ fn serde_device_create_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -489,7 +489,7 @@ fn serde_device_create_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::with_query(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -547,7 +547,7 @@ fn serde_human_find_req(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -604,7 +604,7 @@ fn serde_human_find_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::page_0(
     // Generated from Python implementation (Parsec v2.11.1+dev)
     // Content:

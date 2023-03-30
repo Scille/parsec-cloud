@@ -30,7 +30,7 @@ pub fn test_get_testbed_templates() -> Vec<Arc<TestbedTemplate>> {
 mod test {
     use super::*;
 
-    #[test_log::test]
+    #[libparsec_tests_fixtures::parsec_test]
     pub fn test_stability() {
         let a1 = coolorg::generate();
         let a2 = coolorg::generate();

@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 use std::collections::HashMap;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{Maybe, RealmID};
 
-#[rstest]
+#[parsec_test]
 fn serde_realm_create_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -36,7 +36,7 @@ fn serde_realm_create_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -146,7 +146,7 @@ fn serde_realm_create_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_realm_status_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -175,7 +175,7 @@ fn serde_realm_status_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok_without_maintenance_started(
     // Generated from Rust implementation (Parsec v2.12.1+dev)
     // Content:
@@ -261,7 +261,7 @@ fn serde_realm_status_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_realm_stats_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -290,7 +290,7 @@ fn serde_realm_stats_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -342,7 +342,7 @@ fn serde_realm_stats_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_realm_get_role_certificates_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -371,7 +371,7 @@ fn serde_realm_get_role_certificates_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -421,7 +421,7 @@ fn serde_realm_get_role_certificates_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::without_recipient_message(
     // Generated from Rust implementation (Parsec v2.12.1+dev)
     // Content:
@@ -470,7 +470,7 @@ fn serde_realm_update_roles_req(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -636,7 +636,7 @@ fn serde_realm_update_roles_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_realm_start_reencryption_maintenance_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -677,7 +677,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -806,7 +806,7 @@ fn serde_realm_start_reencryption_maintenance_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_realm_finish_reencryption_maintenance_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -838,7 +838,7 @@ fn serde_realm_finish_reencryption_maintenance_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:

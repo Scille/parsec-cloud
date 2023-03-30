@@ -5,15 +5,12 @@ use hex_literal::hex;
 use serde_json::{json, Value};
 use std::str::FromStr;
 
-use rstest::rstest;
-
 use libparsec_protocol::*;
+use libparsec_tests_fixtures::{alice, bob, parsec_test, timestamp, Device};
 use libparsec_types::{DateTime, InvitationToken, InvitationType, OrganizationID};
 
-use libparsec_tests_fixtures::{alice, bob, timestamp, Device};
-
 #[cfg(feature = "test")]
-#[rstest]
+#[parsec_test]
 fn test_good_authenticated_handshake_server(alice: &Device, timestamp: DateTime) {
     let challenge = hex!(
         "bbf9777bdc479d6c3d6a77b93aa26370f88ee51f81f3983a074ab32fbfcd33ef6a1b6e3f2e9718e2"
@@ -73,7 +70,7 @@ fn test_good_authenticated_handshake_server(alice: &Device, timestamp: DateTime)
     assert_eq!(sh.client_api_version, API_V2_VERSION);
 }
 
-#[rstest]
+#[parsec_test]
 fn test_good_authenticated_handshake_client(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -106,7 +103,7 @@ fn test_good_authenticated_handshake_client(alice: &Device) {
     ch.process_challenge_req(&challenge_req).unwrap();
 }
 
-#[rstest]
+#[parsec_test]
 fn test_good_authenticated_handshake(alice: &Device, timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
@@ -148,7 +145,7 @@ fn test_good_authenticated_handshake(alice: &Device, timestamp: DateTime) {
 }
 
 #[cfg(feature = "test")]
-#[rstest]
+#[parsec_test]
 #[case::user((
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -232,7 +229,7 @@ fn test_good_invited_handshake_server(
     assert_eq!(sh.client_api_version, API_V2_VERSION);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::user((
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -293,7 +290,7 @@ fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, Inv
     ch.process_challenge_req(challenge_req).unwrap();
 }
 
-#[rstest]
+#[parsec_test]
 #[case::user(InvitationType::User)]
 #[case::device(InvitationType::Device)]
 fn test_good_invited_handshake(timestamp: DateTime, #[case] _invitation_type: InvitationType) {
@@ -338,7 +335,7 @@ fn test_good_invited_handshake(timestamp: DateTime, #[case] _invitation_type: In
 
 // 2) Client process challenge
 
-#[rstest]
+#[parsec_test]
 #[case(json!({}))]
 #[case(json!({
     "handshake": "foo",
@@ -395,7 +392,7 @@ fn test_process_challenge_req_bad_format(alice: &Device, timestamp: DateTime, #[
 
 // 2-b) Client check API version
 
-#[rstest]
+#[parsec_test]
 #[case((ApiVersion { version: 2, revision: 22}, ApiVersion { version: 1, revision: 0 }, false))]
 #[case((ApiVersion { version: 2, revision: 22}, ApiVersion { version: 1, revision: 111 }, false))]
 #[case((ApiVersion { version: 2, revision: 22}, ApiVersion { version: 2, revision: 0 }, true))]
@@ -455,7 +452,7 @@ fn test_process_challenge_req_good_api_version(
     }
 }
 
-#[rstest]
+#[parsec_test]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 3, revision: 33 }],
     vec![ApiVersion { version: 0, revision: 000 }, ApiVersion { version: 1, revision: 111 }],
@@ -599,7 +596,7 @@ fn test_process_challenge_req_good_multiple_api_version(
 
 // 3) Server process answer
 
-#[rstest]
+#[parsec_test]
 #[case(json!({}))]
 #[case(json!({
     "handshake": "answer",
@@ -700,7 +697,7 @@ fn test_process_answer_req_bad_format(alice: &Device, timestamp: DateTime, #[cas
 
 // 4) Server build result
 
-#[rstest]
+#[parsec_test]
 fn test_build_result_req_bad_key(alice: &Device, bob: &Device, timestamp: DateTime) {
     let sh = ServerHandshakeStalled::default()
         .build_challenge_req(timestamp)
@@ -729,7 +726,7 @@ fn test_build_result_req_bad_key(alice: &Device, bob: &Device, timestamp: DateTi
     assert!(matches!(err, HandshakeError::FailedChallenge));
 }
 
-#[rstest]
+#[parsec_test]
 fn test_build_result_req_bad_challenge(alice: &Device, timestamp: DateTime) {
     let sh = ServerHandshakeStalled::default()
         .build_challenge_req(timestamp)
@@ -758,7 +755,7 @@ fn test_build_result_req_bad_challenge(alice: &Device, timestamp: DateTime) {
     assert!(matches!(err, HandshakeError::FailedChallenge));
 }
 
-#[rstest]
+#[parsec_test]
 #[case(
     Box::new(|sh: ServerHandshakeAnswer| {
         (sh.build_bad_protocol_result_req(None).unwrap(), HandshakeResult::BadProtocol)
@@ -824,7 +821,7 @@ fn test_build_bad_outcomes(
 
 // 5) Client process result
 
-#[rstest]
+#[parsec_test]
 #[case(json!({}))]
 #[case(json!({"handshake": "foo", "result": "ok"}))]
 #[case(json!({"result": "ok"}))]
@@ -844,7 +841,7 @@ fn test_process_result_req_bad_format(timestamp: DateTime, #[case] req: Value) {
     assert!(matches!(err, HandshakeError::InvalidMessage(_)));
 }
 
-#[rstest]
+#[parsec_test]
 #[case(("bad_identity", HandshakeError::BadIdentity))]
 #[case(("organization_expired", HandshakeError::OrganizationExpired))]
 #[case(("rvk_mismatch", HandshakeError::RVKMismatch))]
@@ -878,7 +875,7 @@ fn test_process_result_req_bad_outcome(
 // Content:
 //   version: 2
 //   revision: 15
-#[rstest]
+#[parsec_test]
 fn serde_api_version() {
     let expected = ApiVersion {
         version: 2,

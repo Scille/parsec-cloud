@@ -1,14 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use diesel::{connection::SimpleConnection, Connection, SqliteConnection};
-use rstest::rstest;
 use std::sync::Arc;
+
+use libparsec_tests_fixtures::parsec_test;
 
 use super::SqliteExecutor;
 use crate::DatabaseError;
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn stop_with_multiple_jobs() {
     let connection = SqliteConnection::establish(":memory:").unwrap();
     let executor = Arc::new(SqliteExecutor::start(connection, Ok));
@@ -104,10 +104,9 @@ async fn stop_with_multiple_jobs() {
     assert_eq!(err, DatabaseError::Closed);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::asap(false)]
 #[case::after_a_job(true)]
-#[test_log::test(tokio::test)]
 async fn stop_while_idle(#[case] run_a_job: bool) {
     let connection = SqliteConnection::establish(":memory:").unwrap();
     let executor = Arc::new(SqliteExecutor::start(connection, Ok));
@@ -133,8 +132,7 @@ async fn stop_while_idle(#[case] run_a_job: bool) {
     assert_eq!(err, DatabaseError::Closed);
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 #[should_panic]
 async fn panicking_job() {
     let connection = SqliteConnection::establish(":memory:").unwrap();
@@ -146,8 +144,7 @@ async fn panicking_job() {
         .unwrap();
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn fail_reopen_database() {
     let connection = SqliteConnection::establish(":memory:").unwrap();
     let executor = SqliteExecutor::start(connection, |_conn| Err(crate::DatabaseError::Closed));

@@ -227,7 +227,7 @@ mod web {
 mod native {
     #![cfg(not(target_arch = "wasm32"))]
 
-    #[test_log::test(tokio::test)]
+    #[libparsec_tests_fixtures::parsec_test]
     async fn test_eyeballs() -> Result<(), ()> {
         super::test_eyeballs().await
     }

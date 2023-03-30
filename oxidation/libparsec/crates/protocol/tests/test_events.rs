@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_protocol::{authenticated_cmds::v2 as authenticated_cmds, Request};
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{InvitationStatus, InvitationToken, RealmID, RealmRole, VlobID};
 
-#[rstest]
+#[parsec_test]
 fn serde_events_listen_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -30,7 +30,7 @@ fn serde_events_listen_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::pinged(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -213,7 +213,7 @@ fn serde_events_listen_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_events_subscribe_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -236,7 +236,7 @@ fn serde_events_subscribe_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_events_subscribe_rep() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:

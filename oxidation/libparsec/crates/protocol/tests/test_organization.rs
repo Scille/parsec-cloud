@@ -2,13 +2,12 @@
 
 use hex_literal::hex;
 use libparsec_types::{Maybe, UserProfile};
-use rstest::rstest;
 
 use libparsec_protocol::{
     anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
 };
 use libparsec_tests_fixtures::{
-    alice, device_certificate, redacted_device_certificate, redacted_user_certificate,
+    alice, device_certificate, parsec_test, redacted_device_certificate, redacted_user_certificate,
     user_certificate, Device,
 };
 use libparsec_types::{ActiveUsersLimit, UsersPerProfileDetailItem};
@@ -16,7 +15,7 @@ use libparsec_types::{ActiveUsersLimit, UsersPerProfileDetailItem};
 type OrganizationBootstrapGenerator =
     Box<dyn FnOnce(&Device, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) -> anonymous_cmds::AnyCmdReq>;
 
-#[rstest]
+#[parsec_test]
 fn serde_organization_stats_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -39,7 +38,7 @@ fn serde_organization_stats_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -106,7 +105,7 @@ fn serde_organization_stats_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_organization_config_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -129,7 +128,7 @@ fn serde_organization_config_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok_with_absent_sequester(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -216,7 +215,7 @@ fn serde_organization_config_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::absent_sequester_authority(
     // Generated from Rust implementation (Parsec v2.14.1+dev)
     // Content:
@@ -529,7 +528,7 @@ fn serde_organization_bootstrap_req(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.14.1+dev)
     // Content:

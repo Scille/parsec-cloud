@@ -1,9 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use rstest::rstest;
-
 use libparsec_core::{TrustchainContext, TrustchainError};
 use libparsec_protocol::authenticated_cmds::v2::user_get::Trustchain;
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, DeviceID, RevokedUserCertificate,
     UserCertificate, UserProfile,
@@ -15,7 +14,7 @@ use libparsec_tests_fixtures::{
     mallory_revoked_user_certif, mallory_user_certif, Device, Organization,
 };
 
-#[rstest]
+#[parsec_test]
 fn test_bad_expected_user(
     alice: &Device,
     bob: &Device,
@@ -52,7 +51,7 @@ fn test_bad_expected_user(
     );
 }
 
-#[rstest]
+#[parsec_test]
 fn test_verify_no_trustchain(
     alice: &Device,
     alice_user_certif: &UserCertificate,
@@ -102,7 +101,7 @@ fn test_verify_no_trustchain(
     assert!(devices.contains(&ctx.get_device(&alice3_device_id).unwrap()));
 }
 
-#[rstest]
+#[parsec_test]
 fn test_bad_user_self_signed(
     alice: &Device,
     alice_user_certif: &UserCertificate,
@@ -140,7 +139,7 @@ fn test_bad_user_self_signed(
     );
 }
 
-#[rstest]
+#[parsec_test]
 fn test_bad_revoked_user_self_signed(
     alice: &Device,
     alice_user_certif: &UserCertificate,
@@ -178,7 +177,7 @@ fn test_bad_revoked_user_self_signed(
     );
 }
 
-#[rstest]
+#[parsec_test]
 fn test_invalid_loop_on_device_certif_trustchain_error(
     alice: &Device,
     bob: &Device,
@@ -226,7 +225,7 @@ fn test_invalid_loop_on_device_certif_trustchain_error(
     );
 }
 
-#[rstest]
+#[parsec_test]
 #[allow(clippy::too_many_arguments)]
 fn test_device_signature_while_revoked(
     alice: &Device,
@@ -283,7 +282,7 @@ fn test_device_signature_while_revoked(
     );
 }
 
-#[rstest]
+#[parsec_test]
 #[allow(clippy::too_many_arguments)]
 fn test_user_signature_while_revoked(
     alice: &Device,
@@ -340,7 +339,7 @@ fn test_user_signature_while_revoked(
     );
 }
 
-#[rstest]
+#[parsec_test]
 #[allow(clippy::too_many_arguments)]
 fn test_revoked_user_signature_while_revoked(
     alice: &Device,
@@ -403,7 +402,7 @@ fn test_revoked_user_signature_while_revoked(
     );
 }
 
-#[rstest]
+#[parsec_test]
 #[allow(clippy::too_many_arguments)]
 fn test_create_user_not_admin(
     alice: &Device,
@@ -450,7 +449,7 @@ fn test_create_user_not_admin(
     );
 }
 
-#[rstest]
+#[parsec_test]
 #[allow(clippy::too_many_arguments)]
 fn test_revoked_user_not_admin(
     alice: &Device,
@@ -495,7 +494,7 @@ fn test_revoked_user_not_admin(
     );
 }
 
-#[rstest]
+#[parsec_test]
 #[allow(clippy::too_many_arguments)]
 fn test_verify_user_with_broken_trustchain(
     alice: &Device,

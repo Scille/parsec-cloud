@@ -1,15 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_crypto::{HashDigest, PublicKey};
 use libparsec_protocol::{
     authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
 };
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{HumanHandle, InvitationStatus, InvitationToken, Maybe};
 
-#[rstest]
+#[parsec_test]
 #[case::user(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -57,7 +57,7 @@ fn serde_invite_new_req(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok_without_email_sent(
     // Generated from Rust implementation (Parsec v2.12.1+dev)
     // Content:
@@ -127,7 +127,7 @@ fn serde_invite_new_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_delete_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -158,7 +158,7 @@ fn serde_invite_delete_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -202,7 +202,7 @@ fn serde_invite_delete_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_list_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -225,7 +225,7 @@ fn serde_invite_list_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_list_rep() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -282,7 +282,7 @@ fn serde_invite_list_rep() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_info_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -305,7 +305,7 @@ fn serde_invite_info_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::user(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -403,7 +403,7 @@ fn serde_invite_info_rep(#[case] raw: &[u8], #[case] expected: invited_cmds::inv
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_1_claimer_wait_peer_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -435,7 +435,7 @@ fn serde_invite_1_claimer_wait_peer_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -485,7 +485,7 @@ fn serde_invite_1_claimer_wait_peer_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_1_greeter_wait_peer_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -519,7 +519,7 @@ fn serde_invite_1_greeter_wait_peer_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -578,7 +578,7 @@ fn serde_invite_1_greeter_wait_peer_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_2a_claimer_send_hashed_nonce_req() {
     // Generated from Python implementation (Parsec v2.10.0+dev)
     // Content:
@@ -610,7 +610,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -666,7 +666,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_2a_greeter_get_hashed_nonce_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -695,7 +695,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -754,7 +754,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_2b_greeter_send_nonce_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -786,7 +786,7 @@ fn serde_invite_2b_greeter_send_nonce_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -842,7 +842,7 @@ fn serde_invite_2b_greeter_send_nonce_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_2b_claimer_send_nonce_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -871,7 +871,7 @@ fn serde_invite_2b_claimer_send_nonce_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -915,7 +915,7 @@ fn serde_invite_2b_claimer_send_nonce_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_3a_greeter_wait_peer_trust_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -944,7 +944,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -997,7 +997,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_3b_claimer_wait_peer_trust_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1023,7 +1023,7 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1067,7 +1067,7 @@ fn serde_invite_3b_claimer_wait_peer_trust_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_3b_greeter_signify_trust_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1096,7 +1096,7 @@ fn serde_invite_3b_greeter_signify_trust_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1149,7 +1149,7 @@ fn serde_invite_3b_greeter_signify_trust_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_3a_claimer_signify_trust_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1172,7 +1172,7 @@ fn serde_invite_3a_claimer_signify_trust_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1216,7 +1216,7 @@ fn serde_invite_3a_claimer_signify_trust_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_4_greeter_communicate_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1247,7 +1247,7 @@ fn serde_invite_4_greeter_communicate_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1302,7 +1302,7 @@ fn serde_invite_4_greeter_communicate_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invite_4_claimer_communicate_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -1331,7 +1331,7 @@ fn serde_invite_4_claimer_communicate_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:

@@ -18,7 +18,7 @@ syn = { version = "1.0.109", features = ["extra-traits"] }
 [dev-dependencies]
 libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
-rstest = "0.16.0"
+rstest = "0.17.0"
 pretty_assertions = "1.3.0"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_with = "2.2.0"

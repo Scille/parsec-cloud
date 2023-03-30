@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_protocol::{
     authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
 };
+use libparsec_tests_fixtures::{parsec_test, rstest};
 
-#[rstest]
+#[parsec_test]
 #[case::invalid_msg_format(
     // Generated from Python implementation (Parsec v2.9.2+dev)
     // Content:
@@ -43,7 +43,7 @@ fn serde_block_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     assert_eq!(data, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::invalid_type_deserialization(
     // Generated from msgpack
     // Content:
