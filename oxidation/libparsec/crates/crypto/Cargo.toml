@@ -37,7 +37,7 @@ use-sodiumoxide = [
 
 [dependencies]
 serde = { version = "1.0.147", features = ["derive"] }
-serde_bytes = { version = "0.11.7" }
+serde_bytes = { version = "0.11.9" }
 hex = "0.4"
 thiserror = "1.0.37"
 base32 = "0.4.0"

@@ -25,7 +25,7 @@ lazy_static = "1.4.0"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_with = "2.2.0"
 rmp-serde = "1.1.1"
-serde_bytes = "0.11.7"
+serde_bytes = "0.11.9"
 chrono = "0.4.23"
 # By default uuid crate uses `getrandom` directly instead of `rand`, however
 # the latter is much faster (see. https://github.com/uuid-rs/uuid/pull/545,
