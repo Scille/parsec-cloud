@@ -6,6 +6,12 @@ mod trustchain;
 pub use testbed::*;
 pub use trustchain::*;
 
+// Reexport
+pub use env_logger;
+pub use rstest;
+
+pub use libparsec_tests_macros::parsec_test;
+
 use hex_literal::hex;
 use rstest::fixture;
 use std::path::PathBuf;

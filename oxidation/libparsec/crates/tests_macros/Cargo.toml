@@ -1,0 +1,13 @@
+[package]
+name = "libparsec_tests_macros"
+version = "0.0.0"
+edition = "2021"
+license = " BUSL-1.1"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.51"
+quote = "1.0.23"
+syn = { version = "1.0.109" }
