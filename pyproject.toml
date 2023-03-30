@@ -50,7 +50,6 @@ h11 = "^0.13"
 # Can use marshmallow or the toasted flavour as you like ;-)
 # marshmallow = "2.14.0"
 toastedmarshmallow = "0.2.6" # updating causes consistency problem in test
-PyNaCl = "^1.5"
 trio = "^0.22"
 trio_typing = "^0.7"
 sentry-sdk = "^1.5"
@@ -58,7 +57,6 @@ structlog = ">=21.5,<23.0"
 # colorama = "^0.4.4  # structlog colored output"
 async_exit_stack = "^1.0"
 outcome = "^1.1"
-oscrypto = "^1.2.1"
 
 # Backend-only requirements
 

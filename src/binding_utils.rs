@@ -144,6 +144,22 @@ macro_rules! gen_proto {
             }
         }
     };
+    ($class: ident, __copy__) => {
+        #[pymethods]
+        impl $class {
+            fn __copy__(&self) -> Self {
+                Self(self.0.clone())
+            }
+        }
+    };
+    ($class: ident, __deepcopy__) => {
+        #[pymethods]
+        impl $class {
+            fn __deepcopy__(&self, _memo: ::pyo3::PyObject) -> Self {
+                Self(self.0.clone())
+            }
+        }
+    };
 }
 
 macro_rules! create_exception {

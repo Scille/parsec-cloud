@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify};
+use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify, verify_detached, Signature};
 
 use crate::CryptoError;
 
@@ -55,7 +55,7 @@ impl TryFrom<&[u8]> for SigningKey {
 
 impl From<[u8; Self::SIZE]> for SigningKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zerocopy
+        // TODO: zero copy
         let (_, sk) = ed25519::keypair_from_seed(&ed25519::Seed(key));
         Self(sk)
     }
@@ -108,6 +108,20 @@ impl VerifyKey {
 
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
         verify(signed, &self.0).or(Err(CryptoError::SignatureVerification))
+    }
+
+    /// Verify a signature using the given [VerifyKey], `signature` and `message`
+    pub fn verify_with_signature(
+        &self,
+        raw_signature: [u8; SigningKey::SIGNATURE_SIZE],
+        message: &[u8],
+    ) -> Result<Vec<u8>, CryptoError> {
+        let signature =
+            Signature::from_bytes(&raw_signature).map_err(|_| CryptoError::Signature)?;
+        if !verify_detached(&signature, message, &self.0) {
+            return Err(CryptoError::SignatureVerification);
+        }
+        Ok(message.into())
     }
 }
 
