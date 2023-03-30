@@ -615,11 +615,26 @@ async def test_sync_with_concurrent_reencryption(
     alice_workspace = alice_core.user_fs.get_workspace(wid)
     bob_workspace = bob_user_fs.get_workspace(wid)
 
-    # Alice creates a files, let it sync
+    # Create the file empty and sync it before writting into it. Without this step,
+    # Alice's sync monitor will have both `/` folder manifest and `/test.txt` file
+    # manifest to sync, with no guarantee which one will be done first. Hence two
+    # different outcomes for the `/test.txt`'s version (depending on if the file
+    # got a minimal sync because the parent folder was synchronized first)
+    await bob_workspace.touch("/test.txt")
+    await bob_workspace.sync()
+    await alice_workspace.sync()
+
+    # Alice creates version 2 of the file and let it sync
     await alice_workspace.write_bytes("/test.txt", b"v1")
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
-    await bob_user_fs.sync()
+    await bob_workspace.sync()
+
+    # Sanity check
+    for workspace in (bob_workspace, alice_workspace):
+        info = await alice_workspace.path_info("/test.txt")
+        assert not info["need_sync"]
+        assert info["base_version"] == 2
 
     # Freeze Alice message processing so she won't process `sharing.reencrypted` messages
     allow_message_processing = trio.Event()
@@ -649,8 +664,10 @@ async def test_sync_with_concurrent_reencryption(
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
-    # Just make sure the sync is done
+    # Bob now retrieves alice's changes
     await bob_workspace.sync()
+
+    # Just make sure the sync is done
     for workspace in (bob_workspace, alice_workspace):
         info = await workspace.path_info("/test.txt")
         assert not info["need_sync"]
