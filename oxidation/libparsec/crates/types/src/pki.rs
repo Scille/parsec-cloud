@@ -6,7 +6,7 @@ use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use libparsec_crypto::{PublicKey, VerifyKey};
-use serialization_format::parsec_data;
+use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,

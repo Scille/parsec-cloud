@@ -18,7 +18,9 @@ from parsec._parsec import (
     OrganizationStatsRepNotFound,
     OrganizationStatsRepOk,
     OrganizationStatsReq,
+    SequesterVerifyKeyDer,
     UsersPerProfileDetailItem,
+    VerifyKey,
 )
 from parsec.api.data import (
     DataError,
@@ -41,8 +43,6 @@ from parsec.backend.config import BackendConfig
 from parsec.backend.user import Device, User
 from parsec.backend.utils import Unset, UnsetType, api, api_typed_msg_adapter, catch_protocol_errors
 from parsec.backend.webhooks import WebhooksComponent
-from parsec.crypto import VerifyKey
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.utils import timestamps_in_the_ballpark
 
 

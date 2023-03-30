@@ -30,13 +30,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
     m.add_function(wrap_pyfunction!(addrs::export_root_verify_key, m)?)?;
 
-    m.add_class::<api_crypto::HashDigest>()?;
-    m.add_class::<api_crypto::SigningKey>()?;
-    m.add_class::<api_crypto::VerifyKey>()?;
-    m.add_class::<api_crypto::SecretKey>()?;
-    m.add_class::<api_crypto::PrivateKey>()?;
-    m.add_class::<api_crypto::PublicKey>()?;
-    m.add_function(wrap_pyfunction!(api_crypto::generate_nonce, m)?)?;
+    api_crypto::add_mod(py, m)?;
 
     m.add_class::<enumerate::ClientType>()?;
     m.add_class::<enumerate::InvitationEmailSentStatus>()?;

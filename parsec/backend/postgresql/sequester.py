@@ -6,7 +6,7 @@ from typing import Any, List, Tuple
 
 import triopg
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, SequesterVerifyKeyDer
 from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.organization import SequesterAuthority
@@ -29,7 +29,6 @@ from parsec.backend.sequester import (
     WebhookSequesterService,
 )
 from parsec.crypto import CryptoError
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 
 
 # Sequester authority never gets modified past organization bootstrap, hence no need

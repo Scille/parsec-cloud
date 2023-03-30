@@ -12,7 +12,6 @@ from parsec.backend.sequester import SequesterServiceType
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
 from parsec.core.fs.path import FsPath
-from parsec.sequester_crypto import sequester_service_decrypt
 from tests.common import customize_fixtures, sequester_service_factory
 
 
@@ -49,9 +48,7 @@ async def test_userfs_sequester_sync(
 
         # Advanced check: make sure each item contain the valid data
         for _, version, sequestered_blob in realm_dump:
-            clear_blob_from_sequester = sequester_service_decrypt(
-                service.decryption_key, sequestered_blob
-            )
+            clear_blob_from_sequester = service.decryption_key.decrypt(sequestered_blob)
             _, blob, _, _, _ = await backend.vlob.read(
                 organization_id=coolorg.organization_id,
                 author=local_device.device_id,
@@ -121,9 +118,7 @@ async def test_workspacefs_sequester_sync(running_backend, backend, alice_user_f
 
         # Advanced check: make sure each item contain the valid data
         for vlob_id, version, sequestered_blob in realm_dump:
-            clear_blob_from_sequester = sequester_service_decrypt(
-                service.decryption_key, sequestered_blob
-            )
+            clear_blob_from_sequester = service.decryption_key.decrypt(sequestered_blob)
             _, blob, _, _, _ = await backend.vlob.read(
                 organization_id=coolorg.organization_id,
                 author=alice.device_id,

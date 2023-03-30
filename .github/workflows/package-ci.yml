@@ -70,6 +70,15 @@ jobs:
           echo "::warning title=Wheel version::$VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
+
       - name: Build wheel
         uses: pypa/cibuildwheel@a6732b126f28affc0bef10118c6480ff722aa9ff  # pin v2.11.2
         with:

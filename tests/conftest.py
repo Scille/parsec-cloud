@@ -7,7 +7,6 @@ import re
 import sqlite3
 import sys
 from contextlib import contextmanager
-from unittest.mock import patch
 
 import attr
 import hypothesis
@@ -310,20 +309,13 @@ def mock_crypto(request):
         yield unmock
 
     else:
+        # No longer supported by oxidized crypto
 
-        def unsecure_but_fast_argon2i_kdf(size, password, salt, *args, **kwargs):
-            data = password + salt
-            return data[:size] + b"\x00" * (size - len(data))
-
-        from parsec.crypto import argon2i
-
-        vanilla_kdf = argon2i.kdf
-
+        @contextmanager
         def unmock():
-            return patch("parsec.crypto.argon2i.kdf", new=vanilla_kdf)
+            yield
 
-        with patch("parsec.crypto.argon2i.kdf", new=unsecure_but_fast_argon2i_kdf):
-            yield unmock
+        yield unmock
 
 
 # Other main fixtures

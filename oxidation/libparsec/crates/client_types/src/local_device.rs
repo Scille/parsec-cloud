@@ -2,10 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 use serde_with::*;
-use serialization_format::parsec_data;
 use sha2::Digest;
 
 use libparsec_crypto::prelude::*;
+use libparsec_serialization_format::parsec_data;
 use libparsec_types::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

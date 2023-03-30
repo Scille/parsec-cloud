@@ -8,7 +8,6 @@ from pathlib import Path
 from uuid import UUID
 
 import click
-import oscrypto.asymmetric
 import trio
 
 try:
@@ -1067,13 +1066,9 @@ def _setup_sequester_key_paths(tmp_path, coolorg):
     service = sequester_service_factory("Test Service", coolorg.sequester_authority)
     service_key = service.encryption_key
     authority_key = coolorg.sequester_authority.signing_key
-    service_key_path.write_bytes(oscrypto.asymmetric.dump_public_key(service_key))
-    authority_key_path.write_bytes(
-        oscrypto.asymmetric.dump_private_key(authority_key, passphrase=None)
-    )
-    authority_pubkey_path.write_bytes(
-        oscrypto.asymmetric.dump_public_key(coolorg.sequester_authority.verify_key)
-    )
+    service_key_path.write_text(service_key.dump_pem())
+    authority_key_path.write_text(authority_key.dump_pem())
+    authority_pubkey_path.write_text(coolorg.sequester_authority.verify_key.dump_pem())
     return authority_key_path, authority_pubkey_path, service_key_path
 
 

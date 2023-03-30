@@ -22,6 +22,14 @@ use crate::CryptoError;
 #[serde(try_from = "&Bytes")]
 pub struct SecretKey(Key);
 
+// see https://github.com/rust-lang/rust-clippy/issues/2627
+#[allow(clippy::derive_hash_xor_eq)]
+impl std::hash::Hash for SecretKey {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0 .0.hash(state)
+    }
+}
+
 impl SecretKey {
     pub const ALGORITHM: &'static str = "xsalsa20poly1305";
     pub const SIZE: usize = KEYBYTES;
@@ -47,13 +55,23 @@ impl SecretKey {
         Ok(plaintext)
     }
 
+    /// # Safety
+    ///
+    /// This function requires access to libsodium methods that are not
+    /// exposed directly, so it uses the unsafe C API
+    /// ...
     pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
-        // Sodiumoxide doesn't expose those methods, so we have to access
-        // the libsodium C API directly
+        let mut state = libsodium_sys::crypto_generichash_blake2b_state {
+            opaque: [0u8; 384usize],
+        };
+        let mut out = Vec::with_capacity(digest_size);
+
+        // SAFETY: Sodiumoxide doesn't expose those methods, so we have to access
+        // the libsodium C API directly.
+        // this remains safe because we provide bounds defined in Rust land when passing vectors.
+        // The only data structure provided by remote code is dropped
+        // at the end of the function.
         unsafe {
-            let mut state = libsodium_sys::crypto_generichash_blake2b_state {
-                opaque: [0u8; 384usize],
-            };
             libsodium_sys::crypto_generichash_blake2b_init(
                 &mut state,
                 self.as_ref().as_ptr(),
@@ -65,7 +83,6 @@ impl SecretKey {
                 data.as_ptr(),
                 data.len() as u64,
             );
-            let mut out = Vec::with_capacity(digest_size);
             libsodium_sys::crypto_generichash_blake2b_final(
                 &mut state,
                 out.as_mut_ptr(),
@@ -82,16 +99,30 @@ impl SecretKey {
 
     pub fn from_password(password: &str, salt: &[u8]) -> Self {
         let mut key = [0; KEYBYTES];
-        let salt = Salt::from_slice(&salt).expect("Invalid salt");
 
-        derive_key(
-            &mut key,
-            password.as_bytes(),
-            &salt,
-            OPSLIMIT_INTERACTIVE,
-            MEMLIMIT_INTERACTIVE,
-        )
-        .expect("Can't fail");
+        // During test we want to skip the `argon2` algorithm for hashing the password
+        // Because it takes some time.
+        // For that we replace argon with a very basic algorithm that copy the `password + salt` to the first key bytes.
+        if cfg!(feature = "test-unsecure-but-fast-secretkey-from-password") {
+            let password_end = KEYBYTES.min(password.len());
+
+            key[..password_end].copy_from_slice(&password.as_bytes()[..password_end]);
+
+            let salt_end = (KEYBYTES - password_end).min(salt.len());
+
+            key[password_end..password_end + salt_end].copy_from_slice(&salt[..salt_end]);
+        } else {
+            let salt = Salt::from_slice(salt).expect("Invalid salt");
+
+            derive_key(
+                &mut key,
+                password.as_bytes(),
+                &salt,
+                OPSLIMIT_INTERACTIVE,
+                MEMLIMIT_INTERACTIVE,
+            )
+            .expect("Can't fail");
+        }
 
         Self::from(key)
     }

@@ -8,11 +8,15 @@ from typing import AsyncGenerator, Dict, List, Tuple
 
 import attr
 import click
-import oscrypto
 from async_generator import asynccontextmanager
-from oscrypto.asymmetric import PrivateKey
 
-from parsec._parsec import DateTime
+from parsec._parsec import (
+    DateTime,
+    SequesterPrivateKeyDer,
+    SequesterPublicKeyDer,
+    SequesterSigningKeyDer,
+    SequesterVerifyKeyDer,
+)
 from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.api.protocol import HumanHandle, OrganizationID, RealmID, SequesterServiceID, UserID
 from parsec.backend.blockstore import blockstore_factory
@@ -33,13 +37,8 @@ from parsec.backend.sequester import (
 )
 from parsec.backend.user import User
 from parsec.cli_utils import cli_exception_handler, debug_config_options, operation
+from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
-from parsec.sequester_crypto import (
-    CryptoError,
-    SequesterEncryptionKeyDer,
-    SequesterVerifyKeyDer,
-    sequester_authority_sign,
-)
 from parsec.sequester_export_reader import RealmExportProgress, extract_workspace
 from parsec.utils import open_service_nursery, trio_run
 
@@ -50,11 +49,9 @@ SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER = "-----END PARSEC SEQUESTER SERVICE CE
 
 def dump_sequester_service_certificate_pem(
     certificate_data: SequesterServiceCertificate,
-    authority_signing_key: PrivateKey,
+    authority_signing_key: SequesterSigningKeyDer,
 ) -> str:
-    certificate = sequester_authority_sign(
-        signing_key=authority_signing_key, data=certificate_data.dump()
-    )
+    certificate = authority_signing_key.sign(certificate_data.dump())
     return "\n".join(
         (
             SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER,
@@ -217,8 +214,8 @@ def generate_service_certificate(
 ) -> None:
     with cli_exception_handler(debug):
         # Load key files
-        service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())
-        authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
+        service_key = SequesterPublicKeyDer.load_pem(service_public_key.read_text())
+        authority_key = SequesterSigningKeyDer.load_pem(authority_private_key.read_text())
 
         # Generate data schema
         service_id = SequesterServiceID.new()
@@ -427,8 +424,8 @@ def create_service(
                 "Webhook sequester service requires webhook_url argument"
             )
         # Load key files
-        service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())
-        authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
+        service_key = SequesterPublicKeyDer.load_pem(service_public_key.read_text())
+        authority_key = SequesterSigningKeyDer.load_pem(authority_private_key.read_text())
         # Generate data schema
         service_id = SequesterServiceID.new()
         now = DateTime.now()
@@ -438,7 +435,7 @@ def create_service(
             service_label=service_label,
             encryption_key_der=service_key,
         )
-        certificate = sequester_authority_sign(signing_key=authority_key, data=certif_data.dump())
+        certificate = authority_key.sign(certif_data.dump())
 
         sequester_service: BaseSequesterService
         if cooked_service_type == SequesterServiceType.STORAGE:
@@ -797,7 +794,7 @@ def extract_realm_export(
         # Finally a command that is not async !
         # This is because here we do only a single thing at a time and sqlite3 provide
         # a synchronous api anyway
-        decryption_key = oscrypto.asymmetric.load_private_key(service_decryption_key.read_bytes())
+        decryption_key = SequesterPrivateKeyDer.load_pem(service_decryption_key.read_text())
 
         # Convert filter_date from click.Datetime to parsec.Datetime
         date: DateTime

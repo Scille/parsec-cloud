@@ -20,10 +20,15 @@ from parsec._parsec_pyi.certif import (
     UserCertificate,
 )
 from parsec._parsec_pyi.crypto import (
+    CryptoError,
     HashDigest,
     PrivateKey,
     PublicKey,
     SecretKey,
+    SequesterPrivateKeyDer,
+    SequesterPublicKeyDer,
+    SequesterSigningKeyDer,
+    SequesterVerifyKeyDer,
     SigningKey,
     VerifyKey,
     generate_nonce,
@@ -510,7 +515,12 @@ __all__ = [
     "VerifyKey",
     "PrivateKey",
     "PublicKey",
+    "SequesterPrivateKeyDer",
+    "SequesterPublicKeyDer",
+    "SequesterSigningKeyDer",
+    "SequesterVerifyKeyDer",
     "generate_nonce",
+    "CryptoError",
     # Enumerate
     "ClientType",
     "InvitationDeletedReason",

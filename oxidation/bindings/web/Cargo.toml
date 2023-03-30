@@ -10,7 +10,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-libparsec = { path = "../../libparsec" }
+libparsec = { path = "../../libparsec", features = ["use-rustcrypto"] }
 wasm-bindgen = { version = "0.2.82" }
 wasm-bindgen-futures = "0.4.33"
 js-sys = "0.3.59"

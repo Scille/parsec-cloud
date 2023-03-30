@@ -4,10 +4,9 @@ from __future__ import annotations
 from base64 import b64decode
 from typing import NoReturn, Tuple
 
-from nacl.exceptions import CryptoError
 from quart import Blueprint, Response, current_app, g, request
 
-from parsec._parsec import ClientType, DateTime
+from parsec._parsec import ClientType, CryptoError, DateTime
 from parsec.api.protocol import (
     DeviceID,
     IncompatibleAPIVersionsError,

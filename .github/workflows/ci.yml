@@ -341,6 +341,15 @@ jobs:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: steps.should-run-rust-jobs.outputs.run == 'true' && startsWith(matrix.os, 'windows')
+        shell: bash
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
+
       - name: Install python deps
         if: steps.python-changes.outputs.run == 'true'
         run: poetry install -E core -E backend
@@ -458,6 +467,14 @@ jobs:
         if: steps.rust-changes.outputs.run == 'true'
         shell: bash
         run: cargo test --workspace --profile ${{ env.CARGO_PROFILE }} --no-run
+
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'

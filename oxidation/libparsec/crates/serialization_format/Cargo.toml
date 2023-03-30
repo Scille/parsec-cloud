@@ -1,5 +1,5 @@
 [package]
-name = "serialization_format"
+name = "libparsec_serialization_format"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"

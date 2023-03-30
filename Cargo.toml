@@ -24,7 +24,7 @@ lazy_static = "1.4.0"
 futures = "0.3.21"
 
 [features]
-default = ["mock-time"]
+default = ["mock-time", "libparsec/use-sodiumoxide"]
 mock-time = ["libparsec/mock-time"]
 extension-module = ["pyo3/extension-module"]
 

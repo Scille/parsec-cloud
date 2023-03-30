@@ -7,7 +7,7 @@ from typing import Any, Dict, Union
 import triopg
 from triopg import UniqueViolationError
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, SequesterVerifyKeyDer, VerifyKey
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.backend.events import BackendEvent
 from parsec.backend.organization import (
@@ -28,8 +28,6 @@ from parsec.backend.postgresql.user_queries.create import q_create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.user import Device, User, UserError
 from parsec.backend.utils import Unset, UnsetType
-from parsec.crypto import VerifyKey
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 
 
 _q_insert_organization = Q(
