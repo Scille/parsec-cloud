@@ -1,20 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use diesel::{dsl::sql, sql_types, ExpressionMethods, RunQueryDsl};
+use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use diesel::{dsl::sql, sql_types, ExpressionMethods, RunQueryDsl};
 use libparsec_platform_async::Notify;
 use libparsec_platform_local_db::{AutoVacuum, DatabaseError, LocalDatabase, VacuumMode};
-use libparsec_tests_fixtures::{tmp_path, TmpPath};
-
-use pretty_assertions::assert_eq;
-use rstest::rstest;
+use libparsec_tests_fixtures::{parsec_test, tmp_path, TmpPath};
 
 mod book;
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn creation_deletion(tmp_path: TmpPath) {
     let local_db = LocalDatabase::from_path(
         &tmp_path,
@@ -45,8 +42,7 @@ async fn creation_deletion(tmp_path: TmpPath) {
     local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn basic_test(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
 
@@ -97,8 +93,7 @@ async fn basic_test(tmp_path: TmpPath) {
     local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn test_set_auto_vacuum(
     tmp_path: TmpPath,
     #[values(AutoVacuum::None, AutoVacuum::Incremental, AutoVacuum::Full)] auto_vacuum: AutoVacuum,
@@ -128,8 +123,7 @@ async fn test_set_auto_vacuum(
     local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn test_get_disk_usage(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
 
@@ -176,8 +170,7 @@ async fn test_get_disk_usage(tmp_path: TmpPath) {
     local_db.close().await; // Gracious close to avoid conflict with `tmp_path`'s drop
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn test_cannot_open_database(tmp_path: TmpPath) {
     let db_path = tmp_path.as_path().join("db.sqlite");
 
@@ -200,8 +193,7 @@ async fn test_cannot_open_database(tmp_path: TmpPath) {
     assert_eq!(local_db_err, expected_error);
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn test_non_utf8_db_path(tmp_path: TmpPath) {
     let non_utf8_name = {
         #[cfg(unix)]
@@ -240,8 +232,7 @@ async fn test_non_utf8_db_path(tmp_path: TmpPath) {
     assert_eq!(local_db_err, expected_error);
 }
 
-#[rstest]
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn test_full_vacuum(tmp_path: TmpPath) {
     use book::{books::dsl::*, create_table, Book};
 

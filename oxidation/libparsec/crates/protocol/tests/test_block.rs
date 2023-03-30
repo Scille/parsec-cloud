@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_protocol::{authenticated_cmds::v2 as authenticated_cmds, Request};
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{BlockID, RealmID};
 
-#[rstest]
+#[parsec_test]
 fn serde_block_create_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -40,7 +40,7 @@ fn serde_block_create_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -111,7 +111,7 @@ fn serde_block_create_rep(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_block_read_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -140,7 +140,7 @@ fn serde_block_read_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:

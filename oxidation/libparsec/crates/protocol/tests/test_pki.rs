@@ -1,13 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
+
 use libparsec_protocol::{
     anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
 };
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{DateTime, EnrollmentID};
-use rstest::rstest;
 
-#[rstest]
+#[parsec_test]
 #[case::submit(
     // Generated from Python implementation (Parsec v2.14.0+dev)
     // Content:
@@ -59,7 +60,7 @@ fn serde_anonymous_pki_req(#[case] bytes: &[u8], #[case] expected: anonymous_cmd
     assert_eq!(data_again, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.14.0+dev)
     // Content:
@@ -84,7 +85,7 @@ fn serde_anonymous_pki_rep_submit(
     assert_eq!(data_again, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::accepted(
     // Generated from Python implementation (Parsec v2.14.0+dev)
     // Content:
@@ -181,7 +182,7 @@ fn serde_anonymous_pki_rep_info(
     assert_eq!(data_again, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::accept(
     // Generated from Python implementation (Parsec v2.14.0)
     // Content:
@@ -254,7 +255,7 @@ fn serde_authenticated_pki_req(
 // Generated from Python implementation (Parsec v2.14.0)
 // Content:
 //   status: "ok"
-#[rstest]
+#[parsec_test]
 #[case::accept(
     &hex!("81a6737461747573a26f6b")[..],
     authenticated_cmds::pki_enrollment_accept::Rep::Ok
@@ -274,7 +275,7 @@ fn serde_authenticated_accept_pki_rep(
     )
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok_one_element(
     // Generated from Python implementation (Parsec v2.14.0)
     // Content:
@@ -336,7 +337,7 @@ fn serde_authenticated_list_pki_rep(
     );
 }
 
-#[rstest]
+#[parsec_test]
 #[case::ok(
     // Generated from Python implementation (Parsec v2.14.0)
     // Content:

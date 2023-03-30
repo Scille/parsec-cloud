@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 use std::{
     collections::{HashMap, HashSet},
     num::NonZeroU64,
@@ -9,6 +8,7 @@ use std::{
 
 use libparsec_client_types::*;
 use libparsec_crypto::prelude::*;
+use libparsec_tests_fixtures::{parsec_test, rstest};
 use libparsec_types::*;
 
 use libparsec_tests_fixtures::{alice, timestamp, Device};
@@ -19,7 +19,7 @@ type AliceLocalWorkspaceManifest =
     Box<dyn FnOnce(&Device) -> (&'static [u8], LocalWorkspaceManifest)>;
 type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest)>;
 
-#[rstest]
+#[parsec_test]
 #[case::file_manifest(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
@@ -202,7 +202,7 @@ fn serde_local_file_manifest(
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_local_file_manifest_invalid_blocksize() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -246,7 +246,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
     assert!(manifest.is_err());
 }
 
-#[rstest]
+#[parsec_test]
 #[case::folder_manifest(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
@@ -381,7 +381,7 @@ fn serde_local_folder_manifest(
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::workspace_manifest(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
@@ -566,7 +566,7 @@ fn serde_local_workspace_manifest(
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::need_sync(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
@@ -917,7 +917,7 @@ fn serde_local_user_manifest(
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn chunk_new() {
     let chunk = Chunk::new(1, NonZeroU64::try_from(5).unwrap());
 
@@ -933,7 +933,7 @@ fn chunk_new() {
     assert_ne!(chunk, Chunk::new(1, NonZeroU64::try_from(5).unwrap()));
 }
 
-#[rstest]
+#[parsec_test]
 fn chunk_evolve_as_block() {
     let chunk = Chunk::new(1, NonZeroU64::try_from(5).unwrap());
     let id = chunk.id;
@@ -980,7 +980,7 @@ fn chunk_evolve_as_block() {
     assert_eq!(err, "This chunk is not aligned");
 }
 
-#[rstest]
+#[parsec_test]
 fn chunk_is_block() {
     let chunk = Chunk {
         id: ChunkID::default(),
@@ -1035,7 +1035,7 @@ fn chunk_is_block() {
     assert!(block.is_block());
 }
 
-#[rstest]
+#[parsec_test]
 fn local_file_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = EntryID::default();
@@ -1058,7 +1058,7 @@ fn local_file_manifest_new(timestamp: DateTime) {
     assert_eq!(lfm.blocks.len(), 0);
 }
 
-#[rstest]
+#[parsec_test]
 fn local_file_manifest_is_reshaped(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = EntryID::default();
@@ -1092,7 +1092,7 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
     assert!(!lfm.is_reshaped());
 }
 
-#[rstest]
+#[parsec_test]
 #[case::empty((0, vec![]))]
 #[case::blocks((2, vec![
     BlockAccess {
@@ -1141,7 +1141,7 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
     );
 }
 
-#[rstest]
+#[parsec_test]
 fn local_file_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
@@ -1182,7 +1182,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     assert_eq!(fm.blocks, vec![block_access]);
 }
 
-#[rstest]
+#[parsec_test]
 fn local_file_manifest_match_remote(timestamp: DateTime) {
     let fm = FileManifest {
         author: DeviceID::default(),
@@ -1222,7 +1222,7 @@ fn local_file_manifest_match_remote(timestamp: DateTime) {
     assert!(lfm.match_remote(&fm));
 }
 
-#[rstest]
+#[parsec_test]
 fn local_folder_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = EntryID::default();
@@ -1241,7 +1241,7 @@ fn local_folder_manifest_new(timestamp: DateTime) {
     assert_eq!(lfm.remote_confinement_points.len(), 0);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::empty((
     HashMap::new(),
     HashMap::new(),
@@ -1297,7 +1297,7 @@ fn local_folder_manifest_from_remote(
     assert_eq!(lfm.remote_confinement_points.len(), filtered);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
 #[case::children_filtered(
     HashMap::from([
@@ -1397,7 +1397,7 @@ fn local_folder_manifest_from_remote_with_local_context(
     assert_eq!(lfm.remote_confinement_points.len(), filtered);
 }
 
-#[rstest]
+#[parsec_test]
 fn local_folder_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
@@ -1422,7 +1422,7 @@ fn local_folder_manifest_to_remote(timestamp: DateTime) {
     assert_eq!(fm.children, lfm.children);
 }
 
-#[rstest]
+#[parsec_test]
 fn local_folder_manifest_match_remote(timestamp: DateTime) {
     let fm = FolderManifest {
         author: DeviceID::default(),
@@ -1447,7 +1447,7 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
     assert!(lfm.match_remote(&fm));
 }
 
-#[rstest]
+#[parsec_test]
 #[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, false, "")]
 #[case::no_data(
     HashMap::new(),
@@ -1518,7 +1518,7 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
 }
 
 // TODO
-#[rstest]
+#[parsec_test]
 fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     let prevent_sync_pattern = Regex::from_regex_str("").unwrap();
 
@@ -1551,7 +1551,7 @@ fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     assert_eq!(lfm.remote_confinement_points, HashSet::new());
 }
 
-#[rstest]
+#[parsec_test]
 fn local_workspace_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let id = EntryID::default();
@@ -1572,7 +1572,7 @@ fn local_workspace_manifest_new(timestamp: DateTime) {
     assert_eq!(lwm.speculative, speculative);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::empty((
     HashMap::new(),
     HashMap::new(),
@@ -1629,7 +1629,7 @@ fn local_workspace_manifest_from_remote(
     assert!(!lwm.speculative);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
 #[case::children_filtered(
     HashMap::from([
@@ -1731,7 +1731,7 @@ fn local_workspace_manifest_from_remote_with_local_context(
     assert!(!lwm.speculative);
 }
 
-#[rstest]
+#[parsec_test]
 fn local_workspace_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
@@ -1756,7 +1756,7 @@ fn local_workspace_manifest_to_remote(timestamp: DateTime) {
     assert_eq!(wm.children, lwm.children);
 }
 
-#[rstest]
+#[parsec_test]
 fn local_workspace_manifest_match_remote(timestamp: DateTime) {
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
@@ -1781,7 +1781,7 @@ fn local_workspace_manifest_match_remote(timestamp: DateTime) {
     assert!(lwm.match_remote(&wm));
 }
 
-#[rstest]
+#[parsec_test]
 #[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, false, "")]
 #[case::no_data(
     HashMap::new(),
@@ -1851,7 +1851,7 @@ fn local_workspace_manifest_evolve_children_and_mark_updated(
 }
 
 // TODO
-#[rstest]
+#[parsec_test]
 fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     let prevent_sync_pattern = Regex::from_regex_str("").unwrap();
 
@@ -1884,7 +1884,7 @@ fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     assert_eq!(lwm.remote_confinement_points, HashSet::new());
 }
 
-#[rstest]
+#[parsec_test]
 fn local_user_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let id = EntryID::default();
@@ -1903,7 +1903,7 @@ fn local_user_manifest_new(timestamp: DateTime) {
     assert_eq!(lum.speculative, speculative);
 }
 
-#[rstest]
+#[parsec_test]
 #[case::empty((0, vec![]))]
 #[case::last_processed_message((10, vec![]))]
 #[case::workspaces((0, vec![WorkspaceEntry::generate("alice".parse().unwrap(), "2000-01-01T00:00:00Z".parse().unwrap())]))]
@@ -1928,7 +1928,7 @@ fn local_user_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
     assert_eq!(lum.workspaces, um.workspaces);
 }
 
-#[rstest]
+#[parsec_test]
 fn local_user_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
@@ -1954,7 +1954,7 @@ fn local_user_manifest_to_remote(timestamp: DateTime) {
     assert_eq!(um.workspaces, lum.workspaces);
 }
 
-#[rstest]
+#[parsec_test]
 fn local_user_manifest_match_remote(timestamp: DateTime) {
     let um = UserManifest {
         author: DeviceID::default(),

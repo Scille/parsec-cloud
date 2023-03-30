@@ -1,16 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use libparsec_types::{HumanHandle, OrganizationID};
-use rstest::rstest;
 
 use libparsec_client_types::{
     AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileRecovery, DeviceFileSmartcard,
     DeviceFileType,
 };
-use libparsec_tests_fixtures::{alice, Device};
+use libparsec_tests_fixtures::{alice, parsec_test, Device};
+use libparsec_types::{HumanHandle, OrganizationID};
 
-#[rstest]
+#[parsec_test]
 fn test_password_protected_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -78,7 +77,7 @@ fn test_password_protected_device_file(alice: &Device) {
     // TODO: Test ciphertext decryption
 }
 
-#[rstest]
+#[parsec_test]
 fn test_recovery_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -144,7 +143,7 @@ fn test_recovery_device_file(alice: &Device) {
     // TODO: Test ciphertext decryption
 }
 
-#[rstest]
+#[parsec_test]
 fn test_smartcard_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.15.0+dev)
     // Content:
@@ -238,7 +237,7 @@ fn test_smartcard_device_file(alice: &Device) {
     assert_eq!(device2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn test_available_device() {
     let org: OrganizationID = "CoolOrg".parse().unwrap();
 

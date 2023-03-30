@@ -27,5 +27,3 @@ thiserror = "1.0.37"
 
 [dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
-
-rstest = "0.16.0"

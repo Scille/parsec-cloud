@@ -6,6 +6,8 @@ use std::{
     task::{Context, Poll},
 };
 
+use libparsec_tests_fixtures::parsec_test;
+
 /// Notifies a single task to wake up.
 ///
 /// `Notify` provides a basic mechanism to notify a single task of an event.
@@ -63,7 +65,7 @@ impl<'a> Future for Notified<'a> {
     }
 }
 
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn notify_before() {
     let notify = Notify::default();
 
@@ -71,7 +73,7 @@ async fn notify_before() {
     notify.notified().await;
 }
 
-#[test_log::test(tokio::test)]
+#[parsec_test]
 async fn notify_after() {
     use crate::spawn;
     use std::sync::Arc;

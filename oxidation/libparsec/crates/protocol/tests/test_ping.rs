@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_protocol::{
     authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds, Request,
 };
+use libparsec_tests_fixtures::parsec_test;
 
-#[rstest]
+#[parsec_test]
 fn serde_authenticated_ping_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -33,7 +33,7 @@ fn serde_authenticated_ping_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_authenticated_ping_rep() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -57,7 +57,7 @@ fn serde_authenticated_ping_rep() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invited_ping_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -83,7 +83,7 @@ fn serde_invited_ping_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_invited_ping_rep() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -107,7 +107,7 @@ fn serde_invited_ping_rep() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn test_authenticated_ping_load_response() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -125,7 +125,7 @@ fn test_authenticated_ping_load_response() {
     )
 }
 
-#[rstest]
+#[parsec_test]
 fn test_invited_ping_load_response() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:

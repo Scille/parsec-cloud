@@ -4,9 +4,8 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_crypto::*;
-use libparsec_types::*;
-
 use libparsec_tests_fixtures::{bob, Device};
+use libparsec_types::*;
 
 #[rstest]
 #[case::normal(

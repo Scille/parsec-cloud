@@ -1,12 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use crate::{LegacyDeviceFile, LegacyDeviceFilePassword};
 use hex_literal::hex;
-use libparsec_types::{DeviceLabel, HumanHandle};
-use rstest::rstest;
 use std::str::FromStr;
 
-#[rstest]
+use libparsec_tests_fixtures::parsec_test;
+use libparsec_types::{DeviceLabel, HumanHandle};
+
+use crate::{LegacyDeviceFile, LegacyDeviceFilePassword};
+
+#[parsec_test]
 #[case::with_device_label_and_human_handle(
     // Generated from Python implementation (Parsec v2.15.0)
     // Content:

@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_tests_fixtures::parsec_test;
 
-#[rstest]
+#[parsec_test]
 fn serde_message_get_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -29,7 +29,7 @@ fn serde_message_get_req() {
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[parsec_test]
 fn serde_message_get_rep() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
