@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 flume = "0.10.14"
 # futures is used for its macros `select_all` and `join_all`
-futures = "0.3.24"
+futures = "0.3.28"
 
 [dev-dependencies]
 log = "0.4.17"
