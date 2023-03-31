@@ -12,7 +12,7 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serialization_format = { path = "../serialization_format" }
+libparsec_serialization_format = { path = "../serialization_format" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_platform_async = { path = "../platform_async" }
 

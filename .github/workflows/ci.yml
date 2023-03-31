@@ -459,6 +459,14 @@ jobs:
         shell: bash
         run: cargo test --workspace --profile ${{ env.CARGO_PROFILE }} --no-run
 
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
         shell: bash

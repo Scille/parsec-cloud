@@ -6,7 +6,7 @@ mod handshake;
 use serde::{Deserialize, Serialize};
 use std::num::NonZeroU8;
 
-use serialization_format::parsec_protocol;
+use libparsec_serialization_format::parsec_protocol;
 
 pub use error::*;
 pub use handshake::*;

@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from parsec._parsec import SequesterVerifyKeyDer, SigningKey, VerifyKey
 from parsec.api.data import DeviceCertificate, SequesterAuthorityCertificate, UserCertificate
 from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
@@ -14,8 +15,6 @@ from parsec.core.invite.exceptions import (
 )
 from parsec.core.local_device import generate_new_device
 from parsec.core.types import BackendOrganizationAddr, BackendOrganizationBootstrapAddr, LocalDevice
-from parsec.crypto import SigningKey, VerifyKey
-from parsec.sequester_crypto import SequesterVerifyKeyDer
 
 
 def _check_rep(rep: dict[str, object], step_name: str) -> None:
