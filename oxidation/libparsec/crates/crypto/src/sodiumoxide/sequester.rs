@@ -5,7 +5,7 @@ use zeroize::Zeroizing;
 use openssl::hash::MessageDigest;
 use openssl::pkey::{PKey, Private, Public};
 use openssl::rsa::{Padding, Rsa};
-use openssl::sign::{RsaPssSaltlen, Signer, Verifier};
+use openssl::sign::{Signer, Verifier};
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
@@ -283,14 +283,17 @@ impl SequesterSigningKeyDer {
     // Signature format:
     //   <algorithm name>:<signature><data>
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
+        // https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_CTX_set_rsa_pss_saltlen.html
+        // EVP_PKEY_CTX_set_rsa_pss_saltlen() sets the RSA PSS salt length to saltlen.
+        // As its name implies it is only supported for PSS padding. If this function
+        // is not called then the maximum salt length is used when signing and auto
+        // detection when verifying.
+        // Rustcrypto uses maximum salt length, so we do the same, to not call `set_rsa_pss_saltlen()`.
         let mut signer =
             Signer::new(MessageDigest::sha256(), &self.0).expect("Unable to build a Signer");
 
         signer
             .set_rsa_padding(Padding::PKCS1_PSS)
-            .expect("OpenSSL error");
-        signer
-            .set_rsa_pss_saltlen(RsaPssSaltlen::DIGEST_LENGTH)
             .expect("OpenSSL error");
 
         signer.update(data).expect("Unreachable");
@@ -376,14 +379,17 @@ impl SequesterVerifyKeyDer {
         let (signature, contents) =
             deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
 
+        // https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_CTX_set_rsa_pss_saltlen.html
+        // EVP_PKEY_CTX_set_rsa_pss_saltlen() sets the RSA PSS salt length to saltlen.
+        // As its name implies it is only supported for PSS padding. If this function
+        // is not called then the maximum salt length is used when signing and auto
+        // detection when verifying.
+        // So we don't need to call `set_rsa_pss_saltlen()`.
         let mut verifier = Verifier::new(MessageDigest::sha256(), &self.0)
             .map_err(|_| CryptoError::SignatureVerification)?;
 
         verifier
             .set_rsa_padding(Padding::PKCS1_PSS)
-            .expect("OpenSSL error");
-        verifier
-            .set_rsa_pss_saltlen(RsaPssSaltlen::DIGEST_LENGTH)
             .expect("OpenSSL error");
 
         verifier
