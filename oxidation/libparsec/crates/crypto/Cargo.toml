@@ -48,8 +48,8 @@ base32 = "0.4.0"
 
 sodiumoxide = { version = "0.2.7", optional = true }
 libsodium-sys = { version = "0.2.7", optional = true }
-openssl = { version = "0.10", optional = true, features = ["vendored"] }
-zeroize = { version = "1", optional = true, features = ["alloc"]}
+openssl = { version = "0.10.48", optional = true, features = ["vendored"] }
+zeroize = { version = "1.6.0", optional = true, features = ["alloc"]}
 
 #
 # RustCrypto stuff

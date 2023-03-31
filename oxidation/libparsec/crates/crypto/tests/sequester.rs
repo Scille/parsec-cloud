@@ -305,3 +305,26 @@ fn test_encrypt_compat() {
 
     assert_eq!(priv_key.decrypt(&encrypted).unwrap(), b"Hello world");
 }
+
+#[test]
+fn verify_with_different_salt_len() {
+    let verify_key = SequesterVerifyKeyDer::try_from(&PUBLIC_KEY_DER_1024[..]).unwrap();
+    let ciphered_salt32 = hex!(
+        "5253415353412d5053532d5348413235363a5533ef66fbd8249dcf2f813da9e381bde5d5d7"
+        "30231584e194e43b5a2cd2802a3a9f713939cf5398f7dd445a97ac9ae7aa3b871b296ff5de"
+        "fa1afe4ee8b1083df0c7c2631f0efb400202d5800c0540e87c4c9b94ecc50d99095212baf3"
+        "5e0ea79d3a56739867e31126b60d6f11b6448719b69562207a376ca5c5ccc0154318c94865"
+        "6c6c6f20576f726c640a"
+    );
+    let ciphered_salt94 = hex!(
+        "5253415353412d5053532d5348413235363a320bb6b943bdf45fb39bc65b60f6353aa29f11"
+        "c5990f664b555723cc910a1b07e95fe82f1ac7c519088d03347461fa7d168686e431f0e466"
+        "6752ecbcd3d9c57698cc41b3280784c762effd2771ebc78e55351db499f0242a1e7067e275"
+        "493d513ac8c04fa8f26ca54633c75ec01a9a60eac2eedc74bbf2979a0140e24976e2874865"
+        "6c6c6f20576f726c640a"
+    );
+    let data = b"Hello World\n";
+
+    assert_eq!(verify_key.verify(&ciphered_salt32).unwrap(), data);
+    assert_eq!(verify_key.verify(&ciphered_salt94).unwrap(), data);
+}
