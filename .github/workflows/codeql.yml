@@ -50,7 +50,7 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        uses: github/codeql-action/init@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
         with:
           languages: python
           setup-python-dependencies: false
@@ -78,7 +78,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        uses: github/codeql-action/analyze@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
         with:
           category: /language:python
 
@@ -135,7 +135,7 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-java-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        uses: github/codeql-action/init@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
         with:
           languages: java
           # If you wish to specify custom queries, you can do so here or in a config file.
@@ -147,7 +147,7 @@ jobs:
 
       - name: Autobuild android
         if: steps.should-run-java-analysis.outputs.run == 'true'
-        uses: github/codeql-action/autobuild@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        uses: github/codeql-action/autobuild@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
         with:
           working-directory: oxidation/client/android
         env:
@@ -155,7 +155,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-java-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        uses: github/codeql-action/analyze@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
         with:
           category: /language:java
 
@@ -188,7 +188,7 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        uses: github/codeql-action/init@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
         with:
           languages: typescript
 
@@ -199,12 +199,12 @@ jobs:
 
       - name: Autobuild for typescript
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/autobuild@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        uses: github/codeql-action/autobuild@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
         with:
           working-directory: oxidation/client
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@168b99b3c22180941ae7dbdd5f5c9678ede476ba # pin v2.2.7
+        uses: github/codeql-action/analyze@04df1262e6247151b5ac09cd2c303ac36ad3f62b # pin v2.2.9
         with:
           category: /language:typescript
