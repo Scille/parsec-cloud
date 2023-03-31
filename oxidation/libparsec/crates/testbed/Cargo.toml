@@ -13,7 +13,7 @@ crc32fast = "1.3.2"
 serde = { version = "1.0.147", features = ["derive"] }
 rmp-serde = "1.1.1"
 lazy_static = "1.4.0"
-reqwest = "0.11.13"
+reqwest = "0.11.16"
 
 [dev-dependencies]
 test-log = "0.2.11"
