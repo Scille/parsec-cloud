@@ -202,6 +202,18 @@ jobs:
           ]
           EOF
 
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: (🏁 Windows) Use strawberry perl
+        if: >-
+          steps.rust-changes.outputs.run == 'true'
+          && steps.rust-cache.outputs.cache-hit != 'true'
+          && startsWith(matrix.os, 'windows')
+        shell: bash
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
+
       - name: Fetch rust dependencies
         if: >-
           steps.rust-changes.outputs.run == 'true'
@@ -345,8 +357,10 @@ jobs:
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
       # paths so we have to switch to Strawberry.
-      - name: Use strawberry perl
-        if: steps.should-run-rust-jobs.outputs.run == 'true' && startsWith(matrix.os, 'windows')
+      - name: (🏁 Windows) Use strawberry perl
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'windows')
         shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
@@ -472,8 +486,10 @@ jobs:
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
       # paths so we have to switch to Strawberry.
-      - name: Use strawberry perl
-        if: startsWith(matrix.os, 'windows')
+      - name: (🏁 Windows) Use strawberry perl
+        if: >-
+          steps.rust-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'windows')
         shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
 
