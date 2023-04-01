@@ -5,6 +5,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.15.1 (2023-04-01)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix certificate validation error on Windows with sequester service certificate generated
+  from non-Windows (fixed by replacing use of Windows's CNG crypto by an embedded OpenSSL)
+  (`#4347<https://github.com/Scille/parsec-cloud/issues/4347>`__)
+
+
 Parsec v2.15.0 (2022-12-12)
 ---------------------------
 
