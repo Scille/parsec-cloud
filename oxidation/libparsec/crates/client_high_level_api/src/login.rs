@@ -9,11 +9,12 @@ use libparsec_core::LoggedCore;
 use libparsec_platform_async::Mutex;
 use libparsec_types::DeviceID;
 
-pub use libparsec_client_types::{AvailableDevice, DeviceFileType};
 pub use libparsec_crypto::SequesterVerifyKeyDer;
 pub use libparsec_protocol::authenticated_cmds::v3::invite_list::InviteListItem;
-pub use libparsec_types::BackendAddr;
-pub use libparsec_types::{BackendOrganizationBootstrapAddr, DeviceLabel, HumanHandle};
+pub use libparsec_types::{
+    AvailableDevice, BackendAddr, BackendOrganizationBootstrapAddr, DeviceFileType, DeviceLabel,
+    HumanHandle,
+};
 
 use crate::ClientEvent;
 

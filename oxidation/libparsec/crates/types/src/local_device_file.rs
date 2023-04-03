@@ -6,7 +6,9 @@ use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 
 use libparsec_serialization_format::parsec_data;
-use libparsec_types::{
+
+use crate as libparsec_types;
+use crate::{
     impl_transparent_data_format_conversion, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
 };
 
@@ -23,7 +25,7 @@ pub struct DeviceFilePassword {
     pub salt: Vec<u8>,
 }
 
-parsec_data!("schema/device_file_password.json5");
+parsec_data!("schema/local_device/device_file_password.json5");
 
 impl_transparent_data_format_conversion!(
     DeviceFilePassword,
@@ -48,7 +50,7 @@ pub struct DeviceFileRecovery {
     pub slug: String,
 }
 
-parsec_data!("schema/device_file_recovery.json5");
+parsec_data!("schema/local_device/device_file_recovery.json5");
 
 impl_transparent_data_format_conversion!(
     DeviceFileRecovery,
@@ -76,7 +78,7 @@ pub struct DeviceFileSmartcard {
     pub certificate_sha1: Option<Vec<u8>>,
 }
 
-parsec_data!("schema/device_file_smartcard.json5");
+parsec_data!("schema/local_device/device_file_smartcard.json5");
 
 impl_transparent_data_format_conversion!(
     DeviceFileSmartcard,

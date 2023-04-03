@@ -4,8 +4,7 @@ use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::num::NonZeroU64;
 
-use libparsec_client_types::{Chunk, LocalFileManifest};
-use libparsec_types::{ChunkID, DateTime};
+use libparsec_types::{Chunk, ChunkID, DateTime, LocalFileManifest};
 
 type WriteOperation = (Chunk, i64);
 
@@ -396,11 +395,14 @@ pub fn prepare_reshape(
 
 #[cfg(test)]
 mod tests {
-    use crate::file_operations::{prepare_read, prepare_reshape, prepare_resize, prepare_write};
-    use libparsec_client_types::{Chunk, LocalFileManifest};
-    use libparsec_tests_fixtures::parsec_test;
-    use libparsec_types::{Blocksize, ChunkID, DateTime, DeviceID, EntryID};
     use std::{collections::HashMap, str::FromStr};
+
+    use libparsec_tests_fixtures::parsec_test;
+    use libparsec_types::{
+        Blocksize, Chunk, ChunkID, DateTime, DeviceID, EntryID, LocalFileManifest,
+    };
+
+    use crate::file_operations::{prepare_read, prepare_reshape, prepare_resize, prepare_write};
 
     fn padded_data(data: &[u8], start: i64, stop: i64) -> Vec<u8> {
         assert!(start <= stop);

@@ -12,7 +12,6 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libparsec_client_types = { path = "../client_types" }
 libparsec_client_connection = { path = "../client_connection" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_platform_async = { path = "../platform_async" }

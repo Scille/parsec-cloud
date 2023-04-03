@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use libparsec_client_types::{DeviceFile, LocalDevice, LocalDeviceResult};
+use libparsec_types::{DeviceFile, LocalDevice, LocalDeviceResult};
 
 use crate::{load_device_file, load_device_with_password_core};
 

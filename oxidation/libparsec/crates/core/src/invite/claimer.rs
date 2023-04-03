@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use libparsec_client_connection::InvitedCmds;
-use libparsec_client_types::LocalDevice;
 use libparsec_crypto::{generate_nonce, HashDigest, PrivateKey, SecretKey, SigningKey};
 use libparsec_protocol::invited_cmds::v2::*;
 use libparsec_types::{
     BackendOrganizationAddr, DeviceLabel, HumanHandle, InviteDeviceConfirmation, InviteDeviceData,
-    InviteUserConfirmation, InviteUserData, SASCode, UserID,
+    InviteUserConfirmation, InviteUserData, LocalDevice, SASCode, UserID,
 };
 
 use crate::{InviteError, InviteResult};

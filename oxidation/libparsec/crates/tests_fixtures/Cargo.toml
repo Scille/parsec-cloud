@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 libparsec_crypto = { path = "../crypto" }
 libparsec_types = { path = "../types" }
-libparsec_client_types = { path = "../client_types" }
 libparsec_testbed = { path = "../testbed" }
 libparsec_tests_macros = { path = "../tests_macros" }
 # Enable testbed support in crates here

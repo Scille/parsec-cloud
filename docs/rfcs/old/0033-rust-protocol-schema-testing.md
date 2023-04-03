@@ -21,7 +21,7 @@ From [ISSUE-2834](https://github.com/Scille/parsec-cloud/issues/2834)
 
 ## Rust protocol schema testing
 
-> How to test if the change made to the protocol schemes (`oxidation/libparsec/crates/{protocol,client_types}/schema/**.json`) is valid ?
+> How to test if the change made to the protocol schemes (`oxidation/libparsec/crates/protocol/schema/**.json`) is valid ?
 
 - Testing retro-compatibility.
   - Ensure that major versions are indeed not compatible together (i.e.: `v1` against `v2`).

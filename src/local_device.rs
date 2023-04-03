@@ -8,8 +8,8 @@ use pyo3::{
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use libparsec::client_types;
 use libparsec::platform_device_loader;
+use libparsec::types;
 
 use crate::{
     addrs::BackendOrganizationAddr,
@@ -62,7 +62,7 @@ pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct LocalDevice(pub Arc<libparsec::client_types::LocalDevice>);
+pub(crate) struct LocalDevice(pub Arc<types::LocalDevice>);
 
 crate::binding_utils::gen_proto!(LocalDevice, __repr__);
 crate::binding_utils::gen_proto!(LocalDevice, __copy__);
@@ -106,7 +106,7 @@ impl LocalDevice {
         );
 
         let time_provider = time_provider.map(|tp| tp.0).unwrap_or_default();
-        let local_device = libparsec::client_types::LocalDevice {
+        let local_device = types::LocalDevice {
             organization_addr: organization_addr.0,
             device_id: device_id.0,
             device_label: device_label.map(|x| x.0),
@@ -201,7 +201,7 @@ impl LocalDevice {
         signing_key: Option<SigningKey>,
         private_key: Option<PrivateKey>,
     ) -> Self {
-        let local_device = client_types::LocalDevice::generate_new_device(
+        let local_device = types::LocalDevice::generate_new_device(
             organization_addr.0,
             device_id.map(|d| d.0),
             profile.0,
@@ -215,12 +215,12 @@ impl LocalDevice {
 
     #[getter]
     fn is_admin(&self) -> PyResult<bool> {
-        Ok(self.0.profile == libparsec::types::UserProfile::Admin)
+        Ok(self.0.profile == types::UserProfile::Admin)
     }
 
     #[getter]
     fn is_outsider(&self) -> PyResult<bool> {
-        Ok(self.0.profile == libparsec::types::UserProfile::Outsider)
+        Ok(self.0.profile == types::UserProfile::Outsider)
     }
 
     #[getter]
@@ -235,7 +235,7 @@ impl LocalDevice {
 
     #[classmethod]
     fn load_slug(_cls: &PyType, slug: &str) -> PyResult<(OrganizationID, DeviceID)> {
-        libparsec::client_types::LocalDevice::load_slug(slug)
+        types::LocalDevice::load_slug(slug)
             .map(|(org_id, device_id)| (OrganizationID(org_id), DeviceID(device_id)))
             .map_err(|e| PyValueError::new_err(e.to_string()))
     }
@@ -377,7 +377,7 @@ impl LocalDevice {
 
     #[classmethod]
     fn load(_cls: &PyType, encrypted: &[u8]) -> PyResult<Self> {
-        libparsec::client_types::LocalDevice::load(encrypted)
+        types::LocalDevice::load(encrypted)
             .map(|local_device| Self(Arc::new(local_device)))
             .map_err(PyValueError::new_err)
     }
@@ -385,7 +385,7 @@ impl LocalDevice {
 
 #[pyclass]
 #[derive(Clone)]
-struct UserInfo(pub libparsec::client_types::UserInfo);
+struct UserInfo(pub types::UserInfo);
 
 crate::binding_utils::gen_proto!(UserInfo, __repr__);
 crate::binding_utils::gen_proto!(UserInfo, __copy__);
@@ -407,7 +407,7 @@ impl UserInfo {
             [revoked_on: Option<DateTime>, "revoked_on"],
         );
 
-        Ok(Self(libparsec::client_types::UserInfo {
+        Ok(Self(types::UserInfo {
             user_id: user_id.0,
             human_handle: human_handle.map(|x| x.0),
             profile: profile.0,
@@ -459,7 +459,7 @@ impl UserInfo {
 
 #[pyclass]
 #[derive(Clone)]
-struct DeviceInfo(pub libparsec::client_types::DeviceInfo);
+struct DeviceInfo(pub types::DeviceInfo);
 
 crate::binding_utils::gen_proto!(DeviceInfo, __repr__);
 crate::binding_utils::gen_proto!(DeviceInfo, __copy__);
@@ -479,7 +479,7 @@ impl DeviceInfo {
             [created_on: DateTime, "created_on"],
         );
 
-        Ok(Self(libparsec::client_types::DeviceInfo {
+        Ok(Self(types::DeviceInfo {
             device_id: device_id.0,
             device_label: device_label.map(|x| x.0),
             created_on: created_on.0,
@@ -524,7 +524,7 @@ pyo3::create_exception!(_parsec, LocalDevicePackingErrorExc, LocalDeviceErrorExc
 pyo3::create_exception!(_parsec, LocalDeviceNotFoundErrorExc, LocalDeviceErrorExc);
 
 #[derive(Debug)]
-struct LocalDeviceError(client_types::LocalDeviceError);
+struct LocalDeviceError(types::LocalDeviceError);
 
 impl std::fmt::Display for LocalDeviceError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -532,8 +532,8 @@ impl std::fmt::Display for LocalDeviceError {
     }
 }
 
-impl From<client_types::LocalDeviceError> for LocalDeviceError {
-    fn from(value: client_types::LocalDeviceError) -> Self {
+impl From<types::LocalDeviceError> for LocalDeviceError {
+    fn from(value: types::LocalDeviceError) -> Self {
         Self(value)
     }
 }
@@ -542,21 +542,21 @@ impl From<LocalDeviceError> for PyErr {
     fn from(value: LocalDeviceError) -> Self {
         let internal = value.0;
         match internal {
-            client_types::LocalDeviceError::CryptoError { exc } => {
+            types::LocalDeviceError::CryptoError { exc } => {
                 LocalDeviceCryptoErrorExc::new_err(exc.to_string())
             }
-            client_types::LocalDeviceError::Validation { .. } => {
+            types::LocalDeviceError::Validation { .. } => {
                 LocalDeviceValidationErrorExc::new_err(internal.to_string())
             }
-            client_types::LocalDeviceError::AlreadyExists(_) => {
+            types::LocalDeviceError::AlreadyExists(_) => {
                 LocalDeviceAlreadyExistsErrorExc::new_err(internal.to_string())
             }
-            client_types::LocalDeviceError::Deserialization(_) => {
+            types::LocalDeviceError::Deserialization(_) => {
                 LocalDevicePackingErrorExc::new_err(internal.to_string())
             }
-            client_types::LocalDeviceError::Access(_)
-            | client_types::LocalDeviceError::InvalidSlug
-            | client_types::LocalDeviceError::Serialization(_) => {
+            types::LocalDeviceError::Access(_)
+            | types::LocalDeviceError::InvalidSlug
+            | types::LocalDeviceError::Serialization(_) => {
                 LocalDeviceErrorExc::new_err(internal.to_string())
             }
         }
@@ -597,7 +597,7 @@ fn change_device_password(
 }
 
 #[pyclass]
-struct AvailableDevice(client_types::AvailableDevice);
+struct AvailableDevice(types::AvailableDevice);
 
 #[pymethods]
 impl AvailableDevice {
@@ -611,7 +611,7 @@ impl AvailableDevice {
         slug: String,
         r#type: DeviceFileType,
     ) -> Self {
-        Self(client_types::AvailableDevice {
+        Self(types::AvailableDevice {
             key_file_path,
             organization_id: organization_id.0,
             device_id: device_id.0,

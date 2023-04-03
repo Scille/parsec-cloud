@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 libparsec_crypto = { path = "../crypto" }
 libparsec_types = { path = "../types" }
-libparsec_client_types = { path = "../client_types" }
 
 hex-literal = "0.3.3"
 crc32fast = "1.3.2"

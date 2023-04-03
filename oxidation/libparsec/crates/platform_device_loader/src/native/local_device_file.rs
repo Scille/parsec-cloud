@@ -7,11 +7,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use libparsec_client_types::{
+use libparsec_crypto::SecretKey;
+use libparsec_types::{
     AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileRecovery, DeviceFileType,
     LegacyDeviceFile, LocalDevice, LocalDeviceError, LocalDeviceResult,
 };
-use libparsec_crypto::SecretKey;
 
 use crate::load_device_with_password_from_path;
 

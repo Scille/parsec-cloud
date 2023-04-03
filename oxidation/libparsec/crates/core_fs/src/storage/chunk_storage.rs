@@ -14,11 +14,10 @@ use diesel::{
     OptionalExtension, QueryDsl, RunQueryDsl,
 };
 
-use libparsec_client_types::LocalDevice;
 use libparsec_crypto::SecretKey;
 use libparsec_platform_async::future;
 use libparsec_platform_local_db::{LocalDatabase, LOCAL_DATABASE_MAX_VARIABLE_NUMBER};
-use libparsec_types::{BlockID, ChunkID, TimeProvider, DEFAULT_BLOCK_SIZE};
+use libparsec_types::{BlockID, ChunkID, LocalDevice, TimeProvider, DEFAULT_BLOCK_SIZE};
 
 use crate::{
     error::{FSError, FSResult},
@@ -615,9 +614,9 @@ mod tests {
         sync::Arc,
     };
 
-    use libparsec_client_types::LocalDevice;
     use libparsec_platform_local_db::VacuumMode;
     use libparsec_tests_fixtures::{parsec_test, TestbedEnv};
+    use libparsec_types::LocalDevice;
 
     use super::*;
 

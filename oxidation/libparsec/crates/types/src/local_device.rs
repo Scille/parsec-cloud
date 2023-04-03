@@ -6,7 +6,11 @@ use sha2::Digest;
 
 use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
-use libparsec_types::*;
+
+use crate::{
+    self as libparsec_types, BackendOrganizationAddr, DateTime, DeviceID, DeviceLabel, DeviceName,
+    EntryID, HumanHandle, Maybe, OrganizationID, TimeProvider, UserID, UserProfile,
+};
 
 pub fn local_device_slug(
     organization_id: &OrganizationID,
@@ -171,7 +175,7 @@ impl LocalDevice {
     }
 }
 
-parsec_data!("schema/local_device.json5");
+parsec_data!("schema/local_device/local_device.json5");
 
 impl TryFrom<LocalDeviceData> for LocalDevice {
     type Error = &'static str;

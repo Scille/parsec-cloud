@@ -6,13 +6,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_client_types::{
-    LocalDevice, LocalFileManifest, LocalFolderManifest, LocalManifest, LocalUserManifest,
-    LocalWorkspaceManifest,
-};
 use libparsec_platform_async::Mutex as AsyncMutex;
 use libparsec_platform_local_db::{AutoVacuum, LocalDatabase, VacuumMode};
-use libparsec_types::{BlockID, ChunkID, EntryID, FileDescriptor, Regex};
+use libparsec_types::{
+    BlockID, ChunkID, EntryID, FileDescriptor, LocalDevice, LocalFileManifest, LocalFolderManifest,
+    LocalManifest, LocalUserManifest, LocalWorkspaceManifest, Regex,
+};
 
 use super::{
     chunk_storage::{ChunkStorage, Remanence},
@@ -574,9 +573,8 @@ mod tests {
     // TODO: add tests for `workspace_storage_non_speculative_init` !
     use std::num::NonZeroU64;
 
-    use libparsec_client_types::Chunk;
     use libparsec_tests_fixtures::{parsec_test, TestbedEnv};
-    use libparsec_types::{Blocksize, Regex, DEFAULT_BLOCK_SIZE};
+    use libparsec_types::{Blocksize, Chunk, Regex, DEFAULT_BLOCK_SIZE};
 
     use super::*;
 
