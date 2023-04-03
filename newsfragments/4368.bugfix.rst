@@ -1,0 +1,1 @@
+Fix `parsec backend sequester list_services` CLI output when an error is returned
