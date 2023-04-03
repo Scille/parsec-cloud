@@ -15,7 +15,7 @@ use std::{
 };
 
 use libparsec::{
-    client_types::LocalManifest,
+    types::LocalManifest,
     types::{Blocksize, DEFAULT_BLOCK_SIZE},
 };
 
@@ -33,7 +33,7 @@ use crate::{
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct Chunk(pub libparsec::client_types::Chunk);
+pub(crate) struct Chunk(pub libparsec::types::Chunk);
 
 crate::binding_utils::gen_proto!(Chunk, __repr__);
 crate::binding_utils::gen_proto!(Chunk, __copy__);
@@ -54,7 +54,7 @@ impl Chunk {
             [access: Option<BlockAccess>, "access"],
         );
 
-        Ok(Self(libparsec::client_types::Chunk {
+        Ok(Self(libparsec::types::Chunk {
             id: id.0,
             start,
             stop: NonZeroU64::try_from(stop)
@@ -128,7 +128,7 @@ impl Chunk {
 
     #[classmethod]
     fn from_block_access(_cls: &PyType, block_access: BlockAccess) -> PyResult<Self> {
-        libparsec::client_types::Chunk::from_block_access(block_access.0)
+        libparsec::types::Chunk::from_block_access(block_access.0)
             .map(Self)
             .map_err(PyValueError::new_err)
     }
@@ -174,7 +174,7 @@ impl Chunk {
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType, start: u64, stop: u64) -> PyResult<Self> {
-        Ok(Self(libparsec::client_types::Chunk::new(
+        Ok(Self(libparsec::types::Chunk::new(
             start,
             NonZeroU64::try_from(stop).map_err(PyValueError::new_err)?,
         )))
@@ -213,7 +213,7 @@ impl Chunk {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct LocalFileManifest(pub libparsec::client_types::LocalFileManifest);
+pub(crate) struct LocalFileManifest(pub libparsec::types::LocalFileManifest);
 
 crate::binding_utils::gen_proto!(LocalFileManifest, __repr__);
 crate::binding_utils::gen_proto!(LocalFileManifest, __copy__);
@@ -235,7 +235,7 @@ impl LocalFileManifest {
             [blocks: Vec<Vec<Chunk>>, "blocks"],
         );
 
-        Ok(Self(libparsec::client_types::LocalFileManifest {
+        Ok(Self(libparsec::types::LocalFileManifest {
             base: base.0,
             need_sync,
             updated: updated.0,
@@ -322,7 +322,7 @@ impl LocalFileManifest {
 
     #[classmethod]
     fn from_remote(_cls: &PyType, remote: FileManifest) -> PyResult<Self> {
-        libparsec::client_types::LocalFileManifest::from_remote(remote.0)
+        libparsec::types::LocalFileManifest::from_remote(remote.0)
             .map(Self)
             .map_err(PyValueError::new_err)
     }
@@ -381,10 +381,7 @@ impl LocalFileManifest {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
-        Ok(
-            libparsec::client_types::LocalFileManifest::decrypt_and_load(encrypted, &key.0)
-                .map(Self)?,
-        )
+        Ok(libparsec::types::LocalFileManifest::decrypt_and_load(encrypted, &key.0).map(Self)?)
     }
 
     #[classmethod]
@@ -399,7 +396,7 @@ impl LocalFileManifest {
             .map(|blocksize| Blocksize::try_from(blocksize).map_err(PyValueError::new_err))
             .unwrap_or(Ok(DEFAULT_BLOCK_SIZE))?;
 
-        Ok(Self(libparsec::client_types::LocalFileManifest::new(
+        Ok(Self(libparsec::types::LocalFileManifest::new(
             author.0,
             parent.0,
             timestamp.0,
@@ -519,7 +516,7 @@ impl LocalFileManifest {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct LocalFolderManifest(pub libparsec::client_types::LocalFolderManifest);
+pub(crate) struct LocalFolderManifest(pub libparsec::types::LocalFolderManifest);
 
 crate::binding_utils::gen_proto!(LocalFolderManifest, __repr__);
 crate::binding_utils::gen_proto!(LocalFolderManifest, __copy__);
@@ -541,7 +538,7 @@ impl LocalFolderManifest {
             [remote, "remote_confinement_points", py_to_rs_set],
         );
 
-        Ok(Self(libparsec::client_types::LocalFolderManifest {
+        Ok(Self(libparsec::types::LocalFolderManifest {
             base: base.0,
             need_sync,
             updated: updated.0,
@@ -664,10 +661,7 @@ impl LocalFolderManifest {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
-        Ok(
-            libparsec::client_types::LocalFolderManifest::decrypt_and_load(encrypted, &key.0)
-                .map(Self)?,
-        )
+        Ok(libparsec::types::LocalFolderManifest::decrypt_and_load(encrypted, &key.0).map(Self)?)
     }
 
     #[classmethod]
@@ -677,7 +671,7 @@ impl LocalFolderManifest {
         parent: EntryID,
         timestamp: DateTime,
     ) -> Self {
-        Self(libparsec::client_types::LocalFolderManifest::new(
+        Self(libparsec::types::LocalFolderManifest::new(
             author.0,
             parent.0,
             timestamp.0,
@@ -708,7 +702,7 @@ impl LocalFolderManifest {
 
     #[classmethod]
     fn from_remote(_cls: &PyType, remote: FolderManifest, prevent_sync_pattern: &Regex) -> Self {
-        Self(libparsec::client_types::LocalFolderManifest::from_remote(
+        Self(libparsec::types::LocalFolderManifest::from_remote(
             remote.0,
             &prevent_sync_pattern.0,
         ))
@@ -723,7 +717,7 @@ impl LocalFolderManifest {
         timestamp: DateTime,
     ) -> Self {
         Self(
-            libparsec::client_types::LocalFolderManifest::from_remote_with_local_context(
+            libparsec::types::LocalFolderManifest::from_remote_with_local_context(
                 remote.0,
                 &prevent_sync_pattern.0,
                 &local_manifest.0,
@@ -863,7 +857,7 @@ impl LocalFolderManifest {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct LocalWorkspaceManifest(pub libparsec::client_types::LocalWorkspaceManifest);
+pub(crate) struct LocalWorkspaceManifest(pub libparsec::types::LocalWorkspaceManifest);
 
 crate::binding_utils::gen_proto!(LocalWorkspaceManifest, __repr__);
 crate::binding_utils::gen_proto!(LocalWorkspaceManifest, __copy__);
@@ -886,7 +880,7 @@ impl LocalWorkspaceManifest {
             [speculative: bool, "speculative"],
         );
 
-        Ok(Self(libparsec::client_types::LocalWorkspaceManifest {
+        Ok(Self(libparsec::types::LocalWorkspaceManifest {
             base: base.0,
             need_sync,
             updated: updated.0,
@@ -1007,7 +1001,7 @@ impl LocalWorkspaceManifest {
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
         Ok(
-            libparsec::client_types::LocalWorkspaceManifest::decrypt_and_load(encrypted, &key.0)
+            libparsec::types::LocalWorkspaceManifest::decrypt_and_load(encrypted, &key.0)
                 .map(Self)?,
         )
     }
@@ -1021,7 +1015,7 @@ impl LocalWorkspaceManifest {
         id: Option<EntryID>,
         speculative: bool,
     ) -> Self {
-        Self(libparsec::client_types::LocalWorkspaceManifest::new(
+        Self(libparsec::types::LocalWorkspaceManifest::new(
             author.0,
             timestamp.0,
             id.map(|id| id.0),
@@ -1053,12 +1047,10 @@ impl LocalWorkspaceManifest {
 
     #[classmethod]
     fn from_remote(_cls: &PyType, remote: WorkspaceManifest, prevent_sync_pattern: &Regex) -> Self {
-        Self(
-            libparsec::client_types::LocalWorkspaceManifest::from_remote(
-                remote.0,
-                &prevent_sync_pattern.0,
-            ),
-        )
+        Self(libparsec::types::LocalWorkspaceManifest::from_remote(
+            remote.0,
+            &prevent_sync_pattern.0,
+        ))
     }
 
     #[classmethod]
@@ -1070,7 +1062,7 @@ impl LocalWorkspaceManifest {
         timestamp: DateTime,
     ) -> Self {
         Self(
-            libparsec::client_types::LocalWorkspaceManifest::from_remote_with_local_context(
+            libparsec::types::LocalWorkspaceManifest::from_remote_with_local_context(
                 remote.0,
                 &prevent_sync_pattern.0,
                 &local_manifest.0,
@@ -1215,7 +1207,7 @@ impl LocalWorkspaceManifest {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct LocalUserManifest(pub libparsec::client_types::LocalUserManifest);
+pub(crate) struct LocalUserManifest(pub libparsec::types::LocalUserManifest);
 
 crate::binding_utils::gen_proto!(LocalUserManifest, __repr__);
 crate::binding_utils::gen_proto!(LocalUserManifest, __copy__);
@@ -1237,7 +1229,7 @@ impl LocalUserManifest {
             [speculative: bool, "speculative"],
         );
 
-        Ok(Self(libparsec::client_types::LocalUserManifest {
+        Ok(Self(libparsec::types::LocalUserManifest {
             base: base.0,
             need_sync,
             updated: updated.0,
@@ -1348,10 +1340,7 @@ impl LocalUserManifest {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
-        Ok(
-            libparsec::client_types::LocalUserManifest::decrypt_and_load(encrypted, &key.0)
-                .map(Self)?,
-        )
+        Ok(libparsec::types::LocalUserManifest::decrypt_and_load(encrypted, &key.0).map(Self)?)
     }
 
     #[classmethod]
@@ -1363,7 +1352,7 @@ impl LocalUserManifest {
         id: Option<EntryID>,
         speculative: bool,
     ) -> Self {
-        Self(libparsec::client_types::LocalUserManifest::new(
+        Self(libparsec::types::LocalUserManifest::new(
             author.0,
             timestamp.0,
             id.map(|id| id.0),
@@ -1380,9 +1369,7 @@ impl LocalUserManifest {
 
     #[classmethod]
     fn from_remote(_cls: &PyType, remote: UserManifest) -> Self {
-        Self(libparsec::client_types::LocalUserManifest::from_remote(
-            remote.0,
-        ))
+        Self(libparsec::types::LocalUserManifest::from_remote(remote.0))
     }
 
     #[classmethod]

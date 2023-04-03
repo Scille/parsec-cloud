@@ -195,7 +195,7 @@ repos:
         name: Validate data files with jsonschema
         alias: check-data-schema
         types_or: [ json5 ]
-        files: ^oxidation/libparsec/crates/(types|client_types)/schema/
+        files: ^oxidation/libparsec/crates/types/schema/
         args: [ --schemafile, json_schema/data.schema.json ]
         additional_dependencies: [ json5 ]
 

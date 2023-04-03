@@ -13,7 +13,7 @@ use crate::time::DateTime;
 
 // Conversion helpers
 
-fn to_py_chunks(py: Python, chunks: Vec<libparsec::client_types::Chunk>) -> &PyTuple {
+fn to_py_chunks(py: Python, chunks: Vec<libparsec::types::Chunk>) -> &PyTuple {
     PyTuple::new(py, chunks.into_iter().map(|x| Chunk(x).into_py(py)))
 }
 
@@ -32,7 +32,7 @@ fn to_py_removed_ids(
 
 fn to_py_write_operations(
     py: Python,
-    write_operations: Vec<(libparsec::client_types::Chunk, i64)>,
+    write_operations: Vec<(libparsec::types::Chunk, i64)>,
 ) -> &PyList {
     PyList::new(
         py,

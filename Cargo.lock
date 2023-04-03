@@ -1170,7 +1170,6 @@ version = "0.0.0"
 dependencies = [
  "libparsec_client_connection",
  "libparsec_client_high_level_api",
- "libparsec_client_types",
  "libparsec_core",
  "libparsec_core_fs",
  "libparsec_crypto",
@@ -1243,7 +1242,6 @@ dependencies = [
 name = "libparsec_client_high_level_api"
 version = "0.0.0"
 dependencies = [
- "libparsec_client_types",
  "libparsec_core",
  "libparsec_crypto",
  "libparsec_platform_async",
@@ -1256,35 +1254,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "libparsec_client_types"
-version = "0.0.0"
-dependencies = [
- "flate2",
- "glob",
- "hex-literal",
- "libparsec_crypto",
- "libparsec_serialization_format",
- "libparsec_tests_fixtures",
- "libparsec_types",
- "paste",
- "pretty_assertions",
- "regex",
- "rmp-serde",
- "rstest_reuse",
- "serde",
- "serde_bytes",
- "serde_test",
- "serde_with",
- "sha2 0.10.6",
- "thiserror",
-]
-
-[[package]]
 name = "libparsec_core"
 version = "0.0.0"
 dependencies = [
  "libparsec_client_connection",
- "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
@@ -1305,7 +1278,6 @@ dependencies = [
  "diesel",
  "lazy_static",
  "libparsec_client_connection",
- "libparsec_client_types",
  "libparsec_core",
  "libparsec_crypto",
  "libparsec_platform_async",
@@ -1380,7 +1352,6 @@ name = "libparsec_platform_device_loader"
 version = "0.0.0"
 dependencies = [
  "hex-literal",
- "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
@@ -1453,7 +1424,6 @@ dependencies = [
  "crc32fast",
  "hex-literal",
  "lazy_static",
- "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_tests_fixtures",
  "libparsec_types",
@@ -1469,7 +1439,6 @@ dependencies = [
  "env_logger",
  "hex-literal",
  "lazy_static",
- "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_platform_device_loader",
  "libparsec_platform_local_db",
@@ -1519,6 +1488,7 @@ dependencies = [
  "serde_bytes",
  "serde_test",
  "serde_with",
+ "sha2 0.10.6",
  "thiserror",
  "unicode-normalization",
  "url",

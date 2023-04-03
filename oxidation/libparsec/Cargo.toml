@@ -24,7 +24,6 @@ test-utils = [
 libparsec_client_high_level_api = { path = "crates/client_high_level_api" }
 libparsec_core = { path = "crates/core" }
 libparsec_crypto = { path = "crates/crypto" }
-libparsec_client_types = { path = "crates/client_types" }
 libparsec_client_connection = { path = "crates/client_connection" }
 libparsec_platform_async = { path = "crates/platform_async" }
 libparsec_platform_device_loader = { path = "crates/platform_device_loader" }

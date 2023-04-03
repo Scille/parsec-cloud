@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use libparsec_client_types as client_types;
-#[cfg(not(target_arch = "wasm32"))]
 pub use libparsec_core_fs as core_fs;
 #[cfg(all(not(target_arch = "wasm32"), feature = "test-utils"))]
 pub use libparsec_platform_local_db as local_db;

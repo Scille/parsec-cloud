@@ -6,13 +6,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_client_types::{LocalDevice, LocalManifest, LocalUserManifest};
+use libparsec_platform_async::Mutex as AsyncMutex;
 use libparsec_platform_local_db::{LocalDatabase, VacuumMode};
-use libparsec_types::EntryID;
+use libparsec_types::{EntryID, LocalDevice, LocalManifest, LocalUserManifest};
 
 use super::{manifest_storage::ManifestStorage, version::get_user_data_storage_db_relative_path};
 use crate::error::FSResult;
-use libparsec_platform_async::Mutex as AsyncMutex;
 
 pub struct UserStorage {
     pub device: Arc<LocalDevice>,

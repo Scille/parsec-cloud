@@ -3,14 +3,13 @@
 use hex_literal::hex;
 use std::collections::HashSet;
 
-use libparsec_client_types::{
-    AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileType, LocalDevice,
-};
 use libparsec_platform_device_loader::*;
 use libparsec_tests_fixtures::{
     alice, bob, mallory, parsec_test, tmp_path, Device, TestbedEnv, TmpPath,
 };
-use libparsec_types::DeviceID;
+use libparsec_types::{
+    AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileType, DeviceID, LocalDevice,
+};
 
 fn device_file_factory(device: LocalDevice) -> DeviceFile {
     DeviceFile::Password(DeviceFilePassword {

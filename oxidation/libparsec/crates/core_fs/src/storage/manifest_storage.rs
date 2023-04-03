@@ -9,10 +9,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_client_types::{LocalDevice, LocalManifest};
 use libparsec_crypto::{CryptoError, SecretKey};
 use libparsec_platform_async::future::TryFutureExt;
-use libparsec_types::{BlockID, ChunkID, EntryID, Regex};
+use libparsec_types::{BlockID, ChunkID, EntryID, LocalDevice, LocalManifest, Regex};
 
 use crate::{
     error::{FSError, FSResult},
@@ -705,12 +704,12 @@ mod tests {
         sync::Arc,
     };
 
-    use libparsec_client_types::{Chunk, LocalFileManifest};
     use libparsec_crypto::{prelude::*, HashDigest};
     use libparsec_platform_local_db::VacuumMode;
-    use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest, Regex};
-
     use libparsec_tests_fixtures::{parsec_test, timestamp, TestbedEnv};
+    use libparsec_types::{
+        BlockAccess, Blocksize, Chunk, DateTime, DeviceID, FileManifest, LocalFileManifest, Regex,
+    };
 
     use super::*;
 

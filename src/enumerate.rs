@@ -8,8 +8,8 @@ use pyo3::{
 };
 
 use libparsec::{
-    client_types,
     protocol::authenticated_cmds::v2::{invite_delete, invite_new},
+    types,
 };
 
 use crate::protocol::{ProtocolErrorFields, ProtocolResult};
@@ -21,7 +21,7 @@ use crate::protocol::{ProtocolErrorFields, ProtocolResult};
 #[pyclass]
 #[derive(Clone)]
 #[non_exhaustive]
-pub(crate) struct ClientType(pub client_types::ClientType);
+pub(crate) struct ClientType(pub types::ClientType);
 
 crate::binding_utils::gen_proto!(ClientType, __repr__);
 crate::binding_utils::gen_proto!(ClientType, __copy__);
@@ -34,10 +34,10 @@ crate::binding_utils::impl_enum_field!(
     [
         "AUTHENTICATED",
         authenticated,
-        client_types::ClientType::Authenticated
+        types::ClientType::Authenticated
     ],
-    ["INVITED", invited, client_types::ClientType::Invited],
-    ["ANONYMOUS", anonymous, client_types::ClientType::Anonymous]
+    ["INVITED", invited, types::ClientType::Invited],
+    ["ANONYMOUS", anonymous, types::ClientType::Anonymous]
 );
 
 #[pyclass]
@@ -385,17 +385,13 @@ crate::binding_utils::gen_proto!(CoreEvent, __richcmp__, eq);
 #[pyclass]
 #[derive(Clone)]
 #[non_exhaustive]
-pub(crate) struct DeviceFileType(pub client_types::DeviceFileType);
+pub(crate) struct DeviceFileType(pub types::DeviceFileType);
 
 crate::binding_utils::impl_enum_field!(
     DeviceFileType,
-    ["PASSWORD", password, client_types::DeviceFileType::Password],
-    [
-        "SMARTCARD",
-        smartcard,
-        client_types::DeviceFileType::Smartcard
-    ],
-    ["RECOVERY", recovery, client_types::DeviceFileType::Recovery]
+    ["PASSWORD", password, types::DeviceFileType::Password],
+    ["SMARTCARD", smartcard, types::DeviceFileType::Smartcard],
+    ["RECOVERY", recovery, types::DeviceFileType::Recovery]
 );
 
 #[pymethods]
@@ -413,9 +409,9 @@ impl DeviceFileType {
 
     #[classmethod]
     pub fn load(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
-        Ok(Self(client_types::DeviceFileType::load(bytes).map_err(
-            |_| PyValueError::new_err("Failed to deserialize"),
-        )?))
+        Ok(Self(types::DeviceFileType::load(bytes).map_err(|_| {
+            PyValueError::new_err("Failed to deserialize")
+        })?))
     }
 }
 

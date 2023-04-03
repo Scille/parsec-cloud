@@ -10,7 +10,6 @@ test-with-testbed = [
 
 [dependencies]
 libparsec_types = { path = "../types" }
-libparsec_client_types = { path = "../client_types" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_testbed = { path = "../testbed", optional = true }
 

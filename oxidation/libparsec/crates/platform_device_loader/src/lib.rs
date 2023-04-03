@@ -8,10 +8,10 @@ mod web;
 #[cfg(feature = "test-with-testbed")]
 mod testbed;
 
-use libparsec_client_types::{
+use libparsec_crypto::SecretKey;
+use libparsec_types::{
     DeviceFilePassword, DeviceFileType, LocalDevice, LocalDeviceError, LocalDeviceResult,
 };
-use libparsec_crypto::SecretKey;
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::*;
 #[cfg(target_arch = "wasm32")]

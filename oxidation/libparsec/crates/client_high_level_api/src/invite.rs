@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-pub use libparsec_client_types::AvailableDevice;
 pub use libparsec_crypto::SequesterVerifyKeyDer;
 pub use libparsec_protocol::authenticated_cmds::v3::invite_list::InviteListItem;
-pub use libparsec_types::{BackendInvitationAddr, InvitationToken, SASCode, UserProfile};
-pub use libparsec_types::{BackendOrganizationBootstrapAddr, DeviceLabel, HumanHandle};
+pub use libparsec_types::{
+    AvailableDevice, BackendInvitationAddr, BackendOrganizationBootstrapAddr, DeviceLabel,
+    HumanHandle, InvitationToken, SASCode, UserProfile,
+};
 
 use crate::{ClientHandle, DeviceAccessParams};
 

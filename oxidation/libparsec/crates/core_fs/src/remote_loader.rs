@@ -3,7 +3,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_client_types::LocalDevice;
 use libparsec_core::RemoteDevicesManager;
 use libparsec_platform_async::Mutex;
 use libparsec_protocol::authenticated_cmds::v2::{
@@ -11,8 +10,8 @@ use libparsec_protocol::authenticated_cmds::v2::{
 };
 use libparsec_types::{
     CertificateSignerOwned, CertificateSignerRef, DataResult, DateTime, DeviceCertificate,
-    DeviceID, EntryID, RealmID, RealmRole, RealmRoleCertificate, RevokedUserCertificate,
-    UserCertificate, UserID, VlobID,
+    DeviceID, EntryID, LocalDevice, RealmID, RealmRole, RealmRoleCertificate,
+    RevokedUserCertificate, UserCertificate, UserID, VlobID,
 };
 
 use crate::{FSError, FSResult};

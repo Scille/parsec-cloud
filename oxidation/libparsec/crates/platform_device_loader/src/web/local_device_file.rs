@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use libparsec_client_types::{AvailableDevice, DeviceFile, DeviceFileType};
+use libparsec_types::{AvailableDevice, DeviceFile, DeviceFileType};
 
 pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
     #[cfg(feature = "test-with-testbed")]

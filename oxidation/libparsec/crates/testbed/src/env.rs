@@ -13,9 +13,8 @@ use std::{
     },
 };
 
-use libparsec_client_types::LocalDevice;
 use libparsec_types::{
-    BackendAddr, BackendOrganizationAddr, DeviceID, OrganizationID, TimeProvider,
+    BackendAddr, BackendOrganizationAddr, DeviceID, LocalDevice, OrganizationID, TimeProvider,
 };
 
 use crate::{TestbedTemplate, TESTBED_TEMPLATES};

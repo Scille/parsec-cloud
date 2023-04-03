@@ -31,22 +31,16 @@ pub(crate) fn file_or_folder_manifest_from_py_object(
     Ok(manifest)
 }
 
-pub(crate) fn manifest_into_py_object(
-    manifest: libparsec::client_types::LocalManifest,
-) -> PyObject {
+pub(crate) fn manifest_into_py_object(manifest: libparsec::types::LocalManifest) -> PyObject {
     Python::with_gil(|py| match manifest {
-        libparsec::client_types::LocalManifest::File(manifest) => {
-            LocalFileManifest(manifest).into_py(py)
-        }
-        libparsec::client_types::LocalManifest::Folder(manifest) => {
+        libparsec::types::LocalManifest::File(manifest) => LocalFileManifest(manifest).into_py(py),
+        libparsec::types::LocalManifest::Folder(manifest) => {
             LocalFolderManifest(manifest).into_py(py)
         }
-        libparsec::client_types::LocalManifest::Workspace(manifest) => {
+        libparsec::types::LocalManifest::Workspace(manifest) => {
             LocalWorkspaceManifest(manifest).into_py(py)
         }
-        libparsec::client_types::LocalManifest::User(manifest) => {
-            LocalUserManifest(manifest).into_py(py)
-        }
+        libparsec::types::LocalManifest::User(manifest) => LocalUserManifest(manifest).into_py(py),
     })
 }
 

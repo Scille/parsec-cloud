@@ -1,7 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-pub use libparsec_client_types::{AvailableDevice, DeviceInfo, UserInfo};
-pub use libparsec_types::{DeviceLabel, OrganizationConfig, OrganizationStats, UserID};
+pub use libparsec_types::{
+    AvailableDevice, DeviceInfo, DeviceLabel, OrganizationConfig, OrganizationStats, UserID,
+    UserInfo,
+};
 
 use crate::{ClientHandle, DeviceAccessParams};
 

@@ -12,7 +12,6 @@ test-utils = []
 
 [dependencies]
 libparsec_client_connection = { path = "../client_connection" }
-libparsec_client_types = { path = "../client_types" }
 libparsec_core = { path = "../core" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_protocol = { path = "../protocol" }
