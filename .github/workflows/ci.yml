@@ -342,7 +342,7 @@ jobs:
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}
-        timeout-minutes: 2
+        timeout-minutes: 5
 
       - name: Install python deps
         if: steps.should-run-python-jobs.outputs.run == 'true'
