@@ -188,7 +188,7 @@ jobs:
           path: dist
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641
+        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
 
       - name: Never trust a Snap
         run: |
@@ -214,7 +214,7 @@ jobs:
           path: dist
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641
+        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
 
       - name: Upload Snap
         run: snapcraft upload --release=edge dist/parsec*.snap
