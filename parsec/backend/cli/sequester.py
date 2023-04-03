@@ -466,11 +466,18 @@ def create_service(
 @click.command(short_help="List available sequester services")
 @click.option("--organization", type=OrganizationID, help="Organization ID", required=True)
 @db_backend_options
+# Add --debug
+@debug_config_options
 def list_services(
-    organization: OrganizationID, db: str, db_max_connections: int, db_min_connections: int
+    organization: OrganizationID,
+    db: str,
+    db_max_connections: int,
+    db_min_connections: int,
+    debug: bool,
 ) -> None:
-    db_config = _get_config(db, db_min_connections, db_max_connections)
-    trio_run(_list_services, db_config, organization, use_asyncio=True)
+    with cli_exception_handler(debug):
+        db_config = _get_config(db, db_min_connections, db_max_connections)
+        trio_run(_list_services, db_config, organization, use_asyncio=True)
 
 
 @click.command(short_help="Disable/re-enable a sequester service")
