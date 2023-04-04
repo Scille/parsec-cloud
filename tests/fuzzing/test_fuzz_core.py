@@ -12,23 +12,24 @@ import trio
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import UserID
-from parsec.core.fs import FSError
+from parsec.core.fs import FSError, WorkspaceFS
+from parsec.core.logged_core import LoggedCore
 from parsec.core.types import WorkspaceRole
 
 FUZZ_PARALLELISM = 10
 FUZZ_TIME = 10.0
 
 
-def generate_name():
+def generate_name() -> str:
     return "".join([choice(ascii_lowercase) for x in range(4)])
 
 
 @attr.s
 class FSState:
     stats = defaultdict(lambda: defaultdict(lambda: 0))
-    logs = attr.ib(factory=list)
-    files = attr.ib(factory=list)
-    folders = attr.ib(factory=lambda: ["/"])
+    logs: list[tuple[float, int, str, str]] = attr.ib(factory=list)
+    files: list[str] = attr.ib(factory=list)
+    folders: list[str] = attr.ib(factory=lambda: ["/"])
 
     def get_cooked_stats(self):
         stats = {}
@@ -41,7 +42,8 @@ class FSState:
         total = sum(stats.values())
         return sorted([(k, (v * 100 // total)) for k, v in stats.items()], key=lambda x: -x[1])
 
-    def get_tree(self):
+    # TODO: How can I type a dict that contains other dict recursively ?
+    def get_tree(self) -> dict[str, str | dict]:
         def is_direct_child_of(parent, candidate):
             if candidate.startswith(parent):
                 relative_candidate = candidate[len(parent) :]
@@ -68,31 +70,31 @@ class FSState:
 
         return recursive_build_tree("/")
 
-    def add_stat(self, fuzzer_id, type, log):
+    def add_stat(self, fuzzer_id: int, type: str, log: str) -> None:
         self.stats[fuzzer_id][type] += 1
         self.logs.append((monotonic(), fuzzer_id, type, log))
 
-    def format_logs(self):
+    def format_logs(self) -> str:
         logs = []
         for ts, fuzzer_id, type, log in self.logs:
             logs.append(f"{ts}[{fuzzer_id}]:{type}:{log}")
         return "\n".join(logs)
 
-    def get_folder(self):
+    def get_folder(self) -> str:
         return self.folders[randrange(0, len(self.folders))].replace("//", "/")
 
-    def get_file(self):
+    def get_file(self) -> str:
         if not self.files:
             raise SkipCommand()
         return self.files[randrange(0, len(self.files))].replace("//", "/")
 
-    def get_path(self):
+    def get_path(self) -> str:
         if self.files and randrange(0, 2):
             return self.get_file()
         else:
             return self.get_folder()
 
-    def remove_path(self, path):
+    def remove_path(self, path) -> None:
         try:
             self.files.remove(path)
         except ValueError:
@@ -105,7 +107,7 @@ class FSState:
                 self.folders = [x for x in self.folders if not x.startswith(path)]
                 self.files = [x for x in self.files if not x.startswith(path)]
 
-    def replace_path(self, old_path, new_path):
+    def replace_path(self, old_path, new_path) -> None:
         try:
             self.files.remove(old_path)
             self.files.append(new_path)
@@ -113,7 +115,7 @@ class FSState:
             self.folders.remove(old_path)
             self.folders.append(new_path)
 
-    def get_new_path(self):
+    def get_new_path(self) -> str:
         return "{}/{}".format(self.get_folder(), generate_name()).replace("//", "/")
 
 
@@ -121,7 +123,7 @@ class SkipCommand(Exception):
     pass
 
 
-async def fuzzer(id, core, workspace, fs_state):
+async def fuzzer(id: int, core: LoggedCore, workspace: WorkspaceFS, fs_state: FSState):
     while True:
         try:
             await _fuzzer_cmd(id, core, workspace, fs_state)
@@ -129,7 +131,7 @@ async def fuzzer(id, core, workspace, fs_state):
             fs_state.add_stat(id, "skipped command", "...")
 
 
-async def _fuzzer_cmd(id, core, workspace, fs_state):
+async def _fuzzer_cmd(id: int, core: LoggedCore, workspace: WorkspaceFS, fs_state: FSState):
     x = randrange(0, 100)
     await trio.sleep(x * 0.01)
 
@@ -233,7 +235,7 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
-async def test_fuzz_core(request, running_backend, alice_core):
+async def test_fuzz_core(request, running_backend, alice_core: LoggedCore):
     await trio.sleep(0.1)  # Somehow fixes the test
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     workspace = alice_core.user_fs.get_workspace(wid)
@@ -251,7 +253,7 @@ async def test_fuzz_core(request, running_backend, alice_core):
 
     finally:
 
-        def prettify(tree, indent=0):
+        def prettify(tree: dict[str, str | dict], indent=0):
             for key, value in tree.items():
                 if isinstance(value, dict):
                     print("  " * indent + key + " <Folder>")
