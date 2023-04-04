@@ -1,0 +1,74 @@
+name: ci-web
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
+  # That would break our unit test if we don't update them.
+  node-version: 18.12.0
+  # Cargo will be faster with this configuration.
+  # It will only update it's index for the dependencies that we use.
+  # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+jobs:
+  test-web-app:
+    runs-on: ubuntu-22.04
+    name: 🌐 Web tests
+    # Just a fail-safe timeout, see the fine grain per-task timeout instead
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
+        timeout-minutes: 5
+
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          filters: .github/filters/ci.yml
+
+      - name: Check modified path that require `test-web` to run
+        id: should-run-web-jobs
+        if: >-
+          steps.changes.outputs.web-jobs == 'true'
+          || github.ref == 'refs/heads/master'
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c  # pin v3.6.0
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        with:
+          node-version: ${{ env.node-version }}
+        timeout-minutes: 2
+
+      # TODO: cache libparsec and reuse it if Rust code hasn't changed !
+
+      - name: Install dependencies
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        run: |
+          # Execute 'npm clean-install' until success,
+          # This is done that way because sometime some CDN response with 503
+          until npm clean-install; do
+            echo "Failed clean-install, retrying ...";
+          done
+        working-directory: oxidation/client
+        timeout-minutes: 5
+
+      - name: E2E tests
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        # Without `VUE_CLI_TEST` set, the command hangs forever because
+        # it fails to stop the server :'(
+        # (see https://github.com/vuejs/vue-cli/issues/3401)
+        run: VUE_CLI_TEST=1 npm run test:e2e:headless
+        working-directory: oxidation/client
+        timeout-minutes: 10
+
+      # Need to run e2e first, as it will trigger compilation of the
+      # libparsec web plugin that is also needed for the unit tests (but
+      # which doesn't trigger it compilation...)
+      - name: Unit tests
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        run: npm run test:unit
+        working-directory: oxidation/client
+        timeout-minutes: 10
