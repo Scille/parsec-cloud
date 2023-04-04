@@ -15,11 +15,13 @@ from parsec.backend.cli.sequester import (
     list_services,
     update_service,
 )
+from parsec.cli_utils import version_option
 
 __all__ = ("backend_cmd_group",)
 
 
 @click.group(short_help="Handle sequestered organization")
+@version_option
 def backend_sequester_cmd() -> None:
     pass
 
@@ -34,6 +36,7 @@ backend_sequester_cmd.add_command(import_service_certificate, "import_service_ce
 
 
 @click.group()
+@version_option
 def backend_cmd_group() -> None:
     pass
 
