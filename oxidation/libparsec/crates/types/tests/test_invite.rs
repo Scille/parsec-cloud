@@ -1,13 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_crypto::*;
-use libparsec_tests_fixtures::{bob, Device};
+use libparsec_tests_types::{bob, rstest, Device};
 use libparsec_types::*;
 
-#[rstest]
+#[rstest::rstest]
 #[case::normal(
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -112,7 +111,7 @@ fn serde_invite_user_data(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::normal(
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -221,7 +220,7 @@ fn serde_invite_user_confirmation(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::normal(
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -275,7 +274,7 @@ fn serde_invite_device_data(
     assert_eq!(data2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::normal(
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:

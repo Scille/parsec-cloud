@@ -1442,10 +1442,10 @@ dependencies = [
  "libparsec_platform_local_db",
  "libparsec_testbed",
  "libparsec_tests_macros",
+ "libparsec_tests_types",
  "libparsec_types",
  "log",
  "regex",
- "rstest",
  "uuid",
 ]
 
@@ -1456,6 +1456,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "libparsec_tests_types"
+version = "0.0.0"
+dependencies = [
+ "hex-literal",
+ "libparsec_crypto",
+ "libparsec_types",
+ "rstest",
 ]
 
 [[package]]
@@ -1473,14 +1483,13 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_serialization_format",
- "libparsec_tests_fixtures",
+ "libparsec_tests_types",
  "paste",
  "percent-encoding",
  "pretty_assertions",
  "rand 0.8.5",
  "regex",
  "rmp-serde",
- "rstest",
  "rstest_reuse",
  "serde",
  "serde_bytes",

@@ -1,14 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use rstest::fixture;
-
 use libparsec_types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, RevokedUserCertificate, UserCertificate,
 };
 
-use crate::{alice, bob, mallory, Device};
+use crate::{alice, bob, mallory, rstest, Device};
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn alice_user_certif(alice: &Device) -> UserCertificate {
     UserCertificate {
@@ -21,7 +19,7 @@ pub fn alice_user_certif(alice: &Device) -> UserCertificate {
     }
 }
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn bob_user_certif(bob: &Device) -> UserCertificate {
     UserCertificate {
@@ -34,7 +32,7 @@ pub fn bob_user_certif(bob: &Device) -> UserCertificate {
     }
 }
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn mallory_user_certif(mallory: &Device) -> UserCertificate {
     UserCertificate {
@@ -47,7 +45,7 @@ pub fn mallory_user_certif(mallory: &Device) -> UserCertificate {
     }
 }
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn alice_device_certif(alice: &Device) -> DeviceCertificate {
     DeviceCertificate {
@@ -59,7 +57,7 @@ pub fn alice_device_certif(alice: &Device) -> DeviceCertificate {
     }
 }
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn bob_device_certif(bob: &Device) -> DeviceCertificate {
     DeviceCertificate {
@@ -71,7 +69,7 @@ pub fn bob_device_certif(bob: &Device) -> DeviceCertificate {
     }
 }
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn mallory_device_certif(mallory: &Device) -> DeviceCertificate {
     DeviceCertificate {
@@ -83,7 +81,7 @@ pub fn mallory_device_certif(mallory: &Device) -> DeviceCertificate {
     }
 }
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn alice_revoked_user_certif(alice: &Device, bob: &Device) -> RevokedUserCertificate {
     RevokedUserCertificate {
@@ -93,7 +91,7 @@ pub fn alice_revoked_user_certif(alice: &Device, bob: &Device) -> RevokedUserCer
     }
 }
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn bob_revoked_user_certif(alice: &Device, bob: &Device) -> RevokedUserCertificate {
     RevokedUserCertificate {
@@ -103,7 +101,7 @@ pub fn bob_revoked_user_certif(alice: &Device, bob: &Device) -> RevokedUserCerti
     }
 }
 
-#[fixture]
+#[rstest::fixture]
 #[once]
 pub fn mallory_revoked_user_certif(alice: &Device, mallory: &Device) -> RevokedUserCertificate {
     RevokedUserCertificate {

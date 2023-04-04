@@ -1,14 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 use std::{collections::HashMap, num::NonZeroU64, str::FromStr};
 
 use libparsec_crypto::*;
-use libparsec_tests_fixtures::{alice, Device};
+use libparsec_tests_types::{alice, rstest, Device};
 use libparsec_types::*;
 
-#[rstest]
+#[rstest::rstest]
 fn serde_file_manifest(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -123,7 +122,7 @@ fn serde_file_manifest(alice: &Device) {
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_file_manifest_invalid_blocksize(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -166,7 +165,7 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
     assert!(manifest.is_err());
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_folder_manifest(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -247,7 +246,7 @@ fn serde_folder_manifest(alice: &Device) {
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_workspace_manifest(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -325,7 +324,7 @@ fn serde_workspace_manifest(alice: &Device) {
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_user_manifest(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -439,7 +438,7 @@ fn serde_user_manifest(alice: &Device) {
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::valid(None, None, None, None, None)]
 #[case::valid_id(None, None, Some(EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap()), None, None)]
 #[case::valid_version(None, None, None, Some(42), None)]
@@ -511,7 +510,7 @@ fn test_file_manifest_verify(
     );
 }
 
-#[rstest]
+#[rstest::rstest]
 fn file_manifest_unverified_load() {
     // Test the unverified_load() function on a file manifest.
     // File manifest has been generated with Parsec 1.12, it is provided raw as it is a bit hard

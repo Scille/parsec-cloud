@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_crypto::*;
+use libparsec_tests_types::rstest;
 use libparsec_types::*;
 
 #[test]
@@ -30,7 +30,7 @@ fn generate_sas_codes() {
     assert_eq!(greeter_sas, "KBWM".parse().unwrap());
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::min(0, Ok("AAAA".parse().unwrap()))]
 #[case::typical(123456, Ok("AU2D".parse().unwrap()))]
 #[case::max(2u32.pow(20) - 1, Ok("9999".parse().unwrap()))]

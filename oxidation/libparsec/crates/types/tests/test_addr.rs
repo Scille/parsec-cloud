@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pretty_assertions::assert_eq;
-use rstest::rstest;
 use rstest_reuse::*;
 use serde_test::{assert_tokens, Token};
 use std::str::FromStr;
 
 use libparsec_crypto::SigningKey;
+use libparsec_tests_types::rstest;
 use libparsec_types::*;
 
 const ORG: &str = "MyOrg";
@@ -140,7 +140,7 @@ impl Testbed for BackendInvitationAddrTestbed {
 }
 
 #[template]
-#[rstest(
+#[rstest::rstest(
     testbed,
     case::backend_addr(&BackendAddrTestbed{}),
     case::organization_addr(&BackendOrganizationAddrTestbed{}),
@@ -151,7 +151,7 @@ impl Testbed for BackendInvitationAddrTestbed {
 fn all_addr(testbed: &dyn Testbed) {}
 
 #[template]
-#[rstest(
+#[rstest::rstest(
     testbed,
     case::backend_organization_addr(&BackendOrganizationAddrTestbed{}),
     case::backend_organization_bootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
@@ -169,7 +169,7 @@ fn test_good_addr(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
 }
 
-#[rstest(value, path, expected)]
+#[rstest::rstest(value, path, expected)]
 #[case::absolute_path(
     "parsec://example.com",
     Some("/foo/bar/"),
@@ -299,7 +299,7 @@ fn test_addr_with_missing_organization_id(
     testbed.assert_addr_err(&url, AddrError::InvalidOrganizationID);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
 
@@ -367,7 +367,7 @@ fn test_bootstrap_addr_no_token() {
     assert_eq!(addr.token(), None);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
 
@@ -392,7 +392,7 @@ fn test_file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_typ
     }
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_file_link_addr_bad_workspace(
     #[values(Some(""), Some("4def"), Some("康熙帝"), None)] bad_workspace: Option<&str>,
 ) {
@@ -421,7 +421,7 @@ fn test_file_link_addr_bad_workspace(
     }
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_file_link_addr_bad_encrypted_path(
     #[values(Some("__notbase32__"), Some("康熙帝"), None)] bad_path: Option<&str>,
 ) {
@@ -465,7 +465,7 @@ fn test_file_link_addr_get_encrypted_path() {
     assert_eq!(addr.encrypted_path(), encrypted_path);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_invitation_addr_bad_type(
     #[values(Some("claim"), Some("claim_foo"), None)] bad_type: Option<&str>,
 ) {
@@ -494,7 +494,7 @@ fn test_invitation_addr_bad_type(
     }
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_invitation_addr_bad_token(
     #[values(Some(""), Some("not_an_uuid"), Some("42"), Some("康熙帝"), None)] bad_token: Option<
         &str,
@@ -536,7 +536,7 @@ fn test_invitation_addr_types() {
     assert_eq!(addr.invitation_type(), InvitationType::Device);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_invitation_addr_to_redirection(#[values("http", "https")] redirection_scheme: &str) {
     let testbed = BackendInvitationAddrTestbed {};
 
@@ -674,7 +674,7 @@ fn backend_addr_redirection() {
     );
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case("https://foo.bar")]
 #[case("https://foo.bar/redirection")]
 #[case("https://foo.bar/not_valid")]
@@ -686,7 +686,7 @@ fn test_faulty_addr_redirection(#[case] raw_url: &str) {
     assert!(res.is_err());
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case("parsec://foo", 443, true)]
 #[case("parsec://foo?no_ssl=false", 443, true)]
 #[case("parsec://foo?no_ssl=true", 80, false)]
@@ -701,7 +701,7 @@ fn test_backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl:
     assert_eq!(addr.use_ssl(), use_ssl);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::bad_scheme("xx://foo:42", AddrError::InvalidUrlScheme { got: "xx".to_string(), expected: "parsec" })]
@@ -734,7 +734,7 @@ fn test_backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
     assert_eq!(BackendAddr::from_str(url).unwrap_err(), msg);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case("parsec://foo", 443, true)]
 #[case("parsec://foo?no_ssl=false", 443, true)]
 #[case("parsec://foo?no_ssl=true", 80, false)]
@@ -763,7 +763,7 @@ fn test_backend_organization_addr_good(
     assert_eq!(addr, addr2);
 }
 
-#[rstest]
+#[rstest::rstest]
 // #[case::empty("", "Invalid URL")]
 // #[case::invalid_url("foo", "Invalid URL")]
 // #[case::missing_mandatory_rvk("parsec://foo:42/org", "Missing mandatory `rvk` param")]
@@ -789,7 +789,7 @@ fn test_backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: Addr
     assert_eq!(BackendOrganizationAddr::from_str(url).unwrap_err(), msg);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case("parsec://foo", 443, true)]
 #[case("parsec://foo?no_ssl=false", 443, true)]
 #[case("parsec://foo?no_ssl=true", 80, false)]
@@ -826,7 +826,7 @@ fn test_backend_organization_bootstrap_addr_good(
     assert_eq!(org_addr.organization_id(), addr.organization_id());
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::missing_action("parsec://foo:42/org?token=123", AddrError::MissingParam("action"))]

@@ -2,16 +2,15 @@
 
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
-use rstest::rstest;
 
 use libparsec_crypto::{SequesterPublicKeyDer, SequesterVerifyKeyDer};
-use libparsec_tests_fixtures::{alice, bob, Device};
+use libparsec_tests_types::{alice, bob, rstest, Device};
 use libparsec_types::*;
 
 // TODO: check serde output to ensure handling of Option<T> depending of
 // default/missing policy
 
-#[rstest]
+#[rstest::rstest]
 fn serde_user_certificate(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -68,7 +67,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     assert_eq!(certif2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -124,7 +123,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     assert_eq!(certif2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -192,7 +191,7 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
     check(&data_is_admin_false, &expected_is_admin_false);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_device_certificate(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -244,7 +243,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
     assert_eq!(certif2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -296,7 +295,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
     assert_eq!(certif2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -334,7 +333,7 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
     assert_eq!(unsecure_certif, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -376,7 +375,7 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     assert_eq!(certif2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -425,7 +424,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     assert_eq!(certif2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -475,7 +474,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     assert_eq!(certif2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_sequester_authority_certificate(alice: &Device) {
     // Generated from Python implementation (Parsec v2.14.1+dev)
     // Content:
@@ -526,7 +525,7 @@ fn serde_sequester_authority_certificate(alice: &Device) {
     assert_eq!(certif2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_sequester_service_certificate() {
     // Generated from Python implementation (Parsec v2.14.1+dev)
     // Content:

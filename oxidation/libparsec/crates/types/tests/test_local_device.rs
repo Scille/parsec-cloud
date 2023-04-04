@@ -1,14 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_crypto::*;
+use libparsec_tests_types::{alice, rstest, Device};
 use libparsec_types::*;
 
-use libparsec_tests_fixtures::{alice, Device};
-
-#[rstest]
+#[rstest::rstest]
 #[case::admin(
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -221,7 +219,7 @@ fn serde_local_device_data(
     assert_eq!(manifest2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn slug(alice: &Device) {
     let local_device = alice.local_device();
 

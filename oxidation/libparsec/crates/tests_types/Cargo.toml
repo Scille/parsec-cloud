@@ -1,0 +1,13 @@
+[package]
+name = "libparsec_tests_types"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+libparsec_crypto = { path = "../crypto" }
+libparsec_types = { path = "../types" }
+
+rstest = "0.17.0"
+hex-literal = "0.3.3"
+
+# No dev-dependencies: this crate is itself only used in other crates' own dev-dependencies

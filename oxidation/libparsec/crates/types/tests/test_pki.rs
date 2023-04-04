@@ -1,17 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 use std::{collections::HashMap, str::FromStr};
 
 use libparsec_crypto::{PublicKey, VerifyKey};
-use libparsec_tests_fixtures::{alice, Device};
+use libparsec_tests_types::{alice, rstest, Device};
 use libparsec_types::{
     BackendPkiEnrollmentAddr, DeviceID, DeviceLabel, EnrollmentID, LocalPendingEnrollment,
     PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, UserProfile, X509Certificate,
 };
 
-#[rstest]
+#[rstest::rstest]
 #[case::without(
     // Generated from Python implementation (Parsec v2.13.0+dev)
     // Content:
@@ -77,7 +76,7 @@ fn serde_pki_enrollment_answer_payload(
     assert_eq!(data, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case(
     // Generated from Python implementation (Parsec v2.13.0+dev)
     // Content:
@@ -113,7 +112,7 @@ fn serde_pki_enrollment_submit_payload(
     assert_eq!(data, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::full(
     // Generated from Python implementation (Parsec v2.8.1+dev)
     // Content:

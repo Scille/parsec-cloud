@@ -1,13 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
 use libparsec_crypto::*;
-use libparsec_tests_fixtures::{alice, bob, Device};
+use libparsec_tests_types::{alice, bob, rstest, Device};
 use libparsec_types::*;
 
-#[rstest]
+#[rstest::rstest]
 fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -68,7 +67,7 @@ fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
     assert_eq!(message2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -129,7 +128,7 @@ fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
     assert_eq!(message2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -178,7 +177,7 @@ fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
     assert_eq!(message2, expected);
 }
 
-#[rstest]
+#[rstest::rstest]
 fn serde_ping_message(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:

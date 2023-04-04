@@ -1,15 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use rstest::rstest;
 
-use libparsec_tests_fixtures::{alice, Device};
+use libparsec_tests_types::{alice, rstest, Device};
 use libparsec_types::{
     AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileRecovery, DeviceFileSmartcard,
     DeviceFileType, HumanHandle, LegacyDeviceFile, LegacyDeviceFilePassword, OrganizationID,
 };
 
-#[rstest]
+#[rstest::rstest]
 fn test_password_protected_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -77,7 +76,7 @@ fn test_password_protected_device_file(alice: &Device) {
     // TODO: Test ciphertext decryption
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_recovery_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
@@ -143,7 +142,7 @@ fn test_recovery_device_file(alice: &Device) {
     // TODO: Test ciphertext decryption
 }
 
-#[rstest]
+#[rstest::rstest]
 fn test_smartcard_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.15.0+dev)
     // Content:
@@ -282,7 +281,7 @@ fn test_available_device() {
     assert_eq!(available_legacy.device_display(), "mypc");
 }
 
-#[rstest]
+#[rstest::rstest]
 #[case::with_device_label_and_human_handle(
     // Generated from Python implementation (Parsec v2.15.0)
     // Content:

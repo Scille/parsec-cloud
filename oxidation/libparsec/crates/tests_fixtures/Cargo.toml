@@ -8,13 +8,13 @@ libparsec_crypto = { path = "../crypto" }
 libparsec_types = { path = "../types" }
 libparsec_testbed = { path = "../testbed" }
 libparsec_tests_macros = { path = "../tests_macros" }
+libparsec_tests_types = { path = "../tests_types" }
 # Enable testbed support in crates here
 libparsec_platform_device_loader = { path = "../platform_device_loader", features = [ "test-with-testbed" ] }
 libparsec_platform_local_db = { path = "../platform_local_db", features = [ "test-with-testbed" ] }
 
 env_logger = "0.10.0"
 log = "0.4.17"
-rstest = "0.17.0"
 hex-literal = "0.3.3"
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
 lazy_static = "1.4.0"

@@ -16,6 +16,8 @@ mod test_local_device_file;
 mod test_local_manifest;
 mod test_manifest;
 mod test_message;
+mod test_organization;
 mod test_pki;
+mod test_regex;
 mod test_sas_code;
 mod test_time;
