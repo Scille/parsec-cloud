@@ -20,6 +20,7 @@ from parsec.core.fs.exceptions import (
     FSInvalidArgumentError,
     FSRemoteManifestNotFound,
 )
+from parsec.core.mountpoint.windows_notify import notify_file_changed, FileChangeEvent
 from parsec.core.gui import desktop, validators
 from parsec.core.gui.custom_dialogs import (
     GreyedDialog,
@@ -56,12 +57,17 @@ class CancelException(Exception):
 
 
 async def _do_rename(
-    workspace_fs: WorkspaceFS, paths: list[tuple[FsPath, FsPath, EntryID]]
+    workspace_fs: WorkspaceFS, mountpoint_manager: MountpointManager, paths: list[tuple[FsPath, FsPath, EntryID]]
 ) -> None:
     new_names = {}
     for (old_path, new_path, entry_id) in paths:
         try:
             await workspace_fs.rename(old_path, new_path)
+            notify_file_changed(
+                FileChangeEvent.FileRenamed,
+                str(mountpoint_manager.get_path_in_mountpoint(workspace_fs.workspace_id, old_path)),
+                str(mountpoint_manager.get_path_in_mountpoint(workspace_fs.workspace_id, new_path)),
+            )
             new_names[entry_id] = FsPath(new_path).name
         except FileExistsError as exc:
             raise JobResultError("already-exists", multi=len(paths) > 1) from exc
@@ -70,14 +76,18 @@ async def _do_rename(
 
 
 async def _do_delete(
-    workspace_fs: WorkspaceFS, files: list[tuple[FsPath, FileType]], silent: bool = False
+    workspace_fs: WorkspaceFS, mountpoint_manager: MountpointManager, files: list[tuple[FsPath, FileType]], silent: bool = False
 ) -> None:
     for path, file_type in files:
         try:
             if file_type == FileType.Folder:
                 await workspace_fs.rmtree(path)
+                if not silent:
+                    notify_file_changed(FileChangeEvent.FolderDeleted, str(mountpoint_manager.get_path_in_mountpoint(workspace_fs.workspace_id, path)))
             else:
                 await workspace_fs.unlink(path)
+                if not silent:
+                    notify_file_changed(FileChangeEvent.FileDeleted, str(mountpoint_manager.get_path_in_mountpoint(workspace_fs.workspace_id, path)))
         except Exception as exc:
             if not silent:
                 raise JobResultError("error", multi=len(files) > 1) from exc
@@ -203,9 +213,10 @@ async def _do_folder_stat(
     return path, dir_id, stats, default_selection
 
 
-async def _do_folder_create(workspace_fs: WorkspaceFS, path: FsPath) -> None:
+async def _do_folder_create(workspace_fs: WorkspaceFS, mountpoint_manager: MountpointManager, path: FsPath) -> None:
     try:
         await workspace_fs.mkdir(path)
+        notify_file_changed(FileChangeEvent.FolderCreated, str(mountpoint_manager.get_path_in_mountpoint(workspace_fs.workspace_id, path)))
     except FileExistsError as exc:
         raise JobResultError("already-exists") from exc
 
@@ -662,6 +673,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 (self, "rename_error"),
                 _do_rename,
                 workspace_fs=self.workspace_fs,
+                mountpoint_manager=self.core.mountpoint_manager,
                 paths=[
                     (
                         self.current_directory / files[0].name,
@@ -687,6 +699,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 (self, "rename_error"),
                 _do_rename,
                 workspace_fs=self.workspace_fs,
+                mountpoint_manager=self.core.mountpoint_manager,
                 paths=[
                     (
                         self.current_directory / f.name,
@@ -730,6 +743,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             (self, "delete_error"),
             _do_delete,
             workspace_fs=self.workspace_fs,
+            mountpoint_manager=self.core.mountpoint_manager,
             files=[(self.current_directory / f.name, f.type) for f in files],
         )
 
@@ -1009,6 +1023,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     )
                 else:
                     await self.workspace_fs.mkdir(dest, parents=True, exist_ok=True)
+                    notify_file_changed(
+                        FileChangeEvent.FolderCreated,
+                        str(self.core.mountpoint_manager.get_path_in_mountpoint(self.workspace_fs.workspace_id, dest)),
+                    )
 
             # Register permission errors and keep going
             except PermissionError as exc:
@@ -1021,7 +1039,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     # Remove the last partially written file
                     to_delete = [(dest, FileType.File)]
                     assert self.workspace_fs is not None
-                    await _do_delete(self.workspace_fs, to_delete, silent=True)
+                    await _do_delete(self.workspace_fs, self.core.mountpoint_manager, to_delete, silent=True)
                 raise
 
         # Return the permission errors
@@ -1072,6 +1090,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     # Update the size
                     read_size += len(chunk)
                     loading_dialog.center_widget.set_progress(current_size + read_size)
+
+            notify_file_changed(
+                FileChangeEvent.FileCreated,
+                str(self.core.mountpoint_manager.get_path_in_mountpoint(self.workspace_fs.workspace_id, dest)),
+            )
 
         # Update and return the current size
         current_size += read_size + 1
@@ -1128,6 +1151,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             (self, "folder_create_error"),
             _do_folder_create,
             workspace_fs=self.workspace_fs,
+            mountpoint_manager=self.core.mountpoint_manager,
             path=self.current_directory / folder_name,
         )
 

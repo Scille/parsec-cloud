@@ -20,6 +20,7 @@ from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash, MountpointNoDriveAvailable
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
+from parsec.core.mountpoint.windows_notify import notify_mountpoint_state
 from parsec.core.types import EntryID, LocalDevice
 from parsec.core.win_registry import parsec_drive_icon_context
 from parsec.event_bus import EventBus
@@ -183,11 +184,12 @@ async def winfsp_mountpoint_runner(
         # security_timeout=10000,
     )
 
+    drive_letter = None
     try:
         event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
+        drive_letter = mountpoint_path.drive[0]
 
         # Manage drive icon
-        drive_letter = mountpoint_path.drive[0]
         with parsec_drive_icon_context(drive_letter, device=user_fs.device):
 
             # Run fs start in a thread
@@ -198,6 +200,8 @@ async def winfsp_mountpoint_runner(
 
             # Make sure the mountpoint is ready
             await _wait_for_winfsp_ready(mountpoint_path)
+
+            notify_mountpoint_state(f"{drive_letter}:\\", True)
 
             # Notify the manager that the mountpoint is ready
             yield mountpoint_path
@@ -227,6 +231,9 @@ async def winfsp_mountpoint_runner(
 
     finally:
         event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
+
+        if drive_letter:
+            notify_mountpoint_state(f"{drive_letter}:\\", False)
 
         # Must run in thread given this call will wait for any winfsp operation
         # to finish so blocking the trio loop can produce a dead lock...

@@ -330,11 +330,9 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
         # `allocation_size` useless for us
         # `security_descriptor` is not supported yet
         parsec_file_name = _winpath_to_parsec(file_name)
-
         if create_options & CREATE_FILE_CREATE_OPTIONS.FILE_DIRECTORY_FILE:
             self.fs_access.folder_create(parsec_file_name)
             return OpenedFolder(parsec_file_name)
-
         else:
             _, fd = self.fs_access.file_create(parsec_file_name, open=True)
             return OpenedFile(parsec_file_name, fd)
