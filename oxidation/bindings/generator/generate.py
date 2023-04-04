@@ -75,7 +75,7 @@ env.globals["raise"] = _raise_helper
 
 
 class BaseTypeInUse:
-    # Name of the type familly (e.g. `bytes`, `struct`, `variant`), to be defined in subclass
+    # Name of the type family (e.g. `bytes`, `struct`, `variant`), to be defined in subclass
     kind: str
 
     @staticmethod
