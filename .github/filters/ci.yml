@@ -1,5 +1,3 @@
-ci-workflow: &ci-workflow .github/workflows/ci.yml
-
 rust-libparsec: &rust-libparsec oxidation/libparsec/**
 
 rust-dependencies-workspace: &rust-dependencies-workspace
@@ -73,8 +71,8 @@ rust-changes: &rust-changes
 # > Note: We don't use `rust-changes` because it include all the change made to the rust code
 # > including change made to the ionic part.
 python-jobs:
-  - *ci-workflow
-  - .github/actions/setup-python-poetry/**
+  - .github/workflows/ci-python.yml
+  - .github/actions/**
   - *python-changes
   - *rust-dependencies-workspace
   - *rust-libparsec
@@ -88,7 +86,7 @@ python-jobs:
 # - We change the toolchain
 # - We modify the Ci workflow
 rust-jobs:
-  - *ci-workflow
+  - .github/workflows/ci-rust.yml
   - *rust-changes
 
 
@@ -103,7 +101,7 @@ rust-jobs:
 # > Note: We don't use `rust-changes` because it include all the change made to the rust code
 # > including change made to the python part.
 web-jobs:
-  - *ci-workflow
+  - .github/workflows/ci-web.yml
   - *rust-dependencies-workspace
   - *rust-libparsec
   - *rust-toolchain

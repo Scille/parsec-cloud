@@ -1,0 +1,102 @@
+name: ci-rust
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  cargo-exclude-unused-crates: >-
+    --exclude=parsec
+    --exclude=libparsec_bindings_android
+    --exclude=libparsec_bindings_web
+    --exclude=libparsec_bindings_electron
+  # Cargo will be faster with this configuration.
+  # It will only update it's index for the dependencies that we use.
+  # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+jobs:
+  test-rust-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 🐧 Linux
+            # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
+            os: ubuntu-20.04
+          - name: 🍎 macOS
+            os: macos-12
+          - name: 🏁 Windows
+            os: windows-2022
+    name: '${{ matrix.name }}: 🦀 Rust tests'
+    # Just a fail-safe timeout, see the fine grain per-task timeout instead
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
+        timeout-minutes: 5
+
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          filters: .github/filters/ci.yml
+
+      - name: Check modified path that require rust-ci run
+        id: should-run-rust-jobs
+        if: >-
+          steps.changes.outputs.rust-jobs == 'true'
+          || github.ref == 'refs/heads/master'
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - uses: actions-rust-lang/setup-rust-toolchain@ac6bb38f317802fab2f463811237b0d9cba8cc80 # pin v1.4.4
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        with:
+          # We setup the cache by hand, see below
+          cache: false
+        timeout-minutes: 10
+
+      - name: Retrieve Rust cache
+        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # pin v2.2.1
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        with:
+          # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
+          # cache is only shared between master and the PRs (and not accross PRs).
+          # So we only save the cache on master build given it's the ones that are the
+          # most likely to be reused.
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+        timeout-minutes: 5
+
+
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: steps.should-run-rust-jobs.outputs.run == 'true' && startsWith(matrix.os, 'windows')
+        shell: bash
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
+
+      # By default, `libparsec_crypto` uses Rust Crypto
+      # so if we modify `libparsec_crypto` which are not tested, it will pass the CI,
+      # that's why we add a check
+      - name: Test rust codebase
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -ex
+          cargo check --profile ci-rust --workspace --features use-sodiumoxide
+          cargo test --profile ci-rust --workspace ${{ env.cargo-exclude-unused-crates }}
+          cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide
+        timeout-minutes: 30
+        env:
+          RUST_LOG: debug
+
+      # Clippy basically compile the project, hence it's faster to run it in
+      # the test-rust-matrix job where compilation cache is reused !
+      - uses: ./.github/actions/use-pre-commit
+        if: >-
+          steps.should-run-rust-jobs.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        with:
+          extra-args: clippy --all-files --verbose
