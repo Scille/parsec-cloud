@@ -1,0 +1,2 @@
+Handle the CLI flag ``--version`` on parsec sub-command.
+You can now type ``parsec --version`` to get the current version of parsec in a terminal.
