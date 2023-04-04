@@ -112,6 +112,21 @@ async def _wait_for_winfsp_ready(mountpoint_path: PurePath, timeout: float = 1.0
                 return
 
 
+def _notify_mountpoint_state(drive: str, state: bool):
+    SHCNE_DRIVEADD = 1 << 8
+    SHCNE_DRIVEREMOVED = 1 << 7
+
+    SHCNF_IDLIST = 0
+    SHCNF_PATH = 5
+
+    import ctypes
+    shell32 = ctypes.OleDLL('shell32')
+    shell32.SHChangeNotify.restype = None
+    event = SHCNE_DRIVEADD if state else SHCNE_DRIVEREMOVED
+    flags = SHCNF_IDLIST | SHCNF_PATH
+    shell32.SHChangeNotify(event, flags, drive, None)
+
+
 @asynccontextmanager
 async def winfsp_mountpoint_runner(
     user_fs: UserFS,
@@ -183,11 +198,12 @@ async def winfsp_mountpoint_runner(
         # security_timeout=10000,
     )
 
+    drive_letter = None
     try:
         event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
+        drive_letter = mountpoint_path.drive[0]
 
         # Manage drive icon
-        drive_letter = mountpoint_path.drive[0]
         with parsec_drive_icon_context(drive_letter, device=user_fs.device):
 
             # Run fs start in a thread
@@ -198,6 +214,8 @@ async def winfsp_mountpoint_runner(
 
             # Make sure the mountpoint is ready
             await _wait_for_winfsp_ready(mountpoint_path)
+
+            _notify_mountpoint_state(f"{drive_letter}:\\", True)
 
             # Notify the manager that the mountpoint is ready
             yield mountpoint_path
@@ -227,6 +245,9 @@ async def winfsp_mountpoint_runner(
 
     finally:
         event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
+
+        if drive_letter:
+            _notify_mountpoint_state(f"{drive_letter}:\\", False)
 
         # Must run in thread given this call will wait for any winfsp operation
         # to finish so blocking the trio loop can produce a dead lock...
