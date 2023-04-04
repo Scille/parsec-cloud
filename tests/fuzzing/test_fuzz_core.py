@@ -236,8 +236,13 @@ async def _fuzzer_cmd(id: int, core: LoggedCore, workspace: WorkspaceFS, fs_stat
 @pytest.mark.trio
 @pytest.mark.slow
 async def test_fuzz_core(request, running_backend, alice_core: LoggedCore):
-    await trio.sleep(0.1)  # Somehow fixes the test
-    wid = await alice_core.user_fs.workspace_create(EntryName("w"))
+    # FIXME: Does this "power nap" is really required ?
+    # await trio.sleep(0.1)  # Somehow fixes the test
+    with trio.fail_after(1):
+        await alice_core.wait_idle_monitors()
+    with trio.fail_after(1):
+        wid = await alice_core.user_fs.workspace_create(EntryName("w"))
+
     workspace = alice_core.user_fs.get_workspace(wid)
     try:
         async with trio.open_service_nursery() as nursery:
