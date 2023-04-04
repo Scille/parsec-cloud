@@ -15,7 +15,6 @@ path = "tests/mod.rs"
 libparsec_client_connection = { path = "../client_connection" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_platform_async = { path = "../platform_async" }
-libparsec_platform_device_loader = { path = "../platform_device_loader" }
 libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
 
