@@ -67,9 +67,14 @@ def cli_workspace_role(request):
     return request.param, expected_role
 
 
-def test_version():
+@pytest.mark.parametrize(
+    "args",
+    (["--version"], ["core", "gui", "--version"], ["backend", "run", "--version"]),
+    ids=["root", "core_gui", "backend_run"],
+)
+def test_version(args: list[str]):
     runner = CliRunner()
-    result = runner.invoke(cli, ["--version"])
+    result = runner.invoke(cli, args)
     assert result.exit_code == 0
     assert f"parsec, version {parsec_version}\n" in result.output
 

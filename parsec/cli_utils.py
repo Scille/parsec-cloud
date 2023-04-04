@@ -25,6 +25,7 @@ import trio
 from typing_extensions import Concatenate, ParamSpec
 
 from parsec._parsec import DateTime
+from parsec._version import __version__
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.utils import open_service_nursery
 
@@ -285,16 +286,18 @@ def sentry_config_options(
 
 
 def debug_config_options(fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R]:
-    decorator = cast(
-        Callable[[Callable[P, R]], Callable[Concatenate[bool, P], R]],
+    for decorator in (
         click.option(
             "--debug",
             is_flag=True,
             # Don't prefix with `PARSEC_` given devs are lazy
             envvar="DEBUG",
         ),
-    )
-    return decorator(fn)
+        click.version_option(version=__version__, prog_name="parsec"),
+    ):
+        fn = decorator(fn)
+
+    return cast(Callable[Concatenate[bool, P], R], fn)
 
 
 class ParsecDateTimeClickType(click.ParamType):
