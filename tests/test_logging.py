@@ -98,12 +98,12 @@ class LogStream:
         return buff[offset:]
 
 
-@pytest.mark.parametrize("familly", ("structlog", "stdlib"))
-def test_level_filtering(familly):
-    if familly == "structlog":
+@pytest.mark.parametrize("family", ("structlog", "stdlib"))
+def test_level_filtering(family):
+    if family == "structlog":
         logger_builder = build_structlog_test_logger
     else:
-        assert familly == "stdlib"
+        assert family == "stdlib"
         logger_builder = build_stdlib_test_logger
 
     out = LogStream()
@@ -262,13 +262,13 @@ def test_stdlib_log_format(log_format):
         assert log == expected_log
 
 
-@pytest.mark.parametrize("familly", ("structlog", "stdlib"))
-def test_exception_handling(familly):
+@pytest.mark.parametrize("family", ("structlog", "stdlib"))
+def test_exception_handling(family):
     out = LogStream()
-    if familly == "structlog":
+    if family == "structlog":
         logger_builder = build_structlog_test_logger
     else:
-        assert familly == "stdlib"
+        assert family == "stdlib"
         logger_builder = build_stdlib_test_logger
     logger = logger_builder(log_level="WARNING", log_format="JSON", log_stream=out.stream)
 

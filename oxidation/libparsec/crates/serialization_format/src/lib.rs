@@ -43,10 +43,10 @@ pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
     let pathname = parse_macro_input!(path as LitStr).value();
     let path = path_from_str(&pathname);
 
-    let familly_name = path
+    let family_name = path
         .file_name()
         .and_then(|os_str| os_str.to_str())
-        .expect("Invalid path, cannot determine protocol familly name")
+        .expect("Invalid path, cannot determine protocol family name")
         .to_owned();
 
     let dir = std::fs::read_dir(path).expect("Cannot read directory");
@@ -68,21 +68,21 @@ pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
         json_cmds.push(json_cmd);
     }
 
-    TokenStream::from(protocol::generate_protocol_cmds_familly(
+    TokenStream::from(protocol::generate_protocol_cmds_family(
         json_cmds,
-        &familly_name,
+        &family_name,
     ))
 }
 
 // Useful for tests to avoid having to deal with file system
 #[proc_macro]
-pub fn generate_protocol_cmds_familly_from_contents(json_contents: TokenStream) -> TokenStream {
+pub fn generate_protocol_cmds_family_from_contents(json_contents: TokenStream) -> TokenStream {
     let json_contents: Vec<String> = {
         let content = parse_macro_input!(json_contents as LitStr).value();
         // Consider empty line as a separator between json files
         content.split("\n\n").map(String::from).collect()
     };
-    let familly_name = "protocol";
+    let family_name = "protocol";
     let mut json_cmds = vec![];
     for json_without_outer_struct in json_contents {
         // Hack around the fact Miniserde only supports struct as root ;-)
@@ -91,9 +91,9 @@ pub fn generate_protocol_cmds_familly_from_contents(json_contents: TokenStream) 
             .expect("JSON spec is not valid");
         json_cmds.push(json_cmd);
     }
-    TokenStream::from(protocol::generate_protocol_cmds_familly(
+    TokenStream::from(protocol::generate_protocol_cmds_family(
         json_cmds,
-        familly_name,
+        family_name,
     ))
 }
 
