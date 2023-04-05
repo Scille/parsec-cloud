@@ -4,7 +4,8 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_crypto::*;
-use libparsec_types::*;
+
+use crate::SASCode;
 
 #[test]
 fn generate_sas_codes() {

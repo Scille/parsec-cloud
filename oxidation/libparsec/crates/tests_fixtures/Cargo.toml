@@ -5,8 +5,9 @@ edition = "2021"
 
 [dependencies]
 libparsec_crypto = { path = "../crypto" }
-libparsec_types = { path = "../types" }
+libparsec_types = { path = "../types", features = [ "types-fixtures" ] }
 libparsec_testbed = { path = "../testbed" }
+libparsec_tests_utils = { path = "../tests_utils" }
 libparsec_tests_macros = { path = "../tests_macros" }
 # Enable testbed support in crates here
 libparsec_platform_device_loader = { path = "../platform_device_loader", features = [ "test-with-testbed" ] }

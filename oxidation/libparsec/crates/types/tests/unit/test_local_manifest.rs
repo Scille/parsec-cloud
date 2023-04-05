@@ -8,9 +8,13 @@ use std::{
 };
 
 use libparsec_crypto::prelude::*;
-use libparsec_types::*;
 
-use libparsec_tests_fixtures::{alice, timestamp, Device};
+use crate::{
+    fixtures::{alice, timestamp, Device},
+    BlockAccess, BlockID, Blocksize, Chunk, ChunkID, DateTime, DeviceID, EntryID, EntryName,
+    FileManifest, FolderManifest, LocalFileManifest, LocalFolderManifest, LocalUserManifest,
+    LocalWorkspaceManifest, RealmRole, Regex, UserManifest, WorkspaceEntry, WorkspaceManifest,
+};
 
 type AliceLocalFileManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFileManifest)>;
 type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest)>;

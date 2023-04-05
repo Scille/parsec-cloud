@@ -3,6 +3,9 @@
 #[macro_use]
 extern crate lazy_static;
 
+#[cfg(any(test, feature = "types-fixtures"))]
+pub mod fixtures;
+
 mod addr;
 mod certif;
 pub mod data_macros;
@@ -20,6 +23,14 @@ mod pki;
 mod regex;
 mod time;
 mod user;
+
+#[cfg(test)]
+#[path = "../tests/unit/mod.rs"]
+mod tests;
+#[cfg(test)]
+#[allow(clippy::single_component_path_imports)]
+/// Needed to expose `rstest_reuse::template` proc macro
+use rstest_reuse;
 
 pub use crate::regex::*;
 pub use addr::*;

@@ -2,12 +2,16 @@
 
 use pretty_assertions::assert_eq;
 use rstest::rstest;
-use rstest_reuse::*;
+use rstest_reuse::{apply, template};
 use serde_test::{assert_tokens, Token};
 use std::str::FromStr;
 
+use crate::{
+    AddrError, BackendAddr, BackendInvitationAddr, BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr, BackendOrganizationFileLinkAddr, InvitationType,
+    OrganizationID,
+};
 use libparsec_crypto::SigningKey;
-use libparsec_types::*;
 
 const ORG: &str = "MyOrg";
 const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";
@@ -164,7 +168,7 @@ fn addr_with_org(testbed: &dyn Testbed) {}
  * Actual tests
  */
 
-#[apply(all_addr)]
+#[rstest_reuse::apply(all_addr)]
 fn test_good_addr(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
 }

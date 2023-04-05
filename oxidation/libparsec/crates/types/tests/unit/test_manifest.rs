@@ -4,9 +4,12 @@ use hex_literal::hex;
 use rstest::rstest;
 use std::{collections::HashMap, num::NonZeroU64, str::FromStr};
 
+use crate::{
+    fixtures::{alice, Device},
+    BlockAccess, BlockID, Blocksize, DateTime, DeviceID, DeviceName, EntryID, FileManifest,
+    FolderManifest, Manifest, RealmRole, UserID, UserManifest, WorkspaceEntry, WorkspaceManifest,
+};
 use libparsec_crypto::*;
-use libparsec_tests_fixtures::{alice, Device};
-use libparsec_types::*;
 
 #[rstest]
 fn serde_file_manifest(alice: &Device) {

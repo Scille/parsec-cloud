@@ -901,6 +901,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
+name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
 name = "http"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1305,7 +1311,7 @@ dependencies = [
  "getrandom 0.1.16",
  "getrandom 0.2.6",
  "hex",
- "hex-literal",
+ "hex-literal 0.3.4",
  "lazy_static",
  "libsodium-sys",
  "openssl",
@@ -1350,7 +1356,7 @@ dependencies = [
 name = "libparsec_platform_device_loader"
 version = "0.0.0"
 dependencies = [
- "hex-literal",
+ "hex-literal 0.3.4",
  "libparsec_crypto",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
@@ -1383,7 +1389,7 @@ version = "0.0.0"
 dependencies = [
  "futures",
  "glob",
- "hex-literal",
+ "hex-literal 0.3.4",
  "libparsec_crypto",
  "libparsec_serialization_format",
  "libparsec_tests_fixtures",
@@ -1420,7 +1426,7 @@ name = "libparsec_testbed"
 version = "0.0.0"
 dependencies = [
  "crc32fast",
- "hex-literal",
+ "hex-literal 0.3.4",
  "lazy_static",
  "libparsec_crypto",
  "libparsec_tests_fixtures",
@@ -1435,13 +1441,14 @@ name = "libparsec_tests_fixtures"
 version = "0.0.0"
 dependencies = [
  "env_logger",
- "hex-literal",
+ "hex-literal 0.3.4",
  "lazy_static",
  "libparsec_crypto",
  "libparsec_platform_device_loader",
  "libparsec_platform_local_db",
  "libparsec_testbed",
  "libparsec_tests_macros",
+ "libparsec_tests_utils",
  "libparsec_types",
  "log",
  "regex",
@@ -1459,6 +1466,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_tests_utils"
+version = "0.1.0"
+dependencies = [
+ "rstest",
+ "uuid",
+]
+
+[[package]]
 name = "libparsec_types"
 version = "0.0.0"
 dependencies = [
@@ -1468,12 +1483,12 @@ dependencies = [
  "flate2",
  "fnmatch-regex",
  "glob",
- "hex-literal",
+ "hex-literal 0.4.1",
  "lazy_static",
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_serialization_format",
- "libparsec_tests_fixtures",
+ "libparsec_tests_utils",
  "paste",
  "percent-encoding",
  "pretty_assertions",

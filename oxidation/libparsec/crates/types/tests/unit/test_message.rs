@@ -3,9 +3,11 @@
 use hex_literal::hex;
 use rstest::rstest;
 
+use crate::{
+    fixtures::{alice, bob, Device},
+    EntryID, MessageContent,
+};
 use libparsec_crypto::*;
-use libparsec_tests_fixtures::{alice, bob, Device};
-use libparsec_types::*;
 
 #[rstest]
 fn serde_sharing_granted_message(alice: &Device, bob: &Device) {

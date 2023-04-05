@@ -3,9 +3,6 @@
 // Functions using rstest parametrize ignores `#[warn(clippy::too_many_arguments)]`
 // decorator, so we must do global ignore instead :(
 #![allow(clippy::too_many_arguments)]
-// Needed to expose `rstest_reuse::template` proc macro
-#![allow(clippy::single_component_path_imports)]
-use rstest_reuse;
 
 mod test_addr;
 mod test_certif;
