@@ -79,28 +79,6 @@ msgstr ""
 msgid "You can install the snap from the command line by doing:"
 msgstr "Vous pouvez installer le snap depuis la ligne de commande en faisant :"
 
-#: ../../userguide/installation.rst:37
-msgid "Via pip"
-msgstr "Via pip"
-
-#: ../../userguide/installation.rst:39
-msgid ""
-"Given that Parsec is written in Python, an alternative is to install it through "
-"`pip (the Python package repository) <https://pypi.org/project/parsec-cloud/>`_."
-msgstr ""
-"Parsec étant écrit en Python, une autre façon de l'installer est via `pip "
-"(Python package repository) <https://pypi.org/project/parsec-cloud/>`_."
-
-#: ../../userguide/installation.rst:45
-msgid "Or install it with all its dependencies, for the GUI."
-msgstr ""
-"Ou l'installer avec toutes ses dépendances, pour accéder à l'interface "
-"graphique par exemple."
-
-#: ../../userguide/installation.rst:53
-msgid "Parsec requires Python >= 3.9 to work."
-msgstr "Parsec a besoin de Python >= 3.9 pour fonctionner."
-
 #: ../../userguide/installation.rst:57
 msgid "MacOS"
 msgstr "MacOS"
