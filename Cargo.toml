@@ -36,6 +36,7 @@ uuid = { version = "1.2.2", features = ["serde", "v4", "fast-rng"] }
 tokio = { version = "1.27", features = ["rt", "rt-multi-thread"] }
 lazy_static = "1.4.0"
 futures = "0.3.28"
+pyo3-log = "0.8.1"
 
 # Rust unoptimized code is really slow with crypto algorithm and regex compilation,
 # hence we optimize our 3rd party dependencies.
