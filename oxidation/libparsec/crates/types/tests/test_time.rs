@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_types::{DateTime, Duration};
+use crate::{DateTime, Duration};
 
 type Part = (Box<dyn Fn(DateTime) -> u32>, i64);
 
