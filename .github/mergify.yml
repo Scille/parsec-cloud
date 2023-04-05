@@ -1,0 +1,58 @@
+shared:
+  dev-rust: &dev-rust
+    - TimeEngineer
+    - FirelightFlagboy
+    - touilleMan
+
+  dev-python: &dev-python
+    - vxgmichel
+    - touilleMan
+    - FirelightFlagboy
+    - mmmarcos
+
+  dev-ci: &dev-ci
+    - FirelightFlagboy
+    - touilleMan
+
+pull_request_rules:
+  - name: Python pull request
+    conditions:
+      - files~=.*\.pyi?$
+      - -closed
+    actions:
+      label:
+        add:
+          - python
+      request_reviews:
+        # Listing reviewers with different proportion to be selecting in the random selection made by `random_count`
+        # But can't use random_count on the free plan
+        # users:
+        #   vxgmichel: 3
+        #   touilleMan: 3
+        #   FirelightFlagboy: 1
+        #   mmmarcos: 2
+        # # Number of required reviews
+        # random_count: 2
+        users: *dev-python
+
+  - name: Rust pull request
+    conditions:
+      - files~=.*\.rs?$
+      - -closed
+    actions:
+      label:
+        add:
+          - rust
+      request_reviews:
+        users: *dev-rust
+
+  - name: CI pull request
+    conditions:
+      - files~=^\.github/
+      - -closed
+    actions:
+      label:
+        add:
+          - CI / CD
+      request_reviews:
+        users: *dev-ci
