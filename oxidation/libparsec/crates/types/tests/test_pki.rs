@@ -5,8 +5,9 @@ use rstest::rstest;
 use std::{collections::HashMap, str::FromStr};
 
 use libparsec_crypto::{PublicKey, VerifyKey};
-use libparsec_tests_fixtures::{alice, Device};
-use libparsec_types::{
+
+use crate::{
+    fixtures::{alice, Device},
     BackendPkiEnrollmentAddr, DeviceID, DeviceLabel, EnrollmentID, LocalPendingEnrollment,
     PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, UserProfile, X509Certificate,
 };

@@ -1,12 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use hex_literal::hex;
-use rstest::rstest;
 use std::{collections::HashMap, num::NonZeroU64, str::FromStr};
 
+use hex_literal::hex;
+use rstest::rstest;
+
 use libparsec_crypto::*;
-use libparsec_tests_fixtures::{alice, Device};
-use libparsec_types::*;
+
+use crate::{
+    fixtures::{alice, Device},
+    BlockAccess, BlockID, Blocksize, DateTime, DeviceID, DeviceName, EntryID, FileManifest,
+    FolderManifest, Manifest, RealmRole, UserID, UserManifest, WorkspaceEntry, WorkspaceManifest,
+};
 
 #[rstest]
 fn serde_file_manifest(alice: &Device) {

@@ -3,9 +3,13 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_crypto::*;
-use libparsec_tests_fixtures::{bob, Device};
-use libparsec_types::*;
+use libparsec_crypto::SecretKey;
+
+use crate::{
+    fixtures::{bob, Device},
+    InviteDeviceConfirmation, InviteDeviceData, InviteUserConfirmation, InviteUserData,
+    UserProfile,
+};
 
 #[rstest]
 #[case::normal(

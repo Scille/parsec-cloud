@@ -3,9 +3,14 @@
 // Functions using rstest parametrize ignores `#[warn(clippy::too_many_arguments)]`
 // decorator, so we must do global ignore instead :(
 #![allow(clippy::too_many_arguments)]
-// Needed to expose `rstest_reuse::template` proc macro
-#![allow(clippy::single_component_path_imports)]
+#[allow(clippy::single_component_path_imports)]
+/// Needed to expose `rstest_reuse::template` proc macro
 use rstest_reuse;
+
+use libparsec_types::*;
+
+#[path = "../src/fixtures.rs"]
+mod fixtures;
 
 mod test_addr;
 mod test_certif;

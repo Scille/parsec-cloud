@@ -3,8 +3,8 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_tests_fixtures::{alice, Device};
-use libparsec_types::{
+use crate::{
+    fixtures::{alice, Device},
     AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileRecovery, DeviceFileSmartcard,
     DeviceFileType, HumanHandle, LegacyDeviceFile, LegacyDeviceFilePassword, OrganizationID,
 };

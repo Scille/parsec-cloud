@@ -94,7 +94,7 @@ mod tests {
     use std::{fs, path::Path};
 
     use crate::regex::Regex;
-    use libparsec_tests_fixtures::{tmp_path, TmpPath};
+    use libparsec_tests_utils::{tmp_path, TmpPath};
     use rstest::rstest;
 
     #[rstest]
