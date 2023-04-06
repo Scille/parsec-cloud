@@ -1478,7 +1478,6 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_serialization_format",
- "libparsec_tests_utils",
  "paste",
  "percent-encoding",
  "pretty_assertions",
