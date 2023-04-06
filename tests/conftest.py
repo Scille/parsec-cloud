@@ -38,7 +38,6 @@ from tests.common import (
     reset_postgresql_testbed,
 )
 
-
 # Pytest hooks
 
 

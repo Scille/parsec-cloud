@@ -17,7 +17,6 @@ from structlog.types import ExcInfo
 
 from parsec import __version__
 
-
 # Long story short Python's logging is an over-engineering mess, adding
 # structlog and Sentry brings another layer of complexity :/
 #

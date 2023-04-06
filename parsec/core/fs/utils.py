@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import enum
 
-
 # Cross-plateform windows error enumeration
 
 
