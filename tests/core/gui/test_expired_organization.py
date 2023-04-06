@@ -25,7 +25,6 @@ async def test_expired_notification_logging(
     core_config,
     snackbar_catcher,
 ):
-
     # Log has alice on an expired organization
     save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
 
@@ -125,7 +124,6 @@ async def test_expired_notification_from_connection(
 async def test_expired_notification_from_update(
     aqtbot, logged_gui, running_backend, autoclose_dialog, alice, snackbar_catcher
 ):
-
     # Set expiration date
     with running_backend.backend.event_bus.listen() as spy:
         await running_backend.backend.organization.update(id=alice.organization_id, is_expired=True)

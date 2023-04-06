@@ -41,7 +41,6 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
 
     # Good events
     with backend.event_bus.listen() as spy:
-
         await backend.vlob.create(
             organization_id=alice.organization_id,
             author=alice2.device_id,
@@ -103,7 +102,6 @@ async def test_vlobs_updated_event_handle_self_events(backend, alice_ws, alice, 
     await events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
-
         await backend.vlob.create(
             organization_id=alice.organization_id,
             author=alice.device_id,
@@ -152,7 +150,6 @@ async def test_vlobs_updated_event_not_participant(backend, alice_ws, bob, bob_r
     await events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
-
         await backend.vlob.create(
             organization_id=bob.organization_id,
             author=bob.device_id,

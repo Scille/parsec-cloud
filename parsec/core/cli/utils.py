@@ -216,7 +216,6 @@ def save_device_options(fn: Callable[..., R]) -> Callable[..., R]:
     @wraps(fn)
     def wrapper(password: str | None, **kwargs: object) -> R:
         async def _save_device(config_dir: Path, device: LocalDevice, password: str | None) -> Path:
-
             device_display = click.style(device.slughash, fg="yellow")
             while True:
                 try:

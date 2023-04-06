@@ -83,7 +83,6 @@ async def initialize_test_organization(
             device_id=alice_device.device_id,
             signing_key=alice_device.signing_key,
         ) as alice_cmds:
-
             # Create new device "pc" for Alice
             other_alice_device = await _register_new_device(
                 cmds=alice_cmds, author=alice_device, device_label=DeviceLabel("pc")
@@ -265,7 +264,6 @@ async def _register_new_device(
     author: LocalDevice,
     device_label: DeviceLabel | None,
 ) -> LocalDevice:
-
     new_device = LocalDevice(
         organization_addr=author.organization_addr,
         device_id=DeviceID(f"{author.user_id.str}@{DeviceName.new().str}"),

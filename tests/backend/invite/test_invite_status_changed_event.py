@@ -39,7 +39,6 @@ async def test_greeter_event_on_claimer_join_and_leave(
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ):
-
         # Claimer is ready, this should be notified to greeter
 
         async with real_clock_timeout():

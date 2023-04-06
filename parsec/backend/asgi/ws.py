@@ -168,7 +168,6 @@ async def _handle_client_websocket_loop(
     websocket: Websocket,
     client_ctx: Ctx,
 ) -> NoReturn:
-
     raw_req: Union[None, bytes, str] = None
     while True:
         # raw_req can be already defined if we received a new request
@@ -186,7 +185,6 @@ async def _handle_client_websocket_loop(
             cmd = ""  # Dummy placeholder for the log
 
         else:
-
             try:
                 cmd = req.get("cmd", "<missing>")
                 if not isinstance(cmd, str):

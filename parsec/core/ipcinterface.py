@@ -112,7 +112,6 @@ def _install_win32_mutex(mutex_name: str) -> Iterator[None]:
 
 @contextmanager
 def _install_posix_file_lock(socket_file: Path) -> Iterator[None]:
-
     import fcntl
 
     try:
@@ -149,13 +148,10 @@ async def _run_tcp_server(
     socket_file: Path, cmd_handler: CommandHandlerCallback
 ) -> AsyncIterator[None]:
     async def _client_handler(stream: Stream) -> None:
-
         # General exception handling
         try:
-
             # Stream handling
             try:
-
                 unpacker = Unpacker()
                 async for raw in stream:
                     unpacker.feed(raw)

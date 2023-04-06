@@ -17,7 +17,6 @@ from tests.core.conftest import UserFsFactory
 async def test_good(
     running_backend, backend, user_fs_factory: UserFsFactory, with_labels, data_base_dir
 ):
-
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
     await backend.organization.create(id=org_id, bootstrap_token=org_token)

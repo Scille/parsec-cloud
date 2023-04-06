@@ -286,7 +286,6 @@ def backend_data_binder_factory(initial_user_manifest_state):
             vlob_id = VlobID.from_entry_id(author.user_manifest_id)
 
             with self.backend.event_bus.listen() as spy:
-
                 # The realm needs to be created strictly before the manifest timestamp
                 realm_create_timestamp = manifest.timestamp.subtract(microseconds=1)
 

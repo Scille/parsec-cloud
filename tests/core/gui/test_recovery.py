@@ -165,7 +165,6 @@ async def test_import_recovery_device(
     await aqtbot.wait_until(imp_w.button_validate.isEnabled)
 
     if kind == "ok":
-
         async with aqtbot.wait_signal(imp_w.create_new_device_success):
             aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
 
@@ -207,7 +206,6 @@ async def test_import_recovery_device(
         )
 
     elif kind == "offline":
-
         with running_backend.offline():
             aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
 

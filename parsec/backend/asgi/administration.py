@@ -176,7 +176,6 @@ async def administration_organization_item(raw_organization_id: str) -> Response
         await not_found_abort()
 
     if request.method == "GET":
-
         return make_rep_response(
             organization_config_rep_serializer,
             data={

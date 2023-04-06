@@ -84,7 +84,6 @@ async def accepter_list_submitted_from_backend(
     ] = []
 
     for enrollment in rep.enrollments:
-
         enrollment_id = enrollment.enrollment_id
         submitted_on = cast(DateTime, enrollment.submitted_on)
         submitter_der_x509_certificate = enrollment.submitter_der_x509_certificate

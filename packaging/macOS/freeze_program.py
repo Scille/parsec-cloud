@@ -34,7 +34,6 @@ def display(line: str):
 
 
 def run(cmd, **kwargs):
-
     if isinstance(cmd, str):
         cmd = cmd.split()
     display(f">>> {' '.join(map(str, cmd))}")

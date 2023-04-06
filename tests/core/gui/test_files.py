@@ -656,7 +656,6 @@ async def test_import_file_permission_denied(
     # Changing file permissions
     os.chmod(file1, 000)
     try:
-
         # Try importing one file
 
         monkeypatch.setattr(

@@ -56,7 +56,6 @@ def transactions_factory(
         async with backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
-
             remote_devices_manager = remote_devices_manager_factory(device)
             remote_loader = RemoteLoader(
                 device,

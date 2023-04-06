@@ -91,7 +91,6 @@ def _run_from_thread_to_trio(
 
 
 class ThreadFSAccess:
-
     # One second seems like a sensible value, as it is very unlikely to
     # produce false positive (the trio loop would have to be busy processing
     # other earlier callbacks for more than a second, which would probably be

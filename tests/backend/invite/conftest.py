@@ -264,7 +264,6 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
         invitation_type=invitation.TYPE,
         token=invitation.token,
     ) as claimer_ws:
-
         async with trio.open_nursery() as nursery:
             tb = ExchangeTestBed(
                 organization_id=alice.organization_id,

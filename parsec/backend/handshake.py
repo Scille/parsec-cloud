@@ -74,7 +74,6 @@ async def _process_authenticated_answer(
 async def _do_process_authenticated_answer(
     backend: BackendApp, handshake: ServerHandshake, handshake_type: HandshakeType
 ) -> Tuple[BaseClientContext | None, bytes, dict[str, object] | None]:
-
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     device_id = cast(DeviceID, handshake.answer_data["device_id"])
     expected_rvk = handshake.answer_data["rvk"]

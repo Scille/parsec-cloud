@@ -21,7 +21,6 @@ async def assert_path_info(workspace, path, **kwargs):
 
 @pytest.mark.trio
 async def test_local_confinement_points(alice_workspace: WorkspaceFS, running_backend):
-
     # Apply a *.tmp pattern
     pattern = Regex.from_regex_str(".*\\.tmp$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)

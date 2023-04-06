@@ -23,7 +23,6 @@ from tests.common import customize_fixtures, local_device_to_backend_user
 @pytest.mark.trio
 @pytest.mark.parametrize("bad_auth_reason", ["no_header", "bad_header"])
 async def test_administration_api_auth(backend_asgi_app, coolorg, bad_auth_reason):
-
     if bad_auth_reason == "bad_header":
         headers = {"authorization": "Bearer dummy"}
     else:

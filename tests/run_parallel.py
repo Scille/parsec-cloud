@@ -174,7 +174,6 @@ if __name__ == "__main__":
                     break
 
             else:
-
                 if event_name == "unexpected_exception":
                     # The event has already be printed by the child process,
                     # only store the event for final recap

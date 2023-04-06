@@ -160,7 +160,6 @@ async def fuse_mountpoint_runner(
 
         # `open_service_nursery` does not exists in trio according to mypy
         async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
-
             # Let fusepy decode the paths using the current file system encoding
             # Note that this does not prevent the user from using a certain encoding
             # in the context of the parsec app and another encoding in the context of
@@ -300,7 +299,6 @@ async def _stop_fuse_thread(
 
     # Fuse exit in macOS
     if sys.platform == "darwin":
-
         # The schedule_exit() solution doesn't work on macOS, instead freezes the application for
         # 120 seconds before a timeout occurs. The solution used is to call this function (macOS
         # equivalent to fusermount) in a subprocess to unmount.
@@ -329,7 +327,6 @@ async def _stop_fuse_thread(
 
     # Fuse exit in linux
     else:
-
         # Schedule an exit in the fuse operations
         fuse_operations.schedule_exit()
 

@@ -682,7 +682,6 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
 
 @pytest.mark.trio
 async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, vlobs, vlob_atoms):
-
     # Start listening events
     await events_subscribe(alice_ws)
 

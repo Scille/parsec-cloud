@@ -125,7 +125,6 @@ def config_factory(
     environ: Mapping[str, str] = {},
     **_: object,
 ) -> CoreConfig:
-
     # The environment variable we always be used first, and if it is not present,
     # we'll use the value from the configuration file.
     backend_addr_env = environ.get("PREFERRED_ORG_CREATION_BACKEND_ADDR")

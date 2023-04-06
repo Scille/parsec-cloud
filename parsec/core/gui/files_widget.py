@@ -59,7 +59,7 @@ async def _do_rename(
     workspace_fs: WorkspaceFS, paths: list[tuple[FsPath, FsPath, EntryID]]
 ) -> None:
     new_names = {}
-    for (old_path, new_path, entry_id) in paths:
+    for old_path, new_path, entry_id in paths:
         try:
             await workspace_fs.rename(old_path, new_path)
             new_names[entry_id] = FsPath(new_path).name
@@ -892,7 +892,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
             # Make the job cancellable
             with trio.CancelScope() as cancel_scope:
-
                 # Create loading dialog and connect to the cancel scope
                 wl = LoadingWidget(total_size=total_size + len(files))
                 loading_dialog = GreyedDialog(wl, T("TEXT_FILE_IMPORT_LOADING_TITLE"), parent=self)
@@ -1000,7 +999,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         # Loop over files to import
         for source, dest in files:
-
             # Import the corresponding file and update the current size
             try:
                 if await source.is_file():
@@ -1045,7 +1043,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         # Open the file to import
         async with await trio.open_file(source, "rb") as f:
-
             # Getting the file name without extension (anything after the first dot is considered to be the extension)
             name_we, *suffixes = dest.name.str.split(".")
             # Count starts at 2 (1 would be the file without a number)
@@ -1058,11 +1055,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
             # Open the file to create
             async with await self.workspace_fs.open_file(dest, "wb") as dest_file:
-
                 # Loop over chunks of DEFAULT_BLOCK_SIZE, i.e. 512KB
                 read_size = 0
                 while True:
-
                     # Read a chunk and write it back
                     chunk = await f.read(DEFAULT_BLOCK_SIZE)
                     if not chunk:

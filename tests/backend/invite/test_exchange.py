@@ -635,7 +635,6 @@ async def test_claimer_step_2_retry(
     # Greeter initiates step 2a...
     async with real_clock_timeout():
         with backend_asgi_app.backend.event_bus.listen() as spy:
-
             async with invite_2a_greeter_get_hashed_nonce.async_call(
                 alice_ws, token=invitation.token
             ) as greeter_2a_async_rep:
@@ -651,7 +650,6 @@ async def test_claimer_step_2_retry(
                         token=invitation.token,
                         greeter_public_key=greeter_retry_privkey.public_key,
                     ) as greeter_retry_1_async_rep:
-
                         # First connection should be notified of the reset
                         await greeter_2a_async_rep.do_recv()
                         assert isinstance(

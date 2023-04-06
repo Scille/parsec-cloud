@@ -70,7 +70,6 @@ def file_system_path(mountpoint_service):
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("test_case", winfsp_tests.TEST_CASES)
 def test_winfsp_tests(test_case, file_system_tempdir):
-
     # Many tests are not supported
     if test_case in XFAIL_LIST:
         pytest.xfail()

@@ -232,7 +232,6 @@ class RemanenceManager:
 
                 # Loop over jobs
                 while True:
-
                     # It's good practice to tick here to avoid busy loops
                     await trio.sleep(0)
 
@@ -497,7 +496,6 @@ class RemanenceManager:
 
             # Loop over download batches
             while True:
-
                 # Not a block-remanent workspace or no block to download
                 if not self.local_storage.is_block_remanent() or not self._remote_only_blocks:
                     with trio.CancelScope() as self._downloader_task_cancel_scope:
@@ -508,13 +506,11 @@ class RemanenceManager:
                 # Open a nursery for downloading in parallel (4 tasks)
                 try:
                     async with open_service_nursery() as nursery:
-
                         # Open channel and loop over downloaded blocks
                         blocks = list(self._remote_only_blocks - missing)
                         channel = await self.remote_loader.receive_load_blocks(blocks, nursery)
                         async with channel:
                             async for access in channel:
-
                                 # Update the internal sets
                                 self._register_downloaded_block(access)
 

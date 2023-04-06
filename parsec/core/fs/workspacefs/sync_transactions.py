@@ -294,7 +294,6 @@ def merge_manifests(
 
 
 class SyncTransactions(EntryTransactions):
-
     # Public read-only helpers
 
     async def get_placeholder_children(
@@ -323,7 +322,6 @@ class SyncTransactions(EntryTransactions):
     ) -> None:
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
-
             # Not a folderish manifest
             if not isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 return
@@ -372,14 +370,12 @@ class SyncTransactions(EntryTransactions):
 
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
-
             # Sync cannot be performed yet
             if (
                 not final
                 and isinstance(local_manifest, LocalFileManifest)
                 and not local_manifest.is_reshaped()
             ):
-
                 # Try a quick reshape (without downloading any block)
                 missing = await self._manifest_reshape(local_manifest)
 
@@ -454,13 +450,10 @@ class SyncTransactions(EntryTransactions):
             return new_local_manifest.to_remote(self.local_author, timestamp)
 
     async def file_reshape(self, entry_id: EntryID) -> None:
-
         # Loop over attempts
         while True:
-
             # Fetch and lock
             async with self.local_storage.lock_manifest(entry_id) as manifest:
-
                 # Not a file manifest
                 if not isinstance(manifest, LocalFileManifest):
                     raise FSIsADirectoryError(entry_id)
@@ -489,13 +482,11 @@ class SyncTransactions(EntryTransactions):
         # Lock parent then child
         parent_id = local_manifest.parent
         async with self.local_storage.lock_manifest(parent_id) as parent_manifest:
-
             # Not a folderish manifest
             if not isinstance(parent_manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 raise FSNotADirectoryError(parent_id)
 
             async with self.local_storage.lock_manifest(entry_id) as current_manifest:
-
                 # Not a file manifest
                 if not isinstance(current_manifest, LocalFileManifest):
                     raise FSIsADirectoryError(entry_id)

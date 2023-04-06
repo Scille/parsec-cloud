@@ -487,12 +487,10 @@ async def test_claimer_handle_cancel_event(
 
         async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
-
                 nursery.start_soon(_do_claimer)
                 nursery.start_soon(_do_greeter)
 
         async with real_clock_timeout():
-
             async with trio.open_nursery() as nursery:
 
                 async def _do_claimer_wait_peer():
@@ -593,7 +591,6 @@ async def test_claimer_handle_command_failure(
             greeter_in_progress_ctx = await greeter_in_progress_ctx.do_signify_trust()
 
         async with real_clock_timeout():
-
             async with trio.open_nursery() as nursery:
                 nursery.start_soon(_do_claimer)
                 nursery.start_soon(_do_greeter)

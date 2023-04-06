@@ -36,7 +36,6 @@ async def test_roles_updated_for_participant(
     backend, alice, bob, alice_ws, bob_ws, realm, next_timestamp
 ):
     async def _update_role_and_check_events(role):
-
         with backend.event_bus.listen() as spy:
             certif = RealmRoleCertificate(
                 author=alice.device_id,

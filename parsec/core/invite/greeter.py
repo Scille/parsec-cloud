@@ -359,7 +359,6 @@ class UserGreetInProgress4Ctx:
         human_handle: HumanHandle | None,
         profile: UserProfile,
     ) -> None:
-
         (
             user_certificate,
             redacted_user_certificate,

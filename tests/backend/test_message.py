@@ -69,10 +69,8 @@ async def test_message_from_bob_to_alice_multi_backends(
         populated=False,
         config={"blockstore_config": PostgreSQLBlockStoreConfig(), "db_url": postgresql_url},
     ) as backend_2:
-
         app_1 = app_factory(backend_1)
         async with backend_authenticated_ws_factory(app_1, alice) as alice_ws:
-
             await events_subscribe(alice_ws)
             async with events_listen(alice_ws) as listen:
                 await backend_2.message.send(

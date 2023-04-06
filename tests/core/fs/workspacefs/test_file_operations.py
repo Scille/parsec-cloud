@@ -96,7 +96,6 @@ class Storage(dict):
         return new_manifest
 
     def reshape(self, manifest: LocalFileManifest) -> LocalFileManifest:
-
         for block, source, destination, write_back, removed_ids in prepare_reshape(manifest):
             data = self.build_data(source)
             new_chunk = destination.evolve_as_block(data)

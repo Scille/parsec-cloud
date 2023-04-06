@@ -77,7 +77,6 @@ async def test_remote_error_event(
     async with mountpoint_manager_factory(
         alice_user_fs, alice_user_fs.event_bus, base_mountpoint, debug=False
     ) as mountpoint_manager:
-
         await mountpoint_manager.mount_workspace(wid)
 
         # Create shared data
@@ -96,7 +95,6 @@ async def test_remote_error_event(
         # Offline test
 
         with running_backend.offline():
-
             with alice_user_fs.event_bus.listen() as spy:
                 # Accessing workspace data in the backend should end up in remote error
                 fd = await trio.to_thread.run_sync(os.open, str(trio_w / "foo.txt"), os.O_RDONLY)
