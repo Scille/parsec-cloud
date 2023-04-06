@@ -1880,6 +1880,7 @@ dependencies = [
  "futures",
  "lazy_static",
  "libparsec",
+ "log",
  "paste",
  "pyo3",
  "pyo3-log",
