@@ -9,7 +9,7 @@ from typing import Generic, TypeVar
 #
 
 
-class Result(Generic[TypeVar("OK"), TypeVar("ERR")]):  # noqa
+class Result(Generic[TypeVar("OK"), TypeVar("ERR")]):
     pass
 
 
@@ -22,7 +22,7 @@ class Structure:
 
 
 # Represent passing parameter in function by reference
-class Ref(Generic[TypeVar("REFERENCED")]):  # noqa
+class Ref(Generic[TypeVar("REFERENCED")]):
     pass
 
 

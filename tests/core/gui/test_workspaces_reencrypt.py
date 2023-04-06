@@ -20,7 +20,6 @@ from parsec.core.types import WorkspaceRole
 from tests.common import customize_fixtures
 from tests.core.gui.conftest import AsyncQtBot, GuiFactory
 
-
 # Helpers
 
 

@@ -25,7 +25,6 @@ from parsec.core.mountpoint import (
 from parsec.core.types import WorkspaceRole
 from tests.common import create_shared_workspace, real_clock_timeout
 
-
 # Helper
 
 

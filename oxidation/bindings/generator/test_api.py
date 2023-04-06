@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 # Dummy API for testing the generator in different usecases
-from typing import Optional, List, Generic, TypeVar
-
+from typing import Generic, List, Optional, TypeVar
 
 # Meta-types, not part of the API but to be used to describe the API
 
 
-class Result(Generic[TypeVar("OK"), TypeVar("ERR")]):  # noqa
+class Result(Generic[TypeVar("OK"), TypeVar("ERR")]):
     pass
 
 
-class Ref(Generic[TypeVar("REFERENCED")]):  # noqa
+class Ref(Generic[TypeVar("REFERENCED")]):
     pass
 
 

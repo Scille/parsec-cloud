@@ -47,7 +47,6 @@ from tests.backend.common import (
     user_revoke,
 )
 
-
 # Helpers
 
 
