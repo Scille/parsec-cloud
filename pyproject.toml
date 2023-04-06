@@ -135,8 +135,8 @@ PyQt5_stubs = "^5.15"
 # it dependencies won't clash with the rest of the project.
 pyinstaller = "^5.3"
 
-ruff = "^0.0.171"
-black = ">=22.6,<24.0"
+ruff = "0.0.261"
+black = "23.3.0"
 mypy = "^0.982"
 
 setuptools = ">=63.1,<68.0"
