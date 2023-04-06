@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import textwrap
 from base64 import b64decode, b64encode
+from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator, Dict, List, Tuple
 
@@ -790,7 +791,7 @@ def extract_realm_export(
     service_decryption_key: Path,
     input: Path,
     output: Path,
-    filter_date: click.DateTime,
+    filter_date: datetime | None,
     debug: bool,
 ) -> int:
     with cli_exception_handler(debug):
@@ -802,7 +803,7 @@ def extract_realm_export(
         # Convert filter_date from click.Datetime to parsec.Datetime
         date: DateTime
         if filter_date:
-            date = DateTime.from_timestamp(date.timestamp())
+            date = DateTime.from_timestamp(filter_date.timestamp())
         else:
             date = DateTime.now()
         ret = 0
