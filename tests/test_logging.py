@@ -138,6 +138,40 @@ def test_stdout_output():
     assert logs == expected_logs
 
 
+@pytest.mark.parametrize(
+    "logger_level",
+    (
+        # FIXME: Trace log level don't seems to work currently
+        # "TRACE",
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+    ),
+)
+def test_rust_lib_output(caplog: pytest.LogCaptureFixture, logger_level: str):
+    LOG_LEVELS = {"TRACE": 1, "DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40}
+    log_level = LOG_LEVELS[logger_level]
+    caplog.set_level(log_level, logger="parsec.log")
+
+    from parsec._parsec import test_log_in_lib
+
+    for level in LOG_LEVELS:
+        test_log_in_lib(level, f"Testing log at {level} level")
+
+    logs = caplog.get_records("call")
+
+    for record in logs:
+        assert record.levelno >= log_level
+        level_name = next(key for key, value in LOG_LEVELS.items() if value == record.levelno)
+        expected_message = f"message=`Testing log at {level_name} level`"
+        assert record.message == expected_message
+
+    # This will make `tests::conftest::no_logs_gte_error` silent
+    # Otherwise, it this fixture will fail since it will find expected error log
+    caplog.clear()
+
+
 def test_file_output(tmp_path):
     # Test both stdlib and structlog to make sure their output won't be mixed
 

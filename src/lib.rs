@@ -18,6 +18,7 @@ mod invite;
 #[cfg(feature = "test-utils")]
 mod local_db;
 mod local_device;
+mod log;
 mod misc;
 mod protocol;
 mod regex;
@@ -32,6 +33,9 @@ mod trustchain;
 #[pymodule]
 #[pyo3(name = "_parsec")]
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
+    log::init_log();
+
+    crate::log::add_mod(py, m)?;
     crate::api_crypto::add_mod(py, m)?;
     crate::backend_connection::add_mod(py, m)?;
     crate::core_fs::add_mod(py, m)?;
