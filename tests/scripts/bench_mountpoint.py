@@ -82,7 +82,6 @@ def main():
             f"{PARSEC_PROFILE_CLI} core run -l INFO"
             f" --device={DEVICE} --password={PASSWORD} --mountpoint={mountdir} --config-dir={confdir}"
         ):
-
             # Wait for mountpoint to be ready
             w1dir = mountdir / "w1"
             for _ in range(10):

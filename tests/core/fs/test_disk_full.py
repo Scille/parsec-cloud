@@ -137,7 +137,6 @@ async def test_workspace_fs_with_disk_full_issue_1535(
     async with alice_fs_context() as fs:
         await fs.write_bytes("/test.txt", b"")
         async with await fs.open_file("/test.txt", "wb") as f:
-
             # A file is being written
             await f.write(b"aaa")
             # The disk is full

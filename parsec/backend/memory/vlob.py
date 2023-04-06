@@ -317,7 +317,6 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         # Extra check for write operations
         if operation_kind == OperationKind.DATA_WRITE:
-
             # Write operations should always occurs strictly after the last change of role for this user
             assert last_role is not None
             assert timestamp is not None

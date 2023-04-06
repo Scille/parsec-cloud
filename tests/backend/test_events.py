@@ -40,7 +40,6 @@ async def test_cancel_connection_after_events_subscribe(
         await trio.testing.wait_all_tasks_blocked()
 
     async with backend_authenticated_ws_factory(backend_asgi_app, bob) as bob_ws:
-
         await events_subscribe(bob_ws)
 
         if revoked_during == "listen_event":
@@ -113,7 +112,6 @@ async def test_cross_backend_event(backend_factory, backend_authenticated_ws_fac
         async with backend_authenticated_ws_factory(
             app_1, bob
         ) as bob_ws, backend_authenticated_ws_factory(app_2, alice) as alice_ws:
-
             await events_subscribe(alice_ws)
 
             async with events_listen(alice_ws) as listen:
@@ -179,7 +177,6 @@ async def test_sse_events_subscribe(
 ):
     async with real_clock_timeout():
         async with alice_rpc.connect_sse_events() as sse_con:
-
             # Should ignore our own events
             with backend.event_bus.listen() as spy:
                 await authenticated_ping(alice_rpc, "bar")
@@ -255,7 +252,6 @@ async def test_sse_events_close_connection_on_backpressure(
 
     async with real_clock_timeout():
         async with alice_rpc.connect_sse_events() as sse_con:
-
             # In SSE, our code pops the events from the client context without waiting
             # peer acknowledgement. Hence the TCP layer must saturate first before
             # the client context has to actually piled up events in it queue.

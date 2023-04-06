@@ -392,7 +392,6 @@ async def logged_core_factory(
         preferred_language=config.gui_language,
         workspace_storage_cache_size=config.workspace_storage_cache_size,
     ) as user_fs:
-
         backend_conn.register_monitor(
             "messages monitor", partial(monitor_messages, user_fs, event_bus)
         )
@@ -412,7 +411,6 @@ async def logged_core_factory(
                 unmount_on_workspace_revoked=config.mountpoint_enabled,
                 exclude_from_mount_all=config.disabled_workspaces,
             ) as mountpoint_manager:
-
                 yield LoggedCore(
                     config=config,
                     device=device,

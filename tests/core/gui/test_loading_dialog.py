@@ -8,7 +8,6 @@ from parsec.core.gui.loading_widget import LoadingWidget
 
 @pytest.mark.gui
 def test_loading_dialog(qtbot):
-
     w = LoadingWidget(total_size=10000)
 
     qtbot.add_widget(w)
@@ -33,7 +32,6 @@ def test_loading_dialog(qtbot):
 
 @pytest.mark.gui
 def test_loading_dialog_overflow(qtbot):
-
     # Test for a file length > to 2Go (overflow of signed int32)
     w = LoadingWidget(total_size=3000000000)
 

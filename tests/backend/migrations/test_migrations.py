@@ -69,7 +69,6 @@ def test_migrations(tmp_path):
     # otherwise it failure would most likely provoke inconsistent DB schemas
     # errors in any subsequent tests)
     with pg_cluster_factory(tmp_path) as pg_cluster:
-
         postgresql_url = url_from_pg_cluster(pg_cluster)
         pg_dump = pg_cluster._find_pg_binary("pg_dump")
         psql = pg_cluster._find_pg_binary("psql")

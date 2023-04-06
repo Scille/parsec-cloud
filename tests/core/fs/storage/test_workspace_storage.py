@@ -90,7 +90,6 @@ async def test_basic_set_get_clear(data_base_dir, alice_workspace_storage: Works
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest, workspace_id=aws.workspace_id)
     async with aws.lock_entry_id(manifest.id):
-
         # 1) No data
         with pytest.raises(FSLocalMissError):
             await aws.get_manifest(manifest.id)
@@ -120,9 +119,7 @@ async def test_cache_set_get(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice, LocalFileManifest, workspace_id=workspace_id)
 
     async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
-
         async with aws.lock_entry_id(manifest.id):
-
             # 1) Set data
             await aws.set_manifest(manifest.id, manifest, cache_only=True)
             assert await aws.get_manifest(manifest.id) == manifest
@@ -363,7 +360,6 @@ async def test_realm_checkpoint(alice_workspace_storage: WorkspaceStorage):
 async def test_lock_manifest(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice, LocalFileManifest, workspace_id=workspace_id)
     async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
-
         with pytest.raises(FSLocalMissError):
             async with aws.lock_manifest(manifest.id):
                 pass
@@ -508,7 +504,6 @@ async def test_remanence_interface(data_base_dir: Path, alice: LocalDevice, work
     async with WorkspaceStorage.run(
         data_base_dir, alice, workspace_id, cache_size=cache_size
     ) as aws:
-
         # Enable remanence
         assert not aws.is_block_remanent()
 
@@ -537,7 +532,6 @@ async def test_remanence_interface(data_base_dir: Path, alice: LocalDevice, work
     async with WorkspaceStorage.run(
         data_base_dir, alice, workspace_id, cache_size=cache_size
     ) as aws:
-
         # Make sure remanence is kept
         assert aws.is_block_remanent()
 

@@ -160,7 +160,7 @@ def remove_cache_entries(
     base_url = f"/repos/{owner}/{repo}/actions/caches?"
     if ref is not None:
         base_url += f"ref={ref}&"
-    for (entry_id, entry) in entries.actions_caches.items():
+    for entry_id, entry in entries.actions_caches.items():
         log.info(
             f"Will remove entry {entry.key}"
             + (f" at {ref}" if ref is not None else "")

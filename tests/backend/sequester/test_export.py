@@ -158,7 +158,6 @@ async def test_sequester_export_full_run(
         input_dbh=backend.sequester.dbh,
         input_blockstore=backend.blockstore,
     ) as exporter:
-
         # Export vlobs
         to_export_count, vlob_batch_offset_marker0 = await exporter.compute_vlobs_export_status()
         assert to_export_count == 3
@@ -353,7 +352,6 @@ async def test_sequester_export_full_run(
         input_dbh=backend.sequester.dbh,
         input_blockstore=backend.blockstore,
     ) as exporter:
-
         # Export vlobs
         to_export_count, vlob_batch_offset_marker0 = await exporter.compute_vlobs_export_status()
         assert to_export_count == 5

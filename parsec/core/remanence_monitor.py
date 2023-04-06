@@ -99,7 +99,6 @@ async def monitor_remanent_workspaces(
     try:
         # Nursery used by _start_remanence_manager/_on_sharing_updated/_fs_workspace_created closures
         async with open_service_nursery() as nursery:
-
             with event_bus.connect_in_context(
                 (CoreEvent.SHARING_UPDATED, cast(EventCallback, _on_sharing_updated)),
                 (CoreEvent.FS_WORKSPACE_CREATED, cast(EventCallback, _fs_workspace_created)),

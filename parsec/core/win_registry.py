@@ -207,7 +207,6 @@ def cleanup_parsec_drive_icons() -> None:
 
     # Loop over the 26 drives
     for letter in string.ascii_uppercase:
-
         # Perform some cleanup if necessary
         _, pid = get_parsec_drive_icon(letter)
         if pid and not get_psutil().pid_exists(pid):

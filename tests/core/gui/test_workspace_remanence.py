@@ -57,7 +57,6 @@ async def test_remanence_dialog_monitor_disabled(
 async def test_remanence_dialog_empty_workspace(
     aqtbot, running_backend, logged_gui, catch_workspace_remanence_widget, remanence_monitor_event
 ):
-
     remanence_monitor_event.set()
 
     core = logged_gui.test_get_core()
@@ -93,7 +92,6 @@ async def test_remanence_dialog_empty_workspace(
 async def test_remanence_dialog_non_empty_workspace(
     aqtbot, logged_gui, catch_workspace_remanence_widget, running_backend, remanence_monitor_event
 ):
-
     remanence_monitor_event.set()
 
     core = logged_gui.test_get_core()
@@ -143,7 +141,6 @@ async def test_remanence_dialog_turn_on(
     remanence_monitor_event,
     snackbar_catcher,
 ):
-
     remanence_monitor_event.set()
 
     core = logged_gui.test_get_core()

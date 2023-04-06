@@ -18,7 +18,6 @@ async def access_testbed(
     organization_factory,
     local_device_factory,
 ):
-
     async with backend_factory(populated=False) as backend:
         binder = backend_data_binder_factory(backend)
 

@@ -200,7 +200,6 @@ async def query_update_roles(
 
     # Perform extra checks when removing write rights
     if new_role.role in (RealmRole.READER, None):
-
         # The change of role needs to occur strictly after the last upload for this user
         rep = await conn.fetchrow(
             *_q_get_last_vlob_update(
@@ -215,7 +214,6 @@ async def query_update_roles(
 
     # Perform extra checks when removing management rights
     if new_role.role in (RealmRole.CONTRIBUTOR, RealmRole.READER, None):
-
         # The change of role needs to occur strictly after the last change of role performed by this user
         rep = await conn.fetchrow(
             *_q_get_last_role_change(

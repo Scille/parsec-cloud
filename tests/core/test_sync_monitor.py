@@ -285,7 +285,6 @@ async def test_autosync_on_remote_modifications(
 
     # Remote changes in workspace
     with alice_core.event_bus.listen() as spy:
-
         alice2_w = alice2_user_fs.get_workspace(wid)
         await alice2_w.mkdir("/foo")
         foo_id = await alice2_w.path_id("/foo")
@@ -345,7 +344,6 @@ async def test_reconnect_with_remote_changes(
     async with running_backend_factory(running_backend.backend) as running_backend2:
         alice2 = running_backend2.correct_addr(alice2)
         async with user_fs_factory(alice2) as alice2_user_fs:
-
             # Switch backend offline for alice (but not alice2 !)
             with running_backend.offline():
                 # Get back modifications from alice

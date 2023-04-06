@@ -401,7 +401,6 @@ def ssl_conf(request):
         with ca.cert_pem.tempfile() as ca_certfile, server_cert.cert_chain_pems[
             0
         ].tempfile() as server_certfile, server_cert.private_key_pem.tempfile() as server_keyfile:
-
             yield SSLConf(
                 backend_opts=f" --ssl-keyfile={server_keyfile} --ssl-certfile={server_certfile} ",
                 # SSL_CERT_FILE is the env var used by default by ssl.SSLContext
@@ -577,7 +576,6 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
                 f"--password={password} {user_invitation_token}",
                 env=ssl_conf.client_env,
             ) as p_greeter:
-
                 greeter_code = None
 
                 print("~~~ Retrieve greeter code ~~~")
@@ -656,7 +654,6 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
                 f"--password={password} {device_invitation_url}",
                 env=ssl_conf.client_env,
             ) as p_greeter:
-
                 greeter_code = None
 
                 print("~~~ Retrieve greeter code ~~~")

@@ -434,7 +434,6 @@ class RemoteLoader(PyUserRemoteLoader):
     async def _get_user_realm_role_at(
         self, user_id: UserID, timestamp: DateTime, author_last_role_granted_on: DateTime
     ) -> RealmRole | None:
-
         # Lazily iterate over user certificates from newest to oldest
         def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificate]:
             if self._realm_role_certificates_cache is None:

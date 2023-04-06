@@ -141,7 +141,6 @@ async def test_workspace_reencryption(
     monkeypatch: pytest.MonkeyPatch,
     reencryption_needed_workspace: EntryID,
 ):
-
     w_w: WorkspacesWidget = await logged_gui.test_switch_to_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
@@ -169,7 +168,6 @@ async def test_workspace_reencryption_offline_backend(
     monkeypatch,
     reencryption_needed_workspace,
 ):
-
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
@@ -199,7 +197,6 @@ async def test_workspace_reencryption_fs_error(
     monkeypatch,
     reencryption_needed_workspace,
 ):
-
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
@@ -233,7 +230,6 @@ async def test_workspace_reencryption_access_error(
     monkeypatch,
     reencryption_needed_workspace,
 ):
-
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
@@ -280,7 +276,6 @@ async def test_workspace_reencryption_not_found_error(
     monkeypatch,
     reencryption_needed_workspace,
 ):
-
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
@@ -326,7 +321,6 @@ async def test_workspace_reencryption_do_one_batch_error(
     | FSWorkspaceNotFoundError
     | Exception,
 ):
-
     expected_errors = {
         FSBackendOfflineError: translate("TEXT_WORKSPACE_REENCRYPT_OFFLINE_ERROR"),
         FSError: translate("TEXT_WORKSPACE_REENCRYPT_FS_ERROR"),

@@ -74,7 +74,6 @@ async def test_backend_desync_notification(
 
     # Wait until we get the notification
     async with aqtbot.wait_signal(central_widget.systray_notification):
-
         # Force sync by creating a workspace
         await central_widget.core.user_fs.workspace_create(EntryName("test1"))
 

@@ -74,7 +74,6 @@ async def write_in_both_files(triof, f, text):
 
 @pytest.mark.trio
 async def test_open(alice_workspace, trio_file):
-
     # Testing open multiples times same file
     f = await alice_workspace.open_file("/foo/bar", "rb")
     f2 = await alice_workspace.open_file("/foo/bar", "rb")
@@ -383,7 +382,6 @@ async def test_read_write(alice_workspace, trio_file, random_text, tmp_path):
 
 @pytest.mark.trio
 async def test_seek(alice_workspace, trio_file):
-
     f = await alice_workspace.open_file("/foo/bar", "wb")
     triof = await trio.open_file(trio_file, "wb")
     await write_in_both_files(triof, f, "thisis10ch".encode("utf-8"))  # cspell: disable-line

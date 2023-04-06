@@ -774,7 +774,6 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         parent: QWidget,
         on_finished: Callable[[], Awaitable[None]],
     ) -> ClaimDeviceWidget:
-
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
 
         def confirm_close() -> bool:

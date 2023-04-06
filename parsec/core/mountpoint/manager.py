@@ -54,7 +54,6 @@ logger = get_logger()
 def get_mountpoint_runner() -> RunnerType:
     # Windows
     if sys.platform == "win32":
-
         try:
             # Use import function for easier mock up
             import_function("winfspy")
@@ -179,7 +178,6 @@ class MountpointManager:
                     self.config,
                     self.event_bus,
                 ) as mountpoint_path:
-
                     # Another runner started before us
                     if key in self._mountpoint_tasks:
                         raise MountpointAlreadyMounted(
@@ -424,16 +422,13 @@ async def mountpoint_manager_factory(
 
         # Exit this context by unmounting all mountpoints
         try:
-
             # A nursery dedicated to new workspace events
             async with open_service_nursery() as mount_nursery:
-
                 # Setup new workspace events
                 with event_bus.connect_in_context(
                     (CoreEvent.FS_WORKSPACE_CREATED, on_event),  # type: ignore[arg-type]
                     (CoreEvent.SHARING_UPDATED, on_event),  # type: ignore[arg-type]
                 ):
-
                     # Mount required workspaces
                     if mount_all:
                         await mountpoint_manager.safe_mount_all(

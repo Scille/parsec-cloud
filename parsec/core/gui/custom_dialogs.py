@@ -252,7 +252,6 @@ def generate_dialog_method(
 
 
 class QDialogInProcess(GreyedDialog[QWidget]):
-
     pools: dict[object, multiprocessing.pool.Pool] = {}
     process_finished = pyqtSignal()
 

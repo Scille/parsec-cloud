@@ -617,7 +617,6 @@ async def test_pki_complete_sequence(anonymous_backend_ws, mallory, alice_ws, al
         await _submit_request(anonymous_backend_ws, mallory, force=True)
 
     async def _reject():
-
         request_id = EnrollmentID.new()
         await _submit_request(anonymous_backend_ws, mallory, request_id=request_id, force=True)
         rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)

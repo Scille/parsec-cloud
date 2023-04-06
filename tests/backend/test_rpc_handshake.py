@@ -49,7 +49,6 @@ async def _test_handshake_api_version_header(
     server_versions = [ApiVersion(2, 1), ApiVersion(3, 1), ApiVersion(4, 1)]
 
     with patch("parsec.backend.asgi.rpc.SUPPORTED_API_VERSIONS", server_versions):
-
         # Plain invalide header value
         rep = await client.send_ping(
             extra_headers={"Api-Version": "dummy"},

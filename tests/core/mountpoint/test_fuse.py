@@ -49,7 +49,6 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-
         with event_bus.listen() as spy:
             mountpoint_path = await mountpoint_manager.mount_workspace(wid)
             command = f"fusermount -u {mountpoint_path}".split()
@@ -85,7 +84,6 @@ async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs):
         async with mountpoint_manager_factory(
             alice_user_fs, alice_user_fs.event_bus, base_mountpoint
         ) as mountpoint_manager:
-
             with pytest.raises(MountpointDriverCrash) as exc:
                 await mountpoint_manager.mount_workspace(wid)
             assert exc.value.args == (
@@ -107,7 +105,6 @@ async def test_unmount_due_to_cancelled_scope(base_mountpoint, alice, alice_user
         async with mountpoint_manager_factory(
             alice_user_fs, event_bus, base_mountpoint
         ) as mountpoint_manager:
-
             await mountpoint_manager.mount_workspace(wid)
             cancel_scope.cancel()
 

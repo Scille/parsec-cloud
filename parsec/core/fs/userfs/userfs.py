@@ -328,10 +328,8 @@ class UserFS:
 
         # Run user storage
         async with UserStorage.run(self.data_base_dir, self.device) as self.storage:
-
             # Nursery for workspace storages
             async with open_service_nursery() as self._workspace_storage_nursery:
-
                 # Make sure all the workspaces are loaded
                 # In particular, we want to make sure that any workspace available through
                 # `userfs.get_user_manifest().workspaces` is also available through
@@ -357,7 +355,6 @@ class UserFS:
         return self.storage.get_user_manifest()
 
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
-
         if self.storage is None:
             raise ValueError("Storage not set")
 

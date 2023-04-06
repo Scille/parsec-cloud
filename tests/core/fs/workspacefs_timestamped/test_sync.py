@@ -19,7 +19,6 @@ async def test_sync_timestamp_consistency(alice_workspace):
     # Iterate over root versions
     versions = await alice_workspace.remote_loader.list_versions(alice_workspace.workspace_id)
     for version, (timestamp, _) in versions.items():
-
         # Get the corresponding timestamped workspace
         workspace = await alice_workspace.to_timestamped(timestamp)
 

@@ -50,10 +50,8 @@ ko = click.style("✘", fg="red")
 
 @contextmanager
 def operation(txt: str) -> Iterator[None]:
-
     click.echo(txt, nl=False)
     try:
-
         yield
 
     except Exception:
@@ -230,7 +228,6 @@ def logging_config_options(
             kwargs["log_file"] = log_file
 
             with open_log_file() as fd:
-
                 configure_logging(log_level=log_level, log_format=log_format, log_stream=fd)
 
                 return fn(*args, **kwargs)

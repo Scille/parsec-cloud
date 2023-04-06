@@ -61,7 +61,6 @@ api_releases_serializer = JSONSerializer(ApiReleasesSchema)
 
 
 async def fetch_json_releases(api_url: str) -> None | list[dict[str, Any]]:
-
     try:
         data = await http_request(api_url, method="GET")
         return json.loads(data)

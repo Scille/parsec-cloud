@@ -74,7 +74,6 @@ async def benchmark_file_writing(device, workspace):
 
 
 async def main():
-
     # Config
     config_dir = get_default_config_dir(os.environ)
     config = load_config(config_dir)
@@ -84,7 +83,6 @@ async def main():
 
     # Log in
     async with logged_core_factory(config, device) as core:
-
         # Get workspace
         user_manifest = core.user_fs.get_user_manifest()
         workspace_entry = user_manifest.workspaces[0]

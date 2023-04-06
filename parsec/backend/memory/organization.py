@@ -118,7 +118,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         # device and organization) and is not atomic (given await is used),
         # so we protect it from concurrency with a big old lock
         async with self._organization_bootstrap_lock[id]:
-
             organization = await self.get(id)
 
             if organization.is_bootstrapped():

@@ -63,7 +63,6 @@ async def _check_realm(
 
     # In all other cases
     else:
-
         # Access during maintenance is forbidden
         if operation_kind != OperationKind.MAINTENANCE and status.in_maintenance:
             raise VlobInMaintenanceError("Data realm is currently under maintenance")

@@ -461,7 +461,6 @@ class SSEResponseIterableBody(ResponseBody):
             # Closing sender end of the channel will cause Quart stop iterating
             # on the receiver end and hence terminate the request
             with self._sse_payload_sender:
-
                 # In SSE, the HTTP status code & headers are sent with the first event.
                 # This means the client has to wait for this first event to know for
                 # sure the connection was successful (in practice the server responds
@@ -488,7 +487,6 @@ class SSEResponseIterableBody(ResponseBody):
         assert client_ctx.cancel_scope is not None
         with client_ctx.cancel_scope:
             async with trio.open_nursery() as nursery:
-
                 with backend.event_bus.connection_context() as client_ctx.event_bus_ctx:
                     await backend.events.connect_events(client_ctx)
 

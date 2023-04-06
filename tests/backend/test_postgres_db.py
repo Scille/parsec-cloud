@@ -38,11 +38,8 @@ async def test_postgresql_connection_ok(postgresql_url, backend_factory):
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_postgresql_notification_listener_terminated(postgresql_url, backend_factory):
-
     async with triopg.connect(postgresql_url) as conn:
-
         with pytest.raises(ConnectionError):
-
             async with backend_factory(config={"db_url": postgresql_url}):
                 (pid,) = await wait_for_listeners(conn)
                 (value,) = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
@@ -146,7 +143,6 @@ async def test_retry_policy_allow_retry(postgresql_url, asyncio_loop, caplog):
         )
         # Connect to PostgreSQL database
         async with triopg.connect(postgresql_url) as conn:
-
             # Test for 10 cycles
             pid = None
             for _ in range(10):

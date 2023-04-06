@@ -20,7 +20,6 @@ from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
 class FileStatusWidget(QWidget, Ui_FileInfoWidget):
-
     get_status_success = pyqtSignal(QtToTrioJob)
     get_status_error = pyqtSignal(QtToTrioJob)
 

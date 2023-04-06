@@ -171,7 +171,6 @@ class WorkspaceFS:
             cache_size=workspace_storage_cache_size,
             prevent_sync_pattern=prevent_sync_pattern,
         ) as workspace_storage:
-
             # Instantiate the workspace
             workspace = WorkspaceFS(
                 workspace_id=workspace_id,
@@ -187,7 +186,6 @@ class WorkspaceFS:
 
             # Connect the remanence manager
             with workspace.remanence_manager.manage_events():
-
                 # Apply the current "prevent sync" pattern
                 await workspace.apply_prevent_sync_pattern()
 
@@ -731,10 +729,8 @@ class WorkspaceFS:
         # Loop over sync transactions
         final = False
         while True:
-
             # Protect against race conditions on the entry id
             try:
-
                 # Perform the sync step transaction
                 try:
                     new_remote_manifest = await self.transactions.synchronization_step(

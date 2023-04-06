@@ -89,7 +89,6 @@ def user_fs_factory(data_base_dir: Path, event_bus_factory: Type[SpiedEventBus])
             async with UserFS.run(
                 data_base_dir, device, cmds, rdm, event_bus, get_prevent_sync_pattern()
             ) as user_fs:
-
                 yield user_fs
 
     return _user_fs_factory
