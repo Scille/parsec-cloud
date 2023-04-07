@@ -2,3 +2,6 @@
 
 def test_log_in_lib(level: str, message: str) -> None:
     pass
+
+def test_log_deadlock() -> None:
+    pass

@@ -172,6 +172,36 @@ def test_rust_lib_output(caplog: pytest.LogCaptureFixture, logger_level: str):
     caplog.clear()
 
 
+@pytest.mark.parametrize(
+    "level",
+    (
+        "ERROR",
+        pytest.param(
+            "INFO",
+            marks=pytest.mark.skip(
+                reason="Will deadlock because It will try to acquire the GIL between multiple threads"
+            ),
+        ),
+    ),
+)
+def test_rust_lib_log_concurrency(caplog: pytest.LogCaptureFixture, level: str):
+    from parsec._parsec import test_log_deadlock
+
+    caplog.set_level(level)
+    test_log_deadlock()
+
+    if level == "INFO":
+        assert "This logs fine" in caplog.messages
+        assert "Let's try again !" in caplog.messages
+        assert "But this ?" in caplog.messages
+    elif level == "ERROR":
+        assert "This logs fine" not in caplog.messages
+        assert "Let's try again !" not in caplog.messages
+        assert "But this ?" not in caplog.messages
+    else:
+        raise ValueError(f"log level `{level}` not handle for the test")
+
+
 def test_file_output(tmp_path):
     # Test both stdlib and structlog to make sure their output won't be mixed
 

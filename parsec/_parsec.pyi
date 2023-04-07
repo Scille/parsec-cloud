@@ -149,7 +149,7 @@ from parsec._parsec_pyi.local_manifest import (
     LocalWorkspaceManifest,
     local_manifest_decrypt_and_load,
 )
-from parsec._parsec_pyi.log import test_log_in_lib
+from parsec._parsec_pyi.log import test_log_deadlock, test_log_in_lib
 from parsec._parsec_pyi.manifest import (
     AnyRemoteManifest,
     BlockAccess,
@@ -1220,4 +1220,5 @@ __all__ = [
     "Regex",
     # Log
     "test_log_in_lib",
+    "test_log_deadlock",
 ]
