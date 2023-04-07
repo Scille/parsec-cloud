@@ -24,7 +24,9 @@ members = [
 default-members = ["oxidation/libparsec"]
 
 [features]
-test-utils = ["libparsec/test-utils", "dep:log"]
+default = ["use-pyo3-log"]
+test-utils = ["libparsec/test-utils"]
+use-pyo3-log = ["dep:pyo3-log"]
 
 [dependencies]
 libparsec = { path = "oxidation/libparsec" }
@@ -36,8 +38,9 @@ uuid = { version = "1.2.2", features = ["serde", "v4", "fast-rng"] }
 tokio = { version = "1.27", features = ["rt", "rt-multi-thread"] }
 lazy_static = "1.4.0"
 futures = "0.3.28"
-pyo3-log = "0.8.1"
-log = { version = "0.4.17", optional = true }
+pyo3-log = { version = "0.8.1", optional = true }
+log = "0.4.17"
+flume = "0.10.14"
 
 # Rust unoptimized code is really slow with crypto algorithm and regex compilation,
 # hence we optimize our 3rd party dependencies.

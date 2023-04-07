@@ -1877,6 +1877,7 @@ dependencies = [
 name = "parsec"
 version = "0.0.0"
 dependencies = [
+ "flume",
  "futures",
  "lazy_static",
  "libparsec",

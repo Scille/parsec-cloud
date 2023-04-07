@@ -4,6 +4,8 @@
 use pyo3::pyfunction;
 use pyo3::{types::PyModule, PyResult, Python};
 
+mod logger;
+
 pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
     #[cfg(feature = "test-utils")]
     {
@@ -19,6 +21,7 @@ pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
 }
 
 pub(crate) fn init_log() {
+    #[cfg(feature = "use-pyo3-log")]
     pyo3_log::init();
 }
 
