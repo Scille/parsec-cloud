@@ -706,7 +706,8 @@ mod tests {
 
     use libparsec_crypto::{prelude::*, HashDigest};
     use libparsec_platform_local_db::VacuumMode;
-    use libparsec_tests_fixtures::{parsec_test, timestamp, TestbedEnv};
+    use libparsec_testbed::TestbedEnv;
+    use libparsec_tests_fixtures::{parsec_test, timestamp};
     use libparsec_types::{
         BlockAccess, Blocksize, Chunk, DateTime, DeviceID, FileManifest, LocalFileManifest, Regex,
     };

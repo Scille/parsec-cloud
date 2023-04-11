@@ -13,6 +13,8 @@ serde = { version = "1.0.147", features = ["derive"] }
 rmp-serde = "1.1.1"
 lazy_static = "1.4.0"
 reqwest = "0.11.16"
+regex = "1.7.3"
+log = "0.4.17"
 
 [dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }

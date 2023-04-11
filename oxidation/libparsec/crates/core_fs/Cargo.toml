@@ -32,5 +32,6 @@ async-trait = "0.1.61"
 
 [dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
+libparsec_testbed = { path = "../testbed" }
 
 tokio = { version = "1.27.0", features = ["macros"]}

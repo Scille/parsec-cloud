@@ -7,9 +7,11 @@ mod coolorg;
 mod empty;
 mod env;
 mod minimal;
+mod scope;
 mod types;
 
 pub use env::*;
+pub use scope::{Run, TestbedScope};
 pub use types::*;
 
 // Templates are generated only once, then copied for fast initialization of testbed envs

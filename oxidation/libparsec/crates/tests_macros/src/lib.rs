@@ -56,7 +56,7 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
 
             if with_server {
                 quote_block = quote! {
-                    libparsec_tests_fixtures::TestbedScope::run_with_server(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
+                    libparsec_testbed::TestbedScope::run_with_server(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
                             let env = env.as_ref();
                             #block
                         }
@@ -64,7 +64,7 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             } else {
                 quote_block = quote! {
-                    libparsec_tests_fixtures::TestbedScope::run(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
+                    libparsec_testbed::TestbedScope::run(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
                             let env = env.as_ref();
                             #block
                         }

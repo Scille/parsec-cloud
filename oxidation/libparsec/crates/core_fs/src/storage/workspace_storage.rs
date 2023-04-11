@@ -573,7 +573,8 @@ mod tests {
     // TODO: add tests for `workspace_storage_non_speculative_init` !
     use std::num::NonZeroU64;
 
-    use libparsec_tests_fixtures::{parsec_test, TestbedEnv};
+    use libparsec_testbed::TestbedEnv;
+    use libparsec_tests_fixtures::parsec_test;
     use libparsec_types::{Blocksize, Chunk, Regex, DEFAULT_BLOCK_SIZE};
 
     use super::*;
