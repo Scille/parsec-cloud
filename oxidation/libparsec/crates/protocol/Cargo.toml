@@ -21,7 +21,7 @@ rand = "0.8.5"
 rmp-serde = "1.1.1"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_with = "2.2.0"
-thiserror = "1.0.37"
+thiserror = "1.0.40"
 futures = "0.3.28"
 
 [dev-dependencies]

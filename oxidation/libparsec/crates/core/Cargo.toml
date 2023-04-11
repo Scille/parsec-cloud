@@ -21,7 +21,7 @@ libparsec_types = { path = "../types" }
 rmp-serde = "1.1.1"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_with = "2.2.0"
-thiserror = "1.0.37"
+thiserror = "1.0.40"
 
 [dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
