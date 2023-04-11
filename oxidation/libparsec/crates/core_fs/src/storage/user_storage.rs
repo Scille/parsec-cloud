@@ -185,7 +185,8 @@ pub async fn user_storage_non_speculative_init(
 
 #[cfg(test)]
 mod tests {
-    use libparsec_tests_fixtures::{parsec_test, timestamp, TestbedEnv};
+    use libparsec_testbed::TestbedEnv;
+    use libparsec_tests_fixtures::{parsec_test, timestamp};
     use libparsec_types::{DateTime, UserManifest};
 
     use super::*;

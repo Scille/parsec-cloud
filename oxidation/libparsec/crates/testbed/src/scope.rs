@@ -4,8 +4,8 @@ use lazy_static::lazy_static;
 use std::{future::Future, io::Read, sync::Arc};
 
 use libparsec_types::BackendAddr;
-// Re-expose
-pub use libparsec_testbed::*;
+
+use crate::{test_drop_testbed, test_new_testbed, TestbedEnv};
 
 /// Keep track of testbed's lifetime, don't drop this before the test is done !
 pub struct TestbedScope {

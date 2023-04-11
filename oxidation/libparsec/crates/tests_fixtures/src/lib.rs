@@ -6,10 +6,8 @@ use uuid::Uuid;
 
 pub use libparsec_tests_macros::parsec_test;
 
-mod testbed;
 mod trustchain;
 
-pub use testbed::*;
 pub use trustchain::*;
 
 // Reexport

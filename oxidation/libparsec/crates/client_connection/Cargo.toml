@@ -35,6 +35,7 @@ thiserror = "1.0.40"
 [dev-dependencies]
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
+libparsec_testbed = { path = "../testbed" }
 
 log = "0.4.17"
 anyhow = "1.0.70"
