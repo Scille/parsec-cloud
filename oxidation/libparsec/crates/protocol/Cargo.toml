@@ -15,6 +15,7 @@ path = "tests/mod.rs"
 libparsec_crypto = { path = "../crypto" }
 libparsec_types = { path = "../types" }
 libparsec_serialization_format = { path = "../serialization_format" }
+libparsec_miniprotocol = { path = "../miniprotocol" }
 
 paste = "1.0.12"
 rand = "0.8.5"

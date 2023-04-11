@@ -25,7 +25,7 @@ pub enum CommandError {
 
     /// We failed to deserialize the reply.
     #[error("Failed to deserialize the response: {0}")]
-    InvalidResponseContent(libparsec_protocol::DecodeError),
+    InvalidResponseContent(libparsec_miniprotocol::DecodeError),
 
     /// The invitation is already used/deleted
     #[error("Invalid handshake: Invitation already deleted")]
@@ -53,7 +53,7 @@ pub enum CommandError {
 
     /// Failed to serialize the request
     #[error("{0}")]
-    Serialization(libparsec_protocol::EncodeError),
+    Serialization(libparsec_miniprotocol::EncodeError),
 
     /// The version is not supported
     #[error("Unsupported API version: {api_version}, supported versions are: {supported_api_versions:?}")]
@@ -107,8 +107,8 @@ impl PartialEq for CommandError {
 
 impl Eq for CommandError {}
 
-impl From<libparsec_protocol::DecodeError> for CommandError {
-    fn from(e: libparsec_protocol::DecodeError) -> Self {
+impl From<libparsec_miniprotocol::DecodeError> for CommandError {
+    fn from(e: libparsec_miniprotocol::DecodeError) -> Self {
         Self::InvalidResponseContent(e)
     }
 }
@@ -119,8 +119,8 @@ impl From<reqwest::Error> for CommandError {
     }
 }
 
-impl From<libparsec_protocol::EncodeError> for CommandError {
-    fn from(e: libparsec_protocol::EncodeError) -> Self {
+impl From<libparsec_miniprotocol::EncodeError> for CommandError {
+    fn from(e: libparsec_miniprotocol::EncodeError) -> Self {
         Self::Serialization(e)
     }
 }

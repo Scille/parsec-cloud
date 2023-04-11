@@ -3,7 +3,7 @@
 use libparsec_types::Maybe;
 use pretty_assertions::assert_eq;
 
-use libparsec_protocol::{self, Request};
+use libparsec_miniprotocol::{self, Request};
 use libparsec_serialization_format::generate_protocol_cmds_family_from_contents;
 
 #[test]
