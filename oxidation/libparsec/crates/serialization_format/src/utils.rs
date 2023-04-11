@@ -116,7 +116,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "PkiEnrollmentSubmitPayload" => "PkiEnrollmentSubmitPayload",
                 "X509Certificate" => "libparsec_types::X509Certificate",
                 // Used only in protocol
-                "IntegerBetween1And100" => "crate::IntegerBetween1And100",
+                "IntegerBetween1And100" => "libparsec_miniprotocol::IntegerBetween1And100",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }

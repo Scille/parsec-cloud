@@ -57,7 +57,3 @@ pub struct ChallengeDataReport {
     pub ballpark_client_early_offset: f64,
     pub ballpark_client_late_offset: f64,
 }
-
-/// Error while deserializing data.
-pub type DecodeError = rmp_serde::decode::Error;
-pub type EncodeError = rmp_serde::encode::Error;

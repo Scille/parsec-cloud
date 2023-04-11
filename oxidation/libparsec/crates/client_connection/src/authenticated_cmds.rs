@@ -32,7 +32,7 @@
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use libparsec_crypto::SigningKey;
-use libparsec_protocol::Request;
+use libparsec_miniprotocol::Request;
 use libparsec_types::{BackendOrganizationAddr, DeviceID};
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
@@ -143,7 +143,7 @@ impl AuthenticatedCmds {
     pub async fn send<T>(
         &self,
         request: T,
-    ) -> CommandResult<<T as libparsec_protocol::Request>::Response>
+    ) -> CommandResult<<T as libparsec_miniprotocol::Request>::Response>
     where
         T: Request,
     {

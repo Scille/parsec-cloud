@@ -19,6 +19,7 @@ libparsec_crypto = { path = "../crypto" }
 # Add primitive type to be used with the protocol
 libparsec_types = { path = "../types" }
 # Provide possible command to send to the server
+libparsec_miniprotocol = { path = "../miniprotocol" }
 libparsec_protocol = { path = "../protocol" }
 libparsec_testbed = { path = "../testbed", optional = true }
 
