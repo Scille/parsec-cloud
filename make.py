@@ -14,6 +14,7 @@ from typing import Optional, Union
 PYTHON_RELEASE_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
+PYTHON_TESTBED_FLAGS = "--profile=release --features test-utils"
 ELECTRON_RELEASE_CARGO_FLAGS = "--profile=release"
 ELECTRON_RELEASE_SODIUM_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
@@ -49,7 +50,7 @@ class Cmd:
         cwd: Optional[Path] = None,
         is_script: bool = False,
     ) -> None:
-        self.cmds = cmd if isinstance(cmd, list) else [cmd]
+        self.cmd = cmd if isinstance(cmd, list) else cmd.split(" ")
         self.extra_env = extra_env
         self.cwd = cwd
         # On Windows only .exe/.bat can be directly executed, so scripts must be
@@ -60,27 +61,24 @@ class Cmd:
         display_extra_env = " ".join(
             [f"{GREY}{k}={v}{NO_COLOR}" for k, v in self.extra_env.items()]
         )
-        display_cmds = []
         display_cwd = f"cd {GREY}{self.cwd.relative_to(BASE_DIR)}{NO_COLOR} && " if self.cwd else ""
-        display_extra_cmds = f" {' '.join(extra_cmd_args)}" if extra_cmd_args else ""
-        for cmd in self.cmds:
-            display_cmds.append(f"{CYAN}{cmd}{display_extra_cmds}{NO_COLOR}")
-        return f"{display_cwd}{display_extra_env} {' && '.join(display_cmds) }"
+        return f"{display_cwd}{display_extra_env} {CYAN}{' '.join(self.cmd + extra_cmd_args)}{NO_COLOR}"
 
     def run(self, extra_cmd_args: list[str] = []) -> None:
         shell = sys.platform == "win32" and self.is_script
-        for cmd in self.cmds:
-            args = cmd.split() + extra_cmd_args
-            # `echo` is not available on Windows
-            if args[0] == "echo":
-                print(" ".join(args[1:]))
-            else:
-                subprocess.check_call(
-                    args,
-                    env={**os.environ, **self.extra_env},
-                    cwd=self.cwd or BASE_DIR,
-                    shell=shell,
-                )
+
+        args = self.cmd + extra_cmd_args
+
+        # `echo` is not available on Windows
+        if args[0] == "echo":
+            print(" ".join(args[1:]))
+        else:
+            subprocess.check_call(
+                args,
+                env={**os.environ, **self.extra_env},
+                cwd=self.cwd or BASE_DIR,
+                shell=shell,
+            )
 
 
 COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
@@ -118,6 +116,27 @@ COMMANDS: dict[tuple[str, ...], Union[Cmd, tuple[Cmd, ...]]] = {
     ("python-dev-libparsec-cargo-flags",): Cmd(
         cmd=f"echo {PYTHON_DEV_CARGO_FLAGS}",
     ),
+    #
+    # Testbed install
+    #
+    ("testbed-server", "ts"): (
+        Cmd(
+            # Forced to do in-place mutation because we can't specify another file to use as a pyproject file.
+            cmd=["sed", "-i", "-E", """s/("?pyqt.*)/# \\1/I""", "pyproject.toml"],
+        ),
+        Cmd(
+            cmd="poetry install -E backend",
+            extra_env={
+                "POETRY_PYQT_BUILD_STRATEGY": "no_build",
+                "POETRY_LIBPARSEC_BUILD_PROFILE": "testbed",
+            },
+        ),
+        # Undo change made by the first command.
+        Cmd(
+            cmd=["sed", "-i", "-E", """s/# ("?pyqt.*)/\\1/I""", "pyproject.toml"],
+        ),
+    ),
+    ("python-testbed-libparsec-cargo-flags",): Cmd(cmd=f"echo {PYTHON_TESTBED_FLAGS}"),
     #
     # Electron bindings
     #
