@@ -18,7 +18,7 @@ on:
 env:
   rust-version: 1.68.0
   node-version: 18.13.0
-  python-version: 3.9
+  python-version: 3.11
   poetry-version: 1.3.2
   # Cargo will be faster with this configuration.
   # It will only update it's index for the dependencies that we use.

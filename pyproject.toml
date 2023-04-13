@@ -37,7 +37,7 @@ include = [
 parsec = "parsec.cli:cli"
 
 [tool.poetry.dependencies]
-python = "~3.9.0"
+python = "~3.11.0"
 
 # Base requirements
 
@@ -48,8 +48,8 @@ msgpack = "^1.0"
 wsproto = "^1.2"
 h11 = ">=0.13,<0.15"
 # Can use marshmallow or the toasted flavour as you like ;-)
-# marshmallow = "2.14.0"
-toastedmarshmallow = "0.2.6" # updating causes consistency problem in test
+marshmallow = "2.16.2"
+# toastedmarshmallow = "0.2.6" # updating causes consistency problem in test
 trio = "^0.22"
 trio_typing = "^0.7"
 sentry-sdk = "^1.5"
@@ -87,6 +87,7 @@ winfspy = { version="^0.8", markers="platform_system=='Windows'", optional=true 
 zxcvbn = { version="^4.4", optional=true }
 psutil = { version="^5.9", markers="platform_system=='Windows'", optional=true }
 pypac = { version="^0.16", optional=true }
+exceptiongroup = "^1.1.1"
 
 [tool.poetry.extras]
 backend = [
@@ -135,8 +136,8 @@ PyQt5_stubs = "^5.15"
 # it dependencies won't clash with the rest of the project.
 pyinstaller = "^5.3"
 
-ruff = "^0.0.171"
-black = "^22.6.0"
+ruff = "0.0.261"
+black = "23.3.0"
 mypy = "^0.982"
 
 setuptools = ">=63.1,<68.0"
