@@ -22,7 +22,7 @@ jobs:
       contents: read
       security-events: write
     env:
-      python-version: "3.9"
+      python-version: "3.11"
       poetry-version: 1.3.2
     steps:
       - name: Checkout repository
