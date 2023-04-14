@@ -51,10 +51,8 @@ ko = click.style("✘", fg="red")
 
 @contextmanager
 def operation(txt: str) -> Iterator[None]:
-
     click.echo(txt, nl=False)
     try:
-
         yield
 
     except Exception:
@@ -231,7 +229,6 @@ def logging_config_options(
             kwargs["log_file"] = log_file
 
             with open_log_file() as fd:
-
                 configure_logging(log_level=log_level, log_format=log_format, log_stream=fd)
 
                 return fn(*args, **kwargs)
@@ -285,6 +282,10 @@ def sentry_config_options(
     return _sentry_config_options
 
 
+def version_option(fn: Callable[P, R]) -> Callable[P, R]:
+    return click.version_option(version=__version__, prog_name="parsec")(fn)
+
+
 def debug_config_options(fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R]:
     for decorator in (
         click.option(
@@ -293,9 +294,10 @@ def debug_config_options(fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R
             # Don't prefix with `PARSEC_` given devs are lazy
             envvar="DEBUG",
         ),
-        click.version_option(version=__version__, prog_name="parsec"),
+
+        version_option,
     ):
-        fn = decorator(fn)
+        fn = decorator(fn)  # type: ignore[operator]
 
     return cast(Callable[Concatenate[bool, P], R], fn)
 

@@ -1,7 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::{
+    collections::HashSet,
+    fmt::Display,
+    fs,
+    io::{BufRead, BufReader, Read},
+    path::Path,
+};
+
 use crate::{RegexError, RegexResult};
-use std::{collections::HashSet, fmt::Display, fs, path::Path};
 
 #[derive(Clone, Debug)]
 pub struct Regex(pub Vec<regex::Regex>);
@@ -15,28 +22,44 @@ fn escape_globing_pattern(string: &str) -> String {
 
 impl Regex {
     /// Returns a regex which is built from a file that contains shell like patterns
-    pub fn from_file(file_path: &Path) -> RegexResult {
-        let file_content =
-            fs::read_to_string(file_path).map_err(|err| RegexError::PatternFileIOError {
+    pub fn from_file(file_path: &Path) -> RegexResult<Self> {
+        let reader = fs::File::open(file_path).map(BufReader::new).map_err(|e| {
+            RegexError::PatternFileIOError {
                 file_path: file_path.to_path_buf(),
-                err,
-            })?;
+                err: e,
+            }
+        })?;
 
-        Ok(Self(
-            file_content
-                .lines()
-                .map(str::trim)
-                .filter(|l| *l != "\n" && !l.starts_with('#'))
-                .map(|l| {
-                    fnmatch_regex::glob_to_regex(&escape_globing_pattern(l))
-                        .map_err(|err| RegexError::GlobPatternError { err })
-                })
-                .collect::<Result<Vec<regex::Regex>, RegexError>>()?,
-        ))
+        Self::from_glob_reader(file_path, reader)
+    }
+
+    pub fn from_glob_reader<P: AsRef<Path>, R: Read>(
+        path: P,
+        reader: BufReader<R>,
+    ) -> RegexResult<Self> {
+        reader
+            .lines()
+            .filter_map(|line| match line {
+                Ok(line) => {
+                    let l = line.trim();
+
+                    if l != "\n" && !l.starts_with('#') {
+                        Some(from_glob_pattern(l))
+                    } else {
+                        None
+                    }
+                }
+                Err(e) => Some(Err(RegexError::PatternFileIOError {
+                    file_path: path.as_ref().to_path_buf(),
+                    err: e,
+                })),
+            })
+            .collect::<RegexResult<Vec<regex::Regex>>>()
+            .map(Self)
     }
 
     /// Returns a regex which is an union of all regexes from `raw_regexes` slice parameter
-    pub fn from_raw_regexes(raw_regexes: &[&str]) -> RegexResult {
+    pub fn from_raw_regexes(raw_regexes: &[&str]) -> RegexResult<Self> {
         Ok(Self(
             raw_regexes
                 .iter()
@@ -46,19 +69,23 @@ impl Regex {
     }
 
     /// Returns a regex from a glob pattern
-    pub fn from_glob_pattern(pattern: &str) -> RegexResult {
-        let escaped_str = escape_globing_pattern(pattern);
-        Ok(Regex(vec![fnmatch_regex::glob_to_regex(&escaped_str)
-            .map_err(|err| RegexError::GlobPatternError { err })?]))
+    pub fn from_glob_pattern(pattern: &str) -> RegexResult<Self> {
+        from_glob_pattern(pattern).map(|re| Self(vec![re]))
     }
 
-    pub fn from_regex_str(regex_str: &str) -> RegexResult {
+    pub fn from_regex_str(regex_str: &str) -> RegexResult<Self> {
         Self::from_raw_regexes(&[regex_str])
     }
 
     pub fn is_match(&self, string: &str) -> bool {
         self.0.iter().any(|r| r.is_match(string))
     }
+}
+
+/// Parse a glob pattern like `*.rs` and convert it to an regex.
+fn from_glob_pattern(pattern: &str) -> RegexResult<regex::Regex> {
+    let escaped_str = escape_globing_pattern(pattern);
+    fnmatch_regex::glob_to_regex(&escaped_str).map_err(|err| RegexError::GlobPatternError { err })
 }
 
 impl PartialEq for Regex {
@@ -91,11 +118,14 @@ impl Display for Regex {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs, path::Path};
+    use std::{
+        io::{BufReader, Cursor},
+        path::Path,
+    };
+
+    use rstest::rstest;
 
     use crate::regex::Regex;
-    use libparsec_tests_fixtures::{tmp_path, TmpPath};
-    use rstest::rstest;
 
     #[rstest]
     #[case::base("*.rs\n*.py", "base.tmp")]
@@ -109,14 +139,10 @@ mod tests {
         "# This contains patterns\n## yes\n   *.rs\n\n  \n\n*.py  ",
         "ignore_comment.tmp"
     )]
-    fn from_pattern_file_content(
-        tmp_path: TmpPath,
-        #[case] file_content: &str,
-        #[case] filename: &str,
-    ) {
-        let filepath = tmp_path.join(filename);
-        fs::write(&filepath, file_content).unwrap();
-        let regex = Regex::from_file(&filepath).expect("Regex should be valid");
+    fn from_pattern_file_content(#[case] file_content: &str, #[case] filename: &str) {
+        let reader = Cursor::new(file_content.to_string());
+        let regex = Regex::from_glob_reader(filename, BufReader::new(reader))
+            .expect("Regex should be valid");
 
         assert!(regex.is_match("file.py"));
         assert!(regex.is_match("file.rs"));

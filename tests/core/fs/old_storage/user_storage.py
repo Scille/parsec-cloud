@@ -17,12 +17,10 @@ async def user_storage_non_speculative_init(data_base_dir: Path, device: LocalDe
 
     # Local data storage service
     async with LocalDatabase.run(data_path) as localdb:
-
         # Manifest storage service
         async with ManifestStorage.run(
             device, localdb, device.user_manifest_id
         ) as manifest_storage:
-
             timestamp = device.timestamp()
             manifest = LocalUserManifest.new_placeholder(
                 author=device.device_id,
@@ -53,12 +51,10 @@ class UserStorage:
 
         # Local database service
         async with LocalDatabase.run(data_path) as localdb:
-
             # Manifest storage service
             async with ManifestStorage.run(
                 device, localdb, device.user_manifest_id
             ) as manifest_storage:
-
                 # Instantiate the user storage
                 self = cls(device, device.user_manifest_id, manifest_storage)
 

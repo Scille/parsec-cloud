@@ -3,10 +3,9 @@
 use rstest::fixture;
 
 use libparsec_types::{
+    fixtures::{alice, bob, mallory, Device},
     CertificateSignerOwned, DateTime, DeviceCertificate, RevokedUserCertificate, UserCertificate,
 };
-
-use crate::{alice, bob, mallory, Device};
 
 #[fixture]
 #[once]

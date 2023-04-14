@@ -561,7 +561,6 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
 
             await self.claimer_claim_task.cancel_and_join()
             async with self._reset_claimer():
-
                 aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 

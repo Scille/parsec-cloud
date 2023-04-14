@@ -9,7 +9,6 @@ from parsec.core.gui.menu_widget import MenuWidget
 
 @pytest.mark.gui
 def test_activate_files(qtbot):
-
     w = MenuWidget(parent=None)
     qtbot.add_widget(w)
 
@@ -26,7 +25,6 @@ def test_activate_files(qtbot):
 
 @pytest.mark.gui
 def test_activate_users(qtbot):
-
     w = MenuWidget(parent=None)
     qtbot.add_widget(w)
 
@@ -43,7 +41,6 @@ def test_activate_users(qtbot):
 
 @pytest.mark.gui
 def test_activate_devices(qtbot):
-
     w = MenuWidget(parent=None)
     qtbot.add_widget(w)
 

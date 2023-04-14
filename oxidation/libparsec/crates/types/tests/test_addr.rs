@@ -1,13 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pretty_assertions::assert_eq;
-use rstest::rstest;
-use rstest_reuse::*;
-use serde_test::{assert_tokens, Token};
 use std::str::FromStr;
 
+use pretty_assertions::assert_eq;
+use rstest::rstest;
+use rstest_reuse::{apply, template};
+use serde_test::{assert_tokens, Token};
+
 use libparsec_crypto::SigningKey;
-use libparsec_types::*;
+
+use crate::{
+    AddrError, BackendAddr, BackendInvitationAddr, BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr, BackendOrganizationFileLinkAddr, InvitationType,
+    OrganizationID,
+};
 
 const ORG: &str = "MyOrg";
 const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";
@@ -164,7 +170,7 @@ fn addr_with_org(testbed: &dyn Testbed) {}
  * Actual tests
  */
 
-#[apply(all_addr)]
+#[rstest_reuse::apply(all_addr)]
 fn test_good_addr(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
 }

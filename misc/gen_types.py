@@ -34,7 +34,7 @@ def replace_wrapped_type(typename):
         (r"Map<(.*), (.*)>", "dict[{type}, {type2}]"),
     ]
 
-    for (reg, format) in REGEX_REPLACEMENTS:
+    for reg, format in REGEX_REPLACEMENTS:
         match = re.match(reg, typename)
 
         if match:
@@ -57,7 +57,7 @@ def replace_wrapped_type_signature(typename):
         (r"Map<(.*), (.*)>", "dict[{type}, {type2}]"),
     ]
 
-    for (reg, format) in REGEX_REPLACEMENTS:
+    for reg, format in REGEX_REPLACEMENTS:
         match = re.match(reg, typename)
 
         if match:

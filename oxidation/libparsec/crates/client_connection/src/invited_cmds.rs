@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_protocol::Request;
+use libparsec_miniprotocol::Request;
 use libparsec_types::{BackendInvitationAddr, InvitationToken};
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
@@ -66,7 +66,7 @@ impl InvitedCmds {
     pub async fn send<T>(
         &self,
         request: T,
-    ) -> CommandResult<<T as libparsec_protocol::Request>::Response>
+    ) -> CommandResult<<T as libparsec_miniprotocol::Request>::Response>
     where
         T: Request,
     {

@@ -55,7 +55,6 @@ class DevOption(click.Option):
     ) -> Tuple[Any, list[str]]:
         value, args = super().handle_parse_result(ctx, opts, args)
         if value:
-
             if "port" in opts:
                 backend_addr = "parsec://localhost:" + str(opts["port"])
             else:
@@ -427,7 +426,6 @@ async def _run_backend(
 
             # Run the backend app (and connect to the database)
             async with backend_app_factory(config=app_config) as backend:
-
                 # Connection is successful, reset the retry policy
                 retry_policy.success()
 

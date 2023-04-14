@@ -30,7 +30,6 @@ async def _chunks_from_path(file_src: trio.Path, size: int = DEFAULT_BLOCK_SIZE)
     fd = await file_src.open("rb")
 
     async with fd:
-
         while True:
             chunk = await fd.read(size)
             if not chunk:
@@ -186,7 +185,6 @@ def _parse_destination(core: LoggedCore, destination: str) -> Tuple[WorkspaceEnt
 async def _root_manifest_parent(
     path_destination: FsPath, workspace_fs: WorkspaceFS, workspace_manifest: WorkspaceManifest
 ) -> Tuple[Union[WorkspaceManifest, FolderManifest], FsPath]:
-
     root_manifest: WorkspaceManifest | FolderManifest = workspace_manifest
     parent = trio.Path("/")
     fs_parent = FsPath("/")

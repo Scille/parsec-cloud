@@ -107,7 +107,6 @@ async def test_sleep_with_mock():
         time_provider.mock_time(freeze=freeze, shift=shift)
 
     async with trio.open_nursery() as nursery:
-
         # Test shift mock
         with trio.fail_after(1):
             nursery.start_soon(_async_mock_time, tp, None, 11)
@@ -202,7 +201,6 @@ async def test_concurrent_sleeps(maybe_wrap_tp_sleep):
 
     async with trio.open_nursery() as nursery:
         with trio.fail_after(1):
-
             tp1.mock_time(freeze=t1)
             tp2.mock_time(freeze=t1)
 
@@ -263,7 +261,6 @@ async def test_reproduce_concurrency_issue(maybe_wrap_tp_sleep):
 
     async with trio.open_nursery() as nursery:
         with trio.fail_after(1):
-
             tp1.mock_time(freeze=t1)
             assert tp1.sleeping_stats() == 0
 

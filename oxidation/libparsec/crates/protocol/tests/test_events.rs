@@ -2,7 +2,8 @@
 
 use hex_literal::hex;
 
-use libparsec_protocol::{authenticated_cmds::v2 as authenticated_cmds, Request};
+use libparsec_miniprotocol::Request;
+use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
 use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{InvitationStatus, InvitationToken, RealmID, RealmRole, VlobID};
 

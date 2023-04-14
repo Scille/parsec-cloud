@@ -77,7 +77,7 @@ class SpiedEvent:
         # class. Instead we should use the native __eq__ overload. This is impossible
         # because of the nature of the class `SpiedEvent`
         if isinstance(other, EventsListenRep):
-            for (name, value) in self.kwargs.items():
+            for name, value in self.kwargs.items():
                 try:
                     other_value = getattr(other, name)
                     # Some tests compare objects like `EntryID` and `RealmID`.

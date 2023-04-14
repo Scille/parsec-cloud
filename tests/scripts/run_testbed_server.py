@@ -64,7 +64,6 @@ async def _run_server(
             )
 
         async with backend_app_factory(config=config) as backend:
-
             org_count = 0
 
             # Populate the server with the testbed templates

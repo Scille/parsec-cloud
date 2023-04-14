@@ -40,7 +40,6 @@ async def test_handshake_send_invalid_answer_data(backend_asgi_app, kind):
 
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         await ws.receive()  # Get challenge
         await ws.send(bad_req)
         result_req = await ws.receive()
@@ -51,7 +50,6 @@ async def test_handshake_send_invalid_answer_data(backend_asgi_app, kind):
 async def test_handshake_incompatible_version(backend_asgi_app):
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         incompatible_version = ApiVersion(API_VERSION.version + 1, 0)
         await ws.receive()  # Get challenge
         req = {
@@ -81,7 +79,6 @@ async def test_authenticated_handshake_good(backend_asgi_app, alice):
 
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
@@ -103,7 +100,6 @@ async def test_authenticated_handshake_bad_rvk(backend_asgi_app, alice, otherorg
     )
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
@@ -134,7 +130,6 @@ async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitati
     )
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
@@ -164,7 +159,6 @@ async def test_api_version_in_logs_on_handshake(backend_asgi_app, backend, alice
     client = backend_asgi_app.test_client()
     with caplog.at_level(logging.INFO):
         async with client.websocket("/ws") as ws:
-
             challenge_req = await ws.receive()
             answer_req = ch.process_challenge_req(challenge_req)
 
@@ -189,7 +183,6 @@ async def test_invited_handshake_bad_token(backend_asgi_app, coolorg, invitation
     )
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
@@ -212,7 +205,6 @@ async def test_invited_handshake_bad_token_type(backend_asgi_app, backend, alice
     )
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
@@ -242,7 +234,6 @@ async def test_handshake_unknown_organization(backend_asgi_app, organization_fac
 
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
@@ -272,7 +263,6 @@ async def test_handshake_expired_organization(backend_asgi_app, backend, expired
     with backend.event_bus.listen() as spy:
         client = backend_asgi_app.test_client()
         async with client.websocket("/ws") as ws:
-
             challenge_req = await ws.receive()
             answer_req = ch.process_challenge_req(challenge_req)
 
@@ -293,7 +283,6 @@ async def test_authenticated_handshake_unknown_device(backend_asgi_app, mallory)
     )
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
@@ -307,7 +296,6 @@ async def test_authenticated_handshake_unknown_device(backend_asgi_app, mallory)
 async def test_handshake_string_websocket_message(backend_asgi_app, mallory):
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-
         await ws.receive()  # Get the challenge
         await ws.send("hello")
 

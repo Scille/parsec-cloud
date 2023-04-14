@@ -9,7 +9,6 @@ from parsec.api.protocol.types import (
 )
 from parsec.serde import BaseSchema, JSONSerializer, fields
 
-
 ### Webhooks ###
 
 

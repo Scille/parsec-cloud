@@ -74,7 +74,6 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
 
             # This certificate has already been submitted
             except PkiEnrollmentSubmitCertificateAlreadySubmittedError:
-
                 # Prompt for permission to force
                 answer = ask_question(
                     self,

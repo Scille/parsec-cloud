@@ -207,7 +207,6 @@ async def test_switch_offline(frozen_clock, running_backend, event_bus, alice):
     conn = BackendAuthenticatedConn(alice, event_bus)
     with event_bus.listen() as spy:
         async with conn.run():
-
             # Wait for the connection to be initialized
             await spy.wait_with_timeout(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
@@ -265,7 +264,6 @@ async def test_concurrency_sends(running_backend, alice, event_bus):
         max_pool=CONCURRENCY // 2,
     )
     async with conn.run():
-
         async with trio.open_service_nursery() as nursery:
             for x in range(CONCURRENCY):
                 nursery.start_soon(sender, conn.cmds, str(x))
@@ -369,7 +367,6 @@ async def test_connection_refused(running_backend, event_bus, mallory):
     conn = BackendAuthenticatedConn(mallory, event_bus)
     with event_bus.listen() as spy:
         async with conn.run():
-
             # Wait for the connection to be initialized
             await spy.wait_with_timeout(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,

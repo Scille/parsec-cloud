@@ -189,7 +189,6 @@ async def winfsp_mountpoint_runner(
         # Manage drive icon
         drive_letter = mountpoint_path.drive[0]
         with parsec_drive_icon_context(drive_letter, device=user_fs.device):
-
             # Run fs start in a thread
             await trio.to_thread.run_sync(fs.start)
 
@@ -204,10 +203,8 @@ async def winfsp_mountpoint_runner(
 
             # Start recording `sharing.updated` events
             with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
-
                 # Loop over `sharing.updated` event
                 while True:
-
                     # Restart the mountpoint with the right read_only flag if necessary
                     # Don't bother with restarting if the workspace has been revoked
                     # It's the manager's responsibility to unmount the workspace in this case

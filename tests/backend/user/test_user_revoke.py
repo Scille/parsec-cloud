@@ -153,7 +153,6 @@ async def test_user_revoke_other_organization(
     async with ws_from_other_organization_factory(
         backend_asgi_app, mimic=alice.device_id, profile=UserProfile.ADMIN
     ) as sock:
-
         revocation = RevokedUserCertificate(
             author=sock.device.device_id, timestamp=DateTime.now(), user_id=bob.user_id
         ).dump_and_sign(sock.device.signing_key)

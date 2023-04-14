@@ -541,7 +541,6 @@ async def test_update_invalid_timestamp(
 async def test_create_already_existing_folder_vlob(
     running_backend, alice_user_fs: UserFS, alice2_user_fs: UserFS
 ):
-
     # First create data locally
     with freeze_time(
         "2000-01-02", devices=[alice_user_fs.device, alice2_user_fs.device], freeze_datetime=True

@@ -41,7 +41,6 @@ def test_timestamp_out_of_ballpark_rep_schema_compatibility():
 
 
 def test_handshake_challenge_schema_compatibility():
-
     # Old handshake definition
     class OlderHandshakeChallengeSchema(BaseSchema):
         handshake = fields.CheckedConstant("challenge", required=True)

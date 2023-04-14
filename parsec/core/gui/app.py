@@ -69,7 +69,6 @@ async def _run_ipc_server(
 
     # Loop over attempts at running an IPC server or sending the command to an existing one
     while True:
-
         # Attempt to run an IPC server if Parsec is not already started
         try:
             async with run_ipc_server(
@@ -80,7 +79,6 @@ async def _run_ipc_server(
 
         # Parsec is already started, give it our work then
         except IPCServerAlreadyRunning:
-
             # Protect against race conditions, in case the server was shutting down
             try:
                 if start_arg:

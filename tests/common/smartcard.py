@@ -164,7 +164,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
         def pki_enrollment_load_local_pending_secret_part(
             self, config_dir: Path, enrollment_id: EnrollmentID
         ) -> tuple[SigningKey, PrivateKey]:
-            for (pending, secret_part) in self._pending_enrollments[config_dir]:
+            for pending, secret_part in self._pending_enrollments[config_dir]:
                 if pending.enrollment_id == enrollment_id:
                     return secret_part
             else:

@@ -3,7 +3,7 @@
 use rstest::rstest;
 use std::str::FromStr;
 
-use libparsec_types::{DeviceID, DeviceLabel, DeviceName, OrganizationID, UserID};
+use crate::{DeviceID, DeviceLabel, DeviceName, OrganizationID, UserID};
 
 #[rstest]
 #[case("foo42")]

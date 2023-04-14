@@ -122,7 +122,6 @@ async def test_ipc_server(tmpdir, monkeypatch):
     mut1 = uuid4().hex
     async with real_clock_timeout():
         async with run_ipc_server(_cmd_handler, socket_file=file1, win32_mutex_name=mut1):
-
             with pytest.raises(IPCServerAlreadyRunning):
                 async with run_ipc_server(_cmd_handler, socket_file=file1, win32_mutex_name=mut1):
                     pass

@@ -225,7 +225,6 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         # Perform extra checks when removing write rights
         if new_role.role in (RealmRole.READER, None):
-
             # The change of role needs to occur strictly after the last upload for this user
             realm_last_vlob_update = self._vlob_component._get_last_vlob_update(
                 organization_id, new_role.realm_id, new_role.user_id
@@ -235,7 +234,6 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         # Perform extra checks when removing management rights
         if new_role.role in (RealmRole.CONTRIBUTOR, RealmRole.READER, None):
-
             # The change of role needs to occur strictly after the last change of role performed by this user
             realm_last_role_change = realm.last_role_change_per_user.get(new_role.user_id)
             if realm_last_role_change is not None and realm_last_role_change >= new_role.granted_on:

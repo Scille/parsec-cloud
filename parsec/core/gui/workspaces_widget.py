@@ -354,7 +354,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # Loop over the resulting workspaces
         assert workspaces is not None
         for workspace_fs in workspaces:
-
             # Pop button from existing mapping
             key = (workspace_fs.workspace_id, getattr(workspace_fs, "timestamp", None))
             button = old_mapping.pop(key, None)

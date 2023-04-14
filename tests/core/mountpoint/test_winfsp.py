@@ -98,7 +98,6 @@ def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
     # All boilerplates are set, let's do the actual test !
 
     try:
-
         with pytest.raises(OSError) as exc:
             Path(mountpoint_service.wpath / "stop_loop").stat()
 
@@ -155,7 +154,6 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service_factory
     )
 
     async def _bootstrap(user_fs, mountpoint_manager):
-
         for name, _ in items:
             # Apply bad name to both the mountpoint folder and data inside it
             wid = await user_fs.workspace_create(EntryName(name))
@@ -255,7 +253,6 @@ def test_replace_if_exists(mountpoint_service):
 @pytest.mark.win32
 @pytest.mark.mountpoint
 def test_get_file_entry_info(mountpoint_service):
-
     # Import here to avoid importing it on Linux/MacOS
     from parsec.core.mountpoint.winfsp_operations import ENTRY_INFO_EXTENSION
 

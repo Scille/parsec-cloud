@@ -485,9 +485,7 @@ class BackendAuthenticatedConn:
 
             try:
                 async with open_service_nursery() as monitors_nursery:
-
                     async with open_service_nursery() as monitors_bootstrap_nursery:
-
                         # Make sure we start from a clean state
                         self.reset_monitors_status()
                         for task_status in self._monitors_task_statuses:

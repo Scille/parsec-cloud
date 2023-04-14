@@ -19,6 +19,7 @@ libparsec_crypto = { path = "../crypto" }
 # Add primitive type to be used with the protocol
 libparsec_types = { path = "../types" }
 # Provide possible command to send to the server
+libparsec_miniprotocol = { path = "../miniprotocol" }
 libparsec_protocol = { path = "../protocol" }
 libparsec_testbed = { path = "../testbed", optional = true }
 
@@ -30,11 +31,12 @@ url = "2.3.1"
 # Used to encoded binary data.
 base64 = "0.21.0"
 chrono = "0.4.23"
-thiserror = "1.0.38"
+thiserror = "1.0.40"
 
 [dev-dependencies]
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
+libparsec_testbed = { path = "../testbed" }
 
 log = "0.4.17"
 anyhow = "1.0.70"

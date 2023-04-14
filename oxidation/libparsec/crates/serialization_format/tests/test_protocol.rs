@@ -3,12 +3,12 @@
 use libparsec_types::Maybe;
 use pretty_assertions::assert_eq;
 
-use libparsec_protocol::{self, Request};
-use libparsec_serialization_format::generate_protocol_cmds_familly_from_contents;
+use libparsec_miniprotocol::{self, Request};
+use libparsec_serialization_format::generate_protocol_cmds_family_from_contents;
 
 #[test]
 fn test_simple() {
-    generate_protocol_cmds_familly_from_contents!(
+    generate_protocol_cmds_family_from_contents!(
         r#"[
     {
         "major_versions": [
@@ -85,7 +85,7 @@ fn test_simple() {
 
 #[test]
 fn test_unknown_rep_status() {
-    generate_protocol_cmds_familly_from_contents!(
+    generate_protocol_cmds_family_from_contents!(
         r#"[
     {
         "major_versions": [1],
@@ -162,7 +162,7 @@ fn test_unknown_rep_status() {
 
 #[test]
 fn test_introduce_in_field() {
-    generate_protocol_cmds_familly_from_contents!(
+    generate_protocol_cmds_family_from_contents!(
         r#"[
     {
         "major_versions": [
@@ -266,7 +266,7 @@ fn test_introduce_in_field() {
 
 #[test]
 fn test_nested_type() {
-    generate_protocol_cmds_familly_from_contents!(
+    generate_protocol_cmds_family_from_contents!(
         r#"[
     {
         "major_versions": [1],
@@ -330,7 +330,7 @@ fn test_nested_type() {
 
 #[test]
 fn test_rep_unit() {
-    generate_protocol_cmds_familly_from_contents!(
+    generate_protocol_cmds_family_from_contents!(
         r#"[
     {
         "major_versions": [1],

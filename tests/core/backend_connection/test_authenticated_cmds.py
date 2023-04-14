@@ -153,7 +153,6 @@ async def test_backend_disconnect_during_handshake(alice):
         client_answered = True
 
     async with trio.open_service_nursery() as nursery:
-
         listeners = await nursery.start(
             partial(trio.serve_tcp, poorly_serve_client, port=0, host="127.0.0.1")
         )

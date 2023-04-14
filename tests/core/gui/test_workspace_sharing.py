@@ -93,7 +93,6 @@ async def test_share_workspace(
     monkeypatch,
     snackbar_catcher,
 ):
-
     _, w_w, share_w_w = gui_workspace_sharing
 
     # 1) Logged as Bob, we share our workspace with Adam

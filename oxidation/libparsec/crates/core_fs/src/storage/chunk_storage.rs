@@ -615,7 +615,8 @@ mod tests {
     };
 
     use libparsec_platform_local_db::VacuumMode;
-    use libparsec_tests_fixtures::{parsec_test, TestbedEnv};
+    use libparsec_testbed::TestbedEnv;
+    use libparsec_tests_fixtures::parsec_test;
     use libparsec_types::LocalDevice;
 
     use super::*;

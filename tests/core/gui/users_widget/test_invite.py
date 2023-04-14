@@ -322,7 +322,6 @@ async def test_cancel_user_invitation(
     email_letterbox,
     snackbar_catcher,
 ):
-
     email = "i@like.coffee"
 
     # Patch dialogs

@@ -33,7 +33,6 @@ from tests.common import OrganizationFullData, customize_fixtures, sequester_ser
 async def test_vlob_create_update_and_sequester_access(
     coolorg: OrganizationFullData, alice_ws, realm, backend
 ):
-
     # s1&s2 are valid sequester services, s3 is a disabled sequester service
     s1 = sequester_service_factory(
         authority=coolorg.sequester_authority, label="Sequester service 1"

@@ -25,7 +25,6 @@ from parsec.core.mountpoint import (
 from parsec.core.types import WorkspaceRole
 from tests.common import create_shared_workspace, real_clock_timeout
 
-
 # Helper
 
 
@@ -150,11 +149,9 @@ async def test_mount_and_explore_workspace(
     # Now we can start fuse
 
     with event_bus.listen() as spy:
-
         async with mountpoint_manager_factory(
             alice_user_fs, event_bus, base_mountpoint
         ) as mountpoint_manager:
-
             await mountpoint_manager.mount_workspace(wid, timestamp=timestamp)
             mountpoint_path = get_path_in_mountpoint(mountpoint_manager, wid, "/", timestamp)
             expected = {"mountpoint": mountpoint_path, "workspace_id": wid, "timestamp": timestamp}
@@ -223,7 +220,6 @@ async def test_idempotent_mount(
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-
         await mountpoint_manager.mount_workspace(wid, timestamp=timestamp)
         bar_txt = get_path_in_mountpoint(mountpoint_manager, wid, "/bar.txt", timestamp)
 
@@ -542,7 +538,6 @@ async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_b
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-
         await mountpoint_manager.mount_workspace(wid)
 
         root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/"))
@@ -590,7 +585,6 @@ async def test_mountpoint_iterdir_with_many_files(
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-
         await mountpoint_manager.mount_workspace(wid)
 
         test_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(base_path))
@@ -625,12 +619,10 @@ async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus)
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-
         for timeout in count(0, 0.002):
             print(f"timeout: {timeout}")
 
             async with real_clock_timeout():
-
                 with trio.move_on_after(timeout) as cancel_scope:
                     await mountpoint_manager.mount_workspace(wid)
 

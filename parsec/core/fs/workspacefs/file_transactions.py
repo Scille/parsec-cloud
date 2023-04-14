@@ -194,7 +194,6 @@ class FileTransactions:
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as manifest:
-
             # Force writing to disk
             await self.local_storage.ensure_manifest_persistent(manifest.id)
 
@@ -209,7 +208,6 @@ class FileTransactions:
     ) -> int:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as manifest:
-
             # Constrained - truncate content to the right length
             if constrained:
                 end_offset = min(manifest.size, offset + len(content))
@@ -248,7 +246,6 @@ class FileTransactions:
     async def fd_resize(self, fd: FileDescriptor, length: int, truncate_only: bool = False) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as manifest:
-
             # Truncate only
             if truncate_only and manifest.size <= length:
                 return
@@ -265,13 +262,11 @@ class FileTransactions:
         # Loop over attempts
         missing: list[BlockAccess] = []
         while True:
-
             # Load missing blocks
             await self.remote_loader.load_blocks(missing)
 
             # Fetch and lock
             async with self._load_and_lock_file(fd) as manifest:
-
                 # End of file
                 if raise_eof and offset >= manifest.size:
                     raise FSEndOfFileError()
@@ -330,7 +325,6 @@ class FileTransactions:
 
         # Perform operations
         for block, source, destination, write_back, removed_ids in prepare_reshape(manifest):
-
             # Build data block
             data, extra_missing = await self._build_data(source)
 
