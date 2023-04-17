@@ -93,7 +93,9 @@ async function setupApp(): Promise<void> {
   });
 
   const app = createApp(App)
-    .use(IonicVue)
+    .use(IonicVue,{
+      rippleEffect: false,
+    })
     .use(router)
     .use(i18n);
 

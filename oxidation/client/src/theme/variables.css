@@ -240,17 +240,215 @@ body.dark {
 :root {
   /*** Light ***/
   /* Primary */
-  --parsec-color-light-primary-50: #E5F1FF;
-  --parsec-color-light-primary-100: #CCE2FF;
-  --parsec-color-light-primary-600: #0058CC;
-  --parsec-color-light-primary-700: #004299;
+  --parsec-color-light-primary-30-opacity15: hsla(212, 100%, 97.1%, 0.15000000596046448);
+  --parsec-color-light-primary-30: hsla(212, 100%, 97.1%, 1);
+  --parsec-color-light-primary-50: hsla(212, 100%, 94.9%, 1);
+  --parsec-color-light-primary-100: hsla(214, 100%, 90%, 1);
+  --parsec-color-light-primary-200: hsla(214, 100%, 80%, 1);
+  --parsec-color-light-primary-300: hsla(214, 100%, 70%, 1);
+  --parsec-color-light-primary-400: hsla(214, 100%, 60%, 1);
+  --parsec-color-light-primary-500: hsla(214, 100%, 62.5%, 1);
+  --parsec-color-light-primary-600: hsla(214, 100%, 40%, 1);
+  --parsec-color-light-primary-700: hsla(214, 100%, 30%, 1);
+  --parsec-color-light-primary-800: hsla(214, 100%, 20%, 1);
+  --parsec-color-light-primary-900: hsla(214, 100%, 10%, 1);
+
   /* Secondary */
-  --parsec-color-light-secondary-inverted-contrast: #FEFEFE;
-  --parsec-color-light-secondary-background: #F9F9FB;
-  --parsec-color-light-secondary-medium: #F3F3F7;
-  --parsec-color-light-secondary-disabled: #EAEAF1;
-  --parsec-color-light-secondary-grey: #8585AD;
+  --parsec-color-light-secondary-contrast: hsla(240, 19.4%, 13.1%, 1);
+  --parsec-color-light-secondary-text: hsla(240, 20.2%, 34.9%, 1);
+  --parsec-color-light-secondary-grey: hsla(240, 19.6%, 60%, 1);
+  --parsec-color-light-secondary-light: hsla(240, 19.5%, 84.9%, 1);
+  --parsec-color-light-secondary-disabled: hsla(240, 20%, 93.1%, 1);
+  --parsec-color-light-secondary-medium: hsla(240, 20%, 96.1%, 1);
+  --parsec-color-light-secondary-premiere: hsla(240, 20%, 96.1%, 1);
+  --parsec-color-light-secondary-background: hsla(240, 20%, 98%, 1);
+  --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99.6%, 1);
 }
+
+/* **** Parsec typography **** */
+
+/* *[class~="title-"]{
+  line-height: 120%;
+  font-weight: 600;
+} */
+
+/* ** title ** */
+.title-h1 {
+  line-height: 120%;
+  font-weight: 600;
+  font-size: 1.62rem;
+}
+.title-h2 {
+  line-height: 120%;
+  font-weight: 600;
+  font-size: 1.375rem;
+}
+.title-h3 {
+  line-height: 120%;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+.title-h4 {
+  line-height: 120%;
+  font-weight: 500;
+  font-size: 1.12rem;
+}
+.title-h5 {
+  line-height: 120%;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* ** subtitle ** */
+.subtitles-normal{
+  font-weight: 500;
+  font-size: 1.12rem;
+  line-height: 156%;
+  letter-spacing: 0.15px;
+}
+.subtitles-sm{
+  font-weight: 500;
+  font-size: 0.88rem;
+  line-height: 171%;
+}
+
+/* ** body ** */
+.body-lg {
+  font-size: 1.12rem;
+  line-height: 161%;
+  letter-spacing: 0.2px;
+  font-weight: 500;
+}
+.body-normal {
+  font-size: 1rem;
+  line-height: 156%;
+  letter-spacing: 0.15px;
+  font-weight: 500;
+}
+.body-sm {
+  font-size: 0.88rem;
+  line-height: 143%;
+  letter-spacing: 0.25px;
+  font-weight: 500;
+}
+
+/* ** button ** */
+.button-large {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-size: 1.12rem;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+}
+.button-medium {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-size: 1rem;
+  line-height: 20px;
+}
+.button-small {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-size: 0.88rem;
+  line-height: 17px;
+}
+
+/* ** caption ** */
+.caption-code {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 29px;
+  letter-spacing: 9px;
+  text-transform: uppercase;
+  }
+.caption-caption {
+  font-size: 0.75rem;
+  font-size: 12px;
+  line-height: 133%;
+  letter-spacing: 0.15px;
+}
+.caption-info {
+  font-weight: 500;
+  font-size: 0.62rem;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+/* ** breadcrumb ** */
+.breadcrumb-large {
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 150%;
+}
+.breadcrumb-normal {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* ** menu ** */
+.menu-link {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 150%;
+}
+.menu-default {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 150%;
+}
+.menu-active {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+/* ** table ** */
+.cell{
+  letter-spacing: 0.15px;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 125%;
+}
+.cell-title {
+  letter-spacing: 0.15px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 143%;
+}
+
+/* ** calendar ** */
+.calendar-day {
+  font-weight: 400;
+  font-size: 0.88rem;
+  line-height: 171%;
+}
+.calendar-weeksday {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 133%;
+  letter-spacing: 0.4px;
+}
+
+/* ** form ** */
+.form-label {
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 156%;
+  letter-spacing: 0.15px;
+}
+.form-input {
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 150%;
+}
+.form-helperText {
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 133%;
+  letter-spacing: 0.4px;
+}
+
 
 /**** Global CSS overloads ****/
 
@@ -273,18 +471,62 @@ ion-card-title {
   font-weight: bold;
 }
 
-ion-card {
-  box-shadow: none;
+.header-md::after{
+  background-image: none;
 }
 
+ion-card {
+  --box-shadow: none;
+}
+
+ion-button{
+  text-transform: none;
+  --border-radius: 6px;
+  --box-shadow: none;
+}
+/* button size */
+ion-button.button-large{
+  --padding-top: 1rem ;
+  --padding-end: 1.25rem;
+  --padding-bottom: 1rem ;
+  --padding-start: 1.25rem;
+  font-size: 1.12rem;
+  line-height: 22px;
+  letter-spacing: 0.02rem;
+  height: 54px;
+}
+
+ion-button.button-default{
+  --padding-top: 0.75rem;
+  --padding-end: 1rem;
+  --padding-bottom: 0.75rem;
+  --padding-start: 1rem;
+  font-size: 1rem;
+  line-height: 20px;
+  height: 44px;
+}
+
+ion-button.button-small{
+  --padding-top: 0.625rem;
+  --padding-end: 1rem;
+  --padding-bottom: 0.625rem;
+  --padding-start: 1rem;
+  font-size: 0.88rem;
+  line-height: 17px;
+  height: 37px;
+}
+
+/* button default */
 ion-button:not(.button-outline):not(.button-clear) {
+  --background: var(--parsec-color-light-primary-500);
   --background-hover: var(--parsec-color-light-primary-700);
   --background-hover-opacity: none;
 }
 
+/* button outline */
 ion-button.button-outline {
-  --border-color: var(--ion-color-primary);
-  --color: var(--ion-color-primary);
+  --border-color: var(--parsec-color-light-primary-500);
+  --color: var(--parsec-color-light-primary-500);
   --border-color-hover: var(--parsec-color-light-primary-700);
   --color-hover: var(--parsec-color-light-primary-700);
   --background-hover: none;
@@ -293,6 +535,19 @@ ion-button.button-outline {
 
 ion-button.button-outline:hover {
   --border-color: var(--parsec-color-light-primary-700);
+}
+
+/* ghost */
+ion-button.button-clear {
+  --color: var(--parsec-color-light-primary-500);
+  --color-hover: var(--parsec-color-light-primary-700);
+  --background-hover: var(--parsec-color-light-primary-50);
+  --background-hover-opacity: none;
+}
+
+/* solid */
+ion-button.button-solid{
+  --background: var(--parsec-color-light-primary-100);
 }
 
 ion-grid.md {

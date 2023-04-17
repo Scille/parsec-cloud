@@ -29,6 +29,7 @@
           />
         </ion-button>
       </ion-item-divider>
+
       <div v-if="listView">
         <mobile-item-list
           v-for="workspace in workspacesExampleData"
