@@ -183,9 +183,8 @@
                     </ion-card-content>
                   </ion-card>
                   <div id="login-button-container">
-                    <!-- @click="login()" à ajouter au button -->
                     <ion-button
-                      @click="$router.push('/documents/workspaces')"
+                      @click="login($event)"
                       size="large"
                       :disabled="password.length == 0"
                       id="login-button"
@@ -346,12 +345,10 @@ async function login(workspace: string): Promise<void> {
   } else {
     storedDeviceDataDict.value[selectedDevice.slug].lastLogin = DateTime.now();
   }
-  // change object to string
-  router.push({ name: '/documents/workspaces', params: { device: JSON.stringify(selectedDevice) } });
-  console.log(selectedDevice);
-  console.log('test');
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
+  // change object to string
+  router.push({ name: 'workspaces', query: { device: JSON.stringify(selectedDevice) } });
 }
 
 function onForgottenPasswordClick(): void {
