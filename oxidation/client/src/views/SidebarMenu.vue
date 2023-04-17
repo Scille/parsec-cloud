@@ -21,8 +21,7 @@
                     {{ $t('HomePage.organizationActionSheet.header') }}
                   </ion-card-subtitle>
                   <ion-card-title class="title-h4">
-                    My company
-                    <!-- {{ device.organizationId }} -->
+                    {{ device.organizationId }}
                   </ion-card-title>
                 </div>
               </div>
@@ -151,11 +150,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 
-// const props =defineProps<{
-//   device: AvailableDevice
-// }>();
-
-let device: any;
+let device: any = {};
 
 // fake data
 const workspacesExampleData = [
@@ -195,8 +190,7 @@ function navigateToPage(pageName: string): void {
 
 // code au chargement de la page
 onMounted(() => {
-  device = currentRoute.params.device;
-  console.log(device);
+  device = JSON.parse(currentRoute.query.device as string);
 });
 
 </script>
