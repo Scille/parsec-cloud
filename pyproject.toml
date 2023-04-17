@@ -39,6 +39,7 @@ parsec = "parsec.cli:cli"
 [tool.poetry.dependencies]
 python = "~3.11.0"
 
+
 # Base requirements
 
 certifi = ">=2021,<2023"
