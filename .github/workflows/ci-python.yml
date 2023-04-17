@@ -156,7 +156,7 @@ jobs:
       - name: Setup cache-key
         if: steps.should-run-python-jobs.outputs.run == 'true'
         id: cache-key
-        run: echo "key=${{ matrix.os }}-${{ hashFiles('src/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python" >> $GITHUB_OUTPUT
+        run: echo "key=${{ matrix.os }}-${{ hashFiles('src/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python-${{ env.python-version }}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
