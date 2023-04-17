@@ -16,7 +16,7 @@
         src="https://ionicframework.com/docs/img/demos/avatar.svg"
       >
     </ion-avatar>
-    <div class=" text-icon">
+    <div class="text-icon">
       <ion-text class="body">
         {{ lastname }} {{ firstname }}
       </ion-text>

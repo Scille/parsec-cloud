@@ -18,7 +18,7 @@ beforeEach(() => {
 });
 
 it('test password input', () => {
-  cy.get('ion-label').should('contains.text', 'The Label');
+  cy.get('ion-input').should('contains.text', 'The Label');
 });
 
 it('should toggle password visibility button icon and password input type on password visibility button click', () => {
