@@ -65,6 +65,9 @@ if (platform === 'web') {
 // https://vitejs.dev/config/
 const config: UserConfigExport = {
   plugins: plugins,
+  build: {
+    sourcemap: true
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')

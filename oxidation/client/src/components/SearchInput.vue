@@ -8,7 +8,7 @@
       {{ label }}
     </ion-label>
     <ion-icon
-      :icon="searchOutline"
+      :icon="search"
       slot="start"
     />
     <ion-input
@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { IonItem, IonInput, IonIcon, IonLabel } from '@ionic/vue';
-import { searchOutline } from 'ionicons/icons';
+import { search } from 'ionicons/icons';
 
 defineProps<{
   label: string

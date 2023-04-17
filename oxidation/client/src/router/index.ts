@@ -16,7 +16,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/menu',
-    component: () => import('@/views/MenuPage.vue'),
+    component: () => import('@/views/SidebarMenu.vue'),
     children: [
       {
         path: '',

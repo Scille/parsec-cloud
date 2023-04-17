@@ -6,6 +6,7 @@
       color="secondary"
     >
       <div id="page">
+        <!-- topbar -->
         <div id="topbar">
           <ion-grid>
             <ion-row>
@@ -23,7 +24,7 @@
                 >
                   <ion-icon
                     slot="start"
-                    :icon="cogOutline"
+                    :icon="cog"
                   />
                   {{ $t('HomePage.topbar.settings') }}
                 </ion-button>
@@ -31,6 +32,9 @@
             </ion-row>
           </ion-grid>
         </div>
+        <!-- end of topbar -->
+
+        <!-- organisazation list -->
         <div id="container">
           <slide-horizontal
             :reverse-direction="!showOrganizationList"
@@ -104,6 +108,8 @@
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
+
+              <!-- bottom -->
               <ion-card-content class="no-existing-organization">
                 <ion-card-title color="tertiary">
                   {{ $t('HomePage.noExistingOrganization.title') }}
@@ -132,6 +138,8 @@
                   {{ $t('HomePage.noExistingOrganization.joinOrganization') }}
                 </ion-button>
               </ion-card-content>
+              <!-- end of bottom -->
+
             </ion-card>
             <ion-card
               v-if="!showOrganizationList"
@@ -146,11 +154,13 @@
                   >
                     <ion-icon
                       slot="start"
-                      :icon="chevronBackOutline"
+                      :icon="chevronBack"
                     />
                     {{ $t('HomePage.organizationLogin.backToList') }}
                   </ion-button>
                 </ion-card-title>
+
+                <!-- login -->
                 <div id="login-container">
                   <ion-card id="login-card-container">
                     <ion-card-content>
@@ -173,8 +183,9 @@
                     </ion-card-content>
                   </ion-card>
                   <div id="login-button-container">
+                    <!-- @click="login()" à ajouter au button -->
                     <ion-button
-                      @click="login()"
+                      @click="$router.push('/documents/workspaces')"
                       size="large"
                       :disabled="password.length == 0"
                       id="login-button"
@@ -187,10 +198,13 @@
                     </ion-button>
                   </div>
                 </div>
+                <!-- end of login -->
+
               </ion-card-content>
             </ion-card>
           </slide-horizontal>
         </div>
+        <!-- end of organization -->
       </div>
     </ion-content>
   </ion-page>
@@ -216,9 +230,9 @@ import {
 import {
   add,
   link,
-  chevronBackOutline,
+  chevronBack,
   searchOutline,
-  cogOutline,
+  cog,
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
@@ -237,7 +251,9 @@ import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { getMockDevices, mockLastLogin } from '../common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const { t, d } = useI18n();
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 let selectedDevice: AvailableDevice;
@@ -322,7 +338,7 @@ function onOrganizationCardClick(device: AvailableDevice): void {
   selectedDevice = device;
 }
 
-async function login(): Promise<void> {
+async function login(workspace: string): Promise<void> {
   if (!storedDeviceDataDict.value[selectedDevice.slug]) {
     storedDeviceDataDict.value[selectedDevice.slug] = {
       lastLogin: DateTime.now()
@@ -330,6 +346,10 @@ async function login(): Promise<void> {
   } else {
     storedDeviceDataDict.value[selectedDevice.slug].lastLogin = DateTime.now();
   }
+  // change object to string
+  router.push({ name: '/documents/workspaces', params: { device: JSON.stringify(selectedDevice) } });
+  console.log(selectedDevice);
+  console.log('test');
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 }
