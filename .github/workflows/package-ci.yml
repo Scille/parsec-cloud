@@ -371,6 +371,9 @@ jobs:
           open parsec.app --args --diagnose
 
   package-electron-app:
+    # We currently disable electron building, this job need to be updated to work with `vite`.
+    # See tracking issue #4419
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -431,6 +434,9 @@ jobs:
         timeout-minutes: 10
 
   package-android-app:
+    # We currently disable android building, this job need to be updated to work with `vite`.
+    # See tracking issue #4395 & #4419
+    if: false
     runs-on: ubuntu-22.04
     name: 🤖 Package Android app
     env:
@@ -476,6 +482,9 @@ jobs:
           if-no-files-found: error
 
   package-web-app:
+    # We currently disable web building, this job need to be updated to work with `vite`.
+    # See tracking issue #4419
+    if: false
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
