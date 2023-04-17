@@ -19,6 +19,7 @@
         :interface="isPlatform('mobile') ? 'action-sheet' : 'popover'"
         :interface-options="isPlatform('mobile') ? userRoleActionSheetOptions : undefined"
         :selected-text="role"
+        label=""
         @ion-change="changeRole($event.detail.value)"
       >
         <ion-select-option value="notShared">

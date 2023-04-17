@@ -38,12 +38,10 @@
         </ion-item>
         <h5>{{ $t('SettingsPage.localization') }}</h5>
         <ion-item>
-          <ion-label>
-            {{ $t('SettingsPage.language') }}
-          </ion-label>
           <ion-select
             interface="popover"
             :selected-text="$t(`SettingsPage.lang.${$i18n.locale.replace('-', '')}`)"
+            :label="$t('SettingsPage.language')"
             @ion-change="changeLang($event.detail.value)"
           >
             <ion-select-option value="en-US">
@@ -56,12 +54,10 @@
         </ion-item>
         <h5>{{ $t('SettingsPage.preferences') }}</h5>
         <ion-item>
-          <ion-label>
-            {{ $t('SettingsPage.theme.label') }}
-          </ion-label>
           <ion-select
             interface="popover"
             :value="config.theme"
+            :label="$t('SettingsPage.theme.label')"
             @ion-change="changeTheme($event.detail.value)"
           >
             <ion-select-option value="dark">
@@ -93,7 +89,6 @@ import {
   IonList,
   IonItem,
   IonToggle,
-  IonLabel,
   IonSelect,
   IonSelectOption
 } from '@ionic/vue';

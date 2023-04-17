@@ -51,7 +51,8 @@ async function openPopover(ev: Event): Promise<void> {
       sortByLabels: props.sortByLabels,
       sortByAsc: sortByAsc.value
     },
-    event: ev
+    event: ev,
+    showBackdrop: false
   });
   await popover.present();
   onDidDismissPopover(popover);

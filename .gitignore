@@ -59,6 +59,9 @@ docs/_build/
 # PyBuilder
 target/
 
+# PyEnv file
+.python-version
+
 # gnupg stuff
 random_seed
 
