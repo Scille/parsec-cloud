@@ -105,7 +105,6 @@ class ChunkStorage:
         return bool(manifest_row)
 
     async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
-
         bytes_id_list = [(id.bytes,) for id in chunk_id]
 
         async with self._open_cursor() as cursor:
@@ -249,7 +248,6 @@ class BlockStorage(ChunkStorage):
 
         # Update database
         async with self._open_cursor() as cursor:
-
             # Insert the chunk
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
@@ -271,7 +269,6 @@ class BlockStorage(ChunkStorage):
 
         # Update database
         async with self._reenter_cursor(cursor) as cursor:
-
             # Count the chunks
             cursor.execute("SELECT COUNT(*) FROM chunks")
             (nb_blocks,) = cursor.fetchone()
@@ -287,7 +284,6 @@ class BlockStorage(ChunkStorage):
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
             def _thread_target(cursor: Cursor) -> set[ChunkID]:
-
                 # Select before delete
                 cursor.execute(
                     """

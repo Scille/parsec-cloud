@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from .common import *
+from .common import BackendAddr, Path, Ref
 
 
 async def test_new_testbed(template: Ref[str], test_server: Optional[Ref[BackendAddr]]) -> Path:

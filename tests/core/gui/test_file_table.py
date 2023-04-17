@@ -42,7 +42,6 @@ def test_file_table_parent_workspace(qtbot, core_config):
 
 @pytest.mark.gui
 def test_file_table_clear(qtbot):
-
     w = FileTable(parent=None)
     qtbot.add_widget(w)
 

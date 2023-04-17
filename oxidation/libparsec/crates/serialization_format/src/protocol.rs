@@ -21,11 +21,8 @@ fn parse_api_version(raw: &str) -> Result<(u32, u32), &'static str> {
     }
 }
 
-pub(crate) fn generate_protocol_cmds_familly(
-    cmds: Vec<JsonCmd>,
-    familly_name: &str,
-) -> TokenStream {
-    quote_cmds_familly(&GenCmdsFamilly::new(cmds, familly_name))
+pub(crate) fn generate_protocol_cmds_family(cmds: Vec<JsonCmd>, family_name: &str) -> TokenStream {
+    quote_cmds_family(&GenCmdsFamily::new(cmds, family_name))
 }
 
 //
@@ -36,7 +33,7 @@ pub(crate) fn generate_protocol_cmds_familly(
 pub(crate) struct JsonCmd {
     // Miniserde only supports struct as root, hence this field that is never
     // present in the actual json files: it will be added just before
-    // deserialization by the parsec_protocol_familly macro !
+    // deserialization by the parsec_protocol_family macro !
     items: Vec<JsonCmdFlavour>,
 }
 
@@ -157,7 +154,7 @@ enum GenCmdNestedType {
     },
 }
 
-struct GenCmdsFamilly {
+struct GenCmdsFamily {
     pub name: String,
     pub versions: HashMap<u32, Vec<GenCmd>>,
 }
@@ -166,8 +163,8 @@ struct GenCmdsFamilly {
 // JSON-to-gen parsing & struct conversion
 //
 
-impl GenCmdsFamilly {
-    fn new(cmds: Vec<JsonCmd>, familly_name: &str) -> Self {
+impl GenCmdsFamily {
+    fn new(cmds: Vec<JsonCmd>, family_name: &str) -> Self {
         let mut gen_versions: HashMap<u32, Vec<GenCmd>> = HashMap::new();
         let mut version_cmd_couples: HashSet<(u32, String)> = HashSet::new();
 
@@ -382,7 +379,7 @@ impl GenCmdsFamilly {
         }
 
         Self {
-            name: familly_name.to_owned(),
+            name: family_name.to_owned(),
             versions: gen_versions,
         }
     }
@@ -392,10 +389,10 @@ impl GenCmdsFamilly {
 // Code generation
 //
 
-fn quote_cmds_familly(familly: &GenCmdsFamilly) -> TokenStream {
-    let familly_name = format_ident!("{}", &familly.name);
+fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
+    let family_name = format_ident!("{}", &family.name);
 
-    let versioned_cmds: Vec<TokenStream> = familly
+    let versioned_cmds: Vec<TokenStream> = family
         .versions
         .iter()
         .sorted_by_key(|(v, _)| *v)
@@ -403,7 +400,7 @@ fn quote_cmds_familly(familly: &GenCmdsFamilly) -> TokenStream {
         .collect();
 
     quote! {
-        pub mod #familly_name {
+        pub mod #family_name {
             #(#versioned_cmds)*
         }
     }
@@ -478,9 +475,10 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
             quote! {
 
                 pub mod #module_name {
+                    use libparsec_miniprotocol::Request;
+
                     use super::AnyCmdReq;
                     use super::UnknownStatus;
-                    use super::super::super::libparsec_protocol::Request;
 
                     #(#nested_types)*
 

@@ -105,7 +105,6 @@ def correct_addr(
 @asynccontextmanager
 async def server_factory(handle_client: Callable):
     async with trio.open_service_nursery() as nursery:
-
         listeners = await nursery.start(
             partial(
                 trio.serve_tcp,

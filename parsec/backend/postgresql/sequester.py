@@ -291,7 +291,6 @@ class PGPSequesterComponent(BaseSequesterComponent):
         service_id: SequesterServiceID,
         disabled_on: DateTime | None = None,
     ) -> None:
-
         disabled_on = disabled_on or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await self._assert_service_enabled(conn, organization_id)

@@ -7,7 +7,6 @@ from parsec._parsec import EntryID
 from parsec.api.data import UserManifest, WorkspaceEntry
 from parsec.core.types import LocalUserManifest
 
-
 # TODO: replace sanity asserts by cleaner exceptions given they could be
 # triggered by a malicious client trying to make us crash
 

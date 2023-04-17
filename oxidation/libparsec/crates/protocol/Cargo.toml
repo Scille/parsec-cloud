@@ -15,13 +15,14 @@ path = "tests/mod.rs"
 libparsec_crypto = { path = "../crypto" }
 libparsec_types = { path = "../types" }
 libparsec_serialization_format = { path = "../serialization_format" }
+libparsec_miniprotocol = { path = "../miniprotocol" }
 
 paste = "1.0.12"
 rand = "0.8.5"
 rmp-serde = "1.1.1"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_with = "2.2.0"
-thiserror = "1.0.37"
+thiserror = "1.0.40"
 futures = "0.3.28"
 
 [dev-dependencies]

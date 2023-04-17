@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use thiserror::Error;
 
-use crate::{DateTime, DeviceFileType, DeviceID, EntryID, RealmID, Regex, UserID};
+use crate::{DateTime, DeviceFileType, DeviceID, EntryID, RealmID, UserID};
 use libparsec_crypto::CryptoError;
 
 #[derive(Error, Debug)]
@@ -19,7 +19,7 @@ pub enum RegexError {
     },
 }
 
-pub type RegexResult = Result<Regex, RegexError>;
+pub type RegexResult<T> = Result<T, RegexError>;
 
 #[derive(Error, Debug)]
 pub enum EntryNameError {

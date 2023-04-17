@@ -127,7 +127,6 @@ async def test_stats(
 
     # Bootstrap & populate two organizations on February and March
     for i in range(2, 4):
-
         dtx1 = DateTime(2000, i, 1)
         org = orgs[i - 2]
         org_d1 = local_device_factory(org=org, profile=UserProfile.ADMIN)

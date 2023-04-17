@@ -258,7 +258,6 @@ async def test_no_proxy_with_http(monkeypatch, type):
         proxy_events.append(event)
 
     async with trio.open_nursery() as nursery:
-
         if type == "no_config":
             pass
         elif type == "no_proxy_from_env":

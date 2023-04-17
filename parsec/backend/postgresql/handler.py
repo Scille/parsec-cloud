@@ -219,7 +219,6 @@ class PGHandler:
     async def _run_connections(
         self, task_status: trio_typing.TaskStatus[None] = trio.TASK_STATUS_IGNORED
     ) -> None:
-
         # By default AsyncPG only work with Python standard `datetime.DateTime`
         # for timestamp types, here we override this behavior to uses our own custom
         # - DateTime type

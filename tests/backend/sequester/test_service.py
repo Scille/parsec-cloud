@@ -21,7 +21,6 @@ from tests.common import (
     sequester_service_factory,
 )
 
-
 # Sequester service modification is not exposed as a command API, so we only
 # test the internal component API
 

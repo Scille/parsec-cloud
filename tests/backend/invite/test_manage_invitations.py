@@ -103,7 +103,6 @@ async def test_user_new_invitation_and_info(
 async def test_device_new_invitation_and_info(
     backend_asgi_app, alice, alice_ws, alice2_ws, backend_invited_ws_factory
 ):
-
     # Provide other unrelated invitations that should stay unchanged
     with backend_asgi_app.backend.event_bus.listen() as spy:
         other_user_invitation = await backend_asgi_app.backend.invite.new_for_user(

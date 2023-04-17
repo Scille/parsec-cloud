@@ -104,7 +104,6 @@ def timestamps_in_the_ballpark(
 
 @attr.s
 class TaskStatus(Generic[T]):
-
     # Internal state
     _trio_task_status: trio_typing.TaskStatus[TaskStatus[T]] = attr.ib()
     _cancel_scope: trio.CancelScope | None = attr.ib(default=None)

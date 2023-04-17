@@ -264,10 +264,8 @@ class ManifestStorage:
             await self._ensure_manifest_persistent(entry_id)
 
     async def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
-
         # Get cursor
         async with self._open_cursor() as cursor:
-
             # Flushing is not necessary
             if entry_id not in self._cache_ahead_of_localdb:
                 return
@@ -339,7 +337,6 @@ class ManifestStorage:
         """
 
         async with self._open_cursor() as cursor:
-
             # Safely remove from cache
             in_cache = bool(self._cache.pop(entry_id, None))
 

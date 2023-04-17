@@ -12,7 +12,8 @@ use libparsec_client_connection::{
 };
 use libparsec_crypto::SigningKey;
 use libparsec_protocol::authenticated_cmds;
-use libparsec_tests_fixtures::{parsec_test, TestbedEnv};
+use libparsec_testbed::TestbedEnv;
+use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::{BackendOrganizationAddr, DeviceID};
 use tokio::{
     sync::oneshot::{channel, Receiver, Sender},

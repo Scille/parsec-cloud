@@ -406,7 +406,6 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         """
 
         async with self.dbh.pool.acquire() as conn:
-
             entries = await conn.fetch(
                 *_q_get_pki_enrollment_from_state(
                     organization_id=organization_id.str, state=PkiEnrollmentStatus.SUBMITTED.value

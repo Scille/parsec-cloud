@@ -1,0 +1,1 @@
+Fixed link to user guide not clickable after creation an organization

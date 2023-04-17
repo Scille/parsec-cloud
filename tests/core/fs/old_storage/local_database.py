@@ -26,7 +26,6 @@ class LocalDatabase:
         vacuum_threshold: int | None = None,
         auto_vacuum: bool = False,
     ):
-
         # Make sure only a single task access the connection object at a time
         self._lock = trio.Lock()
 
@@ -86,7 +85,6 @@ class LocalDatabase:
             await self._connect()
 
             async with self._service_abort_context():
-
                 # Yield the instance
                 yield self
 
@@ -132,14 +130,12 @@ class LocalDatabase:
 
         # An operational error has been detected
         except OperationalError as exception:
-
             # Make sure the local database won't be used by another task
             _conn = self._conn
             del self._conn
 
             # Protect against cancellation
             with trio.CancelScope(shield=True):
-
                 # Notify the service that it can no longer be used
                 await self._send_abort(FSLocalStorageOperationalError(*exception.args))
 
@@ -182,7 +178,6 @@ class LocalDatabase:
 
             # The database is currently not configured for the right auto_vacuum policy
             if self.auto_vacuum != current_auto_vacuum:
-
                 # Changing the auto_vacuum policy requires a full vacuum in order to recreate the tables
                 def _thread_target() -> None:
                     self._conn.execute(f"PRAGMA auto_vacuum={int(self.auto_vacuum)}")
@@ -194,14 +189,12 @@ class LocalDatabase:
     async def _connect(self) -> None:
         # Lock the access to the connection object
         async with self._lock:
-
             # Connect and initialize database
             await self._create_connection()
 
     async def _close(self) -> None:
         # Lock the access to the connection object
         async with self._lock:
-
             # Local database is already closed
             if self._is_closed():
                 return
@@ -213,7 +206,6 @@ class LocalDatabase:
             finally:
                 # Local database is not already closed
                 if not self._is_closed():
-
                     # Close the sqlite3 connection
                     try:
                         await self.run_in_thread(self._conn.close)
@@ -240,13 +232,11 @@ class LocalDatabase:
     async def open_cursor(self, commit: bool = True) -> AsyncIterator[Cursor]:
         # Lock the access to the connection object
         async with self._lock:
-
             # Check connection state
             self._check_open()
 
             # Close the local database if an operational error is detected
             async with self._manage_operational_error():
-
                 # Execute SQL commands
                 cursor = self._conn.cursor()
                 try:
@@ -261,7 +251,6 @@ class LocalDatabase:
     async def commit(self) -> None:
         # Lock the access to the connection object
         async with self._lock:
-
             # Check connection state
             self._check_open()
 
@@ -287,7 +276,6 @@ class LocalDatabase:
 
         # Lock the access to the connection object
         async with self._lock:
-
             # Check connection state
             self._check_open()
 

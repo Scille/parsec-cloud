@@ -317,7 +317,6 @@ class Map(Field[Mapping[str, T]]):
         return ret
 
     def _deserialize(self, value: object, attr: str, obj: dict[str, object]) -> dict[str, T]:
-
         if not isinstance(value, Mapping):
             self.fail("invalid")
             assert False

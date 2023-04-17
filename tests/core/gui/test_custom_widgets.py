@@ -8,7 +8,6 @@ from parsec.core.gui import custom_widgets
 
 @pytest.mark.gui
 def test_file_line_edit(qtbot):
-
     w = custom_widgets.FileLabel(parent=None)
     qtbot.add_widget(w)
 

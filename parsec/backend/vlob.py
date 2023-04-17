@@ -172,7 +172,6 @@ async def extract_sequestered_data_and_proceed_webhook(
     timestamp: DateTime,
     sequester_blob: Dict[SequesterServiceID, bytes],
 ) -> Dict[SequesterServiceID, bytes]:
-
     logger = get_logger()
     # Split storage services and webhook services
     storage_services = [
@@ -328,7 +327,13 @@ class BaseVlobComponent:
         self, client_ctx: AuthenticatedClientContext, req: VlobReadReq
     ) -> VlobReadRep:
         try:
-            (version, blob, author, created_on, author_last_role_granted_on,) = await self.read(
+            (
+                version,
+                blob,
+                author,
+                created_on,
+                author_last_role_granted_on,
+            ) = await self.read(
                 client_ctx.organization_id,
                 client_ctx.device_id,
                 encryption_revision=req.encryption_revision,

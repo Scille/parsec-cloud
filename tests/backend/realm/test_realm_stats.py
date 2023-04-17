@@ -12,7 +12,6 @@ REALM_ID_FAKE = RealmID.from_hex("00000000-0000-0000-0000-000000000001")
 
 @pytest.mark.trio
 async def test_realm_stats_ok(alice_ws, realm):
-
     # Create new data
     await block_create(alice_ws, realm_id=realm, block_id=BlockID.new(), block=b"1234")
     rep = await realm_stats(alice_ws, realm_id=realm)

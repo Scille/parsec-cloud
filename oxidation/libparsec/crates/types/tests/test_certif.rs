@@ -5,8 +5,13 @@ use pretty_assertions::assert_eq;
 use rstest::rstest;
 
 use libparsec_crypto::{SequesterPublicKeyDer, SequesterVerifyKeyDer};
-use libparsec_tests_fixtures::{alice, bob, Device};
-use libparsec_types::*;
+
+use crate::{
+    fixtures::{alice, bob, Device},
+    CertificateSignerOwned, CertificateSignerRef, DeviceCertificate, RealmID, RealmRole,
+    RealmRoleCertificate, RevokedUserCertificate, SequesterAuthorityCertificate,
+    SequesterServiceCertificate, SequesterServiceID, UserCertificate, UserProfile,
+};
 
 // TODO: check serde output to ensure handling of Option<T> depending of
 // default/missing policy

@@ -202,7 +202,6 @@ async def test_conduit_exchange_reset(exchange_testbed):
     await tb.assert_ok_rep("claimer")
 
     for leader, reset_step, reset_actor in possibilities():
-
         # Step 2a
         if reset_step == "2a":
             await _reset_during_twin_orders(
@@ -311,7 +310,6 @@ async def test_change_connection_during_exchange(
         invitation_type=tb.invitation.TYPE,
         token=tb.invitation.token,
     ) as claimer_ws:
-
         tb.claimer_ws = claimer_ws
         await tb.send_order("claimer", "2a_send_hashed_nonce")
 

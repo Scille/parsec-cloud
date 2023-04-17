@@ -47,10 +47,8 @@ async def workspace_storage_non_speculative_init(
 
     # Local data storage service
     async with LocalDatabase.run(db_path) as data_localdb:
-
         # Manifest storage service
         async with ManifestStorage.run(device, data_localdb, workspace_id) as manifest_storage:
-
             manifest = LocalWorkspaceManifest.new_placeholder(
                 author=device.device_id,
                 id=workspace_id,
@@ -320,19 +318,16 @@ class WorkspaceStorage(BaseWorkspaceStorage):
             cache_path,
             auto_vacuum=True,
         ) as cache_localdb:
-
             # Local data storage service
             # TODO: once the auto_vacuum approach has been validated for the cache storage,
             # we should investigate whether it is a good fit for the data storage
             async with LocalDatabase.run(
                 data_path, vacuum_threshold=data_vacuum_threshold
             ) as data_localdb:
-
                 # Block storage service
                 async with BlockStorage.run(
                     device, cache_localdb, cache_size=cache_size
                 ) as block_storage:
-
                     # Clean up block storage and run vacuum if necessary
                     # (e.g after changing the cache size)
                     await block_storage.cleanup()
@@ -341,10 +336,8 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                     async with ManifestStorage.run(
                         device, data_localdb, workspace_id
                     ) as manifest_storage:
-
                         # Chunk storage service
                         async with ChunkStorage.run(device, data_localdb) as chunk_storage:
-
                             # Instantiate workspace storage
                             instance = cls(
                                 device,

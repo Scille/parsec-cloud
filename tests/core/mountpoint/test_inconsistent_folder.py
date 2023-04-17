@@ -50,7 +50,6 @@ async def test_inconsistent_folder_with_network(base_mountpoint, running_backend
 
 
 def _os_tests(mountpoint_path, error_code, winerror):
-
     # Check stat of inconsistent dir counts one file on Windows, 2 on Linux
     assert ((mountpoint_path / "rep").stat()).st_nlink == 1 if sys.platform == "win32" else 2
 

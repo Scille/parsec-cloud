@@ -3,6 +3,11 @@
 #[macro_use]
 extern crate lazy_static;
 
+#[cfg(any(test, feature = "test-fixtures"))]
+/// We define test fixture in that module.
+/// We defined those fixtures here and not in a different crate to prevent cyclic dependencies.
+pub mod fixtures;
+
 mod addr;
 mod certif;
 pub mod data_macros;

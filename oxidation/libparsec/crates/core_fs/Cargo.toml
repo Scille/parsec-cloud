@@ -25,12 +25,13 @@ libparsec_platform_async = { path = "../platform_async" }
 diesel = { version = "2.0.3", default-features = false }
 log = "0.4.17"
 regex = "1.7.3"
-thiserror = "1.0.37"
+thiserror = "1.0.40"
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
 lazy_static = "1.4.0"
 async-trait = "0.1.61"
 
 [dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
+libparsec_testbed = { path = "../testbed" }
 
 tokio = { version = "1.27.0", features = ["macros"]}

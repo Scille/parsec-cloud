@@ -488,7 +488,6 @@ Oops I've made a mistake: {COLOR_GREEN}./misc/releaser.py rollback{COLOR_END}
             rollback_last_release()
 
         else:  # Check
-
             if args.version is None:
                 version = get_version_from_repo_describe_tag(args.verbose)
             else:

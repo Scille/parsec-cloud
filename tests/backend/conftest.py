@@ -33,7 +33,6 @@ def backend_invited_ws_factory():
     ):
         client = backend_asgi_app.test_client()
         async with client.websocket("/ws") as ws:
-
             ch = InvitedClientHandshake(
                 organization_id=organization_id, invitation_type=invitation_type, token=token
             )

@@ -45,7 +45,6 @@ class BlockInfo(NamedTuple):
 
 
 class EntryTransactions(FileTransactions):
-
     # Right management helper
 
     def check_read_rights(self, path: FsPath) -> None:
@@ -166,10 +165,8 @@ class EntryTransactions(FileTransactions):
 
         # Loop over attempts
         while True:
-
             # Lock parent first
             async with self._lock_manifest_from_path(path.parent) as parent:
-
                 # Parent is not a directory
                 if not isinstance(parent, (LocalFolderManifest, LocalWorkspaceManifest)):
                     raise FSNotADirectoryError(filename=path.parent)
@@ -278,7 +275,6 @@ class EntryTransactions(FileTransactions):
 
         # Fetch and lock
         async with self._lock_parent_manifest_from_path(destination) as (parent, child):
-
             # Source does not exist
             if source.name not in parent.children:
                 raise FSFileNotFoundError(filename=source)
@@ -298,14 +294,12 @@ class EntryTransactions(FileTransactions):
 
                 # Overwrite a file
                 if isinstance(source_manifest, LocalFileManifest):
-
                     # Destination is a folder
                     if isinstance(child, LocalFolderManifest):
                         raise FSIsADirectoryError(filename=destination)
 
                 # Overwrite a folder
                 if isinstance(source_manifest, LocalFolderManifest):
-
                     # Destination is not a folder
                     if not isinstance(child, LocalFolderManifest):
                         raise FSNotADirectoryError(filename=destination)
@@ -341,7 +335,6 @@ class EntryTransactions(FileTransactions):
 
         # Fetch and lock
         async with self._lock_parent_manifest_from_path(path) as (parent, child):
-
             # Entry doesn't exist
             if child is None:
                 raise FSFileNotFoundError(filename=path)
@@ -381,7 +374,6 @@ class EntryTransactions(FileTransactions):
 
         # Fetch and lock
         async with self._lock_parent_manifest_from_path(path) as (parent, child):
-
             # Entry doesn't exist
             if child is None:
                 raise FSFileNotFoundError(filename=path)
@@ -417,7 +409,6 @@ class EntryTransactions(FileTransactions):
 
         # Lock parent and child
         async with self._lock_parent_manifest_from_path(path) as (parent, child):
-
             # Destination already exists
             if child is not None:
                 raise FSFileExistsError(filename=path)
@@ -459,7 +450,6 @@ class EntryTransactions(FileTransactions):
 
         # Lock parent in write mode
         async with self._lock_parent_manifest_from_path(path) as (parent, child):
-
             # Destination already exists
             if child is not None:
                 raise FSFileExistsError(filename=path)
@@ -503,7 +493,6 @@ class EntryTransactions(FileTransactions):
 
         # Lock path in read mode
         async with self._lock_manifest_from_path(path) as manifest:
-
             # Not a file
             if not isinstance(manifest, LocalFileManifest):
                 raise FSIsADirectoryError(filename=path)
@@ -517,7 +506,6 @@ class EntryTransactions(FileTransactions):
 
         # Lock manifest
         async with self._lock_manifest_from_path(path) as manifest:
-
             # Not a file
             if not isinstance(manifest, LocalFileManifest):
                 raise FSIsADirectoryError(filename=path)

@@ -75,7 +75,7 @@ env.globals["raise"] = _raise_helper
 
 
 class BaseTypeInUse:
-    # Name of the type familly (e.g. `bytes`, `struct`, `variant`), to be defined in subclass
+    # Name of the type family (e.g. `bytes`, `struct`, `variant`), to be defined in subclass
     kind: str
 
     @staticmethod
@@ -86,7 +86,7 @@ class BaseTypeInUse:
         origin = getattr(param, "__origin__", None)
         if origin is Union:  # Python resolves `Optional[Foo]` as `Union[Foo, None]`
             assert len(param.__args__) == 2 and type(None) in param.__args__
-            elem_param = next(x for x in param.__args__ if x is not type(None))  # noqa
+            elem_param = next(x for x in param.__args__ if x is not type(None))
             return OptionalTypeInUse(BaseTypeInUse.parse(elem_param))
 
         elif origin in (list, List):

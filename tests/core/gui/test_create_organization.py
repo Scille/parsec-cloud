@@ -298,7 +298,6 @@ async def test_create_organization_bootstrap_only(
     organization_bootstrap_addr,
     monkeypatch,
 ):
-
     await gui_factory(start_arg=organization_bootstrap_addr.to_url())
 
     co_w = await catch_create_org_widget()
@@ -369,7 +368,6 @@ async def test_create_organization_bootstrap_only_custom_server(
     organization_bootstrap_addr,
     monkeypatch,
 ):
-
     await gui_factory(start_arg=organization_bootstrap_addr.to_url())
 
     co_w = await catch_create_org_widget()

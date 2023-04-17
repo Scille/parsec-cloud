@@ -76,10 +76,8 @@ def safe_app() -> Iterator[None]:
 
 
 def load_resources(with_printer: bool = False) -> None:
-
     # Loading resources require an application
     with safe_app():
-
         # First printer instantiation might take a long time on windows
         # when network printers are involved. See the bug report:
         # https://bugreports.qt.io/browse/QTBUG-49560

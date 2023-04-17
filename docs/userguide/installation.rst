@@ -33,25 +33,6 @@ If you are familiar with Snap, you may notice that Parsec snap is provided in cl
         sudo snap install parsec --classic
 
 
-Via pip
--------
-
-Given that Parsec is written in Python, an alternative is to install it through `pip (the Python package repository) <https://pypi.org/project/parsec-cloud/>`_.
-
-.. code-block:: shell
-
-    pip install parsec-cloud
-
-Or install it with all its dependencies, for the GUI.
-
-.. code-block:: shell
-
-    pip install parsec-cloud[all]
-
-.. note::
-
-    Parsec requires Python >= 3.9 to work.
-
 
 MacOS
 -----

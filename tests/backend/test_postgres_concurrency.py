@@ -14,7 +14,6 @@ from parsec.backend.pki import PkiEnrollmentNoLongerAvailableError
 from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
 from tests.common import local_device_to_backend_user
 
-
 # Testing concurrency interractions is hard given it involve precise timing
 # (otherwise the test appear to be concurrent, but the queries are in fact
 # executed one after another...)

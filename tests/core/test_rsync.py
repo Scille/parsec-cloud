@@ -121,7 +121,6 @@ async def test_update_file(alice_workspace: WorkspaceFS, monkeypatch):
         "parsec.core.cli.rsync._chunks_from_path",
         AsyncMock(spec=mock.Mock, side_effect=[[b"block1", b"block3"]]),
     ):
-
         await rsync._update_file(
             alice_workspace, entry_id, FsPath("/src_file"), FsPath("/path_in_workspace")
         )
@@ -320,7 +319,6 @@ async def test_get_or_create_directory(alice_workspace: UserFS):
 
 @pytest.mark.trio
 async def test_upsert_file(alice_workspace: UserFS):
-
     _update_file_mock = AsyncMock(spec=mock.Mock())
     _create_path_mock = AsyncMock(spec=mock.Mock())
 
@@ -348,7 +346,6 @@ async def test_upsert_file(alice_workspace: UserFS):
 
 @pytest.mark.trio
 async def test_sync_directory(alice_workspace: UserFS):
-
     _get_or_create_directory_mock = AsyncMock(
         spec=mock.Mock(), side_effect=lambda *x: "folder_manifest_mock"
     )
@@ -400,7 +397,6 @@ async def test_sync_directory(alice_workspace: UserFS):
 
 @pytest.mark.trio
 async def test_sync_directory_content(alice_workspace: UserFS):
-
     path_dir1 = trio.Path("/test_dir1")
     path_dir1.is_dir = AsyncMock(spec=mock.Mock(), side_effect=lambda: True)
     path_dir2 = trio.Path("/test_dir2")
@@ -534,7 +530,6 @@ async def test_root_manifest_parent(alice_workspace: UserFS):
     with mock.patch(
         "parsec.core.cli.rsync._get_or_create_directory", _get_or_create_directory_mock
     ):
-
         root_manifest, parent = await rsync._root_manifest_parent(
             None, alice_workspace, workspace_manifest
         )

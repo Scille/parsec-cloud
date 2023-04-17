@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import click
 
+from parsec.cli_utils import version_option
 from parsec.core.cli import (
     bootstrap_organization,
     create_organization,
@@ -24,6 +25,7 @@ __all__ = ("core_cmd_group",)
 
 
 @click.group()
+@version_option
 def core_cmd_group() -> None:
     pass
 

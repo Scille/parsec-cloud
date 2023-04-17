@@ -949,7 +949,6 @@ class BaseInviteComponent:
             BackendEvent.INVITE_STATUS_CHANGED,
             filter=cast(EventFilterCallback, _event_filter),
         ) as waiter:
-
             listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
 
             # Unlike what it name may imply, `_conduit_listen` doesn't wait for the peer

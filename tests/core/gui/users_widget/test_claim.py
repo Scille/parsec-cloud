@@ -665,7 +665,6 @@ async def test_claim_user_offline_backend(
 async def test_claim_user_unknown_invitation(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui
 ):
-
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
@@ -701,7 +700,6 @@ async def test_claim_user_with_bad_start_arg(event_bus, core_config, gui_factory
 async def test_claim_user_backend_desync(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui, monkeypatch
 ):
-
     # Client is 5 minutes ahead
     def _timestamp(self):
         return DateTime.now().add(minutes=5)

@@ -69,7 +69,6 @@ async def _import_recovery_device(
     new_device_label: DeviceLabel,
     save_device_with_selected_auth: SaveDeviceWithSelectedAuth,
 ) -> None:
-
     recovery_device = await load_recovery_device(recovery_file, passphrase)
 
     device_label_display = click.style(new_device_label, fg="yellow")

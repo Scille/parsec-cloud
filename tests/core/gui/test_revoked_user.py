@@ -19,7 +19,6 @@ async def test_revoked_notification(
     wait_idle_core,
     snackbar_catcher,
 ):
-
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
 
