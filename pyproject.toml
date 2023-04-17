@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "parsec-cloud"
-version = "v2.15.0+dev"
+version = '.cde22f1dc'
 description = "Secure cloud framework"
 authors = ["Scille SAS <contact@scille.fr>"]
 readme = "README.rst"
@@ -14,7 +14,7 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.11",
 ]
 packages = [
     { include = "parsec" },
