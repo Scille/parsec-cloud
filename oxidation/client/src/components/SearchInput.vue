@@ -1,21 +1,20 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
+  <!-- Here we still use ion-item to wrap ion-input because of lack of support of ion-icon with new v7 standalone ion-input -->
+  <!-- TODO: Migrate from legacy to modern syntax following this issue: https://github.com/ionic-team/ionic-framework/issues/26297 -->
   <ion-item fill="solid">
-    <ion-label
-      position="floating"
-    >
-      {{ label }}
-    </ion-label>
     <ion-icon
-      :icon="searchOutline"
+      :icon="search"
       slot="start"
     />
     <ion-input
       id="search-input"
+      :label="label"
+      label-placement="floating"
       v-model="searchRef"
       :clear-input="true"
-      @ion-change="$emit('change', $event.detail.value)"
+      @ion-input="$emit('change', $event.detail.value)"
       @keyup.enter="onEnterPress()"
     />
   </ion-item>
@@ -23,8 +22,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonItem, IonInput, IonIcon, IonLabel } from '@ionic/vue';
-import { searchOutline } from 'ionicons/icons';
+import { IonItem, IonInput, IonIcon } from '@ionic/vue';
+import { search } from 'ionicons/icons';
 
 defineProps<{
   label: string
