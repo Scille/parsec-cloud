@@ -6,14 +6,9 @@ use std::{
     sync::Arc,
 };
 
-use libparsec_crypto::{prelude::*, HashDigest};
-use libparsec_types::{
-    BlockAccess, BlockID, Blocksize, Chunk, ChunkID, DateTime, DeviceID, EntryID, FileManifest,
-    LocalDevice, LocalFileManifest, LocalManifest, Regex,
-};
-
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{parsec_test, timestamp};
+use libparsec_types::prelude::*;
 
 use crate::{
     sqlite::{LocalDatabase, SqliteDataStorage, VacuumMode},

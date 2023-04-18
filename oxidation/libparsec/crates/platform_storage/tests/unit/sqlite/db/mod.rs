@@ -5,9 +5,10 @@ use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::sqlite::{db::DatabaseError, AutoVacuum, LocalDatabase, VacuumMode};
 use libparsec_platform_async::Notify;
 use libparsec_tests_fixtures::{parsec_test, tmp_path, TmpPath};
+
+use crate::sqlite::{db::DatabaseError, AutoVacuum, LocalDatabase, VacuumMode};
 
 mod book;
 

@@ -4,6 +4,7 @@
 use std::path::{Path, PathBuf};
 
 use diesel::{connection::SimpleConnection, sqlite::SqliteConnection, Connection};
+
 use executor::SqliteExecutor;
 
 mod error;

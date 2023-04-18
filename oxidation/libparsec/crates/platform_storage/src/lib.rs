@@ -14,7 +14,7 @@ use std::collections::HashSet;
 
 use async_trait::async_trait;
 
-use libparsec_types::{BlockID, ChunkID, EntryID, LocalManifest, Regex};
+use libparsec_types::prelude::*;
 
 pub use error::{Result, StorageError};
 
