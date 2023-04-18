@@ -1,14 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
-use serde::{Deserialize, Serialize};
-use serde_with::*;
 use std::{
     collections::HashMap,
     io::{Read, Write},
     num::NonZeroU64,
     ops::Deref,
 };
+
+use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
+use serde::{Deserialize, Serialize};
+use serde_with::*;
 use unicode_normalization::UnicodeNormalization;
 
 use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};

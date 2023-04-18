@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use data_encoding::BASE32;
-use serde::de::{self, Deserialize, Deserializer, Visitor};
-use serde::ser::{Serialize, Serializer};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::str::FromStr;
+
+use data_encoding::BASE32;
+use serde::de::{self, Deserialize, Deserializer, Visitor};
+use serde::ser::{Serialize, Serializer};
 use url::Url;
 
 use libparsec_crypto::VerifyKey;

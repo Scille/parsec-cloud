@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 use std::{
     cmp::Ordering,
     collections::{hash_map::RandomState, HashMap, HashSet},
     num::NonZeroU64,
 };
+
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
 use libparsec_crypto::{HashDigest, SecretKey};
 use libparsec_serialization_format::parsec_data;
