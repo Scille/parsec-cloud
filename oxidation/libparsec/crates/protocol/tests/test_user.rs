@@ -3,9 +3,9 @@
 use hex_literal::hex;
 use std::num::NonZeroU64;
 
-use libparsec_types::prelude::*;
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
 use libparsec_tests_fixtures::parsec_test;
+use libparsec_types::prelude::*;
 
 #[parsec_test]
 fn serde_user_get_req() {

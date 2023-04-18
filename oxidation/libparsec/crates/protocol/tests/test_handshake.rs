@@ -5,9 +5,14 @@ use hex_literal::hex;
 use serde_json::{json, Value};
 use std::str::FromStr;
 
-use libparsec_protocol::*;
+use libparsec_protocol::{
+    Answer, ApiVersion, AuthenticatedClientHandshakeStalled, Handshake, HandshakeError,
+    HandshakeResult, InvitedClientHandshakeStalled, ServerHandshakeAnswer, ServerHandshakeResult,
+    ServerHandshakeStalled, SignedAnswer, API_V2_VERSION, BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+};
 use libparsec_tests_fixtures::{alice, bob, parsec_test, timestamp, Device};
-use libparsec_types::{DateTime, InvitationToken, InvitationType, OrganizationID};
+use libparsec_types::prelude::*;
 
 #[cfg(feature = "test")]
 #[parsec_test]
