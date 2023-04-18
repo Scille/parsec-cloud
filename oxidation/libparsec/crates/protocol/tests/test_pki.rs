@@ -6,7 +6,7 @@ use libparsec_protocol::{
     anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
 };
 use libparsec_tests_fixtures::parsec_test;
-use libparsec_types::{DateTime, EnrollmentID};
+use libparsec_types::prelude::*;
 
 #[parsec_test]
 #[case::submit(
