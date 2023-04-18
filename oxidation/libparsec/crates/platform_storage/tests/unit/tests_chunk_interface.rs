@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use libparsec_types::ChunkID;
+use libparsec_types::prelude::*;
 
 use crate::{ChunkStorage, StorageError};
 

@@ -1,8 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 //! Module that provide utilities functions for `local-db`, for example to open the database in memory and keep it for latter use when the [crate::LocalDatabase] is closed.
 
-use diesel::{Connection, SqliteConnection};
 use std::{ops::DerefMut, sync::Mutex};
+
+use diesel::{Connection, SqliteConnection};
 
 use super::DBPathInfo;
 

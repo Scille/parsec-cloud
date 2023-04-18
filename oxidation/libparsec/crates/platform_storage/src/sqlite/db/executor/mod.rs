@@ -4,10 +4,11 @@
 #[cfg(test)]
 mod tests;
 
-use diesel::{connection::SimpleConnection, SqliteConnection};
 use std::sync::atomic::Ordering;
 use std::sync::Mutex;
 use std::sync::{atomic::AtomicBool, Arc};
+
+use diesel::{connection::SimpleConnection, SqliteConnection};
 
 use super::{DatabaseError, DatabaseResult};
 

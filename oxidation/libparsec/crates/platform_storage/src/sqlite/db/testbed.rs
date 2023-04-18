@@ -1,8 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use diesel::{Connection, SqliteConnection};
-use libparsec_testbed::test_get_testbed;
 use std::{cell::RefCell, path::Path};
+
+use diesel::{Connection, SqliteConnection};
+
+use libparsec_testbed::test_get_testbed;
 
 use super::DBPathInfo;
 
