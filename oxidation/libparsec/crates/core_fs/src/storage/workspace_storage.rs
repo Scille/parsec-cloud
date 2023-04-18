@@ -10,10 +10,7 @@ use libparsec_platform_async::Mutex as AsyncMutex;
 use libparsec_platform_storage::{
     BlockStorage, ChunkStorage, Closable, ManifestStorage, NeedSyncEntries,
 };
-use libparsec_types::{
-    BlockID, ChunkID, EntryID, FileDescriptor, LocalDevice, LocalFileManifest, LocalFolderManifest,
-    LocalManifest, LocalUserManifest, LocalWorkspaceManifest, Regex,
-};
+use libparsec_types::prelude::*;
 
 use crate::{
     error::{FSError, FSResult},
@@ -643,7 +640,6 @@ mod tests {
 
     use libparsec_testbed::TestbedEnv;
     use libparsec_tests_fixtures::parsec_test;
-    use libparsec_types::{Blocksize, Chunk, DEFAULT_BLOCK_SIZE};
 
     use super::*;
 

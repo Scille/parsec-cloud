@@ -4,8 +4,7 @@ use libparsec_client_connection::CommandError;
 use libparsec_core::RemoteDevicesManagerError;
 use thiserror::Error;
 
-use libparsec_crypto::CryptoError;
-use libparsec_types::{BlockID, ChunkID, EntryID, FileDescriptor};
+use libparsec_types::prelude::*;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum FSError {

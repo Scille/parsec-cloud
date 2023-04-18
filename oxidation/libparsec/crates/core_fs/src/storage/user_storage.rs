@@ -7,8 +7,7 @@ use std::{
 
 use libparsec_platform_async::Mutex as AsyncMutex;
 use libparsec_platform_storage::{Closable, ManifestStorage, NeedSyncEntries};
-use libparsec_types::EntryID;
-use libparsec_types::{LocalDevice, LocalManifest, LocalUserManifest};
+use libparsec_types::prelude::*;
 
 use super::version::get_user_data_storage_db_relative_path;
 use crate::{error::FSResult, FSError};
@@ -203,7 +202,6 @@ pub async fn user_storage_non_speculative_init(
 mod tests {
     use libparsec_testbed::TestbedEnv;
     use libparsec_tests_fixtures::{parsec_test, timestamp};
-    use libparsec_types::{DateTime, UserManifest};
 
     use super::*;
 

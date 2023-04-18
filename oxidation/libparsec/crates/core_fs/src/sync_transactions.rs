@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use libparsec_types::{BlockAccess, EntryID, FileManifest, FolderManifest, WorkspaceManifest};
+use libparsec_types::prelude::*;
 
 #[derive(Default)]
 pub struct ChangesAfterSync {

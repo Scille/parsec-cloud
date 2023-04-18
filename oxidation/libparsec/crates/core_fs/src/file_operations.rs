@@ -4,7 +4,7 @@ use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::num::NonZeroU64;
 
-use libparsec_types::{Chunk, ChunkID, DateTime, LocalFileManifest};
+use libparsec_types::prelude::*;
 
 type WriteOperation = (Chunk, i64);
 
@@ -398,9 +398,8 @@ mod tests {
     use std::{collections::HashMap, str::FromStr};
 
     use libparsec_tests_fixtures::parsec_test;
-    use libparsec_types::{
-        Blocksize, Chunk, ChunkID, DateTime, DeviceID, EntryID, LocalFileManifest,
-    };
+
+    use super::*;
 
     use crate::file_operations::{prepare_read, prepare_reshape, prepare_resize, prepare_write};
 
