@@ -26,6 +26,7 @@ mod manifest;
 mod message;
 mod organization;
 mod pki;
+mod protocol;
 mod regex;
 mod time;
 mod user;
@@ -44,6 +45,7 @@ pub use manifest::*;
 pub use message::*;
 pub use organization::*;
 pub use pki::*;
+pub use protocol::*;
 pub use time::*;
 pub use user::*;
 

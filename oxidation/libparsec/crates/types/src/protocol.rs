@@ -24,14 +24,14 @@ impl From<IntegerBetween1And100> for u64 {
     }
 }
 
-pub trait Request {
+pub trait ProtocolRequest {
     type Response: for<'de> Deserialize<'de>;
 
-    fn dump(self) -> Result<Vec<u8>, EncodeError>;
+    fn dump(self) -> Result<Vec<u8>, ProtocolEncodeError>;
 
-    fn load_response(buf: &[u8]) -> Result<Self::Response, DecodeError>;
+    fn load_response(buf: &[u8]) -> Result<Self::Response, ProtocolDecodeError>;
 }
 
 /// Error while deserializing data.
-pub type DecodeError = rmp_serde::decode::Error;
-pub type EncodeError = rmp_serde::encode::Error;
+pub type ProtocolDecodeError = rmp_serde::decode::Error;
+pub type ProtocolEncodeError = rmp_serde::encode::Error;

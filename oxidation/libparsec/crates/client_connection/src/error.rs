@@ -3,6 +3,7 @@
 use thiserror::Error;
 
 use libparsec_protocol::ApiVersion;
+use libparsec_types::prelude::*;
 
 pub type CommandResult<T> = core::result::Result<T, CommandError>;
 
@@ -25,7 +26,7 @@ pub enum CommandError {
 
     /// We failed to deserialize the reply.
     #[error("Failed to deserialize the response: {0}")]
-    InvalidResponseContent(libparsec_miniprotocol::DecodeError),
+    InvalidResponseContent(ProtocolDecodeError),
 
     /// The invitation is already used/deleted
     #[error("Invalid handshake: Invitation already deleted")]
@@ -53,7 +54,7 @@ pub enum CommandError {
 
     /// Failed to serialize the request
     #[error("{0}")]
-    Serialization(libparsec_miniprotocol::EncodeError),
+    Serialization(ProtocolEncodeError),
 
     /// The version is not supported
     #[error("Unsupported API version: {api_version}, supported versions are: {supported_api_versions:?}")]
@@ -107,8 +108,8 @@ impl PartialEq for CommandError {
 
 impl Eq for CommandError {}
 
-impl From<libparsec_miniprotocol::DecodeError> for CommandError {
-    fn from(e: libparsec_miniprotocol::DecodeError) -> Self {
+impl From<ProtocolDecodeError> for CommandError {
+    fn from(e: ProtocolDecodeError) -> Self {
         Self::InvalidResponseContent(e)
     }
 }
@@ -119,8 +120,8 @@ impl From<reqwest::Error> for CommandError {
     }
 }
 
-impl From<libparsec_miniprotocol::EncodeError> for CommandError {
-    fn from(e: libparsec_miniprotocol::EncodeError) -> Self {
+impl From<ProtocolEncodeError> for CommandError {
+    fn from(e: ProtocolEncodeError) -> Self {
         Self::Serialization(e)
     }
 }

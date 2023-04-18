@@ -475,7 +475,7 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
             quote! {
 
                 pub mod #module_name {
-                    use libparsec_miniprotocol::Request;
+                    use libparsec_types::ProtocolRequest;
 
                     use super::AnyCmdReq;
                     use super::UnknownStatus;
@@ -484,7 +484,7 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
 
                     #struct_req
 
-                    impl Request for Req {
+                    impl ProtocolRequest for Req {
                         type Response = Rep;
 
                         fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {

@@ -7,8 +7,9 @@ use pyo3::{
 };
 
 use libparsec::protocol::{
-    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds, Request,
+    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
 };
+use libparsec::types::ProtocolRequest;
 
 use crate::protocol::{
     error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
