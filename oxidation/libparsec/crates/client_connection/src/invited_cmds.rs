@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_miniprotocol::Request;
-use libparsec_types::{BackendInvitationAddr, InvitationToken};
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
+
+use libparsec_types::prelude::*;
 
 use crate::{
     error::{CommandError, CommandResult},
@@ -63,12 +63,9 @@ fn prepare_request(
 }
 
 impl InvitedCmds {
-    pub async fn send<T>(
-        &self,
-        request: T,
-    ) -> CommandResult<<T as libparsec_miniprotocol::Request>::Response>
+    pub async fn send<T>(&self, request: T) -> CommandResult<<T as ProtocolRequest>::Response>
     where
-        T: Request,
+        T: ProtocolRequest,
     {
         let request_builder = self.client.post(self.url.clone());
 

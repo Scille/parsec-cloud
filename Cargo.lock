@@ -1181,7 +1181,6 @@ dependencies = [
  "libparsec_core",
  "libparsec_core_fs",
  "libparsec_crypto",
- "libparsec_miniprotocol",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
@@ -1236,7 +1235,6 @@ dependencies = [
  "http-body",
  "hyper",
  "libparsec_crypto",
- "libparsec_miniprotocol",
  "libparsec_platform_http_proxy",
  "libparsec_protocol",
  "libparsec_testbed",
@@ -1338,14 +1336,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libparsec_miniprotocol"
-version = "0.1.0"
-dependencies = [
- "rmp-serde",
- "serde",
-]
-
-[[package]]
 name = "libparsec_platform_async"
 version = "0.0.0"
 dependencies = [
@@ -1412,8 +1402,6 @@ dependencies = [
  "futures",
  "glob",
  "hex-literal 0.3.4",
- "libparsec_crypto",
- "libparsec_miniprotocol",
  "libparsec_serialization_format",
  "libparsec_tests_fixtures",
  "libparsec_types",
@@ -1431,7 +1419,6 @@ name = "libparsec_serialization_format"
 version = "0.0.0"
 dependencies = [
  "itertools",
- "libparsec_miniprotocol",
  "libparsec_types",
  "miniserde",
  "pretty_assertions",

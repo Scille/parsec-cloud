@@ -2,13 +2,11 @@
 
 use pyo3::{prelude::*, types::PyBytes, PyObject, PyResult, Python};
 
-use libparsec::protocol::{
-    authenticated_cmds::v2::{
-        events_listen::{self, APIEvent},
-        events_subscribe,
-    },
-    Request,
+use libparsec::protocol::authenticated_cmds::v2::{
+    events_listen::{self, APIEvent},
+    events_subscribe,
 };
+use libparsec::types::ProtocolRequest;
 
 use crate::{
     enumerate::{InvitationStatus, RealmRole},

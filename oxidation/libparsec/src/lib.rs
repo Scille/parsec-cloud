@@ -10,10 +10,7 @@ pub mod local_db {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod protocol {
-    pub use libparsec_miniprotocol::{IntegerBetween1And100, Request};
-    pub use libparsec_protocol::*;
-}
+pub use libparsec_protocol as protocol;
 #[cfg(feature = "test-utils")]
 pub use libparsec_testbed as testbed;
 #[cfg(not(target_arch = "wasm32"))]

@@ -2,7 +2,7 @@
 
 use hex_literal::hex;
 
-use libparsec_miniprotocol::Request;
+use libparsec_types::prelude::*;
 use libparsec_protocol::{
     authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
 };

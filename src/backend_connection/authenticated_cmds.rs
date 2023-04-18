@@ -5,8 +5,8 @@ use std::{collections::HashMap, num::NonZeroU64, sync::Arc};
 
 use libparsec::{
     client_connection,
-    protocol::{authenticated_cmds, IntegerBetween1And100},
-    types::Maybe,
+    protocol::authenticated_cmds,
+    types::{IntegerBetween1And100, Maybe},
 };
 
 use crate::{
