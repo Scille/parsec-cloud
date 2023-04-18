@@ -19,29 +19,6 @@ pub enum RegexError {
     },
 }
 
-#[cfg(any(test, feature = "test-utils"))]
-impl PartialEq for RegexError {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::ParseError { err: l_err }, Self::ParseError { err: r_err }) => l_err == r_err,
-            (Self::GlobPatternError { err: l_err }, Self::GlobPatternError { err: r_err }) => {
-                l_err.to_string() == r_err.to_string()
-            }
-            (
-                Self::PatternFileIOError {
-                    file_path: l_file_path,
-                    err: l_err,
-                },
-                Self::PatternFileIOError {
-                    file_path: r_file_path,
-                    err: r_err,
-                },
-            ) => l_file_path == r_file_path && l_err.kind() == r_err.kind(),
-            _ => false,
-        }
-    }
-}
-
 pub type RegexResult<T> = Result<T, RegexError>;
 
 #[derive(Error, Debug)]

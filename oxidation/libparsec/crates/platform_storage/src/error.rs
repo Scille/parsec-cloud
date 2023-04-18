@@ -27,35 +27,6 @@ pub enum StorageError {
     Vacuum(DynError),
 }
 
-#[cfg(any(test, feature = "test-utils"))]
-impl PartialEq for StorageError {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::InvalidRegexPattern(l0, l1), Self::InvalidRegexPattern(r0, r1)) => {
-                l0 == r0 && l1 == r1
-            }
-            (Self::Internal(l0), Self::Internal(r0)) | (Self::Vacuum(l0), Self::Vacuum(r0)) => {
-                l0.to_string() == r0.to_string()
-            }
-            (
-                Self::InvalidEntryID {
-                    used_as: l_used_as,
-                    error: l_error,
-                },
-                Self::InvalidEntryID {
-                    used_as: r_used_as,
-                    error: r_error,
-                },
-            ) => l_used_as == r_used_as && l_error == r_error,
-            (Self::LocalChunkIDMiss(l0), Self::LocalChunkIDMiss(r0)) => l0 == r0,
-            (Self::LocalBlockIDMiss(l0), Self::LocalBlockIDMiss(r0)) => l0 == r0,
-            (Self::LocalEntryIDMiss(l0), Self::LocalEntryIDMiss(r0)) => l0 == r0,
-            (Self::Crypto(l0), Self::Crypto(r0)) => l0 == r0,
-            _ => false,
-        }
-    }
-}
-
 impl From<CryptoError> for StorageError {
     fn from(value: CryptoError) -> Self {
         Self::Crypto(value)
