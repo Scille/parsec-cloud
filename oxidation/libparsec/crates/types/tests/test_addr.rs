@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use pretty_assertions::assert_eq;
 use rstest::rstest;
-use rstest_reuse::{apply, template};
+use rstest_reuse::{self, apply, template};
 use serde_test::{assert_tokens, Token};
 
 use libparsec_types::prelude::*;
