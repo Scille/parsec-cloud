@@ -2,6 +2,7 @@
 
 mod utils;
 
+use hyper::server::Server;
 use std::{
     net::{Ipv4Addr, SocketAddr, SocketAddrV4},
     str::FromStr,
@@ -10,18 +11,16 @@ use std::{
 use libparsec_client_connection::{
     generate_authenticated_client, AuthenticatedCmds, CommandError, CommandResult, ProxyConfig,
 };
-use libparsec_crypto::SigningKey;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::parsec_test;
-use libparsec_types::{BackendOrganizationAddr, DeviceID};
+use libparsec_types::prelude::*;
 use tokio::{
     sync::oneshot::{channel, Receiver, Sender},
     task::JoinHandle,
 };
-use utils::server::MakeSignatureVerifier;
 
-use hyper::server::Server;
+use crate::utils::server::MakeSignatureVerifier;
 
 const RVK: &str = "7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
 

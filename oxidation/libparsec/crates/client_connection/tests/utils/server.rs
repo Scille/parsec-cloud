@@ -1,18 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use base64::prelude::{Engine, BASE64_STANDARD};
-use chrono::{DateTime, FixedOffset};
-use http_body::Full;
-use hyper::{
-    body::{self, Bytes},
-    header::{AUTHORIZATION, WWW_AUTHENTICATE},
-    service::Service,
-    Body, HeaderMap, Request, Response, StatusCode,
-};
-use libparsec_client_connection::{API_VERSION_HEADER_NAME, PARSEC_AUTH_METHOD};
-use libparsec_crypto::VerifyKey;
-use libparsec_protocol::authenticated_cmds::v3::{self as authenticated_cmds, AnyCmdReq};
-use libparsec_types::DeviceID;
 use std::{
     collections::HashMap,
     convert::Infallible,
@@ -22,6 +9,20 @@ use std::{
     str::FromStr,
     task::{Context, Poll},
 };
+
+use base64::prelude::{Engine, BASE64_STANDARD};
+use chrono::{DateTime, FixedOffset};
+use http_body::Full;
+use hyper::{
+    body::{self, Bytes},
+    header::{AUTHORIZATION, WWW_AUTHENTICATE},
+    service::Service,
+    Body, HeaderMap, Request, Response, StatusCode,
+};
+
+use libparsec_client_connection::{API_VERSION_HEADER_NAME, PARSEC_AUTH_METHOD};
+use libparsec_protocol::authenticated_cmds::v3::{self as authenticated_cmds, AnyCmdReq};
+use libparsec_types::prelude::*;
 
 pub type ID = DeviceID;
 
