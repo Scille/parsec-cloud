@@ -51,7 +51,7 @@ fn prepare_request(request_builder: RequestBuilder, body: Vec<u8>) -> RequestBui
 }
 
 impl AnonymousCmds {
-    pub async fn send<T>(&self, request: T) -> CommandResult<<T as ProtocolRequest>::Response>
+    pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
     where
         T: ProtocolRequest,
     {
