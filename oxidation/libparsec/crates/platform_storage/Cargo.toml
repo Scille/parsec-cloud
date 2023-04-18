@@ -32,6 +32,7 @@ diesel = { version = "2.0.3", features = ["sqlite", "returning_clauses_for_sqlit
 libsqlite3-sys = { version = "0.25.2", features = ["bundled"] }
 
 [dev-dependencies]
+libparsec_platform_storage = { path = ".", features = ["test-utils"] }
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
