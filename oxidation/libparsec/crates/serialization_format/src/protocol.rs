@@ -475,7 +475,7 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
             quote! {
 
                 pub mod #module_name {
-                    use libparsec_types::ProtocolRequest;
+                    use ::libparsec_types::ProtocolRequest;
 
                     use super::AnyCmdReq;
                     use super::UnknownStatus;
