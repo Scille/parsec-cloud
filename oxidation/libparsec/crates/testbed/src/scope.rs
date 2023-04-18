@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use lazy_static::lazy_static;
 use std::{future::Future, io::Read, sync::Arc};
 
-use libparsec_types::BackendAddr;
+use lazy_static::lazy_static;
+
+use libparsec_types::prelude::*;
 
 use crate::{test_drop_testbed, test_new_testbed, TestbedEnv};
 

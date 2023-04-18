@@ -2,7 +2,7 @@
 
 use hex_literal::hex;
 
-use libparsec_crypto::SigningKey;
+use libparsec_types::prelude::*;
 
 use crate::TestbedTemplate;
 
