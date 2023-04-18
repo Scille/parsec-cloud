@@ -8,11 +8,7 @@ use libparsec_platform_async::Mutex;
 use libparsec_protocol::authenticated_cmds::v2::{
     realm_create, realm_get_role_certificates, vlob_list_versions,
 };
-use libparsec_types::{
-    CertificateSignerOwned, CertificateSignerRef, DataResult, DateTime, DeviceCertificate,
-    DeviceID, EntryID, LocalDevice, RealmID, RealmRole, RealmRoleCertificate,
-    RevokedUserCertificate, UserCertificate, UserID, VlobID,
-};
+use libparsec_types::prelude::*;
 
 use crate::{FSError, FSResult};
 
