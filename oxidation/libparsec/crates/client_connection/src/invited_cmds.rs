@@ -63,7 +63,7 @@ fn prepare_request(
 }
 
 impl InvitedCmds {
-    pub async fn send<T>(&self, request: T) -> CommandResult<<T as ProtocolRequest>::Response>
+    pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
     where
         T: ProtocolRequest,
     {

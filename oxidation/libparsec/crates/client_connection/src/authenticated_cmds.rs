@@ -139,7 +139,7 @@ fn sign_request(
 }
 
 impl AuthenticatedCmds {
-    pub async fn send<T>(&self, request: T) -> CommandResult<<T as ProtocolRequest>::Response>
+    pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
     where
         T: ProtocolRequest,
     {
