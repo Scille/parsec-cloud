@@ -4,13 +4,8 @@ use hex_literal::hex;
 use rstest::rstest;
 use std::{collections::HashMap, str::FromStr};
 
-use libparsec_crypto::{PublicKey, VerifyKey};
-
-use crate::{
-    fixtures::{alice, Device},
-    BackendPkiEnrollmentAddr, DeviceID, DeviceLabel, EnrollmentID, LocalPendingEnrollment,
-    PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, UserProfile, X509Certificate,
-};
+use libparsec_types::fixtures::{alice, Device};
+use libparsec_types::prelude::*;
 
 #[rstest]
 #[case::without(

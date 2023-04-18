@@ -3,12 +3,8 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_crypto::SecretKey;
-
-use crate::{
-    fixtures::{alice, Device},
-    LocalDevice, UserProfile,
-};
+use libparsec_types::fixtures::{alice, Device};
+use libparsec_types::prelude::*;
 
 #[rstest]
 #[case::admin(

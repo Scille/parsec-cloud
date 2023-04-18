@@ -3,12 +3,8 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_crypto::SecretKey;
-
-use crate::{
-    fixtures::{alice, bob, Device},
-    EntryID, MessageContent,
-};
+use libparsec_types::fixtures::{alice, bob, Device};
+use libparsec_types::prelude::*;
 
 #[rstest]
 fn serde_sharing_granted_message(alice: &Device, bob: &Device) {

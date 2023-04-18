@@ -3,11 +3,8 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use crate::{
-    fixtures::{alice, Device},
-    AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileRecovery, DeviceFileSmartcard,
-    DeviceFileType, HumanHandle, LegacyDeviceFile, LegacyDeviceFilePassword, OrganizationID,
-};
+use libparsec_types::fixtures::{alice, Device};
+use libparsec_types::prelude::*;
 
 #[rstest]
 fn test_password_protected_device_file(alice: &Device) {
