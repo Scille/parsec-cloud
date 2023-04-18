@@ -1451,7 +1451,6 @@ dependencies = [
  "crc32fast",
  "hex-literal 0.3.4",
  "lazy_static",
- "libparsec_crypto",
  "libparsec_tests_fixtures",
  "libparsec_types",
  "log",
