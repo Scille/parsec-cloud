@@ -7,11 +7,6 @@
 /// Needed to expose `rstest_reuse::template` proc macro
 use rstest_reuse;
 
-use libparsec_types::*;
-
-#[path = "../src/fixtures.rs"]
-mod fixtures;
-
 mod test_addr;
 mod test_certif;
 mod test_id;

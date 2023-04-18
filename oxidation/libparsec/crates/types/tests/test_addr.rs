@@ -7,13 +7,7 @@ use rstest::rstest;
 use rstest_reuse::{apply, template};
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::SigningKey;
-
-use crate::{
-    AddrError, BackendAddr, BackendInvitationAddr, BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr, BackendOrganizationFileLinkAddr, InvitationType,
-    OrganizationID,
-};
+use libparsec_types::prelude::*;
 
 const ORG: &str = "MyOrg";
 const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";

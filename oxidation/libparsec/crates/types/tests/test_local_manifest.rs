@@ -7,14 +7,8 @@ use std::{
     num::NonZeroU64,
 };
 
-use libparsec_crypto::prelude::*;
-
-use crate::{
-    fixtures::{alice, timestamp, Device},
-    BlockAccess, BlockID, Blocksize, Chunk, ChunkID, DateTime, DeviceID, EntryID, EntryName,
-    FileManifest, FolderManifest, LocalFileManifest, LocalFolderManifest, LocalUserManifest,
-    LocalWorkspaceManifest, RealmRole, Regex, UserManifest, WorkspaceEntry, WorkspaceManifest,
-};
+use libparsec_types::fixtures::{alice, timestamp, Device};
+use libparsec_types::prelude::*;
 
 type AliceLocalFileManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFileManifest)>;
 type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest)>;
