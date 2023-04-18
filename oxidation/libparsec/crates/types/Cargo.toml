@@ -3,11 +3,6 @@ name = "libparsec_types"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"
-autotests = false
-
-[[test]]
-name = "types_integration"
-path = "tests/mod.rs"
 
 [features]
 # TODO: this feature is never referenced, is it useful ?
