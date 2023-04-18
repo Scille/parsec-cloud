@@ -3,13 +3,10 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use crate::{build_signature_path, TrustchainError, TrustchainResult};
-use libparsec_crypto::VerifyKey;
 use libparsec_protocol::authenticated_cmds::v2::user_get::Trustchain;
-use libparsec_types::{
-    CertificateSignerOwned, CertificateSignerRef, DateTime, DeviceCertificate, DeviceID,
-    RevokedUserCertificate, TimeProvider, UserCertificate, UserID, UserProfile,
-};
+use libparsec_types::prelude::*;
+
+use crate::{build_signature_path, TrustchainError, TrustchainResult};
 
 #[derive(Debug)]
 struct CertifState<'a, T> {

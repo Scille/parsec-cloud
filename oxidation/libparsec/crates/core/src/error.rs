@@ -3,7 +3,7 @@
 use libparsec_client_connection::CommandError;
 use thiserror::Error;
 
-use libparsec_types::{DateTime, DeviceID, UserID};
+use libparsec_types::prelude::*;
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum TrustchainError {
