@@ -180,10 +180,10 @@ async fn set_manifest(timestamp: DateTime, env: &TestbedEnv) {
     });
 
     assert!(data_storage.get_manifest_in_cache(entry_id).is_none());
-    assert_eq!(
-        data_storage.get_manifest(entry_id).await,
-        Err(crate::StorageError::LocalEntryIDMiss(entry_id))
-    );
+    assert!(matches!(
+    data_storage.get_manifest(entry_id).await,
+    Err(crate::StorageError::LocalEntryIDMiss(x)) if x == entry_id
+    ));
 
     data_storage
         .set_manifest(entry_id, local_file_manifest.clone(), None)

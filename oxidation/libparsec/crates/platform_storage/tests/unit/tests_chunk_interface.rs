@@ -83,13 +83,12 @@ async fn remove_chunk_from_storage<S: ChunkStorage + Send + Sync>(storage: &S, c
 
 async fn operation_on_missing_chunk<S: ChunkStorage + Send + Sync>(storage: &S, chunk_id: ChunkID) {
     assert!(!storage.is_chunk(chunk_id).await.unwrap());
-    assert_eq!(
+    assert!(matches!(
         storage.get_chunk(chunk_id).await,
-        Err(StorageError::LocalChunkIDMiss(chunk_id))
-    );
-
-    assert_eq!(
+        Err(StorageError::LocalChunkIDMiss(x)) if x == chunk_id
+    ));
+    assert!(matches!(
         storage.clear_chunk(chunk_id).await,
-        Err(StorageError::LocalChunkIDMiss(chunk_id))
-    );
+        Err(StorageError::LocalChunkIDMiss(x)) if x == chunk_id
+    ));
 }
