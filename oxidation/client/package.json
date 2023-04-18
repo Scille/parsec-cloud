@@ -63,7 +63,7 @@
     "eslint-plugin-n": "^15.6.1",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-vue": "^8.0.1",
-    "happy-dom": "^8.9.0",
+    "happy-dom": "^9.8.1",
     "sass": "^1.58.3",
     "sass-loader": "^13.2.0",
     "typescript": "^4.9.5",
