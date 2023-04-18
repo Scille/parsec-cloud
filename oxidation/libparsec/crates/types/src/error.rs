@@ -1,10 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::path::PathBuf;
+
 use thiserror::Error;
 
-use crate::{DateTime, DeviceFileType, DeviceID, EntryID, RealmID, UserID};
 use libparsec_crypto::CryptoError;
+
+use crate::{DateTime, DeviceFileType, DeviceID, EntryID, RealmID, UserID};
 
 #[derive(Error, Debug)]
 pub enum RegexError {
