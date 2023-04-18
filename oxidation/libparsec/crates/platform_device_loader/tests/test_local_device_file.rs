@@ -6,9 +6,7 @@ use std::collections::HashSet;
 use libparsec_platform_device_loader::*;
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{alice, bob, mallory, parsec_test, tmp_path, Device, TmpPath};
-use libparsec_types::{
-    AvailableDevice, DeviceFile, DeviceFilePassword, DeviceFileType, DeviceID, LocalDevice,
-};
+use libparsec_types::prelude::*;
 
 fn device_file_factory(device: LocalDevice) -> DeviceFile {
     DeviceFile::Password(DeviceFilePassword {

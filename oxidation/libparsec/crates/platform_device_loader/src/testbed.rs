@@ -1,10 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_testbed::{test_get_testbed, TestbedTemplate};
-use libparsec_types::{
-    local_device_slug, AvailableDevice, BackendOrganizationAddr, DeviceFileType,
-};
 use std::path::Path;
+
+use libparsec_testbed::{test_get_testbed, TestbedTemplate};
+use libparsec_types::prelude::*;
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
 
