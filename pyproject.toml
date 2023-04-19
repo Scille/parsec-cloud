@@ -40,6 +40,15 @@ parsec = "parsec.cli:cli"
 python = "~3.11.0"
 
 
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-i686-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-ppc64le-image = "manylinux_2_28"
+manylinux-s390x-image = "manylinux_2_28"
+manylinux-pypy_x86_64-image = "manylinux_2_28"
+manylinux-pypy_i686-image = "manylinux_2_28"
+manylinux-pypy_aarch64-image = "manylinux_2_28"
+
 # Base requirements
 
 certifi = ">=2021,<2023"
@@ -165,7 +174,7 @@ generate-setup-file = false
 script = "build.py"
 
 [tool.cibuildwheel]
-build = "cp39-{manylinux,macos,win}*"
+build = "cp311-{manylinux,macos,win}*"
 archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash misc/setup-rust.sh"
