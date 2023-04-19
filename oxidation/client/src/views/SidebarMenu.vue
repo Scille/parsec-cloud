@@ -152,7 +152,7 @@ import {
   business,
   cog
 } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { createGesture } from '@ionic/vue';
 
@@ -193,6 +193,17 @@ const router = useRouter();
 const currentRoute = useRoute();
 const { t, d } = useI18n();
 
+const splitPane = ref();
+const divider = ref();
+const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
+
+const unwatch = watch(wasReset, (value) => {
+  if (value) {
+    resizeMenu(defaultWidth);
+    wasReset.value = false;
+  }
+});
+
 function navigateToPage(pageName: string): void {
   router.push({ name: pageName });
   menuController.close();
@@ -201,8 +212,6 @@ function navigateToPage(pageName: string): void {
 // code au chargement de la page
 onMounted(() => {
   device = JSON.parse(currentRoute.query.device as string);
-
-  init(splitPane, divider);
 
   if (divider.value) {
     const gesture = createGesture({
@@ -215,9 +224,9 @@ onMounted(() => {
   }
 });
 
-const splitPane = ref();
-const divider = ref();
-const { initialWidth, computedWidth, resizeMenu, init } = useSidebarMenu();
+onUnmounted(() => {
+  unwatch();
+});
 
 function onMove(detail: GestureDetail): void {
   requestAnimationFrame(() => {
@@ -232,8 +241,17 @@ function onMove(detail: GestureDetail): void {
   });
 }
 
-function onEnd(detail: any): void {
+function onEnd(): void {
   initialWidth.value = computedWidth.value;
+}
+
+function resizeMenu(newWidth: number): void {
+  if (splitPane.value) {
+    splitPane.value.$el.style.setProperty('--side-width', `${newWidth}px`);
+  }
+  if (divider.value) {
+    divider.value.style.setProperty('left', `${newWidth - 4}px`);
+  }
 }
 
 </script>

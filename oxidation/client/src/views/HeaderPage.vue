@@ -108,7 +108,6 @@ import {
   menu
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
-import { ref } from 'vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 
 const router = useRouter();
