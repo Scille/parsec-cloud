@@ -14,14 +14,9 @@
 set -eux
 set -o pipefail
 
-RUST_TOOLCHAIN=${1:-1.68.0}
-
-df -h
-pwd
-
-if command -v rustc && [[ "$(rustc --version)" == *"${RUST_TOOLCHAIN}"* ]]; then
-    echo "rust-${RUST_TOOLCHAIN} already installed"
+if command -v rustc; then
+    echo "rust already installed"
 else
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --default-toolchain ${RUST_TOOLCHAIN} --profile minimal ${@:2}
-    echo "Successfully installed rust-${RUST_TOOLCHAIN}"
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --default-toolchain none --profile minimal
+    echo "Successfully installed rust"
 fi
