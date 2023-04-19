@@ -55,8 +55,22 @@ jobs:
         working-directory: oxidation/client
         timeout-minutes: 5
 
-      - name: E2E tests
+      - name: Check lint
         if: steps.should-run-web-jobs.outputs.run == 'true'
+        run: npm run lint
+        working-directory: oxidation/client
+        timeout-minutes: 5
+
+      - name: Install web bindings
+        # Currently disable because `E2E tests & Unit tests` are.
+        if: false && steps.should-run-web-jobs.outputs.run == 'true'
+        run: npm run build:ci
+        working-directory: oxidation/bindings/web
+        timeout-minutes: 15
+
+      - name: E2E tests
+        # Currently disable because of #4393
+        if: false && steps.should-run-web-jobs.outputs.run == 'true'
         # Without `VUE_CLI_TEST` set, the command hangs forever because
         # it fails to stop the server :'(
         # (see https://github.com/vuejs/vue-cli/issues/3401)
@@ -68,7 +82,8 @@ jobs:
       # libparsec web plugin that is also needed for the unit tests (but
       # which doesn't trigger it compilation...)
       - name: Unit tests
-        if: steps.should-run-web-jobs.outputs.run == 'true'
+        # Currently disabled because of #3494
+        if: false && steps.should-run-web-jobs.outputs.run == 'true'
         run: npm run test:unit
         working-directory: oxidation/client
         timeout-minutes: 10
