@@ -78,6 +78,7 @@
           </ion-list>
         </ion-content>
       </ion-menu>
+
       <ion-router-outlet id="main" />
     </ion-split-pane>
   </ion-page>
