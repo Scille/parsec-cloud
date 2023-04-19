@@ -39,16 +39,6 @@ parsec = "parsec.cli:cli"
 [tool.poetry.dependencies]
 python = "~3.11.0"
 
-
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-i686-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
-manylinux-ppc64le-image = "manylinux_2_28"
-manylinux-s390x-image = "manylinux_2_28"
-manylinux-pypy_x86_64-image = "manylinux_2_28"
-manylinux-pypy_i686-image = "manylinux_2_28"
-manylinux-pypy_aarch64-image = "manylinux_2_28"
-
 # Base requirements
 
 certifi = ">=2021,<2023"
@@ -181,6 +171,15 @@ before-all = "bash misc/setup-rust.sh"
 before-build = "python -m pip install -U pip"
 test-extras = "core"
 test-command = "parsec --version && parsec core list_devices"
+
+manylinux-x86_64-image = "manylinux_2_24"
+manylinux-i686-image = "manylinux_2_24"
+manylinux-aarch64-image = "manylinux_2_24"
+manylinux-ppc64le-image = "manylinux_2_24"
+manylinux-s390x-image = "manylinux_2_24"
+manylinux-pypy_x86_64-image = "manylinux_2_24"
+manylinux-pypy_i686-image = "manylinux_2_24"
+manylinux-pypy_aarch64-image = "manylinux_2_24"
 
 [tool.cibuildwheel.environment]
 # As it name suggests, `misc/setup-rust.sh` (run during cibuildwheel's before-all) will
