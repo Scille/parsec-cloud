@@ -125,17 +125,6 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
     ROOT_DIR
-    / "misc/setup-rust.sh": {
-        Tool.Rust: [
-            ReplaceRegex(r"rust-.* \(The default\)", "rust-{version} (The default)"),
-            ReplaceRegex(
-                r"setup-rust.sh .* # Will install rust-.*",
-                "setup-rust.sh {version} # Will install rust-{version}",
-            ),
-            ReplaceRegex(r"RUST_TOOLCHAIN=\$\{1:-.*\}", "RUST_TOOLCHAIN=${{1:-{version}}}"),
-        ]
-    },
-    ROOT_DIR
     / "misc/version_updater.py": {
         Tool.Rust: [ReplaceRegex(r'Tool.Rust: "[0-9.]+"', 'Tool.Rust: "{version}"')],
         Tool.Python: [ReplaceRegex(r'Tool.Python: "[0-9.]+"', 'Tool.Python: "{version}"')],
