@@ -16,6 +16,9 @@ set -o pipefail
 
 RUST_TOOLCHAIN=${1:-1.68.0}
 
+df -h
+pwd
+
 if command -v rustc && [[ "$(rustc --version)" == *"${RUST_TOOLCHAIN}"* ]]; then
     echo "rust-${RUST_TOOLCHAIN} already installed"
 else
