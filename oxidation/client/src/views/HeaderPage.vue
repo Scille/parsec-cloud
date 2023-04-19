@@ -5,6 +5,20 @@
     <ion-header>
       <ion-toolbar color="primary">
         <ion-buttons slot="start">
+          <ion-button
+            v-if="!isPlatform('mobile') && isHidden()"
+            slot="icon-only"
+            id="trigger-toggle-menu-button"
+            class="ion-hide-lg-down"
+            @click="reset()"
+          >
+            <ion-icon
+              slot="icon-only"
+              :icon="menu"
+            />
+          </ion-button>
+        </ion-buttons>
+        <ion-buttons slot="start">
           <ion-menu-button />
         </ion-buttons>
         <ion-buttons slot="primary">
@@ -90,9 +104,14 @@ import {
 import {
   personCircleOutline,
   settingsOutline,
-  helpCircleOutline
+  helpCircleOutline,
+  menu
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
+import { ref } from 'vue';
+import useSidebarMenu from '@/services/sidebarMenu';
 
 const router = useRouter();
+const { isHidden, reset } = useSidebarMenu();
+
 </script>

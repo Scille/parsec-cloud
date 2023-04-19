@@ -1,7 +1,14 @@
 <template>
   <ion-page>
+    <div
+      class="divider"
+      ref="divider"
+    >
+      <div class="divider-hover"></div>
+    </div>
     <ion-split-pane
       content-id="main"
+      ref="splitPane"
     >
       <ion-menu
         content-id="main"
@@ -138,17 +145,20 @@ import {
   IonAvatar,
   IonItem,
   IonRouterOutlet,
-  menuController
+  menuController,
+  GestureDetail
 } from '@ionic/vue';
 import {
   business,
   cog
 } from 'ionicons/icons';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { createGesture } from '@ionic/vue';
 
 import { useRouter, useRoute } from 'vue-router';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
+import useSidebarMenu from '@/services/sidebarMenu';
 
 let device: any = {};
 
@@ -191,7 +201,40 @@ function navigateToPage(pageName: string): void {
 // code au chargement de la page
 onMounted(() => {
   device = JSON.parse(currentRoute.query.device as string);
+
+  init(splitPane, divider);
+
+  if (divider.value) {
+    const gesture = createGesture({
+      gestureName: 'resize-menu',
+      el: divider.value,
+      onEnd,
+      onMove
+    });
+    gesture.enable();
+  }
 });
+
+const splitPane = ref();
+const divider = ref();
+const { initialWidth, computedWidth, resizeMenu, init } = useSidebarMenu();
+
+function onMove(detail: GestureDetail): void {
+  requestAnimationFrame(() => {
+    let currentWidth = initialWidth.value + detail.deltaX;
+    if (currentWidth >= 4 && currentWidth <= 500) {
+      if (currentWidth <= 100) {
+        currentWidth = 4;
+      }
+      resizeMenu(currentWidth);
+      computedWidth.value = currentWidth;
+    }
+  });
+}
+
+function onEnd(detail: any): void {
+  initialWidth.value = computedWidth.value;
+}
 
 </script>
 
@@ -248,6 +291,42 @@ onMounted(() => {
 }
 .list-md{
   background: none;
+}
+
+ion-split-pane {
+  --side-min-width: 0px;
+  --side-max-width: 500px;
+  --side-width: 300px;
+}
+
+ion-menu {
+  user-select: none;
+}
+
+.divider {
+  left: 296px;
+  height: 100%;
+  width: 8px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 9999999990;
+  cursor: col-resize;
+  display: flex;
+  justify-content: center;
+  .divider-hover {
+    width: 4px;
+    height: 100%;
+    background: transparent;
+  }
+
+  &:hover, &:active {
+    .divider-hover {
+      background: var(--parsec-color-light-primary-300);
+    }
+  }
 }
 
 .menu-list-workspaces{
