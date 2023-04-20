@@ -29,16 +29,5 @@ pub fn test_get_testbed_templates() -> Vec<Arc<TestbedTemplate>> {
 }
 
 #[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    pub fn test_stability() {
-        let a1 = coolorg::generate();
-        let a2 = coolorg::generate();
-        let a3 = empty::generate();
-
-        assert_eq!(a1.crc, a2.crc);
-        assert_ne!(a1.crc, a3.crc);
-    }
-}
+#[path = "../tests/unit/testbed.rs"]
+mod tests;
