@@ -88,13 +88,6 @@ jobs:
             newsfragments:
               - newsfragments/**
 
-      - name: Install Cargo fmt
-        run: |
-          set -ex
-          rustup component add rustfmt
-          cargo fmt --version
-        timeout-minutes: 2
-
       - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
@@ -155,7 +148,7 @@ jobs:
             }}
           config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
-          SKIP: clippy,cspell
+          SKIP: clippy,fmt,cspell
         timeout-minutes: 30
 
   test-python-matrix:

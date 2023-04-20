@@ -99,4 +99,12 @@ jobs:
           steps.should-run-rust-jobs.outputs.run == 'true'
           && startsWith(matrix.os, 'ubuntu-')
         with:
-          extra-args: clippy --all-files --verbose
+          extra-args: clippy --verbose
+        timeout-minutes: 5
+
+      - name: Check rust code format
+        if: >-
+          steps.should-run-rust-jobs.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        run: cargo fmt --check
+        timeout-minutes: 2
