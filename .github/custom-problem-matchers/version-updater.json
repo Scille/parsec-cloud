@@ -1,0 +1,16 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "version-updater",
+            "pattern": [
+                {
+                    "regexp": "(.*):(\\d+):(\\d+): (.*)",
+                    "file": 1,
+                    "line": 2,
+                    "col": 3,
+                    "message": 4
+                }
+            ]
+        }
+    ]
+}

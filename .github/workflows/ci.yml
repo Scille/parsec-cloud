@@ -74,6 +74,14 @@ jobs:
             newsfragments:
               - newsfragments/**
 
+      - name: Check tools version
+        run: |
+          echo "::add-matcher::.github/custom-problem-matchers/version-updater.json"
+          python3 --version
+          python3 misc/version_updater.py --check
+          echo "::remove-matcher owner=version-updater::"
+        timeout-minutes: 2
+
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
 
