@@ -3,7 +3,7 @@
 # If you think you belongs to one of these teams because you're proficient in one of those parts, ask @touilleMan.
 
 # JS team is responsible for the web code.
-/oxidation/clients/     @Scille/js-code-owners
+/oxidation/client/      @Scille/js-code-owners
 package.json            @Scille/js-code-owners
 package-lock.json       @Scille/js-code-owners
 *.js                    @Scille/js-code-owners
