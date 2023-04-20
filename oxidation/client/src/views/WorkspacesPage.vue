@@ -6,7 +6,7 @@
       <h4 class="ion-margin-start">
         {{ $t('WorkspacesPage.documents') }}
       </h4>
-      <ion-item-divider class="workspace-toolbar ion-margin-bottom">
+      <ion-item-divider class="workspace-toolbar ion-margin-bottom secondary">
         <ion-button
           v-if="!isPlatform('mobile')"
           fill="clear"

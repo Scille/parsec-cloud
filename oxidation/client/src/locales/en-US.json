@@ -87,7 +87,8 @@
     },
     "HeaderPage": {
         "about": "About",
-        "support": "Help and feedback"
+        "support": "Help and feedback",
+        "loggedIn": "Logged in"
     },
     "SettingsPage": {
         "pageTitle": "Settings",
