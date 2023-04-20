@@ -12,9 +12,9 @@ import { inject } from 'vue';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from './states/darkMode';
-import { StorageManager } from '@/services/storageManager';
+import { storageManagerKey } from './main';
 
-const storageManager: StorageManager = inject('storageManager')!;
+const storageManager = inject(storageManagerKey)!;
 
 onMounted(async (): Promise<void> => {
   SplashScreen.hide();
