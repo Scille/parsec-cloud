@@ -82,12 +82,6 @@ jobs:
             newsfragments:
               - newsfragments/**
 
-      - uses: ./.github/actions/setup-python-poetry
-        with:
-          python-version: ${{ env.python-version }}
-          poetry-version: ${{ env.poetry-version }}
-        timeout-minutes: 5
-
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
 
@@ -115,15 +109,6 @@ jobs:
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
           echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
-      - name: Install project (needed for mypy check)
-        run: |
-          set -ex
-          poetry install -E core -E backend
-        # We skip _parsec.so compilation given Mypy only cares about _parsec.pyi
-        env:
-          POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
-        timeout-minutes: 10
-
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
       - uses: ./.github/actions/use-pre-commit
@@ -137,8 +122,8 @@ jobs:
             }}
           config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
-          SKIP: clippy,fmt,cspell,eslint
-        timeout-minutes: 30
+          SKIP: clippy,fmt,cspell,ruff,black,mypy,eslint
+        timeout-minutes: 5
 
   test-python-matrix:
     uses: ./.github/workflows/ci-python.yml

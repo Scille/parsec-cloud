@@ -47,6 +47,7 @@ jobs:
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
         id: changes
         with:
+          list-files: shell
           filters: .github/filters/ci.yml
 
       - name: Check modified path that require python-ci run
@@ -201,6 +202,36 @@ jobs:
           if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
         timeout-minutes: 20
+
+      - name: Install pre-commit
+        if: >-
+          steps.should-run-python-jobs.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        id: pre-commit
+        uses: ./.github/actions/use-pre-commit
+        with:
+          install-only: true
+
+      - name: Check python code style
+        if: >-
+          steps.should-run-python-jobs.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        run: |
+          set -eux
+          for step in mypy black ruff; do
+            python \
+              ${{ steps.pre-commit.outputs.install-path }} \
+              run \
+              $step \
+              --show-diff-on-failure \
+              --verbose \
+              --color=always \
+              $EXTRA_ARGS
+          done
+        env:
+          EXTRA_ARGS: >-
+            ${{ steps.changes.outputs.any-python_files != '' && format('--files {0}', steps.changes.outputs.any-python_files) || '--all-files' }}
+        timeout-minutes: 10
 
       # We only save the libparsec lib when:
       # - We are not in a github queue branch (they're a one time use so caching won't help)
