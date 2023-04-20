@@ -37,7 +37,7 @@ include = [
 parsec = "parsec.cli:cli"
 
 [tool.poetry.dependencies]
-python = "~3.9.0"
+python = "~3.9.5"
 
 # Base requirements
 
