@@ -14,7 +14,7 @@
                 size="8"
                 offset="2"
               >
-                <img src="../assets/images/Logo/logo_inline_blue2.png">
+                <img src="../assets/images/Logo/logo_column_gradient.svg">
               </ion-col>
               <ion-col size="2">
                 <ion-button
@@ -348,6 +348,7 @@ async function login(workspace: string): Promise<void> {
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
   // change object to string
+  // name: défini l'endroit ou le code va aller, query: défini les paramètres
   router.push({ name: 'workspaces', query: { device: JSON.stringify(selectedDevice) } });
 }
 

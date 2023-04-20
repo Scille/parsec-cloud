@@ -4,15 +4,13 @@ http://ionicframework.com/docs/theming/ */
 @font-face {
   font-family: 'montserrat';
   font-style: normal;
-  font-weight: normal;
-  src: url('../assets/fonts/montserrat.ttf');
+  src: url('../assets/fonts/montserrat-VariableFont_wght.ttf');
 }
 
 @font-face {
   font-family: 'montserrat';
-  font-style: normal;
-  font-weight: bold;
-  src: url('../assets/fonts/montserrat_bold.ttf');
+  font-style: italic;
+  src: url('../assets/fonts/montserrat-Italic-VariableFont_wght.ttf');
 }
 
 /* New colors */
@@ -263,14 +261,33 @@ body.dark {
   --parsec-color-light-secondary-premiere: hsla(240, 20%, 96.1%, 1);
   --parsec-color-light-secondary-background: hsla(240, 20%, 98%, 1);
   --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99.6%, 1);
+
+  /* ------ alert light------ */
+  ---parsec-color--success-100: hsla(146, 61.5%, 94.9%, 1);
+  ---parsec-color--success-500: hsla(144, 64.6%, 44.3%, 1);
+  ---parsec-color--success-700: hsla(144, 64.7%, 40%, 1);
+
+  ---parsec-color--warning-100: hsla(45, 92.3%, 94.9%, 1);
+  ---parsec-color--warning-500: hsla(46, 92.9%, 50%, 1);
+  ---parsec-color--warning-700: hsla(45, 93.1%, 40%, 1);
+
+  ---parsec-color--danger-100: hsla(352, 60%, 95.1%, 1);
+  ---parsec-color--danger-500: hsla(352, 60.8%, 50%, 1);
+  ---parsec-color--danger-700: hsla(352, 60.8%, 40%, 1);
+
+  /* ------ tags light------ */
+  ---parsec-color--tags-blue100: hsla(198, 100%, 92%, 1);
+  ---parsec-color--tags-blue500: hsla(198, 82%, 36%, 1);
+  ---parsec-color--tags-indigo100: hsla(247, 100%, 95%, 1);
+  ---parsec-color--tags-indigo500: hsla(245, 100%, 36%, 1);
+  ---parsec-color--tags-orange100: hsla(37, 100%, 95%, 1);
+  ---parsec-color--tags-orange500: hsla(36, 100%, 36%, 1);
+  ---parsec-color--tags-green100: hsla(68, 100%, 92%, 1);
+  ---parsec-color--tags-green500: hsla(72, 90%, 32%, 1);
 }
 
 /* **** Parsec typography **** */
 
-/* *[class~="title-"]{
-  line-height: 120%;
-  font-weight: 600;
-} */
 
 /* ** title ** */
 .title-h1 {

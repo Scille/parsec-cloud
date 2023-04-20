@@ -23,7 +23,7 @@
             "backToList": "Retour aux organisations",
             "forgottenPassword": "Mot de passe oublié ?",
             "passwordLabel": "Mot de passe",
-            "login": "Se connecter"
+            "loggedIn": "Se connecter"
         },
         "mainMenu": {
             "changelog": "Journal des modifications"
@@ -87,7 +87,8 @@
     },
     "HeaderPage": {
         "about": "À propos",
-        "support": "Aide et commentaires"
+        "support": "Aide et commentaires",
+        "loggedIn": "Connecté"
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",
