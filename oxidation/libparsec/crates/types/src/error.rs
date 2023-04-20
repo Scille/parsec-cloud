@@ -51,14 +51,19 @@ pub enum DataError {
     #[error("Invalid author: expected Root(None), got `{0}`")]
     Root(DeviceID),
 
+    // `DeviceID` is 72bytes long, so boxing is needed to limit presure on the stack
     #[error("Invalid author: expected `{expected}`, got `{}`", match .got { Some(got) => got.to_string(), None => "None".to_string() })]
     UnexpectedAuthor {
-        expected: DeviceID,
-        got: Option<DeviceID>,
+        expected: Box<DeviceID>,
+        got: Option<Box<DeviceID>>,
     },
 
+    // `DeviceID` is 72bytes long, so boxing is needed to limit presure on the stack
     #[error("Invalid device ID: expected `{expected}`, got `{got}`")]
-    UnexpectedDeviceID { expected: DeviceID, got: DeviceID },
+    UnexpectedDeviceID {
+        expected: Box<DeviceID>,
+        got: Box<DeviceID>,
+    },
 
     #[error("Invalid realm ID: expected `{expected}`, got `{got}`")]
     UnexpectedRealmID { expected: RealmID, got: RealmID },
@@ -76,11 +81,11 @@ pub enum DataError {
     UnexpectedVersion { expected: u32, got: u32 },
 }
 
-pub type DataResult<T> = Result<T, Box<DataError>>;
+pub type DataResult<T> = Result<T, DataError>;
 
-impl From<CryptoError> for Box<DataError> {
+impl From<CryptoError> for DataError {
     fn from(exc: CryptoError) -> Self {
-        Box::new(DataError::Crypto { exc })
+        DataError::Crypto { exc }
     }
 }
 
@@ -99,7 +104,7 @@ pub enum PkiEnrollmentLocalPendingError {
     Validation { exc: DataError },
 }
 
-pub type PkiEnrollmentLocalPendingResult<T> = Result<T, Box<PkiEnrollmentLocalPendingError>>;
+pub type PkiEnrollmentLocalPendingResult<T> = Result<T, PkiEnrollmentLocalPendingError>;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum LocalDeviceError {

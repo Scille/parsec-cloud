@@ -107,25 +107,25 @@ macro_rules! impl_manifest_dump_load {
                 expected_version: Option<u32>,
             ) -> DataResult<()> {
                 if self.author != *expected_author {
-                    Err(Box::new(DataError::UnexpectedAuthor {
-                        expected: expected_author.clone(),
-                        got: Some(self.author.clone()),
-                    }))
+                    Err(DataError::UnexpectedAuthor {
+                        expected: Box::new(expected_author.clone()),
+                        got: Some(Box::new(self.author.clone())),
+                    })
                 } else if self.timestamp != expected_timestamp {
-                    Err(Box::new(DataError::UnexpectedTimestamp {
+                    Err(DataError::UnexpectedTimestamp {
                         expected: expected_timestamp,
                         got: self.timestamp,
-                    }))
+                    })
                 } else if expected_id.is_some() && expected_id != Some(self.id) {
-                    Err(Box::new(DataError::UnexpectedId {
+                    Err(DataError::UnexpectedId {
                         expected: expected_id.unwrap(),
                         got: self.id,
-                    }))
+                    })
                 } else if expected_version.is_some() && expected_version != Some(self.version) {
-                    Err(Box::new(DataError::UnexpectedVersion {
+                    Err(DataError::UnexpectedVersion {
                         expected: expected_version.unwrap(),
                         got: self.version,
-                    }))
+                    })
                 } else {
                     Ok(())
                 }
@@ -525,7 +525,7 @@ impl Manifest {
         let blob = key
             .decrypt(encrypted)
             .map_err(|exc| DataError::Crypto { exc })?;
-        rmp_serde::from_slice(&blob).map_err(|_| Box::new(DataError::Serialization))
+        rmp_serde::from_slice(&blob).map_err(|_| DataError::Serialization)
     }
 
     pub fn decrypt_verify_and_load(

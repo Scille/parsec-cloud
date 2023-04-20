@@ -6,10 +6,12 @@ use rstest::fixture;
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 use crate::{
-    BackendOrganizationAddr, CertificateSignerOwned, DateTime, DeviceCertificate, DeviceID,
-    DeviceLabel, EntryID, HumanHandle, LocalDevice, OrganizationID, TimeProvider, UserCertificate,
-    UserID, UserProfile,
+    BackendOrganizationAddr, CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel,
+    EntryID, HumanHandle, LocalDevice, OrganizationID, TimeProvider, UserCertificate, UserID,
+    UserProfile,
 };
+// Re-expose `DateTime` to simplify use of `timestamp` fixture
+pub use crate::DateTime;
 
 pub struct Device {
     pub organization_addr: BackendOrganizationAddr,

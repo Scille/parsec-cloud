@@ -35,7 +35,7 @@ macro_rules! impl_local_manifest_dump_load {
                     .decrypt(encrypted)
                     .map_err(|exc| libparsec_types::DataError::Crypto { exc })?;
                 ::rmp_serde::from_slice(&serialized)
-                    .map_err(|_| Box::new(libparsec_types::DataError::Serialization))
+                    .map_err(|_| libparsec_types::DataError::Serialization)
             }
         }
     };
@@ -1063,7 +1063,7 @@ impl LocalManifest {
         let serialized = key
             .decrypt(encrypted)
             .map_err(|exc| DataError::Crypto { exc })?;
-        rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
+        rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
     }
 }
 

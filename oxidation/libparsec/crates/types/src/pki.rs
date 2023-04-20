@@ -25,7 +25,7 @@ fn load<T: DeserializeOwned>(raw: &[u8]) -> DataResult<T> {
         .read_to_end(&mut decompressed)
         .map_err(|_| DataError::Compression)?;
 
-    rmp_serde::from_slice(&decompressed).map_err(|_| Box::new(DataError::Serialization))
+    rmp_serde::from_slice(&decompressed).map_err(|_| DataError::Serialization)
 }
 
 fn dump<T: Serialize>(data: &T) -> Vec<u8> {
@@ -175,7 +175,7 @@ impl LocalPendingEnrollment {
     }
 
     pub fn load(raw: &[u8]) -> DataResult<Self> {
-        rmp_serde::from_slice(raw).map_err(|_| Box::new(DataError::Serialization))
+        rmp_serde::from_slice(raw).map_err(|_| DataError::Serialization)
     }
 
     pub fn dump(&self) -> Vec<u8> {
@@ -206,8 +206,7 @@ impl LocalPendingEnrollment {
             path: path.to_path_buf(),
             exc: e.to_string(),
         })?;
-        Self::load(&data)
-            .map_err(|exc| Box::new(PkiEnrollmentLocalPendingError::Validation { exc: *exc }))
+        Self::load(&data).map_err(|exc| PkiEnrollmentLocalPendingError::Validation { exc })
     }
 
     pub fn load_from_enrollment_id(
@@ -223,11 +222,9 @@ impl LocalPendingEnrollment {
         enrollment_id: EnrollmentID,
     ) -> PkiEnrollmentLocalPendingResult<()> {
         let path = Self::path_from_enrollment_id(config_dir, enrollment_id);
-        std::fs::remove_file(&path).map_err(|e| {
-            Box::new(PkiEnrollmentLocalPendingError::CannotRemove {
-                path,
-                exc: e.to_string(),
-            })
+        std::fs::remove_file(&path).map_err(|e| PkiEnrollmentLocalPendingError::CannotRemove {
+            path,
+            exc: e.to_string(),
         })
     }
 

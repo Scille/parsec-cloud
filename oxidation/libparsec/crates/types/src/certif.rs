@@ -29,7 +29,7 @@ where
     ZlibDecoder::new(&compressed[..])
         .read_to_end(&mut serialized)
         .map_err(|_| DataError::Compression)?;
-    rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
+    rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
 }
 
 fn check_author_allow_root(
@@ -41,16 +41,16 @@ fn check_author_allow_root(
             CertificateSignerOwned::User(author_id),
             CertificateSignerRef::User(expected_author_id),
         ) if author_id != expected_author_id => {
-            return Err(Box::new(DataError::UnexpectedAuthor {
-                expected: expected_author_id.clone(),
-                got: Some(author_id.clone()),
-            }))
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author_id.clone()),
+                got: Some(Box::new(author_id.clone())),
+            })
         }
         (CertificateSignerOwned::Root, CertificateSignerRef::User(expected_author_id)) => {
-            return Err(Box::new(DataError::UnexpectedAuthor {
-                expected: expected_author_id.clone(),
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author_id.clone()),
                 got: None,
-            }))
+            })
         }
         _ => (),
     }
@@ -67,7 +67,7 @@ macro_rules! impl_unsecure_load {
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| DataError::Compression)?;
-                ::rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
+                ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
             }
         }
     };
@@ -177,16 +177,16 @@ impl UserCertificate {
 
         if let Some(expected_user_id) = expected_user_id {
             if &r.user_id != expected_user_id {
-                return Err(Box::new(DataError::UnexpectedUserID {
+                return Err(DataError::UnexpectedUserID {
                     expected: expected_user_id.clone(),
                     got: r.user_id,
-                }));
+                });
             }
         }
 
         if let Some(expected_human_handle) = expected_human_handle {
             if r.human_handle.as_ref() != Some(expected_human_handle) {
-                return Err(Box::new(DataError::InvalidHumanHandle));
+                return Err(DataError::InvalidHumanHandle);
             }
         }
 
@@ -257,18 +257,18 @@ impl RevokedUserCertificate {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
         if &r.author != expected_author {
-            return Err(Box::new(DataError::UnexpectedAuthor {
-                expected: expected_author.clone(),
-                got: Some(r.author),
-            }));
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(r.author)),
+            });
         }
 
         if let Some(expected_user_id) = expected_user_id {
             if &r.user_id != expected_user_id {
-                return Err(Box::new(DataError::UnexpectedUserID {
+                return Err(DataError::UnexpectedUserID {
                     expected: expected_user_id.clone(),
                     got: r.user_id,
-                }));
+                });
             }
         }
 
@@ -319,10 +319,10 @@ impl DeviceCertificate {
 
         if let Some(expected_device_id) = expected_device_id {
             if &r.device_id != expected_device_id {
-                return Err(Box::new(DataError::UnexpectedDeviceID {
-                    expected: expected_device_id.clone(),
-                    got: r.device_id,
-                }));
+                return Err(DataError::UnexpectedDeviceID {
+                    expected: Box::new(expected_device_id.clone()),
+                    got: Box::new(r.device_id),
+                });
             }
         }
 
@@ -372,19 +372,19 @@ impl RealmRoleCertificate {
 
         if let Some(expected_realm_id) = expected_realm_id {
             if r.realm_id != expected_realm_id {
-                return Err(Box::new(DataError::UnexpectedRealmID {
+                return Err(DataError::UnexpectedRealmID {
                     expected: expected_realm_id,
                     got: r.realm_id,
-                }));
+                });
             }
         }
 
         if let Some(expected_user_id) = expected_user_id {
             if &r.user_id != expected_user_id {
-                return Err(Box::new(DataError::UnexpectedUserID {
+                return Err(DataError::UnexpectedUserID {
                     expected: expected_user_id.clone(),
                     got: r.user_id,
-                }));
+                });
             }
         }
 
@@ -483,7 +483,7 @@ impl SequesterServiceCertificate {
         ZlibDecoder::new(buf)
             .read_to_end(&mut serialized)
             .map_err(|_| DataError::Compression)?;
-        rmp_serde::from_slice(&serialized).map_err(|_| Box::new(DataError::Serialization))
+        rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
     }
 }
 
