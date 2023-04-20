@@ -2,22 +2,8 @@
 # These parts are assigned to a specific team whose members are proficient in them.
 # If you think you belongs to one of these teams because you're proficient in one of those parts, ask @touilleMan.
 
-# @touilleMan is responsible for the CODEOWNERS file ;)
-.github/CODEOWNERS      @touilleMan
-
-# Rust team is responsible for the rust code.
-oxidation/libparsec/    @Scille/rust-code-owners
-oxidation/bindings/     @Scille/rust-code-owners
-src                     @Scille/rust-code-owners
-rust-toolchain.toml     @Scille/rust-code-owners
-Cargo.toml              @Scille/rust-code-owners
-Cargo.lock              @Scille/rust-code-owners
-# For now only rust code use json schema
-/json_schema            @Scille/rust-code-owners
-
 # JS team is responsible for the web code.
-oxidation/bindings/     @Scille/js-code-owners
-oxidation/clients/      @Scille/js-code-owners
+/oxidation/clients/     @Scille/js-code-owners
 package.json            @Scille/js-code-owners
 package-lock.json       @Scille/js-code-owners
 *.js                    @Scille/js-code-owners
@@ -25,19 +11,40 @@ package-lock.json       @Scille/js-code-owners
 *.ts                    @Scille/js-code-owners
 *.vue                   @Scille/js-code-owners
 *.css                   @Scille/js-code-owners
+*.scss                  @Scille/js-code-owners
 *.html                  @Scille/js-code-owners
 
-# Ops team is responsible for the CI & the packaging system.
-.github/                @Scille/ops-code-owners
-packaging/              @Scille/ops-code-owners
-misc/                   @Scille/ops-code-owners
+# The bindings folder contains rust code that is used by the `web`, `electron` & `android`.
+# The responsability is shared between the js & rust teams.
+/oxidation/bindings/    @Scille/js-code-owners @Scille/rust-code-owners
+
+
+# Rust team is responsible for the rust code.
+/oxidation/libparsec/   @Scille/rust-code-owners
+/src                    @Scille/rust-code-owners
+rust-toolchain.toml     @Scille/rust-code-owners
+Cargo.toml              @Scille/rust-code-owners
+Cargo.lock              @Scille/rust-code-owners
+# For now only rust code use json schema
+/json_schema            @Scille/rust-code-owners
+
+# The /src contains rust binding that is used by the python code.
+# So the responsability is shared between rust & python teams.
+/src/                   @Scille/rust-code-owners @Scille/python-code-owners
 
 # Python team is responsible for the python code.
-src/                    @Scille/python-code-owners
-parsec/                 @Scille/python-code-owners
-tests/                  @Scille/python-code-owners
+/parsec/                @Scille/python-code-owners
+/tests/                 @Scille/python-code-owners
 pyproject.toml          @Scille/python-code-owners
 poetry.lock             @Scille/python-code-owners
 readthedocs.yml         @Scille/python-code-owners
 mypy.ini                @Scille/python-code-owners
 setup.cfg               @Scille/python-code-owners
+
+# Ops team is responsible for the CI & the packaging system.
+/.github/                @Scille/ops-code-owners
+/packaging/             @Scille/ops-code-owners
+/misc/                  @Scille/ops-code-owners
+
+# @touilleMan is responsible for the CODEOWNERS file ;)
+/.github/CODEOWNERS      @touilleMan
