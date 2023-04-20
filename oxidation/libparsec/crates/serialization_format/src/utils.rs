@@ -58,9 +58,9 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
         Type::Path(p) => {
             let ty = p.path.segments.last().unwrap_or_else(|| unreachable!());
             let mut ident = (match ty.ident.to_string().as_str() {
-                "Integer" => "i64",
+                "Integer" => "libparsec_types::Integer",
                 "Boolean" => "bool",
-                "Float" => "f64",
+                "Float" => "libparsec_types::Float",
                 "String" => "String",
                 "Bytes" => "Vec<u8>",
                 // Both value convert to the same type but have a different meaning.
@@ -71,9 +71,9 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "List" => "Vec",
                 "Map" => "::std::collections::HashMap",
                 "Set" => "::std::collections::HashSet",
-                "Version" => "u32",
-                "Size" => "u64",
-                "Index" => "u64",
+                "Version" => "libparsec_types::VersionInt",
+                "Size" => "libparsec_types::SizeInt",
+                "Index" => "libparsec_types::IndexInt",
                 "NonZeroInteger" => "::std::num::NonZeroU64",
                 "PublicKey" => "libparsec_types::PublicKey",
                 "SigningKey" => "libparsec_types::SigningKey",
