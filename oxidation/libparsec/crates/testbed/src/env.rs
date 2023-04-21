@@ -16,7 +16,7 @@ use reqwest::StatusCode;
 
 use libparsec_types::prelude::*;
 
-use crate::{TestbedTemplate, TESTBED_TEMPLATES};
+use crate::{get_template, TestbedTemplate};
 
 // Testbed always works in memory, the path only acts as an identifier.
 const TESTBED_BASE_DUMMY_PATH: &str = "/parsec/testbed/";
@@ -99,12 +99,7 @@ pub async fn test_new_testbed(
     server_addr: Option<&BackendAddr>,
 ) -> Arc<TestbedEnv> {
     // 1) Retrieve the template
-    let template = TESTBED_TEMPLATES
-        .iter()
-        .find(|x| x.id == template)
-        .unwrap_or_else(|| {
-            panic!("No testbed template named `{}`", template);
-        });
+    let template = get_template(template);
 
     let (kind, organization_addr) = if let Some(server_addr) = server_addr {
         // 2) Call the test server to setup the env on it side
