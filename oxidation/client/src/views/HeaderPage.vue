@@ -35,7 +35,9 @@
             />
             Mes espaces
           </ion-breadcrumb>
-          <ion-breadcrumb href="#electronics">breadcrumb item</ion-breadcrumb>
+          <ion-breadcrumb @click="$router.push('electronics')">
+            breadcrumb item
+          </ion-breadcrumb>
         </ion-breadcrumbs>
 
         <!-- top right icon + profile -->
