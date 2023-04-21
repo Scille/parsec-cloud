@@ -23,6 +23,7 @@ members = [
     "oxidation/libparsec/crates/platform_async",
     "oxidation/libparsec/crates/platform_device_loader",
     "oxidation/libparsec/crates/platform_storage",
+    "oxidation/libparsec/crates/platform_storage2",
     "oxidation/libparsec/crates/protocol",
     "oxidation/libparsec/crates/serialization_format",
     "oxidation/libparsec/crates/testbed",

@@ -1390,6 +1390,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_platform_storage2"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "lazy_static",
+ "libparsec_platform_async",
+ "libparsec_testbed",
+ "libparsec_tests_fixtures",
+ "libparsec_types",
+ "libsqlite3-sys",
+ "log",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "libparsec_protocol"
 version = "0.0.0"
 dependencies = [
@@ -1449,6 +1465,7 @@ dependencies = [
  "lazy_static",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
+ "libparsec_platform_storage2",
  "libparsec_testbed",
  "libparsec_tests_macros",
  "libparsec_types",
