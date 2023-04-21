@@ -6,7 +6,8 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use libparsec::protocol::{authenticated_cmds::v2::message_get, Request};
+use libparsec::protocol::authenticated_cmds::v2::message_get;
+use libparsec::types::ProtocolRequest;
 
 use crate::protocol::{
     error::{ProtocolError, ProtocolErrorFields, ProtocolResult},

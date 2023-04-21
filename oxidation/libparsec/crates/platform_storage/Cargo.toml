@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-test-utils = ["libparsec_types/test-utils"]
+test-utils = []
 # We have two ways of mocking database:
 # - `test-in-memory-mock`: the legacy global switch (should only be used with the Python tests)
 # - `test-with-testbed`: the faster and parallel system (which uses configuration dir as discriminant)

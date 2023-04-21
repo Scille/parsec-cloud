@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+// Functions using rstest parametrize ignores `#[warn(clippy::too_many_arguments)]`
+// decorator, so we must do global ignore instead :(
+#![allow(clippy::too_many_arguments)]
+
 use hex_literal::hex;
 use rstest::rstest;
 use std::{
@@ -7,14 +11,8 @@ use std::{
     num::NonZeroU64,
 };
 
-use libparsec_crypto::prelude::*;
-
-use crate::{
-    fixtures::{alice, timestamp, Device},
-    BlockAccess, BlockID, Blocksize, Chunk, ChunkID, DateTime, DeviceID, EntryID, EntryName,
-    FileManifest, FolderManifest, LocalFileManifest, LocalFolderManifest, LocalUserManifest,
-    LocalWorkspaceManifest, RealmRole, Regex, UserManifest, WorkspaceEntry, WorkspaceManifest,
-};
+use libparsec_types::fixtures::{alice, timestamp, Device};
+use libparsec_types::prelude::*;
 
 type AliceLocalFileManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFileManifest)>;
 type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest)>;

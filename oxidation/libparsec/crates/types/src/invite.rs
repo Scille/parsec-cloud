@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::str::FromStr;
+
 use rand::{seq::SliceRandom, Rng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
-use std::str::FromStr;
 
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;

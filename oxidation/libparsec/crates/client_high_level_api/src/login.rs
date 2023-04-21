@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_platform_device_loader::load_device_with_password;
-use once_cell::sync::OnceCell;
 use std::path::{Path, PathBuf};
+
+use once_cell::sync::OnceCell;
 use thiserror::Error;
 
 use libparsec_core::LoggedCore;
 use libparsec_platform_async::Mutex;
+use libparsec_platform_device_loader::load_device_with_password;
 use libparsec_types::DeviceID;
 
 pub use libparsec_crypto::SequesterVerifyKeyDer;

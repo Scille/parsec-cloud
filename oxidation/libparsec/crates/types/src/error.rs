@@ -1,10 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::path::PathBuf;
+
 use thiserror::Error;
 
-use crate::{DateTime, DeviceFileType, DeviceID, EntryID, RealmID, UserID};
 use libparsec_crypto::CryptoError;
+
+use crate::{DateTime, DeviceFileType, DeviceID, EntryID, RealmID, UserID};
 
 #[derive(Error, Debug)]
 pub enum RegexError {
@@ -17,29 +19,6 @@ pub enum RegexError {
         file_path: std::path::PathBuf,
         err: std::io::Error,
     },
-}
-
-#[cfg(any(test, feature = "test-utils"))]
-impl PartialEq for RegexError {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::ParseError { err: l_err }, Self::ParseError { err: r_err }) => l_err == r_err,
-            (Self::GlobPatternError { err: l_err }, Self::GlobPatternError { err: r_err }) => {
-                l_err.to_string() == r_err.to_string()
-            }
-            (
-                Self::PatternFileIOError {
-                    file_path: l_file_path,
-                    err: l_err,
-                },
-                Self::PatternFileIOError {
-                    file_path: r_file_path,
-                    err: r_err,
-                },
-            ) => l_file_path == r_file_path && l_err.kind() == r_err.kind(),
-            _ => false,
-        }
-    }
 }
 
 pub type RegexResult<T> = Result<T, RegexError>;

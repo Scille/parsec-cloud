@@ -31,13 +31,12 @@
 //!
 
 use base64::prelude::{Engine, BASE64_STANDARD};
-use libparsec_crypto::SigningKey;
-use libparsec_miniprotocol::Request;
-use libparsec_types::{BackendOrganizationAddr, DeviceID};
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
+
+use libparsec_types::prelude::*;
 
 use crate::{
     error::{CommandError, CommandResult},
@@ -65,18 +64,18 @@ impl AuthenticatedCmds {
         addr: BackendOrganizationAddr,
         device_id: DeviceID,
         signing_key: SigningKey,
-    ) -> Result<Self, url::ParseError> {
+    ) -> Self {
         let url = addr.to_authenticated_http_url();
 
         let device_id = BASE64_STANDARD.encode(device_id.to_string().as_bytes());
 
-        Ok(Self {
+        Self {
             client,
             addr,
             url,
             device_id,
             signing_key,
-        })
+        }
     }
 
     pub fn addr(&self) -> &BackendOrganizationAddr {
@@ -140,12 +139,9 @@ fn sign_request(
 }
 
 impl AuthenticatedCmds {
-    pub async fn send<T>(
-        &self,
-        request: T,
-    ) -> CommandResult<<T as libparsec_miniprotocol::Request>::Response>
+    pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
     where
-        T: Request,
+        T: ProtocolRequest,
     {
         let request_builder = self.client.post(self.url.clone());
 

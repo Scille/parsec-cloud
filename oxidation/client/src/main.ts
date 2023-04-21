@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import { createApp } from 'vue';
+import { InjectionKey, createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 
@@ -33,6 +33,14 @@ import { DateTime } from 'luxon';
 import './theme/variables.css';
 import { libparsec } from './plugins/libparsec';
 
+export interface Formatters {
+  timeSince(date: DateTime | undefined, defaultValue?: string): string;
+}
+
+const formattersKey = Symbol('formatters') as InjectionKey<Formatters>;
+const storageManagerKey = Symbol('storageManager') as InjectionKey<StorageManager>;
+const configPathKey = Symbol('configPath') as InjectionKey<string>;
+
 async function setupApp(): Promise<void> {
 
   const storageManager = new StorageManager();
@@ -43,7 +51,7 @@ async function setupApp(): Promise<void> {
   /* I18n variables */
   // Type-define 'fr-FR' as the master schema for the resource
   type MessageSchema = typeof frFR;
-  const supportedLocales:{[key: string]: string} = {
+  const supportedLocales: { [key: string]: string } = {
     fr: 'fr-FR',
     en: 'en-US',
     'fr-FR': 'fr-FR',
@@ -99,13 +107,13 @@ async function setupApp(): Promise<void> {
     .use(router)
     .use(i18n);
 
-  app.provide('formatters', {
-    'timeSince': (date: DateTime | undefined, defaultValue=''): string => {
+  app.provide(formattersKey, {
+    'timeSince': (date: DateTime | undefined, defaultValue = ''): string => {
       const { t, d } = useI18n();
       return formatTimeSince(date, t, d, defaultValue);
     }
   });
-  app.provide('storageManager', storageManager);
+  app.provide(storageManagerKey, storageManager);
 
   // We can start the app with different cases :
   // - dev with a testbed Parsec server with the default devices
@@ -128,7 +136,7 @@ async function setupApp(): Promise<void> {
   const nextStage = async (configPath: string): Promise<void> => {
     await router.isReady();
     // configPath is injected to components
-    app.provide('configPath', configPath);
+    app.provide(configPathKey, configPath);
     app.mount('#app');
     appElem.setAttribute('app-state', 'ready');
   };
@@ -155,3 +163,9 @@ declare global {
 }
 
 await setupApp();
+
+export {
+  formattersKey,
+  storageManagerKey,
+  configPathKey
+};

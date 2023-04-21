@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use lazy_static::lazy_static;
-use reqwest::StatusCode;
 use std::{
     any::Any,
     collections::HashMap,
@@ -13,9 +11,10 @@ use std::{
     },
 };
 
-use libparsec_types::{
-    BackendAddr, BackendOrganizationAddr, DeviceID, LocalDevice, OrganizationID, TimeProvider,
-};
+use lazy_static::lazy_static;
+use reqwest::StatusCode;
+
+use libparsec_types::prelude::*;
 
 use crate::{TestbedTemplate, TESTBED_TEMPLATES};
 

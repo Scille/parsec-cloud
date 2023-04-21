@@ -363,7 +363,7 @@ Git provides multiple methods for that
 
 - `git squash` (`git merge --squash`):
 
-  Apply the changes onto the destination branch but wont make a commit, this
+  Apply the changes onto the destination branch but won't make a commit, this
   allows to create a single commit on top of the current branch.
 
 - `git rebase`

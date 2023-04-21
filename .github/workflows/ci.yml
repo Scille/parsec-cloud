@@ -10,9 +10,6 @@ on:
 
 env:
   python-version: "3.9"
-  # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
-  # That would break our unit test if we don't update them.
-  node-version: 18.12.0
   poetry-version: 1.3.2
   # Cargo will be faster with this configuration.
   # It will only update it's index for the dependencies that we use.
@@ -28,10 +25,7 @@ jobs:
       - check-quality-assurance
       - test-python-matrix
       - test-rust-matrix
-      # Disabled till we fix Cypress tests with Vite
-      # see issue: #4393
-      # see issue: #4394
-      # - test-web-app
+      - test-web-app
       - check-spelling
     runs-on: ubuntu-latest
     if: always()
@@ -88,23 +82,11 @@ jobs:
             newsfragments:
               - newsfragments/**
 
-      - name: Install Cargo fmt
-        run: |
-          set -ex
-          rustup component add rustfmt
-          cargo fmt --version
-        timeout-minutes: 2
-
       - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
         timeout-minutes: 5
-
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c  # pin v3.6.0
-        with:
-          node-version: ${{ env.node-version }}
-        timeout-minutes: 2
 
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
@@ -155,7 +137,7 @@ jobs:
             }}
           config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
-          SKIP: clippy,cspell
+          SKIP: clippy,fmt,cspell,eslint
         timeout-minutes: 30
 
   test-python-matrix:
@@ -165,6 +147,4 @@ jobs:
     uses: ./.github/workflows/ci-rust.yml
 
   test-web-app:
-    # Disabled till we fix Cypress tests with Vite, see issue: #4393 & #4394
-    if: false
     uses: ./.github/workflows/ci-web.yml

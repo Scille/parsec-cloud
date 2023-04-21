@@ -13,8 +13,8 @@ use libparsec::protocol::{
         v2::pki_enrollment_accept,
         v2::{pki_enrollment_list, pki_enrollment_reject},
     },
-    Request,
 };
+use libparsec::types::ProtocolRequest;
 
 use crate::{
     binding_utils::BytesWrapper,

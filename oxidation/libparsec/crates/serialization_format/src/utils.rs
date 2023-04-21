@@ -75,14 +75,14 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "Size" => "u64",
                 "Index" => "u64",
                 "NonZeroInteger" => "::std::num::NonZeroU64",
-                "PublicKey" => "libparsec_crypto::PublicKey",
-                "SigningKey" => "libparsec_crypto::SigningKey",
-                "VerifyKey" => "libparsec_crypto::VerifyKey",
-                "PrivateKey" => "libparsec_crypto::PrivateKey",
-                "SecretKey" => "libparsec_crypto::SecretKey",
-                "HashDigest" => "libparsec_crypto::HashDigest",
-                "SequesterVerifyKeyDer" => "libparsec_crypto::SequesterVerifyKeyDer",
-                "SequesterPublicKeyDer" => "libparsec_crypto::SequesterPublicKeyDer",
+                "PublicKey" => "libparsec_types::PublicKey",
+                "SigningKey" => "libparsec_types::SigningKey",
+                "VerifyKey" => "libparsec_types::VerifyKey",
+                "PrivateKey" => "libparsec_types::PrivateKey",
+                "SecretKey" => "libparsec_types::SecretKey",
+                "HashDigest" => "libparsec_types::HashDigest",
+                "SequesterVerifyKeyDer" => "libparsec_types::SequesterVerifyKeyDer",
+                "SequesterPublicKeyDer" => "libparsec_types::SequesterPublicKeyDer",
                 "DateTime" => "libparsec_types::DateTime",
                 "BlockID" => "libparsec_types::BlockID",
                 "DeviceID" => "libparsec_types::DeviceID",
@@ -116,7 +116,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "PkiEnrollmentSubmitPayload" => "PkiEnrollmentSubmitPayload",
                 "X509Certificate" => "libparsec_types::X509Certificate",
                 // Used only in protocol
-                "IntegerBetween1And100" => "libparsec_miniprotocol::IntegerBetween1And100",
+                "IntegerBetween1And100" => "libparsec_types::IntegerBetween1And100",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }

@@ -1,21 +1,23 @@
 {
     "compilerOptions": {
-        "target": "esnext",
-        "module": "esnext",
+        "target": "ESNext",
+        "module": "ESNext",
         "strict": true,
         "jsx": "preserve",
         "importHelpers": true,
-        "moduleResolution": "node",
+        "moduleResolution": "Node",
         "skipLibCheck": true,
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "strictFunctionTypes": true,
+        "useDefineForClassFields": true,
         "sourceMap": true,
         "baseUrl": ".",
         "types": [
             "node",
-            "cypress"
+            "cypress",
+            "vite/client"
         ],
         "paths": {
             "@/*": [
@@ -23,10 +25,10 @@
             ]
         },
         "lib": [
-            "esnext",
-            "dom",
-            "dom.iterable",
-            "scripthost"
+            "ESNext",
+            "DOM",
+            "DOM.Iterable",
+            "ScriptHost"
         ]
     },
     "include": [

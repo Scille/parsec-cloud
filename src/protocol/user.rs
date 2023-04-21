@@ -8,10 +8,10 @@ use pyo3::{
 };
 use std::num::NonZeroU64;
 
-use libparsec::protocol::{
-    authenticated_cmds::v2::{device_create, human_find, user_create, user_get, user_revoke},
-    IntegerBetween1And100, Request,
+use libparsec::protocol::authenticated_cmds::v2::{
+    device_create, human_find, user_create, user_get, user_revoke,
 };
+use libparsec::types::{IntegerBetween1And100, ProtocolRequest};
 
 use crate::{
     binding_utils::BytesWrapper,

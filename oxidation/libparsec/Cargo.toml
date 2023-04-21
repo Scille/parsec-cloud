@@ -33,6 +33,5 @@ libparsec_platform_storage = { path = "crates/platform_storage", optional = true
 # TODO: merge with regular dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libparsec_protocol = { path = "crates/protocol" }
-libparsec_miniprotocol = { path = "crates/miniprotocol" }
 libparsec_core_fs = { path = "crates/core_fs" }
 libparsec_types = { path = "crates/types" }

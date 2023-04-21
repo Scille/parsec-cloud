@@ -3,9 +3,13 @@
 #[macro_use]
 extern crate lazy_static;
 
+// Re-expose crypto so that `use libparsec_types::prelude::*` is the single-no-brainer-one-liner™
+pub use libparsec_crypto::*;
+
 #[cfg(any(test, feature = "test-fixtures"))]
-/// We define test fixture in that module.
-/// We defined those fixtures here and not in a different crate to prevent cyclic dependencies.
+/// We define test fixtures here and not in a different crate to prevent cyclic dependencies.
+/// Given this is just an implementation detail, only `libparsec_test_fixtures` should access
+/// this module (and, in turn, 3rd party crates should use `libparsec_test_fixtures`)
 pub mod fixtures;
 
 mod addr;
@@ -22,6 +26,7 @@ mod manifest;
 mod message;
 mod organization;
 mod pki;
+mod protocol;
 mod regex;
 mod time;
 mod user;
@@ -40,6 +45,7 @@ pub use manifest::*;
 pub use message::*;
 pub use organization::*;
 pub use pki::*;
+pub use protocol::*;
 pub use time::*;
 pub use user::*;
 
@@ -48,4 +54,8 @@ pub enum ClientType {
     Authenticated,
     Invited,
     Anonymous,
+}
+
+pub mod prelude {
+    pub use super::*;
 }

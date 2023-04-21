@@ -18,8 +18,8 @@ use libparsec::protocol::{
         invite_2b_claimer_send_nonce, invite_3a_claimer_signify_trust,
         invite_3b_claimer_wait_peer_trust, invite_4_claimer_communicate, invite_info,
     },
-    Request,
 };
+use libparsec::types::ProtocolRequest;
 
 use crate::{
     api_crypto,

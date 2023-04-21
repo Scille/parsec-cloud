@@ -54,11 +54,11 @@ import { libparsec } from '../plugins/libparsec';
 import { ClientEvent, ClientConfig, DeviceAccessParamsPassword } from '../plugins/libparsec/definitions';
 
 const name = ref('Scruffy');
-
+const message = ref('Lorem Ipsum');
 const path = 'PATH/TO/.config/parsec/';
 const password = 'PASSWORD';
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-unused-vars
-const onEventCallback = (event: ClientEvent) =>  {
+const onEventCallback = (event: ClientEvent) => {
   console.log('callback');
 };
 const config: ClientConfig = {
@@ -88,20 +88,20 @@ async function onSubmit(): Promise<void> {
 
 <style lang="scss" scoped>
 #container {
-    text-align: center;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+  text-align: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 
-    strong {
-        font-size: 20px;
-        line-height: 26px;
-    }
+  strong {
+    font-size: 20px;
+    line-height: 26px;
+  }
 
-    a {
-        text-decoration: none;
-    }
+  a {
+    text-decoration: none;
+  }
 }
 </style>

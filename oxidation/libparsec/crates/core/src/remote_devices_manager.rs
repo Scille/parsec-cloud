@@ -1,11 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use libparsec_client_connection::{AuthenticatedCmds, CommandError};
-use libparsec_crypto::VerifyKey;
 use libparsec_protocol::authenticated_cmds::v2::user_get;
-use libparsec_types::{
-    DeviceCertificate, DeviceID, RevokedUserCertificate, TimeProvider, UserCertificate, UserID,
-};
+use libparsec_types::prelude::*;
 
 use crate::{RemoteDevicesManagerError, RemoteDevicesManagerResult, TrustchainContext};
 

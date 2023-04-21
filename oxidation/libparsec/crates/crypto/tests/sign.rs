@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::convert::TryFrom;
+
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
-use std::convert::TryFrom;
 
 use libparsec_crypto::{SigningKey, VerifyKey};
 

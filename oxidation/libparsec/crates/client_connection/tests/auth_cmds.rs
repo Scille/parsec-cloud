@@ -2,26 +2,25 @@
 
 mod utils;
 
+use hyper::server::Server;
 use std::{
     net::{Ipv4Addr, SocketAddr, SocketAddrV4},
     str::FromStr,
 };
 
 use libparsec_client_connection::{
-    generate_authenticated_client, AuthenticatedCmds, CommandError, CommandResult,
+    generate_authenticated_client, AuthenticatedCmds, CommandError, CommandResult, ProxyConfig,
 };
-use libparsec_crypto::SigningKey;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::parsec_test;
-use libparsec_types::{BackendOrganizationAddr, DeviceID};
+use libparsec_types::prelude::*;
 use tokio::{
     sync::oneshot::{channel, Receiver, Sender},
     task::JoinHandle,
 };
-use utils::server::MakeSignatureVerifier;
 
-use hyper::server::Server;
+use crate::utils::server::MakeSignatureVerifier;
 
 const RVK: &str = "7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
 
@@ -37,7 +36,8 @@ async fn valid_request() {
     let kp = SigningKey::generate();
     let vk = kp.verify_key();
     let url = generate_backend_organization(IP, PORT, RVK);
-    let auth_cmds = generate_authenticated_client(kp, device_id.clone(), url);
+    let auth_cmds =
+        generate_authenticated_client(kp, device_id.clone(), url, ProxyConfig::default()).unwrap();
 
     let mut signature_verifier = MakeSignatureVerifier::default();
     signature_verifier.register_public_key(device_id, vk);
@@ -76,7 +76,9 @@ async fn invalid_request() {
     let client_kp = SigningKey::generate();
     let other_kp = SigningKey::generate();
     let url = generate_backend_organization(IP, PORT, RVK);
-    let auth_cmds = generate_authenticated_client(client_kp, device_id.clone(), url);
+    let auth_cmds =
+        generate_authenticated_client(client_kp, device_id.clone(), url, ProxyConfig::default())
+            .unwrap();
 
     let mut signature_verifier = MakeSignatureVerifier::default();
     signature_verifier.register_public_key(device_id, other_kp.verify_key());
@@ -189,8 +191,7 @@ async fn with_testbed(env: &TestbedEnv) {
         env.organization_addr.clone(),
         device.device_id.to_owned(),
         device.signing_key.to_owned(),
-    )
-    .unwrap();
+    );
     let rep = cmds
         .send(authenticated_cmds::v3::ping::Req {
             ping: "foo".to_owned(),

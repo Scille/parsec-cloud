@@ -36,9 +36,7 @@
 
         <!-- organisazation list -->
         <div id="container">
-          <slide-horizontal
-            :reverse-direction="!showOrganizationList"
-          >
+          <slide-horizontal :reverse-direction="!showOrganizationList">
             <ion-card
               v-if="showOrganizationList"
               id="organization-list-container"
@@ -91,9 +89,7 @@
                               class="organization-card"
                             />
                             <ion-row class="organization-card-footer">
-                              <ion-col
-                                size="auto"
-                              >
+                              <ion-col size="auto">
                                 <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
                                 <p>
                                   {{ device.slug in storedDeviceDataDict ?
@@ -251,6 +247,7 @@ import { getMockDevices, mockLastLogin } from '../common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
+import { configPathKey, formattersKey, storageManagerKey } from '../main';
 
 const router = useRouter();
 const { t, d } = useI18n();
@@ -261,9 +258,9 @@ const orgSearchString = ref('');
 const showOrganizationList = ref(true);
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
-const { timeSince } = inject('formatters');
-const configPath = inject('configPath', '/');  // Must be a valid Unix path !
-const storageManager: StorageManager = inject('storageManager')!;
+const { timeSince } = inject(formattersKey)!;
+const configPath = inject(configPathKey, '/');  // Must be a valid Unix path !
+const storageManager: StorageManager = inject(storageManagerKey)!;
 
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
@@ -300,16 +297,16 @@ const filteredDevices = computed(() => {
       const bLastLogin = (b.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[b.slug].lastLogin !== undefined) ?
         storedDeviceDataDict.value[b.slug].lastLogin : DateTime.fromMillis(0);
       if (sortByAsc.value) {
-        return bLastLogin.diff(aLastLogin).toObject().milliseconds;
+        return bLastLogin.diff(aLastLogin).toObject().milliseconds!;
       } else {
-        return aLastLogin.diff(bLastLogin).toObject().milliseconds;
+        return aLastLogin.diff(bLastLogin).toObject().milliseconds!;
       }
     }
     return 0;
   });
 });
 
-const storedDeviceDataDict = ref<{[slug: string]: StoredDeviceData}>({});
+const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 
 onMounted(async (): Promise<void> => {
   await mockLastLogin(storageManager);

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
 use libparsec_tests_fixtures::parsec_test;
-use libparsec_types::{Maybe, RealmID};
+use libparsec_types::prelude::*;
 
 #[parsec_test]
 fn serde_realm_create_req() {
