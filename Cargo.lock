@@ -1453,6 +1453,7 @@ dependencies = [
  "libparsec_tests_macros",
  "libparsec_types",
  "log",
+ "pretty_assertions",
  "rstest",
  "uuid",
 ]

@@ -17,4 +17,6 @@ rstest = "0.17.0"
 hex-literal = "0.4.1"
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
 lazy_static = "1.4.0"
+pretty_assertions = "1.3.0"
+
 # No dev-dependencies: this crate is itself only used in other crates' own dev-dependencies
