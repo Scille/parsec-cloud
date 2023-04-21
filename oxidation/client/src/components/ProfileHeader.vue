@@ -1,31 +1,12 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-item id="click-trigger" class="container">
-    <!-- dropdown profile -->
-    <ion-popover
-      trigger="click-trigger"
-      trigger-action="click"
-      class="popover-profile"
-    >
-      <ion-content class="ion-padding">
-        <ion-list>
-          <ion-item class="profile-email">
-            <ion-text class="body-sm">thomas.linere@mycompany.fr</ion-text>
-          </ion-item>
-          <!-- item -->
-          <ion-item class="item">
-            <ion-icon
-              :icon="phonePortrait"
-              slot="start"
-            />
-            <ion-label class="body">Mes appareils</ion-label>
-          </ion-item>
-          <!-- end of item -->
-        </ion-list>
-      </ion-content>
-    </ion-popover>
-    <!-- end of dropdown profile-->
+  <ion-item
+    button
+    id="click-trigger"
+    class="container"
+    @click="openPopover($event)"
+  >
     <ion-avatar slot="start" class="avatar">
       <img
         alt="Silhouette of a person's head"
@@ -48,18 +29,14 @@
 import {
   IonItem,
   IonIcon,
-  IonLabel,
   IonAvatar,
-  IonList,
-  IonPopover,
-  IonContent,
-  IonText
+  IonText,
+  popoverController
 }from '@ionic/vue';
-import {
-  chevronDown, phonePortrait
-} from 'ionicons/icons';
+import { chevronDown } from 'ionicons/icons';
 import { defineProps } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ProfileHeaderPopover from './ProfileHeaderPopover.vue';
 
 const { t, d } = useI18n();
 
@@ -69,6 +46,17 @@ defineProps<{
 }>();
 function onClickMenu() : void {
   console.log('click');
+}
+async function openPopover(ev: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: ProfileHeaderPopover,
+    componentProps: {
+      // options: props.options
+    },
+    event: ev,
+    showBackdrop: false
+  });
+  await popover.present();
 }
 
 </script>
@@ -107,39 +95,5 @@ function onClickMenu() : void {
   display: flex;
   flex-direction: column;
   justify-content: center;
-}
-
-.popover-profile {
-  --backdrop-opacity: 0;
-
-  ion-item {
-    --background: none;
-  }
-
-  .profile-email {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  .item:not(:first-child)  {
-    margin-inline-end: 2px;
-    color: var(--parsec-color-light-secondary-text);
-    border-radius: 0.25rem;
-
-    &:hover {
-      --background: var(--parsec-color-light-primary-30);
-      color: var(--parsec-color-light-primary-600);
-
-      ion-icon {
-        color: var(--parsec-color-light-primary-600);
-      }
-    }
-
-    ion-icon {
-      color: var(--parsec-color-light-secondary-text);
-      margin-inline-end: 0.75rem;
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-    }
-  }
 }
 </style>
