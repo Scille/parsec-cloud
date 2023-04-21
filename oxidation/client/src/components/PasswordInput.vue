@@ -5,12 +5,9 @@
     <ion-row>
       <ion-col>
         <ion-item>
-          <ion-label
-            position="floating"
-          >
-            {{ label }}
-          </ion-label>
           <ion-input
+            :label="label"
+            label-placement="floating"
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
             @ion-change="$emit('change', $event.detail.value)"
@@ -34,7 +31,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon, IonLabel } from '@ionic/vue';
+import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon } from '@ionic/vue';
 import {
   eyeOutline,
   eyeOffOutline
