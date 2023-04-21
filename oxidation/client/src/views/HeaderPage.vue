@@ -7,11 +7,11 @@
         <!-- icon visible when menu is hidden -->
         <ion-buttons slot="start">
           <ion-button
-            v-if="!isPlatform('mobile') && isHidden()"
+            v-if="!isPlatform('mobile') && !isSidebarMenuVisible()"
             slot="icon-only"
             id="trigger-toggle-menu-button"
-            class="ion-hide-lg-down"
-            @click="reset()"
+            class="ion-hide-lg-down topbar-button__item"
+            @click="resetSidebarMenu()"
           >
             <ion-icon
               slot="icon-only"
@@ -117,8 +117,7 @@ import useSidebarMenu from '@/services/sidebarMenu';
 
 const router = useRouter();
 const { t } = useI18n();
-const { isHidden, reset } = useSidebarMenu();
-// const firstname: string = ref('toto');
+const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 
 </script>
 
@@ -132,7 +131,6 @@ const { isHidden, reset } = useSidebarMenu();
 .topbar-right{
   display: flex;
   gap: 2.5em;
-  color: var(--parsec-color-light-primary-700);
 }
 .topbar-button__list{
   display: flex;
@@ -147,8 +145,9 @@ const { isHidden, reset } = useSidebarMenu();
     background: var(--parsec-color-light-secondary-light);
   }
 }
-.topbar-button__item{
+.topbar-button__item, .sc-ion-buttons-md-s .button{
   border: 1px solid var(--parsec-color-light-secondary-light);
+  color: var(--parsec-color-light-primary-700);
   border-radius: 50%;
   --padding-top: 0;
   --padding-end: 0;
@@ -156,6 +155,7 @@ const { isHidden, reset } = useSidebarMenu();
   --padding-start: 0;
   &:hover{
     --background-hover: var(--parsec-color-light-primary-50);
+    background: var(--parsec-color-light-primary-50);
     border: var(--parsec-color-light-primary-50);
   }
 

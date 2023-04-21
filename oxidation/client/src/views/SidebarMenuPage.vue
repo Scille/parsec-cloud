@@ -128,7 +128,7 @@ import {
   business,
   cog
 } from 'ionicons/icons';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { createGesture } from '@ionic/vue';
 
@@ -173,6 +173,7 @@ const splitPane = ref();
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
 
+// watching wasReset value
 const unwatch = watch(wasReset, (value) => {
   if (value) {
     resizeMenu(defaultWidth);
@@ -185,7 +186,6 @@ function navigateToPage(pageName: string): void {
   menuController.close();
 }
 
-// code au chargement de la page
 onMounted(() => {
   device = JSON.parse(currentRoute.query.device as string);
 
@@ -208,7 +208,6 @@ function onMove(detail: GestureDetail): void {
   requestAnimationFrame(() => {
     let currentWidth = initialWidth.value + detail.deltaX;
     if (currentWidth >= 4 && currentWidth <= 500) {
-      console.log('test');
       if (currentWidth <= 150) {
         currentWidth = 4;
       }
