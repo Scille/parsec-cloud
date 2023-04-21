@@ -5,10 +5,9 @@ const initialWidth = ref<number>(defaultWidth);
 const computedWidth = ref<number>(defaultWidth);
 const wasReset = ref<boolean>(false);
 
-// Pourquoi à t-on 2 fois Ref<any> ??
 export default function useSidebarMenu(): any {
-  function isHidden(): boolean {
-    return computedWidth.value === 4;
+  function isVisible(): boolean {
+    return computedWidth.value > 4;
   }
 
   function reset(): void {
@@ -21,7 +20,7 @@ export default function useSidebarMenu(): any {
     defaultWidth,
     initialWidth,
     computedWidth,
-    isHidden,
+    isVisible,
     reset,
     wasReset
   };
