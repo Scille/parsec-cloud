@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonItem, IonInput, IonIcon, IonLabel } from '@ionic/vue';
+import { IonItem, IonInput, IonIcon } from '@ionic/vue';
 import { search } from 'ionicons/icons';
 
 defineProps<{
