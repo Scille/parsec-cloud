@@ -5,7 +5,7 @@
     button
     id="click-trigger"
     class="container"
-    @click="openPopover($event)"
+    @click="isPopoverOpen = !isPopoverOpen; openPopover($event)"
   >
     <ion-avatar slot="start" class="avatar">
       <img
@@ -18,6 +18,7 @@
         {{ lastname }} {{ firstname }}
       </ion-text>
       <ion-icon
+        :class="{'popover-is-open': isPopoverOpen}"
         slot="end"
         :icon="chevronDown"
       />
@@ -34,11 +35,12 @@ import {
   popoverController
 }from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
-import { defineProps } from 'vue';
+import { defineProps, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ProfileHeaderPopover from './ProfileHeaderPopover.vue';
 
 const { t, d } = useI18n();
+const isPopoverOpen = ref(false);
 
 defineProps<{
   firstname: string,
@@ -47,6 +49,7 @@ defineProps<{
 function onClickMenu() : void {
   console.log('click');
 }
+
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: ProfileHeaderPopover,
@@ -57,6 +60,9 @@ async function openPopover(ev: Event): Promise<void> {
     showBackdrop: false
   });
   await popover.present();
+  popover.onDidDismiss().then(() => {
+    isPopoverOpen.value = false;
+  });
 }
 
 </script>
@@ -67,12 +73,12 @@ async function openPopover(ev: Event): Promise<void> {
   flex-direction: column;
   --background: none;
   cursor: pointer;
-
 }
 
 .avatar {
   margin: 0 .75em 0 0;
   position: relative;
+
   &::after {
     content:'';
     position: absolute;
@@ -85,10 +91,15 @@ async function openPopover(ev: Event): Promise<void> {
     background-color: var(---parsec-color--success-500);
   }
 }
+
 .text-icon {
   display: flex;
   align-items: center;
   gap: .1em;
+
+  ion-icon.popover-is-open {
+    rotate: (180deg);
+  }
 }
 
 .text-content {
