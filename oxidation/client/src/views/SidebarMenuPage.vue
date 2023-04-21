@@ -106,11 +106,8 @@ import {
   IonHeader,
   IonMenu,
   IonSplitPane,
-  IonTitle,
-  IonToolbar,
   IonIcon,
   IonText,
-  IonButton,
   IonList,
   IonCard,
   IonCardTitle,
@@ -174,7 +171,7 @@ const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
 
 // watching wasReset value
-const unwatch = watch(wasReset, (value) => {
+const unwatch: WatchStopHandle = watch(wasReset, (value) => {
   if (value) {
     resizeMenu(defaultWidth);
     wasReset.value = false;
@@ -229,11 +226,9 @@ function resizeMenu(newWidth: number): void {
     divider.value.style.setProperty('left', `${newWidth - 4}px`);
   }
 }
-
 </script>
 
 <style lang="scss" scoped>
-
 .divider {
   width: 8px;
   height: 100%;
@@ -244,13 +239,15 @@ function resizeMenu(newWidth: number): void {
   cursor:ew-resize;
   display: flex;
   justify-content: center;
+
   &::after {
     content: '';
     width: 4px;
     height: 100%;
     padding: 20rem 0;
   }
-  &:hover::after, &:active::after{
+
+  &:hover::after, &:active::after {
     background: var(--parsec-color-light-primary-200);
   }
 }
@@ -258,10 +255,12 @@ function resizeMenu(newWidth: number): void {
 .sidebar, .sidebar ion-content {
   --background: var(--parsec-color-light-primary-800);
 }
-.sidebar{
+
+.sidebar {
   border: none;
   user-select: none;
   border-radius: 0 .5rem 0;
+
   // logo parsec
   &::after{
     content: url('../assets/images/logo/logo_icon_white.svg');
@@ -275,15 +274,18 @@ function resizeMenu(newWidth: number): void {
     right: -60px;
   }
 }
-.organization-card{
+
+.organization-card {
   --background: var(--parsec-color-light-primary-30-opacity15);
   box-shadow: none;
   margin: 0.5rem;
+
   &__header{
     display: flex;
     justify-content: space-between;
   }
-  &__container{
+
+  &__container {
     box-shadow: none;
     display: flex;
     align-items: center;
@@ -292,7 +294,8 @@ function resizeMenu(newWidth: number): void {
     position: relative;
     z-index: 2;
     min-width: 0;
-    .orga-avatar{
+
+    .orga-avatar {
       background-color: var(--parsec-color-light-primary-800);
       color: var(--parsec-color-light-primary-50);
       width: 42px;
@@ -306,18 +309,20 @@ function resizeMenu(newWidth: number): void {
       position: relative;
       z-index: 1;
     }
-    .orga-text{
+
+    .orga-text {
       display: flex;
       flex-direction: column;
       white-space: nowrap;
       overflow: hidden;
-      ion-card-subtitle{
+      ion-card-subtitle {
       --color: var(--parsec-color-light-secondary-light);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       }
-      ion-card-title{
+
+      ion-card-title {
         padding: 0.1875em 0;
         margin: 0;
         --color: var(--parsec-color-light-primary-50);
@@ -327,14 +332,16 @@ function resizeMenu(newWidth: number): void {
       }
     }
   }
-  &__icon{
+
+  &__icon {
     white-space: nowrap;
     display: flex;
     align-items: center;
     background-color: var(--parsec-color-light-primary-800);
     position: relative;
     z-index: 2;
-    &::before{
+
+    &::before {
       content: '';
       height: 100%;
       width: 100%;
@@ -343,27 +350,31 @@ function resizeMenu(newWidth: number): void {
       background-color: var(--parsec-color-light-primary-30-opacity15);
     }
   }
-  &__manageBtn{
+
+  &__manageBtn {
     padding:0.625em 1em;
     display: flex;
     align-items: center;
     gap: 1em;
     color: var(--parsec-color-light-secondary-light);
     border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
+
     &:hover{
       background: var(--parsec-color-light-primary-30-opacity15);
     }
-    ion-text{
+
+    ion-text {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
     }
-    ion-icon{
+
+    ion-icon {
       min-width: 18px;
     }
   }
 }
-.list-md{
+.list-md {
   background: none;
 }
 
@@ -377,38 +388,45 @@ ion-menu {
   user-select: none;
 }
 
-.list-workspaces{
+.list-workspaces {
   display: flex;
   flex-direction: column;
   flex: 1;
-  &__header{
+
+  &__header {
     opacity: 0.6;
     color: var(--parsec-color-light-primary-100);
     margin-bottom: 1rem;
     width: fit-content;
     transition: border 0.2s ease-in-out;
     cursor: pointer;
-    &:hover::after{
+
+    &:hover::after {
       background: var(--parsec-color-light-primary-100);
       height: 2px;
       width: 100%;
       border-radius: 5px;
     }
   }
-  .item-label{
+
+  .item-label {
     --background:none;
     border-radius: 4px;
     border: solid 1px var(--parsec-color-light-primary-800);
-    &:hover{
+
+    &:hover {
       border: solid 1px var(--parsec-color-light-primary-30-opacity15);
     }
-    &:active{
+
+    &:active {
       --background: var(--parsec-color-light-primary-30-opacity15);
     }
-    ion-label{
+
+    ion-label {
       --color: var(--parsec-color-light-primary-100);
     }
-    ion-icon{
+
+    ion-icon {
       color: var(--parsec-color-light-primary-100);
       font-size: 1.25em;
       margin-inline-end: 12px;
