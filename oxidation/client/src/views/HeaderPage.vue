@@ -38,8 +38,11 @@
           <ion-breadcrumb href="#electronics">breadcrumb item</ion-breadcrumb>
         </ion-breadcrumbs>
 
-        <!-- top right icon + profil -->
-        <ion-buttons slot="primary" class="topbar-right">
+        <!-- top right icon + profile -->
+        <ion-buttons
+          slot="primary"
+          class="topbar-right"
+        >
           <div class="topbar-button__list">
             <ion-button
               v-if="!isPlatform('mobile')"
@@ -90,20 +93,13 @@ import {
   IonMenuButton,
   IonButtons,
   isPlatform,
-  IonList,
-  IonLabel,
-  IonItem,
   IonContent,
-  IonPopover,
   IonRouterOutlet,
   IonPage,
   IonBreadcrumb,
   IonBreadcrumbs
 } from '@ionic/vue';
 import {
-  personCircle,
-  settings,
-  helpCircle,
   menu,
   home,
   search,
@@ -112,7 +108,6 @@ import {
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import ProfileHeader from '@/components/ProfileHeader.vue';
-import { ref } from 'vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 
 const router = useRouter();
@@ -122,17 +117,18 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
 </script>
 
 <style scoped lang="scss">
-
-.topbar{
+.topbar {
   --background: var(--parsec-color-light-secondary-background);
   display: flex;
   padding: 2em;
 }
-.topbar-right{
+
+.topbar-right {
   display: flex;
   gap: 2.5em;
 }
-.topbar-button__list{
+
+.topbar-button__list {
   display: flex;
   gap: 1.25em;
   align-items: center;
@@ -145,7 +141,8 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
     background: var(--parsec-color-light-secondary-light);
   }
 }
-.topbar-button__item, .sc-ion-buttons-md-s .button{
+
+.topbar-button__item, .sc-ion-buttons-md-s .button {
   border: 1px solid var(--parsec-color-light-secondary-light);
   color: var(--parsec-color-light-primary-700);
   border-radius: 50%;
@@ -153,29 +150,33 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
   --padding-end: 0;
   --padding-bottom: 0;
   --padding-start: 0;
-  &:hover{
+  width: 3em;
+  height: 3em;
+
+  &:hover {
     --background-hover: var(--parsec-color-light-primary-50);
     background: var(--parsec-color-light-primary-50);
     border: var(--parsec-color-light-primary-50);
   }
 
-  .button-native{
+  .button-native {
     --padding-top: 0;
     --padding-end: 0;
     --padding-bottom: 0;
     --padding-start: 0;
   }
-  ion-icon{
-    font-size: 1.25rem;
+
+  ion-icon {
+    font-size: 1.375rem;
   }
 }
 
-.breadcrumb{
+.breadcrumb {
   padding: 0;
   color: var(--parsec-color-light-secondary-grey);
-  &-active{
+
+  &-active {
     color: var(--parsec-color-light-primary-700)
   }
 }
-
 </style>

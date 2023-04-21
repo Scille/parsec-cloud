@@ -32,15 +32,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import {
   IonItem,
   IonIcon,
   IonLabel,
-  IonAvatar
+  IonAvatar,
+  IonList,
+  IonPopover,
+  IonContent,
+  IonText
 }from '@ionic/vue';
 import {
-  chevronDown, ellipse
+  chevronDown
 } from 'ionicons/icons';
 import { defineProps } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -58,35 +61,41 @@ function onClickMenu() : void {
 </script>
 
 <style lang="scss" scoped>
-.container{
+.container {
   display: flex;
   flex-direction: column;
   --background: none;
-  .item-native{
+
+  .item-native {
     padding-inline-start: 0;
     padding: 0;
   }
-  .item-inner{
+
+  .item-inner {
     border-width: 0;
   }
 }
-.avatar{
+
+.avatar {
   margin: 0 .75em 0 0;
 }
-.text-content{
+
+.text-content {
   display: flex;
   flex-direction: column;
   justify-content: center;
   color: var(--parsec-color-);
 }
-.connect-state{
+
+.connect-state {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 0.375rem;
   color: var(--parsec-color-light-secondary-grey);
+
   &::after{
-    content:'';
+    content: '';
     height: 0.5rem;
     width: 0.5rem;
     border-radius: 50%;
