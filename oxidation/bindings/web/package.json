@@ -1,15 +1,12 @@
 {
-  "name": "libparsec_bindings_web",
-  "private": true,
-  "version": "0.0.0",
-  "scripts": {
-    "build": "node scripts/build.js",
-    "build:ci": "npm run build -- ci",
-    "build:dev": "npm run build -- dev",
-    "build:release": "npm run build -- release",
-    "test": "wasm-pack test"
-  },
-  "devDependencies": {
-    "wasm-pack": "^0.10.3"
-  }
+    "name": "libparsec_bindings_web",
+    "private": true,
+    "version": "0.0.0",
+    "scripts": {
+        "build": "node scripts/build.js",
+        "build:dev": "npm run build -- dev",
+        "build:ci": "npm run build -- ci",
+        "build:release": "npm run build -- release",
+        "test": "wasm-pack test"
+    }
 }
