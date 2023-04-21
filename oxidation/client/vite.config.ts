@@ -69,6 +69,10 @@ const config: UserConfigExport = {
     alias: {
       '@': path.resolve(__dirname, './src')
     }
+  },
+  server: {
+    port: 8080,
+    hmr: true
   }
 };
 
