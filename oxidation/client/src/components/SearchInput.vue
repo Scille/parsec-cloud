@@ -2,17 +2,14 @@
 
 <template>
   <ion-item fill="solid">
-    <ion-label
-      position="floating"
-    >
-      {{ label }}
-    </ion-label>
     <ion-icon
       :icon="search"
       slot="start"
     />
     <ion-input
       id="search-input"
+      :label="label"
+      label-placement="floating"
       v-model="searchRef"
       :clear-input="true"
       @ion-change="$emit('change', $event.detail.value)"
