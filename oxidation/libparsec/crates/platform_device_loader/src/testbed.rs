@@ -74,6 +74,6 @@ fn with_pseudo_persistent_storage<T>(
     })
 }
 
-pub fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<AvailableDevice>> {
+pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<AvailableDevice>> {
     with_pseudo_persistent_storage(config_dir, |store| store.available_devices.clone())
 }

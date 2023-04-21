@@ -976,6 +976,7 @@ impl BackendPkiEnrollmentAddr {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BackendAnonymousAddr {
     BackendOrganizationBootstrapAddr(BackendOrganizationBootstrapAddr),
     BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr),

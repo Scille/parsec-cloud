@@ -2,18 +2,17 @@
 
 mod anonymous_cmds;
 mod authenticated_cmds;
-mod client;
 mod error;
 mod invited_cmds;
+#[cfg(feature = "test-with-testbed")]
+mod testbed;
 
 pub use anonymous_cmds::AnonymousCmds;
 pub use authenticated_cmds::{AuthenticatedCmds, PARSEC_AUTH_METHOD};
-pub use client::{
-    generate_anonymous_client, generate_authenticated_client, generate_invited_client,
-};
 pub use error::{CommandError, CommandResult};
 pub use invited_cmds::InvitedCmds;
 
+// Re-expose
 pub use libparsec_platform_http_proxy::ProxyConfig;
 
 /// We send the HTTP request with the body encoded in `msgpack` format.

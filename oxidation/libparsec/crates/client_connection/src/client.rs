@@ -5,23 +5,23 @@ use libparsec_types::prelude::*;
 
 use crate::{AnonymousCmds, AuthenticatedCmds, InvitedCmds};
 
-// TODO: This is just for poc purpose and will change later on
-pub fn generate_authenticated_client(
-    signing_key: SigningKey,
-    device_id: DeviceID,
-    url: BackendOrganizationAddr,
-    config: ProxyConfig,
-) -> reqwest::Result<AuthenticatedCmds> {
-    build_http_client(config)
-        .map(|client| AuthenticatedCmds::new(client, url, device_id, signing_key))
-}
+// // TODO: This is just for poc purpose and will change later on
+// pub fn generate_authenticated_client(
+//     signing_key: SigningKey,
+//     device_id: DeviceID,
+//     url: BackendOrganizationAddr,
+//     config: ProxyConfig,
+// ) -> reqwest::Result<AuthenticatedCmds> {
+//     build_http_client(config)
+//         .map(|client| AuthenticatedCmds::new(client, url, device_id, signing_key))
+// }
 
-pub fn generate_invited_client(
-    url: BackendInvitationAddr,
-    config: ProxyConfig,
-) -> reqwest::Result<InvitedCmds> {
-    build_http_client(config).map(|client| InvitedCmds::new(client, url))
-}
+// pub fn generate_invited_client(
+//     url: BackendInvitationAddr,
+//     config: ProxyConfig,
+// ) -> reqwest::Result<InvitedCmds> {
+//     build_http_client(config).map(|client| InvitedCmds::new(client, url))
+// }
 
 pub fn generate_anonymous_client(
     url: BackendAnonymousAddr,

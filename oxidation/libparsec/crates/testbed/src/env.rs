@@ -21,7 +21,7 @@ use crate::{get_template, TestbedTemplate};
 // Testbed always works in memory, the path only acts as an identifier.
 const TESTBED_BASE_DUMMY_PATH: &str = "/parsec/testbed/";
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TestbedKind {
     ClientServer,
     ClientOnly, // Server is considered offline for the whole run

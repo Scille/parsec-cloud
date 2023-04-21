@@ -8,6 +8,7 @@ libparsec_types = { path = "../types", features = [ "test-fixtures" ] }
 libparsec_tests_macros = { path = "../tests_macros" }
 libparsec_testbed = { path = "../testbed" }
 # Enable testbed support in crates here
+libparsec_client_connection = { path = "../client_connection", features = [ "test-with-testbed" ] }
 libparsec_platform_device_loader = { path = "../platform_device_loader", features = [ "test-with-testbed" ] }
 libparsec_platform_storage = { path = "../platform_storage", features = [ "test-with-testbed" ] }
 libparsec_platform_storage2 = { path = "../platform_storage2", features = [ "test-with-testbed" ] }

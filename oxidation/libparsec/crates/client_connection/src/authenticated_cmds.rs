@@ -35,9 +35,13 @@ use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
+use std::{path::Path, sync::Arc};
 
+use libparsec_platform_http_proxy::ProxyConfig;
 use libparsec_types::prelude::*;
 
+#[cfg(feature = "test-with-testbed")]
+use crate::testbed::{get_send_hook, SendHookFn};
 use crate::{
     error::{CommandError, CommandResult},
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
@@ -47,39 +51,91 @@ use crate::{
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
 
 /// Factory that send commands in a authenticated context.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct AuthenticatedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
-    addr: BackendOrganizationAddr,
     url: Url,
-    device_id: String,
-    signing_key: SigningKey,
+    device: Arc<LocalDevice>,
+    author_header_value: HeaderValue,
+    #[cfg(feature = "test-with-testbed")]
+    send_hook: SendHookFn,
 }
 
 impl AuthenticatedCmds {
-    /// Create a new `AuthenticatedCmds`
     pub fn new(
-        client: Client,
-        addr: BackendOrganizationAddr,
-        device_id: DeviceID,
-        signing_key: SigningKey,
-    ) -> Self {
-        let url = addr.to_authenticated_http_url();
+        config_dir: &Path,
+        device: Arc<LocalDevice>,
+        config: ProxyConfig,
+    ) -> reqwest::Result<Self> {
+        let client = {
+            let builder = reqwest::ClientBuilder::default();
+            let builder = config.configure_http_client(builder)?;
+            builder.build()?
+        };
+        Ok(Self::from_client(client, config_dir, device))
+    }
 
-        let device_id = BASE64_STANDARD.encode(device_id.to_string().as_bytes());
+    pub fn from_client(client: Client, _config_dir: &Path, device: Arc<LocalDevice>) -> Self {
+        let url = device.organization_addr.to_authenticated_http_url();
+
+        #[cfg(feature = "test-with-testbed")]
+        let send_hook = get_send_hook(_config_dir);
+
+        let author_header_value =
+            HeaderValue::from_str(&BASE64_STANDARD.encode(device.device_id.to_string().as_bytes()))
+                .expect("base64 shouldn't contain invalid char");
 
         Self {
             client,
-            addr,
             url,
-            device_id,
-            signing_key,
+            device,
+            author_header_value,
+            #[cfg(feature = "test-with-testbed")]
+            send_hook,
         }
     }
 
     pub fn addr(&self) -> &BackendOrganizationAddr {
-        &self.addr
+        &self.device.organization_addr
+    }
+
+    pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
+    where
+        T: ProtocolRequest,
+    {
+        let request_builder = self.client.post(self.url.clone());
+
+        let data = request.dump()?;
+
+        let req = prepare_request(
+            request_builder,
+            &self.device.signing_key,
+            self.author_header_value.clone(),
+            data,
+        );
+
+        #[cfg(feature = "test-with-testbed")]
+        let resp = (self.send_hook)(req).await?;
+        #[cfg(not(feature = "test-with-testbed"))]
+        let resp = req.send().await?;
+
+        match resp.status().as_u16() {
+            200 => {
+                let response_body = resp.bytes().await?;
+                Ok(T::load_response(&response_body)?)
+            }
+            415 => Err(CommandError::BadContent),
+            422 => Err(crate::error::unsupported_api_version_from_headers(
+                resp.headers(),
+            )),
+            460 => Err(CommandError::ExpiredOrganization),
+            461 => Err(CommandError::RevokedUser),
+            // We typically use HTTP 503 in the tests to simulate server offline,
+            // so it should behave just like if we were not able to connect
+            503 => Err(CommandError::NoResponse(None)),
+            _ => Err(CommandError::InvalidResponseStatus(resp.status())),
+        }
     }
 }
 
@@ -87,10 +143,10 @@ impl AuthenticatedCmds {
 fn prepare_request(
     request_builder: RequestBuilder,
     signing_key: &SigningKey,
-    device_id: &str,
+    author_header_value: HeaderValue,
     body: Vec<u8>,
 ) -> RequestBuilder {
-    let request_builder = sign_request(request_builder, signing_key, device_id, &body);
+    let request_builder = sign_request(request_builder, signing_key, author_header_value, &body);
 
     let mut content_headers = HeaderMap::with_capacity(3);
     content_headers.insert(
@@ -111,7 +167,7 @@ fn prepare_request(
 fn sign_request(
     request_builder: RequestBuilder,
     signing_key: &SigningKey,
-    device_id: &str,
+    author_header_value: HeaderValue,
     body: &[u8],
 ) -> RequestBuilder {
     let timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
@@ -121,10 +177,7 @@ fn sign_request(
     let mut authorization_headers = HeaderMap::with_capacity(4);
 
     authorization_headers.insert(AUTHORIZATION, HeaderValue::from_static(PARSEC_AUTH_METHOD));
-    authorization_headers.insert(
-        "Author",
-        HeaderValue::from_str(device_id).expect("base64 shouldn't contain invalid char"),
-    );
+    authorization_headers.insert("Author", author_header_value);
     authorization_headers.insert(
         "Timestamp",
         HeaderValue::from_str(&timestamp)
@@ -136,34 +189,4 @@ fn sign_request(
     );
 
     request_builder.headers(authorization_headers)
-}
-
-impl AuthenticatedCmds {
-    pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
-    where
-        T: ProtocolRequest,
-    {
-        let request_builder = self.client.post(self.url.clone());
-
-        let data = request.dump()?;
-
-        let req = prepare_request(request_builder, &self.signing_key, &self.device_id, data).send();
-        let resp = req.await?;
-        match resp.status().as_u16() {
-            200 => {
-                let response_body = resp.bytes().await?;
-                Ok(T::load_response(&response_body)?)
-            }
-            415 => Err(CommandError::BadContent),
-            422 => Err(crate::error::unsupported_api_version_from_headers(
-                resp.headers(),
-            )),
-            460 => Err(CommandError::ExpiredOrganization),
-            461 => Err(CommandError::RevokedUser),
-            // We typically use HTTP 503 in the tests to simulate server offline,
-            // so it should behave just like if we were not able to connect
-            503 => Err(CommandError::NoResponse(None)),
-            _ => Err(CommandError::InvalidResponseStatus(resp.status(), resp)),
-        }
-    }
 }

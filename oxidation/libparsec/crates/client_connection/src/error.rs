@@ -22,7 +22,7 @@ pub enum CommandError {
 
     /// We receive a response but with an unexpected status code.
     #[error("Unexpected response status {0}")]
-    InvalidResponseStatus(reqwest::StatusCode, reqwest::Response),
+    InvalidResponseStatus(reqwest::StatusCode),
 
     /// We failed to deserialize the reply.
     #[error("Failed to deserialize the response: {0}")]
