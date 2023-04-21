@@ -259,8 +259,7 @@ function resizeMenu(newWidth: number): void {
 .sidebar {
   border: none;
   user-select: none;
-  border-radius: 0 .5rem 0;
-
+  border-radius: 0 .5rem .5rem 0;
   // logo parsec
   &::after{
     content: url('../assets/images/logo/logo_icon_white.svg');

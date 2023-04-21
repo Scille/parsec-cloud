@@ -127,19 +127,19 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
 
 .topbar-right {
   display: flex;
-  gap: 2.5em;
+  gap: 1.5em;
 }
 
 .topbar-button__list {
   display: flex;
-  gap: 1.25em;
+  gap: 1.5em;
   align-items: center;
   &::after{
     content: '';
     display: block;
     width: 1px;
     height: 1.5em;
-    margin-left: 1em;
+    margin: 0 .5em 0 1em;
     background: var(--parsec-color-light-secondary-light);
   }
 }
