@@ -4,18 +4,11 @@
 #[path = "../tests/unit/tests.rs"]
 mod tests;
 
-#[cfg(not(test))]
-const HTTP_PROXY: &str = "HTTP_PROXY";
-#[cfg(test)]
-const HTTP_PROXY: &str = "TEST_HTTP_PROXY";
-#[cfg(not(test))]
-const HTTPS_PROXY: &str = "HTTPS_PROXY";
-#[cfg(test)]
-const HTTPS_PROXY: &str = "TEST_HTTPS_PROXY";
-
 #[derive(Default)]
 pub struct ProxyConfig {
+    #[cfg(not(target_arch = "wasm32"))]
     http_proxy: Option<String>,
+    #[cfg(not(target_arch = "wasm32"))]
     https_proxy: Option<String>,
 }
 
@@ -35,18 +28,6 @@ impl ProxyConfig {
     pub fn with_env(self) -> Self {
         self.with_env_internal()
     }
-
-    /// Set the http proxy to use, will overwrite the previous configuration.
-    fn with_http_proxy<S: AsRef<str>>(mut self, proxy: S) -> Self {
-        self.http_proxy.replace(proxy.as_ref().to_string());
-        self
-    }
-
-    /// Set the https proxy to use, will overwrite the previous configuration.
-    fn with_https_proxy<S: AsRef<str>>(mut self, proxy: S) -> Self {
-        self.https_proxy.replace(proxy.as_ref().to_string());
-        self
-    }
 }
 
 impl ProxyConfig {
@@ -64,14 +45,35 @@ impl ProxyConfig {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-mod not_wasm32 {
+mod native {
     use std::{iter::Chain, option::IntoIter};
 
     use reqwest::Proxy;
 
     use super::ProxyConfig;
 
+    #[cfg(not(test))]
+    pub const HTTP_PROXY: &str = "HTTP_PROXY";
+    #[cfg(test)]
+    pub const HTTP_PROXY: &str = "TEST_HTTP_PROXY";
+    #[cfg(not(test))]
+    pub const HTTPS_PROXY: &str = "HTTPS_PROXY";
+    #[cfg(test)]
+    pub const HTTPS_PROXY: &str = "TEST_HTTPS_PROXY";
+
     impl ProxyConfig {
+        /// Set the http proxy to use, will overwrite the previous configuration.
+        pub(crate) fn with_http_proxy<S: AsRef<str>>(mut self, proxy: S) -> Self {
+            self.http_proxy.replace(proxy.as_ref().to_string());
+            self
+        }
+
+        /// Set the https proxy to use, will overwrite the previous configuration.
+        pub(crate) fn with_https_proxy<S: AsRef<str>>(mut self, proxy: S) -> Self {
+            self.https_proxy.replace(proxy.as_ref().to_string());
+            self
+        }
+
         pub(crate) fn with_env_internal(self) -> Self {
             let cls = if let Ok(proxy) = std::env::var(crate::HTTP_PROXY) {
                 self.with_http_proxy(proxy)
@@ -109,8 +111,11 @@ mod not_wasm32 {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+pub use native::{HTTPS_PROXY, HTTP_PROXY};
+
 #[cfg(target_arch = "wasm32")]
-mod wasm32 {
+mod web {
     use super::ProxyConfig;
 
     impl ProxyConfig {

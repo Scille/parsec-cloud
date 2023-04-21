@@ -23,9 +23,18 @@ ELECTRON_RELEASE_SODIUM_CARGO_FLAGS = "--profile=release --features libparsec/us
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
 
-WEB_RELEASE_CARGO_FLAGS = "--profile=release"  # Note: on web we use RustCrypto for release
-WEB_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
-WEB_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
+WEB_RELEASE_CARGO_FLAGS = "--release"  # Note: on web we use RustCrypto for release
+# Small hack here: we always pass the `--dev` flag to wasm-pack given it
+# considers there is no need to pass extra args to cargo (i.e. cargo build
+# for dev by default). This way we can pass our own `--profile=foo` extra args
+# without cargo complaining it is clashing with `--release` (provided by wasm-pack, and
+# equivalent to `--profile=realese`).
+# This should be safe given if anything change, cargo won't allow multiple profiles
+# to be passed (hence this script will simply fail).
+# cf. https://github.com/rustwasm/wasm-pack/blob/b4e619c8a13a8441b804895348afbfd4fb1a68a3/src/build/mod.rs#L91-L106
+# and https://github.com/rustwasm/wasm-pack/blob/b4e619c8a13a8441b804895348afbfd4fb1a68a3/src/command/build.rs#L220
+WEB_DEV_CARGO_FLAGS = "--dev -- --features test-utils"
+WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
 
 
 BASE_DIR = Path(__file__).parent.resolve()
