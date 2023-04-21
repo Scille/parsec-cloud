@@ -14,7 +14,7 @@
       label-placement="floating"
       v-model="searchRef"
       :clear-input="true"
-      @ion-change="$emit('change', $event.detail.value)"
+      @ion-input="$emit('change', $event.detail.value)"
       @keyup.enter="onEnterPress()"
     />
   </ion-item>

@@ -10,7 +10,7 @@
             label-placement="floating"
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
-            @ion-change="$emit('change', $event.detail.value)"
+            @ion-input="$emit('change', $event.detail.value)"
             @keyup.enter="onEnterPress()"
           />
           <ion-button
