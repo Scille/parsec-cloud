@@ -23,7 +23,7 @@
             "backToList": "Retour aux organisations",
             "forgottenPassword": "Mot de passe oublié ?",
             "passwordLabel": "Mot de passe",
-            "loggedIn": "Se connecter"
+            "login": "Se connecter"
         },
         "mainMenu": {
             "changelog": "Journal des modifications"
