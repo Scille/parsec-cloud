@@ -22,7 +22,8 @@ import {
   IonList,
   IonItem,
   IonIcon,
-  IonLabel
+  IonLabel,
+  IonText
 } from '@ionic/vue';
 import {
   phonePortrait
@@ -38,7 +39,7 @@ ion-item {
   color: var(--parsec-color-light-secondary-grey);
 }
 
-.item:not(:first-child)  {
+.item:not(:first-child) {
   margin-inline-end: 2px;
   color: var(--parsec-color-light-secondary-text);
   border-radius: 0.25rem;
