@@ -85,7 +85,7 @@ function onClickMenu() : void {
 .avatar {
   margin: 0 .75em 0 0;
   position: relative;
-  &::after{
+  &::after {
     content:'';
     position: absolute;
     bottom: 0;
@@ -97,7 +97,7 @@ function onClickMenu() : void {
     background-color: var(---parsec-color--success-500);
   }
 }
-.text-icon{
+.text-icon {
   display: flex;
   align-items: center;
   gap: .1em;
@@ -109,27 +109,32 @@ function onClickMenu() : void {
   justify-content: center;
 }
 
-.popover-profile{
+.popover-profile {
   --backdrop-opacity: 0;
-  ion-item{
+
+  ion-item {
     --background: none;
   }
-  .profile-email{
+
+  .profile-email {
     color: var(--parsec-color-light-secondary-grey);
   }
-  .item:not(:first-child)
-  {
+
+  .item:not(:first-child)  {
     margin-inline-end: 2px;
     color: var(--parsec-color-light-secondary-text);
-    border-radius: 0.25rem ;
-    &:hover{
+    border-radius: 0.25rem;
+
+    &:hover {
       --background: var(--parsec-color-light-primary-30);
       color: var(--parsec-color-light-primary-600);
-      ion-icon{
+
+      ion-icon {
         color: var(--parsec-color-light-primary-600);
       }
     }
-    ion-icon{
+
+    ion-icon {
       color: var(--parsec-color-light-secondary-text);
       margin-inline-end: 0.75rem;
       margin-top: 1rem;
