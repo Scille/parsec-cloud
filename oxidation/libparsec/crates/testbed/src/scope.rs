@@ -146,6 +146,8 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
             // allow us to do a `process.kill()`.
             "--stop-after-process",
             &std::process::id().to_string(),
+            "--port",
+            "0",
         ])
         // We make the server quiet to avoid polluting test output, if you need
         // server log you should start your own server in another terminal and
