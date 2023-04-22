@@ -145,7 +145,7 @@ pub async fn test_new_testbed(
     } else {
         // No server, organization ID & Addr are not relevant
         let organization_addr = BackendOrganizationAddr::new(
-            "parsec://offline.example.com"
+            "parsec://noserver.example.com"
                 .parse::<BackendAddr>()
                 .unwrap(),
             "OfflineOrg".parse().unwrap(),
