@@ -41,7 +41,7 @@ use libparsec_platform_http_proxy::ProxyConfig;
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test-with-testbed")]
-use crate::testbed::{get_send_hook, SendHookFn};
+use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
     error::{CommandError, CommandResult},
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
@@ -59,7 +59,7 @@ pub struct AuthenticatedCmds {
     device: Arc<LocalDevice>,
     author_header_value: HeaderValue,
     #[cfg(feature = "test-with-testbed")]
-    send_hook: SendHookFn,
+    send_hook: Arc<SendHookConfig>,
 }
 
 impl AuthenticatedCmds {
@@ -116,7 +116,7 @@ impl AuthenticatedCmds {
         );
 
         #[cfg(feature = "test-with-testbed")]
-        let resp = (self.send_hook)(req).await?;
+        let resp = self.send_hook.send(req).await?;
         #[cfg(not(feature = "test-with-testbed"))]
         let resp = req.send().await?;
 

@@ -3,7 +3,8 @@
 use std::sync::Arc;
 
 use libparsec_client_connection::{
-    AnonymousCmds, AuthenticatedCmds, CommandError, InvitedCmds, ProxyConfig,
+    test_register_send_hook, AnonymousCmds, AuthenticatedCmds, Bytes, CommandError, HeaderMap,
+    InvitedCmds, ProxyConfig, ResponseMock, StatusCode,
 };
 use libparsec_protocol::{anonymous_cmds, authenticated_cmds, invited_cmds};
 use libparsec_tests_fixtures::prelude::*;
@@ -53,7 +54,7 @@ async fn authenticated(env: &TestbedEnv) {
                 reqwest::StatusCode::UNAUTHORIZED
             ))
         ),
-        r#"expected "Unexpected response status" with code 401, but got {rep:?}"#
+        r#"expected `InvalidResponseStatus` with code 401, but got {rep:?}"#
     );
 }
 
@@ -113,7 +114,7 @@ async fn invited(env: &TestbedEnv) {
         .await;
     assert!(
         matches!(rep, Err(CommandError::InvitationNotFound)),
-        r#"expected "InvitationNotFound", but got {rep:?}"#
+        r#"expected `InvitationNotFound`, but got {rep:?}"#
     );
 }
 
@@ -137,5 +138,38 @@ async fn anonymous(env: &TestbedEnv) {
         libparsec_protocol::anonymous_cmds::v3::pki_enrollment_info::Rep::NotFound {
             reason: Some("".to_owned())
         }
+    );
+}
+
+#[parsec_test(testbed = "empty")]
+async fn send_hook(env: &TestbedEnv) {
+    test_register_send_hook(
+        &env.discriminant_dir,
+        Some(|_request_builder| async {
+            Ok(ResponseMock::Mocked((
+                StatusCode::IM_A_TEAPOT,
+                HeaderMap::new(),
+                Bytes::new(),
+            )))
+        }),
+    );
+
+    let addr = BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr::new(
+        env.organization_addr.clone(),
+        env.organization_addr.organization_id().to_owned(),
+    ));
+    let cmds = AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+
+    let rep = cmds
+        .send(anonymous_cmds::v3::pki_enrollment_info::Req {
+            enrollment_id: EnrollmentID::default(),
+        })
+        .await;
+    assert!(
+        matches!(
+            rep,
+            Err(CommandError::InvalidResponseStatus(StatusCode::IM_A_TEAPOT))
+        ),
+        r#"expected a teapot, but got {rep:?}"#
     );
 }

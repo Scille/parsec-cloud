@@ -4,13 +4,13 @@ use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
 use libparsec_platform_http_proxy::ProxyConfig;
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test-with-testbed")]
-use crate::testbed::{get_send_hook, SendHookFn};
+use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
     error::{CommandError, CommandResult},
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
@@ -26,7 +26,7 @@ pub struct InvitedCmds {
     addr: BackendInvitationAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
-    send_hook: SendHookFn,
+    send_hook: Arc<SendHookConfig>,
 }
 
 impl InvitedCmds {
@@ -73,7 +73,7 @@ impl InvitedCmds {
         let req = prepare_request(request_builder, data, self.addr().token());
 
         #[cfg(feature = "test-with-testbed")]
-        let resp = (self.send_hook)(req).await?;
+        let resp = self.send_hook.send(req).await?;
         #[cfg(not(feature = "test-with-testbed"))]
         let resp = req.send().await?;
 

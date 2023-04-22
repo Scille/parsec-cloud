@@ -7,6 +7,7 @@ edition = "2021"
 test-with-testbed = [
     "libparsec_testbed",
     "dep:bytes",
+    "dep:once_cell",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -30,11 +31,11 @@ chrono = "0.4.24"
 thiserror = "1.0.40"
 # Reqwest's response body is returned as Bytes, testbed needs this dependency
 bytes = { version = "1.4.0", optional = true }
+once_cell = { version = "1.17.1", optional = true }
 
 [dev-dependencies]
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
-libparsec_testbed = { path = "../testbed" }
 
 log = "0.4.17"
 anyhow = "1.0.70"
