@@ -1,10 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use bytes::Bytes;
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
-use std::{path::Path, sync::Arc};
+use std::fmt::Debug;
+use std::path::Path;
 
 use libparsec_platform_http_proxy::ProxyConfig;
 use libparsec_types::prelude::*;
@@ -26,7 +28,7 @@ pub struct InvitedCmds {
     addr: BackendInvitationAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
-    send_hook: Arc<SendHookConfig>,
+    send_hook: std::sync::Arc<SendHookConfig>,
 }
 
 impl InvitedCmds {
@@ -64,23 +66,39 @@ impl InvitedCmds {
 
     pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
     where
-        T: ProtocolRequest,
+        T: ProtocolRequest + Debug + 'static,
     {
+        #[cfg(feature = "test-with-testbed")]
+        let request = {
+            match self.send_hook.high_level_send(request).await {
+                crate::testbed::HighLevelSendResult::Resolved(rep) => return rep,
+                crate::testbed::HighLevelSendResult::PassToLowLevel(req) => req,
+            }
+        };
+
+        let request_body = request.dump()?;
+
+        // Split non-generic code out of `send` to limit the amount of code generated
+        // by monomorphization
+        let response_body = self.internal_send(request_body).await?;
+
+        Ok(T::load_response(&response_body)?)
+    }
+
+    async fn internal_send(&self, request_body: Vec<u8>) -> Result<Bytes, CommandError> {
         let request_builder = self.client.post(self.url.clone());
 
-        let data = request.dump()?;
-
-        let req = prepare_request(request_builder, data, self.addr().token());
+        let req = prepare_request(request_builder, self.addr().token(), request_body);
 
         #[cfg(feature = "test-with-testbed")]
-        let resp = self.send_hook.send(req).await?;
+        let resp = self.send_hook.low_level_send(req).await?;
         #[cfg(not(feature = "test-with-testbed"))]
         let resp = req.send().await?;
 
         match resp.status().as_u16() {
             200 => {
                 let response_body = resp.bytes().await?;
-                Ok(T::load_response(&response_body)?)
+                Ok(response_body)
             }
             404 => Err(CommandError::InvitationNotFound),
             410 => Err(CommandError::InvitationAlreadyDeleted),
@@ -101,8 +119,8 @@ impl InvitedCmds {
 /// Prepare a new request, the body will be added to the Request using [RequestBuilder::body]
 fn prepare_request(
     request_builder: RequestBuilder,
-    body: Vec<u8>,
     token: InvitationToken,
+    body: Vec<u8>,
 ) -> RequestBuilder {
     let mut content_headers = HeaderMap::with_capacity(4);
     content_headers.insert(

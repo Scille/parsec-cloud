@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::{
+    any::Any,
     fmt::Debug,
     future::Future,
     path::Path,
@@ -14,6 +15,9 @@ pub use reqwest::{header::HeaderMap, Error as RequestError, StatusCode};
 use reqwest::{RequestBuilder, Response};
 
 use libparsec_testbed::{test_get_testbed, TestbedKind};
+use libparsec_types::prelude::*;
+
+use crate::CommandResult;
 
 const STORE_ENTRY_KEY: &str = "client_connection";
 
@@ -52,57 +56,133 @@ impl ResponseMock {
 
 // We want the testbed to return an async function pointer to mock client requests.
 // In Rust this is increadibly cumbersome to do:
-// - `SendHookFn` can have multiple implementation, so it must be boxed
+// - `*SendHookFn` can have multiple implementation, so it must be boxed
 // - async function is considered as a regular function that return a future...
 // - ...future which must be wrapped in a pinned box given it can have multiple
 //   implementations
-// - `SendHookFn` is going to be stored in structure that use `Debug`, so
+// - `*SendHookFn` is going to be stored in structure that use `Debug`, so
 //   it must implement those traits itself.
 //   Due to Rust's orphan rule, the only way to do that is to indroduce our own trait
-//   `SendHookFnT` on which we implement `Debug`.
+//   `*SendHookFnT` on which we implement `Debug`.
 //   From that, `SendHookFnT` must be auto-implemented on each closure that respect
 //   the send hook signature.
-pub(crate) trait SendHookFnT:
+
+trait LowLevelSendHookFnT:
     Fn(RequestBuilder) -> Pin<Box<dyn Future<Output = Result<ResponseMock, RequestError>> + Send>>
 {
 }
-impl<F> SendHookFnT for F where
+impl<F> LowLevelSendHookFnT for F where
     F: Fn(
         RequestBuilder,
     ) -> Pin<Box<dyn Future<Output = Result<ResponseMock, RequestError>> + Send>>
 {
 }
-pub(crate) type SendHookFn = Box<dyn SendHookFnT + Send + Sync>;
-impl std::fmt::Debug for dyn SendHookFnT + Send + Sync {
+type LowLevelSendHookFn = Box<dyn LowLevelSendHookFnT + Send + Sync>;
+impl std::fmt::Debug for dyn LowLevelSendHookFnT + Send + Sync {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SendHookFn")
+        write!(f, "LowLevelSendHookFn")
+    }
+}
+
+enum HighLevelSendHookFnCallResult {
+    Ok(Pin<Box<dyn Future<Output = Box<dyn Any>> + Send>>),
+    TypeCastError(Box<dyn Any>),
+}
+trait HighLevelSendHookFnT: Fn(Box<dyn Any>) -> HighLevelSendHookFnCallResult {}
+impl<F> HighLevelSendHookFnT for F where F: Fn(Box<dyn Any>) -> HighLevelSendHookFnCallResult {}
+type HighLevelSendHookFn = Box<dyn HighLevelSendHookFnT + Send + Sync>;
+impl std::fmt::Debug for dyn HighLevelSendHookFnT + Send + Sync {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "HighLevelSendHookFn")
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct SendHookConfig {
     kind: TestbedKind,
-    custom_hook: Mutex<Option<SendHookFn>>,
+    strategy: Mutex<SendHookStrategyBoxed>,
+}
+
+#[derive(Debug)]
+enum SendHookStrategyBoxed {
+    Default,
+    LowLevelOnce(LowLevelSendHookFn),
+    LowLevelMultiple(LowLevelSendHookFn),
+    HighLevelOnce(HighLevelSendHookFn),
+}
+
+pub(crate) enum HighLevelSendResult<T>
+where
+    T: ProtocolRequest,
+{
+    Resolved(CommandResult<<T>::Response>),
+    PassToLowLevel(T),
 }
 
 impl SendHookConfig {
     fn new(kind: TestbedKind) -> Self {
         Self {
             kind,
-            custom_hook: Mutex::new(None),
+            strategy: Mutex::new(SendHookStrategyBoxed::Default),
         }
     }
 
-    pub async fn send(
+    pub async fn high_level_send<T>(&self, request: T) -> HighLevelSendResult<T>
+    where
+        T: ProtocolRequest + Debug + 'static,
+    {
+        // Given mutex is synchronous, we must release it before any await
+        let custom_hook_future = {
+            let mut guard = self.strategy.lock().expect("Mutex is poisoned");
+            if let SendHookStrategyBoxed::HighLevelOnce(custom_hook) = &*guard {
+                match custom_hook(Box::new(request)) {
+                    HighLevelSendHookFnCallResult::Ok(custom_hook_future) => {
+                        *guard = SendHookStrategyBoxed::Default;
+                        custom_hook_future
+                    }
+                    // The request type wasn't what the hook expected
+                    HighLevelSendHookFnCallResult::TypeCastError(request) => {
+                        let request: Box<T> = request.downcast().expect("Type is known");
+                        panic!("Hook got an unexpected request type: {:?}", request)
+                    }
+                }
+            } else {
+                return HighLevelSendResult::PassToLowLevel(request);
+            }
+        };
+        let rep_as_any = custom_hook_future.await;
+        // Last step: convert back runtime generic type to compile-time specific type
+        // In theory this should never fail given if the test code was written with the
+        // wrong type the code would have already panicked when we converted the request
+        let rep: Box<T::Response> = rep_as_any
+            .downcast()
+            .expect("Wrong type returned for response !");
+        HighLevelSendResult::Resolved(Ok(*rep))
+    }
+
+    pub async fn low_level_send(
         &self,
         request_builder: RequestBuilder,
     ) -> Result<ResponseMock, RequestError> {
-        // Given custom hook's mutex is synchronous, we must release it before any await
-        let (maybe_custom_hook_future, maybe_request_builder) =
-            match &*self.custom_hook.lock().expect("Mutex is poisoned") {
-                Some(custom_hook) => (Some(custom_hook(request_builder)), None),
-                None => (None, Some(request_builder)),
-            };
+        // Given mutex is synchronous, we must release it before any await
+        let (maybe_custom_hook_future, maybe_request_builder) = {
+            let mut guard = self.strategy.lock().expect("Mutex is poisoned");
+            let strategy = std::mem::replace(&mut *guard, SendHookStrategyBoxed::Default);
+            match strategy {
+                SendHookStrategyBoxed::Default => (None, Some(request_builder)),
+                SendHookStrategyBoxed::LowLevelOnce(custom_hook) => {
+                    (Some(custom_hook(request_builder)), None)
+                }
+                SendHookStrategyBoxed::LowLevelMultiple(custom_hook) => {
+                    let res = (Some(custom_hook(request_builder)), None);
+                    *guard = SendHookStrategyBoxed::LowLevelMultiple(custom_hook);
+                    res
+                }
+                SendHookStrategyBoxed::HighLevelOnce(_) => {
+                    panic!("High level send hook have been triggered !")
+                }
+            }
+        };
         match (self.kind, maybe_custom_hook_future, maybe_request_builder) {
             // There is no server listening, must prevent the client from actually
             // sending a request !
@@ -158,27 +238,80 @@ pub(crate) fn get_send_hook(config_dir: &Path) -> Arc<SendHookConfig> {
     })
 }
 
-macro_rules! wrap_send_hook_fn {
-    ($cb: ident) => {{
-        let cb = move |rb| {
-            let future: Pin<Box<dyn Future<Output = _> + Send>> = Box::pin($cb(rb));
-            future
-        };
-        let boxed: Box<dyn SendHookFnT + Send + Sync> = Box::new(cb);
-        boxed
-    }};
-}
-
-pub fn test_register_send_hook<T>(config_dir: &Path, hook: Option<fn(RequestBuilder) -> T>)
+pub fn test_register_low_level_send_hook<T>(config_dir: &Path, hook: fn(RequestBuilder) -> T)
 where
     T: Future<Output = Result<ResponseMock, RequestError>> + Send + 'static,
 {
     with_send_hook_config(config_dir, move |send_hook_config| {
-        let mut guard = send_hook_config
-            .custom_hook
-            .lock()
-            .expect("Mutex is poisoned");
-        *guard = hook.map(|cb| wrap_send_hook_fn!(cb));
+        let mut guard = send_hook_config.strategy.lock().expect("Mutex is poisoned");
+        let cb = move |rb| {
+            let future: Pin<Box<dyn Future<Output = _> + Send>> = Box::pin(hook(rb));
+            future
+        };
+        let boxed: Box<dyn LowLevelSendHookFnT + Send + Sync> = Box::new(cb);
+        *guard = SendHookStrategyBoxed::LowLevelOnce(boxed);
+    })
+    .expect("Config dir doesn't correspond to a testbed env");
+}
+
+pub fn test_register_low_level_send_hook_multicall<T>(
+    config_dir: &Path,
+    hook: fn(RequestBuilder) -> T,
+) where
+    T: Future<Output = Result<ResponseMock, RequestError>> + Send + 'static,
+{
+    with_send_hook_config(config_dir, move |send_hook_config| {
+        let mut guard = send_hook_config.strategy.lock().expect("Mutex is poisoned");
+        let cb = move |rb| {
+            let future: Pin<Box<dyn Future<Output = _> + Send>> = Box::pin(hook(rb));
+            future
+        };
+        let boxed: Box<dyn LowLevelSendHookFnT + Send + Sync> = Box::new(cb);
+        *guard = SendHookStrategyBoxed::LowLevelMultiple(boxed);
+    })
+    .expect("Config dir doesn't correspond to a testbed env");
+}
+
+pub fn test_register_low_level_send_hook_default(config_dir: &Path) {
+    with_send_hook_config(config_dir, move |send_hook_config| {
+        let mut guard = send_hook_config.strategy.lock().expect("Mutex is poisoned");
+        *guard = SendHookStrategyBoxed::Default;
+    })
+    .expect("Config dir doesn't correspond to a testbed env");
+}
+
+pub fn test_register_send_hook<A, R>(config_dir: &Path, hook: fn(A) -> R)
+where
+    A: ProtocolRequest + Send + 'static,
+    R: std::future::Future<Output = A::Response> + Send + 'static,
+{
+    with_send_hook_config(config_dir, move |send_hook_config| {
+        let mut guard = send_hook_config.strategy.lock().expect("Mutex is poisoned");
+
+        // So the caller provided us with `hook` which is compile-time polymorphic, here
+        // we are going to wrap it into a runtime generic callback.
+        // The magic sauce is our caller sends (and expects in return) specific types defined
+        // at compile-time, so we convert them back and forth with `Any` to be able to turn
+        // them into runtime generic types.
+        // Of course the drawback is this can blow up at runtime if the test code has
+        // specified the wrong type in the callback passed to `test_register_send_hook` ¯\_(ツ)_/¯
+        let cb = move |req_as_any: Box<dyn Any>| {
+            let req: Box<A> = match req_as_any.downcast() {
+                Ok(req) => req,
+                // Cast has failed, we don't panic here given we have no information
+                // about the type
+                Err(req_as_any) => return HighLevelSendHookFnCallResult::TypeCastError(req_as_any),
+            };
+            let future: Pin<Box<dyn Future<Output = _> + Send>> = Box::pin(async move {
+                let rep = hook(*req).await;
+                let rep_as_any: Box<dyn Any> = Box::new(rep);
+                rep_as_any
+            });
+            HighLevelSendHookFnCallResult::Ok(future)
+        };
+        let boxed: Box<dyn HighLevelSendHookFnT + Send + Sync> = Box::new(cb);
+
+        *guard = SendHookStrategyBoxed::HighLevelOnce(boxed);
     })
     .expect("Config dir doesn't correspond to a testbed env");
 }

@@ -13,10 +13,14 @@ pub use error::{CommandError, CommandResult};
 pub use invited_cmds::InvitedCmds;
 #[cfg(feature = "test-with-testbed")]
 // Also re-expose reqwest&bytes stuff to simplify building mock response
-pub use testbed::{test_register_send_hook, Bytes, HeaderMap, ResponseMock, StatusCode};
-
+pub use testbed::{
+    test_register_low_level_send_hook, test_register_low_level_send_hook_default,
+    test_register_low_level_send_hook_multicall, test_register_send_hook, Bytes, HeaderMap,
+    ResponseMock, StatusCode,
+};
 // Re-expose
 pub use libparsec_platform_http_proxy::ProxyConfig;
+pub use libparsec_protocol as protocol;
 
 /// We send the HTTP request with the body encoded in `msgpack` format.
 /// This is the corresponding mime type to convey that info.

@@ -31,10 +31,12 @@
 //!
 
 use base64::prelude::{Engine, BASE64_STANDARD};
+use bytes::Bytes;
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
+use std::fmt::Debug;
 use std::{path::Path, sync::Arc};
 
 use libparsec_platform_http_proxy::ProxyConfig;
@@ -102,28 +104,44 @@ impl AuthenticatedCmds {
 
     pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
     where
-        T: ProtocolRequest,
+        T: ProtocolRequest + Debug + 'static,
     {
-        let request_builder = self.client.post(self.url.clone());
+        #[cfg(feature = "test-with-testbed")]
+        let request = {
+            match self.send_hook.high_level_send(request).await {
+                crate::testbed::HighLevelSendResult::Resolved(rep) => return rep,
+                crate::testbed::HighLevelSendResult::PassToLowLevel(req) => req,
+            }
+        };
 
-        let data = request.dump()?;
+        let request_body = request.dump()?;
+
+        // Split non-generic code out of `send` to limit the amount of code generated
+        // by monomorphization
+        let response_body = self.internal_send(request_body).await?;
+
+        Ok(T::load_response(&response_body)?)
+    }
+
+    async fn internal_send(&self, request_body: Vec<u8>) -> Result<Bytes, CommandError> {
+        let request_builder = self.client.post(self.url.clone());
 
         let req = prepare_request(
             request_builder,
             &self.device.signing_key,
             self.author_header_value.clone(),
-            data,
+            request_body,
         );
 
         #[cfg(feature = "test-with-testbed")]
-        let resp = self.send_hook.send(req).await?;
+        let resp = self.send_hook.low_level_send(req).await?;
         #[cfg(not(feature = "test-with-testbed"))]
         let resp = req.send().await?;
 
         match resp.status().as_u16() {
             200 => {
                 let response_body = resp.bytes().await?;
-                Ok(T::load_response(&response_body)?)
+                Ok(response_body)
             }
             415 => Err(CommandError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
