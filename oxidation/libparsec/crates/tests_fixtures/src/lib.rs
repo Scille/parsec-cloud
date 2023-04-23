@@ -11,6 +11,8 @@ pub use trustchain::*;
 // Reexport 3rd parties needed by `parsec_test` macro
 pub use env_logger;
 pub use rstest;
+#[cfg(not(target_arch = "wasm32"))]
+pub use tokio;
 // Pretty assertions are super useful in tests, the only issue is we cannot use star-use
 // to import them (given they shadow the default asserts), so we expose them with a
 // sightly different name

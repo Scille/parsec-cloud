@@ -83,18 +83,24 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    let quote_async_test = if sig.asyncness.is_some() {
+    let quote_block = if sig.asyncness.is_some() {
+        sig.asyncness = None;
         quote! {
-            #[tokio::test]
+            ::libparsec_tests_fixtures::tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(async {
+                    #quote_block
+                })
         }
     } else {
-        quote! {}
+        quote_block
     };
 
     TokenStream::from(quote! {
         #[::libparsec_tests_fixtures::rstest::rstest]
         #quote_attrs
-        #quote_async_test
         #sig {
             let _ = ::libparsec_tests_fixtures::env_logger::builder().is_test(true).try_init();
             #quote_block

@@ -1239,7 +1239,6 @@ dependencies = [
  "once_cell",
  "reqwest",
  "thiserror",
- "tokio",
  "url",
 ]
 
@@ -1360,7 +1359,6 @@ dependencies = [
  "libparsec_tests_fixtures",
  "libparsec_types",
  "serde_json",
- "tokio",
  "web-sys",
 ]
 
@@ -1475,6 +1473,7 @@ dependencies = [
  "log",
  "pretty_assertions",
  "rstest",
+ "tokio",
  "uuid",
 ]
 
