@@ -6,7 +6,23 @@ use std::path::PathBuf;
 use super::db::{DatabaseResult, LocalDatabase};
 use libparsec_types::prelude::*;
 
+// In theory we should have multiple kind of database mapped what they are used for:
+// - workspace data storage: store local manifests & chunks of file that are not
+//   synchronized yet
+// - workspace cache storage: store blocks of file that are synchronized (i.e. this
+//   database can be destroyed without occuring memory loss)
+// - user storage: store the user manifest
+// - certifs storage: store all the certificates for the organization
+//
+// In practise it is just simpler to have a single datamodel that support all those
+// needs: the tables that are not needed are just left alone.
 pub(super) const STORAGE_REVISION: u32 = 1;
+
+/// Path relative to config dir
+pub(super) fn get_certificates_storage_db_relative_path(device: &LocalDevice) -> PathBuf {
+    let slug = device.slug();
+    PathBuf::from_iter([slug, format!("certificates-v{STORAGE_REVISION}.sqlite")])
+}
 
 /// Path relative to config dir
 pub(super) fn get_user_data_storage_db_relative_path(device: &LocalDevice) -> PathBuf {
@@ -18,7 +34,7 @@ pub(super) fn get_user_data_storage_db_relative_path(device: &LocalDevice) -> Pa
 /// Path relative to config dir
 pub(super) fn get_workspace_data_storage_db_relative_path(
     device: &LocalDevice,
-    workspace_id: EntryID,
+    workspace_id: &EntryID,
 ) -> PathBuf {
     let slug = device.slug();
     PathBuf::from_iter([
@@ -32,7 +48,7 @@ pub(super) fn get_workspace_data_storage_db_relative_path(
 /// Path relative to config dir
 pub(super) fn get_workspace_cache_storage_db_relative_path(
     device: &LocalDevice,
-    workspace_id: EntryID,
+    workspace_id: &EntryID,
 ) -> PathBuf {
     let slug = device.slug();
     PathBuf::from_iter([
@@ -78,9 +94,34 @@ table! {
 }
 
 table! {
-    remanence(_id) {
+    remanence (_id) {
         _id -> BigInt,
         block_remanent -> Bool,
+    }
+}
+
+table! {
+    certificates (index_) {
+        index_ -> BigInt,
+        certificate -> Binary,
+        // We want to have a way to retreive a singe certificate without having to iterate,
+        // decrypt and deserialize all of them.
+        // However this is tricky given we don't want to make this table dependent on the
+        // types of certificates, otherwise a migration would be required everytime we
+        // introduce a new type of certificate :(
+        //
+        // Hence:
+        // - `certificate_type` field is not an enum
+        // - `hint` field contains a serialization the fields that we want to query using SQL LIKE
+        //
+        // The format for `hint` is "<field_name>:<field_value> <field_name>:<field_value>..."
+        // For instance:
+        // - User & revoked user certificates: "user_id:2199bb7d21ec4988825db6bcf9d7a43e"
+        // - Realm role certficate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e realm_id:dcf41c521cae4682a4cf29302e2af1b6"
+        // - Device certificate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e device_name:78c339d140664e909961c05b4d9add4c"
+        // - Sequester authority & sequester service certificate: "" (nothing to index)
+        certificate_type -> Text,
+        hint -> Text,
     }
 }
 
@@ -119,6 +160,15 @@ pub(super) struct NewPreventSyncPattern<'a> {
     pub fully_applied: bool,
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = certificates)]
+pub(super) struct NewCertificate<'a> {
+    pub index_: i64,
+    pub certificate: &'a [u8],
+    pub certificate_type: &'a str,
+    pub hint: &'a str,
+}
+
 /// Do not match anything (https://stackoverflow.com/a/2302992/2846140)
 const PREVENT_SYNC_PATTERN_EMPTY_PATTERN: &str = r"^\b$";
 
@@ -137,6 +187,7 @@ pub(super) async fn initialize_model_if_needed(db: &LocalDatabase) -> DatabaseRe
             .execute(conn)?;
             sql_query(std::include_str!("sql/create-chunks-table.sql")).execute(conn)?;
             sql_query(std::include_str!("sql/create-remanence-table.sql")).execute(conn)?;
+            sql_query(std::include_str!("sql/create-certificates-table.sql")).execute(conn)?;
 
             // 2) Populate the tables
 

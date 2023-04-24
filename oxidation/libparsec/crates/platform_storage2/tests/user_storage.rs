@@ -86,7 +86,7 @@ async fn non_speculative_init(env: &TestbedEnv) {
 
     // 1) Initialize the database
 
-    user_storage_non_speculative_init(&env.discriminant_dir, alice.clone())
+    user_storage_non_speculative_init(&env.discriminant_dir, &alice)
         .await
         .unwrap();
 

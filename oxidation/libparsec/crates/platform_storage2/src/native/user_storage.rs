@@ -188,11 +188,11 @@ impl UserStorage {
 
 pub async fn user_storage_non_speculative_init(
     data_base_dir: &Path,
-    device: Arc<LocalDevice>,
+    device: &LocalDevice,
 ) -> Result<(), UserStorageNonSpeculativeInitError> {
     // 1) Open the database
 
-    let db_relative_path = get_user_data_storage_db_relative_path(&device);
+    let db_relative_path = get_user_data_storage_db_relative_path(device);
     let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
         .await
         .map_err(|err| UserStorageNonSpeculativeInitError::Open(Box::new(err)))?;
@@ -213,7 +213,7 @@ pub async fn user_storage_non_speculative_init(
         false,
     ));
 
-    db_set_user_manifest(&db, &device, manifest)
+    db_set_user_manifest(&db, device, manifest)
         .await
         .map_err(|err| UserStorageNonSpeculativeInitError::Operation(Box::new(err)))?;
 

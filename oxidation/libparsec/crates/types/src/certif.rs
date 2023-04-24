@@ -73,16 +73,25 @@ macro_rules! impl_unsecure_load {
     };
 }
 
-macro_rules! impl_dump_and_sign {
+macro_rules! impl_unsecure_dump {
     ($name:ident) => {
         impl $name {
-            pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
+            pub fn unsecure_dump(&self) -> Vec<u8> {
                 let serialized =
                     ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
                 e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-                author_signkey.sign(&compressed)
+                e.finish().unwrap_or_else(|_| unreachable!())
+            }
+        }
+    };
+}
+
+macro_rules! impl_dump_and_sign {
+    ($name:ident) => {
+        impl $name {
+            pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
+                author_signkey.sign(&self.unsecure_dump())
             }
         }
     };
@@ -162,6 +171,7 @@ pub struct UserCertificate {
 }
 
 impl_unsecure_load!(UserCertificate);
+impl_unsecure_dump!(UserCertificate);
 impl_dump_and_sign!(UserCertificate);
 
 impl UserCertificate {
@@ -245,6 +255,7 @@ pub struct RevokedUserCertificate {
 }
 
 impl_unsecure_load!(RevokedUserCertificate);
+impl_unsecure_dump!(RevokedUserCertificate);
 impl_dump_and_sign!(RevokedUserCertificate);
 
 impl RevokedUserCertificate {
@@ -305,6 +316,7 @@ pub struct DeviceCertificate {
 parsec_data!("schema/certif/device_certificate.json5");
 
 impl_unsecure_load!(DeviceCertificate);
+impl_unsecure_dump!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
 
 impl DeviceCertificate {
@@ -357,6 +369,7 @@ pub struct RealmRoleCertificate {
 }
 
 impl_unsecure_load!(RealmRoleCertificate);
+impl_unsecure_dump!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 
 impl RealmRoleCertificate {
@@ -419,6 +432,7 @@ pub struct SequesterAuthorityCertificate {
 }
 
 impl_unsecure_load!(SequesterAuthorityCertificate);
+impl_unsecure_dump!(SequesterAuthorityCertificate);
 impl_dump_and_sign!(SequesterAuthorityCertificate);
 
 impl SequesterAuthorityCertificate {
