@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+#![allow(dead_code)]
+
 use std::{
     fmt::Debug,
     path::Path,
@@ -16,9 +18,18 @@ use crate::{event_bus::EventBus, user_ops::UserOps};
 
 pub type DynError = Box<dyn std::error::Error + Send + Sync>;
 
+// pub struct RunningDeviceConfig {
+//     pub config_dir: PathBuf,
+//     pub data_base_dir: PathBuf,
+//     pub mountpoint_base_dir: PathBuf,
+//     pub prevent_sync_pattern: Option<Path>,
+// }
+
 // Should not be `Clone` given it manages underlying resources !
 pub struct RunningDevice {
     device: Arc<LocalDevice>,
+    cmds: Arc<AuthenticatedCmds>,
+    event_bus: Arc<EventBus>,
     pub user_ops: UserOps,
     stopped: AtomicBool,
 }
@@ -52,6 +63,8 @@ impl RunningDevice {
         // TODO: init workspace ops
         Ok(Self {
             device,
+            cmds,
+            event_bus,
             user_ops,
             stopped: AtomicBool::new(false),
         })

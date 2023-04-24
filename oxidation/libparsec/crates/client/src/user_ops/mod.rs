@@ -1,8 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+mod merge;
+
 use std::{path::PathBuf, sync::Arc};
 
-use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_client_connection::{protocol::authenticated_cmds, AuthenticatedCmds};
 use libparsec_platform_async::Mutex as AsyncMutex;
 use libparsec_platform_storage2::{workspace_storage_non_speculative_init, UserStorage};
 use libparsec_types::prelude::*;
@@ -34,6 +36,12 @@ pub struct UserOps {
     data_base_dir: PathBuf, // TODO: use Arc ?
     device: Arc<LocalDevice>,
     storage: UserStorage,
+    cmds: Arc<AuthenticatedCmds>,
+    #[allow(dead_code)]
+    event_bus: Arc<EventBus>,
+    // // Message processing is done in-order, hence it is pointless to do
+    // // it concurrently
+    // process_messages_lock: Mutex<()>,
     update_user_manifest_lock: AsyncMutex<()>,
 }
 
@@ -44,9 +52,9 @@ impl UserOps {
     pub async fn start(
         data_base_dir: PathBuf,
         device: Arc<LocalDevice>,
-        _cmds: Arc<AuthenticatedCmds>,
+        cmds: Arc<AuthenticatedCmds>,
         // remote_device_manager,
-        _event_bus: Arc<EventBus>,
+        event_bus: Arc<EventBus>,
         // prevent_sync_pattern,
         // preferred_language,
         // workspace_storage_cache_size,
@@ -57,9 +65,12 @@ impl UserOps {
             data_base_dir,
             device,
             storage,
+            cmds,
+            event_bus,
             update_user_manifest_lock: AsyncMutex::new(()),
         })
     }
+
     pub async fn stop(&self) {
         self.storage.stop().await;
     }
@@ -138,6 +149,94 @@ impl UserOps {
     }
 
     pub async fn sync(&self) -> Result<(), DynError> {
+        let user_manifest = self.storage.get_user_manifest();
+        if user_manifest.need_sync {
+            self._outbound_sync().await
+        } else {
+            self._inbound_sync().await
+        }
+    }
+
+    async fn _outbound_sync(&self) -> Result<(), DynError> {
+        todo!()
+    }
+
+    async fn _inbound_sync(&self) -> Result<(), DynError> {
+        // Retrieve remote
+        let _target_um = self._fetch_remote_user_manifest(None).await;
+        // diverged_um = self.get_user_manifest()
+        // if target_um.version == diverged_um.base_version:
+        //     # Nothing new
+        //     return
+
+        // # New things in remote, merge is needed
+        // async with self._update_user_manifest_lock:
+        //     diverged_um = self.get_user_manifest()
+        //     if target_um.version <= diverged_um.base_version:
+        //         # Sync already achieved by a concurrent operation
+        //         return
+        //     merged_um = merge_local_user_manifests(diverged_um, target_um)
+        //     await self.set_user_manifest(merged_um)
+        //     # In case we weren't online when the sharing message arrived,
+        //     # we will learn about the change in the sharing only now.
+        //     # Hence send the corresponding events !
+        //     self._detect_and_send_shared_events(diverged_um, merged_um)
+        //     # TODO: deprecated event ?
+        //     self.event_bus.send(
+        //         CoreEvent.FS_ENTRY_REMOTE_CHANGED, path="/", id=self.user_manifest_id
+        //     )
+        //     return
+        todo!()
+    }
+
+    async fn _fetch_remote_user_manifest(
+        &self,
+        version: Option<VersionInt>,
+    ) -> Result<UserManifest, DynError> {
+        let request = authenticated_cmds::v3::vlob_read::Req {
+            // `encryption_revision` is always 1 given we never re-encrypt the user manifest's realm
+            encryption_revision: 1,
+            timestamp: None,
+            version,
+            vlob_id: VlobID::from(self.device.user_manifest_id.as_ref().to_owned()),
+        };
+        // TODO: handle errors !
+        let _response = self.cmds.send(request).await?;
+
+        // try:
+
+        // except BackendNotAvailable as exc:
+        //     raise FSBackendOfflineError(str(exc)) from exc
+
+        // if isinstance(rep, VlobReadRepInMaintenance):
+        //     raise FSWorkspaceInMaintenance(
+        //         "Cannot access workspace data while it is in maintenance"
+        //     )
+        // elif not isinstance(rep, VlobReadRepOk):
+        //     raise FSError(f"Cannot fetch user manifest from backend: {rep}")
+
+        // expected_author = rep.author
+        // expected_timestamp = rep.timestamp
+        // expected_version = rep.version
+        // blob = rep.blob
+
+        // author = await self.remote_loader.get_device(expected_author)
+
+        // try:
+        //     manifest = UserManifest.decrypt_verify_and_load(
+        //         blob,
+        //         key=self.device.user_manifest_key,
+        //         author_verify_key=author.verify_key,
+        //         expected_id=self.device.user_manifest_id,
+        //         expected_author=expected_author,
+        //         expected_timestamp=expected_timestamp,
+        //         expected_version=version if version is not None else expected_version,
+        //     )
+
+        // except DataError as exc:
+        //     raise FSError(f"Invalid user manifest: {exc}") from exc
+
+        // return manifest
         todo!()
     }
 

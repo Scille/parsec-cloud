@@ -102,7 +102,7 @@ fn merge_workspace_entries(
     // want to remove a workspace entirely ?
     // Workspace entries should never be removed
     for base_entry in base {
-        if let None = resolved.iter().find(|x| x.id == base_entry.id) {
+        if !resolved.iter().any(|x| x.id == base_entry.id) {
             // The impossible occured ! This is most likely due to a bug in the client
             // that did the previous workspace synchronization...
             resolved.push(base_entry.to_owned());
@@ -115,6 +115,7 @@ fn merge_workspace_entries(
     (resolved, need_sync)
 }
 
+#[allow(dead_code)]
 pub(super) fn merge_local_user_manifests(
     diverged: &LocalUserManifest,
     target: &UserManifest,
