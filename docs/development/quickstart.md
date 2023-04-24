@@ -61,14 +61,37 @@ To start hacking, follow the basic steps detailed below:
 
     4. [`python v3.9`](https://www.python.org/)
 
-       > To install the correct python version, we recommend using `pyenv` instead of relaying on a system package
+       To install the correct python version, we use `pyenv` instead of relaying on a system package:
 
-       ```shell
-       # Install Pyenv
-       curl --proto '=https' --tlsv1.2 -sSL https://pyenv.run | bash
-       # Compile Python
-       pyenv install 3.9.10
-       ```
+       1. Install `pyenv`:
+
+          ```shell
+          # Install Pyenv
+          curl --proto '=https' --tlsv1.2 -sSL https://pyenv.run | bash
+          ```
+
+          > For more installation methods for `pyenv`, see <https://github.com/pyenv/pyenv#installation>
+
+       2. Check your `pyenv` installation:
+
+          ```shell
+          pyenv --version
+          ```
+
+          If the previous command worked, you can skip directly to step 3.
+
+          If this command failed with `command not found` (or alike) this means your OS can't find `pyenv` inside your `PATH` variable.
+
+          To correct that you need to update your `PATH` variable. If you've installed `pyenv` via the step above you need to add `$HOME/.pyenv/bin` to that variable.
+
+          > `$HOME` is you home path.
+
+       3. Install the correct python version using `pyenv`
+
+          ```shell
+          # Install a specific Python version
+          pyenv install 3.9.10
+          ```
 
     5. [`poetry >=1.2.0`](https://python-poetry.org/docs/#installation)
 
