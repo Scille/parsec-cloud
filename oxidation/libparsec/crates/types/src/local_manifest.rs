@@ -967,16 +967,30 @@ impl LocalUserManifest {
         }
     }
 
+    pub fn evolve_workspaces_and_mark_updated(
+        mut self,
+        workspace: WorkspaceEntry,
+        timestamp: DateTime,
+    ) -> Self {
+        self.need_sync = true;
+        self.updated = timestamp;
+        self.evolve_workspaces(workspace)
+    }
+
     pub fn evolve_workspaces(mut self, workspace: WorkspaceEntry) -> Self {
-        let mut workspaces =
-            HashMap::<_, _, RandomState>::from_iter(self.workspaces.into_iter().map(|w| (w.id, w)));
-        workspaces.insert(workspace.id, workspace);
-        self.workspaces = workspaces.into_values().collect();
+        for entry in self.workspaces.iter_mut() {
+            if entry.id == workspace.id {
+                *entry = workspace;
+                return self;
+            }
+        }
+        // Entry not already present, add it
+        self.workspaces.push(workspace);
         self
     }
 
-    pub fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<&WorkspaceEntry> {
-        self.workspaces.iter().find(|w| w.id == workspace_id)
+    pub fn get_workspace_entry(&self, workspace_id: &EntryID) -> Option<&WorkspaceEntry> {
+        self.workspaces.iter().find(|w| w.id == *workspace_id)
     }
 
     pub fn from_remote(remote: UserManifest) -> Self {

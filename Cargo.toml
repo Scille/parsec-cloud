@@ -15,6 +15,7 @@ crate-type = ["cdylib"]
 [workspace]
 members = [
     "oxidation/libparsec",
+    "oxidation/libparsec/crates/client",
     "oxidation/libparsec/crates/client_connection",
     "oxidation/libparsec/crates/client_high_level_api",
     "oxidation/libparsec/crates/core",
