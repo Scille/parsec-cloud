@@ -23,6 +23,11 @@ macro_rules! impl_dump_load {
 }
 pub(crate) use impl_dump_load;
 
+// `libparsec_types` must be in the scope given the macro access it from submodule
+// through `super::libparsec_types` (this is needed so that it can be mocked in tests)
+#[allow(clippy::single_component_path_imports)]
+use libparsec_types;
+
 // This macro implements dump/load methods for client/server side.
 // It checks if both Req and Rep are implemented for a specified command
 // It also provides a way to use commands by specifying status, command and type.

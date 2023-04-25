@@ -7,7 +7,6 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 
 use libparsec_crypto::{HashDigest, SecretKey};
 use libparsec_serialization_format::parsec_data;

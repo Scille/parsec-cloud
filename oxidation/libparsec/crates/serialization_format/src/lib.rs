@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 mod data;
-mod field;
 mod protocol;
+mod types;
 mod utils;
 
 use proc_macro::TokenStream;
@@ -10,7 +10,7 @@ use std::{
     ffi::OsStr,
     fs::File,
     io::{BufRead, BufReader},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 use syn::{parse_macro_input, LitStr};
 
@@ -38,12 +38,7 @@ fn content_from_file(path: &PathBuf) -> String {
     content
 }
 
-/// Procedural macro that takes a directory containing one JSON file per protocol command.
-#[proc_macro]
-pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
-    let pathname = parse_macro_input!(path as LitStr).value();
-    let path = path_from_str(&pathname);
-
+fn retrieve_protocol_family_json_cmds(path: &Path) -> (String, Vec<protocol::JsonCmd>) {
     let family_name = path
         .file_name()
         .and_then(|os_str| os_str.to_str())
@@ -75,7 +70,15 @@ pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
         };
         json_cmds.push(json_cmd);
     }
+    (family_name, json_cmds)
+}
 
+/// Procedural macro that takes a directory containing one JSON file per protocol command.
+#[proc_macro]
+pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
+    let path = parse_macro_input!(path as LitStr).value();
+    let path = path_from_str(&path);
+    let (family_name, json_cmds) = retrieve_protocol_family_json_cmds(&path);
     TokenStream::from(protocol::generate_protocol_cmds_family(
         json_cmds,
         &family_name,
@@ -108,8 +111,16 @@ pub fn generate_protocol_cmds_family_from_contents(json_contents: TokenStream) -
 #[proc_macro]
 pub fn parsec_data(path: TokenStream) -> TokenStream {
     let path = parse_macro_input!(path as LitStr).value();
-    let content = content_from_file(&path_from_str(&path));
+    let path = path_from_str(&path);
+    let content = content_from_file(&path);
+    let data: data::JsonData = miniserde::json::from_str(&content).expect("Data is not valid");
+    TokenStream::from(data::generate_data(data))
+}
 
-    let data: data::Data = miniserde::json::from_str(&content).expect("Data is not valid");
-    TokenStream::from(data.quote())
+// Useful for tests to avoid having to deal with file system
+#[proc_macro]
+pub fn parsec_data_from_contents(json_contents: TokenStream) -> TokenStream {
+    let content = parse_macro_input!(json_contents as LitStr).value();
+    let data: data::JsonData = miniserde::json::from_str(&content).expect("Data is not valid");
+    TokenStream::from(data::generate_data(data))
 }

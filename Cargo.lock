@@ -1441,8 +1441,8 @@ dependencies = [
 name = "libparsec_serialization_format"
 version = "0.0.0"
 dependencies = [
+ "hex-literal",
  "itertools",
- "libparsec_types",
  "miniserde",
  "pretty_assertions",
  "proc-macro2",

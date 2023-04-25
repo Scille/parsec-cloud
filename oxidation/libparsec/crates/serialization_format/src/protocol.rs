@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+#[cfg(feature = "python-bindings-support")]
+#[path = "./protocol_python_bindings.rs"]
+pub(crate) mod python_bindings;
+
 use itertools::Itertools;
 use miniserde::Deserialize;
 use proc_macro2::{Ident, TokenStream};
@@ -7,9 +11,8 @@ use quote::{format_ident, quote};
 use std::collections::HashSet;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::utils::inspect_type;
-
-use super::utils::{quote_serde_as, snake_to_pascal_case};
+use crate::types::FieldType;
+use crate::utils::snake_to_pascal_case;
 
 fn parse_api_version(raw: &str) -> Result<(u32, u32), &'static str> {
     let mut splitted = raw.splitn(2, '.');
@@ -128,12 +131,10 @@ struct GenCmdRep {
 
 struct GenCmdField {
     name: String,
-    ty: String,
+    ty: FieldType,
     // Field is required if the command has always contain it, or if
     // it has been introduced in a previous major version of the API
     added_in_minor_revision: bool,
-    // Expose what has been provided in `fields`
-    allowed_extra_types: Rc<RefCell<HashMap<String, String>>>,
 }
 
 struct GenCmdNestedTypeVariant {
@@ -193,13 +194,15 @@ impl GenCmdsFamily {
                 // Now it's time to convert the Json struct into a Gen one !
 
                 // `allowed_extra_types` is needed for each field to be parsed (given a field
-                // may reference a type defined in `nested_types`). However `nested_types`
-                // itself contains structures with fields (and typically we could have
-                // `nested_types` defining first a struct A then a struct B, with A
-                // containing a field of type B).
-                // So we solve this by sharing `allowed_extra_types` accross all types
-                // and populating it only once we have parsed `nested_types` field.
-                let allowed_extra_types = Rc::new(RefCell::new(HashMap::new()));
+                // may reference a type defined in `nested_types`)
+                let allowed_extra_types: Rc<HashSet<String>> = Rc::new({
+                    match cmd.nested_types.as_ref() {
+                        None => HashSet::new(),
+                        Some(nested_types) => {
+                            nested_types.iter().map(|nt| nt.name.clone()).collect()
+                        }
+                    }
+                });
 
                 let convert_field = |field: &JsonCmdField| {
                     // Field can be omitted in a schema if it has been added in a minor
@@ -224,9 +227,11 @@ impl GenCmdsFamily {
                     };
                     Some(GenCmdField {
                         name: field.name.clone(),
-                        ty: field.ty.clone(),
+                        ty: FieldType::from_json_type(
+                            &field.ty,
+                            Some(allowed_extra_types.as_ref()),
+                        ),
                         added_in_minor_revision,
-                        allowed_extra_types: allowed_extra_types.clone(),
                     })
                 };
 
@@ -271,25 +276,6 @@ impl GenCmdsFamily {
                         vec![]
                     }
                 };
-
-                // Told you we were going to populate `allowed_extra_types` !
-                {
-                    let mut allowed_extra_types = allowed_extra_types.borrow_mut();
-                    for nested_type in gen_nested_types.iter() {
-                        let name = match nested_type {
-                            GenCmdNestedType::Enum { name, .. } => name,
-                            GenCmdNestedType::Struct { name, .. } => name,
-                        };
-                        let old_value =
-                            allowed_extra_types.insert(name.to_owned(), name.to_owned());
-                        assert!(
-                            old_value.is_none(),
-                            "{}: Multiple nested types named {:?}",
-                            &cmd.req.cmd,
-                            name
-                        );
-                    }
-                }
 
                 let gen_req = GenCmdReq {
                     _cmd: cmd.req.cmd.to_owned(),
@@ -408,6 +394,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
 
     quote! {
         pub mod #family_name {
+            use super::libparsec_types; // Allow to mock types in tests
             #(#versioned_cmds)*
             pub mod latest {
                 pub use super::#latest_cmds_mod_name::*;
@@ -423,6 +410,7 @@ fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
 
     let code = quote! {
         pub mod #versioned_cmds_mod {
+            use super::libparsec_types; // Allow to mock types in tests
             // Define `UnknownStatus` here instead of where is it actually used (i.e.
             // near each command's `Rep::load` definition) to have a single common
             // definition that will have it deserialization code compiled once \o/
@@ -487,8 +475,7 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
             quote! {
 
                 pub mod #module_name {
-                    use ::libparsec_types::ProtocolRequest;
-
+                    use super::libparsec_types; // Allow to mock types in tests
                     use super::AnyCmdReq;
                     use super::UnknownStatus;
 
@@ -496,7 +483,7 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
 
                     #struct_req
 
-                    impl ProtocolRequest for Req {
+                    impl libparsec_types::ProtocolRequest for Req {
                         type Response = Rep;
 
                         fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
@@ -758,27 +745,43 @@ fn quote_cmd_fields(fields: &[GenCmdField], with_pub: bool) -> Vec<TokenStream> 
 fn quote_cmd_field(field: &GenCmdField, with_pub: bool) -> TokenStream {
     let mut attrs = Vec::<TokenStream>::new();
 
-    let ty: syn::Type = syn::parse_str({
-        let allowed_extra_types = field.allowed_extra_types.borrow();
-        let ty = inspect_type(&field.ty, &allowed_extra_types);
+    let ty = {
         if field.added_in_minor_revision {
             attrs.push(quote! {
-                #[serde(default, skip_serializing_if = "::libparsec_types::Maybe::is_absent")]
+                #[serde(default, skip_serializing_if = "libparsec_types::Maybe::is_absent")]
             });
-            format!("::libparsec_types::Maybe<{}>", ty)
+            let rust_type = field.ty.to_rust_type();
+            quote! {
+                libparsec_types::Maybe<#rust_type>
+            }
         } else {
-            ty
+            field.ty.to_rust_type()
         }
-        .as_ref()
-    })
-    .unwrap_or_else(|err| {
-        panic!("Invalid type {:?} ({:?})", &field.ty, err);
-    });
+    };
 
-    let can_only_be_null = field.ty.starts_with("RequiredOption<");
-    // let can_be_missing_or_null = field.ty.starts_with("NonRequiredOption<");
-    // TODO: rework quote_serde_as to avoid syn ?
-    attrs.push(quote_serde_as(&ty, can_only_be_null));
+    let can_only_be_null = matches!(field.ty, FieldType::RequiredOption(_));
+    // let can_be_missing_or_null = matches!(field.ty, FieldType::NonRequiredOption(_));
+    let default = if can_only_be_null {
+        quote! { no_default }
+    } else {
+        quote! {}
+    };
+
+    match (field.added_in_minor_revision, field.ty.to_serde_as()) {
+        (true, Some(serde_as_type)) => {
+            let serde_as_type = quote! { libparsec_types::Maybe<#serde_as_type> }.to_string();
+            attrs.push(quote! { #[serde_as(as = #serde_as_type, #default)] });
+        }
+        (true, None) => {
+            let serde_as_type = quote! { libparsec_types::Maybe<_> }.to_string();
+            attrs.push(quote! { #[serde_as(as = #serde_as_type, #default)] });
+        }
+        (false, Some(serde_as_type)) => {
+            let serde_as_type = serde_as_type.to_string();
+            attrs.push(quote! { #[serde_as(as = #serde_as_type, #default)] });
+        }
+        _ => (),
+    }
 
     let name = match field.name.as_ref() {
         "type" => {
