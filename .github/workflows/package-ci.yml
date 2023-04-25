@@ -16,7 +16,6 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+*
 
 env:
-  rust-version: 1.68.0
   node-version: 18.13.0
   python-version: 3.9
   poetry-version: 1.3.2
@@ -81,8 +80,6 @@ jobs:
         with:
           output-dir: dist
         timeout-minutes: 50
-        env:
-          RUST_TOOLCHAIN: ${{ env.rust-version }}
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
@@ -406,12 +403,6 @@ jobs:
           python-version: ${{ env.python-version }}
         timeout-minutes: 10
 
-      - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
-        with:
-          toolchain: ${{ env.rust-version }}
-        timeout-minutes: 10
-
       - name: Install dependencies
         shell: bash
         run: |
@@ -446,12 +437,9 @@ jobs:
       - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
-      - name: Install rust toolchain
-        id: rust-toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
-        with:
-          toolchain: ${{ env.rust-version }}
-          targets: armv7-linux-androideabi, i686-linux-android, aarch64-linux-android, x86_64-linux-android
+      - name: Add rustup targets
+        run: rustup target add armv7-linux-androideabi i686-linux-android aarch64-linux-android x86_64-linux-android
+        timeout-minutes: 5
 
       - name: Configure Runner environment
         run: |
