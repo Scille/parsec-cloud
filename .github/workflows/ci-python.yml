@@ -36,7 +36,7 @@ jobs:
           - name: 🏁 Windows
             os: windows-2022
             winfsp-version: 1.11.22176
-    name: '${{ matrix.name }}: 🐍 Python tests'
+    name: "${{ matrix.name }}: 🐍 Python tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}

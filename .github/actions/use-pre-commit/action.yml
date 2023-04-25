@@ -5,11 +5,11 @@ inputs:
   extra-args:
     description: options to pass to pre-commit run-precommit
     required: false
-    default: ''
+    default: ""
   changed-files:
     description: List of changed files to run `pre-commit` on, if empty will run on all files
     required: false
-    default: ''
+    default: ""
   config-file:
     description: where is located the pre-commit config file
     required: false
@@ -21,7 +21,7 @@ inputs:
   install-only:
     description: Only install pre-commit without running it.
     required: false
-    default: 'false'
+    default: "false"
   install-dir:
     description: Path where to install pre-commit.
     required: false
