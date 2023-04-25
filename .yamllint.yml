@@ -75,7 +75,7 @@ rules:
     forbid-explicit-octal: false
 
   quoted-strings:
-    quote-type: any # I would prefer "double" style
+    quote-type: double
     required: only-when-needed
     extra-allowed:
       - \d{2,2}:\d{2,2}

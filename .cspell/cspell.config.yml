@@ -114,16 +114,16 @@ cache:
 useGitignore: true
 allowCompoundWords: true
 ignorePaths:
-  - '**/parsec/core/resources/default_*.ignore'
-  - '**/*.svg'
-  - '**/docs/figures/*.svg'
-  - '**/windows-icon-handler/**/*.vcxproj'
-  - '**/windows-icon-handler/**/*.vcxproj.filters'
-  - '**/gradle.lockfile'
-  - '**/buildscript-gradle.lockfile'
-  - '**/gradle/verification-metadata.xml'
-  - '**/*.icns'
-  - '**/.git'
+  - "**/parsec/core/resources/default_*.ignore"
+  - "**/*.svg"
+  - "**/docs/figures/*.svg"
+  - "**/windows-icon-handler/**/*.vcxproj"
+  - "**/windows-icon-handler/**/*.vcxproj.filters"
+  - "**/gradle.lockfile"
+  - "**/buildscript-gradle.lockfile"
+  - "**/gradle/verification-metadata.xml"
+  - "**/*.icns"
+  - "**/.git"
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"
