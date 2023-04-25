@@ -480,27 +480,3 @@ jobs:
             oxidation/client/android/app/build/outputs/apk/release/app-release-unsigned.apk
             oxidation/client/android/app/build/outputs/apk/release/output-metadata.json
           if-no-files-found: error
-
-  package-web-app:
-    # We currently disable web building, this job need to be updated to work with `vite`.
-    # See tracking issue #4419
-    if: false
-    runs-on: ubuntu-22.04
-    name: ⚡ Package web app
-    steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
-        timeout-minutes: 5
-
-      - name: Install dependencies
-        run: npm clean-install
-        working-directory: oxidation/client
-
-      - name: Build Vue App
-        run: npm run web:release
-        working-directory: oxidation/client
-
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.0
-        with:
-          name: webapp
-          path: oxidation/client/dist/
-          if-no-files-found: error
