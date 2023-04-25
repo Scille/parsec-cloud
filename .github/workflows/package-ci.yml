@@ -37,7 +37,7 @@ jobs:
             os: macos-12
           - name: 🏁 Windows
             os: windows-2022
-    name: '${{ matrix.name }}: 📦 Packaging (build Wheel)'
+    name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
@@ -122,7 +122,7 @@ jobs:
         timeout-minutes: 5
 
   package-linux-build-snap:
-    name: '🐧 Linux: 📦 Packaging (build Snap)'
+    name: "🐧 Linux: 📦 Packaging (build Snap)"
     needs: package-wheel
     runs-on: ubuntu-20.04
     env:
@@ -174,7 +174,7 @@ jobs:
           if-no-files-found: error
 
   package-linux-test-snap:
-    name: '🐧 Linux: 📦 Packaging (test Snap on ${{ matrix.os }})'
+    name: "🐧 Linux: 📦 Packaging (test Snap on ${{ matrix.os }})"
     needs: package-linux-build-snap
     runs-on: ${{ matrix.os }}
     strategy:
@@ -203,7 +203,7 @@ jobs:
           xvfb-run parsec --diagnose
 
   package-linux-release-snap:
-    name: '🐧 Linux: 📦 Packaging (release Snap)'
+    name: "🐧 Linux: 📦 Packaging (release Snap)"
     needs: [ package-linux-build-snap, package-linux-test-snap ]
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
@@ -222,7 +222,7 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
 
   package-linux-release-pypi:
-    name: '🐧 Linux: 📦 Packaging (release Pypi)'
+    name: "🐧 Linux: 📦 Packaging (release Pypi)"
     needs: [ package-wheel, package-linux-test-snap ]
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
@@ -242,7 +242,7 @@ jobs:
           password: ${{ secrets.PYPI_CREDENTIALS }}
 
   package-windows-build-installer-content:
-    name: '🏁 Windows: 📦 Packaging (build installer content)'
+    name: "🏁 Windows: 📦 Packaging (build installer content)"
     needs: package-wheel
     runs-on: windows-2022
     steps:
@@ -303,7 +303,7 @@ jobs:
 
   package-macos-build-app:
     runs-on: macos-12
-    name: '🍎 macOS: 📦 Packaging (build installer content)'
+    name: "🍎 macOS: 📦 Packaging (build installer content)"
     needs: package-wheel
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
@@ -346,7 +346,7 @@ jobs:
 
   package-macos-test-app:
     runs-on: macos-${{ matrix.macos-version }}
-    name: '🍎 macOS: 📦 Packaging (test app on macOS-${{ matrix.macos-version }})'
+    name: "🍎 macOS: 📦 Packaging (test app on macOS-${{ matrix.macos-version }})"
     needs: [ package-wheel, package-macos-build-app ]
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
@@ -393,7 +393,7 @@ jobs:
             paths: |
               oxidation/client/electron/dist/parsec-*.dmg
               oxidation/client/electron/dist/parsec-*.dmg.blockmap
-    name: '${{matrix.name }}: ⚡ Package electron'
+    name: "${{matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
