@@ -7,6 +7,7 @@ mod utils;
 
 use proc_macro::TokenStream;
 use std::{
+    ffi::OsStr,
     fs::File,
     io::{BufRead, BufReader},
     path::PathBuf,
@@ -53,6 +54,13 @@ pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
 
     let mut json_cmds = vec![];
     for json_path in dir.filter_map(|entry| entry.ok()) {
+        // Only keep .json/.json5 files
+        let file_name = json_path.file_name();
+        match std::path::Path::new(&file_name).extension() {
+            Some(x) if x == OsStr::new("json5") || x == OsStr::new("json") => (),
+            _ => continue,
+        }
+
         let json_content = {
             let json_without_outer_struct = content_from_file(&json_path.path());
             // Hack around the fact Miniserde only supports struct as root ;-)
