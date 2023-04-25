@@ -289,7 +289,7 @@ class BackendAuthenticatedConn:
         self._status_exc: Exception | None = None
         self._status_event_sent = False
         self._cmds: RsBackendAuthenticatedCmds | BackendAuthenticatedCmds = (
-            RsBackendAuthenticatedCmds(addr, device.device_id, device.signing_key)
+            RsBackendAuthenticatedCmds(device)
             if parsec.FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]
             else BackendAuthenticatedCmds(addr, self._acquire_transport)
         )
@@ -545,9 +545,7 @@ class BackendAuthenticatedConn:
 
 @asynccontextmanager
 async def backend_authenticated_cmds_factory(
-    addr: BackendOrganizationAddr,
-    device_id: DeviceID,
-    signing_key: SigningKey,
+    device: LocalDevice,
     keepalive: int | None = None,
 ) -> AsyncGenerator[BackendAuthenticatedCmds | RsBackendAuthenticatedCmds, None]:
     """
@@ -564,9 +562,12 @@ async def backend_authenticated_cmds_factory(
             if closed:
                 raise trio.ClosedResourceError
             transport = await connect_as_authenticated(
-                addr, device_id=device_id, signing_key=signing_key, keepalive=keepalive
+                device.organization_addr,
+                device_id=device.device_id,
+                signing_key=device.signing_key,
+                keepalive=keepalive,
             )
-            transport.logger = transport.logger.bind(device_id=device_id)
+            transport.logger = transport.logger.bind(device_id=device.device_id)
 
         return transport
 
@@ -589,9 +590,9 @@ async def backend_authenticated_cmds_factory(
                 raise
 
     try:
-        yield RsBackendAuthenticatedCmds(addr, device_id, signing_key) if parsec.FEATURE_FLAGS[
+        yield RsBackendAuthenticatedCmds(device) if parsec.FEATURE_FLAGS[
             "UNSTABLE_OXIDIZED_CLIENT_CONNECTION"
-        ] else BackendAuthenticatedCmds(addr, _acquire_transport)
+        ] else BackendAuthenticatedCmds(device.organization_addr, _acquire_transport)
 
     finally:
         async with transport_lock:

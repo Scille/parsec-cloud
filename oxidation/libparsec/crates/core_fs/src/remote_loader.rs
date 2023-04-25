@@ -15,7 +15,7 @@ use crate::{FSError, FSResult};
 pub struct UserRemoteLoader {
     device: Arc<LocalDevice>,
     workspace_id: EntryID,
-    backend_cmds: AuthenticatedCmds,
+    backend_cmds: Arc<AuthenticatedCmds>,
     remote_devices_manager: Arc<Mutex<RemoteDevicesManager>>,
     realm_role_certificates_caches: Vec<RealmRoleCertificate>,
 }
@@ -24,7 +24,7 @@ impl UserRemoteLoader {
     pub fn new(
         device: Arc<LocalDevice>,
         workspace_id: EntryID,
-        backend_cmds: AuthenticatedCmds,
+        backend_cmds: Arc<AuthenticatedCmds>,
         remote_devices_manager: Arc<Mutex<RemoteDevicesManager>>,
     ) -> Self {
         Self {

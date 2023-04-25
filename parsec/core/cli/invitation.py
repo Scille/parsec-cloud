@@ -47,9 +47,7 @@ from parsec.utils import trio_run
 async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
     async with spinner("Creating device invitation"):
         async with backend_authenticated_cmds_factory(
-            addr=device.organization_addr,
-            device_id=device.device_id,
-            signing_key=device.signing_key,
+            device=device,
             keepalive=config.backend_connection_keepalive,
         ) as cmds:
             rep = await cmds.invite_new(type=InvitationType.DEVICE)
@@ -91,9 +89,7 @@ async def _invite_user(
 ) -> None:
     async with spinner("Creating user invitation"):
         async with backend_authenticated_cmds_factory(
-            addr=device.organization_addr,
-            device_id=device.device_id,
-            signing_key=device.signing_key,
+            device=device,
             keepalive=config.backend_connection_keepalive,
         ) as cmds:
             rep = await cmds.invite_new(
@@ -264,9 +260,7 @@ async def _greet_invitation(
     config: CoreConfig, device: LocalDevice, token: InvitationToken
 ) -> None:
     async with backend_authenticated_cmds_factory(
-        addr=device.organization_addr,
-        device_id=device.device_id,
-        signing_key=device.signing_key,
+        device=device,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
         async with spinner("Retrieving invitation info"):
@@ -465,9 +459,7 @@ def claim_invitation(
 
 async def _list_invitations(config: CoreConfig, device: LocalDevice) -> None:
     async with backend_authenticated_cmds_factory(
-        addr=device.organization_addr,
-        device_id=device.device_id,
-        signing_key=device.signing_key,
+        device=device,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
         rep = await cmds.invite_list()
@@ -505,9 +497,7 @@ async def _cancel_invitation(
     config: CoreConfig, device: LocalDevice, token: InvitationToken
 ) -> None:
     async with backend_authenticated_cmds_factory(
-        addr=device.organization_addr,
-        device_id=device.device_id,
-        signing_key=device.signing_key,
+        device=device,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
         rep = await cmds.invite_delete(token=token, reason=InvitationDeletedReason.CANCELLED)

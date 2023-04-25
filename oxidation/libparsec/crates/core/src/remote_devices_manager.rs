@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_client_connection::{AuthenticatedCmds, CommandError};
 use libparsec_protocol::authenticated_cmds::v2::user_get;
 use libparsec_types::prelude::*;
@@ -9,13 +11,13 @@ use crate::{RemoteDevicesManagerError, RemoteDevicesManagerResult, TrustchainCon
 const REMOTE_DEVICE_MANAGER_CACHE_VALIDITY: i64 = 60 * 60; // 3600 seconds, 1 hour;
 
 pub struct RemoteDevicesManager {
-    backend_cmds: AuthenticatedCmds,
+    backend_cmds: Arc<AuthenticatedCmds>,
     trustchain_ctx: TrustchainContext,
 }
 
 impl RemoteDevicesManager {
     pub fn new(
-        backend_cmds: AuthenticatedCmds,
+        backend_cmds: Arc<AuthenticatedCmds>,
         root_verify_key: VerifyKey,
         time_provider: TimeProvider,
     ) -> Self {

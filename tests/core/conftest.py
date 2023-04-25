@@ -21,9 +21,7 @@ from tests.common.event_bus_spy import SpiedEventBus
 def remote_devices_manager_factory():
     @asynccontextmanager
     async def _remote_devices_manager_factory(device: LocalDevice):
-        async with backend_authenticated_cmds_factory(
-            device.organization_addr, device.device_id, device.signing_key
-        ) as cmds:
+        async with backend_authenticated_cmds_factory(device) as cmds:
             yield RemoteDevicesManager(cmds, device.root_verify_key, device.time_provider)
 
     return _remote_devices_manager_factory
@@ -49,25 +47,19 @@ async def bob_remote_devices_manager(remote_devices_manager_factory, bob):
 
 @pytest.fixture
 async def alice_backend_cmds(running_backend, alice):
-    async with backend_authenticated_cmds_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(alice) as cmds:
         yield cmds
 
 
 @pytest.fixture
 async def alice2_backend_cmds(running_backend, alice2):
-    async with backend_authenticated_cmds_factory(
-        alice2.organization_addr, alice2.device_id, alice2.signing_key
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(alice2) as cmds:
         yield cmds
 
 
 @pytest.fixture
 async def bob_backend_cmds(running_backend, bob):
-    async with backend_authenticated_cmds_factory(
-        bob.organization_addr, bob.device_id, bob.signing_key
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(bob) as cmds:
         yield cmds
 
 
@@ -82,9 +74,7 @@ def user_fs_factory(data_base_dir: Path, event_bus_factory: Type[SpiedEventBus])
     ) -> AsyncContextManager[UserFS]:
         event_bus = event_bus or event_bus_factory()
 
-        async with backend_authenticated_cmds_factory(
-            device.organization_addr, device.device_id, device.signing_key
-        ) as cmds:
+        async with backend_authenticated_cmds_factory(device) as cmds:
             rdm = RemoteDevicesManager(cmds, device.root_verify_key, device.time_provider)
             async with UserFS.run(
                 data_base_dir, device, cmds, rdm, event_bus, get_prevent_sync_pattern()

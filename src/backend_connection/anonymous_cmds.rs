@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyValueError, pyclass, pymethods, IntoPy, PyAny, PyObject, PyResult, Python,
 };
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use libparsec::{client_connection, protocol::anonymous_cmds, types::Maybe};
 
@@ -31,9 +31,10 @@ impl AnonymousCmds {
             return Err(PyValueError::new_err("Invalid addr provided: accepted addr are BackendOrganizationAddr or BackendPkiEnrollmentAddr"));
         };
 
-        let client_config = client_connection::ProxyConfig::new_from_env();
-
-        client_connection::generate_anonymous_client(addr, client_config)
+        // Config dir is only used as discriminant for the testbed, which is never used in Python
+        let dummy_config_dir = PathBuf::from("");
+        let proxy_config = client_connection::ProxyConfig::new_from_env();
+        client_connection::AnonymousCmds::new(&dummy_config_dir, addr, proxy_config)
             .map_err(|e| {
                 PyValueError::new_err(format!("Failed to generate an anonymous client: {e}"))
             })

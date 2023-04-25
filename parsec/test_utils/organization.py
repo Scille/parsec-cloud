@@ -79,9 +79,7 @@ async def initialize_test_organization(
     # Create context manager, alice_core will be needed for the rest of the script
     async with logged_core_factory(config, alice_device) as alice_core:
         async with backend_authenticated_cmds_factory(
-            addr=alice_device.organization_addr,
-            device_id=alice_device.device_id,
-            signing_key=alice_device.signing_key,
+            device=alice_device,
         ) as alice_cmds:
             # Create new device "pc" for Alice
             other_alice_device = await _register_new_device(

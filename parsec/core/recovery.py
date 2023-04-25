@@ -48,11 +48,7 @@ async def _create_new_device_for_self(
         original_device.signing_key
     )
 
-    async with backend_authenticated_cmds_factory(
-        addr=original_device.organization_addr,
-        device_id=original_device.device_id,
-        signing_key=original_device.signing_key,
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(original_device) as cmds:
         rep = await cmds.device_create(
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,

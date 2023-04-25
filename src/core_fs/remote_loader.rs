@@ -32,7 +32,7 @@ impl UserRemoteLoader {
             libparsec::core_fs::UserRemoteLoader::new(
                 device.0,
                 workspace_id.0,
-                backend_cmds.0.as_ref().clone(),
+                backend_cmds.0.clone(),
                 remote_devices_manager.0.clone(),
             ),
         ))))

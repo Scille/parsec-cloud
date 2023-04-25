@@ -8,7 +8,13 @@ import trio
 
 from parsec import FEATURE_FLAGS
 from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
-from parsec._parsec import AuthenticatedPingRepOk, ClientType, DateTime, EventsListenRepOkPinged
+from parsec._parsec import (
+    AuthenticatedPingRepOk,
+    ClientType,
+    DateTime,
+    EventsListenRepOkPinged,
+    LocalDevice,
+)
 from parsec.api.data import RevokedUserCertificate
 from parsec.api.protocol import AUTHENTICATED_CMDS, OrganizationID, ServerHandshake
 from parsec.api.transport import Ping, Pong, Transport
@@ -25,17 +31,13 @@ from tests.core.backend_connection.common import ALL_CMDS
 @pytest.mark.trio
 async def test_backend_offline(alice):
     with pytest.raises(BackendNotAvailable):
-        async with backend_authenticated_cmds_factory(
-            alice.organization_addr, alice.device_id, alice.signing_key
-        ) as cmds:
+        async with backend_authenticated_cmds_factory(alice) as cmds:
             await cmds.ping()
 
 
 @pytest.mark.trio
 async def test_backend_switch_offline(running_backend, alice):
-    async with backend_authenticated_cmds_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(alice) as cmds:
         await cmds.ping()
         with running_backend.offline():
             with pytest.raises(BackendNotAvailable):
@@ -45,9 +47,7 @@ async def test_backend_switch_offline(running_backend, alice):
 @pytest.mark.skipif(FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"], reason="No error")
 @pytest.mark.trio
 async def test_backend_closed_cmds(running_backend, alice):
-    async with backend_authenticated_cmds_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(alice) as cmds:
         pass
     with pytest.raises(trio.ClosedResourceError):
         await cmds.ping()
@@ -55,19 +55,15 @@ async def test_backend_closed_cmds(running_backend, alice):
 
 @pytest.mark.trio
 async def test_ping(running_backend, alice):
-    async with backend_authenticated_cmds_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(alice) as cmds:
         rep = await cmds.ping("Hello World !")
         assert rep == AuthenticatedPingRepOk("Hello World !")
 
 
 @pytest.mark.trio
-async def test_handshake_unknown_device(running_backend, alice, mallory):
+async def test_handshake_unknown_device(running_backend, mallory):
     with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_authenticated_cmds_factory(
-            alice.organization_addr, mallory.device_id, mallory.signing_key
-        ) as cmds:
+        async with backend_authenticated_cmds_factory(mallory) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Invalid handshake information"
 
@@ -79,10 +75,17 @@ async def test_handshake_unknown_organization(running_backend, alice):
         organization_id=OrganizationID("dummy"),
         root_verify_key=alice.organization_addr.root_verify_key,
     )
+    unknown_org_alice = LocalDevice.generate_new_device(
+        organization_addr=unknown_org_addr,
+        profile=alice.profile,
+        device_id=alice.device_id,
+        human_handle=alice.human_handle,
+        device_label=alice.device_label,
+        signing_key=alice.signing_key,
+        private_key=alice.private_key,
+    )
     with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_authenticated_cmds_factory(
-            unknown_org_addr, alice.device_id, alice.signing_key
-        ) as cmds:
+        async with backend_authenticated_cmds_factory(unknown_org_alice) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Invalid handshake information"
 
@@ -97,10 +100,17 @@ async def test_handshake_rvk_mismatch(running_backend, alice, otherorg):
         organization_id=alice.organization_id,
         root_verify_key=otherorg.root_verify_key,
     )
+    bad_rvk_alice = LocalDevice.generate_new_device(
+        organization_addr=bad_rvk_org_addr,
+        profile=alice.profile,
+        device_id=alice.device_id,
+        human_handle=alice.human_handle,
+        device_label=alice.device_label,
+        signing_key=alice.signing_key,
+        private_key=alice.private_key,
+    )
     with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_authenticated_cmds_factory(
-            bad_rvk_org_addr, alice.device_id, alice.signing_key
-        ) as cmds:
+        async with backend_authenticated_cmds_factory(bad_rvk_alice) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Root verify key for organization differs between client and server"
 
@@ -118,19 +128,26 @@ async def test_handshake_revoked_device(running_backend, alice, bob):
     )
 
     with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_authenticated_cmds_factory(
-            bob.organization_addr, bob.device_id, bob.signing_key
-        ) as cmds:
+        async with backend_authenticated_cmds_factory(bob) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Device has been revoked"
 
 
 @pytest.mark.trio
 async def test_organization_expired(running_backend, alice, expiredorg):
+    # Organization expiration is checked before user existance, so we can
+    # use a dummy user for this test
+    expiredorg_alice = LocalDevice.generate_new_device(
+        organization_addr=expiredorg.addr,
+        profile=alice.profile,
+        device_id=alice.device_id,
+        human_handle=alice.human_handle,
+        device_label=alice.device_label,
+        signing_key=alice.signing_key,
+        private_key=alice.private_key,
+    )
     with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_authenticated_cmds_factory(
-            expiredorg.addr, alice.device_id, alice.signing_key
-        ) as cmds:
+        async with backend_authenticated_cmds_factory(expiredorg_alice) as cmds:
             await cmds.ping()
     assert str(exc.value) == "The organization has expired"
 
@@ -160,10 +177,17 @@ async def test_backend_disconnect_during_handshake(alice):
         organization_addr = correct_addr(
             alice.organization_addr, listeners[0].socket.getsockname()[1]
         )
+        corrected_alice = LocalDevice.generate_new_device(
+            organization_addr=organization_addr,
+            profile=alice.profile,
+            device_id=alice.device_id,
+            human_handle=alice.human_handle,
+            device_label=alice.device_label,
+            signing_key=alice.signing_key,
+            private_key=alice.private_key,
+        )
         with pytest.raises(BackendNotAvailable):
-            async with backend_authenticated_cmds_factory(
-                organization_addr, alice.device_id, alice.signing_key
-            ) as cmds:
+            async with backend_authenticated_cmds_factory(corrected_alice) as cmds:
                 await cmds.ping()
 
         nursery.cancel_scope.cancel()
@@ -215,9 +239,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, runnin
     ] = _mocked_api_events_listen
 
     events_listen_rep = None
-    async with backend_authenticated_cmds_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key, keepalive=KEEPALIVE_TIME
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(alice, keepalive=KEEPALIVE_TIME) as cmds:
         async with trio.open_service_nursery() as nursery:
 
             async def _cmd():
@@ -250,9 +272,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, runnin
 
 @pytest.mark.trio
 async def test_authenticated_cmds_has_right_methods(running_backend, alice):
-    async with backend_authenticated_cmds_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key
-    ) as cmds:
+    async with backend_authenticated_cmds_factory(alice) as cmds:
         for method_name in AUTHENTICATED_CMDS:
             assert hasattr(cmds, method_name)
         for method_name in ALL_CMDS - AUTHENTICATED_CMDS:
@@ -261,9 +281,7 @@ async def test_authenticated_cmds_has_right_methods(running_backend, alice):
 
 @pytest.mark.trio
 async def test_rust_authenticated_ping(running_backend, alice):
-    auth_cmds = RsBackendAuthenticatedCmds(
-        alice.organization_addr, alice.device_id, alice.signing_key
-    )
+    auth_cmds = RsBackendAuthenticatedCmds(alice)
     cmd_result = await auth_cmds.ping("Hello from alice")
     assert isinstance(cmd_result, AuthenticatedPingRepOk)
     assert cmd_result.pong == "Hello from alice"

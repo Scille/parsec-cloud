@@ -24,7 +24,7 @@ impl UserGreetInitialCtx {
     #[new]
     fn new(cmds: &AuthenticatedCmds, token: InvitationToken) -> Self {
         Self(Some(libparsec::core::UserGreetInitialCtx::new(
-            cmds.0.as_ref().clone(),
+            cmds.0.clone(),
             token.0,
         )))
     }
@@ -57,7 +57,7 @@ impl DeviceGreetInitialCtx {
     #[new]
     fn new(cmds: &AuthenticatedCmds, token: InvitationToken) -> Self {
         Self(Some(libparsec::core::DeviceGreetInitialCtx::new(
-            cmds.0.as_ref().clone(),
+            cmds.0.clone(),
             token.0,
         )))
     }

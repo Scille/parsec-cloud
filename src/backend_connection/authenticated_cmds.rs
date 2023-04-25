@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{exceptions::PyValueError, pyclass, pymethods, PyResult};
-use std::{collections::HashMap, num::NonZeroU64, sync::Arc};
+use std::{collections::HashMap, num::NonZeroU64, path::PathBuf, sync::Arc};
 
 use libparsec::{
     client_connection,
@@ -11,13 +11,11 @@ use libparsec::{
 
 use crate::{
     addrs::BackendOrganizationAddr,
-    api_crypto::{PublicKey, SigningKey},
+    api_crypto::PublicKey,
     binding_utils::BytesWrapper,
     enumerate::{InvitationDeletedReason, InvitationType},
-    ids::{
-        BlockID, DeviceID, EnrollmentID, InvitationToken, RealmID, SequesterServiceID, UserID,
-        VlobID,
-    },
+    ids::{BlockID, EnrollmentID, InvitationToken, RealmID, SequesterServiceID, UserID, VlobID},
+    local_device::LocalDevice,
     protocol::*,
     runtime::FutureIntoCoroutine,
     time::DateTime,
@@ -29,23 +27,15 @@ pub(crate) struct AuthenticatedCmds(pub Arc<client_connection::AuthenticatedCmds
 #[pymethods]
 impl AuthenticatedCmds {
     #[new]
-    fn new(
-        addr: BackendOrganizationAddr,
-        device_id: DeviceID,
-        signing_key: SigningKey,
-    ) -> PyResult<Self> {
-        let client_config = client_connection::ProxyConfig::new_from_env();
-
-        client_connection::generate_authenticated_client(
-            signing_key.0,
-            device_id.0,
-            addr.0,
-            client_config,
-        )
-        .map_err(|e| {
-            PyValueError::new_err(format!("Fail to generate an authenticated client: {e}"))
-        })
-        .map(|client| Self(Arc::new(client)))
+    fn new(device: &LocalDevice) -> PyResult<Self> {
+        // Config dir is only used as discriminant for the testbed, which is never used in Python
+        let dummy_config_dir = PathBuf::from("");
+        let proxy_config = client_connection::ProxyConfig::new_from_env();
+        client_connection::AuthenticatedCmds::new(&dummy_config_dir, device.0.clone(), proxy_config)
+            .map_err(|e| {
+                PyValueError::new_err(format!("Fail to generate an authenticated client: {e}"))
+            })
+            .map(|client| Self(Arc::new(client)))
     }
 
     #[getter]

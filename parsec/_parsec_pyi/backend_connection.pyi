@@ -10,11 +10,10 @@ from parsec._parsec_pyi.addrs import (
     BackendOrganizationBootstrapAddr,
     BackendPkiEnrollmentAddr,
 )
-from parsec._parsec_pyi.crypto import HashDigest, PublicKey, SigningKey, VerifyKey
+from parsec._parsec_pyi.crypto import HashDigest, PublicKey, VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationDeletedReason, InvitationType
 from parsec._parsec_pyi.ids import (
     BlockID,
-    DeviceID,
     EnrollmentID,
     InvitationToken,
     RealmID,
@@ -22,6 +21,7 @@ from parsec._parsec_pyi.ids import (
     UserID,
     VlobID,
 )
+from parsec._parsec_pyi.local_device import LocalDevice
 from parsec._parsec_pyi.protocol import (
     AuthenticatedPingRep,
     BlockCreateRep,
@@ -80,9 +80,7 @@ from parsec._parsec_pyi.protocol.vlob import ReencryptionBatchEntry
 from parsec._parsec_pyi.time import DateTime
 
 class AuthenticatedCmds:
-    def __init__(
-        self, addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey
-    ) -> None: ...
+    def __init__(self, device: LocalDevice) -> None: ...
     @property
     def addr(self) -> BackendOrganizationAddr: ...
     async def block_create(

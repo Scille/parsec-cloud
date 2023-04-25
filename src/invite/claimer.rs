@@ -17,8 +17,7 @@ use crate::{
 
 #[pyfunction]
 pub(crate) fn claimer_retrieve_info(cmds: &InvitedCmds) -> FutureIntoCoroutine {
-    let cmds = cmds.0.as_ref().clone();
-
+    let cmds = cmds.0.clone();
     FutureIntoCoroutine::from_raw(async move {
         Ok(
             match libparsec::core::claimer_retrieve_info(&cmds)
@@ -71,7 +70,7 @@ impl UserClaimInitialCtx {
         greeter_human_handle: Option<HumanHandle>,
     ) -> Self {
         Self(Some(libparsec::core::UserClaimInitialCtx::new(
-            cmds.0.as_ref().clone(),
+            cmds.0.clone(),
             claimer_email,
             greeter_user_id.0,
             greeter_human_handle.map(|x| x.0),
@@ -134,7 +133,7 @@ impl DeviceClaimInitialCtx {
         greeter_human_handle: Option<HumanHandle>,
     ) -> Self {
         Self(Some(libparsec::core::DeviceClaimInitialCtx::new(
-            cmds.0.as_ref().clone(),
+            cmds.0.clone(),
             greeter_user_id.0,
             greeter_human_handle.map(|x| x.0),
         )))

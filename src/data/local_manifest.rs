@@ -1362,7 +1362,7 @@ impl LocalUserManifest {
 
     fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<WorkspaceEntry> {
         self.0
-            .get_workspace_entry(workspace_id.0)
+            .get_workspace_entry(&workspace_id.0)
             .cloned()
             .map(WorkspaceEntry)
     }

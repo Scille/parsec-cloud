@@ -650,9 +650,7 @@ async def test_user_claim_but_active_users_limit_reached(backend, running_backen
     )
 
     async def _run_greeter():
-        async with backend_authenticated_cmds_factory(
-            alice.organization_addr, alice.device_id, alice.signing_key
-        ) as alice_backend_cmds:
+        async with backend_authenticated_cmds_factory(alice) as alice_backend_cmds:
             initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=invitation_addr.token)
             in_progress_ctx = await initial_ctx.do_wait_peer()
             in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()

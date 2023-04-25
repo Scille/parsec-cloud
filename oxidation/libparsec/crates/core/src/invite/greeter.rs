@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_protocol::authenticated_cmds::v2::*;
 use libparsec_types::prelude::*;
@@ -12,7 +14,7 @@ use crate::{InviteError, InviteResult};
 #[derive(Debug)]
 struct BaseGreetInitialCtx {
     token: InvitationToken,
-    cmds: AuthenticatedCmds,
+    cmds: Arc<AuthenticatedCmds>,
 }
 
 impl BaseGreetInitialCtx {
@@ -99,7 +101,7 @@ impl BaseGreetInitialCtx {
 pub struct UserGreetInitialCtx(BaseGreetInitialCtx);
 
 impl UserGreetInitialCtx {
-    pub fn new(cmds: AuthenticatedCmds, token: InvitationToken) -> Self {
+    pub fn new(cmds: Arc<AuthenticatedCmds>, token: InvitationToken) -> Self {
         Self(BaseGreetInitialCtx { cmds, token })
     }
 
@@ -112,7 +114,7 @@ impl UserGreetInitialCtx {
 pub struct DeviceGreetInitialCtx(BaseGreetInitialCtx);
 
 impl DeviceGreetInitialCtx {
-    pub fn new(cmds: AuthenticatedCmds, token: InvitationToken) -> Self {
+    pub fn new(cmds: Arc<AuthenticatedCmds>, token: InvitationToken) -> Self {
         Self(BaseGreetInitialCtx { cmds, token })
     }
 
@@ -129,7 +131,7 @@ struct BaseGreetInProgress1Ctx {
     greeter_sas: SASCode,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
-    cmds: AuthenticatedCmds,
+    cmds: Arc<AuthenticatedCmds>,
 }
 
 impl BaseGreetInProgress1Ctx {
@@ -195,7 +197,7 @@ struct BaseGreetInProgress2Ctx {
     token: InvitationToken,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
-    cmds: AuthenticatedCmds,
+    cmds: Arc<AuthenticatedCmds>,
 }
 
 impl BaseGreetInProgress2Ctx {
@@ -268,14 +270,14 @@ impl DeviceGreetInProgress2Ctx {
 struct BaseGreetInProgress3Ctx {
     token: InvitationToken,
     shared_secret_key: SecretKey,
-    cmds: AuthenticatedCmds,
+    cmds: Arc<AuthenticatedCmds>,
 }
 
 #[derive(Debug)]
 struct BaseGreetInProgress3WithPayloadCtx {
     token: InvitationToken,
     shared_secret_key: SecretKey,
-    cmds: AuthenticatedCmds,
+    cmds: Arc<AuthenticatedCmds>,
     payload: Vec<u8>,
 }
 
@@ -469,7 +471,7 @@ pub struct UserGreetInProgress4Ctx {
     public_key: PublicKey,
     verify_key: VerifyKey,
     shared_secret_key: SecretKey,
-    cmds: AuthenticatedCmds,
+    cmds: Arc<AuthenticatedCmds>,
 }
 
 impl UserGreetInProgress4Ctx {
@@ -564,7 +566,7 @@ pub struct DeviceGreetInProgress4Ctx {
     pub requested_device_label: Option<DeviceLabel>,
     verify_key: VerifyKey,
     shared_secret_key: SecretKey,
-    cmds: AuthenticatedCmds,
+    cmds: Arc<AuthenticatedCmds>,
 }
 
 impl DeviceGreetInProgress4Ctx {

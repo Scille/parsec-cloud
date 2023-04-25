@@ -288,9 +288,7 @@ async def _pki_enrollment_review_pendings(
 ) -> None:
     # Connect to the backend
     async with backend_authenticated_cmds_factory(
-        addr=device.organization_addr,
-        device_id=device.device_id,
-        signing_key=device.signing_key,
+        device=device,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
         pendings = await accepter_list_submitted_from_backend(

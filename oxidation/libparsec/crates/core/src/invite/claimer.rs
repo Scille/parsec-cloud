@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_client_connection::InvitedCmds;
 use libparsec_protocol::invited_cmds::v2::*;
 use libparsec_types::prelude::*;
@@ -21,7 +23,7 @@ pub async fn claimer_retrieve_info(cmds: &InvitedCmds) -> InviteResult<invite_in
 struct BaseClaimInitialCtx {
     greeter_user_id: UserID,
     greeter_human_handle: Option<HumanHandle>,
-    cmds: InvitedCmds,
+    cmds: Arc<InvitedCmds>,
 }
 
 impl BaseClaimInitialCtx {
@@ -89,7 +91,7 @@ impl BaseClaimInitialCtx {
             greeter_sas,
             claimer_sas,
             shared_secret_key,
-            cmds: self.cmds,
+            cmds: self.cmds.clone(),
         })
     }
 }
@@ -102,7 +104,7 @@ pub struct UserClaimInitialCtx {
 
 impl UserClaimInitialCtx {
     pub fn new(
-        cmds: InvitedCmds,
+        cmds: Arc<InvitedCmds>,
         claimer_email: String,
         greeter_user_id: UserID,
         greeter_human_handle: Option<HumanHandle>,
@@ -135,7 +137,7 @@ pub struct DeviceClaimInitialCtx(BaseClaimInitialCtx);
 
 impl DeviceClaimInitialCtx {
     pub fn new(
-        cmds: InvitedCmds,
+        cmds: Arc<InvitedCmds>,
         greeter_user_id: UserID,
         greeter_human_handle: Option<HumanHandle>,
     ) -> Self {
@@ -164,7 +166,7 @@ struct BaseClaimInProgress1Ctx {
     greeter_sas: SASCode,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
-    cmds: InvitedCmds,
+    cmds: Arc<InvitedCmds>,
 }
 
 impl BaseClaimInProgress1Ctx {
@@ -182,7 +184,7 @@ impl BaseClaimInProgress1Ctx {
             invite_3a_claimer_signify_trust::Rep::Ok => Ok(BaseClaimInProgress2Ctx {
                 claimer_sas: self.claimer_sas,
                 shared_secret_key: self.shared_secret_key,
-                cmds: self.cmds,
+                cmds: self.cmds.clone(),
             }),
             invite_3a_claimer_signify_trust::Rep::UnknownStatus { unknown_status, .. } => Err(
                 InviteError::Custom(format!("Backend error during step 3a: {unknown_status}")),
@@ -232,7 +234,7 @@ impl DeviceClaimInProgress1Ctx {
 struct BaseClaimInProgress2Ctx {
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
-    cmds: InvitedCmds,
+    cmds: Arc<InvitedCmds>,
 }
 
 impl BaseClaimInProgress2Ctx {
@@ -248,7 +250,7 @@ impl BaseClaimInProgress2Ctx {
             invite_3b_claimer_wait_peer_trust::Rep::NotFound => Err(InviteError::NotFound),
             invite_3b_claimer_wait_peer_trust::Rep::Ok => Ok(BaseClaimInProgress3Ctx {
                 shared_secret_key: self.shared_secret_key,
-                cmds: self.cmds,
+                cmds: self.cmds.clone(),
             }),
             invite_3b_claimer_wait_peer_trust::Rep::UnknownStatus { unknown_status, .. } => Err(
                 InviteError::Custom(format!("Backend error during step 3b: {unknown_status}")),
@@ -292,7 +294,7 @@ impl DeviceClaimInProgress2Ctx {
 #[derive(Debug)]
 struct BaseClaimInProgress3Ctx {
     shared_secret_key: SecretKey,
-    cmds: InvitedCmds,
+    cmds: Arc<InvitedCmds>,
 }
 
 impl BaseClaimInProgress3Ctx {

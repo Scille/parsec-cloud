@@ -34,7 +34,7 @@ impl RemoteDevicesManager {
     ) -> Self {
         Self(Arc::new(Mutex::new(
             libparsec::core::RemoteDevicesManager::new(
-                backend_cmds.0.as_ref().clone(),
+                backend_cmds.0.clone(),
                 root_verify_key.0,
                 time_provider.0,
             ),
