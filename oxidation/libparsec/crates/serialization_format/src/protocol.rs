@@ -2,7 +2,7 @@
 
 use itertools::Itertools;
 use miniserde::Deserialize;
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use std::collections::HashSet;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
@@ -391,27 +391,37 @@ impl GenCmdsFamily {
 
 fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
     let family_name = format_ident!("{}", &family.name);
+    let mut latest_cmds_mod_name = None;
 
     let versioned_cmds: Vec<TokenStream> = family
         .versions
         .iter()
         .sorted_by_key(|(v, _)| *v)
-        .map(|(version, cmds)| quote_versioned_cmds(*version, cmds))
+        .map(|(version, cmds)| {
+            let (mod_name, code) = quote_versioned_cmds(*version, cmds);
+            latest_cmds_mod_name.replace(mod_name);
+            code
+        })
         .collect();
+
+    let latest_cmds_mod_name = latest_cmds_mod_name.expect("at least one version exists");
 
     quote! {
         pub mod #family_name {
             #(#versioned_cmds)*
+            pub mod latest {
+                pub use super::#latest_cmds_mod_name::*;
+            }
         }
     }
 }
 
-fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> TokenStream {
+fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
     let versioned_cmds_mod = format_ident!("v{version}");
     let (any_cmd_req_variants, cmd_structs): (Vec<TokenStream>, Vec<TokenStream>) =
         cmds.iter().map(quote_cmd).unzip();
 
-    quote! {
+    let code = quote! {
         pub mod #versioned_cmds_mod {
             // Define `UnknownStatus` here instead of where is it actually used (i.e.
             // near each command's `Rep::load` definition) to have a single common
@@ -440,7 +450,9 @@ fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> TokenStream {
 
             #(#cmd_structs)*
         }
-    }
+    };
+
+    (versioned_cmds_mod, code)
 }
 
 fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
