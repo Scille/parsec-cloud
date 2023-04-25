@@ -11,7 +11,7 @@
         "test:unit": "cypress run --component",
         "test:e2e": "cypress run --e2e",
         "web:open": "vite --open",
-        "web:release": "vite build && run lint",
+        "web:release": "npm run lint && vite build",
         "native:build": "node ./scripts/vite_build_for_native.cjs",
         "android:copy": "npm run native:build && npx cap copy android",
         "android:copy:release": "npm run native:build && npx cap copy android",
