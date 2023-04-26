@@ -67,8 +67,65 @@ jobs:
         run: npm run web:release
         working-directory: oxidation/client
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.0
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
           name: webapp
           path: oxidation/client/dist/
           if-no-files-found: error
+
+  electron:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-20.04
+            paths: |
+              oxidation/client/electron/dist/parsec_*_*.snap
+              oxidation/client/electron/dist/parsec-*.AppImage
+              oxidation/client/electron/dist/latest-linux.yml
+          - name: 🏁 Windows
+            os: windows-2022
+            paths: |
+              oxidation/client/electron/dist/parsec Setup *.exe
+              oxidation/client/electron/dist/parsec Setup *.exe.blockmap
+              oxidation/client/electron/dist/latest.yml
+          - name: 🍎 macOS
+            os: macos-12
+            paths: |
+              oxidation/client/electron/dist/parsec-*.dmg
+              oxidation/client/electron/dist/parsec-*.dmg.blockmap
+              oxidation/client/electron/dist/latest-mac.yml
+    name: "${{matrix.name }}: ⚡ Package electron"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          npm clean-install
+          (cd electron && npm clean-install)
+          (cd ../bindings/electron && npm clean-install)
+        working-directory: oxidation/client
+        timeout-minutes: 10
+
+      - name: Build Electron bindings
+        run: npm run build:release
+        working-directory: oxidation/bindings/electron
+        # MacOS is really slow when build rust
+        timeout-minutes: 30
+
+      - name: Build Electron apps
+        run: npm run electron:release
+        working-directory: oxidation/client
+        timeout-minutes: 5
+
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-electron-app
+          path: ${{ matrix.paths }}
+          if-no-files-found: error
+        timeout-minutes: 10
