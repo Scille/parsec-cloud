@@ -5,7 +5,7 @@ use crate::{
     binding_utils::{gen_proto, BytesWrapper},
     data::{DeviceCertificate, RevokedUserCertificate, UserCertificate},
     ids::{DeviceID, UserID},
-    protocol::Trustchain,
+    protocol::authenticated_cmds::v2::user_get::Trustchain,
     time::{self, DateTime, TimeProvider},
 };
 

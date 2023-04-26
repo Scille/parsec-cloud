@@ -6,6 +6,7 @@ use std::collections::HashSet;
 
 macro_rules! generate_field_type_enum {
     ($($type_name: ident => $rust_type: path),+ $(,)?) => {
+        #[derive(PartialEq, Eq, Clone)]
         pub(crate) enum FieldType {
 
             // Containers

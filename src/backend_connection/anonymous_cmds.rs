@@ -5,14 +5,14 @@ use pyo3::{
 };
 use std::{path::PathBuf, sync::Arc};
 
-use libparsec::{client_connection, protocol::anonymous_cmds, types::Maybe};
+use libparsec::{client_connection, protocol::anonymous_cmds::v2 as anonymous_cmds, types::Maybe};
 
 use crate::{
     addrs::{BackendOrganizationBootstrapAddr, BackendPkiEnrollmentAddr},
     api_crypto::VerifyKey,
     binding_utils::BytesWrapper,
     ids::EnrollmentID,
-    protocol::*,
+    protocol::anonymous_cmds::v2 as anonymous_cmds_wrapper,
     runtime::FutureIntoCoroutine,
 };
 
@@ -78,7 +78,7 @@ impl AnonymousCmds {
             let root_verify_key = root_verify_key.0;
             let sequester_authority_certificate = Maybe::Present(sequester_authority_certificate);
 
-            let req = anonymous_cmds::v2::organization_bootstrap::Req {
+            let req = anonymous_cmds::organization_bootstrap::Req {
                 bootstrap_token,
                 device_certificate,
                 redacted_device_certificate,
@@ -91,8 +91,8 @@ impl AnonymousCmds {
             crate::binding_utils::send_command!(
                 anonymous_cmds,
                 req,
-                anonymous_cmds::v2::organization_bootstrap,
-                OrganizationBootstrapRep,
+                anonymous_cmds::organization_bootstrap,
+                anonymous_cmds_wrapper::organization_bootstrap,
                 Ok,
                 AlreadyBootstrapped,
                 BadTimestamp,
@@ -111,13 +111,13 @@ impl AnonymousCmds {
         FutureIntoCoroutine::from_raw(async move {
             let enrollment_id = enrollment_id.0;
 
-            let req = anonymous_cmds::v2::pki_enrollment_info::Req { enrollment_id };
+            let req = anonymous_cmds::pki_enrollment_info::Req { enrollment_id };
 
             crate::binding_utils::send_command!(
                 anonymous_cmds,
                 req,
-                anonymous_cmds::v2::pki_enrollment_info,
-                PkiEnrollmentInfoRep,
+                anonymous_cmds::pki_enrollment_info,
+                anonymous_cmds_wrapper::pki_enrollment_info,
                 Ok,
                 NotFound,
                 UnknownStatus,
@@ -145,7 +145,7 @@ impl AnonymousCmds {
         FutureIntoCoroutine::from_raw(async move {
             let enrollment_id = enrollment_id.0;
 
-            let req = anonymous_cmds::v2::pki_enrollment_submit::Req {
+            let req = anonymous_cmds::pki_enrollment_submit::Req {
                 enrollment_id,
                 force,
                 submit_payload,
@@ -157,8 +157,8 @@ impl AnonymousCmds {
             crate::binding_utils::send_command!(
                 anonymous_cmds,
                 req,
-                anonymous_cmds::v2::pki_enrollment_submit,
-                PkiEnrollmentSubmitRep,
+                anonymous_cmds::pki_enrollment_submit,
+                anonymous_cmds_wrapper::pki_enrollment_submit,
                 Ok,
                 AlreadyEnrolled,
                 AlreadySubmitted,

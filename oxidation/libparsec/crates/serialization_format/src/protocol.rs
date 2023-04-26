@@ -32,7 +32,7 @@ pub(crate) fn generate_protocol_cmds_family(cmds: Vec<JsonCmd>, family_name: &st
 // JSON format schemas
 //
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub(crate) struct JsonCmd {
     // Miniserde only supports struct as root, hence this field that is never
     // present in the actual json files: it will be added just before
@@ -40,7 +40,7 @@ pub(crate) struct JsonCmd {
     items: Vec<JsonCmdFlavour>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct JsonCmdFlavour {
     major_versions: Vec<u32>,
     #[allow(unused)]
@@ -50,14 +50,14 @@ struct JsonCmdFlavour {
     nested_types: Option<Vec<JsonNestedType>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct JsonNestedTypeVariant {
     name: String,
     discriminant_value: String,
     fields: Option<Vec<JsonCmdField>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct JsonNestedType {
     name: String,
     variants: Option<Vec<JsonNestedTypeVariant>>,
@@ -65,21 +65,21 @@ struct JsonNestedType {
     fields: Option<Vec<JsonCmdField>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct JsonCmdReq {
     cmd: String,
     fields: Option<Vec<JsonCmdField>>,
     unit: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct JsonCmdRep {
     status: String,
     fields: Option<Vec<JsonCmdField>>,
     unit: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct JsonCmdField {
     name: String,
     #[serde(rename = "type")]
@@ -140,14 +140,18 @@ struct GenCmdField {
 struct GenCmdNestedTypeVariant {
     name: String,
     discriminant_value: String,
-    fields: Option<Vec<GenCmdField>>,
+    fields: Vec<GenCmdField>,
 }
 
 enum GenCmdNestedType {
-    Enum {
+    StructsUnion {
         name: String,
-        discriminant_field: Option<String>,
+        discriminant_field: String,
         variants: Vec<GenCmdNestedTypeVariant>,
+    },
+    LiteralsUnion {
+        name: String,
+        variants: Vec<(String, String)>,
     },
     Struct {
         name: String,
@@ -175,10 +179,18 @@ impl GenCmdsFamily {
         // change between API versions.
 
         for cmd in cmds.into_iter().flat_map(|json_cmd| json_cmd.items) {
+            let JsonCmdFlavour {
+                major_versions,
+                introduced_in,
+                req,
+                reps,
+                nested_types,
+            } = cmd;
+            let cmd_name = &req.cmd.clone();
             assert!(
-                !cmd.major_versions.is_empty(),
+                !major_versions.is_empty(),
                 "{}: major_versions field cannot be empty !",
-                cmd.req.cmd
+                cmd_name
             );
 
             // We don't try to play smart here: if `introduced_in` is set
@@ -190,13 +202,13 @@ impl GenCmdsFamily {
             let has_introduced_in_field = RefCell::new(false);
 
             let mut can_reuse_schema_from_version: Option<u32> = None;
-            for major_version in cmd.major_versions {
+            for major_version in major_versions {
                 // Now it's time to convert the Json struct into a Gen one !
 
                 // `allowed_extra_types` is needed for each field to be parsed (given a field
                 // may reference a type defined in `nested_types`)
                 let allowed_extra_types: Rc<HashSet<String>> = Rc::new({
-                    match cmd.nested_types.as_ref() {
+                    match nested_types.as_ref() {
                         None => HashSet::new(),
                         Some(nested_types) => {
                             nested_types.iter().map(|nt| nt.name.clone()).collect()
@@ -204,7 +216,7 @@ impl GenCmdsFamily {
                     }
                 });
 
-                let convert_field = |field: &JsonCmdField| {
+                let convert_field = |field: JsonCmdField| {
                     // Field can be omitted in a schema if it has been added in a minor
                     // version revision (e.g. field added in APIv1.1, we must allow it
                     // to be missing to still be compatible with APIv1.0)
@@ -220,7 +232,7 @@ impl GenCmdsFamily {
                                     }
                                     introduced_in_major == major_version
                                 }
-                                Err(err) => panic!("{}: {:?}", cmd.req.cmd, err),
+                                Err(err) => panic!("{}: {:?}", cmd_name, err),
                             }
                         }
                         None => false,
@@ -236,39 +248,47 @@ impl GenCmdsFamily {
                 };
 
                 let gen_nested_types = {
-                    if let Some(ref nested_types) = cmd.nested_types {
-                        nested_types.iter().map(|nested_type| {
-                            match (&nested_type.fields, &nested_type.variants, &nested_type.discriminant_field) {
-                                (None, Some(variants), discriminant_field) => {
-                                    GenCmdNestedType::Enum {
+                    if let Some(nested_types) = nested_types.clone() {
+                        nested_types.into_iter().map(|nested_type| {
+                            match (nested_type.fields, nested_type.variants, nested_type.discriminant_field) {
+                                (None, Some(variants), None) => {
+                                    let variants = variants.into_iter().map(|v| {
+                                        assert!(v.fields.is_none(), "{}: `{}::{}` is supposed to be a literal union, but has fields !", cmd_name, &nested_type.name, v.discriminant_value);
+                                        (v.name, v.discriminant_value)
+                                    }).collect();
+                                    GenCmdNestedType::LiteralsUnion {
                                         name: nested_type.name.to_owned(),
+                                        variants,
+                                    }
+                                }
+                                (None, Some(variants), Some(discriminant_field)) => {
+                                    let variants = variants.into_iter().map(|v| {
+                                        let fields = v.fields.unwrap_or_default();
+                                        GenCmdNestedTypeVariant {
+                                            name: v.name,
+                                            discriminant_value: v.discriminant_value,
+                                            fields: fields.into_iter()
+                                                .filter_map(&convert_field)
+                                                .collect(),
+                                        }
+                                    }).collect();
+                                    GenCmdNestedType::StructsUnion {
+                                        name: nested_type.name,
                                         discriminant_field: discriminant_field.to_owned(),
-                                        variants: variants.iter().map(
-                                            |variant| {
-                                                GenCmdNestedTypeVariant {
-                                                    name: variant.name.to_owned(),
-                                                    discriminant_value: variant.discriminant_value.to_owned(),
-                                                    fields: variant.fields.as_ref().map(|fields| {
-                                                        fields.iter()
-                                                        .filter_map(&convert_field)
-                                                        .collect()
-                                                    }),
-                                                }
-                                            }
-                                        ).collect()
+                                        variants,
                                     }
                                 },
                                 (Some(fields), None, None) => {
                                     GenCmdNestedType::Struct {
-                                        name: nested_type.name.to_owned(),
+                                        name: nested_type.name,
                                         fields: fields
-                                            .iter()
+                                            .into_iter()
                                             .filter_map(&convert_field)
                                             .collect(),
                                     }
                                 }
                                 _ => {
-                                    panic!("{}: Nested type {:?} is neither enum nor struct. Enum should have `variants`&`discriminant_field`, Struct should have `fields`.", &cmd.req.cmd, &nested_type.name);
+                                    panic!("{}: Nested type {:?} is neither union nor struct. Union should have `variants`&`discriminant_field`, Struct should have `fields`.", cmd_name, &nested_type.name);
                                 },
                             }
                         }).collect()
@@ -277,39 +297,43 @@ impl GenCmdsFamily {
                     }
                 };
 
-                let gen_req = GenCmdReq {
-                    _cmd: cmd.req.cmd.to_owned(),
-                    kind: match (&cmd.req.unit, &cmd.req.fields) {
-                        (Some(nested_type_name), None) => GenCmdReqKind::Unit {
-                            nested_type_name: nested_type_name.to_owned(),
-                        },
-                        (None, Some(fields)) => GenCmdReqKind::Composed {
-                            fields: fields.iter().filter_map(&convert_field).collect(),
-                        },
-                        (None, None) => GenCmdReqKind::Composed { fields: vec![] },
-                        _ => panic!(
-                            "{}: `unit`/`fields` are mutually exclusives in req",
-                            &cmd.req.cmd
-                        ),
+                let JsonCmdReq {
+                    cmd: req_cmd,
+                    fields: req_fields,
+                    unit: req_unit,
+                } = req.clone();
+                let gen_req_kind = match (req_unit, req_fields) {
+                    (Some(nested_type_name), None) => GenCmdReqKind::Unit { nested_type_name },
+                    (None, Some(fields)) => GenCmdReqKind::Composed {
+                        fields: fields.into_iter().filter_map(&convert_field).collect(),
                     },
+                    (None, None) => GenCmdReqKind::Composed { fields: vec![] },
+                    _ => panic!(
+                        "{}: `unit`/`fields` are mutually exclusives in req",
+                        &req_cmd
+                    ),
+                };
+                let gen_req = GenCmdReq {
+                    _cmd: req_cmd,
+                    kind: gen_req_kind,
                 };
 
-                let gen_reps = cmd
-                    .reps
-                    .iter()
+                let gen_reps = reps
+                    .clone()
+                    .into_iter()
                     .map(|rep| {
-                        let kind = match (&rep.unit, &rep.fields) {
+                        let kind = match (&rep.unit, rep.fields) {
                             (Some(nested_type_name), None) => GenCmdRepKind::Unit {
                                 nested_type_name: nested_type_name.to_owned(),
                             },
                             (None, Some(fields)) => GenCmdRepKind::Composed {
-                                fields: fields.iter().filter_map(&convert_field).collect(),
+                                fields: fields.into_iter().filter_map(&convert_field).collect(),
                             },
                             (None, None) => GenCmdRepKind::Composed { fields: vec![] },
                             _ => {
                                 panic!(
                                     "{}: Status {:?} must have `unit` or `fields` field",
-                                    &cmd.req.cmd, &rep.status
+                                    cmd_name, &rep.status
                                 );
                             }
                         };
@@ -328,7 +352,7 @@ impl GenCmdsFamily {
                         // Never reuse schema that contains `introduced_in` field
                         assert!(can_reuse_schema_from_version.is_none()); // Sanity check
                         GenCmd {
-                            cmd: cmd.req.cmd.to_owned(),
+                            cmd: cmd_name.to_owned(),
                             spec: GenCmdSpec::Original {
                                 req: gen_req,
                                 reps: gen_reps,
@@ -340,7 +364,7 @@ impl GenCmdsFamily {
                         // First time we see this schema
                         can_reuse_schema_from_version.replace(major_version);
                         GenCmd {
-                            cmd: cmd.req.cmd.to_owned(),
+                            cmd: cmd_name.to_owned(),
                             spec: GenCmdSpec::Original {
                                 req: gen_req,
                                 reps: gen_reps,
@@ -349,16 +373,16 @@ impl GenCmdsFamily {
                         }
                     }
                     (false, Some(version)) => GenCmd {
-                        cmd: cmd.req.cmd.to_owned(),
+                        cmd: cmd_name.to_owned(),
                         spec: GenCmdSpec::ReusedFromVersion { version },
                     },
                 };
 
                 assert!(
-                    version_cmd_couples.insert((major_version, cmd.req.cmd.to_owned())),
+                    version_cmd_couples.insert((major_version, cmd_name.to_owned())),
                     "APIv{:?} has multiple implementations of {:?} !",
                     major_version,
-                    cmd.req.cmd
+                    cmd_name
                 );
                 gen_versions.entry(major_version).or_default().push(gen_cmd);
             }
@@ -379,7 +403,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
     let family_name = format_ident!("{}", &family.name);
     let mut latest_cmds_mod_name = None;
 
-    let versioned_cmds: Vec<TokenStream> = family
+    let versioned_cmds: Vec<_> = family
         .versions
         .iter()
         .sorted_by_key(|(v, _)| *v)
@@ -469,8 +493,7 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
             let struct_req = quote_cmd_req_struct(req);
             let (variants_rep, status_match) = quote_cmd_rep_variants(reps);
             let nested_types = quote_cmd_nested_types(nested_types);
-            let known_rep_statuses: Vec<String> =
-                reps.iter().map(|rep| rep.status.to_owned()).collect();
+            let known_rep_statuses = reps.iter().map(|rep| rep.status.to_owned());
 
             quote! {
 
@@ -548,55 +571,49 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
     (variant, module)
 }
 
-fn quote_custom_enum(
+fn quote_custom_struct_union(
     name: &str,
     variants: &[GenCmdNestedTypeVariant],
-    discriminant_field: &Option<String>,
+    discriminant_field: &str,
 ) -> TokenStream {
     let name = format_ident!("{}", name);
-    let variants: Vec<TokenStream> = variants
-        .iter()
-        .map(|variant| {
-            let variant_name = format_ident!("{}", variant.name);
-            let discriminant_value = &variant.discriminant_value;
-            match &variant.fields {
-                None => {
-                    quote! {
-                        #[serde(rename = #discriminant_value)]
-                        #variant_name
-                    }
-                }
-                Some(variant_fields) => {
-                    let variant_fields = quote_cmd_fields(variant_fields, false);
-                    quote! {
-                        #[serde(rename = #discriminant_value)]
-                        #variant_name {
-                            #(#variant_fields),*
-                        }
-                    }
-                }
-            }
-        })
-        .collect();
-    match discriminant_field {
-        Some(discriminant_field) => {
-            quote! {
-                #[::serde_with::serde_as]
-                #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
-                #[serde(tag = #discriminant_field)]
-                pub enum #name {
-                    #(#variants),*
-                }
+    let variants = variants.iter().map(|variant| {
+        let variant_name = format_ident!("{}", variant.name);
+        let value_literal = &variant.discriminant_value;
+        let variant_fields = quote_cmd_fields(&variant.fields, false);
+        quote! {
+            #[serde(rename = #value_literal)]
+            #variant_name {
+                #(#variant_fields),*
             }
         }
-        None => {
-            quote! {
-                #[::serde_with::serde_as]
-                #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
-                pub enum #name {
-                    #(#variants),*
-                }
-            }
+    });
+    quote! {
+        #[::serde_with::serde_as]
+        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
+        #[serde(tag = #discriminant_field)]
+        pub enum #name {
+            #(#variants),*
+        }
+    }
+}
+
+fn quote_custom_literal_union(name: &str, variants: &[(String, String)]) -> TokenStream {
+    let name = format_ident!("{}", name);
+    let variants = variants.iter().map(|(name, value)| {
+        let variant_name = format_ident!("{}", name);
+        let value_literal = &value;
+        quote! {
+            #[serde(rename = #value_literal)]
+            #variant_name
+        }
+    });
+
+    quote! {
+        #[::serde_with::serde_as]
+        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
+        pub enum #name {
+            #(#variants),*
         }
     }
 }
@@ -617,11 +634,14 @@ fn quote_cmd_nested_types(nested_types: &[GenCmdNestedType]) -> Vec<TokenStream>
     nested_types
         .iter()
         .map(|nested_type| match nested_type {
-            GenCmdNestedType::Enum {
+            GenCmdNestedType::StructsUnion {
                 name,
-                variants,
                 discriminant_field,
-            } => quote_custom_enum(name, variants.as_ref(), discriminant_field),
+                variants,
+            } => quote_custom_struct_union(name, variants.as_ref(), discriminant_field),
+            GenCmdNestedType::LiteralsUnion { name, variants } => {
+                quote_custom_literal_union(name, variants.as_ref())
+            }
             GenCmdNestedType::Struct { name, fields } => quote_custom_struct(name, fields.as_ref()),
         })
         .collect()

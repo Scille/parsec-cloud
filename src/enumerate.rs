@@ -420,3 +420,30 @@ crate::binding_utils::gen_proto!(DeviceFileType, __repr__);
 crate::binding_utils::gen_proto!(DeviceFileType, __copy__);
 crate::binding_utils::gen_proto!(DeviceFileType, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceFileType, __richcmp__, eq);
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) enum PkiEnrollmentStatus {
+    #[pyo3(name = "SUBMITTED")]
+    Submitted,
+    #[pyo3(name = "ACCEPTED")]
+    Accepted,
+    #[pyo3(name = "REJECTED")]
+    Rejected,
+    #[pyo3(name = "CANCELLED")]
+    Cancelled,
+}
+
+#[pymethods]
+impl PkiEnrollmentStatus {
+    /// Behave like python's `value` attribute
+    #[getter]
+    fn value(&self) -> &'static str {
+        match self {
+            PkiEnrollmentStatus::Submitted => "SUBMITTED",
+            PkiEnrollmentStatus::Accepted => "ACCEPTED",
+            PkiEnrollmentStatus::Rejected => "REJECTED",
+            PkiEnrollmentStatus::Cancelled => "CANCELLED",
+        }
+    }
+}

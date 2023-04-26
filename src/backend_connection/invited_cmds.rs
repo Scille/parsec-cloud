@@ -3,13 +3,13 @@
 use pyo3::{exceptions::PyValueError, pyclass, pymethods, PyResult};
 use std::{path::PathBuf, sync::Arc};
 
-use libparsec::{client_connection, protocol::invited_cmds};
+use libparsec::{client_connection, protocol::invited_cmds::v2 as invited_cmds};
 
 use crate::{
     addrs::BackendInvitationAddr,
     api_crypto::{HashDigest, PublicKey},
     binding_utils::BytesWrapper,
-    protocol::*,
+    protocol::invited_cmds::v2 as invited_cmds_wrapper,
     runtime::FutureIntoCoroutine,
 };
 
@@ -39,13 +39,13 @@ impl InvitedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let claimer_public_key = claimer_public_key.0;
 
-            let req = invited_cmds::v2::invite_1_claimer_wait_peer::Req { claimer_public_key };
+            let req = invited_cmds::invite_1_claimer_wait_peer::Req { claimer_public_key };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
                 req,
-                invited_cmds::v2::invite_1_claimer_wait_peer,
-                Invite1ClaimerWaitPeerRep,
+                invited_cmds::invite_1_claimer_wait_peer,
+                invited_cmds_wrapper::invite_1_claimer_wait_peer,
                 Ok,
                 AlreadyDeleted,
                 NotFound,
@@ -64,15 +64,15 @@ impl InvitedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let claimer_hashed_nonce = claimer_hashed_nonce.0;
 
-            let req = invited_cmds::v2::invite_2a_claimer_send_hashed_nonce::Req {
+            let req = invited_cmds::invite_2a_claimer_send_hashed_nonce::Req {
                 claimer_hashed_nonce,
             };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
                 req,
-                invited_cmds::v2::invite_2a_claimer_send_hashed_nonce,
-                Invite2aClaimerSendHashedNonceRep,
+                invited_cmds::invite_2a_claimer_send_hashed_nonce,
+                invited_cmds_wrapper::invite_2a_claimer_send_hashed_nonce,
                 Ok,
                 AlreadyDeleted,
                 NotFound,
@@ -88,13 +88,13 @@ impl InvitedCmds {
         crate::binding_utils::unwrap_bytes!(claimer_nonce);
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = invited_cmds::v2::invite_2b_claimer_send_nonce::Req { claimer_nonce };
+            let req = invited_cmds::invite_2b_claimer_send_nonce::Req { claimer_nonce };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
                 req,
-                invited_cmds::v2::invite_2b_claimer_send_nonce,
-                Invite2bClaimerSendNonceRep,
+                invited_cmds::invite_2b_claimer_send_nonce,
+                invited_cmds_wrapper::invite_2b_claimer_send_nonce,
                 Ok,
                 AlreadyDeleted,
                 NotFound,
@@ -108,13 +108,13 @@ impl InvitedCmds {
         let invited_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = invited_cmds::v2::invite_3a_claimer_signify_trust::Req;
+            let req = invited_cmds::invite_3a_claimer_signify_trust::Req;
 
             crate::binding_utils::send_command!(
                 invited_cmds,
                 req,
-                invited_cmds::v2::invite_3a_claimer_signify_trust,
-                Invite3aClaimerSignifyTrustRep,
+                invited_cmds::invite_3a_claimer_signify_trust,
+                invited_cmds_wrapper::invite_3a_claimer_signify_trust,
                 Ok,
                 AlreadyDeleted,
                 NotFound,
@@ -128,13 +128,13 @@ impl InvitedCmds {
         let invited_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = invited_cmds::v2::invite_3b_claimer_wait_peer_trust::Req;
+            let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req;
 
             crate::binding_utils::send_command!(
                 invited_cmds,
                 req,
-                invited_cmds::v2::invite_3b_claimer_wait_peer_trust,
-                Invite3bClaimerWaitPeerTrustRep,
+                invited_cmds::invite_3b_claimer_wait_peer_trust,
+                invited_cmds_wrapper::invite_3b_claimer_wait_peer_trust,
                 Ok,
                 AlreadyDeleted,
                 NotFound,
@@ -150,13 +150,13 @@ impl InvitedCmds {
         crate::binding_utils::unwrap_bytes!(payload);
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = invited_cmds::v2::invite_4_claimer_communicate::Req { payload };
+            let req = invited_cmds::invite_4_claimer_communicate::Req { payload };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
                 req,
-                invited_cmds::v2::invite_4_claimer_communicate,
-                Invite4ClaimerCommunicateRep,
+                invited_cmds::invite_4_claimer_communicate,
+                invited_cmds_wrapper::invite_4_claimer_communicate,
                 Ok,
                 AlreadyDeleted,
                 NotFound,
@@ -170,13 +170,13 @@ impl InvitedCmds {
         let invited_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = invited_cmds::v2::invite_info::Req;
+            let req = invited_cmds::invite_info::Req;
 
             crate::binding_utils::send_command!(
                 invited_cmds,
                 req,
-                invited_cmds::v2::invite_info,
-                InviteInfoRep,
+                invited_cmds::invite_info,
+                invited_cmds_wrapper::invite_info,
                 Ok,
                 UnknownStatus
             )
@@ -188,13 +188,13 @@ impl InvitedCmds {
         let invited_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = invited_cmds::v2::ping::Req { ping };
+            let req = invited_cmds::ping::Req { ping };
 
             crate::binding_utils::send_command!(
                 invited_cmds,
                 req,
-                invited_cmds::v2::ping,
-                InvitedPingRep,
+                invited_cmds::ping,
+                invited_cmds_wrapper::ping,
                 Ok,
                 UnknownStatus
             )

@@ -1915,6 +1915,7 @@ dependencies = [
  "futures",
  "lazy_static",
  "libparsec",
+ "libparsec_serialization_format",
  "paste",
  "pyo3",
  "regex",

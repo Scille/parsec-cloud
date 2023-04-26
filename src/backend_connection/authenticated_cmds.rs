@@ -5,7 +5,7 @@ use std::{collections::HashMap, num::NonZeroU64, path::PathBuf, sync::Arc};
 
 use libparsec::{
     client_connection,
-    protocol::authenticated_cmds,
+    protocol::authenticated_cmds::v2 as authenticated_cmds,
     types::{IntegerBetween1And100, Maybe},
 };
 
@@ -16,7 +16,7 @@ use crate::{
     enumerate::{InvitationDeletedReason, InvitationType},
     ids::{BlockID, EnrollmentID, InvitationToken, RealmID, SequesterServiceID, UserID, VlobID},
     local_device::LocalDevice,
-    protocol::*,
+    protocol::{authenticated_cmds::v2 as authenticated_cmds_wrapper, ReencryptionBatchEntry},
     runtime::FutureIntoCoroutine,
     time::DateTime,
 };
@@ -57,7 +57,7 @@ impl AuthenticatedCmds {
             let block_id = block_id.0;
             let realm_id = realm_id.0;
 
-            let req = authenticated_cmds::v2::block_create::Req {
+            let req = authenticated_cmds::block_create::Req {
                 block,
                 block_id,
                 realm_id,
@@ -66,8 +66,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::block_create,
-                BlockCreateRep,
+                authenticated_cmds::block_create,
+                authenticated_cmds_wrapper::block_create,
                 Ok,
                 NotFound,
                 Timeout,
@@ -85,13 +85,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let block_id = block_id.0;
 
-            let req = authenticated_cmds::v2::block_read::Req { block_id };
+            let req = authenticated_cmds::block_read::Req { block_id };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::block_read,
-                BlockReadRep,
+                authenticated_cmds::block_read,
+                authenticated_cmds_wrapper::block_read,
                 Ok,
                 NotFound,
                 Timeout,
@@ -112,7 +112,7 @@ impl AuthenticatedCmds {
         crate::binding_utils::unwrap_bytes!(device_certificate, redacted_device_certificate);
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::device_create::Req {
+            let req = authenticated_cmds::device_create::Req {
                 device_certificate,
                 redacted_device_certificate,
             };
@@ -120,8 +120,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::device_create,
-                DeviceCreateRep,
+                authenticated_cmds::device_create,
+                authenticated_cmds_wrapper::device_create,
                 Ok,
                 BadUserId,
                 InvalidCertification,
@@ -136,15 +136,15 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::events_listen::Req { wait };
+            let req = authenticated_cmds::events_listen::Req { wait };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::events_listen,
-                EventsListenRep,
-                NoEvents,
+                authenticated_cmds::events_listen,
+                authenticated_cmds_wrapper::events_listen,
                 Ok,
+                NoEvents,
                 Cancelled,
                 UnknownStatus
             )
@@ -155,13 +155,13 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::events_subscribe::Req;
+            let req = authenticated_cmds::events_subscribe::Req;
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::events_subscribe,
-                EventsSubscribeRep,
+                authenticated_cmds::events_subscribe,
+                authenticated_cmds_wrapper::events_subscribe,
                 Ok,
                 UnknownStatus
             )
@@ -179,11 +179,11 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let page = NonZeroU64::try_from(page).map_err(InvalidMessageError::new_err)?;
+            let page = NonZeroU64::try_from(page).map_err(PyValueError::new_err)?;
             let per_page =
-                IntegerBetween1And100::try_from(per_page).map_err(InvalidMessageError::new_err)?;
+                IntegerBetween1And100::try_from(per_page).map_err(PyValueError::new_err)?;
 
-            let req = authenticated_cmds::v2::human_find::Req {
+            let req = authenticated_cmds::human_find::Req {
                 omit_non_human,
                 omit_revoked,
                 page,
@@ -194,8 +194,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::human_find,
-                HumanFindRep,
+                authenticated_cmds::human_find,
+                authenticated_cmds_wrapper::human_find,
                 Ok,
                 NotAllowed,
                 UnknownStatus
@@ -214,7 +214,7 @@ impl AuthenticatedCmds {
             let greeter_public_key = greeter_public_key.0;
             let token = token.0;
 
-            let req = authenticated_cmds::v2::invite_1_greeter_wait_peer::Req {
+            let req = authenticated_cmds::invite_1_greeter_wait_peer::Req {
                 greeter_public_key,
                 token,
             };
@@ -222,8 +222,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_1_greeter_wait_peer,
-                Invite1GreeterWaitPeerRep,
+                authenticated_cmds::invite_1_greeter_wait_peer,
+                authenticated_cmds_wrapper::invite_1_greeter_wait_peer,
                 Ok,
                 NotFound,
                 InvalidState,
@@ -239,13 +239,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
-            let req = authenticated_cmds::v2::invite_2a_greeter_get_hashed_nonce::Req { token };
+            let req = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Req { token };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_2a_greeter_get_hashed_nonce,
-                Invite2aGreeterGetHashedNonceRep,
+                authenticated_cmds::invite_2a_greeter_get_hashed_nonce,
+                authenticated_cmds_wrapper::invite_2a_greeter_get_hashed_nonce,
                 Ok,
                 NotFound,
                 InvalidState,
@@ -267,7 +267,7 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
-            let req = authenticated_cmds::v2::invite_2b_greeter_send_nonce::Req {
+            let req = authenticated_cmds::invite_2b_greeter_send_nonce::Req {
                 greeter_nonce,
                 token,
             };
@@ -275,8 +275,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_2b_greeter_send_nonce,
-                Invite2bGreeterSendNonceRep,
+                authenticated_cmds::invite_2b_greeter_send_nonce,
+                authenticated_cmds_wrapper::invite_2b_greeter_send_nonce,
                 Ok,
                 NotFound,
                 InvalidState,
@@ -292,13 +292,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
-            let req = authenticated_cmds::v2::invite_3a_greeter_wait_peer_trust::Req { token };
+            let req = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Req { token };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_3a_greeter_wait_peer_trust,
-                Invite3aGreeterWaitPeerTrustRep,
+                authenticated_cmds::invite_3a_greeter_wait_peer_trust,
+                authenticated_cmds_wrapper::invite_3a_greeter_wait_peer_trust,
                 Ok,
                 NotFound,
                 InvalidState,
@@ -314,13 +314,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
-            let req = authenticated_cmds::v2::invite_3b_greeter_signify_trust::Req { token };
+            let req = authenticated_cmds::invite_3b_greeter_signify_trust::Req { token };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_3b_greeter_signify_trust,
-                Invite3bGreeterSignifyTrustRep,
+                authenticated_cmds::invite_3b_greeter_signify_trust,
+                authenticated_cmds_wrapper::invite_3b_greeter_signify_trust,
                 Ok,
                 NotFound,
                 InvalidState,
@@ -342,13 +342,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let token = token.0;
 
-            let req = authenticated_cmds::v2::invite_4_greeter_communicate::Req { token, payload };
+            let req = authenticated_cmds::invite_4_greeter_communicate::Req { token, payload };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_4_greeter_communicate,
-                Invite4GreeterCommunicateRep,
+                authenticated_cmds::invite_4_greeter_communicate,
+                authenticated_cmds_wrapper::invite_4_greeter_communicate,
                 Ok,
                 NotFound,
                 InvalidState,
@@ -369,13 +369,13 @@ impl AuthenticatedCmds {
             let token = token.0;
             let reason = reason.0;
 
-            let req = authenticated_cmds::v2::invite_delete::Req { token, reason };
+            let req = authenticated_cmds::invite_delete::Req { token, reason };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_delete,
-                InviteDeleteRep,
+                authenticated_cmds::invite_delete,
+                authenticated_cmds_wrapper::invite_delete,
                 Ok,
                 NotFound,
                 UnknownStatus,
@@ -388,13 +388,13 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::invite_list::Req;
+            let req = authenticated_cmds::invite_list::Req;
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_list,
-                InviteListRep,
+                authenticated_cmds::invite_list,
+                authenticated_cmds_wrapper::invite_list,
                 Ok,
                 UnknownStatus
             )
@@ -411,12 +411,12 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::invite_new::Req(match r#type.0 {
+            let req = authenticated_cmds::invite_new::Req(match r#type.0 {
                 libparsec::types::InvitationType::Device => {
-                    authenticated_cmds::v2::invite_new::UserOrDevice::Device { send_email }
+                    authenticated_cmds::invite_new::UserOrDevice::Device { send_email }
                 }
                 libparsec::types::InvitationType::User => {
-                    authenticated_cmds::v2::invite_new::UserOrDevice::User {
+                    authenticated_cmds::invite_new::UserOrDevice::User {
                         send_email,
                         claimer_email: claimer_email.expect("Missing claimer_email_argument"),
                     }
@@ -426,12 +426,12 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::invite_new,
-                InviteNewRep,
+                authenticated_cmds::invite_new,
+                authenticated_cmds_wrapper::invite_new,
+                Ok,
                 NotAllowed,
                 AlreadyMember,
                 NotAvailable,
-                Ok,
                 UnknownStatus
             )
         })
@@ -441,13 +441,13 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::message_get::Req { offset };
+            let req = authenticated_cmds::message_get::Req { offset };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::message_get,
-                MessageGetRep,
+                authenticated_cmds::message_get,
+                authenticated_cmds_wrapper::message_get,
                 Ok,
                 UnknownStatus
             )
@@ -458,13 +458,13 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::organization_config::Req;
+            let req = authenticated_cmds::organization_config::Req;
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::organization_config,
-                OrganizationConfigRep,
+                authenticated_cmds::organization_config,
+                authenticated_cmds_wrapper::organization_config,
                 Ok,
                 UnknownStatus,
                 NotFound
@@ -476,16 +476,16 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::organization_stats::Req;
+            let req = authenticated_cmds::organization_stats::Req;
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::organization_stats,
-                OrganizationStatsRep,
+                authenticated_cmds::organization_stats,
+                authenticated_cmds_wrapper::organization_stats,
+                Ok,
                 NotFound,
                 NotAllowed,
-                Ok,
                 UnknownStatus
             )
         })
@@ -495,14 +495,14 @@ impl AuthenticatedCmds {
     fn ping(&self, ping: String) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
-        let req = authenticated_cmds::v2::ping::Req { ping };
+        let req = authenticated_cmds::ping::Req { ping };
 
         FutureIntoCoroutine::from_raw(async move {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::ping,
-                AuthenticatedPingRep,
+                authenticated_cmds::ping,
+                authenticated_cmds_wrapper::ping,
                 Ok,
                 UnknownStatus
             )
@@ -536,7 +536,7 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let enrollment_id = enrollment_id.0;
 
-            let req = authenticated_cmds::v2::pki_enrollment_accept::Req {
+            let req = authenticated_cmds::pki_enrollment_accept::Req {
                 accept_payload,
                 accept_payload_signature,
                 accepter_der_x509_certificate,
@@ -550,8 +550,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::pki_enrollment_accept,
-                PkiEnrollmentAcceptRep,
+                authenticated_cmds::pki_enrollment_accept,
+                authenticated_cmds_wrapper::pki_enrollment_accept,
                 Ok,
                 InvalidData,
                 InvalidCertification,
@@ -570,13 +570,13 @@ impl AuthenticatedCmds {
         let auth_cmds = self.0.clone();
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::pki_enrollment_list::Req;
+            let req = authenticated_cmds::pki_enrollment_list::Req;
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::pki_enrollment_list,
-                PkiEnrollmentListRep,
+                authenticated_cmds::pki_enrollment_list,
+                authenticated_cmds_wrapper::pki_enrollment_list,
                 Ok,
                 NotAllowed,
                 UnknownStatus
@@ -590,13 +590,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let enrollment_id = enrollment_id.0;
 
-            let req = authenticated_cmds::v2::pki_enrollment_reject::Req { enrollment_id };
+            let req = authenticated_cmds::pki_enrollment_reject::Req { enrollment_id };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::pki_enrollment_reject,
-                PkiEnrollmentRejectRep,
+                authenticated_cmds::pki_enrollment_reject,
+                authenticated_cmds_wrapper::pki_enrollment_reject,
                 Ok,
                 NotFound,
                 NoLongerAvailable,
@@ -612,13 +612,13 @@ impl AuthenticatedCmds {
         crate::binding_utils::unwrap_bytes!(role_certificate);
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::realm_create::Req { role_certificate };
+            let req = authenticated_cmds::realm_create::Req { role_certificate };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::realm_create,
-                RealmCreateRep,
+                authenticated_cmds::realm_create,
+                authenticated_cmds_wrapper::realm_create,
                 Ok,
                 NotFound,
                 BadTimestamp,
@@ -641,7 +641,7 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
-            let req = authenticated_cmds::v2::realm_finish_reencryption_maintenance::Req {
+            let req = authenticated_cmds::realm_finish_reencryption_maintenance::Req {
                 encryption_revision,
                 realm_id,
             };
@@ -649,8 +649,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::realm_finish_reencryption_maintenance,
-                RealmFinishReencryptionMaintenanceRep,
+                authenticated_cmds::realm_finish_reencryption_maintenance,
+                authenticated_cmds_wrapper::realm_finish_reencryption_maintenance,
                 Ok,
                 MaintenanceError,
                 NotInMaintenance,
@@ -668,13 +668,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
-            let req = authenticated_cmds::v2::realm_get_role_certificates::Req { realm_id };
+            let req = authenticated_cmds::realm_get_role_certificates::Req { realm_id };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::realm_get_role_certificates,
-                RealmGetRoleCertificatesRep,
+                authenticated_cmds::realm_get_role_certificates,
+                authenticated_cmds_wrapper::realm_get_role_certificates,
                 Ok,
                 NotAllowed,
                 NotFound,
@@ -704,7 +704,7 @@ impl AuthenticatedCmds {
             let realm_id = realm_id.0;
             let timestamp = timestamp.0;
 
-            let req = authenticated_cmds::v2::realm_start_reencryption_maintenance::Req {
+            let req = authenticated_cmds::realm_start_reencryption_maintenance::Req {
                 encryption_revision,
                 per_participant_message,
                 realm_id,
@@ -714,15 +714,15 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::realm_start_reencryption_maintenance,
-                RealmStartReencryptionMaintenanceRep,
+                authenticated_cmds::realm_start_reencryption_maintenance,
+                authenticated_cmds_wrapper::realm_start_reencryption_maintenance,
+                Ok,
                 BadEncryptionRevision,
                 BadTimestamp,
                 InMaintenance,
                 MaintenanceError,
                 NotAllowed,
                 NotFound,
-                Ok,
                 ParticipantMismatch,
                 UnknownStatus,
                 "handle_bad_timestamp"
@@ -736,13 +736,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
-            let req = authenticated_cmds::v2::realm_stats::Req { realm_id };
+            let req = authenticated_cmds::realm_stats::Req { realm_id };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::realm_stats,
-                RealmStatsRep,
+                authenticated_cmds::realm_stats,
+                authenticated_cmds_wrapper::realm_stats,
                 Ok,
                 NotAllowed,
                 NotFound,
@@ -757,13 +757,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
-            let req = authenticated_cmds::v2::realm_status::Req { realm_id };
+            let req = authenticated_cmds::realm_status::Req { realm_id };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::realm_status,
-                RealmStatusRep,
+                authenticated_cmds::realm_status,
+                authenticated_cmds_wrapper::realm_status,
                 Ok,
                 NotAllowed,
                 NotFound,
@@ -782,7 +782,7 @@ impl AuthenticatedCmds {
         crate::binding_utils::unwrap_bytes!(recipient_message, role_certificate);
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::realm_update_roles::Req {
+            let req = authenticated_cmds::realm_update_roles::Req {
                 recipient_message,
                 role_certificate,
             };
@@ -790,8 +790,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::realm_update_roles,
-                RealmUpdateRolesRep,
+                authenticated_cmds::realm_update_roles,
+                authenticated_cmds_wrapper::realm_update_roles,
                 Ok,
                 NotAllowed,
                 NotFound,
@@ -826,7 +826,7 @@ impl AuthenticatedCmds {
         );
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::user_create::Req {
+            let req = authenticated_cmds::user_create::Req {
                 device_certificate,
                 redacted_device_certificate,
                 redacted_user_certificate,
@@ -836,8 +836,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::user_create,
-                UserCreateRep,
+                authenticated_cmds::user_create,
+                authenticated_cmds_wrapper::user_create,
                 Ok,
                 ActiveUsersLimitReached,
                 AlreadyExists,
@@ -855,13 +855,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let user_id = user_id.0;
 
-            let req = authenticated_cmds::v2::user_get::Req { user_id };
+            let req = authenticated_cmds::user_get::Req { user_id };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::user_get,
-                UserGetRep,
+                authenticated_cmds::user_get,
+                authenticated_cmds_wrapper::user_get,
                 Ok,
                 NotFound,
                 UnknownStatus
@@ -875,15 +875,15 @@ impl AuthenticatedCmds {
         crate::binding_utils::unwrap_bytes!(revoked_user_certificate);
 
         FutureIntoCoroutine::from_raw(async move {
-            let req = authenticated_cmds::v2::user_revoke::Req {
+            let req = authenticated_cmds::user_revoke::Req {
                 revoked_user_certificate,
             };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::user_revoke,
-                UserRevokeRep,
+                authenticated_cmds::user_revoke,
+                authenticated_cmds_wrapper::user_revoke,
                 Ok,
                 InvalidCertification,
                 UnknownStatus,
@@ -920,7 +920,7 @@ impl AuthenticatedCmds {
             let vlob_id = vlob_id.0;
             let timestamp = timestamp.0;
 
-            let req = authenticated_cmds::v2::vlob_create::Req {
+            let req = authenticated_cmds::vlob_create::Req {
                 blob,
                 encryption_revision,
                 realm_id,
@@ -932,8 +932,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::vlob_create,
-                VlobCreateRep,
+                authenticated_cmds::vlob_create,
+                authenticated_cmds_wrapper::vlob_create,
                 Ok,
                 UnknownStatus,
                 AlreadyExists,
@@ -957,13 +957,13 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let vlob_id = vlob_id.0;
 
-            let req = authenticated_cmds::v2::vlob_list_versions::Req { vlob_id };
+            let req = authenticated_cmds::vlob_list_versions::Req { vlob_id };
 
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::vlob_list_versions,
-                VlobListVersionsRep,
+                authenticated_cmds::vlob_list_versions,
+                authenticated_cmds_wrapper::vlob_list_versions,
                 Ok,
                 NotAllowed,
                 InMaintenance,
@@ -984,7 +984,7 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
-            let req = authenticated_cmds::v2::vlob_maintenance_get_reencryption_batch::Req {
+            let req = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Req {
                 encryption_revision,
                 realm_id,
                 size,
@@ -993,8 +993,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::vlob_maintenance_get_reencryption_batch,
-                VlobMaintenanceGetReencryptionBatchRep,
+                authenticated_cmds::vlob_maintenance_get_reencryption_batch,
+                authenticated_cmds_wrapper::vlob_maintenance_get_reencryption_batch,
                 Ok,
                 BadEncryptionRevision,
                 MaintenanceError,
@@ -1018,7 +1018,7 @@ impl AuthenticatedCmds {
             let realm_id = realm_id.0;
             let batch = batch.into_iter().map(|x| x.0).collect();
 
-            let req = authenticated_cmds::v2::vlob_maintenance_save_reencryption_batch::Req {
+            let req = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Req {
                 encryption_revision,
                 realm_id,
                 batch,
@@ -1027,8 +1027,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::vlob_maintenance_save_reencryption_batch,
-                VlobMaintenanceSaveReencryptionBatchRep,
+                authenticated_cmds::vlob_maintenance_save_reencryption_batch,
+                authenticated_cmds_wrapper::vlob_maintenance_save_reencryption_batch,
                 Ok,
                 BadEncryptionRevision,
                 MaintenanceError,
@@ -1046,7 +1046,7 @@ impl AuthenticatedCmds {
         FutureIntoCoroutine::from_raw(async move {
             let realm_id = realm_id.0;
 
-            let req = authenticated_cmds::v2::vlob_poll_changes::Req {
+            let req = authenticated_cmds::vlob_poll_changes::Req {
                 last_checkpoint,
                 realm_id,
             };
@@ -1054,8 +1054,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::vlob_poll_changes,
-                VlobPollChangesRep,
+                authenticated_cmds::vlob_poll_changes,
+                authenticated_cmds_wrapper::vlob_poll_changes,
                 Ok,
                 UnknownStatus,
                 InMaintenance,
@@ -1079,7 +1079,7 @@ impl AuthenticatedCmds {
             let vlob_id = vlob_id.0;
             let timestamp = timestamp.map(|x| x.0);
 
-            let req = authenticated_cmds::v2::vlob_read::Req {
+            let req = authenticated_cmds::vlob_read::Req {
                 encryption_revision,
                 timestamp,
                 version,
@@ -1089,8 +1089,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::vlob_read,
-                VlobReadRep,
+                authenticated_cmds::vlob_read,
+                authenticated_cmds_wrapper::vlob_read,
                 Ok,
                 UnknownStatus,
                 BadVersion,
@@ -1127,7 +1127,7 @@ impl AuthenticatedCmds {
             let vlob_id = vlob_id.0;
             let timestamp = timestamp.0;
 
-            let req = authenticated_cmds::v2::vlob_update::Req {
+            let req = authenticated_cmds::vlob_update::Req {
                 blob,
                 sequester_blob,
                 encryption_revision,
@@ -1139,8 +1139,8 @@ impl AuthenticatedCmds {
             crate::binding_utils::send_command!(
                 auth_cmds,
                 req,
-                authenticated_cmds::v2::vlob_update,
-                VlobUpdateRep,
+                authenticated_cmds::vlob_update,
+                authenticated_cmds_wrapper::vlob_update,
                 Ok,
                 UnknownStatus,
                 BadEncryptionRevision,

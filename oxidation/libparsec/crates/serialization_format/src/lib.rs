@@ -7,7 +7,6 @@ mod utils;
 
 use proc_macro::TokenStream;
 use std::{
-    ffi::OsStr,
     fs::File,
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
@@ -52,7 +51,7 @@ fn retrieve_protocol_family_json_cmds(path: &Path) -> (String, Vec<protocol::Jso
         // Only keep .json/.json5 files
         let file_name = json_path.file_name();
         match std::path::Path::new(&file_name).extension() {
-            Some(x) if x == OsStr::new("json5") || x == OsStr::new("json") => (),
+            Some(x) if x == "json5" || x == "json" => (),
             _ => continue,
         }
 
@@ -80,6 +79,19 @@ pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
     let path = path_from_str(&path);
     let (family_name, json_cmds) = retrieve_protocol_family_json_cmds(&path);
     TokenStream::from(protocol::generate_protocol_cmds_family(
+        json_cmds,
+        &family_name,
+    ))
+}
+
+/// Procedural macro that takes a directory containing one JSON file per protocol command.
+#[cfg(feature = "python-bindings-support")]
+#[proc_macro]
+pub fn python_bindings_parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
+    let path = parse_macro_input!(path as LitStr).value();
+    let path = path_from_str(&path);
+    let (family_name, json_cmds) = retrieve_protocol_family_json_cmds(&path);
+    TokenStream::from(protocol::python_bindings::generate_protocol_cmds_family(
         json_cmds,
         &family_name,
     ))

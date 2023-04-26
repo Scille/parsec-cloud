@@ -7,6 +7,9 @@ license = " BUSL-1.1"
 [lib]
 proc-macro = true
 
+[features]
+python-bindings-support = []
+
 [dependencies]
 itertools = "0.10.5"
 miniserde = "0.1.30"

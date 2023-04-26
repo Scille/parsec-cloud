@@ -131,7 +131,7 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
 }
 
 macro_rules! py_object {
-    ($_self: ident, $class: ident, $subclass: ident, $py: ident) => {{
+    ($_self: ident, $class: path, $subclass: path, $py: ident) => {{
         let initializer = ::pyo3::PyClassInitializer::from(($subclass, $class($_self)));
         // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
         // or a sub-type of `T` (the type of `initializer` here).
@@ -139,7 +139,7 @@ macro_rules! py_object {
         // will be used as the type of `subtype` in the call of `into_new_object`.
         unsafe {
             use ::pyo3::{pyclass_init::PyObjectInit, PyTypeInfo};
-            initializer.into_new_object($py, $subclass::type_object_raw($py))
+            initializer.into_new_object($py, { use $subclass as base; base::type_object_raw($py) })
                 .map(|ptr| ::pyo3::PyObject::from_owned_ptr($py, ptr))
         }
     }};
@@ -355,14 +355,14 @@ macro_rules! impl_enum_field {
 }
 
 macro_rules! _cmd_error_handler {
-    ("handle_bad_timestamp", $cmd_name: path, $rep_type: ident, $rep: ident) => {
+    ("handle_bad_timestamp", $cmd_mod_path: path, $cmd_wrapper_mod_path: path, $rep: path) => {
         ::paste::paste! {
-            if let $cmd_name::Rep::BadTimestamp { .. } = $rep {
+            if let $cmd_mod_path::Rep::BadTimestamp { .. } = $rep {
                 let rep = ::pyo3::Python::with_gil(|py| {
                     crate::binding_utils::py_object!(
                         $rep,
-                        $rep_type,
-                        [<$rep_type BadTimestamp>],
+                        $cmd_wrapper_mod_path::Rep,
+                        $cmd_wrapper_mod_path::RepBadTimestamp,
                         py
                     )
                 })?;
@@ -373,7 +373,7 @@ macro_rules! _cmd_error_handler {
 }
 
 macro_rules! send_command {
-    ($client: ident, $req: ident, $cmd_name: path, $rep_type: ident, $($kind_type: ty),* $(, $error_handler: literal)? $(,)?) => {
+    ($client: ident, $req: ident, $cmd_mod_path: path, $cmd_wrapper_mod_path: path, $($kind_type: path),* $(, $error_handler: literal)? $(,)?) => {
         // We invoke gil because it will run in a coroutine
         ::paste::paste! {
             {
@@ -382,16 +382,16 @@ macro_rules! send_command {
                     .await
                     .map_err(|e| ::pyo3::PyErr::from(crate::backend_connection::CommandExc::from(e)))?;
 
-                $(crate::binding_utils::_cmd_error_handler!($error_handler, $cmd_name, $rep_type, rep);)?
+                $(crate::binding_utils::_cmd_error_handler!($error_handler, $cmd_mod_path, $cmd_wrapper_mod_path, rep);)?
 
                 Ok(match rep {
                     $(
-                        $cmd_name::Rep::$kind_type { .. } => {
+                        rep @ $cmd_mod_path::Rep::$kind_type { .. } => {
                             ::pyo3::Python::with_gil(|py| {
                                 crate::binding_utils::py_object!(
                                     rep,
-                                    $rep_type,
-                                    [<$rep_type $kind_type>],
+                                    $cmd_wrapper_mod_path::Rep,
+                                    $cmd_wrapper_mod_path::[<Rep $kind_type>],
                                     py
                                 )
                             })?
