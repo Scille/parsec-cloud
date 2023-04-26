@@ -720,7 +720,7 @@ authenticated API, `organization_config`
 
                         // "recipients only" doesn't seem useful: the recipients will
                         // have to do the SAS code exchange so they already have to give
-                        // there concent at this point.
+                        // there consent at this point.
                     },
                     // <------------ Already existing options omitted --------->
                 ]
