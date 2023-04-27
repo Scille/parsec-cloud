@@ -107,20 +107,20 @@ Authenticated API:
         },
         "reps": [
             {
-                "status": "ok",
+                "status": "ok"
             },
             {
                 // Certificate is not signed by the authenticated user, or timestamp is invalid
-                "status": "invalid_certification",
+                "status": "invalid_certification"
             },
             {
                 // Cannot deserialize data into the expected certificate, or inconsistency
                 // between  certificates and/or threshold
-                "status": "invalid_data",
+                "status": "invalid_data"
             },
             {
                 // Future evolution 1: Shamir recovery has already been setup, should ask your admin to reset it first !
-                "status": "already_set",
+                "status": "already_set"
             }
         ],
         "nested_types": [
@@ -154,7 +154,7 @@ Authenticated API:
                         // The shares provided as a `ShamirRecoveryShareCertificate` since
                         // each share is aimed at a specific recipient.
                         "name": "shares",
-                        "type": "Vec<Bytes>",
+                        "type": "List<Bytes>"
                     }
                 ]
             }
@@ -267,21 +267,21 @@ Authenticated API:
             4
         ],
         "req": {
-            "cmd": "shamir_recovery_self_info",
+            "cmd": "shamir_recovery_self_info"
         },
         "reps": [
             {
                 "status": "ok",
-                "other_fields": [
+                "fields": [
                     {
                         // `None` means no configuration
                         // Otherwise, contains a `ShamirRecoveryBriefCertificate`
-                        "name": "self",
+                        "name": "self_info",
                         "type": "RequiredOption<Bytes>"
                     }
                 ]
             }
-        ],
+        ]
     }
 ]
 ```
@@ -298,11 +298,11 @@ Authenticated API:
         "reps": [
             {
                 "status": "ok",
-                "other_fields": [
+                "fields": [
                     {
                         "name": "others",
                         // Contains a list of `ShamirRecoveryBriefCertificate`
-                        "type": "Vec<Bytes>"
+                        "type": "List<Bytes>"
                     }
                 ]
             },
@@ -326,7 +326,7 @@ Authenticated API:
 
 ### 3.1 - Admin creates an invitation
 
-Authentication API:
+Authenticated API:
 
 ```json5
 [
@@ -336,7 +336,7 @@ Authentication API:
         ],
         "req": {
             "cmd": "invite_new",
-            "unit": "UserOrDeviceOrShamirRecovery",
+            "unit": "UserOrDeviceOrShamirRecovery"
         },
         "reps": [
             {
@@ -430,7 +430,7 @@ Invited API, we reuse the `invite_info` command:
                             },
                             {
                                 "name": "recipients",
-                                "type": "Vec<ShamirRecoveryRecipient>",
+                                "type": "List<ShamirRecoveryRecipient>"
                             }
                         ]
                     }
@@ -441,11 +441,11 @@ Invited API, we reuse the `invite_info` command:
                 "fields": [
                     {
                         "name": "user_id",
-                        "type": "UserID",
+                        "type": "UserID"
                     },
                     {
                         "name": "human_handle",
-                        "type": "Option<HumanHandle>",
+                        "type": "RequiredOption<HumanHandle>"
                     },
                     {
                         "name": "shares",
@@ -495,7 +495,7 @@ A single change is required: passing the recipient `user_id` as parameter
             {
                 // Currently returned if invitation is no longer available
                 // now also returned if `greeter_user_id` has an invalid value
-                "status": "not_found",
+                "status": "not_found"
             }
             // <-------------- Other reps omitted --------->
         ],
@@ -579,7 +579,7 @@ The claimer gets access to `reveal_token` and `data_key`, it can then retrieve `
         "reps": [
             {
                 "status": "ok",
-                "other_fields": [
+                "fields": [
                     {
                         "name": "ciphered_data",
                         "type": "Bytes"
@@ -677,7 +677,7 @@ authenticated API, `organization_config`
                     {
                         "name": "shamir_recovery_recipient_allowed_profiles",
                         // Default would be all profiles
-                        "type": "Vec<UserProfile>"
+                        "type": "List<UserProfile>"
                     },
                     // <------------ Already existing options omitted --------->
                 ]
