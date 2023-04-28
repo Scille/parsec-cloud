@@ -419,7 +419,18 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
     quote! {
         pub mod #family_name {
             use super::libparsec_types; // Allow to mock types in tests
+
+            // Define `UnknownStatus` here instead of where is it actually used (i.e.
+            // near each command's `Rep::load` definition) to have a single common
+            // definition that will have it deserialization code compiled once \o/
+            #[derive(::serde::Deserialize)]
+            struct UnknownStatus {
+                status: String,
+                reason: Option<String>
+            }
+
             #(#versioned_cmds)*
+
             pub mod latest {
                 pub use super::#latest_cmds_mod_name::*;
             }
@@ -435,14 +446,7 @@ fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
     let code = quote! {
         pub mod #versioned_cmds_mod {
             use super::libparsec_types; // Allow to mock types in tests
-            // Define `UnknownStatus` here instead of where is it actually used (i.e.
-            // near each command's `Rep::load` definition) to have a single common
-            // definition that will have it deserialization code compiled once \o/
-            #[derive(::serde::Deserialize)]
-            struct UnknownStatus {
-                status: String,
-                reason: Option<String>
-            }
+            use super::UnknownStatus;
 
             #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
             #[serde(tag = "cmd")]
