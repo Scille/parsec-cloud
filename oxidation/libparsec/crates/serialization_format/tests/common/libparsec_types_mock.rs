@@ -14,7 +14,7 @@ pub struct DeviceID(pub String);
 pub trait ProtocolRequest {
     type Response: for<'de> serde::Deserialize<'de>;
 
-    fn dump(self) -> Result<Vec<u8>, rmp_serde::encode::Error>;
+    fn dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error>;
 
     fn load_response(buf: &[u8]) -> Result<Self::Response, rmp_serde::decode::Error>;
 }

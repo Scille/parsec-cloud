@@ -26,6 +26,8 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
 
     quote! {
         pub(crate) mod #family_mod_name {
+            #![allow(clippy::too_many_arguments)]
+
             use ::pyo3::prelude::*;
             use ::pyo3::types::*;
             use libparsec::types::ProtocolRequest;

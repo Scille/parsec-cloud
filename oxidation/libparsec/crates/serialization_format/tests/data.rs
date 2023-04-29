@@ -5,7 +5,7 @@ use pretty_assertions::assert_eq;
 
 use libparsec_serialization_format::parsec_data_from_contents;
 
-#[path = "./utils/libparsec_types_mock.rs"]
+#[path = "./common/libparsec_types_mock.rs"]
 mod libparsec_types;
 
 #[test]

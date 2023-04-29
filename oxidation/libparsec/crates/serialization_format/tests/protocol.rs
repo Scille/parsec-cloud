@@ -6,7 +6,7 @@ use pretty_assertions::assert_eq;
 
 use libparsec_serialization_format::generate_protocol_cmds_family_from_contents;
 
-#[path = "./utils/libparsec_types_mock.rs"]
+#[path = "./common/libparsec_types_mock.rs"]
 mod libparsec_types;
 use libparsec_types::ProtocolRequest;
 
@@ -68,7 +68,7 @@ fn simple() {
     let req = protocol::v2::ping::Req {
         ping: "foo".to_owned(),
     };
-    let dumped = req.clone().dump().unwrap();
+    let dumped = req.dump().unwrap();
     assert_eq!(
         protocol::v2::AnyCmdReq::load(&dumped).unwrap(),
         protocol::v2::AnyCmdReq::Ping(req)
@@ -121,7 +121,7 @@ fn complex_type() {
     let req = protocol::v1::ping::Req {
         ping: HashMap::from([(1, (libparsec_types::DeviceID("alice@pc1".to_owned()), true))]),
     };
-    let dumped = req.clone().dump().unwrap();
+    let dumped = req.dump().unwrap();
     assert_eq!(
         protocol::v1::AnyCmdReq::load(&dumped).unwrap(),
         protocol::v1::AnyCmdReq::Ping(req)
@@ -364,7 +364,7 @@ fn nested_type() {
         e: protocol::v1::ping::EnumNestedType::E1 { f: 42 },
         s: protocol::v1::ping::StructNestedType { f: 42 },
     };
-    let dumped = req.clone().dump().unwrap();
+    let dumped = req.dump().unwrap();
     assert_eq!(
         protocol::v1::AnyCmdReq::load(&dumped).unwrap(),
         protocol::v1::AnyCmdReq::Ping(req)

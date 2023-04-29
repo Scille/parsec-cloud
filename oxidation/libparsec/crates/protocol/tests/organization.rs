@@ -5,10 +5,7 @@ use hex_literal::hex;
 use libparsec_protocol::{
     anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
 };
-use libparsec_tests_fixtures::{
-    alice, device_certificate, parsec_test, redacted_device_certificate, redacted_user_certificate,
-    user_certificate, Device,
-};
+use libparsec_tests_fixtures::*;
 use libparsec_types::prelude::*;
 
 type OrganizationBootstrapGenerator =
@@ -30,7 +27,11 @@ fn serde_organization_stats_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::OrganizationStats(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -120,7 +121,11 @@ fn serde_organization_config_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::OrganizationConfig(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -520,7 +525,11 @@ fn serde_organization_bootstrap_req(
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let anonymous_cmds::AnyCmdReq::OrganizationBootstrap(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = anonymous_cmds::AnyCmdReq::load(&raw2).unwrap();
 

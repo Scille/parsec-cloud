@@ -114,7 +114,7 @@ enum GenCmdReqKind {
 }
 
 struct GenCmdReq {
-    _cmd: String,
+    cmd: String,
     kind: GenCmdReqKind,
 }
 
@@ -181,10 +181,10 @@ impl GenCmdsFamily {
         for cmd in cmds.into_iter().flat_map(|json_cmd| json_cmd.items) {
             let JsonCmdFlavour {
                 major_versions,
-                introduced_in,
                 req,
                 reps,
                 nested_types,
+                ..
             } = cmd;
             let cmd_name = &req.cmd.clone();
             assert!(
@@ -257,7 +257,7 @@ impl GenCmdsFamily {
                                         (v.name, v.discriminant_value)
                                     }).collect();
                                     GenCmdNestedType::LiteralsUnion {
-                                        name: nested_type.name.to_owned(),
+                                        name: nested_type.name,
                                         variants,
                                     }
                                 }
@@ -274,7 +274,7 @@ impl GenCmdsFamily {
                                     }).collect();
                                     GenCmdNestedType::StructsUnion {
                                         name: nested_type.name,
-                                        discriminant_field: discriminant_field.to_owned(),
+                                        discriminant_field,
                                         variants,
                                     }
                                 },
@@ -314,7 +314,7 @@ impl GenCmdsFamily {
                     ),
                 };
                 let gen_req = GenCmdReq {
-                    _cmd: req_cmd,
+                    cmd: req_cmd,
                     kind: gen_req_kind,
                 };
 
@@ -338,7 +338,7 @@ impl GenCmdsFamily {
                             }
                         };
                         GenCmdRep {
-                            status: rep.status.to_owned(),
+                            status: rep.status,
                             kind,
                         }
                     })
@@ -448,17 +448,13 @@ fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
             use super::libparsec_types; // Allow to mock types in tests
             use super::UnknownStatus;
 
-            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
             #[serde(tag = "cmd")]
             pub enum AnyCmdReq {
                 #(#any_cmd_req_variants),*
             }
 
             impl AnyCmdReq {
-                pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
-                    ::rmp_serde::to_vec_named(self)
-                }
-
                 pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
                     ::rmp_serde::from_slice(buf)
                 }
@@ -513,8 +509,8 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
                     impl libparsec_types::ProtocolRequest for Req {
                         type Response = Rep;
 
-                        fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
-                            AnyCmdReq::#variant_name(self).dump()
+                        fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                            ::rmp_serde::to_vec_named(self)
                         }
 
                         fn load_response(buf: &[u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
@@ -654,27 +650,113 @@ fn quote_cmd_nested_types(nested_types: &[GenCmdNestedType]) -> Vec<TokenStream>
 fn quote_cmd_req_struct(req: &GenCmdReq) -> TokenStream {
     match &req.kind {
         GenCmdReqKind::Unit { nested_type_name } => {
+            let cmd_name_literal = &req.cmd;
             let nested_type_name = format_ident!("{}", nested_type_name);
             quote! {
                 #[::serde_with::serde_as]
-                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
+                #[serde(transparent)]
                 pub struct Req(pub #nested_type_name);
+
+                impl ::serde::Serialize for Req
+                {
+                    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                    where
+                        S: ::serde::Serializer,
+                    {
+                        #[derive(::serde::Serialize)]
+                        enum CmdEnum {
+                            #[serde(rename=#cmd_name_literal)]
+                            Val,
+                        }
+                        #[derive(::serde::Serialize)]
+                        struct ReqWithCmd<'a> {
+                            cmd: CmdEnum,
+                            #[serde(flatten)]
+                            unit: &'a #nested_type_name,
+                        }
+                        let to_serialize = ReqWithCmd {cmd: CmdEnum::Val, unit: &self.0 };
+                        to_serialize.serialize(serializer)
+                    }
+                }
             }
         }
         GenCmdReqKind::Composed { fields } => {
             if fields.is_empty() {
+                let cmd_name_literal = &req.cmd;
                 quote! {
                     #[::serde_with::serde_as]
-                    #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                    #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
                     pub struct Req;
+
+                    impl ::serde::Serialize for Req
+                    {
+                        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                        where
+                            S: ::serde::Serializer,
+                        {
+                            use ::serde::ser::SerializeStruct;
+                            let mut state = serializer.serialize_struct("Req", 1)?;
+                            state.serialize_field("cmd", #cmd_name_literal)?;
+                            state.end()
+                        }
+                    }
                 }
             } else {
-                let fields = quote_cmd_fields(fields, true);
+                let fields_codes = quote_cmd_fields(fields, true);
+                let number_of_always_present_fields: usize = fields.iter().fold(0, |ac, f| match f
+                    .added_in_minor_revision
+                {
+                    true => ac,
+                    false => ac + 1,
+                });
+                let determine_maybe_present_fields_codes = fields.iter().filter_map(|f| {
+                    if !f.added_in_minor_revision {
+                        return None;
+                    }
+                    let field_name = format_ident!("{}", &f.name);
+                    Some(quote! {
+                        if let libparsec_types::Maybe::Present(_) =  &self.#field_name {
+                            fields_count += 1;
+                        }
+                    })
+                });
+                let serialize_fields = fields.iter().map(|f| {
+                    let field_name_literal = &f.name;
+                    let field_name = format_ident!("{}", field_name_literal);
+                    if f.added_in_minor_revision {
+                        quote!{
+                            if let libparsec_types::Maybe::Present(field_data) =  &self.#field_name {
+                                state.serialize_field(#field_name_literal, field_data)?;
+                            }
+                        }
+                    } else {
+                        quote!{ state.serialize_field(#field_name_literal, &self.#field_name)?; }
+                    }
+                });
+                let cmd_name_literal = &req.cmd;
+
                 quote! {
                     #[::serde_with::serde_as]
-                    #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                    #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
                     pub struct Req {
-                        #(#fields),*
+                        #(#fields_codes),*
+                    }
+
+                    impl ::serde::Serialize for Req
+                    {
+                        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                        where
+                            S: ::serde::Serializer,
+                        {
+                            use ::serde::ser::SerializeStruct;
+                            let mut fields_count = #number_of_always_present_fields + 1;
+                            #(#determine_maybe_present_fields_codes)*
+                            let mut state = serializer.serialize_struct("Req", fields_count)?;
+                            state.serialize_field("cmd", #cmd_name_literal)?;
+                            #(#serialize_fields)*
+                            state.end()
+                        }
                     }
                 }
             }
@@ -683,7 +765,7 @@ fn quote_cmd_req_struct(req: &GenCmdReq) -> TokenStream {
 }
 
 /// Output:
-/// - 0: Enum variant with his rename
+/// - 0: Enum variant with it rename
 /// - 1: Status match branch
 fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream) {
     let variant_name = format_ident!("{}", &snake_to_pascal_case(&rep.status));
@@ -734,7 +816,7 @@ fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream) {
 }
 
 /// Output:
-/// - 0: Enum variants with his rename + UnknownStatus
+/// - 0: Enum variants with their rename + UnknownStatus
 /// - 1: Status match branches
 fn quote_cmd_rep_variants(reps: &[GenCmdRep]) -> (Vec<TokenStream>, Vec<TokenStream>) {
     let (mut variants, status_match): (Vec<TokenStream>, Vec<TokenStream>) = reps
@@ -746,7 +828,7 @@ fn quote_cmd_rep_variants(reps: &[GenCmdRep]) -> (Vec<TokenStream>, Vec<TokenStr
     // `UnknownStatus` covers the case the server returns a valid message but with an unknown
     // status value (given change in error status only cause a minor bump in API version)
     // Note it is meaningless to serialize a `UnknownStatus` (you created the object from
-    // scratch, you know what it is for baka !)
+    // scratch, you know what it is for, baka !)
     variants.push(quote! {
         #[serde(skip)]
         UnknownStatus {

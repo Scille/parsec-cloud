@@ -4,7 +4,7 @@ use hex_literal::hex;
 use std::num::NonZeroU64;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
-use libparsec_tests_fixtures::parsec_test;
+use libparsec_tests_fixtures::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
@@ -29,7 +29,11 @@ fn serde_user_get_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::UserGet(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -150,7 +154,11 @@ fn serde_user_create_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::UserCreate(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -302,7 +310,11 @@ fn serde_user_revoke_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::UserRevoke(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -407,7 +419,11 @@ fn serde_device_create_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::DeviceCreate(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -540,7 +556,11 @@ fn serde_human_find_req(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::HumanFind(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 

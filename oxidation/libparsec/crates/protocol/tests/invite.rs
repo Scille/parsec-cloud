@@ -49,7 +49,11 @@ fn serde_invite_new_req(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::InviteNew(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -150,7 +154,11 @@ fn serde_invite_delete_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::InviteDelete(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -217,7 +225,11 @@ fn serde_invite_list_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::InviteList(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -297,7 +309,11 @@ fn serde_invite_info_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let invited_cmds::AnyCmdReq::InviteInfo(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -427,7 +443,11 @@ fn serde_invite_1_claimer_wait_peer_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let invited_cmds::AnyCmdReq::Invite1ClaimerWaitPeer(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -511,7 +531,11 @@ fn serde_invite_1_greeter_wait_peer_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::Invite1GreeterWaitPeer(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -602,7 +626,11 @@ fn serde_invite_2a_claimer_send_hashed_nonce_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let invited_cmds::AnyCmdReq::Invite2aClaimerSendHashedNonce(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -687,7 +715,11 @@ fn serde_invite_2a_greeter_get_hashed_nonce_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::Invite2aGreeterGetHashedNonce(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -778,7 +810,11 @@ fn serde_invite_2b_greeter_send_nonce_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::Invite2bGreeterSendNonce(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -863,7 +899,11 @@ fn serde_invite_2b_claimer_send_nonce_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let invited_cmds::AnyCmdReq::Invite2bClaimerSendNonce(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -936,7 +976,11 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::Invite3aGreeterWaitPeerTrust(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -1015,7 +1059,11 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -1088,7 +1136,11 @@ fn serde_invite_3b_greeter_signify_trust_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::Invite3bGreeterSignifyTrust(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -1164,7 +1216,11 @@ fn serde_invite_3a_claimer_signify_trust_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let invited_cmds::AnyCmdReq::Invite3aClaimerSignifyTrust(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -1239,7 +1295,11 @@ fn serde_invite_4_greeter_communicate_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::Invite4GreeterCommunicate(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -1323,7 +1383,11 @@ fn serde_invite_4_claimer_communicate_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let invited_cmds::AnyCmdReq::Invite4ClaimerCommunicate(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 

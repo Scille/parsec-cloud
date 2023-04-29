@@ -3,7 +3,8 @@
 use hex_literal::hex;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
-use libparsec_tests_fixtures::parsec_test;
+use libparsec_tests_fixtures::*;
+use libparsec_types::prelude::*;
 
 #[parsec_test]
 fn serde_message_get_req() {
@@ -22,7 +23,11 @@ fn serde_message_get_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::MessageGet(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 

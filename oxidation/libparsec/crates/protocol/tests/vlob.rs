@@ -4,7 +4,7 @@ use hex_literal::hex;
 use std::collections::HashMap;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
-use libparsec_tests_fixtures::parsec_test;
+use libparsec_tests_fixtures::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
@@ -101,7 +101,11 @@ fn serde_vlob_create_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::VlobCreate(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -283,7 +287,11 @@ fn serde_vlob_read_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::VlobRead(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -466,7 +474,11 @@ fn serde_vlob_update_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::VlobUpdate(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -652,7 +664,11 @@ fn serde_vlob_poll_changes_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::VlobPollChanges(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -743,7 +759,11 @@ fn serde_vlob_list_versions_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 = if let authenticated_cmds::AnyCmdReq::VlobListVersions(data) = data {
+        data.dump().unwrap()
+    } else {
+        unreachable!()
+    };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -843,7 +863,12 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 =
+        if let authenticated_cmds::AnyCmdReq::VlobMaintenanceGetReencryptionBatch(data) = data {
+            data.dump().unwrap()
+        } else {
+            unreachable!()
+        };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
@@ -986,7 +1011,12 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
+    let raw2 =
+        if let authenticated_cmds::AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(data) = data {
+            data.dump().unwrap()
+        } else {
+            unreachable!()
+        };
 
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 

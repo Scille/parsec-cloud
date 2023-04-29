@@ -11,7 +11,7 @@ use libparsec_protocol::{
     ServerHandshakeStalled, SignedAnswer, API_V2_VERSION, BALLPARK_CLIENT_EARLY_OFFSET,
     BALLPARK_CLIENT_LATE_OFFSET,
 };
-use libparsec_tests_fixtures::{alice, bob, parsec_test, timestamp, Device};
+use libparsec_tests_fixtures::*;
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test")]

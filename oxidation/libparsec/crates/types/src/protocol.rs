@@ -27,7 +27,7 @@ impl From<IntegerBetween1And100> for u64 {
 pub trait ProtocolRequest {
     type Response: for<'de> Deserialize<'de>;
 
-    fn dump(self) -> Result<Vec<u8>, ProtocolEncodeError>;
+    fn dump(&self) -> Result<Vec<u8>, ProtocolEncodeError>;
 
     fn load_response(buf: &[u8]) -> Result<Self::Response, ProtocolDecodeError>;
 }
