@@ -351,7 +351,7 @@ fn quote_reps(
             fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
                 Ok(PyBytes::new(
                     py,
-                    &self.0.clone().dump().map_err(|e| {
+                    &self.0.dump().map_err(|e| {
                         ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
                             exc: e.to_string(),
                         })
@@ -436,7 +436,7 @@ fn quote_req(
                     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
                         Ok(PyBytes::new(
                             py,
-                            &self.0.clone().dump().map_err(|e| {
+                            &self.0.dump().map_err(|e| {
                                 ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
                                     exc: e.to_string(),
                                 })
@@ -515,7 +515,7 @@ fn quote_req(
                     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
                         Ok(PyBytes::new(
                             py,
-                            &self.0.clone().dump().map_err(|e| {
+                            &self.0.dump().map_err(|e| {
                                 ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
                                     exc: e.to_string(),
                                 })

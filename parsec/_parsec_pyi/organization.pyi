@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Iterable
 
 from parsec._parsec import UsersPerProfileDetailItem
-from parsec._parsec_pyi.protocol.organization import ActiveUsersLimit
+from parsec._parsec_pyi.protocol import ActiveUsersLimit
 
 class OrganizationStats:
     def __init__(

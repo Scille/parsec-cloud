@@ -1,0 +1,56 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
+from __future__ import annotations
+
+from parsec._parsec import UsersPerProfileDetailItem
+
+class Req:
+    def __init__(
+        self,
+    ) -> None: ...
+    def dump(self) -> bytes: ...
+
+class Rep:
+    @staticmethod
+    def load(raw: bytes) -> Rep: ...
+    def dump(self) -> bytes: ...
+
+class RepUnknownStatus(Rep):
+    def __init__(self, status: str, reason: str | None) -> None: ...
+    @property
+    def status(self) -> str: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepOk(Rep):
+    def __init__(
+        self,
+        data_size: int,
+        metadata_size: int,
+        realms: int,
+        users: int,
+        active_users: int,
+        users_per_profile_detail: list[UsersPerProfileDetailItem],
+    ) -> None: ...
+    @property
+    def data_size(self) -> int: ...
+    @property
+    def metadata_size(self) -> int: ...
+    @property
+    def realms(self) -> int: ...
+    @property
+    def users(self) -> int: ...
+    @property
+    def active_users(self) -> int: ...
+    @property
+    def users_per_profile_detail(self) -> list[UsersPerProfileDetailItem]: ...
+
+class RepNotAllowed(Rep):
+    def __init__(self, reason: str | None) -> None: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepNotFound(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
